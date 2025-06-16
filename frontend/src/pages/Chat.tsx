@@ -16,11 +16,9 @@ export const Chat: React.FC = () => {
 
   return (
     <ChatLayout>
-      <div className="flex-1 flex flex-col h-full">
-        <ChatMessages 
-          messages={currentSession?.messages || []}
-        />
-        <ChatInput 
+      <div className='flex-1 flex flex-col h-full'>
+        <ChatMessages messages={currentSession?.messages || []} />
+        <ChatInput
           onSendMessage={handleSendMessage}
           onStopGeneration={stopGeneration}
         />

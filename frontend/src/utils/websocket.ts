@@ -11,7 +11,9 @@ class WebSocketService {
   constructor() {
     // Use the backend URL for WebSocket connection
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    const wsUrl = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+    const wsUrl = apiUrl
+      .replace('http://', 'ws://')
+      .replace('https://', 'wss://');
     this.url = `${wsUrl}/ws`;
   }
 
@@ -26,7 +28,7 @@ class WebSocketService {
           resolve();
         };
 
-        this.ws.onmessage = (event) => {
+        this.ws.onmessage = event => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
             const handler = this.messageHandlers.get(message.type);
@@ -44,7 +46,7 @@ class WebSocketService {
           this.attemptReconnect();
         };
 
-        this.ws.onerror = (error) => {
+        this.ws.onerror = error => {
           console.error('WebSocket error:', error);
           reject(error);
         };
@@ -82,8 +84,10 @@ class WebSocketService {
   private attemptReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-      
+      console.log(
+        `Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+      );
+
       setTimeout(() => {
         this.connect().catch(() => {
           // Will try again if this fails

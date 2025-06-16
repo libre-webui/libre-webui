@@ -1,5 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
-import { OllamaModel, OllamaGenerateRequest, OllamaGenerateResponse } from '../types';
+import {
+  OllamaModel,
+  OllamaGenerateRequest,
+  OllamaGenerateResponse,
+} from '../types';
 
 class OllamaService {
   private client: AxiosInstance;
@@ -22,7 +26,9 @@ class OllamaService {
       return response.status === 200;
     } catch (error: any) {
       if (error.code === 'ECONNREFUSED') {
-        console.warn('Ollama service is not running. Please start it with: ollama serve');
+        console.warn(
+          'Ollama service is not running. Please start it with: ollama serve'
+        );
       } else {
         console.error('Ollama health check failed:', error.message);
       }
@@ -40,8 +46,12 @@ class OllamaService {
       return models;
     } catch (error: any) {
       if (error.code === 'ECONNREFUSED') {
-        console.error('Cannot connect to Ollama. Please ensure Ollama is running with: ollama serve');
-        throw new Error('Ollama service is not running. Please start it with: ollama serve');
+        console.error(
+          'Cannot connect to Ollama. Please ensure Ollama is running with: ollama serve'
+        );
+        throw new Error(
+          'Ollama service is not running. Please start it with: ollama serve'
+        );
       } else {
         console.error('Failed to fetch models:', error.message);
         throw new Error('Failed to fetch available models from Ollama');
@@ -49,7 +59,9 @@ class OllamaService {
     }
   }
 
-  async generateResponse(request: OllamaGenerateRequest): Promise<OllamaGenerateResponse> {
+  async generateResponse(
+    request: OllamaGenerateRequest
+  ): Promise<OllamaGenerateResponse> {
     try {
       const response = await this.client.post('/api/generate', {
         ...request,
@@ -58,7 +70,9 @@ class OllamaService {
       return response.data;
     } catch (error: any) {
       console.error('Failed to generate response:', error);
-      throw new Error(error.response?.data?.error || 'Failed to generate response');
+      throw new Error(
+        error.response?.data?.error || 'Failed to generate response'
+      );
     }
   }
 
@@ -69,12 +83,16 @@ class OllamaService {
     onComplete: () => void
   ): Promise<void> {
     try {
-      const response = await this.client.post('/api/generate', {
-        ...request,
-        stream: true,
-      }, {
-        responseType: 'stream',
-      });
+      const response = await this.client.post(
+        '/api/generate',
+        {
+          ...request,
+          stream: true,
+        },
+        {
+          responseType: 'stream',
+        }
+      );
 
       let buffer = '';
 
@@ -106,10 +124,13 @@ class OllamaService {
       response.data.on('end', () => {
         onComplete();
       });
-
     } catch (error: any) {
       console.error('Failed to generate stream response:', error);
-      onError(new Error(error.response?.data?.error || 'Failed to generate stream response'));
+      onError(
+        new Error(
+          error.response?.data?.error || 'Failed to generate stream response'
+        )
+      );
     }
   }
 
@@ -121,7 +142,10 @@ class OllamaService {
       });
       console.log(`Successfully pulled model: ${modelName}`);
     } catch (error: any) {
-      console.error(`Failed to pull model ${modelName}:`, error.response?.data || error.message);
+      console.error(
+        `Failed to pull model ${modelName}:`,
+        error.response?.data || error.message
+      );
       throw new Error(error.response?.data?.error || 'Failed to pull model');
     }
   }
@@ -139,7 +163,10 @@ class OllamaService {
 
   async showModel(modelName: string, verbose = false): Promise<any> {
     try {
-      const response = await this.client.post('/api/show', { model: modelName, verbose });
+      const response = await this.client.post('/api/show', {
+        model: modelName,
+        verbose,
+      });
       return response.data;
     } catch (error: any) {
       console.error('Failed to show model:', error);
@@ -180,7 +207,9 @@ class OllamaService {
       return response.data;
     } catch (error: any) {
       console.error('Failed to generate embeddings:', error);
-      throw new Error(error.response?.data?.error || 'Failed to generate embeddings');
+      throw new Error(
+        error.response?.data?.error || 'Failed to generate embeddings'
+      );
     }
   }
 
@@ -190,7 +219,9 @@ class OllamaService {
       return response.data;
     } catch (error: any) {
       console.error('Failed to list running models:', error);
-      throw new Error(error.response?.data?.error || 'Failed to list running models');
+      throw new Error(
+        error.response?.data?.error || 'Failed to list running models'
+      );
     }
   }
 
@@ -200,7 +231,9 @@ class OllamaService {
       return response.data;
     } catch (error: any) {
       console.error('Failed to get version:', error);
-      throw new Error(error.response?.data?.error || 'Failed to get Ollama version');
+      throw new Error(
+        error.response?.data?.error || 'Failed to get Ollama version'
+      );
     }
   }
 
@@ -214,7 +247,9 @@ class OllamaService {
       return response.data;
     } catch (error: any) {
       console.error('Failed to generate chat response:', error);
-      throw new Error(error.response?.data?.error || 'Failed to generate chat response');
+      throw new Error(
+        error.response?.data?.error || 'Failed to generate chat response'
+      );
     }
   }
 
@@ -225,12 +260,16 @@ class OllamaService {
     onComplete: () => void
   ): Promise<void> {
     try {
-      const response = await this.client.post('/api/chat', {
-        ...request,
-        stream: true,
-      }, {
-        responseType: 'stream',
-      });
+      const response = await this.client.post(
+        '/api/chat',
+        {
+          ...request,
+          stream: true,
+        },
+        {
+          responseType: 'stream',
+        }
+      );
 
       let buffer = '';
 
@@ -262,10 +301,14 @@ class OllamaService {
       response.data.on('end', () => {
         onComplete();
       });
-
     } catch (error: any) {
       console.error('Failed to generate chat stream response:', error);
-      onError(new Error(error.response?.data?.error || 'Failed to generate chat stream response'));
+      onError(
+        new Error(
+          error.response?.data?.error ||
+            'Failed to generate chat stream response'
+        )
+      );
     }
   }
 
@@ -279,7 +322,9 @@ class OllamaService {
         return false;
       }
       console.error('Failed to check blob:', error);
-      throw new Error(error.response?.data?.error || 'Failed to check blob existence');
+      throw new Error(
+        error.response?.data?.error || 'Failed to check blob existence'
+      );
     }
   }
 
@@ -303,12 +348,17 @@ class OllamaService {
       return response.data;
     } catch (error: any) {
       console.error('Failed to generate legacy embeddings:', error);
-      throw new Error(error.response?.data?.error || 'Failed to generate legacy embeddings');
+      throw new Error(
+        error.response?.data?.error || 'Failed to generate legacy embeddings'
+      );
     }
   }
 
   // Pull all models
-  async pullAllModels(): Promise<{ success: boolean; results: { name: string; success: boolean }[] }> {
+  async pullAllModels(): Promise<{
+    success: boolean;
+    results: { name: string; success: boolean }[];
+  }> {
     const results: { name: string; success: boolean }[] = [];
     try {
       const models = await this.getModels();
@@ -328,22 +378,44 @@ class OllamaService {
 
   // Pull all models with progress streaming
   async pullAllModelsStream(
-    onProgress: (progress: { current: number; total: number; modelName: string; status: 'starting' | 'success' | 'error'; error?: string }) => void,
+    onProgress: (progress: {
+      current: number;
+      total: number;
+      modelName: string;
+      status: 'starting' | 'success' | 'error';
+      error?: string;
+    }) => void,
     onComplete: () => void,
     onError: (error: string) => void
   ): Promise<void> {
     try {
       const models = await this.getModels();
       const total = models.length;
-      
+
       for (let i = 0; i < models.length; i++) {
         const model = models[i];
         try {
-          onProgress({ current: i + 1, total, modelName: model.name, status: 'starting' });
+          onProgress({
+            current: i + 1,
+            total,
+            modelName: model.name,
+            status: 'starting',
+          });
           await this.pullModel(model.name);
-          onProgress({ current: i + 1, total, modelName: model.name, status: 'success' });
+          onProgress({
+            current: i + 1,
+            total,
+            modelName: model.name,
+            status: 'success',
+          });
         } catch (err: any) {
-          onProgress({ current: i + 1, total, modelName: model.name, status: 'error', error: err.message });
+          onProgress({
+            current: i + 1,
+            total,
+            modelName: model.name,
+            status: 'error',
+            error: err.message,
+          });
         }
       }
       onComplete();

@@ -7,7 +7,10 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src/ --ext .ts,.js --max-warnings 100",
+    "lint:fix": "eslint src/ --ext .ts,.js --fix",
+    "lint:strict": "eslint src/ --ext .ts,.js --max-warnings 0"
   },
   "dependencies": {
     "axios": "^1.10.0",
@@ -27,6 +30,9 @@
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.10",
     "tsx": "^4.20.3",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0"
   }
 }

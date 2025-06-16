@@ -4,7 +4,7 @@ A minimalist interface for local LLMs via Ollama.
 
 ![Rick Rubin Coding Wisdom](./rr.jpg)
 
-*Like Rick Rubin strips music to its essence, Libre WebUI strips away UI complexity. Simple. Minimal. Effective.*
+_Like Rick Rubin strips music to its essence, Libre WebUI strips away UI complexity. Simple. Minimal. Effective._
 
 ## Free & Open Source
 
@@ -28,6 +28,7 @@ npm run dev
 ```
 
 ## Ports
+
 - Frontend: http://localhost:5173
 - Backend: http://localhost:3001
 - Ollama: http://localhost:11434
@@ -37,15 +38,18 @@ npm run dev
 Libre WebUI includes VS Code-inspired keyboard shortcuts for enhanced productivity:
 
 ### Navigation
+
 - **⌘B** (Cmd+B / Ctrl+B) - Toggle sidebar visibility
 - **⌘D** (Cmd+D / Ctrl+D) - Toggle dark/light theme
 
 ### Settings & Help
+
 - **⌘,** (Cmd+Comma / Ctrl+Comma) - Open settings modal
 - **?** - Show keyboard shortcuts help modal
 - **Esc** - Close open modals
 
 ### Chat
+
 - **Enter** - Send message
 - **Shift+Enter** - New line in message
 
@@ -54,6 +58,7 @@ Press **?** anywhere in the app to see the complete shortcuts reference.
 ## Deployment
 
 ### Vercel
+
 The app includes Vercel configuration for seamless deployment with SPA routing support:
 
 ```bash
@@ -75,6 +80,7 @@ These files are automatically created with sensible defaults and are excluded fr
 ## Features
 
 ### 🚀 Core Features
+
 - **Clean, minimal interface** - Rick Rubin-inspired simplicity
 - **Light/Dark mode** - Comfortable viewing in any environment with improved accessibility
 - **Responsive design** - Works seamlessly on desktop, tablet, and mobile
@@ -89,6 +95,7 @@ These files are automatically created with sensible defaults and are excluded fr
 All Ollama API endpoints are integrated and ready to use:
 
 #### Chat & Generation
+
 - ✅ **Chat Completion** - Full conversation support with history
 - ✅ **Text Generation** - Single-turn completion with advanced options
 - ✅ **Streaming Responses** - Real-time response generation
@@ -97,6 +104,7 @@ All Ollama API endpoints are integrated and ready to use:
 - ✅ **Tool Calling** - Function calling for enhanced capabilities
 
 #### Model Management
+
 - ✅ **List Models** - Browse all locally installed models
 - ✅ **Pull Models** - Download from Ollama library with progress tracking
 - ✅ **Delete Models** - Remove unused models to free space
@@ -107,12 +115,14 @@ All Ollama API endpoints are integrated and ready to use:
 - ✅ **Running Models** - View active models and memory usage
 
 #### Advanced Features
+
 - ✅ **Embeddings** - Generate text embeddings for semantic search
 - ✅ **Blob Management** - Handle binary data for model creation
 - ✅ **Version Detection** - Check Ollama server version
 - ✅ **Health Monitoring** - Service status and connectivity checks
 
 ### 🎯 UI Components
+
 - **Model Manager** - Comprehensive model management interface
 - **Chat Interface** - Intuitive conversation experience with syntax highlighting
 - **Settings Panel** - Customizable preferences and options
@@ -121,6 +131,7 @@ All Ollama API endpoints are integrated and ready to use:
 - **Optimized Bundle** - Code splitting for faster loading and better performance
 
 ### 🔧 Developer Features
+
 - **TypeScript** - Full type safety throughout the stack
 - **REST API** - Traditional HTTP endpoints for all features
 - **WebSocket** - Real-time bidirectional communication
@@ -154,26 +165,29 @@ libre-webui-dev/
 ## Documentation
 
 ### 📚 Documentation
+
 **[📖 Complete Documentation →](./docs/00-README.md)**
 
-| Guide | Description |
-|-------|-------------|
-| **[🚀 Quick Start](./docs/01-QUICK_START.md)** | Get up and running in 5 minutes |
-| **[🤖 Working with Models](./docs/02-WORKING_WITH_MODELS.md)** | Complete AI models guide |
-| **[🎯 Pro Tips](./docs/03-PRO_TIPS.md)** | Advanced workflows and techniques |
-| **[⌨️ Keyboard Shortcuts](./docs/04-KEYBOARD_SHORTCUTS.md)** | Productivity hotkeys |
-| **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)** | Try without installation |
-| **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)** | Problem solving guide |
+| Guide                                                          | Description                       |
+| -------------------------------------------------------------- | --------------------------------- |
+| **[🚀 Quick Start](./docs/01-QUICK_START.md)**                 | Get up and running in 5 minutes   |
+| **[🤖 Working with Models](./docs/02-WORKING_WITH_MODELS.md)** | Complete AI models guide          |
+| **[🎯 Pro Tips](./docs/03-PRO_TIPS.md)**                       | Advanced workflows and techniques |
+| **[⌨️ Keyboard Shortcuts](./docs/04-KEYBOARD_SHORTCUTS.md)**   | Productivity hotkeys              |
+| **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)**                     | Try without installation          |
+| **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)**         | Problem solving guide             |
 
 ## Accessibility & Performance
 
 ### Accessibility Features
+
 - **High contrast text** - Improved readability in both light and dark modes
 - **Keyboard navigation** - Full keyboard support with intuitive shortcuts
 - **Screen reader friendly** - Semantic HTML and proper ARIA labels
 - **Responsive design** - Accessible on all device sizes
 
 ### Performance Optimizations
+
 - **Code splitting** - Lazy loading for ChatPage and ModelsPage
 - **Optimized bundles** - Vendor chunks separated for better caching
 - **Syntax highlighting** - Lightweight, optimized syntax highlighter
@@ -185,8 +199,8 @@ Quick API examples:
 // Chat with streaming
 const stream = chatApi.generateChatStreamResponse(sessionId, 'Hello!');
 stream.subscribe(
-  (chunk) => console.log('Received:', chunk),
-  (error) => console.error('Error:', error),
+  chunk => console.log('Received:', chunk),
+  error => console.error('Error:', error),
   () => console.log('Complete')
 );
 
@@ -197,9 +211,10 @@ await ollamaApi.pullModel('llama3.2');
 // Generate embeddings
 const embeddings = await ollamaApi.generateEmbeddings({
   model: 'all-minilm',
-  input: ['Text to embed']
+  input: ['Text to embed'],
 });
 ```
 
 ## License
+
 MIT

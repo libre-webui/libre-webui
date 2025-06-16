@@ -17,7 +17,9 @@ class ChatService {
       if (fs.existsSync(this.dataFile)) {
         const data = fs.readFileSync(this.dataFile, 'utf8');
         const sessionsArray: ChatSession[] = JSON.parse(data);
-        this.sessions = new Map(sessionsArray.map(session => [session.id, session]));
+        this.sessions = new Map(
+          sessionsArray.map(session => [session.id, session])
+        );
         console.log(`Loaded ${sessionsArray.length} sessions from disk`);
       }
     } catch (error) {
@@ -37,7 +39,7 @@ class ChatService {
   createSession(model: string, title?: string): ChatSession {
     const sessionId = uuidv4();
     const now = Date.now();
-    
+
     const session: ChatSession = {
       id: sessionId,
       title: title || 'New Chat',
@@ -48,7 +50,7 @@ class ChatService {
     };
 
     this.sessions.set(sessionId, session);
-    
+
     // Add system message from preferences if one exists
     const systemMessage = preferencesService.getSystemMessage();
     if (systemMessage && systemMessage.trim()) {
@@ -57,7 +59,7 @@ class ChatService {
         content: systemMessage.trim(),
       });
     }
-    
+
     this.saveSessions();
     return session;
   }
@@ -67,11 +69,15 @@ class ChatService {
   }
 
   getAllSessions(): ChatSession[] {
-    return Array.from(this.sessions.values())
-      .sort((a, b) => b.updatedAt - a.updatedAt);
+    return Array.from(this.sessions.values()).sort(
+      (a, b) => b.updatedAt - a.updatedAt
+    );
   }
 
-  updateSession(sessionId: string, updates: Partial<ChatSession>): ChatSession | undefined {
+  updateSession(
+    sessionId: string,
+    updates: Partial<ChatSession>
+  ): ChatSession | undefined {
     const session = this.sessions.get(sessionId);
     if (!session) return undefined;
 
@@ -86,16 +92,22 @@ class ChatService {
     return updatedSession;
   }
 
-  addMessage(sessionId: string, message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }): ChatMessage | undefined {
+  addMessage(
+    sessionId: string,
+    message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }
+  ): ChatMessage | undefined {
     const session = this.sessions.get(sessionId);
     if (!session) return undefined;
 
     const messageId = message.id || uuidv4();
-    
+
     // Check if message with this ID already exists to prevent duplicates
     const existingMessage = session.messages.find(msg => msg.id === messageId);
     if (existingMessage) {
-      console.log('Message with ID already exists, skipping duplicate:', messageId);
+      console.log(
+        'Message with ID already exists, skipping duplicate:',
+        messageId
+      );
       return existingMessage;
     }
 
@@ -110,7 +122,11 @@ class ChatService {
 
     // Auto-generate title from first user message
     const userMessages = session.messages.filter(msg => msg.role === 'user');
-    if (userMessages.length === 1 && message.role === 'user' && session.title === 'New Chat') {
+    if (
+      userMessages.length === 1 &&
+      message.role === 'user' &&
+      session.title === 'New Chat'
+    ) {
       session.title = this.generateTitle(message.content);
     }
 
@@ -136,7 +152,7 @@ class ChatService {
     // Generate a concise title from the first message
     const words = content.trim().split(/\s+/).slice(0, 6);
     let title = words.join(' ');
-    
+
     if (title.length > 50) {
       title = title.substring(0, 47) + '...';
     }
@@ -149,12 +165,16 @@ class ChatService {
     if (!session) return [];
 
     // Separate system messages from conversation messages
-    const systemMessages = session.messages.filter(msg => msg.role === 'system');
-    const conversationMessages = session.messages.filter(msg => msg.role !== 'system');
+    const systemMessages = session.messages.filter(
+      msg => msg.role === 'system'
+    );
+    const conversationMessages = session.messages.filter(
+      msg => msg.role !== 'system'
+    );
 
     // Take the last N conversation messages, but always include all system messages first
     const recentConversation = conversationMessages.slice(-maxMessages);
-    
+
     // Return system messages first, then conversation messages
     return [...systemMessages, ...recentConversation];
   }

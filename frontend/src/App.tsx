@@ -4,12 +4,18 @@ import { Toaster } from 'react-hot-toast';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { SidebarToggle } from '@/components/SidebarToggle';
-import { KeyboardShortcutsModal, KeyboardShortcutsIndicator } from '@/components/KeyboardShortcuts';
+import {
+  KeyboardShortcutsModal,
+  KeyboardShortcutsIndicator,
+} from '@/components/KeyboardShortcuts';
 import { SettingsModal } from '@/components/SettingsModal';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { useAppStore } from '@/store/appStore';
 import { useInitializeApp } from '@/hooks/useInitializeApp';
-import { useKeyboardShortcuts, KeyboardShortcut } from '@/hooks/useKeyboardShortcuts';
+import {
+  useKeyboardShortcuts,
+  KeyboardShortcut,
+} from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/utils';
 import websocketService from '@/utils/websocket';
 
@@ -19,13 +25,20 @@ const ModelsPage = React.lazy(() => import('@/pages/ModelsPage'));
 
 // Loading component
 const PageLoader = () => (
-  <div className="flex items-center justify-center h-full">
-    <div className="text-gray-600 dark:text-dark-600">Loading...</div>
+  <div className='flex items-center justify-center h-full'>
+    <div className='text-gray-600 dark:text-dark-600'>Loading...</div>
   </div>
 );
 
 const App: React.FC = () => {
-  const { sidebarOpen, setSidebarOpen, toggleSidebar, toggleTheme, isDemoMode, demoConfig } = useAppStore();
+  const {
+    sidebarOpen,
+    setSidebarOpen,
+    toggleSidebar,
+    toggleTheme,
+    isDemoMode,
+    demoConfig,
+  } = useAppStore();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
@@ -73,7 +86,7 @@ const App: React.FC = () => {
   // Initialize WebSocket connection
   React.useEffect(() => {
     websocketService.connect().catch(console.error);
-    
+
     return () => {
       websocketService.disconnect();
     };
@@ -81,41 +94,34 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <div className="flex h-screen bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800">
-        <Sidebar
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-        
+      <div className='flex h-screen bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'>
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
         <SidebarToggle />
-        
-        <div 
+
+        <div
           className={cn(
-            "flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out bg-white dark:bg-dark-50",
+            'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out bg-white dark:bg-dark-50',
             // Add left margin on desktop when sidebar is open to prevent content jumping
             // On mobile, always use full width regardless of sidebar state
-            "w-full",
-            sidebarOpen ? "lg:ml-80" : "lg:ml-0"
+            'w-full',
+            sidebarOpen ? 'lg:ml-80' : 'lg:ml-0'
           )}
         >
-          <Header 
-            onSettingsClick={() => setSettingsOpen(true)} 
-          />
-          
+          <Header onSettingsClick={() => setSettingsOpen(true)} />
+
           {/* Demo Mode Banner */}
           {isDemoMode && demoConfig.showBanner && (
-            <DemoModeBanner 
-              message={demoConfig.message}
-            />
+            <DemoModeBanner message={demoConfig.message} />
           )}
-          
-          <main className="flex-1 overflow-hidden bg-white dark:bg-dark-50">
+
+          <main className='flex-1 overflow-hidden bg-white dark:bg-dark-50'>
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/" element={<ChatPage />} />
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/chat/:sessionId" element={<ChatPage />} />
-                <Route path="/models" element={<ModelsPage />} />
+                <Route path='/' element={<ChatPage />} />
+                <Route path='/chat' element={<ChatPage />} />
+                <Route path='/chat/:sessionId' element={<ChatPage />} />
+                <Route path='/models' element={<ModelsPage />} />
               </Routes>
             </Suspense>
           </main>
@@ -127,7 +133,7 @@ const App: React.FC = () => {
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
-      
+
       <KeyboardShortcutsModal
         isOpen={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
@@ -135,12 +141,10 @@ const App: React.FC = () => {
       />
 
       {/* Keyboard shortcuts indicator */}
-      <KeyboardShortcutsIndicator 
-        onClick={() => setShortcutsOpen(true)} 
-      />
+      <KeyboardShortcutsIndicator onClick={() => setShortcutsOpen(true)} />
 
       <Toaster
-        position="top-right"
+        position='top-right'
         toastOptions={{
           duration: 4000,
           className: 'animate-slide-up',
@@ -149,7 +153,8 @@ const App: React.FC = () => {
             color: 'var(--toast-color)',
             border: '1px solid var(--toast-border)',
             borderRadius: '0.75rem',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            boxShadow:
+              '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
             cursor: 'pointer',
           },
           success: {

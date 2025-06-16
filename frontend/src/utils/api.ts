@@ -1,21 +1,31 @@
 import axios from 'axios';
-import { ApiResponse, ChatSession, ChatMessage, OllamaModel, UserPreferences } from '@/types';
+import {
+  ApiResponse,
+  ChatSession,
+  ChatMessage,
+  OllamaModel,
+  UserPreferences,
+} from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 console.log('API_BASE_URL configured as:', API_BASE_URL);
 console.log('Environment variables:', import.meta.env);
 console.log('Demo mode detected:', isDemoMode());
 
 // Mock response helper for demo mode
-const createDemoResponse = <T>(data: T, success = true): Promise<ApiResponse<T>> => {
-  return new Promise((resolve) => {
+const createDemoResponse = <T>(
+  data: T,
+  success = true
+): Promise<ApiResponse<T>> => {
+  return new Promise(resolve => {
     setTimeout(() => {
       resolve({
         success,
         data,
-        error: success ? undefined : 'Demo mode: Backend not available'
+        error: success ? undefined : 'Demo mode: Backend not available',
       });
     }, 500); // Simulate network delay
   });
@@ -33,8 +43,8 @@ const DEMO_MODELS: OllamaModel[] = [
       family: 'llama',
       families: ['llama'],
       parameter_size: '3B',
-      quantization_level: 'Q4_0'
-    }
+      quantization_level: 'Q4_0',
+    },
   },
   {
     name: 'qwen2.5:7b',
@@ -46,9 +56,9 @@ const DEMO_MODELS: OllamaModel[] = [
       family: 'qwen',
       families: ['qwen'],
       parameter_size: '7B',
-      quantization_level: 'Q4_0'
-    }
-  }
+      quantization_level: 'Q4_0',
+    },
+  },
 ];
 
 const DEMO_SESSIONS: ChatSession[] = [
@@ -66,13 +76,14 @@ const DEMO_SESSIONS: ChatSession[] = [
       {
         id: 'demo-msg-2',
         role: 'assistant',
-        content: 'This is a demo of Libre WebUI! In a real deployment, I would be powered by Ollama running locally on your machine. This demo shows the beautiful interface and features without the backend connection.',
+        content:
+          'This is a demo of Libre WebUI! In a real deployment, I would be powered by Ollama running locally on your machine. This demo shows the beautiful interface and features without the backend connection.',
         timestamp: Date.now(),
-      }
+      },
     ],
     createdAt: Date.now(),
     updatedAt: Date.now(),
-  }
+  },
 ];
 
 const api = axios.create({
@@ -82,20 +93,20 @@ const api = axios.create({
 
 // Request interceptor
 api.interceptors.request.use(
-  (config) => {
+  config => {
     return config;
   },
-  (error) => {
+  error => {
     return Promise.reject(error);
   }
 );
 
 // Response interceptor
 api.interceptors.response.use(
-  (response) => {
+  response => {
     return response;
   },
-  (error) => {
+  error => {
     console.error('API Error:', error);
     return Promise.reject(error);
   }
@@ -110,7 +121,10 @@ export const chatApi = {
     return api.get('/chat/sessions').then(res => res.data);
   },
 
-  createSession: (model: string, title?: string): Promise<ApiResponse<ChatSession>> => {
+  createSession: (
+    model: string,
+    title?: string
+  ): Promise<ApiResponse<ChatSession>> => {
     if (isDemoMode()) {
       const newSession: ChatSession = {
         id: `demo-session-${Date.now()}`,
@@ -131,21 +145,36 @@ export const chatApi = {
       if (session) {
         return createDemoResponse(session);
       }
-      return Promise.resolve({ success: false, error: 'Session not found in demo mode' });
+      return Promise.resolve({
+        success: false,
+        error: 'Session not found in demo mode',
+      });
     }
     return api.get(`/chat/sessions/${sessionId}`).then(res => res.data);
   },
 
-  updateSession: (sessionId: string, updates: Partial<ChatSession>): Promise<ApiResponse<ChatSession>> => {
+  updateSession: (
+    sessionId: string,
+    updates: Partial<ChatSession>
+  ): Promise<ApiResponse<ChatSession>> => {
     if (isDemoMode()) {
       const session = DEMO_SESSIONS.find(s => s.id === sessionId);
       if (session) {
-        const updatedSession = { ...session, ...updates, updatedAt: Date.now() };
+        const updatedSession = {
+          ...session,
+          ...updates,
+          updatedAt: Date.now(),
+        };
         return createDemoResponse(updatedSession);
       }
-      return Promise.resolve({ success: false, error: 'Session not found in demo mode' });
+      return Promise.resolve({
+        success: false,
+        error: 'Session not found in demo mode',
+      });
     }
-    return api.put(`/chat/sessions/${sessionId}`, updates).then(res => res.data);
+    return api
+      .put(`/chat/sessions/${sessionId}`, updates)
+      .then(res => res.data);
   },
 
   deleteSession: (sessionId: string): Promise<ApiResponse> => {
@@ -159,28 +188,58 @@ export const chatApi = {
     api.delete('/chat/sessions').then(res => res.data),
 
   // Messages
-  sendMessage: (sessionId: string, content: string, options?: any): Promise<ApiResponse<{ userMessage: ChatMessage; assistantMessage: ChatMessage }>> =>
-    api.post(`/chat/sessions/${sessionId}/messages`, { content, options }).then(res => res.data),
+  sendMessage: (
+    sessionId: string,
+    content: string,
+    options?: any
+  ): Promise<
+    ApiResponse<{ userMessage: ChatMessage; assistantMessage: ChatMessage }>
+  > =>
+    api
+      .post(`/chat/sessions/${sessionId}/messages`, { content, options })
+      .then(res => res.data),
 
-  saveMessage: (sessionId: string, message: Omit<ChatMessage, 'timestamp'> & { timestamp?: number }): Promise<ApiResponse<ChatMessage>> =>
-    api.post(`/chat/sessions/${sessionId}/messages`, message).then(res => res.data),
+  saveMessage: (
+    sessionId: string,
+    message: Omit<ChatMessage, 'timestamp'> & { timestamp?: number }
+  ): Promise<ApiResponse<ChatMessage>> =>
+    api
+      .post(`/chat/sessions/${sessionId}/messages`, message)
+      .then(res => res.data),
 
   // Chat generation using new Ollama chat API
-  generateChatResponse: (sessionId: string, message: string, options?: any): Promise<ApiResponse<ChatMessage>> =>
-    api.post(`/chat/sessions/${sessionId}/generate`, { message, options }).then(res => res.data),
+  generateChatResponse: (
+    sessionId: string,
+    message: string,
+    options?: any
+  ): Promise<ApiResponse<ChatMessage>> =>
+    api
+      .post(`/chat/sessions/${sessionId}/generate`, { message, options })
+      .then(res => res.data),
 
   // Streaming chat generation
-  generateChatStreamResponse: (sessionId: string, message: string, options?: any) => {
+  generateChatStreamResponse: (
+    sessionId: string,
+    message: string,
+    options?: any
+  ) => {
     return {
-      subscribe: async (onMessage: (data: any) => void, onError?: (error: any) => void, onComplete?: () => void) => {
+      subscribe: async (
+        onMessage: (data: any) => void,
+        onError?: (error: any) => void,
+        onComplete?: () => void
+      ) => {
         try {
-          const response = await fetch(`${API_BASE_URL}/chat/sessions/${sessionId}/generate/stream`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ message, options }),
-          });
+          const response = await fetch(
+            `${API_BASE_URL}/chat/sessions/${sessionId}/generate/stream`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ message, options }),
+            }
+          );
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -195,58 +254,64 @@ export const chatApi = {
           let buffer = '';
 
           const processChunk = () => {
-            reader.read().then(({ done, value }) => {
-              if (done) {
-                onComplete?.();
-                return;
-              }
+            reader
+              .read()
+              .then(({ done, value }) => {
+                if (done) {
+                  onComplete?.();
+                  return;
+                }
 
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split('\n');
-              buffer = lines.pop() || '';
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
 
-              for (const line of lines) {
-                const trimmedLine = line.trim();
-                if (trimmedLine.startsWith('data: ')) {
-                  const data = trimmedLine.slice(6);
-                  
-                  if (data === '[DONE]') {
-                    onComplete?.();
-                    return;
-                  }
+                for (const line of lines) {
+                  const trimmedLine = line.trim();
+                  if (trimmedLine.startsWith('data: ')) {
+                    const data = trimmedLine.slice(6);
 
-                  try {
-                    const parsedData = JSON.parse(data);
-                    onMessage(parsedData);
-                    
-                    if (parsedData.type === 'done' || parsedData.type === 'error') {
-                      if (parsedData.type === 'error') {
-                        onError?.(parsedData.error);
-                      } else {
-                        onComplete?.();
-                      }
+                    if (data === '[DONE]') {
+                      onComplete?.();
                       return;
                     }
-                  } catch (parseError) {
-                    console.error('Failed to parse SSE data:', parseError);
+
+                    try {
+                      const parsedData = JSON.parse(data);
+                      onMessage(parsedData);
+
+                      if (
+                        parsedData.type === 'done' ||
+                        parsedData.type === 'error'
+                      ) {
+                        if (parsedData.type === 'error') {
+                          onError?.(parsedData.error);
+                        } else {
+                          onComplete?.();
+                        }
+                        return;
+                      }
+                    } catch (parseError) {
+                      console.error('Failed to parse SSE data:', parseError);
+                    }
                   }
                 }
-              }
 
-              processChunk();
-            }).catch((error) => {
-              onError?.(error);
-            });
+                processChunk();
+              })
+              .catch(error => {
+                onError?.(error);
+              });
           };
 
           processChunk();
-          
+
           return () => reader.cancel();
         } catch (error) {
           onError?.(error);
           return () => {};
         }
-      }
+      },
     };
   },
 };
@@ -282,12 +347,17 @@ export const ollamaApi = {
     return api.delete(`/ollama/models/${modelName}`).then(res => res.data);
   },
 
-  showModel: (modelName: string, verbose = false): Promise<ApiResponse<any>> => {
+  showModel: (
+    modelName: string,
+    verbose = false
+  ): Promise<ApiResponse<any>> => {
     if (isDemoMode()) {
       const model = DEMO_MODELS.find(m => m.name === modelName);
       return createDemoResponse(model || null, !!model);
     }
-    return api.get(`/ollama/models/${modelName}`, { params: { verbose } }).then(res => res.data);
+    return api
+      .get(`/ollama/models/${modelName}`, { params: { verbose } })
+      .then(res => res.data);
   },
 
   createModel: (payload: any): Promise<ApiResponse> => {
@@ -301,7 +371,9 @@ export const ollamaApi = {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
     }
-    return api.post('/ollama/models/copy', { source, destination }).then(res => res.data);
+    return api
+      .post('/ollama/models/copy', { source, destination })
+      .then(res => res.data);
   },
 
   pushModel: (modelName: string): Promise<ApiResponse> => {
@@ -319,7 +391,13 @@ export const ollamaApi = {
   },
 
   pullAllModelsStream: (
-    onProgress: (progress: { current: number; total: number; modelName: string; status: 'starting' | 'success' | 'error'; error?: string }) => void,
+    onProgress: (progress: {
+      current: number;
+      total: number;
+      modelName: string;
+      status: 'starting' | 'success' | 'error';
+      error?: string;
+    }) => void,
     onComplete: () => void,
     onError: (error: string) => void
   ): void => {
@@ -335,7 +413,7 @@ export const ollamaApi = {
             total: demoModels.length,
             modelName: demoModels[current - 1]?.name || 'demo-model',
             status: Math.random() > 0.1 ? 'success' : 'error',
-            error: Math.random() > 0.1 ? undefined : 'Demo error'
+            error: Math.random() > 0.1 ? undefined : 'Demo error',
           });
         }
         if (current >= demoModels.length) {
@@ -346,11 +424,13 @@ export const ollamaApi = {
       return;
     }
 
-    const eventSource = new EventSource(`${API_BASE_URL}/ollama/models/pull-all/stream`);
-    
-    eventSource.onmessage = (event) => {
+    const eventSource = new EventSource(
+      `${API_BASE_URL}/ollama/models/pull-all/stream`
+    );
+
+    eventSource.onmessage = event => {
       const data = JSON.parse(event.data);
-      
+
       switch (data.type) {
         case 'progress':
           onProgress({
@@ -358,7 +438,7 @@ export const ollamaApi = {
             total: data.total,
             modelName: data.modelName,
             status: data.status,
-            error: data.error
+            error: data.error,
           });
           break;
         case 'complete':
@@ -412,16 +492,21 @@ export const ollamaApi = {
     if (isDemoMode()) {
       return Promise.resolve(false);
     }
-    return api.head(`/ollama/blobs/${digest}`).then(() => true).catch(() => false);
+    return api
+      .head(`/ollama/blobs/${digest}`)
+      .then(() => true)
+      .catch(() => false);
   },
 
   pushBlob: (digest: string, data: Blob | Buffer): Promise<ApiResponse> => {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
     }
-    return api.post(`/ollama/blobs/${digest}`, data, {
-      headers: { 'Content-Type': 'application/octet-stream' }
-    }).then(res => res.data);
+    return api
+      .post(`/ollama/blobs/${digest}`, data, {
+        headers: { 'Content-Type': 'application/octet-stream' },
+      })
+      .then(res => res.data);
   },
 
   // Legacy embeddings (deprecated)
@@ -437,7 +522,9 @@ export const preferencesApi = {
   getPreferences: (): Promise<ApiResponse<UserPreferences>> =>
     api.get('/preferences').then(res => res.data),
 
-  updatePreferences: (updates: Partial<UserPreferences>): Promise<ApiResponse<UserPreferences>> =>
+  updatePreferences: (
+    updates: Partial<UserPreferences>
+  ): Promise<ApiResponse<UserPreferences>> =>
     api.put('/preferences', updates).then(res => res.data),
 
   setDefaultModel: (model: string): Promise<ApiResponse<UserPreferences>> =>

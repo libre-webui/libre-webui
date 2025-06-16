@@ -15,12 +15,12 @@ const PRESET_FORMATS = [
   {
     label: 'None (Natural Language)',
     value: null,
-    description: 'Default natural language response'
+    description: 'Default natural language response',
   },
   {
     label: 'JSON',
     value: 'json',
-    description: 'Structured JSON format'
+    description: 'Structured JSON format',
   },
   {
     label: 'List',
@@ -29,12 +29,12 @@ const PRESET_FORMATS = [
       properties: {
         items: {
           type: 'array',
-          items: { type: 'string' }
-        }
+          items: { type: 'string' },
+        },
       },
-      required: ['items']
+      required: ['items'],
     },
-    description: 'Array of items'
+    description: 'Array of items',
   },
   {
     label: 'Summary',
@@ -45,12 +45,12 @@ const PRESET_FORMATS = [
         summary: { type: 'string' },
         key_points: {
           type: 'array',
-          items: { type: 'string' }
-        }
+          items: { type: 'string' },
+        },
       },
-      required: ['title', 'summary', 'key_points']
+      required: ['title', 'summary', 'key_points'],
     },
-    description: 'Document summary with key points'
+    description: 'Document summary with key points',
   },
   {
     label: 'Analysis',
@@ -60,29 +60,29 @@ const PRESET_FORMATS = [
         analysis: { type: 'string' },
         pros: {
           type: 'array',
-          items: { type: 'string' }
+          items: { type: 'string' },
         },
         cons: {
           type: 'array',
-          items: { type: 'string' }
+          items: { type: 'string' },
         },
-        recommendation: { type: 'string' }
+        recommendation: { type: 'string' },
       },
-      required: ['analysis', 'pros', 'cons', 'recommendation']
+      required: ['analysis', 'pros', 'cons', 'recommendation'],
     },
-    description: 'Structured analysis with pros/cons'
+    description: 'Structured analysis with pros/cons',
   },
   {
     label: 'Custom Schema',
     value: 'custom',
-    description: 'Define your own JSON schema'
-  }
+    description: 'Define your own JSON schema',
+  },
 ];
 
 export const StructuredOutput: React.FC<StructuredOutputProps> = ({
   format,
   onFormatChange,
-  className
+  className,
 }) => {
   const [showCustom, setShowCustom] = useState(false);
   const [customSchema, setCustomSchema] = useState('');
@@ -91,12 +91,17 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
     if (format === null) return PRESET_FORMATS[0];
     if (format === 'json') return PRESET_FORMATS[1];
     if (typeof format === 'object') {
-      const preset = PRESET_FORMATS.find(p => 
-        typeof p.value === 'object' && 
-        JSON.stringify(p.value) === JSON.stringify(format)
+      const preset = PRESET_FORMATS.find(
+        p =>
+          typeof p.value === 'object' &&
+          JSON.stringify(p.value) === JSON.stringify(format)
       );
       if (preset) return preset;
-      return { label: 'Custom', value: format, description: 'Custom JSON schema' };
+      return {
+        label: 'Custom',
+        value: format,
+        description: 'Custom JSON schema',
+      };
     }
     return PRESET_FORMATS[0];
   };
@@ -130,14 +135,14 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
     if (!current.value || current.value === 'json') return null;
 
     return (
-      <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
-        <div className="flex items-center mb-2">
-          <Code className="h-4 w-4 text-gray-500 mr-2" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div className='mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-md'>
+        <div className='flex items-center mb-2'>
+          <Code className='h-4 w-4 text-gray-500 mr-2' />
+          <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
             Schema Preview
           </span>
         </div>
-        <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-x-auto">
+        <pre className='text-xs text-gray-700 dark:text-gray-300 overflow-x-auto'>
           {JSON.stringify(current.value, null, 2)}
         </pre>
       </div>
@@ -146,10 +151,10 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
 
   return (
     <div className={cn('space-y-3', className)}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <Settings className="h-4 w-4 text-gray-500 mr-2" />
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center'>
+          <Settings className='h-4 w-4 text-gray-500 mr-2' />
+          <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
             Response Format
           </span>
         </div>
@@ -157,22 +162,22 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
 
       <Select
         value={getCurrentPreset().label}
-        onChange={(e) => handlePresetChange(e.target.value)}
+        onChange={e => handlePresetChange(e.target.value)}
         options={PRESET_FORMATS.map(preset => ({
           value: preset.label,
-          label: preset.label
+          label: preset.label,
         }))}
       />
 
-      <p className="text-xs text-gray-500 dark:text-gray-400">
+      <p className='text-xs text-gray-500 dark:text-gray-400'>
         {getCurrentPreset().description}
       </p>
 
       {showCustom && (
-        <div className="space-y-3">
+        <div className='space-y-3'>
           <Textarea
             value={customSchema}
-            onChange={(e) => setCustomSchema(e.target.value)}
+            onChange={e => setCustomSchema(e.target.value)}
             placeholder={`{
   "type": "object",
   "properties": {
@@ -182,12 +187,12 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
   "required": ["field1"]
 }`}
             rows={8}
-            className="font-mono text-sm"
+            className='font-mono text-sm'
           />
-          <div className="flex gap-2">
+          <div className='flex gap-2'>
             <Button
               onClick={handleCustomApply}
-              size="sm"
+              size='sm'
               disabled={!customSchema.trim()}
             >
               Apply Schema
@@ -197,8 +202,8 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
                 setShowCustom(false);
                 setCustomSchema('');
               }}
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
             >
               Cancel
             </Button>
@@ -209,8 +214,8 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
       {renderFormatPreview()}
 
       {format && (
-        <div className="flex items-center text-xs text-green-600 dark:text-green-400">
-          <FileText className="h-3 w-3 mr-1" />
+        <div className='flex items-center text-xs text-green-600 dark:text-green-400'>
+          <FileText className='h-3 w-3 mr-1' />
           Structured output enabled
         </div>
       )}

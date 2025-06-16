@@ -32,7 +32,9 @@ export const useKeyboardShortcuts = (
 
       // Special handling for ? key (which is Shift+/)
       if (event.key === '?' || (event.key === '/' && event.shiftKey)) {
-        const helpShortcut = shortcuts.find(s => s.key === '?' || s.key === 'h');
+        const helpShortcut = shortcuts.find(
+          s => s.key === '?' || s.key === 'h'
+        );
         if (helpShortcut) {
           event.preventDefault();
           event.stopPropagation();
@@ -41,14 +43,18 @@ export const useKeyboardShortcuts = (
         }
       }
 
-      const matchingShortcut = shortcuts.find((shortcut) => {
-        const keyMatches = shortcut.key.toLowerCase() === event.key.toLowerCase();
-        const metaMatches = !!shortcut.metaKey === (event.metaKey || event.ctrlKey);
+      const matchingShortcut = shortcuts.find(shortcut => {
+        const keyMatches =
+          shortcut.key.toLowerCase() === event.key.toLowerCase();
+        const metaMatches =
+          !!shortcut.metaKey === (event.metaKey || event.ctrlKey);
         const ctrlMatches = !!shortcut.ctrlKey === event.ctrlKey;
         const shiftMatches = !!shortcut.shiftKey === event.shiftKey;
         const altMatches = !!shortcut.altKey === event.altKey;
 
-        return keyMatches && metaMatches && ctrlMatches && shiftMatches && altMatches;
+        return (
+          keyMatches && metaMatches && ctrlMatches && shiftMatches && altMatches
+        );
       });
 
       if (matchingShortcut) {
@@ -73,7 +79,7 @@ export const useKeyboardShortcuts = (
 // Global keyboard shortcuts hook
 export const useGlobalKeyboardShortcuts = () => {
   const { toggleSidebar, toggleTheme } = useAppStore();
-  
+
   const shortcuts: KeyboardShortcut[] = [
     {
       key: 'b',
@@ -104,7 +110,7 @@ export const useGlobalKeyboardShortcuts = () => {
 // Helper function to format shortcut display
 export const formatShortcut = (shortcut: KeyboardShortcut): string => {
   const parts: string[] = [];
-  
+
   if (shortcut.metaKey) {
     parts.push(navigator.platform.includes('Mac') ? '⌘' : 'Ctrl');
   }
@@ -117,15 +123,15 @@ export const formatShortcut = (shortcut: KeyboardShortcut): string => {
   if (shortcut.altKey) {
     parts.push(navigator.platform.includes('Mac') ? '⌥' : 'Alt');
   }
-  
+
   // Format special keys
   let keyDisplay = shortcut.key.toUpperCase();
   if (shortcut.key === ',') keyDisplay = ',';
   if (shortcut.key === ' ') keyDisplay = 'Space';
   if (shortcut.key === 'Enter') keyDisplay = '↩';
   if (shortcut.key === 'Escape') keyDisplay = 'Esc';
-  
+
   parts.push(keyDisplay);
-  
+
   return parts.join('+');
 };

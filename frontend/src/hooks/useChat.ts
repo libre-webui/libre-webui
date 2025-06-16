@@ -48,38 +48,76 @@ export const useChat = (sessionId: string) => {
       // User message confirmation - already handled in sendMessage
     });
 
-    websocketService.onMessage('assistant_chunk', (data: { content: string; total: string; done: boolean; messageId?: string }) => {
-      console.log('Hook: Received assistant_chunk for session:', sessionId, 'total length:', data.total.length, 'messageId:', data.messageId);
-      
-      // Use messageId from backend if provided, otherwise fall back to current streaming ID
-      const messageId = data.messageId || streamingMessageIdRef.current;
-      
-      if (messageId) {
-        setStreamingMessage(data.total);
-        console.log('Hook: Updating message', messageId, 'with content length:', data.total.length);
-        updateMessage(sessionId, messageId, data.total);
-      }
-    });
+    websocketService.onMessage(
+      'assistant_chunk',
+      (data: {
+        content: string;
+        total: string;
+        done: boolean;
+        messageId?: string;
+      }) => {
+        console.log(
+          'Hook: Received assistant_chunk for session:',
+          sessionId,
+          'total length:',
+          data.total.length,
+          'messageId:',
+          data.messageId
+        );
 
-    websocketService.onMessage('assistant_complete', (data: { content: string; role: string; timestamp: number; messageId?: string }) => {
-      console.log('Hook: Received assistant_complete for session:', sessionId, 'messageId:', data.messageId);
-      setIsStreaming(false);
-      setStreamingMessage('');
-      setIsGenerating(false);
-      
-      // Use messageId from backend if provided, otherwise fall back to current streaming ID
-      const messageId = data.messageId || streamingMessageIdRef.current;
-      
-      if (data && messageId) {
-        console.log('Hook: Final update for message', messageId, 'with content length:', data.content.length);
-        updateMessage(sessionId, messageId, data.content);
-        
-        // No need to save to backend - backend already saved it
-        console.log('Hook: Message completed and saved by backend');
+        // Use messageId from backend if provided, otherwise fall back to current streaming ID
+        const messageId = data.messageId || streamingMessageIdRef.current;
+
+        if (messageId) {
+          setStreamingMessage(data.total);
+          console.log(
+            'Hook: Updating message',
+            messageId,
+            'with content length:',
+            data.total.length
+          );
+          updateMessage(sessionId, messageId, data.total);
+        }
       }
-      
-      streamingMessageIdRef.current = null;
-    });
+    );
+
+    websocketService.onMessage(
+      'assistant_complete',
+      (data: {
+        content: string;
+        role: string;
+        timestamp: number;
+        messageId?: string;
+      }) => {
+        console.log(
+          'Hook: Received assistant_complete for session:',
+          sessionId,
+          'messageId:',
+          data.messageId
+        );
+        setIsStreaming(false);
+        setStreamingMessage('');
+        setIsGenerating(false);
+
+        // Use messageId from backend if provided, otherwise fall back to current streaming ID
+        const messageId = data.messageId || streamingMessageIdRef.current;
+
+        if (data && messageId) {
+          console.log(
+            'Hook: Final update for message',
+            messageId,
+            'with content length:',
+            data.content.length
+          );
+          updateMessage(sessionId, messageId, data.content);
+
+          // No need to save to backend - backend already saved it
+          console.log('Hook: Message completed and saved by backend');
+        }
+
+        streamingMessageIdRef.current = null;
+      }
+    );
 
     websocketService.onMessage('error', (data: { error: string }) => {
       console.log('Hook: Received error for session:', sessionId, data.error);
@@ -94,63 +132,71 @@ export const useChat = (sessionId: string) => {
     setIsStreaming(false);
     setStreamingMessage('');
     streamingMessageIdRef.current = null;
-
   }, [sessionId, updateMessage, setIsGenerating]);
 
-  const sendMessage = useCallback(async (content: string, images?: string[], format?: string | Record<string, any>) => {
-    if (!sessionId || !content.trim()) return;
+  const sendMessage = useCallback(
+    async (
+      content: string,
+      images?: string[],
+      format?: string | Record<string, any>
+    ) => {
+      if (!sessionId || !content.trim()) return;
 
-    try {
-      setIsGenerating(true);
-      setIsStreaming(true);
-      setStreamingMessage('');
+      try {
+        setIsGenerating(true);
+        setIsStreaming(true);
+        setStreamingMessage('');
 
-      // Add user message immediately
-      addMessage(sessionId, {
-        role: 'user',
-        content: content.trim(),
-        images: images, // Store images in the message if provided
-      });
-
-      // Create placeholder for assistant message
-      const assistantMessageId = generateId();
-      streamingMessageIdRef.current = assistantMessageId;
-      
-      console.log('Hook: Creating assistant message with ID:', assistantMessageId);
-      
-      addMessage(sessionId, {
-        role: 'assistant',
-        content: '',
-        id: assistantMessageId,
-      });
-
-      // Connect WebSocket if not connected
-      if (!websocketService.isConnected) {
-        await websocketService.connect();
-      }
-
-      // Send chat stream request with new parameters
-      websocketService.send({
-        type: 'chat_stream',
-        data: {
-          sessionId,
+        // Add user message immediately
+        addMessage(sessionId, {
+          role: 'user',
           content: content.trim(),
-          images: images,
-          format: format,
-          options: preferences.generationOptions,
-          assistantMessageId, // Send the message ID to backend
-        },
-      });
+          images: images, // Store images in the message if provided
+        });
 
-    } catch (error: any) {
-      console.error('Failed to send message:', error);
-      setIsStreaming(false);
-      setStreamingMessage('');
-      setIsGenerating(false);
-      streamingMessageIdRef.current = null;
-      toast.error('Failed to send message');
-    }
-  }, [sessionId, addMessage, setIsGenerating, preferences.generationOptions]);
+        // Create placeholder for assistant message
+        const assistantMessageId = generateId();
+        streamingMessageIdRef.current = assistantMessageId;
+
+        console.log(
+          'Hook: Creating assistant message with ID:',
+          assistantMessageId
+        );
+
+        addMessage(sessionId, {
+          role: 'assistant',
+          content: '',
+          id: assistantMessageId,
+        });
+
+        // Connect WebSocket if not connected
+        if (!websocketService.isConnected) {
+          await websocketService.connect();
+        }
+
+        // Send chat stream request with new parameters
+        websocketService.send({
+          type: 'chat_stream',
+          data: {
+            sessionId,
+            content: content.trim(),
+            images: images,
+            format: format,
+            options: preferences.generationOptions,
+            assistantMessageId, // Send the message ID to backend
+          },
+        });
+      } catch (error: any) {
+        console.error('Failed to send message:', error);
+        setIsStreaming(false);
+        setStreamingMessage('');
+        setIsGenerating(false);
+        streamingMessageIdRef.current = null;
+        toast.error('Failed to send message');
+      }
+    },
+    [sessionId, addMessage, setIsGenerating, preferences.generationOptions]
+  );
 
   const stopGeneration = useCallback(() => {
     setIsStreaming(false);

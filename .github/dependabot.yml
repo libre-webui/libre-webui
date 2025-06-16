@@ -1,89 +1,89 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'UTC'
     open-pull-requests-limit: 10
     reviewers:
-      - "kroonen"
+      - 'kroonen'
     assignees:
-      - "kroonen"
+      - 'kroonen'
     commit-message:
-      prefix: "deps"
-      prefix-development: "deps-dev"
-      include: "scope"
+      prefix: 'deps'
+      prefix-development: 'deps-dev'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "automated"
+      - 'dependencies'
+      - 'automated'
     groups:
       react:
         patterns:
-          - "react*"
-          - "@types/react*"
+          - 'react*'
+          - '@types/react*'
       build-tools:
         patterns:
-          - "vite*"
-          - "@vitejs/*"
-          - "rollup*"
-          - "esbuild*"
+          - 'vite*'
+          - '@vitejs/*'
+          - 'rollup*'
+          - 'esbuild*'
       testing:
         patterns:
-          - "jest*"
-          - "vitest*"
-          - "@testing-library/*"
-          - "cypress*"
-          - "playwright*"
+          - 'jest*'
+          - 'vitest*'
+          - '@testing-library/*'
+          - 'cypress*'
+          - 'playwright*'
       code-quality:
         patterns:
-          - "eslint*"
-          - "@eslint/*"
-          - "prettier*"
-          - "@typescript-eslint/*"
+          - 'eslint*'
+          - '@eslint/*'
+          - 'prettier*'
+          - '@typescript-eslint/*'
       typescript:
         patterns:
-          - "typescript*"
-          - "@types/*"
+          - 'typescript*'
+          - '@types/*'
     ignore:
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:30"
-      timezone: "UTC"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:30'
+      timezone: 'UTC'
     open-pull-requests-limit: 5
     reviewers:
-      - "kroonen"
+      - 'kroonen'
     assignees:
-      - "kroonen"
+      - 'kroonen'
     commit-message:
-      prefix: "ci"
-      include: "scope"
+      prefix: 'ci'
+      include: 'scope'
     labels:
-      - "github-actions"
-      - "automated"
+      - 'github-actions'
+      - 'automated'
 
- # - package-ecosystem: "docker"
- #   directory: "/"
- #   schedule:
- #     interval: "weekly"
- #     day: "monday"
- #     time: "10:00"
- #     timezone: "UTC"
- #   open-pull-requests-limit: 3
- #   reviewers:
- #     - "kroonen"
- #   commit-message:
- #     prefix: "docker"
- #   labels:
- #     - "docker"
- #     - "automated"
+  # - package-ecosystem: "docker"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "weekly"
+  #     day: "monday"
+  #     time: "10:00"
+  #     timezone: "UTC"
+  #   open-pull-requests-limit: 3
+  #   reviewers:
+  #     - "kroonen"
+  #   commit-message:
+  #     prefix: "docker"
+  #   labels:
+  #     - "docker"
+  #     - "automated"

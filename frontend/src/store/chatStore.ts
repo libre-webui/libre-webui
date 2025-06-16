@@ -16,8 +16,15 @@ interface ChatState {
   updateSessionTitle: (sessionId: string, title: string) => Promise<void>;
 
   // Messages
-  addMessage: (sessionId: string, message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }) => void;
-  updateMessage: (sessionId: string, messageId: string, content: string) => void;
+  addMessage: (
+    sessionId: string,
+    message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }
+  ) => void;
+  updateMessage: (
+    sessionId: string,
+    messageId: string,
+    content: string
+  ) => void;
 
   // Models
   models: OllamaModel[];
@@ -41,10 +48,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // Sessions
   sessions: [],
   currentSession: null,
-  setCurrentSession: (session) => {
-    console.log('Store: setCurrentSession called', { 
-      newSessionId: session?.id, 
-      messagesCount: session?.messages.length 
+  setCurrentSession: session => {
+    console.log('Store: setCurrentSession called', {
+      newSessionId: session?.id,
+      messagesCount: session?.messages.length,
     });
     set({ currentSession: session });
   },
@@ -53,22 +60,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       set({ loading: true, error: null });
       const response = await chatApi.createSession(model, title);
-      
+
       if (response.success && response.data) {
         const newSession = response.data;
-        
-        set((state) => ({
+
+        set(state => ({
           sessions: [newSession, ...state.sessions],
           currentSession: newSession,
           loading: false,
         }));
-        
+
         // Note: System message is now automatically added by the backend when creating sessions
-        
+
         toast.success('New chat created');
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to create session';
+      const errorMessage =
+        error.response?.data?.error || 'Failed to create session';
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
     }
@@ -78,12 +86,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       set({ loading: true, error: null });
       const response = await chatApi.getSessions();
-      
+
       if (response.success && response.data) {
         set({ sessions: response.data, loading: false });
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to load sessions';
+      const errorMessage =
+        error.response?.data?.error || 'Failed to load sessions';
       set({ error: errorMessage, loading: false });
       console.error('Failed to load sessions:', error);
     }
@@ -94,16 +103,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
       console.log('Store: deleteSession called with:', sessionId);
       const response = await chatApi.deleteSession(sessionId);
       console.log('Store: deleteSession API response:', response);
-      
+
       if (response.success) {
-        set((state) => {
-          const updatedSessions = state.sessions.filter(s => s.id !== sessionId);
-          const newCurrentSession = state.currentSession?.id === sessionId 
-            ? (updatedSessions[0] || null) 
-            : state.currentSession;
-          
-          console.log('Store: Updating state, sessions count:', updatedSessions.length);
-          
+        set(state => {
+          const updatedSessions = state.sessions.filter(
+            s => s.id !== sessionId
+          );
+          const newCurrentSession =
+            state.currentSession?.id === sessionId
+              ? updatedSessions[0] || null
+              : state.currentSession;
+
+          console.log(
+            'Store: Updating state, sessions count:',
+            updatedSessions.length
+          );
+
           return {
             sessions: updatedSessions,
             currentSession: newCurrentSession,
@@ -116,7 +131,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     } catch (error: any) {
       console.error('Store: deleteSession error:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to delete session';
+      const errorMessage =
+        error.response?.data?.error || 'Failed to delete session';
       toast.error(errorMessage);
     }
   },
@@ -125,12 +141,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       set({ loading: true, error: null });
       const response = await chatApi.clearAllSessions();
-      
+
       if (response.success) {
-        set({ 
-          sessions: [], 
+        set({
+          sessions: [],
           currentSession: null,
-          loading: false 
+          loading: false,
         });
         toast.success('All chat history cleared');
       } else {
@@ -140,7 +156,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     } catch (error: any) {
       console.error('Store: clearAllSessions error:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to clear chat history';
+      const errorMessage =
+        error.response?.data?.error || 'Failed to clear chat history';
       toast.error(errorMessage);
       set({ loading: false });
     }
@@ -149,44 +166,51 @@ export const useChatStore = create<ChatState>((set, get) => ({
   updateSessionTitle: async (sessionId: string, title: string) => {
     try {
       const response = await chatApi.updateSession(sessionId, { title });
-      
+
       if (response.success && response.data) {
-        set((state) => ({
-          sessions: state.sessions.map(s => 
+        set(state => ({
+          sessions: state.sessions.map(s =>
             s.id === sessionId ? response.data! : s
           ),
-          currentSession: state.currentSession?.id === sessionId 
-            ? response.data! 
-            : state.currentSession,
+          currentSession:
+            state.currentSession?.id === sessionId
+              ? response.data!
+              : state.currentSession,
         }));
         toast.success('Chat title updated');
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to update session';
+      const errorMessage =
+        error.response?.data?.error || 'Failed to update session';
       toast.error(errorMessage);
     }
   },
 
   // Messages
-  addMessage: (sessionId: string, message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }) => {
+  addMessage: (
+    sessionId: string,
+    message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }
+  ) => {
     const newMessage: ChatMessage = {
       ...message,
       id: message.id || generateId(),
       timestamp: Date.now(),
     };
 
-    console.log('Store: addMessage called', { 
-      sessionId, 
-      role: message.role, 
-      messageId: newMessage.id, 
-      contentLength: message.content.length 
+    console.log('Store: addMessage called', {
+      sessionId,
+      role: message.role,
+      messageId: newMessage.id,
+      contentLength: message.content.length,
     });
 
-    set((state) => {
+    set(state => {
       // Prevent adding duplicate messages
       const session = state.sessions.find(s => s.id === sessionId);
       if (session) {
-        const existingMessage = session.messages.find(m => m.id === newMessage.id);
+        const existingMessage = session.messages.find(
+          m => m.id === newMessage.id
+        );
         if (existingMessage) {
           console.log('Store: Message already exists, skipping add');
           return state;
@@ -206,39 +230,46 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       return {
         sessions: updatedSessions,
-        currentSession: state.currentSession?.id === sessionId
-          ? updatedSessions.find(s => s.id === sessionId) || state.currentSession
-          : state.currentSession,
+        currentSession:
+          state.currentSession?.id === sessionId
+            ? updatedSessions.find(s => s.id === sessionId) ||
+              state.currentSession
+            : state.currentSession,
       };
     });
   },
 
   updateMessage: (sessionId: string, messageId: string, content: string) => {
-    set((state) => {
-      console.log('Store: updateMessage called', { 
-        sessionId, 
-        messageId, 
+    set(state => {
+      console.log('Store: updateMessage called', {
+        sessionId,
+        messageId,
         contentLength: content.length,
         currentSessionId: state.currentSession?.id,
-        isCurrentSession: state.currentSession?.id === sessionId
+        isCurrentSession: state.currentSession?.id === sessionId,
       });
-      
+
       // Only update if this is for the current session
       if (state.currentSession?.id !== sessionId) {
         console.log('Store: Ignoring updateMessage for non-current session');
         return state;
       }
-      
+
       const updatedSessions = state.sessions.map(session => {
         if (session.id === sessionId) {
           const updatedMessages = session.messages.map(msg => {
             if (msg.id === messageId) {
-              console.log('Store: Updating message', msg.id, 'with content length:', content.length);
+              console.log(
+                'Store: Updating message',
+                msg.id,
+                'with content length:',
+                content.length
+              );
               return { ...msg, content };
             }
             return msg;
           });
-          
+
           return {
             ...session,
             messages: updatedMessages,
@@ -248,11 +279,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return session;
       });
 
-      const newCurrentSession = state.currentSession?.id === sessionId
-        ? updatedSessions.find(s => s.id === sessionId) || state.currentSession
-        : state.currentSession;
+      const newCurrentSession =
+        state.currentSession?.id === sessionId
+          ? updatedSessions.find(s => s.id === sessionId) ||
+            state.currentSession
+          : state.currentSession;
 
-      console.log('Store: Updated session messages count:', newCurrentSession?.messages.length);
+      console.log(
+        'Store: Updated session messages count:',
+        newCurrentSession?.messages.length
+      );
 
       return {
         sessions: updatedSessions,
@@ -268,7 +304,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ loading: true, error: null });
       console.log('Loading models from API...');
       const response = await ollamaApi.getModels();
-      
+
       if (response.success && response.data) {
         console.log('Models loaded successfully:', response.data.length);
         set({ models: response.data, loading: false });
@@ -278,7 +314,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     } catch (error: any) {
       console.error('Error loading models:', error);
-      const errorMessage = error.response?.data?.error || 'Failed to load models';
+      const errorMessage =
+        error.response?.data?.error || 'Failed to load models';
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
     }
@@ -290,12 +327,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
       console.log('🔄 Loading preferences from backend...');
       const response = await preferencesApi.getPreferences();
       console.log('📦 Backend preferences response:', response);
-      
+
       if (response.success && response.data) {
         const { defaultModel, systemMessage } = response.data;
         console.log('📋 Extracted defaultModel:', defaultModel);
         console.log('📋 Extracted systemMessage:', systemMessage);
-        
+
         if (defaultModel) {
           console.log('✅ Setting selectedModel to:', defaultModel);
           set({ selectedModel: defaultModel });
@@ -303,7 +340,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         } else {
           console.log('⚠️ No defaultModel found in response');
         }
-        
+
         if (systemMessage !== undefined) {
           set({ systemMessage: systemMessage });
           console.log('✅ Loaded system message from backend:', systemMessage);
@@ -317,10 +354,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   selectedModel: '',
-  setSelectedModel: (model) => {
+  setSelectedModel: model => {
     set({ selectedModel: model });
     // Save to backend preferences when model is selected
-    preferencesApi.setDefaultModel(model).catch((error) => {
+    preferencesApi.setDefaultModel(model).catch(error => {
       console.warn('Failed to save default model to backend:', error);
     });
   },
@@ -332,11 +369,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     try {
-      const response = await chatApi.updateSession(state.currentSession.id, { model });
-      
+      const response = await chatApi.updateSession(state.currentSession.id, {
+        model,
+      });
+
       if (response.success && response.data) {
-        set((state) => ({
-          sessions: state.sessions.map(s => 
+        set(state => ({
+          sessions: state.sessions.map(s =>
             s.id === state.currentSession?.id ? response.data! : s
           ),
           currentSession: response.data,
@@ -345,7 +384,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         toast.success('Model updated for current chat');
       }
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to update session model';
+      const errorMessage =
+        error.response?.data?.error || 'Failed to update session model';
       toast.error(errorMessage);
       throw error;
     }
@@ -353,10 +393,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // System Message
   systemMessage: '',
-  setSystemMessage: (message) => {
+  setSystemMessage: message => {
     set({ systemMessage: message });
     // Save to backend preferences when system message is updated
-    preferencesApi.setSystemMessage(message).catch((error) => {
+    preferencesApi.setSystemMessage(message).catch(error => {
       console.warn('Failed to save system message to backend:', error);
     });
   },
@@ -364,5 +404,5 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // UI state
   loading: false,
   error: null,
-  setError: (error) => set({ error }),
+  setError: error => set({ error }),
 }));

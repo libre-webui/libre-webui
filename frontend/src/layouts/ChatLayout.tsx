@@ -12,7 +12,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
   const { sidebarOpen, toggleSidebar } = useAppStore();
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-dark-100">
+    <div className='flex h-screen bg-gray-50 dark:bg-dark-100'>
       {/* Sidebar */}
       <aside
         className={cn(
@@ -26,17 +26,15 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className='fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden'
           onClick={toggleSidebar}
         />
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className='flex-1 flex flex-col min-w-0'>
         <Header />
-        <main className="flex-1 overflow-hidden">
-          {children}
-        </main>
+        <main className='flex-1 overflow-hidden'>{children}</main>
       </div>
     </div>
   );

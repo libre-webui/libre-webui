@@ -46,7 +46,12 @@ export interface ApiResponse<T = any> {
 }
 
 export interface WebSocketMessage {
-  type: 'connected' | 'user_message' | 'assistant_chunk' | 'assistant_complete' | 'error';
+  type:
+    | 'connected'
+    | 'user_message'
+    | 'assistant_chunk'
+    | 'assistant_complete'
+    | 'error';
   data: any;
 }
 

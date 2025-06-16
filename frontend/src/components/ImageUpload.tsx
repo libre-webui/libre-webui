@@ -15,7 +15,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   images,
   onImagesChange,
   maxImages = 5,
-  className
+  className,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -28,19 +28,20 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
     for (let i = 0; i < Math.min(files.length, remainingSlots); i++) {
       const file = files[i];
-      
+
       if (!file.type.startsWith('image/')) {
         toast.error(`File ${file.name} is not an image`);
         continue;
       }
 
-      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB limit
         toast.error(`Image ${file.name} is too large (max 10MB)`);
         continue;
       }
 
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         if (e.target?.result) {
           newImages.push(e.target.result as string);
           if (newImages.length === Math.min(files.length, remainingSlots)) {
@@ -87,7 +88,8 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           className={cn(
             'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 transition-colors',
             'hover:border-primary-400 dark:hover:border-primary-500',
-            dragActive && 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+            dragActive &&
+              'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
           )}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -95,25 +97,25 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         >
           <input
             ref={fileInputRef}
-            type="file"
+            type='file'
             multiple
-            accept="image/*"
-            onChange={(e) => handleFileSelect(e.target.files)}
-            className="hidden"
+            accept='image/*'
+            onChange={e => handleFileSelect(e.target.files)}
+            className='hidden'
           />
-          
-          <div className="flex flex-col items-center text-center">
-            <Upload className="h-8 w-8 text-gray-400 dark:text-gray-500 mb-2" />
-            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+
+          <div className='flex flex-col items-center text-center'>
+            <Upload className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2' />
+            <p className='text-sm text-gray-700 dark:text-gray-300 mb-2'>
               Drop images here or{' '}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="text-primary-600 dark:text-primary-400 hover:underline font-medium"
+                className='text-primary-600 dark:text-primary-400 hover:underline font-medium'
               >
                 browse
               </button>
             </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className='text-xs text-gray-500 dark:text-gray-400'>
               Supports: JPG, PNG, GIF, WebP (max 10MB each)
             </p>
           </div>
@@ -122,25 +124,25 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
 
       {/* Image Preview Grid */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3'>
           {images.map((image, index) => (
             <div
               key={index}
-              className="relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+              className='relative group aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
             >
               <img
                 src={image}
                 alt={`Upload ${index + 1}`}
-                className="w-full h-full object-cover"
+                className='w-full h-full object-cover'
               />
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center">
+              <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 flex items-center justify-center'>
                 <Button
-                  variant="ghost"
-                  size="sm"
+                  variant='ghost'
+                  size='sm'
                   onClick={() => removeImage(index)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 p-1 rounded-full"
+                  className='opacity-0 group-hover:opacity-100 transition-opacity bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-red-100 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 p-1 rounded-full'
                 >
-                  <X className="h-4 w-4" />
+                  <X className='h-4 w-4' />
                 </Button>
               </div>
             </div>
@@ -151,12 +153,12 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       {/* Quick Add Button */}
       {canAddMore && images.length > 0 && (
         <Button
-          variant="outline"
-          size="sm"
+          variant='outline'
+          size='sm'
           onClick={() => fileInputRef.current?.click()}
-          className="w-full sm:w-auto"
+          className='w-full sm:w-auto'
         >
-          <ImageIcon className="h-4 w-4 mr-2" />
+          <ImageIcon className='h-4 w-4 mr-2' />
           Add More Images ({images.length}/{maxImages})
         </Button>
       )}

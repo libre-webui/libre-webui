@@ -15,7 +15,17 @@
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
     "start": "cd backend && npm start",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "format": "prettier --write \"frontend/src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"backend/src/**/*.{ts,js,json,md}\" \"*.{json,md,yml,yaml}\" \".github/**/*.{yml,yaml}\"",
+    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"backend/src/**/*.{ts,js,json,md}\" \"*.{json,md,yml,yaml}\" \".github/**/*.{yml,yaml}\"",
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:fix": "npm run lint:fix:frontend && npm run lint:fix:backend",
+    "lint:fix:frontend": "cd frontend && npm run lint:fix",
+    "lint:fix:backend": "cd backend && npm run lint:fix",
+    "setup-hooks": "git config core.hooksPath .githooks",
+    "postinstall": "npm run setup-hooks"
   },
   "overrides": {
     "prismjs": "^1.30.0",
@@ -31,7 +41,11 @@
     }
   },
   "devDependencies": {
-    "concurrently": "^9.1.2"
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "concurrently": "^9.1.2",
+    "eslint": "^8.56.0",
+    "prettier": "^3.5.3"
   },
   "keywords": [
     "llm",

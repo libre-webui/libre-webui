@@ -37,7 +37,9 @@ export const ModelTools: React.FC = () => {
     setLoading(true);
     try {
       const res = await ollamaApi.pushModel(selectedModel);
-      res.success ? toast.success('Model pushed') : toast.error(res.error || 'Failed');
+      res.success
+        ? toast.success('Model pushed')
+        : toast.error(res.error || 'Failed');
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -48,8 +50,13 @@ export const ModelTools: React.FC = () => {
     if (!createModelName || !createFile) return;
     setLoading(true);
     try {
-      const res = await ollamaApi.createModel({ name: createModelName, modelfile: createFile });
-      res.success ? toast.success('Model created') : toast.error(res.error || 'Failed');
+      const res = await ollamaApi.createModel({
+        name: createModelName,
+        modelfile: createFile,
+      });
+      res.success
+        ? toast.success('Model created')
+        : toast.error(res.error || 'Failed');
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -61,7 +68,9 @@ export const ModelTools: React.FC = () => {
     setLoading(true);
     try {
       const res = await ollamaApi.copyModel(copySrc, copyDest);
-      res.success ? toast.success('Model copied') : toast.error(res.error || 'Failed');
+      res.success
+        ? toast.success('Model copied')
+        : toast.error(res.error || 'Failed');
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -72,7 +81,10 @@ export const ModelTools: React.FC = () => {
     if (!embedText || !selectedModel) return;
     setLoading(true);
     try {
-      const res = await ollamaApi.generateEmbeddings({ model: selectedModel, prompt: embedText });
+      const res = await ollamaApi.generateEmbeddings({
+        model: selectedModel,
+        prompt: embedText,
+      });
       if (res.success) {
         toast.success('Embeddings generated (see console)');
         console.log('Embeddings:', res.data);
@@ -116,40 +128,120 @@ export const ModelTools: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 mt-6">
-      <h4 className="text-sm font-semibold text-gray-900 dark:text-dark-800">Model Tools (Beta)</h4>
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" onClick={handleShowInfo} disabled={!selectedModel || loading}>Show Info</Button>
-        <Button size="sm" variant="outline" onClick={handlePush} disabled={!selectedModel || loading}>Push</Button>
-        <Button size="sm" variant="outline" onClick={handleRunning} disabled={loading}>Running</Button>
-        <Button size="sm" variant="outline" onClick={handleVersion} disabled={loading}>Version</Button>
+    <div className='space-y-4 mt-6'>
+      <h4 className='text-sm font-semibold text-gray-900 dark:text-dark-800'>
+        Model Tools (Beta)
+      </h4>
+      <div className='flex flex-wrap gap-2'>
+        <Button
+          size='sm'
+          variant='outline'
+          onClick={handleShowInfo}
+          disabled={!selectedModel || loading}
+        >
+          Show Info
+        </Button>
+        <Button
+          size='sm'
+          variant='outline'
+          onClick={handlePush}
+          disabled={!selectedModel || loading}
+        >
+          Push
+        </Button>
+        <Button
+          size='sm'
+          variant='outline'
+          onClick={handleRunning}
+          disabled={loading}
+        >
+          Running
+        </Button>
+        <Button
+          size='sm'
+          variant='outline'
+          onClick={handleVersion}
+          disabled={loading}
+        >
+          Version
+        </Button>
       </div>
       {info && (
-        <pre className="p-2 bg-gray-100 dark:bg-dark-200 rounded text-xs overflow-auto max-h-40">
+        <pre className='p-2 bg-gray-100 dark:bg-dark-200 rounded text-xs overflow-auto max-h-40'>
           {JSON.stringify(info, null, 2)}
         </pre>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input label="Modelfile path" value={createFile} onChange={e => setCreateFile(e.target.value)} placeholder="/path/to/Modelfile" />
-        <Input label="New model name" value={createModelName} onChange={e => setCreateModelName(e.target.value)} placeholder="mymodel:latest" />
-        <Button variant="secondary" size="sm" onClick={handleCreate} className="sm:col-span-2" disabled={loading || !createFile || !createModelName}>Create Model</Button>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+        <Input
+          label='Modelfile path'
+          value={createFile}
+          onChange={e => setCreateFile(e.target.value)}
+          placeholder='/path/to/Modelfile'
+        />
+        <Input
+          label='New model name'
+          value={createModelName}
+          onChange={e => setCreateModelName(e.target.value)}
+          placeholder='mymodel:latest'
+        />
+        <Button
+          variant='secondary'
+          size='sm'
+          onClick={handleCreate}
+          className='sm:col-span-2'
+          disabled={loading || !createFile || !createModelName}
+        >
+          Create Model
+        </Button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Input label="Copy from" value={copySrc} onChange={e => setCopySrc(e.target.value)} placeholder="source:tag" />
-        <Input label="Copy to" value={copyDest} onChange={e => setCopyDest(e.target.value)} placeholder="dest:tag" />
-        <Button variant="secondary" size="sm" onClick={handleCopy} className="sm:col-span-2" disabled={loading || !copySrc || !copyDest}>Copy Model</Button>
+      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+        <Input
+          label='Copy from'
+          value={copySrc}
+          onChange={e => setCopySrc(e.target.value)}
+          placeholder='source:tag'
+        />
+        <Input
+          label='Copy to'
+          value={copyDest}
+          onChange={e => setCopyDest(e.target.value)}
+          placeholder='dest:tag'
+        />
+        <Button
+          variant='secondary'
+          size='sm'
+          onClick={handleCopy}
+          className='sm:col-span-2'
+          disabled={loading || !copySrc || !copyDest}
+        >
+          Copy Model
+        </Button>
       </div>
-      <div className="space-y-2">
-        <Textarea label="Embeddings text" rows={3} value={embedText} onChange={e => setEmbedText(e.target.value)} />
-        <Button variant="secondary" size="sm" onClick={handleEmbed} disabled={loading || !selectedModel || !embedText}>Generate Embeddings</Button>
+      <div className='space-y-2'>
+        <Textarea
+          label='Embeddings text'
+          rows={3}
+          value={embedText}
+          onChange={e => setEmbedText(e.target.value)}
+        />
+        <Button
+          variant='secondary'
+          size='sm'
+          onClick={handleEmbed}
+          disabled={loading || !selectedModel || !embedText}
+        >
+          Generate Embeddings
+        </Button>
       </div>
       {running.length > 0 && (
-        <pre className="p-2 bg-gray-100 dark:bg-dark-200 rounded text-xs overflow-auto max-h-40">
+        <pre className='p-2 bg-gray-100 dark:bg-dark-200 rounded text-xs overflow-auto max-h-40'>
           {JSON.stringify(running, null, 2)}
         </pre>
       )}
       {version && (
-        <div className="text-xs text-gray-600 dark:text-dark-500">Ollama version: {version}</div>
+        <div className='text-xs text-gray-600 dark:text-dark-500'>
+          Ollama version: {version}
+        </div>
       )}
     </div>
   );

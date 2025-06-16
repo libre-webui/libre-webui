@@ -29,7 +29,7 @@ export const ModelManager: React.FC = () => {
     try {
       const [modelsResponse, runningResponse] = await Promise.all([
         ollamaApi.getModels(),
-        ollamaApi.listRunningModels()
+        ollamaApi.listRunningModels(),
       ]);
 
       if (modelsResponse.success) {
@@ -107,58 +107,64 @@ export const ModelManager: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-gray-600 dark:text-dark-600">Loading models...</div>
+      <div className='flex items-center justify-center p-8'>
+        <div className='text-gray-600 dark:text-dark-600'>
+          Loading models...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Pull Model Section */}
-      <div className="bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-800">Pull New Model</h3>
-        <div className="flex gap-2">
+      <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
+        <h3 className='text-lg font-semibold mb-4 text-gray-900 dark:text-dark-800'>
+          Pull New Model
+        </h3>
+        <div className='flex gap-2'>
           <input
-            type="text"
+            type='text'
             value={pullModelName}
-            onChange={(e) => setPullModelName(e.target.value)}
-            placeholder="Enter model name (e.g., llama3.2, codellama)"
-            className="flex-1 px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700"
+            onChange={e => setPullModelName(e.target.value)}
+            placeholder='Enter model name (e.g., llama3.2, codellama)'
+            className='flex-1 px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
             disabled={pulling}
           />
           <Button
             onClick={handlePullModel}
             disabled={pulling || !pullModelName.trim()}
-            className="px-4 py-2"
+            className='px-4 py-2'
           >
             {pulling ? 'Pulling...' : 'Pull Model'}
           </Button>
         </div>
-        <p className="text-sm text-gray-600 dark:text-dark-600 mt-2">
+        <p className='text-sm text-gray-600 dark:text-dark-600 mt-2'>
           Popular models: llama3.2, codellama, mistral, llava, nomic-embed-text
         </p>
       </div>
 
       {/* Running Models Section */}
       {runningModels.length > 0 && (
-        <div className="bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300">
-          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-800">Running Models</h3>
-          <div className="space-y-2">
+        <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
+          <h3 className='text-lg font-semibold mb-4 text-gray-900 dark:text-dark-800'>
+            Running Models
+          </h3>
+          <div className='space-y-2'>
             {runningModels.map((model: any) => (
               <div
                 key={model.name}
-                className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800"
+                className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800'
               >
                 <div>
-                  <div className="font-medium text-green-800 dark:text-green-400">
+                  <div className='font-medium text-green-800 dark:text-green-400'>
                     {model.name}
                   </div>
-                  <div className="text-sm text-green-600 dark:text-green-500">
+                  <div className='text-sm text-green-600 dark:text-green-500'>
                     VRAM: {formatSize(model.size_vram || 0)}
                   </div>
                 </div>
-                <div className="text-xs text-green-600 dark:text-green-500">
+                <div className='text-xs text-green-600 dark:text-green-500'>
                   ● Running
                 </div>
               </div>
@@ -168,63 +174,67 @@ export const ModelManager: React.FC = () => {
       )}
 
       {/* Local Models Section */}
-      <div className="bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-800">Local Models ({models.length})</h3>
-        
+      <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
+        <h3 className='text-lg font-semibold mb-4 text-gray-900 dark:text-dark-800'>
+          Local Models ({models.length})
+        </h3>
+
         {models.length === 0 ? (
-          <div className="text-center py-8 text-gray-600 dark:text-dark-600">
+          <div className='text-center py-8 text-gray-600 dark:text-dark-600'>
             No models found. Pull a model to get started.
           </div>
         ) : (
-          <div className="space-y-3">
-            {models.map((model) => (
+          <div className='space-y-3'>
+            {models.map(model => (
               <div
                 key={model.name}
-                className="flex items-center justify-between p-4 border border-gray-200 dark:border-dark-300 rounded-md hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors"
+                className='flex items-center justify-between p-4 border border-gray-200 dark:border-dark-300 rounded-md hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors'
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium text-gray-900 dark:text-dark-800">
+                <div className='flex-1'>
+                  <div className='flex items-center gap-2'>
+                    <h4 className='font-medium text-gray-900 dark:text-dark-800'>
                       {model.name}
                     </h4>
                     {isModelRunning(model.name) && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
+                      <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'>
                         ● Running
                       </span>
                     )}
                   </div>
-                  
-                  <div className="flex gap-4 text-sm text-gray-600 dark:text-dark-600 mt-1">
+
+                  <div className='flex gap-4 text-sm text-gray-600 dark:text-dark-600 mt-1'>
                     <span>Size: {formatSize(model.size)}</span>
                     {model.details?.parameter_size && (
                       <span>Parameters: {model.details.parameter_size}</span>
                     )}
                     {model.details?.quantization_level && (
-                      <span>Quantization: {model.details.quantization_level}</span>
+                      <span>
+                        Quantization: {model.details.quantization_level}
+                      </span>
                     )}
                     {model.details?.family && (
                       <span>Family: {model.details.family}</span>
                     )}
                   </div>
-                  
-                  <div className="text-xs text-gray-500 dark:text-dark-500 mt-1">
+
+                  <div className='text-xs text-gray-500 dark:text-dark-500 mt-1'>
                     Modified: {new Date(model.modified_at).toLocaleString()}
                   </div>
                 </div>
-                
-                <div className="flex gap-2">
+
+                <div className='flex gap-2'>
                   <Button
                     onClick={() => handleShowModel(model.name)}
-                    variant="outline"
-                    size="sm"
+                    variant='outline'
+                    size='sm'
                   >
                     Info
                   </Button>
                   <Button
                     onClick={() => handleDeleteModel(model.name)}
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    variant='outline'
+                    size='sm'
+                    className='text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
                   >
                     Delete
                   </Button>
@@ -236,9 +246,11 @@ export const ModelManager: React.FC = () => {
       </div>
 
       {/* Quick Actions Section */}
-      <div className="bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300">
-        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-dark-800">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
+        <h3 className='text-lg font-semibold mb-4 text-gray-900 dark:text-dark-800'>
+          Quick Actions
+        </h3>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
           <Button
             onClick={async () => {
               try {
@@ -250,12 +262,12 @@ export const ModelManager: React.FC = () => {
                 toast.error('Failed to get version: ' + error.message);
               }
             }}
-            variant="outline"
-            className="w-full"
+            variant='outline'
+            className='w-full'
           >
             Check Ollama Version
           </Button>
-          
+
           <Button
             onClick={async () => {
               try {
@@ -267,17 +279,13 @@ export const ModelManager: React.FC = () => {
                 toast.error('Ollama health check failed: ' + error.message);
               }
             }}
-            variant="outline"
-            className="w-full"
+            variant='outline'
+            className='w-full'
           >
             Health Check
           </Button>
-          
-          <Button
-            onClick={loadData}
-            variant="outline"
-            className="w-full"
-          >
+
+          <Button onClick={loadData} variant='outline' className='w-full'>
             Refresh Models
           </Button>
         </div>

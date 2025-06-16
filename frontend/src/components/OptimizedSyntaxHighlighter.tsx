@@ -1,6 +1,9 @@
 import React from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import {
+  oneDark,
+  oneLight,
+} from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface OptimizedSyntaxHighlighterProps {
   children: string;
@@ -21,22 +24,30 @@ const languageMap: Record<string, string> = {
 
 // Only support essential languages to reduce bundle size
 const supportedLanguages = [
-  'javascript', 'typescript', 'python', 'java', 
-  'cpp', 'bash', 'json', 'markdown', 'css', 'html'
+  'javascript',
+  'typescript',
+  'python',
+  'java',
+  'cpp',
+  'bash',
+  'json',
+  'markdown',
+  'css',
+  'html',
 ];
 
-export const OptimizedSyntaxHighlighter: React.FC<OptimizedSyntaxHighlighterProps> = ({
-  children,
-  language,
-  isDark = false,
-  className = '',
-}) => {
-  const normalizedLanguage = languageMap[language.toLowerCase()] || language.toLowerCase();
-  
+export const OptimizedSyntaxHighlighter: React.FC<
+  OptimizedSyntaxHighlighterProps
+> = ({ children, language, isDark = false, className = '' }) => {
+  const normalizedLanguage =
+    languageMap[language.toLowerCase()] || language.toLowerCase();
+
   // Fallback to simple pre/code if language is not supported
   if (!supportedLanguages.includes(normalizedLanguage)) {
     return (
-      <pre className={`bg-gray-100 dark:bg-dark-200 p-3 rounded-lg overflow-x-auto text-sm font-mono ${className}`}>
+      <pre
+        className={`bg-gray-100 dark:bg-dark-200 p-3 rounded-lg overflow-x-auto text-sm font-mono ${className}`}
+      >
         <code>{children}</code>
       </pre>
     );

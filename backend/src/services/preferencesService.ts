@@ -28,8 +28,11 @@ class PreferencesService {
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
         }
-        
-        fs.writeFileSync(this.preferencesFile, JSON.stringify(this.defaultPreferences, null, 2));
+
+        fs.writeFileSync(
+          this.preferencesFile,
+          JSON.stringify(this.defaultPreferences, null, 2)
+        );
         console.log('Created preferences.json with default settings');
       }
     } catch (error) {
@@ -55,10 +58,13 @@ class PreferencesService {
     try {
       const currentPreferences = this.getPreferences();
       const updatedPreferences = { ...currentPreferences, ...updates };
-      
-      fs.writeFileSync(this.preferencesFile, JSON.stringify(updatedPreferences, null, 2));
+
+      fs.writeFileSync(
+        this.preferencesFile,
+        JSON.stringify(updatedPreferences, null, 2)
+      );
       console.log('Preferences updated:', updates);
-      
+
       return updatedPreferences;
     } catch (error) {
       console.error('Failed to save preferences:', error);

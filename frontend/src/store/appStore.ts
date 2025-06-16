@@ -37,7 +37,7 @@ export const useAppStore = create<AppState>()(
     (set, get) => ({
       // Theme
       theme: { mode: 'light' },
-      setTheme: (theme) => {
+      setTheme: theme => {
         set({ theme });
         // Apply theme to document
         if (theme.mode === 'dark') {
@@ -54,8 +54,8 @@ export const useAppStore = create<AppState>()(
 
       // Sidebar
       sidebarOpen: true,
-      setSidebarOpen: (open) => set({ sidebarOpen: open }),
-      toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+      setSidebarOpen: open => set({ sidebarOpen: open }),
+      toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
 
       // User preferences
       preferences: {
@@ -69,32 +69,33 @@ export const useAppStore = create<AppState>()(
           num_predict: -1,
         },
       },
-      setPreferences: (newPreferences) =>
-        set((state) => ({
+      setPreferences: newPreferences =>
+        set(state => ({
           preferences: { ...state.preferences, ...newPreferences },
         })),
 
       // UI state
       isGenerating: false,
-      setIsGenerating: (generating) => set({ isGenerating: generating }),
+      setIsGenerating: generating => set({ isGenerating: generating }),
 
       // Settings notification
       hasSeenSettingsNotification: false,
-      markSettingsNotificationAsSeen: () => set({ hasSeenSettingsNotification: true }),
+      markSettingsNotificationAsSeen: () =>
+        set({ hasSeenSettingsNotification: true }),
 
       // Demo mode
       isDemoMode: isDemoMode(),
       demoConfig: getDemoConfig(),
-      setDemoMode: (isDemo) => {
-        set({ 
+      setDemoMode: isDemo => {
+        set({
           isDemoMode: isDemo,
-          demoConfig: getDemoConfig()
+          demoConfig: getDemoConfig(),
         });
       },
     }),
     {
       name: 'libre-webui-app-state',
-      partialize: (state) => ({
+      partialize: state => ({
         theme: state.theme,
         sidebarOpen: state.sidebarOpen,
         preferences: state.preferences,

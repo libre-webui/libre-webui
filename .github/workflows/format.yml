@@ -1,0 +1,119 @@
+name: Format & Lint
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.changes.outputs.frontend }}
+      backend: ${{ steps.changes.outputs.backend }}
+      config: ${{ steps.changes.outputs.config }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+            backend:
+              - 'backend/**'
+            config:
+              - '*.json'
+              - '*.yml'
+              - '*.yaml'
+              - '.github/**'
+
+  format-and-lint:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install workspace dependencies
+        run: npm run install:all
+
+      - name: Check Prettier formatting (All files)
+        if: needs.detect-changes.outputs.config == 'true'
+        run: npm run format:check
+
+      - name: Check Prettier formatting (Frontend only)
+        if: needs.detect-changes.outputs.frontend == 'true' && needs.detect-changes.outputs.backend == 'false' && needs.detect-changes.outputs.config == 'false'
+        run: npx prettier --check "frontend/src/**/*.{ts,tsx,js,jsx,json,css,md}"
+
+      - name: Check Prettier formatting (Backend only)
+        if: needs.detect-changes.outputs.backend == 'true' && needs.detect-changes.outputs.frontend == 'false' && needs.detect-changes.outputs.config == 'false'
+        run: npx prettier --check "backend/src/**/*.{ts,js,json,md}"
+
+      - name: Check Prettier formatting (Frontend + Backend)
+        if: needs.detect-changes.outputs.frontend == 'true' && needs.detect-changes.outputs.backend == 'true'
+        run: npm run format:check
+
+      - name: Run ESLint (Frontend)
+        if: needs.detect-changes.outputs.frontend == 'true'
+        run: npm run lint:frontend
+
+      - name: Run ESLint (Backend)
+        if: needs.detect-changes.outputs.backend == 'true'
+        run: npm run lint:backend
+
+      - name: TypeScript type checking (Frontend)
+        if: needs.detect-changes.outputs.frontend == 'true'
+        run: cd frontend && npm run type-check
+
+      - name: TypeScript type checking (Backend)
+        if: needs.detect-changes.outputs.backend == 'true'
+        run: cd backend && npm run type-check
+
+  auto-format:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(github.ref, 'refs/heads/main')
+    needs: [detect-changes, format-and-lint]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install workspace dependencies
+        run: npm run install:all
+
+      - name: Auto-format with Prettier
+        run: npm run format
+
+      - name: Auto-fix ESLint issues
+        run: npm run lint:fix
+
+      - name: Commit formatting changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff --staged --quiet || git commit -m "Auto-format code [skip ci]"
+          git push

@@ -20,22 +20,22 @@ export const isDemoMode = (): boolean => {
   // Check if running on common demo hosting platforms
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    
+
     // Vercel deployment
     if (hostname.includes('vercel.app') || hostname.includes('vercel.dev')) {
       return true;
     }
-    
+
     // Netlify deployment
     if (hostname.includes('netlify.app') || hostname.includes('netlify.com')) {
       return true;
     }
-    
+
     // GitHub Pages
     if (hostname.includes('github.io')) {
       return true;
     }
-    
+
     // Other common demo domains
     if (hostname.includes('demo.') || hostname.includes('preview.')) {
       return true;
@@ -51,7 +51,8 @@ export const isDemoMode = (): boolean => {
 export const getDemoConfig = () => {
   return {
     isDemo: isDemoMode(),
-    message: 'This is a demo version for presentation purposes only. The Ollama backend is not connected.',
+    message:
+      'This is a demo version for presentation purposes only. The Ollama backend is not connected.',
     showBanner: true,
     allowInteraction: false, // Set to true if you want to allow UI interaction in demo mode
   };

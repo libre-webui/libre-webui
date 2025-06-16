@@ -19,7 +19,12 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const location = useLocation();
   const { currentSession, models, updateCurrentSessionModel } = useChatStore();
-  const { hasSeenSettingsNotification, markSettingsNotificationAsSeen, sidebarOpen, toggleSidebar } = useAppStore();
+  const {
+    hasSeenSettingsNotification,
+    markSettingsNotificationAsSeen,
+    sidebarOpen,
+    toggleSidebar,
+  } = useAppStore();
 
   const getPageTitle = () => {
     switch (location.pathname) {
@@ -31,7 +36,9 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const handleModelChange = async (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleModelChange = async (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const newModel = event.target.value;
     if (currentSession && newModel !== currentSession.model) {
       try {
@@ -47,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
     if (!hasSeenSettingsNotification) {
       markSettingsNotificationAsSeen();
     }
-    
+
     if (onSettingsClick) {
       onSettingsClick();
     }
@@ -62,60 +69,64 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       >
         {/* Left side */}
-        <div className="flex items-center gap-3">
+        <div className='flex items-center gap-3'>
           {/* Mobile menu button - only show on mobile when sidebar is closed */}
           {!sidebarOpen && (
             <Button
-              variant="ghost"
-              size="sm"
+              variant='ghost'
+              size='sm'
               onClick={toggleSidebar}
-              className="lg:hidden h-10 w-10 p-0"
+              className='lg:hidden h-10 w-10 p-0'
             >
-              <Menu className="h-5 w-5" />
+              <Menu className='h-5 w-5' />
             </Button>
           )}
 
           {/* Page title and session info */}
-          <div className="flex items-center gap-3">
-            <Logo size="sm" />
-            <div className="flex flex-col min-w-0">
-              <h1 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-dark-800 leading-tight truncate">
+          <div className='flex items-center gap-3'>
+            <Logo size='sm' />
+            <div className='flex flex-col min-w-0'>
+              <h1 className='text-base sm:text-lg font-semibold text-gray-900 dark:text-dark-800 leading-tight truncate'>
                 {getPageTitle()}
               </h1>
-              {location.pathname === '/chat' && currentSession && models.length > 0 && (
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs text-gray-500 dark:text-dark-500 hidden sm:inline">Model:</span>
-                  <Select
-                    value={currentSession.model}
-                    onChange={handleModelChange}
-                    options={models.map(model => ({ 
-                      value: model.name, 
-                      label: model.name 
-                    }))}
-                    className="text-xs min-w-0 py-1 px-2 h-6 border-0 bg-gray-50 dark:bg-dark-200 rounded-lg max-w-32 sm:max-w-none"
-                  />
-                </div>
-              )}
+              {location.pathname === '/chat' &&
+                currentSession &&
+                models.length > 0 && (
+                  <div className='flex items-center gap-2 mt-0.5'>
+                    <span className='text-xs text-gray-500 dark:text-dark-500 hidden sm:inline'>
+                      Model:
+                    </span>
+                    <Select
+                      value={currentSession.model}
+                      onChange={handleModelChange}
+                      options={models.map(model => ({
+                        value: model.name,
+                        label: model.name,
+                      }))}
+                      className='text-xs min-w-0 py-1 px-2 h-6 border-0 bg-gray-50 dark:bg-dark-200 rounded-lg max-w-32 sm:max-w-none'
+                    />
+                  </div>
+                )}
             </div>
           </div>
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className='flex items-center gap-1 sm:gap-2'>
           <ThemeToggle />
-          <div className="relative">
+          <div className='relative'>
             <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-gray-100 dark:hover:bg-dark-200"
-              title="Settings (⌘,)"
+              variant='ghost'
+              size='sm'
+              className='h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+              title='Settings (⌘,)'
               onClick={handleSettingsClick}
             >
-              <Settings className="h-4 w-4" />
+              <Settings className='h-4 w-4' />
             </Button>
             {/* Simple green notification dot - only show if user hasn't seen settings */}
             {!hasSeenSettingsNotification && (
-              <div className="absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white dark:border-dark-50"></div>
+              <div className='absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white dark:border-dark-50'></div>
             )}
           </div>
         </div>

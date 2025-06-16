@@ -11,6 +11,9 @@ export { Logo } from './Logo';
 export { ModelManager } from './ModelManager';
 export { ImageUpload } from './ImageUpload';
 export { StructuredOutput } from './StructuredOutput';
-export { KeyboardShortcutsModal, KeyboardShortcutsIndicator } from './KeyboardShortcuts';
+export {
+  KeyboardShortcutsModal,
+  KeyboardShortcutsIndicator,
+} from './KeyboardShortcuts';
 export { DemoModeBanner } from './DemoModeBanner';
 export * from './ui';

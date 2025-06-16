@@ -7,8 +7,16 @@ import { useChat } from '@/hooks/useChat';
 import { Select } from '@/components/ui';
 
 export const ChatPage: React.FC = () => {
-  const { currentSession, models, selectedModel, setSelectedModel, createSession } = useChatStore();
-  const { sendMessage, stopGeneration, isStreaming } = useChat(currentSession?.id || '');
+  const {
+    currentSession,
+    models,
+    selectedModel,
+    setSelectedModel,
+    createSession,
+  } = useChatStore();
+  const { sendMessage, stopGeneration, isStreaming } = useChat(
+    currentSession?.id || ''
+  );
 
   const handleModelChange = async (model: string) => {
     setSelectedModel(model);
@@ -17,50 +25,55 @@ export const ChatPage: React.FC = () => {
     }
   };
 
-  const handleSendMessage = (message: string, images?: string[], format?: string | Record<string, any>) => {
+  const handleSendMessage = (
+    message: string,
+    images?: string[],
+    format?: string | Record<string, any>
+  ) => {
     if (!currentSession) return;
     sendMessage(message, images, format);
   };
 
   if (!currentSession) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="text-center max-w-md mx-auto">
-          <Logo size="lg" className="mx-auto mb-6" />
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-dark-800 mb-3">
+      <div className='flex-1 flex items-center justify-center p-8'>
+        <div className='text-center max-w-md mx-auto'>
+          <Logo size='lg' className='mx-auto mb-6' />
+          <h2 className='text-3xl font-bold text-gray-900 dark:text-dark-800 mb-3'>
             Welcome to Libre WebUI
           </h2>
-          <p className="text-gray-600 dark:text-dark-600 mb-8 leading-relaxed">
+          <p className='text-gray-600 dark:text-dark-600 mb-8 leading-relaxed'>
             Select a model and start a conversation with your AI assistant
           </p>
-          
+
           {models.length > 0 ? (
-            <div className="space-y-6">
+            <div className='space-y-6'>
               <Select
-                label="Choose a model"
+                label='Choose a model'
                 value={selectedModel}
-                onChange={(e) => handleModelChange(e.target.value)}
+                onChange={e => handleModelChange(e.target.value)}
                 options={models.map(model => ({
                   value: model.name,
-                  label: model.name
+                  label: model.name,
                 }))}
-                className="text-left"
+                className='text-left'
               />
               {selectedModel && (
-                <div className="p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl">
-                  <p className="text-sm text-gray-700 dark:text-dark-700">
+                <div className='p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl'>
+                  <p className='text-sm text-gray-700 dark:text-dark-700'>
                     Click "New Chat" in the sidebar to begin your conversation
                   </p>
                 </div>
               )}
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="p-6 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl">
-                <p className="text-sm text-gray-700 dark:text-dark-700 mb-4">
-                  No models available. Make sure Ollama is running and has models installed.
+            <div className='space-y-6'>
+              <div className='p-6 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl'>
+                <p className='text-sm text-gray-700 dark:text-dark-700 mb-4'>
+                  No models available. Make sure Ollama is running and has
+                  models installed.
                 </p>
-                <code className="block text-xs bg-gray-100 dark:bg-dark-200 p-3 rounded-lg font-mono text-gray-800 dark:text-dark-600">
+                <code className='block text-xs bg-gray-100 dark:bg-dark-200 p-3 rounded-lg font-mono text-gray-800 dark:text-dark-600'>
                   ollama pull llama3.2:3b
                 </code>
               </div>
@@ -72,11 +85,11 @@ export const ChatPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <ChatMessages 
+    <div className='flex flex-col h-full'>
+      <ChatMessages
         messages={currentSession.messages}
         isStreaming={isStreaming}
-        className="flex-1"
+        className='flex-1'
       />
       <ChatInput
         onSendMessage={handleSendMessage}
