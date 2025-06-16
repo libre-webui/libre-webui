@@ -115,11 +115,13 @@ class OllamaService {
 
   async pullModel(modelName: string): Promise<void> {
     try {
-      await this.client.post('/api/pull', {
+      console.log(`Pulling model: ${modelName}`);
+      const response = await this.client.post('/api/pull', {
         name: modelName,
       });
+      console.log(`Successfully pulled model: ${modelName}`);
     } catch (error: any) {
-      console.error('Failed to pull model:', error);
+      console.error(`Failed to pull model ${modelName}:`, error.response?.data || error.message);
       throw new Error(error.response?.data?.error || 'Failed to pull model');
     }
   }
@@ -302,6 +304,51 @@ class OllamaService {
     } catch (error: any) {
       console.error('Failed to generate legacy embeddings:', error);
       throw new Error(error.response?.data?.error || 'Failed to generate legacy embeddings');
+    }
+  }
+
+  // Pull all models
+  async pullAllModels(): Promise<{ success: boolean; results: { name: string; success: boolean }[] }> {
+    const results: { name: string; success: boolean }[] = [];
+    try {
+      const models = await this.getModels();
+      for (const model of models) {
+        try {
+          await this.pullModel(model.name);
+          results.push({ name: model.name, success: true });
+        } catch (err: any) {
+          results.push({ name: model.name, success: false });
+        }
+      }
+      return { success: true, results };
+    } catch (error: any) {
+      return { success: false, results };
+    }
+  }
+
+  // Pull all models with progress streaming
+  async pullAllModelsStream(
+    onProgress: (progress: { current: number; total: number; modelName: string; status: 'starting' | 'success' | 'error'; error?: string }) => void,
+    onComplete: () => void,
+    onError: (error: string) => void
+  ): Promise<void> {
+    try {
+      const models = await this.getModels();
+      const total = models.length;
+      
+      for (let i = 0; i < models.length; i++) {
+        const model = models[i];
+        try {
+          onProgress({ current: i + 1, total, modelName: model.name, status: 'starting' });
+          await this.pullModel(model.name);
+          onProgress({ current: i + 1, total, modelName: model.name, status: 'success' });
+        } catch (err: any) {
+          onProgress({ current: i + 1, total, modelName: model.name, status: 'error', error: err.message });
+        }
+      }
+      onComplete();
+    } catch (error: any) {
+      onError(error.message);
     }
   }
 }

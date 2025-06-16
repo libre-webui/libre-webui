@@ -311,6 +311,73 @@ export const ollamaApi = {
     return api.post(`/ollama/models/${modelName}/push`).then(res => res.data);
   },
 
+  pullAllModels: (): Promise<ApiResponse> => {
+    if (isDemoMode()) {
+      return createDemoResponse(null, false);
+    }
+    return api.post('/ollama/models/pull-all').then(res => res.data);
+  },
+
+  pullAllModelsStream: (
+    onProgress: (progress: { current: number; total: number; modelName: string; status: 'starting' | 'success' | 'error'; error?: string }) => void,
+    onComplete: () => void,
+    onError: (error: string) => void
+  ): void => {
+    if (isDemoMode()) {
+      // Simulate progress for demo mode
+      const demoModels = DEMO_MODELS;
+      let current = 0;
+      const interval = setInterval(() => {
+        current++;
+        if (current <= demoModels.length) {
+          onProgress({
+            current,
+            total: demoModels.length,
+            modelName: demoModels[current - 1]?.name || 'demo-model',
+            status: Math.random() > 0.1 ? 'success' : 'error',
+            error: Math.random() > 0.1 ? undefined : 'Demo error'
+          });
+        }
+        if (current >= demoModels.length) {
+          clearInterval(interval);
+          setTimeout(onComplete, 500);
+        }
+      }, 1000);
+      return;
+    }
+
+    const eventSource = new EventSource(`${API_BASE_URL}/ollama/models/pull-all/stream`);
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      
+      switch (data.type) {
+        case 'progress':
+          onProgress({
+            current: data.current,
+            total: data.total,
+            modelName: data.modelName,
+            status: data.status,
+            error: data.error
+          });
+          break;
+        case 'complete':
+          eventSource.close();
+          onComplete();
+          break;
+        case 'error':
+          eventSource.close();
+          onError(data.error);
+          break;
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+      onError('Connection to server lost');
+    };
+  },
+
   generateEmbeddings: (payload: any): Promise<ApiResponse<any>> => {
     if (isDemoMode()) {
       return createDemoResponse(null, false);

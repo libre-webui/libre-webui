@@ -45,6 +45,50 @@ router.get('/models', async (req: Request, res: Response<ApiResponse<OllamaModel
   }
 });
 
+// Pull all models
+router.post('/models/pull-all', async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+  try {
+    const result = await ollamaService.pullAllModels();
+    res.json({
+      success: result.success,
+      data: result.results,
+      message: result.success ? 'All models updated.' : 'Some models failed to update.'
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// Pull all models with streaming progress (GET for Server-Sent Events)
+router.get('/models/pull-all/stream', async (req: Request, res: Response): Promise<void> => {
+  try {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    await ollamaService.pullAllModelsStream(
+      (progress) => {
+        res.write(`data: ${JSON.stringify({ type: 'progress', ...progress })}\n\n`);
+      },
+      () => {
+        res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
+        res.end();
+      },
+      (error) => {
+        res.write(`data: ${JSON.stringify({ type: 'error', error })}\n\n`);
+        res.end();
+      }
+    );
+  } catch (error: any) {
+    res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+    res.end();
+  }
+});
+
 // Pull a new model
 router.post('/models/:modelName/pull', async (req: Request, res: Response<ApiResponse>): Promise<void> => {
   try {

@@ -35,6 +35,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const [easterEggClicks, setEasterEggClicks] = useState(0);
   const [showEasterEgg, setShowEasterEgg] = useState(false);
+  const [updatingAllModels, setUpdatingAllModels] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState<{
+    current: number;
+    total: number;
+    modelName: string;
+    status: 'starting' | 'success' | 'error';
+    error?: string;
+  } | null>(null);
 
   // Load system information
   useEffect(() => {
@@ -139,6 +147,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     URL.revokeObjectURL(url);
     
     toast.success('Data exported successfully');
+  };
+
+  const handleUpdateAllModels = async () => {
+    setUpdatingAllModels(true);
+    setUpdateProgress(null);
+    
+    ollamaApi.pullAllModelsStream(
+      (progress) => {
+        setUpdateProgress(progress);
+      },
+      () => {
+        setUpdatingAllModels(false);
+        setUpdateProgress(null);
+        toast.success('All models updated successfully!');
+        loadSystemInfo(); // Refresh models after update
+      },
+      (error) => {
+        setUpdatingAllModels(false);
+        setUpdateProgress(null);
+        toast.error('Failed to update models: ' + error);
+      }
+    );
   };
 
   const tabs = [
@@ -363,6 +393,59 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
               
+              {/* Update All Models Section */}
+              <div className="mt-6">
+                <div className="bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                    Bulk Model Operations
+                  </label>
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Update All Models
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                        Pull the latest versions of all currently installed models from the registry.
+                      </p>
+                      
+                      {updatingAllModels && updateProgress && (
+                        <div className="mb-4 space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              Updating {updateProgress.modelName}... ({updateProgress.current}/{updateProgress.total})
+                            </span>
+                            <span className="text-gray-600 dark:text-gray-400">
+                              {Math.round((updateProgress.current / updateProgress.total) * 100)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div 
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                              style={{ width: `${(updateProgress.current / updateProgress.total) * 100}%` }}
+                            />
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Status: {updateProgress.status === 'starting' ? 'Starting...' : 
+                                     updateProgress.status === 'success' ? '✓ Complete' : 
+                                     updateProgress.status === 'error' ? `✗ Error: ${updateProgress.error}` : ''}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <Button
+                        onClick={handleUpdateAllModels}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        disabled={updatingAllModels || loading || models.length === 0}
+                      >
+                        {updatingAllModels ? 'Updating Models...' : `Update All Models (${models.length})`}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Model Tools Section */}
               <div className="mt-6">
                 <ModelTools />
