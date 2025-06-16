@@ -15,8 +15,12 @@
  * limitations under the License.
  */
 
-export { Button } from './Button';
-export { Input } from './Input';
-export { Textarea } from './Textarea';
-export { Select } from './Select';
-export { MessageContent } from './MessageContent';
+import React from 'react';
+
+interface TestProps {
+  message: string;
+}
+
+export const TestComponent: React.FC<TestProps> = ({ message }) => {
+  return <div>{message}</div>;
+};
