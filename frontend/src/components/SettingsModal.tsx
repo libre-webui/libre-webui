@@ -409,25 +409,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       </p>
                       
                       {updatingAllModels && updateProgress && (
-                        <div className="mb-4 space-y-2">
+                        <div className="mb-4 space-y-3">
                           <div className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600 dark:text-gray-400">
+                            <span className="text-gray-600 dark:text-dark-600 font-medium">
                               Updating {updateProgress.modelName}... ({updateProgress.current}/{updateProgress.total})
                             </span>
-                            <span className="text-gray-600 dark:text-gray-400">
+                            <span className="text-primary-600 dark:text-primary-400 font-semibold">
                               {Math.round((updateProgress.current / updateProgress.total) * 100)}%
                             </span>
                           </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div className="w-full bg-gray-200 dark:bg-dark-300 rounded-full h-3 shadow-subtle">
                             <div 
-                              className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                              className="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-400 dark:to-primary-500 h-3 rounded-full transition-all duration-500 ease-out shadow-glow"
                               style={{ width: `${(updateProgress.current / updateProgress.total) * 100}%` }}
                             />
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Status: {updateProgress.status === 'starting' ? 'Starting...' : 
-                                     updateProgress.status === 'success' ? '✓ Complete' : 
-                                     updateProgress.status === 'error' ? `✗ Error: ${updateProgress.error}` : ''}
+                          <div className="text-xs flex items-center justify-between">
+                            <span className="text-gray-500 dark:text-dark-500">
+                              Status: {updateProgress.status === 'starting' ? (
+                                <span className="text-accent-500 dark:text-accent-400">🔄 Starting...</span>
+                              ) : updateProgress.status === 'success' ? (
+                                <span className="text-success-600 dark:text-success-500">✓ Complete</span>
+                              ) : updateProgress.status === 'error' ? (
+                                <span className="text-error-600 dark:text-error-500">✗ Error: {updateProgress.error}</span>
+                              ) : ''}
+                            </span>
+                            <span className="text-gray-400 dark:text-dark-600 text-[10px]">
+                              {updateProgress.current} of {updateProgress.total} models
+                            </span>
                           </div>
                         </div>
                       )}
