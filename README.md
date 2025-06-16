@@ -153,15 +153,17 @@ libre-webui-dev/
 
 ## Documentation
 
-### 📚 Available Guides
-- **[Quick Start Guide](./docs/QUICK_START.md)** - Get up and running in minutes
-- **[Ollama Integration](./docs/OLLAMA_INTEGRATION.md)** - Complete API documentation and usage examples
-- **[Keyboard Shortcuts](./docs/KEYBOARD_SHORTCUTS.md)** - Full reference for all keyboard shortcuts
-- **[Troubleshooting](./docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[Integration Status](./docs/INTEGRATION_COMPLETE.md)** - Ollama integration completion status
+### 📚 Documentation
+**[📖 Complete Documentation →](./docs/00-README.md)**
 
-See [OLLAMA_INTEGRATION.md](./docs/OLLAMA_INTEGRATION.md) for complete API documentation and usage examples.
-For keyboard shortcuts reference, see [KEYBOARD_SHORTCUTS.md](./docs/KEYBOARD_SHORTCUTS.md).
+| Guide | Description |
+|-------|-------------|
+| **[🚀 Quick Start](./docs/01-QUICK_START.md)** | Get up and running in 5 minutes |
+| **[🤖 Working with Models](./docs/02-WORKING_WITH_MODELS.md)** | Complete AI models guide |
+| **[🎯 Pro Tips](./docs/03-PRO_TIPS.md)** | Advanced workflows and techniques |
+| **[⌨️ Keyboard Shortcuts](./docs/04-KEYBOARD_SHORTCUTS.md)** | Productivity hotkeys |
+| **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)** | Try without installation |
+| **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)** | Problem solving guide |
 
 ## Accessibility & Performance
 

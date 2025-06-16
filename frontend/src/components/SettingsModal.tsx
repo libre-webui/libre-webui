@@ -561,7 +561,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           <Heart className="h-4 w-4 text-red-500 animate-bounce" style={{ animationDelay: '0.1s' }} />
                         </div>
                         <p className="text-center text-sm text-purple-600 dark:text-purple-400 mt-2">
-                          You've discovered the hidden power of persistence! Just like in AI, sometimes the magic happens after multiple iterations. 🪄✨
+                          You've discovered the hidden power of persistence! Just like in AI, sometimes the magic happens after multiple iterations.
                         </p>
                       </div>
                     )}
@@ -590,7 +590,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </a>
 
                   <a
-                    href="https://libre-webui.dev"
+                    href="https://librewebui.org"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group"
@@ -604,7 +604,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </a>
 
                   <a
-                    href="https://ollama.ai"
+                    href="https://ollama.org"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group"
@@ -636,7 +636,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Version Info */}
               <div className="mt-6 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg">
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>Version 1.0.0</span>
+                  <span>Version 0.1.0</span>
                   <span>Built with ❤️ for the open source community</span>
                 </div>
               </div>
