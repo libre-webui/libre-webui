@@ -15,7 +15,7 @@ jobs:
       config: ${{ steps.changes.outputs.config }}
     steps:
       - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v2
+      - uses: dorny/paths-filter@v3
         id: changes
         with:
           filters: |
