@@ -81,39 +81,39 @@ jobs:
         if: needs.detect-changes.outputs.backend == 'true'
         run: cd backend && npm run type-check
 
-  auto-format:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && contains(github.ref, 'refs/heads/main')
-    needs: [detect-changes, format-and-lint]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-
-      - name: Install root dependencies
-        run: npm ci
-
-      - name: Install workspace dependencies
-        run: npm run install:all
-
-      - name: Auto-format with Prettier
-        run: npm run format
-
-      - name: Auto-fix ESLint issues
-        run: npm run lint:fix
-
-      - name: Commit formatting changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add .
-          git diff --staged --quiet || git commit -m "Auto-format code [skip ci]"
-          git push
+  # auto-format:
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'push' && contains(github.ref, 'refs/heads/main')
+  #   needs: [detect-changes, format-and-lint]
+  #
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '22'
+  #         cache: 'npm'
+  #
+  #     - name: Install root dependencies
+  #       run: npm ci
+  #
+  #     - name: Install workspace dependencies
+  #       run: npm run install:all
+  #
+  #     - name: Auto-format with Prettier
+  #       run: npm run format
+  #
+  #     - name: Auto-fix ESLint issues
+  #       run: npm run lint:fix
+  #
+  #     - name: Commit formatting changes
+  #       run: |
+  #         git config --local user.email "action@github.com"
+  #         git config --local user.name "GitHub Action"
+  #         git add .
+  #         git diff --staged --quiet || git commit -m "Auto-format code [skip ci]"
+  #         git push
