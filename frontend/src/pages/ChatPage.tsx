@@ -61,7 +61,8 @@ export const ChatPage: React.FC = () => {
               {selectedModel && (
                 <div className='p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl'>
                   <p className='text-sm text-gray-700 dark:text-dark-700'>
-                    Click "New Chat" in the sidebar to begin your conversation
+                    Click &quot;New Chat&quot; in the sidebar to begin your
+                    conversation
                   </p>
                 </div>
               )}

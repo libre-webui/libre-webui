@@ -372,8 +372,8 @@ export const SettingsPage: React.FC = () => {
               </p>
               <p className='pt-2 border-t border-gray-200 dark:border-gray-700'>
                 <em>
-                  "Like Rick Rubin strips music to its essence, Libre WebUI
-                  strips away UI complexity. Simple. Minimal. Effective."
+                  &quot;Like Rick Rubin strips music to its essence, Libre WebUI
+                  strips away UI complexity. Simple. Minimal. Effective.&quot;
                 </em>
               </p>
             </div>

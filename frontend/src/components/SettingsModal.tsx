@@ -427,7 +427,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className='flex items-center justify-between mt-3'>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
                       This message will be automatically added to the start of
-                      new conversations to set the AI's behavior and context.
+                      new conversations to set the AI&apos;s behavior and
+                      context.
                     </p>
                     <Button
                       onClick={handleSystemMessageSave}
@@ -639,8 +640,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onClick={handleEasterEgg}
                       title='Click me 7 times for a surprise! 🎁'
                     >
-                      "Like Rick Rubin strips music to its essence, Libre WebUI
-                      strips away UI complexity. Simple. Minimal. Effective."
+                      &quot;Like Rick Rubin strips music to its essence, Libre
+                      WebUI strips away UI complexity. Simple. Minimal.
+                      Effective.&quot;
                     </p>
                     {showEasterEgg && (
                       <div className='mt-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-lg animate-pulse'>
@@ -655,9 +657,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           />
                         </div>
                         <p className='text-center text-sm text-purple-600 dark:text-purple-400 mt-2'>
-                          You've discovered the hidden power of persistence!
-                          Just like in AI, sometimes the magic happens after
-                          multiple iterations.
+                          You&apos;ve discovered the hidden power of
+                          persistence! Just like in AI, sometimes the magic
+                          happens after multiple iterations.
                         </p>
                       </div>
                     )}

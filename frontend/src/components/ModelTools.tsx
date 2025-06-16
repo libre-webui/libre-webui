@@ -37,9 +37,11 @@ export const ModelTools: React.FC = () => {
     setLoading(true);
     try {
       const res = await ollamaApi.pushModel(selectedModel);
-      res.success
-        ? toast.success('Model pushed')
-        : toast.error(res.error || 'Failed');
+      if (res.success) {
+        toast.success('Model pushed');
+      } else {
+        toast.error(res.error || 'Failed');
+      }
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -54,9 +56,11 @@ export const ModelTools: React.FC = () => {
         name: createModelName,
         modelfile: createFile,
       });
-      res.success
-        ? toast.success('Model created')
-        : toast.error(res.error || 'Failed');
+      if (res.success) {
+        toast.success('Model created');
+      } else {
+        toast.error(res.error || 'Failed');
+      }
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -68,9 +72,11 @@ export const ModelTools: React.FC = () => {
     setLoading(true);
     try {
       const res = await ollamaApi.copyModel(copySrc, copyDest);
-      res.success
-        ? toast.success('Model copied')
-        : toast.error(res.error || 'Failed');
+      if (res.success) {
+        toast.success('Model copied');
+      } else {
+        toast.error(res.error || 'Failed');
+      }
     } catch (err: any) {
       toast.error(err.message);
     }
