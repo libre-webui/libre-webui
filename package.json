@@ -41,10 +41,10 @@
     }
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
+    "@typescript-eslint/eslint-plugin": "^8.34.0",
+    "@typescript-eslint/parser": "^8.34.0",
     "concurrently": "^9.1.2",
-    "eslint": "^8.56.0",
+    "eslint": "^9.29.0",
     "prettier": "^3.5.3"
   },
   "keywords": [
