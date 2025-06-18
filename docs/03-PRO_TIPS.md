@@ -1,81 +1,34 @@
-# � Pro Tips: Advanced Libre WebUI Workflows
+# 🎯 Pro Tips: Advanced Workflows
 
-Ready to become a Libre WebUI power user? This guide covers advanced techniques and workflows to get the most out of your local AI assistant.
+Ready to become a power user? Here are advanced techniques to get more from Libre WebUI.
 
-## 🚀 Power User Workflows
+## 🚀 Workflow Ideas
 
-### 🎨 **Creative Writing Workflow**
-Perfect for writers, bloggers, and content creators:
-
-1. **Set up a creative system prompt:**
+### **Writing Assistant**
+1. Set a creative system prompt:
    ```
-   You are a creative writing assistant. Help me brainstorm, outline, and refine stories. Ask clarifying questions and suggest improvements.
+   You are a creative writing assistant. Help me brainstorm, outline, and refine stories.
    ```
+2. Use structured outputs (JSON, lists, etc.)
+3. Switch models: `llama3.2:3b` for speed, `llama3.3:70b` for complex work
 
-2. **Use structured outputs for organization:**
-   - Request character profiles in JSON format
-   - Get plot outlines as numbered lists
-   - Generate dialogue suggestions with speaker labels
-
-3. **Switch models for different tasks:**
-   - Use `llama3.2:3b` for edge devices and quick tasks
-   - Switch to `llama3.3:70b` for complex reasoning (similar performance to llama3.1:405b)
-   - Use `devstral:24b` for advanced coding and agents
-
-### 💼 **Professional Productivity Workflow**
-Ideal for business users and professionals:
-
-1. **Email Assistant Setup:**
+### **Business Productivity**
+1. Email assistant setup:
    ```
-   You are a professional communication assistant. Help me write clear, concise, and appropriate business communications.
+   You are a professional communication assistant. Help me write clear business communications.
    ```
+2. Document processing with `qwen2.5vl:32b` for images
+3. Generate summaries and action items
 
-2. **Document Processing Pipeline:**
-   - Upload document images with `qwen2.5vl:32b` (flagship vision-language model)
-   - Extract key information with structured prompts
-   - Generate summaries and action items
-   - Create follow-up templates
+### **Programming Helper**
+1. Use `devstral:24b` for advanced coding
+2. Upload code screenshots for analysis
+3. Get debugging help and code reviews
 
-3. **Meeting Workflow:**
-   - Paste meeting notes for instant summaries
-   - Generate action items and next steps
-   - Create professional follow-up emails
-
-### 🔬 **Research & Analysis Workflow**
-Perfect for students, researchers, and analysts:
-
-1. **Multi-Model Research Strategy:**
-   - Use fast models for initial exploration
-   - Switch to larger models for deep analysis
-   - Employ vision models for chart/graph analysis
-
-2. **Structured Analysis Process:**
-   - Request SWOT analysis in table format
-   - Get pros/cons lists with weighting
-   - Generate research summaries with citations
-
-3. **Visual Data Analysis:**
-   - Upload charts, graphs, and infographics
-   - Ask for trend analysis and insights
-   - Request data extraction and interpretation
-
-### 💻 **Development Workflow**
-Tailored for programmers and technical users:
-
-1. **Code Assistant Setup:**
-   ```
-   You are an expert programming mentor. Provide working code examples, explain concepts clearly, and suggest best practices.
-   ```
-
-2. **Multi-Stage Development:**
-   - Use `devstral:24b` for advanced coding agents and complex programming
-   - Switch to `qwen3:32b` for documentation with thinking capabilities
-   - Use `llama4:16x17b` for multimodal UI/UX feedback
-
-3. **Debugging Process:**
-   - Paste error messages for explanations
-   - Request step-by-step debugging guides
-   - Get code review and optimization suggestions
+### **Research & Analysis**
+1. Use fast models for exploration
+2. Switch to larger models for deep analysis
+3. Upload charts/graphs for visual analysis
 
 ## 🛠️ Advanced Features Mastery
 

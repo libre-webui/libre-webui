@@ -27,6 +27,60 @@ cd frontend && npm install && cd ..
 npm run dev
 ```
 
+## Development
+
+### For New Contributors
+
+Welcome! Getting started with Libre WebUI development is simple:
+
+1. **Clone and install dependencies:**
+
+   ```bash
+   git clone <your-repo-url>
+   cd libre-webui
+   npm install
+   ```
+
+   This automatically installs dependencies for the root, frontend, and backend using npm workspaces.
+
+2. **Start development servers:**
+
+   ```bash
+   # Standard development (local only)
+   npm run dev
+
+   # Development with network access (accessible from other devices)
+   npm run dev:host
+   ```
+
+3. **Clean reinstall (if needed):**
+   ```bash
+   # Use our clean install script to refresh all dependencies
+   ./clean-install.sh
+   ```
+
+### Available Scripts
+
+- `npm run dev` - Start both frontend and backend in development mode
+- `npm run dev:host` - Start development servers with network access (frontend on port 8080 with `--host` flag)
+- `npm run build` - Build both frontend and backend for production
+- `npm run start` - Start the production backend server
+- `npm run lint` - Run linting for both frontend and backend
+- `npm run format` - Format code and add license headers
+- `./clean-install.sh` - Clean npm cache, remove package-lock files, and reinstall all dependencies
+
+### Development Ports
+
+- **Frontend (dev)**: http://localhost:5173 (or http://localhost:8080 with `npm run dev:host`)
+- **Backend (dev)**: http://localhost:3001
+- **Ollama**: http://localhost:11434
+
+The `dev:host` script is particularly useful when you want to:
+
+- Test the app on mobile devices or tablets on your local network
+- Share your development instance with team members
+- Debug responsive design on actual devices
+
 ## Ports
 
 - Frontend: http://localhost:5173

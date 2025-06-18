@@ -7,11 +7,7 @@ updates:
       day: 'monday'
       time: '09:00'
       timezone: 'UTC'
-    open-pull-requests-limit: 10
-    reviewers:
-      - 'kroonen'
-    assignees:
-      - 'kroonen'
+    open-pull-requests-limit: 5
     commit-message:
       prefix: 'deps'
       prefix-development: 'deps-dev'
@@ -20,33 +16,9 @@ updates:
       - 'dependencies'
       - 'automated'
     groups:
-      react:
+      all-dependencies:
         patterns:
-          - 'react*'
-          - '@types/react*'
-      build-tools:
-        patterns:
-          - 'vite*'
-          - '@vitejs/*'
-          - 'rollup*'
-          - 'esbuild*'
-      testing:
-        patterns:
-          - 'jest*'
-          - 'vitest*'
-          - '@testing-library/*'
-          - 'cypress*'
-          - 'playwright*'
-      code-quality:
-        patterns:
-          - 'eslint*'
-          - '@eslint/*'
-          - 'prettier*'
-          - '@typescript-eslint/*'
-      typescript:
-        patterns:
-          - 'typescript*'
-          - '@types/*'
+          - '*'
     ignore:
       - dependency-name: 'react'
         update-types: ['version-update:semver-major']
@@ -60,11 +32,7 @@ updates:
       day: 'monday'
       time: '09:30'
       timezone: 'UTC'
-    open-pull-requests-limit: 5
-    reviewers:
-      - 'kroonen'
-    assignees:
-      - 'kroonen'
+    open-pull-requests-limit: 3
     commit-message:
       prefix: 'ci'
       include: 'scope'

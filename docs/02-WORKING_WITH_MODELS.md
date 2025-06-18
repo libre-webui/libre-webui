@@ -29,27 +29,24 @@ Libre WebUI supports **all the features** that modern AI assistants offer:
 
 ## 🧠 Understanding AI Models
 
-### Popular Models to Try
+## 🧠 AI Models Guide
 
-**For Beginners:**
-- **gemma3:4b** - Current best single-GPU model, fast and capable
-- **llama3.2:1b** - Ultra-lightweight for simple tasks
-- **phi4:14b** - Microsoft's compact powerhouse
+### **Starter Models (Recommended)**
+- **gemma3:4b** - Best for most users (4GB)
+- **llama3.2:1b** - Fastest, smallest (1GB)
+- **phi4:14b** - Microsoft's powerful model (14GB)
 
-**For Advanced Users:**
-- **llama3.3:70b** - State-of-the-art performance (similar to llama3.1:405b)
-- **deepseek-r1:32b** - Advanced reasoning approaching O3 performance
-- **devstral:24b** - Best open source model for coding agents
-- **qwen2.5vl:32b** - Flagship vision-language model
-- **llama4:16x17b** - Meta's latest multimodal collection
+### **Advanced Models**
+- **llama3.3:70b** - State-of-the-art performance (40GB+)
+- **deepseek-r1:32b** - Advanced reasoning (16GB)
+- **devstral:24b** - Best for coding (12GB)
+- **qwen2.5vl:32b** - Image understanding (16GB)
 
-### Model Sizes Explained
-- **1B parameters** = ~1GB memory, ultra-fast, good for simple tasks
-- **4B parameters** = ~3GB memory, current single-GPU champion
-- **14B parameters** = ~8GB memory, compact powerhouse performance
-- **24B parameters** = ~12GB memory, specialized excellence
-- **32B parameters** = ~16GB memory, advanced reasoning capabilities
-- **70B+ parameters** = 32GB+ memory, state-of-the-art performance
+### **Model Sizes**
+- **1B** = ~1GB memory, ultra-fast
+- **4B** = ~3GB memory, great balance
+- **14B** = ~8GB memory, powerful
+- **32B+** = 16GB+ memory, professional use
 
 ## 🚀 Getting Started with Models
 

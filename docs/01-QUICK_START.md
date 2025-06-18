@@ -57,25 +57,24 @@ ollama pull gemma3:4b
 
 ## 🌐 Step 3: Start Libre WebUI
 
-Now let's get the beautiful interface running:
+Now let's get the interface running:
 
-### **Easy Way (Recommended):**
+### **For Users (Recommended):**
 ```bash
-cd /path/to/libre-webui-dev
+cd /path/to/libre-webui
 ./start.sh
 ```
 
-### **Manual Way:**
+### **For Developers:**
 ```bash
-# Start the backend (in one terminal)
-cd backend
+# Clone and setup
+git clone <repo-url>
+cd libre-webui
 npm install
-npm run dev
 
-# Start the frontend (in another terminal)
-cd frontend
-npm install
-npm run dev
+# Start development
+npm run dev              # Local development
+npm run dev:host         # Network access (port 8080)
 ```
 
 ## 🎉 Step 4: Start Chatting!
