@@ -22,6 +22,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 */.dev.log
+*.log
 
 # OS generated files
 .DS_Store

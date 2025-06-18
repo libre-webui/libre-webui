@@ -3,6 +3,14 @@
 # Libre WebUI Startup Script
 echo "🚀 Starting Libre WebUI..."
 
+# Load environment variables from backend/.env if it exists
+if [ -f "backend/.env" ]; then
+    export $(grep -v '^#' backend/.env | xargs)
+fi
+
+# Set default Ollama URL if not set
+OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-"http://localhost:11434"}
+
 # Function to check if a port is in use
 check_port() {
     lsof -i :$1 > /dev/null 2>&1
@@ -31,41 +39,24 @@ if ! command -v node &> /dev/null; then
     exit 1
 fi
 
-# Check if Ollama is installed
-if ! command -v ollama &> /dev/null; then
-    echo "⚠️  Ollama is not installed."
-    echo "   This is required for the LLM functionality."
-    echo "   You can still run the app to see the UI, but you'll need Ollama to chat."
-    echo "   Install from: https://ollama.ai"
-    echo ""
-    echo "   After installing Ollama, run these commands:"
-    echo "   ollama serve"
-    echo "   ollama pull llama3.2:1b  # or another model"
-    echo ""
+# Check if Ollama is accessible (local or remote)
+echo "🔍 Testing connection to Ollama at: $OLLAMA_BASE_URL"
+if curl -s "$OLLAMA_BASE_URL/api/tags" > /dev/null 2>&1; then
+    echo "✅ Ollama is accessible at: $OLLAMA_BASE_URL"
+    
+    # Check if models are available (works for both local and remote)
+    models=$(curl -s "$OLLAMA_BASE_URL/api/tags" 2>/dev/null | jq -r '.models | length' 2>/dev/null || echo "0")
+    if [ "$models" -eq 0 ] || [ "$models" = "null" ]; then
+        echo "⚠️  No models found on Ollama instance."
+        echo "   To install models on your Ollama instance, run:"
+        echo "   ollama pull llama3.2:1b  # or another model"
+    else
+        echo "✅ Found $models model(s) on Ollama instance"
+    fi
 else
-    # Start Ollama if not running
-    if ! check_port 11434; then
-        echo "🦙 Starting Ollama service..."
-        ollama serve &
-        wait_for_service "http://localhost:11434/api/tags" "Ollama"
-    else
-        echo "✅ Ollama is already running"
-    fi
-
-    # Check if models are available
-    models=$(ollama list 2>/dev/null | grep -v "NAME" | wc -l | tr -d ' ')
-    if [ "$models" -eq 0 ]; then
-        echo "⚠️  No models found. Would you like to pull a model? (y/n)"
-        read -r response
-        if [[ "$response" =~ ^[Yy]$ ]]; then
-            echo "📥 Pulling llama3.2:1b model (small and fast)..."
-            ollama pull llama3.2:1b
-        else
-            echo "ℹ️  You can install a model later with: ollama pull <model-name>"
-        fi
-    else
-        echo "✅ Found $models model(s) in Ollama"
-    fi
+    echo "❌ Cannot connect to Ollama at: $OLLAMA_BASE_URL"
+    echo "   Please ensure Ollama is running and accessible."
+    echo "   If using a remote Ollama, check your network connectivity."
 fi
 
 # Install dependencies if needed
@@ -121,10 +112,10 @@ echo "   Frontend: http://localhost:5173"
 echo "   Backend:  http://localhost:3001"
 echo ""
 echo "📋 Service Status:"
-if check_port 11434; then
-    echo "   ✅ Ollama:    http://localhost:11434"
+if curl -s "$OLLAMA_BASE_URL/api/tags" > /dev/null 2>&1; then
+    echo "   ✅ Ollama:    $OLLAMA_BASE_URL"
 else
-    echo "   ❌ Ollama:    Not running (install from https://ollama.ai)"
+    echo "   ❌ Ollama:    $OLLAMA_BASE_URL (not accessible)"
 fi
 if check_port 3001; then
     echo "   ✅ Backend:   http://localhost:3001"
