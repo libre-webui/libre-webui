@@ -34,7 +34,7 @@ interface ChatInputProps {
   onSendMessage: (
     message: string,
     images?: string[],
-    format?: string | Record<string, any>
+    format?: string | Record<string, unknown>
   ) => void;
   onStopGeneration: () => void;
   disabled?: boolean;
@@ -47,7 +47,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const [message, setMessage] = useState('');
   const [images, setImages] = useState<string[]>([]);
-  const [format, setFormat] = useState<string | Record<string, any> | null>(
+  const [format, setFormat] = useState<string | Record<string, unknown> | null>(
     null
   );
   const [showAdvanced, setShowAdvanced] = useState(false);

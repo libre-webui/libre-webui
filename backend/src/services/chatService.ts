@@ -39,8 +39,8 @@ class ChatService {
         );
         console.log(`Loaded ${sessionsArray.length} sessions from disk`);
       }
-    } catch (error) {
-      console.error('Failed to load sessions:', error);
+    } catch (_error) {
+      console.error('Failed to load sessions:', _error);
     }
   }
 
@@ -48,8 +48,8 @@ class ChatService {
     try {
       const sessionsArray = Array.from(this.sessions.values());
       fs.writeFileSync(this.dataFile, JSON.stringify(sessionsArray, null, 2));
-    } catch (error) {
-      console.error('Failed to save sessions:', error);
+    } catch (_error) {
+      console.error('Failed to save sessions:', _error);
     }
   }
 

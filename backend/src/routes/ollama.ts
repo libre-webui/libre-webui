@@ -17,7 +17,7 @@
 
 import express, { Request, Response } from 'express';
 import ollamaService from '../services/ollamaService';
-import { ApiResponse, OllamaModel } from '../types';
+import { ApiResponse, OllamaModel, getErrorMessage } from '../types';
 
 const router = express.Router();
 
@@ -43,10 +43,10 @@ router.get(
           error: 'Ollama service is not available',
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Health check failed'),
       });
     }
   }
@@ -65,10 +65,10 @@ router.get(
         success: true,
         data: models,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to get models'),
       });
     }
   }
@@ -87,10 +87,10 @@ router.post(
           ? 'All models updated.'
           : 'Some models failed to update.',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to pull models'),
       });
     }
   }
@@ -121,9 +121,9 @@ router.get(
           res.end();
         }
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.write(
-        `data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`
+        `data: ${JSON.stringify({ type: 'error', error: getErrorMessage(error, 'Failed to pull models') })}\n\n`
       );
       res.end();
     }
@@ -142,10 +142,10 @@ router.post(
         success: true,
         message: `Model ${modelName} pulled successfully`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to pull model'),
       });
     }
   }
@@ -163,10 +163,10 @@ router.delete(
         success: true,
         message: `Model ${modelName} deleted successfully`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to delete model'),
       });
     }
   }
@@ -181,8 +181,11 @@ router.get(
       const verbose = req.query.verbose === 'true';
       const data = await ollamaService.showModel(modelName, verbose);
       res.json({ success: true, data });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to show model'),
+      });
     }
   }
 );
@@ -194,8 +197,11 @@ router.post(
     try {
       await ollamaService.createModel(req.body);
       res.json({ success: true, message: 'Model created successfully' });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to create model'),
+      });
     }
   }
 );
@@ -208,8 +214,11 @@ router.post(
       const { source, destination } = req.body;
       await ollamaService.copyModel(source, destination);
       res.json({ success: true, message: 'Model copied successfully' });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to copy model'),
+      });
     }
   }
 );
@@ -225,8 +234,11 @@ router.post(
         success: true,
         message: `Model ${modelName} pushed successfully`,
       });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to push model'),
+      });
     }
   }
 );
@@ -238,8 +250,11 @@ router.post(
     try {
       const data = await ollamaService.generateEmbeddings(req.body);
       res.json({ success: true, data });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to generate embeddings'),
+      });
     }
   }
 );
@@ -251,8 +266,11 @@ router.get(
     try {
       const data = await ollamaService.listRunningModels();
       res.json({ success: true, data });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to list running models'),
+      });
     }
   }
 );
@@ -264,8 +282,11 @@ router.get(
     try {
       const data = await ollamaService.getVersion();
       res.json({ success: true, data });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get version'),
+      });
     }
   }
 );
@@ -277,8 +298,11 @@ router.post(
     try {
       const data = await ollamaService.generateChatResponse(req.body);
       res.json({ success: true, data });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to generate chat response'),
+      });
     }
   }
 );
@@ -307,8 +331,11 @@ router.post(
           res.end();
         }
       );
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to stream chat response'),
+      });
     }
   }
 );
@@ -326,7 +353,7 @@ router.head(
       } else {
         res.status(404).end();
       }
-    } catch (error: any) {
+    } catch (_error: unknown) {
       res.status(500).end();
     }
   }
@@ -352,12 +379,18 @@ router.post(
           res
             .status(201)
             .json({ success: true, message: 'Blob created successfully' });
-        } catch (error: any) {
-          res.status(400).json({ success: false, error: error.message });
+        } catch (error: unknown) {
+          res.status(400).json({
+            success: false,
+            error: getErrorMessage(error, 'Failed to create blob'),
+          });
         }
       });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to push blob'),
+      });
     }
   }
 );
@@ -369,8 +402,11 @@ router.post(
     try {
       const data = await ollamaService.generateLegacyEmbeddings(req.body);
       res.json({ success: true, data });
-    } catch (error: any) {
-      res.status(500).json({ success: false, error: error.message });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to generate legacy embeddings'),
+      });
     }
   }
 );

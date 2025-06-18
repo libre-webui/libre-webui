@@ -54,10 +54,12 @@ export const ModelManager: React.FC = () => {
       }
 
       if (runningResponse.success) {
-        setRunningModels(runningResponse.data?.models || []);
+        setRunningModels(runningResponse.data || []);
       }
-    } catch (error: any) {
-      toast.error('Failed to load models: ' + error.message);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to load models: ' + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -79,8 +81,10 @@ export const ModelManager: React.FC = () => {
       toast.success(`Model ${pullModelName} pulled successfully`);
       setPullModelName('');
       await loadData(); // Reload the models list
-    } catch (error: any) {
-      toast.error('Failed to pull model: ' + error.message);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to pull model: ' + errorMessage);
     } finally {
       setPulling(false);
     }
@@ -95,8 +99,10 @@ export const ModelManager: React.FC = () => {
       await ollamaApi.deleteModel(modelName);
       toast.success(`Model ${modelName} deleted successfully`);
       await loadData(); // Reload the models list
-    } catch (error: any) {
-      toast.error('Failed to delete model: ' + error.message);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to delete model: ' + errorMessage);
     }
   };
 
@@ -108,8 +114,10 @@ export const ModelManager: React.FC = () => {
         console.log('Model info:', response.data);
         toast.success('Model information loaded (check console)');
       }
-    } catch (error: any) {
-      toast.error('Failed to get model info: ' + error.message);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to get model info: ' + errorMessage);
     }
   };
 
@@ -275,8 +283,10 @@ export const ModelManager: React.FC = () => {
                 if (response.success && response.data) {
                   toast.success(`Ollama version: ${response.data.version}`);
                 }
-              } catch (error: any) {
-                toast.error('Failed to get version: ' + error.message);
+              } catch (error: unknown) {
+                const errorMessage =
+                  error instanceof Error ? error.message : String(error);
+                toast.error('Failed to get version: ' + errorMessage);
               }
             }}
             variant='outline'
@@ -292,8 +302,10 @@ export const ModelManager: React.FC = () => {
                 if (response.success) {
                   toast.success('Ollama is healthy!');
                 }
-              } catch (error: any) {
-                toast.error('Ollama health check failed: ' + error.message);
+              } catch (error: unknown) {
+                const errorMessage =
+                  error instanceof Error ? error.message : String(error);
+                toast.error('Ollama health check failed: ' + errorMessage);
               }
             }}
             variant='outline'

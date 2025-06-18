@@ -22,7 +22,7 @@ import {
   ApiResponse,
   ChatSession,
   ChatMessage,
-  OllamaGenerateRequest,
+  getErrorMessage,
 } from '../types';
 
 const router = express.Router();
@@ -40,10 +40,10 @@ router.get(
         success: true,
         data: sessions,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to load sessions'),
       });
     }
   }
@@ -72,10 +72,10 @@ router.post(
         success: true,
         data: session,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to create session'),
       });
     }
   }
@@ -104,10 +104,10 @@ router.get(
         success: true,
         data: session,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to get session'),
       });
     }
   }
@@ -138,10 +138,10 @@ router.put(
         success: true,
         data: updatedSession,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to update session'),
       });
     }
   }
@@ -167,10 +167,10 @@ router.delete(
         success: true,
         message: 'Session deleted successfully',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to delete session'),
       });
     }
   }
@@ -186,10 +186,10 @@ router.delete(
         success: true,
         message: 'All chat sessions cleared successfully',
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to clear sessions'),
       });
     }
   }
@@ -242,10 +242,10 @@ router.post(
         success: true,
         data: message,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to add message'),
       });
     }
   }
@@ -260,7 +260,7 @@ router.post(
   ): Promise<void> => {
     try {
       const { sessionId } = req.params;
-      const { message, options = {}, stream = false } = req.body;
+      const { message, options = {} } = req.body;
 
       if (!message) {
         res.status(400).json({
@@ -334,10 +334,10 @@ router.post(
         success: true,
         data: assistantMessage,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to generate response'),
       });
     }
   }
@@ -447,9 +447,9 @@ router.post(
           res.end();
         }
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.write(
-        `data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`
+        `data: ${JSON.stringify({ type: 'error', error: getErrorMessage(error, 'Failed to generate stream response') })}\n\n`
       );
       res.end();
     }

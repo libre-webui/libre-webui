@@ -94,7 +94,7 @@ const wss = new WebSocketServer({
   path: '/ws',
 });
 
-wss.on('connection', (ws, req) => {
+wss.on('connection', ws => {
   console.log('WebSocket client connected');
 
   ws.on('message', async data => {
@@ -164,7 +164,11 @@ wss.on('connection', (ws, req) => {
 
         // Convert our messages to Ollama format
         const ollamaMessages = contextMessages.map(msg => {
-          const ollamaMessage: any = {
+          const ollamaMessage: {
+            role: string;
+            content: string;
+            images?: string[];
+          } = {
             role: msg.role,
             content: msg.content,
           };
@@ -191,7 +195,15 @@ wss.on('connection', (ws, req) => {
         console.log('Backend: Using assistantMessageId:', assistantMessageId);
 
         // Create chat request with advanced features
-        const chatRequest: any = {
+        const chatRequest: {
+          model: string;
+          messages: typeof ollamaMessages;
+          stream: boolean;
+          options?: Record<string, unknown>;
+          format?: string | Record<string, unknown>;
+          tools?: Record<string, unknown>[];
+          think?: boolean;
+        } = {
           model: session.model,
           messages: ollamaMessages,
           stream: true,
@@ -273,12 +285,14 @@ wss.on('connection', (ws, req) => {
           }
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('WebSocket error:', error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       ws.send(
         JSON.stringify({
           type: 'error',
-          data: { error: error.message },
+          data: { error: errorMessage },
         })
       );
     }

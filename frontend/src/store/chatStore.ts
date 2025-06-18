@@ -21,6 +21,20 @@ import { chatApi, ollamaApi, preferencesApi } from '@/utils/api';
 import { generateId } from '@/utils';
 import toast from 'react-hot-toast';
 
+// Helper function to extract error message from unknown error
+const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = error as { response?: { data?: { error?: string } } };
+    if (response.response?.data?.error) {
+      return response.response.data.error;
+    }
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
+};
+
 interface ChatState {
   // Sessions
   sessions: ChatSession[];
@@ -91,9 +105,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         toast.success('New chat created');
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.error || 'Failed to create session';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Failed to create session');
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
     }
@@ -107,9 +120,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (response.success && response.data) {
         set({ sessions: response.data, loading: false });
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.error || 'Failed to load sessions';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Failed to load sessions');
       set({ error: errorMessage, loading: false });
       console.error('Failed to load sessions:', error);
     }
@@ -146,10 +158,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         console.error('Store: deleteSession failed:', response);
         toast.error('Failed to delete chat');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Store: deleteSession error:', error);
-      const errorMessage =
-        error.response?.data?.error || 'Failed to delete session';
+      const errorMessage = getErrorMessage(error, 'Failed to delete session');
       toast.error(errorMessage);
     }
   },
@@ -171,10 +182,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         toast.error('Failed to clear chat history');
         set({ loading: false });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Store: clearAllSessions error:', error);
-      const errorMessage =
-        error.response?.data?.error || 'Failed to clear chat history';
+      const errorMessage = getErrorMessage(
+        error,
+        'Failed to clear chat history'
+      );
       toast.error(errorMessage);
       set({ loading: false });
     }
@@ -196,9 +209,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }));
         toast.success('Chat title updated');
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.error || 'Failed to update session';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Failed to update session');
       toast.error(errorMessage);
     }
   },
@@ -329,10 +341,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         console.error('Failed to load models:', response);
         set({ loading: false });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error loading models:', error);
-      const errorMessage =
-        error.response?.data?.error || 'Failed to load models';
+      const errorMessage = getErrorMessage(error, 'Failed to load models');
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
     }
@@ -365,8 +376,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       } else {
         console.log('❌ Backend response unsuccessful or no data');
       }
-    } catch (error) {
-      console.warn('❌ Failed to load preferences from backend:', error);
+    } catch (_error) {
+      console.warn('❌ Failed to load preferences from backend:', _error);
     }
   },
 
@@ -374,8 +385,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setSelectedModel: model => {
     set({ selectedModel: model });
     // Save to backend preferences when model is selected
-    preferencesApi.setDefaultModel(model).catch(error => {
-      console.warn('Failed to save default model to backend:', error);
+    preferencesApi.setDefaultModel(model).catch(_error => {
+      console.warn('Failed to save default model to backend:', _error);
     });
   },
 
@@ -400,9 +411,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }));
         toast.success('Model updated for current chat');
       }
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.error || 'Failed to update session model';
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(
+        error,
+        'Failed to update session model'
+      );
       toast.error(errorMessage);
       throw error;
     }
@@ -413,8 +426,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
   setSystemMessage: message => {
     set({ systemMessage: message });
     // Save to backend preferences when system message is updated
-    preferencesApi.setSystemMessage(message).catch(error => {
-      console.warn('Failed to save system message to backend:', error);
+    preferencesApi.setSystemMessage(message).catch(_error => {
+      console.warn('Failed to save system message to backend:', _error);
     });
   },
 

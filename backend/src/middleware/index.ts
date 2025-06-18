@@ -18,10 +18,10 @@
 import { Request, Response, NextFunction } from 'express';
 
 export const errorHandler = (
-  error: any,
+  error: unknown,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   console.error('Error:', error);
 
@@ -30,27 +30,35 @@ export const errorHandler = (
   let message = 'Internal server error';
 
   // Handle specific error types
-  if (error.name === 'ValidationError') {
-    statusCode = 400;
-    message = 'Validation error';
-  } else if (error.name === 'UnauthorizedError') {
-    statusCode = 401;
-    message = 'Unauthorized';
-  } else if (error.message) {
-    message = error.message;
+  if (error && typeof error === 'object') {
+    const err = error as { name?: string; message?: string; stack?: string };
+    if (err.name === 'ValidationError') {
+      statusCode = 400;
+      message = 'Validation error';
+    } else if (err.name === 'UnauthorizedError') {
+      statusCode = 401;
+      message = 'Unauthorized';
+    } else if (err.message) {
+      message = err.message;
+    }
   }
 
   res.status(statusCode).json({
     success: false,
     error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
+    ...(process.env.NODE_ENV === 'development' && {
+      stack:
+        error && typeof error === 'object' && 'stack' in error
+          ? (error as { stack?: string }).stack
+          : undefined,
+    }),
   });
 };
 
 export const notFoundHandler = (
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   res.status(404).json({
     success: false,

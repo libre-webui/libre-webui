@@ -22,6 +22,11 @@ import {
   ChatMessage,
   OllamaModel,
   UserPreferences,
+  ChatGenerationOptions,
+  ModelCreatePayload,
+  EmbeddingPayload,
+  EmbeddingResponse,
+  RunningModel,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 
@@ -208,7 +213,7 @@ export const chatApi = {
   sendMessage: (
     sessionId: string,
     content: string,
-    options?: any
+    options?: ChatGenerationOptions
   ): Promise<
     ApiResponse<{ userMessage: ChatMessage; assistantMessage: ChatMessage }>
   > =>
@@ -228,7 +233,7 @@ export const chatApi = {
   generateChatResponse: (
     sessionId: string,
     message: string,
-    options?: any
+    options?: ChatGenerationOptions
   ): Promise<ApiResponse<ChatMessage>> =>
     api
       .post(`/chat/sessions/${sessionId}/generate`, { message, options })
@@ -238,12 +243,14 @@ export const chatApi = {
   generateChatStreamResponse: (
     sessionId: string,
     message: string,
-    options?: any
+    options?: ChatGenerationOptions
   ) => {
     return {
       subscribe: async (
-        onMessage: (data: any) => void,
-        onError?: (error: any) => void,
+        onMessage: (
+          data: ChatMessage | { content: string; done?: boolean }
+        ) => void,
+        onError?: (error: Error) => void,
         onComplete?: () => void
       ) => {
         try {
@@ -316,16 +323,20 @@ export const chatApi = {
 
                 processChunk();
               })
-              .catch(error => {
-                onError?.(error);
+              .catch(_error => {
+                onError?.(
+                  _error instanceof Error ? _error : new Error(String(_error))
+                );
               });
           };
 
           processChunk();
 
           return () => reader.cancel();
-        } catch (error) {
-          onError?.(error);
+        } catch (_error) {
+          onError?.(
+            _error instanceof Error ? _error : new Error(String(_error))
+          );
           return () => {};
         }
       },
@@ -367,7 +378,7 @@ export const ollamaApi = {
   showModel: (
     modelName: string,
     verbose = false
-  ): Promise<ApiResponse<any>> => {
+  ): Promise<ApiResponse<OllamaModel | null>> => {
     if (isDemoMode()) {
       const model = DEMO_MODELS.find(m => m.name === modelName);
       return createDemoResponse(model || null, !!model);
@@ -377,7 +388,7 @@ export const ollamaApi = {
       .then(res => res.data);
   },
 
-  createModel: (payload: any): Promise<ApiResponse> => {
+  createModel: (payload: ModelCreatePayload): Promise<ApiResponse> => {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
     }
@@ -475,14 +486,16 @@ export const ollamaApi = {
     };
   },
 
-  generateEmbeddings: (payload: any): Promise<ApiResponse<any>> => {
+  generateEmbeddings: (
+    payload: EmbeddingPayload
+  ): Promise<ApiResponse<EmbeddingResponse>> => {
     if (isDemoMode()) {
-      return createDemoResponse(null, false);
+      return createDemoResponse({ embeddings: [[]] }, false);
     }
     return api.post('/ollama/embed', payload).then(res => res.data);
   },
 
-  listRunningModels: (): Promise<ApiResponse<any>> => {
+  listRunningModels: (): Promise<ApiResponse<RunningModel[]>> => {
     if (isDemoMode()) {
       return createDemoResponse([]);
     }
@@ -497,9 +510,18 @@ export const ollamaApi = {
   },
 
   // Chat completion
-  chatCompletion: (payload: any): Promise<ApiResponse<any>> => {
+  chatCompletion: (payload: {
+    model: string;
+    messages: Array<{ role: string; content: string; images?: string[] }>;
+    stream?: boolean;
+    format?: string | Record<string, unknown>;
+    options?: Record<string, unknown>;
+  }): Promise<ApiResponse<{ message: { content: string; role: string } }>> => {
     if (isDemoMode()) {
-      return createDemoResponse(null, false);
+      return createDemoResponse(
+        { message: { content: 'Demo response', role: 'assistant' } },
+        false
+      );
     }
     return api.post('/ollama/chat', payload).then(res => res.data);
   },
@@ -527,9 +549,13 @@ export const ollamaApi = {
   },
 
   // Legacy embeddings (deprecated)
-  generateLegacyEmbeddings: (payload: any): Promise<ApiResponse<any>> => {
+  generateLegacyEmbeddings: (payload: {
+    model: string;
+    prompt: string;
+    options?: Record<string, unknown>;
+  }): Promise<ApiResponse<{ embedding: number[] }>> => {
     if (isDemoMode()) {
-      return createDemoResponse(null, false);
+      return createDemoResponse({ embedding: [] }, false);
     }
     return api.post('/ollama/embeddings', payload).then(res => res.data);
   },

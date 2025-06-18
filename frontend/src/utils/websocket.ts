@@ -23,7 +23,7 @@ class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
-  private messageHandlers: Map<string, (data: any) => void> = new Map();
+  private messageHandlers: Map<string, (data: unknown) => void> = new Map();
 
   constructor() {
     // Use the backend URL for WebSocket connection
@@ -52,8 +52,8 @@ class WebSocketService {
             if (handler) {
               handler(message.data);
             }
-          } catch (error) {
-            console.error('Failed to parse WebSocket message:', error);
+          } catch (_error) {
+            console.error('Failed to parse WebSocket message:', _error);
           }
         };
 
@@ -67,8 +67,8 @@ class WebSocketService {
           console.error('WebSocket error:', error);
           reject(error);
         };
-      } catch (error) {
-        reject(error);
+      } catch (_error) {
+        reject(_error);
       }
     });
   }
@@ -80,7 +80,7 @@ class WebSocketService {
     }
   }
 
-  send(message: any) {
+  send(message: WebSocketMessage | Record<string, unknown>) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
@@ -88,7 +88,7 @@ class WebSocketService {
     }
   }
 
-  onMessage(type: string, handler: (data: any) => void) {
+  onMessage(type: string, handler: (data: unknown) => void) {
     // Remove any existing handler for this type first
     this.messageHandlers.delete(type);
     this.messageHandlers.set(type, handler);

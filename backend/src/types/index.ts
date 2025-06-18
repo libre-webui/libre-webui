@@ -45,16 +45,16 @@ export interface OllamaChatMessage {
   content: string;
   thinking?: string;
   images?: string[];
-  tool_calls?: any[];
+  tool_calls?: Record<string, unknown>[];
 }
 
 export interface OllamaChatRequest {
   model: string;
   messages: OllamaChatMessage[];
-  tools?: any[];
+  tools?: Record<string, unknown>[];
   think?: boolean;
-  format?: string | Record<string, any>;
-  options?: Record<string, any>;
+  format?: string | Record<string, unknown>;
+  options?: Record<string, unknown>;
   stream?: boolean;
   keep_alive?: string;
 }
@@ -66,7 +66,7 @@ export interface OllamaChatResponse {
     role: string;
     content: string;
     images?: string[] | null;
-    tool_calls?: any[];
+    tool_calls?: Record<string, unknown>[];
   };
   done: boolean;
   done_reason?: string;
@@ -136,8 +136,8 @@ export interface OllamaCreateRequest {
   template?: string;
   license?: string | string[];
   system?: string;
-  parameters?: Record<string, any>;
-  messages?: any[];
+  parameters?: Record<string, unknown>;
+  messages?: Record<string, unknown>[];
   stream?: boolean;
   quantize?: string;
 }
@@ -157,7 +157,7 @@ export interface OllamaEmbeddingsRequest {
   model: string;
   input: string | string[];
   truncate?: boolean;
-  options?: Record<string, any>;
+  options?: Record<string, unknown>;
   keep_alive?: string;
 }
 
@@ -165,7 +165,7 @@ export interface OllamaEmbeddingsResponse {
   embeddings: number[][];
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -175,10 +175,24 @@ export interface ApiResponse<T = any> {
 export interface OllamaLegacyEmbeddingsRequest {
   model: string;
   prompt: string;
-  options?: Record<string, any>;
+  options?: Record<string, unknown>;
   keep_alive?: string;
 }
 
 export interface OllamaLegacyEmbeddingsResponse {
   embedding: number[];
 }
+
+// Helper function to extract error message from unknown error
+export const getErrorMessage = (error: unknown, fallback: string): string => {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = error as { response?: { data?: { error?: string } } };
+    if (response.response?.data?.error) {
+      return response.response.data.error;
+    }
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return fallback;
+};

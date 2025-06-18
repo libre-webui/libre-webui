@@ -44,8 +44,8 @@ export const useInitializeApp = () => {
         // Load preferences first, then models and sessions
         await loadPreferences();
         await Promise.all([loadModels(), loadSessions()]);
-      } catch (error) {
-        console.error('Failed to initialize app:', error);
+      } catch (_error) {
+        console.error('Failed to initialize app:', _error);
         toast.error('Failed to connect to the backend service');
       }
     };

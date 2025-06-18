@@ -60,8 +60,8 @@ export const Header: React.FC<HeaderProps> = ({
     if (currentSession && newModel !== currentSession.model) {
       try {
         await updateCurrentSessionModel(newModel);
-      } catch (error) {
-        console.error('Failed to update session model:', error);
+      } catch (_error) {
+        console.error('Failed to update session model:', _error);
       }
     }
   };

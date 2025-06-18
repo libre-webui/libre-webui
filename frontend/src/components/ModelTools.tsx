@@ -70,6 +70,7 @@ export const ModelTools: React.FC = () => {
     setLoading(true);
     try {
       const res = await ollamaApi.createModel({
+        model: createModelName,
         name: createModelName,
         modelfile: createFile,
       });

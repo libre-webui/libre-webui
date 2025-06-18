@@ -90,8 +90,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         console.log('Attempting to delete session:', sessionId);
         await deleteSession(sessionId);
         console.log('Session deleted successfully');
-      } catch (error) {
-        console.error('Error deleting session:', error);
+      } catch (_error) {
+        console.error('Error deleting session:', _error);
       }
     }
   };

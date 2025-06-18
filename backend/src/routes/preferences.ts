@@ -17,7 +17,7 @@
 
 import express, { Request, Response } from 'express';
 import preferencesService from '../services/preferencesService';
-import { ApiResponse, UserPreferences } from '../types';
+import { ApiResponse, UserPreferences, getErrorMessage } from '../types';
 
 const router = express.Router();
 
@@ -34,10 +34,10 @@ router.get(
         success: true,
         data: preferences,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to get preferences'),
       });
     }
   }
@@ -58,10 +58,10 @@ router.put(
         success: true,
         data: updatedPreferences,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to update preferences'),
       });
     }
   }
@@ -91,10 +91,10 @@ router.put(
         success: true,
         data: updatedPreferences,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to set default model'),
       });
     }
   }
@@ -124,10 +124,10 @@ router.put(
         success: true,
         data: updatedPreferences,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: getErrorMessage(error, 'Failed to set system message'),
       });
     }
   }

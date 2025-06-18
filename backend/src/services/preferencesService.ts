@@ -52,8 +52,8 @@ class PreferencesService {
         );
         console.log('Created preferences.json with default settings');
       }
-    } catch (error) {
-      console.error('Failed to create preferences file:', error);
+    } catch (_error) {
+      console.error('Failed to create preferences file:', _error);
     }
   }
 
@@ -65,8 +65,8 @@ class PreferencesService {
         // Merge with defaults to ensure all fields exist
         return { ...this.defaultPreferences, ...preferences };
       }
-    } catch (error) {
-      console.error('Failed to load preferences:', error);
+    } catch (_error) {
+      console.error('Failed to load preferences:', _error);
     }
     return this.defaultPreferences;
   }
@@ -83,9 +83,9 @@ class PreferencesService {
       console.log('Preferences updated:', updates);
 
       return updatedPreferences;
-    } catch (error) {
-      console.error('Failed to save preferences:', error);
-      throw error;
+    } catch (_error) {
+      console.error('Failed to save preferences:', _error);
+      throw _error;
     }
   }
 

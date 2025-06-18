@@ -141,9 +141,9 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
       const parsed = JSON.parse(customSchema);
       onFormatChange(parsed);
       setShowCustom(false);
-    } catch (error) {
+    } catch (_error) {
       // Handle JSON parse error
-      console.error('Invalid JSON schema:', error);
+      console.error('Invalid JSON schema:', _error);
     }
   };
 

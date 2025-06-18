@@ -55,6 +55,7 @@ export const SettingsPage: React.FC = () => {
   // Load system information
   useEffect(() => {
     loadSystemInfo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [models, sessions]);
 
   const loadSystemInfo = async () => {
@@ -73,8 +74,8 @@ export const SettingsPage: React.FC = () => {
         sessionsCount: sessions.length,
         isHealthy: healthResponse.success,
       });
-    } catch (error) {
-      console.error('Failed to load system info:', error);
+    } catch (_error) {
+      console.error('Failed to load system info:', _error);
     }
   };
 
@@ -88,8 +89,10 @@ export const SettingsPage: React.FC = () => {
         setPreferences(response.data);
         toast.success('Settings updated successfully');
       }
-    } catch (error: any) {
-      toast.error('Failed to update settings: ' + error.message);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to update settings: ' + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -119,8 +122,10 @@ export const SettingsPage: React.FC = () => {
       await clearAllSessions();
       toast.success('All chat sessions deleted');
       loadSystemInfo();
-    } catch (error: any) {
-      toast.error('Failed to clear sessions: ' + error.message);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to clear sessions: ' + errorMessage);
     }
   };
 

@@ -90,7 +90,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       loadSystemInfo();
       setTempSystemMessage(systemMessage);
     }
-  }, [isOpen, systemMessage, models, sessions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, systemMessage]);
 
   const loadSystemInfo = async () => {
     try {
@@ -108,8 +109,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         sessionsCount: sessions.length,
         isHealthy: healthResponse.success,
       });
-    } catch (error) {
-      console.error('Failed to load system info:', error);
+    } catch (_error) {
+      console.error('Failed to load system info:', _error);
     }
   };
 
@@ -122,8 +123,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         setPreferences(response.data);
         toast.success('Settings updated successfully');
       }
-    } catch (error: any) {
-      toast.error('Failed to update settings: ' + error.message);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to update settings: ' + errorMessage);
     }
   };
 

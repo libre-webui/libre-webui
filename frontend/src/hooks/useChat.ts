@@ -19,7 +19,6 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import websocketService from '@/utils/websocket';
-import { ChatMessage } from '@/types';
 import { generateId } from '@/utils';
 import toast from 'react-hot-toast';
 
@@ -61,88 +60,90 @@ export const useChat = (sessionId: string) => {
     websocketService.offMessage('error');
 
     // Set up handlers for this session
-    websocketService.onMessage('user_message', (_data: ChatMessage) => {
+    websocketService.onMessage('user_message', () => {
       // User message confirmation - already handled in sendMessage
     });
 
-    websocketService.onMessage(
-      'assistant_chunk',
-      (data: {
+    websocketService.onMessage('assistant_chunk', (data: unknown) => {
+      // Type guard to ensure data has the expected structure
+      const chunkData = data as {
         content: string;
         total: string;
         done: boolean;
         messageId?: string;
-      }) => {
+      };
+      console.log(
+        'Hook: Received assistant_chunk for session:',
+        sessionId,
+        'total length:',
+        chunkData.total.length,
+        'messageId:',
+        chunkData.messageId
+      );
+
+      // Use messageId from backend if provided, otherwise fall back to current streaming ID
+      const messageId = chunkData.messageId || streamingMessageIdRef.current;
+
+      if (messageId) {
+        setStreamingMessage(chunkData.total);
         console.log(
-          'Hook: Received assistant_chunk for session:',
-          sessionId,
-          'total length:',
-          data.total.length,
-          'messageId:',
-          data.messageId
+          'Hook: Updating message',
+          messageId,
+          'with content length:',
+          chunkData.total.length
         );
-
-        // Use messageId from backend if provided, otherwise fall back to current streaming ID
-        const messageId = data.messageId || streamingMessageIdRef.current;
-
-        if (messageId) {
-          setStreamingMessage(data.total);
-          console.log(
-            'Hook: Updating message',
-            messageId,
-            'with content length:',
-            data.total.length
-          );
-          updateMessage(sessionId, messageId, data.total);
-        }
+        updateMessage(sessionId, messageId, chunkData.total);
       }
-    );
+    });
 
-    websocketService.onMessage(
-      'assistant_complete',
-      (data: {
+    websocketService.onMessage('assistant_complete', (data: unknown) => {
+      const completeData = data as {
         content: string;
         role: string;
         timestamp: number;
         messageId?: string;
-      }) => {
+      };
+      console.log(
+        'Hook: Received assistant_complete for session:',
+        sessionId,
+        'messageId:',
+        completeData.messageId
+      );
+      setIsStreaming(false);
+      setStreamingMessage('');
+      setIsGenerating(false);
+
+      // Use messageId from backend if provided, otherwise fall back to current streaming ID
+      const messageId = completeData.messageId || streamingMessageIdRef.current;
+
+      if (completeData && messageId) {
         console.log(
-          'Hook: Received assistant_complete for session:',
-          sessionId,
-          'messageId:',
-          data.messageId
+          'Hook: Final update for message',
+          messageId,
+          'with content length:',
+          completeData.content.length
         );
-        setIsStreaming(false);
-        setStreamingMessage('');
-        setIsGenerating(false);
+        updateMessage(sessionId, messageId, completeData.content);
 
-        // Use messageId from backend if provided, otherwise fall back to current streaming ID
-        const messageId = data.messageId || streamingMessageIdRef.current;
-
-        if (data && messageId) {
-          console.log(
-            'Hook: Final update for message',
-            messageId,
-            'with content length:',
-            data.content.length
-          );
-          updateMessage(sessionId, messageId, data.content);
-
-          // No need to save to backend - backend already saved it
-          console.log('Hook: Message completed and saved by backend');
-        }
-
-        streamingMessageIdRef.current = null;
+        // No need to save to backend - backend already saved it
+        console.log('Hook: Message completed and saved by backend');
       }
-    );
 
-    websocketService.onMessage('error', (data: { error: string }) => {
-      console.log('Hook: Received error for session:', sessionId, data.error);
+      streamingMessageIdRef.current = null;
+    });
+
+    websocketService.onMessage('error', (data: unknown) => {
+      const errorData = data as { error: string };
+      console.log(
+        'Hook: Received error for session:',
+        sessionId,
+        errorData.error
+      );
       setIsStreaming(false);
       setStreamingMessage('');
       setIsGenerating(false);
       streamingMessageIdRef.current = null;
-      toast.error(data.error);
+      toast.error(errorData.error);
     });
 
     // Reset streaming state when switching sessions
@@ -203,7 +204,7 @@ export const useChat = (sessionId: string) => {
             assistantMessageId, // Send the message ID to backend
           },
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to send message:', error);
         setIsStreaming(false);
         setStreamingMessage('');

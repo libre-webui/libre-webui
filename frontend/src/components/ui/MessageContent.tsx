@@ -39,8 +39,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
       await navigator.clipboard.writeText(text);
       setCopiedCode(text);
       setTimeout(() => setCopiedCode(null), 2000);
-    } catch (error) {
-      console.error('Failed to copy text:', error);
+    } catch (_error) {
+      console.error('Failed to copy text:', _error);
     }
   };
 
@@ -53,7 +53,8 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     >
       <ReactMarkdown
         components={{
-          code({ node, inline, className, children, ...props }: any) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          code({ inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
             const codeString = String(children).replace(/\n$/, '');
 
@@ -102,6 +103,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
               </code>
             );
           },
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           pre({ children, ...props }: any) {
             return <pre {...props}>{children}</pre>;
           },

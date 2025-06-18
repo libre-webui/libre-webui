@@ -55,7 +55,7 @@ export interface GenerationOptions {
   stop?: string[];
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
   error?: string;
@@ -69,7 +69,7 @@ export interface WebSocketMessage {
     | 'assistant_chunk'
     | 'assistant_complete'
     | 'error';
-  data: any;
+  data: unknown;
 }
 
 export interface Theme {
@@ -81,4 +81,68 @@ export interface UserPreferences {
   defaultModel: string;
   systemMessage: string;
   generationOptions: GenerationOptions;
+}
+
+// Additional types for API calls
+export interface ChatGenerationOptions {
+  temperature?: number;
+  top_p?: number;
+  top_k?: number;
+  num_predict?: number;
+  stop?: string[];
+  format?: string | Record<string, unknown>;
+  tools?: Record<string, unknown>[];
+  think?: boolean;
+  keep_alive?: string;
+}
+
+export interface StreamingCallbacks {
+  onMessage: (data: ChatMessage | { content: string; done?: boolean }) => void;
+  onError?: (error: Error) => void;
+  onComplete?: () => void;
+}
+
+export interface SystemInfo {
+  version?: string;
+  models?: OllamaModel[];
+  status?: string;
+}
+
+export interface ModelCreatePayload {
+  name?: string; // For model name when creating
+  model: string;
+  modelfile?: string; // For Ollama modelfile content
+  from?: string;
+  files?: Record<string, string>;
+  adapters?: Record<string, string>;
+  template?: string;
+  license?: string | string[];
+  system?: string;
+  parameters?: Record<string, unknown>;
+  messages?: Record<string, unknown>[];
+  stream?: boolean;
+  quantize?: string;
+}
+
+export interface EmbeddingPayload {
+  model: string;
+  input?: string | string[];
+  prompt?: string; // Legacy embedding API support
+  truncate?: boolean;
+  options?: Record<string, unknown>;
+  keep_alive?: string;
+}
+
+export interface EmbeddingResponse {
+  embeddings: number[][];
+}
+
+export interface RunningModel {
+  name: string;
+  model: string;
+  size: number;
+  digest: string;
+  details?: Record<string, unknown>;
+  expires_at?: string;
+  size_vram?: number;
 }
