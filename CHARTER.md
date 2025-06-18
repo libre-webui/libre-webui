@@ -13,7 +13,7 @@ We pursue simplicity and user sovereignty above growth, hype, or outside investm
 
 | Principle               | Commitment                                                                                                                           |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Freedom**             | Source code will remain licensed under the **MIT License** in perpetuity.                                                            |
+| **Freedom**             | Source code will remain licensed under the **Apache License 2.0** in perpetuity.                                                     |
 | **Privacy**             | **Zero telemetry**. No analytics, no tracking, no phone‑home code—ever.                                                              |
 | **Transparency**        | All decisions, road‑maps, and governance discussions occur in public issues/PRs or recorded community calls.                         |
 | **Inclusive Community** | We enforce a strict anti‑harassment policy. All contributors and users are welcome regardless of background, identity, or geography. |
