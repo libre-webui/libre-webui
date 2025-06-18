@@ -58,7 +58,14 @@ export default [
       ...typescript.configs.recommended.rules,
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_'
+        }
+      ],
       'no-unused-vars': 'off', // Turn off base rule as it can report incorrect errors
       'no-undef': 'off', // TypeScript handles this
       '@typescript-eslint/explicit-function-return-type': 'off',

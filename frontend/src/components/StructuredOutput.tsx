@@ -23,8 +23,8 @@ import { Textarea } from '@/components/ui/Textarea';
 import { cn } from '@/utils';
 
 interface StructuredOutputProps {
-  format: string | Record<string, any> | null;
-  onFormatChange: (format: string | Record<string, any> | null) => void;
+  format: string | Record<string, unknown> | null;
+  onFormatChange: (format: string | Record<string, unknown> | null) => void;
   className?: string;
 }
 

@@ -156,7 +156,7 @@ export const useChat = (sessionId: string) => {
     async (
       content: string,
       images?: string[],
-      format?: string | Record<string, any>
+      format?: string | Record<string, unknown>
     ) => {
       if (!sessionId || !content.trim()) return;
 

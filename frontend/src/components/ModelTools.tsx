@@ -19,17 +19,18 @@ import React, { useState } from 'react';
 import { Button, Input, Textarea } from '@/components/ui';
 import { ollamaApi } from '@/utils/api';
 import { useChatStore } from '@/store/chatStore';
+import { RunningModel, OllamaModel } from '@/types';
 import toast from 'react-hot-toast';
 
 export const ModelTools: React.FC = () => {
   const { selectedModel } = useChatStore();
-  const [info, setInfo] = useState<any | null>(null);
+  const [info, setInfo] = useState<OllamaModel | null>(null);
   const [createModelName, setCreateModelName] = useState('');
   const [createFile, setCreateFile] = useState('');
   const [copySrc, setCopySrc] = useState('');
   const [copyDest, setCopyDest] = useState('');
   const [embedText, setEmbedText] = useState('');
-  const [running, setRunning] = useState<any[]>([]);
+  const [running, setRunning] = useState<RunningModel[]>([]);
   const [version, setVersion] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -39,12 +40,13 @@ export const ModelTools: React.FC = () => {
     try {
       const res = await ollamaApi.showModel(selectedModel, true);
       if (res.success) {
-        setInfo(res.data);
+        setInfo(res.data || null);
       } else {
         toast.error(res.error || 'Failed to fetch info');
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(errorMessage);
     }
     setLoading(false);
   };
@@ -59,8 +61,9 @@ export const ModelTools: React.FC = () => {
       } else {
         toast.error(res.error || 'Failed');
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(errorMessage);
     }
     setLoading(false);
   };
@@ -79,8 +82,9 @@ export const ModelTools: React.FC = () => {
       } else {
         toast.error(res.error || 'Failed');
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(errorMessage);
     }
     setLoading(false);
   };
@@ -95,8 +99,9 @@ export const ModelTools: React.FC = () => {
       } else {
         toast.error(res.error || 'Failed');
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(errorMessage);
     }
     setLoading(false);
   };
@@ -115,8 +120,9 @@ export const ModelTools: React.FC = () => {
       } else {
         toast.error(res.error || 'Failed');
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(errorMessage);
     }
     setLoading(false);
   };
@@ -130,8 +136,9 @@ export const ModelTools: React.FC = () => {
       } else {
         toast.error(res.error || 'Failed');
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(errorMessage);
     }
     setLoading(false);
   };
@@ -145,8 +152,9 @@ export const ModelTools: React.FC = () => {
       } else {
         toast.error(res.error || 'Failed');
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      toast.error(errorMessage);
     }
     setLoading(false);
   };

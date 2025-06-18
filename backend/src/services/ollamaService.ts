@@ -20,6 +20,11 @@ import {
   OllamaModel,
   OllamaGenerateRequest,
   OllamaGenerateResponse,
+  OllamaCreateRequest,
+  OllamaEmbeddingsRequest,
+  OllamaEmbeddingsResponse,
+  OllamaChatRequest,
+  OllamaChatResponse,
   getErrorMessage,
 } from '../types';
 
@@ -191,7 +196,10 @@ class OllamaService {
     }
   }
 
-  async showModel(modelName: string, verbose = false): Promise<any> {
+  async showModel(
+    modelName: string,
+    verbose = false
+  ): Promise<Record<string, unknown>> {
     try {
       const response = await this.client.post('/api/show', {
         model: modelName,
@@ -204,7 +212,7 @@ class OllamaService {
     }
   }
 
-  async createModel(payload: any): Promise<void> {
+  async createModel(payload: OllamaCreateRequest): Promise<void> {
     try {
       await this.client.post('/api/create', payload);
     } catch (error: unknown) {
@@ -231,7 +239,9 @@ class OllamaService {
     }
   }
 
-  async generateEmbeddings(payload: any): Promise<any> {
+  async generateEmbeddings(
+    payload: OllamaEmbeddingsRequest
+  ): Promise<OllamaEmbeddingsResponse> {
     try {
       const response = await this.client.post('/api/embed', payload);
       return response.data;
@@ -241,7 +251,7 @@ class OllamaService {
     }
   }
 
-  async listRunningModels(): Promise<any> {
+  async listRunningModels(): Promise<{ models: Record<string, unknown>[] }> {
     try {
       const response = await this.client.get('/api/ps');
       return response.data;
@@ -251,7 +261,7 @@ class OllamaService {
     }
   }
 
-  async getVersion(): Promise<any> {
+  async getVersion(): Promise<{ version: string }> {
     try {
       const response = await this.client.get('/api/version');
       return response.data;
@@ -262,7 +272,9 @@ class OllamaService {
   }
 
   // Chat completion methods
-  async generateChatResponse(request: any): Promise<any> {
+  async generateChatResponse(
+    request: OllamaChatRequest
+  ): Promise<OllamaChatResponse> {
     try {
       const response = await this.client.post('/api/chat', {
         ...request,
@@ -278,8 +290,8 @@ class OllamaService {
   }
 
   async generateChatStreamResponse(
-    request: any,
-    onChunk: (chunk: any) => void,
+    request: OllamaChatRequest,
+    onChunk: (chunk: OllamaChatResponse) => void,
     onError: (error: Error) => void,
     onComplete: () => void
   ): Promise<void> {
@@ -366,7 +378,9 @@ class OllamaService {
   }
 
   // Legacy embeddings endpoint (deprecated but still supported)
-  async generateLegacyEmbeddings(payload: any): Promise<any> {
+  async generateLegacyEmbeddings(
+    payload: Record<string, unknown>
+  ): Promise<{ embedding: number[] }> {
     try {
       const response = await this.client.post('/api/embeddings', payload);
       return response.data;
@@ -432,13 +446,15 @@ class OllamaService {
             modelName: model.name,
             status: 'success',
           });
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const errorMessage =
+            err instanceof Error ? err.message : 'Unknown error';
           onProgress({
             current: i + 1,
             total,
             modelName: model.name,
             status: 'error',
-            error: err.message,
+            error: errorMessage,
           });
         }
       }

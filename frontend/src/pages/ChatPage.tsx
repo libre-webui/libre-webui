@@ -45,7 +45,7 @@ export const ChatPage: React.FC = () => {
   const handleSendMessage = (
     message: string,
     images?: string[],
-    format?: string | Record<string, any>
+    format?: string | Record<string, unknown>
   ) => {
     if (!currentSession) return;
     sendMessage(message, images, format);

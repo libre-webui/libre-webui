@@ -29,6 +29,7 @@ import chatRoutes from './routes/chat';
 import preferencesRoutes from './routes/preferences';
 import ollamaService from './services/ollamaService';
 import chatService from './services/chatService';
+import { OllamaChatRequest, OllamaChatMessage } from './types';
 
 // Load environment variables
 dotenv.config();
@@ -163,13 +164,9 @@ wss.on('connection', ws => {
         const contextMessages = chatService.getMessagesForContext(sessionId);
 
         // Convert our messages to Ollama format
-        const ollamaMessages = contextMessages.map(msg => {
-          const ollamaMessage: {
-            role: string;
-            content: string;
-            images?: string[];
-          } = {
-            role: msg.role,
+        const ollamaMessages: OllamaChatMessage[] = contextMessages.map(msg => {
+          const ollamaMessage: OllamaChatMessage = {
+            role: msg.role as OllamaChatMessage['role'],
             content: msg.content,
           };
 
@@ -195,15 +192,7 @@ wss.on('connection', ws => {
         console.log('Backend: Using assistantMessageId:', assistantMessageId);
 
         // Create chat request with advanced features
-        const chatRequest: {
-          model: string;
-          messages: typeof ollamaMessages;
-          stream: boolean;
-          options?: Record<string, unknown>;
-          format?: string | Record<string, unknown>;
-          tools?: Record<string, unknown>[];
-          think?: boolean;
-        } = {
+        const chatRequest: OllamaChatRequest = {
           model: session.model,
           messages: ollamaMessages,
           stream: true,

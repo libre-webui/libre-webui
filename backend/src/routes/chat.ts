@@ -22,6 +22,7 @@ import {
   ApiResponse,
   ChatSession,
   ChatMessage,
+  OllamaChatResponse,
   getErrorMessage,
 } from '../types';
 
@@ -313,7 +314,8 @@ router.post(
       };
 
       // Generate response using Ollama
-      const response = await ollamaService.generateChatResponse(chatRequest);
+      const response: OllamaChatResponse =
+        await ollamaService.generateChatResponse(chatRequest);
 
       // Add assistant response to session
       const assistantMessage = chatService.addMessage(sessionId, {
@@ -417,13 +419,13 @@ router.post(
           res.write(
             `data: ${JSON.stringify({
               type: 'chunk',
-              content: chunk.message?.content || '',
+              content: chunk.message.content || '',
               done: chunk.done,
             })}\n\n`
           );
 
           // Accumulate response content
-          if (chunk.message?.content) {
+          if (chunk.message.content) {
             fullResponse += chunk.message.content;
           }
         },

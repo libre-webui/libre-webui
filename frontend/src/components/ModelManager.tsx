@@ -18,6 +18,7 @@
 import React, { useState, useEffect } from 'react';
 import { ollamaApi } from '@/utils/api';
 import { Button } from '@/components/ui/Button';
+import { RunningModel } from '@/types';
 import toast from 'react-hot-toast';
 
 interface ModelInfo {
@@ -35,7 +36,7 @@ interface ModelInfo {
 
 export const ModelManager: React.FC = () => {
   const [models, setModels] = useState<ModelInfo[]>([]);
-  const [runningModels, setRunningModels] = useState<any>([]);
+  const [runningModels, setRunningModels] = useState<RunningModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [pullModelName, setPullModelName] = useState('');
   const [pulling, setPulling] = useState(false);
@@ -127,7 +128,7 @@ export const ModelManager: React.FC = () => {
   };
 
   const isModelRunning = (modelName: string) => {
-    return runningModels.some((m: any) => m.name === modelName);
+    return runningModels.some((m: RunningModel) => m.name === modelName);
   };
 
   if (loading) {
@@ -176,7 +177,7 @@ export const ModelManager: React.FC = () => {
             Running Models
           </h3>
           <div className='space-y-2'>
-            {runningModels.map((model: any) => (
+            {runningModels.map((model: RunningModel) => (
               <div
                 key={model.name}
                 className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800'
