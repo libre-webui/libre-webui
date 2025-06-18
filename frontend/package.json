@@ -17,7 +17,7 @@
     "axios": "^1.10.0",
     "clsx": "^2.0.0",
     "eslint-plugin-react-refresh": "^0.4.20",
-    "lucide-react": "^0.515.0",
+    "lucide-react": "^0.517.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
