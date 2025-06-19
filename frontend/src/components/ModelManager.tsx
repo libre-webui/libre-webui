@@ -55,7 +55,7 @@ export const ModelManager: React.FC = () => {
       }
 
       if (runningResponse.success) {
-        setRunningModels(runningResponse.data || []);
+        setRunningModels(Array.isArray(runningResponse.data) ? runningResponse.data : []);
       }
     } catch (error: unknown) {
       const errorMessage =
@@ -128,7 +128,7 @@ export const ModelManager: React.FC = () => {
   };
 
   const isModelRunning = (modelName: string) => {
-    return runningModels.some((m: RunningModel) => m.name === modelName);
+    return Array.isArray(runningModels) && runningModels.some((m: RunningModel) => m.name === modelName);
   };
 
   if (loading) {
@@ -171,7 +171,7 @@ export const ModelManager: React.FC = () => {
       </div>
 
       {/* Running Models Section */}
-      {runningModels.length > 0 && (
+      {Array.isArray(runningModels) && runningModels.length > 0 && (
         <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
           <h3 className='text-lg font-semibold mb-4 text-gray-900 dark:text-dark-800'>
             Running Models
