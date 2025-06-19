@@ -55,7 +55,9 @@ export const ModelManager: React.FC = () => {
       }
 
       if (runningResponse.success) {
-        setRunningModels(Array.isArray(runningResponse.data) ? runningResponse.data : []);
+        setRunningModels(
+          Array.isArray(runningResponse.data) ? runningResponse.data : []
+        );
       }
     } catch (error: unknown) {
       const errorMessage =
@@ -128,7 +130,10 @@ export const ModelManager: React.FC = () => {
   };
 
   const isModelRunning = (modelName: string) => {
-    return Array.isArray(runningModels) && runningModels.some((m: RunningModel) => m.name === modelName);
+    return (
+      Array.isArray(runningModels) &&
+      runningModels.some((m: RunningModel) => m.name === modelName)
+    );
   };
 
   if (loading) {
