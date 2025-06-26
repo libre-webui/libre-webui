@@ -1,10 +1,12 @@
 # Libre WebUI
 
-A minimalist interface for local LLMs via Ollama.
+A minimalist, privacy-first interface for local LLMs via Ollama.
 
 <img src="./rr.jpg" alt="Rick Rubin Coding Wisdom" width="300">
 
 _Like Rick Rubin strips music to its essence, Libre WebUI strips away UI complexity. Simple. Minimal. Effective._
+
+---
 
 ## Free & Open Source
 
@@ -14,6 +16,8 @@ _Like Rick Rubin strips music to its essence, Libre WebUI strips away UI complex
 
 Complete offline inference on your own hardware. No data leaves your machine unless you configure it to.
 
+---
+
 ## Setup
 
 ```bash
@@ -22,8 +26,6 @@ Complete offline inference on your own hardware. No data leaves your machine unl
 
 # Option 2: Manual
 npm install
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
 npm run dev
 ```
 
@@ -36,7 +38,7 @@ Welcome! Getting started with Libre WebUI development is simple:
 1. **Clone and install dependencies:**
 
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/libre-webui/libre-webui
    cd libre-webui
    npm install
    ```
@@ -124,12 +126,12 @@ The configuration automatically handles client-side routing for the `/models` pa
 
 ## Configuration
 
-The app automatically generates configuration files on first run:
+The app automatically generates configuration files on first run (these are excluded from version control for privacy):
 
 - `backend/preferences.json` - User preferences (default model, theme, system message)
 - `backend/sessions.json` - Chat session data
 
-These files are automatically created with sensible defaults and are excluded from version control to keep your personal settings private.
+---
 
 ## Features
 
@@ -284,3 +286,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 Copyright (C) 2025 Kroonen AI, Inc.
+
+<sub>LIBRE WEBUI is a trademark of Kroonen AI, Inc.</sub>
