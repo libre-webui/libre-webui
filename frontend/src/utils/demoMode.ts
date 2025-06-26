@@ -33,26 +33,30 @@ export const isDemoMode = (): boolean => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
 
+    // Helper to check if hostname is an exact match or subdomain of allowed hosts
+    const isAllowedHost = (allowedHosts: string[]) =>
+      allowedHosts.some(h => hostname === h || hostname.endsWith('.' + h));
+
     // Vercel deployment
-    const allowedVercelHosts = ['vercel.app', 'www.vercel.app', 'vercel.dev', 'www.vercel.dev'];
-    if (allowedVercelHosts.includes(hostname)) {
+    const allowedVercelHosts = ['vercel.app', 'vercel.dev'];
+    if (isAllowedHost(allowedVercelHosts)) {
       return true;
     }
 
     // Netlify deployment
-    const allowedNetlifyHosts = ['netlify.app', 'www.netlify.app', 'netlify.com', 'www.netlify.com'];
-    if (allowedNetlifyHosts.includes(hostname)) {
+    const allowedNetlifyHosts = ['netlify.app', 'netlify.com'];
+    if (isAllowedHost(allowedNetlifyHosts)) {
       return true;
     }
 
     // GitHub Pages
-    const allowedGitHubHosts = ['github.io', 'www.github.io'];
-    if (allowedGitHubHosts.includes(hostname)) {
+    const allowedGitHubHosts = ['github.io'];
+    if (isAllowedHost(allowedGitHubHosts)) {
       return true;
     }
 
     // Other common demo domains
-    if (hostname.includes('demo.') || hostname.includes('preview.')) {
+    if (hostname.startsWith('demo.') || hostname.startsWith('preview.')) {
       return true;
     }
   }
