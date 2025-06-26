@@ -178,7 +178,8 @@ class OllamaService {
       console.log(`Successfully pulled model: ${modelName}`);
     } catch (error: unknown) {
       console.error(
-        `Failed to pull model ${modelName}:`,
+        'Failed to pull model:',
+        String(modelName),
         getErrorMessage(error, 'Unknown error')
       );
       throw new Error(getErrorMessage(error, 'Failed to pull model'));
