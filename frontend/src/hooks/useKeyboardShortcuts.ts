@@ -63,9 +63,11 @@ export const useKeyboardShortcuts = (
       const matchingShortcut = shortcuts.find(shortcut => {
         const keyMatches =
           shortcut.key.toLowerCase() === event.key.toLowerCase();
-        const metaMatches =
-          !!shortcut.metaKey === (event.metaKey || event.ctrlKey);
-        const ctrlMatches = !!shortcut.ctrlKey === event.ctrlKey;
+        // Accept either metaKey (Cmd) or ctrlKey (Ctrl) for cross-platform support
+        const metaOrCtrl = !!shortcut.metaKey;
+        const metaOrCtrlPressed = event.metaKey || event.ctrlKey;
+        const metaMatches = metaOrCtrl ? metaOrCtrlPressed : true;
+        const ctrlMatches = shortcut.ctrlKey ? event.ctrlKey : true;
         const shiftMatches = !!shortcut.shiftKey === event.shiftKey;
         const altMatches = !!shortcut.altKey === event.altKey;
 
