@@ -33,23 +33,30 @@ export const isDemoMode = (): boolean => {
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
 
+    // Helper to check if hostname is an exact match or subdomain of allowed hosts
+    const isAllowedHost = (allowedHosts: string[]) =>
+      allowedHosts.some(h => hostname === h || hostname.endsWith('.' + h));
+
     // Vercel deployment
-    if (hostname.includes('vercel.app') || hostname.includes('vercel.dev')) {
+    const allowedVercelHosts = ['vercel.app', 'vercel.dev'];
+    if (isAllowedHost(allowedVercelHosts)) {
       return true;
     }
 
     // Netlify deployment
-    if (hostname.includes('netlify.app') || hostname.includes('netlify.com')) {
+    const allowedNetlifyHosts = ['netlify.app', 'netlify.com'];
+    if (isAllowedHost(allowedNetlifyHosts)) {
       return true;
     }
 
     // GitHub Pages
-    if (hostname.includes('github.io')) {
+    const allowedGitHubHosts = ['github.io'];
+    if (isAllowedHost(allowedGitHubHosts)) {
       return true;
     }
 
     // Other common demo domains
-    if (hostname.includes('demo.') || hostname.includes('preview.')) {
+    if (hostname.startsWith('demo.') || hostname.startsWith('preview.')) {
       return true;
     }
   }
