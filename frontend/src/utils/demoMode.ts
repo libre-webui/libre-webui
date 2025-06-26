@@ -34,17 +34,20 @@ export const isDemoMode = (): boolean => {
     const hostname = window.location.hostname;
 
     // Vercel deployment
-    if (hostname.includes('vercel.app') || hostname.includes('vercel.dev')) {
+    const allowedVercelHosts = ['vercel.app', 'www.vercel.app', 'vercel.dev', 'www.vercel.dev'];
+    if (allowedVercelHosts.includes(hostname)) {
       return true;
     }
 
     // Netlify deployment
-    if (hostname.includes('netlify.app') || hostname.includes('netlify.com')) {
+    const allowedNetlifyHosts = ['netlify.app', 'www.netlify.app', 'netlify.com', 'www.netlify.com'];
+    if (allowedNetlifyHosts.includes(hostname)) {
       return true;
     }
 
     // GitHub Pages
-    if (hostname.includes('github.io')) {
+    const allowedGitHubHosts = ['github.io', 'www.github.io'];
+    if (allowedGitHubHosts.includes(hostname)) {
       return true;
     }
 
