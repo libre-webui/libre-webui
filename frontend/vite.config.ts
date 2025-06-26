@@ -1,6 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const WS_BASE_URL = process.env.VITE_WS_BASE_URL || 'ws://localhost:3001';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -14,11 +20,11 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: API_BASE_URL,
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://localhost:3001',
+        target: WS_BASE_URL,
         ws: true,
       },
     },
