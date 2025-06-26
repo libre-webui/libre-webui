@@ -43,8 +43,19 @@ const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
 // Security middleware
 app.use(
   helmet({
-    crossOriginEmbedderPolicy: false,
-    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: true,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        imgSrc: ["'self'", 'data:'],
+        connectSrc: ["'self'"],
+        fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"],
+      },
+    },
   })
 );
 
