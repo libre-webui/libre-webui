@@ -366,6 +366,10 @@ class OllamaService {
   }
 
   async pushBlob(digest: string, data: Buffer | string): Promise<void> {
+    // Only allow lowercase hex strings of length 64 (SHA256)
+    if (!/^[a-f0-9]{64}$/.test(digest)) {
+      throw new Error('Invalid digest format');
+    }
     try {
       await this.client.post(`/api/blobs/${digest}`, data, {
         headers: {
