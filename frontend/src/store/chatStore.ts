@@ -118,7 +118,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatApi.getSessions();
 
       if (response.success && response.data) {
-        set({ sessions: response.data, loading: false });
+        set(state => {
+          const sessions = response.data || [];
+          const shouldSetCurrent = !state.currentSession && sessions.length > 0;
+          return {
+            sessions,
+            currentSession: shouldSetCurrent
+              ? sessions[0]
+              : state.currentSession,
+            loading: false,
+          };
+        });
       }
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to load sessions');
