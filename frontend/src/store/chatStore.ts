@@ -118,15 +118,49 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatApi.getSessions();
       console.log('[DEBUG] loadSessions response:', response);
       if (response.success && response.data) {
-        set(state => {
+        set(prevState => {
           const sessions = response.data || [];
-          const shouldSetCurrent = !state.currentSession && sessions.length > 0;
+          const backendSessionIds = sessions.map(s => s.id);
+          // Debug: Compare frontend and backend session IDs
+          const frontendSessionIds = prevState.sessions.map(s => s.id);
+          console.log('[DEBUG] Backend session IDs:', backendSessionIds);
+          console.log(
+            '[DEBUG] Frontend session IDs (before update):',
+            frontendSessionIds
+          );
+          let currentSession: ChatSession | null = null;
+          // Only keep currentSession if it exists in backend sessions
+          if (
+            prevState.currentSession &&
+            backendSessionIds.includes(prevState.currentSession.id)
+          ) {
+            currentSession =
+              sessions.find(s => s.id === prevState.currentSession!.id) || null;
+            console.log('[DEBUG] Keeping currentSession:', currentSession?.id);
+          } else if (sessions.length > 0) {
+            currentSession = sessions[0];
+            if (prevState.currentSession) {
+              console.warn(
+                '[DEBUG] Previous currentSession not found in backend sessions:',
+                prevState.currentSession.id
+              );
+              toast.error(
+                'Current session not found in backend. Please select or create a new chat.'
+              );
+            }
+            console.log(
+              '[DEBUG] Forced: currentSession set to first available:',
+              currentSession.id
+            );
+          } else {
+            console.log(
+              '[DEBUG] Forced: No valid sessions available, currentSession set to null'
+            );
+          }
           console.log('[DEBUG] Setting sessions:', sessions);
           return {
             sessions,
-            currentSession: shouldSetCurrent
-              ? sessions[0]
-              : state.currentSession,
+            currentSession,
             loading: false,
           };
         });
@@ -134,7 +168,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to load sessions');
       set({ error: errorMessage, loading: false });
-      console.error('Failed to load sessions:', error);
+      toast.error(errorMessage);
     }
   },
 
@@ -231,6 +265,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
     sessionId: string,
     message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }
   ) => {
+    const state = get();
+    // Block if currentSession is not valid
+    if (
+      !state.currentSession ||
+      !state.sessions.find(s => s.id === state.currentSession?.id)
+    ) {
+      toast.error('No valid chat session. Please create or select a chat.');
+      console.error(
+        'addMessage blocked: currentSession is not valid',
+        state.currentSession?.id
+      );
+      return;
+    }
+    // Block if sessionId is not in the current sessions list
+    if (!state.sessions.find(s => s.id === sessionId)) {
+      toast.error(
+        'Session not found or invalid. Please select or create a valid chat session.'
+      );
+      console.error(
+        'addMessage blocked: sessionId not found in sessions',
+        sessionId
+      );
+      return;
+    }
     const newMessage: ChatMessage = {
       ...message,
       id: message.id || generateId(),

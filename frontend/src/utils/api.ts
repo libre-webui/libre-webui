@@ -142,7 +142,8 @@ api.interceptors.response.use(
 export const chatApi = {
   // Sessions
   getSessions: (): Promise<ApiResponse<ChatSession[]>> => {
-    if (isDemoMode()) {
+    // DEMO MODE PATCH: Only use demo sessions if VITE_DEMO_MODE is explicitly 'true'
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
       return createDemoResponse(getDemoSessions());
     }
     return api.get('/chat/sessions').then(res => res.data);
@@ -152,7 +153,7 @@ export const chatApi = {
     model: string,
     title?: string
   ): Promise<ApiResponse<ChatSession>> => {
-    if (isDemoMode()) {
+    if (import.meta.env.VITE_DEMO_MODE === 'true') {
       const newSession: ChatSession = {
         id: `demo-session-${Date.now()}`,
         title: title || 'New Demo Session',
@@ -161,6 +162,7 @@ export const chatApi = {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       };
+      DEMO_SESSIONS.unshift(newSession);
       return createDemoResponse(newSession);
     }
     return api.post('/chat/sessions', { model, title }).then(res => res.data);
