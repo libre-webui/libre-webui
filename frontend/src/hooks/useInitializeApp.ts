@@ -41,10 +41,14 @@ export const useInitializeApp = () => {
             toast.error(
               "Ollama service is not available. Please make sure it's running."
             );
+            return;
+          } else {
+            // In demo mode, proceed to load models and sessions anyway
+            await loadPreferences();
+            await Promise.all([loadModels(), loadSessions()]);
+            return;
           }
-          return;
         }
-
         // Load preferences first, then models and sessions
         await loadPreferences();
         await Promise.all([loadModels(), loadSessions()]);
@@ -52,6 +56,10 @@ export const useInitializeApp = () => {
         console.error('Failed to initialize app:', _error);
         if (!isDemoMode()) {
           toast.error('Failed to connect to the backend service');
+        } else {
+          // In demo mode, proceed to load models and sessions anyway
+          await loadPreferences();
+          await Promise.all([loadModels(), loadSessions()]);
         }
       }
     };
