@@ -19,6 +19,7 @@ import { useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { ollamaApi } from '@/utils/api';
 import toast from 'react-hot-toast';
+import { isDemoMode } from '@/utils/demoMode';
 
 export const useInitializeApp = () => {
   const {
@@ -35,9 +36,11 @@ export const useInitializeApp = () => {
         // Check Ollama health
         const healthResponse = await ollamaApi.checkHealth();
         if (!healthResponse.success) {
-          toast.error(
-            "Ollama service is not available. Please make sure it's running."
-          );
+          if (!isDemoMode()) {
+            toast.error(
+              "Ollama service is not available. Please make sure it's running."
+            );
+          }
           return;
         }
 
@@ -46,7 +49,9 @@ export const useInitializeApp = () => {
         await Promise.all([loadModels(), loadSessions()]);
       } catch (_error) {
         console.error('Failed to initialize app:', _error);
-        toast.error('Failed to connect to the backend service');
+        if (!isDemoMode()) {
+          toast.error('Failed to connect to the backend service');
+        }
       }
     };
 
