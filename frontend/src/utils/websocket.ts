@@ -16,6 +16,7 @@
  */
 
 import { WebSocketMessage } from '@/types';
+import { isDemoMode } from '@/utils/demoMode';
 
 class WebSocketService {
   private ws: WebSocket | null = null;
@@ -35,6 +36,10 @@ class WebSocketService {
   }
 
   connect(): Promise<void> {
+    if (isDemoMode()) {
+      console.log('Demo mode active: skipping WebSocket connection.');
+      return Promise.resolve();
+    }
     return new Promise((resolve, reject) => {
       try {
         this.ws = new WebSocket(this.url);
@@ -99,6 +104,10 @@ class WebSocketService {
   }
 
   private attemptReconnect() {
+    if (isDemoMode()) {
+      console.log('Demo mode active: skipping WebSocket reconnection.');
+      return;
+    }
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       console.log(
