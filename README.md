@@ -2,11 +2,9 @@
 
 ![version](https://img.shields.io/github/package-json/v/libre-webui/libre-webui)
 
+![Libre WebUI Screenshot](./screenshot.png)
+
 A minimalist, privacy-first interface for local LLMs via Ollama.
-
-<img src="./rr.jpg" alt="Rick Rubin Coding Wisdom" width="300">
-
-_Like Rick Rubin strips music to its essence, Libre WebUI strips away UI complexity. Simple. Minimal. Effective._
 
 ---
 
