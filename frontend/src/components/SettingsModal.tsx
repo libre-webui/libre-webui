@@ -635,8 +635,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         Open Source
                       </p>
                       <p>
-                        100% free and open source software licensed under MIT.
-                        Community-driven development.
+                        100% free and open source software licensed under Apache
+                        2.0. Community-driven development.
                       </p>
                     </div>
                   </div>
@@ -770,8 +770,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Version Info */}
               <div className='mt-6 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
                 <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400'>
-                  <span>Version 0.1.0</span>
-                  <span>Built with ❤️ for the open source community</span>
+                  <span>Version 0.1.0-rc</span>
+                  <span>Built with ☕️ for the FOSS community</span>
                 </div>
               </div>
             </div>

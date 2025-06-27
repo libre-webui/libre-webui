@@ -386,7 +386,7 @@ export const SettingsPage: React.FC = () => {
               </p>
               <p>
                 <strong>Open Source:</strong> 100% free and open source software
-                licensed under MIT.
+                licensed under Apache 2.0.
               </p>
               <p>
                 <strong>Local Inference:</strong> Powered by Ollama for
