@@ -22,6 +22,7 @@ import toast from 'react-hot-toast';
 import { isDemoMode } from '@/utils/demoMode';
 
 export const useInitializeApp = () => {
+  console.log('[DEBUG] useInitializeApp hook running');
   const {
     loadSessions,
     loadModels,
