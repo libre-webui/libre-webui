@@ -116,11 +116,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       set({ loading: true, error: null });
       const response = await chatApi.getSessions();
-
+      console.log('[DEBUG] loadSessions response:', response);
       if (response.success && response.data) {
         set(state => {
           const sessions = response.data || [];
           const shouldSetCurrent = !state.currentSession && sessions.length > 0;
+          console.log('[DEBUG] Setting sessions:', sessions);
           return {
             sessions,
             currentSession: shouldSetCurrent
@@ -343,7 +344,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ loading: true, error: null });
       console.log('Loading models from API...');
       const response = await ollamaApi.getModels();
-
+      console.log('[DEBUG] loadModels response:', response);
       if (response.success && response.data) {
         console.log('Models loaded successfully:', response.data.length);
         set({ models: response.data, loading: false });
