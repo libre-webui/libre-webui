@@ -346,8 +346,12 @@ router.head(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { digest } = req.params;
+      // Only allow lowercase hex strings of length 64 (SHA256)
+      if (!/^[a-f0-9]{64}$/.test(digest)) {
+        res.status(400).json({ error: 'Invalid digest format' });
+        return;
+      }
       const exists = await ollamaService.checkBlobExists(digest);
-
       if (exists) {
         res.status(200).end();
       } else {
@@ -365,7 +369,11 @@ router.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { digest } = req.params;
-
+      // Only allow lowercase hex strings of length 64 (SHA256)
+      if (!/^[a-f0-9]{64}$/.test(digest)) {
+        res.status(400).json({ error: 'Invalid digest format' });
+        return;
+      }
       // Handle raw binary data
       const chunks: Buffer[] = [];
       req.on('data', chunk => {
