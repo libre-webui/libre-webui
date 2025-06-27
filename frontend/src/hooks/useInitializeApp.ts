@@ -53,11 +53,11 @@ export const useInitializeApp = () => {
         await loadPreferences();
         await Promise.all([loadModels(), loadSessions()]);
       } catch (_error) {
-        console.error('Failed to initialize app:', _error);
         if (!isDemoMode()) {
+          console.error('Failed to initialize app:', _error);
           toast.error('Failed to connect to the backend service');
         } else {
-          // In demo mode, proceed to load models and sessions anyway
+          // In demo mode, proceed to load models and sessions anyway, no error log
           await loadPreferences();
           await Promise.all([loadModels(), loadSessions()]);
         }
