@@ -83,30 +83,35 @@ const DEMO_MODELS: OllamaModel[] = [
   },
 ];
 
-const DEMO_SESSIONS: ChatSession[] = [
-  {
-    id: 'demo-session-1',
-    title: 'Demo Chat Session',
-    model: 'llama3.2:3b',
-    messages: [
-      {
-        id: 'demo-msg-1',
-        role: 'user',
-        content: 'Hello! Can you tell me about this demo?',
-        timestamp: Date.now(),
-      },
-      {
-        id: 'demo-msg-2',
-        role: 'assistant',
-        content:
-          'This is a demo of Libre WebUI! In a real deployment, I would be powered by Ollama running locally on your machine. This demo shows the beautiful interface and features without the backend connection.',
-        timestamp: Date.now(),
-      },
-    ],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  },
-];
+const getDemoSessions = (): ChatSession[] => {
+  // Always return at least one session in demo mode
+  return [
+    {
+      id: 'demo-session-1',
+      title: 'Demo Chat Session',
+      model: DEMO_MODELS[0].name,
+      messages: [
+        {
+          id: 'demo-msg-1',
+          role: 'user',
+          content: 'Hello! Can you tell me about this demo?',
+          timestamp: Date.now(),
+        },
+        {
+          id: 'demo-msg-2',
+          role: 'assistant',
+          content:
+            'This is a demo of Libre WebUI! In a real deployment, I would be powered by Ollama running locally on your machine. This demo shows the beautiful interface and features without the backend connection.',
+          timestamp: Date.now(),
+        },
+      ],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+  ];
+};
+
+const DEMO_SESSIONS: ChatSession[] = getDemoSessions();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -138,7 +143,7 @@ export const chatApi = {
   // Sessions
   getSessions: (): Promise<ApiResponse<ChatSession[]>> => {
     if (isDemoMode()) {
-      return createDemoResponse(DEMO_SESSIONS);
+      return createDemoResponse(getDemoSessions());
     }
     return api.get('/chat/sessions').then(res => res.data);
   },
@@ -163,7 +168,7 @@ export const chatApi = {
 
   getSession: (sessionId: string): Promise<ApiResponse<ChatSession>> => {
     if (isDemoMode()) {
-      const session = DEMO_SESSIONS.find(s => s.id === sessionId);
+      const session = getDemoSessions().find(s => s.id === sessionId);
       if (session) {
         return createDemoResponse(session);
       }
