@@ -56,7 +56,10 @@ export const ChatPage: React.FC = () => {
       <div className='flex-1 flex items-center justify-center p-8'>
         <div className='text-center max-w-md mx-auto'>
           <Logo size='lg' className='mx-auto mb-6' />
-          <h2 className='text-3xl font-bold text-gray-900 dark:text-dark-800 mb-3'>
+          <h2
+            className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 mb-3'
+            style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+          >
             Welcome to Libre WebUI
           </h2>
           <p className='text-gray-600 dark:text-dark-600 mb-8 leading-relaxed'>
