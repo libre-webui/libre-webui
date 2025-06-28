@@ -3,6 +3,13 @@
 @import 'tailwindcss/utilities';
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&display=swap');
+
+.libre-brand {
+  font-family: 'Instrument Serif', serif !important;
+  font-weight: 400 !important;
+  letter-spacing: 0.01em;
+}
 
 :root {
   font-family:

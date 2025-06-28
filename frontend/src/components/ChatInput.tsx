@@ -186,7 +186,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             href='https://librewebui.org'
             target='_blank'
             rel='noopener noreferrer'
-            className='underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+            className='libre-brand underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+            style={{ fontSize: '1.1em', lineHeight: 1 }}
           >
             Libre WebUI
           </a>{' '}

@@ -143,9 +143,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className='flex items-center justify-between mb-4 sm:mb-6'>
               <div className='flex items-center gap-3'>
                 <Logo size='sm' />
-                <h2 className='text-base sm:text-lg font-semibold text-gray-900 dark:text-dark-800'>
+                <span
+                  className='libre-brand text-lg sm:text-xl font-semibold text-gray-900 dark:text-dark-800'
+                  style={{ lineHeight: 1 }}
+                >
                   Libre WebUI
-                </h2>
+                </span>
               </div>
               <Button
                 variant='ghost'
