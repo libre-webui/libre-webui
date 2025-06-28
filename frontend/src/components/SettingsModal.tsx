@@ -610,9 +610,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         return (
           <div className='space-y-6'>
             <div>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                About Libre WebUI
+              <h3
+                className='libre-brand text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100 mb-4'
+                style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+              >
+                Libre WebUI
               </h3>
+              <div className='text-sm text-gray-700 dark:text-gray-300 mb-6'>
+                <span>About</span>
+              </div>
               <div className='bg-gray-50 dark:bg-dark-100 rounded-lg p-6 border border-gray-200 dark:border-dark-300'>
                 <div className='space-y-4 text-sm text-gray-700 dark:text-gray-300'>
                   <div className='flex items-start gap-3'>
