@@ -16,6 +16,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 | **[⌨️ Shortcuts](./04-KEYBOARD_SHORTCUTS.md)** | Productivity hotkeys | 2 min |
 | **[🎭 Demo Mode](./05-DEMO_MODE.md)** | Try without installation | 3 min |
 | **[🔧 Troubleshooting](./06-TROUBLESHOOTING.md)** | Fix common issues | As needed |
+| **[🔌 Plugin Architecture](./08-PLUGIN_ARCHITECTURE.md)** | External AI service integration | 12 min |
 
 ## � What is Libre WebUI?
 
@@ -26,12 +27,14 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 - 🖼️ **Image Support** - Upload and analyze images
 - 🎨 **Beautiful Interface** - Modern, responsive design
 - ⚡ **Fast & Efficient** - Optimized performance
+- 🔌 **Plugin System** - Connect to external AI services
 - 🆓 **Completely Free** - No subscriptions
 
 ## 🆘 Need Help?
 
 - **Setup issues?** → [Quick Start](./01-QUICK_START.md)
 - **Model questions?** → [Working with Models](./02-WORKING_WITH_MODELS.md)
+- **Plugin setup?** → [Plugin Architecture](./08-PLUGIN_ARCHITECTURE.md)
 - **Technical problems?** → [Troubleshooting](./06-TROUBLESHOOTING.md)
 
 ## 🤝 Contributing

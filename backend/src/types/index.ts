@@ -183,6 +183,71 @@ export interface OllamaLegacyEmbeddingsResponse {
   embedding: number[];
 }
 
+// Generation options for AI models
+export interface GenerationOptions {
+  temperature?: number;
+  top_p?: number;
+  top_k?: number;
+  num_predict?: number;
+  repeat_penalty?: number;
+  seed?: number;
+  stop?: string[];
+  stream?: boolean;
+}
+
+// Plugin system types
+export interface PluginAuthConfig {
+  header: string; // e.g., "x-api-key", "Authorization"
+  prefix?: string; // e.g., "Bearer ", "Token "
+  key_env: string; // Environment variable name
+}
+
+export interface Plugin {
+  id: string;
+  name: string;
+  type: 'completion' | 'embedding' | 'chat';
+  endpoint: string;
+  auth: PluginAuthConfig;
+  model_map: string[];
+  active?: boolean;
+  created_at?: number;
+  updated_at?: number;
+}
+
+export interface PluginStatus {
+  id: string;
+  active: boolean;
+  available: boolean;
+  last_used?: number;
+}
+
+export interface PluginRequest {
+  plugin_id: string;
+  model: string;
+  messages: ChatMessage[];
+  options?: GenerationOptions;
+}
+
+export interface PluginResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    index: number;
+    message: {
+      role: string;
+      content: string;
+    };
+    finish_reason: string;
+  }[];
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
+
 // Helper function to extract error message from unknown error
 export const getErrorMessage = (error: unknown, fallback: string): string => {
   if (error && typeof error === 'object' && 'response' in error) {

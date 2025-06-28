@@ -18,6 +18,7 @@
 import { create } from 'zustand';
 import { ChatSession, ChatMessage, OllamaModel } from '@/types';
 import { chatApi, ollamaApi, preferencesApi } from '@/utils/api';
+import { pluginApi } from '@/utils/api';
 import { generateId } from '@/utils';
 import toast from 'react-hot-toast';
 
@@ -401,15 +402,76 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       set({ loading: true, error: null });
       console.log('Loading models from API...');
-      const response = await ollamaApi.getModels();
-      console.log('[DEBUG] loadModels response:', response);
-      if (response.success && response.data) {
-        console.log('Models loaded successfully:', response.data.length);
-        set({ models: response.data, loading: false });
-      } else {
-        console.error('Failed to load models:', response);
-        set({ loading: false });
+
+      // Load Ollama models
+      const ollamaResponse = await ollamaApi.getModels();
+      console.log('[DEBUG] loadModels ollama response:', ollamaResponse);
+
+      let allModels: OllamaModel[] = [];
+
+      if (ollamaResponse.success && ollamaResponse.data) {
+        allModels = [...ollamaResponse.data];
+        console.log('Ollama models loaded:', ollamaResponse.data.length);
       }
+
+      // Load plugin models
+      try {
+        console.log('🔌 Loading plugin models...');
+        const pluginsResponse = await pluginApi.getAllPlugins();
+        console.log('🔌 Plugins API response:', pluginsResponse);
+        if (pluginsResponse.success && pluginsResponse.data) {
+          // Find active plugin and add its models
+          const activePlugin = pluginsResponse.data.find(
+            plugin => plugin.active
+          );
+          console.log('🔌 Active plugin found:', activePlugin);
+          if (activePlugin && activePlugin.model_map) {
+            const pluginModels: OllamaModel[] = activePlugin.model_map.map(
+              modelName => ({
+                name: modelName,
+                model: modelName,
+                size: 0, // Plugin models don't have size info
+                digest: '',
+                details: {
+                  parent_model: '',
+                  format: '',
+                  family: '',
+                  families: [],
+                  parameter_size: '',
+                  quantization_level: '',
+                },
+                modified_at: new Date().toISOString(),
+                expires_at: new Date().toISOString(),
+                size_vram: 0,
+                isPlugin: true,
+                pluginName: activePlugin.name,
+              })
+            );
+
+            allModels.push(...pluginModels);
+            console.log(
+              'Plugin models added:',
+              pluginModels.length,
+              'from',
+              activePlugin.name
+            );
+          }
+        }
+      } catch (pluginError) {
+        console.error('❌ Failed to load plugin models:', pluginError);
+        if (pluginError instanceof Error) {
+          console.error('❌ Plugin error details:', {
+            message: pluginError.message,
+            response: (pluginError as any).response?.data,
+            status: (pluginError as any).response?.status,
+            url: (pluginError as any).config?.url,
+          });
+        }
+        // Continue without plugin models
+      }
+
+      console.log('Total models loaded:', allModels.length);
+      set({ models: allModels, loading: false });
     } catch (error: unknown) {
       console.error('Error loading models:', error);
       const errorMessage = getErrorMessage(error, 'Failed to load models');
@@ -504,4 +566,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loading: false,
   error: null,
   setError: error => set({ error }),
+
+  // Add a global test function for debugging
+  ...(typeof window !== 'undefined' && {
+    testPluginApi: async () => {
+      try {
+        console.log('🧪 Testing plugin API...');
+        const { pluginApi } = await import('@/utils/api');
+        const result = await pluginApi.getAllPlugins();
+        console.log('✅ Plugin API test result:', result);
+        return result;
+      } catch (error) {
+        console.error('❌ Plugin API test failed:', error);
+        return { error };
+      }
+    },
+  }),
 }));

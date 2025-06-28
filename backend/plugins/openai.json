@@ -1,0 +1,22 @@
+{
+  "id": "openai",
+  "name": "OpenAI GPT",
+  "type": "completion",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "OPENAI_API_KEY"
+  },
+  "model_map": [
+    "gpt-4",
+    "gpt-4-turbo",
+    "gpt-4o",
+    "gpt-4o-mini",
+    "gpt-3.5-turbo",
+    "gpt-3.5-turbo-16k"
+  ],
+  "created_at": 1751139969195,
+  "updated_at": 1751139969195,
+  "active": false
+}

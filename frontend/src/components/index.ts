@@ -33,4 +33,5 @@ export {
   KeyboardShortcutsIndicator,
 } from './KeyboardShortcuts';
 export { DemoModeBanner } from './DemoModeBanner';
+export { PluginManager } from './PluginManager';
 export * from './ui';

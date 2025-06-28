@@ -27,6 +27,8 @@ import {
   EmbeddingPayload,
   EmbeddingResponse,
   RunningModel,
+  Plugin,
+  PluginStatus,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 
@@ -565,6 +567,93 @@ export const ollamaApi = {
       return createDemoResponse({ embedding: [] }, false);
     }
     return api.post('/ollama/embeddings', payload).then(res => res.data);
+  },
+};
+
+export const pluginApi = {
+  getAllPlugins: (): Promise<ApiResponse<Plugin[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<Plugin[]>([]);
+    }
+    return api.get('/plugins').then(res => res.data);
+  },
+
+  uploadPlugin: (file: File): Promise<ApiResponse<Plugin>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<Plugin>({} as Plugin, false);
+    }
+    const formData = new FormData();
+    formData.append('plugin', file);
+    return api
+      .post('/plugins/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then(res => res.data);
+  },
+
+  installPlugin: (
+    pluginData: Omit<Plugin, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<ApiResponse<Plugin>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<Plugin>({} as Plugin, false);
+    }
+    return api.post('/plugins', pluginData).then(res => res.data);
+  },
+
+  updatePlugin: (
+    id: string,
+    updates: Partial<Plugin>
+  ): Promise<ApiResponse<Plugin>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<Plugin>({} as Plugin, false);
+    }
+    return api.put(`/plugins/${id}`, updates).then(res => res.data);
+  },
+
+  deletePlugin: (id: string): Promise<ApiResponse<void>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<void>(undefined);
+    }
+    return api.delete(`/plugins/${id}`).then(res => res.data);
+  },
+
+  activatePlugin: (id: string): Promise<ApiResponse<Plugin>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<Plugin>({} as Plugin, false);
+    }
+    return api.post(`/plugins/${id}/activate`).then(res => res.data);
+  },
+
+  deactivatePlugin: (): Promise<ApiResponse<void>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<void>(undefined);
+    }
+    return api.post('/plugins/deactivate').then(res => res.data);
+  },
+
+  getActivePlugin: (): Promise<ApiResponse<Plugin | null>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<Plugin | null>(null);
+    }
+    return api.get('/plugins/active').then(res => res.data);
+  },
+
+  getPluginStatus: (): Promise<ApiResponse<PluginStatus[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<PluginStatus[]>([]);
+    }
+    return api.get('/plugins/status').then(res => res.data);
+  },
+
+  exportPlugin: (id: string): Promise<Blob> => {
+    if (isDemoMode()) {
+      return Promise.resolve(new Blob(['{}'], { type: 'application/json' }));
+    }
+    return api
+      .get(`/plugins/${id}/export`, {
+        responseType: 'blob',
+      })
+      .then(res => res.data);
   },
 };
 

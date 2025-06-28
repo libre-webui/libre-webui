@@ -35,16 +35,23 @@ export interface ChatSession {
 
 export interface OllamaModel {
   name: string;
+  model?: string;
   size: number;
   digest: string;
   modified_at: string;
+  expires_at?: string;
+  size_vram?: number;
   details?: {
+    parent_model?: string;
     format?: string;
     family?: string;
     families?: string[];
     parameter_size?: string;
     quantization_level?: string;
   };
+  // Plugin-specific fields
+  isPlugin?: boolean;
+  pluginName?: string;
 }
 
 export interface GenerationOptions {
@@ -145,4 +152,30 @@ export interface RunningModel {
   details?: Record<string, unknown>;
   expires_at?: string;
   size_vram?: number;
+}
+
+// Plugin system types
+export interface PluginAuthConfig {
+  header: string; // e.g., "x-api-key", "Authorization"
+  prefix?: string; // e.g., "Bearer ", "Token "
+  key_env: string; // Environment variable name
+}
+
+export interface Plugin {
+  id: string;
+  name: string;
+  type: 'completion' | 'embedding' | 'chat';
+  endpoint: string;
+  auth: PluginAuthConfig;
+  model_map: string[];
+  active?: boolean;
+  created_at?: number;
+  updated_at?: number;
+}
+
+export interface PluginStatus {
+  id: string;
+  active: boolean;
+  available: boolean;
+  last_used?: number;
 }
