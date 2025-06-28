@@ -182,7 +182,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </form>
 
         <div className='mt-2 sm:mt-3 text-xs text-gray-500 dark:text-dark-600 text-center'>
-          Libre WebUI • Press Enter to send, Shift+Enter for new line
+          <a
+            href='https://librewebui.org'
+            target='_blank'
+            rel='noopener noreferrer'
+            className='underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+          >
+            Libre WebUI
+          </a>{' '}
+          • Press Enter to send, Shift+Enter for new line
           {hasAdvancedFeatures && (
             <span className='ml-2 text-primary-600 dark:text-primary-400'>
               •{' '}
