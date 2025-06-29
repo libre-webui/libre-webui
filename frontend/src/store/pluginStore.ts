@@ -267,8 +267,9 @@ export const usePluginStore = create<PluginState>()(
     }),
     {
       name: 'plugin-store',
+      // Persist only the activePluginId to minimize storage usage and avoid persisting sensitive or unnecessary plugin data.
+      // If future functionality requires restoring more plugin state (e.g., metadata or settings), consider extending this logic.
       partialize: state => ({
-        // Only persist active plugin ID, not the full plugin data
         activePluginId: state.activePlugin?.id || null,
       }),
     }
