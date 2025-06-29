@@ -35,7 +35,6 @@ interface PluginManagerProps {
 export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   const {
     plugins,
-    activePlugin,
     isLoading,
     isUploading,
     error,
@@ -47,6 +46,9 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
     exportPlugin,
     clearError,
   } = usePluginStore();
+
+  // Get the active plugin from the plugins array
+  const activePlugin = plugins.find(plugin => plugin.active);
 
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showJsonForm, setShowJsonForm] = useState(false);

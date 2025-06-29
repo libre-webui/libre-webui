@@ -420,41 +420,47 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const pluginsResponse = await pluginApi.getAllPlugins();
         console.log('🔌 Plugins API response:', pluginsResponse);
         if (pluginsResponse.success && pluginsResponse.data) {
-          // Find active plugin and add its models
-          const activePlugin = pluginsResponse.data.find(
+          // Find ALL active plugins and add their models
+          const activePlugins = pluginsResponse.data.filter(
             plugin => plugin.active
           );
-          console.log('🔌 Active plugin found:', activePlugin);
-          if (activePlugin && activePlugin.model_map) {
-            const pluginModels: OllamaModel[] = activePlugin.model_map.map(
-              modelName => ({
-                name: modelName,
-                model: modelName,
-                size: 0, // Plugin models don't have size info
-                digest: '',
-                details: {
-                  parent_model: '',
-                  format: '',
-                  family: '',
-                  families: [],
-                  parameter_size: '',
-                  quantization_level: '',
-                },
-                modified_at: new Date().toISOString(),
-                expires_at: new Date().toISOString(),
-                size_vram: 0,
-                isPlugin: true,
-                pluginName: activePlugin.name,
-              })
-            );
+          console.log(
+            '🔌 Active plugins found:',
+            activePlugins.map(p => p.name)
+          );
 
-            allModels.push(...pluginModels);
-            console.log(
-              'Plugin models added:',
-              pluginModels.length,
-              'from',
-              activePlugin.name
-            );
+          for (const activePlugin of activePlugins) {
+            if (activePlugin.model_map) {
+              const pluginModels: OllamaModel[] = activePlugin.model_map.map(
+                modelName => ({
+                  name: modelName,
+                  model: modelName,
+                  size: 0, // Plugin models don't have size info
+                  digest: '',
+                  details: {
+                    parent_model: '',
+                    format: '',
+                    family: '',
+                    families: [],
+                    parameter_size: '',
+                    quantization_level: '',
+                  },
+                  modified_at: new Date().toISOString(),
+                  expires_at: new Date().toISOString(),
+                  size_vram: 0,
+                  isPlugin: true,
+                  pluginName: activePlugin.name,
+                })
+              );
+
+              allModels.push(...pluginModels);
+              console.log(
+                'Plugin models added:',
+                pluginModels.length,
+                'from',
+                activePlugin.name
+              );
+            }
           }
         }
       } catch (pluginError) {

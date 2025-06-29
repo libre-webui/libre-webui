@@ -1,0 +1,21 @@
+{
+  "id": "anthropic",
+  "name": "Anthropic Claude",
+  "type": "completion",
+  "endpoint": "https://api.anthropic.com/v1/messages",
+  "auth": {
+    "header": "x-api-key",
+    "prefix": "",
+    "key_env": "ANTHROPIC_API_KEY"
+  },
+  "model_map": [
+    "claude-3-5-sonnet-20241022",
+    "claude-3-5-haiku-20241022",
+    "claude-3-opus-20240229",
+    "claude-3-sonnet-20240229",
+    "claude-3-haiku-20240307"
+  ],
+  "created_at": 1751164800000,
+  "updated_at": 1751164800000,
+  "active": false
+}

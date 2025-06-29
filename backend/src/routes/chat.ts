@@ -16,16 +16,16 @@
  */
 
 import express, { Request, Response } from 'express';
-import chatService from '../services/chatService';
-import ollamaService from '../services/ollamaService';
-import pluginService from '../services/pluginService';
+import chatService from '../services/chatService.js';
+import ollamaService from '../services/ollamaService.js';
+import pluginService from '../services/pluginService.js';
 import {
   ApiResponse,
   ChatSession,
   ChatMessage,
   OllamaChatResponse,
   getErrorMessage,
-} from '../types';
+} from '../types/index.js';
 
 const router = express.Router();
 
@@ -318,8 +318,8 @@ router.post(
         ...options,
       };
 
-      // Check if there's an active plugin
-      const activePlugin = pluginService.getActivePlugin();
+      // Check if there's an active plugin for this model
+      const activePlugin = pluginService.getActivePluginForModel(session.model);
 
       if (activePlugin) {
         try {

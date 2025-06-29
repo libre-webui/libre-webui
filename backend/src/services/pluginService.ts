@@ -25,16 +25,16 @@ import {
   PluginResponse,
   ChatMessage,
   GenerationOptions,
-} from '../types';
+} from '../types/index.js';
 
 class PluginService {
   private pluginsDir: string;
-  private activePluginId: string | null = null;
+  private activePluginIds: Set<string> = new Set();
 
   constructor() {
     this.pluginsDir = path.join(process.cwd(), 'plugins');
     this.ensurePluginsDirectory();
-    this.loadActivePlugin();
+    this.loadActivePlugins();
   }
 
   private ensurePluginsDirectory(): void {
@@ -43,22 +43,27 @@ class PluginService {
     }
   }
 
-  private loadActivePlugin(): void {
+  private loadActivePlugins(): void {
     const statusFile = path.join(this.pluginsDir, '.status.json');
     if (fs.existsSync(statusFile)) {
       try {
         const status = JSON.parse(fs.readFileSync(statusFile, 'utf8'));
-        this.activePluginId = status.activePlugin || null;
+        if (Array.isArray(status.activePlugins)) {
+          this.activePluginIds = new Set(status.activePlugins);
+        } else if (status.activePlugin) {
+          // Legacy support for single active plugin
+          this.activePluginIds = new Set([status.activePlugin]);
+        }
       } catch (error) {
         console.error('Failed to load plugin status:', error);
       }
     }
   }
 
-  private saveActivePlugin(): void {
+  private saveActivePlugins(): void {
     const statusFile = path.join(this.pluginsDir, '.status.json');
     const status = {
-      activePlugin: this.activePluginId,
+      activePlugins: Array.from(this.activePluginIds),
       lastUpdated: new Date().toISOString(),
     };
     fs.writeFileSync(statusFile, JSON.stringify(status, null, 2));
@@ -80,7 +85,7 @@ class PluginService {
 
             // Validate plugin structure
             if (this.validatePlugin(plugin)) {
-              plugin.active = plugin.id === this.activePluginId;
+              plugin.active = this.activePluginIds.has(plugin.id);
               plugins.push(plugin);
             }
           } catch (error) {
@@ -119,7 +124,7 @@ class PluginService {
       const plugin: Plugin = JSON.parse(content);
 
       if (this.validatePlugin(plugin)) {
-        plugin.active = plugin.id === this.activePluginId;
+        plugin.active = this.activePluginIds.has(plugin.id);
         return plugin;
       }
     } catch (error) {
@@ -179,10 +184,10 @@ class PluginService {
     try {
       fs.unlinkSync(filePath);
 
-      // If this was the active plugin, deactivate it
-      if (this.activePluginId === id) {
-        this.activePluginId = null;
-        this.saveActivePlugin();
+      // If this was an active plugin, deactivate it
+      if (this.activePluginIds.has(id)) {
+        this.activePluginIds.delete(id);
+        this.saveActivePlugins();
       }
 
       return true;
@@ -200,24 +205,62 @@ class PluginService {
       throw new Error('Plugin not found');
     }
 
-    this.activePluginId = id;
-    this.saveActivePlugin();
+    this.activePluginIds.add(id);
+    this.saveActivePlugins();
     return true;
   }
 
-  // Deactivate the current plugin
-  deactivatePlugin(): boolean {
-    this.activePluginId = null;
-    this.saveActivePlugin();
-    return true;
-  }
-
-  // Get the currently active plugin
-  getActivePlugin(): Plugin | null {
-    if (!this.activePluginId) {
-      return null;
+  // Deactivate a specific plugin
+  deactivatePlugin(id?: string): boolean {
+    if (id) {
+      this.activePluginIds.delete(id);
+    } else {
+      // Legacy: deactivate all plugins
+      this.activePluginIds.clear();
     }
-    return this.getPlugin(this.activePluginId);
+    this.saveActivePlugins();
+    return true;
+  }
+
+  // Get the active plugin for a specific model
+  getActivePluginForModel(model: string): Plugin | null {
+    const activePlugins = this.getActivePlugins();
+
+    // Find the first active plugin that supports this model
+    for (const plugin of activePlugins) {
+      if (plugin.model_map.includes(model)) {
+        return plugin;
+      }
+    }
+
+    return null;
+  }
+
+  // Get all currently active plugins
+  getActivePlugins(): Plugin[] {
+    const allPlugins = this.getAllPlugins();
+    console.log(
+      'All plugins:',
+      allPlugins.map(p => ({ id: p.id, active: p.active }))
+    );
+    console.log(
+      'Active plugin IDs in memory:',
+      Array.from(this.activePluginIds)
+    );
+    const activePlugins = allPlugins.filter(plugin =>
+      this.activePluginIds.has(plugin.id)
+    );
+    console.log(
+      'Filtered active plugins:',
+      activePlugins.map(p => p.id)
+    );
+    return activePlugins;
+  }
+
+  // Legacy method for backward compatibility - returns first active plugin
+  getActivePlugin(): Plugin | null {
+    const activePlugins = this.getActivePlugins();
+    return activePlugins.length > 0 ? activePlugins[0] : null;
   }
 
   // Get plugin status
@@ -268,22 +311,58 @@ class PluginService {
 
     headers[activePlugin.auth.header] = authValue;
 
-    // Convert internal format to OpenAI-compatible format
-    const openaiMessages = messages.map(msg => ({
+    // Convert internal format to plugin-compatible format
+    const pluginMessages = messages.map(msg => ({
       role: msg.role,
       content: msg.content,
     }));
 
-    // Prepare request payload
-    const payload = {
-      model,
-      messages: openaiMessages,
-      temperature: options.temperature || 0.7,
-      max_tokens: options.num_predict === -1 ? undefined : options.num_predict,
-      top_p: options.top_p,
-      stop: options.stop,
-      stream: false, // For now, we'll handle non-streaming responses
-    };
+    // Prepare request payload based on plugin type
+    let payload: Record<string, unknown>;
+
+    if (activePlugin.id === 'anthropic') {
+      // Anthropic-specific payload format
+      // Separate system messages from user/assistant messages
+      const systemMessages = pluginMessages.filter(
+        msg => msg.role === 'system'
+      );
+      const nonSystemMessages = pluginMessages.filter(
+        msg => msg.role !== 'system'
+      );
+
+      payload = {
+        model,
+        messages: nonSystemMessages,
+        max_tokens:
+          options.num_predict && options.num_predict !== -1
+            ? options.num_predict
+            : 1024,
+        temperature: options.temperature || 0.7,
+        top_p: options.top_p,
+        stop_sequences: options.stop,
+        stream: false,
+      };
+
+      // Add system message as top-level parameter if present
+      if (systemMessages.length > 0) {
+        payload.system = systemMessages.map(msg => msg.content).join('\n');
+      }
+
+      // Add required anthropic-version header
+      headers['anthropic-version'] = '2023-06-01';
+    } else {
+      // Default OpenAI-compatible format
+      payload = {
+        model,
+        messages: pluginMessages,
+        temperature: options.temperature || 0.7,
+        max_tokens:
+          options.num_predict === -1 ? undefined : options.num_predict,
+        top_p: options.top_p,
+        stop: options.stop,
+        stream: false,
+      };
+    }
 
     try {
       const response = await axios.post(activePlugin.endpoint, payload, {
@@ -333,23 +412,35 @@ class PluginService {
       typeof anthropicResponse.id === 'string'
         ? anthropicResponse.id
         : `chatcmpl-${Date.now()}`;
+
+    // Map Anthropic stop reasons to OpenAI format
+    const stopReasonMap: Record<string, string> = {
+      end_turn: 'stop',
+      max_tokens: 'length',
+      stop_sequence: 'stop',
+      tool_use: 'tool_calls',
+    };
+
     const stopReason =
       typeof anthropicResponse.stop_reason === 'string'
-        ? anthropicResponse.stop_reason
+        ? stopReasonMap[anthropicResponse.stop_reason] || 'stop'
         : 'stop';
 
     let content = '';
-    if (
-      Array.isArray(anthropicResponse.content) &&
-      anthropicResponse.content[0] &&
-      typeof anthropicResponse.content[0] === 'object' &&
-      anthropicResponse.content[0] !== null &&
-      'text' in anthropicResponse.content[0] &&
-      typeof anthropicResponse.content[0].text === 'string'
-    ) {
-      content = anthropicResponse.content[0].text;
-    } else if (typeof anthropicResponse.completion === 'string') {
-      content = anthropicResponse.completion;
+    // Anthropic returns content as an array of content blocks
+    if (Array.isArray(anthropicResponse.content)) {
+      for (const block of anthropicResponse.content) {
+        if (
+          block &&
+          typeof block === 'object' &&
+          'type' in block &&
+          block.type === 'text' &&
+          'text' in block &&
+          typeof block.text === 'string'
+        ) {
+          content += block.text;
+        }
+      }
     }
 
     let usage;

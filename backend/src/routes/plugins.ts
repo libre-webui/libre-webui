@@ -20,8 +20,13 @@ import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
-import pluginService from '../services/pluginService';
-import { ApiResponse, Plugin, PluginStatus, getErrorMessage } from '../types';
+import pluginService from '../services/pluginService.js';
+import {
+  ApiResponse,
+  Plugin,
+  PluginStatus,
+  getErrorMessage,
+} from '../types/index.js';
 
 // Extend Request interface to include file property
 interface MulterRequest extends Request {
@@ -109,24 +114,21 @@ router.get(
   }
 );
 
-// Get active plugin
+// Get active plugins
 router.get(
   '/active',
-  async (
-    req: Request,
-    res: Response<ApiResponse<Plugin | null>>
-  ): Promise<void> => {
+  async (req: Request, res: Response<ApiResponse<Plugin[]>>): Promise<void> => {
     try {
-      const activePlugin = pluginService.getActivePlugin();
+      const activePlugins = pluginService.getActivePlugins();
 
       res.json({
         success: true,
-        data: activePlugin,
+        data: activePlugins,
       });
     } catch (error: unknown) {
       res.status(500).json({
         success: false,
-        error: getErrorMessage(error, 'Failed to get active plugin'),
+        error: getErrorMessage(error, 'Failed to get active plugins'),
       });
     }
   }
@@ -431,7 +433,29 @@ router.post(
   }
 );
 
-// Deactivate current plugin
+// Deactivate a specific plugin
+router.post(
+  '/deactivate/:id',
+  pluginRateLimit,
+  async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const success = pluginService.deactivatePlugin(id);
+
+      res.json({
+        success: true,
+        data: success,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to deactivate plugin'),
+      });
+    }
+  }
+);
+
+// Deactivate all plugins (legacy)
 router.post(
   '/deactivate',
   pluginRateLimit,

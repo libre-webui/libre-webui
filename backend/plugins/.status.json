@@ -1,4 +1,7 @@
 {
-  "activePlugin": "openai",
-  "lastUpdated": "2025-06-29T02:03:32.519Z"
+  "activePlugins": [
+    "openai",
+    "anthropic"
+  ],
+  "lastUpdated": "2025-06-29T03:01:10.943Z"
 }

@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
     sidebarOpen,
     toggleSidebar,
   } = useAppStore();
-  const { activePlugin } = usePluginStore();
+  const { plugins } = usePluginStore();
 
   const getPageTitle = () => {
     switch (location.pathname) {
@@ -127,20 +127,33 @@ export const Header: React.FC<HeaderProps> = ({
                       className='text-xs min-w-0 py-1 px-2 h-6 border-0 bg-gray-50 dark:bg-dark-200 rounded-lg max-w-32 sm:max-w-none'
                     />
                     {/* Plugin indicator - only show when current model is from a plugin */}
-                    {activePlugin &&
-                      currentSession &&
-                      models.find(m => m.name === currentSession.model)
-                        ?.isPlugin && (
-                        <div className='flex items-center gap-1'>
-                          <span className='text-xs text-gray-500 dark:text-dark-500 hidden sm:inline'>
-                            via
-                          </span>
-                          <span className='text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded'>
-                            {models.find(m => m.name === currentSession.model)
-                              ?.pluginName || activePlugin.name}
-                          </span>
-                        </div>
-                      )}
+                    {currentSession &&
+                      (() => {
+                        const currentModel = models.find(
+                          m => m.name === currentSession.model
+                        );
+                        const activePlugin = currentModel?.isPlugin
+                          ? plugins.find(
+                              p =>
+                                p.active &&
+                                p.model_map?.includes(currentSession.model)
+                            )
+                          : null;
+
+                        return (
+                          activePlugin &&
+                          currentModel?.isPlugin && (
+                            <div className='flex items-center gap-1'>
+                              <span className='text-xs text-gray-500 dark:text-dark-500 hidden sm:inline'>
+                                via
+                              </span>
+                              <span className='text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded'>
+                                {currentModel.pluginName || activePlugin.name}
+                              </span>
+                            </div>
+                          )
+                        );
+                      })()}
                   </div>
                 )}
             </div>

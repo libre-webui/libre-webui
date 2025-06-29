@@ -23,14 +23,18 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 
-import { errorHandler, notFoundHandler, requestLogger } from './middleware';
-import ollamaRoutes from './routes/ollama';
-import chatRoutes from './routes/chat';
-import preferencesRoutes from './routes/preferences';
-import pluginRoutes from './routes/plugins';
-import ollamaService from './services/ollamaService';
-import chatService from './services/chatService';
-import { OllamaChatRequest, OllamaChatMessage } from './types';
+import {
+  errorHandler,
+  notFoundHandler,
+  requestLogger,
+} from './middleware/index.js';
+import ollamaRoutes from './routes/ollama.js';
+import chatRoutes from './routes/chat.js';
+import preferencesRoutes from './routes/preferences.js';
+import pluginRoutes from './routes/plugins.js';
+import ollamaService from './services/ollamaService.js';
+import chatService from './services/chatService.js';
+import { OllamaChatRequest, OllamaChatMessage } from './types/index.js';
 
 // Load environment variables
 dotenv.config();

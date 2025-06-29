@@ -16,8 +16,8 @@
  */
 
 import express, { Request, Response } from 'express';
-import ollamaService from '../services/ollamaService';
-import { ApiResponse, OllamaModel, getErrorMessage } from '../types';
+import ollamaService from '../services/ollamaService.js';
+import { ApiResponse, OllamaModel, getErrorMessage } from '../types/index.js';
 
 const router = express.Router();
 

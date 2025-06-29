@@ -621,14 +621,15 @@ export const pluginApi = {
     if (isDemoMode()) {
       return createDemoResponse<Plugin>({} as Plugin, false);
     }
-    return api.post(`/plugins/${id}/activate`).then(res => res.data);
+    return api.post(`/plugins/activate/${id}`).then(res => res.data);
   },
 
-  deactivatePlugin: (): Promise<ApiResponse<void>> => {
+  deactivatePlugin: (id?: string): Promise<ApiResponse<void>> => {
     if (isDemoMode()) {
       return createDemoResponse<void>(undefined);
     }
-    return api.post('/plugins/deactivate').then(res => res.data);
+    const endpoint = id ? `/plugins/deactivate/${id}` : '/plugins/deactivate';
+    return api.post(endpoint).then(res => res.data);
   },
 
   getActivePlugin: (): Promise<ApiResponse<Plugin | null>> => {

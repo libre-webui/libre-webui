@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import { ChatSession, ChatMessage } from '../types';
+import { ChatSession, ChatMessage } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
-import preferencesService from './preferencesService';
+import preferencesService from './preferencesService.js';
 
 class ChatService {
   private sessions: Map<string, ChatSession> = new Map();
