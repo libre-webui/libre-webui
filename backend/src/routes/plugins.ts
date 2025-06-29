@@ -16,12 +16,17 @@
  */
 
 import express, { Request, Response } from 'express';
-import multer from 'multer';
+import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService';
 import { ApiResponse, Plugin, PluginStatus, getErrorMessage } from '../types';
+
+// Extend Request interface to include file property
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 
 const router = express.Router();
 
@@ -66,7 +71,11 @@ const safeCleanupFile = (filePath: string, tempDir: string): void => {
 // Configure multer for file uploads
 const upload = multer({
   dest: 'temp/',
-  fileFilter: (req, file, cb) => {
+  fileFilter: (
+    req: Request,
+    file: Express.Multer.File,
+    cb: FileFilterCallback
+  ) => {
     const allowedTypes = ['.json', '.zip'];
     const fileExt = path.extname(file.originalname).toLowerCase();
 
@@ -95,6 +104,75 @@ router.get(
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to load plugins'),
+      });
+    }
+  }
+);
+
+// Get active plugin
+router.get(
+  '/active',
+  async (
+    req: Request,
+    res: Response<ApiResponse<Plugin | null>>
+  ): Promise<void> => {
+    try {
+      const activePlugin = pluginService.getActivePlugin();
+
+      res.json({
+        success: true,
+        data: activePlugin,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get active plugin'),
+      });
+    }
+  }
+);
+
+// Get active plugin (alternative route)
+router.get(
+  '/active/current',
+  async (
+    req: Request,
+    res: Response<ApiResponse<Plugin | null>>
+  ): Promise<void> => {
+    try {
+      const activePlugin = pluginService.getActivePlugin();
+
+      res.json({
+        success: true,
+        data: activePlugin,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get active plugin'),
+      });
+    }
+  }
+);
+
+// Get plugin status
+router.get(
+  '/status/all',
+  async (
+    req: Request,
+    res: Response<ApiResponse<PluginStatus[]>>
+  ): Promise<void> => {
+    try {
+      const status = pluginService.getPluginStatus();
+
+      res.json({
+        success: true,
+        data: status,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get plugin status'),
       });
     }
   }
@@ -134,7 +212,10 @@ router.post(
   '/upload',
   uploadRateLimit,
   upload.single('plugin'),
-  async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
+  async (
+    req: MulterRequest,
+    res: Response<ApiResponse<Plugin>>
+  ): Promise<void> => {
     const tempDir = path.resolve('temp/');
 
     try {
@@ -366,52 +447,6 @@ router.post(
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to deactivate plugin'),
-      });
-    }
-  }
-);
-
-// Get active plugin
-router.get(
-  '/active/current',
-  async (
-    req: Request,
-    res: Response<ApiResponse<Plugin | null>>
-  ): Promise<void> => {
-    try {
-      const activePlugin = pluginService.getActivePlugin();
-
-      res.json({
-        success: true,
-        data: activePlugin,
-      });
-    } catch (error: unknown) {
-      res.status(500).json({
-        success: false,
-        error: getErrorMessage(error, 'Failed to get active plugin'),
-      });
-    }
-  }
-);
-
-// Get plugin status
-router.get(
-  '/status/all',
-  async (
-    req: Request,
-    res: Response<ApiResponse<PluginStatus[]>>
-  ): Promise<void> => {
-    try {
-      const status = pluginService.getPluginStatus();
-
-      res.json({
-        success: true,
-        data: status,
-      });
-    } catch (error: unknown) {
-      res.status(500).json({
-        success: false,
-        error: getErrorMessage(error, 'Failed to get plugin status'),
       });
     }
   }

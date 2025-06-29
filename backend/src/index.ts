@@ -27,6 +27,7 @@ import { errorHandler, notFoundHandler, requestLogger } from './middleware';
 import ollamaRoutes from './routes/ollama';
 import chatRoutes from './routes/chat';
 import preferencesRoutes from './routes/preferences';
+import pluginRoutes from './routes/plugins';
 import ollamaService from './services/ollamaService';
 import chatService from './services/chatService';
 import { OllamaChatRequest, OllamaChatMessage } from './types';
@@ -92,6 +93,7 @@ app.get('/health', (req, res) => {
 app.use('/api/ollama', ollamaRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/preferences', preferencesRoutes);
+app.use('/api/plugins', pluginRoutes);
 
 // Error handling
 app.use(notFoundHandler);
