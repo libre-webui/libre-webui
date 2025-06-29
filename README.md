@@ -4,17 +4,17 @@
 
 ![Libre WebUI Screenshot](./screenshot.png)
 
-A minimalist, privacy-first interface for local LLMs via Ollama, with universal routing to external AI services.
+A clean, privacy-first interface for local AI models via Ollama, with flexible routing to external AI services.
 
 ---
 
 ## Free & Open Source
 
-100% free and open source software. No telemetry. No tracking. Your data stays on your hardware.
+100% free and open source software. No telemetry, no tracking. Your data stays on your hardware by default.
 
-## Privacy First
+## Privacy & Flexibility
 
-Complete offline inference on your own hardware. No data leaves your machine unless you configure it to.
+Complete offline operation on your own hardware, with optional connections to external AI services when you need them.
 
 ---
 
@@ -31,11 +31,13 @@ npm run dev
 
 ### Optional: External AI Services
 
-To use plugins for external AI services, set environment variables:
+Connect to external AI services by adding your API keys to the `.env` file:
 
 ```bash
-export OPENAI_API_KEY="your_openai_key"
-export ANTHROPIC_API_KEY="your_anthropic_key"
+# Add to backend/.env
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+GROQ_API_KEY=your_groq_key
 ```
 
 **[📖 Complete Plugin Setup Guide →](./docs/08-PLUGIN_ARCHITECTURE.md)**
@@ -149,14 +151,14 @@ The app automatically generates configuration files on first run (these are excl
 
 ### 🚀 Core Features
 
-- **Clean, minimal interface** - Rick Rubin-inspired simplicity
-- **Light/Dark mode** - Comfortable viewing in any environment with improved accessibility
-- **Responsive design** - Works seamlessly on desktop, tablet, and mobile
+- **Clean interface** - Simple, focused design for productive AI interactions
+- **Light/Dark mode** - Comfortable viewing with improved accessibility
+- **Responsive design** - Works on desktop, tablet, and mobile devices
 - **Real-time chat** - Streaming responses with WebSocket integration
-- **Plugin architecture** - Route requests through external AI services (OpenAI, Anthropic, etc.)
-- **Fully private** - Offline inference on your own hardware
-- **Zero telemetry** - No tracking, no data collection
-- **Keyboard shortcuts** - VS Code-like shortcuts for power users (⌘B, ⌘D, ⌘,, ?)
+- **Plugin system** - Connect external AI services (OpenAI, Anthropic, Groq, etc.)
+- **Privacy-focused** - Local processing with optional external connections
+- **Zero telemetry** - No tracking or data collection
+- **Keyboard shortcuts** - VS Code-inspired shortcuts for power users (⌘B, ⌘D, ⌘,, ?)
 - **Performance optimized** - Code splitting and lazy loading for faster page loads
 
 ### 🤖 Complete Ollama Integration
@@ -192,7 +194,7 @@ All Ollama API endpoints are integrated and ready to use:
 
 ### 🔌 Plugin System
 
-Route chat requests through external AI services while maintaining local fallback:
+Connect to external AI services while maintaining local fallback:
 
 #### Supported Services
 
@@ -203,12 +205,12 @@ Route chat requests through external AI services while maintaining local fallbac
 
 #### Key Features
 
-- 🔌 **Universal Router** - Route to any OpenAI-compatible API
-- 🛡️ **Automatic Fallback** - Falls back to local Ollama on plugin failure
-- 📁 **File Upload** - Install plugins via `.json` file upload
-- 🔧 **Easy Management** - Activate, deactivate, export plugins
-- 🔒 **Secure** - API keys stored in environment variables
-- 📊 **Real-time Status** - Live plugin status indicators
+- 🔌 **Flexible Routing** - Connect to any OpenAI-compatible API
+- 🛡️ **Automatic Fallback** - Falls back to local Ollama when external services fail
+- 📁 **Easy Installation** - Install plugins via JSON file upload
+- 🔧 **Simple Management** - Activate, deactivate, export plugins through UI
+- 🔒 **Secure** - API keys stored safely in environment variables
+- 📊 **Status Monitoring** - Real-time plugin status indicators
 
 #### Quick Plugin Setup
 
@@ -285,7 +287,7 @@ libre-webui-dev/
 | **[⌨️ Keyboard Shortcuts](./docs/04-KEYBOARD_SHORTCUTS.md)**   | Productivity hotkeys              |
 | **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)**                     | Try without installation          |
 | **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)**         | Problem solving guide             |
-| **[🔌 Plugin Architecture](./docs/08-PLUGIN_ARCHITECTURE.md)** | External AI service integration   |
+| **[🔌 Plugin Architecture](./docs/08-PLUGIN_ARCHITECTURE.md)** | Connect multiple AI services      |
 
 ## Accessibility & Performance
 

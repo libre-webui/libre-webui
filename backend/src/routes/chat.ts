@@ -319,9 +319,17 @@ router.post(
       };
 
       // Check if there's an active plugin for this model
+      console.log(`[DEBUG] Looking for plugin for model: ${session.model}`);
       const activePlugin = pluginService.getActivePluginForModel(session.model);
+      console.log(
+        `[DEBUG] Found plugin:`,
+        activePlugin ? activePlugin.id : 'none'
+      );
 
       if (activePlugin) {
+        console.log(
+          `[DEBUG] Using plugin ${activePlugin.id} for model ${session.model}`
+        );
         try {
           // Use plugin for generation
           const pluginResponse = await pluginService.executePluginRequest(
@@ -351,6 +359,9 @@ router.post(
           assistantContent = response.message.content;
         }
       } else {
+        console.log(
+          `[DEBUG] No plugin found, using Ollama for model: ${session.model}`
+        );
         // Use Ollama directly
         response = await ollamaService.generateChatResponse(chatRequest);
         assistantContent = response.message.content;

@@ -34,6 +34,7 @@ import preferencesRoutes from './routes/preferences.js';
 import pluginRoutes from './routes/plugins.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
+import pluginService from './services/pluginService.js';
 import { OllamaChatRequest, OllamaChatMessage } from './types/index.js';
 
 // Load environment variables
@@ -207,6 +208,105 @@ wss.on('connection', ws => {
         let assistantContent = '';
 
         console.log('Backend: Using assistantMessageId:', assistantMessageId);
+
+        // Check if there's an active plugin for this model
+        console.log(
+          `[WebSocket] Looking for plugin for model: ${session.model}`
+        );
+        const activePlugin = pluginService.getActivePluginForModel(
+          session.model
+        );
+        console.log(
+          `[WebSocket] Found plugin:`,
+          activePlugin ? activePlugin.id : 'none'
+        );
+
+        if (activePlugin) {
+          console.log(
+            `[WebSocket] Using plugin ${activePlugin.id} for model ${session.model}`
+          );
+          try {
+            // Get messages for context
+            const contextMessages =
+              chatService.getMessagesForContext(sessionId);
+
+            // Use plugin for generation (non-streaming for now)
+            const pluginResponse = await pluginService.executePluginRequest(
+              session.model,
+              contextMessages.concat([userMessage]),
+              options
+            );
+
+            // Get the content from plugin response
+            assistantContent =
+              pluginResponse.choices[0]?.message?.content || '';
+
+            // Send the complete response as chunks to simulate streaming
+            const words = assistantContent.split(' ');
+            for (let i = 0; i < words.length; i++) {
+              const chunk = words.slice(0, i + 1).join(' ');
+              const isLast = i === words.length - 1;
+
+              ws.send(
+                JSON.stringify({
+                  type: 'assistant_chunk',
+                  data: {
+                    content: isLast
+                      ? ''
+                      : ' ' + words[i] + (i < words.length - 1 ? '' : ''),
+                    total: chunk,
+                    done: isLast,
+                    messageId: assistantMessageId,
+                  },
+                })
+              );
+
+              // Small delay to simulate streaming
+              if (!isLast) {
+                await new Promise(resolve => setTimeout(resolve, 50));
+              }
+            }
+
+            // Save the complete assistant message
+            if (assistantContent && assistantMessageId) {
+              console.log(
+                'Backend: Saving complete assistant message with ID:',
+                assistantMessageId
+              );
+
+              const assistantMessage = chatService.addMessage(sessionId, {
+                role: 'assistant',
+                content: assistantContent,
+                model: session.model,
+                id: assistantMessageId,
+              });
+
+              console.log(
+                'Backend: Assistant message saved:',
+                !!assistantMessage
+              );
+
+              // Send completion signal
+              ws.send(
+                JSON.stringify({
+                  type: 'assistant_complete',
+                  data: assistantMessage,
+                })
+              );
+            }
+            return; // Exit early since we handled the request via plugin
+          } catch (pluginError) {
+            console.error(
+              'Plugin failed, falling back to Ollama:',
+              pluginError
+            );
+            // Continue to Ollama fallback below
+          }
+        }
+
+        console.log(
+          `[WebSocket] No plugin found or plugin failed, using Ollama for model: ${session.model}`
+        );
 
         // Create chat request with advanced features
         const chatRequest: OllamaChatRequest = {

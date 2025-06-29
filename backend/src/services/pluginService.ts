@@ -224,15 +224,38 @@ class PluginService {
 
   // Get the active plugin for a specific model
   getActivePluginForModel(model: string): Plugin | null {
-    const activePlugins = this.getActivePlugins();
+    console.log(`[DEBUG] Looking for plugin for model: ${model}`);
 
-    // Find the first active plugin that supports this model
-    for (const plugin of activePlugins) {
+    // Get all available plugins (not just active ones)
+    const allPlugins = this.getAllPlugins();
+    console.log(
+      `[DEBUG] Available plugins:`,
+      allPlugins.map(p => p.id)
+    );
+
+    // Find the plugin that supports this model
+    for (const plugin of allPlugins) {
+      console.log(
+        `[DEBUG] Checking plugin ${plugin.id} with model_map:`,
+        plugin.model_map
+      );
       if (plugin.model_map.includes(model)) {
+        console.log(`[DEBUG] Found plugin ${plugin.id} for model ${model}`);
+
+        // Check if we have the required API key
+        const apiKey = process.env[plugin.auth.key_env];
+        if (!apiKey) {
+          console.log(
+            `[DEBUG] Plugin ${plugin.id} found but API key ${plugin.auth.key_env} not set`
+          );
+          continue;
+        }
+
         return plugin;
       }
     }
 
+    console.log(`[DEBUG] No plugin found for model: ${model}`);
     return null;
   }
 
@@ -279,17 +302,10 @@ class PluginService {
     messages: ChatMessage[],
     options: GenerationOptions = {}
   ): Promise<PluginResponse> {
-    const activePlugin = this.getActivePlugin();
+    const activePlugin = this.getActivePluginForModel(model);
 
     if (!activePlugin) {
-      throw new Error('No active plugin found');
-    }
-
-    // Check if the model is supported by this plugin
-    if (!activePlugin.model_map.includes(model)) {
-      throw new Error(
-        `Model ${model} is not supported by plugin ${activePlugin.id}`
-      );
+      throw new Error(`No active plugin found for model: ${model}`);
     }
 
     // Get API key from environment
