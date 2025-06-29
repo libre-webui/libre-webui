@@ -76,7 +76,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       await usePluginStore.getState().installPlugin(pluginData);
       setShowJsonForm(false);
       setJsonInput('');
-    } catch (error) {
+    } catch (_error) {
       usePluginStore.getState().setError('Invalid JSON format');
     }
   };

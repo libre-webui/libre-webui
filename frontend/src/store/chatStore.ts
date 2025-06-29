@@ -462,9 +462,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (pluginError instanceof Error) {
           console.error('❌ Plugin error details:', {
             message: pluginError.message,
-            response: (pluginError as any).response?.data,
-            status: (pluginError as any).response?.status,
-            url: (pluginError as any).config?.url,
+            response: (
+              pluginError as { response?: { data: unknown; status: number } }
+            ).response?.data,
+            status: (
+              pluginError as { response?: { data: unknown; status: number } }
+            ).response?.status,
+            url: (pluginError as { config?: { url: string } }).config?.url,
           });
         }
         // Continue without plugin models

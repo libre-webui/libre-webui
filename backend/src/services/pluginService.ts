@@ -22,7 +22,6 @@ import axios from 'axios';
 import {
   Plugin,
   PluginStatus,
-  PluginRequest,
   PluginResponse,
   ChatMessage,
   GenerationOptions,
@@ -299,30 +298,81 @@ class PluginService {
 
       // Default to OpenAI format
       return response.data as PluginResponse;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Plugin request failed for ${activePlugin.id}:`, error);
 
-      if (error.response) {
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response: {
+            status: number;
+            data?: { error?: { message?: string } };
+            statusText: string;
+          };
+        };
         throw new Error(
-          `Plugin API error: ${error.response.status} - ${error.response.data?.error?.message || error.response.statusText}`
+          `Plugin API error: ${axiosError.response.status} - ${axiosError.response.data?.error?.message || axiosError.response.statusText}`
         );
-      } else if (error.request) {
+      } else if (error && typeof error === 'object' && 'request' in error) {
         throw new Error(
           `Plugin connection error: Unable to reach ${activePlugin.endpoint}`
         );
       } else {
-        throw new Error(`Plugin error: ${error.message}`);
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`Plugin error: ${errorMessage}`);
       }
     }
   }
 
   // Convert Anthropic response format to OpenAI format
   private convertAnthropicResponse(
-    anthropicResponse: any,
+    anthropicResponse: Record<string, unknown>,
     model: string
   ): PluginResponse {
+    const id =
+      typeof anthropicResponse.id === 'string'
+        ? anthropicResponse.id
+        : `chatcmpl-${Date.now()}`;
+    const stopReason =
+      typeof anthropicResponse.stop_reason === 'string'
+        ? anthropicResponse.stop_reason
+        : 'stop';
+
+    let content = '';
+    if (
+      Array.isArray(anthropicResponse.content) &&
+      anthropicResponse.content[0] &&
+      typeof anthropicResponse.content[0] === 'object' &&
+      anthropicResponse.content[0] !== null &&
+      'text' in anthropicResponse.content[0] &&
+      typeof anthropicResponse.content[0].text === 'string'
+    ) {
+      content = anthropicResponse.content[0].text;
+    } else if (typeof anthropicResponse.completion === 'string') {
+      content = anthropicResponse.completion;
+    }
+
+    let usage;
+    if (
+      anthropicResponse.usage &&
+      typeof anthropicResponse.usage === 'object' &&
+      anthropicResponse.usage !== null
+    ) {
+      const usageObj = anthropicResponse.usage as Record<string, unknown>;
+      const inputTokens =
+        typeof usageObj.input_tokens === 'number' ? usageObj.input_tokens : 0;
+      const outputTokens =
+        typeof usageObj.output_tokens === 'number' ? usageObj.output_tokens : 0;
+
+      usage = {
+        prompt_tokens: inputTokens,
+        completion_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
+      };
+    }
+
     return {
-      id: anthropicResponse.id || `chatcmpl-${Date.now()}`,
+      id,
       object: 'chat.completion',
       created: Math.floor(Date.now() / 1000),
       model,
@@ -331,41 +381,39 @@ class PluginService {
           index: 0,
           message: {
             role: 'assistant',
-            content:
-              anthropicResponse.content?.[0]?.text ||
-              anthropicResponse.completion ||
-              '',
+            content,
           },
-          finish_reason: anthropicResponse.stop_reason || 'stop',
+          finish_reason: stopReason,
         },
       ],
-      usage: anthropicResponse.usage
-        ? {
-            prompt_tokens: anthropicResponse.usage.input_tokens || 0,
-            completion_tokens: anthropicResponse.usage.output_tokens || 0,
-            total_tokens:
-              (anthropicResponse.usage.input_tokens || 0) +
-              (anthropicResponse.usage.output_tokens || 0),
-          }
-        : undefined,
+      usage,
     };
   }
 
   // Validate plugin structure
-  private validatePlugin(plugin: any): plugin is Plugin {
+  private validatePlugin(plugin: unknown): plugin is Plugin {
     return (
       typeof plugin === 'object' &&
-      typeof plugin.id === 'string' &&
-      typeof plugin.name === 'string' &&
-      typeof plugin.type === 'string' &&
-      typeof plugin.endpoint === 'string' &&
-      typeof plugin.auth === 'object' &&
-      typeof plugin.auth.header === 'string' &&
-      typeof plugin.auth.key_env === 'string' &&
-      (plugin.auth.prefix === undefined ||
-        typeof plugin.auth.prefix === 'string') &&
-      Array.isArray(plugin.model_map) &&
-      plugin.model_map.length > 0
+      plugin !== null &&
+      typeof (plugin as Record<string, unknown>).id === 'string' &&
+      typeof (plugin as Record<string, unknown>).name === 'string' &&
+      typeof (plugin as Record<string, unknown>).type === 'string' &&
+      typeof (plugin as Record<string, unknown>).endpoint === 'string' &&
+      typeof (plugin as Record<string, unknown>).auth === 'object' &&
+      (plugin as Record<string, unknown>).auth !== null &&
+      typeof (
+        (plugin as Record<string, unknown>).auth as Record<string, unknown>
+      ).header === 'string' &&
+      typeof (
+        (plugin as Record<string, unknown>).auth as Record<string, unknown>
+      ).key_env === 'string' &&
+      (((plugin as Record<string, unknown>).auth as Record<string, unknown>)
+        .prefix === undefined ||
+        typeof (
+          (plugin as Record<string, unknown>).auth as Record<string, unknown>
+        ).prefix === 'string') &&
+      Array.isArray((plugin as Record<string, unknown>).model_map) &&
+      ((plugin as Record<string, unknown>).model_map as unknown[]).length > 0
     );
   }
 
@@ -375,7 +423,7 @@ class PluginService {
   }
 
   // Import plugin from JSON data
-  importPlugin(pluginData: any): Plugin {
+  importPlugin(pluginData: unknown): Plugin {
     // Validate and clean the plugin data
     if (!this.validatePlugin(pluginData)) {
       throw new Error('Invalid plugin data');

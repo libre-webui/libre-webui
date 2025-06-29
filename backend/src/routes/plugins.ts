@@ -158,7 +158,7 @@ router.post(
       }
 
       const fileExt = path.extname(req.file.originalname).toLowerCase();
-      let pluginData: any;
+      let pluginData: unknown;
 
       if (fileExt === '.json') {
         // Handle JSON file with safe path handling
@@ -186,7 +186,7 @@ router.post(
       safeCleanupFile(req.file.path, tempDir);
 
       // Install the plugin
-      const plugin = pluginService.installPlugin(pluginData);
+      const plugin = pluginService.importPlugin(pluginData);
 
       res.json({
         success: true,
