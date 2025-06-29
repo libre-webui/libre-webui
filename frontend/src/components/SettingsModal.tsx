@@ -315,7 +315,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const tabs = [
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'models', label: 'Models', icon: Bot },
-    { id: 'plugins', label: 'Plugins', icon: Puzzle },
+    { id: 'plugins', label: 'Plugins', icon: Puzzle, badge: 'Beta' },
     { id: 'system', label: 'System', icon: Monitor },
     { id: 'data', label: 'Data', icon: Database },
     { id: 'about', label: 'About', icon: Info },
@@ -1189,9 +1189,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <span className='text-xs sm:text-sm font-medium truncate'>
                         {tab.label}
                       </span>
-                      {tab.id === 'models' && (
-                        <span className='ml-auto text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-1.5 sm:px-2 py-0.5 rounded-full hidden sm:inline'>
-                          Beta
+                      {tab.badge && (
+                        <span className='ml-auto text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-1.5 sm:px-2 py-0.5 rounded-full hidden sm:inline'>
+                          {tab.badge}
                         </span>
                       )}
                     </button>
