@@ -16,8 +16,12 @@
  */
 
 import express, { Request, Response } from 'express';
-import preferencesService from '../services/preferencesService';
-import { ApiResponse, UserPreferences, getErrorMessage } from '../types';
+import preferencesService from '../services/preferencesService.js';
+import {
+  ApiResponse,
+  UserPreferences,
+  getErrorMessage,
+} from '../types/index.js';
 
 const router = express.Router();
 

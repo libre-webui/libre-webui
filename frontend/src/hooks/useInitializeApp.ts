@@ -17,6 +17,7 @@
 
 import { useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
+import { usePluginStore } from '@/store/pluginStore';
 import { ollamaApi } from '@/utils/api';
 import toast from 'react-hot-toast';
 import { isDemoMode } from '@/utils/demoMode';
@@ -30,6 +31,7 @@ export const useInitializeApp = () => {
     setSelectedModel,
     models,
   } = useChatStore();
+  const { loadPlugins, plugins } = usePluginStore();
 
   useEffect(() => {
     const initialize = async () => {
@@ -45,13 +47,13 @@ export const useInitializeApp = () => {
           } else {
             // In demo mode, proceed to load models and sessions anyway
             await loadPreferences();
-            await Promise.all([loadModels(), loadSessions()]);
+            await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
             return;
           }
         }
-        // Load preferences first, then models and sessions
+        // Load preferences first, then models, sessions, and plugins
         await loadPreferences();
-        await Promise.all([loadModels(), loadSessions()]);
+        await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
       } catch (_error) {
         if (!isDemoMode()) {
           console.error('Failed to initialize app:', _error);
@@ -59,13 +61,13 @@ export const useInitializeApp = () => {
         } else {
           // In demo mode, proceed to load models and sessions anyway, no error log
           await loadPreferences();
-          await Promise.all([loadModels(), loadSessions()]);
+          await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
         }
       }
     };
 
     initialize();
-  }, [loadSessions, loadModels, loadPreferences]);
+  }, [loadSessions, loadModels, loadPreferences, loadPlugins]);
 
   // Set default model when models are loaded
   useEffect(() => {
@@ -108,4 +110,13 @@ export const useInitializeApp = () => {
       }
     }
   }, [models, setSelectedModel]);
+
+  // Reload models when active plugins change
+  useEffect(() => {
+    const activePlugins = plugins.filter(plugin => plugin.active);
+    if (activePlugins.length > 0) {
+      console.log('🔄 Active plugins changed, reloading models...');
+      loadModels();
+    }
+  }, [plugins, loadModels]);
 };

@@ -26,7 +26,7 @@ import {
   OllamaChatRequest,
   OllamaChatResponse,
   getErrorMessage,
-} from '../types';
+} from '../types/index.js';
 
 class OllamaService {
   private client: AxiosInstance;

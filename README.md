@@ -4,17 +4,17 @@
 
 ![Libre WebUI Screenshot](./screenshot.png)
 
-A minimalist, privacy-first interface for local LLMs via Ollama.
+A clean, privacy-first interface for local AI models via Ollama, with flexible routing to external AI services.
 
 ---
 
 ## Free & Open Source
 
-100% free and open source software. No telemetry. No tracking. Your data stays on your hardware.
+100% free and open source software. No telemetry, no tracking. Your data stays on your hardware by default.
 
-## Privacy First
+## Privacy & Flexibility
 
-Complete offline inference on your own hardware. No data leaves your machine unless you configure it to.
+Complete offline operation on your own hardware, with optional connections to external AI services when you need them.
 
 ---
 
@@ -28,6 +28,19 @@ Complete offline inference on your own hardware. No data leaves your machine unl
 npm install
 npm run dev
 ```
+
+### Optional: External AI Services
+
+Connect to external AI services by adding your API keys to the `.env` file:
+
+```bash
+# Add to backend/.env
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+GROQ_API_KEY=your_groq_key
+```
+
+**[📖 Complete Plugin Setup Guide →](./docs/08-PLUGIN_ARCHITECTURE.md)**
 
 ## Development
 
@@ -130,6 +143,7 @@ The app automatically generates configuration files on first run (these are excl
 
 - `backend/preferences.json` - User preferences (default model, theme, system message)
 - `backend/sessions.json` - Chat session data
+- `plugins/*.json` - Plugin configurations for external AI services
 
 ---
 
@@ -137,13 +151,14 @@ The app automatically generates configuration files on first run (these are excl
 
 ### 🚀 Core Features
 
-- **Clean, minimal interface** - Rick Rubin-inspired simplicity
-- **Light/Dark mode** - Comfortable viewing in any environment with improved accessibility
-- **Responsive design** - Works seamlessly on desktop, tablet, and mobile
+- **Clean interface** - Simple, focused design for productive AI interactions
+- **Light/Dark mode** - Comfortable viewing with improved accessibility
+- **Responsive design** - Works on desktop, tablet, and mobile devices
 - **Real-time chat** - Streaming responses with WebSocket integration
-- **Fully private** - Offline inference on your own hardware
-- **Zero telemetry** - No tracking, no data collection
-- **Keyboard shortcuts** - VS Code-like shortcuts for power users (⌘B, ⌘D, ⌘,, ?)
+- **Plugin system** - Connect external AI services (OpenAI, Anthropic, Groq, etc.)
+- **Privacy-focused** - Local processing with optional external connections
+- **Zero telemetry** - No tracking or data collection
+- **Keyboard shortcuts** - VS Code-inspired shortcuts for power users (⌘B, ⌘D, ⌘,, ?)
 - **Performance optimized** - Code splitting and lazy loading for faster page loads
 
 ### 🤖 Complete Ollama Integration
@@ -177,11 +192,50 @@ All Ollama API endpoints are integrated and ready to use:
 - ✅ **Version Detection** - Check Ollama server version
 - ✅ **Health Monitoring** - Service status and connectivity checks
 
+### 🔌 Plugin System
+
+Connect to external AI services while maintaining local fallback:
+
+#### Supported Services
+
+- ✅ **OpenAI** - GPT-4, GPT-3.5 Turbo models
+- ✅ **Anthropic** - Claude 3 Opus, Sonnet, Haiku
+- ✅ **Groq** - High-speed Llama 3, Mixtral models
+- ✅ **Custom APIs** - Any OpenAI-compatible endpoint
+
+#### Key Features
+
+- 🔌 **Flexible Routing** - Connect to any OpenAI-compatible API
+- 🛡️ **Automatic Fallback** - Falls back to local Ollama when external services fail
+- 📁 **Easy Installation** - Install plugins via JSON file upload
+- 🔧 **Simple Management** - Activate, deactivate, export plugins through UI
+- 🔒 **Secure** - API keys stored safely in environment variables
+- 📊 **Status Monitoring** - Real-time plugin status indicators
+
+#### Quick Plugin Setup
+
+```bash
+# Set environment variables
+export OPENAI_API_KEY="your_key_here"
+export ANTHROPIC_API_KEY="your_key_here"
+
+# Install via API
+curl -X POST http://localhost:3001/api/plugins/install \
+  -H "Content-Type: application/json" \
+  -d @plugins/openai.json
+
+# Activate plugin
+curl -X POST http://localhost:3001/api/plugins/activate/openai
+```
+
+**[📖 Complete Plugin Guide →](./docs/08-PLUGIN_ARCHITECTURE.md)**
+
 ### 🎯 UI Components
 
 - **Model Manager** - Comprehensive model management interface
 - **Chat Interface** - Intuitive conversation experience with syntax highlighting
 - **Settings Panel** - Customizable preferences and options
+- **Plugin Manager** - Upload, configure, and manage external AI service integrations
 - **Theme Toggle** - Seamless light/dark mode switching with keyboard shortcut (⌘D)
 - **Keyboard Shortcuts Modal** - Quick access help for all shortcuts (press ?)
 - **Optimized Bundle** - Code splitting for faster loading and better performance
@@ -213,6 +267,7 @@ libre-webui-dev/
 │   │   ├── services/   # Business logic and Ollama integration
 │   │   ├── types/      # Shared type definitions
 │   │   └── middleware/ # Express middleware
+├── plugins/            # Plugin configuration files (.json)
 └── docs/              # Documentation and guides
 ```
 
@@ -232,6 +287,7 @@ libre-webui-dev/
 | **[⌨️ Keyboard Shortcuts](./docs/04-KEYBOARD_SHORTCUTS.md)**   | Productivity hotkeys              |
 | **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)**                     | Try without installation          |
 | **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)**         | Problem solving guide             |
+| **[🔌 Plugin Architecture](./docs/08-PLUGIN_ARCHITECTURE.md)** | Connect multiple AI services      |
 
 ## Accessibility & Performance
 
@@ -269,6 +325,11 @@ const embeddings = await ollamaApi.generateEmbeddings({
   model: 'all-minilm',
   input: ['Text to embed'],
 });
+
+// Plugin management
+const plugins = await pluginApi.getAllPlugins();
+await pluginApi.activatePlugin('openai');
+const activePlugin = await pluginApi.getActivePlugin();
 ```
 
 ## License

@@ -46,6 +46,9 @@ sessions.json
 # User preferences (generated at runtime)
 preferences.json
 
+# Plugin status file
+.status.json
+
 # TypeScript
 *.tsbuildinfo
 

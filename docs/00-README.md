@@ -16,22 +16,25 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 | **[⌨️ Shortcuts](./04-KEYBOARD_SHORTCUTS.md)** | Productivity hotkeys | 2 min |
 | **[🎭 Demo Mode](./05-DEMO_MODE.md)** | Try without installation | 3 min |
 | **[🔧 Troubleshooting](./06-TROUBLESHOOTING.md)** | Fix common issues | As needed |
+| **[🔌 Plugin Architecture](./08-PLUGIN_ARCHITECTURE.md)** | Connect multiple AI services | 12 min |
 
-## � What is Libre WebUI?
+## What is Libre WebUI?
 
-**Local-first AI chat** that runs entirely on your computer. No data leaves your machine.
+**Local-first AI chat** that runs entirely on your computer. No data leaves your machine unless you choose to connect external services.
 
 **Key Benefits:**
-- 🔒 **100% Private** - Everything runs locally
-- 🖼️ **Image Support** - Upload and analyze images
-- 🎨 **Beautiful Interface** - Modern, responsive design
-- ⚡ **Fast & Efficient** - Optimized performance
-- 🆓 **Completely Free** - No subscriptions
+- 🔒 **Privacy-First** - Local processing by default
+- 🔌 **Multiple AI Services** - Connect OpenAI, Anthropic, Groq, and more through plugins
+- 🖼️ **Image Support** - Upload and analyze images with vision models
+- 🎨 **Clean Interface** - Modern, responsive design
+- ⚡ **Fast & Reliable** - Optimized performance with automatic fallbacks
+- 🆓 **Open Source** - Completely free with no subscriptions
 
 ## 🆘 Need Help?
 
 - **Setup issues?** → [Quick Start](./01-QUICK_START.md)
 - **Model questions?** → [Working with Models](./02-WORKING_WITH_MODELS.md)
+- **Plugin setup?** → [Plugin Architecture](./08-PLUGIN_ARCHITECTURE.md)
 - **Technical problems?** → [Troubleshooting](./06-TROUBLESHOOTING.md)
 
 ## 🤝 Contributing
