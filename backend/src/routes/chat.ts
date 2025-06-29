@@ -310,6 +310,14 @@ router.post(
       let response: OllamaChatResponse;
       let assistantContent: string;
 
+      // Prepare common chat request for Ollama (used in both fallback and direct cases)
+      const chatRequest = {
+        model: session.model,
+        messages: ollamaMessages,
+        stream: false,
+        ...options,
+      };
+
       // Check if there's an active plugin
       const activePlugin = pluginService.getActivePlugin();
 
@@ -339,25 +347,11 @@ router.post(
           console.error('Plugin failed, falling back to Ollama:', pluginError);
 
           // Fallback to Ollama
-          const chatRequest = {
-            model: session.model,
-            messages: ollamaMessages,
-            stream: false,
-            ...options,
-          };
-
           response = await ollamaService.generateChatResponse(chatRequest);
           assistantContent = response.message.content;
         }
       } else {
         // Use Ollama directly
-        const chatRequest = {
-          model: session.model,
-          messages: ollamaMessages,
-          stream: false,
-          ...options,
-        };
-
         response = await ollamaService.generateChatResponse(chatRequest);
         assistantContent = response.message.content;
       }

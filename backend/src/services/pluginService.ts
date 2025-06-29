@@ -17,6 +17,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import sanitize from 'sanitize-filename';
 import axios from 'axios';
 import {
   Plugin,
@@ -97,9 +98,20 @@ class PluginService {
 
   // Get a specific plugin by ID
   getPlugin(id: string): Plugin | null {
-    const filePath = path.join(this.pluginsDir, `${id}.json`);
+    // Sanitize the ID to prevent path traversal
+    const sanitizedId = sanitize(id);
+    if (!sanitizedId || sanitizedId !== id) {
+      console.error('Invalid plugin ID provided:', id);
+      return null;
+    }
 
-    if (!fs.existsSync(filePath)) {
+    const filePath = path.resolve(this.pluginsDir, `${sanitizedId}.json`);
+
+    // Ensure the file path is within the plugins directory
+    if (
+      !filePath.startsWith(path.resolve(this.pluginsDir)) ||
+      !fs.existsSync(filePath)
+    ) {
       return null;
     }
 
@@ -112,7 +124,7 @@ class PluginService {
         return plugin;
       }
     } catch (error) {
-      console.error(`Failed to load plugin ${id}:`, error);
+      console.error('Failed to load plugin %s:', sanitizedId, error);
     }
 
     return null;
@@ -140,9 +152,28 @@ class PluginService {
 
   // Delete a plugin
   deletePlugin(id: string): boolean {
-    const filePath = path.join(this.pluginsDir, `${id}.json`);
+    // Validate the ID parameter using a strict pattern
+    const idPattern = /^[a-zA-Z0-9_-]+$/;
+    if (!idPattern.test(id)) {
+      console.error('Invalid plugin ID format:', id);
+      return false;
+    }
 
-    if (!fs.existsSync(filePath)) {
+    // Sanitize the ID to prevent path traversal
+    const sanitizedId = sanitize(id);
+    if (!sanitizedId || sanitizedId !== id) {
+      console.error('Plugin ID failed sanitization:', id);
+      return false;
+    }
+
+    const filePath = path.resolve(this.pluginsDir, `${sanitizedId}.json`);
+
+    // Ensure the file path is within the plugins directory
+    if (
+      !filePath.startsWith(path.resolve(this.pluginsDir)) ||
+      !fs.existsSync(filePath)
+    ) {
+      console.error('File path is invalid or does not exist:', filePath);
       return false;
     }
 
@@ -157,7 +188,7 @@ class PluginService {
 
       return true;
     } catch (error) {
-      console.error(`Failed to delete plugin ${id}:`, error);
+      console.error('Failed to delete plugin %s:', sanitizedId, error);
       return false;
     }
   }
