@@ -16,9 +16,9 @@
   "dependencies": {
     "axios": "^1.10.0",
     "clsx": "^2.0.0",
-    "dotenv": "^16.3.1",
+    "dotenv": "^17.0.0",
     "eslint-plugin-react-refresh": "^0.4.20",
-    "lucide-react": "^0.522.0",
+    "lucide-react": "^0.525.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
@@ -44,7 +44,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.3.6",
     "typescript": "^5.2.2",
-    "vite": "^6.3.5"
+    "vite": "^7.0.0"
   },
   "overrides": {
     "brace-expansion": "2.0.2"
