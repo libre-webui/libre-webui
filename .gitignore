@@ -73,3 +73,6 @@ preferences.json
 
 # Vite
 .vite/
+
+# Installed plugins
+backend/plugins/*
