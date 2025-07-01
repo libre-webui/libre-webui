@@ -46,7 +46,10 @@ interface ChatState {
   sessions: ChatSession[];
   currentSession: ChatSession | null;
   setCurrentSession: (session: ChatSession | null) => void;
-  createSession: (model: string, title?: string) => Promise<void>;
+  createSession: (
+    model: string,
+    title?: string
+  ) => Promise<ChatSession | undefined>;
   loadSessions: () => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
   clearAllSessions: () => Promise<void>;
@@ -116,12 +119,14 @@ export const useChatStore = create<ChatState>((set, get) => ({
         // Note: System message is now automatically added by the backend when creating sessions
 
         toast.success('New chat created');
+        return newSession;
       }
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to create session');
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
     }
+    return undefined;
   },
 
   loadSessions: async () => {

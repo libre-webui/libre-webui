@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { Logo } from '@/components/Logo';
@@ -24,21 +25,60 @@ import { useChat } from '@/hooks/useChat';
 import { Select } from '@/components/ui';
 
 export const ChatPage: React.FC = () => {
+  const { sessionId } = useParams<{ sessionId: string }>();
+  const navigate = useNavigate();
   const {
     currentSession,
+    sessions,
     models,
     selectedModel,
     setSelectedModel,
     createSession,
+    setCurrentSession,
+    loadSessions,
   } = useChatStore();
   const { sendMessage, stopGeneration, isStreaming } = useChat(
     currentSession?.id || ''
   );
 
+  // Handle URL session parameter
+  useEffect(() => {
+    const handleSessionFromUrl = async () => {
+      // First ensure sessions are loaded
+      if (sessions.length === 0) {
+        await loadSessions();
+        return; // Let the next effect run handle the navigation
+      }
+
+      if (sessionId) {
+        // Find the session in the loaded sessions
+        const foundSession = sessions.find(s => s.id === sessionId);
+        if (foundSession && foundSession.id !== currentSession?.id) {
+          setCurrentSession(foundSession);
+        } else if (!foundSession) {
+          // Session not found, redirect to most recent session or root
+          if (sessions.length > 0) {
+            navigate(`/c/${sessions[0].id}`, { replace: true });
+          } else {
+            navigate('/', { replace: true });
+          }
+        }
+      } else if (!sessionId && sessions.length > 0) {
+        // No sessionId in URL but we have sessions, redirect to the most recent session
+        navigate(`/c/${sessions[0].id}`, { replace: true });
+      }
+    };
+
+    handleSessionFromUrl();
+  }, [sessionId, sessions, setCurrentSession, navigate, loadSessions]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleModelChange = async (model: string) => {
     setSelectedModel(model);
     if (!currentSession) {
-      await createSession(model);
+      const newSession = await createSession(model);
+      if (newSession) {
+        navigate(`/c/${newSession.id}`, { replace: true });
+      }
     }
   };
 

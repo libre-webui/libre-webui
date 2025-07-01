@@ -137,7 +137,7 @@ const App: React.FC = () => {
               <Routes>
                 <Route path='/' element={<ChatPage />} />
                 <Route path='/chat' element={<ChatPage />} />
-                <Route path='/chat/:sessionId' element={<ChatPage />} />
+                <Route path='/c/:sessionId' element={<ChatPage />} />
                 <Route path='/models' element={<ModelsPage />} />
               </Routes>
             </Suspense>
