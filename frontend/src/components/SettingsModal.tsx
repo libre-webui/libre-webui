@@ -35,6 +35,8 @@ import {
   Download,
   Trash2,
   Check,
+  Sliders,
+  RotateCcw,
 } from 'lucide-react';
 import { Button, Select, Textarea } from '@/components/ui';
 import { ModelTools } from '@/components/ModelTools';
@@ -112,11 +114,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [jsonInput, setJsonInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Generation options state
+  const [tempGenerationOptions, setTempGenerationOptions] = useState(
+    preferences.generationOptions || {}
+  );
+
   // Load system information
   useEffect(() => {
     if (isOpen) {
       loadSystemInfo();
       setTempSystemMessage(systemMessage);
+      setTempGenerationOptions(preferences.generationOptions || {});
       loadPlugins(); // Load plugins when modal opens
       loadModels(); // Ensure models are up to date when modal opens
     }
@@ -312,9 +320,51 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     );
   };
 
+  const handleGenerationOptionChange = (
+    key: string,
+    value: string | number | boolean | string[] | undefined
+  ) => {
+    setTempGenerationOptions(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleSaveGenerationOptions = async () => {
+    try {
+      const response = await preferencesApi.setGenerationOptions(
+        tempGenerationOptions
+      );
+      if (response.success && response.data) {
+        setPreferences(response.data);
+        toast.success('Generation options updated successfully');
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to update generation options: ' + errorMessage);
+    }
+  };
+
+  const handleResetGenerationOptions = async () => {
+    try {
+      const response = await preferencesApi.resetGenerationOptions();
+      if (response.success && response.data) {
+        setPreferences(response.data);
+        setTempGenerationOptions(response.data.generationOptions || {});
+        toast.success('Generation options reset to defaults');
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to reset generation options: ' + errorMessage);
+    }
+  };
+
   const tabs = [
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'models', label: 'Models', icon: Bot },
+    { id: 'generation', label: 'Generation', icon: Sliders },
     { id: 'plugins', label: 'Plugins', icon: Puzzle, badge: 'Beta' },
     { id: 'system', label: 'System', icon: Monitor },
     { id: 'data', label: 'Data', icon: Database },
@@ -1137,8 +1187,362 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
         );
 
-      default:
-        return null;
+      case 'generation':
+        return (
+          <div className='space-y-6'>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+                Generation Options
+              </h3>
+              <p className='text-sm text-gray-600 dark:text-gray-400 mb-6'>
+                Fine-tune AI generation parameters to control response behavior
+                and quality.
+              </p>
+
+              <div className='space-y-6'>
+                {/* Core Parameters */}
+                <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                  <h4 className='text-md font-medium text-gray-900 dark:text-gray-100 mb-4'>
+                    Core Parameters
+                  </h4>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    {/* Temperature */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Temperature
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (0.0-2.0)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        min='0'
+                        max='2'
+                        step='0.1'
+                        value={tempGenerationOptions.temperature || 0.8}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'temperature',
+                            parseFloat(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Controls randomness. Lower = more focused, Higher = more
+                        creative
+                      </p>
+                    </div>
+
+                    {/* Top P */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Top P
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (0.0-1.0)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        min='0'
+                        max='1'
+                        step='0.05'
+                        value={tempGenerationOptions.top_p || 0.9}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'top_p',
+                            parseFloat(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Nucleus sampling. Lower = more constrained vocabulary
+                      </p>
+                    </div>
+
+                    {/* Top K */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Top K
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (1-100)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        min='1'
+                        max='100'
+                        value={tempGenerationOptions.top_k || 40}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'top_k',
+                            parseInt(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Limits vocabulary to top K tokens
+                      </p>
+                    </div>
+
+                    {/* Min P */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Min P
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (0.0-1.0)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        min='0'
+                        max='1'
+                        step='0.05'
+                        value={tempGenerationOptions.min_p || 0.0}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'min_p',
+                            parseFloat(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Minimum probability threshold
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Generation Control */}
+                <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                  <h4 className='text-md font-medium text-gray-900 dark:text-gray-100 mb-4'>
+                    Generation Control
+                  </h4>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    {/* Max Tokens */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Max Tokens
+                      </label>
+                      <input
+                        type='number'
+                        min='1'
+                        max='4096'
+                        value={tempGenerationOptions.num_predict || 128}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'num_predict',
+                            parseInt(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Maximum number of tokens to generate
+                      </p>
+                    </div>
+
+                    {/* Repeat Penalty */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Repeat Penalty
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (0.0-2.0)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        min='0'
+                        max='2'
+                        step='0.1'
+                        value={tempGenerationOptions.repeat_penalty || 1.1}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'repeat_penalty',
+                            parseFloat(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Penalty for repeating tokens
+                      </p>
+                    </div>
+
+                    {/* Context Length */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Context Length
+                      </label>
+                      <input
+                        type='number'
+                        min='512'
+                        max='32768'
+                        step='512'
+                        value={tempGenerationOptions.num_ctx || 2048}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'num_ctx',
+                            parseInt(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Context window size
+                      </p>
+                    </div>
+
+                    {/* Seed */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Seed
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (optional)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        value={tempGenerationOptions.seed || ''}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'seed',
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        placeholder='Random'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Seed for reproducible outputs
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Advanced Options */}
+                <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                  <h4 className='text-md font-medium text-gray-900 dark:text-gray-100 mb-4'>
+                    Advanced Options
+                  </h4>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    {/* Presence Penalty */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Presence Penalty
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (-2.0-2.0)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        min='-2'
+                        max='2'
+                        step='0.1'
+                        value={tempGenerationOptions.presence_penalty || 0.0}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'presence_penalty',
+                            parseFloat(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Penalty for token presence
+                      </p>
+                    </div>
+
+                    {/* Frequency Penalty */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Frequency Penalty
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (-2.0-2.0)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        min='-2'
+                        max='2'
+                        step='0.1'
+                        value={tempGenerationOptions.frequency_penalty || 0.0}
+                        onChange={e =>
+                          handleGenerationOptionChange(
+                            'frequency_penalty',
+                            parseFloat(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Penalty for token frequency
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Stop Sequences */}
+                  <div className='mt-4'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Stop Sequences
+                      <span className='text-xs text-gray-500 ml-1'>
+                        (comma-separated)
+                      </span>
+                    </label>
+                    <input
+                      type='text'
+                      value={
+                        tempGenerationOptions.stop
+                          ? tempGenerationOptions.stop.join(', ')
+                          : ''
+                      }
+                      onChange={e =>
+                        handleGenerationOptionChange(
+                          'stop',
+                          e.target.value
+                            ? e.target.value
+                                .split(',')
+                                .map(s => s.trim())
+                                .filter(s => s)
+                            : undefined
+                        )
+                      }
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      placeholder='\\n, ###, STOP'
+                    />
+                    <p className='text-xs text-gray-500 mt-1'>
+                      Sequences that will stop generation
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className='flex justify-between items-center pt-4 border-t border-gray-200 dark:border-dark-300'>
+                  <Button
+                    onClick={handleResetGenerationOptions}
+                    variant='outline'
+                    className='flex items-center gap-2'
+                  >
+                    <RotateCcw size={16} />
+                    Reset to Defaults
+                  </Button>
+                  <Button
+                    onClick={handleSaveGenerationOptions}
+                    className='flex items-center gap-2'
+                  >
+                    <Check size={16} />
+                    Save Options
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
     }
   };
 

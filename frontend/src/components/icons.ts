@@ -64,4 +64,8 @@ export {
 
   // System
   Monitor,
+  Sliders,
+  RotateCcw,
+  Info,
+  Puzzle,
 } from 'lucide-react';

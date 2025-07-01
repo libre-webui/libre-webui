@@ -35,6 +35,7 @@ import pluginRoutes from './routes/plugins.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
+import preferencesService from './services/preferencesService.js';
 import { OllamaChatRequest, OllamaChatMessage } from './types/index.js';
 
 // Load environment variables
@@ -226,6 +227,16 @@ wss.on('connection', ws => {
             `[WebSocket] Using plugin ${activePlugin.id} for model ${session.model}`
           );
           try {
+            // Get user's preferred generation options
+            const userGenerationOptions =
+              preferencesService.getGenerationOptions();
+
+            // Merge user preferences with request options (request options take precedence)
+            const mergedOptions = {
+              ...userGenerationOptions,
+              ...options,
+            };
+
             // Get messages for context
             const contextMessages =
               chatService.getMessagesForContext(sessionId);
@@ -234,7 +245,7 @@ wss.on('connection', ws => {
             const pluginResponse = await pluginService.executePluginRequest(
               session.model,
               contextMessages.concat([userMessage]),
-              options
+              mergedOptions
             );
 
             // Get the content from plugin response
@@ -308,12 +319,21 @@ wss.on('connection', ws => {
           `[WebSocket] No plugin found or plugin failed, using Ollama for model: ${session.model}`
         );
 
+        // Get user's preferred generation options
+        const userGenerationOptions = preferencesService.getGenerationOptions();
+
+        // Merge user preferences with request options (request options take precedence)
+        const mergedOptions = {
+          ...userGenerationOptions,
+          ...options,
+        };
+
         // Create chat request with advanced features
         const chatRequest: OllamaChatRequest = {
           model: session.model,
           messages: ollamaMessages,
           stream: true,
-          options: options || {},
+          options: mergedOptions,
         };
 
         // Add structured output format if specified

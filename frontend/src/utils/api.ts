@@ -672,6 +672,14 @@ export const preferencesApi = {
 
   setSystemMessage: (message: string): Promise<ApiResponse<UserPreferences>> =>
     api.put('/preferences/system-message', { message }).then(res => res.data),
+
+  setGenerationOptions: (
+    options: Partial<UserPreferences['generationOptions']>
+  ): Promise<ApiResponse<UserPreferences>> =>
+    api.put('/preferences/generation-options', options).then(res => res.data),
+
+  resetGenerationOptions: (): Promise<ApiResponse<UserPreferences>> =>
+    api.post('/preferences/generation-options/reset').then(res => res.data),
 };
 
 export default api;

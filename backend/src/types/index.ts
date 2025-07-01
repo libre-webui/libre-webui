@@ -33,10 +33,48 @@ export interface ChatSession {
   updatedAt: number;
 }
 
+export interface GenerationOptions {
+  // Core parameters
+  temperature?: number; // 0.0-2.0, default 0.8
+  top_p?: number; // 0.0-1.0, default 0.9
+  top_k?: number; // 1-100, default 40
+  min_p?: number; // 0.0-1.0, default 0.0
+  typical_p?: number; // 0.0-1.0, default 0.7
+
+  // Generation control
+  num_predict?: number; // Number of tokens to predict, default 128
+  seed?: number; // Random seed for reproducible outputs
+  repeat_last_n?: number; // How far back to look for repetition, default 64
+  repeat_penalty?: number; // Penalty for repetition, default 1.1
+  presence_penalty?: number; // Penalty for token presence, default 0.0
+  frequency_penalty?: number; // Penalty for token frequency, default 0.0
+  penalize_newline?: boolean; // Penalize newlines, default true
+
+  // Context and processing
+  num_ctx?: number; // Context window size, default 2048
+  num_batch?: number; // Batch size for processing, default 512
+  num_keep?: number; // Number of tokens to keep from prompt
+
+  // Advanced options
+  stop?: string[]; // Stop sequences
+  numa?: boolean; // Enable NUMA support
+  num_thread?: number; // Number of threads to use
+  num_gpu?: number; // Number of GPU layers
+  main_gpu?: number; // Main GPU to use
+  use_mmap?: boolean; // Use memory mapping
+
+  // Model behavior
+  format?: string | Record<string, unknown>; // Response format (json, etc.)
+  raw?: boolean; // Skip prompt templating
+  keep_alive?: string; // Keep model in memory duration
+  stream?: boolean; // Enable streaming
+}
+
 export interface UserPreferences {
   defaultModel: string;
   theme: 'light' | 'dark';
   systemMessage: string;
+  generationOptions: GenerationOptions;
 }
 
 // Ollama Chat Message format
@@ -181,18 +219,6 @@ export interface OllamaLegacyEmbeddingsRequest {
 
 export interface OllamaLegacyEmbeddingsResponse {
   embedding: number[];
-}
-
-// Generation options for AI models
-export interface GenerationOptions {
-  temperature?: number;
-  top_p?: number;
-  top_k?: number;
-  num_predict?: number;
-  repeat_penalty?: number;
-  seed?: number;
-  stop?: string[];
-  stream?: boolean;
 }
 
 // Plugin system types

@@ -19,6 +19,7 @@ import express, { Request, Response } from 'express';
 import chatService from '../services/chatService.js';
 import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
+import preferencesService from '../services/preferencesService.js';
 import {
   ApiResponse,
   ChatSession,
@@ -310,12 +311,21 @@ router.post(
       let response: OllamaChatResponse;
       let assistantContent: string;
 
+      // Get user's preferred generation options
+      const userGenerationOptions = preferencesService.getGenerationOptions();
+
+      // Merge user preferences with request options (request options take precedence)
+      const mergedOptions = {
+        ...userGenerationOptions,
+        ...options,
+      };
+
       // Prepare common chat request for Ollama (used in both fallback and direct cases)
       const chatRequest = {
         model: session.model,
         messages: ollamaMessages,
         stream: false,
-        ...options,
+        options: mergedOptions,
       };
 
       // Check if there's an active plugin for this model
@@ -452,11 +462,20 @@ router.post(
         content: message,
       });
 
+      // Get user's preferred generation options
+      const userGenerationOptions = preferencesService.getGenerationOptions();
+
+      // Merge user preferences with request options (request options take precedence)
+      const mergedOptions = {
+        ...userGenerationOptions,
+        ...options,
+      };
+
       const chatRequest = {
         model: session.model,
         messages: ollamaMessages,
         stream: true,
-        ...options,
+        options: mergedOptions,
       };
 
       let fullResponse = '';

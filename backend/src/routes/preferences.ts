@@ -137,4 +137,61 @@ router.put(
   }
 );
 
+// Set generation options (convenience endpoint)
+router.put(
+  '/generation-options',
+  async (
+    req: Request,
+    res: Response<ApiResponse<UserPreferences>>
+  ): Promise<void> => {
+    try {
+      const options = req.body;
+
+      if (!options || typeof options !== 'object') {
+        res.status(400).json({
+          success: false,
+          error: 'Generation options are required',
+        });
+        return;
+      }
+
+      const updatedPreferences =
+        preferencesService.setGenerationOptions(options);
+
+      res.json({
+        success: true,
+        data: updatedPreferences,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to set generation options'),
+      });
+    }
+  }
+);
+
+// Reset generation options to defaults
+router.post(
+  '/generation-options/reset',
+  async (
+    req: Request,
+    res: Response<ApiResponse<UserPreferences>>
+  ): Promise<void> => {
+    try {
+      const updatedPreferences = preferencesService.resetGenerationOptions();
+
+      res.json({
+        success: true,
+        data: updatedPreferences,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to reset generation options'),
+      });
+    }
+  }
+);
+
 export default router;
