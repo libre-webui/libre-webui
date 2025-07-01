@@ -16,7 +16,12 @@
  */
 
 import { create } from 'zustand';
-import { ChatSession, ChatMessage, OllamaModel } from '@/types';
+import {
+  ChatSession,
+  ChatMessage,
+  OllamaModel,
+  GenerationStatistics,
+} from '@/types';
 import { chatApi, ollamaApi, preferencesApi } from '@/utils/api';
 import { pluginApi } from '@/utils/api';
 import { generateId } from '@/utils';
@@ -56,6 +61,12 @@ interface ChatState {
     sessionId: string,
     messageId: string,
     content: string
+  ) => void;
+  updateMessageWithStatistics: (
+    sessionId: string,
+    messageId: string,
+    content: string,
+    statistics?: GenerationStatistics
   ) => void;
 
   // Models
@@ -388,6 +399,69 @@ export const useChatStore = create<ChatState>((set, get) => ({
         'Store: Updated session messages count:',
         newCurrentSession?.messages.length
       );
+
+      return {
+        sessions: updatedSessions,
+        currentSession: newCurrentSession,
+      };
+    });
+  },
+
+  updateMessageWithStatistics: (
+    sessionId: string,
+    messageId: string,
+    content: string,
+    statistics?: GenerationStatistics
+  ) => {
+    set(state => {
+      console.log('Store: updateMessageWithStatistics called', {
+        sessionId,
+        messageId,
+        contentLength: content.length,
+        hasStatistics: !!statistics,
+        currentSessionId: state.currentSession?.id,
+        isCurrentSession: state.currentSession?.id === sessionId,
+      });
+
+      // Only update if this is for the current session
+      if (state.currentSession?.id !== sessionId) {
+        console.log(
+          'Store: Ignoring updateMessageWithStatistics for non-current session'
+        );
+        return state;
+      }
+
+      const updatedSessions = state.sessions.map(session => {
+        if (session.id === sessionId) {
+          const updatedMessages = session.messages.map(msg => {
+            if (msg.id === messageId) {
+              console.log(
+                'Store: Updating message',
+                msg.id,
+                'with content length:',
+                content.length,
+                'and statistics:',
+                !!statistics
+              );
+              return { ...msg, content, statistics };
+            }
+            return msg;
+          });
+
+          return {
+            ...session,
+            messages: updatedMessages,
+            updatedAt: Date.now(),
+          };
+        }
+        return session;
+      });
+
+      const newCurrentSession =
+        state.currentSession && state.currentSession.id === sessionId
+          ? updatedSessions.find(s => s.id === sessionId) ||
+            state.currentSession
+          : state.currentSession;
 
       return {
         sessions: updatedSessions,

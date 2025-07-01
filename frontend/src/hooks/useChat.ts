@@ -18,6 +18,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
+import { GenerationStatistics } from '@/types';
 import websocketService from '@/utils/websocket';
 import { generateId } from '@/utils';
 import toast from 'react-hot-toast';
@@ -25,7 +26,8 @@ import toast from 'react-hot-toast';
 export const useChat = (sessionId: string) => {
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const { addMessage, updateMessage } = useChatStore();
+  const { addMessage, updateMessage, updateMessageWithStatistics } =
+    useChatStore();
   const { setIsGenerating, preferences } = useAppStore();
   const streamingMessageIdRef = useRef<string | null>(null);
 
@@ -102,12 +104,15 @@ export const useChat = (sessionId: string) => {
         role: string;
         timestamp: number;
         messageId?: string;
+        statistics?: GenerationStatistics; // Generation statistics from Ollama
       };
       console.log(
         'Hook: Received assistant_complete for session:',
         sessionId,
         'messageId:',
-        completeData.messageId
+        completeData.messageId,
+        'with statistics:',
+        !!completeData.statistics
       );
       setIsStreaming(false);
       setStreamingMessage('');
@@ -121,9 +126,18 @@ export const useChat = (sessionId: string) => {
           'Hook: Final update for message',
           messageId,
           'with content length:',
-          completeData.content.length
+          completeData.content.length,
+          'and statistics:',
+          !!completeData.statistics
         );
-        updateMessage(sessionId, messageId, completeData.content);
+
+        // Use updateMessageWithStatistics to include generation statistics
+        updateMessageWithStatistics(
+          sessionId,
+          messageId,
+          completeData.content,
+          completeData.statistics
+        );
 
         // No need to save to backend - backend already saved it
         console.log('Hook: Message completed and saved by backend');
@@ -150,7 +164,7 @@ export const useChat = (sessionId: string) => {
     setIsStreaming(false);
     setStreamingMessage('');
     streamingMessageIdRef.current = null;
-  }, [sessionId, updateMessage, setIsGenerating]);
+  }, [sessionId, updateMessage, updateMessageWithStatistics, setIsGenerating]);
 
   const sendMessage = useCallback(
     async (

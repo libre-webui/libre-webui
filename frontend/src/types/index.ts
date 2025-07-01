@@ -15,6 +15,18 @@
  * limitations under the License.
  */
 
+export interface GenerationStatistics {
+  total_duration?: number; // Total time in nanoseconds
+  load_duration?: number; // Model load time in nanoseconds
+  prompt_eval_count?: number; // Number of tokens in the prompt
+  prompt_eval_duration?: number; // Time spent evaluating prompt in nanoseconds
+  eval_count?: number; // Number of tokens generated
+  eval_duration?: number; // Time spent generating in nanoseconds
+  tokens_per_second?: number; // Calculated tokens/second
+  created_at?: string; // Timestamp from Ollama
+  model?: string; // Model used for generation
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -22,6 +34,7 @@ export interface ChatMessage {
   timestamp: number;
   model?: string;
   images?: string[]; // Base64 encoded images for multimodal support
+  statistics?: GenerationStatistics; // Generation statistics from Ollama
 }
 
 export interface ChatSession {

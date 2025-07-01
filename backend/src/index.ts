@@ -36,7 +36,11 @@ import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
 import preferencesService from './services/preferencesService.js';
-import { OllamaChatRequest, OllamaChatMessage } from './types/index.js';
+import {
+  OllamaChatRequest,
+  OllamaChatMessage,
+  GenerationStatistics,
+} from './types/index.js';
 
 // Load environment variables
 dotenv.config();
@@ -207,6 +211,7 @@ wss.on('connection', ws => {
         });
 
         let assistantContent = '';
+        let finalStatistics: GenerationStatistics | undefined = undefined;
 
         console.log('Backend: Using assistantMessageId:', assistantMessageId);
 
@@ -366,6 +371,28 @@ wss.on('connection', ws => {
                 })
               );
             }
+
+            // Capture final statistics when streaming is done
+            if (chunk.done) {
+              finalStatistics = {
+                total_duration: chunk.total_duration,
+                load_duration: chunk.load_duration,
+                prompt_eval_count: chunk.prompt_eval_count,
+                prompt_eval_duration: chunk.prompt_eval_duration,
+                eval_count: chunk.eval_count,
+                eval_duration: chunk.eval_duration,
+                created_at: chunk.created_at,
+                model: chunk.model,
+              };
+
+              // Calculate tokens per second if we have the necessary data
+              if (chunk.eval_count && chunk.eval_duration) {
+                finalStatistics.tokens_per_second =
+                  Math.round(
+                    (chunk.eval_count / (chunk.eval_duration / 1e9)) * 100
+                  ) / 100;
+              }
+            }
           },
           error => {
             ws.send(
@@ -388,6 +415,7 @@ wss.on('connection', ws => {
                 content: assistantContent,
                 model: session.model,
                 id: assistantMessageId,
+                statistics: finalStatistics,
               });
 
               console.log(
@@ -395,7 +423,7 @@ wss.on('connection', ws => {
                 !!assistantMessage
               );
 
-              // Send completion signal
+              // Send completion signal with statistics
               ws.send(
                 JSON.stringify({
                   type: 'assistant_complete',
@@ -404,6 +432,7 @@ wss.on('connection', ws => {
                     role: 'assistant',
                     timestamp: Date.now(),
                     messageId: assistantMessageId,
+                    statistics: finalStatistics,
                   },
                 })
               );

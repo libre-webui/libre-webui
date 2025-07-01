@@ -18,6 +18,7 @@
 import React from 'react';
 import { ChatMessage as ChatMessageType } from '@/types';
 import { MessageContent } from '@/components/ui';
+import { GenerationStats } from '@/components/GenerationStats';
 import { formatTimestamp, cn } from '@/utils';
 import { User, Bot } from 'lucide-react';
 
@@ -108,6 +109,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               {isStreaming && (
                 <div className='inline-block w-2 h-5 bg-primary-500 animate-pulse ml-1 rounded-sm' />
               )}
+            </div>
+          )}
+
+          {/* Display generation statistics for assistant messages */}
+          {!isUser && message.statistics && (
+            <div className='mt-3'>
+              <GenerationStats statistics={message.statistics} />
             </div>
           )}
         </div>

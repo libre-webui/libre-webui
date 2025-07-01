@@ -34,4 +34,5 @@ export {
 } from './KeyboardShortcuts';
 export { DemoModeBanner } from './DemoModeBanner';
 export { PluginManager } from './PluginManager';
+export { GenerationStats } from './GenerationStats';
 export * from './ui';

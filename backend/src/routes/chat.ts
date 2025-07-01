@@ -25,10 +25,37 @@ import {
   ChatSession,
   ChatMessage,
   OllamaChatResponse,
+  GenerationStatistics,
   getErrorMessage,
 } from '../types/index.js';
 
 const router = express.Router();
+
+// Helper function to extract generation statistics from Ollama response
+const extractStatistics = (
+  response: OllamaChatResponse
+): GenerationStatistics => {
+  const stats: GenerationStatistics = {
+    total_duration: response.total_duration,
+    load_duration: response.load_duration,
+    prompt_eval_count: response.prompt_eval_count,
+    prompt_eval_duration: response.prompt_eval_duration,
+    eval_count: response.eval_count,
+    eval_duration: response.eval_duration,
+    created_at: response.created_at,
+    model: response.model,
+  };
+
+  // Calculate tokens per second if we have the necessary data
+  if (response.eval_count && response.eval_duration) {
+    // Convert nanoseconds to seconds and calculate tokens/second
+    stats.tokens_per_second =
+      Math.round((response.eval_count / (response.eval_duration / 1e9)) * 100) /
+      100;
+  }
+
+  return stats;
+};
 
 // Get all chat sessions
 router.get(
@@ -377,11 +404,13 @@ router.post(
         assistantContent = response.message.content;
       }
 
-      // Add assistant response to session
+      // Add assistant response to session with statistics
+      const statistics = extractStatistics(response);
       const assistantMessage = chatService.addMessage(sessionId, {
         role: 'assistant',
         content: assistantContent,
         model: session.model,
+        statistics,
       });
 
       if (!assistantMessage) {
