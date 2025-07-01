@@ -34,6 +34,7 @@ interface AppState {
   // User preferences
   preferences: UserPreferences;
   setPreferences: (preferences: Partial<UserPreferences>) => void;
+  loadPreferences: () => Promise<void>;
 
   // UI state
   isGenerating: boolean;
@@ -83,13 +84,27 @@ export const useAppStore = create<AppState>()(
           temperature: 0.7,
           top_p: 0.9,
           top_k: 40,
-          num_predict: -1,
+          num_predict: 1024,
         },
       },
       setPreferences: newPreferences =>
         set(state => ({
           preferences: { ...state.preferences, ...newPreferences },
         })),
+
+      loadPreferences: async () => {
+        try {
+          const { preferencesApi } = await import('@/utils/api');
+          const response = await preferencesApi.getPreferences();
+          if (response.success && response.data) {
+            set(state => ({
+              preferences: { ...state.preferences, ...response.data },
+            }));
+          }
+        } catch (error: unknown) {
+          console.warn('Failed to load preferences from backend:', error);
+        }
+      },
 
       // UI state
       isGenerating: false,

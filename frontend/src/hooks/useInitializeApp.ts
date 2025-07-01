@@ -17,6 +17,7 @@
 
 import { useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
+import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { ollamaApi } from '@/utils/api';
 import toast from 'react-hot-toast';
@@ -27,10 +28,11 @@ export const useInitializeApp = () => {
   const {
     loadSessions,
     loadModels,
-    loadPreferences,
+    loadPreferences: loadChatPreferences,
     setSelectedModel,
     models,
   } = useChatStore();
+  const { loadPreferences: loadAppPreferences } = useAppStore();
   const { loadPlugins, plugins } = usePluginStore();
 
   useEffect(() => {
@@ -46,13 +48,13 @@ export const useInitializeApp = () => {
             return;
           } else {
             // In demo mode, proceed to load models and sessions anyway
-            await loadPreferences();
+            await Promise.all([loadAppPreferences(), loadChatPreferences()]);
             await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
             return;
           }
         }
         // Load preferences first, then models, sessions, and plugins
-        await loadPreferences();
+        await Promise.all([loadAppPreferences(), loadChatPreferences()]);
         await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
       } catch (_error) {
         if (!isDemoMode()) {
@@ -60,14 +62,20 @@ export const useInitializeApp = () => {
           toast.error('Failed to connect to the backend service');
         } else {
           // In demo mode, proceed to load models and sessions anyway, no error log
-          await loadPreferences();
+          await Promise.all([loadAppPreferences(), loadChatPreferences()]);
           await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
         }
       }
     };
 
     initialize();
-  }, [loadSessions, loadModels, loadPreferences, loadPlugins]);
+  }, [
+    loadSessions,
+    loadModels,
+    loadChatPreferences,
+    loadAppPreferences,
+    loadPlugins,
+  ]);
 
   // Set default model when models are loaded
   useEffect(() => {

@@ -1331,7 +1331,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         type='number'
                         min='1'
                         max='4096'
-                        value={tempGenerationOptions.num_predict || 128}
+                        value={tempGenerationOptions.num_predict ?? 1024}
                         onChange={e =>
                           handleGenerationOptionChange(
                             'num_predict',
