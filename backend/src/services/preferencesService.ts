@@ -66,14 +66,39 @@ class PreferencesService {
     theme: 'light',
     systemMessage: 'You are a helpful assistant.',
     generationOptions: {
+      // Core parameters
       temperature: 0.8,
       top_p: 0.9,
       top_k: 40,
+      min_p: 0.0,
+      typical_p: 0.7,
+
+      // Generation control
       num_predict: 128,
-      repeat_penalty: 1.1,
+      seed: undefined,
       repeat_last_n: 64,
+      repeat_penalty: 1.1,
+      presence_penalty: 0.0,
+      frequency_penalty: 0.0,
+      penalize_newline: true,
+
+      // Context and processing
       num_ctx: 2048,
+      num_batch: 512,
+      num_keep: undefined,
+
+      // Advanced options
+      stop: undefined,
+      numa: undefined,
+      num_thread: undefined,
+      num_gpu: undefined,
+      main_gpu: undefined,
       use_mmap: true,
+
+      // Model behavior
+      format: undefined,
+      raw: undefined,
+      keep_alive: undefined,
     },
   };
 

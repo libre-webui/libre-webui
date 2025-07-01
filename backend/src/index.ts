@@ -36,6 +36,7 @@ import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
 import preferencesService from './services/preferencesService.js';
+import { mergeGenerationOptions } from './utils/generationUtils.js';
 import {
   OllamaChatRequest,
   OllamaChatMessage,
@@ -236,11 +237,11 @@ wss.on('connection', ws => {
             const userGenerationOptions =
               preferencesService.getGenerationOptions();
 
-            // Merge user preferences with request options (request options take precedence)
-            const mergedOptions = {
-              ...userGenerationOptions,
-              ...options,
-            };
+            // Merge user preferences with request options
+            const mergedOptions = mergeGenerationOptions(
+              userGenerationOptions,
+              options
+            );
 
             // Get messages for context
             const contextMessages =
@@ -327,18 +328,18 @@ wss.on('connection', ws => {
         // Get user's preferred generation options
         const userGenerationOptions = preferencesService.getGenerationOptions();
 
-        // Merge user preferences with request options (request options take precedence)
-        const mergedOptions = {
-          ...userGenerationOptions,
-          ...options,
-        };
+        // Merge user preferences with request options
+        const mergedOptions = mergeGenerationOptions(
+          userGenerationOptions,
+          options
+        );
 
         // Create chat request with advanced features
         const chatRequest: OllamaChatRequest = {
           model: session.model,
           messages: ollamaMessages,
           stream: true,
-          options: mergedOptions,
+          options: mergedOptions as Record<string, unknown>,
         };
 
         // Add structured output format if specified

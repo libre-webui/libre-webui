@@ -32,7 +32,7 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
 
   // Helper function to format duration from nanoseconds
   const formatDuration = (nanoseconds?: number): string => {
-    if (!nanoseconds) return 'N/A';
+    if (nanoseconds == null) return 'N/A';
 
     const milliseconds = nanoseconds / 1e6;
     if (milliseconds < 1000) {

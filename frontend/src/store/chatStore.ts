@@ -414,20 +414,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     statistics?: GenerationStatistics
   ) => {
     set(state => {
-      console.log('Store: updateMessageWithStatistics called', {
-        sessionId,
-        messageId,
-        contentLength: content.length,
-        hasStatistics: !!statistics,
-        currentSessionId: state.currentSession?.id,
-        isCurrentSession: state.currentSession?.id === sessionId,
-      });
-
       // Only update if this is for the current session
       if (state.currentSession?.id !== sessionId) {
-        console.log(
-          'Store: Ignoring updateMessageWithStatistics for non-current session'
-        );
         return state;
       }
 
@@ -435,14 +423,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (session.id === sessionId) {
           const updatedMessages = session.messages.map(msg => {
             if (msg.id === messageId) {
-              console.log(
-                'Store: Updating message',
-                msg.id,
-                'with content length:',
-                content.length,
-                'and statistics:',
-                !!statistics
-              );
               return { ...msg, content, statistics };
             }
             return msg;

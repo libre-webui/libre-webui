@@ -21,41 +21,18 @@ import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
 import preferencesService from '../services/preferencesService.js';
 import {
+  mergeGenerationOptions,
+  extractStatistics,
+} from '../utils/generationUtils.js';
+import {
   ApiResponse,
   ChatSession,
   ChatMessage,
   OllamaChatResponse,
-  GenerationStatistics,
   getErrorMessage,
 } from '../types/index.js';
 
 const router = express.Router();
-
-// Helper function to extract generation statistics from Ollama response
-const extractStatistics = (
-  response: OllamaChatResponse
-): GenerationStatistics => {
-  const stats: GenerationStatistics = {
-    total_duration: response.total_duration,
-    load_duration: response.load_duration,
-    prompt_eval_count: response.prompt_eval_count,
-    prompt_eval_duration: response.prompt_eval_duration,
-    eval_count: response.eval_count,
-    eval_duration: response.eval_duration,
-    created_at: response.created_at,
-    model: response.model,
-  };
-
-  // Calculate tokens per second if we have the necessary data
-  if (response.eval_count && response.eval_duration) {
-    // Convert nanoseconds to seconds and calculate tokens/second
-    stats.tokens_per_second =
-      Math.round((response.eval_count / (response.eval_duration / 1e9)) * 100) /
-      100;
-  }
-
-  return stats;
-};
 
 // Get all chat sessions
 router.get(
@@ -342,17 +319,17 @@ router.post(
       const userGenerationOptions = preferencesService.getGenerationOptions();
 
       // Merge user preferences with request options (request options take precedence)
-      const mergedOptions = {
-        ...userGenerationOptions,
-        ...options,
-      };
+      const mergedOptions = mergeGenerationOptions(
+        userGenerationOptions,
+        options
+      );
 
       // Prepare common chat request for Ollama (used in both fallback and direct cases)
       const chatRequest = {
         model: session.model,
         messages: ollamaMessages,
         stream: false,
-        options: mergedOptions,
+        options: mergedOptions as Record<string, unknown>,
       };
 
       // Check if there's an active plugin for this model
@@ -495,16 +472,16 @@ router.post(
       const userGenerationOptions = preferencesService.getGenerationOptions();
 
       // Merge user preferences with request options (request options take precedence)
-      const mergedOptions = {
-        ...userGenerationOptions,
-        ...options,
-      };
+      const mergedOptions = mergeGenerationOptions(
+        userGenerationOptions,
+        options
+      );
 
       const chatRequest = {
         model: session.model,
         messages: ollamaMessages,
         stream: true,
-        options: mergedOptions,
+        options: mergedOptions as Record<string, unknown>,
       };
 
       let fullResponse = '';
