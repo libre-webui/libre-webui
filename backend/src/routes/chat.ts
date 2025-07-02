@@ -309,8 +309,10 @@ router.post(
           console.log(
             `[DEBUG] Embeddings enabled, searching documents for: "${message}"`
           );
-          const relevantDocuments =
-            await documentService.searchDocuments(message);
+          const relevantDocuments = await documentService.searchDocuments(
+            message,
+            sessionId
+          );
           console.log(
             `[DEBUG] Found ${relevantDocuments.length} relevant document chunks`
           );

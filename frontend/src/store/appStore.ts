@@ -88,7 +88,7 @@ export const useAppStore = create<AppState>()(
         },
         embeddingSettings: {
           enabled: false,
-          model: 'all-minilm',
+          model: 'nomic-embed-text',
           chunkSize: 1000,
           chunkOverlap: 200,
           similarityThreshold: 0.7,

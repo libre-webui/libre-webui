@@ -213,8 +213,9 @@ class DocumentService {
 
   private chunkDocument(document: Document): DocumentChunk[] {
     const chunks: DocumentChunk[] = [];
-    const chunkSize = 1000; // characters per chunk
-    const overlap = 200; // character overlap between chunks
+    const preferences = preferencesService.getPreferences();
+    const chunkSize = preferences.embeddingSettings?.chunkSize || 1000; // characters per chunk
+    const overlap = preferences.embeddingSettings?.chunkOverlap || 200; // character overlap between chunks
 
     const text = document.content.trim();
     if (!text) return chunks;
@@ -518,7 +519,10 @@ class DocumentService {
 
         // Simple scoring based on term frequency
         for (const term of searchTerms) {
-          const matches = (chunkText.match(new RegExp(term, 'g')) || []).length;
+          // Escape special regex characters to prevent injection
+          const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const matches = (chunkText.match(new RegExp(escapedTerm, 'gi')) || [])
+            .length;
           score += matches;
         }
 
