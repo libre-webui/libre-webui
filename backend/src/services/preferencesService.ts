@@ -114,7 +114,7 @@ class PreferencesService {
       model: 'nomic-embed-text', // Default embedding model
       chunkSize: 1000,
       chunkOverlap: 200,
-      similarityThreshold: 0.7,
+      similarityThreshold: 0.3,
     },
   };
 

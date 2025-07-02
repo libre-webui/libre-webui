@@ -175,7 +175,7 @@ router.get('/:documentId', (req, res) => {
 });
 
 // Search documents
-router.post('/search', (req, res) => {
+router.post('/search', async (req, res) => {
   try {
     const { query, sessionId, limit } = req.body;
 
@@ -187,7 +187,11 @@ router.post('/search', (req, res) => {
       return;
     }
 
-    const chunks = documentService.searchDocuments(query, sessionId, limit);
+    const chunks = await documentService.searchDocuments(
+      query,
+      sessionId,
+      limit
+    );
 
     res.json({
       success: true,
