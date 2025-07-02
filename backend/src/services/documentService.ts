@@ -140,11 +140,20 @@ class DocumentService {
     const text = document.content.trim();
     if (!text) return chunks;
 
+    // Helper function to calculate overlap word count based on character overlap
+    const calculateOverlapWordCount = (
+      overlapChars: number,
+      averageWordLength: number = 5
+    ): number => {
+      return Math.floor(overlapChars / averageWordLength);
+    };
+
     // Split by paragraphs first, then by sentences if needed
     const paragraphs = text.split(/\n\s*\n/).filter((p: string) => p.trim());
 
     let currentChunk = '';
     let chunkIndex = 0;
+    let currentOffset = 0; // Track character position in original text
 
     for (const paragraph of paragraphs) {
       const paragraphText = paragraph.trim();
@@ -155,39 +164,48 @@ class DocumentService {
         currentChunk.length + paragraphText.length > chunkSize
       ) {
         if (currentChunk.trim()) {
+          const chunkStart = currentOffset - currentChunk.length;
+          const chunkEnd = currentOffset;
+
           chunks.push({
             id: uuidv4(),
             documentId: document.id,
             content: currentChunk.trim(),
             chunkIndex: chunkIndex++,
-            startChar: 0, // We'll calculate this later if needed
-            endChar: 0,
+            startChar: Math.max(0, chunkStart),
+            endChar: chunkEnd,
           });
         }
 
         // Start new chunk with overlap from previous chunk
         const words = currentChunk.split(' ');
-        const overlapWords = words.slice(-Math.floor(overlap / 5)); // rough estimate
+        const overlapWords = words.slice(-calculateOverlapWordCount(overlap));
         currentChunk = overlapWords.join(' ') + '\n\n' + paragraphText;
+        currentOffset += paragraphText.length + 2; // +2 for \n\n
       } else {
         // Add paragraph to current chunk
         if (currentChunk) {
           currentChunk += '\n\n' + paragraphText;
+          currentOffset += paragraphText.length + 2; // +2 for \n\n
         } else {
           currentChunk = paragraphText;
+          currentOffset += paragraphText.length;
         }
       }
     }
 
     // Add the final chunk
     if (currentChunk.trim()) {
+      const chunkStart = currentOffset - currentChunk.length;
+      const chunkEnd = currentOffset;
+
       chunks.push({
         id: uuidv4(),
         documentId: document.id,
         content: currentChunk.trim(),
         chunkIndex: chunkIndex,
-        startChar: 0,
-        endChar: 0,
+        startChar: Math.max(0, chunkStart),
+        endChar: chunkEnd,
       });
     }
 

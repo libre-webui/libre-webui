@@ -110,8 +110,19 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
     handleFileUpload(e.target.files);
   };
 
-  const handleRemoveDocument = (documentId: string) => {
-    setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
+  const handleRemoveDocument = async (documentId: string) => {
+    try {
+      const response = await documentsApi.deleteDocument(documentId);
+      if (response.success) {
+        setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
+        toast.success('Document removed successfully');
+      } else {
+        toast.error(response.error || 'Failed to remove document');
+      }
+    } catch (error) {
+      console.error('Error removing document:', error);
+      toast.error('An error occurred while removing the document');
+    }
   };
 
   const formatFileSize = (bytes: number): string => {
