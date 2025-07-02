@@ -17,6 +17,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 | **[🎭 Demo Mode](./05-DEMO_MODE.md)** | Try without installation | 3 min |
 | **[🔧 Troubleshooting](./06-TROUBLESHOOTING.md)** | Fix common issues | As needed |
 | **[🔌 Plugin Architecture](./08-PLUGIN_ARCHITECTURE.md)** | Connect multiple AI services | 12 min |
+| **[📄 RAG Feature](./09-RAG_FEATURE.md)** | Chat with your documents | 6 min |
 
 ## What is Libre WebUI?
 
@@ -24,7 +25,8 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 
 **Key Benefits:**
 - 🔒 **Privacy-First** - Local processing by default
-- 🔌 **Multiple AI Services** - Connect OpenAI, Anthropic, Groq, and more through plugins
+- � **Document Chat** - Upload and chat with your documents using semantic search
+- �🔌 **Multiple AI Services** - Connect OpenAI, Anthropic, Groq, and more through plugins
 - 🖼️ **Image Support** - Upload and analyze images with vision models
 - 🎨 **Clean Interface** - Modern, responsive design
 - ⚡ **Fast & Reliable** - Optimized performance with automatic fallbacks

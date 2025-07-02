@@ -155,8 +155,8 @@ The app automatically generates configuration files on first run (these are excl
 - **Light/Dark mode** - Comfortable viewing with improved accessibility
 - **Responsive design** - Works on desktop, tablet, and mobile devices
 - **Real-time chat** - Streaming responses with WebSocket integration
+- **Document chat** - Upload documents (PDF, TXT, DOCX) and chat with their content using semantic search
 - **Plugin system** - Connect external AI services (OpenAI, Anthropic, Groq, etc.)
-- **Document RAG** - Upload PDF and TXT files for context-aware conversations
 - **Privacy-focused** - Local processing with optional external connections
 - **Zero telemetry** - No tracking or data collection
 - **Keyboard shortcuts** - VS Code-inspired shortcuts for power users (⌘B, ⌘D, ⌘,, ?)
@@ -193,41 +193,43 @@ All Ollama API endpoints are integrated and ready to use:
 - ✅ **Version Detection** - Check Ollama server version
 - ✅ **Health Monitoring** - Service status and connectivity checks
 
-### 📄 Document RAG (Retrieval-Augmented Generation)
+### 📄 Document Chat (RAG Feature)
 
-Upload documents and have AI-powered conversations with your files:
+Upload documents and have intelligent conversations with your files using advanced semantic search:
 
 #### Supported Formats
 
 - ✅ **PDF Files** - Extract and process text from PDF documents
 - ✅ **TXT Files** - Plain text document processing
-- 📝 **Auto-chunking** - Intelligent text segmentation for optimal retrieval
-- 🔍 **Semantic Search** - Find relevant content based on your questions
+- ✅ **DOCX Files** - Microsoft Word document processing
+- ✅ **Markdown Files** - Formatted text document processing
+- 🧠 **Smart Chunking** - Intelligent text segmentation with overlap for better context
+- 🔍 **Semantic Search** - Vector embeddings for precise content matching
 
 #### How It Works
 
-1. **Upload Documents** - Use the advanced features panel in chat to upload PDFs or TXT files
-2. **Auto-Processing** - Documents are automatically parsed and chunked for optimal retrieval
-3. **Context-Aware Chat** - Ask questions and get answers based on your uploaded documents
-4. **Smart Retrieval** - The system automatically finds and includes relevant document sections
-5. **Session Isolation** - Documents are linked to specific chat sessions for privacy
+1. **Upload Documents** - Go to Settings and upload your documents
+2. **Auto-Processing** - Documents are parsed and converted to searchable vector embeddings
+3. **Semantic Search** - Ask questions and get precise answers using AI-powered content matching
+4. **Context Injection** - Relevant document sections are automatically included in responses
+5. **Privacy-First** - All processing happens locally using Ollama embeddings
 
 #### Features
 
-- 🚀 **Real-time Processing** - Documents are processed instantly upon upload
-- 📊 **Visual Indicators** - See when documents are available and being used
-- 🔒 **Privacy-First** - All document processing happens locally on your device
-- 💾 **Persistent Storage** - Documents remain available across browser sessions
-- ⚡ **Fast Search** - Keyword-based search with plans for vector embeddings
-- 🗂️ **Multi-Document Support** - Upload multiple documents per session
+- 🚀 **Vector Embeddings** - Advanced semantic search using Ollama's embedding models
+- 📊 **Processing Status** - Real-time feedback on document processing
+- 🔒 **Local Processing** - Documents never leave your device
+- 💾 **Persistent Storage** - Documents and embeddings saved locally
+- ⚙️ **Configurable Settings** - Adjust chunk size, overlap, and similarity thresholds
+- 🗂️ **Document Management** - Easy upload, view, and removal of documents
 
 #### Example Use Cases
 
-- **Research** - Upload academic papers and ask questions about the content
-- **Documentation** - Upload technical docs and get instant answers
-- **Legal** - Process contracts and legal documents for quick reference
-- **Education** - Upload textbooks and create study materials
-- **Business** - Analyze reports and extract key insights
+- **Research** - Upload academic papers and get detailed analysis
+- **Documentation** - Query technical manuals and get instant answers
+- **Legal** - Process contracts and extract key information
+- **Education** - Upload textbooks and create interactive study sessions
+- **Business** - Analyze reports and extract actionable insights
 
 ### 🔌 Plugin System
 
