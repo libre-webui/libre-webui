@@ -42,6 +42,17 @@ GROQ_API_KEY=your_groq_key
 
 **[📖 Complete Plugin Setup Guide →](./docs/08-PLUGIN_ARCHITECTURE.md)**
 
+### Keep Models Updated
+
+Automatically update your AI provider plugins with the latest available models:
+
+```bash
+# Update all configured providers
+./scripts/update-all-models.sh
+```
+
+**[🤖 Model Updater Guide →](./docs/11-MODEL_UPDATER.md)**
+
 ## Development
 
 ### For New Contributors
@@ -83,6 +94,7 @@ Welcome! Getting started with Libre WebUI development is simple:
 - `npm run lint` - Run linting for both frontend and backend
 - `npm run format` - Format code and add license headers
 - `./clean-install.sh` - Clean npm cache, remove package-lock files, and reinstall all dependencies
+- `./scripts/update-all-models.sh` - Update AI provider plugins with latest available models
 
 ### Development Ports
 

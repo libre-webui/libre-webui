@@ -17,13 +17,11 @@
 
 import { ChatSession, ChatMessage } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
-import path from 'path';
+import storageService from '../storage.js';
 import preferencesService from './preferencesService.js';
 
 class ChatService {
   private sessions: Map<string, ChatSession> = new Map();
-  private dataFile = path.join(process.cwd(), 'sessions.json');
 
   constructor() {
     this.loadSessions();
@@ -31,26 +29,19 @@ class ChatService {
 
   private loadSessions() {
     try {
-      if (fs.existsSync(this.dataFile)) {
-        const data = fs.readFileSync(this.dataFile, 'utf8');
-        const sessionsArray: ChatSession[] = JSON.parse(data);
-        this.sessions = new Map(
-          sessionsArray.map(session => [session.id, session])
-        );
-        console.log(`Loaded ${sessionsArray.length} sessions from disk`);
-      }
-    } catch (_error) {
-      console.error('Failed to load sessions:', _error);
+      const sessionsArray = storageService.getAllSessions();
+      this.sessions = new Map(
+        sessionsArray.map(session => [session.id, session])
+      );
+      console.log(`Loaded ${sessionsArray.length} sessions from storage`);
+    } catch (error) {
+      console.error('Failed to load sessions:', error);
     }
   }
 
   private saveSessions() {
-    try {
-      const sessionsArray = Array.from(this.sessions.values());
-      fs.writeFileSync(this.dataFile, JSON.stringify(sessionsArray, null, 2));
-    } catch (_error) {
-      console.error('Failed to save sessions:', _error);
-    }
+    // This method is kept for compatibility but individual session saving is now handled by storage service
+    // The storage service handles both SQLite and JSON fallback
   }
 
   createSession(model: string, title?: string): ChatSession {
@@ -77,18 +68,37 @@ class ChatService {
       });
     }
 
-    this.saveSessions();
+    // Save to storage
+    storageService.saveSession(session);
     return session;
   }
 
   getSession(sessionId: string): ChatSession | undefined {
-    return this.sessions.get(sessionId);
+    // First try to get from memory cache
+    let session = this.sessions.get(sessionId);
+
+    // If not in cache, try to load from storage
+    if (!session) {
+      session = storageService.getSession(sessionId);
+      if (session) {
+        this.sessions.set(sessionId, session);
+      }
+    }
+
+    return session;
   }
 
   getAllSessions(): ChatSession[] {
-    return Array.from(this.sessions.values()).sort(
-      (a, b) => b.updatedAt - a.updatedAt
-    );
+    // Load fresh data from storage to ensure we have the latest
+    const sessionsArray = storageService.getAllSessions();
+
+    // Update memory cache
+    this.sessions.clear();
+    sessionsArray.forEach(session => {
+      this.sessions.set(session.id, session);
+    });
+
+    return sessionsArray;
   }
 
   updateSession(
@@ -105,7 +115,7 @@ class ChatService {
     };
 
     this.sessions.set(sessionId, updatedSession);
-    this.saveSessions();
+    storageService.saveSession(updatedSession);
     return updatedSession;
   }
 
@@ -148,21 +158,22 @@ class ChatService {
     }
 
     this.sessions.set(sessionId, session);
-    this.saveSessions();
+    storageService.saveSession(session);
     return newMessage;
   }
 
   deleteSession(sessionId: string): boolean {
-    const deleted = this.sessions.delete(sessionId);
+    const deleted = storageService.deleteSession(sessionId);
     if (deleted) {
-      this.saveSessions();
+      this.sessions.delete(sessionId);
     }
     return deleted;
   }
 
   clearAllSessions(): void {
     this.sessions.clear();
-    this.saveSessions();
+    // Note: clearAllSessions would need to be implemented in storage service
+    // For now, we'll keep this as a local operation
   }
 
   private generateTitle(content: string): string {

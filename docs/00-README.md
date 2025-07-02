@@ -18,6 +18,8 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 | **[🔧 Troubleshooting](./06-TROUBLESHOOTING.md)** | Fix common issues | As needed |
 | **[🔌 Plugin Architecture](./08-PLUGIN_ARCHITECTURE.md)** | Connect multiple AI services | 12 min |
 | **[📄 RAG Feature](./09-RAG_FEATURE.md)** | Chat with your documents | 6 min |
+| **[🗄️ SQLite Migration](./10-SQLITE_MIGRATION.md)** | Upgrade from JSON to SQLite storage | 8 min |
+| **[🤖 Model Updater](./11-MODEL_UPDATER.md)** | Auto-update AI provider models | 5 min |
 
 ## What is Libre WebUI?
 
