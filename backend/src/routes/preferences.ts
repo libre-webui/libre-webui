@@ -194,4 +194,61 @@ router.post(
   }
 );
 
+// Set embedding settings
+router.put(
+  '/embedding-settings',
+  async (
+    req: Request,
+    res: Response<ApiResponse<UserPreferences>>
+  ): Promise<void> => {
+    try {
+      const settings = req.body;
+
+      if (!settings || typeof settings !== 'object') {
+        res.status(400).json({
+          success: false,
+          error: 'Embedding settings are required',
+        });
+        return;
+      }
+
+      const updatedPreferences =
+        preferencesService.setEmbeddingSettings(settings);
+
+      res.json({
+        success: true,
+        data: updatedPreferences,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to set embedding settings'),
+      });
+    }
+  }
+);
+
+// Reset embedding settings to defaults
+router.post(
+  '/embedding-settings/reset',
+  async (
+    req: Request,
+    res: Response<ApiResponse<UserPreferences>>
+  ): Promise<void> => {
+    try {
+      const updatedPreferences = preferencesService.resetEmbeddingSettings();
+
+      res.json({
+        success: true,
+        data: updatedPreferences,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to reset embedding settings'),
+      });
+    }
+  }
+);
+
 export default router;

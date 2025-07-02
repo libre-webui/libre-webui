@@ -88,6 +88,14 @@ export interface UserPreferences {
   theme: 'light' | 'dark';
   systemMessage: string;
   generationOptions: GenerationOptions;
+  // Embedding settings for semantic search
+  embeddingSettings: {
+    enabled: boolean;
+    model: string;
+    chunkSize: number;
+    chunkOverlap: number;
+    similarityThreshold: number;
+  };
 }
 
 // Ollama Chat Message format
@@ -232,6 +240,28 @@ export interface OllamaLegacyEmbeddingsRequest {
 
 export interface OllamaLegacyEmbeddingsResponse {
   embedding: number[];
+}
+
+// Document and RAG types
+export interface Document {
+  id: string;
+  filename: string;
+  content: string;
+  fileType: 'pdf' | 'txt';
+  size: number;
+  sessionId?: string;
+  uploadedAt: number;
+}
+
+export interface DocumentChunk {
+  id: string;
+  documentId: string;
+  content: string;
+  chunkIndex: number;
+  startChar: number;
+  endChar: number;
+  // Add embedding vector for semantic search
+  embedding?: number[];
 }
 
 // Plugin system types

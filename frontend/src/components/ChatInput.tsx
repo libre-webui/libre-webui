@@ -26,8 +26,11 @@ import {
 } from 'lucide-react';
 import { Button, Textarea } from '@/components/ui';
 import { ImageUpload } from './ImageUpload';
+import { DocumentUpload } from './DocumentUpload';
+import { DocumentIndicator } from './DocumentIndicator';
 import { StructuredOutput } from './StructuredOutput';
 import { useAppStore } from '@/store/appStore';
+import { useChatStore } from '@/store/chatStore';
 import { cn } from '@/utils';
 
 interface ChatInputProps {
@@ -52,6 +55,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { isGenerating } = useAppStore();
+  const { currentSession } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -99,6 +103,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             onImagesChange={setImages}
             maxImages={5}
           />
+          <DocumentUpload sessionId={currentSession?.id} disabled={disabled} />
           <StructuredOutput format={format} onFormatChange={setFormat} />
         </div>
       )}
@@ -181,26 +186,29 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </div>
         </form>
 
-        <div className='mt-2 sm:mt-3 text-xs text-gray-500 dark:text-dark-600 text-center'>
-          <a
-            href='https://librewebui.org'
-            target='_blank'
-            rel='noopener noreferrer'
-            className='libre-brand underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
-            style={{ fontSize: '1.1em', lineHeight: 1 }}
-          >
-            Libre WebUI
-          </a>{' '}
-          • Press Enter to send, Shift+Enter for new line
-          {hasAdvancedFeatures && (
-            <span className='ml-2 text-primary-600 dark:text-primary-400'>
-              •{' '}
-              {images.length > 0 &&
-                `${images.length} image${images.length > 1 ? 's' : ''}`}
-              {images.length > 0 && format && ' • '}
-              {format && 'Structured output'}
-            </span>
-          )}
+        <div className='mt-2 sm:mt-3 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-dark-600'>
+          <DocumentIndicator sessionId={currentSession?.id} />
+          <div className='text-center'>
+            <a
+              href='https://librewebui.org'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='libre-brand underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+              style={{ fontSize: '1.1em', lineHeight: 1 }}
+            >
+              Libre WebUI
+            </a>{' '}
+            • Press Enter to send, Shift+Enter for new line
+            {hasAdvancedFeatures && (
+              <span className='ml-2 text-primary-600 dark:text-primary-400'>
+                •{' '}
+                {images.length > 0 &&
+                  `${images.length} image${images.length > 1 ? 's' : ''}`}
+                {images.length > 0 && format && ' • '}
+                {format && 'Structured output'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -58,5 +58,8 @@
     "open-source"
   ],
   "author": "Libre WebUI Contributors",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "dependencies": {
+    "sonner": "^2.0.5"
+  }
 }

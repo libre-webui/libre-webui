@@ -155,6 +155,7 @@ The app automatically generates configuration files on first run (these are excl
 - **Light/Dark mode** - Comfortable viewing with improved accessibility
 - **Responsive design** - Works on desktop, tablet, and mobile devices
 - **Real-time chat** - Streaming responses with WebSocket integration
+- **Document chat** - Upload documents (PDF, TXT, DOCX) and chat with their content using semantic search
 - **Plugin system** - Connect external AI services (OpenAI, Anthropic, Groq, etc.)
 - **Privacy-focused** - Local processing with optional external connections
 - **Zero telemetry** - No tracking or data collection
@@ -191,6 +192,44 @@ All Ollama API endpoints are integrated and ready to use:
 - ✅ **Blob Management** - Handle binary data for model creation
 - ✅ **Version Detection** - Check Ollama server version
 - ✅ **Health Monitoring** - Service status and connectivity checks
+
+### 📄 Document Chat (RAG Feature)
+
+Upload documents and have intelligent conversations with your files using advanced semantic search:
+
+#### Supported Formats
+
+- ✅ **PDF Files** - Extract and process text from PDF documents
+- ✅ **TXT Files** - Plain text document processing
+- ✅ **DOCX Files** - Microsoft Word document processing
+- ✅ **Markdown Files** - Formatted text document processing
+- 🧠 **Smart Chunking** - Intelligent text segmentation with overlap for better context
+- 🔍 **Semantic Search** - Vector embeddings for precise content matching
+
+#### How It Works
+
+1. **Upload Documents** - Go to Settings and upload your documents
+2. **Auto-Processing** - Documents are parsed and converted to searchable vector embeddings
+3. **Semantic Search** - Ask questions and get precise answers using AI-powered content matching
+4. **Context Injection** - Relevant document sections are automatically included in responses
+5. **Privacy-First** - All processing happens locally using Ollama embeddings
+
+#### Features
+
+- 🚀 **Vector Embeddings** - Advanced semantic search using Ollama's embedding models
+- 📊 **Processing Status** - Real-time feedback on document processing
+- 🔒 **Local Processing** - Documents never leave your device
+- 💾 **Persistent Storage** - Documents and embeddings saved locally
+- ⚙️ **Configurable Settings** - Adjust chunk size, overlap, and similarity thresholds
+- 🗂️ **Document Management** - Easy upload, view, and removal of documents
+
+#### Example Use Cases
+
+- **Research** - Upload academic papers and get detailed analysis
+- **Documentation** - Query technical manuals and get instant answers
+- **Legal** - Process contracts and extract key information
+- **Education** - Upload textbooks and create interactive study sessions
+- **Business** - Analyze reports and extract actionable insights
 
 ### 🔌 Plugin System
 

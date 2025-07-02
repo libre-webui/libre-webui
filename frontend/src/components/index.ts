@@ -28,6 +28,8 @@ export { Logo } from './Logo';
 export { ModelManager } from './ModelManager';
 export { ImageUpload } from './ImageUpload';
 export { StructuredOutput } from './StructuredOutput';
+export { DocumentUpload } from './DocumentUpload';
+export { DocumentIndicator } from './DocumentIndicator';
 export {
   KeyboardShortcutsModal,
   KeyboardShortcutsIndicator,

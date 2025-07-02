@@ -129,6 +129,13 @@ export interface UserPreferences {
   defaultModel: string;
   systemMessage: string;
   generationOptions: GenerationOptions;
+  embeddingSettings: {
+    enabled: boolean;
+    model: string;
+    chunkSize: number;
+    chunkOverlap: number;
+    similarityThreshold: number;
+  };
 }
 
 // Additional types for API calls
@@ -219,4 +226,37 @@ export interface PluginStatus {
   active: boolean;
   available: boolean;
   last_used?: number;
+}
+
+// Document and RAG types
+export interface DocumentSummary {
+  id: string;
+  filename: string;
+  fileType: 'pdf' | 'txt';
+  size: number;
+  sessionId?: string;
+  uploadedAt: number;
+}
+
+export interface DocumentDetail extends DocumentSummary {
+  content: string;
+}
+
+export interface DocumentChunk {
+  id: string;
+  documentId: string;
+  content: string;
+  chunkIndex: number;
+  startChar: number;
+  endChar: number;
+  filename?: string; // Added for context in search results
+  embedding?: number[]; // Vector embedding for semantic search
+}
+
+// Embedding system types
+export interface EmbeddingStatus {
+  available: boolean;
+  model: string;
+  chunksWithEmbeddings: number;
+  totalChunks: number;
 }
