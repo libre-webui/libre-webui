@@ -234,6 +234,27 @@ export interface OllamaLegacyEmbeddingsResponse {
   embedding: number[];
 }
 
+// Document and RAG types
+export interface Document {
+  id: string;
+  filename: string;
+  content: string;
+  fileType: 'pdf' | 'txt';
+  size: number;
+  sessionId?: string;
+  uploadedAt: number;
+}
+
+export interface DocumentChunk {
+  id: string;
+  documentId: string;
+  content: string;
+  chunkIndex: number;
+  startChar: number;
+  endChar: number;
+  filename?: string; // Added for context in search results
+}
+
 // Plugin system types
 export interface PluginAuthConfig {
   header: string; // e.g., "x-api-key", "Authorization"

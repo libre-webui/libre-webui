@@ -32,10 +32,12 @@ import ollamaRoutes from './routes/ollama.js';
 import chatRoutes from './routes/chat.js';
 import preferencesRoutes from './routes/preferences.js';
 import pluginRoutes from './routes/plugins.js';
+import documentRoutes from './routes/documents.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
 import preferencesService from './services/preferencesService.js';
+import documentService from './services/documentService.js';
 import { mergeGenerationOptions } from './utils/generationUtils.js';
 import {
   OllamaChatRequest,
@@ -105,6 +107,7 @@ app.use('/api/ollama', ollamaRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/plugins', pluginRoutes);
+app.use('/api/documents', documentRoutes);
 
 // Error handling
 app.use(notFoundHandler);
@@ -183,33 +186,65 @@ wss.on('connection', ws => {
           })
         );
 
+        // RAG: Get relevant document context for the user's query
+        const relevantContext = documentService.getRelevantContext(
+          content,
+          sessionId
+        );
+        let enhancedContent = content;
+
+        if (relevantContext.length > 0) {
+          console.log(
+            `Found ${relevantContext.length} relevant document chunks for query`
+          );
+
+          // Inject document context into the user message
+          const contextString = relevantContext.join('\n\n---\n\n');
+          enhancedContent = `Context from uploaded documents:\n\n${contextString}\n\n---\n\nUser question: ${content}`;
+
+          // Update the user message with enhanced content that includes document context
+          // We'll create a new message with the enhanced content for the AI model
+          console.log('Enhanced user message with document context');
+        }
+
         // Use the modern chat completion API instead of legacy generate API
         // This supports multimodal input and structured outputs
         const contextMessages = chatService.getMessagesForContext(sessionId);
 
         // Convert our messages to Ollama format
-        const ollamaMessages: OllamaChatMessage[] = contextMessages.map(msg => {
-          const ollamaMessage: OllamaChatMessage = {
-            role: msg.role as OllamaChatMessage['role'],
-            content: msg.content,
-          };
+        const ollamaMessages: OllamaChatMessage[] = contextMessages.map(
+          (msg, index) => {
+            const ollamaMessage: OllamaChatMessage = {
+              role: msg.role as OllamaChatMessage['role'],
+              content: msg.content,
+            };
 
-          // Process images: strip data URL prefix if present
-          if (msg.images && msg.images.length > 0) {
-            ollamaMessage.images = msg.images.map(img => {
-              // Strip data URL prefix if present (e.g., "data:image/png;base64,")
-              if (typeof img === 'string' && img.includes(',')) {
-                const base64Index = img.indexOf(',');
-                if (base64Index !== -1) {
-                  return img.substring(base64Index + 1);
+            // Use enhanced content for the last user message if we have document context
+            if (
+              msg.role === 'user' &&
+              index === contextMessages.length - 1 &&
+              relevantContext.length > 0
+            ) {
+              ollamaMessage.content = enhancedContent;
+            }
+
+            // Process images: strip data URL prefix if present
+            if (msg.images && msg.images.length > 0) {
+              ollamaMessage.images = msg.images.map(img => {
+                // Strip data URL prefix if present (e.g., "data:image/png;base64,")
+                if (typeof img === 'string' && img.includes(',')) {
+                  const base64Index = img.indexOf(',');
+                  if (base64Index !== -1) {
+                    return img.substring(base64Index + 1);
+                  }
                 }
-              }
-              return img;
-            });
-          }
+                return img;
+              });
+            }
 
-          return ollamaMessage;
-        });
+            return ollamaMessage;
+          }
+        );
 
         let assistantContent = '';
         let finalStatistics: GenerationStatistics | undefined = undefined;

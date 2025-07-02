@@ -156,6 +156,7 @@ The app automatically generates configuration files on first run (these are excl
 - **Responsive design** - Works on desktop, tablet, and mobile devices
 - **Real-time chat** - Streaming responses with WebSocket integration
 - **Plugin system** - Connect external AI services (OpenAI, Anthropic, Groq, etc.)
+- **Document RAG** - Upload PDF and TXT files for context-aware conversations
 - **Privacy-focused** - Local processing with optional external connections
 - **Zero telemetry** - No tracking or data collection
 - **Keyboard shortcuts** - VS Code-inspired shortcuts for power users (⌘B, ⌘D, ⌘,, ?)
@@ -191,6 +192,42 @@ All Ollama API endpoints are integrated and ready to use:
 - ✅ **Blob Management** - Handle binary data for model creation
 - ✅ **Version Detection** - Check Ollama server version
 - ✅ **Health Monitoring** - Service status and connectivity checks
+
+### 📄 Document RAG (Retrieval-Augmented Generation)
+
+Upload documents and have AI-powered conversations with your files:
+
+#### Supported Formats
+
+- ✅ **PDF Files** - Extract and process text from PDF documents
+- ✅ **TXT Files** - Plain text document processing
+- 📝 **Auto-chunking** - Intelligent text segmentation for optimal retrieval
+- 🔍 **Semantic Search** - Find relevant content based on your questions
+
+#### How It Works
+
+1. **Upload Documents** - Use the advanced features panel in chat to upload PDFs or TXT files
+2. **Auto-Processing** - Documents are automatically parsed and chunked for optimal retrieval
+3. **Context-Aware Chat** - Ask questions and get answers based on your uploaded documents
+4. **Smart Retrieval** - The system automatically finds and includes relevant document sections
+5. **Session Isolation** - Documents are linked to specific chat sessions for privacy
+
+#### Features
+
+- 🚀 **Real-time Processing** - Documents are processed instantly upon upload
+- 📊 **Visual Indicators** - See when documents are available and being used
+- 🔒 **Privacy-First** - All document processing happens locally on your device
+- 💾 **Persistent Storage** - Documents remain available across browser sessions
+- ⚡ **Fast Search** - Keyword-based search with plans for vector embeddings
+- 🗂️ **Multi-Document Support** - Upload multiple documents per session
+
+#### Example Use Cases
+
+- **Research** - Upload academic papers and ask questions about the content
+- **Documentation** - Upload technical docs and get instant answers
+- **Legal** - Process contracts and legal documents for quick reference
+- **Education** - Upload textbooks and create study materials
+- **Business** - Analyze reports and extract key insights
 
 ### 🔌 Plugin System
 
