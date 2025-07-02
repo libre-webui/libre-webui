@@ -88,6 +88,14 @@ export interface UserPreferences {
   theme: 'light' | 'dark';
   systemMessage: string;
   generationOptions: GenerationOptions;
+  // Embedding settings for semantic search
+  embeddingSettings: {
+    enabled: boolean;
+    model: string;
+    chunkSize: number;
+    chunkOverlap: number;
+    similarityThreshold: number;
+  };
 }
 
 // Ollama Chat Message format
@@ -252,7 +260,8 @@ export interface DocumentChunk {
   chunkIndex: number;
   startChar: number;
   endChar: number;
-  filename?: string; // Added for context in search results
+  // Add embedding vector for semantic search
+  embedding?: number[];
 }
 
 // Plugin system types

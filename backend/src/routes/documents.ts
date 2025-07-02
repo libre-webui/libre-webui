@@ -229,4 +229,38 @@ router.delete('/:documentId', (req, res) => {
   }
 });
 
+// Get embedding status and information
+router.get('/embeddings/status', async (req, res) => {
+  try {
+    const embeddingInfo = await documentService.getEmbeddingModelInfo();
+    res.json({
+      success: true,
+      data: embeddingInfo,
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Get embedding status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get embedding status',
+    } as ApiResponse);
+  }
+});
+
+// Regenerate embeddings for all documents
+router.post('/embeddings/regenerate', async (req, res) => {
+  try {
+    await documentService.regenerateAllEmbeddings();
+    res.json({
+      success: true,
+      message: 'Embeddings regenerated successfully',
+    } as ApiResponse);
+  } catch (error) {
+    console.error('Regenerate embeddings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to regenerate embeddings',
+    } as ApiResponse);
+  }
+});
+
 export default router;

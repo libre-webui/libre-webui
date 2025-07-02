@@ -43,7 +43,7 @@ import { ModelTools } from '@/components/ModelTools';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
-import { preferencesApi, ollamaApi } from '@/utils/api';
+import { preferencesApi, ollamaApi, documentsApi } from '@/utils/api';
 import toast from 'react-hot-toast';
 
 interface SystemInfo {
@@ -119,12 +119,40 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     preferences.generationOptions || {}
   );
 
+  // Embedding settings state
+  const [embeddingSettings, setEmbeddingSettings] = useState(
+    preferences.embeddingSettings || {
+      enabled: false,
+      model: 'nomic-embed-text',
+      chunkSize: 1000,
+      chunkOverlap: 200,
+      similarityThreshold: 0.7,
+    }
+  );
+  const [embeddingStatus, setEmbeddingStatus] = useState<{
+    available: boolean;
+    model: string;
+    chunksWithEmbeddings: number;
+    totalChunks: number;
+  } | null>(null);
+  const [regeneratingEmbeddings, setRegeneratingEmbeddings] = useState(false);
+
   // Load system information
   useEffect(() => {
     if (isOpen) {
       loadSystemInfo();
+      loadEmbeddingStatus();
       setTempSystemMessage(systemMessage);
       setTempGenerationOptions(preferences.generationOptions || {});
+      setEmbeddingSettings(
+        preferences.embeddingSettings || {
+          enabled: false,
+          model: 'nomic-embed-text',
+          chunkSize: 1000,
+          chunkOverlap: 200,
+          similarityThreshold: 0.7,
+        }
+      );
       loadPlugins(); // Load plugins when modal opens
       loadModels(); // Ensure models are up to date when modal opens
     }
@@ -149,6 +177,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       });
     } catch (_error) {
       console.error('Failed to load system info:', _error);
+    }
+  };
+
+  const loadEmbeddingStatus = async () => {
+    try {
+      const response = await documentsApi.getEmbeddingStatus();
+      if (response.success && response.data) {
+        setEmbeddingStatus(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load embedding status:', error);
+    }
+  };
+
+  const handleRegenerateEmbeddings = async () => {
+    try {
+      setRegeneratingEmbeddings(true);
+      const response = await documentsApi.regenerateEmbeddings();
+      if (response.success) {
+        toast.success('Embeddings regenerated successfully');
+        await loadEmbeddingStatus(); // Reload status
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to regenerate embeddings: ' + errorMessage);
+    } finally {
+      setRegeneratingEmbeddings(false);
     }
   };
 
@@ -361,11 +417,57 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
+  const handleEmbeddingSettingsChange = (
+    key: keyof typeof embeddingSettings,
+    value: string | number | boolean
+  ) => {
+    setEmbeddingSettings(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleSaveEmbeddingSettings = async () => {
+    try {
+      const response =
+        await preferencesApi.setEmbeddingSettings(embeddingSettings);
+      if (response.success && response.data) {
+        setPreferences(response.data);
+        toast.success('Embedding settings updated successfully');
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to update embedding settings: ' + errorMessage);
+    }
+  };
+
+  const handleResetEmbeddingSettings = async () => {
+    try {
+      const response = await preferencesApi.resetEmbeddingSettings();
+      if (response.success && response.data) {
+        setPreferences(response.data);
+        setEmbeddingSettings(response.data.embeddingSettings || {});
+        toast.success('Embedding settings reset to defaults');
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to reset embedding settings: ' + errorMessage);
+    }
+  };
+
   const tabs = [
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'models', label: 'Models', icon: Bot },
     { id: 'generation', label: 'Generation', icon: Sliders },
-    { id: 'plugins', label: 'Plugins', icon: Puzzle, badge: 'Beta' },
+    {
+      id: 'documents',
+      label: 'Documents & RAG',
+      icon: Database,
+      badge: 'Beta',
+    },
+    { id: 'plugins', label: 'Plugins', icon: Puzzle },
     { id: 'system', label: 'System', icon: Monitor },
     { id: 'data', label: 'Data', icon: Database },
     { id: 'about', label: 'About', icon: Info },
@@ -683,6 +785,226 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Model Tools Section */}
               <div className='mt-6'>
                 <ModelTools />
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'documents':
+        return (
+          <div className='space-y-6'>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+                Documents & RAG Settings
+              </h3>
+
+              {/* Embedding Settings */}
+              <div className='bg-gray-50 dark:bg-dark-50 p-4 rounded-lg space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <div>
+                    <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                      Vector Embeddings
+                    </h4>
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      Enable semantic search using vector embeddings for better
+                      document relevance
+                    </p>
+                  </div>
+                  <label className='flex items-center cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      checked={embeddingSettings.enabled}
+                      onChange={e =>
+                        handleEmbeddingSettingsChange(
+                          'enabled',
+                          e.target.checked
+                        )
+                      }
+                      className='sr-only'
+                    />
+                    <div
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        embeddingSettings.enabled
+                          ? 'bg-blue-600'
+                          : 'bg-gray-200 dark:bg-gray-700'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          embeddingSettings.enabled
+                            ? 'translate-x-6'
+                            : 'translate-x-1'
+                        }`}
+                      />
+                    </div>
+                  </label>
+                </div>
+
+                {embeddingSettings.enabled && (
+                  <div className='space-y-4 pt-4 border-t border-gray-200 dark:border-dark-300'>
+                    {/* Embedding Model */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Embedding Model
+                      </label>
+                      <Select
+                        value={embeddingSettings.model}
+                        onChange={e =>
+                          handleEmbeddingSettingsChange('model', e.target.value)
+                        }
+                        options={[
+                          {
+                            value: 'nomic-embed-text',
+                            label: 'nomic-embed-text',
+                          },
+                          { value: 'all-minilm', label: 'all-minilm' },
+                          {
+                            value: 'sentence-transformers',
+                            label: 'sentence-transformers',
+                          },
+                        ]}
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Model used for generating embeddings
+                      </p>
+                    </div>
+
+                    {/* Chunk Size */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Chunk Size: {embeddingSettings.chunkSize}
+                      </label>
+                      <input
+                        type='range'
+                        min='500'
+                        max='2000'
+                        step='100'
+                        value={embeddingSettings.chunkSize}
+                        onChange={e =>
+                          handleEmbeddingSettingsChange(
+                            'chunkSize',
+                            parseInt(e.target.value)
+                          )
+                        }
+                        className='w-full'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Size of text chunks for processing
+                      </p>
+                    </div>
+
+                    {/* Chunk Overlap */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Chunk Overlap: {embeddingSettings.chunkOverlap}
+                      </label>
+                      <input
+                        type='range'
+                        min='50'
+                        max='500'
+                        step='50'
+                        value={embeddingSettings.chunkOverlap}
+                        onChange={e =>
+                          handleEmbeddingSettingsChange(
+                            'chunkOverlap',
+                            parseInt(e.target.value)
+                          )
+                        }
+                        className='w-full'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Character overlap between chunks
+                      </p>
+                    </div>
+
+                    {/* Similarity Threshold */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Similarity Threshold:{' '}
+                        {embeddingSettings.similarityThreshold.toFixed(2)}
+                      </label>
+                      <input
+                        type='range'
+                        min='0.3'
+                        max='0.9'
+                        step='0.05'
+                        value={embeddingSettings.similarityThreshold}
+                        onChange={e =>
+                          handleEmbeddingSettingsChange(
+                            'similarityThreshold',
+                            parseFloat(e.target.value)
+                          )
+                        }
+                        className='w-full'
+                      />
+                      <p className='text-xs text-gray-500 mt-1'>
+                        Minimum similarity score for search results
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Embedding Status */}
+              {embeddingStatus && (
+                <div className='bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg'>
+                  <h4 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
+                    Embedding Status
+                  </h4>
+                  <div className='text-sm text-blue-800 dark:text-blue-200 space-y-1'>
+                    <div>
+                      Status:{' '}
+                      {embeddingStatus.available ? 'Enabled' : 'Disabled'}
+                    </div>
+                    <div>Model: {embeddingStatus.model}</div>
+                    <div>
+                      Chunks with embeddings:{' '}
+                      {embeddingStatus.chunksWithEmbeddings} /{' '}
+                      {embeddingStatus.totalChunks}
+                    </div>
+                    {embeddingStatus.totalChunks > 0 && (
+                      <div>
+                        Coverage:{' '}
+                        {Math.round(
+                          (embeddingStatus.chunksWithEmbeddings /
+                            embeddingStatus.totalChunks) *
+                            100
+                        )}
+                        %
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className='flex gap-2'>
+                <Button
+                  onClick={handleSaveEmbeddingSettings}
+                  className='bg-blue-600 hover:bg-blue-700 text-white'
+                >
+                  Save Settings
+                </Button>
+                <Button
+                  onClick={handleResetEmbeddingSettings}
+                  variant='outline'
+                >
+                  Reset to Defaults
+                </Button>
+                {embeddingSettings.enabled &&
+                  embeddingStatus &&
+                  embeddingStatus.totalChunks > 0 && (
+                    <Button
+                      onClick={handleRegenerateEmbeddings}
+                      disabled={regeneratingEmbeddings}
+                      variant='outline'
+                      className='text-orange-600 border-orange-600 hover:bg-orange-50'
+                    >
+                      {regeneratingEmbeddings
+                        ? 'Regenerating...'
+                        : 'Regenerate Embeddings'}
+                    </Button>
+                  )}
               </div>
             </div>
           </div>
@@ -1538,6 +1860,188 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <Check size={16} />
                     Save Options
                   </Button>
+                </div>
+              </div>
+
+              {/* Embedding Settings Section */}
+              <div className='mt-6'>
+                <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+                    Embedding Settings
+                  </label>
+                  <div className='space-y-4'>
+                    {/* Enable/Disable Embeddings */}
+                    <div className='flex items-center justify-between'>
+                      <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                        Enable Embeddings
+                      </span>
+                      <label className='flex items-center cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={embeddingSettings.enabled}
+                          onChange={e =>
+                            handleEmbeddingSettingsChange(
+                              'enabled',
+                              e.target.checked
+                            )
+                          }
+                          className='sr-only'
+                        />
+                        <div
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                            embeddingSettings.enabled
+                              ? 'bg-blue-600'
+                              : 'bg-gray-200 dark:bg-gray-700'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              embeddingSettings.enabled
+                                ? 'translate-x-6'
+                                : 'translate-x-1'
+                            }`}
+                          />
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Model Selection */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Embedding Model
+                      </label>
+                      <Select
+                        value={embeddingSettings.model}
+                        onChange={e =>
+                          handleEmbeddingSettingsChange('model', e.target.value)
+                        }
+                        options={[
+                          {
+                            value: 'nomic-embed-text',
+                            label: 'Nomic Embed Text',
+                          },
+                          {
+                            value: 'openai-embedding',
+                            label: 'OpenAI Embedding',
+                          },
+                        ]}
+                        disabled={!embeddingSettings.enabled}
+                      />
+                    </div>
+
+                    {/* Chunk Size */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Chunk Size
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (in tokens)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        min='1'
+                        value={embeddingSettings.chunkSize}
+                        onChange={e =>
+                          handleEmbeddingSettingsChange(
+                            'chunkSize',
+                            parseInt(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        disabled={!embeddingSettings.enabled}
+                      />
+                    </div>
+
+                    {/* Chunk Overlap */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Chunk Overlap
+                        <span className='text-xs text-gray-500 ml-1'>
+                          (in tokens)
+                        </span>
+                      </label>
+                      <input
+                        type='number'
+                        min='0'
+                        value={embeddingSettings.chunkOverlap}
+                        onChange={e =>
+                          handleEmbeddingSettingsChange(
+                            'chunkOverlap',
+                            parseInt(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        disabled={!embeddingSettings.enabled}
+                      />
+                    </div>
+
+                    {/* Similarity Threshold */}
+                    <div>
+                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                        Similarity Threshold
+                      </label>
+                      <input
+                        type='number'
+                        min='0'
+                        max='1'
+                        step='0.01'
+                        value={embeddingSettings.similarityThreshold}
+                        onChange={e =>
+                          handleEmbeddingSettingsChange(
+                            'similarityThreshold',
+                            parseFloat(e.target.value)
+                          )
+                        }
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        disabled={!embeddingSettings.enabled}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Status and Regenerate Button */}
+                  {embeddingStatus && (
+                    <div className='mt-4'>
+                      <div className='flex items-center justify-between text-sm'>
+                        <span className='text-gray-700 dark:text-gray-300'>
+                          Embedding Status:
+                        </span>
+                        <span className='font-medium text-gray-900 dark:text-gray-100'>
+                          {embeddingStatus.available
+                            ? 'Available'
+                            : 'Not Available'}
+                        </span>
+                      </div>
+                      {embeddingStatus.available && (
+                        <div className='flex items-center justify-between text-sm mt-1'>
+                          <span className='text-gray-700 dark:text-gray-300'>
+                            Chunks with Embeddings:
+                          </span>
+                          <span className='font-medium text-gray-900 dark:text-gray-100'>
+                            {embeddingStatus.chunksWithEmbeddings} /{' '}
+                            {embeddingStatus.totalChunks}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className='flex justify-between items-center mt-4'>
+                    <Button
+                      onClick={handleResetEmbeddingSettings}
+                      variant='outline'
+                      className='flex items-center gap-2'
+                    >
+                      <RotateCcw size={16} />
+                      Reset to Defaults
+                    </Button>
+                    <Button
+                      onClick={handleSaveEmbeddingSettings}
+                      className='flex items-center gap-2'
+                    >
+                      <Check size={16} />
+                      Save Settings
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

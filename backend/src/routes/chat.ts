@@ -20,6 +20,7 @@ import chatService from '../services/chatService.js';
 import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
 import preferencesService from '../services/preferencesService.js';
+import documentService from '../services/documentService.js';
 import {
   mergeGenerationOptions,
   extractStatistics,
@@ -300,16 +301,70 @@ router.post(
         return;
       }
 
+      // Check if document search is available and enabled
+      let documentContext = '';
+      try {
+        const preferences = preferencesService.getPreferences();
+        if (preferences.embeddingSettings?.enabled) {
+          console.log(
+            `[DEBUG] Embeddings enabled, searching documents for: "${message}"`
+          );
+          const relevantDocuments =
+            await documentService.searchDocuments(message);
+          console.log(
+            `[DEBUG] Found ${relevantDocuments.length} relevant document chunks`
+          );
+
+          if (relevantDocuments.length > 0) {
+            // Get document info for each chunk
+            const documentsMap = new Map();
+            for (const chunk of relevantDocuments) {
+              if (!documentsMap.has(chunk.documentId)) {
+                const doc = documentService.getDocument(chunk.documentId);
+                documentsMap.set(chunk.documentId, doc);
+              }
+            }
+
+            documentContext =
+              '\n\n--- RELEVANT DOCUMENTS ---\n' +
+              relevantDocuments
+                .map((chunk, index) => {
+                  const doc = documentsMap.get(chunk.documentId);
+                  const docTitle = doc ? doc.filename : 'Unknown Document';
+                  return `Document ${index + 1}: ${docTitle} (chunk ${chunk.chunkIndex + 1})\n${chunk.content}\n`;
+                })
+                .join('\n---\n') +
+              '\n--- END DOCUMENTS ---\n\n';
+            console.log(
+              `[DEBUG] Added ${documentContext.length} characters of document context`
+            );
+          } else {
+            console.log(
+              `[DEBUG] No relevant documents found for query: "${message}"`
+            );
+          }
+        } else {
+          console.log(`[DEBUG] Embeddings disabled, skipping document search`);
+        }
+      } catch (error) {
+        console.error('[DEBUG] Error during document search:', error);
+        // Continue without document context if search fails
+      }
+
       // Convert chat messages to Ollama format
       const ollamaMessages = session.messages.map((msg: ChatMessage) => ({
         role: msg.role,
         content: msg.content,
       }));
 
-      // Add the new user message
+      // Add the new user message with document context if available
+      const userMessageContent = documentContext
+        ? `${documentContext}User question: ${message}`
+        : message;
+
       ollamaMessages.push({
         role: 'user',
-        content: message,
+        content: userMessageContent,
       });
 
       let response: OllamaChatResponse;

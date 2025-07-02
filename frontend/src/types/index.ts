@@ -129,6 +129,13 @@ export interface UserPreferences {
   defaultModel: string;
   systemMessage: string;
   generationOptions: GenerationOptions;
+  embeddingSettings: {
+    enabled: boolean;
+    model: string;
+    chunkSize: number;
+    chunkOverlap: number;
+    similarityThreshold: number;
+  };
 }
 
 // Additional types for API calls
@@ -243,4 +250,13 @@ export interface DocumentChunk {
   startChar: number;
   endChar: number;
   filename?: string; // Added for context in search results
+  embedding?: number[]; // Vector embedding for semantic search
+}
+
+// Embedding system types
+export interface EmbeddingStatus {
+  available: boolean;
+  model: string;
+  chunksWithEmbeddings: number;
+  totalChunks: number;
 }

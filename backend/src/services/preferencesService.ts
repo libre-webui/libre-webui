@@ -57,6 +57,14 @@ export interface UserPreferences {
     raw?: boolean; // Skip prompt templating
     keep_alive?: string; // Keep model in memory duration
   };
+  // Embedding settings for semantic search
+  embeddingSettings: {
+    enabled: boolean;
+    model: string;
+    chunkSize: number;
+    chunkOverlap: number;
+    similarityThreshold: number;
+  };
 }
 
 class PreferencesService {
@@ -99,6 +107,14 @@ class PreferencesService {
       format: undefined,
       raw: undefined,
       keep_alive: undefined,
+    },
+    // Embedding settings for semantic search
+    embeddingSettings: {
+      enabled: false, // Start with embeddings disabled
+      model: 'nomic-embed-text', // Default embedding model
+      chunkSize: 1000,
+      chunkOverlap: 200,
+      similarityThreshold: 0.7,
     },
   };
 
@@ -179,6 +195,25 @@ class PreferencesService {
     });
   }
 
+  resetGenerationOptions(): UserPreferences {
+    return this.updatePreferences({
+      generationOptions: this.defaultPreferences.generationOptions,
+    });
+  }
+
+  setEmbeddingSettings(
+    settings: Partial<UserPreferences['embeddingSettings']>
+  ): UserPreferences {
+    const currentPreferences = this.getPreferences();
+    const updatedEmbeddingSettings = {
+      ...currentPreferences.embeddingSettings,
+      ...settings,
+    };
+    return this.updatePreferences({
+      embeddingSettings: updatedEmbeddingSettings,
+    });
+  }
+
   getDefaultModel(): string {
     return this.getPreferences().defaultModel;
   }
@@ -191,9 +226,13 @@ class PreferencesService {
     return this.getPreferences().generationOptions;
   }
 
-  resetGenerationOptions(): UserPreferences {
+  getEmbeddingSettings(): UserPreferences['embeddingSettings'] {
+    return this.getPreferences().embeddingSettings;
+  }
+
+  resetEmbeddingSettings(): UserPreferences {
     return this.updatePreferences({
-      generationOptions: this.defaultPreferences.generationOptions,
+      embeddingSettings: this.defaultPreferences.embeddingSettings,
     });
   }
 }

@@ -19,6 +19,25 @@ import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
 import { Document, DocumentChunk } from '../types/index.js';
+import ollamaService from './ollamaService.js';
+import preferencesService from './preferencesService.js';
+
+// Utility functions for vector operations
+const cosineSimilarity = (a: number[], b: number[]): number => {
+  if (a.length !== b.length) return 0;
+
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    dotProduct += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+};
 
 // Lazy load pdfjs-dist legacy build for Node.js
 let pdfjsLib: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
@@ -152,15 +171,19 @@ class DocumentService {
       // Process the document into chunks
       const chunks = this.chunkDocument(document);
 
+      // Generate embeddings for chunks if enabled
+      const chunksWithEmbeddings =
+        await this.generateEmbeddingsForChunks(chunks);
+
       // Store document and chunks
       this.documents.set(documentId, document);
-      this.chunks.set(documentId, chunks);
+      this.chunks.set(documentId, chunksWithEmbeddings);
 
       this.saveDocuments();
       this.saveChunks();
 
       console.log(
-        `Processed ${fileType.toUpperCase()} document: ${fileName} (${chunks.length} chunks)`
+        `Processed ${fileType.toUpperCase()} document: ${fileName} (${chunksWithEmbeddings.length} chunks)`
       );
       return document;
     } catch (error) {
@@ -251,6 +274,102 @@ class DocumentService {
     return chunks;
   }
 
+  private async generateEmbeddingForText(
+    text: string
+  ): Promise<number[] | null> {
+    try {
+      const preferences = preferencesService.getPreferences();
+      if (!preferences.embeddingSettings.enabled) {
+        return null;
+      }
+
+      const response = await ollamaService.generateEmbeddings({
+        model: preferences.embeddingSettings.model,
+        input: text,
+      });
+
+      return response.embeddings[0] || null;
+    } catch (error) {
+      console.error('Failed to generate embedding:', error);
+      return null;
+    }
+  }
+
+  private async generateEmbeddingsForChunks(
+    chunks: DocumentChunk[]
+  ): Promise<DocumentChunk[]> {
+    const preferences = preferencesService.getPreferences();
+    if (!preferences.embeddingSettings.enabled) {
+      return chunks;
+    }
+
+    console.log(`Generating embeddings for ${chunks.length} chunks...`);
+    const chunksWithEmbeddings: DocumentChunk[] = [];
+
+    for (const chunk of chunks) {
+      const embedding = await this.generateEmbeddingForText(chunk.content);
+      chunksWithEmbeddings.push({
+        ...chunk,
+        embedding: embedding || undefined,
+      });
+    }
+
+    console.log(
+      `Generated embeddings for ${chunksWithEmbeddings.filter(c => c.embedding).length} chunks`
+    );
+    return chunksWithEmbeddings;
+  }
+
+  // Method to regenerate embeddings for all existing documents
+  async regenerateAllEmbeddings(): Promise<void> {
+    const preferences = preferencesService.getPreferences();
+    if (!preferences.embeddingSettings.enabled) {
+      console.log('Embeddings are disabled, skipping regeneration');
+      return;
+    }
+
+    console.log('Starting to regenerate embeddings for all documents...');
+    let processedChunks = 0;
+    let totalChunks = 0;
+
+    for (const [documentId, chunks] of this.chunks.entries()) {
+      totalChunks += chunks.length;
+      const chunksWithEmbeddings =
+        await this.generateEmbeddingsForChunks(chunks);
+      this.chunks.set(documentId, chunksWithEmbeddings);
+      processedChunks += chunksWithEmbeddings.filter(c => c.embedding).length;
+    }
+
+    this.saveChunks();
+    console.log(
+      `Regenerated embeddings for ${processedChunks}/${totalChunks} chunks`
+    );
+  }
+
+  // Method to get embedding model information
+  async getEmbeddingModelInfo(): Promise<{
+    available: boolean;
+    model: string;
+    chunksWithEmbeddings: number;
+    totalChunks: number;
+  }> {
+    const preferences = preferencesService.getPreferences();
+    let chunksWithEmbeddings = 0;
+    let totalChunks = 0;
+
+    for (const chunks of this.chunks.values()) {
+      totalChunks += chunks.length;
+      chunksWithEmbeddings += chunks.filter(c => c.embedding).length;
+    }
+
+    return {
+      available: preferences.embeddingSettings.enabled,
+      model: preferences.embeddingSettings.model,
+      chunksWithEmbeddings,
+      totalChunks,
+    };
+  }
+
   getDocument(documentId: string): Document | undefined {
     return this.documents.get(documentId);
   }
@@ -279,9 +398,82 @@ class DocumentService {
     return deleted;
   }
 
-  // Simple keyword-based search for now
-  // In a production system, you'd want to use vector embeddings
-  searchDocuments(
+  // Enhanced search with semantic similarity using embeddings
+  async searchDocuments(
+    query: string,
+    sessionId?: string,
+    limit = 5
+  ): Promise<DocumentChunk[]> {
+    const preferences = preferencesService.getPreferences();
+
+    // Use semantic search if embeddings are enabled
+    if (preferences.embeddingSettings.enabled) {
+      return this.semanticSearchDocuments(query, sessionId, limit);
+    }
+
+    // Fall back to keyword search
+    return this.keywordSearchDocuments(query, sessionId, limit);
+  }
+
+  private async semanticSearchDocuments(
+    query: string,
+    sessionId?: string,
+    limit = 5
+  ): Promise<DocumentChunk[]> {
+    try {
+      // Generate embedding for the query
+      const queryEmbedding = await this.generateEmbeddingForText(query);
+      if (!queryEmbedding) {
+        console.warn(
+          'Failed to generate query embedding, falling back to keyword search'
+        );
+        return this.keywordSearchDocuments(query, sessionId, limit);
+      }
+
+      const preferences = preferencesService.getPreferences();
+      const results: {
+        chunk: DocumentChunk;
+        similarity: number;
+        document: Document;
+      }[] = [];
+
+      for (const [documentId, documentChunks] of this.chunks.entries()) {
+        const document = this.documents.get(documentId);
+        if (!document) continue;
+
+        // Filter by session if specified
+        if (sessionId && document.sessionId !== sessionId) continue;
+
+        for (const chunk of documentChunks) {
+          if (!chunk.embedding) continue;
+
+          const similarity = cosineSimilarity(queryEmbedding, chunk.embedding);
+
+          // Only include chunks above similarity threshold
+          if (similarity >= preferences.embeddingSettings.similarityThreshold) {
+            results.push({ chunk, similarity, document });
+          }
+        }
+      }
+
+      // Sort by similarity score and return top results
+      return results
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, limit)
+        .map(result => ({
+          ...result.chunk,
+          filename: result.document.filename, // Add filename for context
+        })) as DocumentChunk[];
+    } catch (error) {
+      console.error(
+        'Semantic search failed, falling back to keyword search:',
+        error
+      );
+      return this.keywordSearchDocuments(query, sessionId, limit);
+    }
+  }
+
+  private keywordSearchDocuments(
     query: string,
     sessionId?: string,
     limit = 5
@@ -330,13 +522,17 @@ class DocumentService {
   }
 
   // Get relevant context for RAG
-  getRelevantContext(query: string, sessionId?: string): string[] {
-    const relevantChunks = this.searchDocuments(query, sessionId, 3);
-    return relevantChunks.map(chunk => {
-      const filename =
-        (chunk as DocumentChunk & { filename?: string }).filename || 'Unknown';
-      return `[From: ${filename}]\n${chunk.content}`;
-    });
+  async getRelevantContext(
+    query: string,
+    sessionId?: string
+  ): Promise<string[]> {
+    const relevantChunks = await this.searchDocuments(query, sessionId, 3);
+    return relevantChunks.map(
+      (chunk: DocumentChunk & { filename?: string }) => {
+        const filename = chunk.filename || 'Unknown';
+        return `[From: ${filename}]\n${chunk.content}`;
+      }
+    );
   }
 }
 

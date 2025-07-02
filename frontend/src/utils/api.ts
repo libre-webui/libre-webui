@@ -683,6 +683,15 @@ export const preferencesApi = {
 
   resetGenerationOptions: (): Promise<ApiResponse<UserPreferences>> =>
     api.post('/preferences/generation-options/reset').then(res => res.data),
+
+  // Embedding settings
+  setEmbeddingSettings: (
+    settings: UserPreferences['embeddingSettings']
+  ): Promise<ApiResponse<UserPreferences>> =>
+    api.put('/preferences/embedding-settings', settings).then(res => res.data),
+
+  resetEmbeddingSettings: (): Promise<ApiResponse<UserPreferences>> =>
+    api.post('/preferences/embedding-settings/reset').then(res => res.data),
 };
 
 export const documentsApi = {
@@ -764,6 +773,35 @@ export const documentsApi = {
     }
 
     return api.delete(`/documents/${documentId}`).then(res => res.data);
+  },
+
+  // Embedding management
+  getEmbeddingStatus: (): Promise<
+    ApiResponse<{
+      available: boolean;
+      model: string;
+      chunksWithEmbeddings: number;
+      totalChunks: number;
+    }>
+  > => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        available: false,
+        model: 'nomic-embed-text',
+        chunksWithEmbeddings: 0,
+        totalChunks: 0,
+      });
+    }
+
+    return api.get('/documents/embeddings/status').then(res => res.data);
+  },
+
+  regenerateEmbeddings: (): Promise<ApiResponse<void>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(undefined);
+    }
+
+    return api.post('/documents/embeddings/regenerate').then(res => res.data);
   },
 };
 

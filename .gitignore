@@ -76,3 +76,5 @@ preferences.json
 
 # Installed plugins
 backend/plugins/*
+backend/documents.json
+backend/document-chunks.json

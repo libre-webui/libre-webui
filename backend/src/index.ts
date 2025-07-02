@@ -187,7 +187,7 @@ wss.on('connection', ws => {
         );
 
         // RAG: Get relevant document context for the user's query
-        const relevantContext = documentService.getRelevantContext(
+        const relevantContext = await documentService.getRelevantContext(
           content,
           sessionId
         );
