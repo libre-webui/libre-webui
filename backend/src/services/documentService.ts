@@ -56,6 +56,23 @@ const getPdfjsLib = async () => {
   return pdfjsLib;
 };
 
+// Lazy load pdfjs-dist legacy build for Node.js
+let pdfjsLib: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
+const getPdfjsLib = async () => {
+  if (!pdfjsLib) {
+    try {
+      // Use the legacy build for Node.js compatibility
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      pdfjsLib = pdfjs;
+      console.log('Successfully loaded pdfjs-dist legacy build');
+    } catch (error) {
+      console.error('Failed to load pdfjs-dist legacy:', error);
+      throw new Error('PDF parsing is not available');
+    }
+  }
+  return pdfjsLib;
+};
+
 class DocumentService {
   private documents: Map<string, Document> = new Map();
   private chunks: Map<string, DocumentChunk[]> = new Map();
