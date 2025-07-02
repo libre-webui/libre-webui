@@ -17,10 +17,15 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import getDatabase, { isDatabaseInitialized } from './db.js';
 import { ChatSession, DocumentChunk, UserPreferences } from './types/index.js';
+
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Extended Document interface for SQLite storage
 export interface Document {
@@ -96,6 +101,7 @@ export interface User {
 
 class StorageService {
   private useSQLite = false;
+  private defaultUserEnsured = false;
   private sessionsFile = path.join(__dirname, '..', 'sessions.json');
   private preferencesFile = path.join(__dirname, '..', 'preferences.json');
   private documentsFile = path.join(__dirname, '..', 'documents.json');
@@ -106,6 +112,7 @@ class StorageService {
   );
 
   constructor() {
+    console.log('🔧 StorageService constructor called');
     // Check if SQLite should be used
     this.useSQLite = isDatabaseInitialized();
     console.log(`Storage mode: ${this.useSQLite ? 'SQLite' : 'JSON'}`);
@@ -271,6 +278,12 @@ class StorageService {
 
   saveSession(session: ChatSession, userId = 'default'): void {
     if (this.useSQLite) {
+      // Ensure the default user exists before saving session
+      if (!this.defaultUserEnsured) {
+        this.ensureDefaultUser();
+        this.defaultUserEnsured = true;
+      }
+
       const db = getDatabase();
 
       // Use transaction for consistency
@@ -364,6 +377,26 @@ class StorageService {
     return false;
   }
 
+  clearAllSessions(userId = 'default'): number {
+    if (this.useSQLite) {
+      const db = getDatabase();
+      const stmt = db.prepare('DELETE FROM sessions WHERE user_id = ?');
+      const result = stmt.run(userId);
+      return result.changes;
+    } else {
+      // Fallback to JSON
+      try {
+        const currentSessions = this.getAllSessions();
+        const deletedCount = currentSessions.length;
+        fs.writeFileSync(this.sessionsFile, JSON.stringify([], null, 2));
+        return deletedCount;
+      } catch (error) {
+        console.error('Failed to clear all sessions from JSON:', error);
+        return 0;
+      }
+    }
+  }
+
   // =================================
   // PREFERENCES MANAGEMENT
   // =================================
@@ -404,7 +437,14 @@ class StorageService {
   }
 
   savePreferences(preferences: UserPreferences, userId = 'default'): void {
+    console.log('🔧 savePreferences called for user:', userId);
     if (this.useSQLite) {
+      // Ensure the default user exists before saving preferences
+      if (!this.defaultUserEnsured) {
+        this.ensureDefaultUser();
+        this.defaultUserEnsured = true;
+      }
+
       const db = getDatabase();
       const now = Date.now();
 
@@ -517,6 +557,12 @@ class StorageService {
 
   saveDocument(document: Document, userId = 'default'): void {
     if (this.useSQLite) {
+      // Ensure the default user exists before saving document
+      if (!this.defaultUserEnsured) {
+        this.ensureDefaultUser();
+        this.defaultUserEnsured = true;
+      }
+
       const db = getDatabase();
       const now = Date.now();
 
@@ -715,6 +761,49 @@ class StorageService {
 
     return false;
   }
+
+  // =================================
+  // INITIALIZATION HELPERS
+  // =================================
+
+  ensureDefaultUser(): void {
+    console.log(
+      '🔧 ensureDefaultUser called, defaultUserEnsured:',
+      this.defaultUserEnsured
+    );
+    if (this.useSQLite && !this.defaultUserEnsured) {
+      const db = getDatabase();
+
+      // Check if default user exists
+      const existingUser = db
+        .prepare('SELECT id FROM users WHERE id = ?')
+        .get('default');
+
+      if (!existingUser) {
+        const now = Date.now();
+        const insertUserStmt = db.prepare(`
+          INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+
+        insertUserStmt.run(
+          'default',
+          'default',
+          null,
+          'no-password', // Placeholder since we don't have authentication yet
+          'user',
+          now,
+          now
+        );
+
+        console.log('✅ Created default user for fresh installation');
+      }
+
+      this.defaultUserEnsured = true;
+    }
+  }
+
+  // =================================
 }
 
 // Export singleton instance

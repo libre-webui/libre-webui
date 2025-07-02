@@ -171,9 +171,16 @@ class ChatService {
   }
 
   clearAllSessions(): void {
+    // Clear local memory
+    const deletedCount = this.sessions.size;
     this.sessions.clear();
-    // Note: clearAllSessions would need to be implemented in storage service
-    // For now, we'll keep this as a local operation
+
+    // Delete all sessions from storage (SQLite or JSON) - more efficient bulk operation
+    const actualDeleted = storageService.clearAllSessions();
+
+    console.log(
+      `Cleared all sessions: ${deletedCount} from memory, ${actualDeleted} from storage`
+    );
   }
 
   private generateTitle(content: string): string {

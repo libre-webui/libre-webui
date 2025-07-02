@@ -251,4 +251,43 @@ router.post(
   }
 );
 
+// Export all user data
+router.get('/export', async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Import services here to avoid circular dependencies
+    const chatService = (await import('../services/chatService.js')).default;
+    const documentService = (await import('../services/documentService.js'))
+      .default;
+
+    // Get all user data
+    const preferences = preferencesService.getPreferences();
+    const sessions = chatService.getAllSessions();
+    const documents = documentService.getDocuments();
+
+    const exportData = {
+      preferences,
+      sessions,
+      documents,
+      exportedAt: new Date().toISOString(),
+      version: '1.0',
+      format: 'libre-webui-export',
+    };
+
+    // Set headers for file download
+    const timestamp = new Date().toISOString().split('T')[0];
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="libre-webui-export-${timestamp}.json"`
+    );
+
+    res.json(exportData);
+  } catch (error: unknown) {
+    res.status(500).json({
+      success: false,
+      error: getErrorMessage(error, 'Failed to export user data'),
+    });
+  }
+});
+
 export default router;

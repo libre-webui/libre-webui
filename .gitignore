@@ -87,3 +87,4 @@ data.sqlite
 backend/plugins/*
 backend/documents.json
 backend/document-chunks.json
+backend/data.sqlite.backup

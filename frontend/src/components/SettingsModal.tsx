@@ -1541,11 +1541,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='0'
                         max='2'
                         step='0.1'
-                        value={tempGenerationOptions.temperature || 0.8}
+                        value={tempGenerationOptions.temperature ?? ''}
+                        placeholder='0.8'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'temperature',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1569,11 +1572,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='0'
                         max='1'
                         step='0.05'
-                        value={tempGenerationOptions.top_p || 0.9}
+                        value={tempGenerationOptions.top_p ?? ''}
+                        placeholder='0.9'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'top_p',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1595,11 +1601,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         type='number'
                         min='1'
                         max='100'
-                        value={tempGenerationOptions.top_k || 40}
+                        value={tempGenerationOptions.top_k ?? ''}
+                        placeholder='40'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'top_k',
-                            parseInt(e.target.value)
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1622,11 +1631,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='0'
                         max='1'
                         step='0.05'
-                        value={tempGenerationOptions.min_p || 0.0}
+                        value={tempGenerationOptions.min_p ?? ''}
+                        placeholder='0.0'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'min_p',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1651,19 +1663,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       </label>
                       <input
                         type='number'
-                        min='1'
+                        min='-1'
                         max='4096'
-                        value={tempGenerationOptions.num_predict ?? 1024}
+                        value={tempGenerationOptions.num_predict ?? ''}
+                        placeholder='128'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'num_predict',
-                            parseInt(e.target.value)
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Maximum number of tokens to generate
+                        Maximum number of tokens to generate. Leave empty to use
+                        default. Use -1 for unlimited.
                       </p>
                     </div>
 
@@ -1680,11 +1696,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='0'
                         max='2'
                         step='0.1'
-                        value={tempGenerationOptions.repeat_penalty || 1.1}
+                        value={tempGenerationOptions.repeat_penalty ?? ''}
+                        placeholder='1.1'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'repeat_penalty',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1704,11 +1723,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='512'
                         max='32768'
                         step='512'
-                        value={tempGenerationOptions.num_ctx || 2048}
+                        value={tempGenerationOptions.num_ctx ?? ''}
+                        placeholder='2048'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'num_ctx',
-                            parseInt(e.target.value)
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1766,11 +1788,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='-2'
                         max='2'
                         step='0.1'
-                        value={tempGenerationOptions.presence_penalty || 0.0}
+                        value={tempGenerationOptions.presence_penalty ?? ''}
+                        placeholder='0.0'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'presence_penalty',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1793,11 +1818,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='-2'
                         max='2'
                         step='0.1'
-                        value={tempGenerationOptions.frequency_penalty || 0.0}
+                        value={tempGenerationOptions.frequency_penalty ?? ''}
+                        placeholder='0.0'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'frequency_penalty',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
