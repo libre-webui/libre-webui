@@ -18,8 +18,24 @@
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs';
 import path from 'path';
-import pdfParse from 'pdf-parse';
 import { Document, DocumentChunk } from '../types/index.js';
+
+// Lazy load pdfjs-dist legacy build for Node.js
+let pdfjsLib: typeof import('pdfjs-dist/legacy/build/pdf.mjs') | null = null;
+const getPdfjsLib = async () => {
+  if (!pdfjsLib) {
+    try {
+      // Use the legacy build for Node.js compatibility
+      const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+      pdfjsLib = pdfjs;
+      console.log('Successfully loaded pdfjs-dist legacy build');
+    } catch (error) {
+      console.error('Failed to load pdfjs-dist legacy:', error);
+      throw new Error('PDF parsing is not available');
+    }
+  }
+  return pdfjsLib;
+};
 
 class DocumentService {
   private documents: Map<string, Document> = new Map();
@@ -90,9 +106,32 @@ class DocumentService {
 
     try {
       if (mimeType === 'application/pdf') {
-        const pdfData = await pdfParse(fileBuffer);
-        content = pdfData.text;
-        fileType = 'pdf';
+        try {
+          const pdfLib = await getPdfjsLib();
+          // Convert Buffer to Uint8Array for pdfjs-dist compatibility
+          const uint8Array = new Uint8Array(fileBuffer);
+          const pdfDocument = await pdfLib.getDocument({ data: uint8Array })
+            .promise;
+          const numPages = pdfDocument.numPages;
+          let textContent = '';
+
+          for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+            const page = await pdfDocument.getPage(pageNum);
+            const pageText = await page.getTextContent();
+            const pageContent = pageText.items
+              .map(item => ('str' in item ? item.str : ''))
+              .join(' ');
+            textContent += pageContent + '\n\n';
+          }
+
+          content = textContent.trim();
+          fileType = 'pdf';
+        } catch (pdfError) {
+          console.error('PDF parsing error:', pdfError);
+          throw new Error(
+            `Failed to parse PDF: ${pdfError instanceof Error ? pdfError.message : 'Unknown PDF error'}`
+          );
+        }
       } else if (mimeType === 'text/plain') {
         content = fileBuffer.toString('utf-8');
         fileType = 'txt';
