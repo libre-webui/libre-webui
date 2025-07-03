@@ -528,6 +528,25 @@ class DocumentService {
       }
     );
   }
+
+  // Restore a document from import (used during data import)
+  restoreDocument(document: Document): void {
+    try {
+      // Add to memory
+      this.documents.set(document.id, document);
+
+      // Save to storage
+      storageService.saveDocument(document);
+
+      // If there are any chunks with this document, they'll be handled separately
+      console.log(`Restored document: ${document.filename} (${document.id})`);
+    } catch (error) {
+      console.error('Error restoring document:', error);
+      throw new Error(
+        `Failed to restore document: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
+  }
 }
 
 export default new DocumentService();

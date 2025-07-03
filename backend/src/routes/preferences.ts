@@ -290,4 +290,133 @@ router.get('/export', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// Import user data with duplicate detection
+router.post('/import', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { data, mergeStrategy = 'skip' } = req.body;
+
+    if (!data || typeof data !== 'object') {
+      res.status(400).json({
+        success: false,
+        error: 'Invalid import data format',
+      });
+      return;
+    }
+
+    // Validate export format
+    if (data.format !== 'libre-webui-export') {
+      res.status(400).json({
+        success: false,
+        error:
+          'Invalid export format. Please use a valid Libre WebUI export file.',
+      });
+      return;
+    }
+
+    // Import services here to avoid circular dependencies
+    const chatService = (await import('../services/chatService.js')).default;
+    const documentService = (await import('../services/documentService.js'))
+      .default;
+
+    const importResult = {
+      preferences: { imported: false, error: null as string | null },
+      sessions: { imported: 0, skipped: 0, errors: [] as string[] },
+      documents: { imported: 0, skipped: 0, errors: [] as string[] },
+    };
+
+    // Import preferences (always overwrites)
+    try {
+      if (data.preferences) {
+        preferencesService.updatePreferences(data.preferences);
+        importResult.preferences.imported = true;
+      }
+    } catch (error) {
+      importResult.preferences.error = getErrorMessage(
+        error,
+        'Failed to import preferences'
+      );
+    }
+
+    // Import sessions with duplicate detection
+    if (data.sessions && Array.isArray(data.sessions)) {
+      const existingSessions = chatService.getAllSessions();
+      const existingSessionIds = new Set(existingSessions.map(s => s.id));
+
+      for (const session of data.sessions) {
+        try {
+          if (existingSessionIds.has(session.id)) {
+            if (mergeStrategy === 'skip') {
+              importResult.sessions.skipped++;
+              continue;
+            } else if (mergeStrategy === 'overwrite') {
+              // Delete existing session first
+              chatService.deleteSession(session.id);
+            }
+            // For 'merge' strategy, we'll let the service handle it
+          }
+
+          // Create the session
+          const newSession = chatService.createSession(
+            session.model,
+            session.title
+          );
+
+          // Update with imported data
+          chatService.updateSession(newSession.id, {
+            id: session.id, // Use original ID
+            messages: session.messages || [],
+            createdAt: session.createdAt,
+            updatedAt: session.updatedAt,
+          });
+
+          importResult.sessions.imported++;
+        } catch (error) {
+          importResult.sessions.errors.push(
+            `Session "${session.title || session.id}": ${getErrorMessage(error, 'Import failed')}`
+          );
+        }
+      }
+    }
+
+    // Import documents with duplicate detection
+    if (data.documents && Array.isArray(data.documents)) {
+      const existingDocuments = documentService.getDocuments();
+      const existingDocumentIds = new Set(existingDocuments.map(d => d.id));
+
+      for (const document of data.documents) {
+        try {
+          if (existingDocumentIds.has(document.id)) {
+            if (mergeStrategy === 'skip') {
+              importResult.documents.skipped++;
+              continue;
+            } else if (mergeStrategy === 'overwrite') {
+              // Delete existing document first
+              documentService.deleteDocument(document.id);
+            }
+          }
+
+          // Import the document by recreating it
+          documentService.restoreDocument(document);
+          importResult.documents.imported++;
+        } catch (error) {
+          importResult.documents.errors.push(
+            `Document "${document.filename || document.id}": ${getErrorMessage(error, 'Import failed')}`
+          );
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      data: importResult,
+      message: 'Import completed successfully',
+    });
+  } catch (error: unknown) {
+    res.status(500).json({
+      success: false,
+      error: getErrorMessage(error, 'Failed to import user data'),
+    });
+  }
+});
+
 export default router;
