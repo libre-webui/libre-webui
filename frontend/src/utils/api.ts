@@ -692,6 +692,54 @@ export const preferencesApi = {
 
   resetEmbeddingSettings: (): Promise<ApiResponse<UserPreferences>> =>
     api.post('/preferences/embedding-settings/reset').then(res => res.data),
+
+  exportData: (): Promise<Blob> => {
+    if (isDemoMode()) {
+      const demoData = {
+        preferences: {
+          defaultModel: 'llama3.2:3b',
+          theme: { mode: 'light' },
+          systemMessage: 'You are a helpful assistant.',
+          generationOptions: {},
+          embeddingSettings: { enabled: false },
+        },
+        sessions: getDemoSessions(),
+        documents: [],
+        exportedAt: new Date().toISOString(),
+        version: '1.0',
+        format: 'libre-webui-export',
+      };
+      const blob = new Blob([JSON.stringify(demoData, null, 2)], {
+        type: 'application/json',
+      });
+      return Promise.resolve(blob);
+    }
+    return fetch(`${API_BASE_URL}/preferences/export`, {
+      method: 'GET',
+    }).then(response => response.blob());
+  },
+
+  importData: (
+    data: Record<string, unknown>,
+    mergeStrategy: 'skip' | 'overwrite' | 'merge' = 'skip'
+  ): Promise<
+    ApiResponse<{
+      preferences: { imported: boolean; error: string | null };
+      sessions: { imported: number; skipped: number; errors: string[] };
+      documents: { imported: number; skipped: number; errors: string[] };
+    }>
+  > => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        preferences: { imported: true, error: null },
+        sessions: { imported: 0, skipped: 0, errors: [] },
+        documents: { imported: 0, skipped: 0, errors: [] },
+      });
+    }
+    return api
+      .post('/preferences/import', { data, mergeStrategy })
+      .then(res => res.data);
+  },
 };
 
 export const documentsApi = {

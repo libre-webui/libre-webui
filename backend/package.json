@@ -12,12 +12,15 @@
     "type-check": "tsc --noEmit",
     "lint": "eslint src/ --ext .ts,.js --max-warnings 100",
     "lint:fix": "eslint src/ --ext .ts,.js --fix",
-    "lint:strict": "eslint src/ --ext .ts,.js --max-warnings 0"
+    "lint:strict": "eslint src/ --ext .ts,.js --max-warnings 0",
+    "migrate": "tsx scripts/migrateFromJSON.ts"
   },
   "dependencies": {
     "@types/multer": "^1.4.13",
     "@types/pdf-parse": "^1.1.5",
     "axios": "^1.10.0",
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.2.0",
     "cors": "^2.8.5",
     "dotenv": "^17.0.0",
     "express": "^5.1.0",
@@ -31,6 +34,8 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/morgan": "^1.9.10",

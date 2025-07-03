@@ -46,6 +46,15 @@ sessions.json
 # User preferences (generated at runtime)
 preferences.json
 
+# Documents and chunks data
+documents.json
+document-chunks.json
+
+# SQLite database (user data)
+data.sqlite
+*.sqlite
+*.db
+
 # Plugin status file
 .status.json
 
@@ -78,3 +87,4 @@ preferences.json
 backend/plugins/*
 backend/documents.json
 backend/document-chunks.json
+backend/data.sqlite.backup

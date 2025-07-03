@@ -41,13 +41,19 @@ export const ChatPage: React.FC = () => {
     currentSession?.id || ''
   );
 
+  // Load sessions on mount
+  useEffect(() => {
+    if (sessions.length === 0) {
+      loadSessions();
+    }
+  }, [loadSessions, sessions.length]); // Include sessions.length as dependency
+
   // Handle URL session parameter
   useEffect(() => {
-    const handleSessionFromUrl = async () => {
-      // First ensure sessions are loaded
+    const handleSessionFromUrl = () => {
+      // Only proceed if sessions are loaded
       if (sessions.length === 0) {
-        await loadSessions();
-        return; // Let the next effect run handle the navigation
+        return; // Sessions not loaded yet, wait for them
       }
 
       if (sessionId) {
@@ -70,7 +76,7 @@ export const ChatPage: React.FC = () => {
     };
 
     handleSessionFromUrl();
-  }, [sessionId, sessions, setCurrentSession, navigate, loadSessions]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sessionId, sessions, setCurrentSession, navigate, currentSession?.id]); // Include currentSession?.id as dependency
 
   const handleModelChange = async (model: string) => {
     setSelectedModel(model);

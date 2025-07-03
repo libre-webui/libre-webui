@@ -72,8 +72,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     loading,
     sessions,
     loadModels,
+    loadSessions,
   } = useChatStore();
-  const { theme, setTheme, preferences, setPreferences } = useAppStore();
+  const { theme, setTheme, preferences, setPreferences, loadPreferences } =
+    useAppStore();
   const {
     plugins,
     isLoading: pluginLoading,
@@ -136,6 +138,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     totalChunks: number;
   } | null>(null);
   const [regeneratingEmbeddings, setRegeneratingEmbeddings] = useState(false);
+
+  // Import data state
+  const [importing, setImporting] = useState(false);
+  const [showImportOptions, setShowImportOptions] = useState(false);
+  const [mergeStrategy, setMergeStrategy] = useState<
+    'skip' | 'overwrite' | 'merge'
+  >('skip');
+  const [importResult, setImportResult] = useState<{
+    preferences: { imported: boolean; error: string | null };
+    sessions: { imported: number; skipped: number; errors: string[] };
+    documents: { imported: number; skipped: number; errors: string[] };
+  } | null>(null);
+  const [selectedImportFile, setSelectedImportFile] = useState<File | null>(
+    null
+  );
+  const importFileInputRef = useRef<HTMLInputElement>(null);
 
   // Load system information
   useEffect(() => {
@@ -334,8 +352,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleExportData = () => {
     const data = {
+      format: 'libre-webui-export',
+      version: '1.0',
       preferences,
       sessions,
+      documents: [], // Documents are handled by the backend
       exportedAt: new Date().toISOString(),
     };
 
@@ -352,6 +373,66 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     URL.revokeObjectURL(url);
 
     toast.success('Data exported successfully');
+  };
+
+  const handleImportFileSelect = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedImportFile(file);
+      setShowImportOptions(true);
+      setImportResult(null);
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!selectedImportFile) return;
+
+    setImporting(true);
+    try {
+      const fileContent = await selectedImportFile.text();
+      const importData = JSON.parse(fileContent);
+
+      // Validate the data format
+      if (!importData.format || importData.format !== 'libre-webui-export') {
+        throw new Error(
+          'Invalid export format. Please use a valid Libre WebUI export file.'
+        );
+      }
+
+      const result = await preferencesApi.importData(importData, mergeStrategy);
+
+      if (result.success && result.data) {
+        setImportResult(result.data);
+        toast.success('Data imported successfully');
+
+        // Refresh data in store
+        await loadPreferences();
+        await loadSessions();
+      } else {
+        throw new Error(result.error || 'Import failed');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Import failed');
+      setImportResult(null);
+    } finally {
+      setImporting(false);
+      setShowImportOptions(false);
+      setSelectedImportFile(null);
+      if (importFileInputRef.current) {
+        importFileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleCancelImport = () => {
+    setShowImportOptions(false);
+    setSelectedImportFile(null);
+    setImportResult(null);
+    if (importFileInputRef.current) {
+      importFileInputRef.current.value = '';
+    }
   };
 
   const handleUpdateAllModels = async () => {
@@ -1287,7 +1368,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 Data Management
               </h3>
               <div className='space-y-4'>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                   <div>
                     <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       Export Data
@@ -1302,6 +1383,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className='w-full'
                     >
                       Export All Data
+                    </Button>
+                  </div>
+
+                  <div>
+                    <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Import Data
+                    </h4>
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
+                      Restore your settings and chat history from a JSON file.
+                    </p>
+                    <input
+                      ref={importFileInputRef}
+                      type='file'
+                      accept='.json'
+                      onChange={handleImportFileSelect}
+                      className='hidden'
+                    />
+                    <Button
+                      onClick={() => importFileInputRef.current?.click()}
+                      variant='outline'
+                      size='sm'
+                      className='w-full'
+                      disabled={importing}
+                    >
+                      {importing ? 'Importing...' : 'Import Data'}
                     </Button>
                   </div>
 
@@ -1326,6 +1432,129 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </Button>
                   </div>
                 </div>
+
+                {/* Import Options Modal */}
+                {showImportOptions && (
+                  <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
+                    <h5 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-3'>
+                      Import Options
+                    </h5>
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
+                      How should we handle existing data with the same IDs?
+                    </p>
+                    <div className='space-y-2 mb-4'>
+                      <label className='flex items-center'>
+                        <input
+                          type='radio'
+                          name='mergeStrategy'
+                          value='skip'
+                          checked={mergeStrategy === 'skip'}
+                          onChange={e =>
+                            setMergeStrategy(
+                              e.target.value as 'skip' | 'overwrite' | 'merge'
+                            )
+                          }
+                          className='mr-2'
+                        />
+                        <span className='text-sm text-gray-700 dark:text-gray-300'>
+                          Skip duplicates (keep existing data)
+                        </span>
+                      </label>
+                      <label className='flex items-center'>
+                        <input
+                          type='radio'
+                          name='mergeStrategy'
+                          value='overwrite'
+                          checked={mergeStrategy === 'overwrite'}
+                          onChange={e =>
+                            setMergeStrategy(
+                              e.target.value as 'skip' | 'overwrite' | 'merge'
+                            )
+                          }
+                          className='mr-2'
+                        />
+                        <span className='text-sm text-gray-700 dark:text-gray-300'>
+                          Overwrite existing data
+                        </span>
+                      </label>
+                    </div>
+                    <div className='flex gap-2'>
+                      <Button
+                        onClick={handleConfirmImport}
+                        size='sm'
+                        disabled={importing}
+                      >
+                        {importing ? 'Importing...' : 'Import'}
+                      </Button>
+                      <Button
+                        onClick={handleCancelImport}
+                        variant='outline'
+                        size='sm'
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Import Results */}
+                {importResult && (
+                  <div className='mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg'>
+                    <h5 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
+                      Import Results
+                    </h5>
+                    <div className='text-xs text-blue-800 dark:text-blue-200 space-y-1'>
+                      <div>
+                        Preferences:{' '}
+                        {importResult.preferences.imported
+                          ? '✅ Imported'
+                          : '❌ Failed'}
+                      </div>
+                      <div>
+                        Sessions: ✅ {importResult.sessions.imported} imported,
+                        ⏭️ {importResult.sessions.skipped} skipped
+                      </div>
+                      <div>
+                        Documents: ✅ {importResult.documents.imported}{' '}
+                        imported, ⏭️ {importResult.documents.skipped} skipped
+                      </div>
+                      {(importResult.sessions.errors.length > 0 ||
+                        importResult.documents.errors.length > 0) && (
+                        <div className='mt-2'>
+                          <p className='font-medium'>Errors:</p>
+                          {importResult.sessions.errors.map(
+                            (error: string, idx: number) => (
+                              <p
+                                key={idx}
+                                className='text-red-600 dark:text-red-400'
+                              >
+                                • {error}
+                              </p>
+                            )
+                          )}
+                          {importResult.documents.errors.map(
+                            (error: string, idx: number) => (
+                              <p
+                                key={idx}
+                                className='text-red-600 dark:text-red-400'
+                              >
+                                • {error}
+                              </p>
+                            )
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      onClick={() => setImportResult(null)}
+                      variant='outline'
+                      size='sm'
+                      className='mt-2'
+                    >
+                      Close
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1541,11 +1770,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='0'
                         max='2'
                         step='0.1'
-                        value={tempGenerationOptions.temperature || 0.8}
+                        value={tempGenerationOptions.temperature ?? ''}
+                        placeholder='0.8'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'temperature',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1569,11 +1801,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='0'
                         max='1'
                         step='0.05'
-                        value={tempGenerationOptions.top_p || 0.9}
+                        value={tempGenerationOptions.top_p ?? ''}
+                        placeholder='0.9'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'top_p',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1595,11 +1830,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         type='number'
                         min='1'
                         max='100'
-                        value={tempGenerationOptions.top_k || 40}
+                        value={tempGenerationOptions.top_k ?? ''}
+                        placeholder='40'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'top_k',
-                            parseInt(e.target.value)
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1622,11 +1860,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='0'
                         max='1'
                         step='0.05'
-                        value={tempGenerationOptions.min_p || 0.0}
+                        value={tempGenerationOptions.min_p ?? ''}
+                        placeholder='0.0'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'min_p',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1651,19 +1892,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       </label>
                       <input
                         type='number'
-                        min='1'
+                        min='-1'
                         max='4096'
-                        value={tempGenerationOptions.num_predict ?? 1024}
+                        value={tempGenerationOptions.num_predict ?? ''}
+                        placeholder='128'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'num_predict',
-                            parseInt(e.target.value)
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Maximum number of tokens to generate
+                        Maximum number of tokens to generate. Leave empty to use
+                        default. Use -1 for unlimited.
                       </p>
                     </div>
 
@@ -1680,11 +1925,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='0'
                         max='2'
                         step='0.1'
-                        value={tempGenerationOptions.repeat_penalty || 1.1}
+                        value={tempGenerationOptions.repeat_penalty ?? ''}
+                        placeholder='1.1'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'repeat_penalty',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1704,11 +1952,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='512'
                         max='32768'
                         step='512'
-                        value={tempGenerationOptions.num_ctx || 2048}
+                        value={tempGenerationOptions.num_ctx ?? ''}
+                        placeholder='2048'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'num_ctx',
-                            parseInt(e.target.value)
+                            e.target.value
+                              ? parseInt(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1766,11 +2017,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='-2'
                         max='2'
                         step='0.1'
-                        value={tempGenerationOptions.presence_penalty || 0.0}
+                        value={tempGenerationOptions.presence_penalty ?? ''}
+                        placeholder='0.0'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'presence_penalty',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
@@ -1793,11 +2047,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         min='-2'
                         max='2'
                         step='0.1'
-                        value={tempGenerationOptions.frequency_penalty || 0.0}
+                        value={tempGenerationOptions.frequency_penalty ?? ''}
+                        placeholder='0.0'
                         onChange={e =>
                           handleGenerationOptionChange(
                             'frequency_penalty',
-                            parseFloat(e.target.value)
+                            e.target.value
+                              ? parseFloat(e.target.value)
+                              : undefined
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'

@@ -16,9 +16,9 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import fs from 'fs';
-import path from 'path';
-import { Document, DocumentChunk } from '../types/index.js';
+import { DocumentChunk } from '../types/index.js';
+import { Document } from '../storage.js';
+import storageService from '../storage.js';
 import ollamaService from './ollamaService.js';
 import preferencesService from './preferencesService.js';
 
@@ -59,8 +59,6 @@ const getPdfjsLib = async () => {
 class DocumentService {
   private documents: Map<string, Document> = new Map();
   private chunks: Map<string, DocumentChunk[]> = new Map();
-  private dataFile = path.join(process.cwd(), 'documents.json');
-  private chunksFile = path.join(process.cwd(), 'document-chunks.json');
 
   constructor() {
     this.loadDocuments();
@@ -69,12 +67,9 @@ class DocumentService {
 
   private loadDocuments() {
     try {
-      if (fs.existsSync(this.dataFile)) {
-        const data = fs.readFileSync(this.dataFile, 'utf8');
-        const documentsArray: Document[] = JSON.parse(data);
-        this.documents = new Map(documentsArray.map(doc => [doc.id, doc]));
-        console.log(`Loaded ${documentsArray.length} documents from disk`);
-      }
+      const documentsArray = storageService.getAllDocuments();
+      this.documents = new Map(documentsArray.map(doc => [doc.id, doc]));
+      console.log(`Loaded ${documentsArray.length} documents from storage`);
     } catch (error) {
       console.error('Failed to load documents:', error);
     }
@@ -82,35 +77,30 @@ class DocumentService {
 
   private loadChunks() {
     try {
-      if (fs.existsSync(this.chunksFile)) {
-        const data = fs.readFileSync(this.chunksFile, 'utf8');
-        const chunksData: { [key: string]: DocumentChunk[] } = JSON.parse(data);
-        this.chunks = new Map(Object.entries(chunksData));
-        console.log(
-          `Loaded chunks for ${this.chunks.size} documents from disk`
-        );
+      // Load chunks for all documents
+      const documentsArray = Array.from(this.documents.values());
+      for (const doc of documentsArray) {
+        const chunks = storageService.getDocumentChunks(doc.id);
+        if (chunks.length > 0) {
+          this.chunks.set(doc.id, chunks);
+        }
       }
+      console.log(
+        `Loaded chunks for ${this.chunks.size} documents from storage`
+      );
     } catch (error) {
       console.error('Failed to load document chunks:', error);
     }
   }
 
   private saveDocuments() {
-    try {
-      const documentsArray = Array.from(this.documents.values());
-      fs.writeFileSync(this.dataFile, JSON.stringify(documentsArray, null, 2));
-    } catch (error) {
-      console.error('Failed to save documents:', error);
-    }
+    // This method is no longer needed as we save documents individually
+    // through the storage service
   }
 
   private saveChunks() {
-    try {
-      const chunksData = Object.fromEntries(this.chunks.entries());
-      fs.writeFileSync(this.chunksFile, JSON.stringify(chunksData, null, 2));
-    } catch (error) {
-      console.error('Failed to save document chunks:', error);
-    }
+    // This method is no longer needed as we save chunks individually
+    // through the storage service
   }
 
   async processDocument(
@@ -179,8 +169,8 @@ class DocumentService {
       this.documents.set(documentId, document);
       this.chunks.set(documentId, chunksWithEmbeddings);
 
-      this.saveDocuments();
-      this.saveChunks();
+      storageService.saveDocument(document);
+      storageService.saveDocumentChunks(documentId, chunksWithEmbeddings);
 
       console.log(
         `Processed ${fileType.toUpperCase()} document: ${fileName} (${chunksWithEmbeddings.length} chunks)`
@@ -200,7 +190,7 @@ class DocumentService {
     const chunkSize = preferences.embeddingSettings?.chunkSize || 1000; // characters per chunk
     const overlap = preferences.embeddingSettings?.chunkOverlap || 200; // character overlap between chunks
 
-    const text = document.content.trim();
+    const text = document.content?.trim();
     if (!text) return chunks;
 
     // Helper function to calculate overlap word count based on character overlap
@@ -392,8 +382,8 @@ class DocumentService {
     this.chunks.delete(documentId);
 
     if (deleted) {
-      this.saveDocuments();
-      this.saveChunks();
+      storageService.deleteDocument(documentId);
+      storageService.deleteDocumentChunks(documentId);
     }
 
     return deleted;
@@ -537,6 +527,25 @@ class DocumentService {
         return `[From: ${filename}]\n${chunk.content}`;
       }
     );
+  }
+
+  // Restore a document from import (used during data import)
+  restoreDocument(document: Document): void {
+    try {
+      // Add to memory
+      this.documents.set(document.id, document);
+
+      // Save to storage
+      storageService.saveDocument(document);
+
+      // If there are any chunks with this document, they'll be handled separately
+      console.log(`Restored document: ${document.filename} (${document.id})`);
+    } catch (error) {
+      console.error('Error restoring document:', error);
+      throw new Error(
+        `Failed to restore document: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }
 

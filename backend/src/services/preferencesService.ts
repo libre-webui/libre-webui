@@ -15,63 +15,17 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-
-export interface UserPreferences {
-  defaultModel: string;
-  theme: 'light' | 'dark';
-  systemMessage: string;
-  generationOptions: {
-    // Core parameters
-    temperature?: number; // 0.0-2.0, default 0.8
-    top_p?: number; // 0.0-1.0, default 0.9
-    top_k?: number; // 1-100, default 40
-    min_p?: number; // 0.0-1.0, default 0.0
-    typical_p?: number; // 0.0-1.0, default 0.7
-
-    // Generation control
-    num_predict?: number; // Number of tokens to predict, default 128
-    seed?: number; // Random seed for reproducible outputs
-    repeat_last_n?: number; // How far back to look for repetition, default 64
-    repeat_penalty?: number; // Penalty for repetition, default 1.1
-    presence_penalty?: number; // Penalty for token presence, default 0.0
-    frequency_penalty?: number; // Penalty for token frequency, default 0.0
-    penalize_newline?: boolean; // Penalize newlines, default true
-
-    // Context and processing
-    num_ctx?: number; // Context window size, default 2048
-    num_batch?: number; // Batch size for processing, default 512
-    num_keep?: number; // Number of tokens to keep from prompt
-
-    // Advanced options
-    stop?: string[]; // Stop sequences
-    numa?: boolean; // Enable NUMA support
-    num_thread?: number; // Number of threads to use
-    num_gpu?: number; // Number of GPU layers
-    main_gpu?: number; // Main GPU to use
-    use_mmap?: boolean; // Use memory mapping
-
-    // Model behavior
-    format?: string | Record<string, unknown>; // Response format (json, etc.)
-    raw?: boolean; // Skip prompt templating
-    keep_alive?: string; // Keep model in memory duration
-  };
-  // Embedding settings for semantic search
-  embeddingSettings: {
-    enabled: boolean;
-    model: string;
-    chunkSize: number;
-    chunkOverlap: number;
-    similarityThreshold: number;
-  };
-}
+import storageService from '../storage.js';
+import {
+  UserPreferences,
+  GenerationOptions,
+  EmbeddingSettings,
+} from '../types/index.js';
 
 class PreferencesService {
-  private preferencesFile = path.join(process.cwd(), 'preferences.json');
   private defaultPreferences: UserPreferences = {
     defaultModel: '',
-    theme: 'light',
+    theme: { mode: 'light' },
     systemMessage: 'You are a helpful assistant.',
     generationOptions: {
       // Core parameters
@@ -119,58 +73,72 @@ class PreferencesService {
   };
 
   constructor() {
-    this.ensurePreferencesFile();
+    this.ensurePreferencesExist();
   }
 
-  private ensurePreferencesFile() {
+  private ensurePreferencesExist() {
     try {
-      if (!fs.existsSync(this.preferencesFile)) {
-        // Ensure the directory exists
-        const dir = path.dirname(this.preferencesFile);
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-
-        fs.writeFileSync(
-          this.preferencesFile,
-          JSON.stringify(this.defaultPreferences, null, 2)
-        );
-        console.log('Created preferences.json with default settings');
+      const preferences = storageService.getPreferences();
+      if (!preferences) {
+        // Create default preferences if none exist
+        storageService.savePreferences(this.defaultPreferences);
+        console.log('Created default preferences');
       }
-    } catch (_error) {
-      console.error('Failed to create preferences file:', _error);
+    } catch (error) {
+      console.error('Failed to ensure preferences exist:', error);
     }
   }
 
   getPreferences(): UserPreferences {
     try {
-      if (fs.existsSync(this.preferencesFile)) {
-        const data = fs.readFileSync(this.preferencesFile, 'utf8');
-        const preferences = JSON.parse(data);
+      const preferences = storageService.getPreferences();
+      if (preferences) {
         // Merge with defaults to ensure all fields exist
-        return { ...this.defaultPreferences, ...preferences };
+        return this.mergeWithDefaults(preferences);
       }
-    } catch (_error) {
-      console.error('Failed to load preferences:', _error);
+    } catch (error) {
+      console.error('Failed to get preferences:', error);
     }
+
     return this.defaultPreferences;
   }
 
+  private mergeWithDefaults(preferences: UserPreferences): UserPreferences {
+    return {
+      ...this.defaultPreferences,
+      ...preferences,
+      generationOptions: {
+        ...this.defaultPreferences.generationOptions,
+        ...preferences.generationOptions,
+      },
+      embeddingSettings: {
+        ...this.defaultPreferences.embeddingSettings,
+        ...preferences.embeddingSettings,
+      },
+    };
+  }
+
   updatePreferences(updates: Partial<UserPreferences>): UserPreferences {
+    const currentPreferences = this.getPreferences();
+    const updatedPreferences: UserPreferences = {
+      ...currentPreferences,
+      ...updates,
+      generationOptions: {
+        ...currentPreferences.generationOptions,
+        ...updates.generationOptions,
+      },
+      embeddingSettings: {
+        ...currentPreferences.embeddingSettings,
+        ...updates.embeddingSettings,
+      },
+    };
+
     try {
-      const currentPreferences = this.getPreferences();
-      const updatedPreferences = { ...currentPreferences, ...updates };
-
-      fs.writeFileSync(
-        this.preferencesFile,
-        JSON.stringify(updatedPreferences, null, 2)
-      );
-      console.log('Preferences updated:', updates);
-
+      storageService.savePreferences(updatedPreferences);
       return updatedPreferences;
-    } catch (_error) {
-      console.error('Failed to save preferences:', _error);
-      throw _error;
+    } catch (error) {
+      console.error('Failed to update preferences:', error);
+      throw error;
     }
   }
 
@@ -178,21 +146,40 @@ class PreferencesService {
     return this.updatePreferences({ defaultModel: model });
   }
 
-  setSystemMessage(message: string): UserPreferences {
-    return this.updatePreferences({ systemMessage: message });
+  setTheme(theme: 'light' | 'dark'): UserPreferences {
+    return this.updatePreferences({ theme: { mode: theme } });
   }
 
-  setGenerationOptions(
-    options: Partial<UserPreferences['generationOptions']>
+  setSystemMessage(systemMessage: string): UserPreferences {
+    return this.updatePreferences({ systemMessage });
+  }
+
+  getSystemMessage(): string {
+    return this.getPreferences().systemMessage;
+  }
+
+  getDefaultModel(): string {
+    return this.getPreferences().defaultModel;
+  }
+
+  getGenerationOptions(): GenerationOptions {
+    return this.getPreferences().generationOptions;
+  }
+
+  updateGenerationOptions(
+    options: Partial<GenerationOptions>
   ): UserPreferences {
     const currentPreferences = this.getPreferences();
-    const updatedGenerationOptions = {
-      ...currentPreferences.generationOptions,
-      ...options,
-    };
     return this.updatePreferences({
-      generationOptions: updatedGenerationOptions,
+      generationOptions: {
+        ...currentPreferences.generationOptions,
+        ...options,
+      },
     });
+  }
+
+  setGenerationOptions(options: GenerationOptions): UserPreferences {
+    return this.updatePreferences({ generationOptions: options });
   }
 
   resetGenerationOptions(): UserPreferences {
@@ -201,33 +188,24 @@ class PreferencesService {
     });
   }
 
-  setEmbeddingSettings(
-    settings: Partial<UserPreferences['embeddingSettings']>
+  getEmbeddingSettings(): EmbeddingSettings {
+    return this.getPreferences().embeddingSettings;
+  }
+
+  updateEmbeddingSettings(
+    settings: Partial<EmbeddingSettings>
   ): UserPreferences {
     const currentPreferences = this.getPreferences();
-    const updatedEmbeddingSettings = {
-      ...currentPreferences.embeddingSettings,
-      ...settings,
-    };
     return this.updatePreferences({
-      embeddingSettings: updatedEmbeddingSettings,
+      embeddingSettings: {
+        ...currentPreferences.embeddingSettings,
+        ...settings,
+      },
     });
   }
 
-  getDefaultModel(): string {
-    return this.getPreferences().defaultModel;
-  }
-
-  getSystemMessage(): string {
-    return this.getPreferences().systemMessage;
-  }
-
-  getGenerationOptions(): UserPreferences['generationOptions'] {
-    return this.getPreferences().generationOptions;
-  }
-
-  getEmbeddingSettings(): UserPreferences['embeddingSettings'] {
-    return this.getPreferences().embeddingSettings;
+  setEmbeddingSettings(settings: EmbeddingSettings): UserPreferences {
+    return this.updatePreferences({ embeddingSettings: settings });
   }
 
   resetEmbeddingSettings(): UserPreferences {
@@ -235,6 +213,17 @@ class PreferencesService {
       embeddingSettings: this.defaultPreferences.embeddingSettings,
     });
   }
+
+  resetToDefaults(): UserPreferences {
+    try {
+      storageService.savePreferences(this.defaultPreferences);
+      return this.defaultPreferences;
+    } catch (error) {
+      console.error('Failed to reset preferences to defaults:', error);
+      throw error;
+    }
+  }
 }
 
-export default new PreferencesService();
+const preferencesService = new PreferencesService();
+export default preferencesService;

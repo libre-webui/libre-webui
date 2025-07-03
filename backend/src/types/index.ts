@@ -83,19 +83,21 @@ export interface GenerationOptions {
   stream?: boolean; // Enable streaming
 }
 
+export interface EmbeddingSettings {
+  enabled: boolean;
+  model: string;
+  chunkSize: number;
+  chunkOverlap: number;
+  similarityThreshold: number;
+}
+
 export interface UserPreferences {
   defaultModel: string;
-  theme: 'light' | 'dark';
+  theme: { mode: 'light' | 'dark' };
   systemMessage: string;
   generationOptions: GenerationOptions;
   // Embedding settings for semantic search
-  embeddingSettings: {
-    enabled: boolean;
-    model: string;
-    chunkSize: number;
-    chunkOverlap: number;
-    similarityThreshold: number;
-  };
+  embeddingSettings: EmbeddingSettings;
 }
 
 // Ollama Chat Message format
