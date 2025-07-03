@@ -880,7 +880,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </h3>
 
               {/* Embedding Settings */}
-              <div className='bg-gray-50 dark:bg-dark-50 p-4 rounded-lg space-y-4'>
+              <div className='bg-gray-50 dark:bg-dark-50 p-4 rounded-lg border border-gray-200 dark:border-dark-300 space-y-4'>
                 <div className='flex items-center justify-between'>
                   <div>
                     <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
@@ -904,10 +904,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className='sr-only'
                     />
                     <div
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                         embeddingSettings.enabled
-                          ? 'bg-blue-600'
-                          : 'bg-gray-200 dark:bg-gray-700'
+                          ? 'bg-primary-600 dark:bg-primary-500'
+                          : 'bg-gray-200 dark:bg-dark-300'
                       }`}
                     >
                       <span
@@ -967,7 +967,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             parseInt(e.target.value)
                           )
                         }
-                        className='w-full'
+                        className='w-full range-slider'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Size of text chunks for processing
@@ -991,7 +991,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             parseInt(e.target.value)
                           )
                         }
-                        className='w-full'
+                        className='w-full range-slider'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Character overlap between chunks
@@ -1016,7 +1016,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             parseFloat(e.target.value)
                           )
                         }
-                        className='w-full'
+                        className='w-full range-slider'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Minimum similarity score for search results
@@ -1028,30 +1028,43 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               {/* Embedding Status */}
               {embeddingStatus && (
-                <div className='bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg'>
-                  <h4 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
+                <div className='bg-gray-50 dark:bg-dark-100 p-4 rounded-lg border border-gray-200 dark:border-dark-300'>
+                  <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-2'>
                     Embedding Status
                   </h4>
-                  <div className='text-sm text-blue-800 dark:text-blue-200 space-y-1'>
+                  <div className='text-sm text-gray-700 dark:text-gray-300 space-y-1'>
                     <div>
                       Status:{' '}
-                      {embeddingStatus.available ? 'Enabled' : 'Disabled'}
+                      <span
+                        className={`font-medium ${embeddingStatus.available ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
+                      >
+                        {embeddingStatus.available ? 'Enabled' : 'Disabled'}
+                      </span>
                     </div>
-                    <div>Model: {embeddingStatus.model}</div>
+                    <div>
+                      Model:{' '}
+                      <span className='font-medium'>
+                        {embeddingStatus.model}
+                      </span>
+                    </div>
                     <div>
                       Chunks with embeddings:{' '}
-                      {embeddingStatus.chunksWithEmbeddings} /{' '}
-                      {embeddingStatus.totalChunks}
+                      <span className='font-medium'>
+                        {embeddingStatus.chunksWithEmbeddings} /{' '}
+                        {embeddingStatus.totalChunks}
+                      </span>
                     </div>
                     {embeddingStatus.totalChunks > 0 && (
                       <div>
                         Coverage:{' '}
-                        {Math.round(
-                          (embeddingStatus.chunksWithEmbeddings /
-                            embeddingStatus.totalChunks) *
-                            100
-                        )}
-                        %
+                        <span className='font-medium'>
+                          {Math.round(
+                            (embeddingStatus.chunksWithEmbeddings /
+                              embeddingStatus.totalChunks) *
+                              100
+                          )}
+                          %
+                        </span>
                       </div>
                     )}
                   </div>
@@ -1059,33 +1072,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               )}
 
               {/* Action Buttons */}
-              <div className='flex gap-2'>
+              <div className='flex justify-between items-center pt-4 border-t border-gray-200 dark:border-dark-300'>
+                <div className='flex gap-2'>
+                  <Button
+                    onClick={handleResetEmbeddingSettings}
+                    variant='outline'
+                    className='flex items-center gap-2'
+                  >
+                    <RotateCcw size={16} />
+                    Reset to Defaults
+                  </Button>
+                  {embeddingSettings.enabled &&
+                    embeddingStatus &&
+                    embeddingStatus.totalChunks > 0 && (
+                      <Button
+                        onClick={handleRegenerateEmbeddings}
+                        disabled={regeneratingEmbeddings}
+                        variant='outline'
+                        className='flex items-center gap-2 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                      >
+                        <Database size={16} />
+                        {regeneratingEmbeddings
+                          ? 'Regenerating...'
+                          : 'Regenerate Embeddings'}
+                      </Button>
+                    )}
+                </div>
                 <Button
                   onClick={handleSaveEmbeddingSettings}
-                  className='bg-blue-600 hover:bg-blue-700 text-white'
+                  className='flex items-center gap-2'
                 >
+                  <Check size={16} />
                   Save Settings
                 </Button>
-                <Button
-                  onClick={handleResetEmbeddingSettings}
-                  variant='outline'
-                >
-                  Reset to Defaults
-                </Button>
-                {embeddingSettings.enabled &&
-                  embeddingStatus &&
-                  embeddingStatus.totalChunks > 0 && (
-                    <Button
-                      onClick={handleRegenerateEmbeddings}
-                      disabled={regeneratingEmbeddings}
-                      variant='outline'
-                      className='text-orange-600 border-orange-600 hover:bg-orange-50'
-                    >
-                      {regeneratingEmbeddings
-                        ? 'Regenerating...'
-                        : 'Regenerate Embeddings'}
-                    </Button>
-                  )}
               </div>
             </div>
           </div>
@@ -1499,11 +1518,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
                 {/* Import Results */}
                 {importResult && (
-                  <div className='mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg'>
-                    <h5 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
+                  <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
+                    <h5 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-2'>
                       Import Results
                     </h5>
-                    <div className='text-xs text-blue-800 dark:text-blue-200 space-y-1'>
+                    <div className='text-xs text-gray-700 dark:text-gray-300 space-y-1'>
                       <div>
                         Preferences:{' '}
                         {importResult.preferences.imported
@@ -1589,7 +1608,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
 
                   <div className='flex items-start gap-3'>
-                    <div className='w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0'></div>
+                    <div className='w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0'></div>
                     <div>
                       <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
                         Open Source
@@ -1780,7 +1799,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Controls randomness. Lower = more focused, Higher = more
@@ -1811,7 +1830,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Nucleus sampling. Lower = more constrained vocabulary
@@ -1840,7 +1859,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Limits vocabulary to top K tokens
@@ -1870,7 +1889,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Minimum probability threshold
@@ -1904,7 +1923,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Maximum number of tokens to generate. Leave empty to use
@@ -1935,7 +1954,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Penalty for repeating tokens
@@ -1962,7 +1981,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Context window size
@@ -1988,7 +2007,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                         placeholder='Random'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
@@ -2027,7 +2046,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Penalty for token presence
@@ -2057,7 +2076,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               : undefined
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         Penalty for token frequency
@@ -2091,7 +2110,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             : undefined
                         )
                       }
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       placeholder='\\n, ###, STOP'
                     />
                     <p className='text-xs text-gray-500 mt-1'>
@@ -2145,10 +2164,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           className='sr-only'
                         />
                         <div
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                             embeddingSettings.enabled
-                              ? 'bg-blue-600'
-                              : 'bg-gray-200 dark:bg-gray-700'
+                              ? 'bg-primary-600 dark:bg-primary-500'
+                              : 'bg-gray-200 dark:bg-dark-300'
                           }`}
                         >
                           <span
@@ -2204,7 +2223,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             parseInt(e.target.value)
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                         disabled={!embeddingSettings.enabled}
                       />
                     </div>
@@ -2227,7 +2246,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             parseInt(e.target.value)
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                         disabled={!embeddingSettings.enabled}
                       />
                     </div>
@@ -2249,7 +2268,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             parseFloat(e.target.value)
                           )
                         }
-                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                        className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                         disabled={!embeddingSettings.enabled}
                       />
                     </div>
