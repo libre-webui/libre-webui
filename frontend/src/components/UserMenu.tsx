@@ -73,16 +73,16 @@ export const UserMenu: React.FC = () => {
     <div className='relative' ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className='flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors'
+        className='flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors'
       >
         <div className='flex items-center space-x-2'>
-          <div className='w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center'>
+          <div className='w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center'>
             <span className='text-white text-sm font-medium'>
               {user.username.charAt(0).toUpperCase()}
             </span>
           </div>
           <div className='hidden sm:block text-left'>
-            <p className='text-sm font-medium text-gray-900 dark:text-white'>
+            <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
               {user.username}
             </p>
             <p className='text-xs text-gray-500 dark:text-gray-400'>
@@ -99,9 +99,9 @@ export const UserMenu: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className='absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50'>
-          <div className='p-3 border-b border-gray-200 dark:border-gray-700'>
-            <p className='text-sm font-medium text-gray-900 dark:text-white'>
+        <div className='absolute right-0 mt-2 w-48 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl shadow-xl z-50'>
+          <div className='p-3 border-b border-gray-200 dark:border-dark-300'>
+            <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
               {user.username}
             </p>
             <p className='text-xs text-gray-500 dark:text-gray-400'>
@@ -109,7 +109,7 @@ export const UserMenu: React.FC = () => {
             </p>
             <div className='flex items-center mt-1'>
               {user.role === 'admin' && (
-                <Shield size={12} className='text-blue-500 mr-1' />
+                <Shield size={12} className='text-primary-500 mr-1' />
               )}
               <span className='text-xs text-gray-500 dark:text-gray-400 capitalize'>
                 {user.role}
@@ -120,7 +120,7 @@ export const UserMenu: React.FC = () => {
           <div className='py-1'>
             <button
               onClick={handleSettings}
-              className='w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+              className='w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200'
             >
               <Settings size={16} className='mr-2' />
               Settings
@@ -129,14 +129,14 @@ export const UserMenu: React.FC = () => {
             {isAdmin() && !systemInfo?.singleUserMode && (
               <button
                 onClick={handleUserManagement}
-                className='w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                className='w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200'
               >
                 <User size={16} className='mr-2' />
                 User Management
               </button>
             )}
 
-            <div className='border-t border-gray-200 dark:border-gray-700 mt-1 pt-1'>
+            <div className='border-t border-gray-200 dark:border-dark-300 mt-1 pt-1'>
               <button
                 onClick={handleLogout}
                 className='w-full flex items-center px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'

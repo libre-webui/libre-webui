@@ -44,7 +44,10 @@ export const LoginPage: React.FC = () => {
         <div className='flex justify-center'>
           <Logo />
         </div>
-        <h2 className='mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-dark-950'>
+        <h2
+          className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
+          style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+        >
           Libre WebUI
         </h2>
       </div>
