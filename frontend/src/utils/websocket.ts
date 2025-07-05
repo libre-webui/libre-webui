@@ -42,7 +42,13 @@ class WebSocketService {
     }
     return new Promise((resolve, reject) => {
       try {
-        this.ws = new WebSocket(this.url);
+        // Include auth token in WebSocket connection
+        const token = localStorage.getItem('auth-token');
+        const wsUrlWithAuth = token
+          ? `${this.url}?token=${encodeURIComponent(token)}`
+          : this.url;
+
+        this.ws = new WebSocket(wsUrlWithAuth);
 
         this.ws.onopen = () => {
           console.log('WebSocket connected');

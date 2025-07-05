@@ -23,6 +23,7 @@ import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { ollamaApi } from '@/utils/api';
 import { isDemoMode } from '@/utils/demoMode';
+import websocketService from '@/utils/websocket';
 
 interface AuthState {
   user: User | null;
@@ -75,6 +76,11 @@ export const useAuthStore = create<AuthState>()(
 
             console.log('🔄 Reinitializing app after login...');
 
+            // Reconnect WebSocket with the new token
+            console.log('🔌 Reconnecting WebSocket with auth token...');
+            websocketService.disconnect();
+            await websocketService.connect();
+
             // Check Ollama health first
             const healthResponse = await ollamaApi.checkHealth();
             if (!healthResponse.success && !isDemoMode()) {
@@ -98,6 +104,10 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         // Remove token from localStorage
         localStorage.removeItem('auth-token');
+
+        // Disconnect WebSocket to clear authentication
+        console.log('🔌 Disconnecting WebSocket on logout...');
+        websocketService.disconnect();
 
         // Clear chat store state when logging out
         const chatStore = useChatStore.getState();

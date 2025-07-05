@@ -36,7 +36,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, logout } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -49,6 +49,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     setIsLoading(true);
 
     try {
+      // Clear any existing auth data before login
+      localStorage.removeItem('auth-token');
+
       const response = await authApi.login({ username, password });
 
       if (response.success && response.data) {

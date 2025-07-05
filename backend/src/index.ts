@@ -15,11 +15,14 @@
  * limitations under the License.
  */
 
+// Load environment variables first
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 
@@ -41,14 +44,12 @@ import pluginService from './services/pluginService.js';
 import preferencesService from './services/preferencesService.js';
 import documentService from './services/documentService.js';
 import { mergeGenerationOptions } from './utils/generationUtils.js';
+import { verifyToken } from './utils/jwt.js';
 import {
   OllamaChatRequest,
   OllamaChatMessage,
   GenerationStatistics,
 } from './types/index.js';
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -126,8 +127,29 @@ const wss = new WebSocketServer({
   path: '/ws',
 });
 
-wss.on('connection', ws => {
+wss.on('connection', (ws, req) => {
   console.log('WebSocket client connected');
+
+  // Extract and verify auth token from query parameters
+  let userId = 'default';
+  try {
+    const url = new URL(req.url || '', `http://${req.headers.host}`);
+    const token = url.searchParams.get('token');
+
+    if (token) {
+      // Verify JWT token using the same logic as the auth middleware
+      const decoded = verifyToken(token);
+      userId = decoded.userId;
+      console.log('WebSocket authenticated for user:', userId);
+    } else {
+      console.log(
+        'WebSocket connection without auth token, using default user'
+      );
+    }
+  } catch (error) {
+    console.error('WebSocket auth error:', error);
+    // Continue with default user for backward compatibility
+  }
 
   ws.on('message', async data => {
     try {
@@ -152,10 +174,15 @@ wss.on('connection', ws => {
           !!format
         );
 
-        // Get session
-        const session = chatService.getSession(sessionId);
+        // Get session with user authentication
+        const session = chatService.getSession(sessionId, userId);
         if (!session) {
-          console.log('Backend: Session not found:', sessionId);
+          console.log(
+            'Backend: Session not found:',
+            sessionId,
+            'for user:',
+            userId
+          );
           ws.send(
             JSON.stringify({
               type: 'error',
@@ -166,11 +193,15 @@ wss.on('connection', ws => {
         }
 
         // Add user message with images if provided
-        const userMessage = chatService.addMessage(sessionId, {
-          role: 'user',
-          content,
-          images: images || undefined,
-        });
+        const userMessage = chatService.addMessage(
+          sessionId,
+          {
+            role: 'user',
+            content,
+            images: images || undefined,
+          },
+          userId
+        );
 
         if (!userMessage) {
           ws.send(
@@ -330,12 +361,16 @@ wss.on('connection', ws => {
                 assistantMessageId
               );
 
-              const assistantMessage = chatService.addMessage(sessionId, {
-                role: 'assistant',
-                content: assistantContent,
-                model: session.model,
-                id: assistantMessageId,
-              });
+              const assistantMessage = chatService.addMessage(
+                sessionId,
+                {
+                  role: 'assistant',
+                  content: assistantContent,
+                  model: session.model,
+                  id: assistantMessageId,
+                },
+                userId
+              );
 
               console.log(
                 'Backend: Assistant message saved:',
@@ -450,13 +485,17 @@ wss.on('connection', ws => {
                 assistantMessageId
               );
 
-              const assistantMessage = chatService.addMessage(sessionId, {
-                role: 'assistant',
-                content: assistantContent,
-                model: session.model,
-                id: assistantMessageId,
-                statistics: finalStatistics,
-              });
+              const assistantMessage = chatService.addMessage(
+                sessionId,
+                {
+                  role: 'assistant',
+                  content: assistantContent,
+                  model: session.model,
+                  id: assistantMessageId,
+                  statistics: finalStatistics,
+                },
+                userId
+              );
 
               console.log(
                 'Backend: Assistant message saved:',
