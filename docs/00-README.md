@@ -20,6 +20,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 | **[📄 RAG Feature](./09-RAG_FEATURE.md)** | Chat with your documents | 6 min |
 | **[🗄️ SQLite Migration](./10-SQLITE_MIGRATION.md)** | Upgrade from JSON to SQLite storage | 8 min |
 | **[🤖 Model Updater](./11-MODEL_UPDATER.md)** | Auto-update AI provider models | 5 min |
+| **[🔐 Authentication](./12-AUTHENTICATION.md)** | User management and security | 10 min |
 
 ## What is Libre WebUI?
 
@@ -27,11 +28,12 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 
 **Key Benefits:**
 - 🔒 **Privacy-First** - Local processing by default
-- � **Document Chat** - Upload and chat with your documents using semantic search
-- �🔌 **Multiple AI Services** - Connect OpenAI, Anthropic, Groq, and more through plugins
+- 📄 **Document Chat** - Upload and chat with your documents using semantic search
+- 🔌 **Multiple AI Services** - Connect OpenAI, Anthropic, Groq, and more through plugins
 - 🖼️ **Image Support** - Upload and analyze images with vision models
 - 🎨 **Clean Interface** - Modern, responsive design
 - ⚡ **Fast & Reliable** - Optimized performance with automatic fallbacks
+- 🔐 **Secure Setup** - Beautiful first-time setup experience with user management
 - 🆓 **Open Source** - Completely free with no subscriptions
 
 ## 🆘 Need Help?
@@ -39,6 +41,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 - **Setup issues?** → [Quick Start](./01-QUICK_START.md)
 - **Model questions?** → [Working with Models](./02-WORKING_WITH_MODELS.md)
 - **Plugin setup?** → [Plugin Architecture](./08-PLUGIN_ARCHITECTURE.md)
+- **Authentication setup?** → [Authentication](./12-AUTHENTICATION.md)
 - **Technical problems?** → [Troubleshooting](./06-TROUBLESHOOTING.md)
 
 ## 🤝 Contributing

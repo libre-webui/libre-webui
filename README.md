@@ -53,6 +53,26 @@ Automatically update your AI provider plugins with the latest available models:
 
 **[🤖 Model Updater Guide →](./docs/11-MODEL_UPDATER.md)**
 
+## First-Time Setup
+
+When you first launch Libre WebUI, you'll be greeted with a beautiful welcome screen that guides you through the initial setup:
+
+### 🎉 Welcome Experience
+
+- **App-style interface** - Clean, modern design that matches the main application
+- **Feature highlights** - Introduction to key capabilities (Security, Performance, Open Source)
+- **Guided setup** - Step-by-step process for creating your admin account
+
+### 🔐 Admin Account Creation
+
+- **Secure form** - Password validation and confirmation
+- **Automatic admin role** - First user automatically becomes administrator
+- **Instant access** - Seamless transition into the main application
+
+The setup experience ensures you're up and running quickly while maintaining security best practices. Once complete, you'll have full access to all features including user management, plugin configuration, and system settings.
+
+**[📖 Complete Authentication Guide →](./docs/12-AUTHENTICATION.md)**
+
 ## Development
 
 ### For New Contributors
@@ -164,6 +184,8 @@ The app automatically generates configuration files on first run (these are excl
 ### 🚀 Core Features
 
 - **Clean interface** - Simple, focused design for productive AI interactions
+- **First-time setup** - Beautiful welcome experience with guided admin account creation
+- **User management** - Secure authentication with role-based access control
 - **Light/Dark mode** - Comfortable viewing with improved accessibility
 - **Responsive design** - Works on desktop, tablet, and mobile devices
 - **Real-time chat** - Streaming responses with WebSocket integration
@@ -339,6 +361,7 @@ libre-webui-dev/
 | **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)**                     | Try without installation          |
 | **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)**         | Problem solving guide             |
 | **[🔌 Plugin Architecture](./docs/08-PLUGIN_ARCHITECTURE.md)** | Connect multiple AI services      |
+| **[🔐 Authentication](./docs/12-AUTHENTICATION.md)**           | User management and security      |
 
 ## Accessibility & Performance
 

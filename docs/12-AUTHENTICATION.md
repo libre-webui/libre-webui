@@ -1,6 +1,22 @@
 # Libre WebUI Authentication System
 
-This document describes the comprehensive authentication and user management system implemented for Libre WebUI.
+This document describes the comprehensive authentication and user management system implemented### Default Admin User
+
+### First-Time Setup Experience
+When no users exist in the database, Libre WebUI presents a beautiful first-time setup wizard that guides users through creating the initial admin account. This setup experience:
+
+- **Welcome Screen**: Introduces key features with an app-style interface
+- **Admin Creation**: Secure form for creating the first administrator account
+- **Automatic Admin Role**: The first user is automatically granted admin privileges
+- **Consistent Design**: Matches the app's design system with proper light/dark mode support
+- **Integrated Flow**: Seamlessly transitions into the main application after setup
+
+### First-time Setup
+1. On first startup, if no users exist, the first-time setup wizard is displayed
+2. Users are guided through a welcome screen highlighting key features
+3. The admin account creation form validates input and creates the first user
+4. The first user is automatically assigned admin role and logged in
+5. **Security**: Change the default password immediately after first login (if using environment defaults)ibre WebUI.
 
 ## Features
 
@@ -10,6 +26,7 @@ This document describes the comprehensive authentication and user management sys
 - Rate limiting for login attempts (5 attempts per 15 minutes)
 - Password strength validation
 - Optional email-based authentication
+- First-time setup wizard for admin account creation
 
 ### User Management
 - Role-based access control (admin/user)
@@ -171,11 +188,19 @@ The frontend has been fully integrated with the authentication system, providing
 
 ### Authentication UI Components
 
-1. **LoginForm Component** (`/src/components/LoginForm.tsx`)
+1. **FirstTimeSetup Component** (`/src/components/FirstTimeSetup.tsx`)
+   - Beautiful app-style welcome screen for new installations
+   - Two-step process: welcome and admin account creation
+   - Matches the app's design system with proper theming
+   - Integrated into the main app flow
+   - Automatic admin role assignment for the first user
+
+2. **LoginForm Component** (`/src/components/LoginForm.tsx`)
    - Handles both login and registration
    - Responsive design with proper validation
    - Switches between login/registration modes
    - Shows system info (single/multi-user mode)
+   - Proper light/dark mode support
 
 2. **UserMenu Component** (`/src/components/UserMenu.tsx`)
    - Displays current user info
@@ -233,6 +258,7 @@ The application now supports:
 ### Features
 
 1. **Authentication Flow**
+   - First-time setup wizard for new installations
    - Login with username/password
    - Registration (if enabled)
    - JWT token management
