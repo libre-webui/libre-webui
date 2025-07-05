@@ -41,7 +41,9 @@ export const useInitializeApp = () => {
 
     const initialize = async () => {
       try {
-        console.log('🚀 Initializing Libre WebUI...');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🚀 Initializing Libre WebUI...');
+        }
         initialized.current = true;
 
         // Initialize authentication first
@@ -66,7 +68,9 @@ export const useInitializeApp = () => {
         await Promise.all([loadAppPreferences(), loadChatPreferences()]);
         await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
 
-        console.log('✅ Libre WebUI initialized successfully');
+        if (process.env.NODE_ENV === 'development') {
+          console.log('✅ Libre WebUI initialized successfully');
+        }
       } catch (_error) {
         if (!isDemoMode()) {
           console.error('Failed to initialize app:', _error);
@@ -121,7 +125,9 @@ export const useInitializeApp = () => {
   useEffect(() => {
     const activePlugins = plugins.filter(plugin => plugin.active);
     if (activePlugins.length > 0) {
-      console.log('� Active plugins changed, reloading models...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Active plugins changed, reloading models...');
+      }
       loadModels();
     }
   }, [plugins, loadModels]);

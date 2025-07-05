@@ -403,11 +403,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       const result = await preferencesApi.importData(
         importData,
-        mergeStrategy === 'skip'
-          ? 'replace'
-          : mergeStrategy === 'overwrite'
-            ? 'replace'
-            : 'merge'
+        mergeStrategy === 'overwrite' ? 'replace' : 'merge'
       );
 
       if (result.success && result.data) {
