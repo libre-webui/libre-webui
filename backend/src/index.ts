@@ -33,6 +33,8 @@ import chatRoutes from './routes/chat.js';
 import preferencesRoutes from './routes/preferences.js';
 import pluginRoutes from './routes/plugins.js';
 import documentRoutes from './routes/documents.js';
+import authRoutes from './routes/auth.js';
+import usersRoutes from './routes/users.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
@@ -103,6 +105,8 @@ app.get('/health', (req, res) => {
 });
 
 // API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', usersRoutes);
 app.use('/api/ollama', ollamaRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/preferences', preferencesRoutes);

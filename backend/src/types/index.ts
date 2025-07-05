@@ -319,6 +319,51 @@ export interface PluginResponse {
   };
 }
 
+// User management types
+export interface User {
+  id: string;
+  username: string;
+  email?: string;
+  password_hash?: string; // Optional for responses (never sent to client)
+  role: 'admin' | 'user';
+  created_at: number;
+  updated_at: number;
+}
+
+export interface UserCreateRequest {
+  username: string;
+  email?: string;
+  password: string;
+  role?: 'admin' | 'user';
+}
+
+export interface UserUpdateRequest {
+  username?: string;
+  email?: string;
+  role?: 'admin' | 'user';
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  user: Omit<User, 'password_hash'>;
+  token: string;
+  refreshToken?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface ResetPasswordRequest {
+  userId: string;
+  newPassword: string;
+}
+
 // Helper function to extract error message from unknown error
 export const getErrorMessage = (error: unknown, fallback: string): string => {
   if (error && typeof error === 'object' && 'response' in error) {

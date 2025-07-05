@@ -15,7 +15,17 @@
  * limitations under the License.
  */
 
-export { ChatPage } from './ChatPage';
-export { ModelsPage } from './ModelsPage';
-export { LoginPage } from './LoginPage';
-export { default as UserManagementPage } from './UserManagementPage';
+// Extend Express Request interface to include user property
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        userId: string;
+        username: string;
+        role: 'admin' | 'user';
+      };
+    }
+  }
+}
+
+export {};

@@ -46,7 +46,7 @@ export const ChatPage: React.FC = () => {
     if (sessions.length === 0) {
       loadSessions();
     }
-  }, [loadSessions, sessions.length]); // Include sessions.length as dependency
+  }, [loadSessions, sessions.length]); // Include both dependencies
 
   // Handle URL session parameter
   useEffect(() => {
@@ -76,7 +76,7 @@ export const ChatPage: React.FC = () => {
     };
 
     handleSessionFromUrl();
-  }, [sessionId, sessions, setCurrentSession, navigate, currentSession?.id]); // Include currentSession?.id as dependency
+  }, [sessionId, sessions, setCurrentSession, navigate, currentSession?.id]); // Include currentSession?.id
 
   const handleModelChange = async (model: string) => {
     setSelectedModel(model);

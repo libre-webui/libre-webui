@@ -32,6 +32,12 @@ import {
   DocumentSummary,
   DocumentDetail,
   DocumentChunk,
+  User,
+  UserCreateRequest,
+  UserUpdateRequest,
+  LoginRequest,
+  LoginResponse,
+  SystemInfo,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 
@@ -126,6 +132,11 @@ const api = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   config => {
+    // Add auth token if available
+    const token = localStorage.getItem('auth-token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   error => {
@@ -691,51 +702,27 @@ export const preferencesApi = {
     api.put('/preferences/embedding-settings', settings).then(res => res.data),
 
   resetEmbeddingSettings: (): Promise<ApiResponse<UserPreferences>> =>
-    api.post('/preferences/embedding-settings/reset').then(res => res.data),
-
-  exportData: (): Promise<Blob> => {
-    if (isDemoMode()) {
-      const demoData = {
-        preferences: {
-          defaultModel: 'llama3.2:3b',
-          theme: { mode: 'light' },
-          systemMessage: 'You are a helpful assistant.',
-          generationOptions: {},
-          embeddingSettings: { enabled: false },
-        },
-        sessions: getDemoSessions(),
-        documents: [],
-        exportedAt: new Date().toISOString(),
-        version: '1.0',
-        format: 'libre-webui-export',
-      };
-      const blob = new Blob([JSON.stringify(demoData, null, 2)], {
-        type: 'application/json',
-      });
-      return Promise.resolve(blob);
-    }
-    return fetch(`${API_BASE_URL}/preferences/export`, {
-      method: 'GET',
-    }).then(response => response.blob());
-  },
-
+    api.post('/preferences/embedding-settings/reset').then(res => res.data), // Data import/export
   importData: (
     data: Record<string, unknown>,
-    mergeStrategy: 'skip' | 'overwrite' | 'merge' = 'skip'
-  ): Promise<
-    ApiResponse<{
-      preferences: { imported: boolean; error: string | null };
-      sessions: { imported: number; skipped: number; errors: string[] };
-      documents: { imported: number; skipped: number; errors: string[] };
-    }>
-  > => {
+    mergeStrategy: 'replace' | 'merge' = 'replace'
+  ): Promise<ApiResponse<UserPreferences>> => {
     if (isDemoMode()) {
-      return createDemoResponse({
-        preferences: { imported: true, error: null },
-        sessions: { imported: 0, skipped: 0, errors: [] },
-        documents: { imported: 0, skipped: 0, errors: [] },
+      return createDemoResponse<UserPreferences>({
+        theme: { mode: 'dark' },
+        defaultModel: 'llama3.2',
+        systemMessage: 'You are a helpful assistant.',
+        generationOptions: {},
+        embeddingSettings: {
+          enabled: false,
+          model: 'nomic-embed-text',
+          chunkSize: 1000,
+          chunkOverlap: 200,
+          similarityThreshold: 0.7,
+        },
       });
     }
+
     return api
       .post('/preferences/import', { data, mergeStrategy })
       .then(res => res.data);
@@ -850,6 +837,130 @@ export const documentsApi = {
     }
 
     return api.post('/documents/embeddings/regenerate').then(res => res.data);
+  },
+};
+
+// Authentication API
+export const authApi = {
+  login: (credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<LoginResponse>({
+        user: {
+          id: 'demo-user',
+          username: 'demo',
+          email: 'demo@example.com',
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        token: 'demo-token',
+        systemInfo: {
+          requiresAuth: true,
+          singleUserMode: false,
+          hasUsers: true,
+          version: '1.0.0',
+        },
+      });
+    }
+
+    return api.post('/auth/login', credentials).then(res => res.data);
+  },
+
+  logout: (): Promise<ApiResponse<void>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(undefined);
+    }
+
+    return api.post('/auth/logout').then(res => res.data);
+  },
+
+  getSystemInfo: (): Promise<ApiResponse<SystemInfo>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<SystemInfo>({
+        requiresAuth: true,
+        singleUserMode: false,
+        hasUsers: true,
+        version: '1.0.0',
+      });
+    }
+
+    return api.get('/auth/system-info').then(res => res.data);
+  },
+
+  verifyToken: (): Promise<ApiResponse<User>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<User>({
+        id: 'demo-user',
+        username: 'demo',
+        email: 'demo@example.com',
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    return api.get('/auth/verify').then(res => res.data);
+  },
+};
+
+// Users API
+export const usersApi = {
+  getUsers: (): Promise<ApiResponse<User[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<User[]>([
+        {
+          id: 'demo-user',
+          username: 'demo',
+          email: 'demo@example.com',
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ]);
+    }
+
+    return api.get('/users').then(res => res.data);
+  },
+
+  createUser: (userData: UserCreateRequest): Promise<ApiResponse<User>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<User>({
+        id: 'new-user-' + Date.now(),
+        username: userData.username,
+        email: userData.email,
+        role: userData.role,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    return api.post('/users', userData).then(res => res.data);
+  },
+
+  updateUser: (
+    id: string,
+    userData: UserUpdateRequest
+  ): Promise<ApiResponse<User>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<User>({
+        id,
+        username: userData.username || 'demo',
+        email: userData.email || 'demo@example.com',
+        role: userData.role || 'user',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    return api.patch(`/users/${id}`, userData).then(res => res.data);
+  },
+
+  deleteUser: (id: string): Promise<ApiResponse<void>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(undefined);
+    }
+
+    return api.delete(`/users/${id}`).then(res => res.data);
   },
 };
 

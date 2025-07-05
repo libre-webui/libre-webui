@@ -20,3 +20,12 @@ export { Input } from './Input';
 export { Textarea } from './Textarea';
 export { Select } from './Select';
 export { MessageContent } from './MessageContent';
+export { Label } from './Label';
+export {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './Card';
+export { Switch } from './Switch';

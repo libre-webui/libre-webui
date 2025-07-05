@@ -16,14 +16,18 @@
  */
 
 import React from 'react';
-import { useLocation } from 'react-router-dom';
-import { Settings, Menu } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Settings, Menu, LogOut } from 'lucide-react';
 import { Button, Select } from '@/components/ui';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { UserMenu } from '@/components/UserMenu';
 import { Logo } from '@/components/Logo';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
+import { useAuthStore } from '@/store/authStore';
 import { usePluginStore } from '@/store/pluginStore';
+import { authApi } from '@/utils/api';
+import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 
 interface HeaderProps {
@@ -36,6 +40,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSettingsClick,
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentSession, models, updateCurrentSessionModel } = useChatStore();
   const {
     hasSeenSettingsNotification,
@@ -44,6 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
     toggleSidebar,
   } = useAppStore();
   const { plugins } = usePluginStore();
+  const { user, logout, systemInfo } = useAuthStore();
 
   const getPageTitle = () => {
     if (location.pathname === '/models') {
@@ -88,6 +94,20 @@ export const Header: React.FC<HeaderProps> = ({
 
     if (onSettingsClick) {
       onSettingsClick();
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      logout();
+      navigate('/login');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still logout locally even if API call fails
+      logout();
+      navigate('/login');
     }
   };
 
@@ -172,6 +192,8 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right side */}
         <div className='flex items-center gap-1 sm:gap-2'>
+          <UserMenu />
+
           <ThemeToggle />
           <div className='relative'>
             <Button
@@ -188,6 +210,19 @@ export const Header: React.FC<HeaderProps> = ({
               <div className='absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white dark:border-dark-50'></div>
             )}
           </div>
+
+          {/* Logout button - only show if user is authenticated */}
+          {systemInfo?.requiresAuth && user && (
+            <Button
+              variant='ghost'
+              size='sm'
+              className='h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400'
+              title='Sign Out'
+              onClick={handleLogout}
+            >
+              <LogOut className='h-4 w-4' />
+            </Button>
+          )}
         </div>
       </header>
     </>

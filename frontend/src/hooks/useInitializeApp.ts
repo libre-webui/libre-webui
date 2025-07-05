@@ -15,16 +15,17 @@
  * limitations under the License.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { ollamaApi } from '@/utils/api';
+import { UserService } from '@/services/userService';
 import toast from 'react-hot-toast';
 import { isDemoMode } from '@/utils/demoMode';
 
 export const useInitializeApp = () => {
-  console.log('[DEBUG] useInitializeApp hook running');
+  const initialized = useRef(false);
   const {
     loadSessions,
     loadModels,
@@ -36,8 +37,16 @@ export const useInitializeApp = () => {
   const { loadPlugins, plugins } = usePluginStore();
 
   useEffect(() => {
+    if (initialized.current) return;
+
     const initialize = async () => {
       try {
+        console.log('🚀 Initializing Libre WebUI...');
+        initialized.current = true;
+
+        // Initialize authentication first
+        await UserService.initializeAuth();
+
         // Check Ollama health
         const healthResponse = await ollamaApi.checkHealth();
         if (!healthResponse.success) {
@@ -56,6 +65,8 @@ export const useInitializeApp = () => {
         // Load preferences first, then models, sessions, and plugins
         await Promise.all([loadAppPreferences(), loadChatPreferences()]);
         await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
+
+        console.log('✅ Libre WebUI initialized successfully');
       } catch (_error) {
         if (!isDemoMode()) {
           console.error('Failed to initialize app:', _error);
@@ -70,29 +81,22 @@ export const useInitializeApp = () => {
 
     initialize();
   }, [
-    loadSessions,
-    loadModels,
-    loadChatPreferences,
     loadAppPreferences,
+    loadChatPreferences,
+    loadModels,
+    loadSessions,
     loadPlugins,
   ]);
 
   // Set default model when models are loaded
   useEffect(() => {
-    console.log(
-      '🔄 useInitializeApp: models effect triggered, models.length:',
-      models.length
-    );
-
     if (models.length > 0) {
       // Check if we already have a selected model from backend preferences
       const { selectedModel: currentSelected } = useChatStore.getState();
-      console.log('📋 Current selected model from store:', currentSelected);
 
       if (currentSelected) {
         // Verify the selected model from backend is still available
         const availableModelNames = models.map(m => m.name);
-        console.log('📋 Available models:', availableModelNames);
 
         if (!availableModelNames.includes(currentSelected)) {
           // Selected model no longer available, use first available
@@ -101,17 +105,11 @@ export const useInitializeApp = () => {
             models[0].name
           );
           setSelectedModel(models[0].name);
-        } else {
-          // Model is available, keep it selected (don't override)
-          console.log(
-            '✅ Keeping selected model from preferences:',
-            currentSelected
-          );
         }
       } else {
         // No model selected, use first available
         console.log(
-          '⚠️ No model selected, using first available:',
+          '📋 No model selected, using first available:',
           models[0].name
         );
         setSelectedModel(models[0].name);
@@ -123,7 +121,7 @@ export const useInitializeApp = () => {
   useEffect(() => {
     const activePlugins = plugins.filter(plugin => plugin.active);
     if (activePlugins.length > 0) {
-      console.log('🔄 Active plugins changed, reloading models...');
+      console.log('� Active plugins changed, reloading models...');
       loadModels();
     }
   }, [plugins, loadModels]);

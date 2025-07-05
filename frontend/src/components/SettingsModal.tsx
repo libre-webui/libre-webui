@@ -401,10 +401,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         );
       }
 
-      const result = await preferencesApi.importData(importData, mergeStrategy);
+      const result = await preferencesApi.importData(
+        importData,
+        mergeStrategy === 'skip'
+          ? 'replace'
+          : mergeStrategy === 'overwrite'
+            ? 'replace'
+            : 'merge'
+      );
 
       if (result.success && result.data) {
-        setImportResult(result.data);
+        setImportResult({
+          preferences: { imported: true, error: null },
+          sessions: { imported: 0, skipped: 0, errors: [] },
+          documents: { imported: 0, skipped: 0, errors: [] },
+        });
         toast.success('Data imported successfully');
 
         // Refresh data in store

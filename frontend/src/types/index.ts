@@ -157,12 +157,6 @@ export interface StreamingCallbacks {
   onComplete?: () => void;
 }
 
-export interface SystemInfo {
-  version?: string;
-  models?: OllamaModel[];
-  status?: string;
-}
-
 export interface ModelCreatePayload {
   name?: string; // For model name when creating
   model: string;
@@ -251,6 +245,48 @@ export interface DocumentChunk {
   endChar: number;
   filename?: string; // Added for context in search results
   embedding?: number[]; // Vector embedding for semantic search
+}
+
+// User and Authentication types
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  role: 'admin' | 'user';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserCreateRequest {
+  username: string;
+  email: string;
+  password: string;
+  role: 'admin' | 'user';
+}
+
+export interface UserUpdateRequest {
+  username?: string;
+  email?: string;
+  password?: string;
+  role?: 'admin' | 'user';
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  user: User;
+  token: string;
+  systemInfo: SystemInfo;
+}
+
+export interface SystemInfo {
+  requiresAuth: boolean;
+  singleUserMode: boolean;
+  hasUsers: boolean;
+  version?: string;
 }
 
 // Embedding system types

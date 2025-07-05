@@ -133,18 +133,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       set({ loading: true, error: null });
       const response = await chatApi.getSessions();
-      console.log('[DEBUG] loadSessions response:', response);
       if (response.success && response.data) {
         set(prevState => {
           const sessions = response.data || [];
           const backendSessionIds = sessions.map(s => s.id);
-          // Debug: Compare frontend and backend session IDs
-          const frontendSessionIds = prevState.sessions.map(s => s.id);
-          console.log('[DEBUG] Backend session IDs:', backendSessionIds);
-          console.log(
-            '[DEBUG] Frontend session IDs (before update):',
-            frontendSessionIds
-          );
           let currentSession: ChatSession | null = null;
           // Only keep currentSession if it exists in backend sessions
           if (
@@ -153,28 +145,18 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ) {
             currentSession =
               sessions.find(s => s.id === prevState.currentSession!.id) || null;
-            console.log('[DEBUG] Keeping currentSession:', currentSession?.id);
           } else if (sessions.length > 0) {
             currentSession = sessions[0];
             if (prevState.currentSession) {
               console.warn(
-                '[DEBUG] Previous currentSession not found in backend sessions:',
+                'Previous currentSession not found in backend sessions:',
                 prevState.currentSession.id
               );
               toast.error(
                 'Current session not found in backend. Please select or create a new chat.'
               );
             }
-            console.log(
-              '[DEBUG] Forced: currentSession set to first available:',
-              currentSession.id
-            );
-          } else {
-            console.log(
-              '[DEBUG] Forced: No valid sessions available, currentSession set to null'
-            );
           }
-          console.log('[DEBUG] Setting sessions:', sessions);
           return {
             sessions,
             currentSession,
@@ -464,7 +446,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       // Load Ollama models
       const ollamaResponse = await ollamaApi.getModels();
-      console.log('[DEBUG] loadModels ollama response:', ollamaResponse);
 
       let allModels: OllamaModel[] = [];
 
@@ -475,9 +456,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       // Load plugin models
       try {
-        console.log('🔌 Loading plugin models...');
         const pluginsResponse = await pluginApi.getAllPlugins();
-        console.log('🔌 Plugins API response:', pluginsResponse);
         if (pluginsResponse.success && pluginsResponse.data) {
           // Find ALL active plugins and add their models
           const activePlugins = pluginsResponse.data.filter(
@@ -552,29 +531,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // Load preferences from backend and set default model
   loadPreferences: async () => {
     try {
-      console.log('🔄 Loading preferences from backend...');
       const response = await preferencesApi.getPreferences();
-      console.log('📦 Backend preferences response:', response);
 
       if (response.success && response.data) {
         const { defaultModel, systemMessage } = response.data;
-        console.log('📋 Extracted defaultModel:', defaultModel);
-        console.log('📋 Extracted systemMessage:', systemMessage);
 
         if (defaultModel) {
-          console.log('✅ Setting selectedModel to:', defaultModel);
           set({ selectedModel: defaultModel });
           console.log('✅ Loaded default model from backend:', defaultModel);
-        } else {
-          console.log('⚠️ No defaultModel found in response');
         }
 
         if (systemMessage !== undefined) {
           set({ systemMessage: systemMessage });
-          console.log('✅ Loaded system message from backend:', systemMessage);
+          console.log('✅ Loaded system message from backend');
         }
-      } else {
-        console.log('❌ Backend response unsuccessful or no data');
       }
     } catch (_error) {
       console.warn('❌ Failed to load preferences from backend:', _error);
@@ -641,7 +611,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
     testPluginApi: async () => {
       try {
         console.log('🧪 Testing plugin API...');
-        const { pluginApi } = await import('@/utils/api');
         const result = await pluginApi.getAllPlugins();
         console.log('✅ Plugin API test result:', result);
         return result;

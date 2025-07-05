@@ -101,7 +101,6 @@ export interface User {
 
 class StorageService {
   private useSQLite = false;
-  private defaultUserEnsured = false;
   private sessionsFile = path.join(__dirname, '..', 'sessions.json');
   private preferencesFile = path.join(__dirname, '..', 'preferences.json');
   private documentsFile = path.join(__dirname, '..', 'documents.json');
@@ -112,7 +111,6 @@ class StorageService {
   );
 
   constructor() {
-    console.log('🔧 StorageService constructor called');
     // Check if SQLite should be used
     this.useSQLite = isDatabaseInitialized();
     console.log(`Storage mode: ${this.useSQLite ? 'SQLite' : 'JSON'}`);
@@ -278,12 +276,6 @@ class StorageService {
 
   saveSession(session: ChatSession, userId = 'default'): void {
     if (this.useSQLite) {
-      // Ensure the default user exists before saving session
-      if (!this.defaultUserEnsured) {
-        this.ensureDefaultUser();
-        this.defaultUserEnsured = true;
-      }
-
       const db = getDatabase();
 
       // Use transaction for consistency
@@ -437,14 +429,7 @@ class StorageService {
   }
 
   savePreferences(preferences: UserPreferences, userId = 'default'): void {
-    console.log('🔧 savePreferences called for user:', userId);
     if (this.useSQLite) {
-      // Ensure the default user exists before saving preferences
-      if (!this.defaultUserEnsured) {
-        this.ensureDefaultUser();
-        this.defaultUserEnsured = true;
-      }
-
       const db = getDatabase();
       const now = Date.now();
 
@@ -557,12 +542,6 @@ class StorageService {
 
   saveDocument(document: Document, userId = 'default'): void {
     if (this.useSQLite) {
-      // Ensure the default user exists before saving document
-      if (!this.defaultUserEnsured) {
-        this.ensureDefaultUser();
-        this.defaultUserEnsured = true;
-      }
-
       const db = getDatabase();
       const now = Date.now();
 
@@ -761,49 +740,6 @@ class StorageService {
 
     return false;
   }
-
-  // =================================
-  // INITIALIZATION HELPERS
-  // =================================
-
-  ensureDefaultUser(): void {
-    console.log(
-      '🔧 ensureDefaultUser called, defaultUserEnsured:',
-      this.defaultUserEnsured
-    );
-    if (this.useSQLite && !this.defaultUserEnsured) {
-      const db = getDatabase();
-
-      // Check if default user exists
-      const existingUser = db
-        .prepare('SELECT id FROM users WHERE id = ?')
-        .get('default');
-
-      if (!existingUser) {
-        const now = Date.now();
-        const insertUserStmt = db.prepare(`
-          INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        insertUserStmt.run(
-          'default',
-          'default',
-          null,
-          'no-password', // Placeholder since we don't have authentication yet
-          'user',
-          now,
-          now
-        );
-
-        console.log('✅ Created default user for fresh installation');
-      }
-
-      this.defaultUserEnsured = true;
-    }
-  }
-
-  // =================================
 }
 
 // Export singleton instance
