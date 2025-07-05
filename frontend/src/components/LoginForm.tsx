@@ -78,13 +78,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className='w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6'>
+    <div className='w-full max-w-md mx-auto bg-white dark:bg-dark-25 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 p-6 border border-gray-200 dark:border-dark-200'>
       <div className='text-center mb-6'>
-        <h1 className='text-2xl font-bold text-gray-900 dark:text-white mb-2'>
+        <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
           Welcome Back
         </h1>
-        <p className='text-gray-600 dark:text-gray-400'>
-          Sign in to your account
+        <p className='text-gray-600 dark:text-dark-500'>
+          Sign in to your account to continue
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         <div>
           <label
             htmlFor='username'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+            className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
           >
             Username
           </label>
@@ -102,7 +102,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             value={username}
             onChange={e => setUsername(e.target.value)}
             onKeyDown={handleKeyDown}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white'
+            className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-dark-100 dark:text-dark-800 transition-colors duration-200'
             placeholder='Enter your username'
             required
             disabled={isLoading}
@@ -112,7 +112,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         <div>
           <label
             htmlFor='password'
-            className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'
+            className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
           >
             Password
           </label>
@@ -123,7 +123,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white'
+              className='w-full px-3 py-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-dark-100 dark:text-dark-800 transition-colors duration-200'
               placeholder='Enter your password'
               required
               disabled={isLoading}
@@ -131,7 +131,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
             <button
               type='button'
               onClick={() => setShowPassword(!showPassword)}
-              className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
               disabled={isLoading}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -142,7 +142,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
         <button
           type='submit'
           disabled={isLoading}
-          className='w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+          className='w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
         >
           {isLoading ? (
             <div className='flex items-center'>
@@ -159,7 +159,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       </form>
 
       <div className='mt-6 text-center'>
-        <p className='text-sm text-gray-600 dark:text-gray-400'>
+        <p className='text-sm text-gray-600 dark:text-dark-500'>
           Don&apos;t have an account?{' '}
           <button
             onClick={() =>
@@ -167,7 +167,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
                 icon: 'ℹ️',
               })
             }
-            className='text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium'
+            className='text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors duration-200'
           >
             Sign up here
           </button>
@@ -175,7 +175,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLogin }) => {
       </div>
 
       <div className='mt-4 text-center'>
-        <p className='text-xs text-gray-500 dark:text-gray-400'>
+        <p className='text-xs text-gray-500 dark:text-dark-500'>
           Mode: Multi User
         </p>
       </div>

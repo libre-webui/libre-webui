@@ -25,7 +25,7 @@ interface CardProps {
 export const Card: React.FC<CardProps> = ({ children, className = '' }) => {
   return (
     <div
-      className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm ${className}`}
+      className={`bg-white dark:bg-dark-25 border border-gray-200 dark:border-dark-200 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 ${className}`}
     >
       {children}
     </div>
@@ -59,7 +59,7 @@ export const CardTitle: React.FC<CardTitleProps> = ({
 }) => {
   return (
     <h3
-      className={`text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-white ${className}`}
+      className={`text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-dark-950 ${className}`}
     >
       {children}
     </h3>
@@ -76,7 +76,7 @@ export const CardDescription: React.FC<CardDescriptionProps> = ({
   className = '',
 }) => {
   return (
-    <p className={`text-sm text-gray-500 dark:text-gray-400 ${className}`}>
+    <p className={`text-sm text-gray-500 dark:text-dark-500 ${className}`}>
       {children}
     </p>
   );
