@@ -15,15 +15,17 @@
  * limitations under the License.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { LoginForm } from '@/components/LoginForm';
+import { SignupForm } from '@/components/SignupForm';
 import { Logo } from '@/components/Logo';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, requiresAuth } = useAuthStore();
+  const [isSignupMode, setIsSignupMode] = useState(false);
 
   useEffect(() => {
     // If already authenticated, redirect to home
@@ -53,7 +55,14 @@ export const LoginPage: React.FC = () => {
       </div>
 
       <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
-        <LoginForm />
+        {isSignupMode ? (
+          <SignupForm
+            onBackToLogin={() => setIsSignupMode(false)}
+            onSignup={() => setIsSignupMode(false)}
+          />
+        ) : (
+          <LoginForm onShowSignup={() => setIsSignupMode(true)} />
+        )}
       </div>
     </div>
   );

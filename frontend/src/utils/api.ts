@@ -866,6 +866,34 @@ export const authApi = {
     return api.post('/auth/login', credentials).then(res => res.data);
   },
 
+  signup: (credentials: {
+    username: string;
+    password: string;
+    email?: string;
+  }): Promise<ApiResponse<LoginResponse>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<LoginResponse>({
+        user: {
+          id: 'demo-user-new',
+          username: credentials.username,
+          email: credentials.email || '',
+          role: 'user',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        token: 'demo-token-new',
+        systemInfo: {
+          requiresAuth: true,
+          singleUserMode: false,
+          hasUsers: true,
+          version: '1.0.0',
+        },
+      });
+    }
+
+    return api.post('/auth/signup', credentials).then(res => res.data);
+  },
+
   logout: (): Promise<ApiResponse<void>> => {
     if (isDemoMode()) {
       return createDemoResponse(undefined);

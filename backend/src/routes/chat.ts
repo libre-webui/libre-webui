@@ -21,6 +21,7 @@ import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
 import preferencesService from '../services/preferencesService.js';
 import documentService from '../services/documentService.js';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   mergeGenerationOptions,
   extractStatistics,
@@ -35,15 +36,19 @@ import {
 
 const router = express.Router();
 
+// Apply authentication middleware to all chat routes
+router.use(authenticate);
+
 // Get all chat sessions
 router.get(
   '/sessions',
   async (
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response<ApiResponse<ChatSession[]>>
   ): Promise<void> => {
     try {
-      const sessions = chatService.getAllSessions();
+      const userId = req.user?.userId || 'default';
+      const sessions = chatService.getAllSessions(userId);
       res.json({
         success: true,
         data: sessions,
@@ -61,7 +66,7 @@ router.get(
 router.post(
   '/sessions',
   async (
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response<ApiResponse<ChatSession>>
   ): Promise<void> => {
     try {
@@ -75,7 +80,8 @@ router.post(
         return;
       }
 
-      const session = chatService.createSession(model, title);
+      const userId = req.user?.userId || 'default';
+      const session = chatService.createSession(model, title, userId);
       res.json({
         success: true,
         data: session,
@@ -93,12 +99,13 @@ router.post(
 router.get(
   '/sessions/:sessionId',
   async (
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response<ApiResponse<ChatSession>>
   ): Promise<void> => {
     try {
       const { sessionId } = req.params;
-      const session = chatService.getSession(sessionId);
+      const userId = req.user?.userId || 'default';
+      const session = chatService.getSession(sessionId, userId);
 
       if (!session) {
         res.status(404).json({
@@ -125,14 +132,19 @@ router.get(
 router.put(
   '/sessions/:sessionId',
   async (
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response<ApiResponse<ChatSession>>
   ): Promise<void> => {
     try {
       const { sessionId } = req.params;
       const updates = req.body;
 
-      const updatedSession = chatService.updateSession(sessionId, updates);
+      const userId = req.user?.userId || 'default';
+      const updatedSession = chatService.updateSession(
+        sessionId,
+        updates,
+        userId
+      );
 
       if (!updatedSession) {
         res.status(404).json({
@@ -158,10 +170,14 @@ router.put(
 // Delete a chat session
 router.delete(
   '/sessions/:sessionId',
-  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> => {
     try {
       const { sessionId } = req.params;
-      const deleted = chatService.deleteSession(sessionId);
+      const userId = req.user?.userId || 'default';
+      const deleted = chatService.deleteSession(sessionId, userId);
 
       if (!deleted) {
         res.status(404).json({
@@ -187,9 +203,13 @@ router.delete(
 // Clear all chat sessions
 router.delete(
   '/sessions',
-  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> => {
     try {
-      chatService.clearAllSessions();
+      const userId = req.user?.userId || 'default';
+      chatService.clearAllSessions(userId);
       res.json({
         success: true,
         message: 'All chat sessions cleared successfully',
@@ -207,7 +227,7 @@ router.delete(
 router.post(
   '/sessions/:sessionId/messages',
   async (
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response<ApiResponse<ChatMessage>>
   ): Promise<void> => {
     try {
@@ -222,7 +242,8 @@ router.post(
         return;
       }
 
-      const session = chatService.getSession(sessionId);
+      const userId = req.user?.userId || 'default';
+      const session = chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -231,12 +252,16 @@ router.post(
         return;
       }
 
-      const message = chatService.addMessage(sessionId, {
-        role,
-        content,
-        model,
-        id, // Use provided ID if available
-      });
+      const message = chatService.addMessage(
+        sessionId,
+        {
+          role,
+          content,
+          model,
+          id, // Use provided ID if available
+        },
+        userId
+      );
 
       if (!message) {
         res.status(500).json({
@@ -263,7 +288,7 @@ router.post(
 router.post(
   '/sessions/:sessionId/generate',
   async (
-    req: Request,
+    req: AuthenticatedRequest,
     res: Response<ApiResponse<ChatMessage>>
   ): Promise<void> => {
     try {
@@ -278,7 +303,8 @@ router.post(
         return;
       }
 
-      const session = chatService.getSession(sessionId);
+      const userId = req.user?.userId || 'default';
+      const session = chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -288,10 +314,14 @@ router.post(
       }
 
       // Add user message to session
-      const userMessage = chatService.addMessage(sessionId, {
-        role: 'user',
-        content: message,
-      });
+      const userMessage = chatService.addMessage(
+        sessionId,
+        {
+          role: 'user',
+          content: message,
+        },
+        userId
+      );
 
       if (!userMessage) {
         res.status(500).json({
@@ -440,12 +470,16 @@ router.post(
 
       // Add assistant response to session with statistics
       const statistics = extractStatistics(response);
-      const assistantMessage = chatService.addMessage(sessionId, {
-        role: 'assistant',
-        content: assistantContent,
-        model: session.model,
-        statistics,
-      });
+      const assistantMessage = chatService.addMessage(
+        sessionId,
+        {
+          role: 'assistant',
+          content: assistantContent,
+          model: session.model,
+          statistics,
+        },
+        userId
+      );
 
       if (!assistantMessage) {
         res.status(500).json({
@@ -471,7 +505,7 @@ router.post(
 // Generate a chat response with streaming
 router.post(
   '/sessions/:sessionId/generate/stream',
-  async (req: Request, res: Response): Promise<void> => {
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
       const { sessionId } = req.params;
       const { message, options = {} } = req.body;
@@ -484,7 +518,8 @@ router.post(
         return;
       }
 
-      const session = chatService.getSession(sessionId);
+      const userId = req.user?.userId || 'default';
+      const session = chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -500,10 +535,14 @@ router.post(
       res.setHeader('Access-Control-Allow-Origin', '*');
 
       // Add user message to session
-      const userMessage = chatService.addMessage(sessionId, {
-        role: 'user',
-        content: message,
-      });
+      const userMessage = chatService.addMessage(
+        sessionId,
+        {
+          role: 'user',
+          content: message,
+        },
+        userId
+      );
 
       if (!userMessage) {
         res.write(
@@ -570,11 +609,15 @@ router.post(
         () => {
           // Add complete assistant response to session
           if (fullResponse) {
-            chatService.addMessage(sessionId, {
-              role: 'assistant',
-              content: fullResponse,
-              model: session.model,
-            });
+            chatService.addMessage(
+              sessionId,
+              {
+                role: 'assistant',
+                content: fullResponse,
+                model: session.model,
+              },
+              userId
+            );
           }
 
           res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);

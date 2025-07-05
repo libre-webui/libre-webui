@@ -134,4 +134,57 @@ router.get('/system-info', async (req, res) => {
   }
 });
 
+/**
+ * Signup endpoint
+ */
+router.post('/signup', async (req, res) => {
+  try {
+    const { username, password, email } = req.body;
+
+    if (!username || !password) {
+      res.status(400).json({
+        success: false,
+        message: 'Username and password are required',
+      });
+      return;
+    }
+
+    // Check if user already exists
+    const existingUser = await authService.getUserByUsername(username);
+    if (existingUser) {
+      res.status(409).json({
+        success: false,
+        message: 'Username already exists',
+      });
+      return;
+    }
+
+    const result = await authService.signup(username, password, email);
+    if (!result) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create account',
+      });
+      return;
+    }
+
+    const systemInfo = authService.getSystemInfo();
+
+    res.json({
+      success: true,
+      data: {
+        user: result.user,
+        token: result.token,
+        systemInfo,
+      },
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+});
+
 export default router;

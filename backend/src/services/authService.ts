@@ -107,6 +107,50 @@ export class AuthService {
 
     return userModel.getUserById(payload.userId);
   }
+
+  /**
+   * Get user by username
+   */
+  async getUserByUsername(username: string): Promise<UserPublic | null> {
+    const user = userModel.getUserByUsername(username);
+    if (!user) return null;
+
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      createdAt: new Date(user.created_at).toISOString(),
+      updatedAt: new Date(user.updated_at).toISOString(),
+    };
+  }
+
+  /**
+   * Signup user
+   */
+  async signup(
+    username: string,
+    password: string,
+    email?: string
+  ): Promise<{ user: UserPublic; token: string } | null> {
+    try {
+      const userData = {
+        username,
+        password,
+        email: email || '',
+        role: 'user' as const,
+      };
+
+      const user = await userModel.createUser(userData);
+      if (!user) return null;
+
+      const token = this.generateToken(user);
+      return { user, token };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return null;
+    }
+  }
 }
 
 export const authService = new AuthService();
