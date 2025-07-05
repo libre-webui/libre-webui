@@ -52,6 +52,10 @@ class ChatService {
     const sessionId = uuidv4();
     const now = Date.now();
 
+    console.log(
+      `🚀 ChatService.createSession: sessionId=${sessionId}, userId=${userId}, model=${model}`
+    );
+
     const session: ChatSession = {
       id: sessionId,
       title: title || 'New Chat',
@@ -62,6 +66,7 @@ class ChatService {
     };
 
     this.sessions.set(sessionId, session);
+    console.log(`📝 Session stored in cache: ${sessionId}`);
 
     // Add system message from preferences if one exists
     const systemMessage = preferencesService.getSystemMessage();
@@ -78,6 +83,7 @@ class ChatService {
 
     // Save to storage with user ID
     storageService.saveSession(session, userId);
+    console.log(`💾 Session saved to storage: ${sessionId} for user ${userId}`);
     return session;
   }
 
@@ -85,12 +91,18 @@ class ChatService {
     sessionId: string,
     userId: string = 'default'
   ): ChatSession | undefined {
+    console.log(
+      `🔍 ChatService.getSession: sessionId=${sessionId}, userId=${userId}`
+    );
+
     // First try to get from memory cache
     let session = this.sessions.get(sessionId);
+    console.log(`📝 Session in cache: ${session ? 'YES' : 'NO'}`);
 
     // If not in cache, try to load from storage (with user verification)
     if (!session) {
       session = storageService.getSession(sessionId, userId);
+      console.log(`💾 Session in storage: ${session ? 'YES' : 'NO'}`);
       if (session) {
         this.sessions.set(sessionId, session);
       }
@@ -98,13 +110,20 @@ class ChatService {
       // If found in cache, we should still verify it belongs to this user
       // by checking the storage service (which has the user verification logic)
       const verifiedSession = storageService.getSession(sessionId, userId);
+      console.log(
+        `✅ Session verification: ${verifiedSession ? 'PASSED' : 'FAILED'}`
+      );
       if (!verifiedSession) {
         // Session doesn't belong to this user, remove from cache and return undefined
+        console.log(
+          `❌ Removing session ${sessionId} from cache - verification failed`
+        );
         this.sessions.delete(sessionId);
         return undefined;
       }
     }
 
+    console.log(`🎯 Returning session: ${session ? session.id : 'undefined'}`);
     return session;
   }
 

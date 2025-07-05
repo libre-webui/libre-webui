@@ -18,6 +18,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User, SystemInfo } from '@/types';
+import { useChatStore } from '@/store/chatStore';
+import { useAppStore } from '@/store/appStore';
+import { usePluginStore } from '@/store/pluginStore';
+import { ollamaApi } from '@/utils/api';
+import { isDemoMode } from '@/utils/demoMode';
 
 interface AuthState {
   user: User | null;
@@ -47,6 +52,12 @@ export const useAuthStore = create<AuthState>()(
         // Save token to localStorage
         localStorage.setItem('auth-token', token);
 
+        // Clear chat store state when a new user logs in
+        const chatStore = useChatStore.getState();
+        if (chatStore.clearAllState) {
+          chatStore.clearAllState();
+        }
+
         set({
           user,
           token,
@@ -54,11 +65,45 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           isLoading: false,
         });
+
+        // Reinitialize models and sessions after login
+        setTimeout(async () => {
+          try {
+            // Get required stores
+            const appStore = useAppStore.getState();
+            const pluginStore = usePluginStore.getState();
+
+            console.log('🔄 Reinitializing app after login...');
+
+            // Check Ollama health first
+            const healthResponse = await ollamaApi.checkHealth();
+            if (!healthResponse.success && !isDemoMode()) {
+              console.warn('Ollama service not available after login');
+            }
+
+            await Promise.all([
+              chatStore.loadModels(),
+              chatStore.loadSessions(),
+              chatStore.loadPreferences(),
+              appStore.loadPreferences(),
+              pluginStore.loadPlugins(),
+            ]);
+            console.log('✅ Reinitialized app after login');
+          } catch (error) {
+            console.error('Failed to reinitialize app after login:', error);
+          }
+        }, 100);
       },
 
       logout: () => {
         // Remove token from localStorage
         localStorage.removeItem('auth-token');
+
+        // Clear chat store state when logging out
+        const chatStore = useChatStore.getState();
+        if (chatStore.clearAllState) {
+          chatStore.clearAllState();
+        }
 
         set({
           user: null,

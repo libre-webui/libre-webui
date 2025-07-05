@@ -98,6 +98,7 @@ export interface UserPreferences {
   generationOptions: GenerationOptions;
   // Embedding settings for semantic search
   embeddingSettings: EmbeddingSettings;
+  showUsername: boolean; // If true, show username in chat; if false, show "you"
 }
 
 // Ollama Chat Message format

@@ -53,6 +53,7 @@ interface ChatState {
   loadSessions: () => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
   clearAllSessions: () => Promise<void>;
+  clearAllState: () => void; // Clear all store state (for logout)
   updateSessionTitle: (sessionId: string, title: string) => Promise<void>;
 
   // Messages
@@ -152,9 +153,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 'Previous currentSession not found in backend sessions:',
                 prevState.currentSession.id
               );
-              toast.error(
-                'Current session not found in backend. Please select or create a new chat.'
-              );
+              // Don't show error toast here - let the ChatPage handle URL redirect
             }
           }
           return {
@@ -235,6 +234,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
       toast.error(errorMessage);
       set({ loading: false });
     }
+  },
+
+  clearAllState: () => {
+    // Clear all state when user logs out/switches
+    set({
+      sessions: [],
+      currentSession: null,
+      models: [],
+      selectedModel: '',
+      systemMessage: '',
+      loading: false,
+      error: null,
+    });
   },
 
   updateSessionTitle: async (sessionId: string, title: string) => {
@@ -621,3 +633,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
   }),
 }));
+
+// Export a function to clear state (for use by auth store)
+export const clearChatState = () => {
+  const state = useChatStore.getState();
+  state.clearAllState();
+};

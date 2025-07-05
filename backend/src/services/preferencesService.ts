@@ -70,6 +70,7 @@ class PreferencesService {
       chunkOverlap: 200,
       similarityThreshold: 0.3,
     },
+    showUsername: false, // Default to showing "you" instead of username
   };
 
   constructor() {

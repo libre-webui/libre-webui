@@ -93,6 +93,7 @@ export const useAppStore = create<AppState>()(
           chunkOverlap: 200,
           similarityThreshold: 0.3,
         },
+        showUsername: false, // Default to showing "you" instead of username
       },
       setPreferences: newPreferences =>
         set(state => ({

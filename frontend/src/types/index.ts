@@ -136,6 +136,7 @@ export interface UserPreferences {
     chunkOverlap: number;
     similarityThreshold: number;
   };
+  showUsername: boolean; // If true, show username in chat; if false, show "you"
 }
 
 // Additional types for API calls

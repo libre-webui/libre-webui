@@ -720,6 +720,7 @@ export const preferencesApi = {
           chunkOverlap: 200,
           similarityThreshold: 0.7,
         },
+        showUsername: false, // Default to showing "You"
       });
     }
 

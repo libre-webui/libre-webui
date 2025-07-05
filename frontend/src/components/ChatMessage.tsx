@@ -21,6 +21,8 @@ import { MessageContent } from '@/components/ui';
 import { GenerationStats } from '@/components/GenerationStats';
 import { formatTimestamp, cn } from '@/utils';
 import { User, Bot } from 'lucide-react';
+import { useAppStore } from '@/store/appStore';
+import { useAuthStore } from '@/store/authStore';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -34,6 +36,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   className,
 }) => {
   const isUser = message.role === 'user';
+  const { preferences } = useAppStore();
+  const { user } = useAuthStore();
+
+  // Determine display name for user messages
+  const getUserDisplayName = () => {
+    if (!isUser) return 'Assistant';
+    if (preferences.showUsername && user?.username) {
+      return user.username;
+    }
+    return 'You';
+  };
 
   return (
     <div
@@ -59,7 +72,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       <div className='flex-1 min-w-0'>
         <div className='flex items-center gap-3 mb-2'>
           <span className='text-sm font-semibold text-gray-900 dark:text-dark-800'>
-            {isUser ? 'You' : 'Assistant'}
+            {getUserDisplayName()}
           </span>
           {message.model && !isUser && (
             <span className='text-xs text-gray-500 dark:text-dark-600 bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full'>

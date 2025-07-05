@@ -62,7 +62,10 @@ export const ChatPage: React.FC = () => {
         if (foundSession && foundSession.id !== currentSession?.id) {
           setCurrentSession(foundSession);
         } else if (!foundSession) {
-          // Session not found, redirect to most recent session or root
+          // Session not found for this user, redirect to most recent session or root
+          console.warn(
+            `Session ${sessionId} not found for current user, redirecting...`
+          );
           if (sessions.length > 0) {
             navigate(`/c/${sessions[0].id}`, { replace: true });
           } else {

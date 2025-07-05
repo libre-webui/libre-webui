@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import express, { Request, Response } from 'express';
+import express, { Response } from 'express';
 import chatService from '../services/chatService.js';
 import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
