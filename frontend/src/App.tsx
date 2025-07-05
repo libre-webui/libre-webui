@@ -48,6 +48,7 @@ const UserManagementPage = React.lazy(
 
 // Import LoginPage directly (not lazy) to avoid suspense issues during auth redirects
 import { LoginPage } from '@/pages/LoginPage';
+import { FirstTimeSetup } from '@/components/FirstTimeSetup';
 
 // Loading component
 const PageLoader = () => (
@@ -167,6 +168,15 @@ const App: React.FC = () => {
           </button>
         </div>
       </div>
+    );
+  }
+
+  // Show FirstTimeSetup if system requires auth but has no users
+  if (systemInfo && systemInfo.requiresAuth && !systemInfo.hasUsers) {
+    return (
+      <ErrorBoundary>
+        <FirstTimeSetup />
+      </ErrorBoundary>
     );
   }
 

@@ -135,11 +135,14 @@ export class AuthService {
     email?: string
   ): Promise<{ user: UserPublic; token: string } | null> {
     try {
+      const userCount = userModel.getUserCount();
+
       const userData = {
         username,
         password,
         email: email || '',
-        role: 'user' as const,
+        // First user becomes admin, subsequent users are regular users
+        role: userCount === 0 ? ('admin' as const) : ('user' as const),
       };
 
       const user = await userModel.createUser(userData);

@@ -41,3 +41,4 @@ export { DemoModeBanner } from './DemoModeBanner';
 export { PluginManager } from './PluginManager';
 export { GenerationStats } from './GenerationStats';
 export * from './ui';
+export { FirstTimeSetup } from './FirstTimeSetup';
