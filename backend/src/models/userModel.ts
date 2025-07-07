@@ -56,12 +56,13 @@ export class UserModel {
   private db = getDatabase();
 
   /**
-   * Get all users
+   * Get all users (excluding the default system user)
    */
   getAllUsers(): UserPublic[] {
     const stmt = this.db.prepare(`
       SELECT id, username, email, role, created_at, updated_at
       FROM users
+      WHERE id != 'default'
       ORDER BY created_at DESC
     `);
 
@@ -239,12 +240,21 @@ export class UserModel {
   }
 
   /**
-   * Get user count
+   * Get user count (excluding the default system user)
    */
   getUserCount(): number {
-    const stmt = this.db.prepare('SELECT COUNT(*) as count FROM users');
-    const result = stmt.get() as { count: number };
+    const stmt = this.db.prepare(
+      'SELECT COUNT(*) as count FROM users WHERE id != ?'
+    );
+    const result = stmt.get('default') as { count: number };
     return result.count;
+  }
+
+  /**
+   * Get real user count (excluding default system user) - alias for getUserCount
+   */
+  getRealUserCount(): number {
+    return this.getUserCount();
   }
 }
 

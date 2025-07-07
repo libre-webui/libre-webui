@@ -42,11 +42,14 @@ import {
 import { isDemoMode } from '@/utils/demoMode';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+  import.meta.env.VITE_API_BASE_URL ||
+  `${window.location.protocol}//${window.location.hostname}:3001/api`;
 
-console.log('API_BASE_URL configured as:', API_BASE_URL);
-console.log('Environment variables:', import.meta.env);
-console.log('Demo mode detected:', isDemoMode());
+console.log('🚀 API_BASE_URL configured as:', API_BASE_URL);
+console.log('🌐 Window location:', window.location);
+console.log('🔧 Environment variables:', import.meta.env);
+console.log('📱 User agent:', navigator.userAgent);
+console.log('🎭 Demo mode detected:', isDemoMode());
 
 // Mock response helper for demo mode
 const createDemoResponse = <T>(
@@ -904,6 +907,8 @@ export const authApi = {
   },
 
   getSystemInfo: (): Promise<ApiResponse<SystemInfo>> => {
+    console.log('getSystemInfo called, demo mode:', isDemoMode());
+
     if (isDemoMode()) {
       return createDemoResponse<SystemInfo>({
         requiresAuth: true,
@@ -913,7 +918,35 @@ export const authApi = {
       });
     }
 
-    return api.get('/auth/system-info').then(res => res.data);
+    console.log('🔍 Making API call to:', API_BASE_URL + '/auth/system-info');
+    console.log(
+      '🌐 Full URL from:',
+      window.location.origin,
+      '-> API:',
+      API_BASE_URL + '/auth/system-info'
+    );
+    return api
+      .get('/auth/system-info')
+      .then(res => {
+        console.log('✅ getSystemInfo response:', res.data);
+        return res.data;
+      })
+      .catch(error => {
+        console.error('❌ getSystemInfo error:', error);
+        if (error.response) {
+          console.error('📄 Error response data:', error.response.data);
+          console.error('🔢 Error status:', error.response.status);
+          console.error('🔧 Error headers:', error.response.headers);
+        }
+        if (error.request) {
+          console.error(
+            '📡 Network error - no response received:',
+            error.request
+          );
+        }
+        console.error('🎯 Error config:', error.config);
+        throw error;
+      });
   },
 
   verifyToken: (): Promise<ApiResponse<User>> => {

@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  libre-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8080:5173'
+      - '3001:3001'
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - FRONTEND_PORT=5173
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - CORS_ORIGIN=http://localhost:8080
+      - SINGLE_USER_MODE=false
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - JWT_EXPIRES_IN=7d
+    volumes:
+      - libre_webui_data:/app/backend/data
+      - libre_webui_temp:/app/backend/temp
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    networks:
+      - libre-webui-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - libre-webui-network
+    # Uncomment the following lines if you have GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  libre_webui_data:
+  libre_webui_temp:
+  ollama_data:
+
+networks:
+  libre-webui-network:
+    driver: bridge

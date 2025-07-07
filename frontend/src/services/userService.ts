@@ -27,11 +27,18 @@ export class UserService {
 
     try {
       setLoading(true);
+      console.log('🔐 Starting auth initialization...');
 
       // First, get system info
+      console.log('📡 Fetching system info...');
       const systemInfoResponse = await authApi.getSystemInfo();
+      console.log('📡 System info response:', systemInfoResponse);
+
       if (systemInfoResponse.success && systemInfoResponse.data) {
+        console.log('✅ Setting system info:', systemInfoResponse.data);
         setSystemInfo(systemInfoResponse.data);
+      } else {
+        console.error('❌ System info response failed:', systemInfoResponse);
       }
 
       // Check if there's a stored token

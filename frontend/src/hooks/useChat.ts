@@ -174,6 +174,14 @@ export const useChat = (sessionId: string) => {
     ) => {
       if (!sessionId || !content.trim()) return;
 
+      console.log(
+        'Hook: sendMessage called with sessionId:',
+        sessionId,
+        'content:',
+        content.slice(0, 50),
+        '...'
+      );
+
       try {
         setIsGenerating(true);
         setIsStreaming(true);
@@ -203,9 +211,11 @@ export const useChat = (sessionId: string) => {
 
         // Connect WebSocket if not connected
         if (!websocketService.isConnected) {
+          console.log('Hook: WebSocket not connected, connecting...');
           await websocketService.connect();
         }
 
+        console.log('Hook: Sending chat_stream message via WebSocket');
         // Send chat stream request with new parameters
         websocketService.send({
           type: 'chat_stream',

@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  libre-webui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8080:5173'
+      - '3001:3001'
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - CORS_ORIGIN=http://localhost:8080
+      - SINGLE_USER_MODE=false
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - JWT_EXPIRES_IN=7d
+      - FRONTEND_PORT=5173
+    volumes:
+      - libre_webui_data:/app/backend/data
+      - libre_webui_temp:/app/backend/temp
+    restart: unless-stopped
+    networks:
+      - libre-webui-network
+
+volumes:
+  libre_webui_data:
+  libre_webui_temp:
+
+networks:
+  libre-webui-network:
+    driver: bridge

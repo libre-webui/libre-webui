@@ -25,6 +25,8 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import {
   errorHandler,
@@ -51,35 +53,39 @@ import {
   GenerationStatistics,
 } from './types/index.js';
 
+// Get current directory for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 const port = process.env.PORT || 3001;
 const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
   'http://localhost:5173',
+  'http://localhost:3000',
+  'http://0.0.0.0:3000',
+  'http://0.0.0.0:8080',
+  'http://localhost:8080',
+  'http://192.168.2.159:8080',
 ];
+
+// Allow any origin in development/Docker mode
+const corsConfig =
+  process.env.NODE_ENV === 'production'
+    ? { origin: corsOrigins }
+    : { origin: true };
 
 // Security middleware
 app.use(
   helmet({
-    crossOriginEmbedderPolicy: true,
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-        imgSrc: ["'self'", 'data:'],
-        connectSrc: ["'self'"],
-        fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-        objectSrc: ["'none'"],
-        frameAncestors: ["'self'"],
-      },
-    },
+    crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false, // Disable CSP temporarily for mobile debugging
   })
 );
 
 // CORS configuration
 app.use(
   cors({
-    origin: corsOrigins,
+    ...corsConfig,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -105,6 +111,9 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Static files are served by a separate frontend server on port 8080
+// Backend only serves API endpoints
+
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
@@ -113,6 +122,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentRoutes);
+
+// API-only backend - no static file serving
 
 // Error handling
 app.use(notFoundHandler);
@@ -550,7 +561,7 @@ wss.on('connection', (ws, req) => {
 });
 
 // Start server
-server.listen(port, () => {
+server.listen({ port, host: '0.0.0.0' }, () => {
   console.log(`🚀 Libre WebUI Backend running on port ${port}`);
   console.log(`📡 WebSocket server running on ws://localhost:${port}/ws`);
   console.log(`🌐 CORS enabled for: ${corsOrigins.join(', ')}`);

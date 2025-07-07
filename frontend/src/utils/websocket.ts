@@ -27,12 +27,20 @@ class WebSocketService {
   private messageHandlers: Map<string, (data: unknown) => void> = new Map();
 
   constructor() {
-    // Use the backend URL for WebSocket connection
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    // For WebSocket, we need to connect to the backend server (port 3001)
+    // not the frontend server (port 8080)
+    const apiBaseUrl =
+      import.meta.env.VITE_API_BASE_URL ||
+      `${window.location.protocol}//${window.location.hostname}:3001/api`;
+
+    // Remove /api from the end to get the base URL for WebSocket
+    const apiUrl = apiBaseUrl.replace(/\/api$/, '');
     const wsUrl = apiUrl
       .replace('http://', 'ws://')
       .replace('https://', 'wss://');
     this.url = `${wsUrl}/ws`;
+
+    console.log('WebSocket URL constructed:', this.url);
   }
 
   connect(): Promise<void> {
@@ -40,6 +48,9 @@ class WebSocketService {
       console.log('Demo mode active: skipping WebSocket connection.');
       return Promise.resolve();
     }
+
+    console.log('WebSocket: Attempting to connect to:', this.url);
+
     return new Promise((resolve, reject) => {
       try {
         // Include auth token in WebSocket connection
@@ -48,10 +59,15 @@ class WebSocketService {
           ? `${this.url}?token=${encodeURIComponent(token)}`
           : this.url;
 
+        console.log(
+          'WebSocket: Connecting to:',
+          wsUrlWithAuth.replace(/token=[^&]+/, 'token=***')
+        );
+
         this.ws = new WebSocket(wsUrlWithAuth);
 
         this.ws.onopen = () => {
-          console.log('WebSocket connected');
+          console.log('WebSocket connected successfully');
           this.reconnectAttempts = 0;
           resolve();
         };
@@ -59,9 +75,15 @@ class WebSocketService {
         this.ws.onmessage = event => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
+            console.log('WebSocket: Received message:', message);
             const handler = this.messageHandlers.get(message.type);
             if (handler) {
               handler(message.data);
+            } else {
+              console.warn(
+                'WebSocket: No handler for message type:',
+                message.type
+              );
             }
           } catch (_error) {
             console.error('Failed to parse WebSocket message:', _error);
@@ -93,9 +115,13 @@ class WebSocketService {
 
   send(message: WebSocketMessage | Record<string, unknown>) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      console.log('WebSocket: Sending message:', message);
       this.ws.send(JSON.stringify(message));
     } else {
-      console.warn('WebSocket is not connected');
+      console.warn(
+        'WebSocket is not connected. ReadyState:',
+        this.ws?.readyState
+      );
     }
   }
 

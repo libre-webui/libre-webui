@@ -22,7 +22,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 | **[🤖 Model Updater](./11-MODEL_UPDATER.md)** | Auto-update AI provider models | 5 min |
 | **[🔐 Authentication](./12-AUTHENTICATION.md)** | User management and security | 10 min |
 | **[🎨 Artifacts Feature](./13-ARTIFACTS_FEATURE.md)** | Interactive content and code execution | 7 min |
-| **[⚙️ Artifacts Implementation](./14-ARTIFACTS_IMPLEMENTATION.md)** | Technical implementation details | 15 min |
+| **[🐳 Docker External Ollama](./15-DOCKER_EXTERNAL_OLLAMA.md)** | Run Docker with external Ollama instance | 10 min |
 
 ## 📋 Project Information
 
