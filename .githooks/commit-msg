@@ -1,0 +1,19 @@
+#!/bin/sh
+# Conventional Commits validation hook
+
+commit_regex='^(feat|fix|docs|style|refactor|perf|test|chore)(\(.+\))?(!)?: .{1,50}'
+
+error_msg="Invalid commit message format. Please use conventional commits format:
+<type>[optional scope]: <description>
+
+Examples:
+  feat: add new authentication feature
+  fix(ui): resolve navigation menu issue
+  docs: update README with setup instructions
+  
+For more info: https://www.conventionalcommits.org/"
+
+if ! grep -qE "$commit_regex" "$1"; then
+    echo "$error_msg" >&2
+    exit 1
+fi

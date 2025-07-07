@@ -1,0 +1,105 @@
+name: Release
+
+permissions:
+  contents: write
+  pull-requests: read
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Create release (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          npm run release:${{ github.event.inputs.release_type }}
+
+      - name: Extract version from tag
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+        id: extract_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Run tests and build
+        run: |
+          npm run lint
+          npm run build
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Extract changelog for this version
+            VERSION="${{ steps.extract_version.outputs.version }}"
+            CHANGELOG_SECTION=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
+            echo "notes<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGELOG_SECTION" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            # Generate changelog for unreleased changes
+            CHANGELOG=$(npm run changelog --silent)
+            echo "notes<<EOF" >> $GITHUB_OUTPUT
+            echo "$CHANGELOG" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+          body: ${{ steps.release_notes.outputs.notes }}
+          draft: false
+          prerelease: false
+
+      - name: Build Docker images
+        run: |
+          docker build -t libre-webui:${{ steps.extract_version.outputs.version || 'latest' }} .
+          docker build -t libre-webui:latest .
+
+      - name: Push changes (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git push origin main
+          git push origin --tags

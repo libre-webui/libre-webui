@@ -1,0 +1,49 @@
+{
+  "types": [
+    {
+      "type": "feat",
+      "section": "✨ Added",
+      "hidden": false
+    },
+    {
+      "type": "fix",
+      "section": "🐛 Bug Fixes",
+      "hidden": false
+    },
+    {
+      "type": "chore",
+      "section": "🔧 Technical Improvements",
+      "hidden": false
+    },
+    {
+      "type": "docs",
+      "section": "📚 Documentation",
+      "hidden": false
+    },
+    {
+      "type": "style",
+      "section": "🔧 Technical Improvements",
+      "hidden": false
+    },
+    {
+      "type": "refactor",
+      "section": "🔧 Technical Improvements",
+      "hidden": false
+    },
+    {
+      "type": "perf",
+      "section": "🔧 Technical Improvements",
+      "hidden": false
+    },
+    {
+      "type": "test",
+      "section": "🔧 Technical Improvements",
+      "hidden": false
+    }
+  ],
+  "compareUrlFormat": "https://github.com/libre-webui/libre-webui/compare/{{previousTag}}...{{currentTag}}",
+  "commitUrlFormat": "https://github.com/libre-webui/libre-webui/commit/{{hash}}",
+  "releaseCommitMessageFormat": "chore(release): {{currentTag}}",
+  "issuePrefixes": ["#"],
+  "issueUrlFormat": "https://github.com/libre-webui/libre-webui/issues/{{id}}"
+}
