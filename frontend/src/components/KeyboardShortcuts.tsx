@@ -162,7 +162,7 @@ export const KeyboardShortcutsIndicator: React.FC<{
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'fixed bottom-4 right-4 h-10 w-10 p-0 bg-white/80 dark:bg-dark-100/80 backdrop-blur-sm border border-gray-200 dark:border-dark-300 shadow-lg hover:shadow-xl transition-all duration-200 z-50',
+        'fixed bottom-32 right-4 h-10 w-10 p-0 bg-white/80 dark:bg-dark-100/80 backdrop-blur-sm border border-gray-200 dark:border-dark-300 shadow-lg hover:shadow-xl transition-all duration-200 z-50',
         'hover:bg-white dark:hover:bg-dark-100',
         className
       )}

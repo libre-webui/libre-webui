@@ -16,7 +16,12 @@
  */
 
 import React, { useState, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
@@ -62,6 +67,23 @@ const PageLoader = () => (
     </div>
   </div>
 );
+
+// Conditional keyboard shortcuts indicator - only shows on chat pages
+const ConditionalKeyboardShortcutsIndicator: React.FC<{
+  onClick: () => void;
+}> = ({ onClick }) => {
+  const location = useLocation();
+
+  // Check if we're on a chat page (root, /chat, or /c/sessionId)
+  const isChatPage =
+    location.pathname === '/' ||
+    location.pathname === '/chat' ||
+    location.pathname.startsWith('/c/');
+
+  if (!isChatPage) return null;
+
+  return <KeyboardShortcutsIndicator onClick={onClick} />;
+};
 
 const App: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -343,8 +365,10 @@ const App: React.FC = () => {
           shortcuts={shortcuts}
         />
 
-        {/* Keyboard shortcuts indicator */}
-        <KeyboardShortcutsIndicator onClick={() => setShortcutsOpen(true)} />
+        {/* Keyboard shortcuts indicator - only show on chat pages */}
+        <ConditionalKeyboardShortcutsIndicator
+          onClick={() => setShortcutsOpen(true)}
+        />
 
         <Toaster
           position='top-right'
