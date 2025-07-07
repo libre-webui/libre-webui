@@ -184,7 +184,11 @@ class ReleaseManager {
   /**
    * Determine next version based on commits
    */
-  determineNextVersion(currentVersion, commits, releaseType = null) {
+  determineNextVersion(currentVersion, commits, releaseType = null, forceType = false) {
+    if (forceType && releaseType) {
+      return semver.inc(currentVersion, releaseType);
+    }
+    
     if (releaseType) {
       return semver.inc(currentVersion, releaseType);
     }
@@ -208,7 +212,7 @@ class ReleaseManager {
   /**
    * Create a new release
    */
-  createRelease(releaseType = null) {
+  createRelease(releaseType = null, forceType = false) {
     console.log('🚀 Starting release process...\n');
 
     // Check if working directory is clean
@@ -234,7 +238,7 @@ class ReleaseManager {
     console.log();
 
     // Determine next version
-    const nextVersion = this.determineNextVersion(currentVersion, commits, releaseType);
+    const nextVersion = this.determineNextVersion(currentVersion, commits, releaseType, forceType);
     console.log(`📦 Current version: ${currentVersion}`);
     console.log(`📦 Next version: ${nextVersion}\n`);
 
@@ -274,14 +278,23 @@ class ReleaseManager {
 }
 
 // CLI interface
-const releaseType = process.argv[2];
-const validTypes = ['patch', 'minor', 'major'];
+const args = process.argv.slice(2);
+const releaseType = args.find(arg => ['patch', 'minor', 'major'].includes(arg));
+const forcePatch = args.includes('--patch');
+const forceMinor = args.includes('--minor');
+const forceMajor = args.includes('--major');
 
-if (releaseType && !validTypes.includes(releaseType)) {
+if (releaseType && !['patch', 'minor', 'major'].includes(releaseType)) {
   console.error(`❌ Invalid release type: ${releaseType}`);
-  console.error(`Valid types: ${validTypes.join(', ')}`);
+  console.error(`Valid types: patch, minor, major`);
   process.exit(1);
 }
 
+// Determine the final release type
+let finalReleaseType = releaseType;
+if (forcePatch) finalReleaseType = 'patch';
+if (forceMinor) finalReleaseType = 'minor';
+if (forceMajor) finalReleaseType = 'major';
+
 const releaseManager = new ReleaseManager();
-releaseManager.createRelease(releaseType);
+releaseManager.createRelease(finalReleaseType, forcePatch || forceMinor || forceMajor);
