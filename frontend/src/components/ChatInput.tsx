@@ -23,6 +23,9 @@ import {
   Settings,
   ChevronDown,
   ChevronUp,
+  Paperclip,
+  Plus,
+  Minus,
 } from 'lucide-react';
 import { Button, Textarea } from '@/components/ui';
 import { ImageUpload } from './ImageUpload';
@@ -109,8 +112,37 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       )}
 
       {/* Main Input Area */}
-      <div className='p-4 sm:p-6'>
-        <form onSubmit={handleSubmit} className='flex gap-2 sm:gap-4'>
+      <div className='p-3 sm:p-4'>
+        <form onSubmit={handleSubmit} className='flex gap-2 sm:gap-3'>
+          {/* Advanced Features Toggle - Left Side */}
+          <div className='flex flex-col justify-end'>
+            <Button
+              type='button'
+              variant='outline'
+              size='md'
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className={cn(
+                'h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] p-0 border-gray-200 dark:border-dark-300',
+                'hover:border-gray-300 dark:hover:border-dark-400 transition-colors',
+                hasAdvancedFeatures &&
+                  'border-primary-500 bg-primary-50 dark:bg-primary-900/20 hover:border-primary-600',
+                showAdvanced && 'bg-gray-100 dark:bg-dark-200'
+              )}
+              title='Attachments and advanced features'
+            >
+              {hasAdvancedFeatures ? (
+                <div className='relative'>
+                  <Paperclip className='h-4 w-4' />
+                  <div className='absolute -top-1 -right-1 h-2 w-2 bg-primary-500 rounded-full' />
+                </div>
+              ) : showAdvanced ? (
+                <Minus className='h-4 w-4' />
+              ) : (
+                <Plus className='h-4 w-4' />
+              )}
+            </Button>
+          </div>
+
           <div className='flex-1'>
             <Textarea
               ref={textareaRef}
@@ -128,38 +160,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             />
           </div>
 
-          <div className='flex flex-col justify-end gap-2'>
-            {/* Advanced Features Toggle */}
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className={cn(
-                'h-[32px] w-[32px] p-0 border-gray-200 dark:border-dark-300',
-                hasAdvancedFeatures &&
-                  'border-primary-500 bg-primary-50 dark:bg-primary-900/20',
-                showAdvanced && 'bg-gray-100 dark:bg-dark-200'
-              )}
-              title='Advanced features'
-            >
-              {showAdvanced ? (
-                <ChevronUp className='h-4 w-4' />
-              ) : (
-                <>
-                  {hasAdvancedFeatures ? (
-                    <div className='flex items-center'>
-                      <ImageIcon className='h-3 w-3' />
-                      <Settings className='h-3 w-3 -ml-1' />
-                    </div>
-                  ) : (
-                    <ChevronDown className='h-4 w-4' />
-                  )}
-                </>
-              )}
-            </Button>
-
-            {/* Send/Stop Button */}
+          {/* Send/Stop Button - Right Side */}
+          <div className='flex flex-col justify-end'>
             {isGenerating ? (
               <Button
                 type='button'
@@ -186,7 +188,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </div>
         </form>
 
-        <div className='mt-2 sm:mt-3 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-dark-600'>
+        <div className='mt-2 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-dark-600'>
           <DocumentIndicator sessionId={currentSession?.id} />
           <div className='text-center'>
             <a
