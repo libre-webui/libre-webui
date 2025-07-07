@@ -30,6 +30,7 @@ import {
 import { SettingsModal } from '@/components/SettingsModal';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
+import { Logo } from '@/components/Logo';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useInitializeApp } from '@/hooks/useInitializeApp';
@@ -140,12 +141,21 @@ const App: React.FC = () => {
   // Show loading spinner while initializing auth
   if (authLoading) {
     return (
-      <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center'>
-        <div className='flex flex-col items-center gap-3'>
-          <div className='w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
-          <div className='text-gray-600 dark:text-gray-400'>
-            Loading authentication...
+      <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
+        <div className='sm:mx-auto sm:w-full sm:max-w-md'>
+          <div className='flex justify-center'>
+            <Logo />
           </div>
+          <h2
+            className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
+            style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+          >
+            Libre WebUI
+          </h2>
+        </div>
+
+        <div className='mt-8 flex flex-col items-center gap-4'>
+          <div className='w-8 h-8 border-4 border-gray-300 dark:border-gray-600 border-t-primary-500 dark:border-t-primary-400 rounded-full animate-spin'></div>
         </div>
       </div>
     );
