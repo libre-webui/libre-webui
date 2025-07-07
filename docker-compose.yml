@@ -10,6 +10,7 @@ services:
       - '3001:3001'
     environment:
       - NODE_ENV=production
+      - DOCKER_ENV=true
       - PORT=3001
       - FRONTEND_PORT=5173
       - OLLAMA_BASE_URL=http://ollama:11434

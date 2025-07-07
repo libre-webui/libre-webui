@@ -77,55 +77,72 @@ const corsConfig =
 // Security middleware
 app.use(
   helmet({
-    crossOriginEmbedderPolicy: process.env.NODE_ENV === 'production',
-    contentSecurityPolicy:
-      process.env.NODE_ENV === 'production'
-        ? {
-            directives: {
-              defaultSrc: ["'self'"],
-              scriptSrc: [
-                "'self'",
-                "'unsafe-inline'", // Required for Vite HMR and inline scripts
-                "'unsafe-eval'", // Required for Vite dev tools and dynamic imports
-              ],
-              styleSrc: [
-                "'self'",
-                "'unsafe-inline'", // Required for styled-components and CSS-in-JS
-                'https://fonts.googleapis.com',
-              ],
-              imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
-              connectSrc: [
-                "'self'",
-                'ws:',
-                'wss:',
-                'https:',
-                // Allow WebSocket connections for real-time features
-                `ws://localhost:${port}`,
-                `wss://localhost:${port}`,
-              ],
-              fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
-              objectSrc: ["'none'"],
-              frameAncestors: ["'self'"],
-              formAction: ["'self'"],
-              upgradeInsecureRequests: [],
-              // Add base-uri restriction for additional security
-              baseUri: ["'self'"],
-              // Prevent MIME type sniffing
-              manifestSrc: ["'self'"],
-              // Allow downloads for file exports
-              workerSrc: ["'self'", 'blob:'],
-            },
-          }
-        : false, // Disable CSP in development for easier debugging
-    // Enable additional security headers in production
+    // COEP - disable in Docker/development to avoid proxy issues
+    crossOriginEmbedderPolicy:
+      process.env.NODE_ENV === 'production' && !process.env.DOCKER_ENV
+        ? true
+        : false,
+
+    // Content Security Policy - Docker-aware configuration
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          ...(process.env.NODE_ENV === 'production'
+            ? [] // Strict in production
+            : ["'unsafe-inline'", "'unsafe-eval'"]), // Allow for dev tools
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'", // Required for styled-components and CSS-in-JS
+          'https://fonts.googleapis.com',
+        ],
+        imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+        connectSrc: [
+          "'self'",
+          'ws:',
+          'wss:',
+          'https:',
+          'http:',
+          // WebSocket connections - flexible for Docker networking
+          `ws://localhost:${port}`,
+          `wss://localhost:${port}`,
+          'ws://libre-webui:3001',
+          'wss://libre-webui:3001',
+          ...(process.env.NODE_ENV !== 'production'
+            ? [
+                'http://localhost:*',
+                'ws://localhost:*',
+                'http://libre-webui:*',
+                'ws://libre-webui:*',
+              ]
+            : []),
+        ],
+        fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'self'"],
+        formAction: ["'self'"],
+        upgradeInsecureRequests:
+          process.env.NODE_ENV === 'production' && !process.env.DOCKER_ENV
+            ? []
+            : null,
+        baseUri: ["'self'"],
+        manifestSrc: ["'self'"],
+        workerSrc: ["'self'", 'blob:'],
+      },
+    },
+
+    // HSTS - disabled in Docker to avoid reverse proxy conflicts
     hsts:
-      process.env.NODE_ENV === 'production'
+      process.env.NODE_ENV === 'production' && !process.env.DOCKER_ENV
         ? {
             maxAge: 31536000, // 1 year
             includeSubDomains: true,
             preload: true,
           }
-        : false,
+        : false, // Disabled in Docker/development
+
     // Prevent clickjacking
     frameguard: { action: 'deny' },
     // Prevent MIME type sniffing

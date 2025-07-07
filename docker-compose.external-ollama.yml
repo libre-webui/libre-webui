@@ -10,6 +10,7 @@ services:
       - '3001:3001'
     environment:
       - NODE_ENV=production
+      - DOCKER_ENV=true
       - PORT=3001
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       - CORS_ORIGIN=http://localhost:8080
