@@ -21,6 +21,8 @@ services:
       - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300000}
       - OLLAMA_LONG_OPERATION_TIMEOUT=${OLLAMA_LONG_OPERATION_TIMEOUT:-900000}
       - VITE_API_TIMEOUT=${VITE_API_TIMEOUT:-300000}
+      # Database path - points to the volume mount
+      - DATA_DIR=/app/backend/data
     volumes:
       - libre_webui_data:/app/backend/data
       - libre_webui_temp:/app/backend/temp

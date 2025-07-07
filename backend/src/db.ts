@@ -27,7 +27,10 @@ let db: Database.Database | null = null;
  */
 export function getDatabase(): Database.Database {
   if (!db) {
-    const dbPath = path.join(process.cwd(), 'data.sqlite');
+    // Use environment variable for database path, default to data directory
+    const dataDir =
+      process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+    const dbPath = path.join(dataDir, 'data.sqlite');
 
     // Ensure the directory exists
     const dir = path.dirname(dbPath);
