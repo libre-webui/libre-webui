@@ -77,8 +77,63 @@ const corsConfig =
 // Security middleware
 app.use(
   helmet({
-    crossOriginEmbedderPolicy: false,
-    contentSecurityPolicy: false, // Disable CSP temporarily for mobile debugging
+    crossOriginEmbedderPolicy: process.env.NODE_ENV === 'production',
+    contentSecurityPolicy:
+      process.env.NODE_ENV === 'production'
+        ? {
+            directives: {
+              defaultSrc: ["'self'"],
+              scriptSrc: [
+                "'self'",
+                "'unsafe-inline'", // Required for Vite HMR and inline scripts
+                "'unsafe-eval'", // Required for Vite dev tools and dynamic imports
+              ],
+              styleSrc: [
+                "'self'",
+                "'unsafe-inline'", // Required for styled-components and CSS-in-JS
+                'https://fonts.googleapis.com',
+              ],
+              imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+              connectSrc: [
+                "'self'",
+                'ws:',
+                'wss:',
+                'https:',
+                // Allow WebSocket connections for real-time features
+                `ws://localhost:${port}`,
+                `wss://localhost:${port}`,
+              ],
+              fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+              objectSrc: ["'none'"],
+              frameAncestors: ["'self'"],
+              formAction: ["'self'"],
+              upgradeInsecureRequests: [],
+              // Add base-uri restriction for additional security
+              baseUri: ["'self'"],
+              // Prevent MIME type sniffing
+              manifestSrc: ["'self'"],
+              // Allow downloads for file exports
+              workerSrc: ["'self'", 'blob:'],
+            },
+          }
+        : false, // Disable CSP in development for easier debugging
+    // Enable additional security headers in production
+    hsts:
+      process.env.NODE_ENV === 'production'
+        ? {
+            maxAge: 31536000, // 1 year
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
+    // Prevent clickjacking
+    frameguard: { action: 'deny' },
+    // Prevent MIME type sniffing
+    noSniff: true,
+    // Hide X-Powered-By header
+    hidePoweredBy: true,
+    // Prevent XSS attacks
+    xssFilter: true,
   })
 );
 
