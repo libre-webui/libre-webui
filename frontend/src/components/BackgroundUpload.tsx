@@ -45,7 +45,7 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
     enabled: false,
     imageUrl: '',
     blurAmount: 10,
-    opacity: 0.3,
+    opacity: 0.6,
   };
 
   const handleFileSelect = async (file: File) => {

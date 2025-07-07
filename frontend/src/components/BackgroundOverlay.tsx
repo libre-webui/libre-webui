@@ -26,7 +26,7 @@ export const BackgroundOverlay: React.FC = () => {
     enabled: false,
     imageUrl: '',
     blurAmount: 10,
-    opacity: 0.3,
+    opacity: 0.6,
   };
 
   // Use backgroundImage from store if available, otherwise use the one from preferences

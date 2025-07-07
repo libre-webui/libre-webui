@@ -104,7 +104,7 @@ export const useAppStore = create<AppState>()(
           enabled: false,
           imageUrl: '',
           blurAmount: 10,
-          opacity: 0.3,
+          opacity: 0.6,
         },
       },
       setPreferences: newPreferences =>
@@ -157,7 +157,7 @@ export const useAppStore = create<AppState>()(
             enabled: !!imageUrl,
             imageUrl: imageUrl || '',
             blurAmount: state.preferences.backgroundSettings?.blurAmount || 10,
-            opacity: state.preferences.backgroundSettings?.opacity || 0.3,
+            opacity: state.preferences.backgroundSettings?.opacity || 0.6,
           },
         };
         state.setPreferences(updatedPreferences);

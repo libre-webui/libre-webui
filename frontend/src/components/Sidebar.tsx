@@ -33,6 +33,7 @@ import { Logo } from '@/components/Logo';
 import { SettingsModal } from '@/components/SettingsModal';
 import { useChatStore } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/appStore';
 import { ChatSession } from '@/types';
 import { formatTimestamp, truncateText, cn } from '@/utils';
 
@@ -58,6 +59,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     models,
   } = useChatStore();
   const { user, isAdmin, systemInfo } = useAuthStore();
+  const { backgroundImage } = useAppStore();
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -163,12 +165,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-80 bg-gray-50/90 dark:bg-dark-25/90 backdrop-blur-sm border-r border-gray-200 dark:border-dark-200 transform transition-all duration-300 ease-in-out shadow-xl',
+          'fixed inset-y-0 left-0 z-50 w-80 border-r border-gray-200 dark:border-dark-200 transform transition-all duration-300 ease-in-out shadow-xl',
           // On mobile: slide in/out from left
           // On desktop: slide in/out from left but maintain layout flow
           isOpen ? 'translate-x-0' : '-translate-x-80', // Hide completely to the left (full width)
           // Remove shadow on desktop when integrated into layout
           'lg:shadow-none',
+          // Conditional background based on whether background image is set
+          backgroundImage
+            ? 'bg-gray-50/70 dark:bg-dark-25/70 backdrop-blur-sm'
+            : 'bg-gray-50 dark:bg-dark-25',
           className
         )}
       >
@@ -240,7 +246,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   location.pathname === '/chat' || location.pathname === '/'
                     ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
                 )}
               >
                 <MessageSquare className='h-4 w-4' />
@@ -254,7 +260,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   location.pathname === '/models'
                     ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
                 )}
               >
                 <Database className='h-4 w-4' />
@@ -270,7 +276,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                     location.pathname === '/users'
                       ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
                   )}
                 >
                   <Users className='h-4 w-4' />
@@ -285,7 +291,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClose();
                   }
                 }}
-                className='flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-200 w-full text-left'
+                className='flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200 w-full text-left'
               >
                 <Settings className='h-4 w-4' />
                 Settings

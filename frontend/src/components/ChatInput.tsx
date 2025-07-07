@@ -16,17 +16,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Send,
-  Square,
-  Image as ImageIcon,
-  Settings,
-  ChevronDown,
-  ChevronUp,
-  Paperclip,
-  Plus,
-  Minus,
-} from 'lucide-react';
+import { Send, Square, Paperclip, Plus, Minus } from 'lucide-react';
 import { Button, Textarea } from '@/components/ui';
 import { ImageUpload } from './ImageUpload';
 import { DocumentUpload } from './DocumentUpload';
