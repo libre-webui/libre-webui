@@ -154,6 +154,29 @@ kill -9 XXXX
 3. **Close other applications** to free up memory
 4. **Check your RAM:** You need at least 4GB free for most models
 
+### **"Timeout of 30000ms exceeded" Errors**
+**Problem:** Large models on multiple GPUs need more time to load into memory.
+
+**Solutions:**
+1. **Quick Fix - Environment Variables:**
+   ```bash
+   # Backend (.env file or environment)
+   OLLAMA_TIMEOUT=300000          # 5 minutes for regular operations
+   OLLAMA_LONG_OPERATION_TIMEOUT=900000  # 15 minutes for model loading
+   
+   # Frontend (.env file or environment)
+   VITE_API_TIMEOUT=300000        # 5 minutes for API calls
+   ```
+
+2. **For Large Models (like CodeLlama 70B, Llama 70B+):**
+   ```bash
+   # Increase to 30 minutes for very large models
+   OLLAMA_LONG_OPERATION_TIMEOUT=1800000
+   VITE_API_TIMEOUT=1800000
+   ```
+
+3. **Restart the services** after changing environment variables
+
 ### **Interface Is Laggy**
 **Solutions:**
 1. **Hard refresh** your browser (Shift + Refresh)

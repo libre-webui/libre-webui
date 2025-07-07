@@ -30,13 +30,29 @@ import {
 
 class OllamaService {
   private client: AxiosInstance;
+  private longOperationClient: AxiosInstance;
   private baseUrl: string;
 
   constructor() {
     this.baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
+    // Use environment variable for timeout, default to 5 minutes for large models on multiple GPUs
+    const timeout = parseInt(process.env.OLLAMA_TIMEOUT || '300000');
+    // Use extended timeout for model operations (pulling, loading), default to 15 minutes
+    const longOperationTimeout = parseInt(
+      process.env.OLLAMA_LONG_OPERATION_TIMEOUT || '900000'
+    );
+
     this.client = axios.create({
       baseURL: this.baseUrl,
-      timeout: 30000,
+      timeout: timeout,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    this.longOperationClient = axios.create({
+      baseURL: this.baseUrl,
+      timeout: longOperationTimeout,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -102,7 +118,8 @@ class OllamaService {
     request: OllamaGenerateRequest
   ): Promise<OllamaGenerateResponse> {
     try {
-      const response = await this.client.post('/api/generate', {
+      // Use long operation client for generation as it may need to load model on first use
+      const response = await this.longOperationClient.post('/api/generate', {
         ...request,
         stream: false, // For non-streaming responses
       });
@@ -120,7 +137,8 @@ class OllamaService {
     onComplete: () => void
   ): Promise<void> {
     try {
-      const response = await this.client.post(
+      // Use long operation client for streaming generation as it may need to load model on first use
+      const response = await this.longOperationClient.post(
         '/api/generate',
         {
           ...request,
@@ -172,7 +190,7 @@ class OllamaService {
   async pullModel(modelName: string): Promise<void> {
     try {
       console.log(`Pulling model: ${modelName}`);
-      await this.client.post('/api/pull', {
+      await this.longOperationClient.post('/api/pull', {
         name: modelName,
       });
       console.log(`Successfully pulled model: ${modelName}`);
@@ -277,7 +295,8 @@ class OllamaService {
     request: OllamaChatRequest
   ): Promise<OllamaChatResponse> {
     try {
-      const response = await this.client.post('/api/chat', {
+      // Use long operation client for chat generation as it may need to load model on first use
+      const response = await this.longOperationClient.post('/api/chat', {
         ...request,
         stream: false,
       });
@@ -297,7 +316,8 @@ class OllamaService {
     onComplete: () => void
   ): Promise<void> {
     try {
-      const response = await this.client.post(
+      // Use long operation client for chat streaming as it may need to load model on first use
+      const response = await this.longOperationClient.post(
         '/api/chat',
         {
           ...request,

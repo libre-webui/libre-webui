@@ -127,9 +127,14 @@ const getDemoSessions = (): ChatSession[] => {
 
 const DEMO_SESSIONS: ChatSession[] = getDemoSessions();
 
+// Get timeout from environment variable, default to 5 minutes for large models
+const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT
+  ? parseInt(import.meta.env.VITE_API_TIMEOUT)
+  : 300000;
+
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: API_TIMEOUT,
 });
 
 // Request interceptor

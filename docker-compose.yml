@@ -17,6 +17,10 @@ services:
       - SINGLE_USER_MODE=false
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
       - JWT_EXPIRES_IN=7d
+      # Timeout configuration for large models on multiple GPUs
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300000}
+      - OLLAMA_LONG_OPERATION_TIMEOUT=${OLLAMA_LONG_OPERATION_TIMEOUT:-900000}
+      - VITE_API_TIMEOUT=${VITE_API_TIMEOUT:-300000}
     volumes:
       - libre_webui_data:/app/backend/data
       - libre_webui_temp:/app/backend/temp
