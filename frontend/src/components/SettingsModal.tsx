@@ -46,6 +46,8 @@ import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { preferencesApi, ollamaApi, documentsApi } from '@/utils/api';
 import toast from 'react-hot-toast';
+// Import package.json to get version dynamically
+import packageJson from '../../../package.json';
 
 interface SystemInfo {
   ollamaVersion?: string;
@@ -1799,7 +1801,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Version Info */}
               <div className='mt-6 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
                 <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400'>
-                  <span>Version 0.1.0-rc</span>
+                  <span>Version {packageJson.version}</span>
                   <span>Built with ☕️ for the FOSS community</span>
                 </div>
               </div>
