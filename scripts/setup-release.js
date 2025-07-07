@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -14,17 +14,43 @@ class SetupManager {
   }
 
   /**
-   * Execute shell command
+   * Execute shell command with validation
    */
   exec(command, options = {}) {
+    // Validate command is a string and not empty
+    if (typeof command !== 'string' || !command.trim()) {
+      throw new Error('Invalid command: must be a non-empty string');
+    }
+
+    // Parse command into program and arguments for safer execution
+    const parts = command.trim().split(/\s+/);
+    const program = parts[0];
+    const args = parts.slice(1);
+
+    // Whitelist allowed programs for security
+    const allowedPrograms = ['git', 'npm', 'chmod'];
+    
+    if (!allowedPrograms.includes(program)) {
+      throw new Error(`Program not allowed: ${program}`);
+    }
+
     try {
-      const result = execSync(command, { 
-        encoding: 'utf8', 
+      const result = spawnSync(program, args, {
+        encoding: 'utf8',
         stdio: options.silent ? 'pipe' : 'inherit',
         cwd: this.projectRoot,
-        ...options 
+        ...options
       });
-      return result ? result.trim() : '';
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      if (result.status !== 0) {
+        throw new Error(`Command failed with exit code ${result.status}`);
+      }
+
+      return result.stdout ? result.stdout.trim() : '';
     } catch (error) {
       if (!options.allowFailure) {
         console.error(`Error executing command: ${command}`);

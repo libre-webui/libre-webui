@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -15,9 +15,27 @@ class ChangelogGenerator {
   }
 
   /**
-   * Execute shell command and return output
+   * Execute shell command with validation
    */
   exec(command, options = {}) {
+    // Validate command is a string and not empty
+    if (typeof command !== 'string' || !command.trim()) {
+      throw new Error('Invalid command: must be a non-empty string');
+    }
+
+    // Validate command is a safe git command
+    const safePatterns = [
+      /^git\s+describe\s+--tags\s+--abbrev=0$/,
+      /^git\s+log\s+[\w\-\.]+\.\.HEAD\s+--oneline$/,
+      /^git\s+log\s+--oneline$/,
+      /^git\s+log\s+[\w\-\.]+\s+--oneline$/
+    ];
+
+    const isSafe = safePatterns.some(pattern => pattern.test(command));
+    if (!isSafe) {
+      throw new Error(`Unsafe command: ${command}`);
+    }
+
     try {
       return execSync(command, { 
         encoding: 'utf8', 

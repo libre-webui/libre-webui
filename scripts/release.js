@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { execSync } = require('child_process');
+const { execSync, spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const semver = require('semver');
@@ -21,20 +21,84 @@ class ReleaseManager {
   }
 
   /**
-   * Execute shell command and return output
+   * Execute shell command with validation
    */
   exec(command, options = {}) {
-    try {
-      const result = execSync(command, { 
-        encoding: 'utf8', 
-        stdio: options.silent ? 'pipe' : 'inherit',
-        ...options 
-      });
-      return result ? result.trim() : '';
-    } catch (error) {
-      console.error(`Error executing command: ${command}`);
-      console.error(error.message);
-      process.exit(1);
+    // Validate command is a string and not empty
+    if (typeof command !== 'string' || !command.trim()) {
+      throw new Error('Invalid command: must be a non-empty string');
+    }
+
+    // For specific safe commands that need shell features, use execSync with validation
+    const shellCommands = [
+      'git diff --exit-code',
+      'git diff --cached --exit-code',
+      'git describe --tags --abbrev=0',
+      'git log',
+      'npm run lint',
+      'npm run build',
+      'git add .',
+      'git commit',
+      'git tag'
+    ];
+
+    const needsShell = shellCommands.some(cmd => command.includes(cmd));
+
+    if (needsShell) {
+      // Validate command starts with known safe patterns
+      const safePatterns = [
+        /^git\s+/,
+        /^npm\s+run\s+/,
+        /^git\s+log\s+[\w\-\.]+\.\.HEAD\s+--oneline$/,
+        /^git\s+commit\s+-m\s+"/,
+        /^git\s+tag\s+-a\s+v[\d\.]+\s+-m\s+"/
+      ];
+
+      const isSafe = safePatterns.some(pattern => pattern.test(command));
+      if (!isSafe) {
+        throw new Error(`Unsafe shell command: ${command}`);
+      }
+
+      try {
+        const result = execSync(command, { 
+          encoding: 'utf8', 
+          stdio: options.silent ? 'pipe' : 'inherit',
+          ...options 
+        });
+        return result ? result.trim() : '';
+      } catch (error) {
+        console.error(`Error executing command: ${command}`);
+        console.error(error.message);
+        process.exit(1);
+      }
+    } else {
+      // Use spawn for better security
+      const parts = command.trim().split(/\s+/);
+      const program = parts[0];
+      const args = parts.slice(1);
+
+      const allowedPrograms = ['git', 'npm'];
+      if (!allowedPrograms.includes(program)) {
+        throw new Error(`Program not allowed: ${program}`);
+      }
+
+      try {
+        const result = spawnSync(program, args, {
+          encoding: 'utf8',
+          stdio: options.silent ? 'pipe' : 'inherit',
+          ...options
+        });
+
+        if (result.error) {
+          throw result.error;
+        }
+
+        return result.stdout ? result.stdout.trim() : '';
+      } catch (error) {
+        console.error(`Error executing command: ${command}`);
+        console.error(error.message);
+        process.exit(1);
+      }
     }
   }
 
