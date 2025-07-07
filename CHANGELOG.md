@@ -11,9 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔧 Technical Improvements
 
-### � Bug Fixes
+### 🐛 Bug Fixes
 
 ### 📚 Documentation
+
+## [0.1.1] - 2025-07-07
+
+### ✨ Added
+
+- add --patch, --minor, --major flags to release script
+- add automated release system with conventional commits
+- dynamically display version from package.json in SettingsModal
+- add DATA_DIR environment variable for database path configuration
+- enhance timeout configurations for Ollama service and API calls
+- Remove deprecated Docker files and add external Ollama support in Docker setup feat: Update README and documentation for Docker deployment and external Ollama configuration fix: Adjust Dockerfile for flexible frontend port configuration and environment variables style: Improve code readability and consistency across Docker-related files
+- Enhance Dockerfile for multi-service startup and update WebSocket connection logic
+- Docker deployment fixes and authentication improvements
+
+### 🔧 Technical Improvements
+
+- remove obsolete workflow files and update README for clarity
+- format code for better readability and consistency
+
+### 📚 Documentation
+
+- Update README for Docker configurations and improve table formatting
+
+### 🔄 Other Changes
+
+- Merge branch 'main' of https://github.com/libre-webui/libre-webui into dev
+- Merge pull request #20 from libre-webui/dependabot/npm_and_yarn/dev/all-dependencies-fa4baa3b98
+- deps(deps): bump the all-dependencies group with 2 updates
 
 ## [0.1.0] - 2025-07-06
 
