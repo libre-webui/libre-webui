@@ -13,6 +13,7 @@ services:
       - DOCKER_ENV=true
       - PORT=3001
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      # For network access, add your IP/hostname to CORS_ORIGIN:
       - CORS_ORIGIN=http://localhost:8080
       - SINGLE_USER_MODE=false
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}

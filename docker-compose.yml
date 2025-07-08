@@ -14,6 +14,7 @@ services:
       - PORT=3001
       - FRONTEND_PORT=5173
       - OLLAMA_BASE_URL=http://ollama:11434
+      # For network access, add your IP/hostname to CORS_ORIGIN:
       - CORS_ORIGIN=http://localhost:8080
       - SINGLE_USER_MODE=false
       - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}

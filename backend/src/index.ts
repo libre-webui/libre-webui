@@ -62,17 +62,26 @@ const port = process.env.PORT || 3001;
 const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
   'http://localhost:5173',
   'http://localhost:3000',
-  'http://0.0.0.0:3000',
-  'http://0.0.0.0:8080',
   'http://localhost:8080',
-  'http://192.168.2.159:8080',
 ];
 
-// Allow any origin in development/Docker mode
-const corsConfig =
-  process.env.NODE_ENV === 'production'
-    ? { origin: corsOrigins }
-    : { origin: true };
+// Multi-user safe CORS configuration
+const corsConfig = {
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) => {
+    // Allow requests with no origin (mobile apps, etc.)
+    if (!origin) return callback(null, true);
+
+    // Check if the origin is in our allowed list
+    if (corsOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+};
 
 // Security middleware
 app.use(
