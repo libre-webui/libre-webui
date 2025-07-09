@@ -103,6 +103,11 @@ export const UserManager: React.FC = () => {
         role: formData.role,
       };
 
+      // Only include password if it's provided
+      if (formData.password && formData.password.trim() !== '') {
+        updateData.password = formData.password;
+      }
+
       const response = await usersApi.updateUser(editingUser.id, updateData);
       if (response.success && response.data) {
         setUsers(
@@ -350,27 +355,57 @@ export const UserManager: React.FC = () => {
                   />
                 </div>
               </div>
-              <div>
-                <Label
-                  htmlFor='edit-role'
-                  className='text-gray-700 dark:text-gray-300'
-                >
-                  Role
-                </Label>
-                <select
-                  id='edit-role'
-                  value={formData.role}
-                  onChange={e =>
-                    setFormData({
-                      ...formData,
-                      role: e.target.value as 'admin' | 'user',
-                    })
-                  }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-gray-100 transition-colors duration-200'
-                >
-                  <option value='user'>User</option>
-                  <option value='admin'>Admin</option>
-                </select>
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <Label
+                    htmlFor='edit-password'
+                    className='text-gray-700 dark:text-gray-300'
+                  >
+                    New Password (optional)
+                  </Label>
+                  <Input
+                    id='edit-password'
+                    type='password'
+                    value={formData.password}
+                    onChange={e =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    placeholder='Leave empty to keep current password'
+                    className='bg-white dark:bg-dark-100 border-gray-300 dark:border-dark-300 text-gray-900 dark:text-gray-100'
+                  />
+                </div>
+                <div>
+                  <Label
+                    htmlFor='edit-role'
+                    className='text-gray-700 dark:text-gray-300'
+                  >
+                    Role
+                  </Label>
+                  <select
+                    id='edit-role'
+                    value={formData.role}
+                    onChange={e =>
+                      setFormData({
+                        ...formData,
+                        role: e.target.value as 'admin' | 'user',
+                      })
+                    }
+                    disabled={
+                      editingUser?.id === currentUser?.id &&
+                      currentUser?.role === 'admin'
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-gray-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+                  >
+                    <option value='user'>User</option>
+                    <option value='admin'>Admin</option>
+                  </select>
+                  {editingUser?.id === currentUser?.id &&
+                    currentUser?.role === 'admin' && (
+                      <p className='text-xs text-amber-600 dark:text-amber-400 mt-1'>
+                        Cannot change your own admin role to prevent lockout
+                      </p>
+                    )}
+                </div>
               </div>
               <div className='flex space-x-2'>
                 <Button type='submit'>Update User</Button>
@@ -430,7 +465,6 @@ export const UserManager: React.FC = () => {
                     variant='outline'
                     size='sm'
                     onClick={() => startEdit(user)}
-                    disabled={user.id === currentUser?.id}
                     className='text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400'
                   >
                     <Edit size={16} />
