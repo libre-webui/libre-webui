@@ -311,7 +311,8 @@ router.get(
         `attachment; filename="${fileName}"`
       );
 
-      res.json(exportData);
+      // Send raw JSON, not wrapped in API response
+      res.send(JSON.stringify(exportData, null, 2));
     } catch (error: unknown) {
       res.status(500).json({
         success: false,
