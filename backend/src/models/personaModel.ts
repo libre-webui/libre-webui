@@ -24,11 +24,10 @@ interface PersonaRow {
   user_id: string;
   name: string;
   description: string;
-  instructions: string;
   model: string;
   parameters: string;
-  avatar_url?: string;
-  background_url?: string;
+  avatar?: string;
+  background?: string;
   created_at: number;
   updated_at: number;
 }

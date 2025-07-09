@@ -550,7 +550,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
           );
 
           allModels.push(...personaModels);
-          console.log('Persona models added:', personaModels.length);
 
           // Update personas store
           set(state => ({ ...state, personas: personasMap }));
