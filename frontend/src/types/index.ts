@@ -86,6 +86,10 @@ export interface OllamaModel {
   // Plugin-specific fields
   isPlugin?: boolean;
   pluginName?: string;
+  // Persona-specific fields
+  isPersona?: boolean;
+  personaName?: string;
+  personaDescription?: string;
 }
 
 export interface GenerationOptions {
