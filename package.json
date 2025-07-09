@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:host": "concurrently \"npm run dev:backend\" \"npm run dev:frontend -- --host --port 8080\"",
+    "dev:host": "concurrently \"npm run dev:backend\" \"cd frontend && npm run dev -- --host --port 8080\"",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:backend": "cd backend && npm run dev",
     "build": "npm run build:frontend && npm run build:backend",
