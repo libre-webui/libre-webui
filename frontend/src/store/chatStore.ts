@@ -21,8 +21,9 @@ import {
   ChatMessage,
   OllamaModel,
   GenerationStatistics,
+  Persona,
 } from '@/types';
-import { chatApi, ollamaApi, preferencesApi } from '@/utils/api';
+import { chatApi, ollamaApi, preferencesApi, personaApi } from '@/utils/api';
 import { pluginApi } from '@/utils/api';
 import { generateId } from '@/utils';
 import toast from 'react-hot-toast';
@@ -48,7 +49,8 @@ interface ChatState {
   setCurrentSession: (session: ChatSession | null) => void;
   createSession: (
     model: string,
-    title?: string
+    title?: string,
+    personaId?: string
   ) => Promise<ChatSession | undefined>;
   loadSessions: () => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
@@ -81,6 +83,11 @@ interface ChatState {
   setSelectedModel: (model: string) => void;
   updateCurrentSessionModel: (model: string) => Promise<void>;
 
+  // Personas
+  personas: { [key: string]: Persona };
+  loadPersonas: () => Promise<void>;
+  getCurrentPersona: () => Persona | null;
+
   // System Message
   systemMessage: string;
   setSystemMessage: (message: string) => void;
@@ -96,17 +103,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
   sessions: [],
   currentSession: null,
   setCurrentSession: session => {
-    console.log('Store: setCurrentSession called', {
-      newSessionId: session?.id,
-      messagesCount: session?.messages.length,
-    });
     set({ currentSession: session });
   },
 
-  createSession: async (model: string, title?: string) => {
+  createSession: async (model: string, title?: string, personaId?: string) => {
     try {
       set({ loading: true, error: null });
-      const response = await chatApi.createSession(model, title);
+      const response = await chatApi.createSession(model, title, personaId);
 
       if (response.success && response.data) {
         const newSession = response.data;
@@ -172,10 +175,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   deleteSession: async (sessionId: string) => {
     try {
-      console.log('Store: deleteSession called with:', sessionId);
       const response = await chatApi.deleteSession(sessionId);
-      console.log('Store: deleteSession API response:', response);
-
       if (response.success) {
         set(state => {
           const updatedSessions = state.sessions.filter(
@@ -306,13 +306,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       timestamp: Date.now(),
     };
 
-    console.log('Store: addMessage called', {
-      sessionId,
-      role: message.role,
-      messageId: newMessage.id,
-      contentLength: message.content.length,
-    });
-
     set(state => {
       // Prevent adding duplicate messages
       const session = state.sessions.find(s => s.id === sessionId);
@@ -321,7 +314,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
           m => m.id === newMessage.id
         );
         if (existingMessage) {
-          console.log('Store: Message already exists, skipping add');
           return state;
         }
       }
@@ -341,8 +333,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         sessions: updatedSessions,
         currentSession:
           state.currentSession?.id === sessionId
-            ? updatedSessions.find(s => s.id === sessionId) ||
-              state.currentSession
+            ? (() => {
+                const updatedSession =
+                  updatedSessions.find(s => s.id === sessionId) ||
+                  state.currentSession;
+                return updatedSession;
+              })()
             : state.currentSession,
       };
     });
@@ -350,17 +346,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   updateMessage: (sessionId: string, messageId: string, content: string) => {
     set(state => {
-      console.log('Store: updateMessage called', {
-        sessionId,
-        messageId,
-        contentLength: content.length,
-        currentSessionId: state.currentSession?.id,
-        isCurrentSession: state.currentSession?.id === sessionId,
-      });
-
       // Only update if this is for the current session
       if (state.currentSession?.id !== sessionId) {
-        console.log('Store: Ignoring updateMessage for non-current session');
         return state;
       }
 
@@ -393,11 +380,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ? updatedSessions.find(s => s.id === sessionId) ||
             state.currentSession
           : state.currentSession;
-
-      console.log(
-        'Store: Updated session messages count:',
-        newCurrentSession?.messages.length
-      );
 
       return {
         sessions: updatedSessions,
@@ -530,6 +512,53 @@ export const useChatStore = create<ChatState>((set, get) => ({
         // Continue without plugin models
       }
 
+      // Load personas and add them as special models
+      try {
+        const { personaApi } = await import('@/utils/api');
+        const personasResponse = await personaApi.getPersonas();
+        if (personasResponse.success && personasResponse.data) {
+          // Store personas in the personas object for easy lookup
+          const personasMap = personasResponse.data.reduce(
+            (acc: { [key: string]: Persona }, persona: Persona) => {
+              acc[persona.id] = persona;
+              return acc;
+            },
+            {}
+          );
+
+          const personaModels: OllamaModel[] = personasResponse.data.map(
+            persona => ({
+              name: `persona:${persona.id}`,
+              model: persona.model,
+              size: 0,
+              digest: '',
+              details: {
+                parent_model: persona.model,
+                format: 'persona',
+                family: 'persona',
+                families: ['persona'],
+                parameter_size: '',
+                quantization_level: '',
+              },
+              modified_at: new Date(persona.updated_at).toISOString(),
+              expires_at: new Date().toISOString(),
+              size_vram: 0,
+              isPersona: true,
+              personaName: persona.name,
+              personaDescription: persona.description,
+            })
+          );
+
+          allModels.push(...personaModels);
+
+          // Update personas store
+          set(state => ({ ...state, personas: personasMap }));
+        }
+      } catch (personaError) {
+        console.error('❌ Failed to load personas:', personaError);
+        // Continue without personas
+      }
+
       console.log('Total models loaded:', allModels.length);
       set({ models: allModels, loading: false });
     } catch (error: unknown) {
@@ -601,6 +630,50 @@ export const useChatStore = create<ChatState>((set, get) => ({
       toast.error(errorMessage);
       throw error;
     }
+  },
+
+  // Personas
+  personas: {},
+  loadPersonas: async () => {
+    try {
+      set({ loading: true, error: null });
+      const response = await personaApi.getPersonas();
+
+      if (response.success && response.data) {
+        const personas = response.data;
+
+        set({
+          personas: personas.reduce(
+            (acc: { [key: string]: Persona }, persona: Persona) => {
+              acc[persona.id] = persona;
+              return acc;
+            },
+            {}
+          ),
+          loading: false,
+        });
+
+        console.log('✅ Personas loaded:', personas.length);
+      }
+    } catch (error: unknown) {
+      const errorMessage = getErrorMessage(error, 'Failed to load personas');
+      set({ error: errorMessage, loading: false });
+      console.error('❌ Failed to load personas:', errorMessage);
+    }
+  },
+
+  getCurrentPersona: () => {
+    const state = get();
+    if (
+      !state.currentSession ||
+      !state.currentSession.model?.startsWith('persona:')
+    ) {
+      return null;
+    }
+
+    // Extract persona ID from the model string
+    const personaId = state.currentSession.model.replace('persona:', '');
+    return state.personas[personaId] || null;
   },
 
   // System Message

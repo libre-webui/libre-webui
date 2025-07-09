@@ -27,6 +27,7 @@ import {
   Settings,
   Database,
   Users,
+  User,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { Logo } from '@/components/Logo';
@@ -265,6 +266,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <Database className='h-4 w-4' />
                 Models
+              </Link>
+
+              <Link
+                to='/personas'
+                onClick={() => window.innerWidth < 768 && onClose()}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  location.pathname === '/personas'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
+                )}
+              >
+                <User className='h-4 w-4' />
+                Personas
               </Link>
 
               {/* User Management - only show for admins when auth is required */}

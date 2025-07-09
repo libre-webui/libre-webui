@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { Logo } from '@/components/Logo';
@@ -27,6 +27,7 @@ import { Select } from '@/components/ui';
 export const ChatPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     currentSession,
     sessions,
@@ -36,10 +37,12 @@ export const ChatPage: React.FC = () => {
     createSession,
     setCurrentSession,
     loadSessions,
+    getCurrentPersona,
   } = useChatStore();
   const { sendMessage, stopGeneration, isStreaming } = useChat(
     currentSession?.id || ''
   );
+  const currentPersona = getCurrentPersona();
 
   // Load sessions on mount
   useEffect(() => {
@@ -72,23 +75,39 @@ export const ChatPage: React.FC = () => {
             navigate('/', { replace: true });
           }
         }
-      } else if (!sessionId && sessions.length > 0) {
+      } else if (
+        !sessionId &&
+        sessions.length > 0 &&
+        location.pathname === '/'
+      ) {
         // No sessionId in URL but we have sessions, redirect to the most recent session
+        // Only redirect from root path (/), not from /chat (which should show welcome screen)
         navigate(`/c/${sessions[0].id}`, { replace: true });
       }
     };
 
     handleSessionFromUrl();
-  }, [sessionId, sessions, setCurrentSession, navigate, currentSession?.id]); // Include currentSession?.id
+  }, [
+    sessionId,
+    sessions,
+    setCurrentSession,
+    navigate,
+    currentSession?.id,
+    location.pathname,
+  ]);
 
-  const handleModelChange = async (model: string) => {
-    setSelectedModel(model);
-    if (!currentSession) {
-      const newSession = await createSession(model);
+  const handleCreateSession = async () => {
+    if (selectedModel) {
+      const newSession = await createSession(selectedModel);
       if (newSession) {
         navigate(`/c/${newSession.id}`, { replace: true });
       }
     }
+  };
+
+  const handleModelChange = async (model: string) => {
+    setSelectedModel(model);
+    // Don't auto-create session on model change, let user click "New Chat"
   };
 
   const handleSendMessage = (
@@ -112,28 +131,45 @@ export const ChatPage: React.FC = () => {
             Welcome to Libre WebUI
           </h2>
           <p className='text-gray-600 dark:text-dark-600 mb-8 leading-relaxed'>
-            Select a model and start a conversation with your AI assistant
+            Select a model or persona and start a conversation with your AI
+            assistant
           </p>
 
           {models.length > 0 ? (
             <div className='space-y-6'>
-              <Select
-                label='Choose a model'
-                value={selectedModel}
-                onChange={e => handleModelChange(e.target.value)}
-                options={models.map(model => ({
-                  value: model.name,
-                  label: model.name,
-                }))}
-                className='text-left'
-              />
+              <div className='space-y-3'>
+                <Select
+                  label='Choose a model or persona'
+                  value={selectedModel}
+                  onChange={e => handleModelChange(e.target.value)}
+                  options={models.map(model => ({
+                    value: model.name,
+                    label: model.name,
+                  }))}
+                  className='text-left'
+                />
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  Personas are shown with a purple indicator in the chat header
+                  when active.
+                  <span className='block mt-1'>
+                    <a
+                      href='/personas'
+                      className='text-blue-500 hover:text-blue-600'
+                    >
+                      Create and manage personas
+                    </a>{' '}
+                    in the Personas tab.
+                  </span>
+                </p>
+              </div>
+
               {selectedModel && (
-                <div className='p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl'>
-                  <p className='text-sm text-gray-700 dark:text-dark-700'>
-                    Click &quot;New Chat&quot; in the sidebar to begin your
-                    conversation
-                  </p>
-                </div>
+                <button
+                  onClick={handleCreateSession}
+                  className='w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-colors'
+                >
+                  Start Chat with {selectedModel}
+                </button>
               )}
             </div>
           ) : (
@@ -155,17 +191,36 @@ export const ChatPage: React.FC = () => {
   }
 
   return (
-    <div className='flex flex-col h-full'>
-      <ChatMessages
-        messages={currentSession.messages}
-        isStreaming={isStreaming}
-        className='flex-1'
-      />
-      <ChatInput
-        onSendMessage={handleSendMessage}
-        onStopGeneration={stopGeneration}
-        disabled={!currentSession}
-      />
+    <div
+      className='flex flex-col h-full relative'
+      style={
+        currentPersona?.background
+          ? {
+              backgroundImage: `url(${currentPersona.background})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }
+          : undefined
+      }
+    >
+      {/* Background overlay for better readability when persona background is active */}
+      {currentPersona?.background && (
+        <div className='absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm' />
+      )}
+
+      <div className='flex flex-col h-full relative z-10'>
+        <ChatMessages
+          messages={currentSession.messages}
+          isStreaming={isStreaming}
+          className='flex-1'
+        />
+        <ChatInput
+          onSendMessage={handleSendMessage}
+          onStopGeneration={stopGeneration}
+          disabled={!currentSession}
+        />
+      </div>
     </div>
   );
 };

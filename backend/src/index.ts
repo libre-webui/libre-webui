@@ -40,6 +40,7 @@ import pluginRoutes from './routes/plugins.js';
 import documentRoutes from './routes/documents.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
+import personaRoutes from './routes/personas.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
@@ -203,6 +204,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/personas', personaRoutes);
 
 // API-only backend - no static file serving
 
@@ -378,13 +380,60 @@ wss.on('connection', (ws, req) => {
 
         console.log('Backend: Using assistantMessageId:', assistantMessageId);
 
+        // Resolve the actual model name (handles persona IDs)
+        let actualModelName = session.model;
+        if (session.model.startsWith('persona:')) {
+          try {
+            const personaId = session.model.replace('persona:', '');
+            console.log(
+              `[WebSocket] DEBUG: Resolving persona ${personaId} for user ${userId}`
+            );
+            const { personaService } = await import(
+              './services/personaService.js'
+            );
+
+            // Try to get persona for the current user first, then fallback to 'default'
+            let persona = await personaService.getPersonaById(
+              personaId,
+              userId
+            );
+            if (!persona && userId !== 'default') {
+              console.log(
+                `[WebSocket] DEBUG: Persona not found for user ${userId}, trying default user`
+              );
+              persona = await personaService.getPersonaById(
+                personaId,
+                'default'
+              );
+            }
+
+            console.log(
+              `[WebSocket] DEBUG: Persona lookup result:`,
+              persona
+                ? `Found persona with model: ${persona.model}`
+                : 'Persona not found'
+            );
+            if (persona && persona.model) {
+              actualModelName = persona.model;
+              console.log(
+                `[WebSocket] Resolved persona ${personaId} to model: ${actualModelName}`
+              );
+            } else {
+              console.warn(
+                `[WebSocket] Persona ${personaId} not found, using original model: ${session.model}`
+              );
+            }
+          } catch (error) {
+            console.error(`[WebSocket] Error resolving persona model:`, error);
+          }
+        }
+
         // Check if there's an active plugin for this model
         console.log(
-          `[WebSocket] Looking for plugin for model: ${session.model}`
+          `[WebSocket] Looking for plugin for model: ${actualModelName}`
         );
-        const activePlugin = pluginService.getActivePluginForModel(
-          session.model
-        );
+        const activePlugin =
+          pluginService.getActivePluginForModel(actualModelName);
         console.log(
           `[WebSocket] Found plugin:`,
           activePlugin ? activePlugin.id : 'none'
@@ -392,7 +441,7 @@ wss.on('connection', (ws, req) => {
 
         if (activePlugin) {
           console.log(
-            `[WebSocket] Using plugin ${activePlugin.id} for model ${session.model}`
+            `[WebSocket] Using plugin ${activePlugin.id} for model ${actualModelName}`
           );
           try {
             // Get user's preferred generation options
@@ -411,7 +460,7 @@ wss.on('connection', (ws, req) => {
 
             // Use plugin for generation (non-streaming for now)
             const pluginResponse = await pluginService.executePluginRequest(
-              session.model,
+              actualModelName,
               contextMessages.concat([userMessage]),
               mergedOptions
             );
@@ -488,8 +537,12 @@ wss.on('connection', (ws, req) => {
         }
 
         console.log(
-          `[WebSocket] No plugin found or plugin failed, using Ollama for model: ${session.model}`
+          `[WebSocket] No plugin found or plugin failed, using Ollama for model: ${actualModelName}`
         );
+
+        // Reuse the actualModelName variable that was already resolved above
+        // If we're here, it means either there was no plugin or plugin failed
+        // The actualModelName was already resolved in the earlier code block
 
         // Get user's preferred generation options
         const userGenerationOptions = preferencesService.getGenerationOptions();
@@ -502,7 +555,7 @@ wss.on('connection', (ws, req) => {
 
         // Create chat request with advanced features
         const chatRequest: OllamaChatRequest = {
-          model: session.model,
+          model: actualModelName,
           messages: ollamaMessages,
           stream: true,
           options: mergedOptions as Record<string, unknown>,

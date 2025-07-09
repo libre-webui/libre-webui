@@ -82,9 +82,11 @@ function initializeTables(): void {
       user_id TEXT DEFAULT 'default',
       title TEXT NOT NULL,
       model TEXT NOT NULL,
+      persona_id TEXT, -- Reference to persona used for this session
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL
     )
   `);
 
@@ -150,6 +152,23 @@ function initializeTables(): void {
     )
   `);
 
+  // Personas table - for AI personas/characters
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS personas (
+      id TEXT PRIMARY KEY,
+      user_id TEXT DEFAULT 'default',
+      name TEXT NOT NULL,
+      description TEXT,
+      model TEXT NOT NULL,
+      parameters TEXT NOT NULL, -- JSON string for model parameters (temperature, top_p, etc.)
+      avatar TEXT, -- URL or path to avatar image
+      background TEXT, -- URL or path to background image
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   // Create indexes for better performance
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
@@ -162,6 +181,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_document_chunks_index ON document_chunks(chunk_index);
     CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
     CREATE INDEX IF NOT EXISTS idx_user_preferences_key ON user_preferences(key);
+    CREATE INDEX IF NOT EXISTS idx_personas_user_id ON personas(user_id);
+    CREATE INDEX IF NOT EXISTS idx_personas_name ON personas(name);
   `);
 
   console.log('Database tables initialized successfully');
@@ -206,7 +227,7 @@ function runMigrations(): void {
 
   try {
     // Check if we need to add new columns to session_messages
-    const tableInfo = db
+    const sessionMessagesTableInfo = db
       .prepare('PRAGMA table_info(session_messages)')
       .all() as Array<{
       cid: number;
@@ -217,23 +238,51 @@ function runMigrations(): void {
       pk: number;
     }>;
 
-    const existingColumns = tableInfo.map(col => col.name);
+    const existingSessionMessagesColumns = sessionMessagesTableInfo.map(
+      col => col.name
+    );
 
-    // Add missing columns one by one
-    const newColumns = [
+    // Add missing columns to session_messages table
+    const newSessionMessagesColumns = [
       { name: 'model', type: 'TEXT' },
       { name: 'images', type: 'TEXT' },
       { name: 'statistics', type: 'TEXT' },
       { name: 'artifacts', type: 'TEXT' },
     ];
 
-    for (const column of newColumns) {
-      if (!existingColumns.includes(column.name)) {
+    for (const column of newSessionMessagesColumns) {
+      if (!existingSessionMessagesColumns.includes(column.name)) {
         console.log(`Adding column ${column.name} to session_messages table`);
         db.exec(
           `ALTER TABLE session_messages ADD COLUMN ${column.name} ${column.type}`
         );
       }
+    }
+
+    // Check if we need to add persona_id column to sessions table
+    const sessionsTableInfo = db
+      .prepare('PRAGMA table_info(sessions)')
+      .all() as Array<{
+      cid: number;
+      name: string;
+      type: string;
+      notnull: number;
+      dflt_value: unknown;
+      pk: number;
+    }>;
+
+    const existingSessionsColumns = sessionsTableInfo.map(col => col.name);
+
+    // Add persona_id column to sessions table if it doesn't exist
+    if (!existingSessionsColumns.includes('persona_id')) {
+      console.log('Adding persona_id column to sessions table');
+      db.exec('ALTER TABLE sessions ADD COLUMN persona_id TEXT');
+
+      // Create index for the new column
+      console.log('Creating index for persona_id column');
+      db.exec(
+        'CREATE INDEX IF NOT EXISTS idx_sessions_persona_id ON sessions(persona_id)'
+      );
     }
   } catch (error) {
     console.error('Error running migrations:', error);

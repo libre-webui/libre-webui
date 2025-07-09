@@ -22,6 +22,7 @@ import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
 import preferencesService from '../services/preferencesService.js';
 import documentService from '../services/documentService.js';
+import { personaService } from '../services/personaService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   mergeGenerationOptions,
@@ -55,6 +56,44 @@ router.use(chatRateLimiter);
 // Apply authentication middleware to all chat routes
 router.use(authenticate);
 
+// Helper function to resolve the actual model name from session model
+// If the model is a persona ID (starts with "persona:"), extract the actual model name
+async function resolveActualModelName(
+  sessionModel: string,
+  userId: string = 'default'
+): Promise<string> {
+  if (sessionModel.startsWith('persona:')) {
+    try {
+      const personaId = sessionModel.replace('persona:', '');
+
+      // Try to get persona for the current user first, then fallback to 'default'
+      let persona = await personaService.getPersonaById(personaId, userId);
+      if (!persona && userId !== 'default') {
+        console.log(
+          `[DEBUG] Persona not found for user ${userId}, trying default user`
+        );
+        persona = await personaService.getPersonaById(personaId, 'default');
+      }
+
+      if (persona && persona.model) {
+        console.log(
+          `[DEBUG] Resolved persona ${personaId} to model: ${persona.model}`
+        );
+        return persona.model;
+      } else {
+        console.warn(
+          `[DEBUG] Persona ${personaId} not found, falling back to session model`
+        );
+        return sessionModel;
+      }
+    } catch (error) {
+      console.error(`[DEBUG] Error resolving persona model:`, error);
+      return sessionModel;
+    }
+  }
+  return sessionModel;
+}
+
 // Get all chat sessions
 router.get(
   '/sessions',
@@ -86,7 +125,7 @@ router.post(
     res: Response<ApiResponse<ChatSession>>
   ): Promise<void> => {
     try {
-      const { model, title } = req.body;
+      const { model, title, personaId } = req.body;
 
       if (!model) {
         res.status(400).json({
@@ -97,7 +136,22 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.createSession(model, title, userId);
+
+      // Extract persona ID from model string if it starts with "persona:"
+      let extractedPersonaId = personaId;
+      if (model.startsWith('persona:') && !extractedPersonaId) {
+        extractedPersonaId = model.replace('persona:', '');
+        console.log(
+          `[DEBUG] Extracted personaId from model: ${extractedPersonaId}`
+        );
+      }
+
+      const session = await chatService.createSession(
+        model,
+        title,
+        userId,
+        extractedPersonaId
+      );
       res.json({
         success: true,
         data: session,
@@ -156,7 +210,7 @@ router.put(
       const updates = req.body;
 
       const userId = req.user?.userId || 'default';
-      const updatedSession = chatService.updateSession(
+      const updatedSession = await chatService.updateSession(
         sessionId,
         updates,
         userId
@@ -399,11 +453,37 @@ router.post(
         // Continue without document context if search fails
       }
 
-      // Convert chat messages to Ollama format
-      const ollamaMessages = session.messages.map((msg: ChatMessage) => ({
+      // Convert chat messages to Ollama format and handle persona system prompts
+      let ollamaMessages = session.messages.map((msg: ChatMessage) => ({
         role: msg.role,
         content: msg.content,
       }));
+
+      // Inject persona instructions if session has a persona
+      if (session.personaId) {
+        try {
+          const persona = await personaService.getPersonaById(
+            session.personaId,
+            userId
+          );
+          if (persona && persona.parameters.system_prompt) {
+            // Remove any existing system messages and replace with persona's system prompt
+            ollamaMessages = ollamaMessages.filter(
+              msg => msg.role !== 'system'
+            );
+            ollamaMessages.unshift({
+              role: 'system',
+              content: persona.parameters.system_prompt,
+            });
+            console.log(
+              `[DEBUG] Replaced system messages with persona instructions for: ${persona.name}`
+            );
+          }
+        } catch (error) {
+          console.error('[DEBUG] Error loading persona:', error);
+          // Continue without persona if loading fails
+        }
+      }
 
       // Add the new user message with document context if available
       const userMessageContent = documentContext
@@ -427,17 +507,27 @@ router.post(
         options
       );
 
+      // Resolve the actual model name (handles persona IDs)
+      const actualModelName = await resolveActualModelName(
+        session.model,
+        userId
+      );
+      console.log(
+        `[DEBUG] Resolved model from "${session.model}" to "${actualModelName}"`
+      );
+
       // Prepare common chat request for Ollama (used in both fallback and direct cases)
       const chatRequest = {
-        model: session.model,
+        model: actualModelName,
         messages: ollamaMessages,
         stream: false,
         options: mergedOptions as Record<string, unknown>,
       };
 
       // Check if there's an active plugin for this model
-      console.log(`[DEBUG] Looking for plugin for model: ${session.model}`);
-      const activePlugin = pluginService.getActivePluginForModel(session.model);
+      console.log(`[DEBUG] Looking for plugin for model: ${actualModelName}`);
+      const activePlugin =
+        pluginService.getActivePluginForModel(actualModelName);
       console.log(
         `[DEBUG] Found plugin:`,
         activePlugin ? activePlugin.id : 'none'
@@ -445,12 +535,12 @@ router.post(
 
       if (activePlugin) {
         console.log(
-          `[DEBUG] Using plugin ${activePlugin.id} for model ${session.model}`
+          `[DEBUG] Using plugin ${activePlugin.id} for model ${actualModelName}`
         );
         try {
           // Use plugin for generation
           const pluginResponse = await pluginService.executePluginRequest(
-            session.model,
+            actualModelName,
             session.messages.concat([userMessage]),
             options
           );
@@ -460,7 +550,7 @@ router.post(
 
           // Create a mock response in Ollama format
           response = {
-            model: session.model,
+            model: actualModelName,
             created_at: new Date().toISOString(),
             message: {
               role: 'assistant',
@@ -477,7 +567,7 @@ router.post(
         }
       } else {
         console.log(
-          `[DEBUG] No plugin found, using Ollama for model: ${session.model}`
+          `[DEBUG] No plugin found, using Ollama for model: ${actualModelName}`
         );
         // Use Ollama directly
         response = await ollamaService.generateChatResponse(chatRequest);
@@ -568,11 +658,37 @@ router.post(
         return;
       }
 
-      // Convert chat messages to Ollama format
-      const ollamaMessages = session.messages.map((msg: ChatMessage) => ({
+      // Convert chat messages to Ollama format and handle persona system prompts
+      let ollamaMessages = session.messages.map((msg: ChatMessage) => ({
         role: msg.role,
         content: msg.content,
       }));
+
+      // Inject persona instructions if session has a persona
+      if (session.personaId) {
+        try {
+          const persona = await personaService.getPersonaById(
+            session.personaId,
+            userId
+          );
+          if (persona && persona.parameters.system_prompt) {
+            // Remove any existing system messages and replace with persona's system prompt
+            ollamaMessages = ollamaMessages.filter(
+              msg => msg.role !== 'system'
+            );
+            ollamaMessages.unshift({
+              role: 'system',
+              content: persona.parameters.system_prompt,
+            });
+            console.log(
+              `[DEBUG] Replaced system messages with persona instructions for streaming: ${persona.name}`
+            );
+          }
+        } catch (error) {
+          console.error('[DEBUG] Error loading persona for streaming:', error);
+          // Continue without persona if loading fails
+        }
+      }
 
       // Add the new user message
       ollamaMessages.push({
@@ -589,8 +705,17 @@ router.post(
         options
       );
 
+      // Resolve the actual model name (handles persona IDs)
+      const actualModelName = await resolveActualModelName(
+        session.model,
+        userId
+      );
+      console.log(
+        `[DEBUG] Streaming - Resolved model from "${session.model}" to "${actualModelName}"`
+      );
+
       const chatRequest = {
-        model: session.model,
+        model: actualModelName,
         messages: ollamaMessages,
         stream: true,
         options: mergedOptions as Record<string, unknown>,
