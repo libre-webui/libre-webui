@@ -88,10 +88,30 @@ export const Header: React.FC<HeaderProps> = ({
           );
           if (response.success && response.data) {
             setCurrentPersona(response.data);
+          } else {
+            // Persona not found, clear the reference
+            console.warn(
+              `Persona ${currentSession.personaId} not found, clearing reference`
+            );
+            setCurrentPersona(null);
+            // Clear the personaId from the session to prevent repeated requests
+            const { setCurrentSession } = useChatStore.getState();
+            setCurrentSession({
+              ...currentSession,
+              personaId: undefined,
+            });
           }
         } catch (error) {
           console.error('Failed to load current persona:', error);
           setCurrentPersona(null);
+          // Clear the personaId from the session to prevent repeated requests
+          if (currentSession) {
+            const { setCurrentSession } = useChatStore.getState();
+            setCurrentSession({
+              ...currentSession,
+              personaId: undefined,
+            });
+          }
         }
       } else {
         setCurrentPersona(null);
@@ -99,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
     };
 
     loadCurrentPersona();
-  }, [currentSession?.personaId]);
+  }, [currentSession?.personaId, currentSession]);
 
   const getPageTitle = () => {
     if (location.pathname === '/models') {

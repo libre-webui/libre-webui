@@ -287,20 +287,14 @@ router.get(
         return;
       }
 
-      // Create export data with metadata
+      // Create export data that matches PersonaExport interface
       const exportData = {
-        format: 'libre-webui-persona',
-        version: '1.0',
-        persona: {
-          name: persona.name,
-          description: persona.description,
-          model: persona.model,
-          parameters: persona.parameters,
-          avatar: persona.avatar,
-          background: persona.background,
-        },
-        exportedAt: new Date().toISOString(),
-        exportedBy: userId,
+        name: persona.name,
+        description: persona.description,
+        model: persona.model,
+        params: persona.parameters, // Use 'params' to match PersonaExport interface
+        avatar: persona.avatar,
+        background: persona.background,
       };
 
       // Set headers for file download

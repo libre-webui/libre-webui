@@ -240,11 +240,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {/* Navigation Menu */}
           <div className='px-4 py-2 border-b border-gray-200 dark:border-dark-200'>
             <nav className='space-y-1'>
-              <Link
-                to='/chat'
-                onClick={() => window.innerWidth < 768 && onClose()}
+              <button
+                onClick={() => {
+                  // Clear current session and set a flag to force welcome screen
+                  const { setCurrentSession } = useChatStore.getState();
+                  setCurrentSession(null);
+                  // Set a flag in sessionStorage to force welcome screen
+                  sessionStorage.setItem('forceWelcomeScreen', 'true');
+                  navigate('/chat', { replace: true });
+                  if (window.innerWidth < 768) {
+                    onClose();
+                  }
+                }}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left',
                   location.pathname === '/chat' || location.pathname === '/'
                     ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
@@ -252,7 +261,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <MessageSquare className='h-4 w-4' />
                 Chat
-              </Link>
+              </button>
 
               <Link
                 to='/models'

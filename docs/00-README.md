@@ -23,6 +23,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 | **[🔐 Authentication](./12-AUTHENTICATION.md)** | User management and security | 10 min |
 | **[🎨 Artifacts Feature](./13-ARTIFACTS_FEATURE.md)** | Interactive content and code execution | 7 min |
 | **[🐳 Docker External Ollama](./15-DOCKER_EXTERNAL_OLLAMA.md)** | Run Docker with external Ollama instance | 10 min |
+| **[🎭 Persona Development Framework](./16-PERSONA_DEVELOPMENT_FRAMEWORK.md)** | Create custom AI personalities | 12 min |
 
 ## 📋 Project Information
 

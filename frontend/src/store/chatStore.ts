@@ -159,6 +159,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               // Don't show error toast here - let the ChatPage handle URL redirect
             }
           }
+
           return {
             sessions,
             currentSession,

@@ -54,6 +54,13 @@ export const ChatPage: React.FC = () => {
   // Handle URL session parameter
   useEffect(() => {
     const handleSessionFromUrl = () => {
+      // Check if we should force welcome screen (from sidebar click)
+      const forceWelcome = sessionStorage.getItem('forceWelcomeScreen');
+      if (forceWelcome) {
+        sessionStorage.removeItem('forceWelcomeScreen');
+        return; // Don't load any session, show welcome screen
+      }
+
       // Only proceed if sessions are loaded
       if (sessions.length === 0) {
         return; // Sessions not loaded yet, wait for them
