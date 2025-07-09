@@ -49,6 +49,7 @@ import websocketService from '@/utils/websocket';
 // Lazy load pages for code splitting
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
 const ModelsPage = React.lazy(() => import('@/pages/ModelsPage'));
+const PersonasPage = React.lazy(() => import('@/pages/PersonasPage'));
 const UserManagementPage = React.lazy(
   () => import('@/pages/UserManagementPage')
 );
@@ -268,6 +269,7 @@ const App: React.FC = () => {
                       <Route path='/chat' element={<ChatPage />} />
                       <Route path='/c/:sessionId' element={<ChatPage />} />
                       <Route path='/models' element={<ModelsPage />} />
+                      <Route path='/personas' element={<PersonasPage />} />
                       <Route path='/login' element={<LoginPage />} />
                     </Routes>
                   </Suspense>
@@ -329,6 +331,10 @@ const App: React.FC = () => {
                                 element={<ChatPage />}
                               />
                               <Route path='/models' element={<ModelsPage />} />
+                              <Route
+                                path='/personas'
+                                element={<PersonasPage />}
+                              />
                               <Route
                                 path='/artifacts'
                                 element={<ArtifactDemoPage />}

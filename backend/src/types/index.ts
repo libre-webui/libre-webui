@@ -404,3 +404,59 @@ export const getErrorMessage = (error: unknown, fallback: string): string => {
   }
   return fallback;
 };
+
+// === Persona Types ===
+
+export interface PersonaParameters {
+  temperature?: number;
+  top_p?: number;
+  top_k?: number;
+  context_window?: number;
+  max_tokens?: number;
+  system_prompt?: string;
+  repeat_penalty?: number;
+  presence_penalty?: number;
+  frequency_penalty?: number;
+}
+
+export interface Persona {
+  id: string;
+  user_id: string;
+  name: string;
+  description?: string;
+  model: string;
+  parameters: PersonaParameters;
+  avatar?: string;
+  background?: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface CreatePersonaRequest {
+  name: string;
+  description?: string;
+  model: string;
+  parameters: PersonaParameters;
+  avatar?: string;
+  background?: string;
+}
+
+export interface UpdatePersonaRequest {
+  name?: string;
+  description?: string;
+  model?: string;
+  parameters?: PersonaParameters;
+  avatar?: string;
+  background?: string;
+}
+
+export interface PersonaExport {
+  name: string;
+  description?: string;
+  model: string;
+  params: PersonaParameters;
+  avatar?: string;
+  background?: string;
+  exportedAt: number;
+  version: string;
+}
