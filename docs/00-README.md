@@ -40,7 +40,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 **Key Benefits:**
 - 🔒 **Privacy-First** - Local processing by default
 - 📄 **Document Chat** - Upload and chat with your documents using semantic search
-- 🔌 **Multiple AI Services** - Connect OpenAI, Anthropic, Groq, and more through plugins
+- 🔌 **Multiple AI Services** - Connect OpenAI, Anthropic, Groq, Gemini, Mistral, GitHub Models, and more through plugins (207+ models)
 - 🖼️ **Image Support** - Upload and analyze images with vision models
 - 🎨 **Clean Interface** - Modern, responsive design
 - ⚡ **Fast & Reliable** - Optimized performance with automatic fallbacks

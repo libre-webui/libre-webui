@@ -45,6 +45,9 @@ Connect to external AI services by adding your API keys to the `.env` file:
 OPENAI_API_KEY=your_openai_key
 ANTHROPIC_API_KEY=your_anthropic_key
 GROQ_API_KEY=your_groq_key
+GEMINI_API_KEY=your_gemini_key
+MISTRAL_API_KEY=your_mistral_key
+GITHUB_API_KEY=your_github_token
 ```
 
 **[📖 Complete Plugin Setup Guide →](./docs/08-PLUGIN_ARCHITECTURE.md)**
@@ -54,8 +57,16 @@ GROQ_API_KEY=your_groq_key
 Automatically update your AI provider plugins with the latest available models:
 
 ```bash
-# Update all configured providers
+# Update all configured providers (207+ models across 6 providers)
 ./scripts/update-all-models.sh
+
+# Or update individual providers
+./scripts/update-openai-models.sh      # 67 models
+./scripts/update-anthropic-models.sh   # 13 models
+./scripts/update-groq-models.sh        # 14 models
+./scripts/update-gemini-models.sh      # 45 models
+./scripts/update-mistral-models.sh     # 48 models
+./scripts/update-github-models.sh      # 20 models
 ```
 
 **[🤖 Model Updater Guide →](./docs/11-MODEL_UPDATER.md)**
@@ -155,7 +166,13 @@ Welcome! Getting started with Libre WebUI development is simple:
 - `npm run lint` - Run linting for both frontend and backend
 - `npm run format` - Format code and add license headers
 - `./clean-install.sh` - Clean npm cache, remove package-lock files, and reinstall all dependencies
-- `./scripts/update-all-models.sh` - Update AI provider plugins with latest available models
+- `./scripts/update-all-models.sh` - Update all AI provider plugins with latest available models
+- `./scripts/update-openai-models.sh` - Update OpenAI plugin (67 models)
+- `./scripts/update-anthropic-models.sh` - Update Anthropic plugin (13 models)
+- `./scripts/update-groq-models.sh` - Update Groq plugin (14 models)
+- `./scripts/update-gemini-models.sh` - Update Google Gemini plugin (45 models)
+- `./scripts/update-mistral-models.sh` - Update Mistral plugin (48 models)
+- `./scripts/update-github-models.sh` - Update GitHub Models plugin (20 models)
 
 ### Development Ports
 
@@ -232,7 +249,7 @@ The app automatically generates configuration files on first run (these are excl
 - **Real-time chat** - Streaming responses with WebSocket integration
 - **Document chat** - Upload documents (PDF, TXT, DOCX) and chat with their content using semantic search
 - **Persona Development Framework** - Create custom AI personalities with unique behaviors and visual identities
-- **Plugin system** - Connect external AI services (OpenAI, Anthropic, Groq, etc.)
+- **Plugin system** - Connect external AI services (OpenAI, Anthropic, Groq, Gemini, Mistral, GitHub Models) - 207+ models across 6 providers
 - **Artifacts** - Interactive content rendering for HTML, SVG, code, and more
 - **Privacy-focused** - Local processing with optional external connections
 - **Zero telemetry** - No tracking or data collection
@@ -349,9 +366,12 @@ Connect to external AI services while maintaining local fallback:
 
 #### Supported Services
 
-- ✅ **OpenAI** - o3, o3-mini, o1-pro, GPT-4o, GPT-4.1, ChatGPT-4o-latest
-- ✅ **Anthropic** - Claude 4 Sonnet, Claude 3.7 Sonnet, Claude 3.5 Sonnet, Claude Opus 4
-- ✅ **Groq** - Llama 4 Maverick, Llama 3.3 70B, DeepSeek R1 Distill, Qwen QwQ 32B
+- ✅ **OpenAI** - o3, o3-mini, o4, o4-mini, GPT-4o, GPT-4.1, ChatGPT-4o-latest (67 models)
+- ✅ **Anthropic** - Claude 4 Sonnet, Claude 4 Opus, Claude 3.7 Sonnet, Claude 3.5 Sonnet (13 models)
+- ✅ **Groq** - Llama 4 Maverick, Llama 3.3 70B, DeepSeek R1 Distill, Qwen QwQ 32B (14 models)
+- ✅ **Google Gemini** - Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 1.5 Flash (45 models)
+- ✅ **Mistral** - Mistral Large, Mistral Small, Codestral, Pixtral (48 models)
+- ✅ **GitHub Models** - Llama 3.2, Phi-3.5, Cohere Command R+ (20 models)
 - ✅ **Custom APIs** - Any OpenAI-compatible endpoint
 
 #### Key Features

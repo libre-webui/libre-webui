@@ -278,3 +278,105 @@ Please include:
 *Remember: Ollama (AI engine) + Backend (API) + Frontend (interface) = Working Libre WebUI*
 
 **Still having trouble?** The [Quick Start Guide](./01-QUICK_START.md) has step-by-step setup instructions.
+
+---
+
+## 🔌 **Plugin Issues**
+
+### **Can't Connect to External AI Services**
+
+**The Problem:** You have API keys but external services (OpenAI, Anthropic, etc.) aren't working.
+
+**Common Solutions:**
+
+1. **Check API Key Format:**
+   ```bash
+   # Set API keys in backend/.env
+   OPENAI_API_KEY=your_openai_key_here
+   ANTHROPIC_API_KEY=your_anthropic_key_here
+   GROQ_API_KEY=your_groq_key_here
+   GEMINI_API_KEY=your_gemini_key_here
+   MISTRAL_API_KEY=your_mistral_key_here
+   GITHUB_API_KEY=your_github_token_here
+   ```
+
+2. **Verify API Keys Are Valid:**
+   ```bash
+   # Test OpenAI
+   curl -H "Authorization: Bearer $OPENAI_API_KEY" \
+        https://api.openai.com/v1/models
+   
+   # Test Anthropic
+   curl -H "x-api-key: $ANTHROPIC_API_KEY" \
+        https://api.anthropic.com/v1/messages
+   ```
+
+3. **Update Plugin Models:**
+   ```bash
+   # Update all providers
+   ./scripts/update-all-models.sh
+   
+   # Or update specific providers
+   ./scripts/update-openai-models.sh
+   ./scripts/update-anthropic-models.sh
+   ./scripts/update-groq-models.sh
+   ./scripts/update-gemini-models.sh
+   ./scripts/update-mistral-models.sh
+   ./scripts/update-github-models.sh
+   ```
+
+### **Plugin Update Scripts Failing**
+
+**The Problem:** Model update scripts are reporting errors.
+
+**Common Solutions:**
+
+1. **Check API Keys:**
+   ```bash
+   # Verify environment variables are set
+   echo $OPENAI_API_KEY
+   echo $ANTHROPIC_API_KEY
+   echo $GROQ_API_KEY
+   echo $GEMINI_API_KEY
+   echo $MISTRAL_API_KEY
+   echo $GITHUB_API_KEY
+   ```
+
+2. **Check Script Permissions:**
+   ```bash
+   # Make scripts executable
+   chmod +x scripts/update-*.sh
+   ```
+
+3. **Run Individual Scripts with Debug:**
+   ```bash
+   # Run with verbose output
+   bash -x ./scripts/update-openai-models.sh
+   ```
+
+### **Models Not Showing in UI**
+
+**The Problem:** Plugin models aren't appearing in the model selector.
+
+**Solutions:**
+
+1. **Restart Backend:**
+   ```bash
+   # Stop backend (Ctrl+C) and restart
+   cd backend
+   npm run dev
+   ```
+
+2. **Check Plugin Status:**
+   - Go to Settings → Plugins
+   - Verify plugins are enabled
+   - Check for any error messages
+
+3. **Manual Plugin Refresh:**
+   ```bash
+   # Update all plugins
+   ./scripts/update-all-models.sh
+   
+   # Restart backend to reload models
+   cd backend && npm run dev
+   ```

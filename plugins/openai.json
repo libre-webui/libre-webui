@@ -57,6 +57,7 @@
   "gpt-4o-search-preview-2025-03-11",
   "gpt-4o-transcribe",
   "gpt-image-1",
+  "o1",
   "o1-2024-12-17",
   "o1-mini",
   "o1-mini-2024-09-12",
@@ -64,7 +65,16 @@
   "o1-preview-2024-09-12",
   "o1-pro",
   "o1-pro-2025-03-19",
+  "o3",
+  "o3-2025-01-31",
   "o3-mini",
-  "o3-mini-2025-01-31"
+  "o3-mini-2025-01-31",
+  "o4",
+  "o4-2025-07-01",
+  "o4-mini",
+  "o4-mini-2025-04-16",
+  "o4-mini-2025-07-01",
+  "o4-mini-deep-research",
+  "o4-mini-deep-research-2025-06-26"
 ]
 }

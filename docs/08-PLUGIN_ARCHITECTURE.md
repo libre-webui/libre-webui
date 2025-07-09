@@ -1,6 +1,6 @@
 # Plugin Architecture
 
-Libre WebUI's plugin system lets you connect multiple AI services through a single interface. Access OpenAI's GPT models, Anthropic's Claude, Groq, Cohere, and custom AI APIs without switching between different platforms.
+Libre WebUI's plugin system lets you connect multiple AI services through a single interface. Access OpenAI's GPT models, Anthropic's Claude, Groq, Mistral, GitHub Models, Google Gemini, and custom AI APIs without switching between different platforms.
 
 ## What This Gives You
 
@@ -10,13 +10,16 @@ The plugin system acts as a **unified interface** for different AI providers:
 - Use GPT-4 for detailed analysis
 - Switch to Claude for different perspectives
 - Try Groq for faster responses
-- Access Cohere for specialized tasks
+- Access Mistral for efficient processing
+- Use GitHub Models for free premium access
+- Leverage Google Gemini for advanced capabilities
 - All from the same chat interface
 
 ### **Easy Model Switching**
 - Compare responses from different models
 - Switch providers mid-conversation
 - Test which AI works best for your tasks
+- Access 207+ models across 6 major providers
 
 ### **Reliable Fallbacks**
 - If one service is unavailable, automatically use another
@@ -26,6 +29,7 @@ The plugin system acts as a **unified interface** for different AI providers:
 ### **Cost Management**
 - Use premium models only when needed
 - Route simple tasks to more affordable options
+- Take advantage of free GitHub Models
 - Track usage across different services
 
 ## How It Works
@@ -33,16 +37,28 @@ The plugin system acts as a **unified interface** for different AI providers:
 The plugin system connects to different AI services through standardized configurations:
 
 ### **Supported Services**
-- **Popular Providers**: OpenAI, Anthropic, Cohere, Groq, Mistral
+- **OpenAI**: GPT-4, GPT-4o, ChatGPT, o3, o4, and all variants (67 models)
+- **Anthropic**: Claude 4 Sonnet, Claude 4 Opus, Claude 3.7 Sonnet, Claude 3.5 Sonnet, Opus, Haiku (13 models)
+- **Groq**: Ultra-fast inference with Llama, Gemma, Mistral (14 models)
+- **Google Gemini**: Gemini 1.5/2.0/2.5 models and experimental variants (45 models)
+- **Mistral**: Mistral Large, Small, Nemo, Codestral (48 models)
+- **GitHub Models**: Free access to premium models from multiple providers (20 models)
 - **Custom APIs**: Your own models or company services
 - **Local Models**: Ollama, LM Studio, other OpenAI-compatible endpoints
-- **Easy Expansion**: New services can be added with simple JSON configs
+
+### **Automated Model Management**
+- **Dynamic Updates**: Automatically fetch latest models from APIs
+- **Smart Filtering**: Remove non-chat models (embeddings, TTS, etc.)
+- **Backup System**: Automatic backup before updates
+- **Error Handling**: Robust error checking and recovery
+- **Update Scripts**: Individual and bulk update capabilities
 
 ### **Management Features**
 - Install plugins by uploading JSON files
 - Enable/disable services through settings
 - Switch between providers during conversations
 - Share configurations with team members
+- Automated model list updates
 
 ### **Reliability Features**
 - Automatic failover when services are unavailable
@@ -124,6 +140,9 @@ Get free API keys from:
 - OpenAI: https://platform.openai.com/api-keys
 - Anthropic: https://console.anthropic.com/
 - Groq: https://console.groq.com/keys
+- Google AI: https://ai.google.dev/
+- Mistral: https://console.mistral.ai/
+- GitHub: https://github.com/settings/personal-access-tokens
 
 ### Step 2: Configure Environment
 Add to your `.env` file:
@@ -131,13 +150,31 @@ Add to your `.env` file:
 OPENAI_API_KEY=your_openai_key_here
 ANTHROPIC_API_KEY=your_anthropic_key_here
 GROQ_API_KEY=your_groq_key_here
+GEMINI_API_KEY=your_gemini_key_here
+MISTRAL_API_KEY=your_mistral_key_here
+GITHUB_API_KEY=your_github_token_here
 ```
 
-### Step 3: Enable Plugins
+### Step 3: Update Plugin Models
+Run the automated update system:
+```bash
+# Update all providers at once
+./scripts/update-all-models.sh
+
+# Or update individual providers
+./scripts/update-openai-models.sh
+./scripts/update-anthropic-models.sh
+./scripts/update-groq-models.sh
+./scripts/update-gemini-models.sh
+./scripts/update-mistral-models.sh
+./scripts/update-github-models.sh
+```
+
+### Step 4: Enable Plugins
 - Go to Settings → Plugins
 - Enable the services you want to use
 
-### Step 4: Start Using
+### Step 5: Start Using
 - Select a model from any enabled service
 - Chat normally - the system handles routing automatically
 - Switch models anytime to compare responses
@@ -184,51 +221,58 @@ Plugins are defined using JSON configuration files with the following structure:
 
 ## Included Plugins
 
-The system comes with pre-configured plugins for popular services:
+The system comes with pre-configured plugins for popular services and automated update scripts:
 
 ### OpenAI Plugin (`plugins/openai.json`)
-```json
-{
-  "id": "openai",
-  "name": "OpenAI GPT",
-  "type": "completion",
-  "endpoint": "https://api.openai.com/v1/chat/completions",
-  "auth": {
-    "header": "Authorization",
-    "prefix": "Bearer ",
-    "key_env": "OPENAI_API_KEY"
-  },
-  "model_map": [
-    "gpt-4",
-    "gpt-4-turbo",
-    "gpt-4o",
-    "gpt-4o-mini",
-    "gpt-3.5-turbo"
-  ]
-}
-```
+- **Models**: 67 current models including o3, o4, GPT-4, GPT-4o, ChatGPT variants
+- **Update Method**: Dynamic API fetching
+- **Endpoint**: `https://api.openai.com/v1/chat/completions`
 
 ### Anthropic Plugin (`plugins/anthropic.json`)
-```json
-{
-  "id": "anthropic",
-  "name": "Anthropic Claude",
-  "type": "completion",
-  "endpoint": "https://api.anthropic.com/v1/messages",
-  "auth": {
-    "header": "x-api-key",
-    "prefix": "",
-    "key_env": "ANTHROPIC_API_KEY"
-  },
-  "model_map": [
-    "claude-3-opus-20240229",
-    "claude-3-sonnet-20240229",
-    "claude-3-haiku-20240307",
-    "claude-3-5-sonnet-20241022",
-    "claude-3-5-haiku-20241022"
-  ]
-}
-```
+- **Models**: 13 current models including Claude 4 Sonnet, Claude 4 Opus, Claude 3.7 Sonnet, Claude 3.5 Sonnet
+- **Update Method**: Dynamic API fetching with manual curation
+- **Endpoint**: `https://api.anthropic.com/v1/messages`
+
+### Groq Plugin (`plugins/groq.json`)
+- **Models**: 14 current models with ultra-fast inference
+- **Update Method**: Dynamic API fetching
+- **Endpoint**: `https://api.groq.com/openai/v1/chat/completions`
+
+### Google Gemini Plugin (`plugins/gemini.json`)
+- **Models**: 45 current models including Gemini 1.5/2.0/2.5 variants
+- **Update Method**: Dynamic API fetching
+- **Endpoint**: `https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`
+
+### Mistral Plugin (`plugins/mistral.json`)
+- **Models**: 48 current models including Mistral Large, Small, Nemo, Codestral
+- **Update Method**: Dynamic API fetching
+- **Endpoint**: `https://api.mistral.ai/v1/chat/completions`
+
+### GitHub Models Plugin (`plugins/github.json`)
+- **Models**: 20 premium models from OpenAI, Meta, Microsoft, Mistral
+- **Update Method**: Dynamic API fetching
+- **Endpoint**: `https://models.inference.ai.azure.com/chat/completions`
+- **Special**: Free access to premium models
+
+## Automated Update System
+
+The plugin system includes automated scripts to keep model lists current:
+
+### Update Scripts
+- `update-openai-models.sh` - Fetches OpenAI models via API
+- `update-anthropic-models.sh` - Updates manually curated Claude models
+- `update-groq-models.sh` - Fetches Groq models via API
+- `update-gemini-models.sh` - Fetches Google Gemini models via API
+- `update-mistral-models.sh` - Fetches Mistral models via API
+- `update-github-models.sh` - Fetches GitHub Models via API
+- `update-all-models.sh` - Updates all providers at once
+
+### Features
+- **Automatic Backup**: Creates `.backup` files before updating
+- **Error Handling**: Robust error checking and recovery
+- **Smart Filtering**: Removes non-chat models (embeddings, TTS, etc.)
+- **Status Reporting**: Detailed progress and statistics
+- **API Key Validation**: Checks for required environment variables
 
 ## Environment Setup
 
@@ -241,9 +285,35 @@ export OPENAI_API_KEY="your_openai_api_key_here"
 # For Anthropic
 export ANTHROPIC_API_KEY="your_anthropic_api_key_here"
 
+# For Groq
+export GROQ_API_KEY="your_groq_api_key_here"
+
+# For Google Gemini
+export GEMINI_API_KEY="your_gemini_api_key_here"
+
+# For Mistral
+export MISTRAL_API_KEY="your_mistral_api_key_here"
+
+# For GitHub Models
+export GITHUB_API_KEY="your_github_token_here"
+
 # For custom services
 export CUSTOM_API_KEY="your_custom_api_key_here"
 ```
+
+## Model Statistics
+
+Current model counts across all providers:
+
+| Provider | Models | Update Method | Free Tier |
+|----------|---------|---------------|-----------|
+| OpenAI | 67 | Dynamic API | Limited |
+| Anthropic | 13 | Dynamic API | Limited |
+| Groq | 14 | Dynamic API | Generous |
+| Google Gemini | 45 | Dynamic API | Generous |
+| Mistral | 48 | Dynamic API | Limited |
+| GitHub Models | 20 | Dynamic API | **Free** |
+| **Total** | **207** | 6 APIs | Mixed |
 
 ## Using the Plugin System
 
@@ -458,6 +528,7 @@ Enable debug logging to troubleshoot issues:
 - Verify plugin is enabled in settings
 - Test internet connection
 - Try a different model from the same provider
+- Run the update script for that provider
 
 **Authentication errors:**
 - Verify API key is copied correctly (no extra spaces)
@@ -468,8 +539,15 @@ Enable debug logging to troubleshoot issues:
 **Model not found:**
 - Check if model name exists in plugin configuration
 - Verify model is available in your API account
+- Run the update script to refresh model list
 - Try a different model from the same provider
 - Some models require special access approval
+
+**Update script issues:**
+- Ensure API key environment variable is set
+- Check internet connectivity
+- Verify API endpoint is accessible
+- Run individual update scripts to isolate issues
 
 ### Debug Information
 ```bash
@@ -478,6 +556,17 @@ NODE_ENV=development npm run dev
 
 # Check plugin status:
 curl http://localhost:3001/api/plugins/status/all
+
+# Test individual update scripts:
+./scripts/update-openai-models.sh
+./scripts/update-anthropic-models.sh
+./scripts/update-groq-models.sh
+./scripts/update-gemini-models.sh
+./scripts/update-mistral-models.sh
+./scripts/update-github-models.sh
+
+# Update all providers:
+./scripts/update-all-models.sh
 ```
 
 ## Security & Best Practices
