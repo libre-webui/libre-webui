@@ -47,6 +47,7 @@ interface SessionRow {
   user_id: string;
   title: string;
   model: string;
+  persona_id?: string;
   created_at: number;
   updated_at: number;
 }
@@ -204,6 +205,7 @@ class StorageService {
           id: session.id,
           title: session.title,
           model: session.model,
+          personaId: session.persona_id || undefined,
           createdAt: session.created_at,
           updatedAt: session.updated_at,
           messages: messages.map(msg => ({
@@ -285,14 +287,15 @@ class StorageService {
       const transaction = db.transaction((session: ChatSession) => {
         // Insert or update session
         const sessionStmt = db.prepare(`
-          INSERT OR REPLACE INTO sessions (id, user_id, title, model, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?)
+          INSERT OR REPLACE INTO sessions (id, user_id, title, model, persona_id, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `);
         sessionStmt.run(
           session.id,
           userId,
           session.title,
           session.model,
+          session.personaId || null,
           session.createdAt,
           session.updatedAt
         );
