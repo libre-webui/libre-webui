@@ -151,6 +151,45 @@ router.post(
   }
 );
 
+// Pull a model with streaming progress
+router.get(
+  '/models/:modelName/pull/stream',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { modelName } = req.params;
+
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+
+      await ollamaService.pullModelStream(
+        modelName,
+        progress => {
+          res.write(
+            `data: ${JSON.stringify({ type: 'progress', ...progress })}\n\n`
+          );
+        },
+        error => {
+          res.write(
+            `data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`
+          );
+          res.end();
+        },
+        () => {
+          res.write(`data: ${JSON.stringify({ type: 'complete' })}\n\n`);
+          res.end();
+        }
+      );
+    } catch (error: unknown) {
+      res.write(
+        `data: ${JSON.stringify({ type: 'error', error: getErrorMessage(error, 'Failed to pull model') })}\n\n`
+      );
+      res.end();
+    }
+  }
+);
+
 // Delete a model
 router.delete(
   '/models/:modelName',

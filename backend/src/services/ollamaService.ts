@@ -204,6 +204,87 @@ class OllamaService {
     }
   }
 
+  async pullModelStream(
+    modelName: string,
+    onProgress: (progress: {
+      status: string;
+      digest?: string;
+      total?: number;
+      completed?: number;
+      percent?: number;
+    }) => void,
+    onError: (error: Error) => void,
+    onComplete: () => void
+  ): Promise<void> {
+    try {
+      console.log(`Pulling model with streaming: ${modelName}`);
+      const response = await this.longOperationClient.post(
+        '/api/pull',
+        {
+          name: modelName,
+          stream: true,
+        },
+        {
+          responseType: 'stream',
+        }
+      );
+
+      let buffer = '';
+
+      response.data.on('data', (chunk: Buffer) => {
+        buffer += chunk.toString();
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const data = JSON.parse(line);
+
+              // Calculate percentage if total and completed are available
+              let percent: number | undefined;
+              if (data.total && data.completed) {
+                percent = Math.round((data.completed / data.total) * 100);
+              }
+
+              onProgress({
+                status: data.status || 'unknown',
+                digest: data.digest,
+                total: data.total,
+                completed: data.completed,
+                percent,
+              });
+
+              // Check if pull is complete
+              if (
+                data.status === 'success' ||
+                (!data.status && data.completed === data.total)
+              ) {
+                onComplete();
+                return;
+              }
+            } catch (parseError) {
+              console.error('Failed to parse pull progress chunk:', parseError);
+            }
+          }
+        }
+      });
+
+      response.data.on('error', (error: Error) => {
+        onError(error);
+      });
+
+      response.data.on('end', () => {
+        onComplete();
+      });
+    } catch (error: unknown) {
+      console.error('Failed to pull model with streaming:', error);
+      onError(
+        new Error(getErrorMessage(error, 'Failed to pull model with streaming'))
+      );
+    }
+  }
+
   async deleteModel(modelName: string): Promise<void> {
     try {
       await this.client.delete('/api/delete', {

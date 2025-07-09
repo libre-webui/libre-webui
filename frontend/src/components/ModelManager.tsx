@@ -40,6 +40,13 @@ export const ModelManager: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [pullModelName, setPullModelName] = useState('');
   const [pulling, setPulling] = useState(false);
+  const [pullProgress, setPullProgress] = useState<{
+    status: string;
+    percent?: number;
+    total?: number;
+    completed?: number;
+  } | null>(null);
+  const [cancelPull, setCancelPull] = useState<(() => void) | null>(null);
 
   // Load models and running models
   const loadData = async () => {
@@ -79,17 +86,47 @@ export const ModelManager: React.FC = () => {
     }
 
     setPulling(true);
+    setPullProgress({ status: 'starting' });
+
     try {
-      await ollamaApi.pullModel(pullModelName.trim());
-      toast.success(`Model ${pullModelName} pulled successfully`);
-      setPullModelName('');
-      await loadData(); // Reload the models list
+      const cancelFn = ollamaApi.pullModelStream(
+        pullModelName.trim(),
+        progress => {
+          setPullProgress(progress);
+        },
+        () => {
+          setPullProgress(null);
+          setPulling(false);
+          setCancelPull(null);
+          toast.success(`Model ${pullModelName} pulled successfully`);
+          setPullModelName('');
+          loadData(); // Reload the models list
+        },
+        error => {
+          setPullProgress(null);
+          setPulling(false);
+          setCancelPull(null);
+          toast.error('Failed to pull model: ' + error);
+        }
+      );
+      setCancelPull(() => cancelFn);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       toast.error('Failed to pull model: ' + errorMessage);
-    } finally {
+      setPullProgress(null);
       setPulling(false);
+      setCancelPull(null);
+    }
+  };
+
+  const handleCancelPull = () => {
+    if (cancelPull) {
+      cancelPull();
+      setCancelPull(null);
+      setPulling(false);
+      setPullProgress(null);
+      toast.success('Model pull cancelled');
     }
   };
 
@@ -162,16 +199,70 @@ export const ModelManager: React.FC = () => {
             className='flex-1 px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
             disabled={pulling}
           />
-          <Button
-            onClick={handlePullModel}
-            disabled={pulling || !pullModelName.trim()}
-            className='px-4 py-2'
-          >
-            {pulling ? 'Pulling...' : 'Pull Model'}
-          </Button>
+          {pulling ? (
+            <Button
+              onClick={handleCancelPull}
+              variant='outline'
+              className='px-4 py-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
+            >
+              Cancel
+            </Button>
+          ) : (
+            <Button
+              onClick={handlePullModel}
+              disabled={!pullModelName.trim()}
+              className='px-4 py-2'
+            >
+              Pull Model
+            </Button>
+          )}
         </div>
+
+        {/* Progress Bar */}
+        {pulling && pullProgress && (
+          <div className='mt-4 p-3 bg-gray-50 dark:bg-dark-200 rounded-md border border-gray-200 dark:border-dark-300'>
+            <div className='flex items-center justify-between mb-2'>
+              <span className='text-sm font-medium text-gray-800 dark:text-dark-700'>
+                {pullProgress.status === 'starting'
+                  ? 'Initializing...'
+                  : pullProgress.status === 'pulling'
+                    ? 'Pulling model...'
+                    : pullProgress.status === 'verifying sha256'
+                      ? 'Verifying...'
+                      : pullProgress.status === 'writing manifest'
+                        ? 'Writing manifest...'
+                        : pullProgress.status === 'removing any unused layers'
+                          ? 'Cleaning up...'
+                          : pullProgress.status}
+              </span>
+              {pullProgress.percent !== undefined && (
+                <span className='text-sm text-gray-600 dark:text-dark-600'>
+                  {pullProgress.percent}%
+                </span>
+              )}
+            </div>
+
+            {pullProgress.percent !== undefined && (
+              <div className='w-full bg-gray-200 dark:bg-dark-400 rounded-full h-2'>
+                <div
+                  className='bg-gray-600 dark:bg-dark-600 h-2 rounded-full transition-all duration-300'
+                  style={{ width: `${pullProgress.percent}%` }}
+                />
+              </div>
+            )}
+
+            {pullProgress.total && pullProgress.completed && (
+              <div className='mt-2 text-xs text-gray-600 dark:text-dark-600'>
+                {(pullProgress.completed / (1024 * 1024 * 1024)).toFixed(2)} GB
+                / {(pullProgress.total / (1024 * 1024 * 1024)).toFixed(2)} GB
+              </div>
+            )}
+          </div>
+        )}
+
         <p className='text-sm text-gray-600 dark:text-dark-600 mt-2'>
-          Popular models: llama3.2, codellama, mistral, llava, nomic-embed-text
+          Popular models: deepseek-r1, gemma3n, gemma3, qwen3, qwen2.5vl,
+          llama3.1, nomic-embed-text, llama3.2, mistral, qwen2.5, llama3
         </p>
       </div>
 

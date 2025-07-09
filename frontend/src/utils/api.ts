@@ -399,6 +399,84 @@ export const ollamaApi = {
     return api.post(`/ollama/models/${modelName}/pull`).then(res => res.data);
   },
 
+  pullModelStream: (
+    modelName: string,
+    onProgress: (progress: {
+      status: string;
+      digest?: string;
+      total?: number;
+      completed?: number;
+      percent?: number;
+    }) => void,
+    onComplete: () => void,
+    onError: (error: string) => void
+  ): (() => void) => {
+    if (isDemoMode()) {
+      // Simulate pull progress for demo mode
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress >= 100) {
+          progress = 100;
+          onProgress({
+            status: 'success',
+            total: 100,
+            completed: 100,
+            percent: 100,
+          });
+          clearInterval(interval);
+          setTimeout(onComplete, 500);
+        } else {
+          onProgress({
+            status: 'pulling',
+            total: 100,
+            completed: progress,
+            percent: Math.round(progress),
+          });
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+
+    const eventSource = new EventSource(
+      `${API_BASE_URL}/ollama/models/${modelName}/pull/stream`
+    );
+
+    eventSource.onmessage = event => {
+      const data = JSON.parse(event.data);
+
+      switch (data.type) {
+        case 'progress':
+          onProgress({
+            status: data.status,
+            digest: data.digest,
+            total: data.total,
+            completed: data.completed,
+            percent: data.percent,
+          });
+          break;
+        case 'complete':
+          eventSource.close();
+          onComplete();
+          break;
+        case 'error':
+          eventSource.close();
+          onError(data.error);
+          break;
+      }
+    };
+
+    eventSource.onerror = () => {
+      eventSource.close();
+      onError('Connection to server lost');
+    };
+
+    // Return cancel function
+    return () => {
+      eventSource.close();
+    };
+  },
+
   deleteModel: (modelName: string): Promise<ApiResponse> => {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
