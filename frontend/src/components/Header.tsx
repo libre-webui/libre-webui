@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Settings, Menu, LogOut } from 'lucide-react';
+import { Settings, Menu, LogOut, User } from 'lucide-react';
 import { Button, Select } from '@/components/ui';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserMenu } from '@/components/UserMenu';
@@ -26,9 +26,10 @@ import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { usePluginStore } from '@/store/pluginStore';
-import { authApi } from '@/utils/api';
+import { authApi, personaApi, chatApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
+import { Persona } from '@/types';
 
 interface HeaderProps {
   className?: string;
@@ -41,15 +42,64 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentSession, models, updateCurrentSessionModel } = useChatStore();
+  const {
+    currentSession,
+    models,
+    updateCurrentSessionModel: _updateCurrentSessionModel,
+    setCurrentSession: _setCurrentSession,
+  } = useChatStore();
   const {
     hasSeenSettingsNotification,
     markSettingsNotificationAsSeen,
     sidebarOpen,
     toggleSidebar,
+    setBackgroundImage,
   } = useAppStore();
   const { plugins } = usePluginStore();
   const { user, logout, systemInfo } = useAuthStore();
+
+  // Persona state
+  const [_personas, setPersonas] = useState<Persona[]>([]);
+  const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
+
+  // Load personas on component mount
+  useEffect(() => {
+    const loadPersonas = async () => {
+      try {
+        const response = await personaApi.getPersonas();
+        if (response.success && response.data) {
+          setPersonas(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to load personas:', error);
+      }
+    };
+
+    loadPersonas();
+  }, []);
+
+  // Load current persona when session changes
+  useEffect(() => {
+    const loadCurrentPersona = async () => {
+      if (currentSession?.personaId) {
+        try {
+          const response = await personaApi.getPersona(
+            currentSession.personaId
+          );
+          if (response.success && response.data) {
+            setCurrentPersona(response.data);
+          }
+        } catch (error) {
+          console.error('Failed to load current persona:', error);
+          setCurrentPersona(null);
+        }
+      } else {
+        setCurrentPersona(null);
+      }
+    };
+
+    loadCurrentPersona();
+  }, [currentSession?.personaId]);
 
   const getPageTitle = () => {
     if (location.pathname === '/models') {
@@ -86,16 +136,75 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const handleModelChange = async (
+  const handleModelOrPersonaChange = async (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    const newModel = event.target.value;
-    if (currentSession && newModel !== currentSession.model) {
-      try {
-        await updateCurrentSessionModel(newModel);
-      } catch (_error) {
-        console.error('Failed to update session model:', _error);
+    const value = event.target.value;
+    if (!currentSession) return;
+
+    try {
+      // Check if the selected value is a persona
+      if (value.startsWith('persona:')) {
+        const personaId = value.replace('persona:', '');
+
+        // Get persona details to use its model
+        const personaResponse = await personaApi.getPersona(personaId);
+        if (!personaResponse.success || !personaResponse.data) {
+          toast.error('Failed to load persona details');
+          return;
+        }
+
+        const persona = personaResponse.data;
+
+        // Update session with persona and its model
+        const response = await chatApi.updateSession(currentSession.id, {
+          personaId: personaId,
+          model: value, // Keep the persona model string (persona:xxx)
+        });
+
+        if (response.success && response.data) {
+          // Update both currentSession and the sessions array
+          const { sessions } = useChatStore.getState();
+          const updatedSessions = sessions.map(s =>
+            s.id === currentSession.id ? response.data! : s
+          );
+          useChatStore.setState({
+            sessions: updatedSessions,
+            currentSession: response.data,
+          });
+
+          // Apply persona background if it has one
+          if (persona.background) {
+            setBackgroundImage(persona.background);
+          }
+
+          toast.success('Persona applied');
+        }
+      } else {
+        // It's a regular model - update the model and clear persona
+        const response = await chatApi.updateSession(currentSession.id, {
+          model: value,
+          personaId: undefined,
+        });
+
+        if (response.success && response.data) {
+          // Update both currentSession and the sessions array
+          const { sessions } = useChatStore.getState();
+          const updatedSessions = sessions.map(s =>
+            s.id === currentSession.id ? response.data! : s
+          );
+          useChatStore.setState({
+            sessions: updatedSessions,
+            currentSession: response.data,
+          });
+
+          setBackgroundImage(null);
+          toast.success('Model updated');
+        }
       }
+    } catch (error) {
+      console.error('Failed to update session:', error);
+      toast.error('Failed to update session');
     }
   };
 
@@ -166,18 +275,49 @@ export const Header: React.FC<HeaderProps> = ({
                   Model:
                 </span>
                 <Select
-                  value={currentSession.model}
-                  onChange={handleModelChange}
+                  value={
+                    currentSession.personaId
+                      ? `persona:${currentSession.personaId}`
+                      : currentSession.model
+                  }
+                  onChange={handleModelOrPersonaChange}
                   options={models.map(model => ({
                     value: model.name,
-                    label: model.isPlugin
-                      ? `${model.name} (${model.pluginName})`
-                      : model.name,
+                    label: model.isPersona
+                      ? `👤 ${model.personaName} (via ${model.model})`
+                      : model.isPlugin
+                        ? `${model.name} (${model.pluginName})`
+                        : model.name,
                   }))}
                   className='text-xs min-w-0 py-1 px-2 h-6 border-0 bg-gray-50 dark:bg-dark-200 rounded-lg max-w-32 sm:max-w-none'
                 />
-                {/* Plugin indicator - only show when current model is from a plugin */}
-                {currentSession &&
+
+                {/* Persona indicator - show when using a persona */}
+                {currentSession?.personaId && currentPersona && (
+                  <div className='flex items-center gap-1'>
+                    <span className='text-xs text-gray-500 dark:text-dark-500 hidden sm:inline'>
+                      via
+                    </span>
+                    <div className='flex items-center gap-1'>
+                      {currentPersona.avatar ? (
+                        <img
+                          src={currentPersona.avatar}
+                          alt={currentPersona.name}
+                          className='w-4 h-4 rounded-full object-cover'
+                        />
+                      ) : (
+                        <User className='h-3 w-3' />
+                      )}
+                      <span className='text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded'>
+                        {currentPersona.name}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Plugin indicator - only show when current model is from a plugin and no persona */}
+                {!currentSession?.personaId &&
+                  currentSession &&
                   (() => {
                     const currentModel = models.find(
                       m => m.name === currentSession.model

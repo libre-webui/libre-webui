@@ -15,27 +15,18 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
-import { ChatHeader } from '@/components/ChatHeader';
-import { PersonaSelector } from '@/components/PersonaSelector';
 import { Logo } from '@/components/Logo';
 import { useChatStore } from '@/store/chatStore';
-import { useAppStore } from '@/store/appStore';
 import { useChat } from '@/hooks/useChat';
-import { personaApi, chatApi } from '@/utils/api';
 import { Select } from '@/components/ui';
-import toast from 'react-hot-toast';
 
 export const ChatPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
-  const [selectedPersonaId, setSelectedPersonaId] = useState<
-    string | undefined
-  >();
-  const { setBackgroundImage } = useAppStore();
   const {
     currentSession,
     sessions,
@@ -45,10 +36,12 @@ export const ChatPage: React.FC = () => {
     createSession,
     setCurrentSession,
     loadSessions,
+    getCurrentPersona,
   } = useChatStore();
   const { sendMessage, stopGeneration, isStreaming } = useChat(
     currentSession?.id || ''
   );
+  const currentPersona = getCurrentPersona();
 
   // Load sessions on mount
   useEffect(() => {
@@ -90,50 +83,8 @@ export const ChatPage: React.FC = () => {
     handleSessionFromUrl();
   }, [sessionId, sessions, setCurrentSession, navigate, currentSession?.id]); // Include currentSession?.id
 
-  // Apply persona background when session changes
-  useEffect(() => {
-    const applyPersonaBackground = async () => {
-      if (currentSession?.personaId) {
-        try {
-          const response = await personaApi.getPersona(
-            currentSession.personaId
-          );
-          if (response.success && response.data?.background) {
-            setBackgroundImage(response.data.background);
-          }
-        } catch (error) {
-          console.error('Failed to load persona background:', error);
-        }
-      } else {
-        // Clear background if no persona
-        setBackgroundImage(null);
-      }
-    };
-
-    applyPersonaBackground();
-  }, [currentSession?.personaId, setBackgroundImage]);
-
   const handleCreateSession = async () => {
-    if (selectedPersonaId) {
-      // If persona is selected, use persona's model and create session
-      try {
-        const response = await personaApi.getPersona(selectedPersonaId);
-        if (response.success && response.data) {
-          const persona = response.data;
-          const newSession = await createSession(
-            persona.model,
-            `Chat with ${persona.name}`,
-            selectedPersonaId
-          );
-          if (newSession) {
-            navigate(`/c/${newSession.id}`, { replace: true });
-          }
-        }
-      } catch (error) {
-        console.error('Error creating session with persona:', error);
-      }
-    } else if (selectedModel) {
-      // No persona selected, use selected model
+    if (selectedModel) {
       const newSession = await createSession(selectedModel);
       if (newSession) {
         navigate(`/c/${newSession.id}`, { replace: true });
@@ -144,42 +95,6 @@ export const ChatPage: React.FC = () => {
   const handleModelChange = async (model: string) => {
     setSelectedModel(model);
     // Don't auto-create session on model change, let user click "New Chat"
-  };
-
-  const handlePersonaChange = async (personaId: string | undefined) => {
-    if (!currentSession) return;
-
-    try {
-      // Update the session with the new persona
-      const response = await chatApi.updateSession(currentSession.id, {
-        personaId: personaId,
-      });
-
-      if (response.success && response.data) {
-        // Update the session in the store
-        setCurrentSession(response.data);
-
-        // Apply the new persona's background if it has one
-        if (personaId) {
-          const personaResponse = await personaApi.getPersona(personaId);
-          if (personaResponse.success && personaResponse.data?.background) {
-            setBackgroundImage(personaResponse.data.background);
-          }
-        } else {
-          // Clear background if no persona
-          setBackgroundImage(null);
-        }
-
-        toast.success(
-          personaId
-            ? 'Persona applied to session'
-            : 'Persona removed from session'
-        );
-      }
-    } catch (error) {
-      console.error('Error updating session persona:', error);
-      toast.error('Failed to update session persona');
-    }
   };
 
   const handleSendMessage = (
@@ -203,63 +118,47 @@ export const ChatPage: React.FC = () => {
             Welcome to Libre WebUI
           </h2>
           <p className='text-gray-600 dark:text-dark-600 mb-8 leading-relaxed'>
-            Select a model and start a conversation with your AI assistant
+            Select a model or persona and start a conversation with your AI
+            assistant
           </p>
 
           {models.length > 0 ? (
             <div className='space-y-6'>
               <div className='space-y-3'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  Choose a persona (recommended)
+                  Choose a model or persona
                 </label>
-                <PersonaSelector
-                  selectedPersonaId={selectedPersonaId}
-                  onPersonaChange={setSelectedPersonaId}
-                  className='justify-start'
+                <Select
+                  label='Choose a model or persona'
+                  value={selectedModel}
+                  onChange={e => handleModelChange(e.target.value)}
+                  options={models.map(model => ({
+                    value: model.name,
+                    label: model.name,
+                  }))}
+                  className='text-left'
                 />
                 <p className='text-xs text-gray-500 dark:text-gray-400'>
-                  {selectedPersonaId
-                    ? 'Persona selected! The persona will determine the AI model, personality, and behavior.'
-                    : 'Select a persona for enhanced AI interactions with custom instructions and personality.'}
+                  Personas are shown with a purple indicator in the chat header
+                  when active.
                   <span className='block mt-1'>
                     <a
                       href='/personas'
                       className='text-blue-500 hover:text-blue-600'
                     >
-                      Create new personas
+                      Create and manage personas
                     </a>{' '}
                     in the Personas tab.
                   </span>
                 </p>
               </div>
 
-              {!selectedPersonaId && (
-                <div className='space-y-3'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    Or choose a model directly
-                  </label>
-                  <Select
-                    label='Choose a model'
-                    value={selectedModel}
-                    onChange={e => handleModelChange(e.target.value)}
-                    options={models.map(model => ({
-                      value: model.name,
-                      label: model.name,
-                    }))}
-                    className='text-left'
-                  />
-                  <p className='text-xs text-gray-500 dark:text-gray-400'>
-                    Use a raw model without persona customization.
-                  </p>
-                </div>
-              )}
-
-              {(selectedPersonaId || selectedModel) && (
+              {selectedModel && (
                 <button
                   onClick={handleCreateSession}
                   className='w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-colors'
                 >
-                  Start Chat {selectedPersonaId ? 'with Persona' : 'with Model'}
+                  Start Chat with {selectedModel}
                 </button>
               )}
             </div>
@@ -282,22 +181,36 @@ export const ChatPage: React.FC = () => {
   }
 
   return (
-    <div className='flex flex-col h-full'>
-      <ChatHeader
-        session={currentSession}
-        onPersonaChange={handlePersonaChange}
-      />
+    <div
+      className='flex flex-col h-full relative'
+      style={
+        currentPersona?.background
+          ? {
+              backgroundImage: `url(${currentPersona.background})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
+            }
+          : undefined
+      }
+    >
+      {/* Background overlay for better readability when persona background is active */}
+      {currentPersona?.background && (
+        <div className='absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm' />
+      )}
 
-      <ChatMessages
-        messages={currentSession.messages}
-        isStreaming={isStreaming}
-        className='flex-1'
-      />
-      <ChatInput
-        onSendMessage={handleSendMessage}
-        onStopGeneration={stopGeneration}
-        disabled={!currentSession}
-      />
+      <div className='flex flex-col h-full relative z-10'>
+        <ChatMessages
+          messages={currentSession.messages}
+          isStreaming={isStreaming}
+          className='flex-1'
+        />
+        <ChatInput
+          onSendMessage={handleSendMessage}
+          onStopGeneration={stopGeneration}
+          disabled={!currentSession}
+        />
+      </div>
     </div>
   );
 };

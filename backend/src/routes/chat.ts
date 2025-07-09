@@ -56,6 +56,44 @@ router.use(chatRateLimiter);
 // Apply authentication middleware to all chat routes
 router.use(authenticate);
 
+// Helper function to resolve the actual model name from session model
+// If the model is a persona ID (starts with "persona:"), extract the actual model name
+async function resolveActualModelName(
+  sessionModel: string,
+  userId: string = 'default'
+): Promise<string> {
+  if (sessionModel.startsWith('persona:')) {
+    try {
+      const personaId = sessionModel.replace('persona:', '');
+
+      // Try to get persona for the current user first, then fallback to 'default'
+      let persona = await personaService.getPersonaById(personaId, userId);
+      if (!persona && userId !== 'default') {
+        console.log(
+          `[DEBUG] Persona not found for user ${userId}, trying default user`
+        );
+        persona = await personaService.getPersonaById(personaId, 'default');
+      }
+
+      if (persona && persona.model) {
+        console.log(
+          `[DEBUG] Resolved persona ${personaId} to model: ${persona.model}`
+        );
+        return persona.model;
+      } else {
+        console.warn(
+          `[DEBUG] Persona ${personaId} not found, falling back to session model`
+        );
+        return sessionModel;
+      }
+    } catch (error) {
+      console.error(`[DEBUG] Error resolving persona model:`, error);
+      return sessionModel;
+    }
+  }
+  return sessionModel;
+}
+
 // Get all chat sessions
 router.get(
   '/sessions',
@@ -98,11 +136,21 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.createSession(
+
+      // Extract persona ID from model string if it starts with "persona:"
+      let extractedPersonaId = personaId;
+      if (model.startsWith('persona:') && !extractedPersonaId) {
+        extractedPersonaId = model.replace('persona:', '');
+        console.log(
+          `[DEBUG] Extracted personaId from model: ${extractedPersonaId}`
+        );
+      }
+
+      const session = await chatService.createSession(
         model,
         title,
         userId,
-        personaId
+        extractedPersonaId
       );
       res.json({
         success: true,
@@ -162,7 +210,7 @@ router.put(
       const updates = req.body;
 
       const userId = req.user?.userId || 'default';
-      const updatedSession = chatService.updateSession(
+      const updatedSession = await chatService.updateSession(
         sessionId,
         updates,
         userId
@@ -459,17 +507,27 @@ router.post(
         options
       );
 
+      // Resolve the actual model name (handles persona IDs)
+      const actualModelName = await resolveActualModelName(
+        session.model,
+        userId
+      );
+      console.log(
+        `[DEBUG] Resolved model from "${session.model}" to "${actualModelName}"`
+      );
+
       // Prepare common chat request for Ollama (used in both fallback and direct cases)
       const chatRequest = {
-        model: session.model,
+        model: actualModelName,
         messages: ollamaMessages,
         stream: false,
         options: mergedOptions as Record<string, unknown>,
       };
 
       // Check if there's an active plugin for this model
-      console.log(`[DEBUG] Looking for plugin for model: ${session.model}`);
-      const activePlugin = pluginService.getActivePluginForModel(session.model);
+      console.log(`[DEBUG] Looking for plugin for model: ${actualModelName}`);
+      const activePlugin =
+        pluginService.getActivePluginForModel(actualModelName);
       console.log(
         `[DEBUG] Found plugin:`,
         activePlugin ? activePlugin.id : 'none'
@@ -477,12 +535,12 @@ router.post(
 
       if (activePlugin) {
         console.log(
-          `[DEBUG] Using plugin ${activePlugin.id} for model ${session.model}`
+          `[DEBUG] Using plugin ${activePlugin.id} for model ${actualModelName}`
         );
         try {
           // Use plugin for generation
           const pluginResponse = await pluginService.executePluginRequest(
-            session.model,
+            actualModelName,
             session.messages.concat([userMessage]),
             options
           );
@@ -492,7 +550,7 @@ router.post(
 
           // Create a mock response in Ollama format
           response = {
-            model: session.model,
+            model: actualModelName,
             created_at: new Date().toISOString(),
             message: {
               role: 'assistant',
@@ -509,7 +567,7 @@ router.post(
         }
       } else {
         console.log(
-          `[DEBUG] No plugin found, using Ollama for model: ${session.model}`
+          `[DEBUG] No plugin found, using Ollama for model: ${actualModelName}`
         );
         // Use Ollama directly
         response = await ollamaService.generateChatResponse(chatRequest);
@@ -647,8 +705,17 @@ router.post(
         options
       );
 
+      // Resolve the actual model name (handles persona IDs)
+      const actualModelName = await resolveActualModelName(
+        session.model,
+        userId
+      );
+      console.log(
+        `[DEBUG] Streaming - Resolved model from "${session.model}" to "${actualModelName}"`
+      );
+
       const chatRequest = {
-        model: session.model,
+        model: actualModelName,
         messages: ollamaMessages,
         stream: true,
         options: mergedOptions as Record<string, unknown>,

@@ -42,7 +42,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const isSystem = message.role === 'system';
   const { preferences } = useAppStore();
   const { user } = useAuthStore();
-  const { setSystemMessage } = useChatStore();
+  const { setSystemMessage, getCurrentPersona } = useChatStore();
+  const currentPersona = getCurrentPersona();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
   const [isSaving, setIsSaving] = useState(false);
@@ -90,6 +91,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       }
       return 'You';
     }
+    // For assistant messages, use persona name if available
+    if (currentPersona?.name) {
+      return currentPersona.name;
+    }
     return 'Assistant';
   };
 
@@ -127,10 +132,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         className
       )}
     >
-      {/* Avatar */}{' '}
+      {/* Avatar */}
       <div
         className={cn(
-          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm',
+          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm overflow-hidden',
           isUser
             ? 'bg-primary-600 text-white'
             : isSystem
@@ -142,6 +147,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <User className='h-4 w-4' />
         ) : isSystem ? (
           <Settings className='h-4 w-4' />
+        ) : currentPersona?.avatar ? (
+          <img
+            src={currentPersona.avatar}
+            alt={currentPersona.name || 'Assistant'}
+            className='w-full h-full object-cover'
+          />
         ) : (
           <Bot className='h-4 w-4' />
         )}
