@@ -47,13 +47,14 @@ class ChatService {
   createSession(
     model: string,
     title?: string,
-    userId: string = 'default'
+    userId: string = 'default',
+    personaId?: string
   ): ChatSession {
     const sessionId = uuidv4();
     const now = Date.now();
 
     console.log(
-      `🚀 ChatService.createSession: sessionId=${sessionId}, userId=${userId}, model=${model}`
+      `🚀 ChatService.createSession: sessionId=${sessionId}, userId=${userId}, model=${model}, personaId=${personaId}`
     );
 
     const session: ChatSession = {
@@ -63,6 +64,7 @@ class ChatService {
       model,
       createdAt: now,
       updatedAt: now,
+      personaId,
     };
 
     // Add system message from preferences if one exists

@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
+import { PersonaSelector } from '@/components/PersonaSelector';
 import { Logo } from '@/components/Logo';
 import { useChatStore } from '@/store/chatStore';
 import { useChat } from '@/hooks/useChat';
@@ -27,6 +28,9 @@ import { Select } from '@/components/ui';
 export const ChatPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
+  const [selectedPersonaId, setSelectedPersonaId] = useState<
+    string | undefined
+  >();
   const {
     currentSession,
     sessions,
@@ -84,7 +88,11 @@ export const ChatPage: React.FC = () => {
   const handleModelChange = async (model: string) => {
     setSelectedModel(model);
     if (!currentSession) {
-      const newSession = await createSession(model);
+      const newSession = await createSession(
+        model,
+        undefined,
+        selectedPersonaId
+      );
       if (newSession) {
         navigate(`/c/${newSession.id}`, { replace: true });
       }
@@ -127,6 +135,18 @@ export const ChatPage: React.FC = () => {
                 }))}
                 className='text-left'
               />
+
+              <div className='space-y-3'>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  Choose a persona (optional)
+                </label>
+                <PersonaSelector
+                  selectedPersonaId={selectedPersonaId}
+                  onPersonaChange={setSelectedPersonaId}
+                  className='justify-start'
+                />
+              </div>
+
               {selectedModel && (
                 <div className='p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl'>
                   <p className='text-sm text-gray-700 dark:text-dark-700'>

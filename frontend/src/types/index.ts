@@ -64,6 +64,7 @@ export interface ChatSession {
   model: string;
   createdAt: number;
   updatedAt: number;
+  personaId?: string;
 }
 
 export interface OllamaModel {

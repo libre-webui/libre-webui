@@ -180,7 +180,8 @@ export const chatApi = {
 
   createSession: (
     model: string,
-    title?: string
+    title?: string,
+    personaId?: string
   ): Promise<ApiResponse<ChatSession>> => {
     if (import.meta.env.VITE_DEMO_MODE === 'true') {
       const newSession: ChatSession = {
@@ -190,11 +191,14 @@ export const chatApi = {
         messages: [],
         createdAt: Date.now(),
         updatedAt: Date.now(),
+        personaId,
       };
       DEMO_SESSIONS.unshift(newSession);
       return createDemoResponse(newSession);
     }
-    return api.post('/chat/sessions', { model, title }).then(res => res.data);
+    return api
+      .post('/chat/sessions', { model, title, personaId })
+      .then(res => res.data);
   },
 
   getSession: (sessionId: string): Promise<ApiResponse<ChatSession>> => {

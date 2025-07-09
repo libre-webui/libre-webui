@@ -48,7 +48,8 @@ interface ChatState {
   setCurrentSession: (session: ChatSession | null) => void;
   createSession: (
     model: string,
-    title?: string
+    title?: string,
+    personaId?: string
   ) => Promise<ChatSession | undefined>;
   loadSessions: () => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
@@ -103,10 +104,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ currentSession: session });
   },
 
-  createSession: async (model: string, title?: string) => {
+  createSession: async (model: string, title?: string, personaId?: string) => {
     try {
       set({ loading: true, error: null });
-      const response = await chatApi.createSession(model, title);
+      const response = await chatApi.createSession(model, title, personaId);
 
       if (response.success && response.data) {
         const newSession = response.data;

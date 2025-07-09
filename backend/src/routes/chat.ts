@@ -86,7 +86,7 @@ router.post(
     res: Response<ApiResponse<ChatSession>>
   ): Promise<void> => {
     try {
-      const { model, title } = req.body;
+      const { model, title, personaId } = req.body;
 
       if (!model) {
         res.status(400).json({
@@ -97,7 +97,12 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.createSession(model, title, userId);
+      const session = chatService.createSession(
+        model,
+        title,
+        userId,
+        personaId
+      );
       res.json({
         success: true,
         data: session,
