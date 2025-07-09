@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { Logo } from '@/components/Logo';
@@ -27,6 +27,7 @@ import { Select } from '@/components/ui';
 export const ChatPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     currentSession,
     sessions,
@@ -74,14 +75,26 @@ export const ChatPage: React.FC = () => {
             navigate('/', { replace: true });
           }
         }
-      } else if (!sessionId && sessions.length > 0) {
+      } else if (
+        !sessionId &&
+        sessions.length > 0 &&
+        location.pathname === '/'
+      ) {
         // No sessionId in URL but we have sessions, redirect to the most recent session
+        // Only redirect from root path (/), not from /chat (which should show welcome screen)
         navigate(`/c/${sessions[0].id}`, { replace: true });
       }
     };
 
     handleSessionFromUrl();
-  }, [sessionId, sessions, setCurrentSession, navigate, currentSession?.id]); // Include currentSession?.id
+  }, [
+    sessionId,
+    sessions,
+    setCurrentSession,
+    navigate,
+    currentSession?.id,
+    location.pathname,
+  ]);
 
   const handleCreateSession = async () => {
     if (selectedModel) {
@@ -125,9 +138,6 @@ export const ChatPage: React.FC = () => {
           {models.length > 0 ? (
             <div className='space-y-6'>
               <div className='space-y-3'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  Choose a model or persona
-                </label>
                 <Select
                   label='Choose a model or persona'
                   value={selectedModel}
