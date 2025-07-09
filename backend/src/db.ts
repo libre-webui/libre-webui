@@ -173,7 +173,6 @@ function initializeTables(): void {
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions(updated_at);
-    CREATE INDEX IF NOT EXISTS idx_sessions_persona_id ON sessions(persona_id);
     CREATE INDEX IF NOT EXISTS idx_session_messages_session_id ON session_messages(session_id);
     CREATE INDEX IF NOT EXISTS idx_session_messages_timestamp ON session_messages(timestamp);
     CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
@@ -228,7 +227,7 @@ function runMigrations(): void {
 
   try {
     // Check if we need to add new columns to session_messages
-    const tableInfo = db
+    const sessionMessagesTableInfo = db
       .prepare('PRAGMA table_info(session_messages)')
       .all() as Array<{
       cid: number;
@@ -239,23 +238,51 @@ function runMigrations(): void {
       pk: number;
     }>;
 
-    const existingColumns = tableInfo.map(col => col.name);
+    const existingSessionMessagesColumns = sessionMessagesTableInfo.map(
+      col => col.name
+    );
 
-    // Add missing columns one by one
-    const newColumns = [
+    // Add missing columns to session_messages table
+    const newSessionMessagesColumns = [
       { name: 'model', type: 'TEXT' },
       { name: 'images', type: 'TEXT' },
       { name: 'statistics', type: 'TEXT' },
       { name: 'artifacts', type: 'TEXT' },
     ];
 
-    for (const column of newColumns) {
-      if (!existingColumns.includes(column.name)) {
+    for (const column of newSessionMessagesColumns) {
+      if (!existingSessionMessagesColumns.includes(column.name)) {
         console.log(`Adding column ${column.name} to session_messages table`);
         db.exec(
           `ALTER TABLE session_messages ADD COLUMN ${column.name} ${column.type}`
         );
       }
+    }
+
+    // Check if we need to add persona_id column to sessions table
+    const sessionsTableInfo = db
+      .prepare('PRAGMA table_info(sessions)')
+      .all() as Array<{
+      cid: number;
+      name: string;
+      type: string;
+      notnull: number;
+      dflt_value: unknown;
+      pk: number;
+    }>;
+
+    const existingSessionsColumns = sessionsTableInfo.map(col => col.name);
+
+    // Add persona_id column to sessions table if it doesn't exist
+    if (!existingSessionsColumns.includes('persona_id')) {
+      console.log('Adding persona_id column to sessions table');
+      db.exec('ALTER TABLE sessions ADD COLUMN persona_id TEXT');
+
+      // Create index for the new column
+      console.log('Creating index for persona_id column');
+      db.exec(
+        'CREATE INDEX IF NOT EXISTS idx_sessions_persona_id ON sessions(persona_id)'
+      );
     }
   } catch (error) {
     console.error('Error running migrations:', error);
