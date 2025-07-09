@@ -36,7 +36,7 @@ We pursue simplicity and user sovereignty above growth, hype, or outside investm
 
 ## 4 Contribution Guidelines (Summary)
 
-- Submit PRs against `main`; require at least **one approving review** from the TSC.
+- Submit PRs against `dev`; require at least **one approving review** from the TSC.
 - All new features must include documentation and unit tests.
 - Security issues: disclose privately at **security@kroonen.ai**; we follow a 30‑day coordinated release window.
 
