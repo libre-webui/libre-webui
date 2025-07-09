@@ -82,9 +82,11 @@ function initializeTables(): void {
       user_id TEXT DEFAULT 'default',
       title TEXT NOT NULL,
       model TEXT NOT NULL,
+      persona_id TEXT, -- Reference to persona used for this session
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL
     )
   `);
 
@@ -150,10 +152,28 @@ function initializeTables(): void {
     )
   `);
 
+  // Personas table - for AI personas/characters
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS personas (
+      id TEXT PRIMARY KEY,
+      user_id TEXT DEFAULT 'default',
+      name TEXT NOT NULL,
+      description TEXT,
+      model TEXT NOT NULL,
+      parameters TEXT NOT NULL, -- JSON string for model parameters (temperature, top_p, etc.)
+      avatar TEXT, -- URL or path to avatar image
+      background TEXT, -- URL or path to background image
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   // Create indexes for better performance
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions(updated_at);
+    CREATE INDEX IF NOT EXISTS idx_sessions_persona_id ON sessions(persona_id);
     CREATE INDEX IF NOT EXISTS idx_session_messages_session_id ON session_messages(session_id);
     CREATE INDEX IF NOT EXISTS idx_session_messages_timestamp ON session_messages(timestamp);
     CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
@@ -162,6 +182,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_document_chunks_index ON document_chunks(chunk_index);
     CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
     CREATE INDEX IF NOT EXISTS idx_user_preferences_key ON user_preferences(key);
+    CREATE INDEX IF NOT EXISTS idx_personas_user_id ON personas(user_id);
+    CREATE INDEX IF NOT EXISTS idx_personas_name ON personas(name);
   `);
 
   console.log('Database tables initialized successfully');

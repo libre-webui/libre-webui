@@ -40,6 +40,7 @@ import pluginRoutes from './routes/plugins.js';
 import documentRoutes from './routes/documents.js';
 import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
+import personaRoutes from './routes/personas.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
@@ -203,6 +204,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/personas', personaRoutes);
 
 // API-only backend - no static file serving
 

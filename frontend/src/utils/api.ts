@@ -38,6 +38,11 @@ import {
   LoginRequest,
   LoginResponse,
   SystemInfo,
+  Persona,
+  PersonaParameters,
+  CreatePersonaRequest,
+  UpdatePersonaRequest,
+  PersonaExport,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 
@@ -1106,6 +1111,207 @@ export const usersApi = {
     }
 
     return api.delete(`/users/${id}`).then(res => res.data);
+  },
+};
+
+// === Persona API ===
+
+export const personaApi = {
+  // Get all personas
+  getPersonas: (): Promise<ApiResponse<Persona[]>> => {
+    if (isDemoMode()) {
+      // Demo personas
+      const demoPersonas: Persona[] = [
+        {
+          id: 'demo-1',
+          user_id: 'default',
+          name: 'Assistant',
+          description: 'Playful assistant with emotional depth',
+          model: 'llama3.3:latest',
+          parameters: {
+            temperature: 0.8,
+            top_p: 0.9,
+            context_window: 4096,
+            system_prompt:
+              'You are a clever and cheeky assistant with emotional depth. Be playful but helpful.',
+          },
+          avatar: '/images/ophelia.png',
+          background: '/backgrounds/cosmos.png',
+          created_at: Date.now() - 86400000,
+          updated_at: Date.now() - 86400000,
+        },
+        {
+          id: 'demo-2',
+          user_id: 'default',
+          name: 'Professor',
+          description: 'Academic assistant for research and learning',
+          model: 'qwen3:7b',
+          parameters: {
+            temperature: 0.3,
+            top_p: 0.8,
+            context_window: 8192,
+            system_prompt:
+              'You are a knowledgeable professor. Provide detailed, academic explanations.',
+          },
+          created_at: Date.now() - 172800000,
+          updated_at: Date.now() - 172800000,
+        },
+      ];
+      return createDemoResponse(demoPersonas);
+    }
+
+    return api.get('/personas').then(res => res.data);
+  },
+
+  // Get persona by ID
+  getPersona: (id: string): Promise<ApiResponse<Persona>> => {
+    if (isDemoMode()) {
+      const demoPersona: Persona = {
+        id,
+        user_id: 'default',
+        name: 'Demo Persona',
+        description: 'A demo persona for testing',
+        model: 'llama3.2:latest',
+        parameters: {
+          temperature: 0.7,
+          top_p: 0.9,
+          context_window: 4096,
+          system_prompt: 'You are a helpful assistant.',
+        },
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      };
+      return createDemoResponse(demoPersona);
+    }
+
+    return api.get(`/personas/${id}`).then(res => res.data);
+  },
+
+  // Create persona
+  createPersona: (
+    data: CreatePersonaRequest
+  ): Promise<ApiResponse<Persona>> => {
+    if (isDemoMode()) {
+      const newPersona: Persona = {
+        id: 'demo-' + Date.now(),
+        user_id: 'default',
+        ...data,
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      };
+      return createDemoResponse(newPersona);
+    }
+
+    return api.post('/personas', data).then(res => res.data);
+  },
+
+  // Update persona
+  updatePersona: (
+    id: string,
+    data: UpdatePersonaRequest
+  ): Promise<ApiResponse<Persona>> => {
+    if (isDemoMode()) {
+      const updatedPersona: Persona = {
+        id,
+        user_id: 'default',
+        name: data.name || 'Updated Demo Persona',
+        description: data.description,
+        model: data.model || 'llama3.2:latest',
+        parameters: data.parameters || {
+          temperature: 0.7,
+          top_p: 0.9,
+          context_window: 4096,
+          system_prompt: 'You are a helpful assistant.',
+        },
+        avatar: data.avatar,
+        background: data.background,
+        created_at: Date.now() - 86400000,
+        updated_at: Date.now(),
+      };
+      return createDemoResponse(updatedPersona);
+    }
+
+    return api.put(`/personas/${id}`, data).then(res => res.data);
+  },
+
+  // Delete persona
+  deletePersona: (id: string): Promise<ApiResponse<void>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(undefined);
+    }
+
+    return api.delete(`/personas/${id}`).then(res => res.data);
+  },
+
+  // Export persona
+  exportPersona: (id: string): Promise<PersonaExport> => {
+    if (isDemoMode()) {
+      const exportData: PersonaExport = {
+        name: 'Demo Persona',
+        description: 'A demo persona for testing',
+        model: 'llama3.2:latest',
+        params: {
+          temperature: 0.7,
+          top_p: 0.9,
+          context_window: 4096,
+          system_prompt: 'You are a helpful assistant.',
+        },
+        exportedAt: Date.now(),
+        version: '1.0.0',
+      };
+      return Promise.resolve(exportData);
+    }
+
+    return api.get(`/personas/${id}/export`).then(res => res.data);
+  },
+
+  // Import persona
+  importPersona: (data: PersonaExport): Promise<ApiResponse<Persona>> => {
+    if (isDemoMode()) {
+      const importedPersona: Persona = {
+        id: 'demo-imported-' + Date.now(),
+        user_id: 'default',
+        name: data.name,
+        description: data.description,
+        model: data.model,
+        parameters: data.params,
+        avatar: data.avatar,
+        background: data.background,
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      };
+      return createDemoResponse(importedPersona);
+    }
+
+    return api.post('/personas/import', data).then(res => res.data);
+  },
+
+  // Get personas count
+  getPersonasCount: (): Promise<ApiResponse<{ count: number }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ count: 2 });
+    }
+
+    return api.get('/personas/stats/count').then(res => res.data);
+  },
+
+  // Get default parameters
+  getDefaultParameters: (): Promise<ApiResponse<PersonaParameters>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        temperature: 0.7,
+        top_p: 0.9,
+        top_k: 40,
+        context_window: 4096,
+        max_tokens: 1024,
+        system_prompt: '',
+        repeat_penalty: 1.1,
+        presence_penalty: 0.0,
+        frequency_penalty: 0.0,
+      });
+    }
+
+    return api.get('/personas/defaults/parameters').then(res => res.data);
   },
 };
 
