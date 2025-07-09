@@ -1129,25 +1129,25 @@ export const personaApi = {
         {
           id: 'demo-1',
           user_id: 'default',
-          name: 'Assistant',
-          description: 'Playful assistant with emotional depth',
+          name: 'Creative Assistant',
+          description: 'Helpful assistant for creative tasks',
           model: 'llama3.3:latest',
           parameters: {
             temperature: 0.8,
             top_p: 0.9,
             context_window: 4096,
             system_prompt:
-              'You are a clever and cheeky assistant with emotional depth. Be playful but helpful.',
+              'You are a creative and helpful assistant. Provide thoughtful and engaging responses.',
           },
-          avatar: '/images/ophelia.png',
-          background: '/backgrounds/cosmos.png',
+          avatar: '/images/creative-avatar.png',
+          background: '/backgrounds/creative-bg.png',
           created_at: Date.now() - 86400000,
           updated_at: Date.now() - 86400000,
         },
         {
           id: 'demo-2',
           user_id: 'default',
-          name: 'Professor',
+          name: 'Research Assistant',
           description: 'Academic assistant for research and learning',
           model: 'qwen3:7b',
           parameters: {
@@ -1155,7 +1155,7 @@ export const personaApi = {
             top_p: 0.8,
             context_window: 8192,
             system_prompt:
-              'You are a knowledgeable professor. Provide detailed, academic explanations.',
+              'You are a knowledgeable research assistant. Provide detailed, informative explanations.',
           },
           created_at: Date.now() - 172800000,
           updated_at: Date.now() - 172800000,
@@ -1173,8 +1173,8 @@ export const personaApi = {
       const demoPersona: Persona = {
         id,
         user_id: 'default',
-        name: 'Demo Persona',
-        description: 'A demo persona for testing',
+        name: 'Sample Assistant',
+        description: 'A sample assistant for demonstration',
         model: 'llama3.2:latest',
         parameters: {
           temperature: 0.7,
@@ -1218,7 +1218,7 @@ export const personaApi = {
       const updatedPersona: Persona = {
         id,
         user_id: 'default',
-        name: data.name || 'Updated Demo Persona',
+        name: data.name || 'Updated Sample Assistant',
         description: data.description,
         model: data.model || 'llama3.2:latest',
         parameters: data.parameters || {
@@ -1251,8 +1251,8 @@ export const personaApi = {
   exportPersona: (id: string): Promise<PersonaExport> => {
     if (isDemoMode()) {
       const exportData: PersonaExport = {
-        name: 'Demo Persona',
-        description: 'A demo persona for testing',
+        name: 'Sample Assistant',
+        description: 'A sample assistant for demonstration',
         model: 'llama3.2:latest',
         params: {
           temperature: 0.7,
@@ -1316,6 +1316,86 @@ export const personaApi = {
     }
 
     return api.get('/personas/defaults/parameters').then(res => res.data);
+  },
+
+  // Download persona as JSON file
+  downloadPersona: async (id: string, name: string): Promise<void> => {
+    if (isDemoMode()) {
+      // Create demo export data for download
+      const exportData = {
+        format: 'libre-webui-persona',
+        version: '1.0',
+        persona: {
+          name: 'Sample Assistant',
+          description: 'A sample assistant for demonstration',
+          model: 'llama3.2:latest',
+          parameters: {
+            temperature: 0.7,
+            top_p: 0.9,
+            context_window: 4096,
+            system_prompt: 'You are a helpful assistant.',
+          },
+        },
+        exportedAt: new Date().toISOString(),
+        exportedBy: 'demo-user',
+      };
+
+      // Trigger download in demo mode
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${name.replace(/[^a-zA-Z0-9]/g, '_')}_persona.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('auth-token');
+      const headers: Record<string, string> = {};
+
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/personas/${id}/download`, {
+        method: 'GET',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download persona');
+      }
+
+      // Get the filename from response headers or use default
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `${name.replace(/[^a-zA-Z0-9]/g, '_')}_persona.json`;
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Convert response to blob and trigger download
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading persona:', error);
+      throw error;
+    }
   },
 };
 

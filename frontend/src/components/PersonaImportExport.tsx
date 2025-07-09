@@ -292,17 +292,17 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
         </h4>
         <pre className='text-xs text-gray-600 dark:text-dark-600 overflow-x-auto'>
           {`{
-  "name": "Assistant",
-  "description": "Playful assistant with emotional depth",
-  "model": "llama3.3:latest",
+  "name": "Assistant Name",
+  "description": "Brief description of the assistant's personality",
+  "model": "model-name:version",
   "params": {
     "temperature": 0.8,
     "top_p": 0.9,
     "context_window": 4096,
-    "system_prompt": "You are a clever and cheeky assistant..."
+    "system_prompt": "You are a helpful assistant with specific traits..."
   },
-  "avatar": "/images/ophelia.png",
-  "background": "/backgrounds/cosmos.png"
+  "avatar": "/path/to/avatar.png",
+  "background": "/path/to/background.png"
 }`}
         </pre>
       </div>

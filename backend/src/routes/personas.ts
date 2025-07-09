@@ -267,4 +267,58 @@ router.get(
   }
 );
 
+/**
+ * Download/Export a specific persona as JSON file
+ */
+router.get(
+  '/:id/download',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId || 'default';
+
+      const persona = await personaService.getPersonaById(id, userId);
+
+      if (!persona) {
+        res.status(404).json({
+          success: false,
+          error: 'Persona not found',
+        });
+        return;
+      }
+
+      // Create export data with metadata
+      const exportData = {
+        format: 'libre-webui-persona',
+        version: '1.0',
+        persona: {
+          name: persona.name,
+          description: persona.description,
+          model: persona.model,
+          parameters: persona.parameters,
+          avatar: persona.avatar,
+          background: persona.background,
+        },
+        exportedAt: new Date().toISOString(),
+        exportedBy: userId,
+      };
+
+      // Set headers for file download
+      const fileName = `${persona.name.replace(/[^a-zA-Z0-9]/g, '_')}_persona.json`;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${fileName}"`
+      );
+
+      res.json(exportData);
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to download persona'),
+      });
+    }
+  }
+);
+
 export default router;

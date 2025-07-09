@@ -84,6 +84,17 @@ export const PersonaManager: React.FC = () => {
     }
   };
 
+  const handleDownloadPersona = async (persona: Persona) => {
+    try {
+      await personaApi.downloadPersona(persona.id, persona.name);
+      toast.success(`Persona "${persona.name}" downloaded successfully`);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to download persona: ' + errorMessage);
+    }
+  };
+
   const handleFormSubmit = async () => {
     setShowCreateForm(false);
     setEditingPersona(null);
@@ -207,6 +218,7 @@ export const PersonaManager: React.FC = () => {
               persona={persona}
               onEdit={handleEditPersona}
               onDelete={handleDeletePersona}
+              onDownload={handleDownloadPersona}
             />
           ))}
         </div>

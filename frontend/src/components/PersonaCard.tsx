@@ -18,17 +18,20 @@
 import React from 'react';
 import { Button } from '@/components/ui/Button';
 import { Persona } from '@/types';
+import { Download, Edit, Trash2 } from 'lucide-react';
 
 interface PersonaCardProps {
   persona: Persona;
   onEdit: (persona: Persona) => void;
   onDelete: (persona: Persona) => void;
+  onDownload: (persona: Persona) => void;
 }
 
 const PersonaCard: React.FC<PersonaCardProps> = ({
   persona,
   onEdit,
   onDelete,
+  onDownload,
 }) => {
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString();
@@ -110,20 +113,31 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         </div>
         <div className='flex gap-2'>
           <Button
+            onClick={() => onDownload(persona)}
+            variant='outline'
+            size='sm'
+            className='p-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300'
+            title='Download persona'
+          >
+            <Download className='h-4 w-4' />
+          </Button>
+          <Button
             onClick={() => onEdit(persona)}
             variant='outline'
             size='sm'
-            className='px-3 py-1'
+            className='p-2'
+            title='Edit persona'
           >
-            Edit
+            <Edit className='h-4 w-4' />
           </Button>
           <Button
             onClick={() => onDelete(persona)}
             variant='outline'
             size='sm'
-            className='px-3 py-1 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
+            className='p-2 text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300'
+            title='Delete persona'
           >
-            Delete
+            <Trash2 className='h-4 w-4' />
           </Button>
         </div>
       </div>
