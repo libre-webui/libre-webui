@@ -22,6 +22,7 @@ import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
 import preferencesService from '../services/preferencesService.js';
 import documentService from '../services/documentService.js';
+import { personaService } from '../services/personaService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import {
   mergeGenerationOptions,
@@ -404,11 +405,37 @@ router.post(
         // Continue without document context if search fails
       }
 
-      // Convert chat messages to Ollama format
-      const ollamaMessages = session.messages.map((msg: ChatMessage) => ({
+      // Convert chat messages to Ollama format and handle persona system prompts
+      let ollamaMessages = session.messages.map((msg: ChatMessage) => ({
         role: msg.role,
         content: msg.content,
       }));
+
+      // Inject persona instructions if session has a persona
+      if (session.personaId) {
+        try {
+          const persona = await personaService.getPersonaById(
+            session.personaId,
+            userId
+          );
+          if (persona && persona.parameters.system_prompt) {
+            // Remove any existing system messages and replace with persona's system prompt
+            ollamaMessages = ollamaMessages.filter(
+              msg => msg.role !== 'system'
+            );
+            ollamaMessages.unshift({
+              role: 'system',
+              content: persona.parameters.system_prompt,
+            });
+            console.log(
+              `[DEBUG] Replaced system messages with persona instructions for: ${persona.name}`
+            );
+          }
+        } catch (error) {
+          console.error('[DEBUG] Error loading persona:', error);
+          // Continue without persona if loading fails
+        }
+      }
 
       // Add the new user message with document context if available
       const userMessageContent = documentContext
@@ -573,11 +600,37 @@ router.post(
         return;
       }
 
-      // Convert chat messages to Ollama format
-      const ollamaMessages = session.messages.map((msg: ChatMessage) => ({
+      // Convert chat messages to Ollama format and handle persona system prompts
+      let ollamaMessages = session.messages.map((msg: ChatMessage) => ({
         role: msg.role,
         content: msg.content,
       }));
+
+      // Inject persona instructions if session has a persona
+      if (session.personaId) {
+        try {
+          const persona = await personaService.getPersonaById(
+            session.personaId,
+            userId
+          );
+          if (persona && persona.parameters.system_prompt) {
+            // Remove any existing system messages and replace with persona's system prompt
+            ollamaMessages = ollamaMessages.filter(
+              msg => msg.role !== 'system'
+            );
+            ollamaMessages.unshift({
+              role: 'system',
+              content: persona.parameters.system_prompt,
+            });
+            console.log(
+              `[DEBUG] Replaced system messages with persona instructions for streaming: ${persona.name}`
+            );
+          }
+        } catch (error) {
+          console.error('[DEBUG] Error loading persona for streaming:', error);
+          // Continue without persona if loading fails
+        }
+      }
 
       // Add the new user message
       ollamaMessages.push({

@@ -19,11 +19,15 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
+import { ChatHeader } from '@/components/ChatHeader';
 import { PersonaSelector } from '@/components/PersonaSelector';
 import { Logo } from '@/components/Logo';
 import { useChatStore } from '@/store/chatStore';
+import { useAppStore } from '@/store/appStore';
 import { useChat } from '@/hooks/useChat';
+import { personaApi, chatApi } from '@/utils/api';
 import { Select } from '@/components/ui';
+import toast from 'react-hot-toast';
 
 export const ChatPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -31,6 +35,7 @@ export const ChatPage: React.FC = () => {
   const [selectedPersonaId, setSelectedPersonaId] = useState<
     string | undefined
   >();
+  const { setBackgroundImage } = useAppStore();
   const {
     currentSession,
     sessions,
@@ -85,17 +90,95 @@ export const ChatPage: React.FC = () => {
     handleSessionFromUrl();
   }, [sessionId, sessions, setCurrentSession, navigate, currentSession?.id]); // Include currentSession?.id
 
-  const handleModelChange = async (model: string) => {
-    setSelectedModel(model);
-    if (!currentSession) {
-      const newSession = await createSession(
-        model,
-        undefined,
-        selectedPersonaId
-      );
+  // Apply persona background when session changes
+  useEffect(() => {
+    const applyPersonaBackground = async () => {
+      if (currentSession?.personaId) {
+        try {
+          const response = await personaApi.getPersona(
+            currentSession.personaId
+          );
+          if (response.success && response.data?.background) {
+            setBackgroundImage(response.data.background);
+          }
+        } catch (error) {
+          console.error('Failed to load persona background:', error);
+        }
+      } else {
+        // Clear background if no persona
+        setBackgroundImage(null);
+      }
+    };
+
+    applyPersonaBackground();
+  }, [currentSession?.personaId, setBackgroundImage]);
+
+  const handleCreateSession = async () => {
+    if (selectedPersonaId) {
+      // If persona is selected, use persona's model and create session
+      try {
+        const response = await personaApi.getPersona(selectedPersonaId);
+        if (response.success && response.data) {
+          const persona = response.data;
+          const newSession = await createSession(
+            persona.model,
+            `Chat with ${persona.name}`,
+            selectedPersonaId
+          );
+          if (newSession) {
+            navigate(`/c/${newSession.id}`, { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error('Error creating session with persona:', error);
+      }
+    } else if (selectedModel) {
+      // No persona selected, use selected model
+      const newSession = await createSession(selectedModel);
       if (newSession) {
         navigate(`/c/${newSession.id}`, { replace: true });
       }
+    }
+  };
+
+  const handleModelChange = async (model: string) => {
+    setSelectedModel(model);
+    // Don't auto-create session on model change, let user click "New Chat"
+  };
+
+  const handlePersonaChange = async (personaId: string | undefined) => {
+    if (!currentSession) return;
+
+    try {
+      // Update the session with the new persona
+      const response = await chatApi.updateSession(currentSession.id, {
+        personaId: personaId,
+      });
+
+      if (response.success && response.data) {
+        // Update the session in the store
+        setCurrentSession(response.data);
+
+        // Apply the new persona's background if it has one
+        if (personaId) {
+          const personaResponse = await personaApi.getPersona(personaId);
+          if (personaResponse.success && personaResponse.data?.background) {
+            setBackgroundImage(personaResponse.data.background);
+          }
+        } else {
+          // Clear background if no persona
+          setBackgroundImage(null);
+        }
+
+        toast.success(
+          personaId
+            ? 'Persona applied to session'
+            : 'Persona removed from session'
+        );
+      }
+    } catch (error) {
+      console.error('Error updating session persona:', error);
+      toast.error('Failed to update session persona');
     }
   };
 
@@ -125,35 +208,59 @@ export const ChatPage: React.FC = () => {
 
           {models.length > 0 ? (
             <div className='space-y-6'>
-              <Select
-                label='Choose a model'
-                value={selectedModel}
-                onChange={e => handleModelChange(e.target.value)}
-                options={models.map(model => ({
-                  value: model.name,
-                  label: model.name,
-                }))}
-                className='text-left'
-              />
-
               <div className='space-y-3'>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  Choose a persona (optional)
+                  Choose a persona (recommended)
                 </label>
                 <PersonaSelector
                   selectedPersonaId={selectedPersonaId}
                   onPersonaChange={setSelectedPersonaId}
                   className='justify-start'
                 />
+                <p className='text-xs text-gray-500 dark:text-gray-400'>
+                  {selectedPersonaId
+                    ? 'Persona selected! The persona will determine the AI model, personality, and behavior.'
+                    : 'Select a persona for enhanced AI interactions with custom instructions and personality.'}
+                  <span className='block mt-1'>
+                    <a
+                      href='/personas'
+                      className='text-blue-500 hover:text-blue-600'
+                    >
+                      Create new personas
+                    </a>{' '}
+                    in the Personas tab.
+                  </span>
+                </p>
               </div>
 
-              {selectedModel && (
-                <div className='p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl'>
-                  <p className='text-sm text-gray-700 dark:text-dark-700'>
-                    Click &quot;New Chat&quot; in the sidebar to begin your
-                    conversation
+              {!selectedPersonaId && (
+                <div className='space-y-3'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    Or choose a model directly
+                  </label>
+                  <Select
+                    label='Choose a model'
+                    value={selectedModel}
+                    onChange={e => handleModelChange(e.target.value)}
+                    options={models.map(model => ({
+                      value: model.name,
+                      label: model.name,
+                    }))}
+                    className='text-left'
+                  />
+                  <p className='text-xs text-gray-500 dark:text-gray-400'>
+                    Use a raw model without persona customization.
                   </p>
                 </div>
+              )}
+
+              {(selectedPersonaId || selectedModel) && (
+                <button
+                  onClick={handleCreateSession}
+                  className='w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-lg transition-colors'
+                >
+                  Start Chat {selectedPersonaId ? 'with Persona' : 'with Model'}
+                </button>
               )}
             </div>
           ) : (
@@ -176,6 +283,11 @@ export const ChatPage: React.FC = () => {
 
   return (
     <div className='flex flex-col h-full'>
+      <ChatHeader
+        session={currentSession}
+        onPersonaChange={handlePersonaChange}
+      />
+
       <ChatMessages
         messages={currentSession.messages}
         isStreaming={isStreaming}
