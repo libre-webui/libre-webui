@@ -5,15 +5,40 @@ All notable changes to Libre WebUI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.2] - 2025-07-09
 
 ### ✨ Added
 
+- Enhance documentation and implementation for Persona Development Framework
+- Add persona download functionality with JSON export
+- Enhance chat functionality with persona support
+- Integrate persona management into chat sessions, including persona selection and background application
+- Add persona selection to chat session creation and update related types and services
+- Implement Persona management features including creation, editing, deletion, and import/export functionality
+- implement model pulling with streaming progress and cancellation support
+- update CORS methods and enhance user management with optional password update
+- add conditional keyboard shortcuts indicator for chat pages
+- enhance background image handling and user management
+- update security headers and CSP for Docker compatibility
+- add logo and branding to loading screen during authentication
+- enhance Helmet configuration with production-ready CSP
+
 ### 🔧 Technical Improvements
+
+- Simplify PersonaRow interface by removing unused fields and adjust chat store logging
+- enhance ChatInput with advanced features toggle and improved button layout
 
 ### 🐛 Bug Fixes
 
-### 📚 Documentation
+- Send raw JSON response for persona download instead of API response wrapper
+- Update session handling to include location pathname for redirection logic
+- db init for persona table
+- multi user cors origin
+- resolve shell command injection vulnerabilities in release scripts
+
+### 🔄 Other Changes
+
+- Adds a Persona Development Framework allowing users to create, manage, and apply AI personas in chat sessions.
 
 ## [0.1.1] - 2025-07-07
 
