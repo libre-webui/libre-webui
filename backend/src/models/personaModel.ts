@@ -15,8 +15,12 @@
  * limitations under the License.
  */
 
-import { getDatabase } from '../db';
-import { Persona, CreatePersonaRequest, UpdatePersonaRequest } from '../types';
+import { getDatabase } from '../db.js';
+import {
+  Persona,
+  CreatePersonaRequest,
+  UpdatePersonaRequest,
+} from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
 
 interface PersonaRow {

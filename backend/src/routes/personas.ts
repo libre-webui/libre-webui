@@ -16,8 +16,8 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { personaService } from '../services/personaService';
-import { ApiResponse, getErrorMessage } from '../types';
+import { personaService } from '../services/personaService.js';
+import { ApiResponse, getErrorMessage } from '../types/index.js';
 
 const router = Router();
 

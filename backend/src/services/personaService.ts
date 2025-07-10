@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import { personaModel } from '../models/personaModel';
+import { personaModel } from '../models/personaModel.js';
 import {
   Persona,
   CreatePersonaRequest,
   UpdatePersonaRequest,
   PersonaExport,
-} from '../types';
+} from '../types/index.js';
 
 export class PersonaService {
   /**
