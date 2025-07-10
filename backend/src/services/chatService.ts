@@ -53,9 +53,12 @@ class ChatService {
   ): Promise<ChatSession> {
     const sessionId = uuidv4();
     const now = Date.now();
-
     console.log(
-      `🚀 ChatService.createSession: sessionId=${sessionId}, userId=${userId}, model=${model}, personaId=${personaId}`
+      `🚀 ChatService.createSession: sessionId=%s, userId=%s, model=%s, personaId=%s`,
+      sessionId,
+      userId,
+      model,
+      personaId
     );
 
     const session: ChatSession = {
@@ -81,7 +84,9 @@ class ChatService {
       try {
         const personaIdFromModel = model.replace('persona:', '');
         console.log(
-          `[DEBUG] Extracting persona ID: "${personaIdFromModel}" for user: "${userId}"`
+          `[DEBUG] Extracting persona ID: "%s" for user: "%s"`,
+          personaIdFromModel,
+          userId
         );
         const { personaService } = await import('./personaService.js');
 
@@ -97,7 +102,8 @@ class ChatService {
 
         if (!persona && userId !== 'default') {
           console.log(
-            `[DEBUG] Trying fallback to default user for persona ${personaIdFromModel}`
+            `[DEBUG] Trying fallback to default user for persona %s`,
+            personaIdFromModel
           );
           persona = await personaService.getPersonaById(
             personaIdFromModel,
@@ -238,7 +244,8 @@ class ChatService {
       if (updates.model.startsWith('persona:')) {
         const personaId = updates.model.replace('persona:', '');
         console.log(
-          `[DEBUG] updateSession: Extracting persona ID: ${personaId}`
+          `[DEBUG] updateSession: Extracting persona ID: %s`,
+          personaId
         );
 
         // Update personaId
@@ -372,7 +379,9 @@ class ChatService {
   ): Promise<void> {
     try {
       console.log(
-        `[DEBUG] updateSystemMessageForPersona: Starting for persona ${personaId}, user ${userId}`
+        `[DEBUG] updateSystemMessageForPersona: Starting for persona %s, user %s`,
+        personaId,
+        userId
       );
 
       // Try to get persona for the current user first, then fallback to 'default'
@@ -397,14 +406,16 @@ class ChatService {
         );
       } else {
         console.log(
-          `[DEBUG] updateSystemMessageForPersona: No system prompt found for persona ${personaId}, using default`
+          `[DEBUG] updateSystemMessageForPersona: No system prompt found for persona %s, using default`,
+          personaId
         );
         // Fallback to default system message
         this.updateSystemMessageToDefault(session, userId);
       }
     } catch (error) {
       console.error(
-        `[ERROR] updateSystemMessageForPersona: Error getting persona ${personaId}:`,
+        `[ERROR] updateSystemMessageForPersona: Error getting persona %s:`,
+        personaId,
         error
       );
       // Fallback to default system message

@@ -30,6 +30,9 @@ Set your API keys as environment variables:
 export OPENAI_API_KEY="your_openai_key_here"
 export ANTHROPIC_API_KEY="your_anthropic_key_here"
 export GROQ_API_KEY="your_groq_key_here"
+export GEMINI_API_KEY="your_gemini_key_here"
+export MISTRAL_API_KEY="your_mistral_key_here"
+export GITHUB_API_KEY="your_github_token_here"
 ```
 
 **💡 Pro Tip:** Add these to your shell profile (`.bashrc`, `.zshrc`, etc.) to persist them across sessions.
@@ -43,6 +46,9 @@ You can also set these in your backend `.env` file:
 OPENAI_API_KEY=your_openai_key_here
 ANTHROPIC_API_KEY=your_anthropic_key_here
 GROQ_API_KEY=your_groq_key_here
+GEMINI_API_KEY=your_gemini_key_here
+MISTRAL_API_KEY=your_mistral_key_here
+GITHUB_API_KEY=your_github_token_here
 ```
 
 ## How It Works
@@ -55,7 +61,10 @@ The script first checks which API keys are available:
 📋 Checking API keys...
 ✅ OpenAI: API key found
 ✅ Anthropic: API key found
-⚠️  Groq: API key not set (GROQ_API_KEY)
+✅ Groq: API key found
+✅ Gemini: API key found
+✅ Mistral: API key found
+✅ GitHub Models: API key found
 ```
 
 ### 2. Provider Updates
@@ -67,12 +76,22 @@ For each provider with a valid API key, the script:
 
 ```
 🔄 Updating OpenAI models...
-✅ OpenAI: Successfully updated
+✅ OpenAI: Successfully updated (67 models)
 
 🔄 Updating Anthropic models...
-✅ Anthropic: Successfully updated
+✅ Anthropic: Successfully updated (13 models)
 
-⏭️  Skipping Groq (no API key)
+🔄 Updating Groq models...
+✅ Groq: Successfully updated (14 models)
+
+🔄 Updating Gemini models...
+✅ Gemini: Successfully updated (45 models)
+
+🔄 Updating Mistral models...
+✅ Mistral: Successfully updated (48 models)
+
+🔄 Updating GitHub Models...
+✅ GitHub Models: Successfully updated (20 models)
 ```
 
 ### 3. Summary Report
@@ -83,26 +102,48 @@ After completion, you'll see:
 🎉 Update process completed!
 
 📁 Updated plugin files:
-   plugins/openai.json (2.4K bytes, Dec 15 10:30)
-   plugins/anthropic.json (1.8K bytes, Dec 15 10:30)
+   plugins/openai.json (2.8K bytes, Jul 9 17:30)
+   plugins/anthropic.json (2.1K bytes, Jul 9 17:30)
+   plugins/groq.json (1.2K bytes, Jul 9 17:30)
+   plugins/gemini.json (3.1K bytes, Jul 9 17:30)
+   plugins/mistral.json (2.9K bytes, Jul 9 17:30)
+   plugins/github.json (1.5K bytes, Jul 9 17:30)
+
+📊 Total models: 207 across 6 providers
 ```
 
 ## Provider-Specific Behavior
 
 ### OpenAI
 - ✅ **Auto-updates** - Fetches latest models via API
-- 🎯 **Comprehensive** - Includes all available models
+- 🎯 **Comprehensive** - Includes all available models including o3, o4 series (67 models)
 - 🔄 **Regular Updates** - OpenAI frequently adds new models
+- 🚀 **Latest Technology** - o3, o3-mini, o4, o4-mini with advanced reasoning
 
 ### Anthropic (Claude)
-- ✅ **Auto-updates** - Fetches latest models via API
-- 🎯 **Focused** - Includes production-ready models
-- 📈 **Stable** - Less frequent but significant updates
+- ✅ **Auto-updates** - Fetches latest models via API with manual curation
+- 🎯 **Focused** - Includes production-ready models including Claude 4 series (13 models)
+- 📈 **Cutting-edge** - Latest Claude 4 Sonnet, Claude 4 Opus, and Claude 3.7 Sonnet
 
 ### Groq
-- ℹ️ **Manual maintenance** - No public models API endpoint
-- 🛠️ **Community-driven** - Updated manually when new models are available
-- ⚡ **High performance** - Optimized for speed
+- ✅ **Auto-updates** - Fetches latest models via API
+- ⚡ **High Performance** - Optimized for speed (14 models)
+- 🚀 **Fast Inference** - Excellent for real-time applications
+
+### Google Gemini
+- ✅ **Auto-updates** - Fetches latest models via API
+- 🧠 **Advanced** - Multimodal capabilities (45 models)
+- � **Research-focused** - Cutting-edge AI technology
+
+### Mistral
+- ✅ **Auto-updates** - Fetches latest models via API
+- 🇪🇺 **European** - Privacy-focused European provider (48 models)
+- 🎯 **Specialized** - Strong in coding and reasoning
+
+### GitHub Models
+- ✅ **Auto-updates** - Fetches latest models via API
+- 🐙 **Developer-friendly** - Integrated with GitHub ecosystem (20 models)
+- 🔓 **Open Source** - Focus on open-source models
 
 ## Troubleshooting
 
@@ -145,6 +186,22 @@ export OPENAI_API_KEY="your_key_here"
 ```
 
 **Solution:** Currently, individual provider scripts are integrated into the main updater. This error indicates an internal issue - please report it.
+
+### Individual Provider Scripts
+
+You can also update providers individually:
+
+```bash
+# Update individual providers
+./scripts/update-openai-models.sh      # OpenAI GPT models (67 models)
+./scripts/update-anthropic-models.sh   # Anthropic Claude models (13 models)
+./scripts/update-groq-models.sh        # Groq models (14 models)
+./scripts/update-gemini-models.sh      # Google Gemini models (45 models)
+./scripts/update-mistral-models.sh     # Mistral models (48 models)
+./scripts/update-github-models.sh      # GitHub Models (20 models)
+```
+
+Each script requires its respective API key to be set as an environment variable.
 
 ## Best Practices
 

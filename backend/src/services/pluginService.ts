@@ -366,6 +366,28 @@ class PluginService {
 
       // Add required anthropic-version header
       headers['anthropic-version'] = '2023-06-01';
+    } else if (activePlugin.id === 'gemini') {
+      // Gemini-specific payload format
+      payload = {
+        contents: [
+          {
+            parts: [
+              {
+                text: messages[messages.length - 1]?.content || '',
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: options.temperature || 0.7,
+          maxOutputTokens:
+            options.num_predict && options.num_predict !== -1
+              ? options.num_predict
+              : 1024,
+          topP: options.top_p,
+          stopSequences: options.stop,
+        },
+      };
     } else {
       // Default OpenAI-compatible format
       payload = {
@@ -380,8 +402,11 @@ class PluginService {
       };
     }
 
+    // Process endpoint template - replace {model} with actual model name
+    const processedEndpoint = activePlugin.endpoint.replace('{model}', model);
+
     try {
-      const response = await axios.post(activePlugin.endpoint, payload, {
+      const response = await axios.post(processedEndpoint, payload, {
         headers,
         timeout: 60000, // 60 second timeout
       });
@@ -389,6 +414,8 @@ class PluginService {
       // Handle different response formats
       if (activePlugin.id === 'anthropic') {
         return this.convertAnthropicResponse(response.data, model);
+      } else if (activePlugin.id === 'gemini') {
+        return this.convertGeminiResponse(response.data, model);
       }
 
       // Default to OpenAI format
@@ -409,7 +436,7 @@ class PluginService {
         );
       } else if (error && typeof error === 'object' && 'request' in error) {
         throw new Error(
-          `Plugin connection error: Unable to reach ${activePlugin.endpoint}`
+          `Plugin connection error: Unable to reach ${processedEndpoint}`
         );
       } else {
         const errorMessage =
@@ -491,6 +518,95 @@ class PluginService {
             content,
           },
           finish_reason: stopReason,
+        },
+      ],
+      usage,
+    };
+  }
+
+  // Convert Gemini response format to OpenAI format
+  private convertGeminiResponse(
+    geminiResponse: Record<string, unknown>,
+    model: string
+  ): PluginResponse {
+    const id = `chatcmpl-${Date.now()}`;
+
+    let content = '';
+    let finishReason = 'stop';
+
+    // Gemini returns candidates array
+    if (Array.isArray(geminiResponse.candidates)) {
+      const candidate = geminiResponse.candidates[0];
+      if (candidate && typeof candidate === 'object') {
+        const candidateObj = candidate as Record<string, unknown>;
+
+        // Extract content from parts
+        if (candidateObj.content && typeof candidateObj.content === 'object') {
+          const contentObj = candidateObj.content as Record<string, unknown>;
+          if (Array.isArray(contentObj.parts)) {
+            for (const part of contentObj.parts) {
+              if (
+                part &&
+                typeof part === 'object' &&
+                'text' in part &&
+                typeof part.text === 'string'
+              ) {
+                content += part.text;
+              }
+            }
+          }
+        }
+
+        // Map Gemini finish reason to OpenAI format
+        if (typeof candidateObj.finishReason === 'string') {
+          const finishReasonMap: Record<string, string> = {
+            STOP: 'stop',
+            MAX_TOKENS: 'length',
+            SAFETY: 'content_filter',
+            RECITATION: 'content_filter',
+            OTHER: 'stop',
+          };
+          finishReason = finishReasonMap[candidateObj.finishReason] || 'stop';
+        }
+      }
+    }
+
+    // Extract usage if available
+    let usage;
+    if (
+      geminiResponse.usageMetadata &&
+      typeof geminiResponse.usageMetadata === 'object'
+    ) {
+      const usageObj = geminiResponse.usageMetadata as Record<string, unknown>;
+      const promptTokens =
+        typeof usageObj.promptTokenCount === 'number'
+          ? usageObj.promptTokenCount
+          : 0;
+      const completionTokens =
+        typeof usageObj.candidatesTokenCount === 'number'
+          ? usageObj.candidatesTokenCount
+          : 0;
+
+      usage = {
+        prompt_tokens: promptTokens,
+        completion_tokens: completionTokens,
+        total_tokens: promptTokens + completionTokens,
+      };
+    }
+
+    return {
+      id,
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model,
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: 'assistant',
+            content,
+          },
+          finish_reason: finishReason,
         },
       ],
       usage,

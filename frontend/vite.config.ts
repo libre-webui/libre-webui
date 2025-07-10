@@ -17,7 +17,8 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    host: false, // Allow --host flag to override
+    port: 5173,  // Default port, can be overridden by --port flag
     proxy: {
       '/api': {
         target: API_BASE_URL,

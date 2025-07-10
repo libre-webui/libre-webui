@@ -79,7 +79,20 @@ const corsConfig = {
     if (corsOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      // In development mode, allow network access (when --host is used)
+      // This allows access from network IPs like http://192.168.x.x:8080 or http://10.x.x.x:8080
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      const isNetworkOrigin =
+        origin &&
+        /^https?:\/\/(?:192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(
+          origin
+        );
+
+      if (isDevelopment && isNetworkOrigin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     }
   },
 };
