@@ -302,7 +302,38 @@ class PluginService {
     messages: ChatMessage[],
     options: GenerationOptions = {}
   ): Promise<PluginResponse> {
+    // Validate model parameter to prevent SSRF attacks
+    if (!model || typeof model !== 'string') {
+      throw new Error('Invalid model parameter: must be a non-empty string');
+    }
+
+    // Sanitize model parameter - only allow alphanumeric, hyphens, underscores, colons, and dots
+    const modelPattern = /^[a-zA-Z0-9\-_:.]+$/;
+    if (!modelPattern.test(model)) {
+      throw new Error(
+        `Invalid model parameter: ${model} contains invalid characters`
+      );
+    }
+
+    // Prevent path traversal and other malicious patterns
+    if (model.includes('..') || model.includes('//') || model.includes('\\')) {
+      throw new Error(
+        `Invalid model parameter: ${model} contains invalid patterns`
+      );
+    }
+
     const activePlugin = this.getActivePluginForModel(model);
+
+    if (!activePlugin) {
+      throw new Error(`No active plugin found for model: ${model}`);
+    }
+
+    // Additional validation: ensure the model is in the plugin's allowed model_map
+    if (!activePlugin.model_map.includes(model)) {
+      throw new Error(
+        `Model ${model} is not supported by plugin ${activePlugin.id}`
+      );
+    }
 
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
@@ -403,7 +434,25 @@ class PluginService {
     }
 
     // Process endpoint template - replace {model} with actual model name
-    const processedEndpoint = activePlugin.endpoint.replace('{model}', model);
+    // Final validation before URL construction to prevent SSRF
+    const sanitizedModel = encodeURIComponent(model);
+    const processedEndpoint = activePlugin.endpoint.replace(
+      '{model}',
+      sanitizedModel
+    );
+
+    // Validate the final endpoint URL
+    try {
+      const url = new URL(processedEndpoint);
+      // Ensure we're only making requests to HTTPS endpoints (security best practice)
+      if (url.protocol !== 'https:') {
+        throw new Error(
+          `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed.`
+        );
+      }
+    } catch (_error) {
+      throw new Error(`Invalid endpoint URL constructed: ${processedEndpoint}`);
+    }
 
     try {
       const response = await axios.post(processedEndpoint, payload, {
