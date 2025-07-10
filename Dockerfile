@@ -45,10 +45,26 @@ RUN npm ci --only=production && npm cache clean --force
 
 # Build frontend
 FROM base AS frontend-builder
+RUN apk add --no-cache libc6-compat python3 make g++ git && \
+    apk update && apk upgrade
 WORKDIR /app
+
+# Copy package files for workspace setup
+COPY package*.json ./
+COPY frontend/package*.json ./frontend/
+COPY backend/package*.json ./backend/
+
+# Copy git hooks directory (needed for postinstall)
+COPY .githooks/ ./.githooks/
+
+# Initialize git repository for postinstall script
+RUN git init && git config user.email "docker@example.com" && git config user.name "Docker Build"
+
+# Install dependencies in workspace
+RUN npm ci && npm cache clean --force
+
+# Copy frontend source code
 COPY frontend/ ./frontend/
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package*.json ./
 
 # Set production environment variables for frontend build
 # Use window.location.origin + port to connect to backend on same host
@@ -59,10 +75,27 @@ RUN cd frontend && npm run build
 
 # Build backend
 FROM base AS backend-builder
+RUN apk add --no-cache libc6-compat python3 make g++ git && \
+    apk update && apk upgrade
 WORKDIR /app
+
+# Copy package files for workspace setup
+COPY package*.json ./
+COPY frontend/package*.json ./frontend/
+COPY backend/package*.json ./backend/
+
+# Copy git hooks directory (needed for postinstall)
+COPY .githooks/ ./.githooks/
+
+# Initialize git repository for postinstall script
+RUN git init && git config user.email "docker@example.com" && git config user.name "Docker Build"
+
+# Install dependencies in workspace
+RUN npm ci && npm cache clean --force
+
+# Copy backend source code
 COPY backend/ ./backend/
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package*.json ./
+
 RUN cd backend && npm run build
 
 # Production image
