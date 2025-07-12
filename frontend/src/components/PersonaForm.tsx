@@ -24,7 +24,9 @@ import {
   UpdatePersonaRequest,
   PersonaParameters,
   OllamaModel,
+  EmbeddingModel,
 } from '@/types';
+import { Brain, Database, Info, User, Sliders } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface PersonaFormProps {
@@ -33,12 +35,27 @@ interface PersonaFormProps {
   onCancel: () => void;
 }
 
+interface ExtendedFormData extends CreatePersonaRequest {
+  embedding_model?: string;
+  memory_settings?: {
+    enabled: boolean;
+    max_memories: number;
+    auto_cleanup: boolean;
+    retention_days: number;
+  };
+  mutation_settings?: {
+    enabled: boolean;
+    sensitivity: 'low' | 'medium' | 'high';
+    auto_adapt: boolean;
+  };
+}
+
 const PersonaForm: React.FC<PersonaFormProps> = ({
   persona,
   onSubmit,
   onCancel,
 }) => {
-  const [formData, setFormData] = useState<CreatePersonaRequest>({
+  const [formData, setFormData] = useState<ExtendedFormData>({
     name: '',
     description: '',
     model: '',
@@ -55,11 +72,27 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     },
     avatar: '',
     background: '',
+    embedding_model: 'nomic-embed-text',
+    memory_settings: {
+      enabled: false,
+      max_memories: 1000,
+      auto_cleanup: true,
+      retention_days: 90,
+    },
+    mutation_settings: {
+      enabled: false,
+      sensitivity: 'medium',
+      auto_adapt: true,
+    },
   });
 
   const [availableModels, setAvailableModels] = useState<OllamaModel[]>([]);
+  const [embeddingModels, setEmbeddingModels] = useState<EmbeddingModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    'basic' | 'parameters' | 'advanced'
+  >('basic');
 
   // Load available models and populate form if editing
   useEffect(() => {
@@ -71,6 +104,31 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         if (modelsResponse.success) {
           setAvailableModels(modelsResponse.data || []);
         }
+
+        // Load embedding models
+        setEmbeddingModels([
+          {
+            id: 'nomic-embed-text',
+            name: 'Nomic Embed Text',
+            description: 'Default, balanced performance',
+            provider: 'ollama',
+            dimensions: 768,
+          },
+          {
+            id: 'all-minilm',
+            name: 'All MiniLM',
+            description: 'Lightweight, fast processing',
+            provider: 'ollama',
+            dimensions: 384,
+          },
+          {
+            id: 'bge-large',
+            name: 'BGE Large',
+            description: 'High accuracy, larger memory footprint',
+            provider: 'ollama',
+            dimensions: 1024,
+          },
+        ]);
 
         // Load default parameters if creating new persona
         if (!persona) {
@@ -105,6 +163,18 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         parameters: persona.parameters,
         avatar: persona.avatar || '',
         background: persona.background || '',
+        embedding_model: persona.embedding_model || 'nomic-embed-text',
+        memory_settings: persona.memory_settings || {
+          enabled: false,
+          max_memories: 1000,
+          auto_cleanup: true,
+          retention_days: 90,
+        },
+        mutation_settings: persona.mutation_settings || {
+          enabled: false,
+          sensitivity: 'medium',
+          auto_adapt: true,
+        },
       });
     }
   }, [persona]);
@@ -123,6 +193,9 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
           parameters: formData.parameters,
           avatar: formData.avatar,
           background: formData.background,
+          embedding_model: formData.embedding_model,
+          memory_settings: formData.memory_settings,
+          mutation_settings: formData.mutation_settings,
         };
 
         const response = await personaApi.updatePersona(persona.id, updateData);
@@ -164,279 +237,553 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     }));
   };
 
+  const updateFormData = (updates: Partial<ExtendedFormData>) => {
+    setFormData(prev => ({ ...prev, ...updates }));
+  };
+
+  const updateMemorySettings = (
+    updates: Partial<ExtendedFormData['memory_settings']>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      memory_settings: { ...prev.memory_settings!, ...updates },
+    }));
+  };
+
+  const updateMutationSettings = (
+    updates: Partial<ExtendedFormData['mutation_settings']>
+  ) => {
+    setFormData(prev => ({
+      ...prev,
+      mutation_settings: { ...prev.mutation_settings!, ...updates },
+    }));
+  };
+
   if (loading) {
     return (
       <div className='flex items-center justify-center p-8'>
-        <div className='text-gray-600 dark:text-dark-600'>Loading form...</div>
+        <div className='text-gray-600 dark:text-gray-400'>Loading form...</div>
       </div>
     );
   }
 
+  const tabs = [
+    { id: 'basic', label: 'Basic Info', icon: User },
+    { id: 'parameters', label: 'Parameters', icon: Sliders },
+    { id: 'advanced', label: 'Advanced', icon: Brain },
+  ];
+
   return (
     <div className='max-w-4xl mx-auto'>
       <div className='mb-6'>
-        <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-800'>
+        <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
           {persona ? 'Edit Persona' : 'Create New Persona'}
         </h1>
-        <p className='text-gray-600 dark:text-dark-600 mt-1'>
+        <p className='text-gray-600 dark:text-gray-400 mt-1'>
           {persona
-            ? 'Update your persona settings'
-            : 'Create a new AI persona with custom personality and settings'}
+            ? 'Update your persona settings and advanced features'
+            : 'Create a new AI persona with custom personality, memory, and adaptive learning'}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className='space-y-6'>
-        {/* Basic Information */}
-        <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-4'>
-            Basic Information
-          </h3>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Name *
-              </label>
-              <input
-                type='text'
-                value={formData.name}
-                onChange={e =>
-                  setFormData(prev => ({ ...prev, name: e.target.value }))
+        {/* Tab Navigation */}
+        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700'>
+          <div className='flex border-b border-gray-200 dark:border-gray-700'>
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                type='button'
+                onClick={() =>
+                  setActiveTab(tab.id as 'basic' | 'parameters' | 'advanced')
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
-                placeholder='Enter persona name'
-                required
-              />
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Model *
-              </label>
-              <select
-                value={formData.model}
-                onChange={e =>
-                  setFormData(prev => ({ ...prev, model: e.target.value }))
-                }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
-                required
+                className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
               >
-                <option value=''>Select a model</option>
-                {availableModels.map(model => (
-                  <option key={model.name} value={model.name}>
-                    {model.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+                <tab.icon className='h-4 w-4' />
+                {tab.label}
+              </button>
+            ))}
           </div>
 
-          <div className='mt-4'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={e =>
-                setFormData(prev => ({ ...prev, description: e.target.value }))
-              }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
-              rows={3}
-              placeholder='Describe your persona...'
-            />
-          </div>
-        </div>
+          <div className='p-6'>
+            {/* Basic Information Tab */}
+            {activeTab === 'basic' && (
+              <div className='space-y-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Name *
+                    </label>
+                    <input
+                      type='text'
+                      value={formData.name}
+                      onChange={e => updateFormData({ name: e.target.value })}
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      placeholder='Enter persona name'
+                      required
+                    />
+                  </div>
 
-        {/* Visual Settings */}
-        <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-4'>
-            Visual Settings
-          </h3>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Model *
+                    </label>
+                    <select
+                      value={formData.model}
+                      onChange={e => updateFormData({ model: e.target.value })}
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      required
+                    >
+                      <option value=''>Select a model</option>
+                      {availableModels.map(model => (
+                        <option key={model.name} value={model.name}>
+                          {model.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Avatar URL
-              </label>
-              <input
-                type='url'
-                value={formData.avatar}
-                onChange={e =>
-                  setFormData(prev => ({ ...prev, avatar: e.target.value }))
-                }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
-                placeholder='https://example.com/avatar.png'
-              />
-            </div>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    Description
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={e =>
+                      updateFormData({ description: e.target.value })
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    rows={3}
+                    placeholder='Describe your persona...'
+                  />
+                </div>
 
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Background Image URL
-              </label>
-              <input
-                type='url'
-                value={formData.background}
-                onChange={e =>
-                  setFormData(prev => ({ ...prev, background: e.target.value }))
-                }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
-                placeholder='https://example.com/background.png'
-              />
-            </div>
-          </div>
-        </div>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Avatar URL
+                    </label>
+                    <input
+                      type='url'
+                      value={formData.avatar}
+                      onChange={e => updateFormData({ avatar: e.target.value })}
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      placeholder='https://example.com/avatar.jpg'
+                    />
+                  </div>
 
-        {/* Model Parameters */}
-        <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-4'>
-            Model Parameters
-          </h3>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Background URL
+                    </label>
+                    <input
+                      type='url'
+                      value={formData.background}
+                      onChange={e =>
+                        updateFormData({ background: e.target.value })
+                      }
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      placeholder='https://example.com/background.jpg'
+                    />
+                  </div>
+                </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-            {/* Temperature */}
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Temperature ({formData.parameters.temperature})
-              </label>
-              <input
-                type='range'
-                min='0'
-                max='2'
-                step='0.1'
-                value={formData.parameters.temperature}
-                onChange={e =>
-                  handleParameterChange(
-                    'temperature',
-                    parseFloat(e.target.value)
-                  )
-                }
-                className='w-full'
-              />
-              <div className='flex justify-between text-xs text-gray-500 dark:text-dark-500 mt-1'>
-                <span>Focused</span>
-                <span>Creative</span>
+                <div>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    System Prompt
+                  </label>
+                  <textarea
+                    value={formData.parameters.system_prompt}
+                    onChange={e =>
+                      handleParameterChange('system_prompt', e.target.value)
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    rows={6}
+                    placeholder='Enter the system prompt that defines your persona behavior...'
+                  />
+                  <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
+                    The system prompt defines how your persona will behave and
+                    respond to users.
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Top P */}
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Top P ({formData.parameters.top_p})
-              </label>
-              <input
-                type='range'
-                min='0'
-                max='1'
-                step='0.1'
-                value={formData.parameters.top_p}
-                onChange={e =>
-                  handleParameterChange('top_p', parseFloat(e.target.value))
-                }
-                className='w-full'
-              />
-              <div className='flex justify-between text-xs text-gray-500 dark:text-dark-500 mt-1'>
-                <span>Precise</span>
-                <span>Diverse</span>
+            {/* Parameters Tab */}
+            {activeTab === 'parameters' && (
+              <div className='space-y-6'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Temperature: {formData.parameters.temperature?.toFixed(1)}
+                    </label>
+                    <input
+                      type='range'
+                      min='0'
+                      max='2'
+                      step='0.1'
+                      value={formData.parameters.temperature}
+                      onChange={e =>
+                        handleParameterChange(
+                          'temperature',
+                          parseFloat(e.target.value)
+                        )
+                      }
+                      className='w-full'
+                    />
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      Controls creativity vs consistency
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Top-P: {formData.parameters.top_p?.toFixed(1)}
+                    </label>
+                    <input
+                      type='range'
+                      min='0'
+                      max='1'
+                      step='0.1'
+                      value={formData.parameters.top_p}
+                      onChange={e =>
+                        handleParameterChange(
+                          'top_p',
+                          parseFloat(e.target.value)
+                        )
+                      }
+                      className='w-full'
+                    />
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      Controls response diversity
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Top-K: {formData.parameters.top_k}
+                    </label>
+                    <input
+                      type='range'
+                      min='1'
+                      max='100'
+                      step='1'
+                      value={formData.parameters.top_k}
+                      onChange={e =>
+                        handleParameterChange('top_k', parseInt(e.target.value))
+                      }
+                      className='w-full'
+                    />
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      Limits vocabulary to top-k tokens
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Context Window: {formData.parameters.context_window}
+                    </label>
+                    <input
+                      type='range'
+                      min='128'
+                      max='131072'
+                      step='128'
+                      value={formData.parameters.context_window}
+                      onChange={e =>
+                        handleParameterChange(
+                          'context_window',
+                          parseInt(e.target.value)
+                        )
+                      }
+                      className='w-full'
+                    />
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      Maximum conversation history length
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Max Tokens: {formData.parameters.max_tokens}
+                    </label>
+                    <input
+                      type='range'
+                      min='1'
+                      max='8192'
+                      step='1'
+                      value={formData.parameters.max_tokens}
+                      onChange={e =>
+                        handleParameterChange(
+                          'max_tokens',
+                          parseInt(e.target.value)
+                        )
+                      }
+                      className='w-full'
+                    />
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      Maximum response length
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      Repeat Penalty:{' '}
+                      {formData.parameters.repeat_penalty?.toFixed(1)}
+                    </label>
+                    <input
+                      type='range'
+                      min='0.5'
+                      max='2'
+                      step='0.1'
+                      value={formData.parameters.repeat_penalty}
+                      onChange={e =>
+                        handleParameterChange(
+                          'repeat_penalty',
+                          parseFloat(e.target.value)
+                        )
+                      }
+                      className='w-full'
+                    />
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                      Reduces repetitive responses
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Top K */}
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Top K ({formData.parameters.top_k})
-              </label>
-              <input
-                type='range'
-                min='1'
-                max='100'
-                step='1'
-                value={formData.parameters.top_k}
-                onChange={e =>
-                  handleParameterChange('top_k', parseInt(e.target.value))
-                }
-                className='w-full'
-              />
-            </div>
+            {/* Advanced Tab */}
+            {activeTab === 'advanced' && (
+              <div className='space-y-8'>
+                {/* Embedding Model Selection */}
+                <div className='bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800'>
+                  <div className='flex items-center gap-3 mb-4'>
+                    <Database className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+                    <h3 className='text-lg font-semibold text-blue-900 dark:text-blue-100'>
+                      Embedding Model
+                    </h3>
+                  </div>
+                  <div>
+                    <label className='block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2'>
+                      Embedding Model
+                    </label>
+                    <select
+                      value={formData.embedding_model}
+                      onChange={e =>
+                        updateFormData({ embedding_model: e.target.value })
+                      }
+                      className='w-full px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    >
+                      {embeddingModels.map(model => (
+                        <option key={model.id} value={model.id}>
+                          {model.name} - {model.description}
+                        </option>
+                      ))}
+                    </select>
+                    <p className='text-xs text-blue-600 dark:text-blue-400 mt-1'>
+                      Choose the embedding model for memory encoding and
+                      semantic search
+                    </p>
+                  </div>
+                </div>
 
-            {/* Context Window */}
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Context Window
-              </label>
-              <input
-                type='number'
-                min='128'
-                max='131072'
-                value={formData.parameters.context_window}
-                onChange={e =>
-                  handleParameterChange(
-                    'context_window',
-                    parseInt(e.target.value)
-                  )
-                }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
-              />
-            </div>
+                {/* Memory Settings */}
+                <div className='bg-green-50 dark:bg-green-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800'>
+                  <div className='flex items-center gap-3 mb-4'>
+                    <Database className='h-5 w-5 text-green-600 dark:text-green-400' />
+                    <h3 className='text-lg font-semibold text-green-900 dark:text-green-100'>
+                      Memory System
+                    </h3>
+                  </div>
 
-            {/* Max Tokens */}
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Max Tokens
-              </label>
-              <input
-                type='number'
-                min='1'
-                max='8192'
-                value={formData.parameters.max_tokens}
-                onChange={e =>
-                  handleParameterChange('max_tokens', parseInt(e.target.value))
-                }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
-              />
-            </div>
+                  <div className='space-y-4'>
+                    <div className='flex items-center gap-3'>
+                      <input
+                        type='checkbox'
+                        checked={formData.memory_settings?.enabled}
+                        onChange={e =>
+                          updateMemorySettings({ enabled: e.target.checked })
+                        }
+                        className='rounded'
+                      />
+                      <label className='text-sm font-medium text-green-700 dark:text-green-300'>
+                        Enable Memory System
+                      </label>
+                    </div>
 
-            {/* Repeat Penalty */}
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Repeat Penalty ({formData.parameters.repeat_penalty})
-              </label>
-              <input
-                type='range'
-                min='0.5'
-                max='2'
-                step='0.1'
-                value={formData.parameters.repeat_penalty}
-                onChange={e =>
-                  handleParameterChange(
-                    'repeat_penalty',
-                    parseFloat(e.target.value)
-                  )
-                }
-                className='w-full'
-              />
-            </div>
+                    {formData.memory_settings?.enabled && (
+                      <>
+                        <div>
+                          <label className='block text-sm font-medium text-green-700 dark:text-green-300 mb-2'>
+                            Max Memories:{' '}
+                            {formData.memory_settings.max_memories}
+                          </label>
+                          <input
+                            type='range'
+                            min='100'
+                            max='10000'
+                            step='100'
+                            value={formData.memory_settings.max_memories}
+                            onChange={e =>
+                              updateMemorySettings({
+                                max_memories: parseInt(e.target.value),
+                              })
+                            }
+                            className='w-full'
+                          />
+                          <p className='text-xs text-green-600 dark:text-green-400 mt-1'>
+                            Maximum number of memories to store
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className='block text-sm font-medium text-green-700 dark:text-green-300 mb-2'>
+                            Retention Days:{' '}
+                            {formData.memory_settings.retention_days}
+                          </label>
+                          <input
+                            type='range'
+                            min='7'
+                            max='365'
+                            step='7'
+                            value={formData.memory_settings.retention_days}
+                            onChange={e =>
+                              updateMemorySettings({
+                                retention_days: parseInt(e.target.value),
+                              })
+                            }
+                            className='w-full'
+                          />
+                          <p className='text-xs text-green-600 dark:text-green-400 mt-1'>
+                            How long to keep memories before automatic cleanup
+                          </p>
+                        </div>
+
+                        <div className='flex items-center gap-3'>
+                          <input
+                            type='checkbox'
+                            checked={formData.memory_settings.auto_cleanup}
+                            onChange={e =>
+                              updateMemorySettings({
+                                auto_cleanup: e.target.checked,
+                              })
+                            }
+                            className='rounded'
+                          />
+                          <label className='text-sm font-medium text-green-700 dark:text-green-300'>
+                            Auto-cleanup old memories
+                          </label>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mutation Settings */}
+                <div className='bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800'>
+                  <div className='flex items-center gap-3 mb-4'>
+                    <Brain className='h-5 w-5 text-purple-600 dark:text-purple-400' />
+                    <h3 className='text-lg font-semibold text-purple-900 dark:text-purple-100'>
+                      Adaptive Learning
+                    </h3>
+                  </div>
+
+                  <div className='space-y-4'>
+                    <div className='flex items-center gap-3'>
+                      <input
+                        type='checkbox'
+                        checked={formData.mutation_settings?.enabled}
+                        onChange={e =>
+                          updateMutationSettings({ enabled: e.target.checked })
+                        }
+                        className='rounded'
+                      />
+                      <label className='text-sm font-medium text-purple-700 dark:text-purple-300'>
+                        Enable Adaptive Learning
+                      </label>
+                    </div>
+
+                    {formData.mutation_settings?.enabled && (
+                      <>
+                        <div>
+                          <label className='block text-sm font-medium text-purple-700 dark:text-purple-300 mb-2'>
+                            Learning Sensitivity
+                          </label>
+                          <select
+                            value={formData.mutation_settings.sensitivity}
+                            onChange={e =>
+                              updateMutationSettings({
+                                sensitivity: e.target.value as
+                                  | 'low'
+                                  | 'medium'
+                                  | 'high',
+                              })
+                            }
+                            className='w-full px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                          >
+                            <option value='low'>
+                              Low - Minimal adaptation
+                            </option>
+                            <option value='medium'>
+                              Medium - Balanced adaptation
+                            </option>
+                            <option value='high'>
+                              High - Rapid adaptation
+                            </option>
+                          </select>
+                          <p className='text-xs text-purple-600 dark:text-purple-400 mt-1'>
+                            How quickly the persona adapts to user preferences
+                          </p>
+                        </div>
+
+                        <div className='flex items-center gap-3'>
+                          <input
+                            type='checkbox'
+                            checked={formData.mutation_settings.auto_adapt}
+                            onChange={e =>
+                              updateMutationSettings({
+                                auto_adapt: e.target.checked,
+                              })
+                            }
+                            className='rounded'
+                          />
+                          <label className='text-sm font-medium text-purple-700 dark:text-purple-300'>
+                            Auto-adapt to user preferences
+                          </label>
+                        </div>
+
+                        <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4'>
+                          <div className='flex items-start gap-3'>
+                            <Info className='h-4 w-4 text-yellow-600 mt-0.5' />
+                            <div className='text-sm text-yellow-800 dark:text-yellow-300'>
+                              <p className='font-medium mb-1'>
+                                Learning Capabilities:
+                              </p>
+                              <ul className='text-xs space-y-1'>
+                                <li>
+                                  • Mood adjustments based on conversation tone
+                                </li>
+                                <li>
+                                  • Learning user communication preferences
+                                </li>
+                                <li>• Adapting response style and length</li>
+                                <li>• Building contextual understanding</li>
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-
-        {/* System Prompt */}
-        <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-4'>
-            System Prompt
-          </h3>
-
-          <textarea
-            value={formData.parameters.system_prompt}
-            onChange={e =>
-              handleParameterChange('system_prompt', e.target.value)
-            }
-            className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
-            rows={6}
-            placeholder='Enter the system prompt that defines your persona behavior...'
-          />
-          <p className='text-sm text-gray-500 dark:text-dark-500 mt-2'>
-            The system prompt defines how your persona will behave and respond
-            to users.
-          </p>
         </div>
 
         {/* Form Actions */}

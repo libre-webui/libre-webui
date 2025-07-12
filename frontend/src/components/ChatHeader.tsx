@@ -16,7 +16,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { User, Settings } from 'lucide-react';
+import { User, Settings, Brain, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { PersonaSelector } from './PersonaSelector';
 import { personaApi } from '@/utils/api';
@@ -37,6 +37,16 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const [persona, setPersona] = useState<Persona | null>(null);
   const [showPersonaSelector, setShowPersonaSelector] = useState(false);
   const [_loading, setLoading] = useState(false);
+
+  // Check if persona has advanced features
+  const hasAdvancedFeatures = (persona: Persona): boolean => {
+    // Check for advanced fields or legacy features in parameters
+    return !!(
+      persona.embedding_model ||
+      persona.memory_settings ||
+      (persona.parameters as Record<string, unknown>)?.legacy_features
+    );
+  };
 
   useEffect(() => {
     const loadPersona = async () => {
@@ -82,7 +92,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           </h1>
 
           {persona && (
-            <div className='flex items-center gap-2 px-3 py-1 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 rounded-full text-sm'>
+            <div
+              className={cn(
+                'flex items-center gap-2 px-3 py-1 rounded-full text-sm',
+                hasAdvancedFeatures(persona)
+                  ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                  : 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+              )}
+            >
               {persona.avatar ? (
                 <img
                   src={persona.avatar}
@@ -93,6 +110,15 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                 <User className='h-4 w-4' />
               )}
               <span className='font-medium'>{persona.name}</span>
+              {hasAdvancedFeatures(persona) && (
+                <div
+                  className='flex items-center gap-1'
+                  title='Advanced: Memory & Adaptive Learning Active'
+                >
+                  <Brain className='h-3 w-3' />
+                  <Sparkles className='h-3 w-3' />
+                </div>
+              )}
             </div>
           )}
         </div>

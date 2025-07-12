@@ -1265,7 +1265,6 @@ export const personaApi = {
       };
       return Promise.resolve(exportData);
     }
-
     return api.get(`/personas/${id}/export`).then(res => res.data);
   },
 
@@ -1318,83 +1317,125 @@ export const personaApi = {
     return api.get('/personas/defaults/parameters').then(res => res.data);
   },
 
-  // Download persona as JSON file
-  downloadPersona: async (id: string, name: string): Promise<void> => {
-    if (isDemoMode()) {
-      // Create demo export data for download
-      const exportData = {
-        format: 'libre-webui-persona',
-        version: '1.0',
-        persona: {
-          name: 'Sample Assistant',
-          description: 'A sample assistant for demonstration',
-          model: 'llama3.2:latest',
-          parameters: {
-            temperature: 0.7,
-            top_p: 0.9,
-            context_window: 4096,
-            system_prompt: 'You are a helpful assistant.',
-          },
-        },
-        exportedAt: new Date().toISOString(),
-        exportedBy: 'demo-user',
-      };
+  // === Advanced Features (unified system) ===
 
-      // Trigger download in demo mode
-      const dataStr = JSON.stringify(exportData, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${name.replace(/[^a-zA-Z0-9]/g, '_')}_persona.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-      return;
+  // Get memory status for a persona
+  getMemoryStatus: (
+    personaId: string
+  ): Promise<
+    ApiResponse<{
+      status: 'active' | 'wiped' | 'backed_up';
+      memory_count: number;
+      last_backup: number;
+      size_mb: number;
+    }>
+  > => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        status: 'active' as const,
+        memory_count: 42,
+        last_backup: Date.now() - 86400000,
+        size_mb: 2.3,
+      });
+    }
+    return api
+      .get(`/personas/${personaId}/memory/status`)
+      .then(res => res.data);
+  },
+
+  // Wipe memories for a persona
+  wipeMemories: (
+    personaId: string
+  ): Promise<ApiResponse<{ deleted_count: number }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ deleted_count: 42 });
+    }
+    return api.delete(`/personas/${personaId}/memory`).then(res => res.data);
+  },
+
+  // Backup persona
+  backupPersona: (personaId: string): Promise<Blob> => {
+    if (isDemoMode()) {
+      const demoData = JSON.stringify({
+        persona_id: personaId,
+        backup_date: new Date().toISOString(),
+        data: 'demo backup data',
+      });
+      return Promise.resolve(
+        new Blob([demoData], { type: 'application/json' })
+      );
+    }
+    return api
+      .get(`/personas/${personaId}/backup`, { responseType: 'blob' })
+      .then(res => res.data);
+  },
+
+  // Export persona DNA
+  exportPersonaDNA: (personaId: string): Promise<Blob> => {
+    if (isDemoMode()) {
+      const demoData = JSON.stringify({
+        persona_id: personaId,
+        export_date: new Date().toISOString(),
+        dna: 'demo DNA data',
+        memories: [],
+        learned_behaviors: {},
+      });
+      return Promise.resolve(
+        new Blob([demoData], { type: 'application/json' })
+      );
+    }
+    return api
+      .get(`/personas/${personaId}/export/dna`, { responseType: 'blob' })
+      .then(res => res.data);
+  },
+
+  // Import persona DNA
+  importPersonaDNA: (dnaFile: File): Promise<ApiResponse<Persona>> => {
+    if (isDemoMode()) {
+      const importedPersona: Persona = {
+        id: 'demo-dna-' + Date.now(),
+        user_id: 'default',
+        name: 'Imported Persona',
+        description: 'Persona imported from DNA',
+        model: 'llama3.2:latest',
+        parameters: {
+          temperature: 0.7,
+          top_p: 0.9,
+          context_window: 4096,
+          system_prompt: 'You are a helpful assistant.',
+        },
+        created_at: Date.now(),
+        updated_at: Date.now(),
+      };
+      return createDemoResponse(importedPersona);
     }
 
+    const formData = new FormData();
+    formData.append('dnaFile', dnaFile);
+    return api
+      .post('/personas/import/dna', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then(res => res.data);
+  },
+
+  // Download persona (export and trigger download)
+  downloadPersona: async (id: string, name: string): Promise<void> => {
     try {
-      const token = localStorage.getItem('auth-token');
-      const headers: Record<string, string> = {};
-
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/personas/${id}/download`, {
-        method: 'GET',
-        headers,
+      const exportData = await personaApi.exportPersona(id);
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: 'application/json',
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to download persona');
-      }
-
-      // Get the filename from response headers or use default
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `${name.replace(/[^a-zA-Z0-9]/g, '_')}_persona.json`;
-
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      }
-
-      // Convert response to blob and trigger download
-      const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${name}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading persona:', error);
-      throw error;
+    } catch (_error) {
+      throw new Error('Failed to download persona');
     }
   },
 };

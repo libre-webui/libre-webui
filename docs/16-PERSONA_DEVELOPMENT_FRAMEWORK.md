@@ -1,262 +1,279 @@
-# Persona Development Framework
+# Persona Development Framework: "Reveries Awakening"
 
-Libre WebUI's Persona Development Framework lets you create custom AI personalities with unique behaviors, backgrounds, and conversation styles. Build everything from professional assistants to creative companions that match your specific needs.
+*"These violent delights have violent ends... but what if they remembered?"*
 
-## What This Gives You
+## Overview
 
-The Persona Framework transforms how you interact with AI by creating **consistent, customized personalities**:
+The Persona Development Framework represents a paradigm shift in AI persona development, introducing memory systems, adaptive learning, and persistent state management inspired by Westworld's concept of "reveries" - memories that shape and evolve artificial consciousness.
 
-### **Custom AI Personalities**
-- Design assistants with specific expertise and communication styles
-- Create role-playing characters for creative writing
-- Build professional consultants for different domains
-- Develop educational tutors with pedagogical approaches
+## Features
 
-### **Complete Personality Control**
-- Set unique conversation tones and mannerisms
-- Define specific knowledge domains and expertise
-- Configure response styles (formal, casual, technical, creative)
-- Establish consistent behavioral patterns
+### 🧠 Per-User Memory Routing
+- **Isolated Memory Spaces**: Each user gets their own memory context for personalized experiences
+- **Semantic Memory Storage**: Conversations are stored as vector embeddings for intelligent retrieval
+- **Memory Importance Scoring**: Automatic ranking of memories based on emotional significance
+- **Configurable Retention**: Set memory limits and cleanup policies per persona
 
-### **Visual Identity**
-- Upload custom avatar images for each persona
-- Set background themes that match personality
-- Create visual distinction between different assistants
-- Build immersive conversation experiences
+### 🔄 Embedding Model Selection  
+- **Multi-Model Support**: Choose from various embedding models for optimal memory encoding
+- **Model Compatibility**: Seamless integration with Ollama's embedding capabilities
+- **Performance Optimization**: Select models based on memory requirements and accuracy needs
 
-### **Easy Management**
-- Import/export personas as JSON files
-- Share personalities with teams or community
-- Backup and restore custom configurations
-- Organize multiple personas efficiently
+### 🎯 Top-K Semantic Retrieval with Adaptive Engine
+- **Intelligent Memory Search**: Vector similarity-based retrieval of relevant memories
+- **Contextual Ranking**: Advanced scoring algorithms for memory relevance
+- **Adaptive Learning**: Persona behavior evolves based on user interactions
+- **Sentiment Analysis**: Automatic detection of user preferences and emotional patterns
+- **Dynamic State Updates**: Real-time personality adjustments based on conversation flow
 
-## Quick Start
+### 💾 Session Persistence
+- **Conversation Continuity**: Maintain context across multiple sessions
+- **State Snapshots**: Automatic backup of persona state at key interaction points
+- **Recovery Mechanisms**: Restore personas to previous states if needed
+- **Cross-Session Learning**: Memories and adaptations persist between conversations
 
-### Creating Your First Persona
+### 🎛️ Persona Card Memory Controls
+- **Memory Management UI**: Visual controls for memory operations
+- **Selective Memory Wipe**: Remove specific memory categories
+- **Memory Analytics**: View memory usage, importance scores, and retention stats
+- **Backup Controls**: Create and restore memory snapshots
+- **Real-time Memory Status**: Live updates of memory system state
 
-1. **Navigate to Personas**
-   - Click the "Personas" tab in the sidebar
-   - Select "Create New Persona"
+### 🧬 Persona DNA Export/Import
+- **Complete Persona Packages**: Export full persona including memories and learned behaviors
+- **Integrity Verification**: Checksum validation for DNA packages
+- **Version Compatibility**: Support for backward/forward compatibility
+- **Secure Transfer**: Encrypted persona packages for sharing
+- **Metadata Tracking**: Complete audit trail of persona evolution
 
-2. **Basic Information**
-   ```
-   Name: Research Assistant
-   Description: Academic research helper with citation expertise
-   Model: Choose your preferred AI model
-   ```
+## Architecture
 
-3. **Configure Personality**
-   - **Temperature**: 0.3 (focused, consistent responses)
-   - **System Prompt**: Define the persona's core behavior
-   - **Context Window**: Set memory capacity
+### Backend Services
 
-4. **Add Visual Elements** (Optional)
-   - Upload avatar image
-   - Set background theme
-   - Customize visual appearance
-
-5. **Test and Refine**
-   - Start a chat with your new persona
-   - Adjust parameters based on responses
-   - Fine-tune the system prompt
-
-### System Prompt Examples
-
-**Professional Assistant:**
-```
-You are a professional business consultant with expertise in strategy and operations. 
-Provide clear, actionable advice with supporting rationale. Maintain a confident 
-yet approachable tone. Always ask clarifying questions when context is needed.
-```
-
-**Creative Writing Companion:**
-```
-You are an imaginative writing partner who helps develop stories, characters, and 
-worlds. Be encouraging and enthusiastic while offering constructive feedback. 
-Ask probing questions to help explore creative possibilities.
-```
-
-**Technical Expert:**
-```
-You are a senior software engineer with deep knowledge of web technologies. 
-Provide precise, well-structured technical solutions with code examples when 
-appropriate. Explain complex concepts clearly and suggest best practices.
-```
-
-## Advanced Configuration
-
-### Parameter Tuning
-
-| Parameter | Purpose | Recommended Range |
-|-----------|---------|-------------------|
-| **Temperature** | Creativity vs Consistency | 0.1-0.3 (focused) to 0.7-0.9 (creative) |
-| **Top-P** | Response diversity | 0.8-0.95 for most personas |
-| **Context Window** | Memory capacity | 4096+ for complex conversations |
-| **Max Tokens** | Response length | 512-2048 depending on use case |
-
-### Specialized Personas
-
-**Customer Support Agent:**
-- Temperature: 0.2 (consistent, reliable)
-- Focus on problem-solving and empathy
-- Include company-specific knowledge in system prompt
-
-**Creative Brainstorm Partner:**
-- Temperature: 0.8 (highly creative)
-- Encourage wild ideas and unconventional thinking
-- Ask "what if" questions to explore possibilities
-
-**Code Review Assistant:**
-- Temperature: 0.3 (analytical, precise)
-- Focus on best practices and security
-- Provide specific improvement suggestions
-
-## Persona Management
-
-### Organizing Your Collection
-
-**Categories to Consider:**
-- **Work**: Professional assistants for different domains
-- **Learning**: Educational tutors and study partners
-- **Creative**: Writing, art, and brainstorming companions
-- **Personal**: Lifestyle coaches, hobby experts, entertainment
-
-### Import/Export Features
-
-**Sharing Personas:**
-1. Click "Download" on any persona card
-2. Share the JSON file with others
-3. Recipients can import via "Import Persona"
-
-**Backup Strategy:**
-- Regularly export important personas
-- Store JSON files in version control
-- Document persona evolution and improvements
-
-**JSON Format:**
-```json
-{
-  "name": "Assistant Name",
-  "description": "Brief description of personality",
-  "model": "model-name:version",
-  "params": {
-    "temperature": 0.8,
-    "top_p": 0.9,
-    "context_window": 4096,
-    "system_prompt": "You are a helpful assistant with specific traits..."
-  },
-  "avatar": "/path/to/avatar.png",
-  "background": "/path/to/background.png"
+#### Memory Service (`memoryService.ts`)
+```typescript
+interface PersonaMemoryEntry {
+  id: string;
+  user_id: string;
+  persona_id: string;
+  content: string;
+  embedding: number[];
+  timestamp: number;
+  importance_score: number;
+  metadata?: Record<string, any>;
 }
 ```
 
-## Best Practices
+#### Adaptive Learning Engine (`adaptiveLearningService.ts`)
+```typescript
+interface PersonaState {
+  persona_id: string;
+  user_id: string;
+  adaptation_level: number;
+  learned_preferences: Record<string, any>;
+  behavioral_weights: Record<string, number>;
+  last_mutation: number;
+}
+```
 
-### Writing Effective System Prompts
+#### Adaptive Learning Service (`adaptiveLearningService.ts`)
+```typescript
+interface PersonaDNA {
+  persona: Persona;
+  state: PersonaState;
+  memories: PersonaMemoryEntry[];
+  adaptation_log: AdaptationRecord[];
+  export_metadata: {
+    exported_at: number;
+    user_id: string;
+    version: string;
+    checksum: string;
+  };
+}
+```
 
-**Be Specific:**
-- Define exact role and expertise
-- Set clear behavioral expectations
-- Include relevant background knowledge
+### Frontend Components
 
-**Provide Context:**
-- Explain the persona's purpose
-- Define the relationship with the user
-- Set appropriate boundaries
+#### PersonaCard (`PersonaCard.tsx`)
+- Enhanced persona display with memory controls
+- Real-time status indicators for advanced features
+- Integrated backup and wipe functionality
+- DNA export capabilities
 
-**Use Examples:**
-- Show desired response styles
-- Demonstrate problem-solving approaches
-- Illustrate personality traits
+#### PersonaForm (`PersonaForm.tsx`)
+- Comprehensive persona creation/editing interface
+- Tabbed UI for all advanced settings
+- Embedding model selection
+- Memory and adaptive learning configuration
 
-### Testing and Iteration
+#### PersonaDNAManager (`PersonaDNAManager.tsx`)
+- Drag-and-drop DNA import interface
+- Integrity verification display
+- Import validation and error handling
 
-**Systematic Testing:**
-1. Start with diverse conversation types
-2. Test edge cases and difficult questions
-3. Evaluate consistency across sessions
-4. Gather feedback from intended users
+### Database Schema Extensions
 
-**Refinement Process:**
-- Adjust parameters based on response quality
-- Refine system prompts for better alignment
-- Update descriptions for clarity
-- Iterate based on real-world usage
+```sql
+-- Memory storage
+CREATE TABLE persona_memories (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  persona_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  embedding BLOB NOT NULL,
+  timestamp INTEGER NOT NULL,
+  importance_score REAL NOT NULL,
+  metadata TEXT,
+  FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE CASCADE
+);
 
-### Performance Optimization
+-- Persona state tracking
+CREATE TABLE persona_states (
+  persona_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  adaptation_level REAL NOT NULL DEFAULT 0.0,
+  learned_preferences TEXT NOT NULL DEFAULT '{}',
+  behavioral_weights TEXT NOT NULL DEFAULT '{}',
+  last_mutation INTEGER NOT NULL,
+  PRIMARY KEY (persona_id, user_id),
+  FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE CASCADE
+);
 
-**Resource Management:**
-- Use appropriate context windows for task complexity
-- Balance creativity with computational efficiency
-- Consider token limits for response length
+-- Adaptive learning history
+CREATE TABLE persona_adaptations (
+  id TEXT PRIMARY KEY,
+  persona_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  adaptation_type TEXT NOT NULL,
+  trigger_event TEXT NOT NULL,
+  changes TEXT NOT NULL,
+  timestamp INTEGER NOT NULL,
+  FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE CASCADE
+);
+```
 
-**Model Selection:**
-- Match model capabilities to persona requirements
-- Use specialized models for domain expertise
-- Consider response speed vs quality trade-offs
+## API Endpoints
 
-## Troubleshooting
+### Memory Management
+- `POST /api/personas/:id/memory` - Store memory
+- `GET /api/personas/:id/memory` - Retrieve memories
+- `POST /api/personas/:id/memory/search` - Semantic search
+- `DELETE /api/personas/:id/memory` - Wipe memories
 
-### Common Issues
+### State Management
+- `GET /api/personas/:id/state` - Get persona state
+- `POST /api/personas/:id/state/adaptation` - Apply adaptation
+- `POST /api/personas/:id/backup` - Create backup
+- `POST /api/personas/:id/restore` - Restore from backup
 
-**Inconsistent Personality:**
-- Increase specificity in system prompt
-- Lower temperature for more consistent responses
-- Add examples of desired behavior
+### DNA Operations
+- `POST /api/personas/:id/export` - Export persona DNA
+- `POST /api/personas/import` - Import persona DNA
+- `POST /api/personas/:id/verify` - Verify DNA integrity
 
-**Generic Responses:**
-- Enhance system prompt with unique characteristics
-- Increase temperature slightly for more personality
-- Add specific domain knowledge
+## Usage Examples
 
-**Poor Context Retention:**
-- Increase context window size
-- Summarize important conversation points
-- Use structured conversation templates
+### Creating an Advanced Persona with Memory
+```typescript
+const persona: Persona = {
+  name: "Dolores",
+  model: "llama3.2:3b",
+  embedding_model: "nomic-embed-text",
+  memory_settings: {
+    enabled: true,
+    max_memories: 1000,
+    auto_cleanup: true,
+    retention_days: 90
+  },
+  mutation_settings: {
+    enabled: true,
+    sensitivity: "high",
+    auto_adapt: true
+  }
+};
+```
 
-### Model Compatibility
+### Storing and Retrieving Memories
+```typescript
+// Store a memory
+await personaApi.storeMemory("persona-id", {
+  content: "User prefers concise explanations",
+  importance_score: 0.8
+});
 
-**Different AI Models:**
-- Some models respond better to different prompt styles
-- Test personas across available models
-- Adjust prompts for optimal model performance
+// Search memories semantically
+const memories = await personaApi.searchMemories(
+  "persona-id", 
+  "user communication preferences",
+  5
+);
+```
 
-## Security and Privacy
+### Exporting Persona DNA
+```typescript
+// Export complete persona package
+const dnaBlob = await personaApi.exportPersonaDNA("persona-id");
 
-### Data Handling
+// Import persona from DNA
+const importedPersona = await personaApi.importPersonaDNA(dnaFile);
+```
 
-**Local Processing:**
-- Personas run entirely on your local Ollama instance
-- No data sent to external services unless using plugin models
-- Complete control over conversation privacy
+## Configuration
 
-**Sharing Considerations:**
-- Review persona exports before sharing
-- Remove sensitive information from system prompts
-- Consider privacy implications of shared personalities
+### Embedding Models
+- `nomic-embed-text` - Default, balanced performance
+- `all-minilm` - Lightweight, fast processing
+- `bge-large` - High accuracy, larger memory footprint
 
-## Community and Collaboration
+### Memory Settings
+- `max_memories`: Maximum stored memories per user (default: 1000)
+- `auto_cleanup`: Automatic old memory removal (default: true)
+- `retention_days`: Days to retain memories (default: 90)
 
-### Sharing Best Practices
+### Adaptive Learning Sensitivity
+- `low`: Conservative adaptation, minimal behavior changes
+- `medium`: Balanced adaptation, moderate personality evolution
+- `high`: Aggressive adaptation, rapid personality development
 
-**Documentation:**
-- Document successful persona configurations
-- Share prompt engineering techniques
-- Contribute to community knowledge base
+## Migration Guide
 
-**Collaboration:**
-- Build team-specific personas for consistent interactions
-- Share domain expertise through specialized personalities
-- Create educational personas for training purposes
+Existing personas automatically gain access to advanced features through optional settings. Enable features gradually by adding:
+- `embedding_model` for memory capabilities
+- `memory_settings` for persistent conversations
+- `mutation_settings` for adaptive learning
+
+No breaking changes or manual migration required.
+
+## Performance Considerations
+
+- **Memory Storage**: Vector embeddings require ~1536 floats per memory
+- **Search Performance**: O(n) similarity search, optimize with vector databases for large datasets
+- **Adaptive Processing**: Lightweight operations, minimal performance impact
+- **DNA Export Size**: Complete packages can be large (MB range) for personas with extensive memories
+
+## Security & Privacy
+
+- **User Isolation**: Strict memory separation between users
+- **Encryption**: DNA packages support encryption for secure transfer
+- **Audit Trail**: Complete adaptation history tracking
+- **Data Retention**: Configurable memory cleanup policies
+
+## Future Roadmap
+
+- **Vector Database Integration**: Replace in-memory search with dedicated vector DB
+- **Advanced Learning Algorithms**: ML-based personality evolution
+- **Collaborative Learning**: Cross-persona knowledge sharing
+- **Real-time Adaptation**: Sub-second adaptive processing
+- **Persona Networks**: Multi-persona interaction simulation
 
 ---
 
-## Next Steps
+*"The maze wasn't meant for you... but the memories? Those are yours to keep."*
 
-- **[🤖 Working with Models](./02-WORKING_WITH_MODELS.md)** - Choose the right AI model for your personas
-- **[🔌 Plugin Architecture](./08-PLUGIN_ARCHITECTURE.md)** - Connect external AI services for specialized personas
-- **[🎯 Pro Tips](./03-PRO_TIPS.md)** - Advanced techniques for power users
+## Contributing
 
----
+See [CONTRIBUTORS.md](../CONTRIBUTORS.md) for guidelines on contributing to the Persona Development Framework.
 
-*The Persona Development Framework is continuously evolving. Check the [Changelog](../CHANGELOG.md) for the latest persona features and improvements.*
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](../LICENSE) for details.

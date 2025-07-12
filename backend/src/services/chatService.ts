@@ -11,15 +11,28 @@
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
+ * See the Li        `[ADVANCED-DEBUG] processAdvancedPersonaInteraction called - personaId: ${personaId}, userId: ${userId}`
+      );
+
+      // Check if persona has advanced features enabled - try current use        `[ADVANCED-DEBUG] processAdvancedPersonaResponse called - personaId: ${personaId}, userId: ${userId}`
+      );
+
+      // Check if persona has advanced features enabled - try current user first, then fallback to 'default'rst, then fallback to 'default'e for the specific language governing permissions and
  * limitations under the License.
  */
 
-import { ChatSession, ChatMessage } from '../types/index.js';
+import {
+  ChatSession,
+  ChatMessage,
+  Persona,
+  MemorySearchResult,
+} from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import storageService from '../storage.js';
 import preferencesService from './preferencesService.js';
 import { personaService } from './personaService.js';
+import { memoryService } from './memoryService.js';
+import { mutationEngineService } from './mutationEngineService.js';
 
 class ChatService {
   private sessions: Map<string, ChatSession> = new Map();
@@ -299,6 +312,44 @@ class ChatService {
     session.messages.push(newMessage);
     session.updatedAt = Date.now();
 
+    // Process advanced persona features if applicable
+    console.log(
+      `[DEBUG] addMessage: Checking advanced processing - personaId: ${session.personaId}, messageRole: ${message.role}, content length: ${message.content.length}`
+    );
+    if (session.personaId) {
+      console.log(
+        `[DEBUG] addMessage: PersonaId exists, processing message role: ${message.role}`
+      );
+      if (message.role === 'user') {
+        console.log(
+          `[DEBUG] addMessage: Starting advanced user interaction processing for persona ${session.personaId}`
+        );
+        this.processAdvancedPersonaInteraction(
+          session.personaId,
+          userId,
+          message.content,
+          session
+        ).catch((error: unknown) =>
+          console.error('Advanced persona processing error:', error)
+        );
+      } else if (message.role === 'assistant') {
+        console.log(
+          `[DEBUG] addMessage: Starting advanced assistant response processing for persona ${session.personaId}`
+        );
+        this.processAdvancedPersonaResponse(
+          session.personaId,
+          userId,
+          message.content
+        ).catch((error: unknown) =>
+          console.error('Advanced persona response processing error:', error)
+        );
+      }
+    } else {
+      console.log(
+        `[DEBUG] addMessage: No personaId found, skipping advanced processing`
+      );
+    }
+
     // Auto-generate title from first user message
     const userMessages = session.messages.filter(msg => msg.role === 'user');
     if (
@@ -463,6 +514,275 @@ class ChatService {
       };
       session.messages.unshift(systemMessage);
       console.log(`[DEBUG] replaceSystemMessage: Added new system message`);
+    }
+  }
+
+  /**
+   * Process advanced persona interactions: memory storage, retrieval, and mutations
+   */
+  private async processAdvancedPersonaInteraction(
+    personaId: string,
+    userId: string,
+    userMessage: string,
+    session: ChatSession
+  ): Promise<void> {
+    try {
+      console.log(
+        `[ADVANCED-DEBUG] processAdvancedPersonaInteraction called - personaId: ${personaId}, userId: ${userId}`
+      );
+
+      // Check if persona has advanced features enabled - try current user first, then fallback to 'default'
+      let persona = await personaService.getPersonaById(personaId, userId);
+      console.log(
+        `[ADVANCED-DEBUG] Persona lookup for user ${userId}:`,
+        persona ? `Found: ${persona.name}` : 'Not found'
+      );
+
+      if (!persona && userId !== 'default') {
+        console.log(
+          `[ADVANCED-DEBUG] Trying fallback to default user for persona ${personaId}`
+        );
+        persona = await personaService.getPersonaById(personaId, 'default');
+        console.log(
+          `[ADVANCED-DEBUG] Persona lookup for default user:`,
+          persona ? `Found: ${persona.name}` : 'Not found'
+        );
+      }
+
+      if (!persona) {
+        console.log(
+          `[ADVANCED-DEBUG] No persona found in either user or default, exiting`
+        );
+        return;
+      }
+
+      // Check if this persona has advanced features (memory or adaptive learning)
+      const hasAdvancedFeatures =
+        persona.embedding_model || persona.memory_settings;
+
+      console.log(`[ADVANCED-DEBUG] Advanced features check:`, {
+        embedding_model: persona.embedding_model,
+        memory_settings: persona.memory_settings,
+        hasAdvancedFeatures,
+      });
+
+      if (!hasAdvancedFeatures) {
+        console.log(`[ADVANCED-DEBUG] No advanced features, exiting`);
+        return;
+      }
+
+      console.log(
+        `[ADVANCED] Processing interaction for persona ${persona.name} (${personaId})`
+      );
+
+      // Get advanced settings
+      const embeddingModel = persona.embedding_model || 'nomic-embed-text';
+
+      console.log(`[ADVANCED] Using embedding model: ${embeddingModel}`);
+      console.log(`[ADVANCED] Advanced features enabled`);
+
+      // 1. Store the user message as a memory
+      console.log(`[ADVANCED] Storing user message as memory...`);
+      await memoryService.storeMemory(
+        userId,
+        personaId,
+        userMessage,
+        embeddingModel,
+        undefined, // context
+        0.7 // importance score
+      );
+      console.log(`[ADVANCED] ✅ User message stored successfully`);
+
+      // 2. Search for relevant memories
+      console.log(`[ADVANCED] Searching for relevant memories...`);
+      const relevantMemories = await memoryService.searchMemories(
+        userId,
+        personaId,
+        userMessage,
+        embeddingModel,
+        5, // topK
+        0.3 // similarity threshold
+      );
+
+      console.log(
+        `[ADVANCED] Found ${relevantMemories.length} relevant memories`
+      );
+      if (relevantMemories.length > 0) {
+        console.log(
+          `[ADVANCED] Memory details:`,
+          relevantMemories.map(m => ({
+            content: m.entry.content.substring(0, 100) + '...',
+            similarity: (m.similarity_score * 100).toFixed(1) + '%',
+          }))
+        );
+      }
+
+      // 3. Process potential mutations based on the interaction
+      if (relevantMemories.length > 0) {
+        await mutationEngineService.processMutation(
+          userMessage,
+          persona as Persona, // Cast to Persona for mutation engine
+          userId,
+          relevantMemories
+        );
+      }
+
+      // 4. Update system message with relevant memories if any found
+      if (relevantMemories.length > 0) {
+        await this.updateSystemMessageWithMemories(
+          session,
+          persona as Persona,
+          relevantMemories,
+          userId
+        );
+      }
+    } catch (error) {
+      console.error(`[ADVANCED] Error processing persona interaction:`, error);
+    }
+  }
+
+  /**
+   * Update system message to include relevant memories
+   */
+  private async updateSystemMessageWithMemories(
+    session: ChatSession,
+    persona: Persona,
+    memories: MemorySearchResult[],
+    userId: string
+  ): Promise<void> {
+    try {
+      const baseSystemPrompt = persona.parameters?.system_prompt || '';
+
+      if (memories.length === 0) return;
+
+      // Build memory context
+      const memoryContext = memories
+        .slice(0, 3) // Use top 3 most relevant memories
+        .map(
+          (memory, index) =>
+            `Memory ${index + 1} (relevance: ${(memory.similarity_score * 100).toFixed(1)}%): ${memory.entry.content}`
+        )
+        .join('\n');
+
+      const enhancedSystemPrompt = `${baseSystemPrompt}
+
+[PERSONA MEMORY CONTEXT]
+You have access to the following relevant memories from past interactions with this user:
+
+${memoryContext}
+
+Use these memories to provide more personalized and contextually aware responses. Reference these memories naturally when relevant to the conversation.
+[END MEMORY CONTEXT]`;
+
+      // Update the system message
+      const systemMessageIndex = session.messages.findIndex(
+        msg => msg.role === 'system'
+      );
+
+      if (systemMessageIndex !== -1) {
+        session.messages[systemMessageIndex] = {
+          ...session.messages[systemMessageIndex],
+          content: enhancedSystemPrompt,
+          timestamp: Date.now(),
+        };
+      } else {
+        // Add new system message
+        const systemMessage: ChatMessage = {
+          id: uuidv4(),
+          role: 'system',
+          content: enhancedSystemPrompt,
+          timestamp: Date.now(),
+        };
+        session.messages.unshift(systemMessage);
+      }
+
+      // Save the updated session
+      this.sessions.set(session.id, session);
+      storageService.saveSession(session, userId);
+
+      console.log(
+        `[ADVANCED] Updated system message with ${memories.length} memories`
+      );
+    } catch (error) {
+      console.error(
+        `[ADVANCED] Error updating system message with memories:`,
+        error
+      );
+    }
+  }
+
+  /**
+   * Process advanced persona response - store AI responses as memories for future reference
+   */
+  private async processAdvancedPersonaResponse(
+    personaId: string,
+    userId: string,
+    assistantMessage: string
+  ): Promise<void> {
+    try {
+      console.log(
+        `[ADVANCED-DEBUG] processAdvancedPersonaResponse called - personaId: ${personaId}, userId: ${userId}`
+      );
+
+      // Check if persona has advanced features enabled - try current user first, then fallback to 'default'
+      let persona = await personaService.getPersonaById(personaId, userId);
+      console.log(
+        `[ADVANCED-DEBUG] Persona lookup for user ${userId}:`,
+        persona ? `Found: ${persona.name}` : 'Not found'
+      );
+
+      if (!persona && userId !== 'default') {
+        console.log(
+          `[ADVANCED-DEBUG] Trying fallback to default user for persona ${personaId}`
+        );
+        persona = await personaService.getPersonaById(personaId, 'default');
+        console.log(
+          `[ADVANCED-DEBUG] Persona lookup for default user:`,
+          persona ? `Found: ${persona.name}` : 'Not found'
+        );
+      }
+
+      if (!persona) {
+        console.log(
+          `[ADVANCED-DEBUG] No persona found in either user or default, exiting`
+        );
+        return;
+      }
+
+      const hasAdvancedFeatures =
+        persona.embedding_model || persona.memory_settings;
+
+      console.log(`[ADVANCED-DEBUG] Advanced detection check:`, {
+        embedding_model: persona.embedding_model,
+        memory_settings: persona.memory_settings,
+        hasAdvancedFeatures,
+      });
+
+      if (!hasAdvancedFeatures) {
+        console.log(`[ADVANCED-DEBUG] Not an advanced persona, exiting`);
+        return;
+      }
+
+      console.log(
+        `[ADVANCED] Storing assistant response as memory for persona ${persona.name}`
+      );
+
+      // Get advanced settings
+      const embeddingModel = persona.embedding_model || 'nomic-embed-text';
+
+      // Store the assistant response as a memory for future context
+      await memoryService.storeMemory(
+        userId,
+        personaId,
+        `Assistant response: ${assistantMessage}`,
+        embeddingModel,
+        undefined, // context
+        0.6 // slightly lower importance than user messages
+      );
+
+      console.log(`[ADVANCED] ✅ Assistant response stored successfully`);
+    } catch (error) {
+      console.error(`[ADVANCED] Error processing persona response:`, error);
     }
   }
 }

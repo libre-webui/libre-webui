@@ -431,6 +431,19 @@ export interface Persona {
   background?: string;
   created_at: number;
   updated_at: number;
+  // Advanced features (optional for unified interface)
+  embedding_model?: string;
+  memory_settings?: {
+    enabled: boolean;
+    max_memories: number;
+    auto_cleanup: boolean;
+    retention_days: number;
+  };
+  mutation_settings?: {
+    enabled: boolean;
+    sensitivity: 'low' | 'medium' | 'high';
+    auto_adapt: boolean;
+  };
 }
 
 export interface CreatePersonaRequest {
@@ -440,6 +453,19 @@ export interface CreatePersonaRequest {
   parameters: PersonaParameters;
   avatar?: string;
   background?: string;
+  // Advanced features (optional)
+  embedding_model?: string;
+  memory_settings?: {
+    enabled: boolean;
+    max_memories: number;
+    auto_cleanup: boolean;
+    retention_days: number;
+  };
+  mutation_settings?: {
+    enabled: boolean;
+    sensitivity: 'low' | 'medium' | 'high';
+    auto_adapt: boolean;
+  };
 }
 
 export interface UpdatePersonaRequest {
@@ -449,6 +475,19 @@ export interface UpdatePersonaRequest {
   parameters?: PersonaParameters;
   avatar?: string;
   background?: string;
+  // Advanced features (optional)
+  embedding_model?: string;
+  memory_settings?: {
+    enabled: boolean;
+    max_memories: number;
+    auto_cleanup: boolean;
+    retention_days: number;
+  };
+  mutation_settings?: {
+    enabled: boolean;
+    sensitivity: 'low' | 'medium' | 'high';
+    auto_adapt: boolean;
+  };
 }
 
 export interface PersonaExport {
@@ -461,3 +500,85 @@ export interface PersonaExport {
   exportedAt: number;
   version: string;
 }
+
+// === Persona Development Framework - Advanced Types ===
+
+export interface EmbeddingModel {
+  id: string;
+  name: string;
+  description: string;
+  provider: 'ollama' | 'openai' | 'sentence-transformers' | 'huggingface';
+  dimensions: number;
+}
+
+export interface PersonaMemoryEntry {
+  id: string;
+  user_id: string;
+  persona_id: string;
+  content: string;
+  embedding?: number[];
+  timestamp: number;
+  context?: string;
+  importance_score?: number;
+}
+
+export interface PersonaState {
+  persona_id: string;
+  user_id: string;
+  runtime_state: Record<string, unknown>;
+  mutation_log: PersonaMutation[];
+  last_updated: number;
+  version: number;
+}
+
+export interface PersonaMutation {
+  id: string;
+  timestamp: number;
+  type: 'memory_add' | 'memory_update' | 'state_change' | 'parameter_adjust';
+  description: string;
+  changes: Record<string, unknown>;
+  triggered_by?: string; // user input or system event
+}
+
+export interface MemorySearchResult {
+  entry: PersonaMemoryEntry;
+  similarity_score: number;
+  relevance_rank: number;
+}
+
+export interface MutationEngineResult {
+  state_deltas: Record<string, unknown>;
+  new_memories: Omit<PersonaMemoryEntry, 'id' | 'timestamp'>[];
+  updated_memories: { id: string; updates: Partial<PersonaMemoryEntry> }[];
+  mutations: Omit<PersonaMutation, 'id' | 'timestamp'>[];
+}
+
+export interface PersonaBackup {
+  persona: Persona;
+  state: PersonaState;
+  memories: PersonaMemoryEntry[];
+  created_at: number;
+  version: string;
+}
+
+export interface PersonaDNA {
+  persona: Persona;
+  state: PersonaState;
+  memories: PersonaMemoryEntry[];
+  mutation_log: PersonaMutation[];
+  export_metadata: {
+    exported_at: number;
+    user_id: string;
+    version: string;
+    checksum: string;
+  };
+}
+
+export interface MemoryStatus {
+  status: 'active' | 'wiped' | 'backed_up';
+  memory_count: number;
+  last_backup?: number;
+  size_mb: number;
+}
+
+// Note: Legacy interfaces have been merged into the main Persona interface with optional advanced features
