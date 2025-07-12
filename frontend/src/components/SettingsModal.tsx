@@ -560,7 +560,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       id: 'documents',
       label: 'Documents & RAG',
       icon: Database,
-      badge: 'Beta',
     },
     { id: 'plugins', label: 'Plugins', icon: Puzzle },
     { id: 'system', label: 'System', icon: Monitor },
@@ -2428,11 +2427,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <span className='text-xs sm:text-sm font-medium truncate'>
                         {tab.label}
                       </span>
-                      {tab.badge && (
-                        <span className='ml-auto text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-1.5 sm:px-2 py-0.5 rounded-full hidden sm:inline'>
-                          {tab.badge}
-                        </span>
-                      )}
                     </button>
                   );
                 })}
