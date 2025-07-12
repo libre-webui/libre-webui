@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { personaApi, ollamaApi } from '@/utils/api';
 import {
@@ -93,11 +93,15 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   const [activeTab, setActiveTab] = useState<
     'basic' | 'parameters' | 'advanced'
   >('basic');
+  const hasLoadedRef = useRef(false);
 
   // Load available models and populate form if editing
   useEffect(() => {
+    if (hasLoadedRef.current) return;
+
     const loadData = async () => {
       setLoading(true);
+      hasLoadedRef.current = true;
       try {
         // Load available models
         const modelsResponse = await ollamaApi.getModels();
@@ -117,19 +121,28 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
             'minilm',
           ];
 
-          const ollamaEmbeddingModels = (modelsResponse.data || [])
+          const ollamaEmbeddingModels: EmbeddingModel[] = (
+            modelsResponse.data || []
+          )
             .filter(model =>
               embeddingPatterns.some(pattern =>
                 model.name.toLowerCase().includes(pattern.toLowerCase())
               )
             )
             .map(model => ({
-              id: model.name,
+              id: model.name, // Use full model name including tag
               name: model.name,
               description: `${model.details?.parameter_size || 'Unknown size'} - ${model.details?.family || 'Ollama model'}`,
               provider: 'ollama' as const,
               dimensions: 768, // Default dimensions, will be determined at runtime
-            }));
+            }))
+            // Remove duplicates based on ID
+            .reduce((unique: EmbeddingModel[], model) => {
+              if (!unique.find((m: EmbeddingModel) => m.id === model.id)) {
+                unique.push(model);
+              }
+              return unique;
+            }, []);
 
           // Set embedding models from Ollama, with fallback to default options
           if (ollamaEmbeddingModels.length > 0) {
@@ -147,9 +160,66 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
             ]);
           }
         }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-        // Load default parameters if creating new persona
-        if (!persona) {
+    loadData();
+  }, []); // Only run once on mount
+
+  // Handle persona-specific embedding model logic
+  useEffect(() => {
+    if (persona && persona.embedding_model && embeddingModels.length > 0) {
+      setEmbeddingModels(prevModels => {
+        const savedModel = persona.embedding_model!;
+
+        // Check if exact match exists
+        const exactMatch = prevModels.some(model => model.id === savedModel);
+
+        // Check if there's a model that matches without tag (e.g., "nomic-embed-text" vs "nomic-embed-text:latest")
+        const baseModelName = savedModel.split(':')[0];
+        const taggedMatch = prevModels.find(
+          model =>
+            model.id.startsWith(baseModelName + ':') ||
+            model.id === baseModelName
+        );
+
+        if (exactMatch) {
+          // Exact match found, no need to add anything
+          return prevModels;
+        } else if (taggedMatch) {
+          // Found a tagged version, update the persona's form data to use the tagged version
+          setFormData(prev => ({
+            ...prev,
+            embedding_model: taggedMatch.id,
+          }));
+          return prevModels;
+        } else {
+          // No match found, add the saved model as unavailable
+          return [
+            ...prevModels,
+            {
+              id: savedModel,
+              name: savedModel,
+              description:
+                'Previously selected model (not currently installed)',
+              provider: 'ollama' as const,
+              dimensions: 768,
+            },
+          ];
+        }
+      });
+    }
+  }, [persona, embeddingModels]);
+
+  // Load default parameters for new personas
+  useEffect(() => {
+    if (!persona) {
+      const loadDefaults = async () => {
+        try {
           const defaultsResponse = await personaApi.getDefaultParameters();
           if (defaultsResponse.success && defaultsResponse.data) {
             setFormData(prev => ({
@@ -160,15 +230,12 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
               },
             }));
           }
+        } catch (error) {
+          console.error('Error loading default parameters:', error);
         }
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadData();
+      };
+      loadDefaults();
+    }
   }, [persona]);
 
   // Populate form when editing
@@ -181,8 +248,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         parameters: persona.parameters,
         avatar: persona.avatar || '',
         background: persona.background || '',
-        embedding_model:
-          persona.embedding_model || embeddingModels[0]?.id || '',
+        embedding_model: persona.embedding_model || '',
         memory_settings: persona.memory_settings || {
           enabled: false,
           max_memories: 1000,
@@ -196,14 +262,26 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         },
       });
     }
-  }, [persona, embeddingModels]);
+  }, [persona]);
 
-  // Set default embedding model when embedding models are loaded
+  // Set default embedding model when embedding models are loaded (for new personas only)
   useEffect(() => {
     if (embeddingModels.length > 0 && !formData.embedding_model && !persona) {
       updateFormData({ embedding_model: embeddingModels[0].id });
     }
   }, [embeddingModels, formData.embedding_model, persona]);
+
+  // Set default embedding model for existing persona if it doesn't have one
+  useEffect(() => {
+    if (
+      persona &&
+      embeddingModels.length > 0 &&
+      !persona.embedding_model &&
+      !formData.embedding_model
+    ) {
+      updateFormData({ embedding_model: embeddingModels[0].id });
+    }
+  }, [persona, embeddingModels, formData.embedding_model]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
