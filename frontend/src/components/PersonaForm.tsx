@@ -259,6 +259,15 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     }));
   };
 
+  // Helper function to calculate slider progress percentage
+  const getSliderProgress = (
+    value: number,
+    min: number,
+    max: number
+  ): number => {
+    return ((value - min) / (max - min)) * 100;
+  };
+
   if (loading) {
     return (
       <div className='flex items-center justify-center p-8'>
@@ -276,20 +285,20 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   return (
     <div className='max-w-4xl mx-auto'>
       <div className='mb-6'>
-        <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+        <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-800'>
           {persona ? 'Edit Persona' : 'Create New Persona'}
         </h1>
-        <p className='text-gray-600 dark:text-gray-400 mt-1'>
+        <p className='text-gray-600 dark:text-dark-600 mt-1'>
           {persona
-            ? 'Update your persona settings and advanced features'
-            : 'Create a new AI persona with custom personality, memory, and adaptive learning'}
+            ? 'Customize your AI persona with advanced memory, adaptive learning, and intelligent parameters'
+            : 'Create a new AI persona with custom personality, memory systems, and adaptive learning capabilities'}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className='space-y-6'>
         {/* Tab Navigation */}
-        <div className='bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700'>
-          <div className='flex border-b border-gray-200 dark:border-gray-700'>
+        <div className='bg-white dark:bg-dark-100 rounded-lg shadow-sm border border-gray-200 dark:border-dark-300'>
+          <div className='flex border-b border-gray-200 dark:border-dark-300'>
             {tabs.map(tab => (
               <button
                 key={tab.id}
@@ -299,8 +308,8 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                 }
                 className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-colors ${
                   activeTab === tab.id
-                    ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                    ? 'border-b-2 border-primary-500 text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
+                    : 'text-gray-500 dark:text-dark-600 hover:text-gray-700 dark:hover:text-dark-800'
                 }`}
               >
                 <tab.icon className='h-4 w-4' />
@@ -315,27 +324,27 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
               <div className='space-y-6'>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Name *
                     </label>
                     <input
                       type='text'
                       value={formData.name}
                       onChange={e => updateFormData({ name: e.target.value })}
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
                       placeholder='Enter persona name'
                       required
                     />
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Model *
                     </label>
                     <select
                       value={formData.model}
                       onChange={e => updateFormData({ model: e.target.value })}
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
                       required
                     >
                       <option value=''>Select a model</option>
@@ -349,7 +358,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                     Description
                   </label>
                   <textarea
@@ -357,7 +366,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                     onChange={e =>
                       updateFormData({ description: e.target.value })
                     }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
                     rows={3}
                     placeholder='Describe your persona...'
                   />
@@ -365,20 +374,20 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
 
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Avatar URL
                     </label>
                     <input
                       type='url'
                       value={formData.avatar}
                       onChange={e => updateFormData({ avatar: e.target.value })}
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
                       placeholder='https://example.com/avatar.jpg'
                     />
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Background URL
                     </label>
                     <input
@@ -387,14 +396,14 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                       onChange={e =>
                         updateFormData({ background: e.target.value })
                       }
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
                       placeholder='https://example.com/background.jpg'
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                     System Prompt
                   </label>
                   <textarea
@@ -402,11 +411,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                     onChange={e =>
                       handleParameterChange('system_prompt', e.target.value)
                     }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
                     rows={6}
                     placeholder='Enter the system prompt that defines your persona behavior...'
                   />
-                  <p className='text-sm text-gray-500 dark:text-gray-400 mt-2'>
+                  <p className='text-sm text-gray-500 dark:text-dark-600 mt-2'>
                     The system prompt defines how your persona will behave and
                     respond to users.
                   </p>
@@ -419,7 +428,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
               <div className='space-y-6'>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Temperature: {formData.parameters.temperature?.toFixed(1)}
                     </label>
                     <input
@@ -434,15 +443,20 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                           parseFloat(e.target.value)
                         )
                       }
-                      className='w-full'
+                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
+                      style={
+                        {
+                          '--progress': `${getSliderProgress(formData.parameters.temperature || 0.8, 0, 2)}%`,
+                        } as React.CSSProperties
+                      }
                     />
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
                       Controls creativity vs consistency
                     </p>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Top-P: {formData.parameters.top_p?.toFixed(1)}
                     </label>
                     <input
@@ -457,15 +471,20 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                           parseFloat(e.target.value)
                         )
                       }
-                      className='w-full'
+                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
+                      style={
+                        {
+                          '--progress': `${getSliderProgress(formData.parameters.top_p || 0.9, 0, 1)}%`,
+                        } as React.CSSProperties
+                      }
                     />
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
                       Controls response diversity
                     </p>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Top-K: {formData.parameters.top_k}
                     </label>
                     <input
@@ -477,15 +496,20 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                       onChange={e =>
                         handleParameterChange('top_k', parseInt(e.target.value))
                       }
-                      className='w-full'
+                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
+                      style={
+                        {
+                          '--progress': `${getSliderProgress(formData.parameters.top_k || 40, 1, 100)}%`,
+                        } as React.CSSProperties
+                      }
                     />
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
                       Limits vocabulary to top-k tokens
                     </p>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Context Window: {formData.parameters.context_window}
                     </label>
                     <input
@@ -500,15 +524,20 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                           parseInt(e.target.value)
                         )
                       }
-                      className='w-full'
+                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
+                      style={
+                        {
+                          '--progress': `${getSliderProgress(formData.parameters.context_window || 4096, 128, 131072)}%`,
+                        } as React.CSSProperties
+                      }
                     />
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
                       Maximum conversation history length
                     </p>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Max Tokens: {formData.parameters.max_tokens}
                     </label>
                     <input
@@ -523,15 +552,20 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                           parseInt(e.target.value)
                         )
                       }
-                      className='w-full'
+                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
+                      style={
+                        {
+                          '--progress': `${getSliderProgress(formData.parameters.max_tokens || 1024, 1, 8192)}%`,
+                        } as React.CSSProperties
+                      }
                     />
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
                       Maximum response length
                     </p>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
                       Repeat Penalty:{' '}
                       {formData.parameters.repeat_penalty?.toFixed(1)}
                     </label>
@@ -547,9 +581,14 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                           parseFloat(e.target.value)
                         )
                       }
-                      className='w-full'
+                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
+                      style={
+                        {
+                          '--progress': `${getSliderProgress(formData.parameters.repeat_penalty || 1.1, 0.5, 2)}%`,
+                        } as React.CSSProperties
+                      }
                     />
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
                       Reduces repetitive responses
                     </p>
                   </div>
@@ -561,15 +600,15 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
             {activeTab === 'advanced' && (
               <div className='space-y-8'>
                 {/* Embedding Model Selection */}
-                <div className='bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 border border-blue-200 dark:border-blue-800'>
+                <div className='bg-primary-50 dark:bg-primary-900/20 rounded-lg p-6 border border-primary-200 dark:border-primary-800'>
                   <div className='flex items-center gap-3 mb-4'>
-                    <Database className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-                    <h3 className='text-lg font-semibold text-blue-900 dark:text-blue-100'>
+                    <Database className='h-5 w-5 text-primary-600 dark:text-primary-400' />
+                    <h3 className='text-lg font-semibold text-primary-900 dark:text-primary-100'>
                       Embedding Model
                     </h3>
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-blue-700 dark:text-blue-300 mb-2'>
+                    <label className='block text-sm font-medium text-primary-700 dark:text-primary-300 mb-2'>
                       Embedding Model
                     </label>
                     <select
@@ -577,7 +616,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                       onChange={e =>
                         updateFormData({ embedding_model: e.target.value })
                       }
-                      className='w-full px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                      className='w-full px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
                     >
                       {embeddingModels.map(model => (
                         <option key={model.id} value={model.id}>
@@ -585,7 +624,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                         </option>
                       ))}
                     </select>
-                    <p className='text-xs text-blue-600 dark:text-blue-400 mt-1'>
+                    <p className='text-xs text-primary-600 dark:text-primary-400 mt-1'>
                       Choose the embedding model for memory encoding and
                       semantic search
                     </p>
@@ -634,7 +673,12 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                                 max_memories: parseInt(e.target.value),
                               })
                             }
-                            className='w-full'
+                            className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
+                            style={
+                              {
+                                '--progress': `${getSliderProgress(formData.memory_settings.max_memories, 100, 10000)}%`,
+                              } as React.CSSProperties
+                            }
                           />
                           <p className='text-xs text-green-600 dark:text-green-400 mt-1'>
                             Maximum number of memories to store
@@ -657,7 +701,12 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                                 retention_days: parseInt(e.target.value),
                               })
                             }
-                            className='w-full'
+                            className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
+                            style={
+                              {
+                                '--progress': `${getSliderProgress(formData.memory_settings.retention_days, 7, 365)}%`,
+                              } as React.CSSProperties
+                            }
                           />
                           <p className='text-xs text-green-600 dark:text-green-400 mt-1'>
                             How long to keep memories before automatic cleanup
@@ -685,10 +734,10 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                 </div>
 
                 {/* Mutation Settings */}
-                <div className='bg-purple-50 dark:bg-purple-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800'>
+                <div className='bg-primary-50 dark:bg-primary-900/20 rounded-lg p-6 border border-primary-200 dark:border-primary-800'>
                   <div className='flex items-center gap-3 mb-4'>
-                    <Brain className='h-5 w-5 text-purple-600 dark:text-purple-400' />
-                    <h3 className='text-lg font-semibold text-purple-900 dark:text-purple-100'>
+                    <Brain className='h-5 w-5 text-primary-600 dark:text-primary-400' />
+                    <h3 className='text-lg font-semibold text-primary-900 dark:text-primary-100'>
                       Adaptive Learning
                     </h3>
                   </div>
@@ -703,7 +752,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                         }
                         className='rounded'
                       />
-                      <label className='text-sm font-medium text-purple-700 dark:text-purple-300'>
+                      <label className='text-sm font-medium text-primary-700 dark:text-primary-300'>
                         Enable Adaptive Learning
                       </label>
                     </div>
@@ -711,7 +760,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                     {formData.mutation_settings?.enabled && (
                       <>
                         <div>
-                          <label className='block text-sm font-medium text-purple-700 dark:text-purple-300 mb-2'>
+                          <label className='block text-sm font-medium text-primary-700 dark:text-primary-300 mb-2'>
                             Learning Sensitivity
                           </label>
                           <select
@@ -724,7 +773,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                                   | 'high',
                               })
                             }
-                            className='w-full px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                            className='w-full px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
                           >
                             <option value='low'>
                               Low - Minimal adaptation
@@ -736,7 +785,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                               High - Rapid adaptation
                             </option>
                           </select>
-                          <p className='text-xs text-purple-600 dark:text-purple-400 mt-1'>
+                          <p className='text-xs text-primary-600 dark:text-primary-400 mt-1'>
                             How quickly the persona adapts to user preferences
                           </p>
                         </div>
@@ -752,7 +801,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                             }
                             className='rounded'
                           />
-                          <label className='text-sm font-medium text-purple-700 dark:text-purple-300'>
+                          <label className='text-sm font-medium text-primary-700 dark:text-primary-300'>
                             Auto-adapt to user preferences
                           </label>
                         </div>

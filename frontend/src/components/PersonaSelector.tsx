@@ -95,8 +95,8 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
                 className='flex items-center gap-1'
                 title='Advanced Persona with Memory & Adaptive Learning'
               >
-                <Brain className='h-3 w-3 text-purple-500' />
-                <Sparkles className='h-3 w-3 text-pink-500' />
+                <Brain className='h-3 w-3 text-primary-600' />
+                <Sparkles className='h-3 w-3 text-primary-500' />
               </div>
             )}
           </div>
@@ -119,7 +119,7 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
             {selectedPersona.description}
           </div>
           {hasAdvancedFeatures(selectedPersona) && (
-            <div className='text-xs bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-400 px-2 py-1 rounded-full border border-purple-200 dark:border-purple-800'>
+            <div className='text-xs bg-gradient-to-r from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 text-primary-700 dark:text-primary-400 px-2 py-1 rounded-full border border-primary-200 dark:border-primary-800'>
               Advanced ✨
             </div>
           )}

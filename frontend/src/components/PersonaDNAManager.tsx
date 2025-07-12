@@ -169,7 +169,7 @@ const PersonaDNAManager: React.FC<PersonaDNAManagerProps> = ({
                     <span
                       className={`text-xs px-2 py-1 rounded ${
                         importResult.mutation_settings?.enabled
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-400'
+                          ? 'bg-primary-100 text-primary-800 dark:bg-primary-800/30 dark:text-primary-400'
                           : 'bg-gray-100 text-gray-800 dark:bg-gray-800/30 dark:text-gray-400'
                       }`}
                     >
@@ -196,10 +196,10 @@ const PersonaDNAManager: React.FC<PersonaDNAManagerProps> = ({
         )}
 
         {/* Information Section */}
-        <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
+        <div className='bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4'>
           <div className='flex items-start gap-3'>
-            <AlertCircle className='h-5 w-5 text-blue-500 mt-0.5' />
-            <div className='text-sm text-blue-700 dark:text-blue-300'>
+            <AlertCircle className='h-5 w-5 text-primary-500 mt-0.5' />
+            <div className='text-sm text-primary-700 dark:text-primary-300'>
               <h4 className='font-medium mb-2'>About Persona DNA</h4>
               <ul className='space-y-1 text-xs'>
                 <li>

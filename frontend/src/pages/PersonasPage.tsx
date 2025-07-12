@@ -17,7 +17,7 @@
 
 import React from 'react';
 import { PersonaManager } from '@/components/PersonaManager';
-import { Brain } from 'lucide-react';
+import { Brain, Database, TrendingUp, Download } from 'lucide-react';
 
 export const PersonasPage: React.FC = () => {
   return (
@@ -26,7 +26,7 @@ export const PersonasPage: React.FC = () => {
         {/* Header */}
         <div className='mb-8'>
           <div className='flex items-center gap-3 mb-4'>
-            <div className='p-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg'>
+            <div className='p-3 bg-gradient-to-r from-primary-500 to-primary-600 rounded-lg'>
               <Brain className='h-6 w-6 text-white' />
             </div>
             <div>
@@ -34,56 +34,56 @@ export const PersonasPage: React.FC = () => {
                 Persona Development Framework
               </h1>
               <p className='text-gray-700 dark:text-gray-300 mt-1'>
-                Create, manage, and customize AI personas with advanced memory,
-                adaptive learning, and tailored personalities.
+                Build intelligent AI companions with persistent memory, evolving
+                personalities, and advanced learning capabilities.
               </p>
             </div>
           </div>
 
           {/* Features Banner */}
-          <div className='bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6'>
+          <div className='bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border border-primary-200 dark:border-primary-800 rounded-lg p-6'>
             <div className='grid grid-cols-1 md:grid-cols-3 gap-6 text-sm'>
               <div className='flex items-start gap-3'>
-                <div className='p-2 bg-blue-500 rounded-lg'>
-                  <Brain className='h-4 w-4 text-white' />
+                <div className='p-2 bg-primary-500 rounded-lg'>
+                  <Database className='h-4 w-4 text-white' />
                 </div>
                 <div>
-                  <h3 className='font-semibold text-blue-900 dark:text-blue-400 mb-1'>
+                  <h3 className='font-semibold text-primary-900 dark:text-primary-400 mb-1'>
                     Semantic Memory
                   </h3>
-                  <p className='text-blue-800 dark:text-blue-300 text-xs'>
-                    Personas remember and learn from past conversations with
-                    intelligent context retrieval
+                  <p className='text-primary-800 dark:text-primary-300 text-xs'>
+                    Advanced memory system that learns and recalls context
+                    across conversations with semantic understanding
                   </p>
                 </div>
               </div>
 
               <div className='flex items-start gap-3'>
-                <div className='p-2 bg-purple-500 rounded-lg'>
-                  <Brain className='h-4 w-4 text-white' />
+                <div className='p-2 bg-primary-600 rounded-lg'>
+                  <TrendingUp className='h-4 w-4 text-white' />
                 </div>
                 <div>
-                  <h3 className='font-semibold text-purple-900 dark:text-purple-400 mb-1'>
+                  <h3 className='font-semibold text-primary-900 dark:text-primary-400 mb-1'>
                     Adaptive Learning
                   </h3>
-                  <p className='text-purple-800 dark:text-purple-300 text-xs'>
-                    Behavior evolves based on user interactions and preferences
-                    over time
+                  <p className='text-primary-800 dark:text-primary-300 text-xs'>
+                    Dynamic personality evolution based on user interactions,
+                    preferences, and conversation patterns
                   </p>
                 </div>
               </div>
 
               <div className='flex items-start gap-3'>
-                <div className='p-2 bg-green-500 rounded-lg'>
-                  <Brain className='h-4 w-4 text-white' />
+                <div className='p-2 bg-primary-700 rounded-lg'>
+                  <Download className='h-4 w-4 text-white' />
                 </div>
                 <div>
-                  <h3 className='font-semibold text-green-900 dark:text-green-400 mb-1'>
+                  <h3 className='font-semibold text-primary-900 dark:text-primary-400 mb-1'>
                     DNA Export/Import
                   </h3>
-                  <p className='text-green-800 dark:text-green-300 text-xs'>
-                    Share complete persona packages including memories and
-                    learned behaviors
+                  <p className='text-primary-800 dark:text-primary-300 text-xs'>
+                    Export and share complete persona DNA including memories,
+                    learned behaviors, and personality traits
                   </p>
                 </div>
               </div>

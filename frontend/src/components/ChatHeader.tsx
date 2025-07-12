@@ -96,7 +96,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               className={cn(
                 'flex items-center gap-2 px-3 py-1 rounded-full text-sm',
                 hasAdvancedFeatures(persona)
-                  ? 'bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                  ? 'bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800'
                   : 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
               )}
             >

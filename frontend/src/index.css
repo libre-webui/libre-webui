@@ -237,3 +237,120 @@
   --tw-prose-th-borders: theme('colors.gray.600');
   --tw-prose-td-borders: theme('colors.gray.700');
 }
+
+/* Custom slider styles for dark theme */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: theme('colors.gray.200');
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.dark .slider::-webkit-slider-track {
+  background: theme('colors.gray.600');
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: theme('colors.primary.500');
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  border: 2px solid white;
+}
+
+.dark .slider::-webkit-slider-thumb {
+  border-color: theme('colors.dark.100');
+  background: theme('colors.primary.400');
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: theme('colors.primary.600');
+  transform: scale(1.1);
+}
+
+.dark .slider::-webkit-slider-thumb:hover {
+  background: theme('colors.primary.300');
+}
+
+/* Firefox */
+.slider::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  cursor: pointer;
+  background: theme('colors.gray.200');
+  border-radius: 4px;
+  border: none;
+}
+
+.dark .slider::-moz-range-track {
+  background: theme('colors.gray.600');
+}
+
+.slider::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: theme('colors.primary.500');
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 2px solid white;
+  transition: all 0.2s ease;
+}
+
+.dark .slider::-moz-range-thumb {
+  border-color: theme('colors.dark.100');
+  background: theme('colors.primary.400');
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.slider::-moz-range-thumb:hover {
+  background: theme('colors.primary.600');
+  transform: scale(1.1);
+}
+
+.dark .slider::-moz-range-thumb:hover {
+  background: theme('colors.primary.300');
+}
+
+/* Enhanced slider with progress indication */
+.slider {
+  position: relative;
+  background: theme('colors.gray.200');
+}
+
+.dark .slider {
+  background: theme('colors.gray.600');
+}
+
+/* Progress fill for slider */
+.slider::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: var(--progress, 50%);
+  background: theme('colors.primary.500');
+  border-radius: 4px;
+  transition: width 0.2s ease;
+  pointer-events: none;
+}
+
+.dark .slider::before {
+  background: theme('colors.primary.400');
+}
