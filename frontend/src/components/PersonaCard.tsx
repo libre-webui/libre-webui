@@ -224,15 +224,17 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                   Memory Status
                 </span>
               </div>
-              <span
-                className={`text-xs px-2 py-1 rounded-full ${
-                  memoryStatus.status === 'active'
-                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
-                    : 'bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-dark-600'
-                }`}
-              >
-                {memoryStatus.status}
-              </span>
+              {memoryStatus.status && (
+                <span
+                  className={`text-xs px-2 py-1 rounded-full ${
+                    memoryStatus.status === 'active'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'
+                      : 'bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-dark-600'
+                  }`}
+                >
+                  {memoryStatus.status}
+                </span>
+              )}
             </div>
             <div className='grid grid-cols-2 gap-3 text-xs'>
               <div>
@@ -261,14 +263,14 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-400'>
               Temp: {persona.parameters.temperature?.toFixed(1) || '0.7'}
             </span>
-            <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400'>
+            <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-400'>
               Top-P: {persona.parameters.top_p?.toFixed(1) || '0.9'}
             </span>
             <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-400'>
               Context: {persona.parameters.context_window || 4096}
             </span>
             {persona.memory_settings?.enabled && (
-              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400'>
+              <span className='inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-400'>
                 <Brain className='h-3 w-3 mr-1' />
                 Memory
               </span>
