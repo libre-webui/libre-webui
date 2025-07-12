@@ -693,11 +693,7 @@ export const pluginApi = {
     }
     const formData = new FormData();
     formData.append('plugin', file);
-    return api
-      .post('/plugins/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      .then(res => res.data);
+    return api.post('/plugins/upload', formData).then(res => res.data);
   },
 
   installPlugin: (
@@ -849,13 +845,7 @@ export const documentsApi = {
       formData.append('sessionId', sessionId);
     }
 
-    return api
-      .post('/documents/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      })
-      .then(res => res.data);
+    return api.post('/documents/upload', formData).then(res => res.data);
   },
 
   getDocuments: (
@@ -1412,11 +1402,7 @@ export const personaApi = {
 
     const formData = new FormData();
     formData.append('dnaFile', dnaFile);
-    return api
-      .post('/personas/import/dna', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      .then(res => res.data);
+    return api.post('/personas/import/dna', formData).then(res => res.data);
   },
 
   // Download persona (export and trigger download)

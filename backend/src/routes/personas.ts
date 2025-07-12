@@ -437,12 +437,8 @@ router.get(
         );
 
         memories = await memoryService.getMemories(id, userId, 1000, 0);
-        adaptationLog = (await mutationEngineService.getPersonaState(
-          id,
-          userId
-        ))
-          ? []
-          : []; // Placeholder
+        const state = await mutationEngineService.getPersonaState(id, userId);
+        adaptationLog = state?.mutation_log || [];
       } catch (_error) {
         // Services might not be available, continue with empty data
       }
