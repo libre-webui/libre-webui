@@ -1421,7 +1421,10 @@ export const personaApi = {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (_error) {
-      throw new Error('Failed to download persona');
+      console.error('Error while downloading persona:', _error);
+      throw new Error(
+        `Failed to download persona: ${_error instanceof Error ? _error.message : String(_error)}`
+      );
     }
   },
 };
