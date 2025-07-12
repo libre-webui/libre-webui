@@ -32,6 +32,9 @@ interface PersonaRow {
   parameters: string;
   avatar?: string;
   background?: string;
+  embedding_model?: string;
+  memory_settings?: string;
+  mutation_settings?: string;
   created_at: number;
   updated_at: number;
 }
@@ -45,7 +48,8 @@ export class PersonaModel {
   async getPersonas(userId: string = 'default'): Promise<Persona[]> {
     try {
       const stmt = this.db.prepare(`
-        SELECT id, user_id, name, description, model, parameters, avatar, background, created_at, updated_at
+        SELECT id, user_id, name, description, model, parameters, avatar, background, 
+               embedding_model, memory_settings, mutation_settings, created_at, updated_at
         FROM personas 
         WHERE user_id = ?
         ORDER BY updated_at DESC
@@ -56,6 +60,12 @@ export class PersonaModel {
       return rows.map(row => ({
         ...row,
         parameters: JSON.parse(row.parameters),
+        memory_settings: row.memory_settings
+          ? JSON.parse(row.memory_settings)
+          : undefined,
+        mutation_settings: row.mutation_settings
+          ? JSON.parse(row.mutation_settings)
+          : undefined,
       }));
     } catch (error) {
       console.error('Error fetching personas:', error);
@@ -72,7 +82,8 @@ export class PersonaModel {
   ): Promise<Persona | null> {
     try {
       const stmt = this.db.prepare(`
-        SELECT id, user_id, name, description, model, parameters, avatar, background, created_at, updated_at
+        SELECT id, user_id, name, description, model, parameters, avatar, background, 
+               embedding_model, memory_settings, mutation_settings, created_at, updated_at
         FROM personas 
         WHERE id = ? AND user_id = ?
       `);
@@ -86,6 +97,12 @@ export class PersonaModel {
       return {
         ...row,
         parameters: JSON.parse(row.parameters),
+        memory_settings: row.memory_settings
+          ? JSON.parse(row.memory_settings)
+          : undefined,
+        mutation_settings: row.mutation_settings
+          ? JSON.parse(row.mutation_settings)
+          : undefined,
       };
     } catch (error) {
       console.error('Error fetching persona:', error);
@@ -105,8 +122,9 @@ export class PersonaModel {
       const now = Date.now();
 
       const stmt = this.db.prepare(`
-        INSERT INTO personas (id, user_id, name, description, model, parameters, avatar, background, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO personas (id, user_id, name, description, model, parameters, avatar, background, 
+                              embedding_model, memory_settings, mutation_settings, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       stmt.run(
@@ -118,6 +136,9 @@ export class PersonaModel {
         JSON.stringify(data.parameters),
         data.avatar || null,
         data.background || null,
+        data.embedding_model || null,
+        data.memory_settings ? JSON.stringify(data.memory_settings) : null,
+        data.mutation_settings ? JSON.stringify(data.mutation_settings) : null,
         now,
         now
       );
@@ -182,6 +203,21 @@ export class PersonaModel {
         values.push(data.background);
       }
 
+      if (data.embedding_model !== undefined) {
+        updates.push('embedding_model = ?');
+        values.push(data.embedding_model);
+      }
+
+      if (data.memory_settings !== undefined) {
+        updates.push('memory_settings = ?');
+        values.push(JSON.stringify(data.memory_settings));
+      }
+
+      if (data.mutation_settings !== undefined) {
+        updates.push('mutation_settings = ?');
+        values.push(JSON.stringify(data.mutation_settings));
+      }
+
       if (updates.length === 0) {
         return existing;
       }
@@ -236,7 +272,8 @@ export class PersonaModel {
   ): Promise<Persona | null> {
     try {
       const stmt = this.db.prepare(`
-        SELECT id, user_id, name, description, model, parameters, avatar, background, created_at, updated_at
+        SELECT id, user_id, name, description, model, parameters, avatar, background, 
+               embedding_model, memory_settings, mutation_settings, created_at, updated_at
         FROM personas 
         WHERE name = ? AND user_id = ?
       `);
@@ -250,6 +287,12 @@ export class PersonaModel {
       return {
         ...row,
         parameters: JSON.parse(row.parameters),
+        memory_settings: row.memory_settings
+          ? JSON.parse(row.memory_settings)
+          : undefined,
+        mutation_settings: row.mutation_settings
+          ? JSON.parse(row.mutation_settings)
+          : undefined,
       };
     } catch (error) {
       console.error('Error fetching persona by name:', error);

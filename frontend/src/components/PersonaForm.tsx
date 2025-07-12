@@ -72,7 +72,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     },
     avatar: '',
     background: '',
-    embedding_model: 'nomic-embed-text',
+    embedding_model: '',
     memory_settings: {
       enabled: false,
       max_memories: 1000,
@@ -103,32 +103,50 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         const modelsResponse = await ollamaApi.getModels();
         if (modelsResponse.success) {
           setAvailableModels(modelsResponse.data || []);
-        }
 
-        // Load embedding models
-        setEmbeddingModels([
-          {
-            id: 'nomic-embed-text',
-            name: 'Nomic Embed Text',
-            description: 'Default, balanced performance',
-            provider: 'ollama',
-            dimensions: 768,
-          },
-          {
-            id: 'all-minilm',
-            name: 'All MiniLM',
-            description: 'Lightweight, fast processing',
-            provider: 'ollama',
-            dimensions: 384,
-          },
-          {
-            id: 'bge-large',
-            name: 'BGE Large',
-            description: 'High accuracy, larger memory footprint',
-            provider: 'ollama',
-            dimensions: 1024,
-          },
-        ]);
+          // Filter embedding models from available Ollama models
+          // Common embedding model patterns
+          const embeddingPatterns = [
+            'embed',
+            'nomic',
+            'bge',
+            'gte',
+            'multilingual',
+            'sentence',
+            'universal',
+            'minilm',
+          ];
+
+          const ollamaEmbeddingModels = (modelsResponse.data || [])
+            .filter(model =>
+              embeddingPatterns.some(pattern =>
+                model.name.toLowerCase().includes(pattern.toLowerCase())
+              )
+            )
+            .map(model => ({
+              id: model.name,
+              name: model.name,
+              description: `${model.details?.parameter_size || 'Unknown size'} - ${model.details?.family || 'Ollama model'}`,
+              provider: 'ollama' as const,
+              dimensions: 768, // Default dimensions, will be determined at runtime
+            }));
+
+          // Set embedding models from Ollama, with fallback to default options
+          if (ollamaEmbeddingModels.length > 0) {
+            setEmbeddingModels(ollamaEmbeddingModels);
+          } else {
+            // Fallback to hardcoded options if no embedding models found
+            setEmbeddingModels([
+              {
+                id: 'nomic-embed-text',
+                name: 'nomic-embed-text',
+                description: 'Default embedding model (install if needed)',
+                provider: 'ollama' as const,
+                dimensions: 768,
+              },
+            ]);
+          }
+        }
 
         // Load default parameters if creating new persona
         if (!persona) {
@@ -163,7 +181,8 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         parameters: persona.parameters,
         avatar: persona.avatar || '',
         background: persona.background || '',
-        embedding_model: persona.embedding_model || 'nomic-embed-text',
+        embedding_model:
+          persona.embedding_model || embeddingModels[0]?.id || '',
         memory_settings: persona.memory_settings || {
           enabled: false,
           max_memories: 1000,
@@ -177,7 +196,14 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         },
       });
     }
-  }, [persona]);
+  }, [persona, embeddingModels]);
+
+  // Set default embedding model when embedding models are loaded
+  useEffect(() => {
+    if (embeddingModels.length > 0 && !formData.embedding_model && !persona) {
+      updateFormData({ embedding_model: embeddingModels[0].id });
+    }
+  }, [embeddingModels, formData.embedding_model, persona]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -618,16 +644,36 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                       }
                       className='w-full px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
                     >
-                      {embeddingModels.map(model => (
-                        <option key={model.id} value={model.id}>
-                          {model.name} - {model.description}
+                      {embeddingModels.length === 0 ? (
+                        <option value='' disabled>
+                          No embedding models found - install one first
                         </option>
-                      ))}
+                      ) : (
+                        embeddingModels.map(model => (
+                          <option key={model.id} value={model.id}>
+                            {model.name} - {model.description}
+                          </option>
+                        ))
+                      )}
                     </select>
-                    <p className='text-xs text-primary-600 dark:text-primary-400 mt-1'>
-                      Choose the embedding model for memory encoding and
-                      semantic search
-                    </p>
+                    {embeddingModels.length === 0 ? (
+                      <div className='mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md'>
+                        <p className='text-sm text-yellow-800 dark:text-yellow-200'>
+                          <strong>No embedding models detected.</strong> To
+                          enable memory features, install an embedding model
+                          like:
+                        </p>
+                        <code className='block mt-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 p-1 rounded'>
+                          ollama pull nomic-embed-text
+                        </code>
+                      </div>
+                    ) : (
+                      <p className='text-xs text-primary-600 dark:text-primary-400 mt-1'>
+                        Choose from available Ollama embedding models for memory
+                        encoding and semantic search. Models are automatically
+                        detected from your Ollama installation.
+                      </p>
+                    )}
                   </div>
                 </div>
 
