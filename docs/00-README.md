@@ -23,7 +23,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 | **[🔐 Authentication](./12-AUTHENTICATION.md)** | User management and security | 10 min |
 | **[🎨 Artifacts Feature](./13-ARTIFACTS_FEATURE.md)** | Interactive content and code execution | 7 min |
 | **[🐳 Docker External Ollama](./15-DOCKER_EXTERNAL_OLLAMA.md)** | Run Docker with external Ollama instance | 10 min |
-| **[🎭 Persona Development Framework](./16-PERSONA_DEVELOPMENT_FRAMEWORK.md)** | Create custom AI personalities | 12 min |
+| **[🎭 Persona Development Framework](./16-PERSONA_DEVELOPMENT_FRAMEWORK.md)** | Advanced AI personalities with memory systems and dynamic embedding model selection | 15 min |
 
 ## 📋 Project Information
 
@@ -39,7 +39,8 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 
 **Key Benefits:**
 - 🔒 **Privacy-First** - Local processing by default
-- 📄 **Document Chat** - Upload and chat with your documents using semantic search
+- 📄 **Document Chat** - Upload and chat with your documents using semantic search with your choice of Ollama embedding models
+- 🎭 **Advanced Personas** - Create AI personalities with memory systems and adaptive learning using dynamic embedding model selection
 - 🔌 **Multiple AI Services** - Connect OpenAI, Anthropic, Groq, Gemini, Mistral, GitHub Models, and more through plugins (207+ models)
 - 🖼️ **Image Support** - Upload and analyze images with vision models
 - 🎨 **Clean Interface** - Modern, responsive design

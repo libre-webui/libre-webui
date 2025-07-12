@@ -1,4 +1,4 @@
-# Persona Development Framework: "Reveries Awakening"
+# Persona Development Framework
 
 *"These violent delights have violent ends... but what if they remembered?"*
 
@@ -14,10 +14,12 @@ The Persona Development Framework represents a paradigm shift in AI persona deve
 - **Memory Importance Scoring**: Automatic ranking of memories based on emotional significance
 - **Configurable Retention**: Set memory limits and cleanup policies per persona
 
-### 🔄 Embedding Model Selection  
-- **Multi-Model Support**: Choose from various embedding models for optimal memory encoding
-- **Model Compatibility**: Seamless integration with Ollama's embedding capabilities
-- **Performance Optimization**: Select models based on memory requirements and accuracy needs
+### 🔄 Dynamic Embedding Model Selection  
+- **Ollama Integration**: Automatically detects available embedding models from your Ollama installation
+- **Smart Filtering**: Identifies embedding-capable models using intelligent pattern matching
+- **User Choice**: Select from any installed embedding model including `nomic-embed-text`, `bge-*`, `gte-*`, and more
+- **Real-time Updates**: Available models refresh automatically when new embeddings are installed
+- **Fallback Guidance**: Helpful installation instructions when no embedding models are detected
 
 ### 🎯 Top-K Semantic Retrieval with Adaptive Engine
 - **Intelligent Memory Search**: Vector similarity-based retrieval of relevant memories
@@ -221,9 +223,11 @@ const importedPersona = await personaApi.importPersonaDNA(dnaFile);
 ## Configuration
 
 ### Embedding Models
-- `nomic-embed-text` - Default, balanced performance
-- `all-minilm` - Lightweight, fast processing
-- `bge-large` - High accuracy, larger memory footprint
+Choose from any embedding model available in your Ollama installation:
+- **Detected Models**: All embedding models are automatically discovered from Ollama
+- **Common Options**: `nomic-embed-text`, `bge-large`, `bge-small`, `gte-base`, `multilingual-e5`
+- **Auto-Installation Guide**: System provides `ollama pull` commands for missing models
+- **Performance Notes**: Larger models (like `bge-large`) offer higher accuracy but use more memory
 
 ### Memory Settings
 - `max_memories`: Maximum stored memories per user (default: 1000)
