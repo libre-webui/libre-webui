@@ -248,7 +248,7 @@ The app automatically generates configuration files on first run (these are excl
 - **Responsive design** - Works on desktop, tablet, and mobile devices
 - **Real-time chat** - Streaming responses with WebSocket integration
 - **Document chat** - Upload documents (PDF, TXT, DOCX) and chat with their content using semantic search
-- **Persona Development Framework** - Create custom AI personalities with unique behaviors and visual identities
+- **Persona Development Framework** - Create custom AI personalities with memory systems, adaptive learning, and dynamic embedding model selection from your Ollama installation
 - **Plugin system** - Connect external AI services (OpenAI, Anthropic, Groq, Gemini, Mistral, GitHub Models) - 207+ models across 6 providers
 - **Artifacts** - Interactive content rendering for HTML, SVG, code, and more
 - **Privacy-focused** - Local processing with optional external connections
@@ -360,6 +360,42 @@ Upload documents and have intelligent conversations with your files using advanc
 - **Education** - Upload textbooks and create interactive study sessions
 - **Business** - Analyze reports and extract actionable insights
 
+### 🎭 Persona Development Framework
+
+Create sophisticated AI personalities with advanced memory systems and adaptive learning capabilities:
+
+#### Dynamic Embedding Model Selection
+
+- ✅ **Ollama Integration** - Automatically detects all embedding models from your Ollama installation
+- ✅ **Smart Discovery** - Intelligent pattern matching identifies embedding-capable models
+- ✅ **Real-time Updates** - Available models refresh when you install new embeddings via `ollama pull`
+- ✅ **User Choice** - Select from any detected model: `nomic-embed-text`, `bge-large`, `gte-base`, and more
+- ✅ **Installation Guidance** - Helpful prompts with `ollama pull` commands when no models are found
+
+#### Advanced Memory Systems
+
+- 🧠 **Per-User Memory Isolation** - Each user gets dedicated memory context for personalized experiences
+- 🔍 **Semantic Memory Storage** - Conversations stored as vector embeddings for intelligent retrieval
+- 📊 **Memory Importance Scoring** - Automatic ranking based on emotional significance and relevance
+- ⚙️ **Configurable Retention** - Set memory limits, cleanup policies, and retention periods per persona
+
+#### Adaptive Learning Engine
+
+- 🎯 **Top-K Semantic Retrieval** - Vector similarity-based memory search with contextual ranking
+- 🔄 **Dynamic State Updates** - Real-time personality adjustments based on conversation patterns
+- 📈 **Sentiment Analysis** - Automatic detection of user preferences and emotional responses
+- 🧬 **Persona DNA Export/Import** - Complete persona packages with memories and learned behaviors
+
+#### Example Embedding Models
+
+```bash
+# Install popular embedding models
+ollama pull nomic-embed-text    # Default, balanced performance
+ollama pull bge-large          # High accuracy, larger memory footprint
+ollama pull gte-base           # Lightweight, fast processing
+ollama pull multilingual-e5    # Multi-language support
+```
+
 ### 🔌 Plugin System
 
 Connect to external AI services while maintaining local fallback:
@@ -450,23 +486,23 @@ libre-webui/
 
 **[📖 Complete Documentation →](./docs/00-README.md)**
 
-| Guide                                                                              | Description                              |
-| ---------------------------------------------------------------------------------- | ---------------------------------------- |
-| **[🚀 Quick Start](./docs/01-QUICK_START.md)**                                     | Get up and running in 5 minutes          |
-| **[🤖 Working with Models](./docs/02-WORKING_WITH_MODELS.md)**                     | Complete AI models guide                 |
-| **[🎯 Pro Tips](./docs/03-PRO_TIPS.md)**                                           | Advanced workflows and techniques        |
-| **[⌨️ Keyboard Shortcuts](./docs/04-KEYBOARD_SHORTCUTS.md)**                       | Productivity hotkeys                     |
-| **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)**                                         | Try without installation                 |
-| **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)**                             | Problem solving guide                    |
-| **[🔌 Plugin Architecture](./docs/08-PLUGIN_ARCHITECTURE.md)**                     | Connect multiple AI services             |
-| **[� RAG Feature](./docs/09-RAG_FEATURE.md)**                                      | Chat with your documents                 |
-| **[🗄️ SQLite Migration](./docs/10-SQLITE_MIGRATION.md)**                           | Upgrade from JSON to SQLite storage      |
-| **[🤖 Model Updater](./docs/11-MODEL_UPDATER.md)**                                 | Auto-update AI provider models           |
-| **[�🔐 Authentication](./docs/12-AUTHENTICATION.md)**                              | User management and security             |
-| **[🎨 Artifacts Feature](./docs/13-ARTIFACTS_FEATURE.md)**                         | Interactive content and code execution   |
-| **[⚙️ Artifacts Implementation](./docs/14-ARTIFACTS_IMPLEMENTATION.md)**           | Technical implementation details         |
-| **[🐳 Docker External Ollama](./docs/15-DOCKER_EXTERNAL_OLLAMA.md)**               | Run Docker with external Ollama instance |
-| **[🎭 Persona Development Framework](./docs/16-PERSONA_DEVELOPMENT_FRAMEWORK.md)** | Create custom AI personalities           |
+| Guide                                                                              | Description                                                                         |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| **[🚀 Quick Start](./docs/01-QUICK_START.md)**                                     | Get up and running in 5 minutes                                                     |
+| **[🤖 Working with Models](./docs/02-WORKING_WITH_MODELS.md)**                     | Complete AI models guide                                                            |
+| **[🎯 Pro Tips](./docs/03-PRO_TIPS.md)**                                           | Advanced workflows and techniques                                                   |
+| **[⌨️ Keyboard Shortcuts](./docs/04-KEYBOARD_SHORTCUTS.md)**                       | Productivity hotkeys                                                                |
+| **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)**                                         | Try without installation                                                            |
+| **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)**                             | Problem solving guide                                                               |
+| **[🔌 Plugin Architecture](./docs/08-PLUGIN_ARCHITECTURE.md)**                     | Connect multiple AI services                                                        |
+| **[� RAG Feature](./docs/09-RAG_FEATURE.md)**                                      | Chat with your documents                                                            |
+| **[🗄️ SQLite Migration](./docs/10-SQLITE_MIGRATION.md)**                           | Upgrade from JSON to SQLite storage                                                 |
+| **[🤖 Model Updater](./docs/11-MODEL_UPDATER.md)**                                 | Auto-update AI provider models                                                      |
+| **[�🔐 Authentication](./docs/12-AUTHENTICATION.md)**                              | User management and security                                                        |
+| **[🎨 Artifacts Feature](./docs/13-ARTIFACTS_FEATURE.md)**                         | Interactive content and code execution                                              |
+| **[⚙️ Artifacts Implementation](./docs/14-ARTIFACTS_IMPLEMENTATION.md)**           | Technical implementation details                                                    |
+| **[🐳 Docker External Ollama](./docs/15-DOCKER_EXTERNAL_OLLAMA.md)**               | Run Docker with external Ollama instance                                            |
+| **[🎭 Persona Development Framework](./docs/16-PERSONA_DEVELOPMENT_FRAMEWORK.md)** | Advanced AI personalities with memory systems and dynamic embedding model selection |
 
 ## Accessibility & Performance
 

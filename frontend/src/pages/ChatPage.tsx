@@ -21,6 +21,7 @@ import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { Logo } from '@/components/Logo';
 import { useChatStore } from '@/store/chatStore';
+import { useAppStore } from '@/store/appStore';
 import { useChat } from '@/hooks/useChat';
 import { Select } from '@/components/ui';
 
@@ -39,6 +40,7 @@ export const ChatPage: React.FC = () => {
     loadSessions,
     getCurrentPersona,
   } = useChatStore();
+  const { setBackgroundImage } = useAppStore();
   const { sendMessage, stopGeneration, isStreaming } = useChat(
     currentSession?.id || ''
   );
@@ -102,6 +104,18 @@ export const ChatPage: React.FC = () => {
     currentSession?.id,
     location.pathname,
   ]);
+
+  // Manage background image state based on current persona
+  useEffect(() => {
+    if (currentPersona?.background) {
+      // Set persona background - this will override general background settings
+      setBackgroundImage(currentPersona.background);
+    } else {
+      // Clear persona background when no persona or persona has no background
+      // This allows the general background settings to work independently
+      setBackgroundImage(null);
+    }
+  }, [currentPersona?.background, setBackgroundImage]);
 
   const handleCreateSession = async () => {
     if (selectedModel) {

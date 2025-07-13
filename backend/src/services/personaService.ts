@@ -25,16 +25,131 @@ import {
 
 export class PersonaService {
   /**
-   * Get all personas for a user
+   * Get all personas for a user with optional advanced features
    */
   async getPersonas(userId: string = 'default'): Promise<Persona[]> {
+    const basePersonas = await personaModel.getPersonas(userId);
+
+    // Check each persona for advanced features and merge them
+    const enhancedPersonas = await Promise.all(
+      basePersonas.map(async (persona): Promise<Persona> => {
+        // Check if this persona has advanced features stored
+        const advancedFeatures = await this.getAdvancedFeatures(
+          persona.id,
+          userId
+        );
+
+        return {
+          ...persona,
+          ...advancedFeatures,
+        };
+      })
+    );
+
+    return enhancedPersonas;
+  }
+
+  /**
+   * Get advanced features for a persona if they exist
+   */
+  private async getAdvancedFeatures(
+    personaId: string,
+    userId: string
+  ): Promise<{
+    embedding_model?: string;
+    memory_settings?: {
+      enabled: boolean;
+      max_memories: number;
+      auto_cleanup: boolean;
+      retention_days: number;
+    };
+    mutation_settings?: {
+      enabled: boolean;
+      sensitivity: 'low' | 'medium' | 'high';
+      auto_adapt: boolean;
+    };
+  }> {
+    try {
+      // For now, check if persona has memory entries to determine if it has advanced features
+      // In a real implementation, this would be stored in a separate table or persona metadata
+      const { getDatabase } = await import('../db.js');
+      const db = getDatabase();
+
+      const memoryCheck = db
+        .prepare(
+          `
+        SELECT COUNT(*) as count FROM persona_memories 
+        WHERE persona_id = ? AND user_id = ?
+      `
+        )
+        .get(personaId, userId) as { count: number };
+
+      const stateCheck = db
+        .prepare(
+          `
+        SELECT * FROM persona_states 
+        WHERE persona_id = ? AND user_id = ?
+      `
+        )
+        .get(personaId, userId) as Record<string, unknown> | undefined;
+
+      // If persona has memories or state, assume it has advanced features
+      if (memoryCheck.count > 0 || stateCheck) {
+        return {
+          embedding_model: 'nomic-embed-text',
+          memory_settings: {
+            enabled: true,
+            max_memories: 1000,
+            auto_cleanup: true,
+            retention_days: 90,
+          },
+          mutation_settings: {
+            enabled: true,
+            sensitivity: 'medium' as const,
+            auto_adapt: true,
+          },
+        };
+      }
+
+      return {};
+    } catch (_error) {
+      // If tables don't exist or error occurs, return empty
+      return {};
+    }
+  }
+
+  /**
+   * Get all personas for a user (original method)
+   */
+  async getBasicPersonas(userId: string = 'default'): Promise<Persona[]> {
     return await personaModel.getPersonas(userId);
   }
 
   /**
-   * Get a specific persona by ID
+   * Get a specific persona by ID with optional advanced features
    */
   async getPersonaById(
+    id: string,
+    userId: string = 'default'
+  ): Promise<Persona | null> {
+    const basePersona = await personaModel.getPersonaById(id, userId);
+    if (!basePersona) {
+      return null;
+    }
+
+    // Check for advanced features and merge them
+    const advancedFeatures = await this.getAdvancedFeatures(id, userId);
+
+    return {
+      ...basePersona,
+      ...advancedFeatures,
+    };
+  }
+
+  /**
+   * Get a specific persona by ID (basic version)
+   */
+  async getBasicPersonaById(
     id: string,
     userId: string = 'default'
   ): Promise<Persona | null> {
@@ -112,7 +227,59 @@ export class PersonaService {
       parameters,
     };
 
-    return await personaModel.createPersona(personaData, userId);
+    const createdPersona = await personaModel.createPersona(
+      personaData,
+      userId
+    );
+
+    // If advanced features are provided, initialize them
+    if (data.memory_settings?.enabled || data.mutation_settings?.enabled) {
+      await this.initializeAdvancedFeatures(createdPersona.id, userId, {
+        embedding_model: data.embedding_model,
+        memory_settings: data.memory_settings,
+        mutation_settings: data.mutation_settings,
+      });
+    }
+
+    // Return enhanced persona with advanced features if they were initialized
+    return (
+      (await this.getPersonaById(createdPersona.id, userId)) || createdPersona
+    );
+  }
+
+  /**
+   * Initialize advanced features for a persona
+   */
+  private async initializeAdvancedFeatures(
+    personaId: string,
+    userId: string,
+    features: {
+      embedding_model?: string;
+      memory_settings?: {
+        enabled: boolean;
+        max_memories: number;
+        auto_cleanup: boolean;
+        retention_days: number;
+      };
+      mutation_settings?: {
+        enabled: boolean;
+        sensitivity: 'low' | 'medium' | 'high';
+        auto_adapt: boolean;
+      };
+    }
+  ): Promise<void> {
+    try {
+      // Initialize mutation engine state if mutation settings are enabled
+      if (features.mutation_settings?.enabled) {
+        const { mutationEngineService } = await import(
+          './mutationEngineService.js'
+        );
+        await mutationEngineService.initializePersonaState(personaId, userId);
+      }
+    } catch (error) {
+      console.error('Failed to initialize advanced features:', error);
+      // Don't throw error - persona creation should still succeed
+    }
   }
 
   /**
@@ -238,6 +405,10 @@ export class PersonaService {
       background: persona.background,
       exportedAt: Date.now(),
       version: '1.0.0',
+      // Include advanced features in export
+      embedding_model: persona.embedding_model,
+      memory_settings: persona.memory_settings,
+      mutation_settings: persona.mutation_settings,
     };
   }
 
@@ -261,6 +432,10 @@ export class PersonaService {
       parameters: personaData.params,
       avatar: personaData.avatar,
       background: personaData.background,
+      // Include advanced features from import data
+      embedding_model: personaData.embedding_model,
+      memory_settings: personaData.memory_settings,
+      mutation_settings: personaData.mutation_settings,
     };
 
     // Check if persona with same name exists and add suffix if needed

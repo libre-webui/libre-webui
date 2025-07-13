@@ -25,6 +25,7 @@ import { StructuredOutput } from './StructuredOutput';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import { cn } from '@/utils';
+import packageJson from '../../../package.json';
 
 interface ChatInputProps {
   onSendMessage: (
@@ -190,7 +191,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             >
               Libre WebUI
             </a>{' '}
-            • Press Enter to send, Shift+Enter for new line
+            <span
+              className='text-xs text-gray-400 dark:text-gray-500'
+              style={{ fontSize: '0.55rem' }}
+            >
+              v{packageJson.version}
+            </span>{' '}
+            <span className='text-gray-300 dark:text-gray-600 opacity-50'>
+              •
+            </span>{' '}
+            <span
+              className='text-gray-400 dark:text-gray-500'
+              style={{ fontSize: '0.55rem' }}
+            >
+              LLM can make mistakes - verify important information
+            </span>
             {hasAdvancedFeatures && (
               <span className='ml-2 text-primary-600 dark:text-primary-400'>
                 •{' '}

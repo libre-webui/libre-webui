@@ -92,16 +92,41 @@ export const optionalAuth = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
+    console.log(
+      `[OPTIONAL-AUTH-DEBUG] ${req.method} ${req.path} - authHeader:`,
+      authHeader ? 'Present' : 'Missing'
+    );
+
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const payload = authService.verifyToken(token);
-      if (payload) {
-        req.user = payload;
+      console.log(`[OPTIONAL-AUTH-DEBUG] Token found, length: ${token.length}`);
+      console.log(
+        `[OPTIONAL-AUTH-DEBUG] Token preview:`,
+        token.length > 20 ? `${token.substring(0, 20)}...` : token
+      );
+
+      try {
+        const payload = authService.verifyToken(token);
+        if (payload) {
+          req.user = payload;
+          console.log(
+            `[OPTIONAL-AUTH-DEBUG] Auth successful for user: ${payload.userId}`
+          );
+        } else {
+          console.log(`[OPTIONAL-AUTH-DEBUG] Token verification returned null`);
+        }
+      } catch (error) {
+        console.log(
+          `[OPTIONAL-AUTH-DEBUG] Token verification failed:`,
+          (error as Error).message
+        );
       }
+    } else {
+      console.log(`[OPTIONAL-AUTH-DEBUG] No valid auth header found`);
     }
-    next();
   } catch (error) {
     console.error('Optional auth error:', error);
-    next();
   }
+
+  next();
 };

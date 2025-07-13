@@ -284,6 +284,36 @@ function runMigrations(): void {
         'CREATE INDEX IF NOT EXISTS idx_sessions_persona_id ON sessions(persona_id)'
       );
     }
+
+    // Check if we need to add embedding_model and advanced features columns to personas table
+    const personasTableInfo = db
+      .prepare('PRAGMA table_info(personas)')
+      .all() as Array<{
+      cid: number;
+      name: string;
+      type: string;
+      notnull: number;
+      dflt_value: unknown;
+      pk: number;
+    }>;
+
+    const existingPersonasColumns = personasTableInfo.map(col => col.name);
+
+    // Add missing columns to personas table
+    const newPersonasColumns = [
+      { name: 'embedding_model', type: 'TEXT' },
+      { name: 'memory_settings', type: 'TEXT' }, // JSON string
+      { name: 'mutation_settings', type: 'TEXT' }, // JSON string
+    ];
+
+    for (const column of newPersonasColumns) {
+      if (!existingPersonasColumns.includes(column.name)) {
+        console.log(`Adding column ${column.name} to personas table`);
+        db.exec(
+          `ALTER TABLE personas ADD COLUMN ${column.name} ${column.type}`
+        );
+      }
+    }
   } catch (error) {
     console.error('Error running migrations:', error);
   }

@@ -316,4 +316,161 @@ router.get(
   }
 );
 
+// === Advanced Features Endpoints ===
+
+/**
+ * Get memory status for a persona
+ */
+router.get(
+  '/:id/memory/status',
+  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId || 'default';
+
+      // Import memory service dynamically to avoid dependency issues
+      const { memoryService } = await import('../services/memoryService.js');
+      const status = await memoryService.getMemoryStatus(id, userId);
+
+      res.json({
+        success: true,
+        data: status,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get memory status'),
+      });
+    }
+  }
+);
+
+/**
+ * Wipe memories for a persona
+ */
+router.delete(
+  '/:id/memory',
+  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId || 'default';
+
+      const { memoryService } = await import('../services/memoryService.js');
+      const deletedCount = await memoryService.wipeMemories(userId, id);
+
+      res.json({
+        success: true,
+        data: { deleted_count: deletedCount },
+        message: `Deleted ${deletedCount} memories`,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to wipe memories'),
+      });
+    }
+  }
+);
+
+/**
+ * Backup persona
+ */
+router.get(
+  '/:id/backup',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId || 'default';
+
+      const persona = await personaService.getPersonaById(id, userId);
+      if (!persona) {
+        res.status(404).json({ success: false, error: 'Persona not found' });
+        return;
+      }
+
+      const backupData = {
+        persona,
+        backup_date: new Date().toISOString(),
+        user_id: userId,
+      };
+
+      const fileName = `${persona.name.replace(/[^a-zA-Z0-9]/g, '_')}_backup.json`;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${fileName}"`
+      );
+      res.send(JSON.stringify(backupData, null, 2));
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to backup persona'),
+      });
+    }
+  }
+);
+
+/**
+ * Export persona DNA
+ */
+router.get(
+  '/:id/export/dna',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId || 'default';
+
+      const persona = await personaService.getPersonaById(id, userId);
+      if (!persona) {
+        res.status(404).json({ success: false, error: 'Persona not found' });
+        return;
+      }
+
+      // Try to get memories and state if they exist
+      let memories: unknown[] = [];
+      let adaptationLog: unknown[] = [];
+
+      try {
+        const { memoryService } = await import('../services/memoryService.js');
+        const { mutationEngineService } = await import(
+          '../services/mutationEngineService.js'
+        );
+
+        memories = await memoryService.getMemories(id, userId, 1000, 0);
+        const state = await mutationEngineService.getPersonaState(id, userId);
+        adaptationLog = state?.mutation_log || [];
+      } catch (_error) {
+        // Services might not be available, continue with empty data
+      }
+
+      const dnaData = {
+        persona,
+        memories,
+        adaptation_log: adaptationLog,
+        export_metadata: {
+          exported_at: Date.now(),
+          user_id: userId,
+          version: '1.0.0',
+          checksum: Buffer.from(JSON.stringify(persona))
+            .toString('base64')
+            .slice(0, 16),
+        },
+      };
+
+      const fileName = `${persona.name.replace(/[^a-zA-Z0-9]/g, '_')}_DNA.json`;
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${fileName}"`
+      );
+      res.send(JSON.stringify(dnaData, null, 2));
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to export DNA'),
+      });
+    }
+  }
+);
+
 export default router;

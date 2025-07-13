@@ -95,6 +95,7 @@ const App: React.FC = () => {
     toggleSidebar,
     toggleTheme,
     backgroundImage,
+    preferences,
   } = useAppStore();
   const {
     systemInfo,
@@ -106,6 +107,18 @@ const App: React.FC = () => {
 
   // Initialize the app
   useInitializeApp();
+
+  // Check if any background is active (persona background or general background settings)
+  const hasActiveBackground = () => {
+    // Persona background takes priority
+    if (backgroundImage) {
+      return true;
+    }
+
+    // Check general background settings
+    const backgroundSettings = preferences.backgroundSettings;
+    return backgroundSettings?.enabled && backgroundSettings?.imageUrl;
+  };
 
   // Debug logging - this will help us understand what's happening
   React.useEffect(() => {
@@ -229,7 +242,7 @@ const App: React.FC = () => {
           <div
             className={cn(
               'flex h-screen text-gray-900 dark:text-dark-800 relative',
-              backgroundImage
+              hasActiveBackground()
                 ? 'bg-white/40 dark:bg-dark-50/40'
                 : 'bg-white dark:bg-dark-50'
             )}
@@ -245,7 +258,7 @@ const App: React.FC = () => {
                 'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
                 'w-full',
                 sidebarOpen ? 'lg:ml-80' : 'lg:ml-0',
-                backgroundImage
+                hasActiveBackground()
                   ? 'bg-white/30 dark:bg-dark-50/30'
                   : 'bg-white dark:bg-dark-50'
               )}
@@ -257,7 +270,7 @@ const App: React.FC = () => {
               <main
                 className={cn(
                   'flex-1 overflow-hidden',
-                  backgroundImage
+                  hasActiveBackground()
                     ? 'bg-white/20 dark:bg-dark-50/20 backdrop-blur-sm'
                     : 'bg-gray-50 dark:bg-dark-100'
                 )}
@@ -288,7 +301,7 @@ const App: React.FC = () => {
                   <div
                     className={cn(
                       'flex h-screen text-gray-900 dark:text-dark-800 relative',
-                      backgroundImage
+                      hasActiveBackground()
                         ? 'bg-white/40 dark:bg-dark-50/40'
                         : 'bg-white dark:bg-dark-50'
                     )}
@@ -304,7 +317,7 @@ const App: React.FC = () => {
                         'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
                         'w-full',
                         sidebarOpen ? 'lg:ml-80' : 'lg:ml-0',
-                        backgroundImage
+                        hasActiveBackground()
                           ? 'bg-white/30 dark:bg-dark-50/30'
                           : 'bg-white dark:bg-dark-50'
                       )}
@@ -316,7 +329,7 @@ const App: React.FC = () => {
                       <main
                         className={cn(
                           'flex-1 overflow-hidden',
-                          backgroundImage
+                          hasActiveBackground()
                             ? 'bg-white/20 dark:bg-dark-50/20 backdrop-blur-sm'
                             : 'bg-gray-50 dark:bg-dark-100'
                         )}

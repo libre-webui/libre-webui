@@ -16,7 +16,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { User, Users } from 'lucide-react';
+import { User, Users, Brain, Sparkles } from 'lucide-react';
 import { Select } from '@/components/ui';
 import { personaApi } from '@/utils/api';
 import { Persona } from '@/types';
@@ -58,11 +58,21 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
 
   const selectedPersona = personas.find(p => p.id === selectedPersonaId);
 
+  // Check if a persona has advanced features
+  const hasAdvancedFeatures = (persona: Persona): boolean => {
+    // Check for advanced fields or legacy features in parameters
+    return !!(
+      persona.embedding_model ||
+      persona.memory_settings ||
+      (persona.parameters as Record<string, unknown>)?.legacy_features
+    );
+  };
+
   const options = [
     { value: '', label: 'No Persona' },
     ...personas.map(persona => ({
       value: persona.id,
-      label: persona.name,
+      label: `${persona.name}${hasAdvancedFeatures(persona) ? ' ✨' : ''}`,
     })),
   ];
 
@@ -80,6 +90,15 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
             ) : (
               <User className='h-4 w-4' />
             )}
+            {hasAdvancedFeatures(selectedPersona) && (
+              <div
+                className='flex items-center gap-1'
+                title='Advanced Persona with Memory & Adaptive Learning'
+              >
+                <Brain className='h-3 w-3 text-primary-600' />
+                <Sparkles className='h-3 w-3 text-primary-500' />
+              </div>
+            )}
           </div>
         ) : (
           <Users className='h-4 w-4' />
@@ -95,8 +114,15 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
       />
 
       {selectedPersona && (
-        <div className='text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs'>
-          {selectedPersona.description}
+        <div className='flex items-center gap-2'>
+          <div className='text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs'>
+            {selectedPersona.description}
+          </div>
+          {hasAdvancedFeatures(selectedPersona) && (
+            <div className='text-xs bg-gradient-to-r from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-800/30 text-primary-700 dark:text-primary-400 px-2 py-1 rounded-full border border-primary-200 dark:border-primary-800'>
+              Advanced ✨
+            </div>
+          )}
         </div>
       )}
     </div>
