@@ -22,7 +22,16 @@ import { GenerationStats } from '@/components/GenerationStats';
 import { ArtifactContainer } from '@/components/ArtifactContainer';
 import { formatTimestamp, cn } from '@/utils';
 import { parseArtifacts } from '@/utils/artifactParser';
-import { User, Bot, Settings, Edit3, Save, X } from 'lucide-react';
+import {
+  User,
+  Bot,
+  Settings,
+  Edit3,
+  Save,
+  X,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
@@ -48,6 +57,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [editedContent, setEditedContent] = useState(message.content);
   const [isSaving, setIsSaving] = useState(false);
   const [parsedContent, setParsedContent] = useState(message.content);
+  const [isSystemMessageExpanded, setIsSystemMessageExpanded] = useState(false);
   const [artifacts, setArtifacts] = useState(message.artifacts || []);
 
   // Parse artifacts from message content on mount or when content changes
@@ -120,33 +130,42 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     setEditedContent(message.content);
   };
 
+  // Helper function to truncate system message for display
+  const truncateSystemMessage = (content: string, maxLength: number = 100) => {
+    if (content.length <= maxLength) return content;
+    return content.substring(0, maxLength) + '...';
+  };
+
+  // Determine if system message should show expand/collapse button
+  const shouldShowExpandButton = isSystem && message.content.length > 100;
+
   return (
     <div
       className={cn(
-        'flex gap-4 p-6 transition-colors group',
+        'flex gap-4 transition-colors group',
         isUser
-          ? 'bg-transparent'
+          ? 'bg-transparent p-6'
           : isSystem
-            ? 'bg-gray-25 dark:bg-dark-25 border-l-4 border-primary-500 dark:border-primary-400'
-            : 'bg-gray-25 dark:bg-dark-100/50',
+            ? 'bg-transparent p-2 py-3'
+            : 'bg-gray-25 dark:bg-dark-100/50 p-6',
         className
       )}
     >
       {/* Avatar */}
       <div
         className={cn(
-          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm overflow-hidden',
+          'flex shrink-0 items-center justify-center rounded-full shadow-sm overflow-hidden',
           isUser
-            ? 'bg-primary-600 text-white'
+            ? 'h-8 w-8 bg-primary-600 text-white'
             : isSystem
-              ? 'bg-primary-600 dark:bg-primary-500 text-white'
-              : 'bg-gray-700 text-white dark:bg-dark-600'
+              ? 'h-5 w-5 bg-gray-400 dark:bg-gray-500 text-white'
+              : 'h-8 w-8 bg-gray-700 text-white dark:bg-dark-600'
         )}
       >
         {isUser ? (
           <User className='h-4 w-4' />
         ) : isSystem ? (
-          <Settings className='h-4 w-4' />
+          <Settings className='h-2.5 w-2.5' />
         ) : currentPersona?.avatar ? (
           <img
             src={currentPersona.avatar}
@@ -206,11 +225,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               {message.content}
             </p>
           ) : isSystem ? (
-            <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-              <div className='text-xs uppercase tracking-wide font-semibold mb-2 text-gray-700 dark:text-gray-300 flex items-center justify-between'>
-                <div className='flex items-center gap-1.5'>
-                  <Settings className='h-3 w-3' />
-                  System Message
+            <div className='bg-gray-50/30 dark:bg-dark-50/30 rounded-md p-2 border border-gray-100/50 dark:border-dark-200/50'>
+              <div className='text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 flex items-center justify-between'>
+                <div className='flex items-center gap-1'>
+                  <Settings className='h-2.5 w-2.5 opacity-50' />
+                  System
                 </div>
                 <div className='flex items-center gap-1'>
                   {isEditing ? (
@@ -252,9 +271,33 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   disabled={isSaving}
                 />
               ) : (
-                <p className='whitespace-pre-wrap leading-relaxed text-sm text-gray-900 dark:text-gray-100'>
-                  {message.content}
-                </p>
+                <div>
+                  <p className='whitespace-pre-wrap leading-relaxed text-xs text-gray-500 dark:text-gray-400'>
+                    {isSystemMessageExpanded
+                      ? message.content
+                      : truncateSystemMessage(message.content)}
+                  </p>
+                  {shouldShowExpandButton && (
+                    <button
+                      onClick={() =>
+                        setIsSystemMessageExpanded(!isSystemMessageExpanded)
+                      }
+                      className='mt-1 flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+                    >
+                      {isSystemMessageExpanded ? (
+                        <>
+                          <ChevronUp className='h-3 w-3' />
+                          Show less
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className='h-3 w-3' />
+                          Show more
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           ) : (
