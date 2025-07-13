@@ -24,6 +24,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 | **[🎨 Artifacts Feature](./13-ARTIFACTS_FEATURE.md)** | Interactive content and code execution | 7 min |
 | **[🐳 Docker External Ollama](./15-DOCKER_EXTERNAL_OLLAMA.md)** | Run Docker with external Ollama instance | 10 min |
 | **[🎭 Persona Development Framework](./16-PERSONA_DEVELOPMENT_FRAMEWORK.md)** | Advanced AI personalities with memory systems and dynamic embedding model selection | 15 min |
+| **[🔌 MCP Integration](./17-MCP_INTEGRATION.md)** | Connect AI models to tools and resources via Model Context Protocol | 12 min |
 
 ## 📋 Project Information
 
@@ -42,7 +43,8 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 - 📄 **Document Chat** - Upload and chat with your documents using semantic search with your choice of Ollama embedding models
 - 🎭 **Advanced Personas** - Create AI personalities with memory systems and adaptive learning using dynamic embedding model selection
 - 🔌 **Multiple AI Services** - Connect OpenAI, Anthropic, Groq, Gemini, Mistral, GitHub Models, and more through plugins (207+ models)
-- 🖼️ **Image Support** - Upload and analyze images with vision models
+- � **MCP Integration** - Connect your AI to external tools and data sources through the Model Context Protocol
+- �🖼️ **Image Support** - Upload and analyze images with vision models
 - 🎨 **Clean Interface** - Modern, responsive design
 - ⚡ **Fast & Reliable** - Optimized performance with automatic fallbacks
 - 🔐 **Secure Setup** - Beautiful first-time setup experience with user management
@@ -53,6 +55,7 @@ Welcome to Libre WebUI! Your complete guide to local AI chat.
 - **Setup issues?** → [Quick Start](./01-QUICK_START.md)
 - **Model questions?** → [Working with Models](./02-WORKING_WITH_MODELS.md)
 - **Plugin setup?** → [Plugin Architecture](./08-PLUGIN_ARCHITECTURE.md)
+- **MCP integration?** → [MCP Integration](./17-MCP_INTEGRATION.md)
 - **Authentication setup?** → [Authentication](./12-AUTHENTICATION.md)
 - **Technical problems?** → [Troubleshooting](./06-TROUBLESHOOTING.md)
 

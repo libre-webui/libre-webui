@@ -250,6 +250,7 @@ The app automatically generates configuration files on first run (these are excl
 - **Document chat** - Upload documents (PDF, TXT, DOCX) and chat with their content using semantic search
 - **Persona Development Framework** - Create custom AI personalities with memory systems, adaptive learning, and dynamic embedding model selection from your Ollama installation
 - **Plugin system** - Connect external AI services (OpenAI, Anthropic, Groq, Gemini, Mistral, GitHub Models) - 207+ models across 6 providers
+- **MCP Integration** - Connect AI models to external tools and data sources through the Model Context Protocol
 - **Artifacts** - Interactive content rendering for HTML, SVG, code, and more
 - **Privacy-focused** - Local processing with optional external connections
 - **Zero telemetry** - No tracking or data collection
@@ -437,6 +438,61 @@ curl -X POST http://localhost:3001/api/plugins/activate/openai
 
 **[📖 Complete Plugin Guide →](./docs/08-PLUGIN_ARCHITECTURE.md)**
 
+### 🔌 MCP Integration - Model Context Protocol
+
+Connect your AI models to powerful external tools and data sources through the open Model Context Protocol standard:
+
+#### What is MCP?
+
+The **Model Context Protocol** enables LLMs to securely interact with:
+
+- **File Systems** - Read, write, and manage local files and directories
+- **Databases** - Query SQL databases, NoSQL stores, and data warehouses
+- **APIs** - Connect to REST APIs, web services, and cloud platforms
+- **Development Tools** - Git repositories, build systems, testing frameworks
+- **Custom Tools** - Any application that implements the MCP standard
+
+#### Supported Connection Types
+
+- ✅ **stdio** - Local command-line tools and applications (recommended)
+- ✅ **SSE** - Server-Sent Events for web-based MCP servers
+- ✅ **WebSocket** - Real-time bidirectional communication
+
+#### Popular MCP Servers
+
+```bash
+# File System Access
+npx @modelcontextprotocol/server-filesystem /path/to/directory
+
+# Git Repository Management
+npx @modelcontextprotocol/server-git --repository /path/to/repo
+
+# SQLite Database Access
+npx @modelcontextprotocol/server-sqlite --db-path /path/to/database.db
+
+# Web Search (with API key)
+npx @modelcontextprotocol/server-brave-search
+```
+
+#### Key Features
+
+- 🔧 **Tool Execution** - Dynamic form generation for tool parameters
+- 📄 **Resource Access** - Browse and read files, data, and content
+- 🔒 **Secure Connections** - Sandboxed execution with permission controls
+- 🔄 **Auto-Reconnect** - Automatic connection management and retry logic
+- 📊 **Real-time Status** - Connection monitoring and health indicators
+- 🎯 **Debug Mode** - Detailed logging for troubleshooting
+
+#### Quick MCP Setup
+
+1. **Navigate to Settings** → **MCP Management**
+2. **Add MCP Server** with your configuration
+3. **Connect** to establish the connection
+4. **Browse Tools** and **Resources** available
+5. **Execute Tools** through the dynamic interface
+
+**[📖 Complete MCP Guide →](./docs/17-MCP_INTEGRATION.md)**
+
 ### 🎯 UI Components
 
 - **Model Manager** - Comprehensive model management interface
@@ -495,10 +551,11 @@ libre-webui/
 | **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)**                                         | Try without installation                                                            |
 | **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)**                             | Problem solving guide                                                               |
 | **[🔌 Plugin Architecture](./docs/08-PLUGIN_ARCHITECTURE.md)**                     | Connect multiple AI services                                                        |
-| **[� RAG Feature](./docs/09-RAG_FEATURE.md)**                                      | Chat with your documents                                                            |
+| **[🔌 MCP Integration](./docs/17-MCP_INTEGRATION.md)**                             | Connect AI models to tools and data sources via Model Context Protocol              |
+| **[📄 RAG Feature](./docs/09-RAG_FEATURE.md)**                                     | Chat with your documents                                                            |
 | **[🗄️ SQLite Migration](./docs/10-SQLITE_MIGRATION.md)**                           | Upgrade from JSON to SQLite storage                                                 |
 | **[🤖 Model Updater](./docs/11-MODEL_UPDATER.md)**                                 | Auto-update AI provider models                                                      |
-| **[�🔐 Authentication](./docs/12-AUTHENTICATION.md)**                              | User management and security                                                        |
+| **[🔐 Authentication](./docs/12-AUTHENTICATION.md)**                               | User management and security                                                        |
 | **[🎨 Artifacts Feature](./docs/13-ARTIFACTS_FEATURE.md)**                         | Interactive content and code execution                                              |
 | **[⚙️ Artifacts Implementation](./docs/14-ARTIFACTS_IMPLEMENTATION.md)**           | Technical implementation details                                                    |
 | **[🐳 Docker External Ollama](./docs/15-DOCKER_EXTERNAL_OLLAMA.md)**               | Run Docker with external Ollama instance                                            |
@@ -546,22 +603,6 @@ const plugins = await pluginApi.getAllPlugins();
 await pluginApi.activatePlugin('openai');
 const activePlugin = await pluginApi.getActivePlugin();
 ```
-
-## 📋 Release Notes
-
-**Current Version: v0.1.0** - [View Changelog](./CHANGELOG.md)
-
-This is the first official release of Libre WebUI! 🎉
-
-**Highlights:**
-
-- Complete authentication & user management system
-- SQLite database migration for better performance
-- Interactive artifacts feature for code execution
-- Plugin architecture for external AI services
-- Modern UI with dark/light theme support
-
-**[📋 Full Changelog →](./CHANGELOG.md)**
 
 ## License
 
