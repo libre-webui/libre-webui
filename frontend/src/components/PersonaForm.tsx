@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { personaApi, ollamaApi } from '@/utils/api';
 import {
@@ -28,6 +28,8 @@ import {
 } from '@/types';
 import { Brain, Database, Info, User, Sliders } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { AvatarUpload } from '@/components/AvatarUpload';
+import { PersonaBackgroundUpload } from '@/components/PersonaBackgroundUpload';
 
 interface PersonaFormProps {
   persona: Persona | null;
@@ -90,10 +92,24 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   const [embeddingModels, setEmbeddingModels] = useState<EmbeddingModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [saveAndClose, setSaveAndClose] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<
     'basic' | 'parameters' | 'advanced'
   >('basic');
   const hasLoadedRef = useRef(false);
+
+  // Update form data with the ability to clear last saved status
+  const updateFormData = useCallback(
+    (updates: Partial<ExtendedFormData>) => {
+      setFormData(prev => ({ ...prev, ...updates }));
+      // Clear last saved indicator when making changes
+      if (lastSaved) {
+        setLastSaved(null);
+      }
+    },
+    [lastSaved]
+  );
 
   // Load available models and populate form if editing
   useEffect(() => {
@@ -269,7 +285,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     if (embeddingModels.length > 0 && !formData.embedding_model && !persona) {
       updateFormData({ embedding_model: embeddingModels[0].id });
     }
-  }, [embeddingModels, formData.embedding_model, persona]);
+  }, [embeddingModels, formData.embedding_model, persona, updateFormData]);
 
   // Set default embedding model for existing persona if it doesn't have one
   useEffect(() => {
@@ -281,7 +297,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     ) {
       updateFormData({ embedding_model: embeddingModels[0].id });
     }
-  }, [persona, embeddingModels, formData.embedding_model]);
+  }, [persona, embeddingModels, formData.embedding_model, updateFormData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -305,7 +321,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         const response = await personaApi.updatePersona(persona.id, updateData);
         if (response.success) {
           toast.success('Persona updated successfully');
-          onSubmit();
+          setLastSaved(new Date());
+          // Only call onSubmit (which closes the form) if saveAndClose is true
+          if (saveAndClose) {
+            onSubmit();
+          }
         } else {
           toast.error('Failed to update persona: ' + response.error);
         }
@@ -314,7 +334,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         const response = await personaApi.createPersona(formData);
         if (response.success) {
           toast.success('Persona created successfully');
-          onSubmit();
+          setLastSaved(new Date());
+          // Only call onSubmit (which closes the form) if saveAndClose is true
+          if (saveAndClose) {
+            onSubmit();
+          }
         } else {
           toast.error('Failed to create persona: ' + response.error);
         }
@@ -325,7 +349,18 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
       toast.error('Failed to save persona: ' + errorMessage);
     } finally {
       setSubmitting(false);
+      setSaveAndClose(false); // Reset the flag
     }
+  };
+
+  const handleSaveAndContinue = (e: React.FormEvent) => {
+    setSaveAndClose(false);
+    handleSubmit(e);
+  };
+
+  const handleSaveAndClose = (e: React.FormEvent) => {
+    setSaveAndClose(true);
+    handleSubmit(e);
   };
 
   const handleParameterChange = (
@@ -339,10 +374,6 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         [key]: value,
       },
     }));
-  };
-
-  const updateFormData = (updates: Partial<ExtendedFormData>) => {
-    setFormData(prev => ({ ...prev, ...updates }));
   };
 
   const updateMemorySettings = (
@@ -392,14 +423,22 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-800'>
           {persona ? 'Edit Persona' : 'Create New Persona'}
         </h1>
-        <p className='text-gray-600 dark:text-dark-600 mt-1'>
-          {persona
-            ? 'Customize your AI persona with advanced memory, adaptive learning, and intelligent parameters'
-            : 'Create a new AI persona with custom personality, memory systems, and adaptive learning capabilities'}
-        </p>
+        <div className='flex items-center gap-4 mt-1'>
+          <p className='text-gray-600 dark:text-dark-600'>
+            {persona
+              ? 'Customize your AI persona with advanced memory, adaptive learning, and intelligent parameters'
+              : 'Create a new AI persona with custom personality, memory systems, and adaptive learning capabilities'}
+          </p>
+          {lastSaved && (
+            <div className='flex items-center gap-2 text-sm text-green-600 dark:text-green-400'>
+              <div className='w-2 h-2 bg-green-500 rounded-full'></div>
+              Saved {lastSaved.toLocaleTimeString()}
+            </div>
+          )}
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className='space-y-6'>
+      <form onSubmit={e => e.preventDefault()} className='space-y-6'>
         {/* Tab Navigation */}
         <div className='bg-white dark:bg-dark-100 rounded-lg shadow-sm border border-gray-200 dark:border-dark-300'>
           <div className='flex border-b border-gray-200 dark:border-dark-300'>
@@ -476,35 +515,19 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                   />
                 </div>
 
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Avatar URL
-                    </label>
-                    <input
-                      type='url'
-                      value={formData.avatar}
-                      onChange={e => updateFormData({ avatar: e.target.value })}
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
-                      placeholder='https://example.com/avatar.jpg'
-                    />
-                  </div>
+                {/* Avatar Upload */}
+                <AvatarUpload
+                  value={formData.avatar || ''}
+                  onChange={avatarUrl => updateFormData({ avatar: avatarUrl })}
+                />
 
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Background URL
-                    </label>
-                    <input
-                      type='url'
-                      value={formData.background}
-                      onChange={e =>
-                        updateFormData({ background: e.target.value })
-                      }
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
-                      placeholder='https://example.com/background.jpg'
-                    />
-                  </div>
-                </div>
+                {/* Background Upload */}
+                <PersonaBackgroundUpload
+                  value={formData.background || ''}
+                  onChange={backgroundUrl =>
+                    updateFormData({ background: backgroundUrl })
+                  }
+                />
 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
@@ -960,7 +983,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         </div>
 
         {/* Form Actions */}
-        <div className='flex justify-end gap-4'>
+        <div className='flex justify-between gap-4'>
           <Button
             type='button'
             variant='outline'
@@ -969,13 +992,32 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
           >
             Cancel
           </Button>
-          <Button type='submit' disabled={submitting}>
-            {submitting
-              ? 'Saving...'
-              : persona
-                ? 'Update Persona'
-                : 'Create Persona'}
-          </Button>
+
+          <div className='flex gap-3'>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={handleSaveAndContinue}
+              disabled={submitting}
+            >
+              {submitting && !saveAndClose
+                ? 'Saving...'
+                : persona
+                  ? 'Save & Continue Editing'
+                  : 'Save & Continue Editing'}
+            </Button>
+            <Button
+              type='button'
+              onClick={handleSaveAndClose}
+              disabled={submitting}
+            >
+              {submitting && saveAndClose
+                ? 'Saving...'
+                : persona
+                  ? 'Save & Close'
+                  : 'Create & Close'}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
