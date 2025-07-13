@@ -48,6 +48,11 @@ class McpService {
       throw new Error(errorData.error || `HTTP ${response.status}`);
     }
 
+    // Handle responses with no body (204 No Content, etc.)
+    if (response.status === 204 || !response.headers.get('Content-Length')) {
+      return null;
+    }
+
     return response.json();
   }
 

@@ -259,7 +259,6 @@ const McpToolsBrowser: React.FC<McpToolsBrowserProps> = ({ onToolCall }) => {
                 type?: string;
                 text?: string;
                 data?: string;
-                resource?: { uri?: string; text?: string };
               },
               index: number
             ) => (
@@ -276,12 +275,7 @@ const McpToolsBrowser: React.FC<McpToolsBrowserProps> = ({ onToolCall }) => {
                 )}
                 {item.type === 'resource' && (
                   <div className='p-2 bg-blue-50 dark:bg-blue-900/20 rounded'>
-                    <strong>Resource:</strong> {item.resource?.uri}
-                    {item.resource?.text && (
-                      <pre className='mt-2 whitespace-pre-wrap'>
-                        {item.resource.text}
-                      </pre>
-                    )}
+                    <strong>Resource:</strong> {item.data}
                   </div>
                 )}
               </div>
