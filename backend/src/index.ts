@@ -42,8 +42,11 @@ import authRoutes from './routes/auth.js';
 import { optionalAuth } from './middleware/auth.js';
 import usersRoutes from './routes/users.js';
 import personaRoutes from './routes/personas.js';
+import { createMcpRoutes } from './routes/mcp.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
+import { mcpService } from './services/mcpService.js';
+import { mcpStorageService } from './services/mcpStorageService.js';
 import pluginService from './services/pluginService.js';
 import preferencesService from './services/preferencesService.js';
 import documentService from './services/documentService.js';
@@ -219,6 +222,7 @@ app.use('/api/preferences', preferencesRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/personas', optionalAuth, personaRoutes);
+app.use('/api/mcp', optionalAuth, createMcpRoutes());
 
 // API-only backend - no static file serving
 
@@ -708,6 +712,38 @@ wss.on('connection', (ws, req) => {
   );
 });
 
+// Initialize MCP connections
+async function initializeMcpConnections() {
+  try {
+    console.log('🔌 Initializing MCP connections...');
+    const enabledServers = await mcpStorageService.getEnabledServers();
+
+    if (enabledServers.length === 0) {
+      console.log('📭 No MCP servers configured');
+      return;
+    }
+
+    console.log(`🔗 Found ${enabledServers.length} enabled MCP server(s)`);
+
+    const connectionPromises = enabledServers.map(async server => {
+      try {
+        await mcpService.connectToServer(server);
+        console.log(`✅ Connected to MCP server: ${server.name}`);
+      } catch (error) {
+        console.warn(
+          `⚠️  Failed to connect to MCP server ${server.name}:`,
+          error
+        );
+      }
+    });
+
+    await Promise.allSettled(connectionPromises);
+    console.log('🔌 MCP initialization complete');
+  } catch (error) {
+    console.error('❌ Error initializing MCP connections:', error);
+  }
+}
+
 // Start server
 server.listen({ port, host: '0.0.0.0' }, () => {
   console.log(`🚀 Libre WebUI Backend running on port ${port}`);
@@ -724,18 +760,23 @@ server.listen({ port, host: '0.0.0.0' }, () => {
       );
     }
   });
+
+  // Initialize MCP connections
+  initializeMcpConnections();
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM signal received: closing HTTP server');
+  await mcpService.disconnectAll();
   server.close(() => {
     console.log('HTTP server closed');
   });
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT signal received: closing HTTP server');
+  await mcpService.disconnectAll();
   server.close(() => {
     console.log('HTTP server closed');
   });

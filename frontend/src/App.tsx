@@ -54,6 +54,7 @@ const UserManagementPage = React.lazy(
   () => import('@/pages/UserManagementPage')
 );
 const ArtifactDemoPage = React.lazy(() => import('@/pages/ArtifactDemoPage'));
+const McpManagementPage = React.lazy(() => import('@/pages/McpManagementPage'));
 
 // Import LoginPage directly (not lazy) to avoid suspense issues during auth redirects
 import { LoginPage } from '@/pages/LoginPage';
@@ -351,6 +352,10 @@ const App: React.FC = () => {
                               <Route
                                 path='/artifacts'
                                 element={<ArtifactDemoPage />}
+                              />
+                              <Route
+                                path='/mcp'
+                                element={<McpManagementPage />}
                               />
                               <Route
                                 path='/users'

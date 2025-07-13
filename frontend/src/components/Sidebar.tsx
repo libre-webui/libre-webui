@@ -28,6 +28,7 @@ import {
   Database,
   Users,
   User,
+  Plug,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { Logo } from '@/components/Logo';
@@ -289,6 +290,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <User className='h-4 w-4' />
                 Personas
+              </Link>
+
+              <Link
+                to='/mcp'
+                onClick={() => window.innerWidth < 768 && onClose()}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  location.pathname === '/mcp'
+                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
+                )}
+              >
+                <Plug className='h-4 w-4' />
+                MCP
               </Link>
 
               {/* User Management - only show for admins when auth is required */}
