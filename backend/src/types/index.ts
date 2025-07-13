@@ -499,6 +499,19 @@ export interface PersonaExport {
   background?: string;
   exportedAt: number;
   version: string;
+  // Advanced features (include in export/import)
+  embedding_model?: string;
+  memory_settings?: {
+    enabled: boolean;
+    max_memories: number;
+    auto_cleanup: boolean;
+    retention_days: number;
+  };
+  mutation_settings?: {
+    enabled: boolean;
+    sensitivity: 'low' | 'medium' | 'high';
+    auto_adapt: boolean;
+  };
 }
 
 // === Persona Development Framework - Advanced Types ===

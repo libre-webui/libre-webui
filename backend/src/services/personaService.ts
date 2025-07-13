@@ -405,6 +405,10 @@ export class PersonaService {
       background: persona.background,
       exportedAt: Date.now(),
       version: '1.0.0',
+      // Include advanced features in export
+      embedding_model: persona.embedding_model,
+      memory_settings: persona.memory_settings,
+      mutation_settings: persona.mutation_settings,
     };
   }
 
@@ -428,6 +432,10 @@ export class PersonaService {
       parameters: personaData.params,
       avatar: personaData.avatar,
       background: personaData.background,
+      // Include advanced features from import data
+      embedding_model: personaData.embedding_model,
+      memory_settings: personaData.memory_settings,
+      mutation_settings: personaData.mutation_settings,
     };
 
     // Check if persona with same name exists and add suffix if needed

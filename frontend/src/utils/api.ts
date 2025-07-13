@@ -1272,6 +1272,10 @@ export const personaApi = {
         background: data.background,
         created_at: Date.now(),
         updated_at: Date.now(),
+        // Include advanced features from import data
+        embedding_model: data.embedding_model,
+        memory_settings: data.memory_settings,
+        mutation_settings: data.mutation_settings,
       };
       return createDemoResponse(importedPersona);
     }
