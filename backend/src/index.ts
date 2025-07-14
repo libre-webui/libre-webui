@@ -232,7 +232,7 @@ const personasRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/personas', optionalAuth, personasRateLimiter, personaRoutes);
+app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 
 // API-only backend - no static file serving
 
