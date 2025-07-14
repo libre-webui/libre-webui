@@ -20,6 +20,7 @@ import { userModel, UserPublic } from '../models/userModel.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { randomBytes } from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -34,9 +35,19 @@ try {
   console.warn('Could not read version from package.json, using default');
 }
 
+// Generate or use JWT secret - never use hardcoded secrets in production
 const JWT_SECRET =
   process.env.JWT_SECRET ||
-  'your-super-secret-jwt-key-change-this-in-production';
+  (() => {
+    const generatedSecret = randomBytes(64).toString('hex');
+    console.warn(
+      '⚠️  JWT_SECRET not provided - generated random secret for this session'
+    );
+    console.warn(
+      '🔒 For production, set JWT_SECRET environment variable to persist sessions across restarts'
+    );
+    return generatedSecret;
+  })();
 
 export interface AuthTokenPayload {
   userId: string;

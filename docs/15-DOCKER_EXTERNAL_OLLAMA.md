@@ -71,7 +71,7 @@ docker-compose -f docker-compose.external-ollama.yml up -d
 |----------|---------|-------------|
 | `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` | External Ollama URL |
 | `FRONTEND_PORT` | `5173` | Internal frontend port |
-| `JWT_SECRET` | `your-super-secret-jwt-key-change-this-in-production` | Authentication secret |
+| `JWT_SECRET` | *(auto-generated)* | Authentication secret - **REQUIRED for production** |
 | `CORS_ORIGIN` | `http://localhost:8080` | Frontend origin for CORS |
 
 ### Custom Ollama URL
@@ -135,7 +135,10 @@ Data persists across container restarts and rebuilds.
 
 ## 🔒 Security Considerations
 
-1. **Change JWT Secret**: Always set a secure JWT_SECRET in production
+1. **JWT Secret**: 
+   - **Development**: Auto-generated secure random secret (sessions don't persist across restarts)
+   - **Production**: **MUST** set `JWT_SECRET` environment variable for persistent sessions
+   - Generate secure secret: `openssl rand -hex 64`
 2. **Network Access**: Ensure Ollama is only accessible from trusted sources
 3. **Firewall Rules**: Configure appropriate firewall rules for port 8080
 4. **HTTPS**: Consider using a reverse proxy with SSL for production
@@ -170,7 +173,8 @@ deploy:
 Create `.env.external-ollama`:
 ```bash
 OLLAMA_BASE_URL=http://host.docker.internal:11434
-JWT_SECRET=your-secure-secret-here
+# Generate with: openssl rand -hex 64
+JWT_SECRET=your-cryptographically-secure-64-char-hex-secret-here
 CORS_ORIGIN=http://localhost:8080
 ```
 

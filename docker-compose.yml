@@ -17,7 +17,8 @@ services:
       # For network access, add your IP/hostname to CORS_ORIGIN:
       - CORS_ORIGIN=http://localhost:8080
       - SINGLE_USER_MODE=false
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      # JWT_SECRET: Generate with 'openssl rand -hex 64' and set via .env file or environment
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=7d
       # Timeout configuration for large models on multiple GPUs
       - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300000}

@@ -149,8 +149,8 @@ ENV FRONTEND_PORT=5173
 # Set Ollama URL to connect to host machine when running in container
 ENV OLLAMA_BASE_URL=http://host.docker.internal:11434
 
-# JWT secret for authentication
-ENV JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+# JWT secret should be provided at runtime via environment variable or Docker secrets
+# Do not set JWT_SECRET here - it will be generated automatically if not provided
 
 # Expose ports - 3001 for backend, 5173 for frontend
 EXPOSE 3001 5173
