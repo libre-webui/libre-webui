@@ -16,16 +16,43 @@
  */
 
 import { Router, Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import { personaService } from '../services/personaService.js';
 import { ApiResponse, getErrorMessage } from '../types/index.js';
 
 const router = Router();
+
+// Rate limiting for persona operations
+const personaRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many persona requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// More restrictive rate limiting for create/update/delete operations
+const personaWriteRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 30, // Limit each IP to 30 write operations per windowMs
+  message: {
+    success: false,
+    error:
+      'Too many persona write operations from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 /**
  * Get all personas for the current user
  */
 router.get(
   '/',
+  personaRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
@@ -50,6 +77,7 @@ router.get(
  */
 router.get(
   '/:id',
+  personaRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const { id } = req.params;
@@ -83,6 +111,7 @@ router.get(
  */
 router.post(
   '/',
+  personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
@@ -107,6 +136,7 @@ router.post(
  */
 router.put(
   '/:id',
+  personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const { id } = req.params;
@@ -141,6 +171,7 @@ router.put(
  */
 router.delete(
   '/:id',
+  personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const { id } = req.params;
@@ -174,6 +205,7 @@ router.delete(
  */
 router.get(
   '/:id/export',
+  personaRateLimit,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
@@ -203,6 +235,7 @@ router.get(
  */
 router.post(
   '/import',
+  personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
@@ -227,6 +260,7 @@ router.post(
  */
 router.get(
   '/stats/count',
+  personaRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
@@ -250,6 +284,7 @@ router.get(
  */
 router.get(
   '/defaults/parameters',
+  personaRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const defaults = personaService.getDefaultParameters();
@@ -272,6 +307,7 @@ router.get(
  */
 router.get(
   '/:id/download',
+  personaRateLimit,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
@@ -323,6 +359,7 @@ router.get(
  */
 router.get(
   '/:id/memory/status',
+  personaRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const { id } = req.params;
@@ -350,6 +387,7 @@ router.get(
  */
 router.delete(
   '/:id/memory',
+  personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const { id } = req.params;
@@ -377,6 +415,7 @@ router.delete(
  */
 router.get(
   '/:id/backup',
+  personaRateLimit,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
@@ -415,6 +454,7 @@ router.get(
  */
 router.get(
   '/:id/export/dna',
+  personaRateLimit,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
