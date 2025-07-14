@@ -20,6 +20,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -198,6 +199,19 @@ app.use(requestLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Configure rate limiting for personas API
+const personasRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // max 100 requests per windowMs per IP
+  message: {
+    success: false,
+    error:
+      'Too many requests to personas API from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -218,7 +232,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentRoutes);
-app.use('/api/personas', optionalAuth, personaRoutes);
+app.use('/api/personas', optionalAuth, personasRateLimiter, personaRoutes);
 
 // API-only backend - no static file serving
 
