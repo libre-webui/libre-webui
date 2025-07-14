@@ -2,8 +2,14 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import dotenv from 'dotenv';
+import { readFileSync } from 'fs';
 
 dotenv.config();
+
+// Read version from package.json
+const packageJson = JSON.parse(
+  readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8')
+);
 
 const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:3001';
 const WS_BASE_URL = process.env.VITE_WS_BASE_URL || 'ws://localhost:3001';
@@ -11,6 +17,9 @@ const WS_BASE_URL = process.env.VITE_WS_BASE_URL || 'ws://localhost:3001';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

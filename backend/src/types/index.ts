@@ -420,7 +420,23 @@ export interface PersonaParameters {
   frequency_penalty?: number;
 }
 
-export interface Persona {
+// Shared type for advanced persona features to reduce duplication
+export interface AdvancedFeatures {
+  embedding_model?: string;
+  memory_settings?: {
+    enabled: boolean;
+    max_memories: number;
+    auto_cleanup: boolean;
+    retention_days: number;
+  };
+  mutation_settings?: {
+    enabled: boolean;
+    sensitivity: 'low' | 'medium' | 'high';
+    auto_adapt: boolean;
+  };
+}
+
+export interface Persona extends AdvancedFeatures {
   id: string;
   user_id: string;
   name: string;
@@ -432,21 +448,9 @@ export interface Persona {
   created_at: number;
   updated_at: number;
   // Advanced features (optional for unified interface)
-  embedding_model?: string;
-  memory_settings?: {
-    enabled: boolean;
-    max_memories: number;
-    auto_cleanup: boolean;
-    retention_days: number;
-  };
-  mutation_settings?: {
-    enabled: boolean;
-    sensitivity: 'low' | 'medium' | 'high';
-    auto_adapt: boolean;
-  };
 }
 
-export interface CreatePersonaRequest {
+export interface CreatePersonaRequest extends AdvancedFeatures {
   name: string;
   description?: string;
   model: string;
@@ -454,21 +458,9 @@ export interface CreatePersonaRequest {
   avatar?: string;
   background?: string;
   // Advanced features (optional)
-  embedding_model?: string;
-  memory_settings?: {
-    enabled: boolean;
-    max_memories: number;
-    auto_cleanup: boolean;
-    retention_days: number;
-  };
-  mutation_settings?: {
-    enabled: boolean;
-    sensitivity: 'low' | 'medium' | 'high';
-    auto_adapt: boolean;
-  };
 }
 
-export interface UpdatePersonaRequest {
+export interface UpdatePersonaRequest extends Partial<AdvancedFeatures> {
   name?: string;
   description?: string;
   model?: string;
@@ -476,21 +468,9 @@ export interface UpdatePersonaRequest {
   avatar?: string;
   background?: string;
   // Advanced features (optional)
-  embedding_model?: string;
-  memory_settings?: {
-    enabled: boolean;
-    max_memories: number;
-    auto_cleanup: boolean;
-    retention_days: number;
-  };
-  mutation_settings?: {
-    enabled: boolean;
-    sensitivity: 'low' | 'medium' | 'high';
-    auto_adapt: boolean;
-  };
 }
 
-export interface PersonaExport {
+export interface PersonaExport extends AdvancedFeatures {
   name: string;
   description?: string;
   model: string;
@@ -500,18 +480,6 @@ export interface PersonaExport {
   exportedAt: number;
   version: string;
   // Advanced features (include in export/import)
-  embedding_model?: string;
-  memory_settings?: {
-    enabled: boolean;
-    max_memories: number;
-    auto_cleanup: boolean;
-    retention_days: number;
-  };
-  mutation_settings?: {
-    enabled: boolean;
-    sensitivity: 'low' | 'medium' | 'high';
-    auto_adapt: boolean;
-  };
 }
 
 // === Persona Development Framework - Advanced Types ===

@@ -70,11 +70,51 @@ export class PersonaService {
     };
   }> {
     try {
-      // For now, check if persona has memory entries to determine if it has advanced features
-      // In a real implementation, this would be stored in a separate table or persona metadata
       const { getDatabase } = await import('../db.js');
       const db = getDatabase();
 
+      // Retrieve the embedding_model and other advanced features from the database
+      const personaAdvancedData = db
+        .prepare(
+          `
+          SELECT embedding_model, memory_settings, mutation_settings 
+          FROM personas 
+          WHERE id = ? AND user_id = ?
+        `
+        )
+        .get(personaId, userId) as
+        | {
+            embedding_model?: string;
+            memory_settings?: string;
+            mutation_settings?: string;
+          }
+        | undefined;
+
+      if (!personaAdvancedData) {
+        return {};
+      }
+
+      // Parse JSON settings or use defaults
+      let memorySettings;
+      let mutationSettings;
+
+      try {
+        memorySettings = personaAdvancedData.memory_settings
+          ? JSON.parse(personaAdvancedData.memory_settings)
+          : undefined;
+      } catch {
+        memorySettings = undefined;
+      }
+
+      try {
+        mutationSettings = personaAdvancedData.mutation_settings
+          ? JSON.parse(personaAdvancedData.mutation_settings)
+          : undefined;
+      } catch {
+        mutationSettings = undefined;
+      }
+
+      // Check if persona has memory entries to determine if it has advanced features
       const memoryCheck = db
         .prepare(
           `
@@ -82,7 +122,7 @@ export class PersonaService {
         WHERE persona_id = ? AND user_id = ?
       `
         )
-        .get(personaId, userId) as { count: number };
+        .get(personaId, userId) as { count: number } | undefined;
 
       const stateCheck = db
         .prepare(
@@ -93,17 +133,24 @@ export class PersonaService {
         )
         .get(personaId, userId) as Record<string, unknown> | undefined;
 
-      // If persona has memories or state, assume it has advanced features
-      if (memoryCheck.count > 0 || stateCheck) {
+      // If persona has memories, state, or stored advanced settings, return advanced features
+      if (
+        (memoryCheck?.count ?? 0) > 0 ||
+        stateCheck ||
+        personaAdvancedData.embedding_model ||
+        memorySettings ||
+        mutationSettings
+      ) {
         return {
-          embedding_model: 'nomic-embed-text',
-          memory_settings: {
+          embedding_model:
+            personaAdvancedData.embedding_model || 'nomic-embed-text',
+          memory_settings: memorySettings || {
             enabled: true,
             max_memories: 1000,
             auto_cleanup: true,
             retention_days: 90,
           },
-          mutation_settings: {
+          mutation_settings: mutationSettings || {
             enabled: true,
             sensitivity: 'medium' as const,
             auto_adapt: true,
