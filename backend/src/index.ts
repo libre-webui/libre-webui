@@ -199,19 +199,6 @@ app.use(requestLogger);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Configure rate limiting for personas API
-const personasRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // max 100 requests per windowMs per IP
-  message: {
-    success: false,
-    error:
-      'Too many requests to personas API from this IP, please try again later.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
@@ -232,6 +219,19 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/preferences', preferencesRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentRoutes);
+
+// Rate limiter for the /api/personas route
+const personasRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api/personas', optionalAuth, personasRateLimiter, personaRoutes);
 
 // API-only backend - no static file serving
