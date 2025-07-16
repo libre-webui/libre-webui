@@ -505,8 +505,8 @@ libre-webui/
 
 **[📖 Complete Documentation →](https://docs.librewebui.org)**
 
-| Guide                                                                              | Description                                                                         |
-| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Guide                                                                                             | Description                                                                         |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | **[🚀 Quick Start](https://docs.librewebui.org/QUICK_START)**                                     | Get up and running in 5 minutes                                                     |
 | **[🤖 Working with Models](https://docs.librewebui.org/WORKING_WITH_MODELS)**                     | Complete AI models guide                                                            |
 | **[🎯 Pro Tips](https://docs.librewebui.org/PRO_TIPS)**                                           | Advanced workflows and techniques                                                   |
@@ -514,12 +514,12 @@ libre-webui/
 | **[🎭 Demo Mode](https://docs.librewebui.org/DEMO_MODE)**                                         | Try without installation                                                            |
 | **[🔧 Troubleshooting](https://docs.librewebui.org/TROUBLESHOOTING)**                             | Problem solving guide                                                               |
 | **[🔌 Plugin Architecture](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)**                     | Connect multiple AI services                                                        |
-| **[📚 RAG Feature](https://docs.librewebui.org/RAG_FEATURE)**                                      | Chat with your documents                                                            |
+| **[📚 RAG Feature](https://docs.librewebui.org/RAG_FEATURE)**                                     | Chat with your documents                                                            |
 | **[🗄️ SQLite Migration](https://docs.librewebui.org/SQLITE_MIGRATION)**                           | Upgrade from JSON to SQLite storage                                                 |
 | **[🤖 Model Updater](https://docs.librewebui.org/MODEL_UPDATER)**                                 | Auto-update AI provider models                                                      |
-| **[🔐 Authentication](https://docs.librewebui.org/AUTHENTICATION)**                              | User management and security                                                        |
+| **[🔐 Authentication](https://docs.librewebui.org/AUTHENTICATION)**                               | User management and security                                                        |
 | **[🎨 Artifacts Feature](https://docs.librewebui.org/ARTIFACTS_FEATURE)**                         | Interactive content and code execution                                              |
-| **[⚙️ Artifacts Implementation](https://docs.librewebui.org/RELEASE_AUTOMATION)**           | Technical implementation details                                                    |
+| **[⚙️ Artifacts Implementation](https://docs.librewebui.org/RELEASE_AUTOMATION)**                 | Technical implementation details                                                    |
 | **[🐳 Docker External Ollama](https://docs.librewebui.org/DOCKER_EXTERNAL_OLLAMA)**               | Run Docker with external Ollama instance                                            |
 | **[🎭 Persona Development Framework](https://docs.librewebui.org/PERSONA_DEVELOPMENT_FRAMEWORK)** | Advanced AI personalities with memory systems and dynamic embedding model selection |
 
@@ -575,8 +575,9 @@ const activePlugin = await pluginApi.getActivePlugin();
 </div>
 
 ## License
+
 Licensed under the Apache License, Version 2.0. See [LICENSE](http://www.apache.org/licenses/LICENSE-2.0) for details.
-*Copyright (C) 2025 Libre WebUI*
+_Copyright (C) 2025 Libre WebUI_
 
 ---
 
