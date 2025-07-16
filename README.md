@@ -1,4 +1,12 @@
+<div align="center">
+
 # Libre WebUI
+
+**Open-source AI chat interface** - A clean, privacy-first web UI for local AI models via Ollama, with flexible routing to OpenAI, Anthropic, Groq, and other external AI services. Self-hosted AI assistant with complete data privacy.
+
+[🌐 **Visit Website**](https://librewebui.org) • [📖 **Documentation**](https://docs.librewebui.org)
+
+![Libre WebUI - Privacy-first AI chat interface for local and external AI models](./screenshot.png)
 
 ![version](https://img.shields.io/github/package-json/v/libre-webui/libre-webui)
 ![license](https://img.shields.io/github/license/libre-webui/libre-webui)
@@ -9,9 +17,20 @@
 ![repo size](https://img.shields.io/github/repo-size/libre-webui/libre-webui)
 ![top language](https://img.shields.io/github/languages/top/libre-webui/libre-webui)
 
-![Libre WebUI Screenshot](./screenshot.png)
+</div>
 
-A clean, privacy-first interface for local AI models via Ollama, with flexible routing to external AI services.
+---
+
+## ✨ Key Features
+
+- 🔒 **Privacy-First**: Complete offline operation, no data tracking or telemetry
+- 🤖 **Multi-AI Support**: Ollama, OpenAI, Anthropic Claude, Groq, Gemini, Mistral
+- 🏠 **Self-Hosted**: Run entirely on your own hardware
+- 🔌 **Plugin Architecture**: Extensible system for custom AI integrations
+- 💬 **Modern Chat UI**: Clean, responsive interface for AI conversations
+- 📚 **RAG (Retrieval-Augmented Generation)**: Chat with your documents
+- 🎨 **Artifacts**: Interactive code execution and content generation
+- ⚡ **Fast Setup**: Get running in under 5 minutes
 
 ---
 
@@ -50,7 +69,7 @@ MISTRAL_API_KEY=your_mistral_key
 GITHUB_API_KEY=your_github_token
 ```
 
-**[📖 Complete Plugin Setup Guide →](./docs/08-PLUGIN_ARCHITECTURE.md)**
+**[📖 Complete Plugin Setup Guide →](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)**
 
 ### Keep Models Updated
 
@@ -69,7 +88,7 @@ Automatically update your AI provider plugins with the latest available models:
 ./scripts/update-github-models.sh      # 20 models
 ```
 
-**[🤖 Model Updater Guide →](./docs/11-MODEL_UPDATER.md)**
+**[🤖 Model Updater Guide →](https://docs.librewebui.org/MODEL_UPDATER)**
 
 ## Docker Deployment
 
@@ -103,7 +122,7 @@ docker-compose -f docker-compose.external-ollama.yml up -d
 - **Backend:** http://localhost:3001
 - **Ollama:** http://localhost:11434 (bundled) or external
 
-**[🐳 Complete Docker Guide →](./docs/15-DOCKER_EXTERNAL_OLLAMA.md)**
+**[🐳 Complete Docker Guide →](https://docs.librewebui.org/DOCKER_EXTERNAL_OLLAMA)**
 
 ## First-Time Setup
 
@@ -123,7 +142,7 @@ When you first launch Libre WebUI, you'll be greeted with a beautiful welcome sc
 
 The setup experience ensures you're up and running quickly while maintaining security best practices. Once complete, you'll have full access to all features including user management, plugin configuration, and system settings.
 
-**[📖 Complete Authentication Guide →](./docs/12-AUTHENTICATION.md)**
+**[📖 Complete Authentication Guide →](https://docs.librewebui.org/AUTHENTICATION)**
 
 ## Development
 
@@ -288,8 +307,8 @@ Ask the AI to create:
 
 The AI's response will automatically render as an interactive artifact alongside the explanation.
 
-**[🎨 Complete Artifacts Guide →](./docs/13-ARTIFACTS_FEATURE.md)**
-**[⚙️ Technical Implementation →](./docs/14-ARTIFACTS_IMPLEMENTATION.md)**
+**[🎨 Complete Artifacts Guide →](https://docs.librewebui.org/ARTIFACTS_FEATURE)**
+**[⚙️ Technical Implementation →](https://docs.librewebui.org/RELEASE_AUTOMATION)**
 
 ### 🤖 Complete Ollama Integration
 
@@ -435,7 +454,7 @@ curl -X POST http://localhost:3001/api/plugins/install \
 curl -X POST http://localhost:3001/api/plugins/activate/openai
 ```
 
-**[📖 Complete Plugin Guide →](./docs/08-PLUGIN_ARCHITECTURE.md)**
+**[📖 Complete Plugin Guide →](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)**
 
 ### 🎯 UI Components
 
@@ -484,25 +503,25 @@ libre-webui/
 
 ### 📚 Documentation
 
-**[📖 Complete Documentation →](./docs/00-README.md)**
+**[📖 Complete Documentation →](https://docs.librewebui.org)**
 
 | Guide                                                                              | Description                                                                         |
 | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| **[🚀 Quick Start](./docs/01-QUICK_START.md)**                                     | Get up and running in 5 minutes                                                     |
-| **[🤖 Working with Models](./docs/02-WORKING_WITH_MODELS.md)**                     | Complete AI models guide                                                            |
-| **[🎯 Pro Tips](./docs/03-PRO_TIPS.md)**                                           | Advanced workflows and techniques                                                   |
-| **[⌨️ Keyboard Shortcuts](./docs/04-KEYBOARD_SHORTCUTS.md)**                       | Productivity hotkeys                                                                |
-| **[🎭 Demo Mode](./docs/05-DEMO_MODE.md)**                                         | Try without installation                                                            |
-| **[🔧 Troubleshooting](./docs/06-TROUBLESHOOTING.md)**                             | Problem solving guide                                                               |
-| **[🔌 Plugin Architecture](./docs/08-PLUGIN_ARCHITECTURE.md)**                     | Connect multiple AI services                                                        |
-| **[� RAG Feature](./docs/09-RAG_FEATURE.md)**                                      | Chat with your documents                                                            |
-| **[🗄️ SQLite Migration](./docs/10-SQLITE_MIGRATION.md)**                           | Upgrade from JSON to SQLite storage                                                 |
-| **[🤖 Model Updater](./docs/11-MODEL_UPDATER.md)**                                 | Auto-update AI provider models                                                      |
-| **[�🔐 Authentication](./docs/12-AUTHENTICATION.md)**                              | User management and security                                                        |
-| **[🎨 Artifacts Feature](./docs/13-ARTIFACTS_FEATURE.md)**                         | Interactive content and code execution                                              |
-| **[⚙️ Artifacts Implementation](./docs/14-ARTIFACTS_IMPLEMENTATION.md)**           | Technical implementation details                                                    |
-| **[🐳 Docker External Ollama](./docs/15-DOCKER_EXTERNAL_OLLAMA.md)**               | Run Docker with external Ollama instance                                            |
-| **[🎭 Persona Development Framework](./docs/16-PERSONA_DEVELOPMENT_FRAMEWORK.md)** | Advanced AI personalities with memory systems and dynamic embedding model selection |
+| **[🚀 Quick Start](https://docs.librewebui.org/QUICK_START)**                                     | Get up and running in 5 minutes                                                     |
+| **[🤖 Working with Models](https://docs.librewebui.org/WORKING_WITH_MODELS)**                     | Complete AI models guide                                                            |
+| **[🎯 Pro Tips](https://docs.librewebui.org/PRO_TIPS)**                                           | Advanced workflows and techniques                                                   |
+| **[⌨️ Keyboard Shortcuts](https://docs.librewebui.org/KEYBOARD_SHORTCUTS)**                       | Productivity hotkeys                                                                |
+| **[🎭 Demo Mode](https://docs.librewebui.org/DEMO_MODE)**                                         | Try without installation                                                            |
+| **[🔧 Troubleshooting](https://docs.librewebui.org/TROUBLESHOOTING)**                             | Problem solving guide                                                               |
+| **[🔌 Plugin Architecture](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)**                     | Connect multiple AI services                                                        |
+| **[📚 RAG Feature](https://docs.librewebui.org/RAG_FEATURE)**                                      | Chat with your documents                                                            |
+| **[🗄️ SQLite Migration](https://docs.librewebui.org/SQLITE_MIGRATION)**                           | Upgrade from JSON to SQLite storage                                                 |
+| **[🤖 Model Updater](https://docs.librewebui.org/MODEL_UPDATER)**                                 | Auto-update AI provider models                                                      |
+| **[🔐 Authentication](https://docs.librewebui.org/AUTHENTICATION)**                              | User management and security                                                        |
+| **[🎨 Artifacts Feature](https://docs.librewebui.org/ARTIFACTS_FEATURE)**                         | Interactive content and code execution                                              |
+| **[⚙️ Artifacts Implementation](https://docs.librewebui.org/RELEASE_AUTOMATION)**           | Technical implementation details                                                    |
+| **[🐳 Docker External Ollama](https://docs.librewebui.org/DOCKER_EXTERNAL_OLLAMA)**               | Run Docker with external Ollama instance                                            |
+| **[🎭 Persona Development Framework](https://docs.librewebui.org/PERSONA_DEVELOPMENT_FRAMEWORK)** | Advanced AI personalities with memory systems and dynamic embedding model selection |
 
 ## Accessibility & Performance
 
@@ -547,34 +566,18 @@ await pluginApi.activatePlugin('openai');
 const activePlugin = await pluginApi.getActivePlugin();
 ```
 
-## 📋 Release Notes
+## Community
 
-**Current Version: v0.1.0** - [View Changelog](./CHANGELOG.md)
+<div align="center">
 
-This is the first official release of Libre WebUI! 🎉
+🐘 **Follow us on Mastodon:** [@librewebui@fosstodon.org](https://fosstodon.org/@librewebui)
 
-**Highlights:**
-
-- Complete authentication & user management system
-- SQLite database migration for better performance
-- Interactive artifacts feature for code execution
-- Plugin architecture for external AI services
-- Modern UI with dark/light theme support
-
-**[📋 Full Changelog →](./CHANGELOG.md)**
+</div>
 
 ## License
+Licensed under the Apache License, Version 2.0. See [LICENSE](http://www.apache.org/licenses/LICENSE-2.0) for details.
+*Copyright (C) 2025 Libre WebUI*
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at:
+---
 
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
-Copyright (C) 2025 Libre WebUI (Kroonen AI, Inc.)
+<small>Powered by [Kroonen AI](https://kroonen.ai)</small>
