@@ -79,7 +79,7 @@ export class EncryptionService {
     if (keyString) {
       if (keyString.length !== 64) {
         throw new Error(
-          'ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes)'
+          `ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes). Current length: ${keyString.length}`
         );
       }
       this.encryptionKey = Buffer.from(keyString, 'hex');
@@ -147,9 +147,11 @@ export class EncryptionService {
   public decrypt(encryptedData: string): string {
     if (!encryptedData || !encryptedData.includes(':')) {
       // Data doesn't contain colons, likely unencrypted
-      console.debug(
-        'Decryption: Data appears to be unencrypted (no colons found)'
-      );
+      if (process.env.DEBUG_ENCRYPTION) {
+        console.debug(
+          'Decryption: Data appears to be unencrypted (no colons found)'
+        );
+      }
       return encryptedData;
     }
 

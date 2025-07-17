@@ -371,8 +371,8 @@ function runMigrations(): void {
         );
       }
     }
-  } catch (_error) {
-    console.error('Error running migrations:', _error);
+  } catch (error) {
+    console.error('Error running migrations:', error);
   }
 }
 

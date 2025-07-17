@@ -475,6 +475,39 @@ class StorageService {
   // PREFERENCES MANAGEMENT
   // =================================
 
+  /**
+   * Safely decrypt and parse a preference value with proper error handling
+   */
+  private safeDecryptPreference(key: string, value: string): unknown {
+    try {
+      // Decrypt the preference value
+      const decryptedValue = encryptionService.decrypt(value);
+      try {
+        // Parse the decrypted value
+        return JSON.parse(decryptedValue);
+      } catch (parseError) {
+        console.error(`Parsing error for preference key "${key}":`, parseError);
+        // Fallback to raw decrypted value
+        return decryptedValue;
+      }
+    } catch (decryptError) {
+      console.error(
+        `Decryption error for preference key "${key}":`,
+        decryptError
+      );
+      // Fallback to raw value (assuming unencrypted legacy data)
+      try {
+        return JSON.parse(value);
+      } catch (parseError) {
+        console.error(
+          `Parsing error for raw preference key "${key}":`,
+          parseError
+        );
+        return value;
+      }
+    }
+  }
+
   getPreferences(userId?: string): UserPreferences | null {
     if (this.useSQLite) {
       const db = getDatabase();
@@ -500,36 +533,7 @@ class StorageService {
 
       const preferences: Record<string, unknown> = {};
       rows.forEach(row => {
-        try {
-          // Decrypt the preference value
-          const decryptedValue = encryptionService.decrypt(row.value);
-          try {
-            // Parse the decrypted value
-            preferences[row.key] = JSON.parse(decryptedValue);
-          } catch (parseError) {
-            console.error(
-              `Parsing error for preference key "${row.key}":`,
-              parseError
-            );
-            // Fallback to raw decrypted value
-            preferences[row.key] = decryptedValue;
-          }
-        } catch (decryptError) {
-          console.error(
-            `Decryption error for preference key "${row.key}":`,
-            decryptError
-          );
-          // Fallback to raw value (assuming unencrypted legacy data)
-          try {
-            preferences[row.key] = JSON.parse(row.value);
-          } catch (parseError) {
-            console.error(
-              `Parsing error for raw preference key "${row.key}":`,
-              parseError
-            );
-            preferences[row.key] = row.value;
-          }
-        }
+        preferences[row.key] = this.safeDecryptPreference(row.key, row.value);
       });
 
       return preferences as unknown as UserPreferences;

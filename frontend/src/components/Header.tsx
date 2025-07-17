@@ -119,7 +119,8 @@ export const Header: React.FC<HeaderProps> = ({
     };
 
     loadCurrentPersona();
-  }, [currentSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSession?.personaId]);
 
   const getPageTitle = () => {
     if (location.pathname === '/models') {
