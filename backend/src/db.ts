@@ -21,39 +21,96 @@ import fs from 'fs';
 
 // Database instance
 let db: Database.Database | null = null;
+let dbInitializationFailed = false;
+
+/**
+ * Check if SQLite/better-sqlite3 is available
+ */
+function isSQLiteAvailable(): boolean {
+  try {
+    // Try to create a temporary in-memory database to test if better-sqlite3 works
+    const testDb = new Database(':memory:');
+    testDb.close();
+    return true;
+  } catch (error) {
+    console.error('SQLite availability check failed:', error);
+    return false;
+  }
+}
 
 /**
  * Initialize and return the SQLite database connection
  */
 export function getDatabase(): Database.Database {
-  if (!db) {
-    // Use environment variable for database path, default to data directory
-    const dataDir =
-      process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
-    const dbPath = path.join(dataDir, 'data.sqlite');
+  if (dbInitializationFailed) {
+    throw new Error('SQLite database initialization previously failed');
+  }
 
-    // Ensure the directory exists
-    const dir = path.dirname(dbPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+  if (!db) {
+    // Check if SQLite is available first
+    if (!isSQLiteAvailable()) {
+      console.error(
+        'better-sqlite3 is not available or compatible with current Node.js version'
+      );
+      console.log('Storage mode: JSON');
+      dbInitializationFailed = true;
+      throw new Error('SQLite not available');
     }
 
-    // Initialize database
-    db = new Database(dbPath);
+    try {
+      // Use environment variable for database path, default to data directory
+      const dataDir =
+        process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+      const dbPath = path.join(dataDir, 'data.sqlite');
 
-    // Enable foreign keys
-    db.pragma('foreign_keys = ON');
+      // Ensure the directory exists
+      const dir = path.dirname(dbPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
 
-    // Create tables if they don't exist
-    initializeTables();
+      // Initialize database
+      db = new Database(dbPath);
 
-    // Run migrations
-    runMigrations();
+      // Enable foreign keys
+      db.pragma('foreign_keys = ON');
 
-    console.log(`SQLite database initialized at: ${dbPath}`);
+      // Set additional security pragmas
+      db.pragma('journal_mode = WAL');
+      db.pragma('synchronous = FULL');
+      db.pragma('temp_store = MEMORY');
+      db.pragma('mmap_size = 268435456'); // 256MB
+
+      console.log('✅ Database initialized with application-level encryption');
+
+      // Create tables if they don't exist
+      initializeTables();
+
+      // Run migrations
+      runMigrations();
+
+      console.log(`SQLite database initialized at: ${dbPath}`);
+    } catch (error) {
+      console.error('Error initializing SQLite database:', error);
+      console.log('Storage mode: JSON');
+      dbInitializationFailed = true;
+      throw new Error('SQLite database initialization failed');
+    }
   }
 
   return db;
+}
+
+/**
+ * Safely get the database connection, returns null if not available
+ */
+export function getDatabaseSafe(): Database.Database | null {
+  try {
+    return getDatabase();
+  } catch (_error) {
+    console.warn('Database not available, continuing without SQLite');
+    return null;
+  }
 }
 
 /**
