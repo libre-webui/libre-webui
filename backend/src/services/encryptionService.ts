@@ -29,9 +29,56 @@ export class EncryptionService {
   private algorithm = 'aes-256-gcm';
 
   /**
-   * Automatically add the encryption key to the .env file
+   * Automatically add the encryption key to the .env file or persistent storage
    */
   private addKeyToEnvFile(encryptionKey: string): void {
+    const isDocker = process.env.DOCKER_ENV === 'true';
+
+    if (isDocker) {
+      // In Docker, store key in persistent data directory
+      this.saveKeyToPersistentStorage(encryptionKey);
+    } else {
+      // In regular environment, store in .env file
+      this.saveKeyToEnvFile(encryptionKey);
+    }
+  }
+
+  /**
+   * Save encryption key to persistent data directory (for Docker)
+   */
+  private saveKeyToPersistentStorage(encryptionKey: string): void {
+    try {
+      const dataDir =
+        process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+      const keyPath = path.join(dataDir, '.encryption_key');
+
+      // Ensure data directory exists
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+
+      // Write the key to persistent storage
+      fs.writeFileSync(keyPath, encryptionKey, 'utf8');
+      console.info(
+        `✅ Automatically saved ENCRYPTION_KEY to persistent storage: ${keyPath}`
+      );
+      console.info('🔐 Encryption key will persist across container restarts');
+    } catch (error) {
+      console.error(
+        '❌ Failed to save ENCRYPTION_KEY to persistent storage:',
+        error
+      );
+      console.warn(
+        '   Please set ENCRYPTION_KEY environment variable manually:'
+      );
+      console.warn(`   ENCRYPTION_KEY=${encryptionKey}`);
+    }
+  }
+
+  /**
+   * Save encryption key to .env file (for regular environments)
+   */
+  private saveKeyToEnvFile(encryptionKey: string): void {
     try {
       const envPath = path.join(process.cwd(), '.env');
       let envContent = '';
@@ -73,9 +120,45 @@ export class EncryptionService {
     }
   }
 
+  /**
+   * Load encryption key from persistent storage (for Docker)
+   */
+  private loadKeyFromPersistentStorage(): string | null {
+    try {
+      const dataDir =
+        process.env.DATA_DIR || path.join(process.cwd(), 'backend', 'data');
+      const keyPath = path.join(dataDir, '.encryption_key');
+
+      if (fs.existsSync(keyPath)) {
+        const key = fs.readFileSync(keyPath, 'utf8').trim();
+        if (key.length === 64) {
+          console.info(
+            `✅ Loaded encryption key from persistent storage: ${keyPath}`
+          );
+          return key;
+        }
+      }
+    } catch (error) {
+      console.warn(
+        '⚠️  Failed to load encryption key from persistent storage:',
+        error
+      );
+    }
+    return null;
+  }
+
   private constructor() {
-    // Get encryption key from environment or generate one
-    const keyString = process.env.ENCRYPTION_KEY;
+    // Get encryption key from environment, persistent storage, or generate one
+    let keyString = process.env.ENCRYPTION_KEY;
+
+    // If no environment variable, try loading from persistent storage in Docker
+    if (!keyString && process.env.DOCKER_ENV === 'true') {
+      const persistentKey = this.loadKeyFromPersistentStorage();
+      if (persistentKey) {
+        keyString = persistentKey;
+      }
+    }
+
     if (keyString) {
       if (keyString.length !== 64) {
         throw new Error(
@@ -87,21 +170,26 @@ export class EncryptionService {
         throw new Error('Invalid ENCRYPTION_KEY: hex decoding failed');
       }
     } else {
-      // Generate a new key and automatically add it to .env file
+      // Generate a new key and automatically add it to appropriate storage
       this.encryptionKey = crypto.randomBytes(32);
-      const keyString = this.encryptionKey.toString('hex');
+      const newKeyString = this.encryptionKey.toString('hex');
 
       console.warn(
-        `⚠️  No ENCRYPTION_KEY provided. Generated key: ${keyString}`
+        `⚠️  No ENCRYPTION_KEY found. Generated key: ${newKeyString}`
       );
 
-      // Automatically add the key to .env file
-      this.addKeyToEnvFile(keyString);
+      // Automatically add the key to appropriate storage (Docker vs regular)
+      this.addKeyToEnvFile(newKeyString);
 
-      console.info(
-        '🔐 Generated encryption key has been automatically added to your .env file'
-      );
-      console.info('   Restart the application to use the persistent key');
+      if (process.env.DOCKER_ENV === 'true') {
+        console.info('🔐 Generated encryption key saved to persistent storage');
+        console.info('   Key will persist across container restarts');
+      } else {
+        console.info(
+          '🔐 Generated encryption key has been automatically added to your .env file'
+        );
+        console.info('   Restart the application to use the persistent key');
+      }
     }
   }
 

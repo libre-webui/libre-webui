@@ -17,6 +17,7 @@
 
 import jwt from 'jsonwebtoken';
 import { User } from '../types/index.js';
+import { JWT_SECRET } from '../services/authService.js';
 
 /**
  * JWT payload interface
@@ -43,14 +44,9 @@ export function generateToken(user: User): string {
     role: user.role,
   };
 
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not defined in environment variables');
-  }
-
   const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
 
-  return jwt.sign(payload, secret, { expiresIn } as jwt.SignOptions);
+  return jwt.sign(payload, JWT_SECRET, { expiresIn } as jwt.SignOptions);
 }
 
 /**
@@ -59,13 +55,8 @@ export function generateToken(user: User): string {
  * @returns JWTPayload - Decoded payload
  */
 export function verifyToken(token: string): JWTPayload {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not defined in environment variables');
-  }
-
   try {
-    const decoded = jwt.verify(token, secret) as JWTPayload;
+    const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     return decoded;
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
@@ -91,13 +82,8 @@ export function generateRefreshToken(user: User): string {
     role: user.role,
   };
 
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET is not defined in environment variables');
-  }
-
   // Refresh tokens have longer expiry (30 days)
-  return jwt.sign(payload, secret, { expiresIn: '30d' } as jwt.SignOptions);
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' } as jwt.SignOptions);
 }
 
 /**

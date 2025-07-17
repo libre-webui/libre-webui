@@ -18,8 +18,11 @@ services:
       - CORS_ORIGIN=http://localhost:8080
       - SINGLE_USER_MODE=false
       # JWT_SECRET: Generate with 'openssl rand -hex 64' and set via .env file or environment
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET:-}
       - JWT_EXPIRES_IN=7d
+      # Encryption: Optional 64-character hex key. If not provided, one will be auto-generated
+      # and stored in the persistent data volume for security across container restarts
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
       # Timeout configuration for large models on multiple GPUs
       - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300000}
       - OLLAMA_LONG_OPERATION_TIMEOUT=${OLLAMA_LONG_OPERATION_TIMEOUT:-900000}

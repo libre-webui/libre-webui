@@ -36,7 +36,7 @@ try {
 }
 
 // Generate or use JWT secret - never use hardcoded secrets in production
-const JWT_SECRET =
+export const JWT_SECRET =
   process.env.JWT_SECRET ||
   (() => {
     const generatedSecret = randomBytes(64).toString('hex');
