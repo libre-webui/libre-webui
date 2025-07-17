@@ -119,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
     };
 
     loadCurrentPersona();
-  }, [currentSession?.personaId, currentSession]);
+  }, [currentSession?.personaId]);
 
   const getPageTitle = () => {
     if (location.pathname === '/models') {

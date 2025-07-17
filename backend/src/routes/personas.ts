@@ -22,10 +22,10 @@ import { ApiResponse, getErrorMessage } from '../types/index.js';
 
 const router = Router();
 
-// Rate limiting for persona operations
+// Rate limiting for persona operations (temporarily disabled for development)
 const personaRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // Limit each IP to 500 requests per windowMs
+  max: 10000, // Very high limit for development
   message: {
     success: false,
     error: 'Too many persona requests from this IP, please try again later.',
