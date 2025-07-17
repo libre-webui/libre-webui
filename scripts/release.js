@@ -130,7 +130,18 @@ class ReleaseManager {
   getCommitsSinceLastTag() {
     try {
       const lastTag = this.exec('git describe --tags --abbrev=0', { silent: true });
-      return this.exec(`git log ${lastTag}..HEAD --oneline`, { silent: true }).split('\n').filter(line => line.trim());
+      const commits = this.exec(`git log ${lastTag}..HEAD --oneline`, { silent: true })
+        .split('\n')
+        .filter(line => line.trim())
+        .filter(line => {
+          // Filter out previous release commits and merge commits
+          return !line.includes('chore(release):') && 
+                 !line.includes('Merge branch') &&
+                 !line.includes('chore: run fmt') &&
+                 !line.includes('Update README.md') &&
+                 !line.includes('docs: add unreleased section');
+        });
+      return commits;
     } catch {
       // No previous tags
       return this.exec('git log --oneline', { silent: true }).split('\n').filter(line => line.trim());
@@ -150,16 +161,36 @@ class ReleaseManager {
     commits.forEach(commit => {
       const message = commit.replace(/^[a-f0-9]+\s+/, '');
       
+      // Skip certain types of commits that shouldn't be in changelog
+      if (message.match(/^(chore\(release\)|Merge pull request|Merge branch)/)) {
+        return;
+      }
+      
       if (message.match(/^feat(\(.+\))?:/)) {
         features.push(message.replace(/^feat(\(.+\))?:\s*/, ''));
       } else if (message.match(/^fix(\(.+\))?:/)) {
         fixes.push(message.replace(/^fix(\(.+\))?:\s*/, ''));
-      } else if (message.match(/^(refactor|perf|style|chore)(\(.+\))?:/)) {
-        improvements.push(message.replace(/^(refactor|perf|style|chore)(\(.+\))?:\s*/, ''));
+      } else if (message.match(/^(refactor|perf|style)(\(.+\))?:/)) {
+        improvements.push(message.replace(/^(refactor|perf|style)(\(.+\))?:\s*/, ''));
       } else if (message.match(/^docs(\(.+\))?:/)) {
         docs.push(message.replace(/^docs(\(.+\))?:\s*/, ''));
+      } else if (message.match(/^chore(\(.+\))?:/)) {
+        // Only include meaningful chore commits
+        const cleanMessage = message.replace(/^chore(\(.+\))?:\s*/, '');
+        if (!cleanMessage.match(/^(run fmt|bump|update dependencies|release)/)) {
+          improvements.push(cleanMessage);
+        }
       } else {
-        other.push(message);
+        // For non-conventional commits, try to categorize by keywords
+        if (message.match(/^(add|implement|introduce)/i)) {
+          features.push(message);
+        } else if (message.match(/^(fix|resolve|patch)/i)) {
+          fixes.push(message);
+        } else if (message.match(/^(update|improve|enhance|optimize)/i)) {
+          improvements.push(message);
+        } else {
+          other.push(message);
+        }
       }
     });
 
