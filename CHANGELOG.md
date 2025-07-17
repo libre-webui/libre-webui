@@ -17,69 +17,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.4] - 2025-07-17
 
-### ✨ Added
+### 🔐 Security & Encryption
 
-- add automatic encryption key generation and storage in .env file
-- Implement database encryption service with AES-256-GCM
-- implement avatar and background image upload components in PersonaForm
-- add expand/collapse functionality for system messages and manage background image state based on current persona
-- add embedding model and memory settings to personas and update PersonaForm for dynamic model selection
-- Implement Memory and Mutation Engine Services
-- Add CONTRIBUTORS.md file to recognize project maintainers and community contributors
-- Add support for Gemini plugin with specific payload format and response conversion
-- Enhance model updater with new providers and models
-
-### 🔧 Technical Improvements
-
-- run fmt
-- 0.1.3
-- 0.1.3
-- update package-lock.json dependency versions
-- remove unused components and clean up codebase
-- display version and warning message in ChatInput component refactor: remove badge from SettingsModal component tabs
-- simplify API calls by removing redundant headers for file uploads
-- streamline memory status display in PersonaCard component
-- update persona selector styles and enhance personas page layout
-- Update Dockerfile and package.json and add lowlight missing dependency
+- **Database Encryption Service**: Implement AES-256-GCM encryption for all sensitive data at rest
+- **Automatic Key Management**: Auto-generate and store encryption keys in .env file
+- **Enhanced Rate Limiting**: Improved rate limiting for persona operations (500 requests per 15-minute window)
 
 ### 🐛 Bug Fixes
 
-- update @napi-rs/canvas and other dependencies to latest versions
-- improve error handling in migration and encryption processes, and refactor preference decryption logic
-- add rate limiting to /api/personas route and update dependency in Header component
-- update rate limiting for persona operations and clean up dependencies in Header component
-- update rate limiting for /api/personas route to allow 500 requests per window
-- update JWT_SECRET handling for production and development environments
-- reorder middleware for /api/personas route
-- update rate limiter configuration for /api/personas route
-- add advanced features to Persona export/import including embedding model, memory, and mutation settings
-- embedding model handling and default parameter loading
-- improve error handling in persona download function
-- Refac imports to use file extensions and update dependencies
-- Enable network access for development server with --host flag
-- Update contribution guidelines to submit PRs against `dev` branch instead of `main`
+- Update @napi-rs/canvas and other dependencies to latest versions
+- Improve error handling in migration and encryption processes, and refactor preference decryption logic
+- Add rate limiting to /api/personas route and update dependency in Header component
+- Update rate limiting for persona operations and clean up dependencies in Header component
+
+### 🔧 Technical Improvements
+
+- Enhanced preference decryption logic with proper error handling
+- Improved React Hook optimizations and dependency management
+- Better code organization and error logging
 
 ### 📚 Documentation
 
-- add unreleased section to changelog for proper release automation
-- enhance Persona Development Framework section with dynamic embedding model selection and advanced memory systems
-
-### 🔄 Other Changes
-
-- Merge pull request #28 from libre-webui/feature/e2e
-- Update README.md
-- security(rate-limiting): CodeQL: top level
-- security(rate-limiting): implement rate limiting for persona operations
-- refactor
-- Merge pull request #26 from libre-webui/dependabot/github_actions/dev/docker/build-push-action-6
-- Merge pull request #25 from libre-webui/dependabot/npm_and_yarn/dev/all-dependencies-b7e63996a2
-- ci(deps): bump docker/build-push-action from 5 to 6
-- deps(deps): bump the all-dependencies group with 3 updates
-- Merge pull request #23 from libre-webui/feature/reveries-awakening
-- Merge branch 'dev'
-- security: Fix SSRF vulnerability in pluginService.ts
-- Merge branch 'dev'
-- security: Fix format string injection vulnerability in chatService.ts
+- Add unreleased section to changelog for proper release automation
 
 ## [0.1.3] - 2025-07-16
 
