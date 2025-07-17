@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import Database from 'better-sqlite3';
 import { getDatabase } from '../db.js';
 import {
   Persona,
@@ -40,12 +41,41 @@ interface PersonaRow {
 }
 
 export class PersonaModel {
-  private db = getDatabase();
+  private db: Database.Database | null = null;
+
+  constructor() {
+    this.initializeDatabase();
+  }
+
+  private initializeDatabase(): void {
+    try {
+      this.db = getDatabase();
+    } catch (_error) {
+      console.warn(
+        'PersonaModel: Database not available, running without SQLite features'
+      );
+      this.db = null;
+    }
+  }
+
+  private ensureDatabase(): Database.Database {
+    if (!this.db) {
+      throw new Error('Database not available - SQLite features disabled');
+    }
+    return this.db;
+  }
 
   /**
    * Get all personas for a user
    */
   async getPersonas(userId: string = 'default'): Promise<Persona[]> {
+    if (!this.db) {
+      console.warn(
+        'PersonaModel: Database not available, returning empty personas list'
+      );
+      return [];
+    }
+
     try {
       const stmt = this.db.prepare(`
         SELECT id, user_id, name, description, model, parameters, avatar, background, 
@@ -81,7 +111,8 @@ export class PersonaModel {
     userId: string = 'default'
   ): Promise<Persona | null> {
     try {
-      const stmt = this.db.prepare(`
+      const db = this.ensureDatabase();
+      const stmt = db.prepare(`
         SELECT id, user_id, name, description, model, parameters, avatar, background, 
                embedding_model, memory_settings, mutation_settings, created_at, updated_at
         FROM personas 
@@ -118,10 +149,11 @@ export class PersonaModel {
     userId: string = 'default'
   ): Promise<Persona> {
     try {
+      const db = this.ensureDatabase();
       const id = uuidv4();
       const now = Date.now();
 
-      const stmt = this.db.prepare(`
+      const stmt = db.prepare(`
         INSERT INTO personas (id, user_id, name, description, model, parameters, avatar, background, 
                               embedding_model, memory_settings, mutation_settings, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -227,7 +259,8 @@ export class PersonaModel {
       values.push(id);
       values.push(userId);
 
-      const stmt = this.db.prepare(`
+      const db = this.ensureDatabase();
+      const stmt = db.prepare(`
         UPDATE personas 
         SET ${updates.join(', ')}
         WHERE id = ? AND user_id = ?
@@ -250,7 +283,8 @@ export class PersonaModel {
     userId: string = 'default'
   ): Promise<boolean> {
     try {
-      const stmt = this.db.prepare(`
+      const db = this.ensureDatabase();
+      const stmt = db.prepare(`
         DELETE FROM personas 
         WHERE id = ? AND user_id = ?
       `);
@@ -271,7 +305,8 @@ export class PersonaModel {
     userId: string = 'default'
   ): Promise<Persona | null> {
     try {
-      const stmt = this.db.prepare(`
+      const db = this.ensureDatabase();
+      const stmt = db.prepare(`
         SELECT id, user_id, name, description, model, parameters, avatar, background, 
                embedding_model, memory_settings, mutation_settings, created_at, updated_at
         FROM personas 
@@ -305,7 +340,8 @@ export class PersonaModel {
    */
   async getPersonasCount(userId: string = 'default'): Promise<number> {
     try {
-      const stmt = this.db.prepare(`
+      const db = this.ensureDatabase();
+      const stmt = db.prepare(`
         SELECT COUNT(*) as count 
         FROM personas 
         WHERE user_id = ?

@@ -22,6 +22,7 @@ import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
 import getDatabase, { isDatabaseInitialized } from './db.js';
 import { ChatSession, DocumentChunk, UserPreferences } from './types/index.js';
+import { encryptionService } from './services/encryptionService.js';
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -148,10 +149,16 @@ class StorageService {
         INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `);
+
+      // Encrypt sensitive user data
+      const encryptedEmail = user.email
+        ? encryptionService.encrypt(user.email)
+        : null;
+
       stmt.run(
         user.id,
         user.username,
-        user.email,
+        encryptedEmail,
         user.password_hash,
         user.role,
         user.created_at,
@@ -166,7 +173,14 @@ class StorageService {
     if (this.useSQLite) {
       const db = getDatabase();
       const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
-      return stmt.get(userId) as User | undefined;
+      const user = stmt.get(userId) as User | undefined;
+
+      if (user && user.email) {
+        // Decrypt email
+        user.email = encryptionService.decrypt(user.email);
+      }
+
+      return user;
     }
     return undefined;
   }
@@ -175,7 +189,14 @@ class StorageService {
     if (this.useSQLite) {
       const db = getDatabase();
       const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
-      return stmt.get(username) as User | undefined;
+      const user = stmt.get(username) as User | undefined;
+
+      if (user && user.email) {
+        // Decrypt email
+        user.email = encryptionService.decrypt(user.email);
+      }
+
+      return user;
     }
     return undefined;
   }
@@ -201,23 +222,41 @@ class StorageService {
 
       return sessions.map(session => {
         const messages = messagesStmt.all(session.id) as MessageRow[];
+
+        // Decrypt session data
+        const decryptedTitle = encryptionService.decrypt(session.title);
+
         return {
           id: session.id,
-          title: session.title,
+          title: decryptedTitle,
           model: session.model,
           personaId: session.persona_id || undefined,
           createdAt: session.created_at,
           updatedAt: session.updated_at,
-          messages: messages.map(msg => ({
-            id: msg.id,
-            role: msg.role as 'user' | 'assistant' | 'system',
-            content: msg.content,
-            timestamp: msg.timestamp,
-            model: msg.model,
-            images: msg.images ? JSON.parse(msg.images) : undefined,
-            statistics: msg.statistics ? JSON.parse(msg.statistics) : undefined,
-            artifacts: msg.artifacts ? JSON.parse(msg.artifacts) : undefined,
-          })),
+          messages: messages.map(msg => {
+            // Decrypt message data
+            const decryptedContent = encryptionService.decrypt(msg.content);
+            const decryptedImages = msg.images
+              ? JSON.parse(encryptionService.decrypt(msg.images))
+              : undefined;
+            const decryptedStatistics = msg.statistics
+              ? JSON.parse(encryptionService.decrypt(msg.statistics))
+              : undefined;
+            const decryptedArtifacts = msg.artifacts
+              ? JSON.parse(encryptionService.decrypt(msg.artifacts))
+              : undefined;
+
+            return {
+              id: msg.id,
+              role: msg.role as 'user' | 'assistant' | 'system',
+              content: decryptedContent,
+              timestamp: msg.timestamp,
+              model: msg.model,
+              images: decryptedImages,
+              statistics: decryptedStatistics,
+              artifacts: decryptedArtifacts,
+            };
+          }),
         };
       });
     } else {
@@ -255,22 +294,39 @@ class StorageService {
       `);
       const messages = messagesStmt.all(sessionId) as MessageRow[];
 
+      // Decrypt session data
+      const decryptedTitle = encryptionService.decrypt(session.title);
+
       return {
         id: session.id,
-        title: session.title,
+        title: decryptedTitle,
         model: session.model,
         createdAt: session.created_at,
         updatedAt: session.updated_at,
-        messages: messages.map(msg => ({
-          id: msg.id,
-          role: msg.role as 'user' | 'assistant' | 'system',
-          content: msg.content,
-          timestamp: msg.timestamp,
-          model: msg.model,
-          images: msg.images ? JSON.parse(msg.images) : undefined,
-          statistics: msg.statistics ? JSON.parse(msg.statistics) : undefined,
-          artifacts: msg.artifacts ? JSON.parse(msg.artifacts) : undefined,
-        })),
+        messages: messages.map(msg => {
+          // Decrypt message data
+          const decryptedContent = encryptionService.decrypt(msg.content);
+          const decryptedImages = msg.images
+            ? JSON.parse(encryptionService.decrypt(msg.images))
+            : undefined;
+          const decryptedStatistics = msg.statistics
+            ? JSON.parse(encryptionService.decrypt(msg.statistics))
+            : undefined;
+          const decryptedArtifacts = msg.artifacts
+            ? JSON.parse(encryptionService.decrypt(msg.artifacts))
+            : undefined;
+
+          return {
+            id: msg.id,
+            role: msg.role as 'user' | 'assistant' | 'system',
+            content: decryptedContent,
+            timestamp: msg.timestamp,
+            model: msg.model,
+            images: decryptedImages,
+            statistics: decryptedStatistics,
+            artifacts: decryptedArtifacts,
+          };
+        }),
       };
     } else {
       // Fallback to JSON
@@ -290,10 +346,14 @@ class StorageService {
           INSERT OR REPLACE INTO sessions (id, user_id, title, model, persona_id, created_at, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?)
         `);
+
+        // Encrypt sensitive session data
+        const encryptedTitle = encryptionService.encrypt(session.title);
+
         sessionStmt.run(
           session.id,
           userId,
-          session.title,
+          encryptedTitle,
           session.model,
           session.personaId || null,
           session.createdAt,
@@ -314,17 +374,29 @@ class StorageService {
           `);
 
           session.messages.forEach((message, index) => {
+            // Encrypt sensitive data before storing
+            const encryptedContent = encryptionService.encrypt(message.content);
+            const encryptedImages = message.images
+              ? encryptionService.encrypt(JSON.stringify(message.images))
+              : null;
+            const encryptedStatistics = message.statistics
+              ? encryptionService.encrypt(JSON.stringify(message.statistics))
+              : null;
+            const encryptedArtifacts = message.artifacts
+              ? encryptionService.encrypt(JSON.stringify(message.artifacts))
+              : null;
+
             insertMessageStmt.run(
               uuidv4(),
               session.id,
               message.role,
-              message.content,
+              encryptedContent,
               message.timestamp,
               index,
               message.model || null,
-              message.images ? JSON.stringify(message.images) : null,
-              message.statistics ? JSON.stringify(message.statistics) : null,
-              message.artifacts ? JSON.stringify(message.artifacts) : null
+              encryptedImages,
+              encryptedStatistics,
+              encryptedArtifacts
             );
           });
         }
@@ -429,8 +501,11 @@ class StorageService {
       const preferences: Record<string, unknown> = {};
       rows.forEach(row => {
         try {
-          preferences[row.key] = JSON.parse(row.value);
+          // Decrypt the preference value before parsing
+          const decryptedValue = encryptionService.decrypt(row.value);
+          preferences[row.key] = JSON.parse(decryptedValue);
         } catch {
+          // If decryption or parsing fails, use raw value
           preferences[row.key] = row.value;
         }
       });
@@ -482,14 +557,12 @@ class StorageService {
         `);
 
         Object.entries(preferences).forEach(([key, value]) => {
-          insertStmt.run(
-            uuidv4(),
-            userId,
-            key,
-            JSON.stringify(value),
-            now,
-            now
+          // Encrypt the preference value before storing
+          const encryptedValue = encryptionService.encrypt(
+            JSON.stringify(value)
           );
+
+          insertStmt.run(uuidv4(), userId, key, encryptedValue, now, now);
         });
       });
 
@@ -519,18 +592,31 @@ class StorageService {
       `);
       const rows = stmt.all(userId) as DocumentRow[];
 
-      return rows.map(row => ({
-        id: row.id,
-        filename: row.filename,
-        title: row.title,
-        content: row.content,
-        fileType: row.file_type as 'pdf' | 'txt' | undefined,
-        size: row.size,
-        sessionId: row.session_id,
-        uploadedAt: row.uploaded_at,
-        createdAt: row.created_at,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-      }));
+      return rows.map(row => {
+        // Decrypt document data
+        const decryptedTitle = row.title
+          ? encryptionService.decrypt(row.title)
+          : undefined;
+        const decryptedContent = row.content
+          ? encryptionService.decrypt(row.content)
+          : undefined;
+        const decryptedMetadata = row.metadata
+          ? JSON.parse(encryptionService.decrypt(row.metadata))
+          : undefined;
+
+        return {
+          id: row.id,
+          filename: row.filename,
+          title: decryptedTitle,
+          content: decryptedContent,
+          fileType: row.file_type as 'pdf' | 'txt' | undefined,
+          size: row.size,
+          sessionId: row.session_id,
+          uploadedAt: row.uploaded_at,
+          createdAt: row.created_at,
+          metadata: decryptedMetadata,
+        };
+      });
     } else {
       // Fallback to JSON
       try {
@@ -556,17 +642,28 @@ class StorageService {
 
       if (!row) return undefined;
 
+      // Decrypt document data
+      const decryptedTitle = row.title
+        ? encryptionService.decrypt(row.title)
+        : undefined;
+      const decryptedContent = row.content
+        ? encryptionService.decrypt(row.content)
+        : undefined;
+      const decryptedMetadata = row.metadata
+        ? JSON.parse(encryptionService.decrypt(row.metadata))
+        : undefined;
+
       return {
         id: row.id,
         filename: row.filename,
-        title: row.title,
-        content: row.content,
+        title: decryptedTitle,
+        content: decryptedContent,
         fileType: row.file_type as 'pdf' | 'txt' | undefined,
         size: row.size,
         sessionId: row.session_id,
         uploadedAt: row.uploaded_at,
         createdAt: row.created_at,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
+        metadata: decryptedMetadata,
       };
     } else {
       // Fallback to JSON
@@ -586,13 +683,24 @@ class StorageService {
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
+      // Encrypt sensitive document data
+      const encryptedTitle = document.title
+        ? encryptionService.encrypt(document.title)
+        : null;
+      const encryptedContent = document.content
+        ? encryptionService.encrypt(document.content)
+        : null;
+      const encryptedMetadata = document.metadata
+        ? encryptionService.encrypt(JSON.stringify(document.metadata))
+        : null;
+
       stmt.run(
         document.id,
         userId,
         document.filename,
-        document.title || null,
-        document.content || null,
-        document.metadata ? JSON.stringify(document.metadata) : null,
+        encryptedTitle,
+        encryptedContent,
+        encryptedMetadata,
         document.uploadedAt,
         document.createdAt || now,
         now
@@ -660,16 +768,27 @@ class StorageService {
       `);
       const rows = stmt.all(documentId) as DocumentChunkRow[];
 
-      return rows.map(row => ({
-        id: row.id,
-        documentId: row.document_id,
-        content: row.content,
-        embedding: row.embedding ? JSON.parse(row.embedding) : undefined,
-        chunkIndex: row.chunk_index,
-        startChar: row.start_char,
-        endChar: row.end_char,
-        metadata: row.metadata ? JSON.parse(row.metadata) : undefined,
-      }));
+      return rows.map(row => {
+        // Decrypt document chunk data
+        const decryptedContent = encryptionService.decrypt(row.content);
+        const decryptedEmbedding = row.embedding
+          ? JSON.parse(encryptionService.decrypt(row.embedding))
+          : undefined;
+        const decryptedMetadata = row.metadata
+          ? JSON.parse(encryptionService.decrypt(row.metadata))
+          : undefined;
+
+        return {
+          id: row.id,
+          documentId: row.document_id,
+          content: decryptedContent,
+          embedding: decryptedEmbedding,
+          chunkIndex: row.chunk_index,
+          startChar: row.start_char,
+          endChar: row.end_char,
+          metadata: decryptedMetadata,
+        };
+      });
     } else {
       // Fallback to JSON
       try {
@@ -708,14 +827,20 @@ class StorageService {
           `);
 
             chunks.forEach(chunk => {
+              // Encrypt chunk data
+              const encryptedContent = encryptionService.encrypt(chunk.content);
+              const encryptedEmbedding = chunk.embedding
+                ? encryptionService.encrypt(JSON.stringify(chunk.embedding))
+                : null;
+
               insertStmt.run(
                 chunk.id,
                 documentId,
                 chunk.chunkIndex,
-                chunk.content,
+                encryptedContent,
                 chunk.startChar || null,
                 chunk.endChar || null,
-                chunk.embedding ? JSON.stringify(chunk.embedding) : null,
+                encryptedEmbedding,
                 now
               );
             });

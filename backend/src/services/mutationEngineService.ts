@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { getDatabase } from '../db.js';
+import { getDatabaseSafe } from '../db.js';
 import { memoryService } from './memoryService.js';
 import {
   PersonaState,
@@ -26,13 +26,29 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 export class MutationEngineService {
-  private db = getDatabase();
+  private db = getDatabaseSafe();
 
   constructor() {
     this.initializeTables();
   }
 
+  /**
+   * Ensure database is available
+   */
+  private ensureDatabase() {
+    if (!this.db) {
+      throw new Error('Database not available');
+    }
+    return this.db;
+  }
+
   private initializeTables(): void {
+    if (!this.db) {
+      console.warn(
+        'MutationEngineService: Database not available, skipping table initialization'
+      );
+      return;
+    }
     // Persona states table
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS persona_states (
@@ -81,7 +97,8 @@ export class MutationEngineService {
       version: 1,
     };
 
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       INSERT INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
@@ -105,7 +122,8 @@ export class MutationEngineService {
     personaId: string,
     userId: string
   ): Promise<PersonaState | null> {
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       SELECT persona_id, user_id, runtime_state, mutation_log, last_updated, version
       FROM persona_states
       WHERE persona_id = ? AND user_id = ?
@@ -140,7 +158,8 @@ export class MutationEngineService {
    * Save persona state
    */
   async savePersonaState(state: PersonaState): Promise<void> {
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       INSERT OR REPLACE INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
@@ -579,7 +598,8 @@ export class MutationEngineService {
    * Reset persona state
    */
   async resetPersonaState(personaId: string, userId: string): Promise<void> {
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       DELETE FROM persona_states
       WHERE persona_id = ? AND user_id = ?
     `);

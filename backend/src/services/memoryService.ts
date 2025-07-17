@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { getDatabase } from '../db.js';
+import { getDatabaseSafe } from '../db.js';
 import ollamaService from './ollamaService.js';
 import {
   PersonaMemoryEntry,
@@ -25,7 +25,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 
 export class MemoryService {
-  private db = getDatabase();
+  private db = getDatabaseSafe();
   private embeddingModels: EmbeddingModel[] = [
     {
       id: 'nomic-embed-text',
@@ -68,7 +68,24 @@ export class MemoryService {
     this.initializeTables();
   }
 
+  /**
+   * Ensure database is available
+   */
+  private ensureDatabase() {
+    if (!this.db) {
+      throw new Error('Database not available');
+    }
+    return this.db;
+  }
+
   private initializeTables(): void {
+    if (!this.db) {
+      console.warn(
+        'MemoryService: Database not available, skipping table initialization'
+      );
+      return;
+    }
+
     // Persona memories table
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS persona_memories (
@@ -139,7 +156,8 @@ export class MemoryService {
     // Generate embedding
     const embedding = await this.generateEmbedding(content, embeddingModel);
 
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       INSERT INTO persona_memories (
         id, user_id, persona_id, content, embedding, timestamp, context, importance_score
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -211,7 +229,8 @@ export class MemoryService {
     }
 
     // Get all memories for this user/persona with embeddings
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       SELECT id, user_id, persona_id, content, embedding, timestamp, context, importance_score
       FROM persona_memories
       WHERE user_id = ? AND persona_id = ? AND embedding IS NOT NULL
@@ -283,7 +302,8 @@ export class MemoryService {
     limit = 100,
     offset = 0
   ): Promise<PersonaMemoryEntry[]> {
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       SELECT id, user_id, persona_id, content, embedding, timestamp, context, importance_score
       FROM persona_memories
       WHERE user_id = ? AND persona_id = ?
@@ -324,7 +344,8 @@ export class MemoryService {
       `[MEMORY-DEBUG] getMemoryCount called - userId: ${userId}, personaId: ${personaId}`
     );
 
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       SELECT COUNT(*) as count
       FROM persona_memories
       WHERE user_id = ? AND persona_id = ?
@@ -370,7 +391,8 @@ export class MemoryService {
    * Delete all memories for a persona (wipe)
    */
   async wipeMemories(userId: string, personaId: string): Promise<number> {
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       DELETE FROM persona_memories
       WHERE user_id = ? AND persona_id = ?
     `);
@@ -398,7 +420,8 @@ export class MemoryService {
   ): Promise<number> {
     let imported = 0;
 
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       INSERT INTO persona_memories (
         id, user_id, persona_id, content, embedding, timestamp, context, importance_score
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -435,7 +458,8 @@ export class MemoryService {
     memoryId: string,
     importanceScore: number
   ): Promise<boolean> {
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       UPDATE persona_memories
       SET importance_score = ?
       WHERE id = ?
@@ -455,7 +479,8 @@ export class MemoryService {
   ): Promise<number> {
     const cutoffTimestamp = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
 
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       DELETE FROM persona_memories
       WHERE user_id = ? AND persona_id = ? AND timestamp < ?
       AND importance_score < 0.7

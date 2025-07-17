@@ -113,11 +113,25 @@ export const useChat = (sessionId: string) => {
     });
 
     websocketService.onMessage('error', (data: unknown) => {
-      const errorData = data as { error: string };
+      const errorData = data as {
+        error: string;
+        code?: string;
+        sessionId?: string;
+      };
       setIsStreaming(false);
       setStreamingMessage('');
       setIsGenerating(false);
       streamingMessageIdRef.current = null;
+
+      // Handle session not found error by redirecting to home
+      if (errorData.code === 'SESSION_NOT_FOUND') {
+        console.warn('Session not found, redirecting to create new session...');
+        toast.error('Session not found. Creating a new session...');
+        // Navigate to home to create a new session
+        window.location.href = '/';
+        return;
+      }
+
       toast.error(errorData.error);
     });
 

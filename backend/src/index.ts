@@ -15,9 +15,25 @@
  * limitations under the License.
  */
 
-// Load environment variables first
-import dotenv from 'dotenv';
-dotenv.config();
+// Load environment variables FIRST before any other imports
+import './env.js';
+
+/*
+ * Libre WebUI
+ * Copyright (C) 2025 Kroonen AI, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 import express from 'express';
 import rateLimit from 'express-rate-limit';
@@ -26,8 +42,6 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 import {
   errorHandler,
@@ -55,10 +69,6 @@ import {
   OllamaChatMessage,
   GenerationStatistics,
 } from './types/index.js';
-
-// Get current directory for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -308,7 +318,14 @@ wss.on('connection', (ws, req) => {
           ws.send(
             JSON.stringify({
               type: 'error',
-              data: { error: 'Session not found' },
+              data: {
+                error: 'Session not found',
+                code: 'SESSION_NOT_FOUND',
+                message:
+                  'The requested session does not exist or does not belong to the current user. Please create a new session.',
+                sessionId: sessionId,
+                userId: userId,
+              },
             })
           );
           return;

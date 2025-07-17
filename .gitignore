@@ -84,8 +84,10 @@ data.sqlite
 # Vite
 .vite/
 
-# Installed plugins
+# Installed plugins & backend data
 backend/plugins/*
 backend/documents.json
 backend/document-chunks.json
 backend/data.sqlite.backup
+backend/backend/data/data.sqlite-shm
+backend/backend/data/data.sqlite-wal

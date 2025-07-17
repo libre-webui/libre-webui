@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { getDatabase } from '../db.js';
+import { getDatabaseSafe } from '../db.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -53,13 +53,24 @@ export interface UserPublic {
 }
 
 export class UserModel {
-  private db = getDatabase();
+  private db = getDatabaseSafe();
+
+  /**
+   * Ensure database is available
+   */
+  private ensureDatabase() {
+    if (!this.db) {
+      throw new Error('Database not available');
+    }
+    return this.db;
+  }
 
   /**
    * Get all users (excluding the default system user)
    */
   getAllUsers(): UserPublic[] {
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       SELECT id, username, email, role, created_at, updated_at
       FROM users
       WHERE id != 'default'
@@ -81,7 +92,8 @@ export class UserModel {
    * Get user by ID
    */
   getUserById(id: string): UserPublic | null {
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       SELECT id, username, email, role, created_at, updated_at
       FROM users
       WHERE id = ?
@@ -104,7 +116,8 @@ export class UserModel {
    * Get user by username
    */
   getUserByUsername(username: string): User | null {
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       SELECT *
       FROM users
       WHERE username = ?
@@ -121,7 +134,8 @@ export class UserModel {
     const now = Date.now();
     const passwordHash = await bcrypt.hash(userData.password, 12);
 
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
@@ -189,7 +203,8 @@ export class UserModel {
     values.push(now);
     values.push(id);
 
-    const stmt = this.db.prepare(`
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(`
       UPDATE users
       SET ${updates.join(', ')}
       WHERE id = ?
@@ -204,7 +219,8 @@ export class UserModel {
    * Delete a user
    */
   deleteUser(id: string): boolean {
-    const stmt = this.db.prepare('DELETE FROM users WHERE id = ?');
+    const db = this.ensureDatabase();
+    const stmt = db.prepare('DELETE FROM users WHERE id = ?');
     const result = stmt.run(id);
     return result.changes > 0;
   }
@@ -227,7 +243,8 @@ export class UserModel {
    * Check if username exists
    */
   usernameExists(username: string): boolean {
-    const stmt = this.db.prepare('SELECT 1 FROM users WHERE username = ?');
+    const db = this.ensureDatabase();
+    const stmt = db.prepare('SELECT 1 FROM users WHERE username = ?');
     return !!stmt.get(username);
   }
 
@@ -235,7 +252,8 @@ export class UserModel {
    * Check if email exists
    */
   emailExists(email: string): boolean {
-    const stmt = this.db.prepare('SELECT 1 FROM users WHERE email = ?');
+    const db = this.ensureDatabase();
+    const stmt = db.prepare('SELECT 1 FROM users WHERE email = ?');
     return !!stmt.get(email);
   }
 
@@ -243,7 +261,8 @@ export class UserModel {
    * Get user count (excluding the default system user)
    */
   getUserCount(): number {
-    const stmt = this.db.prepare(
+    const db = this.ensureDatabase();
+    const stmt = db.prepare(
       'SELECT COUNT(*) as count FROM users WHERE id != ?'
     );
     const result = stmt.get('default') as { count: number };
