@@ -1,3 +1,4 @@
+import './src/env.js'; // Load environment variables
 import { encryptionService } from './src/services/encryptionService.js';
 
 try {
@@ -42,12 +43,20 @@ try {
     const nullDecrypted = encryptionService.decrypt(nullTest);
     console.log('✅ Empty string test:', nullDecrypted === '' ? 'PASSED' : 'FAILED');
   } catch (error) {
-    console.log('❌ Empty string test: FAILED -', error.message);
+    if (error instanceof Error) {
+      console.log('❌ Empty string test: FAILED -', error.message);
+    } else {
+      console.log('❌ Empty string test: FAILED -', String(error));
+    }
   }
 
   console.log('\n🎉 Encryption service is ready for production!');
   console.log('All sensitive data will be encrypted before storage in the database.');
 } catch (error) {
-  console.error('❌ Error running encryption tests:', error);
+  if (error instanceof Error) {
+    console.error('❌ Error running encryption tests:', error.message);
+  } else {
+    console.error('❌ Error running encryption tests:', String(error));
+  }
   process.exit(1);
 }

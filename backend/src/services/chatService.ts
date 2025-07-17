@@ -27,9 +27,6 @@ import preferencesService from './preferencesService.js';
 import { personaService } from './personaService.js';
 import { memoryService } from './memoryService.js';
 import { mutationEngineService } from './mutationEngineService.js';
-// Encryption service imported for future use
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { encryptionService } from './encryptionService.js';
 
 class ChatService {
   private sessions: Map<string, ChatSession> = new Map();

@@ -16,6 +16,8 @@
  */
 
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
 /**
  * Encryption service for sensitive data
@@ -26,21 +28,80 @@ export class EncryptionService {
   private encryptionKey: Buffer;
   private algorithm = 'aes-256-gcm';
 
+  /**
+   * Automatically add the encryption key to the .env file
+   */
+  private addKeyToEnvFile(encryptionKey: string): void {
+    try {
+      const envPath = path.join(process.cwd(), '.env');
+      let envContent = '';
+
+      // Read existing .env file if it exists
+      if (fs.existsSync(envPath)) {
+        envContent = fs.readFileSync(envPath, 'utf8');
+
+        // Check if ENCRYPTION_KEY already exists (shouldn't happen, but just in case)
+        if (envContent.includes('ENCRYPTION_KEY=')) {
+          console.warn(
+            '⚠️  ENCRYPTION_KEY already exists in .env file, skipping auto-generation'
+          );
+          return;
+        }
+      }
+
+      // Add the encryption key to the content
+      const keyLine = `\n# Database Encryption\n# 64-character encryption key for protecting sensitive data\nENCRYPTION_KEY=${encryptionKey}\n`;
+
+      if (envContent && !envContent.endsWith('\n')) {
+        envContent += '\n';
+      }
+
+      envContent += keyLine;
+
+      // Write back to .env file
+      fs.writeFileSync(envPath, envContent, 'utf8');
+      console.info(`✅ Automatically added ENCRYPTION_KEY to .env file`);
+    } catch (error) {
+      console.error(
+        '❌ Failed to automatically add ENCRYPTION_KEY to .env file:',
+        error
+      );
+      console.warn(
+        '   Please manually add the following line to your .env file:'
+      );
+      console.warn(`   ENCRYPTION_KEY=${encryptionKey}`);
+    }
+  }
+
   private constructor() {
     // Get encryption key from environment or generate one
     const keyString = process.env.ENCRYPTION_KEY;
     if (keyString) {
+      if (keyString.length !== 64) {
+        throw new Error(
+          'ENCRYPTION_KEY must be exactly 64 hex characters (32 bytes)'
+        );
+      }
       this.encryptionKey = Buffer.from(keyString, 'hex');
       if (this.encryptionKey.length !== 32) {
-        throw new Error('ENCRYPTION_KEY must be 64 hex characters (32 bytes)');
+        throw new Error('Invalid ENCRYPTION_KEY: hex decoding failed');
       }
     } else {
-      // Generate a new key and log it (for development only)
+      // Generate a new key and automatically add it to .env file
       this.encryptionKey = crypto.randomBytes(32);
+      const keyString = this.encryptionKey.toString('hex');
+
       console.warn(
-        `⚠️  No ENCRYPTION_KEY provided. Generated key: ${this.encryptionKey.toString('hex')}`
+        `⚠️  No ENCRYPTION_KEY provided. Generated key: ${keyString}`
       );
-      console.warn('   Add this to your .env file for production use');
+
+      // Automatically add the key to .env file
+      this.addKeyToEnvFile(keyString);
+
+      console.info(
+        '🔐 Generated encryption key has been automatically added to your .env file'
+      );
+      console.info('   Restart the application to use the persistent key');
     }
   }
 
@@ -85,20 +146,32 @@ export class EncryptionService {
    */
   public decrypt(encryptedData: string): string {
     if (!encryptedData || !encryptedData.includes(':')) {
-      return encryptedData; // Return as-is if not encrypted
+      // Data doesn't contain colons, likely unencrypted
+      console.debug(
+        'Decryption: Data appears to be unencrypted (no colons found)'
+      );
+      return encryptedData;
     }
 
     try {
       const parts = encryptedData.split(':');
       if (parts.length !== 3) {
-        // Might be unencrypted data, return as-is for backward compatibility
         console.warn(
-          'Decryption: Invalid format, treating as unencrypted data'
+          `Decryption: Invalid format (expected 3 parts, got ${parts.length}), treating as unencrypted data`
         );
         return encryptedData;
       }
 
       const [ivHex, authTagHex, encrypted] = parts;
+
+      // Validate hex format before attempting to convert
+      if (!/^[a-fA-F0-9]+$/.test(ivHex) || !/^[a-fA-F0-9]+$/.test(authTagHex)) {
+        console.warn(
+          'Decryption: Invalid hex format, treating as unencrypted data'
+        );
+        return encryptedData;
+      }
+
       const iv = Buffer.from(ivHex, 'hex');
       const authTag = Buffer.from(authTagHex, 'hex');
 
