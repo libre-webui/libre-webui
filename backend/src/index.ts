@@ -230,7 +230,19 @@ app.use('/api/preferences', preferencesRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentRoutes);
 
-app.use('/api/personas', optionalAuth, personaRoutes);
+// Rate limiter for the /api/personas route
+const personasRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 
 // API-only backend - no static file serving
 
