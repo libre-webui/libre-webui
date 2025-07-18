@@ -1,3 +1,11 @@
+---
+sidebar_position: 2
+title: "Persona Development Framework" 
+description: "Create AI personalities with memory systems, adaptive learning, and persistent state management. Advanced persona creation and management."
+slug: /PERSONA_DEVELOPMENT_FRAMEWORK
+keywords: [persona development, ai personalities, memory systems, adaptive learning, persona DNA, character development]
+---
+
 # Persona Development Framework
 
 *"These violent delights have violent ends... but what if they remembered?"*
@@ -273,11 +281,3 @@ No breaking changes or manual migration required.
 ---
 
 *"The maze wasn't meant for you... but the memories? Those are yours to keep."*
-
-## Contributing
-
-See [CONTRIBUTORS.md](../CONTRIBUTORS.md) for guidelines on contributing to the Persona Development Framework.
-
-## License
-
-Licensed under the Apache License, Version 2.0. See [LICENSE](../LICENSE) for details.

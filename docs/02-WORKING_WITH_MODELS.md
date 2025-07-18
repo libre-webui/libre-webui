@@ -1,40 +1,147 @@
+---
+sidebar_position: 3
+title: "Working with AI Models"
+description: "Complete guide to 207+ AI models in Libre WebUI. Advanced model management with Ollama, OpenAI, Claude, Gemini, and more. Superior features for AI enthusiasts."
+slug: /WORKING_WITH_MODELS
+keywords: [libre webui ai models, 207+ ai models, ollama models, ai model management, gemma, llama, phi4, deepseek, qwen, claude models, openai models, local ai models, open webui alternative]
+image: /img/docusaurus-social-card.jpg
+---
+
 # 🤖 Working with AI Models in Libre WebUI
 
 This guide explains how to use AI models in Libre WebUI. Whether you're new to AI or an experienced user, this guide will help you get the most out of your local AI assistant.
+
+:::tip Reading Time
+**~8 minutes** - Complete guide from basics to advanced model management
+:::
 
 ## 🎯 What You Can Do
 
 Libre WebUI supports **all the features** that modern AI assistants offer:
 
-### 💬 **Chat & Conversations**
-- Have natural conversations with AI models
-- Get streaming responses (words appear as they're generated)
-- Use advanced settings like temperature and creativity controls
-- Create custom system prompts to change the AI's personality
+<div className="container">
+  <div className="row">
+    <div className="col col--6">
+      <div className="card margin--sm">
+        <div className="card__header">
+          <h4>💬 Chat & Conversations</h4>
+        </div>
+        <div className="card__body">
+          <ul>
+            <li>Have natural conversations with AI models</li>
+            <li>Get streaming responses (words appear as they're generated)</li>
+            <li>Use advanced settings like temperature and creativity controls</li>
+            <li>Create custom system prompts to change the AI's personality</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div className="col col--6">
+      <div className="card margin--sm">
+        <div className="card__header">
+          <h4>🖼️ Vision & Images</h4>
+        </div>
+        <div className="card__body">
+          <ul>
+            <li>Upload images and ask questions about them</li>
+            <li>Analyze charts, diagrams, and photographs</li>
+            <li>Get help with visual tasks like describing scenes or reading text in images</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div className="row">
+    <div className="col col--6">
+      <div className="card margin--sm">
+        <div className="card__header">
+          <h4>📝 Structured Responses</h4>
+        </div>
+        <div className="card__body">
+          <ul>
+            <li>Request responses in specific formats (JSON, lists, etc.)</li>
+            <li>Get organized summaries and analysis</li>
+            <li>Use predefined templates for common tasks</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div className="col col--6">
+      <div className="card margin--sm">
+        <div className="card__header">
+          <h4>🛠️ Model Management</h4>
+        </div>
+        <div className="card__body">
+          <ul>
+            <li>Download and manage AI models locally</li>
+            <li>Switch between different models for different tasks</li>
+            <li>Monitor model performance and memory usage</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-### 🖼️ **Vision & Images**
-- Upload images and ask questions about them
-- Analyze charts, diagrams, and photographs
-- Get help with visual tasks like describing scenes or reading text in images
-
-### 📝 **Structured Responses**
-- Request responses in specific formats (JSON, lists, etc.)
-- Get organized summaries and analysis
-- Use predefined templates for common tasks
-
-### 🛠️ **Model Management**
-- Download and manage AI models locally
-- Switch between different models for different tasks
-- Monitor model performance and memory usage
-
-## 🧠 Understanding AI Models
+---
 
 ## 🧠 AI Models Guide
 
-### **Starter Models (Recommended)**
-- **gemma3:4b** - Best for most users (4GB)
-- **llama3.2:1b** - Fastest, smallest (1GB)
-- **phi4:14b** - Microsoft's powerful model (14GB)
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+<Tabs>
+  <TabItem value="starter" label="🌱 Starter Models" default>
+    
+**Perfect for newcomers and everyday use:**
+
+| Model | Size | Memory | Best For |
+|-------|------|--------|----------|
+| **gemma3:4b** | ~4GB | 8GB RAM | **Most users** - Best balance |
+| **llama3.2:1b** | ~1GB | 4GB RAM | **Fast responses** - Ultra-quick |
+| **phi4:14b** | ~14GB | 16GB RAM | **Power users** - Microsoft's best |
+
+:::tip Recommended Starting Point
+**gemma3:4b** is currently the best single-GPU model for most users. Great balance of speed and intelligence.
+:::
+
+  </TabItem>
+  <TabItem value="advanced" label="🚀 Advanced Models">
+    
+**For users with powerful hardware:**
+
+| Model | Size | Memory | Best For |
+|-------|------|--------|----------|
+| **llama3.3:70b** | ~40GB | 64GB RAM | **State-of-the-art** performance |
+| **deepseek-r1:32b** | ~16GB | 32GB RAM | **Advanced reasoning** |
+| **devstral:24b** | ~12GB | 24GB RAM | **Best for coding** |
+| **qwen2.5vl:32b** | ~16GB | 32GB RAM | **Image understanding** |
+
+:::warning Hardware Requirements
+These models require significant RAM and processing power. Check your system specifications first.
+:::
+
+  </TabItem>
+  <TabItem value="specialized" label="🎯 Specialized Models">
+    
+**For specific use cases:**
+
+| Model | Size | Specialty | Use Case |
+|-------|------|-----------|----------|
+| **qwen2.5vl:3b** | ~3GB | **Vision** | Analyze images and photos |
+| **devstral:24b** | ~12GB | **Coding** | Programming assistance |
+| **deepseek-r1:32b** | ~16GB | **Reasoning** | Complex problem solving |
+| **llama4:16x17b** | ~16GB | **Multimodal** | Text, images, and more |
+
+:::info Model Selection Tips
+- **Vision tasks** → qwen2.5vl models
+- **Programming** → devstral models  
+- **Reasoning** → deepseek-r1 models
+- **General use** → gemma3 or llama3 models
+:::
+
+  </TabItem>
+</Tabs>
 
 ### **Advanced Models**
 - **llama3.3:70b** - State-of-the-art performance (40GB+)

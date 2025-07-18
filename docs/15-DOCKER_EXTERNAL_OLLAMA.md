@@ -1,3 +1,12 @@
+---
+sidebar_position: 1
+title: "Docker External Ollama Setup"
+description: "Simple Docker deployment for Libre WebUI with external Ollama. Complete guide for Docker Compose, networking, and container management."
+slug: /DOCKER_EXTERNAL_OLLAMA
+keywords: [libre webui docker, docker external ollama, easy docker ai setup, libre webui vs open webui docker, docker compose ai, container ai deployment, ollama docker network, simplified docker setup]
+image: /img/docusaurus-social-card.jpg
+---
+
 # 🐳 Docker with External Ollama Setup
 
 This guide covers running Libre WebUI in Docker while connecting to an external Ollama instance running on your host machine.
@@ -205,7 +214,5 @@ docker-compose -f docker-compose.external-ollama.yml up -d --build
 ```
 
 ---
-
-**💡 Need help with the standard Docker setup?** See the main [Docker documentation](../DOCKER.md).
 
 **🚀 Ready to start chatting?** Visit `http://localhost:8080` after running the setup commands above.

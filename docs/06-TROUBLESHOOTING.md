@@ -1,60 +1,89 @@
+---
+sidebar_position: 1
+title: "Troubleshooting Guide"
+description: "Complete troubleshooting guide for Libre WebUI. Fast problem resolution with detailed solutions for Docker, Ollama, models, and performance issues."
+slug: /TROUBLESHOOTING
+keywords: [libre webui troubleshooting, libre webui problems, ollama connection problems, docker ai issues, ai model problems, libre webui debugging, local ai troubleshooting, open webui alternative support]
+image: /img/docusaurus-social-card.jpg
+---
+
 # 🔧 Troubleshooting: Quick Fixes for Common Issues
 
 Having trouble with Libre WebUI? Don't worry! Most issues have simple solutions. Let's get you back to chatting with AI quickly.
+
+:::tip Quick Help
+**90% of issues** are solved by checking these three things: Ollama running, models downloaded, and backend/frontend started.
+:::
 
 ## 🚨 Most Common Issue: "Can't Create New Chat"
 
 **This usually means one of three things is missing. Let's check them in order:**
 
 ### ✅ **Quick Fix: The One-Command Solution**
+
 If you have the start script, try this first:
+
 ```bash
 cd /home/rob/Documents/libre-webui-dev
 ./start.sh
 ```
 
+:::success Success Indicator
 **This should start everything automatically!** If it works, you're done! 🎉
+:::
 
 ---
 
-## � **Step-by-Step Diagnosis**
+## 🔍 **Step-by-Step Diagnosis**
 
 If the quick fix didn't work, let's figure out what's wrong:
 
-### **1️⃣ Is Ollama Running?**
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
+<Tabs>
+  <TabItem value="ollama" label="1️⃣ Ollama Running?" default>
+    
 **The Problem:** Ollama is the AI engine. Without it, there's no AI to chat with.
 
-**How to Check:**
+**Check if installed:**
 ```bash
 ollama --version
 ```
 
-**If you see an error like "command not found":**
+:::danger Command Not Found?
+**If you see "command not found":**
 - 📥 **Install Ollama**: Go to [ollama.ai](https://ollama.ai) and download for your system
 - 💻 **Restart your terminal** after installation
+:::
 
-**If you see a version number:**
+:::success Version Number Shown?
+**If you see a version number, start Ollama:**
 ```bash
 ollama serve
 ```
-This starts the Ollama service. **Keep this terminal open!**
+**Keep this terminal open!**
+:::
 
-### **2️⃣ Do You Have AI Models?**
-
+  </TabItem>
+  <TabItem value="models" label="2️⃣ Models Downloaded?">
+    
 **The Problem:** Ollama is running but has no AI "brains" to use.
 
-**How to Check:**
+**Check available models:**
 ```bash
 ollama list
 ```
 
+:::warning Empty List?
 **If the list is empty or shows an error:**
+
+**Download a recommended model:**
 ```bash
-# Download the current best single-GPU model (recommended)
+# Current best single-GPU model (recommended)
 ollama pull gemma3:4b
 
-# Or download an ultra-fast one for slower computers
+# Or ultra-fast for slower computers
 ollama pull llama3.2:1b
 
 # For advanced users with good hardware
@@ -62,34 +91,44 @@ ollama pull llama3.3:70b
 ```
 
 **Wait for the download to finish** (1-32GB depending on the model).
+:::
 
-### **3️⃣ Is the Backend Running?**
-
+  </TabItem>
+  <TabItem value="backend" label="3️⃣ Backend Running?">
+    
 **The Problem:** The backend connects your browser to Ollama.
 
-**How to Start It:**
+**Start the backend:**
 ```bash
 cd backend
 npm install    # Only needed the first time
 npm run dev
 ```
 
+:::success Expected Output
 **You should see:** `Server running on port 3001` or similar.
 **Keep this terminal open!**
+:::
 
-### **4️⃣ Is the Frontend Running?**
-
+  </TabItem>
+  <TabItem value="frontend" label="4️⃣ Frontend Running?">
+    
 **The Problem:** The frontend is the beautiful interface you see in your browser.
 
-**How to Start It:**
+**Start the frontend:**
 ```bash
 cd frontend  
 npm install    # Only needed the first time
 npm run dev
 ```
 
+:::success Expected Output
 **You should see:** A message with a local URL like `http://localhost:5173`
 **Keep this terminal open!**
+:::
+
+  </TabItem>
+</Tabs>
 
 ---
 
@@ -145,7 +184,7 @@ kill -9 XXXX
 
 ---
 
-## � **Performance Issues**
+## ⚡ **Performance Issues**
 
 ### **AI Responses Are Very Slow**
 **Solutions:**

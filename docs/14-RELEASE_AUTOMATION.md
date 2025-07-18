@@ -1,3 +1,11 @@
+---
+sidebar_position: 2
+title: "Release Automation"
+description: "Automated release system with conventional commits, changelog generation, and deployment workflows."
+slug: /RELEASE_AUTOMATION
+keywords: [release automation, conventional commits, changelog, deployment, ci cd, versioning]
+---
+
 # Release Automation Guide
 
 This guide explains how to use the automated release system for Libre WebUI, which automatically generates changelogs based on conventional commits.

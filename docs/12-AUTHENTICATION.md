@@ -1,6 +1,17 @@
+---
+sidebar_position: 1
+title: "Authentication & Security"
+description: "Advanced authentication and security in Libre WebUI. Comprehensive user management with role-based access control, JWT security, and privacy protection."
+slug: /AUTHENTICATION
+keywords: [libre webui authentication, secure ai interface, privacy-first authentication, role-based access control, jwt security, user management ai, secure local ai, open webui alternative security]
+image: /img/docusaurus-social-card.jpg
+---
+
 # Libre WebUI Authentication System
 
-This document describes the comprehensive authentication and user management system implemented### Default Admin User
+This document describes the comprehensive authentication and user management system implemented in Libre WebUI.
+
+## Default Admin User
 
 ### First-Time Setup Experience
 When no users exist in the database, Libre WebUI presents a beautiful first-time setup wizard that guides users through creating the initial admin account. This setup experience:

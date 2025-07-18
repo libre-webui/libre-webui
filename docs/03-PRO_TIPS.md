@@ -1,27 +1,115 @@
+---
+sidebar_position: 1
+title: "Pro Tips & Advanced Features"
+description: "Advanced workflows and power user techniques for Libre WebUI. Exclusive productivity features including system prompts, model optimization, and expert workflows."
+slug: /PRO_TIPS
+keywords: [libre webui pro tips, advanced ai workflows, power user ai, system prompts, ai optimization, productivity ai, advanced ai techniques, expert ai usage, open webui alternative]
+image: /img/docusaurus-social-card.jpg
+---
+
 # 🎯 Pro Tips: Advanced Workflows
 
 Ready to become a power user? Here are advanced techniques to get more from Libre WebUI.
 
-## 🚀 Workflow Ideas
+:::tip Reading Time
+**~10 minutes** to master advanced workflows that will transform how you use AI
+:::
 
-### **Writing Assistant**
-1. Set a creative system prompt:
-   ```
-   You are a creative writing assistant. Help me brainstorm, outline, and refine stories.
-   ```
-2. Use structured outputs (JSON, lists, etc.)
-3. Switch models: `llama3.2:3b` for speed, `llama3.3:70b` for complex work
+## 🚀 Power User Workflows
 
-### **Business Productivity**
-1. Email assistant setup:
-   ```
-   You are a professional communication assistant. Help me write clear business communications.
-   ```
-2. Document processing with `qwen2.5vl:32b` for images
-3. Generate summaries and action items
+Master these proven workflows to maximize your productivity:
 
-### **Programming Helper**
-1. Use `devstral:24b` for advanced coding
+## ✍️ Writing Assistant Workflow
+
+**Perfect for content creators, authors, and professional writers:**
+
+**1. Set up your creative assistant:**
+```
+You are a creative writing assistant. Help me brainstorm, outline, and refine stories. 
+Focus on character development, plot structure, and engaging dialogue.
+```
+
+**2. Use structured outputs:**
+- Request outlines in JSON format
+- Ask for character profiles in lists
+- Get plot summaries in markdown
+
+**3. Model strategy:**
+- `llama3.2:3b` for quick brainstorming
+- `llama3.3:70b` for complex narrative analysis
+- `gemma3:4b` for balanced writing assistance
+
+:::tip Writing Workflow
+Start with fast models for ideas, then switch to powerful models for refinement and detailed work.
+:::
+
+## 💼 Business Productivity Workflow
+
+**Streamline your professional communication and analysis:**
+
+**1. Professional communication setup:**
+```
+You are a professional communication assistant. Help me write clear, concise business communications. 
+Focus on clarity, professionalism, and actionable outcomes.
+```
+
+**2. Document processing workflow:**
+
+- Use `qwen2.5vl:32b` for analyzing uploaded charts/images
+- Generate summaries and action items
+- Create meeting notes and follow-ups
+
+**3. Email assistance patterns:**
+
+- "Draft a follow-up email for..."
+- "Summarize this document and highlight key points"
+- "Create a professional response to..."
+
+## 💻 Programming Helper Workflow
+
+**For developers and technical professionals:**
+
+**1. Use `devstral:24b` for advanced coding:**
+
+- Complex architecture design
+- Code reviews and optimization
+- Debugging assistance
+
+**2. Code analysis workflow:**
+
+- Upload code screenshots for analysis
+- Get debugging help with context
+- Request architectural improvements
+
+**3. Development patterns:**
+
+- "Review this code for security issues"
+- "Optimize this algorithm for performance"
+- "Explain this complex codebase"
+
+## 🔬 Research & Analysis Workflow
+
+**For academics, analysts, and researchers:**
+
+**1. Multi-model research strategy:**
+
+- Fast models for initial exploration
+- Larger models for deep analysis
+- Vision models for chart/graph analysis
+
+**2. Research workflow:**
+
+- Upload visual data for analysis
+- Generate structured research summaries
+- Create comparative analyses
+
+**3. Analysis patterns:**
+
+- "What are the implications of..."
+- "Compare and contrast these approaches"
+- "Synthesize findings from these sources"
+
+---
 2. Upload code screenshots for analysis
 3. Get debugging help and code reviews
 

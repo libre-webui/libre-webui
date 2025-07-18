@@ -1,15 +1,59 @@
+---
+sidebar_position: 2
+title: "Demo Mode"
+description: "Try Libre WebUI without installation. Experience the full interface with simulated AI responses in your browser."
+slug: /DEMO_MODE
+keywords: [demo mode, try online, no installation, preview, test interface]
+---
+
 # 🎭 Demo Mode: Try Before You Install
 
 Want to explore Libre WebUI without setting up Ollama? Demo Mode lets you experience the interface with simulated AI responses.
 
+:::tip Zero Setup Required
+**Try immediately** in your browser - no downloads, installations, or technical setup needed!
+:::
+
 ## 🌟 What is Demo Mode?
 
-Demo Mode is a special version of Libre WebUI that runs without requiring Ollama or any AI models to be installed. It's perfect for:
+Demo Mode is a special version of Libre WebUI that runs without requiring Ollama or any AI models to be installed. 
 
-- **🚀 Trying out the interface** before committing to a full setup
-- **📱 Showcasing features** on devices without AI capabilities  
-- **🎨 Testing the UI** during development
-- **📖 Learning** how the interface works
+<div className="container">
+  <div className="row">
+    <div className="col col--6">
+      <div className="card">
+        <div className="card__header">
+          <h4>🚀 Perfect For</h4>
+        </div>
+        <div className="card__body">
+          <ul>
+            <li><strong>Trying out the interface</strong> before committing to a full setup</li>
+            <li><strong>Showcasing features</strong> on devices without AI capabilities</li>
+            <li><strong>Testing the UI</strong> during development</li>
+            <li><strong>Learning</strong> how the interface works</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div className="col col--6">
+      <div className="card">
+        <div className="card__header">
+          <h4>⚡ Instant Access</h4>
+        </div>
+        <div className="card__body">
+          <ul>
+            <li><strong>No Ollama installation</strong> required</li>
+            <li><strong>No model downloads</strong> needed</li>
+            <li><strong>Works immediately</strong> in any browser</li>
+            <li><strong>Full UI experience</strong> with simulated responses</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+---
 
 ## ✨ Demo Mode Features
 

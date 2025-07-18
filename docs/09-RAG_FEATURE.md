@@ -1,3 +1,12 @@
+---
+sidebar_position: 1
+title: "Document Chat (RAG)"
+description: "Advanced RAG (Retrieval-Augmented Generation) in Libre WebUI. Upload PDFs, TXT, DOCX and chat with your documents using powerful semantic search capabilities."
+slug: /RAG_FEATURE
+keywords: [libre webui rag, document chat libre webui, pdf chat ai, document ai chat, semantic search ai, vector embeddings, ai document analysis, advanced rag features, open webui alternative]
+image: /img/docusaurus-social-card.jpg
+---
+
 # 📄 Document Chat (RAG Feature)
 
 > **Reading time:** ~6 minutes

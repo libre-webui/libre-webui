@@ -1,3 +1,12 @@
+---
+sidebar_position: 3
+title: "Model Updater"
+description: "Revolutionary auto-updating system for 207+ AI models in Libre WebUI. Automatic model management with updates for OpenAI, Anthropic, Claude, Groq, Gemini, Mistral, GitHub Models."
+slug: /MODEL_UPDATER
+keywords: [libre webui model updater, auto-update ai models, 207+ ai models, automatic model management, ai model automation, openai model updates, claude model updates, gemini model updates, open webui alternative]
+image: /img/docusaurus-social-card.jpg
+---
+
 # 🤖 Universal AI Model Updater
 
 Keep your AI provider plugins up-to-date with the latest available models automatically.
@@ -133,7 +142,7 @@ After completion, you'll see:
 ### Google Gemini
 - ✅ **Auto-updates** - Fetches latest models via API
 - 🧠 **Advanced** - Multimodal capabilities (45 models)
-- � **Research-focused** - Cutting-edge AI technology
+- 🔬 **Research-focused** - Cutting-edge AI technology
 
 ### Mistral
 - ✅ **Auto-updates** - Fetches latest models via API

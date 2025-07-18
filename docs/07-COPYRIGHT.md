@@ -1,3 +1,11 @@
+---
+sidebar_position: 2
+title: "Copyright & License"
+description: "Copyright header management, license information, and legal guidelines for Libre WebUI"
+slug: /COPYRIGHT
+keywords: [copyright, license, legal, apache, headers, attribution]
+---
+
 # Copyright Header Management
 
 This project automatically adds copyright headers to all TypeScript/JavaScript source files using a custom script.

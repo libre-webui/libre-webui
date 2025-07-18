@@ -1,3 +1,12 @@
+---
+sidebar_position: 3
+title: "Plugin Architecture"
+description: "Advanced plugin architecture in Libre WebUI supporting 207+ AI models. Comprehensive external AI integration with OpenAI, Anthropic, Claude, Groq, Gemini, Mistral, and GitHub Models."
+slug: /PLUGIN_ARCHITECTURE
+keywords: [libre webui plugins, 207+ ai models, ai plugin architecture, openai integration, anthropic claude, groq ai, gemini ai, mistral ai, github models, external ai services, open webui alternative]
+image: /img/docusaurus-social-card.jpg
+---
+
 # Plugin Architecture
 
 Libre WebUI's plugin system lets you connect multiple AI services through a single interface. Access OpenAI's GPT models, Anthropic's Claude, Groq, Mistral, GitHub Models, Google Gemini, and custom AI APIs without switching between different platforms.

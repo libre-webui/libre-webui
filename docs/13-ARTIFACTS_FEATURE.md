@@ -1,3 +1,12 @@
+---
+sidebar_position: 2
+title: "Artifacts Feature"
+description: "Revolutionary Artifacts feature in Libre WebUI. Create advanced interactive content with HTML, SVG, code execution, and dynamic sandboxed rendering."
+slug: /ARTIFACTS_FEATURE
+keywords: [libre webui artifacts, interactive ai content, ai code execution, html ai generation, svg ai creation, dynamic ai content, sandboxed ai rendering, advanced ai features, open webui alternative]
+image: /img/docusaurus-social-card.jpg
+---
+
 # 🎨 Artifacts Feature Guide
 
 The Artifacts feature in Libre WebUI allows you to create and interact with dynamic, executable content directly within chat conversations. This feature automatically detects code blocks and converts them into interactive, rendered artifacts.

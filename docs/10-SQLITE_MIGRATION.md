@@ -1,3 +1,11 @@
+---
+sidebar_position: 2
+title: "SQLite Migration"
+description: "Database upgrade from JSON to SQLite for improved performance, data integrity, and scalability. Migration guide and benefits."
+slug: /SQLITE_MIGRATION
+keywords: [sqlite migration, database upgrade, json to sqlite, performance, data integrity, migration guide]
+---
+
 # SQLite Migration Guide
 
 **Libre WebUI** has migrated from JSON file storage to **SQLite** for improved performance, data integrity, and scalability. This guide covers the migration process, benefits, and how to work with the new storage system.
