@@ -1,9 +1,9 @@
 ---
 sidebar_position: 3
 title: "Model Updater"
-description: "Revolutionary auto-updating system for 207+ AI models in Libre WebUI. Automatic model management with updates for OpenAI, Anthropic, Claude, Groq, Gemini, Mistral, GitHub Models."
+description: "Revolutionary auto-updating system for 500+ AI models in Libre WebUI. Automatic model management with updates for OpenAI, Anthropic, Claude, Groq, Gemini, Mistral, GitHub Models, and OpenRouter."
 slug: /MODEL_UPDATER
-keywords: [libre webui model updater, auto-update ai models, 207+ ai models, automatic model management, ai model automation, openai model updates, claude model updates, gemini model updates, open webui alternative]
+keywords: [libre webui model updater, auto-update ai models, 500+ ai models, automatic model management, ai model automation, openai model updates, claude model updates, gemini model updates, openrouter model updates, open webui alternative]
 image: /img/docusaurus-social-card.jpg
 ---
 
@@ -42,6 +42,7 @@ export GROQ_API_KEY="your_groq_key_here"
 export GEMINI_API_KEY="your_gemini_key_here"
 export MISTRAL_API_KEY="your_mistral_key_here"
 export GITHUB_API_KEY="your_github_token_here"
+export OPENROUTER_API_KEY="your_openrouter_key_here"
 ```
 
 **💡 Pro Tip:** Add these to your shell profile (`.bashrc`, `.zshrc`, etc.) to persist them across sessions.
@@ -58,6 +59,7 @@ GROQ_API_KEY=your_groq_key_here
 GEMINI_API_KEY=your_gemini_key_here
 MISTRAL_API_KEY=your_mistral_key_here
 GITHUB_API_KEY=your_github_token_here
+OPENROUTER_API_KEY=your_openrouter_key_here
 ```
 
 ## How It Works
@@ -74,6 +76,7 @@ The script first checks which API keys are available:
 ✅ Gemini: API key found
 ✅ Mistral: API key found
 ✅ GitHub Models: API key found
+✅ OpenRouter: API key found
 ```
 
 ### 2. Provider Updates
@@ -101,6 +104,9 @@ For each provider with a valid API key, the script:
 
 🔄 Updating GitHub Models...
 ✅ GitHub Models: Successfully updated (20 models)
+
+🔄 Updating OpenRouter...
+✅ OpenRouter: Successfully updated (319 models)
 ```
 
 ### 3. Summary Report
@@ -117,8 +123,9 @@ After completion, you'll see:
    plugins/gemini.json (3.1K bytes, Jul 9 17:30)
    plugins/mistral.json (2.9K bytes, Jul 9 17:30)
    plugins/github.json (1.5K bytes, Jul 9 17:30)
+   plugins/openrouter.json (8.2K bytes, Jul 9 17:30)
 
-📊 Total models: 207 across 6 providers
+📊 Total models: 526 across 7 providers
 ```
 
 ## Provider-Specific Behavior
@@ -153,6 +160,11 @@ After completion, you'll see:
 - ✅ **Auto-updates** - Fetches latest models via API
 - 🐙 **Developer-friendly** - Integrated with GitHub ecosystem (20 models)
 - 🔓 **Open Source** - Focus on open-source models
+
+### OpenRouter
+- ✅ **Auto-updates** - Fetches latest models via API
+- 🌐 **Unified Access** - Single API key for 300+ models from multiple providers (319 models)
+- 🔄 **Multi-Provider** - Access to OpenAI, Anthropic, Google, Meta, Mistral, and many more
 
 ## Troubleshooting
 
@@ -208,6 +220,7 @@ You can also update providers individually:
 ./scripts/update-gemini-models.sh      # Google Gemini models (45 models)
 ./scripts/update-mistral-models.sh     # Mistral models (48 models)
 ./scripts/update-github-models.sh      # GitHub Models (20 models)
+./scripts/update-openrouter-models.sh  # OpenRouter models (319 models)
 ```
 
 Each script requires its respective API key to be set as an environment variable.

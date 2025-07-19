@@ -55,6 +55,7 @@ groq_key_set=false
 gemini_key_set=false
 mistral_key_set=false
 github_key_set=false
+openrouter_key_set=false
 
 if check_api_key "OpenAI" "OPENAI_API_KEY"; then
     openai_key_set=true
@@ -78,6 +79,10 @@ fi
 
 if check_api_key "GitHub Models" "GITHUB_API_KEY"; then
     github_key_set=true
+fi
+
+if check_api_key "OpenRouter" "OPENROUTER_API_KEY"; then
+    openrouter_key_set=true
 fi
 
 echo -e "\n${BLUE}🚀 Starting updates...${NC}"
@@ -120,6 +125,12 @@ else
     echo -e "\n${YELLOW}⏭️  Skipping GitHub Models (no API key)${NC}"
 fi
 
+if [ "$openrouter_key_set" = true ]; then
+    update_provider "OpenRouter" "update-openrouter-models.sh"
+else
+    echo -e "\n${YELLOW}⏭️  Skipping OpenRouter (no API key)${NC}"
+fi
+
 echo -e "\n${GREEN}🎉 Update process completed!${NC}"
 echo -e "\n${BLUE}💡 Tip: Set your API keys as environment variables:${NC}"
 echo -e "   export OPENAI_API_KEY=\"your_openai_key\""
@@ -128,6 +139,7 @@ echo -e "   export GROQ_API_KEY=\"your_groq_key\""
 echo -e "   export GEMINI_API_KEY=\"your_gemini_key\""
 echo -e "   export MISTRAL_API_KEY=\"your_mistral_key\""
 echo -e "   export GITHUB_API_KEY=\"your_github_key\""
+echo -e "   export OPENROUTER_API_KEY=\"your_openrouter_key\""
 
 echo -e "\n${BLUE}📁 Updated plugin files:${NC}"
 ls -la plugins/*.json | awk '{print "   " $9 " (" $5 " bytes, " $6 " " $7 " " $8 ")"}'

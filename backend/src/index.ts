@@ -62,6 +62,7 @@ import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
 import preferencesService from './services/preferencesService.js';
 import documentService from './services/documentService.js';
+import { encryptionService } from './services/encryptionService.js';
 import { mergeGenerationOptions } from './utils/generationUtils.js';
 import { verifyToken } from './utils/jwt.js';
 import {

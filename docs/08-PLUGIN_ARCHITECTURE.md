@@ -1,9 +1,9 @@
 ---
 sidebar_position: 3
 title: "Plugin Architecture"
-description: "Advanced plugin architecture in Libre WebUI supporting 207+ AI models. Comprehensive external AI integration with OpenAI, Anthropic, Claude, Groq, Gemini, Mistral, and GitHub Models."
+description: "Advanced plugin architecture in Libre WebUI supporting 500+ AI models. Comprehensive external AI integration with OpenAI, Anthropic, Claude, Groq, Gemini, Mistral, GitHub Models, and OpenRouter."
 slug: /PLUGIN_ARCHITECTURE
-keywords: [libre webui plugins, 207+ ai models, ai plugin architecture, openai integration, anthropic claude, groq ai, gemini ai, mistral ai, github models, external ai services, open webui alternative]
+keywords: [libre webui plugins, 500+ ai models, ai plugin architecture, openai integration, anthropic claude, groq ai, gemini ai, mistral ai, github models, openrouter, external ai services, open webui alternative]
 image: /img/docusaurus-social-card.jpg
 ---
 
@@ -22,13 +22,14 @@ The plugin system acts as a **unified interface** for different AI providers:
 - Access Mistral for efficient processing
 - Use GitHub Models for free premium access
 - Leverage Google Gemini for advanced capabilities
+- Use OpenRouter for access to 300+ models from multiple providers
 - All from the same chat interface
 
 ### **Easy Model Switching**
 - Compare responses from different models
 - Switch providers mid-conversation
 - Test which AI works best for your tasks
-- Access 207+ models across 6 major providers
+- Access 500+ models across 7 major providers
 
 ### **Reliable Fallbacks**
 - If one service is unavailable, automatically use another
@@ -52,6 +53,7 @@ The plugin system connects to different AI services through standardized configu
 - **Google Gemini**: Gemini 1.5/2.0/2.5 models and experimental variants (45 models)
 - **Mistral**: Mistral Large, Small, Nemo, Codestral (48 models)
 - **GitHub Models**: Free access to premium models from multiple providers (20 models)
+- **OpenRouter**: Unified access to 300+ models from dozens of providers (319 models)
 - **Custom APIs**: Your own models or company services
 - **Local Models**: Ollama, LM Studio, other OpenAI-compatible endpoints
 
@@ -152,6 +154,7 @@ Get free API keys from:
 - Google AI: https://ai.google.dev/
 - Mistral: https://console.mistral.ai/
 - GitHub: https://github.com/settings/personal-access-tokens
+- OpenRouter: https://openrouter.ai/keys
 
 ### Step 2: Configure Environment
 Add to your `.env` file:
@@ -162,6 +165,7 @@ GROQ_API_KEY=your_groq_key_here
 GEMINI_API_KEY=your_gemini_key_here
 MISTRAL_API_KEY=your_mistral_key_here
 GITHUB_API_KEY=your_github_token_here
+OPENROUTER_API_KEY=your_openrouter_key_here
 ```
 
 ### Step 3: Update Plugin Models
@@ -177,6 +181,7 @@ Run the automated update system:
 ./scripts/update-gemini-models.sh
 ./scripts/update-mistral-models.sh
 ./scripts/update-github-models.sh
+./scripts/update-openrouter-models.sh
 ```
 
 ### Step 4: Enable Plugins
@@ -263,6 +268,12 @@ The system comes with pre-configured plugins for popular services and automated 
 - **Endpoint**: `https://models.inference.ai.azure.com/chat/completions`
 - **Special**: Free access to premium models
 
+### OpenRouter Plugin (`plugins/openrouter.json`)
+- **Models**: 319+ models from dozens of providers including OpenAI, Anthropic, Google, Meta, Mistral, and many community models
+- **Update Method**: Dynamic API fetching
+- **Endpoint**: `https://openrouter.ai/api/v1/chat/completions`
+- **Special**: Single API key for access to multiple AI providers
+
 ## Automated Update System
 
 The plugin system includes automated scripts to keep model lists current:
@@ -274,6 +285,7 @@ The plugin system includes automated scripts to keep model lists current:
 - `update-gemini-models.sh` - Fetches Google Gemini models via API
 - `update-mistral-models.sh` - Fetches Mistral models via API
 - `update-github-models.sh` - Fetches GitHub Models via API
+- `update-openrouter-models.sh` - Fetches OpenRouter models via API
 - `update-all-models.sh` - Updates all providers at once
 
 ### Features
@@ -306,6 +318,9 @@ export MISTRAL_API_KEY="your_mistral_api_key_here"
 # For GitHub Models
 export GITHUB_API_KEY="your_github_token_here"
 
+# For OpenRouter
+export OPENROUTER_API_KEY="your_openrouter_key_here"
+
 # For custom services
 export CUSTOM_API_KEY="your_custom_api_key_here"
 ```
@@ -322,7 +337,8 @@ Current model counts across all providers:
 | Google Gemini | 45 | Dynamic API | Generous |
 | Mistral | 48 | Dynamic API | Limited |
 | GitHub Models | 20 | Dynamic API | **Free** |
-| **Total** | **207** | 6 APIs | Mixed |
+| OpenRouter | 319 | Dynamic API | Mixed |
+| **Total** | **526** | 7 APIs | Mixed |
 
 ## Using the Plugin System
 
@@ -573,6 +589,7 @@ curl http://localhost:3001/api/plugins/status/all
 ./scripts/update-gemini-models.sh
 ./scripts/update-mistral-models.sh
 ./scripts/update-github-models.sh
+./scripts/update-openrouter-models.sh
 
 # Update all providers:
 ./scripts/update-all-models.sh

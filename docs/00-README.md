@@ -1,15 +1,15 @@
 ---
 sidebar_position: 1
 title: "Documentation Overview"
-description: "Complete documentation for Libre WebUI - the most advanced privacy-first local AI interface with 100% offline operation, 207+ AI models, zero telemetry, and complete local control."
+description: "Complete documentation for Libre WebUI - the most advanced privacy-first local AI interface with 100% offline operation, 500+ AI models, zero telemetry, and complete local control."
 slug: /
-keywords: [libre webui, ollama interface, local ai, privacy ai, open webui alternative, libre chat alternative, offline ai, private ai chat, local llm, ai interface, open source ai, 207+ ai models, zero telemetry, privacy-first ai]
+keywords: [libre webui, ollama interface, local ai, privacy ai, open webui alternative, libre chat alternative, offline ai, private ai chat, local llm, ai interface, open source ai, 500+ ai models, zero telemetry, privacy-first ai]
 image: /img/docusaurus-social-card.jpg
 ---
 
 # 📚 Libre WebUI Documentation
 
-**The #1 Privacy-First AI Interface** – Built for 100% offline operation, 207+ AI models, and zero data collection.
+**The #1 Privacy-First AI Interface** – Built for 100% offline operation, 500+ AI models, and zero data collection.
 Designed to outperform traditional web UIs like Open WebUI and LibreChat in privacy, flexibility, and speed.
 
 :::tip New to Libre WebUI?
@@ -18,7 +18,7 @@ Designed to outperform traditional web UIs like Open WebUI and LibreChat in priv
 
 :::info Why Choose Libre WebUI?
 🔒 **100% Privacy** - Zero telemetry, your data stays local  
-🎯 **207+ AI Models** - Extensive model support across 6 providers  
+🎯 **500+ AI Models** - Extensive model support across 7 providers  
 ⚡ **Quick Setup** - 5-minute installation with Docker or local  
 🎨 **Modern Interface** - Clean, responsive design optimized for productivity  
 🛡️ **Advanced Security** - Comprehensive authentication and role management  
@@ -213,7 +213,7 @@ Ready to unlock the full potential of Libre WebUI?
           <h4>🔌 <a href="./PLUGIN_ARCHITECTURE">Plugin Architecture</a></h4>
         </div>
         <div className="card__body">
-          <p>Connect external AI services: OpenAI, Anthropic, Groq, Gemini, and more.</p>
+          <p>Connect external AI services: OpenAI, Anthropic, Groq, Gemini, Mistral, GitHub Models, and OpenRouter.</p>
           <small><strong>⏱️ 12 minutes</strong> • <strong>🎯 Power User</strong></small>
         </div>
       </div>
@@ -292,7 +292,7 @@ For administrators and advanced users managing Libre WebUI deployments.
           <h4>🤖 <a href="./MODEL_UPDATER">Model Updater</a></h4>
         </div>
         <div className="card__body">
-          <p>Auto-update AI provider models (207+ models across 6 providers).</p>
+          <p>Auto-update AI provider models (500+ models across 7 providers).</p>
           <small><strong>⏱️ 5 minutes</strong> • <strong>🎯 Maintenance</strong></small>
         </div>
       </div>
@@ -363,8 +363,8 @@ Different ways to deploy and run Libre WebUI.
       <h3>🤖 AI Integration</h3>
       <ul>
         <li><strong>Complete Ollama integration</strong> - All API endpoints supported</li>
-        <li><strong>Multiple AI providers</strong> - OpenAI, Anthropic, Groq, Gemini, Mistral, GitHub Models</li>
-        <li><strong>207+ models</strong> across 6 external providers</li>
+        <li><strong>Multiple AI providers</strong> - OpenAI, Anthropic, Groq, Gemini, Mistral, GitHub Models, OpenRouter</li>
+        <li><strong>500+ models</strong> across 7 external providers</li>
         <li><strong>Automatic fallback</strong> to local Ollama when external services fail</li>
       </ul>
     </div>
