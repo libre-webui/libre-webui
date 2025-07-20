@@ -6,15 +6,35 @@ const path = require('path');
 const axios = require('axios');
 
 /**
- * AI-powered changelog regeneration for all releases
- * Analyzes commits between tags and generates comprehensive release notes
+ * ╔══════════════════════════════════════════════════════════════════╗
+ * ║                        LIBRE WEBUI                               ║
+ * ║           AI-Powered Development Analysis & Changelog            ║
+ * ║                                                                  ║
+ * ║  ██      ██ ██████  ██████  ███████     ██     ██ ███████ ██████  ║
+ * ║  ██      ██ ██   ██ ██   ██ ██          ██     ██ ██      ██   ██ ║
+ * ║  ██      ██ ██████  ██████  █████       ██  █  ██ █████   ██████  ║
+ * ║  ██      ██ ██   ██ ██   ██ ██          ██ ███ ██ ██      ██   ██ ║
+ * ║  ███████ ██ ██████  ██   ██ ███████      ███ ███  ███████ ██████  ║
+ * ║                                                                  ║
+ * ║              ██    ██ ██                                         ║
+ * ║              ██    ██ ██                                         ║
+ * ║              ██    ██ ██                                         ║
+ * ║              ██    ██ ██                                         ║
+ * ║               ██████  ██                                         ║
+ * ║                                                                  ║
+ * ║         🤖 AI-powered changelog regeneration for all releases    ║
+ * ║         📊 Analyzes commits between tags and generates           ║
+ * ║            comprehensive release notes using local AI            ║
+ * ║                                                                  ║
+ * ║         🔒 100% Privacy-First • 🚀 Ollama Powered              ║
+ * ╚══════════════════════════════════════════════════════════════════╝
  */
 
 class ChangelogRegeneration {
   constructor() {
     this.projectRoot = path.join(__dirname, '..');
     this.ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-    this.defaultModel = process.env.CHANGELOG_AI_MODEL || 'gemma3:27b';
+    this.defaultModel = process.env.CHANGELOG_AI_MODEL || 'llama3.2:3b';
     this.changelogPath = path.join(this.projectRoot, 'CHANGELOG.md');
   }
 
@@ -248,7 +268,15 @@ IMPORTANT: Do not wrap your response in code blocks (\`\`\`markdown or \`\`\`). 
    * Generate complete changelog for all releases
    */
   async regenerateAllChangelogs() {
-    console.log('🔄 Regenerating all changelogs using AI analysis...\n');
+    console.log(`
+╔══════════════════════════════════════════════════════════════════╗
+║                        LIBRE WEBUI                               ║
+║           AI-Powered Changelog Regeneration                      ║
+║                                                                  ║
+║         🤖 Regenerating all changelogs using AI analysis...     ║
+║         🔒 100% Privacy-First • 🚀 Powered by Ollama           ║
+╚══════════════════════════════════════════════════════════════════╝
+`);
 
     const tags = this.getTags();
     console.log(`📋 Found ${tags.length} releases: ${tags.join(', ')}\n`);
@@ -393,7 +421,27 @@ const args = process.argv.slice(2);
 const regenerator = new ChangelogRegeneration();
 
 if (args.includes('--help')) {
-  console.log('🤖 AI Changelog Regeneration Tool\n');
+  console.log(`
+╔══════════════════════════════════════════════════════════════════╗
+║                        LIBRE WEBUI                               ║
+║           AI-Powered Changelog Regeneration Tool                 ║
+║                                                                  ║
+║  ██      ██ ██████  ██████  ███████     ██     ██ ███████ ██████  ║
+║  ██      ██ ██   ██ ██   ██ ██          ██     ██ ██      ██   ██ ║
+║  ██      ██ ██████  ██████  █████       ██  █  ██ █████   ██████  ║
+║  ██      ██ ██   ██ ██   ██ ██          ██ ███ ██ ██      ██   ██ ║
+║  ███████ ██ ██████  ██   ██ ███████      ███ ███  ███████ ██████  ║
+║                                                                  ║
+║              ██    ██ ██                                         ║
+║              ██    ██ ██                                         ║
+║              ██    ██ ██                                         ║
+║              ██    ██ ██                                         ║
+║               ██████  ██                                         ║
+║                                                                  ║
+║         🤖 Generate intelligent changelogs using local AI        ║
+║         🔒 100% Privacy-First • 🚀 Powered by Ollama           ║
+╚══════════════════════════════════════════════════════════════════╝
+`);
   console.log('Usage: node scripts/regenerate-changelog.js [command]\n');
   console.log('Commands:');
   console.log('  all              Regenerate complete changelog for all releases');
@@ -401,7 +449,7 @@ if (args.includes('--help')) {
   console.log('  --help           Show this help message\n');
   console.log('Environment Variables:');
   console.log('  OLLAMA_BASE_URL      Ollama server URL (default: http://localhost:11434)');
-  console.log('  CHANGELOG_AI_MODEL   AI model to use (default: gemma3:27b)');
+  console.log('  CHANGELOG_AI_MODEL   AI model to use (default: llama3.2:3b)');
 } else if (args[0] === 'preview' && args[1]) {
   regenerator.previewVersion(args[1]);
 } else if (args[0] === 'all' || args.length === 0) {

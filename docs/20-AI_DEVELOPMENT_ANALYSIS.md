@@ -37,14 +37,14 @@ Libre WebUI includes intelligent analysis tools that leverage your local Ollama 
 
 :::tip Prerequisites Checklist
 - ✅ **Ollama running locally**: `ollama serve`
-- ✅ **A suitable model installed**: `ollama pull llama3.2:3b` (recommended for speed)
+- ✅ **A suitable model installed**: `ollama pull llama3.2:3b` (recommended for balanced performance)
 - ✅ **Git repository with commits**: The system analyzes your git history
 :::
 
 ### 🏃‍♂️ Get Started in 30 Seconds
 
 ```bash
-# 1. Install a fast AI model (if not already done)
+# 1. Install a balanced AI model (if not already done)
 ollama pull llama3.2:3b
 
 # 2. Generate AI-powered changelog for current changes
@@ -106,9 +106,10 @@ The standard release process (`npm run release`) now automatically includes AI-p
 # Ollama server configuration
 OLLAMA_BASE_URL=http://localhost:11434
 
+```bash
 # AI model selection (smaller = faster, larger = more detailed)
-CHANGELOG_AI_MODEL=llama3.2:3b        # For changelog generation
-ANALYSIS_AI_MODEL=llama3.2:3b         # For development analysis
+CHANGELOG_AI_MODEL=llama3.2:3b        # For quick changelog generation
+ANALYSIS_AI_MODEL=llama3.1:latest     # For development analysis
 
 # Timeouts
 OLLAMA_TIMEOUT=30000                   # Standard operations (30s)
@@ -121,20 +122,47 @@ Choose the right model for your needs:
 
 | Use Case | Recommended Model | Size | Speed | Quality | Best For |
 |----------|------------------|------|-------|---------|----------|
-| **⚡ Fast changelog** | `llama3.2:1b` | ~1GB | ⚡ Fast | Good | Quick releases |
-| **⚖️ Balanced** | `llama3.2:3b` | ~2GB | 🚀 Medium | Very Good | Daily usage |
-| **🎯 Detailed analysis** | `qwen2.5:7b` | ~4GB | 🐌 Slow | Excellent | Major releases |
+| **⚡ Fast & Light** | `llama3.2:3b` | ~2GB | ⚡ Fast | Good | Quick changelogs |
+| **⚖️ Balanced** | `llama3.1:latest` | ~4GB | 🚀 Medium | Very Good | Daily usage |
+| **🎯 Best Quality** | `gemma3:27b` | ~16GB | 🐌 Slow | Excellent | Detailed analysis |
 
-```bash
-# Install recommended models
-ollama pull llama3.2:3b    # Balanced choice
-ollama pull qwen2.5:7b     # For detailed analysis  
-ollama pull llama3.2:1b    # For speed
+```bash title="Model Installation Guide"
+# Recommended installation order:
+
+# 1. Essential: Fast and reliable for daily use
+ollama pull llama3.2:3b
+
+# 2. Advanced: Better quality for comprehensive analysis  
+ollama pull llama3.1:latest
+
+# 3. Premium: Best quality for detailed reports (requires 16GB+ RAM)
+ollama pull gemma3:27b
 ```
 
-:::caution Model Selection
-Larger models provide better analysis but require more RAM and processing time. Start with `llama3.2:3b` for the best balance.
+:::info Model Selection Strategy
+- **Start with llama3.2:3b** - Perfect for getting started and daily changelog generation
+- **Upgrade to llama3.1:latest** - When you need better analysis quality 
+- **Use gemma3:27b** - For the most detailed insights and comprehensive analysis
 :::
+
+:::caution Model Selection
+- **llama3.2:3b** is perfect for quick changelog generation and daily use
+- **llama3.1:latest** provides better analysis quality while maintaining reasonable speed
+- **gemma3:27b** offers the best analysis quality but requires significant RAM (16GB+)
+:::
+
+### 🔄 Quick Model Switching
+
+```bash title="Switch Models on the Fly"
+# Use fast model for quick changelog
+CHANGELOG_AI_MODEL=llama3.2:3b npm run changelog:ai
+
+# Use balanced model for better quality
+CHANGELOG_AI_MODEL=llama3.1:latest npm run changelog:ai
+
+# Use best model for detailed analysis
+CHANGELOG_AI_MODEL=gemma3:27b npm run changelog:ai
+```
 
 ## 📊 What Gets Analyzed
 
@@ -273,8 +301,8 @@ ollama list
 
 **⏰ "AI generation timeout"**
 ```bash
-# Use a smaller/faster model
-export CHANGELOG_AI_MODEL=llama3.2:1b
+# Use a faster model
+export CHANGELOG_AI_MODEL=llama3.2:3b
 
 # Or increase timeout
 export OLLAMA_TIMEOUT=60000
@@ -282,8 +310,9 @@ export OLLAMA_TIMEOUT=60000
 
 **🤖 "Model not found"**
 ```bash
-# Install the required model
-ollama pull llama3.2:3b
+# Install the recommended models
+ollama pull llama3.2:3b      # Fast and reliable
+ollama pull llama3.1:latest  # Balanced performance
 
 # Or use an available model
 ollama list
@@ -293,10 +322,11 @@ export CHANGELOG_AI_MODEL=your-available-model
 ### ⚡ Performance Optimization
 
 :::tip Performance Best Practices
-1. **Use smaller models** for frequent operations (changelog generation)
-2. **Keep Ollama warm** by running a test query periodically  
-3. **Batch operations** when possible to avoid model loading overhead
-4. **Monitor resource usage** especially with larger models
+1. **Use llama3.2:3b** for frequent operations (fast changelog generation)
+2. **Use llama3.1:latest** for comprehensive analysis (balanced performance)
+3. **Use gemma3:27b** for detailed analysis (best quality but requires 16GB+ RAM)
+4. **Keep Ollama warm** by running a test query periodically  
+5. **Batch operations** when possible to avoid model loading overhead
 :::
 
 ## 🌟 Best Practices
