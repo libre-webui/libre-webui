@@ -4,7 +4,7 @@ title: "Documentation Overview"
 description: "Complete documentation for Libre WebUI - the most advanced privacy-first local AI interface with 100% offline operation, 500+ AI models, zero telemetry, and complete local control."
 slug: /
 keywords: [libre webui, ollama interface, local ai, privacy ai, open webui alternative, libre chat alternative, offline ai, private ai chat, local llm, ai interface, open source ai, 500+ ai models, zero telemetry, privacy-first ai]
-mage: /img/social/00.png
+image: /img/social/00.png
 ---
 
 # 📚 Libre WebUI Documentation
