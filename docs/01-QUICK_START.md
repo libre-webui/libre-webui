@@ -4,7 +4,7 @@ title: "Quick Start Guide"
 description: "Get your first AI chat running in 5 minutes with Libre WebUI. Complete Docker and local installation guide with step-by-step instructions for privacy-first AI."
 slug: /QUICK_START
 keywords: [libre webui quick start, libre webui setup, ollama installation, docker ai setup, local ai installation, ai chat setup, privacy ai tutorial, open webui alternative setup]
-image: /img/docusaurus-social-card.jpg
+image: /img/social/01.png
 ---
 
 # 🚀 Quick Start: Your First AI Chat in 5 Minutes
@@ -228,7 +228,7 @@ Use this approach if:
 :::
 
   </TabItem>
-  <TabItem value="source" label="� From Source">
+  <TabItem value="source" label="🔨 From Source">
 
 **For developers who want to modify the code:**
 

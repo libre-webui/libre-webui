@@ -4,7 +4,7 @@ title: "Plugin Architecture"
 description: "Advanced plugin architecture in Libre WebUI supporting 500+ AI models. Comprehensive external AI integration with OpenAI, Anthropic, Claude, Groq, Gemini, Mistral, GitHub Models, and OpenRouter."
 slug: /PLUGIN_ARCHITECTURE
 keywords: [libre webui plugins, 500+ ai models, ai plugin architecture, openai integration, anthropic claude, groq ai, gemini ai, mistral ai, github models, openrouter, external ai services, open webui alternative]
-image: /img/docusaurus-social-card.jpg
+image: /img/social/08.png
 ---
 
 # Plugin Architecture

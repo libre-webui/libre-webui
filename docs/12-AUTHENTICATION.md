@@ -4,7 +4,7 @@ title: "Authentication & Security"
 description: "Advanced authentication and security in Libre WebUI. Comprehensive user management with role-based access control, JWT security, and privacy protection."
 slug: /AUTHENTICATION
 keywords: [libre webui authentication, secure ai interface, privacy-first authentication, role-based access control, jwt security, user management ai, secure local ai, open webui alternative security]
-image: /img/docusaurus-social-card.jpg
+image: /img/social/12.png
 ---
 
 # Libre WebUI Authentication System

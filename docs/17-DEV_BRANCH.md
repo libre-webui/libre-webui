@@ -4,6 +4,7 @@ title: "Development Branch Guide"
 description: "Use the experimental dev branch to test latest features and help improve Libre WebUI. Learn how to report bugs and contribute."
 slug: /DEV_BRANCH
 keywords: [development, dev branch, experimental, testing, bug reports, contributing, latest features]
+image: /img/social/17.png
 ---
 
 # 🧪 Development Branch Guide

@@ -4,6 +4,7 @@ title: "SQLite Migration"
 description: "Database upgrade from JSON to SQLite for improved performance, data integrity, and scalability. Migration guide and benefits."
 slug: /SQLITE_MIGRATION
 keywords: [sqlite migration, database upgrade, json to sqlite, performance, data integrity, migration guide]
+image: /img/social/10.png
 ---
 
 # SQLite Migration Guide

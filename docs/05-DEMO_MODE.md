@@ -4,6 +4,7 @@ title: "Demo Mode"
 description: "Try Libre WebUI without installation. Experience the full interface with simulated AI responses in your browser."
 slug: /DEMO_MODE
 keywords: [demo mode, try online, no installation, preview, test interface]
+image: /img/social/05.png
 ---
 
 # 🎭 Demo Mode: Try Before You Install

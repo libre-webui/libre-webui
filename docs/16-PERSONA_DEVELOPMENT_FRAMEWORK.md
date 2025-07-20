@@ -4,6 +4,7 @@ title: "Persona Development Framework"
 description: "Create AI personalities with memory systems, adaptive learning, and persistent state management. Advanced persona creation and management."
 slug: /PERSONA_DEVELOPMENT_FRAMEWORK
 keywords: [persona development, ai personalities, memory systems, adaptive learning, persona DNA, character development]
+image: /img/social/16.png
 ---
 
 # Persona Development Framework

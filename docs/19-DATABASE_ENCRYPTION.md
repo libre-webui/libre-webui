@@ -1,10 +1,10 @@
 ---
 sidebar_position: 4
-title: "Database Encryption & Security - AES-256-GCM Protection | Libre WebUI"
+title: "Database Encryption & Security - AES-256-GCM Protection"
 description: "Enterprise-grade database encryption in Libre WebUI with AES-256-GCM. Secure chat sessions, user data, and documents with Docker persistent storage, JWT integration, and zero-trust architecture."
 slug: /DATABASE_ENCRYPTION
 keywords: [database encryption, aes-256-gcm encryption, libre webui security, chat encryption, encrypted database, privacy protection, secure ai interface, data protection, encrypted storage, docker encryption, jwt security, enterprise security, local ai encryption, offline ai security, encrypted chat, secure messaging, privacy-first ai, zero-trust ai, database security, sqlite encryption, end-to-end encryption, private ai, secure ai chat, enterprise ai security, gdpr compliance, hipaa compliance, encrypted ai interface]
-image: /img/docusaurus-social-card.jpg
+image: /img/social/19.png
 ---
 
 # 🔐 Database Encryption & Security

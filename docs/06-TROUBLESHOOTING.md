@@ -4,7 +4,7 @@ title: "Troubleshooting Guide"
 description: "Complete troubleshooting guide for Libre WebUI. Fast problem resolution with detailed solutions for Docker, Ollama, models, and performance issues."
 slug: /TROUBLESHOOTING
 keywords: [libre webui troubleshooting, libre webui problems, ollama connection problems, docker ai issues, ai model problems, libre webui debugging, local ai troubleshooting, open webui alternative support]
-image: /img/docusaurus-social-card.jpg
+image: /img/social/06.png
 ---
 
 # 🔧 Troubleshooting: Quick Fixes for Common Issues

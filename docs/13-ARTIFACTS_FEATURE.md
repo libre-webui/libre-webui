@@ -4,7 +4,7 @@ title: "Artifacts Feature"
 description: "Revolutionary Artifacts feature in Libre WebUI. Create advanced interactive content with HTML, SVG, code execution, and dynamic sandboxed rendering."
 slug: /ARTIFACTS_FEATURE
 keywords: [libre webui artifacts, interactive ai content, ai code execution, html ai generation, svg ai creation, dynamic ai content, sandboxed ai rendering, advanced ai features, open webui alternative]
-image: /img/docusaurus-social-card.jpg
+image: /img/social/13.png
 ---
 
 # 🎨 Artifacts Feature Guide

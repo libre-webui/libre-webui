@@ -4,7 +4,7 @@ title: "Working with AI Models"
 description: "Complete guide to 207+ AI models in Libre WebUI. Advanced model management with Ollama, OpenAI, Claude, Gemini, and more. Superior features for AI enthusiasts."
 slug: /WORKING_WITH_MODELS
 keywords: [libre webui ai models, 207+ ai models, ollama models, ai model management, gemma, llama, phi4, deepseek, qwen, claude models, openai models, local ai models, open webui alternative]
-image: /img/docusaurus-social-card.jpg
+image: /img/social/02.png
 ---
 
 # 🤖 Working with AI Models in Libre WebUI

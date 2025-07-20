@@ -4,6 +4,7 @@ title: "Copyright & License"
 description: "Copyright header management, license information, and legal guidelines for Libre WebUI"
 slug: /COPYRIGHT
 keywords: [copyright, license, legal, apache, headers, attribution]
+image: /img/social/07.png
 ---
 
 # Copyright Header Management

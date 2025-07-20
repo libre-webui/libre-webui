@@ -4,6 +4,7 @@ title: "Keyboard Shortcuts"
 description: "VS Code-style keyboard shortcuts for productivity. Master hotkeys to navigate Libre WebUI faster."
 slug: /KEYBOARD_SHORTCUTS
 keywords: [keyboard shortcuts, hotkeys, productivity, vscode, navigation, efficiency]
+image: /img/social/04.png
 ---
 
 # ⌨️ Keyboard Shortcuts: Boost Your Productivity

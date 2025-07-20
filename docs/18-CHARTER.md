@@ -4,6 +4,7 @@ title: "Community Charter"
 description: "The foundational principles, governance model, and ethical guidelines that define Libre WebUI's mission and values."
 slug: /CHARTER
 keywords: [charter, governance, community, ethics, principles, open source, privacy, freedom]
+image: /img/social/18.png
 ---
 
 # 📜 Libre WebUI Community & Ethical Charter

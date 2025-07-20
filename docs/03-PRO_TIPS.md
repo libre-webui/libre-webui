@@ -4,7 +4,7 @@ title: "Pro Tips & Advanced Features"
 description: "Advanced workflows and power user techniques for Libre WebUI. Exclusive productivity features including system prompts, model optimization, and expert workflows."
 slug: /PRO_TIPS
 keywords: [libre webui pro tips, advanced ai workflows, power user ai, system prompts, ai optimization, productivity ai, advanced ai techniques, expert ai usage, open webui alternative]
-image: /img/docusaurus-social-card.jpg
+image: /img/social/03.png
 ---
 
 # 🎯 Pro Tips: Advanced Workflows

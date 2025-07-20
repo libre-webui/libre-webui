@@ -4,6 +4,7 @@ title: "Release Automation"
 description: "Automated release system with conventional commits, changelog generation, and deployment workflows."
 slug: /RELEASE_AUTOMATION
 keywords: [release automation, conventional commits, changelog, deployment, ci cd, versioning]
+image: /img/social/14.png
 ---
 
 # Release Automation Guide
