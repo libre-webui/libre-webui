@@ -2,7 +2,7 @@
 
 # Libre WebUI
 
-**Open-source AI chat interface** - A clean, privacy-first web UI for local AI models via Ollama, with flexible routing to OpenAI, Anthropic, Groq, and other external AI services. Self-hosted AI assistant with complete data privacy.
+**Open-source AI chat interface** - A clean, privacy-first web UI for local AI models via Ollama, with flexible routing to OpenRouter, OpenAI, Anthropic, Groq, and other external AI services. Self-hosted AI assistant with complete data privacy.
 
 [🌐 **Visit Website**](https://librewebui.org) • [📖 **Documentation**](https://docs.librewebui.org)
 
@@ -25,7 +25,7 @@
 
 - 🔒 **Privacy-First**: Complete offline operation, no data tracking or telemetry
 - 🛡️ **Enterprise-Grade Security**: AES-256-GCM database encryption for all sensitive data
-- 🤖 **Multi-AI Support**: Ollama, OpenAI, Anthropic Claude, Groq, Gemini, Mistral
+- 🤖 **Multi-AI Support**: Ollama, OpenRouter, OpenAI, Anthropic Claude, Groq, Gemini, Mistral
 - 🏠 **Self-Hosted**: Run entirely on your own hardware
 - 🔌 **Plugin Architecture**: Extensible system for custom AI integrations
 - 💬 **Modern Chat UI**: Clean, responsive interface for AI conversations
@@ -74,6 +74,7 @@ Connect to external AI services by adding your API keys to the `.env` file:
 
 ```bash
 # Add to backend/.env
+OPENROUTER_API_KEY=your_openrouter_key
 OPENAI_API_KEY=your_openai_key
 ANTHROPIC_API_KEY=your_anthropic_key
 GROQ_API_KEY=your_groq_key
@@ -93,10 +94,11 @@ ENCRYPTION_KEY=your_64_character_encryption_key_here
 Automatically update your AI provider plugins with the latest available models:
 
 ```bash
-# Update all configured providers (207+ models across 6 providers)
+# Update all configured providers (600+ models across 7 providers)
 ./scripts/update-all-models.sh
 
 # Or update individual providers
+./scripts/update-openrouter-models.sh  # 400+ models
 ./scripts/update-openai-models.sh      # 67 models
 ./scripts/update-anthropic-models.sh   # 13 models
 ./scripts/update-groq-models.sh        # 14 models
