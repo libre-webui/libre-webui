@@ -389,6 +389,16 @@ class ReleaseManager {
       process.exit(1);
     }
 
+    // Format code after commit
+    console.log('🎨 Formatting code...');
+    try {
+      this.exec('npm run format');
+      console.log('  ✅ Code formatting completed');
+    } catch (error) {
+      console.error('  ❌ Code formatting failed:', error.message);
+      process.exit(1);
+    }
+
     // Create git tag
     console.log('🏷️  Creating git tag...');
     try {
