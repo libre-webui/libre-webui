@@ -7,6 +7,9 @@ keywords: [libre webui docker, docker external ollama, easy docker ai setup, lib
 image: /img/social/15.png
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # 🐳 Docker with External Ollama Setup
 
 This guide covers running Libre WebUI in Docker while connecting to an external Ollama instance running on your host machine.
