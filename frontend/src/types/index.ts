@@ -283,7 +283,7 @@ export interface DocumentChunk {
 export interface User {
   id: string;
   username: string;
-  email: string;
+  email: string | null;
   role: 'admin' | 'user';
   createdAt: string;
   updatedAt: string;
@@ -298,7 +298,7 @@ export interface UserCreateRequest {
 
 export interface UserUpdateRequest {
   username?: string;
-  email?: string;
+  email?: string | null;
   password?: string;
   role?: 'admin' | 'user';
 }

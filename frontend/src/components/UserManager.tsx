@@ -164,7 +164,7 @@ export const UserManager: React.FC = () => {
     setEditingUser(user);
     setFormData({
       username: user.username,
-      email: user.email,
+      email: user.email || '', // Handle null email
       password: '',
       role: user.role,
     });
@@ -453,7 +453,7 @@ export const UserManager: React.FC = () => {
                       )}
                     </h3>
                     <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      {user.email} • {user.role}
+                      {user.email || 'No email provided'} • {user.role}
                     </p>
                     <p className='text-xs text-gray-500 dark:text-gray-500'>
                       Created: {new Date(user.createdAt).toLocaleDateString()}

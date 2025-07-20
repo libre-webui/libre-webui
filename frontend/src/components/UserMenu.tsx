@@ -159,7 +159,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                 {user.username}
               </p>
               <p className='text-xs text-gray-500 dark:text-gray-400'>
-                {user.email}
+                {user.email || 'No email provided'}
               </p>
               <div className='flex items-center mt-1'>
                 {user.role === 'admin' && (

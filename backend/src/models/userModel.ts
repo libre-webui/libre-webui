@@ -22,7 +22,7 @@ import { v4 as uuidv4 } from 'uuid';
 export interface User {
   id: string;
   username: string;
-  email: string;
+  email: string | null;
   password_hash: string;
   role: 'admin' | 'user';
   created_at: number;
@@ -31,14 +31,14 @@ export interface User {
 
 export interface UserCreateData {
   username: string;
-  email: string;
+  email: string | null;
   password: string;
   role: 'admin' | 'user';
 }
 
 export interface UserUpdateData {
   username?: string;
-  email?: string;
+  email?: string | null;
   password?: string;
   role?: 'admin' | 'user';
 }
@@ -46,7 +46,7 @@ export interface UserUpdateData {
 export interface UserPublic {
   id: string;
   username: string;
-  email: string;
+  email: string | null;
   role: 'admin' | 'user';
   createdAt: string;
   updatedAt: string;
@@ -143,7 +143,7 @@ export class UserModel {
     stmt.run(
       id,
       userData.username,
-      userData.email,
+      userData.email || null, // Store NULL instead of empty string
       passwordHash,
       userData.role,
       now,
@@ -172,7 +172,7 @@ export class UserModel {
 
     const now = Date.now();
     const updates: string[] = [];
-    const values: (string | number)[] = [];
+    const values: (string | number | null)[] = [];
 
     if (userData.username !== undefined) {
       updates.push('username = ?');

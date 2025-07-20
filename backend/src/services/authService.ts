@@ -164,15 +164,13 @@ export class AuthService {
     try {
       const userCount = userModel.getUserCount();
 
-      // Check if the only user is the default user
-      const isFirstRealUser =
-        userCount === 0 ||
-        (userCount === 1 && userModel.getUserById('default') !== null);
+      // Only the very first real user (excluding the default system user) becomes admin
+      const isFirstRealUser = userCount === 0;
 
       const userData = {
         username,
         password,
-        email: email || '',
+        email: email || null, // Use null instead of empty string
         // First real user becomes admin, subsequent users are regular users
         role: isFirstRealUser ? ('admin' as const) : ('user' as const),
       };
