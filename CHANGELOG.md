@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Libre WebUI will be documented in this file.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,418 +9,339 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ Added
 
-### 🔧 Technical Improvements
+### 🔧 Improved
 
-### 🐛 Bug Fixes
-
-### 📚 Documentation
-
-## [0.1.6] - 2025-07-20
-
-### ✨ Added
-
-- move code formatting step to before committing changes in release process
-- add view mode toggle and optimized syntax highlighting for artifact rendering
-- enhance scrolling behavior in ChatMessages component for improved user experience during streaming
-- enhance streaming performance with batching and debugging tools
-- update README to include OpenRouter in multi-AI support and enhance model update instructions
-
-### 🔧 Technical Improvements
-
-- update package-lock.json
-
-### 🐛 Bug Fixes
-
-- add code formatting step to release process
-- correct typo in README front matter
-- improve error handling and validation in release script
+### 🐛 Fixed
 
 ### 📚 Documentation
-
-- add Tabs and TabItem imports for enhanced documentation layout
-- update
-
-## [0.1.5] - 2025-07-20
-
-### ✨ Added
-
-- **OpenRouter Integration**: Complete support for OpenRouter API with model fetching capabilities
-  - New `openrouter.json` plugin file with 300+ model configurations
-  - Automated model updates via `update-openrouter-models.sh` script
-  - Environment variable support for OpenRouter API key
-  - Integration with existing plugin architecture
-- **Enhanced JWT and Encryption**: Improved JWT token handling and encryption service
-  - Support for Docker persistent storage of encryption keys
-  - Better key management and security practices
-- **User Email Flexibility**: Allow null email values instead of requiring empty strings
-  - Improved user model validation
-  - Better handling of optional user data
-
-### 🔧 Technical Improvements
-
-- **Docker Build Enhancements**: Fixed SQLCipher compilation issues in Alpine Linux
-  - Added essential build dependencies: `sqlite-dev`, `openssl-dev`, `libffi-dev`, `python3-dev`
-  - Resolved native module compilation failures
-  - Enhanced multi-stage build configuration
-  - Improved Docker Compose configurations for external Ollama setup
-
-### 📚 Documentation
-
-- **Comprehensive Documentation Overhaul**: Major expansion and improvement of project documentation
-  - **New Guides Added**:
-    - Plugin Architecture (08) - Complete plugin development guide
-    - RAG Feature (09) - Retrieval-Augmented Generation implementation
-    - SQLite Migration (10) - Database migration procedures
-    - Model Updater (11) - Automated model management system
-    - Authentication & Security (12) - Security best practices
-    - Artifacts Feature (13) - Code artifact handling
-    - Release Automation (14) - Automated release workflows
-    - Docker External Ollama (15) - External Ollama setup guide
-    - Persona Development Framework (16) - AI persona creation
-    - Community Charter (18) - Project governance and ethics
-    - Database Encryption (19) - Encryption implementation details
-    - Development Branch Guide (17) - Using the dev branch
-  - **Enhanced Existing Documentation**:
-    - Quick Start Guide (01) - Added local Docker build instructions and troubleshooting
-    - Working with Models (02) - Expanded model management information
-    - Pro Tips (03) - Additional productivity tips and shortcuts
-    - Keyboard Shortcuts (04) - Complete shortcut reference
-    - Demo Mode (05) - Enhanced demo capabilities
-    - Troubleshooting (06) - Common issues and solutions
-    - Main README (00) - Comprehensive project overview
-- **Docker Documentation**: Detailed local build instructions and SQLCipher troubleshooting
-  - Step-by-step build process explanation
-  - Common build error solutions
-  - Performance optimization tips
-
-### 🐛 Bug Fixes
-
-- **Code Quality**: Fixed linting issues across frontend and backend components
-  - Resolved ESLint warnings and errors
-  - Improved code formatting and consistency
-- **Release Automation**: Enhanced changelog generation and release script improvements
-  - Better commit message filtering to reduce noise
-  - Improved categorization of changes
-  - More accurate semantic versioning detection
-- **Documentation Structure**: Reorganized changelog sections for better clarity
-  - Enhanced security documentation organization
-  - Improved navigation and cross-references
-
-## [0.1.4] - 2025-07-17
-
-### 🔐 Security & Encryption
-
-- **Database Encryption Service**: Implement AES-256-GCM encryption for all sensitive data at rest
-- **Automatic Key Management**: Auto-generate and store encryption keys in .env file
-- **Enhanced Rate Limiting**: Improved rate limiting for persona operations (500 requests per 15-minute window)
-
-### 🐛 Bug Fixes
-
-- Update @napi-rs/canvas and other dependencies to latest versions
-- Improve error handling in migration and encryption processes, and refactor preference decryption logic
-- Add rate limiting to /api/personas route and update dependency in Header component
-- Update rate limiting for persona operations and clean up dependencies in Header component
-
-### 🔧 Technical Improvements
-
-- Enhanced preference decryption logic with proper error handling
-- Improved React Hook optimizations and dependency management
-- Better code organization and error logging
-
-### 📚 Documentation
-
-- Add unreleased section to changelog for proper release automation
-
-## [0.1.3] - 2025-07-16
-
-### ✨ Added
-
-- implement avatar and background image upload components in PersonaForm
-- add expand/collapse functionality for system messages and manage background image state based on current persona
-- add embedding model and memory settings to personas and update PersonaForm for dynamic model selection
-- Implement Memory and Mutation Engine Services
-- Add CONTRIBUTORS.md file to recognize project maintainers and community contributors
-- Add support for Gemini plugin with specific payload format and response conversion
-- Enhance model updater with new providers and models
-
-### 🔧 Technical Improvements
-
-- remove unused components and clean up codebase
-- display version and warning message in ChatInput component refactor: remove badge from SettingsModal component tabs
-- simplify API calls by removing redundant headers for file uploads
-- streamline memory status display in PersonaCard component
-- update persona selector styles and enhance personas page layout
-- Update Dockerfile and package.json and add lowlight missing dependency
-
-### 🐛 Bug Fixes
-
-- update JWT_SECRET handling for production and development environments
-- reorder middleware for /api/personas route
-- update rate limiter configuration for /api/personas route
-- add advanced features to Persona export/import including embedding model, memory, and mutation settings
-- embedding model handling and default parameter loading
-- improve error handling in persona download function
-- Refac imports to use file extensions and update dependencies
-- Enable network access for development server with --host flag
-- Update contribution guidelines to submit PRs against `dev` branch instead of `main`
-
-### 📚 Documentation
-
-- add unreleased section to changelog for proper release automation
-- enhance Persona Development Framework section with dynamic embedding model selection and advanced memory systems
-
-### 🔄 Other Changes
-
-- security(rate-limiting): CodeQL: top level
-- security(rate-limiting): implement rate limiting for persona operations
-- refactor
-- Merge pull request #26 from libre-webui/dependabot/github_actions/dev/docker/build-push-action-6
-- Merge pull request #25 from libre-webui/dependabot/npm_and_yarn/dev/all-dependencies-b7e63996a2
-- ci(deps): bump docker/build-push-action from 5 to 6
-- deps(deps): bump the all-dependencies group with 3 updates
-- Merge pull request #23 from libre-webui/feature/reveries-awakening
-- Merge branch 'dev'
-- security: Fix SSRF vulnerability in pluginService.ts
-- Merge branch 'dev'
-- security: Fix format string injection vulnerability in chatService.ts
-
-## [0.1.2] - 2025-07-09
-
-### ✨ Added
-
-- Enhance documentation and implementation for Persona Development Framework
-- Add persona download functionality with JSON export
-- Enhance chat functionality with persona support
-- Integrate persona management into chat sessions, including persona selection and background application
-- Add persona selection to chat session creation and update related types and services
-- Implement Persona management features including creation, editing, deletion, and import/export functionality
-- implement model pulling with streaming progress and cancellation support
-- update CORS methods and enhance user management with optional password update
-- add conditional keyboard shortcuts indicator for chat pages
-- enhance background image handling and user management
-- update security headers and CSP for Docker compatibility
-- add logo and branding to loading screen during authentication
-- enhance Helmet configuration with production-ready CSP
-
-### 🔧 Technical Improvements
-
-- Simplify PersonaRow interface by removing unused fields and adjust chat store logging
-- enhance ChatInput with advanced features toggle and improved button layout
-
-### 🐛 Bug Fixes
-
-- Send raw JSON response for persona download instead of API response wrapper
-- Update session handling to include location pathname for redirection logic
-- db init for persona table
-- multi user cors origin
-- resolve shell command injection vulnerabilities in release scripts
-
-### 🔄 Other Changes
-
-- Adds a Persona Development Framework allowing users to create, manage, and apply AI personas in chat sessions.
-
-## [0.1.1] - 2025-07-07
-
-### ✨ Added
-
-- add --patch, --minor, --major flags to release script
-- add automated release system with conventional commits
-- dynamically display version from package.json in SettingsModal
-- add DATA_DIR environment variable for database path configuration
-- enhance timeout configurations for Ollama service and API calls
-- Remove deprecated Docker files and add external Ollama support in Docker setup feat: Update README and documentation for Docker deployment and external Ollama configuration fix: Adjust Dockerfile for flexible frontend port configuration and environment variables style: Improve code readability and consistency across Docker-related files
-- Enhance Dockerfile for multi-service startup and update WebSocket connection logic
-- Docker deployment fixes and authentication improvements
-
-### 🔧 Technical Improvements
-
-- remove obsolete workflow files and update README for clarity
-- format code for better readability and consistency
-
-### 📚 Documentation
-
-- Update README for Docker configurations and improve table formatting
-
-### 🔄 Other Changes
-
-- Merge branch 'main' of https://github.com/libre-webui/libre-webui into dev
-- Merge pull request #20 from libre-webui/dependabot/npm_and_yarn/dev/all-dependencies-fa4baa3b98
-- deps(deps): bump the all-dependencies group with 2 updates
-
-## [0.1.0] - 2025-07-06
-
-### 🎉 Initial Release
-
-The first official release of Libre WebUI - a privacy-first, local-first AI chat interface with optional external service integration.
-
-### ✨ Major Features
-
-#### 🔐 Authentication & User Management
-
-- **Complete authentication system** with secure JWT-based sessions
-- **Multi-user support** with role-based access (admin/user)
-- **Beautiful first-time setup** experience for admin account creation
-- **User management interface** with CRUD operations
-- **Rate limiting** for authentication, chat, and user management endpoints
-- **WebSocket authentication** with token lifecycle management
-
-#### 🗄️ Database Migration to SQLite
-
-- **SQLite database** replacing JSON file storage for better performance
-- **Automatic migration system** for existing JSON data
-- **User data import/export** functionality with duplicate detection
-- **Session management** with persistent storage
-- **Preferences system** with user-specific settings
-
-#### 🎨 Artifacts Feature
-
-- **Interactive content rendering** for HTML, SVG, code snippets, and JSON
-- **Automatic artifact detection** from code blocks in chat messages
-- **Sandboxed execution** for security with iframe isolation
-- **Full-screen viewing** mode for better content interaction
-- **Copy & download functionality** for all artifact types
-- **Intelligent parsing** with complexity detection to prevent spam artifacts
-
-#### 🔌 Plugin Architecture
-
-- **External AI service integration** (OpenAI, Anthropic, Groq)
-- **Automatic model updates** from AI providers
-- **Flexible plugin system** for easy service addition
-
-#### 🎨 Custom Background Images
-
-- **Background image upload** - Users can now upload custom background images
-- **Real-time preview** - Background images are displayed immediately after upload
-- **Configurable blur effect** - Adjustable blur amount (0-20px) for visual enhancement
-- **Opacity control** - Customizable transparency (0-100%) for better text readability
-- **Toggle functionality** - Enable/disable background images with a single click
-- **Background removal** - Option to remove current background and reset to default
-- **Semi-transparent UI** - Main content, header, and sidebar have semi-transparent backgrounds with blur effects
-- **Persistent settings** - Background preferences are saved and synced across sessions
-- **Error handling** - Comprehensive error handling for uploads and API calls
-- **Performance optimized** - Efficient image handling with proper scaling and optimization
-
-#### 📄 Document Processing (RAG)
-
-- **Document upload** support (PDF, TXT, DOCX)
-- **Semantic search** integration for document chat
-- **Vector embeddings** with configurable models
-
-### 🎨 User Interface
-
-#### 🖼️ Modern Design System
-
-- **Clean, responsive interface** that works on desktop, tablet, and mobile
-- **Dark/light theme** support with proper color tokens
-- **Improved component styling** with consistent design patterns
-- **Enhanced settings modal** with custom range sliders
-- **User menu dropdown** with portal rendering and proper positioning
-
-#### ⚡ Performance Optimizations
-
-- **Code splitting** and lazy loading for faster page loads
-- **Real-time chat** with WebSocket streaming
-- **Optimized artifact rendering** with duplicate prevention
-- **Efficient state management** with Zustand stores
-
-#### ⌨️ Developer Experience
-
-- **VS Code-inspired keyboard shortcuts** (⌘B, ⌘D, ⌘,, ?)
-- **Complete TypeScript coverage** across frontend and backend
-- **Proper error handling** and loading states
-- **Development mode debugging** with helpful console logs
-
-### 🔒 Security Features
-
-- **Sandboxed artifact execution** with iframe security
-- **Content validation** for all user inputs
-- **Rate limiting** on all API endpoints
-- **Secure password handling** with proper hashing
-- **CORS configuration** for development and production
-- **Input sanitization** for HTML and code content
-
-### 🛠️ Technical Improvements
-
-#### Backend
-
-- **Express.js API** with comprehensive route handling
-- **JWT authentication** with proper token management
-- **Database migrations** with automatic schema updates
-- **WebSocket server** for real-time communication
-- **Plugin service architecture** for external API integration
-- **Comprehensive error handling** and logging
-
-#### Frontend
-
-- **React 18** with modern hooks and functional components
-- **TypeScript** for type safety across the application
-- **Tailwind CSS** with custom design tokens
-- **React Router** for client-side navigation
-- **Zustand** for state management
-- **Axios** for API communication with interceptors
-
-#### Custom Background Images - Technical Implementation
-
-- **Type safety** - Full TypeScript support for background settings
-- **State management** - Integrated background state into Zustand app store
-- **API integration** - Background settings persist via preferences API
-- **Component architecture** - Modular components for upload, rendering, and configuration
-- **UI integration** - Seamlessly integrated into existing Settings modal
-
-### 📚 Documentation
-
-- **Complete documentation suite** with 14 comprehensive guides
-- **Step-by-step setup guides** for quick onboarding
-- **Feature documentation** for all major capabilities
-- **Technical implementation guides** for developers
-- **Troubleshooting guides** for common issues
-
-### 🧪 Quality Assurance
-
-- **ESLint configuration** with TypeScript support
-- **Prettier formatting** for consistent code style
-- **Git hooks** for pre-commit validation
-- **Security scanning** with CodeQL integration
-- **Comprehensive testing** of all major features
-
-### 📦 Deployment & Operations
-
-- **Docker support** with development and production configurations
-- **npm scripts** for easy development workflow
-- **Environment configuration** for different deployment scenarios
-- **Logging system** for debugging and monitoring
-- **Health check endpoints** for service monitoring
-
-### 🎯 Highlights
-
-This release establishes Libre WebUI as a **production-ready alternative** to corporate AI chat interfaces, with:
-
-- **Privacy-first architecture** - Everything runs locally by default
-- **No telemetry or tracking** - Your data stays on your hardware
-- **Open source** - Complete transparency and community control
-- **Feature parity** with leading AI chat interfaces
-- **Extensible plugin system** for future growth
-- **Professional user experience** with modern UI/UX
-
-### 🚀 Getting Started
-
-```bash
-# Quick start
-git clone https://github.com/libre-webui/libre-webui
-cd libre-webui
-./start.sh
-```
-
-Visit the [documentation](./docs/00-README.md) for detailed setup instructions.
-
-### 🤝 Contributing
-
-We welcome contributions! See our [contributing guide](./docs/00-README.md#contributing) for details.
-
-### 📄 License
-
-This project is licensed under the Apache License 2.0. See [LICENSE](./LICENSE) for details.
 
 ---
 
-**Full Changelog**: https://github.com/libre-webui/libre-webui/commits/v0.1.0
+## [0.1.6] - 2025-07-20
+
+## Libre WebUI v0.1.6 - 2025-07-20
+
+This release focuses on enhancing the user experience with improved streaming performance, a more refined chat interface, and expanded documentation. We've also streamlined the release process and improved overall stability. This version delivers a smoother and more feature-rich experience for both casual users and developers.
+
+### ✨ Added
+
+- **View Mode Toggle:** Introduced a toggle to switch between different viewing modes for artifact rendering, providing greater control over how outputs are displayed.
+- **OpenRouter Support:** Expanded multi-AI support to include OpenRouter, offering users more flexibility in choosing their preferred AI providers.
+- **Debugging Tools for Streaming:** Added initial debugging tools to assist in diagnosing and resolving issues with streaming performance.
+
+### 🔧 Improved
+
+- **Streaming Performance:** Significantly enhanced streaming performance through batching of messages, resulting in faster and more responsive chat interactions.
+- **Chat Message Scrolling:** Improved scrolling behavior within the `ChatMessages` component, making it easier to follow conversations, especially during active streaming.
+- **Model Update Instructions:** Enhanced instructions for updating models in the README, providing clearer guidance for users.
+- **Release Process:** Streamlined the release process by incorporating code formatting _before_ committing changes, ensuring consistent code style across releases.
+
+### 🐛 Fixed
+
+- **README Typo:** Corrected a typographical error in the README front matter.
+- **Release Script Error Handling:** Improved error handling and validation within the release script, making it more robust and reliable.
+
+### 📚 Documentation
+
+- **Documentation Layout:** Added necessary imports for `Tabs` and `TabItem` components to enhance the layout and organization of documentation pages.
+- **Updated Documentation:** General documentation updates across multiple files (00-README.md, 01-QUICK_START.md, 02-WORKING_WITH_MODELS.md, 03-PRO_TIPS.md, 04-KEYBOARD_SHORTCUTS.md, 05-DEMO_MODE.md) to reflect the latest features and improvements.
+
+### 🔒 Security
+
+- No security-related changes in this release.
+
+### ⚠️ Breaking Changes
+
+- No breaking changes in this release.
+
+### Technical Details
+
+- **Streaming Optimization:** Implemented message batching during streaming to reduce network overhead and improve perceived responsiveness. This involved refactoring the message handling logic within the streaming component.
+- **Release Process Automation:** The release process now includes a pre-commit hook that automatically formats code using a configured formatter (e.g., Prettier). This ensures consistent code style and reduces the risk of style-related merge conflicts.
+- **Documentation Updates:** Documentation updates primarily focused on clarifying existing instructions and adding details about new features. The addition of `Tabs` and `TabItem` imports allows for more structured and organized documentation layouts.
+- **Error Handling:** Improved error handling in the release script now includes more specific error messages and validation checks to identify and address potential issues during the release process.
+
+### User Impact
+
+- **Faster Chat Experience:** The streaming performance improvements result in a noticeably faster and more responsive chat experience, especially when interacting with AI models.
+- **Improved Usability:** The enhanced scrolling behavior makes it easier to follow conversations and review past messages.
+- **Clearer Guidance:** Updated documentation provides clearer instructions and guidance for using Libre WebUI, making it easier for new users to get started.
+- **More Flexible AI Choices:** Support for OpenRouter expands the range of AI providers users can choose from.
+
+---
+
+## [0.1.5] - 2025-07-20
+
+## Libre WebUI v0.1.5 - 2025-07-20
+
+This release focuses on bolstering the core infrastructure of Libre WebUI, enhancing security, and significantly expanding documentation to empower both users and developers. We've added support for OpenRouter, improved key management for persistent storage, and streamlined the overall user experience through various refinements.
+
+### ✨ Added
+
+- **OpenRouter Support:** Integrated support for the OpenRouter API, allowing users to leverage a wider range of models and providers. Includes model fetching and update scripts for seamless integration.
+- **Persistent Storage for Encryption Keys:** Added support for Docker persistent storage for encryption keys, ensuring key security and availability across container restarts.
+
+### 🔧 Improved
+
+- **User Email Handling:** Updated user email handling to allow `null` values instead of requiring empty strings, providing greater flexibility in user data management.
+- **JWT and Encryption Handling:** Enhanced JWT and encryption handling for improved security and reliability.
+- **Docker Build Process:** Updated the Dockerfile to include additional dependencies for SQLite and OpenSSL, streamlining the local build process and improving compatibility.
+
+### 🐛 Fixed
+
+- **Changelog Generation:** Improved the changelog generation process in the release script to filter noise and better categorize commits, resulting in a cleaner and more informative changelog.
+- **Linting Issues:** Addressed various linting issues throughout the codebase, improving code quality and maintainability.
+
+### 📚 Documentation
+
+- **Extensive Documentation Updates:** Significantly expanded documentation with new sections covering:
+  - Plugin Architecture
+  - RAG (Retrieval Augmented Generation) Feature
+  - SQLite Migration
+  - Model Updater
+  - Authentication & Security
+  - Artifacts Feature
+  - Release Automation
+  - Docker External Ollama Setup
+  - Persona Development Framework
+  - Community Charter
+- **Development Branch Guide:** Added a guide for contributing to the development branch.
+- **Outdated Database Encryption Removal:** Removed the outdated Database Encryption implementation, streamlining the codebase and focusing on the new, improved key management system.
+
+### 🔒 Security
+
+- **Enhanced Key Management:** Implemented support for Docker persistent storage for encryption keys, providing a more secure and reliable method for storing sensitive data.
+- **JWT & Encryption Improvements:** Strengthened JWT and encryption handling to mitigate potential security vulnerabilities.
+- **Security Documentation:** Expanded security documentation to provide users with a comprehensive understanding of the security features and best practices.
+
+### ⚠️ Breaking Changes
+
+- None in this release.
+
+### Technical Details
+
+- **SQLite & OpenSSL Dependencies:** The Dockerfile now explicitly includes SQLite and OpenSSL, ensuring consistent build environments and resolving potential dependency issues.
+- **Encryption Key Storage:** Encryption keys are now designed to be stored persistently outside the container, preventing data loss on container restarts. This is achieved through volume mounting in Docker.
+- **OpenRouter Integration:** The OpenRouter integration leverages the API to dynamically fetch available models and their configurations. The update scripts facilitate keeping the model list current.
+- **JWT Handling:** JWTs are now generated and validated with enhanced security measures, including stronger algorithms and key rotation considerations.
+
+### User Impact
+
+This release provides a more robust and secure experience for all Libre WebUI users. The addition of OpenRouter expands model options, while improved documentation empowers users to customize and extend the platform. The enhanced security features protect user data and ensure a reliable and trustworthy experience. The streamlined build process and improved changelog make development and contribution easier for the community.
+
+---
+
+## [0.1.4] - 2025-07-17
+
+## Libre WebUI v0.1.4 - 2025-07-17
+
+This release focuses on enhancing the security and reliability of Libre WebUI, introducing database encryption and improved error handling. We've also made significant improvements to API rate limiting and streamlined dependency management. These changes aim to provide a more secure and robust experience for all users.
+
+### ✨ Added
+
+- **Automatic Encryption Key Generation:** Libre WebUI now automatically generates and stores an encryption key in the `.env` file during initial setup, simplifying the configuration process.
+- **Database Encryption Service:** Implemented a robust database encryption service utilizing AES-256-GCM to protect sensitive user data at rest.
+
+### 🔧 Improved
+
+- **API Rate Limiting:** Enhanced rate limiting for the `/api/personas` route, allowing up to 500 requests per window. This prevents abuse and ensures service stability. Rate limiting logic has been refined across persona operations for better performance.
+- **Error Handling:** Improved error handling in database migration and encryption processes, providing more informative error messages and preventing unexpected failures.
+- **Preference Decryption:** Refactored the preference decryption logic for improved clarity and maintainability.
+
+### 🐛 Fixed
+
+- **Dependency Updates:** Updated `@napi-rs/canvas` and other core dependencies to the latest versions, resolving potential vulnerabilities and improving performance.
+- **Header Component Dependencies:** Cleaned up unnecessary dependencies within the Header component, reducing bundle size and improving load times.
+
+### 📚 Documentation
+
+- **Changelog Updates:** Added an "Unreleased" section to the changelog to facilitate smoother release automation and tracking of upcoming changes.
+- **README Updates:** Updated the README.md file with relevant information about the latest features and improvements.
+
+### 🔒 Security
+
+- **AES-256-GCM Encryption:** Implemented AES-256-GCM encryption for the entire database, protecting user data from unauthorized access. The encryption key is securely stored and managed.
+- **Dependency Updates:** Updated dependencies to address potential security vulnerabilities.
+
+### ⚠️ Breaking Changes
+
+- None. This release does not introduce any breaking changes.
+
+### Technical Details
+
+- **Encryption Implementation:** The database encryption service utilizes AES-256-GCM with a randomly generated key stored in the `.env` file. This key should be treated as highly sensitive and protected accordingly.
+- **Rate Limiting:** Rate limiting is implemented using a sliding window algorithm to provide a balance between performance and protection against abuse.
+- **Dependency Management:** `package-lock.json` has been updated to ensure consistent dependency versions across all environments.
+- **`.env` Configuration:** The `.env` file now includes a variable for the encryption key. Users should ensure this file is not committed to version control.
+
+### User Impact
+
+- **Enhanced Security:** Database encryption protects your personal data from unauthorized access, providing peace of mind.
+- **Improved Reliability:** Enhanced error handling and dependency updates contribute to a more stable and reliable experience.
+- **Faster Performance:** Dependency cleanup and optimized rate limiting contribute to improved performance and responsiveness.
+- **Simplified Setup:** Automatic encryption key generation simplifies the initial setup process.
+
+---
+
+## [0.1.3] - 2025-07-16
+
+## Libre WebUI v0.1.3 - 2025-07-16
+
+This release focuses on enhancing the Persona management experience, improving security, and laying the groundwork for more advanced features like memory and mutation engines. We've also made significant improvements to documentation and developer tooling, making it easier to contribute and extend Libre WebUI.
+
+### ✨ Added
+
+- **Persona Management:** Implemented avatar and background image upload components within the PersonaForm for richer persona customization.
+- **Memory & Mutation Engine Services:** Added core services for Memory and Mutation engines, paving the way for more dynamic and intelligent chatbot behavior.
+- **Gemini Plugin Support:** Added support for the Gemini plugin, including specific payload formatting and response conversion.
+- **Contributor Recognition:** Added a `CONTRIBUTORS.md` file to publicly acknowledge and thank project maintainers and community contributors.
+- **Model Updater Enhancements:** Expanded the model updater with support for new providers and models, increasing flexibility and choice.
+
+### 🔧 Improved
+
+- **Persona Export/Import:** Enhanced Persona export/import functionality to include embedding model, memory, and mutation settings, enabling complete persona backups and sharing.
+- **Persona Interface:** Improved the Persona page layout and styles for a more intuitive user experience. Streamlined memory status display in the PersonaCard component.
+- **Chat Input:** Updated the ChatInput component to display the version number and a warning message.
+- **Embedding Model Selection:** Enhanced the Persona Development Framework section with dynamic embedding model selection and advanced memory systems documentation. The PersonaForm now supports dynamic model selection.
+- **File Uploads:** Simplified API calls for file uploads by removing redundant headers, improving efficiency.
+- **Dependency Management:** Updated dependencies across the project, ensuring compatibility and stability.
+
+### 🐛 Fixed
+
+- **Persona Download:** Improved error handling in the persona download function for more robust operation.
+- **Network Access (Development):** Enabled network access for the development server using the `--host` flag, facilitating easier local testing.
+- **Import Resolution:** Refactored imports to use file extensions, resolving potential import issues.
+
+### 📚 Documentation
+
+- **Persona Development Framework:** Expanded documentation to cover dynamic embedding model selection and advanced memory systems.
+- **Contribution Guidelines:** Updated contribution guidelines to direct pull requests to the `dev` branch instead of `main`.
+
+### 🔒 Security
+
+- **SSRF Vulnerability:** Fixed a Server-Side Request Forgery (SSRF) vulnerability in `pluginService.ts`.
+- **Format String Injection:** Fixed a format string injection vulnerability in `chatService.ts`.
+- **JWT Secret Handling:** Updated JWT_SECRET handling for both production and development environments to improve security.
+- **Rate Limiting:** Implemented rate limiting for persona operations to prevent abuse and ensure service availability. Reordered middleware and updated configuration for the `/api/personas` route to optimize rate limiting effectiveness. CodeQL analysis was performed to identify and address potential vulnerabilities.
+
+### ⚠️ Breaking Changes
+
+- None identified in this release.
+
+### Technical Details
+
+- **Docker Updates:** Updated the Dockerfile and package.json to ensure a consistent and reproducible build environment. Added a missing dependency (`lowlight`) to the Dockerfile.
+- **CI/CD:** Updated the Docker build action to version 6.
+- **Refactoring:** Removed unused components and cleaned up the codebase for improved maintainability. Simplified API calls and streamlined component rendering.
+- **Rate Limiting Implementation:** Rate limiting is implemented using a token bucket algorithm with configurable limits per IP address.
+- **Gemini Plugin Integration:** The Gemini plugin integration utilizes a specific payload format and response conversion logic to ensure compatibility with the Libre WebUI API.
+
+---
+
+## [0.1.2] - 2025-07-09
+
+## Libre WebUI v0.1.2 - 2025-07-09
+
+This release focuses on significantly expanding user personalization and management capabilities with the introduction of the Persona Development Framework. Alongside this, we’ve made substantial improvements to security, user experience, and core functionality like model pulling and chat interactions. This version delivers a more robust and customizable experience for all users.
+
+### ✨ Added
+
+- **Persona Development Framework:** Introduced a comprehensive framework for creating, managing, and utilizing custom personas within the chat interface. Users can now define unique personalities and backgrounds for their AI interactions.
+- **Persona Import/Export:** Added functionality to export personas as JSON files, allowing for easy sharing and backup. Users can also import personas from existing JSON files.
+- **Model Pulling with Streaming Progress:** Implemented a new model pulling mechanism with streaming progress updates and cancellation support, providing a more responsive and user-friendly experience when downloading models.
+- **Conditional Keyboard Shortcuts Indicator:** Added a visual indicator to the chat interface to display available keyboard shortcuts, improving usability.
+- **Loading Screen Branding:** Enhanced the loading screen during authentication with a logo and branding elements for a more polished user experience.
+
+### 🔧 Improved
+
+- **Chat Functionality with Persona Support:** Enhanced the chat functionality to seamlessly integrate with the Persona Development Framework. Users can now select and apply personas to their chat sessions.
+- **Persona Management in Chat Sessions:** Improved chat session management to include persona selection and background application, ensuring consistent personality throughout the conversation.
+- **User Management & CORS:** Enhanced user management features with optional password updates and improved CORS handling for multi-user environments.
+- **Background Image Handling:** Improved background image handling for a more visually appealing and customizable interface.
+- **Chat Input Enhancements:** Enhanced the ChatInput component with advanced features toggle and improved button layout for better usability.
+- **Helmet Configuration:** Updated Helmet configuration with a production-ready Content Security Policy (CSP) for enhanced security.
+
+### 🐛 Fixed
+
+- **Persona Table Initialization:** Resolved an issue with the initialization of the persona table in the database.
+- **Session Handling Redirection:** Corrected session handling to properly include the location pathname for redirection logic.
+- **Raw JSON Response for Persona Download:** Fixed an issue where persona downloads were returning an API response wrapper instead of raw JSON.
+- **Multi-User CORS Origin:** Resolved a CORS issue affecting multi-user environments.
+- **Shell Command Injection Vulnerabilities:** Addressed and mitigated potential shell command injection vulnerabilities in release scripts.
+
+### 📚 Documentation
+
+- **Persona Development Framework Documentation:** Added comprehensive documentation detailing the Persona Development Framework, including instructions on creating, managing, and utilizing personas.
+
+### 🔒 Security
+
+- **Enhanced Security Headers & CSP:** Updated security headers and implemented a robust Content Security Policy (CSP) for improved protection against various attacks, especially for Docker deployments.
+- **CSP Configuration for Production:** Fine-tuned the CSP configuration for production environments to maximize security without impacting functionality.
+
+### ⚠️ Breaking Changes
+
+- None identified in this release.
+
+### Technical Details
+
+- **Database Schema Update:** The persona table has been added to the database schema. Developers should ensure their database migrations are up-to-date.
+- **API Endpoints:** New API endpoints have been added for persona management (creation, editing, deletion, import/export). Refer to the updated API documentation for details.
+- **CORS Configuration:** The CORS configuration has been updated to allow for more flexible origin handling. Developers should review the configuration to ensure it meets their specific requirements.
+- **CSP Configuration:** The CSP configuration has been significantly updated. Developers should review the configuration to ensure it aligns with their security policies and application requirements.
+- **Chat Service Refactor:** The chat service has been refactored to integrate with the Persona Development Framework. Developers extending the chat service should be aware of these changes.
+- **PersonaRow Interface:** The `PersonaRow` interface has been simplified by removing unused fields to improve code clarity and maintainability.
+
+---
+
+## [0.1.1] - 2025-07-07
+
+## Libre WebUI v0.1.1 - 2025-07-07
+
+This release focuses on significantly improving Docker deployment, enhancing configuration options, and streamlining the release process. We've added robust automation for releases and made it easier to customize and deploy Libre WebUI in various environments, including support for external Ollama instances. This version also lays the groundwork for future scalability and maintainability.
+
+### ✨ Added
+
+- **Automated Release System:** Implemented a fully automated release pipeline using conventional commits, enabling faster and more reliable releases. The release script now supports `--patch`, `--minor`, and `--major` flags for version bumping.
+- **External Ollama Support (Docker):** The Docker setup now supports connecting to an external, pre-existing Ollama instance, providing greater flexibility in deployment scenarios.
+- **Dynamic Version Display:** The application now dynamically displays the version number from `package.json` within the SettingsModal, ensuring users always have access to the current version information.
+- **Configurable Data Directory:** Added the `DATA_DIR` environment variable, allowing users to specify the database path for persistent data storage.
+
+### 🔧 Improved
+
+- **Docker Deployment:** Major improvements to the Dockerfile and related files for multi-service startup, flexible frontend port configuration, and environment variable handling. WebSocket connection logic has been updated for improved stability.
+- **Timeout Configurations:** Enhanced timeout configurations for both the Ollama service and API calls, improving responsiveness and reliability under varying network conditions.
+- **Code Readability & Consistency:** Significant improvements to code formatting and consistency across the codebase, particularly within Docker-related files, enhancing maintainability and collaboration.
+
+### 🐛 Fixed
+
+- **Docker Configuration Issues:** Resolved several issues related to Docker deployment, including incorrect configurations and potential startup failures.
+- **WebSocket Connection Stability:** Addressed issues with WebSocket connections within the Docker environment, improving the overall stability of the application.
+
+### 📚 Documentation
+
+- **Docker Documentation:** Updated the README with comprehensive documentation for Docker configurations, including instructions for external Ollama setup and environment variable usage. Improved table formatting for better readability.
+- **General README Updates:** Clarified various sections of the README for improved user understanding.
+
+### 🔒 Security
+
+- No specific security changes in this release.
+
+### ⚠️ Breaking Changes
+
+- No breaking changes are introduced in this release.
+
+### Technical Details
+
+- **Conventional Commits:** The release process now leverages conventional commits for automated versioning and changelog generation.
+- **Dockerfile Optimization:** The Dockerfile has been restructured to support multi-service startup and improved resource utilization.
+- **Environment Variable Configuration:** The addition of `DATA_DIR` and improved handling of other environment variables provide greater control over application behavior.
+- **WebSocket Updates:** WebSocket connection logic has been updated to handle potential connection issues and improve stability.
+
+### User Impact
+
+- **Easier Deployment:** The improved Docker configuration and external Ollama support make it significantly easier to deploy Libre WebUI in various environments.
+- **Increased Customization:** The `DATA_DIR` environment variable allows users to customize data storage locations.
+- **Enhanced Reliability:** Improved timeout configurations and WebSocket stability contribute to a more reliable and responsive user experience.
+- **Automatic Updates:** The automated release system ensures users receive timely updates with new features and bug fixes.
+
+---
