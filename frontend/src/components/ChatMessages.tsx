@@ -35,30 +35,71 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isUserScrolledUpRef = useRef<boolean>(false);
 
-  const scrollToBottom = useCallback(() => {
-    // Throttle scroll updates to improve performance during streaming
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
+  const scrollToBottom = useCallback(
+    (force: boolean = false) => {
+      // During streaming, always scroll to bottom unless explicitly prevented
+      if (isStreaming || force) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
 
-    scrollTimeoutRef.current = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 50); // Faster scroll updates for better UX during streaming
-  }, []);
+      // For non-streaming, respect user scroll position
+      if (isUserScrolledUpRef.current) {
+        return; // Don't auto-scroll if user has manually scrolled up
+      }
+
+      // Use throttled approach for normal scrolling
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      scrollTimeoutRef.current = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+    },
+    [isStreaming]
+  );
+
+  // Check if user has scrolled up manually - but only when not actively streaming
+  const handleScroll = useCallback(() => {
+    // Don't interfere with auto-scroll during active streaming
+    if (isStreaming) return;
+
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20; // 20px threshold
+
+    isUserScrolledUpRef.current = !isAtBottom;
+  }, [isStreaming]);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages.length, scrollToBottom]);
 
-  // Also scroll during streaming when content changes
+  // Enhanced streaming scroll - direct scroll manipulation for reliability
   useEffect(() => {
     if (isStreaming && streamingMessage) {
-      scrollToBottom();
+      // Use requestAnimationFrame for smooth, consistent scrolling
+      requestAnimationFrame(() => {
+        const container = scrollContainerRef.current;
+        if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
+      });
     }
-  }, [isStreaming, streamingMessage, scrollToBottom]);
+  }, [isStreaming, streamingMessage]);
 
-  // Cleanup timeout on unmount
+  // Reset scroll tracking when streaming starts
+  useEffect(() => {
+    if (isStreaming) {
+      isUserScrolledUpRef.current = false; // Allow auto-scroll during new streaming
+    }
+  }, [isStreaming]); // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (scrollTimeoutRef.current) {
@@ -91,6 +132,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
 
   return (
     <div
+      ref={scrollContainerRef}
+      onScroll={handleScroll}
       className={cn(
         'flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600',
         'scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500',
