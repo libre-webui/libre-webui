@@ -27,8 +27,12 @@ import {
   AlertTriangle,
   Download,
   ExternalLink,
+  Eye,
+  Code2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
+import { useAppStore } from '@/store/appStore';
 import { Artifact } from '@/types';
 import { cn } from '@/utils';
 
@@ -46,7 +50,9 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   onFullscreenToggle,
 }) => {
   const [copied, setCopied] = useState(false);
+  const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const { theme } = useAppStore();
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -180,13 +186,35 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   };
 
   const renderCode = () => {
+    // Auto-detect language based on artifact type if not specified
+    const getLanguage = () => {
+      if (artifact.language) {
+        return artifact.language;
+      }
+
+      switch (artifact.type) {
+        case 'html':
+          return 'html';
+        case 'react':
+          return 'jsx';
+        case 'svg':
+          return 'xml';
+        case 'json':
+          return 'json';
+        default:
+          return 'text';
+      }
+    };
+
     return (
-      <div className='relative'>
-        <pre className='bg-gray-900 dark:bg-dark-950 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm border border-gray-200 dark:border-dark-200'>
-          <code className={`language-${artifact.language || 'text'}`}>
-            {artifact.content}
-          </code>
-        </pre>
+      <div className='relative max-h-96 overflow-auto'>
+        <OptimizedSyntaxHighlighter
+          language={getLanguage()}
+          isDark={theme.mode === 'dark'}
+          className='!m-0 !rounded-lg'
+        >
+          {artifact.content}
+        </OptimizedSyntaxHighlighter>
       </div>
     );
   };
@@ -194,12 +222,18 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   const renderJson = () => {
     try {
       const parsedJson = JSON.parse(artifact.content);
+      const formattedJson = JSON.stringify(parsedJson, null, 2);
+
       return (
-        <pre className='bg-gray-900 dark:bg-dark-950 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm border border-gray-200 dark:border-dark-200'>
-          <code className='language-json'>
-            {JSON.stringify(parsedJson, null, 2)}
-          </code>
-        </pre>
+        <div className='relative max-h-96 overflow-auto'>
+          <OptimizedSyntaxHighlighter
+            language='json'
+            isDark={theme.mode === 'dark'}
+            className='!m-0 !rounded-lg'
+          >
+            {formattedJson}
+          </OptimizedSyntaxHighlighter>
+        </div>
       );
     } catch (_err) {
       return (
@@ -216,6 +250,12 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   };
 
   const renderContent = () => {
+    // Show raw code if in code view mode
+    if (viewMode === 'code') {
+      return renderCode();
+    }
+
+    // Otherwise show the rendered preview
     switch (artifact.type) {
       case 'html':
         return renderHtml();
@@ -224,9 +264,19 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       case 'json':
         return renderJson();
       case 'code':
+      case 'text':
       default:
         return renderCode();
     }
+  };
+
+  // Determine if we should show the view mode toggle
+  const shouldShowViewToggle = () => {
+    return (
+      artifact.type === 'html' ||
+      artifact.type === 'svg' ||
+      artifact.type === 'react'
+    );
   };
 
   return (
@@ -253,6 +303,33 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
         </div>
 
         <div className='flex items-center gap-1'>
+          {/* View mode toggle for previewable artifacts */}
+          {shouldShowViewToggle() && (
+            <>
+              <Button
+                variant={viewMode === 'preview' ? 'primary' : 'ghost'}
+                size='sm'
+                onClick={() => setViewMode('preview')}
+                className='h-8 px-3 text-xs'
+                title='Preview mode'
+              >
+                <Eye className='h-3 w-3 mr-1' />
+                Preview
+              </Button>
+              <Button
+                variant={viewMode === 'code' ? 'primary' : 'ghost'}
+                size='sm'
+                onClick={() => setViewMode('code')}
+                className='h-8 px-3 text-xs'
+                title='Code mode'
+              >
+                <Code2 className='h-3 w-3 mr-1' />
+                Code
+              </Button>
+              <div className='w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1' />
+            </>
+          )}
+
           <Button
             variant='ghost'
             size='sm'

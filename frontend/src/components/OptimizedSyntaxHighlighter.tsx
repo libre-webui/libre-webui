@@ -51,6 +51,8 @@ const supportedLanguages = [
   'markdown',
   'css',
   'html',
+  'jsx', // Added for React components
+  'xml', // Added for SVG
 ];
 
 export const OptimizedSyntaxHighlighter: React.FC<
