@@ -15,6 +15,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.1.5] - 2025-07-20
+
+### ✨ Added
+
+- **OpenRouter Integration**: Complete support for OpenRouter API with model fetching capabilities
+  - New `openrouter.json` plugin file with 300+ model configurations
+  - Automated model updates via `update-openrouter-models.sh` script
+  - Environment variable support for OpenRouter API key
+  - Integration with existing plugin architecture
+- **Enhanced JWT and Encryption**: Improved JWT token handling and encryption service
+  - Support for Docker persistent storage of encryption keys
+  - Better key management and security practices
+- **User Email Flexibility**: Allow null email values instead of requiring empty strings
+  - Improved user model validation
+  - Better handling of optional user data
+
+### 🔧 Technical Improvements
+
+- **Docker Build Enhancements**: Fixed SQLCipher compilation issues in Alpine Linux
+  - Added essential build dependencies: `sqlite-dev`, `openssl-dev`, `libffi-dev`, `python3-dev`
+  - Resolved native module compilation failures
+  - Enhanced multi-stage build configuration
+  - Improved Docker Compose configurations for external Ollama setup
+
+### 📚 Documentation
+
+- **Comprehensive Documentation Overhaul**: Major expansion and improvement of project documentation
+  - **New Guides Added**:
+    - Plugin Architecture (08) - Complete plugin development guide
+    - RAG Feature (09) - Retrieval-Augmented Generation implementation
+    - SQLite Migration (10) - Database migration procedures
+    - Model Updater (11) - Automated model management system
+    - Authentication & Security (12) - Security best practices
+    - Artifacts Feature (13) - Code artifact handling
+    - Release Automation (14) - Automated release workflows
+    - Docker External Ollama (15) - External Ollama setup guide
+    - Persona Development Framework (16) - AI persona creation
+    - Community Charter (18) - Project governance and ethics
+    - Database Encryption (19) - Encryption implementation details
+    - Development Branch Guide (17) - Using the dev branch
+  - **Enhanced Existing Documentation**:
+    - Quick Start Guide (01) - Added local Docker build instructions and troubleshooting
+    - Working with Models (02) - Expanded model management information
+    - Pro Tips (03) - Additional productivity tips and shortcuts
+    - Keyboard Shortcuts (04) - Complete shortcut reference
+    - Demo Mode (05) - Enhanced demo capabilities
+    - Troubleshooting (06) - Common issues and solutions
+    - Main README (00) - Comprehensive project overview
+- **Docker Documentation**: Detailed local build instructions and SQLCipher troubleshooting
+  - Step-by-step build process explanation
+  - Common build error solutions
+  - Performance optimization tips
+
+### 🐛 Bug Fixes
+
+- **Code Quality**: Fixed linting issues across frontend and backend components
+  - Resolved ESLint warnings and errors
+  - Improved code formatting and consistency
+- **Release Automation**: Enhanced changelog generation and release script improvements
+  - Better commit message filtering to reduce noise
+  - Improved categorization of changes
+  - More accurate semantic versioning detection
+- **Documentation Structure**: Reorganized changelog sections for better clarity
+  - Enhanced security documentation organization
+  - Improved navigation and cross-references
+
 ## [0.1.4] - 2025-07-17
 
 ### 🔐 Security & Encryption
