@@ -67,9 +67,9 @@ class ReleaseManager {
         });
         return result ? result.trim() : '';
       } catch (error) {
-        console.error(`Error executing command: ${command}`);
+        console.error(`Error executing shell command: ${command}`);
         console.error(error.message);
-        process.exit(1);
+        throw error; // Re-throw to allow caller to handle
       }
     } else {
       // Use spawn for better security
@@ -93,11 +93,16 @@ class ReleaseManager {
           throw result.error;
         }
 
+        if (result.status !== 0) {
+          const errorMessage = result.stderr ? result.stderr.trim() : `Command failed with exit code ${result.status}`;
+          throw new Error(errorMessage);
+        }
+
         return result.stdout ? result.stdout.trim() : '';
       } catch (error) {
         console.error(`Error executing command: ${command}`);
         console.error(error.message);
-        process.exit(1);
+        throw error; // Re-throw to allow caller to handle
       }
     }
   }
@@ -350,25 +355,70 @@ class ReleaseManager {
 
     // Run any pre-release scripts (linting, building, etc.)
     console.log('🔍 Running pre-release checks...');
-    this.exec('npm run lint');
-    this.exec('npm run build');
+    try {
+      this.exec('npm run lint');
+      console.log('  ✅ Linting passed');
+    } catch (error) {
+      console.error('  ❌ Linting failed:', error.message);
+      process.exit(1);
+    }
+    
+    try {
+      this.exec('npm run build');
+      console.log('  ✅ Build completed');
+    } catch (error) {
+      console.error('  ❌ Build failed:', error.message);
+      process.exit(1);
+    }
 
     // Commit changes
     console.log('📝 Committing release changes...');
-    this.exec('git add .');
-    this.exec(`git commit -m "chore(release): ${nextVersion}"`);
+    try {
+      this.exec('git add .');
+      console.log('  ✅ Files staged');
+    } catch (error) {
+      console.error('  ❌ Failed to stage files:', error.message);
+      process.exit(1);
+    }
+
+    try {
+      this.exec(`git commit -m "chore(release): ${nextVersion}"`);
+      console.log('  ✅ Release commit created');
+    } catch (error) {
+      console.error('  ❌ Failed to create commit:', error.message);
+      process.exit(1);
+    }
 
     // Create git tag
     console.log('🏷️  Creating git tag...');
-    this.exec(`git tag -a v${nextVersion} -m "Release v${nextVersion}"`);
+    try {
+      this.exec(`git tag -a v${nextVersion} -m "Release v${nextVersion}"`);
+      console.log(`  ✅ Tag v${nextVersion} created successfully`);
+    } catch (error) {
+      console.error(`  ❌ Failed to create tag v${nextVersion}:`, error.message);
+      process.exit(1);
+    }
 
     console.log(`\n✅ Release v${nextVersion} created successfully!`);
+    
+    // Verify the tag was created
+    try {
+      const tagExists = this.exec(`git tag -l v${nextVersion}`, { silent: true });
+      if (tagExists.trim() === `v${nextVersion}`) {
+        console.log(`  ✅ Tag v${nextVersion} verified`);
+      } else {
+        console.error(`  ❌ Tag verification failed - tag v${nextVersion} not found`);
+      }
+    } catch (error) {
+      console.error(`  ❌ Tag verification failed:`, error.message);
+    }
+    
     console.log('\n📋 Next steps:');
     console.log('  1. Review the changes:');
     console.log(`     git show v${nextVersion}`);
     console.log('  2. Push to remote:');
     console.log('     git push origin main && git push origin --tags');
-    console.log('  3. Create a GitHub release from the tag');
+    console.log('  3. GitHub release will be created automatically when tag is pushed');
   }
 }
 
