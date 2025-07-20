@@ -371,6 +371,16 @@ class ReleaseManager {
       process.exit(1);
     }
 
+    // Format code before committing
+    console.log('🎨 Formatting code...');
+    try {
+      this.exec('npm run format');
+      console.log('  ✅ Code formatting completed');
+    } catch (error) {
+      console.error('  ❌ Code formatting failed:', error.message);
+      process.exit(1);
+    }
+
     // Commit changes
     console.log('📝 Committing release changes...');
     try {
@@ -386,16 +396,6 @@ class ReleaseManager {
       console.log('  ✅ Release commit created');
     } catch (error) {
       console.error('  ❌ Failed to create commit:', error.message);
-      process.exit(1);
-    }
-
-    // Format code after commit
-    console.log('🎨 Formatting code...');
-    try {
-      this.exec('npm run format');
-      console.log('  ✅ Code formatting completed');
-    } catch (error) {
-      console.error('  ❌ Code formatting failed:', error.message);
       process.exit(1);
     }
 
