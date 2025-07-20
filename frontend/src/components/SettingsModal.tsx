@@ -1760,7 +1760,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </a>
 
                   <a
-                    href='https://ollama.org'
+                    href='https://ollama.ai'
                     target='_blank'
                     rel='noopener noreferrer'
                     className='flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group'
@@ -1801,7 +1801,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className='mt-6 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
                 <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400'>
                   <span>Version {packageJson.version}</span>
-                  <span>Built with ☕️ for the FOSS community</span>
+                  <span>
+                    Built with ☕️ for the FOSS community by{' '}
+                    <a
+                      href='https://kroonen.ai'
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors'
+                    >
+                      Kroonen AI
+                    </a>
+                  </span>
                 </div>
               </div>
             </div>

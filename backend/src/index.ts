@@ -517,17 +517,18 @@ wss.on('connection', (ws, req) => {
 
             // Send the complete response as chunks to simulate streaming
             const words = assistantContent.split(' ');
-            for (let i = 0; i < words.length; i++) {
-              const chunk = words.slice(0, i + 1).join(' ');
-              const isLast = i === words.length - 1;
+            const BATCH_SIZE = 3; // Send 3 words at a time to reduce message frequency
+
+            for (let i = 0; i < words.length; i += BATCH_SIZE) {
+              const batch = words.slice(i, i + BATCH_SIZE);
+              const chunk = words.slice(0, i + batch.length).join(' ');
+              const isLast = i + BATCH_SIZE >= words.length;
 
               ws.send(
                 JSON.stringify({
                   type: 'assistant_chunk',
                   data: {
-                    content: isLast
-                      ? ''
-                      : ' ' + words[i] + (i < words.length - 1 ? '' : ''),
+                    content: batch.join(' ') + (isLast ? '' : ' '),
                     total: chunk,
                     done: isLast,
                     messageId: assistantMessageId,
@@ -535,9 +536,9 @@ wss.on('connection', (ws, req) => {
                 })
               );
 
-              // Small delay to simulate streaming
+              // Small delay to simulate streaming but with better batching
               if (!isLast) {
-                await new Promise(resolve => setTimeout(resolve, 50));
+                await new Promise(resolve => setTimeout(resolve, 100));
               }
             }
 
@@ -618,11 +619,6 @@ wss.on('connection', (ws, req) => {
           chunk => {
             if (chunk.message?.content) {
               assistantContent += chunk.message.content;
-
-              console.log(
-                'Backend: Sending chunk, total length:',
-                assistantContent.length
-              );
 
               // Send streaming chunk with the provided message ID
               ws.send(

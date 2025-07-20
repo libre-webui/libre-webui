@@ -352,16 +352,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return state;
       }
 
+      // Find the session directly instead of mapping all sessions
+      const targetSession = state.sessions.find(s => s.id === sessionId);
+      if (!targetSession) {
+        return state;
+      }
+
+      // Find the message directly instead of mapping all messages
+      const targetMessage = targetSession.messages.find(
+        m => m.id === messageId
+      );
+      if (!targetMessage || targetMessage.content === content) {
+        return state; // No changes needed
+      }
+
+      // Create optimized update - only update the specific session and message
       const updatedSessions = state.sessions.map(session => {
         if (session.id === sessionId) {
           const updatedMessages = session.messages.map(msg => {
             if (msg.id === messageId) {
-              console.log(
-                'Store: Updating message',
-                msg.id,
-                'with content length:',
-                content.length
-              );
               return { ...msg, content };
             }
             return msg;

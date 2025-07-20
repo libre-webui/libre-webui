@@ -31,6 +31,13 @@ export const useChat = (sessionId: string) => {
   const { setIsGenerating, preferences } = useAppStore();
   const streamingMessageIdRef = useRef<string | null>(null);
 
+  // Buffer for streaming content to reduce state updates
+  const streamingContentRef = useRef<string>('');
+
+  // Store update batching with debounced timer approach
+  const lastStoreUpdate = useRef<number>(0);
+  const storeUpdateTimer = useRef<NodeJS.Timeout>();
+
   // Clean up handlers when component unmounts or sessionId changes
   useEffect(() => {
     return () => {
@@ -71,8 +78,22 @@ export const useChat = (sessionId: string) => {
       const messageId = chunkData.messageId || streamingMessageIdRef.current;
 
       if (messageId) {
+        // Always update the content buffer and UI immediately for responsive streaming
+        streamingContentRef.current = chunkData.total;
         setStreamingMessage(chunkData.total);
-        updateMessage(sessionId, messageId, chunkData.total);
+
+        // Debounced store updates - only update when streaming slows down or finishes
+        if (storeUpdateTimer.current) {
+          clearTimeout(storeUpdateTimer.current);
+        }
+
+        storeUpdateTimer.current = setTimeout(
+          () => {
+            updateMessage(sessionId, messageId, streamingContentRef.current);
+            lastStoreUpdate.current = Date.now();
+          },
+          chunkData.done ? 0 : 200
+        ); // Immediate on completion, 200ms debounce otherwise
       }
     });
 
@@ -92,6 +113,8 @@ export const useChat = (sessionId: string) => {
         'with statistics:',
         !!completeData.statistics
       );
+
+      // Clear streaming state immediately for better UX
       setIsStreaming(false);
       setStreamingMessage('');
       setIsGenerating(false);
@@ -100,16 +123,27 @@ export const useChat = (sessionId: string) => {
       const messageId = completeData.messageId || streamingMessageIdRef.current;
 
       if (completeData && messageId) {
+        // Ensure final update with the complete content
+        const finalContent =
+          streamingContentRef.current || completeData.content;
+
         // Use updateMessageWithStatistics to include generation statistics
         updateMessageWithStatistics(
           sessionId,
           messageId,
-          completeData.content,
+          finalContent,
           completeData.statistics
         );
       }
 
       streamingMessageIdRef.current = null;
+      streamingContentRef.current = '';
+
+      // Clear any pending store update timers
+      if (storeUpdateTimer.current) {
+        clearTimeout(storeUpdateTimer.current);
+      }
+      lastStoreUpdate.current = 0;
     });
 
     websocketService.onMessage('error', (data: unknown) => {
@@ -139,6 +173,13 @@ export const useChat = (sessionId: string) => {
     setIsStreaming(false);
     setStreamingMessage('');
     streamingMessageIdRef.current = null;
+
+    // Cleanup function
+    return () => {
+      if (storeUpdateTimer.current) {
+        clearTimeout(storeUpdateTimer.current);
+      }
+    };
   }, [sessionId, updateMessage, updateMessageWithStatistics, setIsGenerating]);
 
   const sendMessage = useCallback(
@@ -153,6 +194,12 @@ export const useChat = (sessionId: string) => {
         setIsGenerating(true);
         setIsStreaming(true);
         setStreamingMessage('');
+
+        // Reset batching timers for new stream
+        if (storeUpdateTimer.current) {
+          clearTimeout(storeUpdateTimer.current);
+        }
+        lastStoreUpdate.current = Date.now();
 
         // Add user message immediately
         addMessage(sessionId, {

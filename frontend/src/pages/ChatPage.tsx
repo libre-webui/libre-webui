@@ -41,9 +41,8 @@ export const ChatPage: React.FC = () => {
     getCurrentPersona,
   } = useChatStore();
   const { setBackgroundImage } = useAppStore();
-  const { sendMessage, stopGeneration, isStreaming } = useChat(
-    currentSession?.id || ''
-  );
+  const { sendMessage, stopGeneration, isStreaming, streamingMessage } =
+    useChat(currentSession?.id || '');
   const currentPersona = getCurrentPersona();
 
   // Load sessions on mount
@@ -233,6 +232,7 @@ export const ChatPage: React.FC = () => {
       <div className='flex flex-col h-full relative z-10'>
         <ChatMessages
           messages={currentSession.messages}
+          streamingMessage={streamingMessage}
           isStreaming={isStreaming}
           className='flex-1'
         />

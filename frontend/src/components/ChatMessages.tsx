@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { ChatMessage } from '@/components/ChatMessage';
 import { ChatMessage as ChatMessageType } from '@/types';
 import { cn } from '@/utils';
@@ -34,14 +34,38 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   className,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  const scrollToBottom = useCallback(() => {
+    // Throttle scroll updates to improve performance during streaming
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
+    scrollTimeoutRef.current = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50); // Faster scroll updates for better UX during streaming
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamingMessage]);
+  }, [messages.length, scrollToBottom]);
+
+  // Also scroll during streaming when content changes
+  useEffect(() => {
+    if (isStreaming && streamingMessage) {
+      scrollToBottom();
+    }
+  }, [isStreaming, streamingMessage, scrollToBottom]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (messages.length === 0 && !isStreaming) {
     return (
@@ -74,16 +98,26 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       )}
     >
       <div className='max-w-4xl mx-auto px-4 sm:px-6'>
-        {messages.map((message, index) => (
-          <ChatMessage
-            key={message.id}
-            message={message}
-            isStreaming={
-              isStreaming && message === messages[messages.length - 1]
-            }
-            className={index === 0 ? 'mt-4 sm:mt-6' : ''}
-          />
-        ))}
+        {messages.map((message, index) => {
+          const isLastMessage = index === messages.length - 1;
+          const isStreamingThisMessage =
+            isStreaming && isLastMessage && message.role === 'assistant';
+
+          // For the last assistant message during streaming, use streamingMessage content
+          const displayMessage =
+            isStreamingThisMessage && streamingMessage
+              ? { ...message, content: streamingMessage }
+              : message;
+
+          return (
+            <ChatMessage
+              key={message.id}
+              message={displayMessage}
+              isStreaming={isStreamingThisMessage}
+              className={index === 0 ? 'mt-4 sm:mt-6' : ''}
+            />
+          );
+        })}
         <div ref={messagesEndRef} className='h-4 sm:h-6' />
       </div>
     </div>
