@@ -310,9 +310,61 @@ class ReleaseManager {
   }
 
   /**
+   * Generate AI-powered release summary
+   */
+  async generateAIReleaseSummary(commits) {
+    try {
+      const { spawn } = require('child_process');
+      
+      console.log('🤖 Generating AI-powered release summary...');
+      
+      return new Promise((resolve, reject) => {
+        const aiProcess = spawn('node', [
+          path.join(__dirname, 'ai-changelog-generator.js'),
+          'release'
+        ], {
+          stdio: ['pipe', 'pipe', 'pipe'],
+          cwd: path.join(__dirname, '..')
+        });
+
+        let output = '';
+        let error = '';
+
+        aiProcess.stdout.on('data', (data) => {
+          output += data.toString();
+        });
+
+        aiProcess.stderr.on('data', (data) => {
+          error += data.toString();
+        });
+
+        aiProcess.on('close', (code) => {
+          if (code === 0) {
+            console.log('  ✅ AI summary generated successfully');
+            resolve(output);
+          } else {
+            console.log('  ⚠️  AI summary generation failed, using standard changelog');
+            resolve(null);
+          }
+        });
+
+        // Set a timeout for AI generation
+        setTimeout(() => {
+          aiProcess.kill();
+          console.log('  ⚠️  AI summary generation timed out, using standard changelog');
+          resolve(null);
+        }, 45000); // 45 second timeout
+      });
+    } catch (error) {
+      console.log('  ⚠️  AI summary generation failed, using standard changelog');
+      return null;
+    }
+  }
+
+  /**
    * Create a new release
    */
-  createRelease(releaseType = null, forceType = false) {
+  async createRelease(releaseType = null, forceType = false) {
     console.log('🚀 Starting release process...\n');
 
     // Check if working directory is clean
@@ -336,6 +388,16 @@ class ReleaseManager {
     console.log(`📝 Found ${commits.length} commits since last release:`);
     commits.forEach(commit => console.log(`  - ${commit}`));
     console.log();
+
+    // Generate AI-powered release summary if available
+    const aiSummary = await this.generateAIReleaseSummary(commits);
+    if (aiSummary) {
+      console.log('🤖 AI Release Summary:');
+      console.log('─'.repeat(60));
+      console.log(aiSummary);
+      console.log('─'.repeat(60));
+      console.log();
+    }
 
     // Determine next version
     const nextVersion = this.determineNextVersion(currentVersion, commits, releaseType, forceType);

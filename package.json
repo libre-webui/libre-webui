@@ -32,6 +32,12 @@
     "release:minor": "node scripts/release.js minor",
     "release:major": "node scripts/release.js major",
     "changelog": "node scripts/generate-changelog.js",
+    "changelog:ai": "node scripts/ai-changelog-generator.js",
+    "changelog:ai:summary": "node scripts/ai-changelog-generator.js summary",
+    "changelog:ai:impact": "node scripts/ai-changelog-generator.js impact",
+    "analyze": "node scripts/analyze-development.js",
+    "analyze:quick": "node scripts/analyze-development.js --quick",
+    "analyze:metrics": "node scripts/analyze-development.js --metrics",
     "version": "npm run changelog && git add CHANGELOG.md"
   },
   "overrides": {
