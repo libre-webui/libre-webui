@@ -15,6 +15,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.1.6] - 2025-07-20
+
+### ✨ Added
+
+- move code formatting step to before committing changes in release process
+- add view mode toggle and optimized syntax highlighting for artifact rendering
+- enhance scrolling behavior in ChatMessages component for improved user experience during streaming
+- enhance streaming performance with batching and debugging tools
+- update README to include OpenRouter in multi-AI support and enhance model update instructions
+
+### 🔧 Technical Improvements
+
+- update package-lock.json
+
+### 🐛 Bug Fixes
+
+- add code formatting step to release process
+- correct typo in README front matter
+- improve error handling and validation in release script
+
+### 📚 Documentation
+
+- add Tabs and TabItem imports for enhanced documentation layout
+- update
+
 ## [0.1.5] - 2025-07-20
 
 ### ✨ Added
