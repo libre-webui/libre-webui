@@ -165,8 +165,26 @@ Now let's get the interface running. Since you already have Ollama installed fro
 
 **Perfect for this setup since you already have Ollama installed:**
 
+**Option A: Using pre-built image (fastest):**
 ```bash
+# Clone the repository first
+git clone https://github.com/libre-webui/libre-webui.git
+cd libre-webui
+
 # Use the external Ollama configuration
+docker-compose -f docker-compose.external-ollama.yml up -d
+```
+
+**Option B: Build locally from source:**
+```bash
+# Clone the repository
+git clone https://github.com/libre-webui/libre-webui.git
+cd libre-webui
+
+# Build the local Docker image
+docker build --no-cache -t libre-webui:latest .
+
+# Run with external Ollama configuration
 docker-compose -f docker-compose.external-ollama.yml up -d
 ```
 
@@ -184,15 +202,13 @@ Since you installed Ollama in Step 1, this setup:
 - ✅ Easier to manage models with `ollama pull`
 :::
 
-**First time setup:**
-```bash
-# Clone the repository first
-git clone https://github.com/libre-webui/libre-webui.git
-cd libre-webui
-
-# Then run the external Ollama setup
-docker-compose -f docker-compose.external-ollama.yml up -d
-```
+:::note When to Build Locally
+Choose local build when:
+- You want the latest development features
+- You've made custom modifications
+- The pre-built image has compatibility issues
+- You prefer building from source for security
+:::
 
   </TabItem>
   <TabItem value="docker-simple" label="🐳 Simple Docker (All-in-One)">

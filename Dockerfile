@@ -5,7 +5,15 @@ RUN apk update && apk upgrade && apk add --no-cache dumb-init
 
 # Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat python3 make g++ git && \
+RUN apk add --no-cache \
+    libc6-compat \
+    python3 \
+    make \
+    g++ \
+    git \
+    sqlite-dev \
+    openssl-dev \
+    libffi-dev && \
     apk update && apk upgrade
 WORKDIR /app
 
@@ -25,7 +33,15 @@ RUN npm ci && npm cache clean --force
 
 # Install production dependencies only
 FROM base AS prod-deps
-RUN apk add --no-cache libc6-compat python3 make g++ git && \
+RUN apk add --no-cache \
+    libc6-compat \
+    python3 \
+    make \
+    g++ \
+    git \
+    sqlite-dev \
+    openssl-dev \
+    libffi-dev && \
     apk update && apk upgrade
 WORKDIR /app
 
@@ -45,7 +61,15 @@ RUN npm ci --only=production && npm cache clean --force
 
 # Build frontend
 FROM base AS frontend-builder
-RUN apk add --no-cache libc6-compat python3 make g++ git && \
+RUN apk add --no-cache \
+    libc6-compat \
+    python3 \
+    make \
+    g++ \
+    git \
+    sqlite-dev \
+    openssl-dev \
+    libffi-dev && \
     apk update && apk upgrade
 WORKDIR /app
 
@@ -75,7 +99,15 @@ RUN cd frontend && npm run build
 
 # Build backend
 FROM base AS backend-builder
-RUN apk add --no-cache libc6-compat python3 make g++ git && \
+RUN apk add --no-cache \
+    libc6-compat \
+    python3 \
+    make \
+    g++ \
+    git \
+    sqlite-dev \
+    openssl-dev \
+    libffi-dev && \
     apk update && apk upgrade
 WORKDIR /app
 

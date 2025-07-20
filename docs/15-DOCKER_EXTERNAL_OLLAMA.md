@@ -53,10 +53,49 @@ Updated Docker image that:
 
 ### Launch Container
 
+<Tabs>
+  <TabItem value="compose" label="🐳 Docker Compose (Recommended)" default>
+
+**Using pre-built image:**
 ```bash
-# Build and run with external Ollama configuration
+# Pull and run with external Ollama configuration
 docker-compose -f docker-compose.external-ollama.yml up -d
 ```
+
+**Building locally from source:**
+```bash
+# First, build the local Docker image
+docker build --no-cache -t libre-webui:latest .
+
+# Then run with external Ollama configuration
+docker-compose -f docker-compose.external-ollama.yml up -d
+```
+
+:::tip When to Build Locally
+Build locally when:
+- You want to use the latest development code
+- You've made custom modifications to the source
+- The pre-built image doesn't work for your architecture
+:::
+
+  </TabItem>
+  <TabItem value="docker-run" label="🏃 Direct Docker Run">
+
+**Quick single command:**
+```bash
+# Run directly with Docker (builds automatically)
+docker run -d \
+  --name libre-webui \
+  -p 8080:5173 \
+  -p 3001:3001 \
+  -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+  -e FRONTEND_PORT=5173 \
+  -v libre_webui_data:/app/backend/data \
+  $(docker build -q .)
+```
+
+  </TabItem>
+</Tabs>
 
 ### Access Application
 
@@ -92,6 +131,23 @@ OLLAMA_BASE_URL=http://192.168.1.100:11434 docker-compose -f docker-compose.exte
 ```
 
 ## 🔧 Troubleshooting
+
+### Build Issues
+
+**SQLCipher Compilation Errors**
+If you encounter errors like "Could not find sqlite3 development headers" during local builds:
+
+```bash
+# The Dockerfile includes these dependencies automatically:
+# - sqlite-dev (SQLite development headers)
+# - openssl-dev (OpenSSL development libraries) 
+# - libffi-dev (Foreign Function Interface library)
+# - python3-dev (Python development headers for node-gyp)
+
+# If build still fails, try clearing Docker cache:
+docker system prune -f
+docker build --no-cache -t libre-webui:latest .
+```
 
 ### Common Issues
 
