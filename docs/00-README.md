@@ -225,7 +225,7 @@ Ready to unlock the full potential of Libre WebUI?
         </div>
         <div className="card__body">
           <p>Upload documents and chat with their content using semantic search.</p>
-          <small><strong>⏱️ 6 minutes</strong> • <strong>� Productivity</strong></small>
+          <small><strong>⏱️ 6 minutes</strong> • <strong> Productivity</strong></small>
         </div>
       </div>
     </div>
@@ -238,7 +238,7 @@ Ready to unlock the full potential of Libre WebUI?
         </div>
         <div className="card__body">
           <p>Interactive content generation and code execution in chat.</p>
-          <small><strong>⏱️ 7 minutes</strong> • <strong>� Creative</strong></small>
+          <small><strong>⏱️ 7 minutes</strong> • <strong> Creative</strong></small>
         </div>
       </div>
     </div>

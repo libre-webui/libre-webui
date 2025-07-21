@@ -554,8 +554,8 @@ libre-webui/
 | **[🗄️ SQLite Migration](https://docs.librewebui.org/SQLITE_MIGRATION)**                           | Upgrade from JSON to SQLite storage                                                 |
 | **[🤖 Model Updater](https://docs.librewebui.org/MODEL_UPDATER)**                                 | Auto-update AI provider models                                                      |
 | **[🔐 Authentication](https://docs.librewebui.org/AUTHENTICATION)**                               | User management and security                                                        |
-| **[� Single Sign-On (SSO)](https://docs.librewebui.org/SSO)**                                     | GitHub OAuth2 and enterprise authentication                                         |
-| **[�🔒 Database Encryption](https://docs.librewebui.org/DATABASE_ENCRYPTION)**                    | Enterprise-grade data protection with AES-256-GCM encryption                        |
+| **[🔐 Single Sign-On (SSO)](https://docs.librewebui.org/SSO)**                                    | GitHub OAuth2 and enterprise authentication                                         |
+| **[🔒 Database Encryption](https://docs.librewebui.org/DATABASE_ENCRYPTION)**                     | Enterprise-grade data protection with AES-256-GCM encryption                        |
 | **[🎨 Artifacts Feature](https://docs.librewebui.org/ARTIFACTS_FEATURE)**                         | Interactive content and code execution                                              |
 | **[⚙️ Artifacts Implementation](https://docs.librewebui.org/RELEASE_AUTOMATION)**                 | Technical implementation details                                                    |
 | **[🐳 Docker External Ollama](https://docs.librewebui.org/DOCKER_EXTERNAL_OLLAMA)**               | Run Docker with external Ollama instance                                            |
