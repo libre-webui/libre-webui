@@ -45,6 +45,7 @@ import {
 } from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/utils';
 import websocketService from '@/utils/websocket';
+import { handleOAuthCallback } from '@/utils/oauthCallback';
 
 // Lazy load pages for code splitting
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
@@ -105,7 +106,43 @@ const App: React.FC = () => {
   } = useAuthStore();
   const { isDemoMode, demoConfig } = useAppStore();
 
-  // Initialize the app
+  // Handle OAuth callback FIRST - before any routing or initialization
+  const [oauthProcessed, setOauthProcessed] = React.useState(false);
+
+  React.useEffect(() => {
+    const processOAuthCallback = async () => {
+      console.log('� Processing OAuth callback before routing...');
+      console.log('🌐 Current URL:', window.location.href);
+      console.log('🌐 Search params:', window.location.search);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const authStatus = urlParams.get('auth');
+
+      console.log('🔍 OAuth params found:', {
+        token: token ? 'present' : 'none',
+        authStatus,
+      });
+
+      if (token && authStatus === 'success') {
+        console.log('🔑 OAuth callback detected, processing before routing...');
+        const success = await handleOAuthCallback();
+        if (success) {
+          console.log('✅ OAuth processed successfully, routing will proceed');
+        } else {
+          console.log('❌ OAuth processing failed');
+        }
+      } else {
+        console.log('🔍 No OAuth callback detected');
+      }
+
+      setOauthProcessed(true);
+    };
+
+    processOAuthCallback();
+  }, []);
+
+  // Initialize the app only after OAuth is processed
   useInitializeApp();
 
   // Check if any background is active (persona background or general background settings)
@@ -230,6 +267,15 @@ const App: React.FC = () => {
       <ErrorBoundary>
         <FirstTimeSetup />
       </ErrorBoundary>
+    );
+  }
+
+  // Show loading state while processing OAuth
+  if (!oauthProcessed) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
+      </div>
     );
   }
 

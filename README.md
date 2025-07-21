@@ -84,10 +84,16 @@ GITHUB_API_KEY=your_github_token
 
 # Database Encryption (Highly Recommended)
 ENCRYPTION_KEY=your_64_character_encryption_key_here
+
+# GitHub OAuth2 SSO (Optional - for team authentication)
+GITHUB_CLIENT_ID=your_github_oauth_client_id
+GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
+GITHUB_CALLBACK_URL=http://localhost:3001/auth/github/callback
 ```
 
 **[📖 Complete Plugin Setup Guide →](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)**
 **[🔒 Database Encryption Guide →](https://docs.librewebui.org/DATABASE_ENCRYPTION)**
+**[🔑 SSO Setup Guide →](https://docs.librewebui.org/SSO)**
 
 ### Keep Models Updated
 
@@ -162,6 +168,16 @@ When you first launch Libre WebUI, you'll be greeted with a beautiful welcome sc
 The setup experience ensures you're up and running quickly while maintaining security best practices. Once complete, you'll have full access to all features including user management, plugin configuration, and system settings.
 
 **[📖 Complete Authentication Guide →](https://docs.librewebui.org/AUTHENTICATION)**
+
+### 🔑 Enterprise Single Sign-On (SSO)
+
+- **GitHub OAuth2** - Seamless authentication with existing GitHub accounts
+- **Team Integration** - Perfect for organizations already using GitHub
+- **Auto-provisioning** - Automatic account creation for authorized users
+- **Security First** - OAuth2 compliance with minimal scope permissions
+- **5-minute setup** - Environment variables and you're ready to go
+
+**[🔑 Complete SSO Setup Guide →](https://docs.librewebui.org/SSO)**
 
 ## Development
 
@@ -538,7 +554,8 @@ libre-webui/
 | **[🗄️ SQLite Migration](https://docs.librewebui.org/SQLITE_MIGRATION)**                           | Upgrade from JSON to SQLite storage                                                 |
 | **[🤖 Model Updater](https://docs.librewebui.org/MODEL_UPDATER)**                                 | Auto-update AI provider models                                                      |
 | **[🔐 Authentication](https://docs.librewebui.org/AUTHENTICATION)**                               | User management and security                                                        |
-| **[🔒 Database Encryption](https://docs.librewebui.org/DATABASE_ENCRYPTION)**                     | Enterprise-grade data protection with AES-256-GCM encryption                        |
+| **[� Single Sign-On (SSO)](https://docs.librewebui.org/SSO)**                                     | GitHub OAuth2 and enterprise authentication                                         |
+| **[�🔒 Database Encryption](https://docs.librewebui.org/DATABASE_ENCRYPTION)**                    | Enterprise-grade data protection with AES-256-GCM encryption                        |
 | **[🎨 Artifacts Feature](https://docs.librewebui.org/ARTIFACTS_FEATURE)**                         | Interactive content and code execution                                              |
 | **[⚙️ Artifacts Implementation](https://docs.librewebui.org/RELEASE_AUTOMATION)**                 | Technical implementation details                                                    |
 | **[🐳 Docker External Ollama](https://docs.librewebui.org/DOCKER_EXTERNAL_OLLAMA)**               | Run Docker with external Ollama instance                                            |

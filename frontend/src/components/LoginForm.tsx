@@ -21,6 +21,7 @@ import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 
 interface LoginFormProps {
   onLogin?: () => void;
@@ -164,6 +165,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           )}
         </button>
       </form>
+
+      {/* GitHub OAuth Button */}
+      <GitHubAuthButton />
 
       <div className='mt-6 text-center'>
         <p className='text-sm text-gray-600 dark:text-dark-500'>

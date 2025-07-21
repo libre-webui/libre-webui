@@ -276,6 +276,17 @@ For administrators and advanced users managing Libre WebUI deployments.
     <div className="col col--6">
       <div className="card margin--md">
         <div className="card__header">
+          <h4>🔐 <a href="./SSO">Single Sign-On (SSO)</a></h4>
+        </div>
+        <div className="card__body">
+          <p>GitHub OAuth2 and enterprise authentication for teams.</p>
+          <small><strong>⏱️ 5 minutes</strong> • <strong>🎯 Enterprise</strong></small>
+        </div>
+      </div>
+    </div>
+    <div className="col col--6">
+      <div className="card margin--md">
+        <div className="card__header">
           <h4>🗄️ <a href="./SQLITE_MIGRATION">SQLite Migration</a></h4>
         </div>
         <div className="card__body">
@@ -498,6 +509,7 @@ Different ways to deploy and run Libre WebUI.
       <p>Advanced configuration help?</p>
       <ul>
         <li><a href="./AUTHENTICATION">Authentication Setup</a></li>
+        <li><a href="./SSO">Single Sign-On (SSO)</a></li>
         <li><a href="./DOCKER_EXTERNAL_OLLAMA">Docker Deployment</a></li>
         <li><a href="https://github.com/libre-webui/libre-webui/discussions">GitHub Discussions</a></li>
       </ul>
