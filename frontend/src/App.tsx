@@ -45,7 +45,7 @@ import {
 } from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/utils';
 import websocketService from '@/utils/websocket';
-import { handleOAuthCallback } from '@/utils/oauthCallback';
+import toast from 'react-hot-toast';
 
 // Lazy load pages for code splitting
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
@@ -108,18 +108,78 @@ const App: React.FC = () => {
 
   // Handle OAuth callback FIRST - before any routing or initialization
   const [oauthProcessed, setOauthProcessed] = React.useState(false);
+  const processingRef = React.useRef(false);
 
   React.useEffect(() => {
     const processOAuthCallback = async () => {
+      // Prevent multiple simultaneous executions
+      if (processingRef.current) {
+        console.log('OAuth already processing, skipping...');
+        return;
+      }
+
+      console.log('Starting OAuth callback processing...');
+      processingRef.current = true;
+
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
       const authStatus = urlParams.get('auth');
 
       if (token && authStatus === 'success') {
-        await handleOAuthCallback();
+        try {
+          // Use the same API base URL logic as other parts of the app
+          const API_BASE_URL =
+            import.meta.env.VITE_API_BASE_URL ||
+            import.meta.env.VITE_BACKEND_URL + '/api' ||
+            'http://localhost:3001/api';
+
+          // Verify token and get user info from the backend
+          const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: 'include',
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              // Use auth store login function to properly authenticate
+              const { login, systemInfo } = useAuthStore.getState();
+              login(
+                data.data,
+                token,
+                systemInfo || {
+                  requiresAuth: true,
+                  singleUserMode: false,
+                  hasUsers: true,
+                  version: '0.1.6',
+                }
+              );
+              console.log('OAuth login successful, showing toast');
+              toast.success('GitHub login successful!');
+            } else {
+              toast.error('Failed to verify GitHub authentication');
+            }
+          } else {
+            toast.error('GitHub authentication verification failed');
+          }
+        } catch (error) {
+          console.error('OAuth processing error:', error);
+          toast.error('GitHub authentication failed');
+        }
+
+        // Clean up URL regardless of success/failure
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
       }
 
+      console.log('OAuth processing completed');
       setOauthProcessed(true);
+      processingRef.current = false;
     };
 
     processOAuthCallback();

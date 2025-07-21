@@ -52,7 +52,7 @@ export const GitHubAuth: React.FC = () => {
   /**
    * Store JWT token in localStorage
    */
-  const setToken = (token: string) => {
+  const _setToken = (token: string) => {
     localStorage.setItem('jwt_token', token);
   };
 
@@ -68,31 +68,6 @@ export const GitHubAuth: React.FC = () => {
    */
   useEffect(() => {
     checkAuthStatus();
-    handleOAuthCallback();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /**
-   * Handle OAuth callback and extract token from URL
-   */
-  const handleOAuthCallback = useCallback(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const authStatus = urlParams.get('auth');
-    const error = urlParams.get('error');
-
-    if (token && authStatus === 'success') {
-      // Store the JWT token
-      setToken(token);
-      // Remove URL parameters
-      window.history.replaceState({}, document.title, window.location.pathname);
-      // Check auth status with the new token
-      checkAuthStatus();
-    }
-
-    if (error === 'oauth_failed') {
-      setError('GitHub authentication failed. Please try again.');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /**

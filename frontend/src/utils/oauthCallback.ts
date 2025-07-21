@@ -28,39 +28,15 @@ const API_BASE_URL =
  * Handle OAuth callback and extract token from URL
  */
 export const handleOAuthCallback = async () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
-  const authStatus = urlParams.get('auth');
-  const error = urlParams.get('error');
-
-  if (error === 'oauth_failed') {
-    toast.error('GitHub authentication failed. Please try again.');
-    // Clean up URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return false;
-  }
-
-  if (error === 'oauth_not_configured') {
-    toast.error('GitHub OAuth is not configured on the server.');
-    // Clean up URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return false;
-  }
-
-  if (token && authStatus === 'success') {
-    const success = await handleTokenLogin(token);
-    // Clean up URL
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return success;
-  }
-
+  // OAuth processing is now handled by App.tsx
+  // This function is kept for backward compatibility but does nothing
   return false;
 };
 
 /**
  * Handle login with received JWT token
  */
-const handleTokenLogin = async (token: string): Promise<boolean> => {
+const _handleTokenLogin = async (token: string): Promise<boolean> => {
   try {
     // Verify token and get user info
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -80,7 +56,7 @@ const handleTokenLogin = async (token: string): Promise<boolean> => {
           singleUserMode: false,
           hasUsers: true,
         });
-        toast.success('GitHub login successful!');
+        // Don't show success toast here since App.tsx handles it
         return true;
       } else {
         toast.error('Failed to verify GitHub authentication');
