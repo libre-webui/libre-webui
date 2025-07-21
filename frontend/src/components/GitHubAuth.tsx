@@ -94,7 +94,6 @@ export const GitHubAuth: React.FC = () => {
     const token = urlParams.get('token');
 
     if (token) {
-      console.log('Processing OAuth token from URL');
       // Store JWT token and clear URL params
       setToken(token);
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -103,14 +102,12 @@ export const GitHubAuth: React.FC = () => {
     }
 
     if (urlParams.get('auth') === 'success') {
-      console.log('Processing OAuth success from URL');
       // Remove URL parameters after successful auth
       window.history.replaceState({}, document.title, window.location.pathname);
       return false; // No token processed, auth check can proceed
     }
 
     if (urlParams.get('error')) {
-      console.log('Processing OAuth error from URL');
       const errorType = urlParams.get('error');
       const errorMessages: { [key: string]: string } = {
         oauth_failed: 'GitHub authentication failed. Please try again.',
@@ -131,12 +128,10 @@ export const GitHubAuth: React.FC = () => {
    */
   const checkAuthStatus = useCallback(async () => {
     try {
-      console.log('Checking authentication status...');
       setLoading(true);
       const token = getToken();
 
       if (!token) {
-        console.log('No token found');
         setUser(null);
         setOAuthProfile(null);
         return;
@@ -165,7 +160,6 @@ export const GitHubAuth: React.FC = () => {
             }
           } catch (_profileError) {
             // OAuth profile is optional
-            console.log('No OAuth profile available');
           }
 
           setError(null);
@@ -181,11 +175,7 @@ export const GitHubAuth: React.FC = () => {
         setUser(null);
         setOAuthProfile(null);
       }
-    } catch (error: unknown) {
-      console.log(
-        'Authentication check failed:',
-        error instanceof Error ? error.message : 'Unknown error'
-      );
+    } catch (_error: unknown) {
       // Remove invalid token
       removeToken();
       setUser(null);
@@ -201,7 +191,7 @@ export const GitHubAuth: React.FC = () => {
   const handleGitHubLogin = () => {
     setError(null);
     // Redirect to backend GitHub auth route
-    window.location.href = `${BACKEND_URL}/auth/github`;
+    window.location.href = `${BACKEND_URL}/api/auth/oauth/github`;
   };
 
   /**

@@ -53,7 +53,7 @@ Currently supported SSO providers:
 3. Fill in the application details:
    - **Application name**: `Libre WebUI - [Your Organization]`
    - **Homepage URL**: `http://localhost:3000` (or your domain)
-   - **Authorization callback URL**: `http://localhost:3001/auth/github/callback`
+   - **Authorization callback URL**: `http://localhost:3001/api/auth/oauth/github/callback`
 4. Click **"Register application"**
 5. Note down the **Client ID** and **Client Secret**
 
@@ -65,7 +65,7 @@ Add the following environment variables to your `.env` file:
 # GitHub OAuth Configuration
 GITHUB_CLIENT_ID=your_github_client_id_here
 GITHUB_CLIENT_SECRET=your_github_client_secret_here
-GITHUB_CALLBACK_URL=http://localhost:3001/auth/github/callback
+GITHUB_CALLBACK_URL=http://localhost:3001/api/auth/oauth/github/callback
 
 # Optional: Customize OAuth behavior
 OAUTH_AUTO_REGISTER=true
@@ -127,7 +127,7 @@ For production deployments with custom domains:
 
 ```bash
 # Production callback URL
-GITHUB_CALLBACK_URL=https://ai.yourcompany.com/auth/github/callback
+GITHUB_CALLBACK_URL=https://ai.yourcompany.com/api/auth/oauth/github/callback
 ```
 
 ## User Experience
@@ -244,7 +244,7 @@ For production deployments, always use HTTPS:
 
 ```bash
 # Production callback with HTTPS
-GITHUB_CALLBACK_URL=https://your-domain.com/auth/github/callback
+GITHUB_CALLBACK_URL=https://your-domain.com/api/auth/oauth/github/callback
 ```
 
 Update your GitHub OAuth app callback URL accordingly.

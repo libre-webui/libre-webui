@@ -17,6 +17,7 @@
 
 import { authService } from './authService.js';
 import { userModel, UserPublic } from '../models/userModel.js';
+import * as crypto from 'crypto';
 
 interface GitHubProfile {
   id: number;
@@ -232,10 +233,8 @@ export class GitHubOAuthService {
       const newUser = await userModel.createUser({
         username: uniqueUsername,
         email: profile.email || null,
-        // Set a random password since OAuth users don't use password login
-        password:
-          Math.random().toString(36).substring(2, 15) +
-          Math.random().toString(36).substring(2, 15),
+        // Set a cryptographically secure random password since OAuth users don't use password login
+        password: crypto.randomBytes(24).toString('base64'),
         role: 'user', // Default role
       });
 

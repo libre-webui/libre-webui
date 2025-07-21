@@ -17,6 +17,7 @@
 
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 
 // Use the same API base URL logic as the main api.ts
 const API_BASE_URL =

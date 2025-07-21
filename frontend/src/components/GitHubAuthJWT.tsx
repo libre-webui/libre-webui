@@ -30,7 +30,7 @@ interface AuthResponse {
   message?: string;
 }
 
-const BACKEND_URL = 'http://localhost:3001';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 /**
  * GitHub OAuth2 Login Component (JWT Integration)
@@ -46,21 +46,21 @@ export const GitHubAuth: React.FC = () => {
    * Get JWT token from localStorage
    */
   const getToken = (): string | null => {
-    return localStorage.getItem('libre_webui_token');
+    return localStorage.getItem('jwt_token');
   };
 
   /**
    * Store JWT token in localStorage
    */
   const setToken = (token: string) => {
-    localStorage.setItem('libre_webui_token', token);
+    localStorage.setItem('jwt_token', token);
   };
 
   /**
    * Remove JWT token from localStorage
    */
   const removeToken = () => {
-    localStorage.removeItem('libre_webui_token');
+    localStorage.removeItem('jwt_token');
   };
 
   /**
