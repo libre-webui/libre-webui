@@ -17,7 +17,6 @@
 
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
-import axios from 'axios';
 
 // Use the same API base URL logic as the main api.ts
 const API_BASE_URL =
@@ -34,21 +33,6 @@ export const handleOAuthCallback = async () => {
   const authStatus = urlParams.get('auth');
   const error = urlParams.get('error');
 
-  console.log('🔍 OAuth callback check - URL:', window.location.href);
-  console.log(
-    '🔍 OAuth callback check - Search params:',
-    window.location.search
-  );
-  console.log(
-    '🔍 OAuth callback check - All params:',
-    Object.fromEntries(urlParams.entries())
-  );
-  console.log('🔍 OAuth callback check:', {
-    token: token ? 'present' : 'none',
-    authStatus,
-    error,
-  });
-
   if (error === 'oauth_failed') {
     toast.error('GitHub authentication failed. Please try again.');
     // Clean up URL
@@ -64,7 +48,6 @@ export const handleOAuthCallback = async () => {
   }
 
   if (token && authStatus === 'success') {
-    console.log('🔑 Processing OAuth token...');
     const success = await handleTokenLogin(token);
     // Clean up URL
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -78,9 +61,6 @@ export const handleOAuthCallback = async () => {
  * Handle login with received JWT token
  */
 const handleTokenLogin = async (token: string): Promise<boolean> => {
-  console.log('🔐 Starting token verification...');
-  console.log('🔗 API_BASE_URL:', API_BASE_URL);
-  console.log('🔗 Full URL will be:', `${API_BASE_URL}/auth/me`);
   try {
     // Verify token and get user info
     const response = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -90,15 +70,8 @@ const handleTokenLogin = async (token: string): Promise<boolean> => {
       credentials: 'include',
     });
 
-    console.log(
-      '📡 Token verification response:',
-      response.status,
-      response.ok
-    );
-
     if (response.ok) {
       const data = await response.json();
-      console.log('👤 User data received:', data);
       if (data.success && data.data) {
         // Login using the auth store
         const { login } = useAuthStore.getState();
@@ -108,24 +81,14 @@ const handleTokenLogin = async (token: string): Promise<boolean> => {
           hasUsers: true,
         });
         toast.success('GitHub login successful!');
-        console.log(
-          '✅ GitHub OAuth login successful for user:',
-          data.data.username
-        );
         return true;
       } else {
         toast.error('Failed to verify GitHub authentication');
-        console.error('❌ Failed to verify GitHub authentication:', data);
       }
     } else {
       toast.error('GitHub authentication verification failed');
-      console.error(
-        '❌ GitHub authentication verification failed:',
-        response.status
-      );
     }
-  } catch (error) {
-    console.error('❌ GitHub token login error:', error);
+  } catch (_error) {
     toast.error('GitHub authentication failed');
   }
 
