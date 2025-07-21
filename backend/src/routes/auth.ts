@@ -23,6 +23,9 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Fallback frontend URL for OAuth redirects
+const FALLBACK_FRONTEND_URL = 'http://localhost:5173';
+
 // Rate limiter for authentication routes: 5 login attempts per 15 minutes
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -253,7 +256,7 @@ router.get(
     try {
       if (!isGitHubConfigured) {
         return res.redirect(
-          `${process.env.CORS_ORIGIN || 'http://localhost:5173'}?error=oauth_not_configured`
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_not_configured`
         );
       }
 
@@ -261,7 +264,7 @@ router.get(
 
       if (!code || typeof code !== 'string') {
         return res.redirect(
-          `${process.env.CORS_ORIGIN || 'http://localhost:5173'}?error=oauth_failed`
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
         );
       }
 
@@ -269,7 +272,7 @@ router.get(
       const accessToken = await githubOAuthService.exchangeCodeForToken(code);
       if (!accessToken) {
         return res.redirect(
-          `${process.env.CORS_ORIGIN || 'http://localhost:5173'}?error=oauth_failed`
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
         );
       }
 
@@ -277,7 +280,7 @@ router.get(
       const profile = await githubOAuthService.getUserProfile(accessToken);
       if (!profile) {
         return res.redirect(
-          `${process.env.CORS_ORIGIN || 'http://localhost:5173'}?error=oauth_failed`
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
         );
       }
 
@@ -286,7 +289,7 @@ router.get(
 
       if (!user) {
         return res.redirect(
-          `${process.env.CORS_ORIGIN || 'http://localhost:5173'}?error=oauth_failed`
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
         );
       }
 
@@ -297,12 +300,12 @@ router.get(
 
       // Redirect to frontend with token in URL
       res.redirect(
-        `${process.env.CORS_ORIGIN || 'http://localhost:5173'}?token=${token}&auth=success`
+        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?token=${token}&auth=success`
       );
     } catch (error) {
       console.error('GitHub OAuth callback error:', error);
       res.redirect(
-        `${process.env.CORS_ORIGIN || 'http://localhost:5173'}?error=oauth_failed`
+        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
       );
     }
   }

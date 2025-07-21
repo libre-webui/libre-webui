@@ -101,8 +101,8 @@ const App: React.FC = () => {
   const {
     systemInfo,
     isLoading: authLoading,
-    user,
-    isAuthenticated,
+    user: _user,
+    isAuthenticated: _isAuthenticated,
   } = useAuthStore();
   const { isDemoMode, demoConfig } = useAppStore();
 
@@ -111,29 +111,12 @@ const App: React.FC = () => {
 
   React.useEffect(() => {
     const processOAuthCallback = async () => {
-      console.log('� Processing OAuth callback before routing...');
-      console.log('🌐 Current URL:', window.location.href);
-      console.log('🌐 Search params:', window.location.search);
-
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('token');
       const authStatus = urlParams.get('auth');
 
-      console.log('🔍 OAuth params found:', {
-        token: token ? 'present' : 'none',
-        authStatus,
-      });
-
       if (token && authStatus === 'success') {
-        console.log('🔑 OAuth callback detected, processing before routing...');
-        const success = await handleOAuthCallback();
-        if (success) {
-          console.log('✅ OAuth processed successfully, routing will proceed');
-        } else {
-          console.log('❌ OAuth processing failed');
-        }
-      } else {
-        console.log('🔍 No OAuth callback detected');
+        await handleOAuthCallback();
       }
 
       setOauthProcessed(true);
@@ -156,18 +139,6 @@ const App: React.FC = () => {
     const backgroundSettings = preferences.backgroundSettings;
     return backgroundSettings?.enabled && backgroundSettings?.imageUrl;
   };
-
-  // Debug logging - this will help us understand what's happening
-  React.useEffect(() => {
-    console.log('🔍 Auth Debug State:', {
-      systemInfo,
-      authLoading,
-      user,
-      isAuthenticated,
-      requiresAuth: systemInfo?.requiresAuth,
-      singleUserMode: systemInfo?.singleUserMode,
-    });
-  }, [systemInfo, authLoading, user, isAuthenticated]);
 
   // Define keyboard shortcuts
   const shortcuts: KeyboardShortcut[] = [
