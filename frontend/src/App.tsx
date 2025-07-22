@@ -28,6 +28,7 @@ import { Sidebar } from '@/components/Sidebar';
 import { SidebarToggle } from '@/components/SidebarToggle';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { API_BASE_URL } from '@/utils/config';
 import {
   KeyboardShortcutsModal,
   KeyboardShortcutsIndicator,
@@ -127,12 +128,6 @@ const App: React.FC = () => {
 
       if (token && authStatus === 'success') {
         try {
-          // Use the same API base URL logic as other parts of the app
-          const API_BASE_URL =
-            import.meta.env.VITE_API_BASE_URL ||
-            import.meta.env.VITE_BACKEND_URL + '/api' ||
-            'http://localhost:3001/api';
-
           // Verify token and get user info from the backend
           const response = await fetch(`${API_BASE_URL}/auth/me`, {
             headers: {
