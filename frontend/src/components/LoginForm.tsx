@@ -21,6 +21,8 @@ import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { GitHubAuthButton } from '@/components/GitHubAuthButton';
+import { HuggingFaceAuthButton } from '@/components/HuggingFaceAuthButton';
 
 interface LoginFormProps {
   onLogin?: () => void;
@@ -164,6 +166,25 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           )}
         </button>
       </form>
+
+      {/* OAuth Section */}
+      <div className='mt-6'>
+        <div className='relative'>
+          <div className='absolute inset-0 flex items-center'>
+            <div className='w-full border-t border-gray-300 dark:border-dark-300' />
+          </div>
+          <div className='relative flex justify-center text-sm'>
+            <span className='px-2 bg-white dark:bg-dark-25 text-gray-500 dark:text-dark-500'>
+              or
+            </span>
+          </div>
+        </div>
+
+        <div className='mt-6 space-y-3'>
+          <GitHubAuthButton />
+          <HuggingFaceAuthButton />
+        </div>
+      </div>
 
       <div className='mt-6 text-center'>
         <p className='text-sm text-gray-600 dark:text-dark-500'>

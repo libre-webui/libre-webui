@@ -17,10 +17,15 @@
 
 import express from 'express';
 import rateLimit from 'express-rate-limit';
+import { githubOAuthService } from '../services/simpleGitHubOAuth.js';
+import { huggingFaceOAuthService } from '../services/simpleHuggingFaceOAuth.js';
 import { authService } from '../services/authService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Fallback frontend URL for OAuth redirects
+const FALLBACK_FRONTEND_URL = 'http://localhost:5173';
 
 // Rate limiter for authentication routes: 5 login attempts per 15 minutes
 const authRateLimiter = rateLimit({
@@ -221,5 +226,233 @@ router.post('/signup', authRateLimiter, async (req, res) => {
     });
   }
 });
+
+/**
+ * GitHub OAuth Routes
+ * These routes integrate GitHub OAuth with the existing JWT authentication system
+ */
+
+// GitHub OAuth setup if credentials are provided
+const isGitHubConfigured = githubOAuthService.isConfigured();
+
+/**
+ * GitHub OAuth - Start authentication
+ */
+router.get('/oauth/github', generalAuthRateLimiter, (req, res) => {
+  if (!isGitHubConfigured) {
+    return res.status(404).json({ error: 'GitHub OAuth not configured' });
+  }
+
+  const authUrl = githubOAuthService.getAuthUrl();
+  res.redirect(authUrl);
+});
+
+/**
+ * GitHub OAuth - Handle callback and generate JWT
+ */
+router.get(
+  '/oauth/github/callback',
+  generalAuthRateLimiter,
+  async (req, res) => {
+    try {
+      if (!isGitHubConfigured) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_not_configured`
+        );
+      }
+
+      const { code } = req.query;
+
+      if (!code || typeof code !== 'string') {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Exchange code for access token
+      const accessToken = await githubOAuthService.exchangeCodeForToken(code);
+      if (!accessToken) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Get user profile
+      const profile = await githubOAuthService.getUserProfile(accessToken);
+      if (!profile) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Process user with GitHub OAuth service
+      const user = await githubOAuthService.processUser(profile);
+
+      if (!user) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Generate JWT token using existing auth service
+      const token = authService.generateToken(user);
+
+      console.log('GitHub OAuth successful for user:', user.username);
+
+      // Redirect to frontend with token in URL
+      res.redirect(
+        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?token=${token}&auth=success`
+      );
+    } catch (error) {
+      console.error('GitHub OAuth callback error:', error);
+      res.redirect(
+        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+      );
+    }
+  }
+);
+
+/**
+ * Check if GitHub OAuth is configured
+ */
+router.get('/oauth/github/status', generalAuthRateLimiter, (req, res) => {
+  res.json({ configured: isGitHubConfigured });
+});
+
+/**
+ * Hugging Face OAuth Routes
+ * These routes integrate Hugging Face OAuth with the existing JWT authentication system
+ */
+
+// Hugging Face OAuth setup if credentials are provided
+const isHuggingFaceConfigured = huggingFaceOAuthService.isConfigured();
+
+/**
+ * Hugging Face OAuth - Start authentication
+ */
+router.get('/oauth/huggingface', generalAuthRateLimiter, (req, res) => {
+  if (!isHuggingFaceConfigured) {
+    return res.status(404).json({ error: 'Hugging Face OAuth not configured' });
+  }
+
+  const authUrl = huggingFaceOAuthService.getAuthUrl();
+  res.redirect(authUrl);
+});
+
+/**
+ * Hugging Face OAuth - Handle callback and generate JWT
+ */
+router.get(
+  '/oauth/huggingface/callback',
+  generalAuthRateLimiter,
+  async (req, res) => {
+    try {
+      if (!isHuggingFaceConfigured) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_not_configured`
+        );
+      }
+
+      const { code } = req.query;
+
+      if (!code || typeof code !== 'string') {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Exchange code for access token
+      const accessToken =
+        await huggingFaceOAuthService.exchangeCodeForToken(code);
+      if (!accessToken) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Get user profile
+      const profile = await huggingFaceOAuthService.getUserProfile(accessToken);
+      if (!profile) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Process user with Hugging Face OAuth service
+      const user = await huggingFaceOAuthService.processUser(profile);
+
+      if (!user) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Generate JWT token
+      const token = authService.generateToken(user);
+
+      console.log('Hugging Face OAuth successful for user:', user.username);
+
+      // Redirect to frontend with token in URL
+      res.redirect(
+        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?token=${token}&auth=success`
+      );
+    } catch (error) {
+      console.error('Hugging Face OAuth callback error:', error);
+      res.redirect(
+        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+      );
+    }
+  }
+);
+
+/**
+ * Check if Hugging Face OAuth is configured
+ */
+router.get('/oauth/huggingface/status', generalAuthRateLimiter, (req, res) => {
+  res.json({ configured: isHuggingFaceConfigured });
+});
+
+/**
+ * Get current user info (works with both regular JWT and GitHub OAuth JWT)
+ */
+router.get(
+  '/me',
+  generalAuthRateLimiter,
+  // We can't use the existing authenticate middleware due to type conflicts
+  // So we'll do manual JWT verification
+  async (req, res) => {
+    try {
+      const token = req.headers.authorization?.startsWith('Bearer ')
+        ? req.headers.authorization.substring(7)
+        : null;
+
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+          message: 'No token provided',
+        });
+      }
+
+      const user = await authService.getUserFromToken(token);
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid token',
+        });
+      }
+
+      res.json({
+        success: true,
+        data: user,
+      });
+    } catch (error) {
+      console.error('Get user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
+);
 
 export default router;

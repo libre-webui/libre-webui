@@ -54,11 +54,12 @@ import preferencesRoutes from './routes/preferences.js';
 import pluginRoutes from './routes/plugins.js';
 import documentRoutes from './routes/documents.js';
 import authRoutes from './routes/auth.js';
-import { optionalAuth } from './middleware/auth.js';
 import usersRoutes from './routes/users.js';
 import personaRoutes from './routes/personas.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
+import { GitHubOAuthService } from './services/simpleGitHubOAuth.js';
+import { HuggingFaceOAuthService } from './services/simpleHuggingFaceOAuth.js';
 import pluginService from './services/pluginService.js';
 import preferencesService from './services/preferencesService.js';
 import documentService from './services/documentService.js';
@@ -243,7 +244,7 @@ const personasRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
+app.use('/api/personas', personasRateLimiter, personaRoutes);
 
 // API-only backend - no static file serving
 
@@ -741,6 +742,25 @@ server.listen({ port, host: '0.0.0.0' }, () => {
   console.log(`🚀 Libre WebUI Backend running on port ${port}`);
   console.log(`📡 WebSocket server running on ws://localhost:${port}/ws`);
   console.log(`🌐 CORS enabled for: ${corsOrigins.join(', ')}`);
+
+  // Check OAuth providers configuration on startup
+  const githubOAuth = new GitHubOAuthService();
+  const hfOAuth = new HuggingFaceOAuthService();
+
+  const githubConfigured = githubOAuth.isConfigured();
+  const hfConfigured = hfOAuth.isConfigured();
+
+  if (githubConfigured || hfConfigured) {
+    console.log('🔐 SSO Configuration:');
+    if (githubConfigured) {
+      console.log('  ✅ GitHub OAuth configured and ready');
+    }
+    if (hfConfigured) {
+      console.log('  ✅ Hugging Face OAuth configured and ready');
+    }
+  } else {
+    console.log('ℹ️  No SSO providers configured (optional)');
+  }
 
   // Check Ollama connection on startup
   ollamaService.isHealthy().then(isHealthy => {
