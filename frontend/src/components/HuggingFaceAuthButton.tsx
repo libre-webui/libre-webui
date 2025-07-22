@@ -50,23 +50,32 @@ export const HuggingFaceAuthButton: React.FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setIsConfigured(data.configured);
+        setIsConfigured(data.configured || false);
+        console.log('Hugging Face OAuth configured:', data.configured);
       } else {
+        console.log('Hugging Face OAuth status check failed');
         setIsConfigured(false);
       }
     } catch (error) {
-      console.error('Error checking Hugging Face OAuth config:', error);
+      // Hugging Face OAuth not configured, hide the button
+      console.log('Hugging Face OAuth not configured:', error);
       setIsConfigured(false);
     }
   };
 
   /**
-   * Handle Hugging Face OAuth login
+   * Initiate Hugging Face OAuth login
    */
   const handleHuggingFaceLogin = () => {
+    if (!isConfigured || isLoading) {
+      return;
+    }
+
     setIsLoading(true);
-    // Redirect to the Hugging Face OAuth endpoint
-    window.location.href = `${BACKEND_URL}/api/auth/oauth/huggingface`;
+
+    // Redirect to Hugging Face OAuth
+    const hfAuthUrl = `${BACKEND_URL}/api/auth/oauth/huggingface`;
+    window.location.href = hfAuthUrl;
   };
 
   // Don't render if Hugging Face OAuth is not configured
@@ -79,18 +88,18 @@ export const HuggingFaceAuthButton: React.FC = () => {
       type='button'
       onClick={handleHuggingFaceLogin}
       disabled={isLoading}
-      className='w-full inline-flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm bg-orange-600 text-sm font-medium text-white hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+      className='w-full flex items-center justify-center px-4 py-2 border border-orange-300 dark:border-orange-600 rounded-lg shadow-sm bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
     >
       {isLoading ? (
-        <>
-          <Loader2 className='w-4 h-4 mr-2 animate-spin' />
-          Connecting...
-        </>
+        <div className='flex items-center'>
+          <Loader2 size={16} className='animate-spin mr-2' />
+          Connecting to Hugging Face...
+        </div>
       ) : (
-        <>
-          <span className='text-base mr-2'>🤗</span>
+        <div className='flex items-center'>
+          <span className='mr-2 text-base'>🤗</span>
           Continue with Hugging Face
-        </>
+        </div>
       )}
     </button>
   );
