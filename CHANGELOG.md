@@ -9,13 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ Added
 
-### 🔧 Improved
+### 🔧 Technical Improvements
 
-### 🐛 Fixed
+### 🐛 Bug Fixes
 
 ### 📚 Documentation
 
----
+## [0.1.7] - 2025-07-22
+
+### ✨ Added
+
+- Enhance OAuth configuration handling and update error messages for GitHub and Hugging Face services
+- Implement Hugging Face OAuth2 support and update UI components for SSO
+- Add Hugging Face OAuth2 SSO support using modular structure
+- Add GitHub OAuth2 SSO configuration to environment variables in Docker Compose files
+- Refactor OAuth callback handling to improve user feedback and prevent multiple executions
+- Improve GitHub OAuth integration with secure password generation and updated callback URLs
+- Add Single Sign-On (SSO) support with GitHub OAuth2 integration
+- Update AI-powered changelog generator and regeneration scripts with enhanced documentation and model recommendations
+- Enhance AI Development Analysis documentation and add changelog regeneration script
+- add AI-powered development analysis and changelog generation
+
+### 🔧 Technical Improvements
+
+- Update dependencies in package-lock.json to latest versions
+- Optimize token management functions with useCallback for better performance
+- update: docker file
+- Remove debug logging from OAuth callback processing in App component
+- Remove debug logging from OAuth callback handling
+
+### 🐛 Bug Fixes
+
+- Refactor API base URL handling in App component for consistency
+- Improve Hugging Face OAuth configuration handling and enhance button UI
+- Address Copilot PR review feedback
+- Correct emoji display in documentation and improve formatting
 
 ## [0.1.6] - 2025-07-20
 
