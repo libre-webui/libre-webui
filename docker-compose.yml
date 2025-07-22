@@ -27,6 +27,15 @@ services:
       - VITE_API_TIMEOUT=${VITE_API_TIMEOUT:-300000}
       # Database path - points to the volume mount
       - DATA_DIR=/app/backend/data
+      # GitHub OAuth2 SSO Configuration
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - GITHUB_CALLBACK_URL=${GITHUB_CALLBACK_URL:-http://localhost:8080/api/auth/oauth/github/callback}
+      # Hugging Face OAuth2 SSO Configuration
+      - HUGGINGFACE_CLIENT_ID=${HUGGINGFACE_CLIENT_ID:-}
+      - HUGGINGFACE_CLIENT_SECRET=${HUGGINGFACE_CLIENT_SECRET:-}
+      - HUGGINGFACE_CALLBACK_URL=${HUGGINGFACE_CALLBACK_URL:-http://localhost:8080/api/auth/oauth/huggingface/callback}
+      - SESSION_SECRET=${SESSION_SECRET:-}
     volumes:
       - libre_webui_data:/app/backend/data
       - libre_webui_temp:/app/backend/temp

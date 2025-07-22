@@ -22,6 +22,7 @@ import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
+import { HuggingFaceAuthButton } from '@/components/HuggingFaceAuthButton';
 
 interface LoginFormProps {
   onLogin?: () => void;
@@ -168,6 +169,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
       {/* GitHub OAuth Button */}
       <GitHubAuthButton />
+
+      {/* Hugging Face OAuth Button */}
+      <HuggingFaceAuthButton />
 
       <div className='mt-6 text-center'>
         <p className='text-sm text-gray-600 dark:text-dark-500'>

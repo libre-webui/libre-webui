@@ -18,6 +18,7 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { githubOAuthService } from '../services/simpleGitHubOAuth.js';
+import { huggingFaceOAuthService } from '../services/simpleHuggingFaceOAuth.js';
 import { authService } from '../services/authService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 
@@ -316,6 +317,99 @@ router.get(
  */
 router.get('/oauth/github/status', generalAuthRateLimiter, (req, res) => {
   res.json({ configured: isGitHubConfigured });
+});
+
+/**
+ * Hugging Face OAuth Routes
+ * These routes integrate Hugging Face OAuth with the existing JWT authentication system
+ */
+
+// Hugging Face OAuth setup if credentials are provided
+const isHuggingFaceConfigured = huggingFaceOAuthService.isConfigured();
+
+/**
+ * Hugging Face OAuth - Start authentication
+ */
+router.get('/oauth/huggingface', generalAuthRateLimiter, (req, res) => {
+  if (!isHuggingFaceConfigured) {
+    return res.status(404).json({ error: 'Hugging Face OAuth not configured' });
+  }
+
+  const authUrl = huggingFaceOAuthService.getAuthUrl();
+  res.redirect(authUrl);
+});
+
+/**
+ * Hugging Face OAuth - Handle callback and generate JWT
+ */
+router.get(
+  '/oauth/huggingface/callback',
+  generalAuthRateLimiter,
+  async (req, res) => {
+    try {
+      if (!isHuggingFaceConfigured) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_not_configured`
+        );
+      }
+
+      const { code } = req.query;
+
+      if (!code || typeof code !== 'string') {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Exchange code for access token
+      const accessToken =
+        await huggingFaceOAuthService.exchangeCodeForToken(code);
+      if (!accessToken) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Get user profile
+      const profile = await huggingFaceOAuthService.getUserProfile(accessToken);
+      if (!profile) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Process user with Hugging Face OAuth service
+      const user = await huggingFaceOAuthService.processUser(profile);
+
+      if (!user) {
+        return res.redirect(
+          `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+        );
+      }
+
+      // Generate JWT token
+      const token = authService.generateToken(user);
+
+      console.log('Hugging Face OAuth successful for user:', user.username);
+
+      // Redirect to frontend with token in URL
+      res.redirect(
+        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?token=${token}&auth=success`
+      );
+    } catch (error) {
+      console.error('Hugging Face OAuth callback error:', error);
+      res.redirect(
+        `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
+      );
+    }
+  }
+);
+
+/**
+ * Check if Hugging Face OAuth is configured
+ */
+router.get('/oauth/huggingface/status', generalAuthRateLimiter, (req, res) => {
+  res.json({ configured: isHuggingFaceConfigured });
 });
 
 /**
