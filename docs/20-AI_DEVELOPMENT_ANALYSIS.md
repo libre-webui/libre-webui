@@ -183,7 +183,7 @@ CHANGELOG_AI_MODEL=gemma3:27b npm run changelog:ai
 The AI analyzes both quantitative metrics (commit counts, file changes) and qualitative patterns (development trends, architectural decisions) to provide actionable insights.
 :::
 
-## � Example Outputs
+## Example Outputs
 
 ### 🤖 AI Changelog Generation
 

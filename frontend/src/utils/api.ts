@@ -45,14 +45,9 @@ import {
   PersonaExport,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
+import { API_BASE_URL, logConfigInfo } from '@/utils/config';
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  `${window.location.protocol}//${window.location.hostname}:3001/api`;
-
-console.log('🚀 API_BASE_URL configured as:', API_BASE_URL);
-console.log('🌐 Window location:', window.location);
-console.log('🔧 Environment variables:', import.meta.env);
+logConfigInfo();
 console.log('📱 User agent:', navigator.userAgent);
 console.log('🎭 Demo mode detected:', isDemoMode());
 

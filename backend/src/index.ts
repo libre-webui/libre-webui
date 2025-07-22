@@ -54,7 +54,6 @@ import preferencesRoutes from './routes/preferences.js';
 import pluginRoutes from './routes/plugins.js';
 import documentRoutes from './routes/documents.js';
 import authRoutes from './routes/auth.js';
-import { optionalAuth } from './middleware/auth.js';
 import usersRoutes from './routes/users.js';
 import personaRoutes from './routes/personas.js';
 import ollamaService from './services/ollamaService.js';
@@ -243,7 +242,7 @@ const personasRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
+app.use('/api/personas', personasRateLimiter, personaRoutes);
 
 // API-only backend - no static file serving
 
