@@ -225,7 +225,7 @@ Ready to unlock the full potential of Libre WebUI?
         </div>
         <div className="card__body">
           <p>Upload documents and chat with their content using semantic search.</p>
-          <small><strong>⏱️ 6 minutes</strong> • <strong>� Productivity</strong></small>
+          <small><strong>⏱️ 6 minutes</strong> • <strong> Productivity</strong></small>
         </div>
       </div>
     </div>
@@ -238,7 +238,7 @@ Ready to unlock the full potential of Libre WebUI?
         </div>
         <div className="card__body">
           <p>Interactive content generation and code execution in chat.</p>
-          <small><strong>⏱️ 7 minutes</strong> • <strong>� Creative</strong></small>
+          <small><strong>⏱️ 7 minutes</strong> • <strong> Creative</strong></small>
         </div>
       </div>
     </div>
@@ -270,6 +270,17 @@ For administrators and advanced users managing Libre WebUI deployments.
         <div className="card__body">
           <p>User management, security, and role-based access control.</p>
           <small><strong>⏱️ 10 minutes</strong> • <strong>🎯 Admin</strong></small>
+        </div>
+      </div>
+    </div>
+    <div className="col col--6">
+      <div className="card margin--md">
+        <div className="card__header">
+          <h4>🔐 <a href="./SSO">Single Sign-On (SSO)</a></h4>
+        </div>
+        <div className="card__body">
+          <p>GitHub OAuth2 and enterprise authentication for teams.</p>
+          <small><strong>⏱️ 5 minutes</strong> • <strong>🎯 Enterprise</strong></small>
         </div>
       </div>
     </div>
@@ -498,6 +509,7 @@ Different ways to deploy and run Libre WebUI.
       <p>Advanced configuration help?</p>
       <ul>
         <li><a href="./AUTHENTICATION">Authentication Setup</a></li>
+        <li><a href="./SSO">Single Sign-On (SSO)</a></li>
         <li><a href="./DOCKER_EXTERNAL_OLLAMA">Docker Deployment</a></li>
         <li><a href="https://github.com/libre-webui/libre-webui/discussions">GitHub Discussions</a></li>
       </ul>

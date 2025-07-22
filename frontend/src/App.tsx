@@ -45,6 +45,7 @@ import {
 } from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/utils';
 import websocketService from '@/utils/websocket';
+import toast from 'react-hot-toast';
 
 // Lazy load pages for code splitting
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
@@ -100,12 +101,91 @@ const App: React.FC = () => {
   const {
     systemInfo,
     isLoading: authLoading,
-    user,
-    isAuthenticated,
+    user: _user,
+    isAuthenticated: _isAuthenticated,
   } = useAuthStore();
   const { isDemoMode, demoConfig } = useAppStore();
 
-  // Initialize the app
+  // Handle OAuth callback FIRST - before any routing or initialization
+  const [oauthProcessed, setOauthProcessed] = React.useState(false);
+  const processingRef = React.useRef(false);
+
+  React.useEffect(() => {
+    const processOAuthCallback = async () => {
+      // Prevent multiple simultaneous executions
+      if (processingRef.current) {
+        console.log('OAuth already processing, skipping...');
+        return;
+      }
+
+      console.log('Starting OAuth callback processing...');
+      processingRef.current = true;
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const authStatus = urlParams.get('auth');
+
+      if (token && authStatus === 'success') {
+        try {
+          // Use the same API base URL logic as other parts of the app
+          const API_BASE_URL =
+            import.meta.env.VITE_API_BASE_URL ||
+            import.meta.env.VITE_BACKEND_URL + '/api' ||
+            'http://localhost:3001/api';
+
+          // Verify token and get user info from the backend
+          const response = await fetch(`${API_BASE_URL}/auth/me`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            credentials: 'include',
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+              // Use auth store login function to properly authenticate
+              const { login, systemInfo } = useAuthStore.getState();
+              login(
+                data.data,
+                token,
+                systemInfo || {
+                  requiresAuth: true,
+                  singleUserMode: false,
+                  hasUsers: true,
+                  version: '0.1.6',
+                }
+              );
+              console.log('OAuth login successful, showing toast');
+              toast.success('GitHub login successful!');
+            } else {
+              toast.error('Failed to verify GitHub authentication');
+            }
+          } else {
+            toast.error('GitHub authentication verification failed');
+          }
+        } catch (error) {
+          console.error('OAuth processing error:', error);
+          toast.error('GitHub authentication failed');
+        }
+
+        // Clean up URL regardless of success/failure
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+      }
+
+      console.log('OAuth processing completed');
+      setOauthProcessed(true);
+      processingRef.current = false;
+    };
+
+    processOAuthCallback();
+  }, []);
+
+  // Initialize the app only after OAuth is processed
   useInitializeApp();
 
   // Check if any background is active (persona background or general background settings)
@@ -119,18 +199,6 @@ const App: React.FC = () => {
     const backgroundSettings = preferences.backgroundSettings;
     return backgroundSettings?.enabled && backgroundSettings?.imageUrl;
   };
-
-  // Debug logging - this will help us understand what's happening
-  React.useEffect(() => {
-    console.log('🔍 Auth Debug State:', {
-      systemInfo,
-      authLoading,
-      user,
-      isAuthenticated,
-      requiresAuth: systemInfo?.requiresAuth,
-      singleUserMode: systemInfo?.singleUserMode,
-    });
-  }, [systemInfo, authLoading, user, isAuthenticated]);
 
   // Define keyboard shortcuts
   const shortcuts: KeyboardShortcut[] = [
@@ -230,6 +298,15 @@ const App: React.FC = () => {
       <ErrorBoundary>
         <FirstTimeSetup />
       </ErrorBoundary>
+    );
+  }
+
+  // Show loading state while processing OAuth
+  if (!oauthProcessed) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
+      </div>
     );
   }
 
