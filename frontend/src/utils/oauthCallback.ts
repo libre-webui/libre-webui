@@ -54,13 +54,13 @@ const _handleTokenLogin = async (token: string): Promise<boolean> => {
         // Don't show success toast here since App.tsx handles it
         return true;
       } else {
-        toast.error('Failed to verify GitHub authentication');
+        toast.error('Failed to verify authentication');
       }
     } else {
-      toast.error('GitHub authentication verification failed');
+      toast.error('Authentication verification failed');
     }
   } catch (_error) {
-    toast.error('GitHub authentication failed');
+    toast.error('Authentication failed');
   }
 
   return false;

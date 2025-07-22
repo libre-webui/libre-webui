@@ -17,8 +17,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+import { API_BASE_URL } from '../utils/config';
 
 /**
  * Hugging Face OAuth Button Component
@@ -41,7 +40,7 @@ export const HuggingFaceAuthButton: React.FC = () => {
     try {
       // Check the OAuth status endpoint instead of the auth endpoint
       const response = await fetch(
-        `${BACKEND_URL}/api/auth/oauth/huggingface/status`,
+        `${API_BASE_URL}/auth/oauth/huggingface/status`,
         {
           method: 'GET',
           credentials: 'include',
@@ -74,7 +73,7 @@ export const HuggingFaceAuthButton: React.FC = () => {
     setIsLoading(true);
 
     // Redirect to Hugging Face OAuth
-    const hfAuthUrl = `${BACKEND_URL}/api/auth/oauth/huggingface`;
+    const hfAuthUrl = `${API_BASE_URL}/auth/oauth/huggingface`;
     window.location.href = hfAuthUrl;
   };
 

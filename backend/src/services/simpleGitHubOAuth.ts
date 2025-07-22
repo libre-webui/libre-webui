@@ -52,7 +52,9 @@ export class GitHubOAuthService {
    */
   getAuthUrl(): string {
     if (!this.clientId) {
-      throw new Error('GitHub client ID not configured');
+      throw new Error(
+        'GitHub client ID not configured. Please set the GITHUB_CLIENT_ID environment variable.'
+      );
     }
 
     const params = new URLSearchParams({

@@ -17,8 +17,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Github, Loader2 } from 'lucide-react';
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+import { API_BASE_URL } from '../utils/config';
 
 /**
  * GitHub OAuth Button Component
@@ -40,13 +39,10 @@ export const GitHubAuthButton: React.FC = () => {
   const checkGitHubOAuthConfig = async () => {
     try {
       // Check the OAuth status endpoint instead of the auth endpoint
-      const response = await fetch(
-        `${BACKEND_URL}/api/auth/oauth/github/status`,
-        {
-          method: 'GET',
-          credentials: 'include',
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/auth/oauth/github/status`, {
+        method: 'GET',
+        credentials: 'include',
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -74,7 +70,7 @@ export const GitHubAuthButton: React.FC = () => {
     setIsLoading(true);
 
     // Redirect to GitHub OAuth
-    const githubAuthUrl = `${BACKEND_URL}/api/auth/oauth/github`;
+    const githubAuthUrl = `${API_BASE_URL}/auth/oauth/github`;
     window.location.href = githubAuthUrl;
   };
 

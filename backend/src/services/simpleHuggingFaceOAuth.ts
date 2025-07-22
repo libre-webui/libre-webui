@@ -64,7 +64,9 @@ export class HuggingFaceOAuthService {
    */
   getAuthUrl(): string {
     if (!this.clientId) {
-      throw new Error('Hugging Face Client ID not configured');
+      throw new Error(
+        'Hugging Face Client ID not configured. Please set the HUGGINGFACE_CLIENT_ID environment variable.'
+      );
     }
 
     const params = new URLSearchParams({
