@@ -17,12 +17,7 @@
 
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
-
-// Use the same API base URL logic as the main api.ts
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_BACKEND_URL + '/api' ||
-  'http://localhost:3001/api';
+import { API_BASE_URL } from '@/utils/config';
 
 /**
  * Handle OAuth callback and extract token from URL

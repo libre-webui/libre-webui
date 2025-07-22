@@ -234,7 +234,8 @@ export class GitHubOAuthService {
         username: uniqueUsername,
         email: profile.email || null,
         // Set a cryptographically secure random password since OAuth users don't use password login
-        password: crypto.randomBytes(24).toString('base64'),
+        // The password is prefixed with 'oauth:' to mark this account as OAuth-only
+        password: 'oauth:' + crypto.randomBytes(24).toString('base64'),
         role: 'user', // Default role
       });
 
