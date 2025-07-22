@@ -9,41 +9,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ Added
 
-### 🔧 Technical Improvements
+### 🔧 Improved
 
-### 🐛 Bug Fixes
+### 🐛 Fixed
 
 ### 📚 Documentation
 
+---
+
 ## [0.1.7] - 2025-07-22
 
-### ✨ Added
+## Libre WebUI v0.1.7 - 2025-07-22
 
-- Enhance OAuth configuration handling and update error messages for GitHub and Hugging Face services
-- Implement Hugging Face OAuth2 support and update UI components for SSO
-- Add Hugging Face OAuth2 SSO support using modular structure
-- Add GitHub OAuth2 SSO configuration to environment variables in Docker Compose files
-- Refactor OAuth callback handling to improve user feedback and prevent multiple executions
-- Improve GitHub OAuth integration with secure password generation and updated callback URLs
-- Add Single Sign-On (SSO) support with GitHub OAuth2 integration
-- Update AI-powered changelog generator and regeneration scripts with enhanced documentation and model recommendations
-- Enhance AI Development Analysis documentation and add changelog regeneration script
-- add AI-powered development analysis and changelog generation
+This release focuses on enhanced security and usability with the addition of Single Sign-On (SSO) options and improvements to the overall user experience. We've also invested in streamlining our development process with AI-powered tools for analysis and changelog generation.
 
-### 🔧 Technical Improvements
+**✨ New Features**
 
-- Update dependencies in package-lock.json to latest versions
-- Optimize token management functions with useCallback for better performance
-- update: docker file
-- Remove debug logging from OAuth callback processing in App component
-- Remove debug logging from OAuth callback handling
+- **Single Sign-On (SSO):** Added support for GitHub and Hugging Face OAuth2, allowing users to easily log in with their existing accounts.
+- **AI Development Analysis:** Introduced AI-powered tools to assist with development and provide insights into project health.
+- **AI-Powered Changelog Generation:** Implemented automated changelog generation to improve release note accuracy and efficiency.
 
-### 🐛 Bug Fixes
+**🔧 Improvements**
 
-- Refactor API base URL handling in App component for consistency
-- Improve Hugging Face OAuth configuration handling and enhance button UI
-- Address Copilot PR review feedback
-- Correct emoji display in documentation and improve formatting
+- **OAuth Configuration:** Enhanced OAuth configuration handling for both GitHub and Hugging Face, providing clearer error messages and a more streamlined setup process.
+- **Performance:** Optimized token management functions for improved application responsiveness.
+- **Docker Support:** Updated Dockerfile and provided example environment variables for GitHub OAuth configuration in Docker Compose.
+
+**🐛 Bug Fixes**
+
+- **OAuth Handling:** Resolved issues with OAuth callback handling to prevent multiple executions and improve user feedback.
+- **Emoji Display:** Corrected emoji display in documentation and improved overall formatting.
+- **API URL Consistency:** Refactored API base URL handling for consistency across the application.
+
+**📚 Documentation**
+
+- Expanded documentation for AI Development Analysis and Changelog Regeneration scripts.
+- Improved documentation formatting and clarity throughout the project.
+
+--
 
 ## [0.1.6] - 2025-07-20
 
