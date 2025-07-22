@@ -84,38 +84,23 @@ export const GitHubAuthButton: React.FC = () => {
   }
 
   return (
-    <>
-      {/* Divider */}
-      <div className='relative my-4'>
-        <div className='absolute inset-0 flex items-center'>
-          <div className='w-full border-t border-gray-300 dark:border-dark-300' />
+    <button
+      type='button'
+      onClick={handleGitHubLogin}
+      disabled={isLoading}
+      className='w-full flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm bg-white dark:bg-dark-100 text-gray-700 dark:text-dark-700 hover:bg-gray-50 dark:hover:bg-dark-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+    >
+      {isLoading ? (
+        <div className='flex items-center'>
+          <Loader2 size={16} className='animate-spin mr-2' />
+          Connecting to GitHub...
         </div>
-        <div className='relative flex justify-center text-sm'>
-          <span className='px-2 bg-white dark:bg-dark-25 text-gray-500 dark:text-dark-500'>
-            or
-          </span>
+      ) : (
+        <div className='flex items-center'>
+          <Github size={16} className='mr-2' />
+          Continue with GitHub
         </div>
-      </div>
-
-      {/* GitHub OAuth Button */}
-      <button
-        type='button'
-        onClick={handleGitHubLogin}
-        disabled={isLoading}
-        className='w-full flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm bg-white dark:bg-dark-100 text-gray-700 dark:text-dark-700 hover:bg-gray-50 dark:hover:bg-dark-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
-      >
-        {isLoading ? (
-          <div className='flex items-center'>
-            <Loader2 size={16} className='animate-spin mr-2' />
-            Connecting to GitHub...
-          </div>
-        ) : (
-          <div className='flex items-center'>
-            <Github size={16} className='mr-2' />
-            Continue with GitHub
-          </div>
-        )}
-      </button>
-    </>
+      )}
+    </button>
   );
 };

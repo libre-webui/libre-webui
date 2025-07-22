@@ -56,9 +56,7 @@ export class HuggingFaceOAuthService {
    * Check if Hugging Face OAuth is properly configured
    */
   isConfigured(): boolean {
-    const configured = !!(this.clientId && this.clientSecret);
-    console.log('🤗 Hugging Face OAuth configured:', configured);
-    return configured;
+    return !!(this.clientId && this.clientSecret);
   }
 
   /**
