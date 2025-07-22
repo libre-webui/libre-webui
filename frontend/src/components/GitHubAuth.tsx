@@ -57,34 +57,34 @@ export const GitHubAuth: React.FC = () => {
   /**
    * Get JWT token from localStorage
    */
-  const getToken = (): string | null => {
+  const getToken = useCallback((): string | null => {
     return localStorage.getItem('jwt_token');
-  };
+  }, []);
 
   /**
    * Set JWT token in localStorage
    */
-  const setToken = (token: string): void => {
+  const setToken = useCallback((token: string): void => {
     localStorage.setItem('jwt_token', token);
-  };
+  }, []);
 
   /**
    * Remove JWT token from localStorage
    */
-  const removeToken = (): void => {
+  const removeToken = useCallback((): void => {
     localStorage.removeItem('jwt_token');
-  };
+  }, []);
 
   /**
    * Create axios instance with auth header
    */
-  const createAuthAxios = () => {
+  const createAuthAxios = useCallback(() => {
     const token = getToken();
     return axios.create({
       baseURL: BACKEND_URL,
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
-  };
+  }, [getToken]);
 
   /**
    * Handle OAuth callback and extract JWT token from URL
@@ -121,7 +121,7 @@ export const GitHubAuth: React.FC = () => {
     }
 
     return false; // No callback parameters found
-  }, []);
+  }, [setToken]);
 
   /**
    * Check if user is currently authenticated using JWT
@@ -183,7 +183,7 @@ export const GitHubAuth: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [getToken, createAuthAxios, removeToken]);
 
   /**
    * Initiate GitHub OAuth login
@@ -261,7 +261,7 @@ export const GitHubAuth: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [initialized]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialized, handleAuthCallback, checkAuthStatus]);
 
   /**
    * Loading state
