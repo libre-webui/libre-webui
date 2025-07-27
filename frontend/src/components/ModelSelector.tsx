@@ -211,7 +211,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-2 text-left',
           'bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-dark-300',
-          'rounded-lg text-sm transition-all duration-200',
+          'rounded-lg text-sm', // removed transition-all and duration
           'hover:bg-gray-100 dark:hover:bg-dark-100',
           'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
@@ -220,7 +220,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         {getCurrentModelDisplay()}
         <ChevronDown
           className={cn(
-            'h-4 w-4 text-gray-400 transition-transform duration-200',
+            'h-4 w-4 text-gray-400', // removed transition-transform and duration
             isOpen && 'rotate-180'
           )}
         />
