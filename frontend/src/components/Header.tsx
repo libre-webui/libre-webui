@@ -17,15 +17,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Settings, Menu, LogOut, User } from 'lucide-react';
-import { Button, Select } from '@/components/ui';
+import { Settings, Menu, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserMenu } from '@/components/UserMenu';
 import { Logo } from '@/components/Logo';
+import { ModelSelector } from '@/components/ModelSelector';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
-import { usePluginStore } from '@/store/pluginStore';
+// Removed unused import: usePluginStore
 import { authApi, personaApi, chatApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
@@ -55,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
     toggleSidebar,
     setBackgroundImage,
   } = useAppStore();
-  const { plugins } = usePluginStore();
+  // Removed unused pluginStore
   const { user, logout, systemInfo } = useAuthStore();
 
   // Persona state
@@ -295,76 +296,17 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className='text-xs text-gray-500 dark:text-dark-500 hidden sm:inline'>
                   Model:
                 </span>
-                <Select
-                  value={
+                <ModelSelector
+                  models={models}
+                  selectedModel={
                     currentSession.personaId
                       ? `persona:${currentSession.personaId}`
                       : currentSession.model
                   }
-                  onChange={handleModelOrPersonaChange}
-                  options={models.map(model => ({
-                    value: model.name,
-                    label: model.isPersona
-                      ? `👤 ${model.personaName} (via ${model.model})`
-                      : model.isPlugin
-                        ? `${model.name} (${model.pluginName})`
-                        : model.name,
-                  }))}
-                  className='text-xs min-w-0 py-1 px-2 h-6 border-0 bg-gray-50 dark:bg-dark-200 rounded-lg max-w-32 sm:max-w-none'
+                  onModelChange={handleModelOrPersonaChange}
+                  currentPersona={currentPersona}
+                  className='min-w-48 sm:min-w-64'
                 />
-
-                {/* Persona indicator - show when using a persona */}
-                {currentSession?.personaId && currentPersona && (
-                  <div className='flex items-center gap-1'>
-                    <span className='text-xs text-gray-500 dark:text-dark-500 hidden sm:inline'>
-                      via
-                    </span>
-                    <div className='flex items-center gap-1'>
-                      {currentPersona.avatar ? (
-                        <img
-                          src={currentPersona.avatar}
-                          alt={currentPersona.name}
-                          className='w-4 h-4 rounded-full object-cover'
-                        />
-                      ) : (
-                        <User className='h-3 w-3' />
-                      )}
-                      <span className='text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 px-2 py-1 rounded'>
-                        {currentPersona.name}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Plugin indicator - only show when current model is from a plugin and no persona */}
-                {!currentSession?.personaId &&
-                  currentSession &&
-                  (() => {
-                    const currentModel = models.find(
-                      m => m.name === currentSession.model
-                    );
-                    const activePlugin = currentModel?.isPlugin
-                      ? plugins.find(
-                          p =>
-                            p.active &&
-                            p.model_map?.includes(currentSession.model)
-                        )
-                      : null;
-
-                    return (
-                      activePlugin &&
-                      currentModel?.isPlugin && (
-                        <div className='flex items-center gap-1'>
-                          <span className='text-xs text-gray-500 dark:text-dark-500 hidden sm:inline'>
-                            via
-                          </span>
-                          <span className='text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded'>
-                            {currentModel.pluginName || activePlugin.name}
-                          </span>
-                        </div>
-                      )
-                    );
-                  })()}
               </div>
             )}
           </div>

@@ -20,10 +20,11 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { Logo } from '@/components/Logo';
+import { ModelSelector } from '@/components/ModelSelector';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { useChat } from '@/hooks/useChat';
-import { Select } from '@/components/ui';
+// Removed unused import: Select
 
 export const ChatPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -125,7 +126,10 @@ export const ChatPage: React.FC = () => {
     }
   };
 
-  const handleModelChange = async (model: string) => {
+  const handleModelChange = async (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const model = event.target.value;
     setSelectedModel(model);
     // Don't auto-create session on model change, let user click "New Chat"
   };
@@ -158,19 +162,19 @@ export const ChatPage: React.FC = () => {
           {models.length > 0 ? (
             <div className='space-y-6'>
               <div className='space-y-3'>
-                <Select
-                  label='Choose a model or persona'
-                  value={selectedModel}
-                  onChange={e => handleModelChange(e.target.value)}
-                  options={models.map(model => ({
-                    value: model.name,
-                    label: model.name,
-                  }))}
-                  className='text-left'
-                />
+                <div className='space-y-2'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    Choose a model or persona
+                  </label>
+                  <ModelSelector
+                    models={models}
+                    selectedModel={selectedModel}
+                    onModelChange={handleModelChange}
+                    className='w-full'
+                  />
+                </div>
                 <p className='text-xs text-gray-500 dark:text-gray-400'>
-                  Personas are shown with a purple indicator in the chat header
-                  when active.
+                  Select from Ollama models, personas, or plugin models.
                   <span className='block mt-1'>
                     <a
                       href='/personas'
