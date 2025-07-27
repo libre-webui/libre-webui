@@ -32,9 +32,9 @@ export const ThemeToggle: React.FC = () => {
       title={`Switch to ${theme.mode === 'light' ? 'dark' : 'light'} mode (⌘D)`}
     >
       {theme.mode === 'light' ? (
-        <Moon className='h-4 w-4 text-gray-600 dark:text-dark-500' />
+        <Moon className='h-4 w-4 text-primary-600 dark:text-primary-400' />
       ) : (
-        <Sun className='h-4 w-4 text-yellow-500 dark:text-yellow-400' />
+        <Sun className='h-4 w-4 text-primary-600 dark:text-primary-400' />
       )}
     </Button>
   );

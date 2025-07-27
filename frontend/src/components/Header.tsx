@@ -21,7 +21,6 @@ import { Settings, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserMenu } from '@/components/UserMenu';
-import { Logo } from '@/components/Logo';
 import { ModelSelector } from '@/components/ModelSelector';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
@@ -284,7 +283,6 @@ export const Header: React.FC<HeaderProps> = ({
               className='flex items-center gap-3 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
               title='Go to latest chat'
             >
-              <Logo size='sm' />
               <div className='flex flex-col min-w-0'>
                 <h1 className='text-base sm:text-lg font-semibold text-gray-900 dark:text-dark-800 leading-tight truncate'>
                   {getPageTitle()}
@@ -293,9 +291,6 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             {isOnChatPage() && currentSession && models.length > 0 && (
               <div className='flex items-center gap-2 mt-0.5'>
-                <span className='text-xs text-gray-500 dark:text-dark-500 hidden sm:inline'>
-                  Model:
-                </span>
                 <ModelSelector
                   models={models}
                   selectedModel={

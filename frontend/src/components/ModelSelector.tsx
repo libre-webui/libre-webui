@@ -16,15 +16,16 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ChevronDown,
   User,
   Brain,
   Cpu,
-  Plug,
   Check,
   Sparkles,
-  Server,
+  Bot,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/utils';
 import { OllamaModel, Persona } from '@/types';
@@ -71,14 +72,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     {
       type: 'ollama' as const,
       label: 'Ollama Models',
-      icon: <Server className='h-4 w-4' />,
+      icon: <Bot className='h-4 w-4' />,
       models: models.filter(model => !model.isPersona && !model.isPlugin),
-      color: 'blue',
+      color: 'green',
     },
     {
       type: 'plugins' as const,
       label: 'Plugin Models',
-      icon: <Plug className='h-4 w-4' />,
+      icon: <Zap className='h-4 w-4' />,
       models: models.filter(model => model.isPlugin),
       color: 'green',
     },
@@ -146,9 +147,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       return <User className='h-4 w-4 text-purple-600 dark:text-purple-400' />;
     }
     if (model.isPlugin) {
-      return <Plug className='h-4 w-4 text-green-600 dark:text-green-400' />;
+      return <Zap className='h-4 w-4 text-green-600 dark:text-green-400' />;
     }
-    return <Server className='h-4 w-4 text-blue-600 dark:text-blue-400' />;
+    return <Bot className='h-4 w-4 text-green-600 dark:text-green-400' />;
   };
 
   const getModelLabel = (model: OllamaModel) => {
@@ -169,17 +170,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       return `via ${model.pluginName}`;
     }
     return null;
-  };
-
-  const getGroupColor = (type: string) => {
-    switch (type) {
-      case 'personas':
-        return 'border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20';
-      case 'plugins':
-        return 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20';
-      default:
-        return 'border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20';
-    }
   };
 
   const getCurrentModelDisplay = () => {
@@ -236,106 +226,99 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         />
       </button>
 
-      {/* Dropdown Menu */}
-      {isOpen && (
-        <div className='absolute top-full left-0 right-0 mt-1 z-50 animate-slide-up'>
-          <div className='bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg shadow-card dark:shadow-lg max-h-96 overflow-hidden backdrop-blur-sm'>
-            {/* Search Input */}
-            <div className='p-3 border-b border-gray-100 dark:border-dark-200'>
-              <input
-                ref={searchInputRef}
-                type='text'
-                placeholder='Search models...'
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className='w-full px-3 py-2 text-sm bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-dark-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200'
-              />
-            </div>
+      {/* Portal Dropdown */}
+      {isOpen &&
+        createPortal(
+          <div className='fixed inset-0 z-[999999] flex items-start justify-center pt-20'>
+            {/* Background overlay */}
+            <div
+              className='absolute inset-0 bg-black/20'
+              onClick={() => setIsOpen(false)}
+            />
 
-            {/* Model Groups */}
-            <div className='max-h-80 overflow-y-auto'>
-              {filteredGroups.length > 0 ? (
-                filteredGroups.map(group => (
-                  <div key={group.type} className='py-2'>
-                    {/* Group Header */}
-                    <div
-                      className={cn(
-                        'flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide',
-                        'text-gray-500 dark:text-gray-400 border-l-2 mx-2 mb-1',
-                        getGroupColor(group.type)
-                      )}
-                    >
-                      {group.icon}
-                      {group.label}
-                      <span className='ml-auto text-xs bg-gray-200 dark:bg-dark-300 px-2 py-0.5 rounded-full'>
-                        {group.models.length}
-                      </span>
-                    </div>
+            {/* Dropdown */}
+            <div
+              className='relative w-96 max-w-[90vw] bg-white dark:bg-dark-100 border-2 border-gray-300 dark:border-dark-300 rounded-lg shadow-2xl'
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Search */}
+              <div className='p-3 border-b border-gray-200 dark:border-dark-200 bg-white dark:bg-dark-100'>
+                <input
+                  ref={searchInputRef}
+                  type='text'
+                  placeholder='Search models...'
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  onClick={e => e.stopPropagation()}
+                  onMouseDown={e => e.stopPropagation()}
+                  className='w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-dark-200 border border-gray-300 dark:border-dark-300 rounded focus:outline-none focus:border-primary-500'
+                />
+              </div>
 
-                    {/* Group Models */}
-                    {group.models.map(model => (
-                      <button
-                        key={model.name}
-                        onClick={() => handleModelSelect(model.name)}
-                        className={cn(
-                          'w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors',
-                          (selectedModel === model.name ||
-                            (selectedModel.startsWith('persona:') &&
-                              model.name === selectedModel)) &&
-                            'bg-primary-50 dark:bg-primary-900/20 border-r-2 border-primary-500'
-                        )}
-                      >
-                        {getModelIcon(model)}
+              {/* Models List */}
+              <div className='max-h-64 overflow-y-auto bg-white dark:bg-dark-100'>
+                {filteredGroups.length > 0 ? (
+                  filteredGroups.map(group => (
+                    <div key={group.type}>
+                      {/* Group Header */}
+                      <div className='px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-dark-300 border-b border-gray-200 dark:border-dark-400'>
+                        <div className='flex items-center gap-2'>
+                          {group.icon}
+                          {group.label} ({group.models.length})
+                        </div>
+                      </div>
 
-                        <div className='flex-1 min-w-0'>
-                          <div className='flex items-center gap-2'>
-                            <span className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
-                              {getModelLabel(model)}
-                            </span>
-                            {model.isPersona && (
-                              <div className='flex items-center gap-1'>
-                                <Brain className='h-3 w-3 text-purple-600 dark:text-purple-400' />
-                                {/* Check if persona has advanced features */}
-                                <Sparkles className='h-3 w-3 text-purple-500 dark:text-purple-300' />
+                      {/* Models */}
+                      {group.models.map(model => (
+                        <div
+                          key={model.name}
+                          onMouseDown={e => {
+                            e.preventDefault();
+                            handleModelSelect(model.name);
+                          }}
+                          className={cn(
+                            'px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-dark-200 last:border-b-0',
+                            'hover:bg-gray-50 dark:hover:bg-dark-200',
+                            'bg-white dark:bg-dark-100',
+                            (selectedModel === model.name ||
+                              (selectedModel.startsWith('persona:') &&
+                                model.name === selectedModel)) &&
+                              'bg-primary-50 dark:bg-primary-900 border-l-4 border-primary-500'
+                          )}
+                        >
+                          <div className='flex items-center gap-3'>
+                            {getModelIcon(model)}
+                            <div className='flex-1'>
+                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                                {getModelLabel(model)}
                               </div>
+                              {getModelSubLabel(model) && (
+                                <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                  {getModelSubLabel(model)}
+                                </div>
+                              )}
+                            </div>
+                            {(selectedModel === model.name ||
+                              (selectedModel.startsWith('persona:') &&
+                                model.name === selectedModel)) && (
+                              <Check className='h-4 w-4 text-primary-600 dark:text-primary-400' />
                             )}
                           </div>
-                          {getModelSubLabel(model) && (
-                            <span className='text-xs text-gray-500 dark:text-gray-400 truncate'>
-                              {getModelSubLabel(model)}
-                            </span>
-                          )}
-                          {model.personaDescription && (
-                            <span className='text-xs text-gray-400 dark:text-gray-500 truncate mt-0.5 block'>
-                              {model.personaDescription}
-                            </span>
-                          )}
                         </div>
-
-                        {(selectedModel === model.name ||
-                          (selectedModel.startsWith('persona:') &&
-                            model.name === selectedModel)) && (
-                          <Check className='h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0' />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                ))
-              ) : (
-                <div className='px-4 py-8 text-center text-gray-500 dark:text-gray-400'>
-                  <div className='flex flex-col items-center gap-2'>
-                    <Cpu className='h-8 w-8 text-gray-300 dark:text-gray-600' />
+                      ))}
+                    </div>
+                  ))
+                ) : (
+                  <div className='px-4 py-8 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-dark-100'>
+                    <Cpu className='h-8 w-8 mx-auto mb-2 text-gray-300 dark:text-gray-600' />
                     <p className='text-sm'>No models found</p>
-                    {searchTerm && (
-                      <p className='text-xs'>Try adjusting your search</p>
-                    )}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       {/* Hidden select for form compatibility */}
       <select

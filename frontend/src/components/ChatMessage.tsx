@@ -225,7 +225,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               {message.content}
             </p>
           ) : isSystem ? (
-            <div className='bg-gray-50/30 dark:bg-dark-50/30 rounded-md p-2 border border-gray-100/50 dark:border-dark-200/50'>
+            <div className='bg-gray-50/30 dark:bg-dark-50/30 rounded-md p-2 border border-gray-100/50 dark:border-dark-200/50 relative z-0'>
               <div className='text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 flex items-center justify-between'>
                 <div className='flex items-center gap-1'>
                   <Settings className='h-2.5 w-2.5 opacity-50' />
