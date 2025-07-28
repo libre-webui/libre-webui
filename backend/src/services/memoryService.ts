@@ -362,8 +362,8 @@ export class MemoryService {
    * Get memory status for a persona
    */
   async getMemoryStatus(
-    personaId: string,
-    userId: string
+    userId: string,
+    personaId: string
   ): Promise<{
     memory_count: number;
     last_backup?: number;

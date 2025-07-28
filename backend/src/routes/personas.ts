@@ -367,7 +367,7 @@ router.get(
 
       // Import memory service dynamically to avoid dependency issues
       const { memoryService } = await import('../services/memoryService.js');
-      const status = await memoryService.getMemoryStatus(id, userId);
+      const status = await memoryService.getMemoryStatus(userId, id);
 
       res.json({
         success: true,
