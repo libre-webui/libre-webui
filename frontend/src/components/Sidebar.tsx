@@ -58,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     updateSessionTitle,
     selectedModel,
     models,
+    currentSession,
   } = useChatStore();
   const { user, isAdmin, systemInfo } = useAuthStore();
   const { backgroundImage } = useAppStore();
@@ -66,16 +67,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [editingTitle, setEditingTitle] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // Define the prefix for session URLs
-  const SESSION_URL_PREFIX = '/c/';
-
   // Extract current session ID from URL using useParams
   const { sessionId } = useParams<{ sessionId: string }>();
-  const currentSessionIdFromUrl = location.pathname.startsWith(
-    SESSION_URL_PREFIX
-  )
-    ? sessionId
-    : null;
+  const currentSessionIdFromUrl = sessionId || null;
+
+  // Get current session ID from store as fallback
+  const currentSessionId = currentSession?.id || currentSessionIdFromUrl;
 
   const handleCreateSession = async () => {
     if (!selectedModel) return;
@@ -112,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }
 
         // Check if we're deleting the current session
-        const isCurrentSession = currentSessionIdFromUrl === sessionId;
+        const isCurrentSession = currentSessionId === sessionId;
 
         await deleteSession(sessionId);
         if (process.env.NODE_ENV === 'development') {
@@ -344,102 +341,127 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               ) : (
                 <div className='space-y-2'>
-                  {sessions.map(session => (
-                    <div
-                      key={session.id}
-                      className={cn(
-                        'group relative rounded-xl p-4 cursor-pointer transition-all duration-200',
-                        'hover:bg-white dark:hover:bg-dark-200 hover:shadow-sm',
-                        currentSessionIdFromUrl === session.id &&
-                          'bg-white dark:bg-dark-200 shadow-sm border border-primary-200 dark:border-primary-800 ring-1 ring-primary-100 dark:ring-primary-900'
-                      )}
-                      onClick={() => handleSelectSession(session)}
-                    >
-                      {editingSessionId === session.id ? (
-                        <div
-                          className='flex items-center gap-2'
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <Input
-                            value={editingTitle}
-                            onChange={e => setEditingTitle(e.target.value)}
-                            onKeyDown={e => {
-                              if (e.key === 'Enter') {
-                                handleSaveEdit(session.id);
-                              } else if (e.key === 'Escape') {
-                                handleCancelEdit();
-                              }
-                            }}
-                            className='text-sm h-8'
-                            autoFocus
-                          />
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={() => handleSaveEdit(session.id)}
-                            className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300'
-                          >
-                            <Check className='h-3 w-3' />
-                          </Button>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={handleCancelEdit}
-                            className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300'
-                          >
-                            <X className='h-3 w-3' />
-                          </Button>
-                        </div>
-                      ) : (
-                        <>
-                          <div className='flex items-start justify-between'>
-                            <div className='flex-1 min-w-0'>
-                              <h3 className='text-sm font-medium text-gray-900 dark:text-dark-800 truncate mb-1'>
-                                {truncateText(session.title, 30)}
-                              </h3>
-                              <p className='text-xs text-gray-500 dark:text-dark-600'>
-                                {formatTimestamp(session.updatedAt)} •{' '}
-                                {session.model}
-                              </p>
-                            </div>
+                  {sessions.map(session => {
+                    const isActive = currentSessionId === session.id;
 
-                            <div className='flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0'>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={e => handleStartEditing(session, e)}
-                                className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-300'
-                                title='Rename chat'
-                              >
-                                <Edit3 className='h-3 w-3' />
-                              </Button>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={e =>
-                                  handleDeleteSession(session.id, e)
+                    return (
+                      <div
+                        key={session.id}
+                        className={cn(
+                          'group relative rounded-xl p-4 cursor-pointer transition-all duration-200',
+                          isActive
+                            ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 shadow-sm ring-1 ring-primary-100 dark:ring-primary-800/50'
+                            : 'hover:bg-white dark:hover:bg-dark-200 hover:shadow-sm border border-transparent hover:border-gray-200 dark:hover:border-dark-300'
+                        )}
+                        onClick={() => handleSelectSession(session)}
+                      >
+                        {editingSessionId === session.id ? (
+                          <div
+                            className='flex items-center gap-2'
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <Input
+                              value={editingTitle}
+                              onChange={e => setEditingTitle(e.target.value)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  handleSaveEdit(session.id);
+                                } else if (e.key === 'Escape') {
+                                  handleCancelEdit();
                                 }
-                                className='h-7 w-7 p-0 text-error-600 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20'
-                                title='Delete chat'
-                              >
-                                <Trash2 className='h-3 w-3' />
-                              </Button>
-                            </div>
+                              }}
+                              className='text-sm h-8'
+                              autoFocus
+                            />
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              onClick={() => handleSaveEdit(session.id)}
+                              className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300'
+                            >
+                              <Check className='h-3 w-3' />
+                            </Button>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              onClick={handleCancelEdit}
+                              className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300'
+                            >
+                              <X className='h-3 w-3' />
+                            </Button>
                           </div>
+                        ) : (
+                          <>
+                            <div className='flex items-start justify-between'>
+                              <div className='flex-1 min-w-0'>
+                                <h3
+                                  className={cn(
+                                    'text-sm font-medium truncate mb-1',
+                                    isActive
+                                      ? 'text-primary-800 dark:text-primary-200 font-semibold'
+                                      : 'text-gray-900 dark:text-dark-800'
+                                  )}
+                                >
+                                  {truncateText(session.title, 30)}
+                                </h3>
+                                <p
+                                  className={cn(
+                                    'text-xs',
+                                    isActive
+                                      ? 'text-primary-600 dark:text-primary-400'
+                                      : 'text-gray-500 dark:text-dark-600'
+                                  )}
+                                >
+                                  {formatTimestamp(session.updatedAt)} •{' '}
+                                  {session.model}
+                                </p>
+                              </div>
 
-                          {session.messages.length > 0 && (
-                            <p className='text-xs text-gray-400 dark:text-dark-500 mt-2 line-clamp-2'>
-                              {truncateText(
-                                session.messages[session.messages.length - 1]
-                                  ?.content || '',
-                                60
-                              )}
-                            </p>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  ))}
+                              <div className='flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0'>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={e => handleStartEditing(session, e)}
+                                  className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-300'
+                                  title='Rename chat'
+                                >
+                                  <Edit3 className='h-3 w-3' />
+                                </Button>
+                                <Button
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={e =>
+                                    handleDeleteSession(session.id, e)
+                                  }
+                                  className='h-7 w-7 p-0 text-error-600 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20'
+                                  title='Delete chat'
+                                >
+                                  <Trash2 className='h-3 w-3' />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {session.messages.length > 0 && (
+                              <p
+                                className={cn(
+                                  'text-xs mt-2 line-clamp-2',
+                                  isActive
+                                    ? 'text-primary-500 dark:text-primary-300'
+                                    : 'text-gray-400 dark:text-dark-500'
+                                )}
+                              >
+                                {truncateText(
+                                  session.messages[session.messages.length - 1]
+                                    ?.content || '',
+                                  60
+                                )}
+                              </p>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
