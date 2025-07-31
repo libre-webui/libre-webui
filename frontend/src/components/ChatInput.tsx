@@ -208,23 +208,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const hasAdvancedFeatures = images.length > 0 || format !== null;
   return (
     <div className='border-t border-gray-100 dark:border-dark-200 bg-white dark:bg-dark-100'>
-      {/* Model Selector */}
-      {currentSession && models.length > 0 && (
-        <div className='border-b border-gray-100 dark:border-dark-200 p-3 sm:p-4'>
-          <ModelSelector
-            models={models}
-            selectedModel={
-              currentSession.personaId
-                ? `persona:${currentSession.personaId}`
-                : currentSession.model
-            }
-            onModelChange={handleModelOrPersonaChange}
-            currentPersona={currentPersona}
-            className='w-full max-w-sm'
-          />
-        </div>
-      )}
-
       {/* Advanced Features Panel */}
       {showAdvanced && (
         <div className='border-b border-gray-100 dark:border-dark-200 p-4 space-y-4'>
@@ -240,7 +223,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
       {/* Main Input Area */}
       <div className='p-3 sm:p-4'>
-        <form onSubmit={handleSubmit} className='flex gap-2 sm:gap-3'>
+        <form onSubmit={handleSubmit} className='flex gap-3'>
           {/* Advanced Features Toggle - Left Side */}
           <div className='flex flex-col justify-end'>
             <Button
@@ -270,7 +253,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </Button>
           </div>
 
-          <div className='flex-1'>
+          <div className='flex-1 min-w-0'>
             <Textarea
               ref={textareaRef}
               value={message}
@@ -286,6 +269,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               rows={1}
             />
           </div>
+
+          {/* Model Selector - Before Send Button */}
+          {currentSession && models.length > 0 && (
+            <div className='flex flex-col justify-end'>
+              <ModelSelector
+                models={models}
+                selectedModel={
+                  currentSession.personaId
+                    ? `persona:${currentSession.personaId}`
+                    : currentSession.model
+                }
+                onModelChange={handleModelOrPersonaChange}
+                currentPersona={currentPersona}
+                className='flex-shrink-0 min-w-[80px] max-w-[200px]'
+                compact
+              />
+            </div>
+          )}
 
           {/* Send/Stop Button - Right Side */}
           <div className='flex flex-col justify-end'>

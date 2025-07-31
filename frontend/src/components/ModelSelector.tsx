@@ -45,6 +45,7 @@ interface ModelSelectorProps {
   currentPersona?: Persona | null;
   className?: string;
   disabled?: boolean;
+  compact?: boolean;
 }
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
@@ -54,6 +55,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   currentPersona,
   className,
   disabled = false,
+  compact = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -173,7 +175,31 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
   const getCurrentModelDisplay = () => {
-    if (!currentModel) return 'Select Model';
+    if (!currentModel) {
+      return compact ? (
+        <div className='flex items-center gap-2 min-w-0'>
+          <Bot className='h-4 w-4' />
+          <span className='text-xs font-medium text-gray-400 dark:text-gray-500 truncate'>
+            Select Model
+          </span>
+        </div>
+      ) : (
+        'Select Model'
+      );
+    }
+
+    if (compact) {
+      const modelName = getModelLabel(currentModel);
+
+      return (
+        <div className='flex items-center gap-2 min-w-0'>
+          {getModelIcon(currentModel)}
+          <span className='text-xs font-medium text-gray-700 dark:text-gray-200 truncate'>
+            {modelName}
+          </span>
+        </div>
+      );
+    }
 
     const label = getModelLabel(currentModel);
     const subLabel = getModelSubLabel(currentModel);
@@ -209,18 +235,27 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-3 py-2 text-left',
+          compact
+            ? 'h-[44px] sm:h-[52px] px-3 flex items-center justify-between text-left w-full '
+            : 'w-full flex items-center justify-between gap-2 px-3 py-2 text-left ',
           'bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-dark-300',
-          'rounded-lg text-sm', // removed transition-all and duration
-          'hover:bg-gray-100 dark:hover:bg-dark-100',
+          'rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-100',
           'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         )}
+        title={
+          compact
+            ? currentModel
+              ? getModelLabel(currentModel)
+              : 'Select Model'
+            : undefined
+        }
       >
         {getCurrentModelDisplay()}
         <ChevronDown
           className={cn(
-            'h-4 w-4 text-gray-400', // removed transition-transform and duration
+            compact ? 'h-3 w-3' : 'h-4 w-4',
+            'text-gray-400 flex-shrink-0',
             isOpen && 'rotate-180'
           )}
         />
@@ -229,20 +264,20 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       {/* Portal Dropdown */}
       {isOpen &&
         createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-start justify-center pt-20'>
+          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
             {/* Background overlay */}
             <div
-              className='absolute inset-0 bg-black/20'
+              className='absolute inset-0 bg-black/50 backdrop-blur-sm'
               onClick={() => setIsOpen(false)}
             />
 
             {/* Dropdown */}
             <div
-              className='relative w-96 max-w-[90vw] bg-white dark:bg-dark-100 border-2 border-gray-300 dark:border-dark-300 rounded-lg shadow-2xl'
+              className='relative w-96 max-w-[90vw] bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl shadow-2xl'
               onClick={e => e.stopPropagation()}
             >
               {/* Search */}
-              <div className='p-3 border-b border-gray-200 dark:border-dark-200 bg-white dark:bg-dark-100'>
+              <div className='p-4 border-b border-gray-200 dark:border-dark-200'>
                 <input
                   ref={searchInputRef}
                   type='text'
@@ -251,12 +286,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   onChange={e => setSearchTerm(e.target.value)}
                   onClick={e => e.stopPropagation()}
                   onMouseDown={e => e.stopPropagation()}
-                  className='w-full px-3 py-2 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-dark-200 border border-gray-300 dark:border-dark-300 rounded focus:outline-none focus:border-primary-500'
+                  className='w-full px-3 py-2 text-sm bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-dark-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
                 />
               </div>
 
               {/* Models List */}
-              <div className='max-h-64 overflow-y-auto bg-white dark:bg-dark-100'>
+              <div className='max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400'>
                 {filteredGroups.length > 0 ? (
                   filteredGroups.map(group => (
                     <div key={group.type}>
