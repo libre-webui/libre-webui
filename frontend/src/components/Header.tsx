@@ -15,21 +15,19 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Settings, Menu, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { UserMenu } from '@/components/UserMenu';
-import { ModelSelector } from '@/components/ModelSelector';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 // Removed unused import: usePluginStore
-import { authApi, personaApi, chatApi } from '@/utils/api';
+import { authApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
-import { Persona } from '@/types';
 
 interface HeaderProps {
   className?: string;
@@ -42,85 +40,15 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const {
-    currentSession,
-    models,
-    updateCurrentSessionModel: _updateCurrentSessionModel,
-    setCurrentSession: _setCurrentSession,
-  } = useChatStore();
+  const { currentSession } = useChatStore();
   const {
     hasSeenSettingsNotification,
     markSettingsNotificationAsSeen,
     sidebarOpen,
     toggleSidebar,
-    setBackgroundImage,
   } = useAppStore();
   // Removed unused pluginStore
   const { user, logout, systemInfo } = useAuthStore();
-
-  // Persona state
-  const [_personas, setPersonas] = useState<Persona[]>([]);
-  const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
-
-  // Load personas on component mount
-  useEffect(() => {
-    const loadPersonas = async () => {
-      try {
-        const response = await personaApi.getPersonas();
-        if (response.success && response.data) {
-          setPersonas(response.data);
-        }
-      } catch (error) {
-        console.error('Failed to load personas:', error);
-      }
-    };
-
-    loadPersonas();
-  }, []);
-
-  // Load current persona when session changes
-  useEffect(() => {
-    const loadCurrentPersona = async () => {
-      if (currentSession?.personaId) {
-        try {
-          const response = await personaApi.getPersona(
-            currentSession.personaId
-          );
-          if (response.success && response.data) {
-            setCurrentPersona(response.data);
-          } else {
-            // Persona not found, clear the reference
-            console.warn(
-              `Persona ${currentSession.personaId} not found, clearing reference`
-            );
-            setCurrentPersona(null);
-            // Clear the personaId from the session to prevent repeated requests
-            const { setCurrentSession } = useChatStore.getState();
-            setCurrentSession({
-              ...currentSession,
-              personaId: undefined,
-            });
-          }
-        } catch (error) {
-          console.error('Failed to load current persona:', error);
-          setCurrentPersona(null);
-          // Clear the personaId from the session to prevent repeated requests
-          if (currentSession) {
-            const { setCurrentSession } = useChatStore.getState();
-            setCurrentSession({
-              ...currentSession,
-              personaId: undefined,
-            });
-          }
-        }
-      } else {
-        setCurrentPersona(null);
-      }
-    };
-
-    loadCurrentPersona();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSession?.personaId]);
 
   const getPageTitle = () => {
     if (location.pathname === '/models') {
@@ -136,14 +64,6 @@ export const Header: React.FC<HeaderProps> = ({
     }
   };
 
-  const isOnChatPage = () => {
-    return (
-      location.pathname === '/chat' ||
-      location.pathname === '/' ||
-      location.pathname.startsWith('/c/')
-    );
-  };
-
   const handleLogoClick = () => {
     const { sessions } = useChatStore.getState();
 
@@ -154,78 +74,6 @@ export const Header: React.FC<HeaderProps> = ({
     } else {
       // No sessions exist, navigate to root to create a new one
       navigate('/');
-    }
-  };
-
-  const handleModelOrPersonaChange = async (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const value = event.target.value;
-    if (!currentSession) return;
-
-    try {
-      // Check if the selected value is a persona
-      if (value.startsWith('persona:')) {
-        const personaId = value.replace('persona:', '');
-
-        // Get persona details to use its model
-        const personaResponse = await personaApi.getPersona(personaId);
-        if (!personaResponse.success || !personaResponse.data) {
-          toast.error('Failed to load persona details');
-          return;
-        }
-
-        const persona = personaResponse.data;
-
-        // Update session with persona and its model
-        const response = await chatApi.updateSession(currentSession.id, {
-          personaId: personaId,
-          model: value, // Keep the persona model string (persona:xxx)
-        });
-
-        if (response.success && response.data) {
-          // Update both currentSession and the sessions array
-          const { sessions } = useChatStore.getState();
-          const updatedSessions = sessions.map(s =>
-            s.id === currentSession.id ? response.data! : s
-          );
-          useChatStore.setState({
-            sessions: updatedSessions,
-            currentSession: response.data,
-          });
-
-          // Apply persona background if it has one
-          if (persona.background) {
-            setBackgroundImage(persona.background);
-          }
-
-          toast.success('Persona applied');
-        }
-      } else {
-        // It's a regular model - update the model and clear persona
-        const response = await chatApi.updateSession(currentSession.id, {
-          model: value,
-          personaId: undefined,
-        });
-
-        if (response.success && response.data) {
-          // Update both currentSession and the sessions array
-          const { sessions } = useChatStore.getState();
-          const updatedSessions = sessions.map(s =>
-            s.id === currentSession.id ? response.data! : s
-          );
-          useChatStore.setState({
-            sessions: updatedSessions,
-            currentSession: response.data,
-          });
-
-          setBackgroundImage(null);
-          toast.success('Model updated');
-        }
-      }
-    } catch (error) {
-      console.error('Failed to update session:', error);
-      toast.error('Failed to update session');
     }
   };
 
@@ -289,21 +137,6 @@ export const Header: React.FC<HeaderProps> = ({
                 </h1>
               </div>
             </button>
-            {isOnChatPage() && currentSession && models.length > 0 && (
-              <div className='flex items-center gap-2 mt-0.5'>
-                <ModelSelector
-                  models={models}
-                  selectedModel={
-                    currentSession.personaId
-                      ? `persona:${currentSession.personaId}`
-                      : currentSession.model
-                  }
-                  onModelChange={handleModelOrPersonaChange}
-                  currentPersona={currentPersona}
-                  className='min-w-48 sm:min-w-64'
-                />
-              </div>
-            )}
           </div>
         </div>
 

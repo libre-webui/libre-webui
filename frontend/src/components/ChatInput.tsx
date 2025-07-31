@@ -22,9 +22,13 @@ import { ImageUpload } from './ImageUpload';
 import { DocumentUpload } from './DocumentUpload';
 import { DocumentIndicator } from './DocumentIndicator';
 import { StructuredOutput } from './StructuredOutput';
+import { ModelSelector } from './ModelSelector';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
+import { personaApi, chatApi } from '@/utils/api';
+import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
+import { Persona } from '@/types';
 
 interface ChatInputProps {
   onSendMessage: (
@@ -47,8 +51,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     null
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const { isGenerating } = useAppStore();
-  const { currentSession } = useChatStore();
+  const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
+  const { isGenerating, setBackgroundImage } = useAppStore();
+  const { currentSession, models } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -85,9 +90,141 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   }, [message]);
 
+  // Load current persona when session changes
+  useEffect(() => {
+    const loadCurrentPersona = async () => {
+      if (currentSession?.personaId) {
+        try {
+          const response = await personaApi.getPersona(
+            currentSession.personaId
+          );
+          if (response.success && response.data) {
+            setCurrentPersona(response.data);
+          } else {
+            console.warn(
+              `Persona ${currentSession.personaId} not found, clearing reference`
+            );
+            setCurrentPersona(null);
+            // Clear the personaId from the session to prevent repeated requests
+            const { setCurrentSession } = useChatStore.getState();
+            setCurrentSession({
+              ...currentSession,
+              personaId: undefined,
+            });
+          }
+        } catch (error) {
+          console.error('Failed to load current persona:', error);
+          setCurrentPersona(null);
+          // Clear the personaId from the session to prevent repeated requests
+          if (currentSession) {
+            const { setCurrentSession } = useChatStore.getState();
+            setCurrentSession({
+              ...currentSession,
+              personaId: undefined,
+            });
+          }
+        }
+      } else {
+        setCurrentPersona(null);
+      }
+    };
+
+    loadCurrentPersona();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSession?.personaId]);
+
+  const handleModelOrPersonaChange = async (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
+    const value = event.target.value;
+    if (!currentSession) return;
+
+    try {
+      // Check if the selected value is a persona
+      if (value.startsWith('persona:')) {
+        const personaId = value.replace('persona:', '');
+
+        // Get persona details to use its model
+        const personaResponse = await personaApi.getPersona(personaId);
+        if (!personaResponse.success || !personaResponse.data) {
+          toast.error('Failed to load persona details');
+          return;
+        }
+
+        const persona = personaResponse.data;
+
+        // Update session with persona and its model
+        const response = await chatApi.updateSession(currentSession.id, {
+          personaId: personaId,
+          model: value, // Keep the persona model string (persona:xxx)
+        });
+
+        if (response.success && response.data) {
+          // Update both currentSession and the sessions array
+          const { sessions } = useChatStore.getState();
+          const updatedSessions = sessions.map(s =>
+            s.id === currentSession.id ? response.data! : s
+          );
+          useChatStore.setState({
+            sessions: updatedSessions,
+            currentSession: response.data,
+          });
+
+          // Apply persona background if it has one
+          if (persona.background) {
+            setBackgroundImage(persona.background);
+          }
+
+          toast.success('Persona applied');
+        }
+      } else {
+        // It's a regular model - update the model and clear persona
+        const response = await chatApi.updateSession(currentSession.id, {
+          model: value,
+          personaId: undefined,
+        });
+
+        if (response.success && response.data) {
+          // Update both currentSession and the sessions array
+          const { sessions } = useChatStore.getState();
+          const updatedSessions = sessions.map(s =>
+            s.id === currentSession.id ? response.data! : s
+          );
+          useChatStore.setState({
+            sessions: updatedSessions,
+            currentSession: response.data,
+          });
+
+          setBackgroundImage(null);
+          toast.success('Model updated');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update session:', error);
+      toast.error('Failed to update session');
+    }
+  };
+
   const hasAdvancedFeatures = images.length > 0 || format !== null;
   return (
     <div className='border-t border-gray-100 dark:border-dark-200 bg-white dark:bg-dark-100'>
+      {/* Model Selector */}
+      {currentSession && models.length > 0 && (
+        <div className='border-b border-gray-100 dark:border-dark-200 p-3 sm:p-4'>
+          <ModelSelector
+            models={models}
+            selectedModel={
+              currentSession.personaId
+                ? `persona:${currentSession.personaId}`
+                : currentSession.model
+            }
+            onModelChange={handleModelOrPersonaChange}
+            currentPersona={currentPersona}
+            className='w-full max-w-sm'
+          />
+        </div>
+      )}
+
       {/* Advanced Features Panel */}
       {showAdvanced && (
         <div className='border-b border-gray-100 dark:border-dark-200 p-4 space-y-4'>
