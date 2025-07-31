@@ -177,13 +177,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       >
         <div className='flex flex-col h-full'>
-          {/* Header */}
-          <div className='p-4 sm:p-6 border-b border-gray-200 dark:border-dark-200'>
-            <div className='flex items-center justify-between mb-4 sm:mb-6'>
-              <div className='flex items-center gap-3'>
+          {/* Header - Compact */}
+          <div className='p-3 border-b border-gray-200/60 dark:border-dark-200/60'>
+            <div className='flex items-center justify-between mb-3'>
+              <div className='flex items-center gap-2'>
                 <Logo size='sm' />
                 <span
-                  className='libre-brand text-lg sm:text-xl font-semibold text-gray-900 dark:text-dark-800'
+                  className='libre-brand text-base font-semibold text-gray-900 dark:text-dark-800'
                   style={{ lineHeight: 1 }}
                 >
                   Libre WebUI
@@ -193,17 +193,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 variant='ghost'
                 size='sm'
                 onClick={onClose}
-                className='lg:hidden h-8 w-8 p-0 hover:bg-gray-200 dark:hover:bg-dark-200'
+                className='lg:hidden h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
               >
-                <X className='h-4 w-4' />
+                <X className='h-3.5 w-3.5' />
               </Button>
             </div>
 
             <Button
               onClick={handleCreateSession}
               disabled={!selectedModel || models.length === 0}
-              className='w-full shadow-sm hover:shadow-md transition-all duration-200'
-              size='md'
+              className='w-full bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow-md transition-all duration-200 border-0'
+              size='sm'
               title={
                 !selectedModel || models.length === 0
                   ? 'No models available. Please ensure Ollama is running and models are installed.'
@@ -213,29 +213,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Plus className='h-4 w-4 mr-2' />
               New Chat
             </Button>
-
-            {/* Model status indicator */}
-            {models.length === 0 && (
-              <div className='mt-3 p-3 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl'>
-                <p className='text-xs text-gray-700 dark:text-dark-700'>
-                  No models available. Please ensure Ollama is running and
-                  models are installed.
-                </p>
-              </div>
-            )}
-
-            {selectedModel && (
-              <div className='mt-3 p-3 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl'>
-                <p className='text-xs text-gray-700 dark:text-dark-700'>
-                  Using model:{' '}
-                  <span className='font-medium'>{selectedModel}</span>
-                </p>
-              </div>
-            )}
           </div>
 
-          {/* Navigation Menu */}
-          <div className='px-4 py-2 border-b border-gray-200 dark:border-dark-200'>
+          {/* Navigation Menu - Grouped */}
+          <div className='px-3 py-2'>
             <nav className='space-y-1'>
               <button
                 onClick={() => {
@@ -250,13 +231,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }
                 }}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left',
+                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 text-left',
                   location.pathname === '/chat' || location.pathname === '/'
-                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100'
                 )}
               >
-                <MessageSquare className='h-4 w-4' />
+                <MessageSquare className='h-4 w-4 shrink-0' />
                 Chat
               </button>
 
@@ -264,13 +245,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 to='/models'
                 onClick={() => window.innerWidth < 768 && onClose()}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200',
                   location.pathname === '/models'
-                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100'
                 )}
               >
-                <Database className='h-4 w-4' />
+                <Database className='h-4 w-4 shrink-0' />
                 Models
               </Link>
 
@@ -278,13 +259,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 to='/personas'
                 onClick={() => window.innerWidth < 768 && onClose()}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200',
                   location.pathname === '/personas'
-                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100'
                 )}
               >
-                <User className='h-4 w-4' />
+                <User className='h-4 w-4 shrink-0' />
                 Personas
               </Link>
 
@@ -294,13 +275,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   to='/users'
                   onClick={() => window.innerWidth < 768 && onClose()}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    'flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200',
                     location.pathname === '/users'
-                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200'
+                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100'
                   )}
                 >
-                  <Users className='h-4 w-4' />
+                  <Users className='h-4 w-4 shrink-0' />
                   User Management
                 </Link>
               )}
@@ -312,35 +293,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onClose();
                   }
                 }}
-                className='flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-200 hover:text-gray-900 dark:hover:text-gray-200 w-full text-left'
+                className='flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 w-full text-left'
               >
-                <Settings className='h-4 w-4' />
+                <Settings className='h-4 w-4 shrink-0' />
                 Settings
               </button>
             </nav>
           </div>
 
           {/* Sessions list */}
-          <div className='flex-1 overflow-y-auto scrollbar-thin'>
-            <div className='p-3 sm:p-4'>
-              <div className='flex items-center justify-between mb-3'>
-                <h3 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                  Chat Sessions
+          <div className='flex-1 overflow-y-auto scrollbar-thin border-t border-gray-200/60 dark:border-dark-200/60'>
+            <div className='p-3'>
+              <div className='flex items-center justify-between mb-3 px-1'>
+                <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200'>
+                  Recent Chats
                 </h3>
                 {sessions.length > 0 && (
-                  <span className='text-xs text-gray-500 dark:text-gray-400'>
+                  <span className='inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-dark-300 text-gray-600 dark:text-gray-400 rounded-full min-w-[1.5rem] h-5'>
                     {sessions.length}
                   </span>
                 )}
               </div>
               {sessions.length === 0 ? (
-                <div className='text-center py-12 text-gray-500 dark:text-dark-600'>
-                  <MessageSquare className='h-8 w-8 mx-auto mb-3 opacity-50' />
-                  <p className='text-sm font-medium'>No chats yet</p>
-                  <p className='text-xs mt-1'>Start a conversation to begin</p>
+                <div className='text-center py-8 px-2'>
+                  <div className='w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-dark-300 rounded-xl flex items-center justify-center'>
+                    <MessageSquare className='h-5 w-5 text-gray-400 dark:text-gray-500' />
+                  </div>
+                  <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
+                    No chats yet
+                  </p>
+                  <p className='text-xs mt-1 text-gray-500 dark:text-gray-500'>
+                    Create your first chat above
+                  </p>
                 </div>
               ) : (
-                <div className='space-y-2'>
+                <div className='space-y-1.5'>
                   {sessions.map(session => {
                     const isActive = currentSessionId === session.id;
 
@@ -348,10 +335,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <div
                         key={session.id}
                         className={cn(
-                          'group relative rounded-xl p-4 cursor-pointer transition-all duration-200',
+                          'group relative rounded-lg p-3 cursor-pointer transition-all duration-200',
                           isActive
-                            ? 'bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 shadow-sm ring-1 ring-primary-100 dark:ring-primary-800/50'
-                            : 'hover:bg-white dark:hover:bg-dark-200 hover:shadow-sm border border-transparent hover:border-gray-200 dark:hover:border-dark-300'
+                            ? 'bg-primary-50 dark:bg-primary-900/25 border border-primary-200/60 dark:border-primary-700/60 shadow-sm'
+                            : 'hover:bg-white dark:hover:bg-dark-200/70 hover:shadow-sm border border-transparent hover:border-gray-200/60 dark:hover:border-dark-300/60'
                         )}
                         onClick={() => handleSelectSession(session)}
                       >
@@ -396,33 +383,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               <div className='flex-1 min-w-0'>
                                 <h3
                                   className={cn(
-                                    'text-sm font-medium truncate mb-1',
+                                    'text-sm font-medium truncate mb-1 leading-tight',
                                     isActive
-                                      ? 'text-primary-800 dark:text-primary-200 font-semibold'
-                                      : 'text-gray-900 dark:text-dark-800'
+                                      ? 'text-primary-900 dark:text-primary-100 font-semibold'
+                                      : 'text-gray-900 dark:text-gray-100'
                                   )}
                                 >
-                                  {truncateText(session.title, 30)}
+                                  {truncateText(session.title, 28)}
                                 </h3>
                                 <p
                                   className={cn(
-                                    'text-xs',
+                                    'text-xs leading-tight',
                                     isActive
-                                      ? 'text-primary-600 dark:text-primary-400'
-                                      : 'text-gray-500 dark:text-dark-600'
+                                      ? 'text-primary-700 dark:text-primary-300'
+                                      : 'text-gray-500 dark:text-gray-400'
                                   )}
                                 >
                                   {formatTimestamp(session.updatedAt)} •{' '}
-                                  {session.model}
+                                  <span className='font-medium'>
+                                    {session.model}
+                                  </span>
                                 </p>
                               </div>
 
-                              <div className='flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0'>
+                              <div className='flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all duration-200 ml-2 shrink-0'>
                                 <Button
                                   variant='ghost'
                                   size='sm'
                                   onClick={e => handleStartEditing(session, e)}
-                                  className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-300'
+                                  className='h-6 w-6 p-0 hover:bg-gray-100 dark:hover:bg-dark-400 rounded-md'
                                   title='Rename chat'
                                 >
                                   <Edit3 className='h-3 w-3' />
@@ -433,7 +422,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   onClick={e =>
                                     handleDeleteSession(session.id, e)
                                   }
-                                  className='h-7 w-7 p-0 text-error-600 hover:text-error-700 hover:bg-error-50 dark:hover:bg-error-900/20'
+                                  className='h-6 w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md'
                                   title='Delete chat'
                                 >
                                   <Trash2 className='h-3 w-3' />
@@ -444,16 +433,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             {session.messages.length > 0 && (
                               <p
                                 className={cn(
-                                  'text-xs mt-2 line-clamp-2',
+                                  'text-xs mt-1.5 line-clamp-2 leading-relaxed',
                                   isActive
-                                    ? 'text-primary-500 dark:text-primary-300'
-                                    : 'text-gray-400 dark:text-dark-500'
+                                    ? 'text-primary-600 dark:text-primary-400'
+                                    : 'text-gray-400 dark:text-gray-500'
                                 )}
                               >
                                 {truncateText(
                                   session.messages[session.messages.length - 1]
                                     ?.content || '',
-                                  60
+                                  55
                                 )}
                               </p>
                             )}
@@ -464,46 +453,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   })}
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className='p-4 border-t border-gray-200 dark:border-dark-200 bg-gray-25 dark:bg-dark-100'>
-            <div className='text-xs text-gray-500 dark:text-dark-600 text-center space-y-2'>
-              {models.length > 0 && (
-                <p>
-                  Using{' '}
-                  <span className='font-medium text-gray-700 dark:text-dark-700'>
-                    {selectedModel || 'No model selected'}
-                  </span>
-                </p>
-              )}
-              <p>
-                {sessions.length} chat{sessions.length !== 1 ? 's' : ''}{' '}
-                available
-              </p>
-
-              {/* Keyboard shortcuts hint */}
-              <div className='pt-2 border-t border-gray-200 dark:border-dark-300'>
-                <p className='text-xs text-gray-400 dark:text-dark-500'>
-                  Press{' '}
-                  <kbd className='px-1 py-0.5 text-xs font-mono bg-gray-200 dark:bg-dark-300 text-gray-600 dark:text-dark-600 rounded'>
-                    ⌘B
-                  </kbd>{' '}
-                  to toggle sidebar
-                </p>
-                <p className='text-xs text-gray-400 dark:text-dark-500 mt-1'>
-                  Press{' '}
-                  <kbd className='px-1 py-0.5 text-xs font-mono bg-gray-200 dark:bg-dark-300 text-gray-600 dark:text-dark-600 rounded'>
-                    ?
-                  </kbd>{' '}
-                  or{' '}
-                  <kbd className='px-1 py-0.5 text-xs font-mono bg-gray-200 dark:bg-dark-300 text-gray-600 dark:text-dark-600 rounded'>
-                    H
-                  </kbd>{' '}
-                  for shortcuts
-                </p>
-              </div>
             </div>
           </div>
         </div>
