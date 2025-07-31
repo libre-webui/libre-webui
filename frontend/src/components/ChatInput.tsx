@@ -223,7 +223,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
       {/* Main Input Area */}
       <div className='p-3 sm:p-4'>
-        <form onSubmit={handleSubmit} className='flex gap-3'>
+        <form onSubmit={handleSubmit} className='flex gap-2 sm:gap-3'>
           {/* Advanced Features Toggle - Left Side */}
           <div className='flex flex-col justify-end'>
             <Button
@@ -234,6 +234,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               className={cn(
                 'h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] p-0 border-gray-200 dark:border-dark-300',
                 'hover:border-gray-300 dark:hover:border-dark-400 transition-colors',
+                'active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation',
                 hasAdvancedFeatures &&
                   'border-primary-500 bg-primary-50 dark:bg-primary-900/20 hover:border-primary-600',
                 showAdvanced && 'bg-gray-100 dark:bg-dark-200'
@@ -264,15 +265,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               className={cn(
                 'min-h-[44px] sm:min-h-[52px] max-h-[200px] resize-none bg-gray-50 dark:bg-dark-50 border-gray-200 dark:border-dark-300',
                 'scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400',
-                'focus:bg-white dark:focus:bg-dark-50'
+                'focus:bg-white dark:focus:bg-dark-50 touch-manipulation',
+                'text-base sm:text-sm' // Prevent zoom on iOS
               )}
               rows={1}
             />
           </div>
 
-          {/* Model Selector - Before Send Button */}
+          {/* Model Selector - Before Send Button - Hidden on very small screens */}
           {currentSession && models.length > 0 && (
-            <div className='flex flex-col justify-end'>
+            <div className='hidden xs:flex flex-col justify-end'>
               <ModelSelector
                 models={models}
                 selectedModel={
@@ -282,7 +284,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 }
                 onModelChange={handleModelOrPersonaChange}
                 currentPersona={currentPersona}
-                className='flex-shrink-0 min-w-[80px] max-w-[200px]'
+                className='flex-shrink-0 min-w-[80px] max-w-[120px] sm:max-w-[200px]'
                 compact
               />
             </div>
@@ -296,7 +298,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 variant='outline'
                 size='md'
                 onClick={handleStopGeneration}
-                className='h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] p-0 border-gray-200 dark:border-dark-300 hover:border-gray-300 dark:hover:border-dark-400'
+                className={cn(
+                  'h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] p-0 border-gray-200 dark:border-dark-300',
+                  'hover:border-gray-300 dark:hover:border-dark-400 active:bg-gray-100 dark:active:bg-dark-200',
+                  'touch-manipulation'
+                )}
                 title='Stop generation'
               >
                 <Square className='h-4 w-4' />
@@ -307,7 +313,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 variant='primary'
                 size='md'
                 disabled={!message.trim() || disabled}
-                className='h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] p-0 shadow-md hover:shadow-lg disabled:shadow-sm'
+                className={cn(
+                  'h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] p-0 shadow-md hover:shadow-lg disabled:shadow-sm',
+                  'active:shadow-sm active:scale-95 transition-all duration-150 touch-manipulation'
+                )}
                 title='Send message'
               >
                 <Send className='h-4 w-4' />
@@ -315,6 +324,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             )}
           </div>
         </form>
+
+        {/* Mobile-only Model Selector */}
+        {currentSession && models.length > 0 && (
+          <div className='xs:hidden mt-2'>
+            <ModelSelector
+              models={models}
+              selectedModel={
+                currentSession.personaId
+                  ? `persona:${currentSession.personaId}`
+                  : currentSession.model
+              }
+              onModelChange={handleModelOrPersonaChange}
+              currentPersona={currentPersona}
+              className='w-full'
+              compact
+            />
+          </div>
+        )}
 
         <div className='mt-2 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-dark-600'>
           <DocumentIndicator sessionId={currentSession?.id} />

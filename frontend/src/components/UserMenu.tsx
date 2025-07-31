@@ -102,11 +102,11 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
       <button
         ref={buttonRef}
         onClick={() => setIsOpen(!isOpen)}
-        className='flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 transition-colors'
+        className='flex items-center space-x-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 transition-colors touch-manipulation'
       >
         <div className='flex items-center space-x-2'>
-          <div className='w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center'>
-            <span className='text-white text-sm font-medium'>
+          <div className='w-7 h-7 sm:w-8 sm:h-8 bg-primary-500 rounded-full flex items-center justify-center'>
+            <span className='text-white text-xs sm:text-sm font-medium'>
               {user.username.charAt(0).toUpperCase()}
             </span>
           </div>
@@ -119,8 +119,8 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
             </p>
           </div>
           <ChevronDown
-            size={16}
-            className={`text-gray-500 dark:text-gray-400 transition-transform ${
+            size={14}
+            className={`hidden sm:block text-gray-500 dark:text-gray-400 transition-transform ${
               isOpen ? 'rotate-180' : ''
             }`}
           />
@@ -131,11 +131,11 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
         createPortal(
           <div
             ref={menuRef}
-            className='w-48 border border-gray-200 dark:border-dark-200 rounded-xl shadow-2xl'
+            className='w-48 sm:w-52 border border-gray-200 dark:border-dark-200 rounded-xl shadow-2xl'
             style={{
               position: 'fixed',
               top: dropdownPosition.top,
-              right: dropdownPosition.right,
+              right: Math.max(8, dropdownPosition.right), // Ensure minimum 8px margin from screen edge
               backgroundColor: document.documentElement.classList.contains(
                 'dark'
               )
@@ -174,18 +174,18 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
             <div className='py-1'>
               <button
                 onClick={handleSettings}
-                className='w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200'
+                className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
               >
-                <Settings size={16} className='mr-2' />
+                <Settings size={16} className='mr-3 flex-shrink-0' />
                 Settings
               </button>
 
               {isAdmin() && (
                 <button
                   onClick={handleUserManagement}
-                  className='w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200'
+                  className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
                 >
-                  <User size={16} className='mr-2' />
+                  <User size={16} className='mr-3 flex-shrink-0' />
                   User Management
                 </button>
               )}
@@ -193,9 +193,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
               <div className='border-t border-gray-200 dark:border-dark-200 mt-1 pt-1'>
                 <button
                   onClick={handleLogout}
-                  className='w-full flex items-center px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                  className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 touch-manipulation transition-colors'
                 >
-                  <LogOut size={16} className='mr-2' />
+                  <LogOut size={16} className='mr-3 flex-shrink-0' />
                   Sign Out
                 </button>
               </div>

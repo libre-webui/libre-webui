@@ -264,7 +264,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       {/* Portal Dropdown */}
       {isOpen &&
         createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
+          <div className='fixed inset-0 z-[999999] flex items-start sm:items-center justify-center p-2 sm:p-4'>
             {/* Background overlay */}
             <div
               className='absolute inset-0 bg-black/50 backdrop-blur-sm'
@@ -273,11 +273,16 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
             {/* Dropdown */}
             <div
-              className='relative w-96 max-w-[90vw] bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl shadow-2xl'
+              className={cn(
+                'relative bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 shadow-2xl',
+                'w-full max-w-sm sm:w-96 sm:max-w-[90vw]',
+                'mt-2 sm:mt-0 rounded-xl sm:rounded-xl',
+                'max-h-[85vh] sm:max-h-none flex flex-col'
+              )}
               onClick={e => e.stopPropagation()}
             >
               {/* Search */}
-              <div className='p-4 border-b border-gray-200 dark:border-dark-200'>
+              <div className='p-3 sm:p-4 border-b border-gray-200 dark:border-dark-200 flex-shrink-0'>
                 <input
                   ref={searchInputRef}
                   type='text'
@@ -286,17 +291,22 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   onChange={e => setSearchTerm(e.target.value)}
                   onClick={e => e.stopPropagation()}
                   onMouseDown={e => e.stopPropagation()}
-                  className='w-full px-3 py-2 text-sm bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-dark-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500'
+                  className={cn(
+                    'w-full px-3 py-2.5 sm:py-2 text-sm bg-gray-50 dark:bg-dark-200',
+                    'border border-gray-200 dark:border-dark-300 rounded-lg',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                    'touch-manipulation'
+                  )}
                 />
               </div>
 
               {/* Models List */}
-              <div className='max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400'>
+              <div className='flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 max-h-80 sm:max-h-80'>
                 {filteredGroups.length > 0 ? (
                   filteredGroups.map(group => (
                     <div key={group.type}>
                       {/* Group Header */}
-                      <div className='px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-dark-300 border-b border-gray-200 dark:border-dark-400'>
+                      <div className='px-3 sm:px-3 py-2.5 sm:py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-dark-300 border-b border-gray-200 dark:border-dark-400 sticky top-0'>
                         <div className='flex items-center gap-2'>
                           {group.icon}
                           {group.label} ({group.models.length})
@@ -311,10 +321,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                             e.preventDefault();
                             handleModelSelect(model.name);
                           }}
+                          onTouchStart={e => {
+                            e.preventDefault();
+                            handleModelSelect(model.name);
+                          }}
                           className={cn(
-                            'px-4 py-3 cursor-pointer border-b border-gray-100 dark:border-dark-200 last:border-b-0',
-                            'hover:bg-gray-50 dark:hover:bg-dark-200',
-                            'bg-white dark:bg-dark-100',
+                            'px-3 sm:px-4 py-3.5 sm:py-3 cursor-pointer border-b border-gray-100 dark:border-dark-200 last:border-b-0',
+                            'hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100',
+                            'bg-white dark:bg-dark-100 touch-manipulation',
+                            'transition-colors duration-150 ease-in-out',
                             (selectedModel === model.name ||
                               (selectedModel.startsWith('persona:') &&
                                 model.name === selectedModel)) &&
@@ -323,12 +338,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                         >
                           <div className='flex items-center gap-3'>
                             {getModelIcon(model)}
-                            <div className='flex-1'>
-                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                            <div className='flex-1 min-w-0'>
+                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
                                 {getModelLabel(model)}
                               </div>
                               {getModelSubLabel(model) && (
-                                <div className='text-xs text-gray-500 dark:text-gray-400'>
+                                <div className='text-xs text-gray-500 dark:text-gray-400 truncate'>
                                   {getModelSubLabel(model)}
                                 </div>
                               )}
@@ -336,7 +351,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                             {(selectedModel === model.name ||
                               (selectedModel.startsWith('persona:') &&
                                 model.name === selectedModel)) && (
-                              <Check className='h-4 w-4 text-primary-600 dark:text-primary-400' />
+                              <Check className='h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0' />
                             )}
                           </div>
                         </div>

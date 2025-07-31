@@ -137,10 +137,20 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       className={cn(
         'flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600',
         'scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500',
+        // Better mobile scrolling
+        'overscroll-behavior-y-contain scroll-smooth',
+        // iOS momentum scrolling
+        '[-webkit-overflow-scrolling:touch]',
         className
       )}
+      style={{
+        // Ensure proper touch scrolling on mobile
+        WebkitOverflowScrolling: 'touch',
+        // Prevent rubber banding on iOS
+        overscrollBehaviorY: 'contain',
+      }}
     >
-      <div className='max-w-4xl mx-auto px-4 sm:px-6'>
+      <div className='max-w-4xl mx-auto px-3 sm:px-4 md:px-6'>
         {messages.map((message, index) => {
           const isLastMessage = index === messages.length - 1;
           const isStreamingThisMessage =
@@ -157,11 +167,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
               key={message.id}
               message={displayMessage}
               isStreaming={isStreamingThisMessage}
-              className={index === 0 ? 'mt-4 sm:mt-6' : ''}
+              className={index === 0 ? 'mt-3 sm:mt-4 md:mt-6' : ''}
             />
           );
         })}
-        <div ref={messagesEndRef} className='h-4 sm:h-6' />
+        <div ref={messagesEndRef} className='h-3 sm:h-4 md:h-6' />
       </div>
     </div>
   );

@@ -2399,10 +2399,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       />
 
       {/* Modal */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-4xl mx-4 max-h-[95vh] sm:max-h-[90vh]'>
-        <div className='bg-white dark:bg-dark-25 rounded-lg sm:rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-200 animate-scale-in flex flex-col h-full max-h-[95vh] sm:max-h-[90vh]'>
+      <div className='fixed inset-0 sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 z-50 w-full sm:max-w-4xl sm:mx-4 h-full sm:h-auto sm:max-h-[90vh] p-0 sm:p-4'>
+        <div className='bg-white dark:bg-dark-25 rounded-none sm:rounded-2xl shadow-2xl border-0 sm:border border-gray-200 dark:border-dark-200 animate-scale-in flex flex-col h-full sm:max-h-[90vh] overscroll-behavior-contain'>
           {/* Header */}
-          <div className='flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-dark-200'>
+          <div className='flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-dark-200 bg-white dark:bg-dark-25 sticky top-0 z-10'>
             <h2 className='text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100'>
               Settings
             </h2>
@@ -2410,16 +2410,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               variant='ghost'
               size='sm'
               onClick={onClose}
-              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700'
+              className='h-9 w-9 sm:h-8 sm:w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
               title='Close'
             >
-              <X className='h-4 w-4' />
+              <X className='h-5 w-5 sm:h-4 sm:w-4' />
             </Button>
           </div>
 
-          <div className='flex flex-1 min-h-0'>
+          <div className='flex flex-1 min-h-0 overscroll-behavior-contain'>
             {/* Sidebar Tabs */}
-            <div className='w-48 sm:w-64 border-r border-gray-100 dark:border-dark-200 p-3 sm:p-4'>
+            <div
+              className='w-40 xs:w-48 sm:w-64 border-r border-gray-100 dark:border-dark-200 p-2 xs:p-3 sm:p-4 overflow-y-auto scrollbar-thin'
+              style={{
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
               <nav className='space-y-1'>
                 {tabs.map(tab => {
                   const Icon = tab.icon;
@@ -2427,10 +2432,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 sm:py-2.5 text-left rounded-lg transition-colors duration-200 ${
+                      className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2.5 sm:py-2.5 text-left rounded-lg transition-colors duration-200 touch-manipulation ${
                         activeTab === tab.id
                           ? 'bg-gray-100 dark:bg-dark-100 text-gray-900 dark:text-white border border-gray-200 dark:border-dark-300'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100'
                       }`}
                     >
                       <Icon className='h-4 w-4 flex-shrink-0' />
@@ -2444,7 +2449,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
 
             {/* Tab Content */}
-            <div className='flex-1 p-4 sm:p-6 overflow-auto'>
+            <div
+              className='flex-1 p-3 xs:p-4 sm:p-6 overflow-auto overscroll-behavior-contain'
+              style={{
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
               {renderTabContent()}
             </div>
           </div>

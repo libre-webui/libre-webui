@@ -107,32 +107,39 @@ export const Header: React.FC<HeaderProps> = ({
       <header
         className={cn(
           'flex items-center justify-between p-3 sm:p-4 border-b border-gray-100 dark:border-dark-200 bg-white/80 dark:bg-dark-50/80 backdrop-blur-sm',
+          'min-h-[60px] sm:min-h-[64px]', // Ensure consistent header height
           className
         )}
       >
         {/* Left side */}
-        <div className='flex items-center gap-3'>
+        <div className='flex items-center gap-2 sm:gap-3 min-w-0 flex-1'>
           {/* Mobile menu button - only show on mobile when sidebar is closed */}
           {!sidebarOpen && (
             <Button
               variant='ghost'
               size='sm'
               onClick={toggleSidebar}
-              className='lg:hidden h-10 w-10 p-0'
+              className={cn(
+                'lg:hidden h-9 w-9 sm:h-10 sm:w-10 p-0 flex-shrink-0',
+                'active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation'
+              )}
             >
               <Menu className='h-5 w-5' />
             </Button>
           )}
 
           {/* Page title and session info */}
-          <div className='flex items-center gap-3'>
+          <div className='flex items-center gap-2 sm:gap-3 min-w-0 flex-1'>
             <button
               onClick={handleLogoClick}
-              className='flex items-center gap-3 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
+              className={cn(
+                'flex items-center gap-2 sm:gap-3 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-dark-200',
+                'transition-colors min-w-0 touch-manipulation active:bg-gray-200 dark:active:bg-dark-100'
+              )}
               title='Go to latest chat'
             >
               <div className='flex flex-col min-w-0'>
-                <h1 className='text-base sm:text-lg font-semibold text-gray-900 dark:text-dark-800 leading-tight truncate'>
+                <h1 className='text-sm sm:text-base md:text-lg font-semibold text-gray-900 dark:text-dark-800 leading-tight truncate'>
                   {getPageTitle()}
                 </h1>
               </div>
@@ -141,15 +148,19 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right side */}
-        <div className='flex items-center gap-1 sm:gap-2'>
+        <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
           <UserMenu onSettingsClick={onSettingsClick} />
 
           <ThemeToggle />
+
           <div className='relative'>
             <Button
               variant='ghost'
               size='sm'
-              className='h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+              className={cn(
+                'h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-gray-100 dark:hover:bg-dark-200',
+                'active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation'
+              )}
               title='Settings (⌘,)'
               onClick={handleSettingsClick}
             >
@@ -157,20 +168,24 @@ export const Header: React.FC<HeaderProps> = ({
             </Button>
             {/* Simple green notification dot - only show if user hasn't seen settings */}
             {!hasSeenSettingsNotification && (
-              <div className='absolute -top-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-white dark:border-dark-50'></div>
+              <div className='absolute -top-0.5 -right-0.5 h-2.5 w-2.5 sm:h-3 sm:w-3 bg-green-500 rounded-full border-2 border-white dark:border-dark-50'></div>
             )}
           </div>
 
-          {/* Logout button - only show if user is authenticated */}
+          {/* Logout button - only show if user is authenticated and not included in UserMenu */}
           {systemInfo?.requiresAuth && user && (
             <Button
               variant='ghost'
               size='sm'
-              className='h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400'
+              className={cn(
+                'h-8 w-8 sm:h-9 sm:w-9 p-0 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400',
+                'active:bg-red-100 dark:active:bg-red-900/30 touch-manipulation',
+                'sm:hidden' // Hide on desktop since UserMenu has logout
+              )}
               title='Sign Out'
               onClick={handleLogout}
             >
-              <LogOut className='h-4 w-4' />
+              <LogOut className='h-3.5 w-3.5 sm:h-4 sm:w-4' />
             </Button>
           )}
         </div>
