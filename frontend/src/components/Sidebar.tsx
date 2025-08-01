@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Plus,
@@ -72,6 +72,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Extract current session ID from URL using useParams
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -79,6 +81,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Get current session ID from store as fallback
   const currentSessionId = currentSession?.id || currentSessionIdFromUrl;
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    if (userMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [userMenuOpen]);
 
   const handleCreateSession = async () => {
     if (!selectedModel) return;
@@ -614,10 +634,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   </button>
                 </div>
               ) : (
-                // Expanded mode: Show compact user details and actions
-                <div className='space-y-1.5'>
-                  {/* User Info Display */}
-                  <div className='p-2.5 rounded-xl bg-white/50 dark:bg-dark-200/50 border border-gray-200/30 dark:border-dark-300/30'>
+                // Expanded mode: Show ChatGPT-style user dropdown
+                <div className='relative' ref={userMenuRef}>
+                  <button
+                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                    className='w-full p-2.5 rounded-xl bg-white/50 dark:bg-dark-200/50 border border-gray-200/30 dark:border-dark-300/30 hover:bg-white/70 dark:hover:bg-dark-200/70 transition-all duration-200 text-left touch-manipulation'
+                  >
                     <div className='flex items-center gap-2.5'>
                       <div className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'>
                         <span className='text-white text-xs font-medium'>
@@ -640,43 +662,82 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           </span>
                         </div>
                       </div>
+                      <ChevronRight
+                        className={cn(
+                          'h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform duration-200',
+                          userMenuOpen && 'rotate-90'
+                        )}
+                      />
                     </div>
-                  </div>
+                  </button>
 
-                  {/* Action Buttons */}
-                  <div className='space-y-0.5'>
-                    <button
-                      onClick={() => {
-                        setSettingsOpen(true);
-                        if (window.innerWidth < 768) {
-                          onClose();
-                        }
-                      }}
-                      className='w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200 text-left touch-manipulation'
-                    >
-                      <Settings className='h-4 w-4 shrink-0' />
-                      Settings
-                    </button>
+                  {/* Dropdown Menu */}
+                  {userMenuOpen && (
+                    <div className='absolute bottom-full left-0 right-0 mb-2 py-2 bg-white dark:bg-dark-100 rounded-xl shadow-lg border border-gray-200/50 dark:border-dark-200/50 backdrop-blur-sm z-50'>
+                      <div className='px-3 py-2 border-b border-gray-100 dark:border-dark-200/50'>
+                        <div className='flex items-center gap-2.5'>
+                          <div className='w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center'>
+                            <span className='text-white text-sm font-medium'>
+                              {user.username.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className='flex-1 min-w-0'>
+                            <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                              {user.username}
+                            </p>
+                            <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                              {user.email || 'No email provided'}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-                    {isAdmin() && (
-                      <Link
-                        to='/users'
-                        onClick={() => window.innerWidth < 768 && onClose()}
-                        className='w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation'
-                      >
-                        <User className='h-4 w-4 shrink-0' />
-                        User Management
-                      </Link>
-                    )}
+                      <div className='py-1'>
+                        <button
+                          onClick={() => {
+                            setSettingsOpen(true);
+                            setUserMenuOpen(false);
+                            if (window.innerWidth < 768) {
+                              onClose();
+                            }
+                          }}
+                          className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
+                        >
+                          <Settings className='h-4 w-4 shrink-0' />
+                          Settings
+                        </button>
 
-                    <button
-                      onClick={handleLogout}
-                      className='w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 text-left touch-manipulation'
-                    >
-                      <LogOut className='h-4 w-4 shrink-0' />
-                      Sign Out
-                    </button>
-                  </div>
+                        {isAdmin() && (
+                          <Link
+                            to='/users'
+                            onClick={() => {
+                              setUserMenuOpen(false);
+                              if (window.innerWidth < 768) {
+                                onClose();
+                              }
+                            }}
+                            className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200'
+                          >
+                            <User className='h-4 w-4 shrink-0' />
+                            User Management
+                          </Link>
+                        )}
+
+                        <div className='border-t border-gray-100 dark:border-dark-200/50 my-1'></div>
+
+                        <button
+                          onClick={() => {
+                            handleLogout();
+                            setUserMenuOpen(false);
+                          }}
+                          className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200 text-left'
+                        >
+                          <LogOut className='h-4 w-4 shrink-0' />
+                          Log out
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
