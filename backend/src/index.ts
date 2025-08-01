@@ -224,15 +224,6 @@ app.get('/health', (req, res) => {
 // Static files are served by a separate frontend server on port 8080
 // Backend only serves API endpoints
 
-// API routes
-app.use('/api/auth', optionalAuth, authRoutes);
-app.use('/api/users', optionalAuth, usersRoutes);
-app.use('/api/ollama', ollamaRoutes);
-app.use('/api/chat', optionalAuth, chatRoutes);
-app.use('/api/preferences', optionalAuth, preferencesRoutes);
-app.use('/api/plugins', pluginRoutes);
-app.use('/api/documents', documentRoutes);
-
 // Rate limiter for the /api/personas route
 const personasRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -245,6 +236,31 @@ const personasRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for the /api/preferences route
+const preferencesRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// API routes
+app.use('/api/auth', optionalAuth, authRoutes);
+app.use('/api/users', optionalAuth, usersRoutes);
+app.use('/api/ollama', ollamaRoutes);
+app.use('/api/chat', optionalAuth, chatRoutes);
+app.use(
+  '/api/preferences',
+  preferencesRateLimiter,
+  optionalAuth,
+  preferencesRoutes
+);
+app.use('/api/plugins', pluginRoutes);
+app.use('/api/documents', documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 
 // API-only backend - no static file serving
