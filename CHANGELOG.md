@@ -9,13 +9,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ Added
 
-### 🔧 Improved
+### 🔧 Technical Improvements
 
-### 🐛 Fixed
+### 🐛 Bug Fixes
 
 ### 📚 Documentation
 
----
+## [0.1.8] - 2025-08-01
+
+### ✨ Added
+
+- add clickAway for mobile view to collapse from full to compact mode on mobile for better UX
+- enhance mobile usability with touch manipulation and improved button targets
+- update Sidebar component for a more compact layout and improved styling
+- Implement code changes to enhance functionality and improve performance
+- reposition ModelSelector in ChatInput and add compact mode to ModelSelector
+- moving the ModelSelector in ChatInput component 👀
+- implement ModelSelector component and remove unused imports
+- Enhance OAuth configuration handling and update error messages for GitHub and Hugging Face services
+- Implement Hugging Face OAuth2 support and update UI components for SSO
+- Add Hugging Face OAuth2 SSO support using modular structure
+- Add GitHub OAuth2 SSO configuration to environment variables in Docker Compose files
+- Refactor OAuth callback handling to improve user feedback and prevent multiple executions
+- Improve GitHub OAuth integration with secure password generation and updated callback URLs
+- Add Single Sign-On (SSO) support with GitHub OAuth2 integration
+- Update AI-powered changelog generator and regeneration scripts with enhanced documentation and model recommendations
+- Enhance AI Development Analysis documentation and add changelog regeneration script
+- add AI-powered development analysis and changelog generation
+
+### 🔧 Technical Improvements
+
+- remove transition effects for ModelSelector and global theme switching
+- update styles and structure in ChatMessage, Header, ModelSelector, and ThemeToggle components
+- Revamp structure and content
+- update: changelog
+- Update dependencies in package-lock.json to latest versions
+- Optimize token management functions with useCallback for better performance
+- update: docker file
+- Remove debug logging from OAuth callback processing in App component
+- Remove debug logging from OAuth callback handling
+
+### 🐛 Bug Fixes
+
+- bug with persona + refac: sidebar mobile view
+- missing useCallback loadMemoryStauts from persona.embedding_model
+- correct parameter order in getMemoryStatus method and related usage
+- Refactor API base URL handling in App component for consistency
+- Improve Hugging Face OAuth configuration handling and enhance button UI
+- Address Copilot PR review feedback
+- Correct emoji display in documentation and improve formatting
+
+### 🔄 Other Changes
+
+- refac: user account dropdown menu
+- refac: sidebar UI/UX + introduce a compact mode
 
 ## [0.1.7] - 2025-07-22
 

@@ -1,6 +1,6 @@
 {
   "name": "libre-webui",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "A modern, minimalist WebUI for interacting with local LLMs through Ollama API",
   "private": true,
   "workspaces": [
