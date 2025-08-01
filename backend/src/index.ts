@@ -272,9 +272,33 @@ const documentsRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for the /api/auth route (general limit, specific limits applied within route)
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs (higher level limit)
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiter for the /api/users route (general limit, specific limits applied within route)
+const usersRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // limit each IP to 50 requests per windowMs (moderate limit for user management)
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // API routes
-app.use('/api/auth', optionalAuth, authRoutes);
-app.use('/api/users', optionalAuth, usersRoutes);
+app.use('/api/auth', authRateLimiter, optionalAuth, authRoutes);
+app.use('/api/users', usersRateLimiter, optionalAuth, usersRoutes);
 app.use('/api/ollama', ollamaRateLimiter, ollamaRoutes);
 app.use('/api/chat', optionalAuth, chatRoutes);
 app.use(
