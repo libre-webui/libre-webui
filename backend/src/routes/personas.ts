@@ -476,7 +476,7 @@ router.get(
           '../services/mutationEngineService.js'
         );
 
-        memories = await memoryService.getMemories(id, userId, 1000, 0);
+        memories = await memoryService.getMemories(userId, id, 1000, 0);
         const state = await mutationEngineService.getPersonaState(id, userId);
         adaptationLog = state?.mutation_log || [];
       } catch (_error) {

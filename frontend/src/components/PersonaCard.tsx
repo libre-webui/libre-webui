@@ -68,7 +68,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
     } catch (error) {
       console.error('Failed to load memory status:', error);
     }
-  }, [persona.id, persona.embedding_model, hasAdvancedFeatures]);
+  }, [persona.id, hasAdvancedFeatures]);
 
   useEffect(() => {
     loadMemoryStatus();

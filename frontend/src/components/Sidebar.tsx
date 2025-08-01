@@ -51,7 +51,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
-  onClose,
+  onClose: _onClose,
   className,
 }) => {
   const location = useLocation();
@@ -106,17 +106,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (newSession) {
       navigate(`/c/${newSession.id}`, { replace: true });
     }
-    // On mobile, close sidebar after creating session
-    if (window.innerWidth < 768) {
-      onClose();
+    // On mobile, compact sidebar after creating session so user can easily access other chats
+    if (window.innerWidth < 768 && !sidebarCompact) {
+      toggleSidebarCompact();
     }
   };
 
   const handleSelectSession = (session: ChatSession) => {
     navigate(`/c/${session.id}`, { replace: true });
-    // On mobile, close sidebar after selecting session
-    if (window.innerWidth < 768) {
-      onClose();
+    // On mobile, compact sidebar after selecting session so user can easily select another
+    if (window.innerWidth < 768 && !sidebarCompact) {
+      toggleSidebarCompact();
     }
   };
   const handleDeleteSession = async (
@@ -253,14 +253,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     >
                       <ChevronLeft className='h-4 w-4' />
                     </Button>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={onClose}
-                      className='lg:hidden h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
-                    >
-                      <X className='h-4 w-4' />
-                    </Button>
                   </div>
                 </>
               ) : (
@@ -328,8 +320,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   // Set a flag in sessionStorage to force welcome screen
                   sessionStorage.setItem('forceWelcomeScreen', 'true');
                   navigate('/chat', { replace: true });
-                  if (window.innerWidth < 768) {
-                    onClose();
+                  if (window.innerWidth < 768 && !sidebarCompact) {
+                    toggleSidebarCompact();
                   }
                 }}
                 className={cn(
@@ -349,7 +341,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               <Link
                 to='/models'
-                onClick={() => window.innerWidth < 768 && onClose()}
+                onClick={() =>
+                  window.innerWidth < 768 &&
+                  !sidebarCompact &&
+                  toggleSidebarCompact()
+                }
                 className={cn(
                   'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation',
                   sidebarCompact
@@ -367,7 +363,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
               <Link
                 to='/personas'
-                onClick={() => window.innerWidth < 768 && onClose()}
+                onClick={() =>
+                  window.innerWidth < 768 &&
+                  !sidebarCompact &&
+                  toggleSidebarCompact()
+                }
                 className={cn(
                   'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation',
                   sidebarCompact
@@ -604,8 +604,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     onClick={() => {
                       setSettingsOpen(true);
-                      if (window.innerWidth < 768) {
-                        onClose();
+                      if (window.innerWidth < 768 && !sidebarCompact) {
+                        toggleSidebarCompact();
                       }
                     }}
                     className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
@@ -617,7 +617,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {isAdmin() && (
                     <Link
                       to='/users'
-                      onClick={() => window.innerWidth < 768 && onClose()}
+                      onClick={() =>
+                        window.innerWidth < 768 &&
+                        !sidebarCompact &&
+                        toggleSidebarCompact()
+                      }
                       className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
                       title='User Management'
                     >
@@ -697,8 +701,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           onClick={() => {
                             setSettingsOpen(true);
                             setUserMenuOpen(false);
-                            if (window.innerWidth < 768) {
-                              onClose();
+                            if (window.innerWidth < 768 && !sidebarCompact) {
+                              toggleSidebarCompact();
                             }
                           }}
                           className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
@@ -712,8 +716,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             to='/users'
                             onClick={() => {
                               setUserMenuOpen(false);
-                              if (window.innerWidth < 768) {
-                                onClose();
+                              if (window.innerWidth < 768 && !sidebarCompact) {
+                                toggleSidebarCompact();
                               }
                             }}
                             className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200'

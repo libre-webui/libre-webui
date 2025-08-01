@@ -48,6 +48,7 @@ import {
   notFoundHandler,
   requestLogger,
 } from './middleware/index.js';
+import { optionalAuth } from './middleware/auth.js';
 import ollamaRoutes from './routes/ollama.js';
 import chatRoutes from './routes/chat.js';
 import preferencesRoutes from './routes/preferences.js';
@@ -224,11 +225,11 @@ app.get('/health', (req, res) => {
 // Backend only serves API endpoints
 
 // API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', usersRoutes);
+app.use('/api/auth', optionalAuth, authRoutes);
+app.use('/api/users', optionalAuth, usersRoutes);
 app.use('/api/ollama', ollamaRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/preferences', preferencesRoutes);
+app.use('/api/chat', optionalAuth, chatRoutes);
+app.use('/api/preferences', optionalAuth, preferencesRoutes);
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentRoutes);
 
@@ -244,7 +245,7 @@ const personasRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/personas', personasRateLimiter, personaRoutes);
+app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 
 // API-only backend - no static file serving
 

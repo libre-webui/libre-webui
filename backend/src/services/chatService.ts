@@ -97,8 +97,8 @@ class ChatService {
         );
         const { personaService } = await import('./personaService.js');
 
-        // Try to get persona for the current user first, then fallback to 'default'
-        let persona = await personaService.getPersonaById(
+        // Get persona for the current user only (no fallback to maintain privacy)
+        const persona = await personaService.getPersonaById(
           personaIdFromModel,
           userId
         );
@@ -106,21 +106,6 @@ class ChatService {
           `[DEBUG] Persona lookup for user ${userId}:`,
           persona ? `Found: ${persona.name}` : 'Not found'
         );
-
-        if (!persona && userId !== 'default') {
-          console.log(
-            `[DEBUG] Trying fallback to default user for persona %s`,
-            personaIdFromModel
-          );
-          persona = await personaService.getPersonaById(
-            personaIdFromModel,
-            'default'
-          );
-          console.log(
-            `[DEBUG] Persona lookup for default user:`,
-            persona ? `Found: ${persona.name}` : 'Not found'
-          );
-        }
 
         if (persona && persona.parameters?.system_prompt) {
           systemMessage = persona.parameters.system_prompt.trim();
@@ -429,14 +414,8 @@ class ChatService {
         userId
       );
 
-      // Try to get persona for the current user first, then fallback to 'default'
-      let persona = await personaService.getPersonaById(personaId, userId);
-      if (!persona && userId !== 'default') {
-        console.log(
-          `[DEBUG] updateSystemMessageForPersona: Persona not found for user ${userId}, trying default user`
-        );
-        persona = await personaService.getPersonaById(personaId, 'default');
-      }
+      // Get persona for the current user only (no fallback to maintain privacy)
+      const persona = await personaService.getPersonaById(personaId, userId);
 
       if (persona && persona.parameters?.system_prompt) {
         const newSystemMessage = persona.parameters.system_prompt.trim();
@@ -525,28 +504,15 @@ class ChatService {
         `[ADVANCED-DEBUG] processAdvancedPersonaInteraction called - personaId: ${personaId}, userId: ${userId}`
       );
 
-      // Check if persona has advanced features enabled - try current user first, then fallback to 'default'
-      let persona = await personaService.getPersonaById(personaId, userId);
+      // Check if persona has advanced features enabled for current user only (no fallback to maintain privacy)
+      const persona = await personaService.getPersonaById(personaId, userId);
       console.log(
         `[ADVANCED-DEBUG] Persona lookup for user ${userId}:`,
         persona ? `Found: ${persona.name}` : 'Not found'
       );
 
-      if (!persona && userId !== 'default') {
-        console.log(
-          `[ADVANCED-DEBUG] Trying fallback to default user for persona ${personaId}`
-        );
-        persona = await personaService.getPersonaById(personaId, 'default');
-        console.log(
-          `[ADVANCED-DEBUG] Persona lookup for default user:`,
-          persona ? `Found: ${persona.name}` : 'Not found'
-        );
-      }
-
       if (!persona) {
-        console.log(
-          `[ADVANCED-DEBUG] No persona found in either user or default, exiting`
-        );
+        console.log(`[ADVANCED-DEBUG] No persona found for user, exiting`);
         return;
       }
 
@@ -718,28 +684,15 @@ Use these memories to provide more personalized and contextually aware responses
         `[ADVANCED-DEBUG] processAdvancedPersonaResponse called - personaId: ${personaId}, userId: ${userId}`
       );
 
-      // Check if persona has advanced features enabled - try current user first, then fallback to 'default'
-      let persona = await personaService.getPersonaById(personaId, userId);
+      // Check if persona has advanced features enabled for current user only (no fallback to maintain privacy)
+      const persona = await personaService.getPersonaById(personaId, userId);
       console.log(
         `[ADVANCED-DEBUG] Persona lookup for user ${userId}:`,
         persona ? `Found: ${persona.name}` : 'Not found'
       );
 
-      if (!persona && userId !== 'default') {
-        console.log(
-          `[ADVANCED-DEBUG] Trying fallback to default user for persona ${personaId}`
-        );
-        persona = await personaService.getPersonaById(personaId, 'default');
-        console.log(
-          `[ADVANCED-DEBUG] Persona lookup for default user:`,
-          persona ? `Found: ${persona.name}` : 'Not found'
-        );
-      }
-
       if (!persona) {
-        console.log(
-          `[ADVANCED-DEBUG] No persona found in either user or default, exiting`
-        );
+        console.log(`[ADVANCED-DEBUG] No persona found for user, exiting`);
         return;
       }
 
