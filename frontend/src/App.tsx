@@ -352,11 +352,16 @@ const App: React.FC = () => {
               className={cn(
                 'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
                 'w-full',
+                // Desktop behavior: use margin-left to resize content area
                 sidebarOpen
                   ? sidebarCompact
-                    ? 'ml-16'
-                    : 'ml-80 max-sm:ml-64'
-                  : 'ml-0',
+                    ? 'lg:ml-16'
+                    : 'lg:ml-80'
+                  : 'lg:ml-0',
+                // Mobile behavior: use transform to slide content right (preserves content width)
+                sidebarOpen && !sidebarCompact
+                  ? 'max-lg:translate-x-64'
+                  : 'max-lg:translate-x-0',
                 hasActiveBackground()
                   ? 'bg-white/30 dark:bg-dark-50/30'
                   : 'bg-white dark:bg-dark-50'
@@ -413,11 +418,16 @@ const App: React.FC = () => {
                       className={cn(
                         'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
                         'w-full',
+                        // Desktop behavior: use margin-left to resize content area
                         sidebarOpen
                           ? sidebarCompact
-                            ? 'ml-16'
-                            : 'ml-80 max-sm:ml-64'
-                          : 'ml-0',
+                            ? 'lg:ml-16'
+                            : 'lg:ml-80'
+                          : 'lg:ml-0',
+                        // Mobile behavior: use transform to slide content right (preserves content width)
+                        sidebarOpen && !sidebarCompact
+                          ? 'max-lg:translate-x-64'
+                          : 'max-lg:translate-x-0',
                         hasActiveBackground()
                           ? 'bg-white/30 dark:bg-dark-50/30'
                           : 'bg-white dark:bg-dark-50'

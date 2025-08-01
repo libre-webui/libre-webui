@@ -74,6 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   // Extract current session ID from URL using useParams
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -99,6 +100,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
         document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [userMenuOpen]);
+
+  // Collapse sidebar on mobile when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Double-check window width at click time in case of orientation change
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node) &&
+        window.innerWidth < 768 && // Only on mobile
+        isOpen && // Only when sidebar is open
+        !sidebarCompact // Only when sidebar is expanded
+      ) {
+        toggleSidebarCompact();
+      }
+    };
+
+    // Only add event listener on mobile when sidebar is open and expanded
+    if (isOpen && !sidebarCompact && window.innerWidth < 768) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () =>
+        document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen, sidebarCompact, toggleSidebarCompact]);
 
   const handleCreateSession = async () => {
     if (!selectedModel) return;
@@ -196,6 +220,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <>
       {/* Sidebar */}
       <div
+        ref={sidebarRef}
         className={cn(
           'fixed inset-y-0 left-0 z-50 border-r border-gray-200 dark:border-dark-200 transform transition-all duration-300 ease-in-out shadow-xl',
           // Dynamic width based on compact mode and responsive design
