@@ -248,10 +248,34 @@ const preferencesRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for the /api/ollama route
+const ollamaRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs (higher limit for model operations)
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Rate limiter for the /api/documents route
+const documentsRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // API routes
 app.use('/api/auth', optionalAuth, authRoutes);
 app.use('/api/users', optionalAuth, usersRoutes);
-app.use('/api/ollama', ollamaRoutes);
+app.use('/api/ollama', ollamaRateLimiter, ollamaRoutes);
 app.use('/api/chat', optionalAuth, chatRoutes);
 app.use(
   '/api/preferences',
@@ -260,7 +284,7 @@ app.use(
   preferencesRoutes
 );
 app.use('/api/plugins', pluginRoutes);
-app.use('/api/documents', documentRoutes);
+app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 
 // API-only backend - no static file serving
