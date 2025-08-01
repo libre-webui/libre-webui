@@ -26,8 +26,11 @@ import {
   X,
   Settings,
   Database,
-  Users,
   User,
+  LogOut,
+  Shield,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { Logo } from '@/components/Logo';
@@ -37,6 +40,8 @@ import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import { ChatSession } from '@/types';
 import { formatTimestamp, truncateText, cn } from '@/utils';
+import { authApi } from '@/utils/api';
+import { toast } from 'react-hot-toast';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -61,7 +66,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     currentSession,
   } = useChatStore();
   const { user, isAdmin, systemInfo } = useAuthStore();
-  const { backgroundImage } = useAppStore();
+  const { backgroundImage, sidebarCompact, toggleSidebarCompact } =
+    useAppStore();
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -150,24 +156,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setEditingTitle('');
   };
 
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      const { logout } = useAuthStore.getState();
+      logout();
+      navigate('/login');
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still logout locally even if API call fails
+      const { logout } = useAuthStore.getState();
+      logout();
+      navigate('/login');
+    }
+  };
+
   return (
     <>
-      {/* Mobile backdrop */}
-      {isOpen && (
-        <div
-          className='fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300'
-          onClick={onClose}
-          onTouchStart={onClose} // Better touch handling
-        />
-      )}
-
       {/* Sidebar */}
       <div
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-80 border-r border-gray-200 dark:border-dark-200 transform transition-all duration-300 ease-in-out shadow-xl',
+          'fixed inset-y-0 left-0 z-50 border-r border-gray-200 dark:border-dark-200 transform transition-all duration-300 ease-in-out shadow-xl',
+          // Dynamic width based on compact mode and responsive design
+          sidebarCompact ? 'w-16' : 'w-80 max-sm:w-64',
           // On mobile: slide in/out from left
           // On desktop: slide in/out from left but maintain layout flow
-          isOpen ? 'translate-x-0' : '-translate-x-80', // Hide completely to the left (full width)
+          isOpen ? 'translate-x-0' : '-translate-x-full',
           // Remove shadow on desktop when integrated into layout
           'lg:shadow-none',
           // Conditional background based on whether background image is set
@@ -184,47 +199,107 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }}
       >
         <div className='flex flex-col h-full'>
-          {/* Header - Compact */}
-          <div className='p-3 border-b border-gray-200/60 dark:border-dark-200/60'>
-            <div className='flex items-center justify-between mb-3'>
-              <div className='flex items-center gap-2'>
-                <Logo size='sm' />
-                <span
-                  className='libre-brand text-base font-semibold text-gray-900 dark:text-dark-800'
-                  style={{ lineHeight: 1 }}
-                >
-                  Libre WebUI
-                </span>
-              </div>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={onClose}
-                className='lg:hidden h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
-              >
-                <X className='h-4 w-4' />
-              </Button>
+          {/* Header */}
+          <div
+            className={cn(
+              'border-b border-gray-200/60 dark:border-dark-200/60',
+              sidebarCompact ? 'p-2' : 'p-3'
+            )}
+          >
+            <div
+              className={cn(
+                'flex items-center',
+                sidebarCompact ? 'justify-center mb-2' : 'justify-between mb-2'
+              )}
+            >
+              {!sidebarCompact ? (
+                <>
+                  <div className='flex items-center gap-2'>
+                    <Logo size='sm' />
+                    <span
+                      className='libre-brand text-base font-semibold text-gray-900 dark:text-dark-800'
+                      style={{ lineHeight: 1 }}
+                    >
+                      Libre WebUI
+                    </span>
+                  </div>
+                  <div className='flex items-center gap-1'>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={toggleSidebarCompact}
+                      className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
+                      title='Toggle sidebar size'
+                    >
+                      <ChevronLeft className='h-4 w-4' />
+                    </Button>
+                    <Button
+                      variant='ghost'
+                      size='sm'
+                      onClick={onClose}
+                      className='lg:hidden h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
+                    >
+                      <X className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <div className='flex flex-col items-center gap-1.5'>
+                  <Logo size='sm' />
+                  <Button
+                    variant='ghost'
+                    size='sm'
+                    onClick={toggleSidebarCompact}
+                    className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
+                    title='Expand sidebar'
+                  >
+                    <ChevronRight className='h-4 w-4' />
+                  </Button>
+                </div>
+              )}
             </div>
 
-            <Button
-              onClick={handleCreateSession}
-              disabled={!selectedModel || models.length === 0}
-              className='w-full bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white shadow-sm hover:shadow-md active:shadow-lg transition-all duration-200 border-0 touch-manipulation'
-              size='sm'
-              title={
-                !selectedModel || models.length === 0
-                  ? 'No models available. Please ensure Ollama is running and models are installed.'
-                  : ''
-              }
-            >
-              <Plus className='h-4 w-4 mr-2' />
-              New Chat
-            </Button>
+            {!sidebarCompact && (
+              <Button
+                onClick={handleCreateSession}
+                disabled={!selectedModel || models.length === 0}
+                className='w-full bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white shadow-sm hover:shadow-md active:shadow-lg transition-all duration-200 border-0 touch-manipulation'
+                size='sm'
+                title={
+                  !selectedModel || models.length === 0
+                    ? 'No models available. Please ensure Ollama is running and models are installed.'
+                    : ''
+                }
+              >
+                <Plus className='h-4 w-4 mr-2' />
+                New Chat
+              </Button>
+            )}
+
+            {sidebarCompact && (
+              <Button
+                onClick={handleCreateSession}
+                disabled={!selectedModel || models.length === 0}
+                className='w-full h-9 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white shadow-sm hover:shadow-md active:shadow-lg transition-all duration-200 border-0 touch-manipulation p-0'
+                title={
+                  !selectedModel || models.length === 0
+                    ? 'No models available. Please ensure Ollama is running and models are installed.'
+                    : 'New Chat'
+                }
+              >
+                <Plus className='h-4 w-4' />
+              </Button>
+            )}
           </div>
 
-          {/* Navigation Menu - Grouped */}
-          <div className='px-3 py-2'>
-            <nav className='space-y-1'>
+          {/* Navigation Menu */}
+          <div className={cn('py-1.5', sidebarCompact ? 'px-1' : 'px-2.5')}>
+            <nav
+              className={cn(
+                'space-y-0.5',
+                sidebarCompact && 'flex flex-col items-center'
+              )}
+            >
               <button
                 onClick={() => {
                   // Clear current session and set a flag to force welcome screen
@@ -238,73 +313,55 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   }
                 }}
                 className={cn(
-                  'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 text-left touch-manipulation',
+                  'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-left touch-manipulation',
+                  sidebarCompact
+                    ? 'w-11 h-11 justify-center p-0'
+                    : 'w-full px-2.5 py-2',
                   location.pathname === '/chat' || location.pathname === '/'
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
                 )}
+                title={sidebarCompact ? 'Chat' : undefined}
               >
                 <MessageSquare className='h-4 w-4 shrink-0' />
-                Chat
+                {!sidebarCompact && 'Chat'}
               </button>
 
               <Link
                 to='/models'
                 onClick={() => window.innerWidth < 768 && onClose()}
                 className={cn(
-                  'flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 touch-manipulation',
+                  'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation',
+                  sidebarCompact
+                    ? 'w-11 h-11 justify-center p-0'
+                    : 'w-full px-2.5 py-2',
                   location.pathname === '/models'
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
                 )}
+                title={sidebarCompact ? 'Models' : undefined}
               >
                 <Database className='h-4 w-4 shrink-0' />
-                Models
+                {!sidebarCompact && 'Models'}
               </Link>
 
               <Link
                 to='/personas'
                 onClick={() => window.innerWidth < 768 && onClose()}
                 className={cn(
-                  'flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 touch-manipulation',
+                  'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation',
+                  sidebarCompact
+                    ? 'w-11 h-11 justify-center p-0'
+                    : 'w-full px-2.5 py-2',
                   location.pathname === '/personas'
                     ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
                 )}
+                title={sidebarCompact ? 'Personas' : undefined}
               >
                 <User className='h-4 w-4 shrink-0' />
-                Personas
+                {!sidebarCompact && 'Personas'}
               </Link>
-
-              {/* User Management - only show for admins when auth is required */}
-              {systemInfo?.requiresAuth && user && isAdmin() && (
-                <Link
-                  to='/users'
-                  onClick={() => window.innerWidth < 768 && onClose()}
-                  className={cn(
-                    'flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 touch-manipulation',
-                    location.pathname === '/users'
-                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
-                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
-                  )}
-                >
-                  <Users className='h-4 w-4 shrink-0' />
-                  User Management
-                </Link>
-              )}
-
-              <button
-                onClick={() => {
-                  setSettingsOpen(true);
-                  if (window.innerWidth < 768) {
-                    onClose();
-                  }
-                }}
-                className='flex items-center gap-2.5 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200 w-full text-left touch-manipulation'
-              >
-                <Settings className='h-4 w-4 shrink-0' />
-                Settings
-              </button>
             </nav>
           </div>
 
@@ -315,31 +372,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
               WebkitOverflowScrolling: 'touch',
             }}
           >
-            <div className='p-3'>
-              <div className='flex items-center justify-between mb-3 px-1'>
-                <h3 className='text-sm font-semibold text-gray-800 dark:text-gray-200'>
-                  Recent Chats
-                </h3>
-                {sessions.length > 0 && (
-                  <span className='inline-flex items-center justify-center px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-dark-300 text-gray-600 dark:text-gray-400 rounded-full min-w-[1.5rem] h-5'>
+            <div className={cn('p-2.5', sidebarCompact && 'px-1')}>
+              {!sidebarCompact && sessions.length > 0 && (
+                <div className='flex items-center justify-between mb-1.5 px-1'>
+                  <h3 className='text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide'>
+                    Chats
+                  </h3>
+                  <span className='text-xs text-gray-500 dark:text-gray-500 font-medium'>
                     {sessions.length}
                   </span>
-                )}
-              </div>
+                </div>
+              )}
               {sessions.length === 0 ? (
-                <div className='text-center py-8 px-2'>
-                  <div className='w-12 h-12 mx-auto mb-3 bg-gray-100 dark:bg-dark-300 rounded-xl flex items-center justify-center'>
-                    <MessageSquare className='h-5 w-5 text-gray-400 dark:text-gray-500' />
+                <div
+                  className={cn(
+                    'text-center py-8',
+                    sidebarCompact ? 'px-1' : 'px-2'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'mx-auto mb-3 bg-gray-100 dark:bg-dark-300 rounded-xl flex items-center justify-center',
+                      sidebarCompact ? 'w-8 h-8' : 'w-12 h-12'
+                    )}
+                  >
+                    <MessageSquare
+                      className={cn(
+                        'text-gray-400 dark:text-gray-500',
+                        sidebarCompact ? 'h-4 w-4' : 'h-5 w-5'
+                      )}
+                    />
                   </div>
-                  <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
-                    No chats yet
-                  </p>
-                  <p className='text-xs mt-1 text-gray-500 dark:text-gray-500'>
-                    Create your first chat above
-                  </p>
+                  {!sidebarCompact && (
+                    <>
+                      <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
+                        No chats yet
+                      </p>
+                      <p className='text-xs mt-1 text-gray-500 dark:text-gray-500'>
+                        Create your first chat above
+                      </p>
+                    </>
+                  )}
                 </div>
               ) : (
-                <div className='space-y-1.5'>
+                <div
+                  className={cn('space-y-0.5', sidebarCompact && 'space-y-1')}
+                >
                   {sessions.map(session => {
                     const isActive = currentSessionId === session.id;
 
@@ -347,14 +425,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <div
                         key={session.id}
                         className={cn(
-                          'group relative rounded-lg p-3 cursor-pointer transition-all duration-200 touch-manipulation',
+                          'group relative cursor-pointer transition-all duration-200 touch-manipulation',
+                          sidebarCompact
+                            ? 'rounded-lg p-2 flex items-center justify-center'
+                            : 'rounded-lg px-2.5 py-2',
                           isActive
-                            ? 'bg-primary-50 dark:bg-primary-900/25 border border-primary-200/60 dark:border-primary-700/60 shadow-sm'
-                            : 'hover:bg-white dark:hover:bg-dark-200/70 hover:shadow-sm border border-transparent hover:border-gray-200/60 dark:hover:border-dark-300/60 active:bg-gray-50 dark:active:bg-dark-200'
+                            ? 'bg-gray-100 dark:bg-dark-200'
+                            : 'hover:bg-gray-50 dark:hover:bg-dark-200/50'
                         )}
                         onClick={() => handleSelectSession(session)}
+                        title={
+                          sidebarCompact
+                            ? `${session.title} - ${session.model}`
+                            : undefined
+                        }
                       >
-                        {editingSessionId === session.id ? (
+                        {sidebarCompact ? (
+                          // Compact mode: Show only avatar/indicator
+                          <div className='flex items-center justify-center w-full h-8'>
+                            <div
+                              className={cn(
+                                'w-3 h-3 rounded-full',
+                                isActive
+                                  ? 'bg-primary-500'
+                                  : 'bg-gray-300 dark:bg-gray-600'
+                              )}
+                            />
+                          </div>
+                        ) : editingSessionId === session.id ? (
+                          // Editing mode (only in expanded view)
                           <div
                             className='flex items-center gap-2'
                             onClick={e => e.stopPropagation()}
@@ -390,75 +489,69 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             </Button>
                           </div>
                         ) : (
-                          <>
-                            <div className='flex items-start justify-between'>
-                              <div className='flex-1 min-w-0'>
-                                <h3
+                          // Expanded mode: Show full session details
+                          <div className='flex items-center justify-between w-full'>
+                            <div className='flex-1 min-w-0 mr-2'>
+                              <h3
+                                className={cn(
+                                  'text-sm font-medium truncate leading-tight',
+                                  isActive
+                                    ? 'text-gray-900 dark:text-gray-100'
+                                    : 'text-gray-900 dark:text-gray-100'
+                                )}
+                              >
+                                {truncateText(session.title, 32)}
+                              </h3>
+                              <div className='flex items-center gap-1.5 mt-0.5'>
+                                <span
                                   className={cn(
-                                    'text-sm font-medium truncate mb-1 leading-tight',
+                                    'text-xs',
                                     isActive
-                                      ? 'text-primary-900 dark:text-primary-100 font-semibold'
-                                      : 'text-gray-900 dark:text-gray-100'
+                                      ? 'text-gray-600 dark:text-gray-400'
+                                      : 'text-gray-500 dark:text-gray-500'
                                   )}
                                 >
-                                  {truncateText(session.title, 28)}
-                                </h3>
-                                <p
+                                  {formatTimestamp(session.updatedAt)}
+                                </span>
+                                <span className='text-gray-400 dark:text-gray-600'>
+                                  •
+                                </span>
+                                <span
                                   className={cn(
-                                    'text-xs leading-tight',
+                                    'text-xs font-medium',
                                     isActive
-                                      ? 'text-primary-700 dark:text-primary-300'
-                                      : 'text-gray-500 dark:text-gray-400'
+                                      ? 'text-gray-700 dark:text-gray-300'
+                                      : 'text-gray-600 dark:text-gray-400'
                                   )}
                                 >
-                                  {formatTimestamp(session.updatedAt)} •{' '}
-                                  <span className='font-medium'>
-                                    {session.model}
-                                  </span>
-                                </p>
-                              </div>
-
-                              <div className='flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 ml-2 shrink-0'>
-                                <Button
-                                  variant='ghost'
-                                  size='sm'
-                                  onClick={e => handleStartEditing(session, e)}
-                                  className='h-7 w-7 sm:h-6 sm:w-6 p-0 hover:bg-gray-100 dark:hover:bg-dark-400 active:bg-gray-200 dark:active:bg-dark-300 rounded-md touch-manipulation'
-                                  title='Rename chat'
-                                >
-                                  <Edit3 className='h-3 w-3' />
-                                </Button>
-                                <Button
-                                  variant='ghost'
-                                  size='sm'
-                                  onClick={e =>
-                                    handleDeleteSession(session.id, e)
-                                  }
-                                  className='h-7 w-7 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 rounded-md touch-manipulation'
-                                  title='Delete chat'
-                                >
-                                  <Trash2 className='h-3 w-3' />
-                                </Button>
+                                  {session.model}
+                                </span>
                               </div>
                             </div>
 
-                            {session.messages.length > 0 && (
-                              <p
-                                className={cn(
-                                  'text-xs mt-1.5 line-clamp-2 leading-relaxed',
-                                  isActive
-                                    ? 'text-primary-600 dark:text-primary-400'
-                                    : 'text-gray-400 dark:text-gray-500'
-                                )}
+                            <div className='flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 shrink-0'>
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={e => handleStartEditing(session, e)}
+                                className='h-7 w-7 sm:h-6 sm:w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 rounded-md touch-manipulation'
+                                title='Rename chat'
                               >
-                                {truncateText(
-                                  session.messages[session.messages.length - 1]
-                                    ?.content || '',
-                                  55
-                                )}
-                              </p>
-                            )}
-                          </>
+                                <Edit3 className='h-3 w-3' />
+                              </Button>
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                onClick={e =>
+                                  handleDeleteSession(session.id, e)
+                                }
+                                className='h-7 w-7 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 rounded-md touch-manipulation'
+                                title='Delete chat'
+                              >
+                                <Trash2 className='h-3 w-3' />
+                              </Button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     );
@@ -467,6 +560,127 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
             </div>
           </div>
+
+          {/* User Account Section - only show if user is authenticated */}
+          {systemInfo?.requiresAuth && user && (
+            <div
+              className={cn(
+                'border-t border-gray-200/60 dark:border-dark-200/60',
+                sidebarCompact ? 'p-1.5' : 'p-2.5'
+              )}
+            >
+              {sidebarCompact ? (
+                // Compact mode: Show only user avatar and key actions
+                <div className='flex flex-col items-center space-y-1.5'>
+                  <div
+                    className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'
+                    title={`${user.username} (${user.role})`}
+                  >
+                    <span className='text-white text-xs font-medium'>
+                      {user.username.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setSettingsOpen(true);
+                      if (window.innerWidth < 768) {
+                        onClose();
+                      }
+                    }}
+                    className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
+                    title='Settings'
+                  >
+                    <Settings className='h-4 w-4' />
+                  </button>
+
+                  {isAdmin() && (
+                    <Link
+                      to='/users'
+                      onClick={() => window.innerWidth < 768 && onClose()}
+                      className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
+                      title='User Management'
+                    >
+                      <User className='h-4 w-4' />
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={handleLogout}
+                    className='w-9 h-9 flex items-center justify-center rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 touch-manipulation transition-all duration-200'
+                    title='Sign Out'
+                  >
+                    <LogOut className='h-4 w-4' />
+                  </button>
+                </div>
+              ) : (
+                // Expanded mode: Show compact user details and actions
+                <div className='space-y-1.5'>
+                  {/* User Info Display */}
+                  <div className='p-2.5 rounded-xl bg-white/50 dark:bg-dark-200/50 border border-gray-200/30 dark:border-dark-300/30'>
+                    <div className='flex items-center gap-2.5'>
+                      <div className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'>
+                        <span className='text-white text-xs font-medium'>
+                          {user.username.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className='flex-1 min-w-0'>
+                        <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                          {user.username}
+                        </p>
+                        <div className='flex items-center mt-0.5'>
+                          {user.role === 'admin' && (
+                            <Shield
+                              size={10}
+                              className='text-primary-500 mr-1'
+                            />
+                          )}
+                          <span className='text-xs text-gray-500 dark:text-gray-400 capitalize'>
+                            {user.role}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className='space-y-0.5'>
+                    <button
+                      onClick={() => {
+                        setSettingsOpen(true);
+                        if (window.innerWidth < 768) {
+                          onClose();
+                        }
+                      }}
+                      className='w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200 text-left touch-manipulation'
+                    >
+                      <Settings className='h-4 w-4 shrink-0' />
+                      Settings
+                    </button>
+
+                    {isAdmin() && (
+                      <Link
+                        to='/users'
+                        onClick={() => window.innerWidth < 768 && onClose()}
+                        className='w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation'
+                      >
+                        <User className='h-4 w-4 shrink-0' />
+                        User Management
+                      </Link>
+                    )}
+
+                    <button
+                      onClick={handleLogout}
+                      className='w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 text-left touch-manipulation'
+                    >
+                      <LogOut className='h-4 w-4 shrink-0' />
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

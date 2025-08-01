@@ -16,7 +16,6 @@
  */
 
 import React, { ReactNode } from 'react';
-import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
@@ -26,31 +25,25 @@ interface ChatLayoutProps {
 }
 
 export const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
-  const { sidebarOpen, toggleSidebar } = useAppStore();
+  const { sidebarOpen, sidebarCompact, toggleSidebar } = useAppStore();
 
   return (
     <div className='flex h-screen bg-gray-50 dark:bg-dark-100'>
-      {/* Sidebar */}
-      <aside
+      {/* Sidebar - Let the Sidebar component handle its own positioning */}
+      <Sidebar isOpen={sidebarOpen} onClose={() => toggleSidebar()} />
+
+      {/* Main content - Adjust margin based on sidebar state */}
+      <div
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-dark-50 border-r border-gray-200 dark:border-dark-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:inset-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out',
+          // Add left margin when sidebar is open (on all screen sizes for side-by-side layout)
+          sidebarOpen
+            ? sidebarCompact
+              ? 'ml-16'
+              : 'ml-80 max-sm:ml-64'
+            : 'ml-0'
         )}
       >
-        <Sidebar isOpen={sidebarOpen} onClose={() => toggleSidebar()} />
-      </aside>
-
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className='fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden'
-          onClick={toggleSidebar}
-        />
-      )}
-
-      {/* Main content */}
-      <div className='flex-1 flex flex-col min-w-0'>
-        <Header />
         <main className='flex-1 overflow-hidden'>{children}</main>
       </div>
     </div>

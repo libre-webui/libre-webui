@@ -23,9 +23,7 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
-import { SidebarToggle } from '@/components/SidebarToggle';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { API_BASE_URL } from '@/utils/config';
@@ -71,7 +69,7 @@ const PageLoader = () => (
   </div>
 );
 
-// Conditional keyboard shortcuts indicator - only shows on chat pages
+// Conditional keyboard shortcuts indicator - only shows on chat pages and desktop
 const ConditionalKeyboardShortcutsIndicator: React.FC<{
   onClick: () => void;
 }> = ({ onClick }) => {
@@ -85,7 +83,11 @@ const ConditionalKeyboardShortcutsIndicator: React.FC<{
 
   if (!isChatPage) return null;
 
-  return <KeyboardShortcutsIndicator onClick={onClick} />;
+  return (
+    <div className='hidden lg:block'>
+      <KeyboardShortcutsIndicator onClick={onClick} />
+    </div>
+  );
 };
 
 const App: React.FC = () => {
@@ -93,8 +95,11 @@ const App: React.FC = () => {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const {
     sidebarOpen,
+    sidebarCompact,
     setSidebarOpen,
+    setSidebarCompact,
     toggleSidebar,
+    toggleSidebarCompact,
     toggleTheme,
     backgroundImage,
     preferences,
@@ -200,7 +205,26 @@ const App: React.FC = () => {
     {
       key: 'b',
       metaKey: true,
-      action: toggleSidebar,
+      action: () => {
+        // On desktop (lg screens), always keep sidebar open and toggle compact mode
+        // On mobile, allow closing/opening the sidebar
+        if (window.innerWidth >= 1024) {
+          // lg breakpoint
+          // Desktop behavior: If closed, open in expanded mode, otherwise toggle compact
+          if (!sidebarOpen) {
+            setSidebarCompact(false);
+            toggleSidebar();
+          } else {
+            toggleSidebarCompact();
+          }
+        } else {
+          // Mobile behavior: Toggle open/closed, always open in expanded mode
+          if (!sidebarOpen && sidebarCompact) {
+            setSidebarCompact(false);
+          }
+          toggleSidebar();
+        }
+      },
       description: 'Toggle sidebar',
     },
     {
@@ -324,18 +348,20 @@ const App: React.FC = () => {
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
             />
-            <SidebarToggle />
             <div
               className={cn(
                 'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
                 'w-full',
-                sidebarOpen ? 'lg:ml-80' : 'lg:ml-0',
+                sidebarOpen
+                  ? sidebarCompact
+                    ? 'ml-16'
+                    : 'ml-80 max-sm:ml-64'
+                  : 'ml-0',
                 hasActiveBackground()
                   ? 'bg-white/30 dark:bg-dark-50/30'
                   : 'bg-white dark:bg-dark-50'
               )}
             >
-              <Header onSettingsClick={() => setSettingsOpen(true)} />
               {isDemoMode && demoConfig.showBanner && (
                 <DemoModeBanner message={demoConfig.message} />
               )}
@@ -383,18 +409,20 @@ const App: React.FC = () => {
                       isOpen={sidebarOpen}
                       onClose={() => setSidebarOpen(false)}
                     />
-                    <SidebarToggle />
                     <div
                       className={cn(
                         'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
                         'w-full',
-                        sidebarOpen ? 'lg:ml-80' : 'lg:ml-0',
+                        sidebarOpen
+                          ? sidebarCompact
+                            ? 'ml-16'
+                            : 'ml-80 max-sm:ml-64'
+                          : 'ml-0',
                         hasActiveBackground()
                           ? 'bg-white/30 dark:bg-dark-50/30'
                           : 'bg-white dark:bg-dark-50'
                       )}
                     >
-                      <Header onSettingsClick={() => setSettingsOpen(true)} />
                       {isDemoMode && demoConfig.showBanner && (
                         <DemoModeBanner message={demoConfig.message} />
                       )}

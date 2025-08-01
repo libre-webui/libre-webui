@@ -28,8 +28,11 @@ interface AppState {
 
   // Sidebar
   sidebarOpen: boolean;
+  sidebarCompact: boolean;
   setSidebarOpen: (open: boolean) => void;
+  setSidebarCompact: (compact: boolean) => void;
   toggleSidebar: () => void;
+  toggleSidebarCompact: () => void;
 
   // User preferences
   preferences: UserPreferences;
@@ -78,8 +81,12 @@ export const useAppStore = create<AppState>()(
 
       // Sidebar
       sidebarOpen: true,
+      sidebarCompact: false,
       setSidebarOpen: open => set({ sidebarOpen: open }),
+      setSidebarCompact: compact => set({ sidebarCompact: compact }),
       toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
+      toggleSidebarCompact: () =>
+        set(state => ({ sidebarCompact: !state.sidebarCompact })),
 
       // User preferences
       preferences: {
@@ -191,6 +198,7 @@ export const useAppStore = create<AppState>()(
       partialize: state => ({
         theme: state.theme,
         sidebarOpen: state.sidebarOpen,
+        sidebarCompact: state.sidebarCompact,
         preferences: state.preferences,
         hasSeenSettingsNotification: state.hasSeenSettingsNotification,
         backgroundImage: state.backgroundImage,

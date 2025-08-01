@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-export { Header } from './Header';
 export { Sidebar } from './Sidebar';
-export { SidebarToggle } from './SidebarToggle';
 export { ChatInput } from './ChatInput';
 export { ChatMessage } from './ChatMessage';
 export { ChatMessages } from './ChatMessages';
@@ -31,7 +29,6 @@ export { StructuredOutput } from './StructuredOutput';
 export { DocumentUpload } from './DocumentUpload';
 export { DocumentIndicator } from './DocumentIndicator';
 export { LoginForm } from './LoginForm';
-export { UserMenu } from './UserMenu';
 export { ProtectedRoute } from './ProtectedRoute';
 export {
   KeyboardShortcutsModal,
