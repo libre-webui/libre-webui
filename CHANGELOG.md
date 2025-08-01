@@ -17,52 +17,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.8] - 2025-08-01
 
-### ✨ Added
+### 🔒 Security Enhancements
 
-- add clickAway for mobile view to collapse from full to compact mode on mobile for better UX
-- enhance mobile usability with touch manipulation and improved button targets
-- update Sidebar component for a more compact layout and improved styling
-- Implement code changes to enhance functionality and improve performance
-- reposition ModelSelector in ChatInput and add compact mode to ModelSelector
-- moving the ModelSelector in ChatInput component 👀
-- implement ModelSelector component and remove unused imports
-- Enhance OAuth configuration handling and update error messages for GitHub and Hugging Face services
-- Implement Hugging Face OAuth2 support and update UI components for SSO
-- Add Hugging Face OAuth2 SSO support using modular structure
-- Add GitHub OAuth2 SSO configuration to environment variables in Docker Compose files
-- Refactor OAuth callback handling to improve user feedback and prevent multiple executions
-- Improve GitHub OAuth integration with secure password generation and updated callback URLs
-- Add Single Sign-On (SSO) support with GitHub OAuth2 integration
-- Update AI-powered changelog generator and regeneration scripts with enhanced documentation and model recommendations
-- Enhance AI Development Analysis documentation and add changelog regeneration script
-- add AI-powered development analysis and changelog generation
+- **Critical Persona Privacy Fix:** Fixed major security vulnerability where personas were accessible across users due to missing authentication middleware and fallback to 'default' user
+- **Proper User Isolation:** Added authentication middleware (`optionalAuth`) to all user-context API routes ensuring complete user data isolation
+- **Memory Privacy:** Fixed persona memory system to properly scope to the creating user, preventing cross-user memory access
+
+### 📱 Mobile Experience Improvements
+
+- **Enhanced Mobile Sidebar UX:** Redesigned mobile sidebar behavior - removed close button and replaced with smart compact/expand functionality
+- **Improved Mobile Navigation:** Mobile users can now easily switch between chats without getting stuck - sidebar compacts instead of closing
+- **Mobile Content Animation:** Fixed mobile content animation to slide right instead of compressing, preserving readability and maintaining proper proportions
+- **Click-Away Support:** Added intelligent click-away detection that compacts expanded sidebar on mobile for better UX
+- **Touch-Optimized Interactions:** Enhanced touch manipulation and improved button targets for better mobile usability
+
+### ✨ New Features
+
+- **Single Sign-On (SSO):** Complete GitHub and Hugging Face OAuth2 integration with secure token handling and enhanced user experience
+- **Model Selector Enhancements:** Repositioned and added compact mode to ModelSelector component with improved UI/UX
+- **AI-Powered Development Tools:** Integrated AI-powered changelog generation and development analysis tools for better project maintenance
 
 ### 🔧 Technical Improvements
 
-- remove transition effects for ModelSelector and global theme switching
-- update styles and structure in ChatMessage, Header, ModelSelector, and ThemeToggle components
-- Revamp structure and content
-- update: changelog
-- Update dependencies in package-lock.json to latest versions
-- Optimize token management functions with useCallback for better performance
-- update: docker file
-- Remove debug logging from OAuth callback processing in App component
-- Remove debug logging from OAuth callback handling
+- **Authentication Architecture:** Implemented proper authentication middleware across all API routes requiring user context
+- **Memory System Refactoring:** Fixed parameter ordering and improved memory retrieval for persona-specific data
+- **Code Quality:** Removed unused dependencies, fixed linting warnings, and optimized component performance with proper useCallback usage
+- **OAuth Security:** Enhanced OAuth callback handling with better error handling and prevention of multiple executions
+- **Docker Configuration:** Updated Docker files with improved OAuth environment variable support
 
-### 🐛 Bug Fixes
+### 🐛 Critical Bug Fixes
 
-- bug with persona + refac: sidebar mobile view
-- missing useCallback loadMemoryStauts from persona.embedding_model
-- correct parameter order in getMemoryStatus method and related usage
-- Refactor API base URL handling in App component for consistency
-- Improve Hugging Face OAuth configuration handling and enhance button UI
-- Address Copilot PR review feedback
-- Correct emoji display in documentation and improve formatting
+- **Persona Visibility Bug:** Resolved issue where personas created by one user were visible to other users
+- **Memory Parameter Fix:** Corrected `getMemories()` parameter order that was causing memory lookup failures
+- **Authentication Context:** Fixed missing user context in API calls that was causing fallback to 'default' user
+- **Mobile Sidebar State:** Fixed mobile sidebar getting stuck in closed state without recovery options
+- **useCallback Dependencies:** Resolved React Hook dependency warnings in PersonaCard component
 
-### 🔄 Other Changes
+### 📚 Documentation & Developer Experience
 
-- refac: user account dropdown menu
-- refac: sidebar UI/UX + introduce a compact mode
+- **Enhanced Changelog Generation:** Improved AI-powered changelog generation with better categorization and clarity
+- **OAuth Documentation:** Added comprehensive OAuth setup and configuration documentation
+- **Mobile UX Guidelines:** Documented mobile-first design principles and touch interaction patterns
+
+### ⚠️ Breaking Changes
+
+- Personas created before this version may need to be reassigned to the correct user if they were incorrectly stored under 'default' user
+- API routes now properly enforce user authentication - unauthenticated requests will no longer fall back to 'default' user context
+
+### 🎯 User Impact
+
+- **Enhanced Privacy:** Your personas and memories are now truly private and cannot be accessed by other users
+- **Better Mobile Experience:** Significantly improved mobile navigation with intuitive sidebar behavior and proper content layout
+- **Improved Security:** Enhanced user data isolation and proper authentication across all user-specific features
+- **Smoother Interactions:** Better touch support and optimized animations create a more responsive mobile experience
 
 ## [0.1.7] - 2025-07-22
 
