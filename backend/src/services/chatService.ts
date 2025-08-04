@@ -344,6 +344,46 @@ class ChatService {
     return newMessage;
   }
 
+  updateMessage(
+    sessionId: string,
+    messageId: string,
+    updates: Partial<ChatMessage>,
+    userId: string = 'default'
+  ): ChatMessage | undefined {
+    // First verify the session belongs to the user
+    const session = this.getSession(sessionId, userId);
+    if (!session) {
+      console.error('Session not found or access denied:', sessionId, userId);
+      return undefined;
+    }
+
+    // Find the message to update
+    const messageIndex = session.messages.findIndex(
+      msg => msg.id === messageId
+    );
+    if (messageIndex === -1) {
+      console.error('Message not found:', messageId);
+      return undefined;
+    }
+
+    // Update the message
+    const updatedMessage = {
+      ...session.messages[messageIndex],
+      ...updates,
+      timestamp: Date.now(), // Always update timestamp
+    };
+
+    session.messages[messageIndex] = updatedMessage;
+    session.updatedAt = Date.now();
+
+    // Save updated session
+    this.sessions.set(sessionId, session);
+    storageService.saveSession(session, userId);
+
+    console.log(`✅ Updated message ${messageId} in session ${sessionId}`);
+    return updatedMessage;
+  }
+
   deleteSession(sessionId: string, userId: string = 'default'): boolean {
     // First verify the session belongs to the user
     const session = this.getSession(sessionId, userId);
@@ -399,7 +439,19 @@ class ChatService {
     const recentConversation = conversationMessages.slice(-maxMessages);
 
     // Return system messages first, then conversation messages
-    return [...systemMessages, ...recentConversation];
+    const contextMessages = [...systemMessages, ...recentConversation];
+
+    // Debug: Log the system messages being sent
+    if (systemMessages.length > 0) {
+      console.log(`🎯 [DEBUG] Context for session ${sessionId}:`);
+      systemMessages.forEach((msg, index) => {
+        console.log(
+          `  System message ${index + 1}: "${msg.content.substring(0, 100)}${msg.content.length > 100 ? '...' : ''}"`
+        );
+      });
+    }
+
+    return contextMessages;
   }
 
   private async updateSystemMessageForPersona(

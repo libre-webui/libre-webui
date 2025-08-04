@@ -116,8 +116,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const handleSaveSystemMessage = async () => {
     setIsSaving(true);
     try {
-      await setSystemMessage(editedContent);
+      setSystemMessage(editedContent);
       setIsEditing(false);
+      console.log('✅ System message updated:', editedContent);
     } catch (error) {
       console.error('Failed to save system message:', error);
     } finally {
