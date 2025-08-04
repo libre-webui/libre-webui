@@ -227,7 +227,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           {/* Unified Input Container */}
           <div
             className={cn(
-              'flex items-end gap-2 p-2 sm:p-3 rounded-2xl sm:rounded-3xl border transition-all duration-200',
+              'flex items-center gap-2 p-2 sm:p-3 rounded-2xl sm:rounded-3xl border transition-all duration-200',
               'bg-gray-50 dark:bg-dark-50 border-gray-200 dark:border-dark-300',
               'hover:border-gray-300 dark:hover:border-dark-400',
               'focus-within:border-primary-400 dark:focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-dark-50',
@@ -241,15 +241,21 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               size='sm'
               onClick={() => setShowAdvanced(!showAdvanced)}
               className={cn(
-                'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0',
+                'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
                 'hover:bg-gray-200 dark:hover:bg-dark-200 transition-colors touch-manipulation',
                 hasAdvancedFeatures && 'text-primary-600 dark:text-primary-400',
                 showAdvanced && 'bg-gray-200 dark:bg-dark-200'
               )}
               title='Attachments and advanced features'
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0',
+              }}
             >
               {hasAdvancedFeatures ? (
-                <div className='relative'>
+                <div className='relative flex items-center justify-center'>
                   <Paperclip className='h-4 w-4' />
                   <div className='absolute -top-0.5 -right-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
                 </div>
@@ -269,7 +275,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onKeyDown={handleKeyDown}
                 placeholder='Send a message'
                 disabled={disabled}
-                className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 text-base sm:text-sm leading-relaxed touch-manipulation'
+                className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 text-base sm:text-sm leading-none touch-manipulation'
                 rows={1}
                 style={{
                   boxShadow: 'none !important',
@@ -278,6 +284,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   background: 'transparent !important',
                   padding: '0 !important',
                   margin: '0 !important',
+                  lineHeight: '1.2 !important',
+                  verticalAlign: 'middle',
                 }}
               />
             </div>
@@ -310,7 +318,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   size='sm'
                   onClick={handleStopGeneration}
                   className={cn(
-                    'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0',
+                    'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                     'hover:bg-gray-200 dark:hover:bg-dark-200 transition-colors touch-manipulation'
                   )}
                   title='Stop generation'
@@ -324,7 +332,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   size='sm'
                   disabled={!message.trim() || disabled}
                   className={cn(
-                    'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0',
+                    'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                     'hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400',
                     'disabled:text-gray-400 dark:disabled:text-dark-500 disabled:hover:bg-transparent',
                     'transition-all duration-150 touch-manipulation',
