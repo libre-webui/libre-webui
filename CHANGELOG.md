@@ -15,6 +15,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.1.9] - 2025-08-04
+
+### ✨ Added
+
+- add live system message update
+
+### 🔧 Technical Improvements
+
+- unify input area and enhance styling in ChatInput component
+
+### 🐛 Bug Fixes
+
+- adjust component dimensions for better responsiveness in ArtifactRenderer and ChatInput
+- improve mobile behavior and truncate model display in ChatMessage and GenerationStats components
+- update package versions to 0.1.8 and related dependencies
+- add rate limiting for /api/chat route
+- add rate limiting for /api/auth and /api/users routes
+- increase Ollama rate limit for streaming support
+- add rate limiting for /api/ollama and /api/documents routes
+- add rate limiting for /api/preferences route
+
+### 🔄 Other Changes
+
+- deps(deps): bump the all-dependencies group with 7 updates
+- release: v0.1.8
+
 ## [0.1.8] - 2025-08-01
 
 ### 🔒 Security Enhancements
