@@ -689,11 +689,72 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // System Message
   systemMessage: '',
   setSystemMessage: message => {
+    const state = get();
     set({ systemMessage: message });
+
     // Save to backend preferences when system message is updated
     preferencesApi.setSystemMessage(message).catch(_error => {
       console.warn('Failed to save system message to backend:', _error);
     });
+
+    // Update the system message in the current session if it exists
+    if (state.currentSession) {
+      const systemMessageIndex = state.currentSession.messages.findIndex(
+        msg => msg.role === 'system'
+      );
+
+      if (systemMessageIndex !== -1) {
+        // Update existing system message in the store
+        set(state => {
+          const updatedSessions = state.sessions.map(session => {
+            if (session.id === state.currentSession?.id) {
+              const updatedMessages = session.messages.map((msg, index) => {
+                if (index === systemMessageIndex && msg.role === 'system') {
+                  return {
+                    ...msg,
+                    content: message,
+                    timestamp: Date.now(),
+                  };
+                }
+                return msg;
+              });
+
+              return {
+                ...session,
+                messages: updatedMessages,
+                updatedAt: Date.now(),
+              };
+            }
+            return session;
+          });
+
+          const updatedCurrentSession = state.currentSession
+            ? updatedSessions.find(s => s.id === state.currentSession!.id) ||
+              state.currentSession
+            : null;
+
+          return {
+            sessions: updatedSessions,
+            currentSession: updatedCurrentSession,
+          };
+        });
+
+        // Also update the system message on the backend
+        const systemMessage = state.currentSession.messages[systemMessageIndex];
+        chatApi
+          .updateMessage(state.currentSession.id, systemMessage.id, {
+            content: message,
+          })
+          .catch(_error => {
+            console.warn(
+              'Failed to sync system message update to backend:',
+              _error
+            );
+          });
+
+        console.log('✅ Updated system message in current session');
+      }
+    }
   },
 
   // UI state

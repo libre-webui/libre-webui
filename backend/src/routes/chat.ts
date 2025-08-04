@@ -237,6 +237,46 @@ router.put(
   }
 );
 
+// Update a message in a chat session
+router.put(
+  '/sessions/:sessionId/messages/:messageId',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<ChatMessage>>
+  ): Promise<void> => {
+    try {
+      const { sessionId, messageId } = req.params;
+      const updates = req.body;
+      const userId = req.user?.userId || 'default';
+
+      const updatedMessage = chatService.updateMessage(
+        sessionId,
+        messageId,
+        updates,
+        userId
+      );
+
+      if (!updatedMessage) {
+        res.status(404).json({
+          success: false,
+          error: 'Session or message not found',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: updatedMessage,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to update message'),
+      });
+    }
+  }
+);
+
 // Delete a chat session
 router.delete(
   '/sessions/:sessionId',

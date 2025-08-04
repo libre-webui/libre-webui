@@ -472,6 +472,13 @@ wss.on('connection', (ws, req) => {
               content: msg.content,
             };
 
+            // Debug: Log what we're sending to Ollama
+            if (msg.role === 'system') {
+              console.log(
+                `🚀 [DEBUG] Sending to Ollama - System message: "${msg.content.substring(0, 150)}${msg.content.length > 150 ? '...' : ''}"`
+              );
+            }
+
             // Use enhanced content for the last user message if we have document context
             if (
               msg.role === 'user' &&

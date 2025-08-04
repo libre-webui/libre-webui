@@ -150,7 +150,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         overscrollBehaviorY: 'contain',
       }}
     >
-      <div className='max-w-4xl mx-auto px-3 sm:px-4 md:px-6'>
+      <div className='max-w-4xl mx-auto px-3 sm:px-4 md:px-6 w-full min-w-0'>
         {messages.map((message, index) => {
           const isLastMessage = index === messages.length - 1;
           const isStreamingThisMessage =

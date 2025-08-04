@@ -358,10 +358,10 @@ const App: React.FC = () => {
                     ? 'lg:ml-16'
                     : 'lg:ml-80'
                   : 'lg:ml-0',
-                // Mobile behavior: use transform to slide content right (preserves content width)
-                sidebarOpen && !sidebarCompact
-                  ? 'max-lg:translate-x-64'
-                  : 'max-lg:translate-x-0',
+                // Mobile behavior:
+                // - Compact sidebar: push content right to avoid overlap
+                // - Expanded sidebar: overlay (no transform)
+                sidebarOpen && sidebarCompact ? 'max-lg:ml-16' : 'max-lg:ml-0',
                 hasActiveBackground()
                   ? 'bg-white/30 dark:bg-dark-50/30'
                   : 'bg-white dark:bg-dark-50'
@@ -424,10 +424,12 @@ const App: React.FC = () => {
                             ? 'lg:ml-16'
                             : 'lg:ml-80'
                           : 'lg:ml-0',
-                        // Mobile behavior: use transform to slide content right (preserves content width)
-                        sidebarOpen && !sidebarCompact
-                          ? 'max-lg:translate-x-64'
-                          : 'max-lg:translate-x-0',
+                        // Mobile behavior:
+                        // - Compact sidebar: push content right to avoid overlap
+                        // - Expanded sidebar: overlay (no transform)
+                        sidebarOpen && sidebarCompact
+                          ? 'max-lg:ml-16'
+                          : 'max-lg:ml-0',
                         hasActiveBackground()
                           ? 'bg-white/30 dark:bg-dark-50/30'
                           : 'bg-white dark:bg-dark-50'

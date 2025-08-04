@@ -264,6 +264,19 @@ export const chatApi = {
       .post(`/chat/sessions/${sessionId}/messages`, message)
       .then(res => res.data),
 
+  updateMessage: (
+    sessionId: string,
+    messageId: string,
+    updates: Partial<ChatMessage>
+  ): Promise<ApiResponse<ChatMessage>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<ChatMessage>({} as ChatMessage);
+    }
+    return api
+      .put(`/chat/sessions/${sessionId}/messages/${messageId}`, updates)
+      .then(res => res.data);
+  },
+
   // Chat generation using new Ollama chat API
   generateChatResponse: (
     sessionId: string,

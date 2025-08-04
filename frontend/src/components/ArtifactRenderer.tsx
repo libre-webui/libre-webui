@@ -156,7 +156,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       <iframe
         ref={iframeRef}
         srcDoc={htmlContent}
-        className='w-full h-96 border-0 rounded-lg'
+        className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg'
         sandbox='allow-scripts allow-same-origin'
         title={artifact.title}
       />
@@ -167,13 +167,13 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     try {
       return (
         <div
-          className='w-full h-96 flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-200'
+          className='w-full h-64 sm:h-80 lg:h-96 flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-200'
           dangerouslySetInnerHTML={{ __html: artifact.content }}
         />
       );
     } catch (_err) {
       return (
-        <div className='w-full h-96 flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-200'>
+        <div className='w-full h-64 sm:h-80 lg:h-96 flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-200'>
           <div className='text-center'>
             <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
             <p className='text-sm text-gray-600 dark:text-gray-400'>
@@ -207,7 +207,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     };
 
     return (
-      <div className='relative max-h-96 overflow-auto'>
+      <div className='relative max-h-64 sm:max-h-80 lg:max-h-96 overflow-auto'>
         <OptimizedSyntaxHighlighter
           language={getLanguage()}
           isDark={theme.mode === 'dark'}
@@ -225,7 +225,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       const formattedJson = JSON.stringify(parsedJson, null, 2);
 
       return (
-        <div className='relative max-h-96 overflow-auto'>
+        <div className='relative max-h-64 sm:max-h-80 lg:max-h-96 overflow-auto'>
           <OptimizedSyntaxHighlighter
             language='json'
             isDark={theme.mode === 'dark'}
@@ -283,92 +283,177 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     <div
       className={cn(
         'border border-gray-200 dark:border-dark-200 rounded-xl bg-white dark:bg-dark-25 shadow-lg transition-all duration-300 hover:shadow-xl',
+        'w-full max-w-full overflow-hidden', // Ensure it doesn't overflow on mobile
         isFullscreen && 'fixed inset-4 z-50 shadow-2xl animate-scale-in',
         !isFullscreen && 'animate-fade-in',
         className
       )}
     >
       {/* Header */}
-      <div className='flex items-center justify-between p-4 border-b border-gray-100 dark:border-dark-200'>
-        <div className='flex items-center gap-3'>
+      <div className='px-1.5 py-1.5 sm:p-4 border-b border-gray-100 dark:border-dark-200'>
+        {/* Mobile: Vertical Stack */}
+        <div className='flex flex-col gap-2 sm:hidden'>
+          {/* Title Row */}
           <div className='flex items-center gap-2'>
-            {getIcon()}
-            <h3 className='font-semibold text-gray-900 dark:text-gray-100 truncate'>
+            <div className='h-4 w-4 flex-shrink-0 flex items-center justify-center'>
+              {getIcon()}
+            </div>
+            <h3 className='font-medium text-gray-900 dark:text-gray-100 truncate text-sm leading-tight flex-1'>
               {artifact.title}
             </h3>
           </div>
-          <span className='text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full font-medium'>
-            {artifact.type.toUpperCase()}
-          </span>
-        </div>
 
-        <div className='flex items-center gap-1'>
-          {/* View mode toggle for previewable artifacts */}
-          {shouldShowViewToggle() && (
-            <>
-              <Button
-                variant={viewMode === 'preview' ? 'primary' : 'ghost'}
-                size='sm'
-                onClick={() => setViewMode('preview')}
-                className='h-8 px-3 text-xs'
-                title='Preview mode'
-              >
-                <Eye className='h-3 w-3 mr-1' />
-                Preview
-              </Button>
-              <Button
-                variant={viewMode === 'code' ? 'primary' : 'ghost'}
-                size='sm'
-                onClick={() => setViewMode('code')}
-                className='h-8 px-3 text-xs'
-                title='Code mode'
-              >
-                <Code2 className='h-3 w-3 mr-1' />
-                Code
-              </Button>
-              <div className='w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1' />
-            </>
-          )}
-
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => copyToClipboard(artifact.content)}
-            className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
-            title='Copy content'
-          >
-            {copied ? (
-              <Check className='h-4 w-4 text-green-500' />
-            ) : (
-              <Copy className='h-4 w-4' />
+          {/* Buttons Row */}
+          <div className='flex items-center justify-end gap-0.5'>
+            {/* View mode toggle for previewable artifacts */}
+            {shouldShowViewToggle() && (
+              <>
+                <Button
+                  variant={viewMode === 'preview' ? 'primary' : 'ghost'}
+                  size='sm'
+                  onClick={() => setViewMode('preview')}
+                  className='h-5 px-0.5 text-xs'
+                  title='Preview mode'
+                >
+                  <Eye className='h-2.5 w-2.5' />
+                </Button>
+                <Button
+                  variant={viewMode === 'code' ? 'primary' : 'ghost'}
+                  size='sm'
+                  onClick={() => setViewMode('code')}
+                  className='h-5 px-0.5 text-xs'
+                  title='Code mode'
+                >
+                  <Code2 className='h-2.5 w-2.5' />
+                </Button>
+                <div className='w-px h-2 bg-gray-300 dark:bg-gray-600 mx-0.5' />
+              </>
             )}
-          </Button>
 
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={downloadArtifact}
-            className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
-            title='Download'
-          >
-            <Download className='h-4 w-4' />
-          </Button>
-
-          {onFullscreenToggle && (
             <Button
               variant='ghost'
               size='sm'
-              onClick={onFullscreenToggle}
-              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
-              title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              onClick={() => copyToClipboard(artifact.content)}
+              className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 touch-manipulation'
+              title='Copy content'
             >
-              {isFullscreen ? (
-                <Minimize2 className='h-4 w-4' />
+              {copied ? (
+                <Check className='h-2.5 w-2.5 text-green-500' />
               ) : (
-                <Maximize2 className='h-4 w-4' />
+                <Copy className='h-2.5 w-2.5' />
               )}
             </Button>
-          )}
+
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={downloadArtifact}
+              className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 touch-manipulation'
+              title='Download'
+            >
+              <Download className='h-2.5 w-2.5' />
+            </Button>
+
+            {onFullscreenToggle && (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={onFullscreenToggle}
+                className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 touch-manipulation border border-gray-200 dark:border-dark-300 hover:border-gray-300 dark:hover:border-dark-400'
+                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className='h-2.5 w-2.5' />
+                ) : (
+                  <Maximize2 className='h-2.5 w-2.5' />
+                )}
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop: Horizontal Layout */}
+        <div className='hidden sm:flex items-center justify-between'>
+          <div className='flex items-center gap-3'>
+            <div className='flex items-center gap-2'>
+              {getIcon()}
+              <h3 className='font-semibold text-gray-900 dark:text-gray-100 truncate'>
+                {artifact.title}
+              </h3>
+            </div>
+            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full font-medium'>
+              {artifact.type.toUpperCase()}
+            </span>
+          </div>
+
+          <div className='flex items-center gap-1'>
+            {/* View mode toggle for previewable artifacts */}
+            {shouldShowViewToggle() && (
+              <>
+                <Button
+                  variant={viewMode === 'preview' ? 'primary' : 'ghost'}
+                  size='sm'
+                  onClick={() => setViewMode('preview')}
+                  className='h-8 px-3 text-xs'
+                  title='Preview mode'
+                >
+                  <Eye className='h-3 w-3 mr-1' />
+                  Preview
+                </Button>
+                <Button
+                  variant={viewMode === 'code' ? 'primary' : 'ghost'}
+                  size='sm'
+                  onClick={() => setViewMode('code')}
+                  className='h-8 px-3 text-xs'
+                  title='Code mode'
+                >
+                  <Code2 className='h-3 w-3 mr-1' />
+                  Code
+                </Button>
+                <div className='w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1' />
+              </>
+            )}
+
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => copyToClipboard(artifact.content)}
+              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+              title='Copy content'
+            >
+              {copied ? (
+                <Check className='h-4 w-4 text-green-500' />
+              ) : (
+                <Copy className='h-4 w-4' />
+              )}
+            </Button>
+
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={downloadArtifact}
+              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+              title='Download'
+            >
+              <Download className='h-4 w-4' />
+            </Button>
+
+            {onFullscreenToggle && (
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={onFullscreenToggle}
+                className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+              >
+                {isFullscreen ? (
+                  <Minimize2 className='h-4 w-4' />
+                ) : (
+                  <Maximize2 className='h-4 w-4' />
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 

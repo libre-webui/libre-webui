@@ -116,8 +116,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const handleSaveSystemMessage = async () => {
     setIsSaving(true);
     try {
-      await setSystemMessage(editedContent);
+      setSystemMessage(editedContent);
       setIsEditing(false);
+      console.log('✅ System message updated:', editedContent);
     } catch (error) {
       console.error('Failed to save system message:', error);
     } finally {
@@ -183,7 +184,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             {getDisplayName()}
           </span>
           {message.model && !isUser && !isSystem && (
-            <span className='text-xs text-gray-500 dark:text-dark-600 bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full'>
+            <span
+              className='text-xs text-gray-500 dark:text-dark-600 bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full truncate max-w-32 sm:max-w-48'
+              title={message.model}
+            >
               {message.model}
             </span>
           )}

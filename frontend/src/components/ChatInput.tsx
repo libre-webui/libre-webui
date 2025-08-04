@@ -221,30 +221,43 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
 
-      {/* Main Input Area */}
+      {/* Main Input Area - Unified Input Bar */}
       <div className='p-3 sm:p-4'>
-        <form onSubmit={handleSubmit} className='flex gap-2 sm:gap-3'>
-          {/* Advanced Features Toggle - Left Side */}
-          <div className='flex flex-col justify-end'>
+        <form onSubmit={handleSubmit}>
+          {/* Unified Input Container */}
+          <div
+            className={cn(
+              'flex items-center gap-2 p-2 sm:p-3 rounded-2xl sm:rounded-3xl border transition-all duration-200',
+              'bg-gray-50 dark:bg-dark-50 border-gray-200 dark:border-dark-300',
+              'hover:border-gray-300 dark:hover:border-dark-400',
+              'focus-within:border-primary-400 dark:focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-dark-50',
+              'shadow-sm hover:shadow-md focus-within:shadow-lg'
+            )}
+          >
+            {/* Advanced Features Toggle - Integrated Left */}
             <Button
               type='button'
-              variant='outline'
-              size='md'
+              variant='ghost'
+              size='sm'
               onClick={() => setShowAdvanced(!showAdvanced)}
               className={cn(
-                'h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] p-0 border-gray-200 dark:border-dark-300',
-                'hover:border-gray-300 dark:hover:border-dark-400 transition-colors',
-                'active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation',
-                hasAdvancedFeatures &&
-                  'border-primary-500 bg-primary-50 dark:bg-primary-900/20 hover:border-primary-600',
-                showAdvanced && 'bg-gray-100 dark:bg-dark-200'
+                'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
+                'hover:bg-gray-200 dark:hover:bg-dark-200 transition-colors touch-manipulation',
+                hasAdvancedFeatures && 'text-primary-600 dark:text-primary-400',
+                showAdvanced && 'bg-gray-200 dark:bg-dark-200'
               )}
               title='Attachments and advanced features'
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0',
+              }}
             >
               {hasAdvancedFeatures ? (
-                <div className='relative'>
+                <div className='relative flex items-center justify-center'>
                   <Paperclip className='h-4 w-4' />
-                  <div className='absolute -top-1 -right-1 h-2 w-2 bg-primary-500 rounded-full' />
+                  <div className='absolute -top-0.5 -right-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
                 </div>
               ) : showAdvanced ? (
                 <Minus className='h-4 w-4' />
@@ -252,82 +265,93 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 <Plus className='h-4 w-4' />
               )}
             </Button>
-          </div>
 
-          <div className='flex-1 min-w-0'>
-            <Textarea
-              ref={textareaRef}
-              value={message}
-              onChange={e => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder='Type your message... (Enter to send, Shift+Enter for new line)'
-              disabled={disabled}
-              className={cn(
-                'min-h-[44px] sm:min-h-[52px] max-h-[200px] resize-none bg-gray-50 dark:bg-dark-50 border-gray-200 dark:border-dark-300',
-                'scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400',
-                'focus:bg-white dark:focus:bg-dark-50 touch-manipulation',
-                'text-base sm:text-sm' // Prevent zoom on iOS
-              )}
-              rows={1}
-            />
-          </div>
-
-          {/* Model Selector - Before Send Button - Hidden on very small screens */}
-          {currentSession && models.length > 0 && (
-            <div className='hidden xs:flex flex-col justify-end'>
-              <ModelSelector
-                models={models}
-                selectedModel={
-                  currentSession.personaId
-                    ? `persona:${currentSession.personaId}`
-                    : currentSession.model
-                }
-                onModelChange={handleModelOrPersonaChange}
-                currentPersona={currentPersona}
-                className='flex-shrink-0 min-w-[80px] max-w-[120px] sm:max-w-[200px]'
-                compact
+            {/* Text Input Area */}
+            <div className='flex-1 min-w-0'>
+              <Textarea
+                ref={textareaRef}
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder='Send a message'
+                disabled={disabled}
+                className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 text-base sm:text-sm leading-none touch-manipulation'
+                rows={1}
+                style={{
+                  boxShadow: 'none !important',
+                  border: 'none !important',
+                  outline: 'none !important',
+                  background: 'transparent !important',
+                  padding: '0 !important',
+                  margin: '0 !important',
+                  lineHeight: '1.2 !important',
+                  verticalAlign: 'middle',
+                }}
               />
             </div>
-          )}
 
-          {/* Send/Stop Button - Right Side */}
-          <div className='flex flex-col justify-end'>
-            {isGenerating ? (
-              <Button
-                type='button'
-                variant='outline'
-                size='md'
-                onClick={handleStopGeneration}
-                className={cn(
-                  'h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] p-0 border-gray-200 dark:border-dark-300',
-                  'hover:border-gray-300 dark:hover:border-dark-400 active:bg-gray-100 dark:active:bg-dark-200',
-                  'touch-manipulation'
-                )}
-                title='Stop generation'
-              >
-                <Square className='h-4 w-4' />
-              </Button>
-            ) : (
-              <Button
-                type='submit'
-                variant='primary'
-                size='md'
-                disabled={!message.trim() || disabled}
-                className={cn(
-                  'h-[44px] w-[44px] sm:h-[52px] sm:w-[52px] p-0 shadow-md hover:shadow-lg disabled:shadow-sm',
-                  'active:shadow-sm active:scale-95 transition-all duration-150 touch-manipulation'
-                )}
-                title='Send message'
-              >
-                <Send className='h-4 w-4' />
-              </Button>
-            )}
+            {/* Integrated Controls Row */}
+            <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
+              {/* Model Selector - Integrated */}
+              {currentSession && models.length > 0 && (
+                <div className='hidden sm:block'>
+                  <ModelSelector
+                    models={models}
+                    selectedModel={
+                      currentSession.personaId
+                        ? `persona:${currentSession.personaId}`
+                        : currentSession.model
+                    }
+                    onModelChange={handleModelOrPersonaChange}
+                    currentPersona={currentPersona}
+                    className='min-w-[160px] max-w-[240px] border-0 bg-gray-100 dark:bg-dark-100 rounded-xl text-sm'
+                    compact
+                  />
+                </div>
+              )}
+
+              {/* Send/Stop Button - Integrated Right */}
+              {isGenerating ? (
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  onClick={handleStopGeneration}
+                  className={cn(
+                    'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                    'hover:bg-gray-200 dark:hover:bg-dark-200 transition-colors touch-manipulation'
+                  )}
+                  title='Stop generation'
+                >
+                  <Square className='h-4 w-4' />
+                </Button>
+              ) : (
+                <Button
+                  type='submit'
+                  variant='ghost'
+                  size='sm'
+                  disabled={!message.trim() || disabled}
+                  className={cn(
+                    'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                    'hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400',
+                    'disabled:text-gray-400 dark:disabled:text-dark-500 disabled:hover:bg-transparent',
+                    'transition-all duration-150 touch-manipulation',
+                    message.trim() &&
+                      !disabled &&
+                      'hover:scale-105 active:scale-95'
+                  )}
+                  title='Send message'
+                >
+                  <Send className='h-4 w-4' />
+                </Button>
+              )}
+            </div>
           </div>
         </form>
 
         {/* Mobile-only Model Selector */}
         {currentSession && models.length > 0 && (
-          <div className='xs:hidden mt-2'>
+          <div className='sm:hidden mt-3'>
             <ModelSelector
               models={models}
               selectedModel={
@@ -337,7 +361,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               }
               onModelChange={handleModelOrPersonaChange}
               currentPersona={currentPersona}
-              className='w-full'
+              className='w-full rounded-xl bg-gray-100 dark:bg-dark-100 border-0'
               compact
             />
           </div>

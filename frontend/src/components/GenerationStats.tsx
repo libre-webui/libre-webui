@@ -73,7 +73,10 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
           {totalDuration}
         </span>
         {statistics.model && (
-          <span className='text-gray-400 dark:text-dark-400 bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full'>
+          <span
+            className='text-gray-400 dark:text-dark-400 bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full truncate max-w-32 sm:max-w-48'
+            title={statistics.model}
+          >
             {statistics.model}
           </span>
         )}
