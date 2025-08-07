@@ -12,12 +12,18 @@
   "codestral-2411-rc5",
   "codestral-2412",
   "codestral-2501",
+  "codestral-2508",
   "codestral-latest",
+  "devstral-medium-2507",
+  "devstral-medium-latest",
   "devstral-small-2505",
+  "devstral-small-2507",
   "devstral-small-latest",
   "magistral-medium-2506",
+  "magistral-medium-2507",
   "magistral-medium-latest",
   "magistral-small-2506",
+  "magistral-small-2507",
   "magistral-small-latest",
   "ministral-3b-2410",
   "ministral-3b-latest",
@@ -56,6 +62,11 @@
   "pixtral-12b-2409",
   "pixtral-12b-latest",
   "pixtral-large-2411",
-  "pixtral-large-latest"
+  "pixtral-large-latest",
+  "voxtral-mini-2507",
+  "voxtral-mini-latest",
+  "voxtral-mini-transcribe-2507",
+  "voxtral-small-2507",
+  "voxtral-small-latest"
 ]
 }

@@ -6,6 +6,30 @@
 echo "🤖 Universal AI Model Updater"
 echo "================================"
 
+# Function to load environment variables from .env file
+load_env() {
+    local env_file="$1"
+    if [ -f "$env_file" ]; then
+        echo -e "${BLUE}📁 Loading environment variables from ${env_file}${NC}"
+        # Export variables from .env file (ignoring comments and empty lines)
+        while IFS='=' read -r key value; do
+            # Skip comments and empty lines
+            if [[ $key =~ ^[[:space:]]*# ]] || [[ -z $key ]]; then
+                continue
+            fi
+            # Remove leading/trailing whitespace and quotes
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | xargs | sed 's/^["'\'']\|["'\'']$//g')
+            # Export the variable
+            export "$key=$value"
+        done < "$env_file"
+        return 0
+    else
+        echo -e "${YELLOW}⚠️  Environment file not found: ${env_file}${NC}"
+        return 1
+    fi
+}
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -45,6 +69,24 @@ update_provider() {
         echo -e "${RED}❌ $provider: Update script not found (scripts/$script_name)${NC}"
     fi
 }
+
+# Find and load environment variables from backend .env file
+# Try different possible paths for the .env file
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+if [ -f "$PROJECT_ROOT/backend/.env" ]; then
+    load_env "$PROJECT_ROOT/backend/.env"
+elif [ -f "$SCRIPT_DIR/../backend/.env" ]; then
+    load_env "$SCRIPT_DIR/../backend/.env"
+elif [ -f "./backend/.env" ]; then
+    load_env "./backend/.env"
+else
+    echo -e "${YELLOW}⚠️  No .env file found in expected locations${NC}"
+    echo -e "${YELLOW}    Tried: $PROJECT_ROOT/backend/.env${NC}"
+    echo -e "${YELLOW}    Tried: $SCRIPT_DIR/../backend/.env${NC}"  
+    echo -e "${YELLOW}    Tried: ./backend/.env${NC}"
+fi
 
 echo -e "\n${BLUE}📋 Checking API keys...${NC}"
 

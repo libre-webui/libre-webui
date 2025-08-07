@@ -10,8 +10,6 @@
   },
   "model_map": [
   "AI21-Jamba-Instruct",
-  "Cohere-command-r",
-  "Cohere-command-r-plus",
   "gpt-4o",
   "gpt-4o-mini",
   "Meta-Llama-3-70B-Instruct",
