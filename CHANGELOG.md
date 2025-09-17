@@ -15,6 +15,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.1.10] - 2025-09-17
+
+### ✨ Added
+
+- adding env var loading in update script tool + update all plugins
+
+### 🔧 Technical Improvements
+
+- update: package-lock
+- fix upper round coerner in SettingsModal
+- reposition KeyboardShortcutsIndicator to top-right corner
+- update SettingsModal layout responsiveness
+- update package-lock.json
+- update preview
+- update changelog for version 0.1.9 with mobile experience enhancements and bug fixes
+
+### 🔄 Other Changes
+
+- deps(deps): bump the all-dependencies group with 7 updates
+- deps(deps): bump the all-dependencies group with 12 updates
+- ci(deps): bump actions/setup-node from 4 to 5
+- deps(deps): bump the all-dependencies group with 11 updates
+- ci(deps): bump actions/checkout from 4 to 5
+- deps(deps): bump the all-dependencies group with 7 updates
+- deps(deps): bump the all-dependencies group with 8 updates
+
 ## [0.1.9] - 2025-08-04
 
 ### 📱 Mobile Experience Revolution
