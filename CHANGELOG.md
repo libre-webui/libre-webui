@@ -17,29 +17,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.10] - 2025-09-17
 
-### ✨ Added
+### 🎨 UI/UX Enhancements
 
-- adding env var loading in update script tool + update all plugins
+- **Fixed SettingsModal Corner Rendering:** Resolved visual bug where header border overlapped with container's rounded corners, creating an imperfect border appearance in the upper corners
+- **Enhanced Keyboard Shortcuts Indicator:** Repositioned the KeyboardShortcutsIndicator to the top-right corner for better visual hierarchy and accessibility
+- **Improved SettingsModal Layout:** Enhanced responsive behavior and layout consistency across different screen sizes
+
+### ⚙️ Developer Experience
+
+- **Enhanced Update Script:** Added environment variable loading support to the update script tool, enabling dynamic configuration during plugin updates and system maintenance
+- **Plugin System Improvements:** Streamlined the plugin update process with better environment configuration handling
 
 ### 🔧 Technical Improvements
 
-- update: package-lock
-- fix upper round coerner in SettingsModal
-- reposition KeyboardShortcutsIndicator to top-right corner
-- update SettingsModal layout responsiveness
-- update package-lock.json
-- update preview
-- update changelog for version 0.1.9 with mobile experience enhancements and bug fixes
-
-### 🔄 Other Changes
-
-- deps(deps): bump the all-dependencies group with 7 updates
-- deps(deps): bump the all-dependencies group with 12 updates
-- ci(deps): bump actions/setup-node from 4 to 5
-- deps(deps): bump the all-dependencies group with 11 updates
-- ci(deps): bump actions/checkout from 4 to 5
-- deps(deps): bump the all-dependencies group with 7 updates
-- deps(deps): bump the all-dependencies group with 8 updates
+- **Dependency Security Updates:** Comprehensive dependency updates including 47+ package updates across development and production dependencies
+- **CI Pipeline Enhancements:** Updated GitHub Actions workflow dependencies (actions/setup-node v4→v5, actions/checkout v4→v5) for improved build reliability
+- **Package Management:** Optimized package-lock.json for better dependency resolution and security
 
 ## [0.1.9] - 2025-08-04
 
