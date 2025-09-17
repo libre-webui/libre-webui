@@ -2402,7 +2402,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       <div className='fixed inset-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 z-50 w-full lg:max-w-4xl lg:mx-4 h-full lg:h-[85vh] p-0 lg:p-4'>
         <div className='bg-white dark:bg-dark-25 rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-200 animate-scale-in flex flex-col h-full overscroll-behavior-contain'>
           {/* Header */}
-          <div className='flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-dark-200 bg-white dark:bg-dark-25 sticky top-0 z-10 rounded-t-2xl'>
+          <div className='flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-dark-200 sticky top-0 z-10 rounded-t-2xl'>
             <h2 className='text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100'>
               Settings
             </h2>
