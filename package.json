@@ -59,7 +59,7 @@
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.34.0",
     "concurrently": "^9.2.1",
-    "eslint": "^9.35.0",
+    "eslint": "^9.36.0",
     "prettier": "^3.6.0"
   },
   "keywords": [
