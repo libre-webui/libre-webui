@@ -22,16 +22,16 @@
     "@types/pdf-parse": "^1.1.5",
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
-    "better-sqlite3": "^12.3.0",
+    "better-sqlite3": "^12.4.1",
     "cors": "^2.8.5",
-    "dotenv": "^17.2.2",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
-    "pdfjs-dist": "^5.4.149",
+    "pdfjs-dist": "^5.4.296",
     "sanitize-filename": "^1.6.3",
     "uuid": "^13.0.0",
     "ws": "^8.14.2"
@@ -43,13 +43,13 @@
     "@types/express": "^5.0.3",
     "@types/express-rate-limit": "^6.0.2",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^24.5.2",
+    "@types/node": "^24.7.0",
     "@types/uuid": "^11.0.0",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.34.0",
-    "eslint": "^9.36.0",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "eslint": "^9.37.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
   }
 }
