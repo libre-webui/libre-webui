@@ -77,6 +77,51 @@
 
 ---
 
+## 💼 Enterprise Services
+
+<div align="center">
+
+### **Professional Deployment & Support for Organizations**
+
+Need help deploying LibreWebUI for your team? Kroonen AI offers enterprise services for organizations requiring professional setup, compliance consulting, and ongoing support.
+
+</div>
+
+<table>
+<tr>
+<td width="50%" align="center">
+
+### 🚀 **What We Offer**
+
+- **Production Deployment** - AWS, Azure, GCP, on-premise
+- **SSO Integration** - GitHub, Okta, Azure AD, SAML
+- **Compliance Consulting** - GDPR, HIPAA, SOC 2
+- **Custom Development** - Integrations, features, workflows
+- **Managed Support** - Ongoing maintenance and updates
+
+</td>
+<td width="50%" align="center">
+
+### 🎯 **Perfect For**
+
+- **Healthcare** - HIPAA-compliant AI infrastructure
+- **Legal** - Privileged document analysis
+- **Finance** - SOC 2 compliant AI platforms
+- **Research** - Private data processing
+- **Enterprise** - Teams requiring professional support
+
+</td>
+</tr>
+</table>
+
+<div align="center">
+
+**[📋 Learn More About Enterprise Services →](https://kroonen.ai/librewebui)**
+
+</div>
+
+---
+
 ## ⚡ Quick Start
 
 <div align="center">
@@ -738,6 +783,68 @@ libre-webui/
 
 ---
 
+## 💖 Support This Project
+
+<div align="center">
+
+### **Help Keep LibreWebUI Free & Open Source**
+
+LibreWebUI is built with passion and maintained independently. Your support helps fund development, infrastructure, and new features.
+
+</div>
+
+<table>
+<tr>
+<td width="50%" align="center">
+
+### ☕ **For Individuals**
+
+**Every contribution matters!**
+
+- ✨ Sponsor badge on your profile
+- 🙏 Eternal gratitude from the maintainer
+- 🚀 Help fund active development
+- 🔒 Keep privacy-first AI accessible
+
+<p align="center">
+  <a href="https://github.com/sponsors/libre-webui">
+    <img src="https://img.shields.io/badge/Sponsor-❤️-red?style=for-the-badge&logo=github" alt="Sponsor on GitHub">
+  </a>
+</p>
+
+</td>
+<td width="50%" align="center">
+
+### 🏢 **For Companies**
+
+**Using LibreWebUI in production?**
+
+Consider sponsoring or [enterprise support](https://kroonen.ai/librewebui):
+
+- 💼 Company logo on README (optional)
+- 🎯 Influence roadmap priorities
+- 📧 Direct communication channel
+- ⚡ Priority issue responses
+
+**Sponsorship helps us:**
+
+- 🛠️ Maintain and improve LibreWebUI
+- 🔐 Keep security updates flowing
+- 📚 Create better documentation
+- 🌟 Add community-requested features
+
+</td>
+</tr>
+</table>
+
+<div align="center">
+
+**[💝 Become a Sponsor](https://github.com/sponsors/libre-webui)** | **[🏢 Enterprise Services](https://kroonen.ai/librewebui)**
+
+</div>
+
+---
+
 ## 📄 License
 
 <div align="center">
@@ -750,6 +857,6 @@ _Copyright (C) 2025 Libre WebUI_
 
 ---
 
-<small>🚀 Powered by <a href="https://kroonen.ai">Kroonen AI</a></small>
+💖 [Sponsor Development](https://github.com/sponsors/libre-webui) | 🏢 [Enterprise Services](https://kroonen.ai/librewebui) | 🚀 Built by [Kroonen AI](https://kroonen.ai)
 
 </div>
