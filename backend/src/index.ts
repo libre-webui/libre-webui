@@ -519,9 +519,8 @@ wss.on('connection', (ws, req) => {
             console.log(
               `[WebSocket] DEBUG: Resolving persona ${personaId} for user ${userId}`
             );
-            const { personaService } = await import(
-              './services/personaService.js'
-            );
+            const { personaService } =
+              await import('./services/personaService.js');
 
             // Try to get persona for the current user first, then fallback to 'default'
             let persona = await personaService.getPersonaById(

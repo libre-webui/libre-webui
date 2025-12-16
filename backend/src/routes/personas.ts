@@ -472,9 +472,8 @@ router.get(
 
       try {
         const { memoryService } = await import('../services/memoryService.js');
-        const { mutationEngineService } = await import(
-          '../services/mutationEngineService.js'
-        );
+        const { mutationEngineService } =
+          await import('../services/mutationEngineService.js');
 
         memories = await memoryService.getMemories(userId, id, 1000, 0);
         const state = await mutationEngineService.getPersonaState(id, userId);

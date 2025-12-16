@@ -318,9 +318,8 @@ export class PersonaService {
     try {
       // Initialize mutation engine state if mutation settings are enabled
       if (features.mutation_settings?.enabled) {
-        const { mutationEngineService } = await import(
-          './mutationEngineService.js'
-        );
+        const { mutationEngineService } =
+          await import('./mutationEngineService.js');
         await mutationEngineService.initializePersonaState(personaId, userId);
       }
     } catch (error) {
