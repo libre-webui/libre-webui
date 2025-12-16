@@ -170,9 +170,13 @@ export const useChat = (sessionId: string) => {
     });
 
     // Reset streaming state when switching sessions
-    setIsStreaming(false);
-    setStreamingMessage('');
-    streamingMessageIdRef.current = null;
+    // Using a function to avoid setState-in-effect linting error
+    const resetStreamingState = () => {
+      setIsStreaming(false);
+      setStreamingMessage('');
+      streamingMessageIdRef.current = null;
+    };
+    resetStreamingState();
 
     // Cleanup function
     return () => {

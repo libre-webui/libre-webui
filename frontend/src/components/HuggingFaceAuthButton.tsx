@@ -29,38 +29,38 @@ export const HuggingFaceAuthButton: React.FC = () => {
 
   // Check if Hugging Face OAuth is configured by testing the auth endpoint
   useEffect(() => {
+    /**
+     * Check if Hugging Face OAuth is configured on the backend
+     */
+    const checkHuggingFaceOAuthConfig = async () => {
+      try {
+        // Check the OAuth status endpoint instead of the auth endpoint
+        const response = await fetch(
+          `${API_BASE_URL}/auth/oauth/huggingface/status`,
+          {
+            method: 'GET',
+            credentials: 'include',
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsConfigured(data.configured || false);
+          console.log('Hugging Face OAuth configured:', data.configured);
+        } else {
+          console.log('Hugging Face OAuth status check failed');
+          setIsConfigured(false);
+        }
+      } catch (error) {
+        // Hugging Face OAuth not configured, hide the button
+        console.log('Hugging Face OAuth not configured:', error);
+        setIsConfigured(false);
+      }
+    };
+
     checkHuggingFaceOAuthConfig();
     // OAuth callback handling is now done in useInitializeApp hook
   }, []);
-
-  /**
-   * Check if Hugging Face OAuth is configured on the backend
-   */
-  const checkHuggingFaceOAuthConfig = async () => {
-    try {
-      // Check the OAuth status endpoint instead of the auth endpoint
-      const response = await fetch(
-        `${API_BASE_URL}/auth/oauth/huggingface/status`,
-        {
-          method: 'GET',
-          credentials: 'include',
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setIsConfigured(data.configured || false);
-        console.log('Hugging Face OAuth configured:', data.configured);
-      } else {
-        console.log('Hugging Face OAuth status check failed');
-        setIsConfigured(false);
-      }
-    } catch (error) {
-      // Hugging Face OAuth not configured, hide the button
-      console.log('Hugging Face OAuth not configured:', error);
-      setIsConfigured(false);
-    }
-  };
 
   /**
    * Initiate Hugging Face OAuth login

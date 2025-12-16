@@ -29,35 +29,38 @@ export const GitHubAuthButton: React.FC = () => {
 
   // Check if GitHub OAuth is configured by testing the auth endpoint
   useEffect(() => {
+    /**
+     * Check if GitHub OAuth is configured on the backend
+     */
+    const checkGitHubOAuthConfig = async () => {
+      try {
+        // Check the OAuth status endpoint instead of the auth endpoint
+        const response = await fetch(
+          `${API_BASE_URL}/auth/oauth/github/status`,
+          {
+            method: 'GET',
+            credentials: 'include',
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsConfigured(data.configured || false);
+          console.log('GitHub OAuth configured:', data.configured);
+        } else {
+          console.log('GitHub OAuth status check failed');
+          setIsConfigured(false);
+        }
+      } catch (error) {
+        // GitHub OAuth not configured, hide the button
+        console.log('GitHub OAuth not configured:', error);
+        setIsConfigured(false);
+      }
+    };
+
     checkGitHubOAuthConfig();
     // OAuth callback handling is now done in useInitializeApp hook
   }, []);
-
-  /**
-   * Check if GitHub OAuth is configured on the backend
-   */
-  const checkGitHubOAuthConfig = async () => {
-    try {
-      // Check the OAuth status endpoint instead of the auth endpoint
-      const response = await fetch(`${API_BASE_URL}/auth/oauth/github/status`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setIsConfigured(data.configured || false);
-        console.log('GitHub OAuth configured:', data.configured);
-      } else {
-        console.log('GitHub OAuth status check failed');
-        setIsConfigured(false);
-      }
-    } catch (error) {
-      // GitHub OAuth not configured, hide the button
-      console.log('GitHub OAuth not configured:', error);
-      setIsConfigured(false);
-    }
-  };
 
   /**
    * Initiate GitHub OAuth login

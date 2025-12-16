@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import React, { useId } from 'react';
 import { cn } from '@/utils';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -32,7 +32,8 @@ export const Input: React.FC<InputProps> = ({
   id,
   ...props
 }) => {
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || `input-${generatedId}`;
 
   return (
     <div className='space-y-1'>
