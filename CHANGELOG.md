@@ -15,6 +15,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.1.11] - 2025-12-16
+
+### 🔒 Security Fixes
+
+- **Fixed High-Severity Vulnerabilities:** Resolved 3 critical security issues identified by Dependabot
+  - HIGH: glob CLI command injection via -c/--cmd (GHSA-5j98-mcp5-4vw2)
+  - HIGH: auth0/node-jws improperly verifies HMAC signature
+  - MODERATE: mdast-util-to-hast unsanitized class attribute (GHSA-4fh9-h7wg-q85m)
+  - MODERATE: body-parser denial of service vulnerability
+  - MODERATE: js-yaml prototype pollution in merge (GHSA-mh29-5h37-fv8m)
+  - MODERATE: vite server.fs.deny bypass on Windows
+- **Zero Vulnerabilities:** All security issues resolved via npm audit fix
+
+### 🐛 Bug Fixes
+
+- Fixed React linting errors for OAuth components (useEffect dependencies)
+- Replaced Math.random() with React.useId() hook in form components for proper ID generation
+- Resolved setState-in-effect warnings in useChat hook
+
+### 🔧 Technical Improvements
+
+- Updated 47+ dependencies for improved stability and security
+- CI pipeline enhancements: actions/checkout (5→6), actions/setup-node (5→6)
+- Code quality improvements to pass stricter React linting rules
+
 ## [0.1.10] - 2025-09-17
 
 ### 🎨 UI/UX Enhancements
