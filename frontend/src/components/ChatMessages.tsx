@@ -143,12 +143,16 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         '[-webkit-overflow-scrolling:touch]',
         className
       )}
-      style={{
-        // Ensure proper touch scrolling on mobile
-        WebkitOverflowScrolling: 'touch',
-        // Prevent rubber banding on iOS
-        overscrollBehaviorY: 'contain',
-      }}
+      style={
+        {
+          // Ensure proper touch scrolling on mobile
+          WebkitOverflowScrolling: 'touch',
+          // Prevent rubber banding on iOS
+          overscrollBehaviorY: 'contain',
+          // Ensure scrolling works in Electron (not captured by title bar drag)
+          WebkitAppRegion: 'no-drag',
+        } as React.CSSProperties
+      }
     >
       <div className='max-w-4xl mx-auto px-3 sm:px-4 md:px-6 w-full min-w-0'>
         {messages.map((message, index) => {

@@ -361,28 +361,76 @@ class PluginService {
 
     headers[activePlugin.auth.header] = authValue;
 
-    // Convert internal format to plugin-compatible format
-    const pluginMessages = messages.map(msg => ({
-      role: msg.role,
-      content: msg.content,
-    }));
-
     // Prepare request payload based on plugin type
     let payload: Record<string, unknown>;
 
     if (activePlugin.id === 'anthropic') {
       // Anthropic-specific payload format
       // Separate system messages from user/assistant messages
-      const systemMessages = pluginMessages.filter(
-        msg => msg.role === 'system'
-      );
-      const nonSystemMessages = pluginMessages.filter(
-        msg => msg.role !== 'system'
-      );
+      const systemMessages = messages.filter(msg => msg.role === 'system');
+      const nonSystemMessages = messages.filter(msg => msg.role !== 'system');
+
+      // Convert messages to Anthropic format with image support
+      const anthropicMessages = nonSystemMessages.map(msg => {
+        // Check if message has images
+        if (msg.images && msg.images.length > 0) {
+          // Anthropic format: content is an array of content blocks
+          const contentBlocks: Array<
+            | { type: 'text'; text: string }
+            | {
+                type: 'image';
+                source: { type: 'base64'; media_type: string; data: string };
+              }
+          > = [];
+
+          // Add images first
+          for (const image of msg.images) {
+            // Extract base64 data and media type from data URL
+            let base64Data = image;
+            let mediaType = 'image/jpeg'; // Default
+
+            if (image.startsWith('data:')) {
+              const match = image.match(/^data:([^;]+);base64,(.+)$/);
+              if (match) {
+                mediaType = match[1];
+                base64Data = match[2];
+              }
+            }
+
+            contentBlocks.push({
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType,
+                data: base64Data,
+              },
+            });
+          }
+
+          // Add text content
+          if (msg.content) {
+            contentBlocks.push({
+              type: 'text',
+              text: msg.content,
+            });
+          }
+
+          return {
+            role: msg.role,
+            content: contentBlocks,
+          };
+        }
+
+        // No images - simple text content
+        return {
+          role: msg.role,
+          content: msg.content,
+        };
+      });
 
       payload = {
         model,
-        messages: nonSystemMessages,
+        messages: anthropicMessages,
         max_tokens:
           options.num_predict && options.num_predict !== -1
             ? options.num_predict
@@ -401,17 +449,43 @@ class PluginService {
       // Add required anthropic-version header
       headers['anthropic-version'] = '2023-06-01';
     } else if (activePlugin.id === 'gemini') {
-      // Gemini-specific payload format
+      // Gemini-specific payload format with image support
+      const lastMessage = messages[messages.length - 1];
+      const parts: Array<{
+        text?: string;
+        inline_data?: { mime_type: string; data: string };
+      }> = [];
+
+      // Add images if present
+      if (lastMessage?.images && lastMessage.images.length > 0) {
+        for (const image of lastMessage.images) {
+          let base64Data = image;
+          let mimeType = 'image/jpeg';
+
+          if (image.startsWith('data:')) {
+            const match = image.match(/^data:([^;]+);base64,(.+)$/);
+            if (match) {
+              mimeType = match[1];
+              base64Data = match[2];
+            }
+          }
+
+          parts.push({
+            inline_data: {
+              mime_type: mimeType,
+              data: base64Data,
+            },
+          });
+        }
+      }
+
+      // Add text content
+      if (lastMessage?.content) {
+        parts.push({ text: lastMessage.content });
+      }
+
       payload = {
-        contents: [
-          {
-            parts: [
-              {
-                text: messages[messages.length - 1]?.content || '',
-              },
-            ],
-          },
-        ],
+        contents: [{ parts }],
         generationConfig: {
           temperature: options.temperature || 0.7,
           maxOutputTokens:
@@ -423,10 +497,41 @@ class PluginService {
         },
       };
     } else {
-      // Default OpenAI-compatible format
+      // Default OpenAI-compatible format with image support
+      const openaiMessages = messages.map(msg => {
+        // Check if message has images (OpenAI vision format)
+        if (msg.images && msg.images.length > 0) {
+          const content: Array<
+            | { type: 'text'; text: string }
+            | { type: 'image_url'; image_url: { url: string } }
+          > = [];
+
+          // Add images
+          for (const image of msg.images) {
+            // OpenAI expects data URLs or regular URLs
+            const imageUrl = image.startsWith('data:')
+              ? image
+              : `data:image/jpeg;base64,${image}`;
+            content.push({
+              type: 'image_url',
+              image_url: { url: imageUrl },
+            });
+          }
+
+          // Add text
+          if (msg.content) {
+            content.push({ type: 'text', text: msg.content });
+          }
+
+          return { role: msg.role, content };
+        }
+
+        return { role: msg.role, content: msg.content };
+      });
+
       payload = {
         model,
-        messages: pluginMessages,
+        messages: openaiMessages,
         temperature: options.temperature || 0.7,
         max_tokens:
           options.num_predict === -1 ? undefined : options.num_predict,
