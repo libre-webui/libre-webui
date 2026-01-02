@@ -198,6 +198,24 @@
   touch-action: manipulation;
 }
 
+/* Electron app region fixes for macOS hiddenInset titlebar */
+/* Prevent the entire window from being draggable in Electron */
+body {
+  -webkit-app-region: no-drag;
+}
+
+/* Make clickable elements explicitly non-draggable */
+button,
+a,
+input,
+textarea,
+select,
+[role='button'],
+.cursor-pointer {
+  -webkit-app-region: no-drag;
+  -webkit-user-drag: none;
+}
+
 /* Prevent double-tap zoom on iOS */
 input[type='text'],
 input[type='email'],

@@ -216,6 +216,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  // Check if running in Electron (file:// protocol)
+  const isElectron = window.location.protocol === 'file:';
+
   return (
     <>
       {/* Sidebar */}
@@ -243,12 +246,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           WebkitOverflowScrolling: 'touch',
         }}
       >
+        {/* Draggable area for Electron macOS title bar (below traffic lights) */}
+        {isElectron && (
+          <div
+            className='absolute top-0 left-16 right-0 h-8 z-[60]'
+            style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+          />
+        )}
         <div className='flex flex-col h-full'>
           {/* Header */}
           <div
             className={cn(
               'border-b border-gray-200/60 dark:border-dark-200/60',
-              sidebarCompact ? 'p-2' : 'p-3'
+              sidebarCompact ? 'p-2' : 'p-3',
+              // Add top padding for Electron macOS traffic lights
+              isElectron && 'pt-8'
             )}
           >
             <div
@@ -412,9 +424,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Sessions list */}
           <div
-            className='flex-1 overflow-y-auto scrollbar-thin border-t border-gray-200/60 dark:border-dark-200/60 overscroll-behavior-contain'
+            className='flex-1 overflow-y-auto scrollbar-thin border-t border-gray-200/60 dark:border-dark-200/60'
             style={{
               WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+              willChange: 'scroll-position',
             }}
           >
             <div className={cn('p-2.5', sidebarCompact && 'px-1')}>

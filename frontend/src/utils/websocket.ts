@@ -28,18 +28,23 @@ class WebSocketService {
 
   constructor() {
     // For WebSocket, we need to connect to the backend server (port 3001)
-    // not the frontend server (port 8080)
-    const apiBaseUrl =
-      import.meta.env.VITE_API_BASE_URL ||
-      `${window.location.protocol}//${window.location.hostname}:3001/api`;
+    // When running in Electron with file:// protocol, use localhost
+    let wsUrl: string;
 
-    // Remove /api from the end to get the base URL for WebSocket
-    const apiUrl = apiBaseUrl.replace(/\/api$/, '');
-    const wsUrl = apiUrl
-      .replace('http://', 'ws://')
-      .replace('https://', 'wss://');
+    if (window.location.protocol === 'file:') {
+      // Electron app - use localhost directly
+      wsUrl = 'ws://localhost:3001';
+    } else if (import.meta.env.VITE_API_BASE_URL) {
+      // Explicit API URL configured
+      const apiUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '');
+      wsUrl = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+    } else {
+      // Default: derive from window location
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.hostname}:3001`;
+    }
+
     this.url = `${wsUrl}/ws`;
-
     console.log('WebSocket URL constructed:', this.url);
   }
 

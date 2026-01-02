@@ -17,11 +17,28 @@
 
 import React, { useState, Suspense } from 'react';
 import {
-  BrowserRouter as Router,
+  BrowserRouter,
+  HashRouter,
   Routes,
   Route,
   useLocation,
 } from 'react-router-dom';
+
+// Use HashRouter for Electron (file:// protocol) since BrowserRouter doesn't work with file://
+const Router =
+  window.location.protocol === 'file:' ? HashRouter : BrowserRouter;
+const isElectron = window.location.protocol === 'file:';
+
+// Draggable title bar area for Electron macOS
+const ElectronTitleBar: React.FC = () => {
+  if (!isElectron) return null;
+  return (
+    <div
+      className='absolute top-0 left-0 right-0 h-8 z-50'
+      style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+    />
+  );
+};
 import { Toaster } from 'react-hot-toast';
 import { Sidebar } from '@/components/Sidebar';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -94,7 +111,6 @@ const App: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [isRetrying, setIsRetrying] = useState(false);
   const {
     sidebarOpen,
     sidebarCompact,
@@ -271,7 +287,6 @@ const App: React.FC = () => {
   // Auto-retry connection to backend when it's not available
   React.useEffect(() => {
     if (!systemInfo && !authLoading && retryCount < 15) {
-      setIsRetrying(true);
       const timer = setTimeout(async () => {
         setRetryCount(c => c + 1);
         try {
@@ -283,9 +298,6 @@ const App: React.FC = () => {
         }
       }, 2000);
       return () => clearTimeout(timer);
-    }
-    if (systemInfo) {
-      setIsRetrying(false);
     }
   }, [systemInfo, authLoading, retryCount]);
 
@@ -312,53 +324,32 @@ const App: React.FC = () => {
     );
   }
 
-  // Show friendly message if backend isn't reachable
+  // Show loading screen while waiting for backend
   if (!systemInfo) {
     return (
       <div className='min-h-screen bg-dark-50 flex items-center justify-center p-4'>
-        <div className='text-center max-w-md'>
-          <div className='flex justify-center mb-6'>
+        <div className='text-center'>
+          <div className='flex justify-center mb-8'>
             <img
               src='./logo-dark.png'
               alt='Libre WebUI'
-              className='h-20 w-20 rounded-lg'
+              className='h-24 w-24 rounded-xl'
             />
           </div>
-          <h2 className='text-xl font-semibold text-white mb-3'>
-            {isRetrying ? 'Connecting to Backend...' : 'Backend Not Running'}
-          </h2>
-          <p className='text-gray-400 mb-6'>
-            {isRetrying
-              ? 'Waiting for the backend server to start...'
-              : 'Libre WebUI needs the backend server to be running. Start it with:'}
-          </p>
-          {isRetrying ? (
-            <div className='flex justify-center mb-6'>
-              <div className='w-8 h-8 border-4 border-gray-600 border-t-primary-500 rounded-full animate-spin'></div>
-            </div>
-          ) : (
-            <>
-              <div className='bg-gray-800 rounded-lg p-4 mb-6 text-left'>
-                <code className='text-green-400 text-sm font-mono'>
-                  npm run dev:backend
-                </code>
-              </div>
-              <p className='text-gray-500 text-sm mb-6'>
-                Or run both frontend and backend together:
-              </p>
-              <div className='bg-gray-800 rounded-lg p-4 mb-6 text-left'>
-                <code className='text-green-400 text-sm font-mono'>
-                  npm run dev
-                </code>
-              </div>
-            </>
-          )}
-          <button
-            onClick={() => window.location.reload()}
-            className='bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 px-6 rounded-lg transition-colors'
+          <h1
+            className='libre-brand text-3xl text-white mb-8'
+            style={{ fontWeight: 300, letterSpacing: '0.02em' }}
           >
-            {isRetrying ? 'Retrying...' : 'Retry Connection'}
-          </button>
+            Libre WebUI
+          </h1>
+          <div className='flex justify-center mb-4'>
+            <div className='w-8 h-8 border-3 border-gray-700 border-t-primary-500 rounded-full animate-spin'></div>
+          </div>
+          <p className='text-gray-500 text-sm'>
+            {retryCount > 0
+              ? `Connecting to backend... (${retryCount}/15)`
+              : 'Starting up...'}
+          </p>
         </div>
       </div>
     );
@@ -396,6 +387,7 @@ const App: React.FC = () => {
                 : 'bg-white dark:bg-dark-50'
             )}
           >
+            <ElectronTitleBar />
             <BackgroundRenderer />
             <Sidebar
               isOpen={sidebarOpen}
@@ -462,6 +454,7 @@ const App: React.FC = () => {
                         : 'bg-white dark:bg-dark-50'
                     )}
                   >
+                    <ElectronTitleBar />
                     <BackgroundRenderer />
                     <Sidebar
                       isOpen={sidebarOpen}
