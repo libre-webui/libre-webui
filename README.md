@@ -178,12 +178,25 @@ _Use your Ollama instance_
 
 </td>
 </tr>
+<tr>
+<td colspan="4" align="center">
+
+### 🖥️ **Desktop App (macOS)**
+
+```bash
+npm run electron:build
+```
+
+_Native macOS app with DMG installer - [See documentation](https://docs.librewebui.org/ELECTRON_DESKTOP_APP)_
+
+</td>
+</tr>
 </table>
 
 <div align="center">
 
-**🎉 Access your instance at:**  
-Development: `http://localhost:5173` | Docker: `http://localhost:8080`
+**🎉 Access your instance at:**
+Development: `http://localhost:5173` | Docker: `http://localhost:8080` | Desktop: Native app
 
 </div>
 
@@ -683,6 +696,7 @@ libre-webui/
 - **[🔒 Database Encryption](https://docs.librewebui.org/DATABASE_ENCRYPTION)** - Security guide
 - **[🎨 Artifacts Feature](https://docs.librewebui.org/ARTIFACTS_FEATURE)** - Interactive content
 - **[🐳 Docker Guide](https://docs.librewebui.org/DOCKER_EXTERNAL_OLLAMA)** - Container deployment
+- **[🖥️ Desktop App](https://docs.librewebui.org/ELECTRON_DESKTOP_APP)** - Electron build guide
 
 </td>
 </tr>
