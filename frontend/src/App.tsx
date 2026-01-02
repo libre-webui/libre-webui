@@ -289,22 +289,42 @@ const App: React.FC = () => {
     );
   }
 
-  // Debug: Show system info if no systemInfo is loaded
+  // Show friendly message if backend isn't reachable
   if (!systemInfo) {
     return (
-      <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center'>
-        <div className='text-center'>
-          <h2 className='text-xl font-bold text-gray-900 dark:text-white mb-2'>
-            System Info Not Loaded
+      <div className='min-h-screen bg-dark-50 flex items-center justify-center p-4'>
+        <div className='text-center max-w-md'>
+          <div className='flex justify-center mb-6'>
+            <img
+              src='./logo-dark.png'
+              alt='Libre WebUI'
+              className='h-20 w-20 rounded-lg'
+            />
+          </div>
+          <h2 className='text-xl font-semibold text-white mb-3'>
+            Backend Not Running
           </h2>
-          <p className='text-gray-600 dark:text-gray-400 mb-4'>
-            Unable to load system configuration. Check the console for errors.
+          <p className='text-gray-400 mb-6'>
+            Libre WebUI needs the backend server to be running. Start it with:
           </p>
+          <div className='bg-gray-800 rounded-lg p-4 mb-6 text-left'>
+            <code className='text-green-400 text-sm font-mono'>
+              npm run dev:backend
+            </code>
+          </div>
+          <p className='text-gray-500 text-sm mb-6'>
+            Or run both frontend and backend together:
+          </p>
+          <div className='bg-gray-800 rounded-lg p-4 mb-6 text-left'>
+            <code className='text-green-400 text-sm font-mono'>
+              npm run dev
+            </code>
+          </div>
           <button
             onClick={() => window.location.reload()}
-            className='bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg'
+            className='bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 px-6 rounded-lg transition-colors'
           >
-            Retry
+            Retry Connection
           </button>
         </div>
       </div>

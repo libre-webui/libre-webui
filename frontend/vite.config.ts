@@ -14,9 +14,13 @@ const packageJson = JSON.parse(
 const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:3001';
 const WS_BASE_URL = process.env.VITE_WS_BASE_URL || 'ws://localhost:3001';
 
+// Use relative paths for Electron builds
+const isElectron = process.env.ELECTRON_BUILD === 'true';
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: isElectron ? './' : '/',
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
   },

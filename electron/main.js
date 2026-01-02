@@ -11,7 +11,6 @@
 
 const { app, BrowserWindow, shell, Menu, dialog, nativeTheme } = require('electron');
 const path = require('path');
-const { spawn } = require('child_process');
 const http = require('http');
 
 // Prevent multiple instances (fixes fork bomb issue)
@@ -23,7 +22,6 @@ if (!gotTheLock) {
 
 // Keep references to prevent garbage collection
 let mainWindow = null;
-let backendProcess = null;
 let splashWindow = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -100,100 +98,18 @@ function createMainWindow() {
   return mainWindow;
 }
 
-// Wait for a server to be ready
-function waitForServer(port, maxAttempts = 60) {
-  return new Promise((resolve, reject) => {
-    let attempts = 0;
-
-    const check = () => {
-      attempts++;
-      const req = http.get(`http://localhost:${port}/api/health`, (res) => {
-        if (res.statusCode === 200) {
-          resolve();
-        } else if (attempts < maxAttempts) {
-          setTimeout(check, 500);
-        } else {
-          reject(new Error(`Server on port ${port} not responding`));
-        }
-      });
-
-      req.on('error', () => {
-        if (attempts < maxAttempts) {
-          setTimeout(check, 500);
-        } else {
-          reject(new Error(`Server on port ${port} not reachable`));
-        }
-      });
-
-      req.end();
-    };
-
-    check();
+// Check if backend is running (optional - app works without it for demo)
+async function checkBackend() {
+  return new Promise((resolve) => {
+    const req = http.get(`http://localhost:${BACKEND_PORT}/api/health`, (res) => {
+      resolve(res.statusCode === 200);
+    });
+    req.on('error', () => resolve(false));
+    req.setTimeout(2000, () => {
+      req.destroy();
+      resolve(false);
+    });
   });
-}
-
-// Start the backend server
-async function startBackend() {
-  return new Promise((resolve, reject) => {
-    const backendPath = getResourcePath('backend');
-
-    // Set up environment
-    const env = {
-      ...process.env,
-      NODE_ENV: 'production',
-      PORT: BACKEND_PORT.toString(),
-      DATA_DIR: path.join(app.getPath('userData'), 'data'),
-    };
-
-    // Check if running in development
-    if (isDev) {
-      console.log('Running in development mode - backend should be started separately');
-      resolve();
-      return;
-    }
-
-    console.log('Starting backend from:', backendPath);
-
-    // Use node to run the backend
-    const nodePath = process.execPath;
-    const backendEntry = path.join(backendPath, 'dist', 'index.js');
-
-    backendProcess = spawn(nodePath, [backendEntry], {
-      cwd: backendPath,
-      env,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    backendProcess.stdout.on('data', (data) => {
-      console.log(`[Backend] ${data.toString().trim()}`);
-    });
-
-    backendProcess.stderr.on('data', (data) => {
-      console.error(`[Backend Error] ${data.toString().trim()}`);
-    });
-
-    backendProcess.on('error', (error) => {
-      console.error('Failed to start backend:', error);
-      reject(error);
-    });
-
-    backendProcess.on('exit', (code) => {
-      console.log(`Backend exited with code ${code}`);
-      backendProcess = null;
-    });
-
-    // Give the server a moment to start
-    setTimeout(resolve, 1000);
-  });
-}
-
-// Stop the backend server
-function stopBackend() {
-  if (backendProcess) {
-    console.log('Stopping backend server...');
-    backendProcess.kill('SIGTERM');
-    backendProcess = null;
-  }
 }
 
 // Create application menu
@@ -292,14 +208,12 @@ async function main() {
   createMenu();
 
   try {
-    // Start backend
-    await startBackend();
-
-    // Wait for backend to be ready
-    if (!isDev) {
-      console.log('Waiting for backend server...');
-      await waitForServer(BACKEND_PORT);
-      console.log('Backend server ready!');
+    // Check if backend is available (optional)
+    const backendAvailable = await checkBackend();
+    if (backendAvailable) {
+      console.log('Backend server detected on port', BACKEND_PORT);
+    } else {
+      console.log('Backend not detected - start it separately with: npm run dev:backend');
     }
 
     // Create main window
@@ -312,7 +226,16 @@ async function main() {
     } else {
       // In production, load the built frontend
       const frontendPath = getResourcePath('frontend', 'dist', 'index.html');
-      window.loadFile(frontendPath);
+      console.log('Loading frontend from:', frontendPath);
+      window.loadFile(frontendPath).catch((err) => {
+        console.error('Failed to load frontend:', err);
+        dialog.showErrorBox('Load Error', `Could not load app: ${err.message}`);
+      });
+    }
+
+    // Open DevTools in dev mode
+    if (isDev) {
+      window.webContents.openDevTools();
     }
   } catch (error) {
     console.error('Failed to start application:', error);
@@ -336,7 +259,6 @@ app.on('second-instance', () => {
 });
 
 app.on('window-all-closed', () => {
-  stopBackend();
   if (process.platform !== 'darwin') {
     app.quit();
   }
@@ -348,9 +270,6 @@ app.on('activate', () => {
   }
 });
 
-app.on('before-quit', () => {
-  stopBackend();
-});
 
 // Handle certificate errors for localhost
 app.on('certificate-error', (event, _webContents, url, _error, _certificate, callback) => {
