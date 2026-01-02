@@ -19,10 +19,18 @@
  * Get the API base URL using consistent logic across the application
  */
 export const getApiBaseUrl = (): string => {
-  return (
-    import.meta.env.VITE_API_BASE_URL ||
-    `${window.location.protocol}//${window.location.hostname}:3001/api`
-  );
+  // Check for explicit env var first
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+
+  // When running in Electron with file:// protocol, use localhost
+  if (window.location.protocol === 'file:') {
+    return 'http://localhost:3001/api';
+  }
+
+  // Default: use same host with port 3001
+  return `${window.location.protocol}//${window.location.hostname}:3001/api`;
 };
 
 /**
