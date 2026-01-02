@@ -1,0 +1,9 @@
+{
+  "name": "libre-webui-electron",
+  "version": "0.1.11",
+  "description": "Libre WebUI Desktop Application",
+  "main": "main.js",
+  "author": "Kroonen AI, Inc.",
+  "license": "Apache-2.0",
+  "private": true
+}

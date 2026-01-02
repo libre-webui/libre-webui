@@ -1,0 +1,31 @@
+<svg width="540" height="380" viewBox="0 0 540 380" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a2e"/>
+      <stop offset="100%" style="stop-color:#16213e"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="540" height="380" fill="url(#bgGrad)"/>
+
+  <!-- Subtle grid pattern -->
+  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
+  </pattern>
+  <rect width="540" height="380" fill="url(#grid)"/>
+
+  <!-- Title -->
+  <text x="270" y="60" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="600">
+    Libre WebUI
+  </text>
+
+  <!-- Subtitle -->
+  <text x="270" y="90" text-anchor="middle" fill="#a0aec0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14">
+    Drag to Applications to install
+  </text>
+
+  <!-- Arrow -->
+  <path d="M 200 220 L 340 220" stroke="#667eea" stroke-width="3" stroke-linecap="round" stroke-dasharray="8 8"/>
+  <path d="M 330 210 L 345 220 L 330 230" fill="none" stroke="#667eea" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

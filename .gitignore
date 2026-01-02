@@ -91,3 +91,12 @@ backend/document-chunks.json
 backend/data.sqlite.backup
 backend/backend/data/data.sqlite-shm
 backend/backend/data/data.sqlite-wal
+
+# Electron build output
+dist-electron/
+electron/assets/icon.iconset/
+electron/assets/icons/
+electron/assets/*.icns
+electron/assets/*.ico
+electron/assets/*.png
+!electron/assets/icon.svg

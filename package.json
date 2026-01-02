@@ -3,6 +3,7 @@
   "version": "0.1.11",
   "description": "A modern, minimalist WebUI for interacting with local LLMs through Ollama API",
   "private": true,
+  "main": "electron/main.js",
   "workspaces": [
     "frontend",
     "backend"
@@ -38,7 +39,12 @@
     "analyze": "node scripts/analyze-development.js",
     "analyze:quick": "node scripts/analyze-development.js --quick",
     "analyze:metrics": "node scripts/analyze-development.js --metrics",
-    "version": "npm run changelog && git add CHANGELOG.md"
+    "version": "npm run changelog && git add CHANGELOG.md",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "electron:build": "npm run build && electron-builder build --mac --arm64",
+    "electron:build:universal": "npm run build && electron-builder build --mac --arm64 --x64",
+    "electron:pack": "electron-builder --dir",
+    "generate-icons": "node scripts/generate-icons.js"
   },
   "overrides": {
     "prismjs": "^1.30.0",
@@ -59,8 +65,12 @@
     "@typescript-eslint/eslint-plugin": "^8.50.1",
     "@typescript-eslint/parser": "^8.34.0",
     "concurrently": "^9.2.1",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "eslint": "^9.39.2",
-    "prettier": "^3.7.4"
+    "prettier": "^3.7.4",
+    "sharp": "^0.33.5",
+    "wait-on": "^8.0.5"
   },
   "keywords": [
     "llm",
