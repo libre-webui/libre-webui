@@ -710,7 +710,7 @@ export const pluginApi = {
     if (isDemoMode()) {
       return createDemoResponse<Plugin>({} as Plugin, false);
     }
-    return api.post('/plugins', pluginData).then(res => res.data);
+    return api.post('/plugins/install', pluginData).then(res => res.data);
   },
 
   updatePlugin: (

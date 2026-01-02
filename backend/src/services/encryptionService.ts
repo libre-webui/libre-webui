@@ -76,21 +76,63 @@ export class EncryptionService {
   }
 
   /**
+   * Find the .env file location - checks multiple possible locations
+   */
+  private findEnvFilePath(): string {
+    // Possible .env file locations in order of priority
+    const possiblePaths = [
+      path.join(process.cwd(), 'backend', '.env'), // Running from project root (npm run dev)
+      path.join(process.cwd(), '.env'), // Running from backend directory
+      path.join(__dirname, '..', '..', '.env'), // Relative to this file (backend/src/services -> backend/)
+    ];
+
+    // Find the first existing .env file
+    for (const envPath of possiblePaths) {
+      if (fs.existsSync(envPath)) {
+        return envPath;
+      }
+    }
+
+    // If no .env exists, prefer the backend/.env location if backend dir exists
+    const backendEnvPath = path.join(process.cwd(), 'backend', '.env');
+    const backendDir = path.dirname(backendEnvPath);
+    if (fs.existsSync(backendDir)) {
+      return backendEnvPath;
+    }
+
+    // Fallback to cwd/.env
+    return path.join(process.cwd(), '.env');
+  }
+
+  /**
    * Save encryption key to .env file (for regular environments)
    */
   private saveKeyToEnvFile(encryptionKey: string): void {
     try {
-      const envPath = path.join(process.cwd(), '.env');
+      const envPath = this.findEnvFilePath();
       let envContent = '';
 
       // Read existing .env file if it exists
       if (fs.existsSync(envPath)) {
         envContent = fs.readFileSync(envPath, 'utf8');
 
-        // Check if ENCRYPTION_KEY already exists (shouldn't happen, but just in case)
-        if (envContent.includes('ENCRYPTION_KEY=')) {
+        // Check if ENCRYPTION_KEY already exists (commented or uncommented)
+        if (/^ENCRYPTION_KEY=/m.test(envContent)) {
           console.warn(
             '⚠️  ENCRYPTION_KEY already exists in .env file, skipping auto-generation'
+          );
+          return;
+        }
+
+        // If there's a commented ENCRYPTION_KEY line, replace it with the actual key
+        if (envContent.includes('# ENCRYPTION_KEY=')) {
+          envContent = envContent.replace(
+            /# ENCRYPTION_KEY=.*/,
+            `ENCRYPTION_KEY=${encryptionKey}`
+          );
+          fs.writeFileSync(envPath, envContent, 'utf8');
+          console.info(
+            `✅ Automatically added ENCRYPTION_KEY to .env file: ${envPath}`
           );
           return;
         }
@@ -107,7 +149,9 @@ export class EncryptionService {
 
       // Write back to .env file
       fs.writeFileSync(envPath, envContent, 'utf8');
-      console.info(`✅ Automatically added ENCRYPTION_KEY to .env file`);
+      console.info(
+        `✅ Automatically added ENCRYPTION_KEY to .env file: ${envPath}`
+      );
     } catch (error) {
       console.error(
         '❌ Failed to automatically add ENCRYPTION_KEY to .env file:',
