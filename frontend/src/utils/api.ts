@@ -1053,6 +1053,16 @@ export const authApi = {
 
     return api.get('/auth/verify').then(res => res.data);
   },
+
+  getEncryptionKey: (): Promise<ApiResponse<{ encryptionKey: string }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<{ encryptionKey: string }>({
+        encryptionKey: 'demo-encryption-key-not-real',
+      });
+    }
+
+    return api.get('/auth/encryption-key').then(res => res.data);
+  },
 };
 
 // Users API

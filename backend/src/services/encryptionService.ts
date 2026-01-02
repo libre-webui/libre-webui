@@ -355,6 +355,14 @@ export class EncryptionService {
   public static generateKey(): string {
     return crypto.randomBytes(32).toString('hex');
   }
+
+  /**
+   * Get the current encryption key (for first-time setup display)
+   * WARNING: Only use this during first-time setup when showing the key to the admin
+   */
+  public getKeyForDisplay(): string {
+    return this.encryptionKey.toString('hex');
+  }
 }
 
 // Export singleton instance

@@ -21,6 +21,7 @@ import { githubOAuthService } from '../services/simpleGitHubOAuth.js';
 import { huggingFaceOAuthService } from '../services/simpleHuggingFaceOAuth.js';
 import { authService } from '../services/authService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import { encryptionService } from '../services/encryptionService.js';
 
 const router = express.Router();
 
@@ -167,6 +168,37 @@ router.get('/system-info', async (req, res) => {
     });
   } catch (error) {
     console.error('System info error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+    });
+  }
+});
+
+/**
+ * Get encryption key for first-time setup
+ * Only accessible during initial setup (single user mode - just created first admin)
+ */
+router.get('/encryption-key', generalAuthRateLimiter, async (req, res) => {
+  try {
+    const systemInfo = authService.getSystemInfo();
+
+    // Only allow access during first-time setup (when only one user exists - the newly created admin)
+    if (!systemInfo.singleUserMode) {
+      res.status(403).json({
+        success: false,
+        message: 'Encryption key is only available during first-time setup',
+      });
+      return;
+    }
+
+    const encryptionKey = encryptionService.getKeyForDisplay();
+    res.json({
+      success: true,
+      data: { encryptionKey },
+    });
+  } catch (error) {
+    console.error('Encryption key retrieval error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
