@@ -12,6 +12,7 @@
 const { app, BrowserWindow, shell, Menu, dialog, nativeTheme } = require('electron');
 const path = require('path');
 const http = require('http');
+const { spawn } = require('child_process');
 
 // Prevent multiple instances (fixes fork bomb issue)
 const gotTheLock = app.requestSingleInstanceLock();
@@ -23,6 +24,7 @@ if (!gotTheLock) {
 // Keep references to prevent garbage collection
 let mainWindow = null;
 let splashWindow = null;
+let backendProcess = null;
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 const BACKEND_PORT = process.env.PORT || 3001;
@@ -98,7 +100,7 @@ function createMainWindow() {
   return mainWindow;
 }
 
-// Check if backend is running (optional - app works without it for demo)
+// Check if backend is running
 async function checkBackend() {
   return new Promise((resolve) => {
     const req = http.get(`http://localhost:${BACKEND_PORT}/api/health`, (res) => {
@@ -110,6 +112,37 @@ async function checkBackend() {
       resolve(false);
     });
   });
+}
+
+// Start backend in a new Terminal window (macOS)
+function startBackendInTerminal() {
+  const projectRoot = isDev
+    ? path.join(__dirname, '..')
+    : path.join(process.resourcesPath, '..');
+
+  // Use AppleScript to open Terminal and run the backend
+  const script = `
+    tell application "Terminal"
+      activate
+      do script "cd '${projectRoot}' && npm run dev:backend"
+    end tell
+  `;
+
+  backendProcess = spawn('osascript', ['-e', script], {
+    detached: true,
+    stdio: 'ignore',
+  });
+
+  backendProcess.unref();
+  console.log('Started backend in Terminal');
+}
+
+// Stop backend process
+function stopBackend() {
+  if (backendProcess) {
+    backendProcess.kill();
+    backendProcess = null;
+  }
 }
 
 // Create application menu
@@ -208,12 +241,13 @@ async function main() {
   createMenu();
 
   try {
-    // Check if backend is available (optional)
+    // Check if backend is available, if not start it in Terminal
     const backendAvailable = await checkBackend();
     if (backendAvailable) {
       console.log('Backend server detected on port', BACKEND_PORT);
     } else {
-      console.log('Backend not detected - start it separately with: npm run dev:backend');
+      console.log('Backend not detected - starting it in Terminal...');
+      startBackendInTerminal();
     }
 
     // Create main window
@@ -259,9 +293,14 @@ app.on('second-instance', () => {
 });
 
 app.on('window-all-closed', () => {
+  stopBackend();
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  stopBackend();
 });
 
 app.on('activate', () => {

@@ -93,6 +93,8 @@ const ConditionalKeyboardShortcutsIndicator: React.FC<{
 const App: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
   const {
     sidebarOpen,
     sidebarCompact,
@@ -266,6 +268,27 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Auto-retry connection to backend when it's not available
+  React.useEffect(() => {
+    if (!systemInfo && !authLoading && retryCount < 15) {
+      setIsRetrying(true);
+      const timer = setTimeout(async () => {
+        setRetryCount(c => c + 1);
+        try {
+          // Re-run auth initialization to check if backend is now available
+          const { UserService } = await import('@/services/userService');
+          await UserService.initializeAuth();
+        } catch {
+          // Will retry on next interval
+        }
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+    if (systemInfo) {
+      setIsRetrying(false);
+    }
+  }, [systemInfo, authLoading, retryCount]);
+
   // Show loading spinner while initializing auth
   if (authLoading) {
     return (
@@ -302,29 +325,39 @@ const App: React.FC = () => {
             />
           </div>
           <h2 className='text-xl font-semibold text-white mb-3'>
-            Backend Not Running
+            {isRetrying ? 'Connecting to Backend...' : 'Backend Not Running'}
           </h2>
           <p className='text-gray-400 mb-6'>
-            Libre WebUI needs the backend server to be running. Start it with:
+            {isRetrying
+              ? 'Waiting for the backend server to start...'
+              : 'Libre WebUI needs the backend server to be running. Start it with:'}
           </p>
-          <div className='bg-gray-800 rounded-lg p-4 mb-6 text-left'>
-            <code className='text-green-400 text-sm font-mono'>
-              npm run dev:backend
-            </code>
-          </div>
-          <p className='text-gray-500 text-sm mb-6'>
-            Or run both frontend and backend together:
-          </p>
-          <div className='bg-gray-800 rounded-lg p-4 mb-6 text-left'>
-            <code className='text-green-400 text-sm font-mono'>
-              npm run dev
-            </code>
-          </div>
+          {isRetrying ? (
+            <div className='flex justify-center mb-6'>
+              <div className='w-8 h-8 border-4 border-gray-600 border-t-primary-500 rounded-full animate-spin'></div>
+            </div>
+          ) : (
+            <>
+              <div className='bg-gray-800 rounded-lg p-4 mb-6 text-left'>
+                <code className='text-green-400 text-sm font-mono'>
+                  npm run dev:backend
+                </code>
+              </div>
+              <p className='text-gray-500 text-sm mb-6'>
+                Or run both frontend and backend together:
+              </p>
+              <div className='bg-gray-800 rounded-lg p-4 mb-6 text-left'>
+                <code className='text-green-400 text-sm font-mono'>
+                  npm run dev
+                </code>
+              </div>
+            </>
+          )}
           <button
             onClick={() => window.location.reload()}
             className='bg-primary-500 hover:bg-primary-600 text-white font-medium py-2.5 px-6 rounded-lg transition-colors'
           >
-            Retry Connection
+            {isRetrying ? 'Retrying...' : 'Retry Connection'}
           </button>
         </div>
       </div>
