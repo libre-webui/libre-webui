@@ -444,10 +444,16 @@ class PluginService {
     // Validate the final endpoint URL
     try {
       const url = new URL(processedEndpoint);
-      // Ensure we're only making requests to HTTPS endpoints (security best practice)
-      if (url.protocol !== 'https:') {
+
+      // Allow HTTP only for localhost/127.0.0.1 (safe for local development)
+      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
+        url.hostname
+      );
+
+      if (url.protocol !== 'https:' && !isLocalhost) {
         throw new Error(
-          `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed.`
+          `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints. ` +
+            `(HTTP is permitted only for localhost during local development)`
         );
       }
     } catch (_error) {
