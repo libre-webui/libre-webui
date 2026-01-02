@@ -20,23 +20,28 @@ async function generateIcons() {
     return;
   }
 
-  const svgPath = path.join(__dirname, '..', 'electron', 'assets', 'icon.svg');
   const assetsDir = path.join(__dirname, '..', 'electron', 'assets');
   const iconsDir = path.join(assetsDir, 'icons');
+
+  // Use PNG source (logo-dark.png) if available, otherwise fall back to SVG
+  const pngPath = path.join(assetsDir, 'icon-source.png');
+  const svgPath = path.join(assetsDir, 'icon.svg');
+  const sourcePath = fs.existsSync(pngPath) ? pngPath : svgPath;
 
   // Ensure directories exist
   if (!fs.existsSync(iconsDir)) {
     fs.mkdirSync(iconsDir, { recursive: true });
   }
 
-  const svgBuffer = fs.readFileSync(svgPath);
+  console.log(`Using source: ${path.basename(sourcePath)}`);
+  const sourceBuffer = fs.readFileSync(sourcePath);
 
   // Generate PNG icons for various sizes
   const sizes = [16, 32, 48, 64, 128, 256, 512, 1024];
 
   console.log('Generating PNG icons...');
   for (const size of sizes) {
-    await sharp(svgBuffer)
+    await sharp(sourceBuffer)
       .resize(size, size)
       .png()
       .toFile(path.join(iconsDir, `${size}x${size}.png`));
@@ -44,7 +49,7 @@ async function generateIcons() {
   }
 
   // Generate icon.png (512x512 for general use)
-  await sharp(svgBuffer)
+  await sharp(sourceBuffer)
     .resize(512, 512)
     .png()
     .toFile(path.join(assetsDir, 'icon.png'));
@@ -78,7 +83,7 @@ async function generateIcons() {
   console.log('Generating macOS iconset...');
   for (const { size, scale, name } of iconsetSizes) {
     const actualSize = size * scale;
-    await sharp(svgBuffer)
+    await sharp(sourceBuffer)
       .resize(actualSize, actualSize)
       .png()
       .toFile(path.join(iconsetDir, name));
