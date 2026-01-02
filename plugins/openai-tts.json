@@ -1,0 +1,38 @@
+{
+  "id": "openai-tts",
+  "name": "OpenAI TTS",
+  "type": "tts",
+  "endpoint": "https://api.openai.com/v1/audio/speech",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "OPENAI_API_KEY"
+  },
+  "model_map": [
+    "tts-1",
+    "tts-1-hd",
+    "gpt-4o-mini-tts",
+    "gpt-4o-mini-tts-2025-03-20",
+    "gpt-4o-mini-tts-2025-12-15"
+  ],
+  "capabilities": {
+    "tts": {
+      "endpoint": "https://api.openai.com/v1/audio/speech",
+      "model_map": [
+        "tts-1",
+        "tts-1-hd",
+        "gpt-4o-mini-tts",
+        "gpt-4o-mini-tts-2025-03-20",
+        "gpt-4o-mini-tts-2025-12-15"
+      ],
+      "config": {
+        "voices": ["alloy", "ash", "coral", "echo", "fable", "onyx", "nova", "sage", "shimmer"],
+        "default_voice": "alloy",
+        "formats": ["mp3", "opus", "aac", "flac", "wav", "pcm"],
+        "default_format": "mp3",
+        "max_characters": 4096,
+        "supports_streaming": true
+      }
+    }
+  }
+}

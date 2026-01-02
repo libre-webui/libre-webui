@@ -149,6 +149,15 @@ export interface Theme {
   mode: 'light' | 'dark';
 }
 
+export interface TTSSettings {
+  enabled: boolean;
+  autoPlay: boolean;
+  model: string;
+  voice: string;
+  speed: number;
+  pluginId?: string;
+}
+
 export interface UserPreferences {
   theme: Theme;
   defaultModel: string;
@@ -161,6 +170,7 @@ export interface UserPreferences {
     chunkOverlap: number;
     similarityThreshold: number;
   };
+  ttsSettings?: TTSSettings;
   showUsername: boolean; // If true, show username in chat; if false, show "you"
   backgroundSettings?: {
     enabled: boolean;

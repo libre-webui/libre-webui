@@ -1,0 +1,58 @@
+{
+  "id": "elevenlabs",
+  "name": "ElevenLabs",
+  "type": "tts",
+  "endpoint": "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+  "auth": {
+    "header": "xi-api-key",
+    "key_env": "ELEVENLABS_API_KEY"
+  },
+  "model_map": [
+    "eleven_multilingual_v2",
+    "eleven_turbo_v2_5",
+    "eleven_turbo_v2",
+    "eleven_monolingual_v1",
+    "eleven_multilingual_v1",
+    "eleven_flash_v2_5",
+    "eleven_flash_v2"
+  ],
+  "capabilities": {
+    "tts": {
+      "endpoint": "https://api.elevenlabs.io/v1/text-to-speech",
+      "model_map": [
+        "eleven_multilingual_v2",
+        "eleven_turbo_v2_5",
+        "eleven_turbo_v2",
+        "eleven_monolingual_v1",
+        "eleven_multilingual_v1",
+        "eleven_flash_v2_5",
+        "eleven_flash_v2"
+      ],
+      "config": {
+        "voices": [
+          "Rachel",
+          "Domi",
+          "Bella",
+          "Antoni",
+          "Elli",
+          "Josh",
+          "Arnold",
+          "Adam",
+          "Sam",
+          "Nicole",
+          "Glinda",
+          "Clyde",
+          "James",
+          "Charlotte",
+          "Lily",
+          "Serena"
+        ],
+        "default_voice": "Rachel",
+        "formats": ["mp3", "pcm", "ulaw"],
+        "default_format": "mp3",
+        "max_characters": 5000,
+        "supports_streaming": true
+      }
+    }
+  }
+}

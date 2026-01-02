@@ -25,6 +25,9 @@ import {
   PluginResponse,
   ChatMessage,
   GenerationOptions,
+  TTSRequest,
+  TTSConfig,
+  PluginType,
 } from '../types/index.js';
 
 class PluginService {
@@ -714,6 +717,373 @@ class PluginService {
     }
 
     return this.installPlugin(pluginData);
+  }
+
+  // ============================================
+  // TTS (Text-to-Speech) Methods
+  // ============================================
+
+  // Get plugin that supports TTS for a specific model
+  getPluginForTTS(model: string): Plugin | null {
+    console.log(`[DEBUG] Looking for TTS plugin for model: ${model}`);
+
+    const allPlugins = this.getAllPlugins();
+
+    for (const plugin of allPlugins) {
+      // Check if plugin has TTS capability
+      if (plugin.capabilities?.tts) {
+        const ttsCapability = plugin.capabilities.tts;
+        if (ttsCapability.model_map.includes(model)) {
+          console.log(
+            `[DEBUG] Found TTS plugin ${plugin.id} for model ${model}`
+          );
+
+          // Check if we have the required API key
+          const apiKey = process.env[plugin.auth.key_env];
+          if (!apiKey) {
+            console.log(
+              `[DEBUG] Plugin ${plugin.id} found but API key ${plugin.auth.key_env} not set`
+            );
+            continue;
+          }
+
+          return plugin;
+        }
+      }
+
+      // Also check primary type for backward compatibility with TTS-only plugins
+      if (plugin.type === 'tts' && plugin.model_map.includes(model)) {
+        console.log(
+          `[DEBUG] Found TTS-type plugin ${plugin.id} for model ${model}`
+        );
+
+        const apiKey = process.env[plugin.auth.key_env];
+        if (!apiKey) {
+          console.log(
+            `[DEBUG] Plugin ${plugin.id} found but API key ${plugin.auth.key_env} not set`
+          );
+          continue;
+        }
+
+        return plugin;
+      }
+    }
+
+    console.log(`[DEBUG] No TTS plugin found for model: ${model}`);
+    return null;
+  }
+
+  // Get all available TTS models from all plugins
+  getAvailableTTSModels(): {
+    model: string;
+    plugin: string;
+    config?: TTSConfig;
+  }[] {
+    const models: { model: string; plugin: string; config?: TTSConfig }[] = [];
+    const allPlugins = this.getAllPlugins();
+
+    for (const plugin of allPlugins) {
+      // Check capabilities-based TTS
+      if (plugin.capabilities?.tts) {
+        const ttsCapability = plugin.capabilities.tts;
+        // Check if API key is available
+        const apiKey = process.env[plugin.auth.key_env];
+        if (apiKey) {
+          for (const model of ttsCapability.model_map) {
+            models.push({
+              model,
+              plugin: plugin.id,
+              config: ttsCapability.config,
+            });
+          }
+        }
+      }
+
+      // Check primary type for TTS-only plugins
+      if (plugin.type === 'tts') {
+        const apiKey = process.env[plugin.auth.key_env];
+        if (apiKey) {
+          for (const model of plugin.model_map) {
+            models.push({
+              model,
+              plugin: plugin.id,
+            });
+          }
+        }
+      }
+    }
+
+    return models;
+  }
+
+  // Execute a TTS request through the appropriate plugin
+  async executeTTSRequest(
+    model: string,
+    input: string,
+    options: {
+      voice?: string;
+      response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+      speed?: number;
+    } = {}
+  ): Promise<Buffer> {
+    // Validate model parameter
+    if (!model || typeof model !== 'string') {
+      throw new Error('Invalid model parameter: must be a non-empty string');
+    }
+
+    // Sanitize model parameter
+    const modelPattern = /^[a-zA-Z0-9\-_:.]+$/;
+    if (!modelPattern.test(model)) {
+      throw new Error(
+        `Invalid model parameter: ${model} contains invalid characters`
+      );
+    }
+
+    // Prevent path traversal
+    if (model.includes('..') || model.includes('//') || model.includes('\\')) {
+      throw new Error(
+        `Invalid model parameter: ${model} contains invalid patterns`
+      );
+    }
+
+    const plugin = this.getPluginForTTS(model);
+    if (!plugin) {
+      throw new Error(`No TTS plugin found for model: ${model}`);
+    }
+
+    // Get API key from environment
+    const apiKey = process.env[plugin.auth.key_env];
+    if (!apiKey) {
+      throw new Error(
+        `API key not found in environment variable: ${plugin.auth.key_env}`
+      );
+    }
+
+    // Determine endpoint
+    let endpoint: string;
+    let ttsConfig: TTSConfig | undefined;
+
+    if (plugin.capabilities?.tts) {
+      endpoint = plugin.capabilities.tts.endpoint;
+      ttsConfig = plugin.capabilities.tts.config;
+    } else {
+      endpoint = plugin.endpoint;
+    }
+
+    // Prepare headers
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    const authValue = plugin.auth.prefix
+      ? `${plugin.auth.prefix}${apiKey}`
+      : apiKey;
+
+    headers[plugin.auth.header] = authValue;
+
+    // Apply defaults from config
+    const voice = options.voice || ttsConfig?.default_voice || 'alloy';
+    const responseFormat =
+      options.response_format || ttsConfig?.default_format || 'mp3';
+    const speed = options.speed || 1.0;
+
+    // Validate input length if max_characters is set
+    if (ttsConfig?.max_characters && input.length > ttsConfig.max_characters) {
+      throw new Error(
+        `Input text exceeds maximum length of ${ttsConfig.max_characters} characters`
+      );
+    }
+
+    // Prepare request payload and endpoint based on plugin type
+    let payload: Record<string, unknown>;
+    let processedEndpoint: string;
+
+    if (plugin.id === 'elevenlabs') {
+      // ElevenLabs API format
+      // ElevenLabs uses voice IDs - map voice names to IDs
+      const elevenLabsVoiceIds: Record<string, string> = {
+        rachel: '21m00Tcm4TlvDq8ikWAM',
+        domi: 'AZnzlk1XvdvUeBnXmlld',
+        bella: 'EXAVITQu4vr4xnSDxMaL',
+        antoni: 'ErXwobaYiN019PkySvjV',
+        elli: 'MF3mGyEYCl7XYWbV9V6O',
+        josh: 'TxGEqnHWrfWFTfGW9XjX',
+        arnold: 'VR6AewLTigWG4xSOukaG',
+        adam: 'pNInz6obpgDQGcFmaJgB',
+        sam: 'yoZ06aMxZJJ28mfd3POQ',
+        nicole: 'piTKgcLEGmPE4e6mEKli',
+        glinda: 'z9fAnlkpzviPz146aGWa',
+        clyde: '2EiwWnXFnvU5JabPnv8n',
+        james: 'ZQe5CZNOzWyzPSCn5a3c',
+        charlotte: 'XB0fDUnXU5powFXDhCwa',
+        lily: 'pFZP5JQG7iQjIQuC4Bku',
+        serena: 'pMsXgVXv3BLzUgSXRplE',
+      };
+
+      const voiceId =
+        elevenLabsVoiceIds[voice.toLowerCase()] ||
+        elevenLabsVoiceIds['rachel'] ||
+        '21m00Tcm4TlvDq8ikWAM';
+
+      processedEndpoint = `${endpoint}/${voiceId}`;
+
+      // Add output_format query parameter
+      const formatMap: Record<string, string> = {
+        mp3: 'mp3_44100_128',
+        pcm: 'pcm_16000',
+        ulaw: 'ulaw_8000',
+      };
+      const outputFormat = formatMap[responseFormat] || 'mp3_44100_128';
+      processedEndpoint += `?output_format=${outputFormat}`;
+
+      payload = {
+        text: input,
+        model_id: model,
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+        },
+      };
+    } else {
+      // Default OpenAI TTS format
+      payload = {
+        model,
+        input,
+        voice,
+        response_format: responseFormat,
+        speed,
+      };
+
+      // Process endpoint template
+      const sanitizedModel = encodeURIComponent(model);
+      processedEndpoint = endpoint.replace('{model}', sanitizedModel);
+    }
+
+    // Validate the final endpoint URL
+    try {
+      const url = new URL(processedEndpoint);
+      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
+        url.hostname
+      );
+
+      if (url.protocol !== 'https:' && !isLocalhost) {
+        throw new Error(
+          `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints.`
+        );
+      }
+    } catch (_error) {
+      throw new Error(`Invalid endpoint URL constructed: ${processedEndpoint}`);
+    }
+
+    try {
+      const response = await axios.post(processedEndpoint, payload, {
+        headers,
+        timeout: 120000, // 2 minute timeout for TTS
+        responseType: 'arraybuffer', // TTS returns binary audio data
+      });
+
+      return Buffer.from(response.data);
+    } catch (error: unknown) {
+      console.error(`TTS plugin request failed for ${plugin.id}:`, error);
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as {
+          response: {
+            status: number;
+            data?: ArrayBuffer;
+            statusText: string;
+          };
+        };
+
+        // Try to parse error message from response
+        let errorMessage = axiosError.response.statusText;
+        if (axiosError.response.data) {
+          try {
+            const errorText = Buffer.from(axiosError.response.data).toString(
+              'utf8'
+            );
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.error?.message || errorMessage;
+          } catch {
+            // Ignore parse errors
+          }
+        }
+
+        throw new Error(
+          `TTS API error: ${axiosError.response.status} - ${errorMessage}`
+        );
+      } else if (error && typeof error === 'object' && 'request' in error) {
+        throw new Error(
+          `TTS connection error: Unable to reach ${processedEndpoint}`
+        );
+      } else {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+        throw new Error(`TTS error: ${errorMessage}`);
+      }
+    }
+  }
+
+  // Get TTS configuration for a specific plugin
+  getTTSConfig(pluginId: string): TTSConfig | null {
+    const plugin = this.getPlugin(pluginId);
+    if (!plugin) return null;
+
+    if (plugin.capabilities?.tts?.config) {
+      return plugin.capabilities.tts.config;
+    }
+
+    return null;
+  }
+
+  // Get all plugins that support a specific capability type
+  getPluginsByCapability(capabilityType: PluginType): Plugin[] {
+    const allPlugins = this.getAllPlugins();
+    const result: Plugin[] = [];
+
+    for (const plugin of allPlugins) {
+      // Check if primary type matches
+      if (plugin.type === capabilityType) {
+        const apiKey = process.env[plugin.auth.key_env];
+        if (apiKey) {
+          result.push(plugin);
+        }
+        continue;
+      }
+
+      // Check capabilities object based on capability type
+      if (plugin.capabilities) {
+        let hasCapability = false;
+
+        switch (capabilityType) {
+          case 'tts':
+            hasCapability = !!plugin.capabilities.tts;
+            break;
+          case 'stt':
+            hasCapability = !!plugin.capabilities.stt;
+            break;
+          case 'embedding':
+            hasCapability = !!plugin.capabilities.embedding;
+            break;
+          case 'image':
+            hasCapability = !!plugin.capabilities.image;
+            break;
+          case 'completion':
+          case 'chat':
+            hasCapability = !!plugin.capabilities.completion;
+            break;
+        }
+
+        if (hasCapability) {
+          const apiKey = process.env[plugin.auth.key_env];
+          if (apiKey) {
+            result.push(plugin);
+          }
+        }
+      }
+    }
+
+    return result;
   }
 }
 

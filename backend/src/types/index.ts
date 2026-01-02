@@ -112,6 +112,15 @@ export interface EmbeddingSettings {
   similarityThreshold: number;
 }
 
+export interface TTSSettings {
+  enabled: boolean;
+  autoPlay: boolean;
+  model: string;
+  voice: string;
+  speed: number;
+  pluginId?: string;
+}
+
 export interface UserPreferences {
   defaultModel: string;
   theme: { mode: 'light' | 'dark' };
@@ -119,6 +128,8 @@ export interface UserPreferences {
   generationOptions: GenerationOptions;
   // Embedding settings for semantic search
   embeddingSettings: EmbeddingSettings;
+  // Text-to-speech settings
+  ttsSettings?: TTSSettings;
   showUsername: boolean; // If true, show username in chat; if false, show "you"
   backgroundSettings?: {
     enabled: boolean;
@@ -301,16 +312,77 @@ export interface PluginAuthConfig {
   key_env: string; // Environment variable name
 }
 
+// Unified plugin type supporting multiple capabilities
+export type PluginType =
+  | 'completion'
+  | 'embedding'
+  | 'chat'
+  | 'tts'
+  | 'stt'
+  | 'image';
+
+// TTS-specific configuration
+export interface TTSConfig {
+  voices?: string[]; // Available voice options
+  default_voice?: string; // Default voice to use
+  formats?: string[]; // Supported audio formats (mp3, wav, opus, etc.)
+  default_format?: string; // Default audio format
+  max_characters?: number; // Maximum text length
+  supports_streaming?: boolean; // Whether streaming is supported
+}
+
+// Plugin capabilities for multi-capability plugins
+export interface PluginCapabilities {
+  completion?: {
+    endpoint: string;
+    model_map: string[];
+  };
+  tts?: {
+    endpoint: string;
+    model_map: string[];
+    config?: TTSConfig;
+  };
+  stt?: {
+    endpoint: string;
+    model_map: string[];
+  };
+  embedding?: {
+    endpoint: string;
+    model_map: string[];
+  };
+  image?: {
+    endpoint: string;
+    model_map: string[];
+  };
+}
+
 export interface Plugin {
   id: string;
   name: string;
-  type: 'completion' | 'embedding' | 'chat';
-  endpoint: string;
+  type: PluginType; // Primary type for backward compatibility
+  endpoint: string; // Primary endpoint for backward compatibility
   auth: PluginAuthConfig;
-  model_map: string[];
+  model_map: string[]; // Primary model map for backward compatibility
+  capabilities?: PluginCapabilities; // Multi-capability support
   active?: boolean;
   created_at?: number;
   updated_at?: number;
+}
+
+// TTS Request/Response types
+export interface TTSRequest {
+  model: string;
+  input: string;
+  voice?: string;
+  response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+  speed?: number; // 0.25 to 4.0
+}
+
+export interface TTSResponse {
+  audio: Buffer;
+  format: string;
+  model: string;
+  voice: string;
 }
 
 export interface PluginStatus {

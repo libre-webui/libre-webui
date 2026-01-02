@@ -37,6 +37,10 @@ import {
   Check,
   Sliders,
   RotateCcw,
+  Volume2,
+  Play,
+  Square,
+  Loader2,
 } from 'lucide-react';
 import { Button, Select, Textarea } from '@/components/ui';
 import { ModelTools } from '@/components/ModelTools';
@@ -44,7 +48,14 @@ import { BackgroundUpload } from '@/components/BackgroundUpload';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
-import { preferencesApi, ollamaApi, documentsApi } from '@/utils/api';
+import {
+  preferencesApi,
+  ollamaApi,
+  documentsApi,
+  ttsApi,
+  TTSModel,
+  TTSPlugin,
+} from '@/utils/api';
 import toast from 'react-hot-toast';
 // Import package.json to get version dynamically
 import packageJson from '../../../package.json';
@@ -142,6 +153,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   } | null>(null);
   const [regeneratingEmbeddings, setRegeneratingEmbeddings] = useState(false);
 
+  // TTS settings state
+  const [ttsSettings, setTtsSettings] = useState(
+    preferences.ttsSettings || {
+      enabled: false,
+      autoPlay: false,
+      model: '',
+      voice: '',
+      speed: 1.0,
+      pluginId: '',
+    }
+  );
+  const [ttsModels, setTtsModels] = useState<TTSModel[]>([]);
+  const [ttsPlugins, setTtsPlugins] = useState<TTSPlugin[]>([]);
+  const [ttsVoices, setTtsVoices] = useState<string[]>([]);
+  const [loadingTTS, setLoadingTTS] = useState(false);
+  const [testingTTS, setTestingTTS] = useState(false);
+  const [testAudio, setTestAudio] = useState<HTMLAudioElement | null>(null);
+
   // Import data state
   const [importing, setImporting] = useState(false);
   const [showImportOptions, setShowImportOptions] = useState(false);
@@ -163,6 +192,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     if (isOpen) {
       loadSystemInfo();
       loadEmbeddingStatus();
+      loadTTSData();
       setTempSystemMessage(systemMessage);
       setTempGenerationOptions(preferences.generationOptions || {});
       setEmbeddingSettings(
@@ -172,6 +202,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           chunkSize: 1000,
           chunkOverlap: 200,
           similarityThreshold: 0.7,
+        }
+      );
+      setTtsSettings(
+        preferences.ttsSettings || {
+          enabled: false,
+          autoPlay: false,
+          model: '',
+          voice: '',
+          speed: 1.0,
+          pluginId: '',
         }
       );
       loadPlugins(); // Load plugins when modal opens
@@ -210,6 +250,145 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     } catch (error) {
       console.error('Failed to load embedding status:', error);
     }
+  };
+
+  const loadTTSData = async () => {
+    setLoadingTTS(true);
+    try {
+      const [modelsResponse, pluginsResponse] = await Promise.all([
+        ttsApi.getModels(),
+        ttsApi.getPlugins(),
+      ]);
+
+      if (modelsResponse.success && modelsResponse.data) {
+        setTtsModels(modelsResponse.data);
+        // Set default model if not set
+        if (!ttsSettings.model && modelsResponse.data.length > 0) {
+          const firstModel = modelsResponse.data[0];
+          setTtsSettings(prev => ({
+            ...prev,
+            model: firstModel.model,
+            pluginId: firstModel.plugin,
+            voice: firstModel.config?.default_voice || '',
+          }));
+          // Also load voices for this plugin
+          if (firstModel.config?.voices) {
+            setTtsVoices(firstModel.config.voices);
+          }
+        }
+      }
+
+      if (pluginsResponse.success && pluginsResponse.data) {
+        setTtsPlugins(pluginsResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to load TTS data:', error);
+    } finally {
+      setLoadingTTS(false);
+    }
+  };
+
+  const handleTtsModelChange = async (modelName: string) => {
+    const selectedModel = ttsModels.find(m => m.model === modelName);
+    if (selectedModel) {
+      setTtsSettings(prev => ({
+        ...prev,
+        model: modelName,
+        pluginId: selectedModel.plugin,
+        voice: selectedModel.config?.default_voice || prev.voice,
+      }));
+      // Update available voices
+      if (selectedModel.config?.voices) {
+        setTtsVoices(selectedModel.config.voices);
+      }
+    }
+  };
+
+  const handleTtsSettingChange = (
+    key: keyof typeof ttsSettings,
+    value: string | number | boolean
+  ) => {
+    setTtsSettings(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleSaveTtsSettings = async () => {
+    try {
+      const response = await preferencesApi.updatePreferences({
+        ttsSettings,
+      });
+      if (response.success && response.data) {
+        setPreferences(response.data);
+        toast.success('TTS settings saved successfully');
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to save TTS settings: ' + errorMessage);
+    }
+  };
+
+  const handleTestTTS = async () => {
+    if (testingTTS) {
+      // Stop current test
+      if (testAudio) {
+        testAudio.pause();
+        testAudio.currentTime = 0;
+        setTestAudio(null);
+      }
+      setTestingTTS(false);
+      return;
+    }
+
+    setTestingTTS(true);
+    try {
+      const response = await ttsApi.generateBase64({
+        model: ttsSettings.model || 'tts-1',
+        input: 'Hello! This is a test of the text-to-speech system.',
+        voice: ttsSettings.voice || 'alloy',
+        speed: ttsSettings.speed || 1.0,
+        response_format: 'mp3',
+      });
+
+      if (response.success && response.data?.audio) {
+        const audioUrl = `data:${response.data.mimeType};base64,${response.data.audio}`;
+        const audio = new Audio(audioUrl);
+        setTestAudio(audio);
+
+        audio.onended = () => {
+          setTestingTTS(false);
+          setTestAudio(null);
+        };
+
+        audio.onerror = () => {
+          toast.error('Failed to play audio');
+          setTestingTTS(false);
+          setTestAudio(null);
+        };
+
+        await audio.play();
+      } else {
+        throw new Error(response.message || 'Failed to generate speech');
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('TTS test failed: ' + errorMessage);
+      setTestingTTS(false);
+    }
+  };
+
+  const handleResetTtsSettings = () => {
+    setTtsSettings({
+      enabled: false,
+      autoPlay: false,
+      model: ttsModels[0]?.model || '',
+      voice: ttsModels[0]?.config?.default_voice || '',
+      speed: 1.0,
+      pluginId: ttsModels[0]?.plugin || '',
+    });
   };
 
   const handleRegenerateEmbeddings = async () => {
@@ -556,6 +735,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     { id: 'appearance', label: 'Appearance', icon: Palette },
     { id: 'models', label: 'Models', icon: Bot },
     { id: 'generation', label: 'Generation', icon: Sliders },
+    { id: 'tts', label: 'Text-to-Speech', icon: Volume2 },
     {
       id: 'documents',
       label: 'Documents & RAG',
@@ -918,6 +1098,277 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className='mt-6'>
                 <ModelTools />
               </div>
+            </div>
+          </div>
+        );
+
+      case 'tts':
+        return (
+          <div className='space-y-6'>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+                Text-to-Speech Settings
+              </h3>
+              <p className='text-sm text-gray-600 dark:text-gray-400 mb-6'>
+                Configure text-to-speech for reading assistant messages aloud.
+              </p>
+
+              {loadingTTS ? (
+                <div className='flex items-center justify-center py-8'>
+                  <Loader2 className='h-8 w-8 animate-spin text-primary-500' />
+                  <span className='ml-3 text-gray-600 dark:text-gray-400'>
+                    Loading TTS providers...
+                  </span>
+                </div>
+              ) : ttsModels.length === 0 ? (
+                <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4'>
+                  <div className='flex items-start gap-3'>
+                    <Volume2 className='h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5' />
+                    <div>
+                      <h4 className='text-sm font-medium text-yellow-800 dark:text-yellow-200'>
+                        No TTS Providers Available
+                      </h4>
+                      <p className='text-sm text-yellow-700 dark:text-yellow-300 mt-1'>
+                        To enable text-to-speech, install a TTS plugin (like
+                        OpenAI TTS or ElevenLabs) and configure the API key in
+                        your environment.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className='space-y-6'>
+                  {/* Enable TTS Toggle */}
+                  <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                          Enable Text-to-Speech
+                        </h4>
+                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                          Show TTS button on assistant messages
+                        </p>
+                      </div>
+                      <label className='flex items-center cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={ttsSettings.enabled}
+                          onChange={e =>
+                            handleTtsSettingChange('enabled', e.target.checked)
+                          }
+                          className='sr-only'
+                        />
+                        <div
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                            ttsSettings.enabled
+                              ? 'bg-primary-600 dark:bg-primary-500'
+                              : 'bg-gray-200 dark:bg-dark-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              ttsSettings.enabled
+                                ? 'translate-x-6'
+                                : 'translate-x-1'
+                            }`}
+                          />
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Auto-Play Toggle */}
+                  <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                          Auto-Play Messages
+                        </h4>
+                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                          Automatically read assistant messages aloud when they
+                          complete
+                        </p>
+                      </div>
+                      <label className='flex items-center cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={ttsSettings.autoPlay}
+                          onChange={e =>
+                            handleTtsSettingChange('autoPlay', e.target.checked)
+                          }
+                          disabled={!ttsSettings.enabled}
+                          className='sr-only'
+                        />
+                        <div
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                            !ttsSettings.enabled
+                              ? 'bg-gray-100 dark:bg-dark-200 opacity-50 cursor-not-allowed'
+                              : ttsSettings.autoPlay
+                                ? 'bg-primary-600 dark:bg-primary-500'
+                                : 'bg-gray-200 dark:bg-dark-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              ttsSettings.autoPlay
+                                ? 'translate-x-6'
+                                : 'translate-x-1'
+                            }`}
+                          />
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Voice Settings */}
+                  <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                    <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-4'>
+                      Voice Configuration
+                    </h4>
+                    <div className='space-y-4'>
+                      {/* Model Selection */}
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                          TTS Model
+                        </label>
+                        <Select
+                          value={ttsSettings.model}
+                          onChange={e => handleTtsModelChange(e.target.value)}
+                          disabled={!ttsSettings.enabled}
+                          options={[
+                            { value: '', label: 'Select a model' },
+                            ...ttsModels.map(model => ({
+                              value: model.model,
+                              label: `${model.model} (${model.plugin})`,
+                            })),
+                          ]}
+                        />
+                        <p className='text-xs text-gray-500 mt-1'>
+                          The AI model used for speech synthesis
+                        </p>
+                      </div>
+
+                      {/* Voice Selection */}
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                          Voice
+                        </label>
+                        <Select
+                          value={ttsSettings.voice}
+                          onChange={e =>
+                            handleTtsSettingChange('voice', e.target.value)
+                          }
+                          disabled={
+                            !ttsSettings.enabled || ttsVoices.length === 0
+                          }
+                          options={[
+                            { value: '', label: 'Select a voice' },
+                            ...ttsVoices.map(voice => ({
+                              value: voice,
+                              label:
+                                voice.charAt(0).toUpperCase() + voice.slice(1),
+                            })),
+                          ]}
+                        />
+                        <p className='text-xs text-gray-500 mt-1'>
+                          The voice persona for speech output
+                        </p>
+                      </div>
+
+                      {/* Speed Control */}
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                          Speed: {ttsSettings.speed.toFixed(1)}x
+                        </label>
+                        <input
+                          type='range'
+                          min='0.25'
+                          max='4.0'
+                          step='0.25'
+                          value={ttsSettings.speed}
+                          onChange={e =>
+                            handleTtsSettingChange(
+                              'speed',
+                              parseFloat(e.target.value)
+                            )
+                          }
+                          disabled={!ttsSettings.enabled}
+                          className='w-full range-slider'
+                        />
+                        <div className='flex justify-between text-xs text-gray-500 mt-1'>
+                          <span>0.25x (Slow)</span>
+                          <span>1.0x (Normal)</span>
+                          <span>4.0x (Fast)</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Available Providers Info */}
+                  {ttsPlugins.length > 0 && (
+                    <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                      <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+                        Available TTS Providers
+                      </h4>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+                        {ttsPlugins.map(plugin => (
+                          <div
+                            key={plugin.id}
+                            className='flex items-center gap-2 p-2 bg-white dark:bg-dark-100 rounded border border-gray-200 dark:border-dark-300'
+                          >
+                            <div className='w-2 h-2 rounded-full bg-green-500' />
+                            <span className='text-sm text-gray-700 dark:text-gray-300'>
+                              {plugin.name}
+                            </span>
+                            <span className='text-xs text-gray-500 dark:text-gray-400'>
+                              ({plugin.models?.length || 0} models)
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Test & Action Buttons */}
+                  <div className='flex justify-between items-center pt-4 border-t border-gray-200 dark:border-dark-300'>
+                    <div className='flex gap-2'>
+                      <Button
+                        onClick={handleResetTtsSettings}
+                        variant='outline'
+                        className='flex items-center gap-2'
+                      >
+                        <RotateCcw size={16} />
+                        Reset
+                      </Button>
+                      <Button
+                        onClick={handleTestTTS}
+                        variant='outline'
+                        disabled={!ttsSettings.enabled || !ttsSettings.model}
+                        className='flex items-center gap-2'
+                      >
+                        {testingTTS ? (
+                          <>
+                            <Square size={16} />
+                            Stop
+                          </>
+                        ) : (
+                          <>
+                            <Play size={16} />
+                            Test Voice
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <Button
+                      onClick={handleSaveTtsSettings}
+                      className='flex items-center gap-2'
+                    >
+                      <Check size={16} />
+                      Save Settings
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         );

@@ -15,13 +15,15 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ChatMessage as ChatMessageType } from '@/types';
 import { MessageContent } from '@/components/ui';
 import { GenerationStats } from '@/components/GenerationStats';
 import { ArtifactContainer } from '@/components/ArtifactContainer';
+import { TTSButton } from '@/components/TTSButton';
 import { formatTimestamp, cn, parseThinkingContent } from '@/utils';
 import { parseArtifacts } from '@/utils/artifactParser';
+import { ttsApi } from '@/utils/api';
 import {
   User,
   Bot,
@@ -62,6 +64,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [artifacts, setArtifacts] = useState(message.artifacts || []);
   const [thinkingContent, setThinkingContent] = useState<string | null>(null);
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const autoPlayAudioRef = useRef<HTMLAudioElement | null>(null);
+  const wasStreamingRef = useRef(isStreaming);
+  const hasAutoPlayedRef = useRef(false);
 
   // Parse thinking content and artifacts from message content on mount or when content changes
   useEffect(() => {
@@ -106,6 +112,71 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       }
     }
   }, [isStreaming, message.content, message.artifacts, isUser, isSystem]);
+
+  // Auto-play TTS when streaming completes (if enabled)
+  useEffect(() => {
+    // Check if streaming just completed (was streaming, now not streaming)
+    const streamingJustCompleted = wasStreamingRef.current && !isStreaming;
+    wasStreamingRef.current = isStreaming;
+
+    // Only auto-play once per message
+    if (
+      streamingJustCompleted &&
+      !hasAutoPlayedRef.current &&
+      !isUser &&
+      !isSystem &&
+      parsedContent &&
+      preferences.ttsSettings?.enabled &&
+      preferences.ttsSettings?.autoPlay
+    ) {
+      hasAutoPlayedRef.current = true;
+
+      // Auto-play the message (parsedContent already has thinking removed)
+      const playMessage = async () => {
+        setIsAutoPlaying(true);
+        try {
+          const response = await ttsApi.generateBase64({
+            model: preferences.ttsSettings?.model || 'tts-1',
+            input: parsedContent,
+            voice: preferences.ttsSettings?.voice || 'alloy',
+            speed: preferences.ttsSettings?.speed || 1.0,
+            response_format: 'mp3',
+          });
+
+          if (response.success && response.data?.audio) {
+            const audioUrl = `data:${response.data.mimeType};base64,${response.data.audio}`;
+            const audio = new Audio(audioUrl);
+            autoPlayAudioRef.current = audio;
+
+            audio.onended = () => {
+              setIsAutoPlaying(false);
+              autoPlayAudioRef.current = null;
+            };
+
+            audio.onerror = () => {
+              setIsAutoPlaying(false);
+              autoPlayAudioRef.current = null;
+            };
+
+            await audio.play();
+          }
+        } catch (error) {
+          console.error('Auto-play TTS failed:', error);
+          setIsAutoPlaying(false);
+        }
+      };
+
+      playMessage();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (autoPlayAudioRef.current) {
+        autoPlayAudioRef.current.pause();
+        autoPlayAudioRef.current = null;
+      }
+    };
+  }, [isStreaming, isUser, isSystem, parsedContent, preferences.ttsSettings]);
 
   // Determine display name for messages
   const getDisplayName = () => {
@@ -209,6 +280,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <span className='text-xs text-gray-400 dark:text-dark-500'>
             {formatTimestamp(message.timestamp)}
           </span>
+          {/* TTS Button for assistant messages */}
+          {!isUser && !isSystem && !isStreaming && parsedContent && (
+            <TTSButton
+              text={parsedContent}
+              size='sm'
+              className={cn(
+                'transition-opacity',
+                isAutoPlaying
+                  ? 'opacity-100 text-primary-600 dark:text-primary-400'
+                  : 'opacity-0 group-hover:opacity-100'
+              )}
+            />
+          )}
         </div>
 
         <div className='text-gray-700 dark:text-dark-700'>
