@@ -20,7 +20,7 @@ import { ChatMessage as ChatMessageType } from '@/types';
 import { MessageContent } from '@/components/ui';
 import { GenerationStats } from '@/components/GenerationStats';
 import { ArtifactContainer } from '@/components/ArtifactContainer';
-import { formatTimestamp, cn } from '@/utils';
+import { formatTimestamp, cn, parseThinkingContent } from '@/utils';
 import { parseArtifacts } from '@/utils/artifactParser';
 import {
   User,
@@ -31,6 +31,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Brain,
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
@@ -59,22 +60,30 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [parsedContent, setParsedContent] = useState(message.content);
   const [isSystemMessageExpanded, setIsSystemMessageExpanded] = useState(false);
   const [artifacts, setArtifacts] = useState(message.artifacts || []);
+  const [thinkingContent, setThinkingContent] = useState<string | null>(null);
+  const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
 
-  // Parse artifacts from message content on mount or when content changes
+  // Parse thinking content and artifacts from message content on mount or when content changes
   useEffect(() => {
     if (!isUser && !isSystem && message.content) {
+      // First, parse thinking content
+      const thinkingParsed = parseThinkingContent(message.content);
+      setThinkingContent(thinkingParsed.thinking);
+
+      const contentAfterThinking = thinkingParsed.content;
+
       // Use existing artifacts from the message if available
       if (message.artifacts && message.artifacts.length > 0) {
-        setParsedContent(message.content);
+        setParsedContent(contentAfterThinking);
         setArtifacts(message.artifacts);
       } else if (!isStreaming) {
         // Only parse when not streaming to avoid duplicates
-        const parsed = parseArtifacts(message.content);
+        const parsed = parseArtifacts(contentAfterThinking);
         setParsedContent(parsed.content);
         setArtifacts(parsed.artifacts);
       } else {
         // During streaming, just show the content without parsing
-        setParsedContent(message.content);
+        setParsedContent(contentAfterThinking);
         setArtifacts([]);
       }
     }
@@ -83,9 +92,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   // Parse artifacts when streaming completes
   useEffect(() => {
     if (!isUser && !isSystem && message.content && !isStreaming) {
+      // Parse thinking content first
+      const thinkingParsed = parseThinkingContent(message.content);
+      setThinkingContent(thinkingParsed.thinking);
+
+      const contentAfterThinking = thinkingParsed.content;
+
       // Parse artifacts when streaming finishes
       if (!message.artifacts || message.artifacts.length === 0) {
-        const parsed = parseArtifacts(message.content);
+        const parsed = parseArtifacts(contentAfterThinking);
         setParsedContent(parsed.content);
         setArtifacts(parsed.artifacts);
       }
@@ -306,6 +321,30 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             </div>
           ) : (
             <div className='relative'>
+              {/* Collapsible Thinking/CoT Section */}
+              {thinkingContent && (
+                <div className='mb-3'>
+                  <button
+                    onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
+                    className='flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+                  >
+                    <Brain className='h-4 w-4' />
+                    <span className='font-medium'>Thinking</span>
+                    {isThinkingExpanded ? (
+                      <ChevronUp className='h-4 w-4' />
+                    ) : (
+                      <ChevronDown className='h-4 w-4' />
+                    )}
+                  </button>
+                  {isThinkingExpanded && (
+                    <div className='mt-2 p-3 bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-300'>
+                      <p className='text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap leading-relaxed'>
+                        {thinkingContent}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
               <MessageContent content={parsedContent} />
               {isStreaming && (
                 <div className='inline-block w-2 h-5 bg-primary-500 animate-pulse ml-1 rounded-sm' />

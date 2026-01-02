@@ -78,3 +78,45 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
     timeoutId = setTimeout(() => func(...args), delay);
   };
 }
+
+/**
+ * Parse thinking/chain-of-thought content from assistant messages.
+ * Supports formats like [Thinking: ...] or <thinking>...</thinking>
+ */
+export interface ParsedThinking {
+  thinking: string | null;
+  content: string;
+}
+
+export function parseThinkingContent(content: string): ParsedThinking {
+  // Pattern 1: [Thinking: ...]  - matches content between [Thinking: and ]
+  // Need to handle nested brackets and multi-line content
+  const bracketPattern = /^\[Thinking:\s*([\s\S]*?)\]\s*/i;
+
+  // Pattern 2: <thinking>...</thinking> - XML-style tags
+  const xmlPattern = /^<thinking>([\s\S]*?)<\/thinking>\s*/i;
+
+  // Try bracket pattern first
+  const bracketMatch = content.match(bracketPattern);
+  if (bracketMatch) {
+    return {
+      thinking: bracketMatch[1].trim(),
+      content: content.slice(bracketMatch[0].length).trim(),
+    };
+  }
+
+  // Try XML pattern
+  const xmlMatch = content.match(xmlPattern);
+  if (xmlMatch) {
+    return {
+      thinking: xmlMatch[1].trim(),
+      content: content.slice(xmlMatch[0].length).trim(),
+    };
+  }
+
+  // No thinking content found
+  return {
+    thinking: null,
+    content,
+  };
+}
