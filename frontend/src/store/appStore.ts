@@ -69,17 +69,27 @@ export const useAppStore = create<AppState>()(
       theme: { mode: 'light' },
       setTheme: theme => {
         set({ theme });
-        // Apply theme to document
+        // Apply theme to document - remove all theme classes first
+        document.documentElement.classList.remove('dark', 'ophelia');
+        // Add the appropriate class for dark themes
         if (theme.mode === 'dark') {
           document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
+        } else if (theme.mode === 'ophelia') {
+          document.documentElement.classList.add('ophelia');
         }
+        // 'light' mode has no class (default)
       },
       toggleTheme: () => {
         const currentTheme = get().theme;
-        const newMode = currentTheme.mode === 'light' ? 'dark' : 'light';
-        get().setTheme({ mode: newMode });
+        // Cycle through: light -> dark -> ophelia -> light
+        const themeOrder: Array<'light' | 'dark' | 'ophelia'> = [
+          'light',
+          'dark',
+          'ophelia',
+        ];
+        const currentIndex = themeOrder.indexOf(currentTheme.mode);
+        const nextIndex = (currentIndex + 1) % themeOrder.length;
+        get().setTheme({ mode: themeOrder[nextIndex] });
       },
 
       // Sidebar

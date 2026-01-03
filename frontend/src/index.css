@@ -54,6 +54,122 @@
   --scrollbar-thumb-hover: theme('colors.gray.500');
 }
 
+/* Ophelia theme - Purple accents with AMOLED black */
+.ophelia {
+  --toast-bg: #050505;
+  --toast-color: #fafafa;
+  --toast-border: #262626;
+
+  --scrollbar-track: #000000;
+  --scrollbar-thumb: #3b0764;
+  --scrollbar-thumb-hover: #581c87;
+
+  /* Primary purple color overrides */
+  --ophelia-primary-50: #faf5ff;
+  --ophelia-primary-100: #f3e8ff;
+  --ophelia-primary-200: #e9d5ff;
+  --ophelia-primary-300: #d8b4fe;
+  --ophelia-primary-400: #c084fc;
+  --ophelia-primary-500: #a855f7;
+  --ophelia-primary-600: #9333ea;
+  --ophelia-primary-700: #7c3aed;
+  --ophelia-primary-800: #6b21a8;
+  --ophelia-primary-900: #581c87;
+
+  /* AMOLED black backgrounds */
+  --ophelia-bg-base: #000000;
+  --ophelia-bg-elevated: #050505;
+  --ophelia-bg-card: #0a0a0a;
+  --ophelia-bg-surface: #121212;
+  --ophelia-bg-border: #1a1a1a;
+  --ophelia-bg-muted: #262626;
+
+  color-scheme: dark;
+}
+
+/* Ophelia theme base styles - AMOLED black with purple accents */
+.ophelia {
+  /* Override body/html backgrounds */
+  background-color: #000000 !important;
+}
+
+.ophelia body {
+  background-color: #000000;
+  color: #fafafa;
+}
+
+/* Override common background utilities for Ophelia */
+.ophelia .bg-white {
+  background-color: #050505 !important;
+}
+
+.ophelia .bg-gray-50 {
+  background-color: #000000 !important;
+}
+
+.ophelia .bg-gray-100 {
+  background-color: #050505 !important;
+}
+
+/* Text colors for Ophelia */
+.ophelia .text-gray-900 {
+  color: #fafafa !important;
+}
+
+.ophelia .text-gray-700 {
+  color: #e5e5e5 !important;
+}
+
+.ophelia .text-gray-600 {
+  color: #a3a3a3 !important;
+}
+
+.ophelia .text-gray-500 {
+  color: #737373 !important;
+}
+
+/* Border colors for Ophelia */
+.ophelia .border-gray-200 {
+  border-color: #1a1a1a !important;
+}
+
+.ophelia .border-gray-300 {
+  border-color: #262626 !important;
+}
+
+/* Primary color overrides for purple */
+.ophelia .bg-primary-600 {
+  background-color: #9333ea !important;
+}
+
+.ophelia .bg-primary-500 {
+  background-color: #a855f7 !important;
+}
+
+.ophelia .hover\:bg-primary-700:hover {
+  background-color: #7c3aed !important;
+}
+
+.ophelia .text-primary-600 {
+  color: #a855f7 !important;
+}
+
+.ophelia .text-primary-500 {
+  color: #a855f7 !important;
+}
+
+.ophelia .text-primary-400 {
+  color: #c084fc !important;
+}
+
+.ophelia .ring-primary-500 {
+  --tw-ring-color: #a855f7 !important;
+}
+
+.ophelia .focus\:ring-primary-500:focus {
+  --tw-ring-color: #a855f7 !important;
+}
+
 /* Toast positioning to avoid header overlap */
 [data-hot-toast] {
   z-index: 9999 !important;
@@ -279,6 +395,325 @@ select {
   --tw-prose-td-borders: theme('colors.gray.700');
 }
 
+/* Ophelia theme prose styles - Purple links on AMOLED black */
+.ophelia .prose {
+  --tw-prose-body: #e5e5e5;
+  --tw-prose-headings: #fafafa;
+  --tw-prose-lead: #a3a3a3;
+  --tw-prose-links: #c084fc;
+  --tw-prose-bold: #fafafa;
+  --tw-prose-counters: #a3a3a3;
+  --tw-prose-bullets: #581c87;
+  --tw-prose-hr: #262626;
+  --tw-prose-quotes: #fafafa;
+  --tw-prose-quote-borders: #581c87;
+  --tw-prose-captions: #a3a3a3;
+  --tw-prose-code: #fafafa;
+  --tw-prose-pre-code: #e5e5e5;
+  --tw-prose-pre-bg: #050505;
+  --tw-prose-th-borders: #262626;
+  --tw-prose-td-borders: #1a1a1a;
+}
+
+/* Ophelia theme text selection */
+.ophelia ::selection {
+  background-color: #581c87;
+  color: #faf5ff;
+}
+
+/* Ophelia theme toast close indicator */
+.ophelia [data-hot-toast] [data-toast]::after {
+  color: #737373;
+}
+
+/* Ophelia theme focus ring */
+.ophelia .focus-ring:focus {
+  box-shadow:
+    0 0 0 2px #a855f7,
+    0 0 0 4px rgba(168, 85, 247, 0.2);
+}
+
+.ophelia :focus-visible {
+  outline: 2px solid #a855f7;
+  outline-offset: 2px;
+}
+
+/* Ophelia theme - Thinking section styling */
+.ophelia .bg-dark-100 {
+  background-color: #0a0a0a !important;
+}
+
+.ophelia .border-dark-300 {
+  border-color: #1a1a1a !important;
+}
+
+/* Ophelia theme - Message card backgrounds (semi-transparent for wallpaper) */
+.ophelia .bg-gray-25 {
+  background-color: rgba(5, 5, 5, 0.85) !important;
+}
+
+/* Ophelia theme - Model badge */
+.ophelia .bg-dark-200 {
+  background-color: #121212 !important;
+}
+
+/* Ophelia theme - dark backgrounds for cards/surfaces */
+.ophelia .dark\:bg-dark-100\/50 {
+  background-color: rgba(5, 5, 5, 0.85) !important;
+}
+
+.ophelia .dark\:bg-dark-100 {
+  background-color: #050505 !important;
+}
+
+.ophelia .dark\:bg-dark-200 {
+  background-color: #0a0a0a !important;
+}
+
+.ophelia .dark\:bg-dark-50 {
+  background-color: #000000 !important;
+}
+
+/* Ophelia theme - text colors for messages */
+.ophelia .dark\:text-dark-800 {
+  color: #e5e5e5 !important;
+}
+
+.ophelia .dark\:text-dark-700 {
+  color: #a3a3a3 !important;
+}
+
+.ophelia .dark\:text-dark-600 {
+  color: #737373 !important;
+}
+
+.ophelia .dark\:text-dark-500 {
+  color: #525252 !important;
+}
+
+/* Ophelia theme - sidebar and surfaces with wallpaper */
+.ophelia .bg-dark-50 {
+  background-color: rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Ophelia theme - Profile selector in sidebar */
+.ophelia .bg-white\/50 {
+  background-color: rgba(10, 10, 10, 0.7) !important;
+}
+
+.ophelia .dark\:bg-dark-200\/50 {
+  background-color: rgba(10, 10, 10, 0.7) !important;
+}
+
+.ophelia .hover\:bg-white\/70:hover {
+  background-color: rgba(18, 18, 18, 0.8) !important;
+}
+
+.ophelia .dark\:hover\:bg-dark-200\/70:hover {
+  background-color: rgba(18, 18, 18, 0.8) !important;
+}
+
+/* Ophelia theme - Settings tab selection */
+.ophelia .bg-gray-100 {
+  background-color: #0a0a0a !important;
+}
+
+.ophelia .dark\:bg-dark-100 {
+  background-color: #050505 !important;
+}
+
+/* Ophelia theme - Keyboard shortcut indicator */
+.ophelia .bg-white\/80 {
+  background-color: rgba(10, 10, 10, 0.9) !important;
+}
+
+.ophelia .dark\:bg-dark-100\/80 {
+  background-color: rgba(5, 5, 5, 0.9) !important;
+}
+
+.ophelia .hover\:bg-white:hover {
+  background-color: #121212 !important;
+}
+
+.ophelia .dark\:hover\:bg-dark-100:hover {
+  background-color: #0a0a0a !important;
+}
+
+/* Ophelia theme - Sidebar with background image */
+.ophelia .bg-gray-50\/70 {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.ophelia .dark\:bg-dark-25\/70 {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
+
+/* Ophelia theme - User menu dropdown */
+.ophelia .bg-white {
+  background-color: #050505 !important;
+}
+
+/* Ophelia theme - hover states for sidebar buttons */
+.ophelia .hover\:bg-gray-50:hover {
+  background-color: #0a0a0a !important;
+}
+
+.ophelia .dark\:hover\:bg-dark-200\/50:hover {
+  background-color: rgba(18, 18, 18, 0.7) !important;
+}
+
+.ophelia .active\:bg-gray-100:active {
+  background-color: #121212 !important;
+}
+
+.ophelia .dark\:active\:bg-dark-200:active {
+  background-color: #121212 !important;
+}
+
+/* Ophelia theme - border colors (very subtle for AMOLED) */
+.ophelia .border-gray-200\/30 {
+  border-color: rgba(26, 26, 26, 0.3) !important;
+}
+
+.ophelia .dark\:border-dark-300\/30 {
+  border-color: rgba(26, 26, 26, 0.3) !important;
+}
+
+/* Ophelia theme - main sidebar/panel borders */
+.ophelia .border-gray-200 {
+  border-color: rgba(26, 26, 26, 0.4) !important;
+}
+
+.ophelia .dark\:border-dark-200 {
+  border-color: rgba(18, 18, 18, 0.5) !important;
+}
+
+.ophelia .border-gray-200\/50 {
+  border-color: rgba(26, 26, 26, 0.3) !important;
+}
+
+.ophelia .dark\:border-dark-200\/50 {
+  border-color: rgba(18, 18, 18, 0.3) !important;
+}
+
+.ophelia .border-gray-200\/60 {
+  border-color: rgba(26, 26, 26, 0.2) !important;
+}
+
+.ophelia .dark\:border-dark-200\/60 {
+  border-color: rgba(18, 18, 18, 0.2) !important;
+}
+
+.ophelia .border-gray-100 {
+  border-color: rgba(18, 18, 18, 0.3) !important;
+}
+
+.ophelia .dark\:border-dark-100 {
+  border-color: rgba(10, 10, 10, 0.3) !important;
+}
+
+/* Ophelia theme - Override primary/teal colors to purple */
+.ophelia .bg-primary-100 {
+  background-color: rgba(147, 51, 234, 0.2) !important;
+}
+
+.ophelia .dark\:bg-primary-900\/30 {
+  background-color: rgba(147, 51, 234, 0.25) !important;
+}
+
+.ophelia .text-primary-800 {
+  color: #c084fc !important;
+}
+
+.ophelia .dark\:text-primary-200 {
+  color: #e9d5ff !important;
+}
+
+.ophelia .text-primary-500 {
+  color: #a855f7 !important;
+}
+
+.ophelia .bg-primary-500 {
+  background-color: #9333ea !important;
+}
+
+.ophelia .bg-primary-600 {
+  background-color: #7c3aed !important;
+}
+
+.ophelia .hover\:bg-primary-700:hover {
+  background-color: #6b21a8 !important;
+}
+
+.ophelia .active\:bg-primary-800:active {
+  background-color: #581c87 !important;
+}
+
+/* Ophelia theme - Toggle switch colors */
+.ophelia .peer-checked\:bg-primary-600:is(:checked ~ *) {
+  background-color: #9333ea !important;
+}
+
+.ophelia .peer:checked ~ .peer-checked\:bg-primary-600 {
+  background-color: #9333ea !important;
+}
+
+/* Direct toggle override for Ophelia */
+.ophelia input[type='checkbox']:checked + div {
+  background-color: #9333ea !important;
+}
+
+.ophelia .peer-checked\:after\:translate-x-full:is(:checked ~ *)::after {
+  background-color: #fafafa !important;
+}
+
+/* Focus ring purple */
+.ophelia .peer-focus\:ring-primary-300 {
+  --tw-ring-color: rgba(168, 85, 247, 0.3) !important;
+}
+
+.ophelia .dark\:peer-focus\:ring-primary-800 {
+  --tw-ring-color: rgba(107, 33, 168, 0.5) !important;
+}
+
+/* Ophelia theme - Persona page icons */
+.ophelia .bg-primary-50 {
+  background-color: rgba(147, 51, 234, 0.15) !important;
+}
+
+.ophelia .bg-primary-100\/80 {
+  background-color: rgba(147, 51, 234, 0.2) !important;
+}
+
+.ophelia .text-primary-600 {
+  color: #a855f7 !important;
+}
+
+.ophelia .text-primary-700 {
+  color: #9333ea !important;
+}
+
+.ophelia .dark\:text-primary-400 {
+  color: #c084fc !important;
+}
+
+/* Ophelia - gradient backgrounds to purple */
+.ophelia .from-primary-50 {
+  --tw-gradient-from: rgba(147, 51, 234, 0.1) !important;
+}
+
+.ophelia .to-primary-100 {
+  --tw-gradient-to: rgba(147, 51, 234, 0.15) !important;
+}
+
+.ophelia .dark\:from-primary-900\/20 {
+  --tw-gradient-from: rgba(88, 28, 135, 0.2) !important;
+}
+
+.ophelia .dark\:to-primary-800\/10 {
+  --tw-gradient-to: rgba(107, 33, 168, 0.1) !important;
+}
+
 @layer utilities {
   /* Custom slider styles for dark theme */
   .slider {
@@ -373,6 +808,43 @@ select {
 
   .dark .slider::-moz-range-thumb:hover {
     background: theme('colors.primary.300');
+  }
+
+  /* Ophelia theme slider styles */
+  .ophelia .slider {
+    background: #1a1a1a;
+  }
+
+  .ophelia .slider::-webkit-slider-track {
+    background: #1a1a1a;
+  }
+
+  .ophelia .slider::-webkit-slider-thumb {
+    background: #a855f7;
+    border-color: #000000;
+    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+  }
+
+  .ophelia .slider::-webkit-slider-thumb:hover {
+    background: #c084fc;
+  }
+
+  .ophelia .slider::-moz-range-track {
+    background: #1a1a1a;
+  }
+
+  .ophelia .slider::-moz-range-thumb {
+    background: #a855f7;
+    border-color: #000000;
+    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.4);
+  }
+
+  .ophelia .slider::-moz-range-thumb:hover {
+    background: #c084fc;
+  }
+
+  .ophelia .slider::before {
+    background: #a855f7;
   }
 
   /* Progress fill for slider */

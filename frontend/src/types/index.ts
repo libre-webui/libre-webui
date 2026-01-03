@@ -146,7 +146,7 @@ export interface WebSocketMessage {
 }
 
 export interface Theme {
-  mode: 'light' | 'dark';
+  mode: 'light' | 'dark' | 'ophelia';
 }
 
 export interface TTSSettings {

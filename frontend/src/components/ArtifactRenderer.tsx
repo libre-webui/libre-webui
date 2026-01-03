@@ -282,7 +282,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   return (
     <div
       className={cn(
-        'border border-gray-200 dark:border-dark-200 rounded-xl bg-white dark:bg-dark-25 shadow-lg transition-all duration-300 hover:shadow-xl',
+        'border border-gray-200 dark:border-dark-200 ophelia:border-[#1a1a1a] rounded-xl bg-white dark:bg-dark-25 ophelia:bg-[#050505] shadow-lg transition-all duration-300 hover:shadow-xl',
         'w-full max-w-full overflow-hidden', // Ensure it doesn't overflow on mobile
         isFullscreen && 'fixed inset-4 z-50 shadow-2xl animate-scale-in',
         !isFullscreen && 'animate-fade-in',
@@ -290,7 +290,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       )}
     >
       {/* Header */}
-      <div className='px-1.5 py-1.5 sm:p-4 border-b border-gray-100 dark:border-dark-200'>
+      <div className='px-1.5 py-1.5 sm:p-4 border-b border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a]'>
         {/* Mobile: Vertical Stack */}
         <div className='flex flex-col gap-2 sm:hidden'>
           {/* Title Row */}
@@ -298,7 +298,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
             <div className='h-4 w-4 flex-shrink-0 flex items-center justify-center'>
               {getIcon()}
             </div>
-            <h3 className='font-medium text-gray-900 dark:text-gray-100 truncate text-sm leading-tight flex-1'>
+            <h3 className='font-medium text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] truncate text-sm leading-tight flex-1'>
               {artifact.title}
             </h3>
           </div>
@@ -326,7 +326,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
                 >
                   <Code2 className='h-2.5 w-2.5' />
                 </Button>
-                <div className='w-px h-2 bg-gray-300 dark:bg-gray-600 mx-0.5' />
+                <div className='w-px h-2 bg-gray-300 dark:bg-gray-600 ophelia:bg-[#262626] mx-0.5' />
               </>
             )}
 
@@ -334,7 +334,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               variant='ghost'
               size='sm'
               onClick={() => copyToClipboard(artifact.content)}
-              className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 touch-manipulation'
+              className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] touch-manipulation'
               title='Copy content'
             >
               {copied ? (
@@ -348,7 +348,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               variant='ghost'
               size='sm'
               onClick={downloadArtifact}
-              className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 touch-manipulation'
+              className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] touch-manipulation'
               title='Download'
             >
               <Download className='h-2.5 w-2.5' />
@@ -359,7 +359,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
                 variant='ghost'
                 size='sm'
                 onClick={onFullscreenToggle}
-                className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 touch-manipulation border border-gray-200 dark:border-dark-300 hover:border-gray-300 dark:hover:border-dark-400'
+                className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] touch-manipulation border border-gray-200 dark:border-dark-300 ophelia:border-[#262626] hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#3f3f46]'
                 title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
               >
                 {isFullscreen ? (
@@ -377,11 +377,11 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           <div className='flex items-center gap-3'>
             <div className='flex items-center gap-2'>
               {getIcon()}
-              <h3 className='font-semibold text-gray-900 dark:text-gray-100 truncate'>
+              <h3 className='font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] truncate'>
                 {artifact.title}
               </h3>
             </div>
-            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full font-medium'>
+            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 ophelia:bg-[rgba(147,51,234,0.2)] text-primary-700 dark:text-primary-300 ophelia:text-[#c084fc] px-2 py-1 rounded-full font-medium'>
               {artifact.type.toUpperCase()}
             </span>
           </div>
@@ -410,7 +410,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
                   <Code2 className='h-3 w-3 mr-1' />
                   Code
                 </Button>
-                <div className='w-px h-4 bg-gray-300 dark:bg-gray-600 mx-1' />
+                <div className='w-px h-4 bg-gray-300 dark:bg-gray-600 ophelia:bg-[#262626] mx-1' />
               </>
             )}
 
@@ -418,7 +418,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               variant='ghost'
               size='sm'
               onClick={() => copyToClipboard(artifact.content)}
-              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
               title='Copy content'
             >
               {copied ? (
@@ -432,7 +432,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               variant='ghost'
               size='sm'
               onClick={downloadArtifact}
-              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
               title='Download'
             >
               <Download className='h-4 w-4' />
@@ -443,7 +443,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
                 variant='ghost'
                 size='sm'
                 onClick={onFullscreenToggle}
-                className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200'
+                className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
                 title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
               >
                 {isFullscreen ? (
@@ -460,7 +460,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       {/* Content */}
       <div className='p-4'>
         {artifact.description && (
-          <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
+          <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] mb-4'>
             {artifact.description}
           </p>
         )}
@@ -469,8 +469,8 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       </div>
 
       {/* Footer */}
-      <div className='flex items-center justify-between p-3 border-t border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-100/50'>
-        <div className='text-xs text-gray-500 dark:text-gray-400'>
+      <div className='flex items-center justify-between p-3 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] bg-gray-50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a]'>
+        <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
           Created: {new Date(artifact.createdAt).toLocaleString()}
         </div>
 
@@ -485,7 +485,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
                 newWindow.document.close();
               }
             }}
-            className='text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
+            className='text-xs hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] ophelia:text-[#a3a3a3]'
           >
             <ExternalLink className='h-3 w-3 mr-1' />
             Open in new window

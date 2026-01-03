@@ -285,7 +285,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       variant='ghost'
                       size='sm'
                       onClick={toggleSidebarCompact}
-                      className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
+                      className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.15)] active:bg-gray-200 dark:active:bg-dark-100 ophelia:active:bg-[rgba(147,51,234,0.25)] touch-manipulation ophelia:text-[#a3a3a3] ophelia:hover:text-[#c084fc]'
                       title='Toggle sidebar size'
                     >
                       <ChevronLeft className='h-4 w-4' />
@@ -299,7 +299,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     variant='ghost'
                     size='sm'
                     onClick={toggleSidebarCompact}
-                    className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
+                    className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.15)] active:bg-gray-200 dark:active:bg-dark-100 ophelia:active:bg-[rgba(147,51,234,0.25)] touch-manipulation ophelia:text-[#a3a3a3] ophelia:hover:text-[#c084fc]'
                     title='Expand sidebar'
                   >
                     <ChevronRight className='h-4 w-4' />
@@ -367,8 +367,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'w-11 h-11 justify-center p-0'
                     : 'w-full px-2.5 py-2',
                   location.pathname === '/chat' || location.pathname === '/'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[rgba(147,51,234,0.25)] text-primary-800 dark:text-primary-200 ophelia:text-[#e9d5ff] shadow-sm'
+                    : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200/50 ophelia:hover:bg-[rgba(147,51,234,0.1)] hover:text-gray-900 dark:hover:text-gray-100 ophelia:hover:text-[#e9d5ff] active:bg-gray-100 dark:active:bg-dark-200 ophelia:active:bg-[rgba(147,51,234,0.15)]'
                 )}
                 title={sidebarCompact ? 'Chat' : undefined}
               >
@@ -389,8 +389,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'w-11 h-11 justify-center p-0'
                     : 'w-full px-2.5 py-2',
                   location.pathname === '/models'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[rgba(147,51,234,0.25)] text-primary-800 dark:text-primary-200 ophelia:text-[#e9d5ff] shadow-sm'
+                    : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200/50 ophelia:hover:bg-[rgba(147,51,234,0.1)] hover:text-gray-900 dark:hover:text-gray-100 ophelia:hover:text-[#e9d5ff] active:bg-gray-100 dark:active:bg-dark-200 ophelia:active:bg-[rgba(147,51,234,0.15)]'
                 )}
                 title={sidebarCompact ? 'Models' : undefined}
               >
@@ -411,8 +411,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'w-11 h-11 justify-center p-0'
                     : 'w-full px-2.5 py-2',
                   location.pathname === '/personas'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[rgba(147,51,234,0.25)] text-primary-800 dark:text-primary-200 ophelia:text-[#e9d5ff] shadow-sm'
+                    : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200/50 ophelia:hover:bg-[rgba(147,51,234,0.1)] hover:text-gray-900 dark:hover:text-gray-100 ophelia:hover:text-[#e9d5ff] active:bg-gray-100 dark:active:bg-dark-200 ophelia:active:bg-[rgba(147,51,234,0.15)]'
                 )}
                 title={sidebarCompact ? 'Personas' : undefined}
               >
@@ -527,14 +527,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   handleCancelEdit();
                                 }
                               }}
-                              className='text-sm h-8'
+                              className='text-sm h-8 ophelia:bg-[#0a0a0a] ophelia:border-[#9333ea] ophelia:text-[#fafafa] ophelia:focus:ring-[#a855f7] ophelia:focus:border-[#a855f7]'
                               autoFocus
                             />
                             <Button
                               variant='ghost'
                               size='sm'
                               onClick={() => handleSaveEdit(session.id)}
-                              className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300 active:bg-gray-200 dark:active:bg-dark-400 touch-manipulation'
+                              className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300 ophelia:hover:bg-[rgba(147,51,234,0.2)] active:bg-gray-200 dark:active:bg-dark-400 ophelia:active:bg-[rgba(147,51,234,0.3)] touch-manipulation ophelia:text-[#a855f7] ophelia:hover:text-[#c084fc]'
                             >
                               <Check className='h-3 w-3' />
                             </Button>
@@ -542,7 +542,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               variant='ghost'
                               size='sm'
                               onClick={handleCancelEdit}
-                              className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300 active:bg-gray-200 dark:active:bg-dark-400 touch-manipulation'
+                              className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300 ophelia:hover:bg-[rgba(239,68,68,0.15)] active:bg-gray-200 dark:active:bg-dark-400 ophelia:active:bg-[rgba(239,68,68,0.25)] touch-manipulation ophelia:text-[#737373] ophelia:hover:text-[#f87171]'
                             >
                               <X className='h-3 w-3' />
                             </Button>
@@ -681,7 +681,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <div className='relative' ref={userMenuRef}>
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className='w-full p-2.5 rounded-xl bg-white/50 dark:bg-dark-200/50 border border-gray-200/30 dark:border-dark-300/30 hover:bg-white/70 dark:hover:bg-dark-200/70 transition-all duration-200 text-left touch-manipulation'
+                    className='w-full p-2.5 rounded-xl bg-white/50 dark:bg-dark-200/50 ophelia:bg-[rgba(10,10,10,0.6)] border border-gray-200/30 dark:border-dark-300/30 ophelia:border-[rgba(38,38,38,0.2)] hover:bg-white/70 dark:hover:bg-dark-200/70 ophelia:hover:bg-[rgba(18,18,18,0.7)] transition-all duration-200 text-left touch-manipulation'
                   >
                     <div className='flex items-center gap-2.5'>
                       <div className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'>

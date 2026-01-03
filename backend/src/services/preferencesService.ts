@@ -184,7 +184,10 @@ class PreferencesService {
     return this.updatePreferences({ defaultModel: model }, userId);
   }
 
-  setTheme(theme: 'light' | 'dark', userId?: string): UserPreferences {
+  setTheme(
+    theme: 'light' | 'dark' | 'ophelia',
+    userId?: string
+  ): UserPreferences {
     return this.updatePreferences({ theme: { mode: theme } }, userId);
   }
 

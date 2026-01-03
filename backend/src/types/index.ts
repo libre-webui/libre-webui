@@ -123,7 +123,7 @@ export interface TTSSettings {
 
 export interface UserPreferences {
   defaultModel: string;
-  theme: { mode: 'light' | 'dark' };
+  theme: { mode: 'light' | 'dark' | 'ophelia' };
   systemMessage: string;
   generationOptions: GenerationOptions;
   // Embedding settings for semantic search

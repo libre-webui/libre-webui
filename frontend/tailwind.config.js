@@ -69,6 +69,39 @@ export default {
           900: '#0c4a6e',
           950: '#082f49',
         },
+        // Ophelia theme - Purple with AMOLED black
+        ophelia: {
+          // Purple accent colors
+          primary: {
+            50: '#faf5ff',
+            100: '#f3e8ff',
+            200: '#e9d5ff',
+            300: '#d8b4fe',
+            400: '#c084fc',
+            500: '#a855f7',
+            600: '#9333ea',
+            700: '#7c3aed',
+            800: '#6b21a8',
+            900: '#581c87',
+            950: '#3b0764',
+          },
+          // AMOLED black backgrounds
+          bg: {
+            50: '#000000',   // Pure black base
+            100: '#050505',  // Slightly lighter
+            200: '#0a0a0a',  // Card backgrounds
+            300: '#121212',  // Elevated surfaces
+            400: '#1a1a1a',  // Borders
+            500: '#262626',  // Muted elements
+          },
+          // Text colors for AMOLED
+          text: {
+            900: '#fafafa',  // Primary text
+            800: '#e5e5e5',  // Secondary text
+            700: '#a3a3a3',  // Muted text
+            600: '#737373',  // Disabled text
+          },
+        },
         // Success, warning, error colors
         success: {
           50: '#f0fdf4',
@@ -168,5 +201,10 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Add ophelia variant for the Ophelia theme
+    function({ addVariant }) {
+      addVariant('ophelia', '.ophelia &');
+    },
+  ],
 }

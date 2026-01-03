@@ -54,12 +54,12 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 
   return (
     <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
-      <div className='bg-white dark:bg-dark-100 rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden'>
+      <div className='bg-white dark:bg-dark-100 ophelia:bg-[#050505] rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden'>
         {/* Header */}
-        <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-300'>
+        <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'>
           <div className='flex items-center gap-2'>
-            <Keyboard className='h-5 w-5 text-gray-700 dark:text-dark-600' />
-            <h2 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
+            <Keyboard className='h-5 w-5 text-gray-700 dark:text-dark-600 ophelia:text-[#a3a3a3]' />
+            <h2 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
               Keyboard Shortcuts
             </h2>
           </div>
@@ -92,7 +92,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                       <span className='text-sm text-gray-600 dark:text-dark-500'>
                         {shortcut.description}
                       </span>
-                      <kbd className='px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-dark-600 rounded border border-gray-300 dark:border-dark-400'>
+                      <kbd className='px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-dark-200 ophelia:bg-[#121212] text-gray-700 dark:text-dark-600 ophelia:text-[#a3a3a3] rounded border border-gray-300 dark:border-dark-400 ophelia:border-[#262626]'>
                         {formatShortcut(shortcut)}
                       </kbd>
                     </div>
@@ -112,7 +112,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                 <span className='text-sm text-gray-600 dark:text-dark-500'>
                   Send message
                 </span>
-                <kbd className='px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-dark-600 rounded border border-gray-300 dark:border-dark-400'>
+                <kbd className='px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-dark-200 ophelia:bg-[#121212] text-gray-700 dark:text-dark-600 ophelia:text-[#a3a3a3] rounded border border-gray-300 dark:border-dark-400 ophelia:border-[#262626]'>
                   Enter
                 </kbd>
               </div>
@@ -120,7 +120,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
                 <span className='text-sm text-gray-600 dark:text-dark-500'>
                   New line in message
                 </span>
-                <kbd className='px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-dark-200 text-gray-700 dark:text-dark-600 rounded border border-gray-300 dark:border-dark-400'>
+                <kbd className='px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-dark-200 ophelia:bg-[#121212] text-gray-700 dark:text-dark-600 ophelia:text-[#a3a3a3] rounded border border-gray-300 dark:border-dark-400 ophelia:border-[#262626]'>
                   ⇧+Enter
                 </kbd>
               </div>
@@ -129,14 +129,14 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className='px-6 py-4 bg-gray-50 dark:bg-dark-200 border-t border-gray-200 dark:border-dark-300'>
-          <p className='text-xs text-gray-500 dark:text-dark-400 text-center'>
+        <div className='px-6 py-4 bg-gray-50 dark:bg-dark-200 ophelia:bg-[#0a0a0a] border-t border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'>
+          <p className='text-xs text-gray-500 dark:text-dark-400 ophelia:text-[#737373] text-center'>
             Press{' '}
-            <kbd className='px-1 py-0.5 text-xs font-mono bg-gray-200 dark:bg-dark-300 rounded'>
+            <kbd className='px-1 py-0.5 text-xs font-mono bg-gray-200 dark:bg-dark-300 ophelia:bg-[#1a1a1a] rounded'>
               ?
             </kbd>{' '}
             or{' '}
-            <kbd className='px-1 py-0.5 text-xs font-mono bg-gray-200 dark:bg-dark-300 rounded'>
+            <kbd className='px-1 py-0.5 text-xs font-mono bg-gray-200 dark:bg-dark-300 ophelia:bg-[#1a1a1a] rounded'>
               H
             </kbd>{' '}
             to show this help
@@ -162,8 +162,8 @@ export const KeyboardShortcutsIndicator: React.FC<{
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'fixed top-4 right-4 h-10 w-10 p-0 bg-white/80 dark:bg-dark-100/80 backdrop-blur-sm border border-gray-200 dark:border-dark-300 shadow-lg hover:shadow-xl transition-all duration-200 z-50',
-        'hover:bg-white dark:hover:bg-dark-100',
+        'fixed top-4 right-4 h-10 w-10 p-0 bg-white/80 dark:bg-dark-100/80 ophelia:bg-[rgba(10,10,10,0.9)] backdrop-blur-sm border border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a] shadow-lg hover:shadow-xl transition-all duration-200 z-50',
+        'hover:bg-white dark:hover:bg-dark-100 ophelia:hover:bg-[#121212]',
         className
       )}
       title='Keyboard shortcuts'
