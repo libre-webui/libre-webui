@@ -227,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         className={cn(
           'fixed inset-y-0 left-0 z-50 border-r border-gray-200 dark:border-dark-200 transform transition-all duration-300 ease-in-out shadow-xl',
           // Dynamic width based on compact mode and responsive design
-          sidebarCompact ? 'w-16' : 'w-80 max-sm:w-64',
+          sidebarCompact ? 'w-18' : 'w-80 max-sm:w-64',
           // On mobile: slide in/out from left
           // On desktop: slide in/out from left but maintain layout flow
           isOpen ? 'translate-x-0' : '-translate-x-full',
@@ -260,7 +260,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               'border-b border-gray-200/60 dark:border-dark-200/60',
               sidebarCompact ? 'p-2' : 'p-3',
               // Add top padding for Electron macOS traffic lights
-              isElectron && 'pt-8'
+              isElectron && 'pt-10'
             )}
           >
             <div

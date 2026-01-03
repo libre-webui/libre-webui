@@ -67,7 +67,7 @@ function createMainWindow() {
     minHeight: 600,
     show: false,
     titleBarStyle: 'hiddenInset',
-    trafficLightPosition: { x: 15, y: 15 },
+    trafficLightPosition: { x: 12, y: 12 },
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#1a1a1a' : '#ffffff',
     webPreferences: {
       nodeIntegration: false,
@@ -241,13 +241,14 @@ async function main() {
   createMenu();
 
   try {
-    // Check if backend is available, if not start it in Terminal
+    // Check if backend is available
     const backendAvailable = await checkBackend();
     if (backendAvailable) {
       console.log('Backend server detected on port', BACKEND_PORT);
     } else {
-      console.log('Backend not detected - starting it in Terminal...');
-      startBackendInTerminal();
+      console.log('Backend not detected - please start it manually with: npm run dev:backend');
+      // Disabled auto-start in Terminal for now
+      // startBackendInTerminal();
     }
 
     // Create main window

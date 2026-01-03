@@ -59,6 +59,10 @@ export const useAuthStore = create<AuthState>()(
           chatStore.clearAllState();
         }
 
+        // Clear app store user-specific state (background, preferences) to prevent data leaking between users
+        const appStore = useAppStore.getState();
+        appStore.clearUserState();
+
         set({
           user,
           token,
@@ -71,7 +75,6 @@ export const useAuthStore = create<AuthState>()(
         setTimeout(async () => {
           try {
             // Get required stores
-            const appStore = useAppStore.getState();
             const pluginStore = usePluginStore.getState();
 
             console.log('🔄 Reinitializing app after login...');
@@ -87,11 +90,13 @@ export const useAuthStore = create<AuthState>()(
               console.warn('Ollama service not available after login');
             }
 
+            // Load the new user's data
+            const currentAppStore = useAppStore.getState();
             await Promise.all([
               chatStore.loadModels(),
               chatStore.loadSessions(),
               chatStore.loadPreferences(),
-              appStore.loadPreferences(),
+              currentAppStore.loadPreferences(),
               pluginStore.loadPlugins(),
             ]);
             console.log('✅ Reinitialized app after login');
@@ -114,6 +119,10 @@ export const useAuthStore = create<AuthState>()(
         if (chatStore.clearAllState) {
           chatStore.clearAllState();
         }
+
+        // Clear app store user-specific state (background, preferences)
+        const appStore = useAppStore.getState();
+        appStore.clearUserState();
 
         set({
           user: null,

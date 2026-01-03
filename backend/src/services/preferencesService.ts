@@ -131,6 +131,14 @@ class PreferencesService {
         ...this.defaultPreferences.embeddingSettings,
         ...preferences.embeddingSettings,
       },
+      // Preserve backgroundSettings if they exist
+      ...(preferences.backgroundSettings && {
+        backgroundSettings: preferences.backgroundSettings,
+      }),
+      // Preserve ttsSettings if they exist
+      ...(preferences.ttsSettings && {
+        ttsSettings: preferences.ttsSettings,
+      }),
     };
   }
 
@@ -150,6 +158,17 @@ class PreferencesService {
         ...currentPreferences.embeddingSettings,
         ...updates.embeddingSettings,
       },
+      // Properly merge backgroundSettings
+      backgroundSettings: updates.backgroundSettings
+        ? {
+            ...currentPreferences.backgroundSettings,
+            ...updates.backgroundSettings,
+          }
+        : currentPreferences.backgroundSettings,
+      // Properly merge ttsSettings
+      ttsSettings: updates.ttsSettings
+        ? { ...currentPreferences.ttsSettings, ...updates.ttsSettings }
+        : currentPreferences.ttsSettings,
     };
 
     try {

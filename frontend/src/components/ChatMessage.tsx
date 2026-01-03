@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { ChatMessage as ChatMessageType } from '@/types';
 import { MessageContent } from '@/components/ui';
 import { GenerationStats } from '@/components/GenerationStats';
@@ -58,6 +59,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const currentPersona = getCurrentPersona();
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(message.content);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [parsedContent, setParsedContent] = useState(message.content);
   const [isSystemMessageExpanded, setIsSystemMessageExpanded] = useState(false);
@@ -308,15 +310,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     src={image}
                     alt={`Uploaded image ${index + 1}`}
                     className='w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity'
-                    onClick={() => {
-                      // Open image in new tab for full view
-                      const win = window.open();
-                      if (win) {
-                        win.document.write(
-                          `<img src="${image}" style="max-width:100%; max-height:100vh; margin:auto; display:block;" />`
-                        );
-                      }
-                    }}
+                    onClick={() => setLightboxImage(image)}
                   />
                 </div>
               ))}
@@ -451,6 +445,32 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           )}
         </div>
       </div>
+
+      {/* Image Lightbox Modal - rendered via portal to escape stacking context */}
+      {lightboxImage &&
+        createPortal(
+          <div
+            className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm'
+            onClick={() => setLightboxImage(null)}
+          >
+            <button
+              className='absolute top-6 right-6 p-3 bg-white/20 hover:bg-white/40 rounded-full text-white transition-all shadow-lg border border-white/30'
+              onClick={e => {
+                e.stopPropagation();
+                setLightboxImage(null);
+              }}
+            >
+              <X className='h-7 w-7' />
+            </button>
+            <img
+              src={lightboxImage}
+              alt='Full size image'
+              className='max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl'
+              onClick={e => e.stopPropagation()}
+            />
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

@@ -45,6 +45,9 @@ interface AppState {
   uploadBackgroundImage: (file: File) => Promise<void>;
   removeBackgroundImage: () => void;
 
+  // Clear user-specific state (called on logout/login)
+  clearUserState: () => void;
+
   // UI state
   isGenerating: boolean;
   setIsGenerating: (generating: boolean) => void;
@@ -124,8 +127,11 @@ export const useAppStore = create<AppState>()(
           const { preferencesApi } = await import('@/utils/api');
           const response = await preferencesApi.getPreferences();
           if (response.success && response.data) {
+            const data = response.data;
             set(state => ({
-              preferences: { ...state.preferences, ...response.data },
+              preferences: { ...state.preferences, ...data },
+              // Restore background image from backend preferences
+              backgroundImage: data.backgroundSettings?.imageUrl || null,
             }));
           }
         } catch (error: unknown) {
@@ -154,20 +160,41 @@ export const useAppStore = create<AppState>()(
 
       // Background settings
       backgroundImage: null,
-      setBackgroundImage: imageUrl => {
+      setBackgroundImage: async imageUrl => {
         set({ backgroundImage: imageUrl });
-        // Update preferences
-        const state = get();
-        const updatedPreferences = {
-          ...state.preferences,
-          backgroundSettings: {
-            enabled: !!imageUrl,
-            imageUrl: imageUrl || '',
-            blurAmount: state.preferences.backgroundSettings?.blurAmount || 10,
-            opacity: state.preferences.backgroundSettings?.opacity || 0.6,
-          },
-        };
-        state.setPreferences(updatedPreferences);
+
+        // Only update backend when setting a new image (not when clearing)
+        // Clearing is used for temporary persona overlays and shouldn't persist
+        if (imageUrl) {
+          // Update preferences locally
+          const state = get();
+          const updatedPreferences = {
+            ...state.preferences,
+            backgroundSettings: {
+              enabled: true,
+              imageUrl: imageUrl,
+              blurAmount:
+                state.preferences.backgroundSettings?.blurAmount || 10,
+              opacity: state.preferences.backgroundSettings?.opacity || 0.6,
+            },
+          };
+          state.setPreferences(updatedPreferences);
+
+          // Save to backend for persistence
+          try {
+            const { preferencesApi } = await import('@/utils/api');
+            await preferencesApi.updatePreferences({
+              backgroundSettings: updatedPreferences.backgroundSettings,
+            });
+          } catch (error) {
+            console.warn(
+              'Failed to save background settings to backend:',
+              error
+            );
+          }
+        }
+        // When imageUrl is null, just clear the visual state without persisting
+        // The user's saved background from preferences.backgroundSettings will show through
       },
       uploadBackgroundImage: async (file: File) => {
         try {
@@ -188,22 +215,81 @@ export const useAppStore = create<AppState>()(
           throw error;
         }
       },
-      removeBackgroundImage: () => {
+      removeBackgroundImage: async () => {
+        set({ backgroundImage: null });
+
+        // Update preferences locally to disable background
         const state = get();
-        state.setBackgroundImage(null);
+        const updatedBackgroundSettings = {
+          enabled: false,
+          imageUrl: '',
+          blurAmount: state.preferences.backgroundSettings?.blurAmount || 10,
+          opacity: state.preferences.backgroundSettings?.opacity || 0.6,
+        };
+        state.setPreferences({
+          backgroundSettings: updatedBackgroundSettings,
+        });
+
+        // Save to backend to persist the removal
+        try {
+          const { preferencesApi } = await import('@/utils/api');
+          await preferencesApi.updatePreferences({
+            backgroundSettings: updatedBackgroundSettings,
+          });
+        } catch (error) {
+          console.warn('Failed to save background removal to backend:', error);
+        }
+      },
+
+      // Clear user-specific state (called on logout/login to prevent data leaking between users)
+      clearUserState: () => {
+        set({
+          backgroundImage: null,
+          preferences: {
+            theme: { mode: 'light' },
+            defaultModel: '',
+            systemMessage: '',
+            generationOptions: {
+              temperature: 0.7,
+              top_p: 0.9,
+              top_k: 40,
+              num_predict: 1024,
+            },
+            embeddingSettings: {
+              enabled: false,
+              model: 'nomic-embed-text',
+              chunkSize: 1000,
+              chunkOverlap: 200,
+              similarityThreshold: 0.3,
+            },
+            showUsername: false,
+            backgroundSettings: {
+              enabled: false,
+              imageUrl: '',
+              blurAmount: 10,
+              opacity: 0.6,
+            },
+          },
+        });
       },
     }),
     {
       name: 'libre-webui-app-state',
-      partialize: state => ({
-        theme: state.theme,
-        sidebarOpen: state.sidebarOpen,
-        sidebarCompact: state.sidebarCompact,
-        preferences: state.preferences,
-        hasSeenSettingsNotification: state.hasSeenSettingsNotification,
-        backgroundImage: state.backgroundImage,
-        // Note: We don't persist isDemoMode as it should be detected on each app load
-      }),
+      partialize: state => {
+        // Exclude backgroundSettings from persisted preferences to avoid overwriting backend data
+        const { backgroundSettings: _, ...preferencesWithoutBackground } =
+          state.preferences;
+        return {
+          theme: state.theme,
+          sidebarOpen: state.sidebarOpen,
+          sidebarCompact: state.sidebarCompact,
+          preferences: preferencesWithoutBackground,
+          hasSeenSettingsNotification: state.hasSeenSettingsNotification,
+          // Note: backgroundImage and backgroundSettings are stored in backend preferences, not localStorage
+          // This avoids the ~5MB localStorage size limit for base64 images
+          // Note: We don't persist isDemoMode as it should be detected on each app load
+        };
+      },
     }
   )
 );

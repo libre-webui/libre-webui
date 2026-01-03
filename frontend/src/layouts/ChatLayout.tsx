@@ -39,7 +39,7 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
           // Add left margin when sidebar is open (on all screen sizes for side-by-side layout)
           sidebarOpen
             ? sidebarCompact
-              ? 'ml-16'
+              ? 'ml-20'
               : 'ml-80 max-sm:ml-64'
             : 'ml-0'
         )}

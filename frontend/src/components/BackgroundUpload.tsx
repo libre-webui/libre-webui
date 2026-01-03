@@ -107,53 +107,77 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
   };
 
   const handleToggleBackground = async (enabled: boolean) => {
-    const updatedPreferences = {
-      ...preferences,
-      backgroundSettings: {
-        ...backgroundSettings,
-        enabled,
-      },
+    // Always use backgroundImage from store as the source of truth
+    const currentImageUrl =
+      backgroundImage || backgroundSettings.imageUrl || '';
+    const updatedBackgroundSettings = {
+      ...backgroundSettings,
+      imageUrl: currentImageUrl,
+      enabled,
     };
-    setPreferences(updatedPreferences);
+    setPreferences({
+      backgroundSettings: updatedBackgroundSettings,
+    });
 
-    try {
-      await preferencesApi.updatePreferences(updatedPreferences);
-    } catch (error) {
-      console.error('Failed to update preferences:', error);
+    // Only save to backend if we have valid data (don't overwrite with empty values)
+    if (currentImageUrl || !enabled) {
+      try {
+        await preferencesApi.updatePreferences({
+          backgroundSettings: updatedBackgroundSettings,
+        });
+      } catch (error) {
+        console.error('Failed to update preferences:', error);
+      }
     }
   };
 
   const handleBlurChange = async (blurAmount: number) => {
-    const updatedPreferences = {
-      ...preferences,
-      backgroundSettings: {
-        ...backgroundSettings,
-        blurAmount,
-      },
+    // Always use backgroundImage from store as the source of truth
+    const currentImageUrl =
+      backgroundImage || backgroundSettings.imageUrl || '';
+    const updatedBackgroundSettings = {
+      ...backgroundSettings,
+      imageUrl: currentImageUrl,
+      blurAmount,
     };
-    setPreferences(updatedPreferences);
+    setPreferences({
+      backgroundSettings: updatedBackgroundSettings,
+    });
 
-    try {
-      await preferencesApi.updatePreferences(updatedPreferences);
-    } catch (error) {
-      console.error('Failed to update preferences:', error);
+    // Only save to backend if we have a valid image
+    if (currentImageUrl) {
+      try {
+        await preferencesApi.updatePreferences({
+          backgroundSettings: updatedBackgroundSettings,
+        });
+      } catch (error) {
+        console.error('Failed to update preferences:', error);
+      }
     }
   };
 
   const handleOpacityChange = async (opacity: number) => {
-    const updatedPreferences = {
-      ...preferences,
-      backgroundSettings: {
-        ...backgroundSettings,
-        opacity,
-      },
+    // Always use backgroundImage from store as the source of truth
+    const currentImageUrl =
+      backgroundImage || backgroundSettings.imageUrl || '';
+    const updatedBackgroundSettings = {
+      ...backgroundSettings,
+      imageUrl: currentImageUrl,
+      opacity,
     };
-    setPreferences(updatedPreferences);
+    setPreferences({
+      backgroundSettings: updatedBackgroundSettings,
+    });
 
-    try {
-      await preferencesApi.updatePreferences(updatedPreferences);
-    } catch (error) {
-      console.error('Failed to update preferences:', error);
+    // Only save to backend if we have a valid image
+    if (currentImageUrl) {
+      try {
+        await preferencesApi.updatePreferences({
+          backgroundSettings: updatedBackgroundSettings,
+        });
+      } catch (error) {
+        console.error('Failed to update preferences:', error);
+      }
     }
   };
 
