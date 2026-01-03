@@ -18,6 +18,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Volume2, VolumeX, Loader2, Square } from 'lucide-react';
 import { ttsApi, TTSModel } from '@/utils/api';
+import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
 
 interface TTSButtonProps {
@@ -31,6 +32,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
   className,
   size = 'sm',
 }) => {
+  const { preferences } = useAppStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,14 +74,20 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
     setError(null);
 
     try {
-      // Use first available model
-      const model = availableModels[0]?.model || 'tts-1';
-      const voice = availableModels[0]?.config?.default_voice || 'alloy';
+      // Use saved settings from preferences, fall back to first available model
+      const ttsSettings = preferences.ttsSettings;
+      const model = ttsSettings?.model || availableModels[0]?.model || 'tts-1';
+      const voice =
+        ttsSettings?.voice ||
+        availableModels[0]?.config?.default_voice ||
+        'alloy';
+      const speed = ttsSettings?.speed || 1.0;
 
       const response = await ttsApi.generateBase64({
         model,
         input: text,
         voice,
+        speed,
         response_format: 'mp3',
       });
 
