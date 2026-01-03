@@ -22,13 +22,16 @@ export const ModelsPage: React.FC = () => {
   return (
     <div className='h-full overflow-auto'>
       <div className='max-w-6xl mx-auto p-6'>
-        <div className='mb-8'>
-          <h1 className='text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2'>
-            Model Management
-          </h1>
-          <p className='text-gray-700 dark:text-gray-300'>
-            Manage your Ollama models, download new ones, and monitor system
-            resources.
+        {/* Header - matching PersonasPage style */}
+        <div className='text-center max-w-md mx-auto mb-8'>
+          <h2
+            className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] mb-3'
+            style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+          >
+            Models
+          </h2>
+          <p className='text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3] leading-relaxed'>
+            Pull, manage, and monitor your Ollama models
           </p>
         </div>
 

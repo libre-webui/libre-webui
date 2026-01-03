@@ -44,7 +44,7 @@ export const Logo: React.FC<LogoProps> = ({ className, size = 'md' }) => {
       )}
     >
       <img
-        src='./logo-dark.png'
+        src='/logo-dark.png'
         alt='Libre WebUI Logo'
         className='w-full h-full object-contain'
         draggable={false}

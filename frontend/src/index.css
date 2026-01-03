@@ -739,6 +739,46 @@ select {
   background-color: rgba(0, 0, 0, 0.5) !important;
 }
 
+/* Ophelia theme - Input focus border purple override */
+.ophelia .focus-within\:border-primary-400:focus-within {
+  border-color: #9333ea !important;
+}
+
+.ophelia .dark\:focus-within\:border-primary-500:focus-within {
+  border-color: #9333ea !important;
+}
+
+/* Ophelia theme - Force all focus-within borders to purple */
+.ophelia *:focus-within {
+  --tw-border-opacity: 1 !important;
+}
+
+.ophelia div:has(textarea:focus),
+.ophelia div:has(input:focus) {
+  border-color: #9333ea !important;
+}
+
+/* Ophelia theme - Caret/cursor color purple */
+.ophelia textarea,
+.ophelia input[type='text'],
+.ophelia input[type='search'],
+.ophelia input[type='email'],
+.ophelia input[type='password'],
+.ophelia [contenteditable='true'] {
+  caret-color: #a855f7 !important;
+}
+
+/* Ophelia theme - Text selection highlight purple */
+.ophelia ::selection {
+  background-color: rgba(147, 51, 234, 0.3) !important;
+  color: #fafafa !important;
+}
+
+.ophelia ::-moz-selection {
+  background-color: rgba(147, 51, 234, 0.3) !important;
+  color: #fafafa !important;
+}
+
 @layer utilities {
   /* Custom slider styles for dark theme */
   .slider {

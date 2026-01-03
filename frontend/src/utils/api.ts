@@ -685,6 +685,41 @@ export const ollamaApi = {
     }
     return api.post('/ollama/embeddings', payload).then(res => res.data);
   },
+
+  getLibraryModels: (): Promise<
+    ApiResponse<
+      Array<{
+        name: string;
+        description: string;
+        category: string;
+        sizes: string[];
+        pulls?: string;
+        tags?: string[];
+      }>
+    >
+  > => {
+    if (isDemoMode()) {
+      return createDemoResponse([
+        {
+          name: 'llama3.2',
+          description: "Meta's latest Llama model",
+          category: 'general',
+          sizes: ['1b', '3b'],
+          pulls: '50M+',
+          tags: ['general'],
+        },
+        {
+          name: 'deepseek-r1',
+          description: 'Open reasoning model',
+          category: 'reasoning',
+          sizes: ['7b', '14b', '32b'],
+          pulls: '200M+',
+          tags: ['reasoning'],
+        },
+      ]);
+    }
+    return api.get('/ollama/library').then(res => res.data);
+  },
 };
 
 export const pluginApi = {

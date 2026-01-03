@@ -67,21 +67,27 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     {
       type: 'personas' as const,
       label: 'Personas',
-      icon: <User className='h-4 w-4' />,
+      icon: (
+        <User className='h-4 w-4 text-purple-600 dark:text-purple-400 ophelia:text-[#a855f7]' />
+      ),
       models: models.filter(model => model.isPersona),
       color: 'purple',
     },
     {
       type: 'ollama' as const,
       label: 'Ollama Models',
-      icon: <Bot className='h-4 w-4' />,
+      icon: (
+        <Bot className='h-4 w-4 text-green-600 dark:text-green-400 ophelia:text-[#a855f7]' />
+      ),
       models: models.filter(model => !model.isPersona && !model.isPlugin),
       color: 'green',
     },
     {
       type: 'plugins' as const,
       label: 'Plugin Models',
-      icon: <Zap className='h-4 w-4' />,
+      icon: (
+        <Zap className='h-4 w-4 text-green-600 dark:text-green-400 ophelia:text-[#a855f7]' />
+      ),
       models: models.filter(model => model.isPlugin),
       color: 'green',
     },
@@ -149,9 +155,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       return <User className='h-4 w-4 text-purple-600 dark:text-purple-400' />;
     }
     if (model.isPlugin) {
-      return <Zap className='h-4 w-4 text-green-600 dark:text-green-400' />;
+      return (
+        <Zap className='h-4 w-4 text-green-600 dark:text-green-400 ophelia:text-[#a855f7]' />
+      );
     }
-    return <Bot className='h-4 w-4 text-green-600 dark:text-green-400' />;
+    return (
+      <Bot className='h-4 w-4 text-green-600 dark:text-green-400 ophelia:text-[#a855f7]' />
+    );
   };
 
   const getModelLabel = (model: OllamaModel) => {
@@ -194,7 +204,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       return (
         <div className='flex items-center gap-2 min-w-0'>
           {getModelIcon(currentModel)}
-          <span className='text-xs font-medium text-gray-700 dark:text-gray-200 truncate'>
+          <span className='text-xs font-medium text-gray-700 dark:text-gray-200 ophelia:text-[#e5e5e5] truncate'>
             {modelName}
           </span>
         </div>
@@ -238,9 +248,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           compact
             ? 'h-[44px] sm:h-[52px] px-3 flex items-center justify-between text-left w-full '
             : 'w-full flex items-center justify-between gap-2 px-3 py-2 text-left ',
-          'bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-dark-300',
-          'rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-100',
-          'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+          'bg-gray-50 dark:bg-dark-200 ophelia:bg-[#121212] border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
+          'rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-100 ophelia:hover:bg-[#1a1a1a]',
+          'focus:outline-none focus:ring-2 focus:ring-primary-500/20 ophelia:focus:ring-[#9333ea]/20 focus:border-primary-500 ophelia:focus:border-[#9333ea]',
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         )}
         title={
@@ -274,7 +284,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             {/* Dropdown */}
             <div
               className={cn(
-                'relative bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 shadow-2xl',
+                'relative bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a] border border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a] shadow-2xl',
                 'w-full max-w-sm sm:w-96 sm:max-w-[90vw]',
                 'mt-2 sm:mt-0 rounded-xl sm:rounded-xl',
                 'max-h-[85vh] sm:max-h-none flex flex-col'
@@ -282,7 +292,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
               onClick={e => e.stopPropagation()}
             >
               {/* Search */}
-              <div className='p-3 sm:p-4 border-b border-gray-200 dark:border-dark-200 flex-shrink-0'>
+              <div className='p-3 sm:p-4 border-b border-gray-200 dark:border-dark-200 ophelia:border-[#1a1a1a] flex-shrink-0'>
                 <input
                   ref={searchInputRef}
                   type='text'
@@ -292,9 +302,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   onClick={e => e.stopPropagation()}
                   onMouseDown={e => e.stopPropagation()}
                   className={cn(
-                    'w-full px-3 py-2.5 sm:py-2 text-sm bg-gray-50 dark:bg-dark-200',
-                    'border border-gray-200 dark:border-dark-300 rounded-lg',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+                    'w-full px-3 py-2.5 sm:py-2 text-sm bg-gray-50 dark:bg-dark-200 ophelia:bg-[#121212] ophelia:text-[#fafafa] ophelia:placeholder-[#737373]',
+                    'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626] rounded-lg',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20 ophelia:focus:ring-[#9333ea]/20 focus:border-primary-500 ophelia:focus:border-[#9333ea]',
                     'touch-manipulation'
                   )}
                 />
@@ -306,7 +316,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   filteredGroups.map(group => (
                     <div key={group.type}>
                       {/* Group Header */}
-                      <div className='px-3 sm:px-3 py-2.5 sm:py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-dark-300 border-b border-gray-200 dark:border-dark-400 sticky top-0'>
+                      <div className='px-3 sm:px-3 py-2.5 sm:py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3] bg-gray-100 dark:bg-dark-300 ophelia:bg-[#0a0a0a] border-b border-gray-200 dark:border-dark-400 ophelia:border-[#1a1a1a] sticky top-0'>
                         <div className='flex items-center gap-2'>
                           {group.icon}
                           {group.label} ({group.models.length})
@@ -326,24 +336,24 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                             handleModelSelect(model.name);
                           }}
                           className={cn(
-                            'px-3 sm:px-4 py-3.5 sm:py-3 cursor-pointer border-b border-gray-100 dark:border-dark-200 last:border-b-0',
-                            'hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100',
-                            'bg-white dark:bg-dark-100 touch-manipulation',
+                            'px-3 sm:px-4 py-3.5 sm:py-3 cursor-pointer border-b border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] last:border-b-0',
+                            'hover:bg-gray-50 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] active:bg-gray-100 dark:active:bg-dark-100 ophelia:active:bg-[#1a1a1a]',
+                            'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a] touch-manipulation',
                             'transition-colors duration-150 ease-in-out',
                             (selectedModel === model.name ||
                               (selectedModel.startsWith('persona:') &&
                                 model.name === selectedModel)) &&
-                              'bg-primary-50 dark:bg-primary-900 border-l-4 border-primary-500'
+                              'bg-primary-50 dark:bg-primary-900 ophelia:bg-[rgba(147,51,234,0.15)] border-l-4 border-primary-500 ophelia:border-l-[#9333ea]'
                           )}
                         >
                           <div className='flex items-center gap-3'>
                             {getModelIcon(model)}
                             <div className='flex-1 min-w-0'>
-                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] truncate'>
                                 {getModelLabel(model)}
                               </div>
                               {getModelSubLabel(model) && (
-                                <div className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                                <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373] truncate'>
                                   {getModelSubLabel(model)}
                                 </div>
                               )}
@@ -351,7 +361,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                             {(selectedModel === model.name ||
                               (selectedModel.startsWith('persona:') &&
                                 model.name === selectedModel)) && (
-                              <Check className='h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0' />
+                              <Check className='h-4 w-4 text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7] flex-shrink-0' />
                             )}
                           </div>
                         </div>
@@ -359,8 +369,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                     </div>
                   ))
                 ) : (
-                  <div className='px-4 py-8 text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-dark-100'>
-                    <Cpu className='h-8 w-8 mx-auto mb-2 text-gray-300 dark:text-gray-600' />
+                  <div className='px-4 py-8 text-center text-gray-500 dark:text-gray-400 ophelia:text-[#737373] bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]'>
+                    <Cpu className='h-8 w-8 mx-auto mb-2 text-gray-300 dark:text-gray-600 ophelia:text-[#525252]' />
                     <p className='text-sm'>No models found</p>
                   </div>
                 )}

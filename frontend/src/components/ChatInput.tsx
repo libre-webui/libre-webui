@@ -228,9 +228,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <div
             className={cn(
               'flex items-center gap-2 p-2 sm:p-3 rounded-2xl sm:rounded-3xl border transition-all duration-200',
-              'bg-gray-50 dark:bg-dark-50 border-gray-200 dark:border-dark-300',
-              'hover:border-gray-300 dark:hover:border-dark-400',
-              'focus-within:border-primary-400 dark:focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-dark-50',
+              'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#0a0a0a] border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
+              'hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#3f3f46]',
+              'focus-within:border-primary-400 dark:focus-within:border-primary-500 ophelia:focus-within:border-[#9333ea] focus-within:bg-white dark:focus-within:bg-dark-50 ophelia:focus-within:bg-[#0a0a0a]',
               'shadow-sm hover:shadow-md focus-within:shadow-lg'
             )}
           >
