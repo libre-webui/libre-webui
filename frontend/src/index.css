@@ -714,6 +714,31 @@ select {
   --tw-gradient-to: rgba(107, 33, 168, 0.1) !important;
 }
 
+/* Ophelia theme - Background overlay colors (darker for AMOLED) */
+.ophelia .bg-white\/40 {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.ophelia .dark\:bg-dark-50\/40 {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.ophelia .bg-white\/30 {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.ophelia .dark\:bg-dark-50\/30 {
+  background-color: rgba(0, 0, 0, 0.6) !important;
+}
+
+.ophelia .bg-white\/20 {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.ophelia .dark\:bg-dark-50\/20 {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
 @layer utilities {
   /* Custom slider styles for dark theme */
   .slider {
