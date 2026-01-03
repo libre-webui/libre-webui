@@ -275,6 +275,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           if (firstModel.config?.voices) {
             setTtsVoices(firstModel.config.voices);
           }
+        } else if (ttsSettings.model) {
+          // Load voices for the currently selected model
+          const currentModel = modelsResponse.data.find(
+            m => m.model === ttsSettings.model
+          );
+          if (currentModel?.config?.voices) {
+            setTtsVoices(currentModel.config.voices);
+          }
         }
       }
 
