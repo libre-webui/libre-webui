@@ -58,7 +58,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navigate = useNavigate();
   const {
     sessions,
-    createSession,
     deleteSession,
     updateSessionTitle,
     selectedModel,
@@ -124,13 +123,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isOpen, sidebarCompact, toggleSidebarCompact]);
 
-  const handleCreateSession = async () => {
-    if (!selectedModel) return;
-    const newSession = await createSession(selectedModel);
-    if (newSession) {
-      navigate(`/c/${newSession.id}`, { replace: true });
-    }
-    // On mobile, compact sidebar after creating session so user can easily access other chats
+  const handleCreateSession = () => {
+    // Clear current session and show welcome screen instead of immediately creating a session
+    const { setCurrentSession } = useChatStore.getState();
+    setCurrentSession(null);
+    // Set a flag in sessionStorage to force welcome screen
+    sessionStorage.setItem('forceWelcomeScreen', 'true');
+    navigate('/chat', { replace: true });
+    // On mobile, compact sidebar after clicking so user can easily access other chats
     if (window.innerWidth < 768 && !sidebarCompact) {
       toggleSidebarCompact();
     }
