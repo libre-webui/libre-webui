@@ -102,6 +102,18 @@ async function generateIcons() {
     }
   }
 
+  // Generate DMG background from SVG
+  const dmgBgSvgPath = path.join(assetsDir, 'dmg-background.svg');
+  const dmgBgPngPath = path.join(assetsDir, 'dmg-background.png');
+  if (fs.existsSync(dmgBgSvgPath)) {
+    console.log('\nGenerating DMG background...');
+    await sharp(dmgBgSvgPath)
+      .resize(540, 380)
+      .png()
+      .toFile(dmgBgPngPath);
+    console.log('  ✓ dmg-background.png generated');
+  }
+
   // Generate Windows .ico (requires multiple sizes embedded)
   // For now, just copy the 256x256 as a placeholder
   console.log('\n📝 Note: For Windows .ico file:');

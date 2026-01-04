@@ -45,6 +45,9 @@ jobs:
       - name: Build frontend and backend
         run: npm run build
 
+      - name: Generate Electron icons
+        run: npm run generate-icons
+
       - name: Build Electron app for macOS
         run: npm run electron:build
         env:
