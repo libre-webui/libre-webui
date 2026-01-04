@@ -17,6 +17,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import {
   Plus,
   MessageSquare,
@@ -31,16 +32,18 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
+  Camera,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { Logo } from '@/components/Logo';
 import { SettingsModal } from '@/components/SettingsModal';
+import { AvatarUpload } from '@/components/AvatarUpload';
 import { useChatStore } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import { ChatSession } from '@/types';
 import { formatTimestamp, truncateText, cn } from '@/utils';
-import { authApi } from '@/utils/api';
+import { authApi, usersApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 
 interface SidebarProps {
@@ -65,7 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     currentSession,
     generatingTitleForSession,
   } = useChatStore();
-  const { user, isAdmin, systemInfo } = useAuthStore();
+  const { user, isAdmin, systemInfo, setUser } = useAuthStore();
   const { backgroundImage, sidebarCompact, toggleSidebarCompact } =
     useAppStore();
 
@@ -73,6 +76,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [editingTitle, setEditingTitle] = useState('');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarValue, setAvatarValue] = useState('');
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -123,6 +129,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
         document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [isOpen, sidebarCompact, toggleSidebarCompact]);
+
+  // Initialize avatar value when user changes
+  useEffect(() => {
+    if (user?.avatar) {
+      setAvatarValue(user.avatar);
+    }
+  }, [user?.avatar]);
+
+  const handleSaveAvatar = async () => {
+    setIsSavingAvatar(true);
+    try {
+      const response = await usersApi.updateMyAvatar(avatarValue || null);
+      if (response.success && response.data) {
+        setUser(response.data);
+        toast.success('Profile picture updated');
+        setShowAvatarModal(false);
+      } else {
+        toast.error(response.message || 'Failed to update avatar');
+      }
+    } catch (error) {
+      console.error('Failed to update avatar:', error);
+      toast.error('Failed to update profile picture');
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  };
 
   const handleCreateSession = () => {
     // Clear current session and show welcome screen instead of immediately creating a session
@@ -662,14 +694,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {sidebarCompact ? (
                 // Compact mode: Show only user avatar and key actions
                 <div className='flex flex-col items-center space-y-1.5'>
-                  <div
-                    className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'
-                    title={`${user.username} (${user.role})`}
-                  >
-                    <span className='text-white text-xs font-medium'>
-                      {user.username.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt={user.username}
+                      className='w-7 h-7 rounded-full object-cover'
+                      title={`${user.username} (${user.role})`}
+                    />
+                  ) : (
+                    <div
+                      className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'
+                      title={`${user.username} (${user.role})`}
+                    >
+                      <span className='text-white text-xs font-medium'>
+                        {user.username.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
 
                   <button
                     onClick={() => {
@@ -715,11 +756,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     className='w-full p-2.5 rounded-xl bg-white/50 dark:bg-dark-200/50 ophelia:bg-[rgba(10,10,10,0.6)] border border-gray-200/30 dark:border-dark-300/30 ophelia:border-[rgba(38,38,38,0.2)] hover:bg-white/70 dark:hover:bg-dark-200/70 ophelia:hover:bg-[rgba(18,18,18,0.7)] transition-all duration-200 text-left touch-manipulation'
                   >
                     <div className='flex items-center gap-2.5'>
-                      <div className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'>
-                        <span className='text-white text-xs font-medium'>
-                          {user.username.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                      {user.avatar ? (
+                        <img
+                          src={user.avatar}
+                          alt={user.username}
+                          className='w-7 h-7 rounded-full object-cover'
+                        />
+                      ) : (
+                        <div className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'>
+                          <span className='text-white text-xs font-medium'>
+                            {user.username.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                       <div className='flex-1 min-w-0'>
                         <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
                           {user.username}
@@ -750,11 +799,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <div className='absolute bottom-full left-0 right-0 mb-2 py-2 bg-white dark:bg-dark-100 rounded-xl shadow-lg border border-gray-200/50 dark:border-dark-200/50 backdrop-blur-sm z-50'>
                       <div className='px-3 py-2 border-b border-gray-100 dark:border-dark-200/50'>
                         <div className='flex items-center gap-2.5'>
-                          <div className='w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center'>
-                            <span className='text-white text-sm font-medium'>
-                              {user.username.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
+                          {user.avatar ? (
+                            <img
+                              src={user.avatar}
+                              alt={user.username}
+                              className='w-8 h-8 rounded-full object-cover'
+                            />
+                          ) : (
+                            <div className='w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center'>
+                              <span className='text-white text-sm font-medium'>
+                                {user.username.charAt(0).toUpperCase()}
+                              </span>
+                            </div>
+                          )}
                           <div className='flex-1 min-w-0'>
                             <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
                               {user.username}
@@ -767,6 +824,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       </div>
 
                       <div className='py-1'>
+                        <button
+                          onClick={() => {
+                            setShowAvatarModal(true);
+                            setUserMenuOpen(false);
+                          }}
+                          className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
+                        >
+                          <Camera className='h-4 w-4 shrink-0' />
+                          Change Picture
+                        </button>
+
                         <button
                           onClick={() => {
                             setSettingsOpen(true);
@@ -823,6 +891,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+
+      {/* Avatar Upload Modal */}
+      {showAvatarModal &&
+        createPortal(
+          <div
+            className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/50'
+            onClick={() => setShowAvatarModal(false)}
+          >
+            <div
+              className='bg-white dark:bg-dark-100 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4'
+              onClick={e => e.stopPropagation()}
+            >
+              <div className='flex items-center justify-between mb-4'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                  Change Profile Picture
+                </h3>
+                <button
+                  onClick={() => setShowAvatarModal(false)}
+                  className='p-1 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors'
+                >
+                  <X size={20} className='text-gray-500' />
+                </button>
+              </div>
+
+              <div className='space-y-4'>
+                <AvatarUpload value={avatarValue} onChange={setAvatarValue} />
+
+                <div className='flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-300'>
+                  <button
+                    onClick={() => setShowAvatarModal(false)}
+                    className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveAvatar}
+                    disabled={isSavingAvatar}
+                    className='px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors'
+                  >
+                    {isSavingAvatar ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </>
   );
 };

@@ -171,6 +171,7 @@ export class HuggingFaceOAuthService {
           username: existingUser.username,
           email: existingUser.email,
           role: existingUser.role,
+          avatar: existingUser.avatar,
           createdAt: new Date(existingUser.created_at).toISOString(),
           updatedAt: new Date(existingUser.updated_at).toISOString(),
         };

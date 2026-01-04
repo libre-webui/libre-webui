@@ -388,6 +388,8 @@ wss.on('connection', (ws, req) => {
           format,
           options,
           assistantMessageId,
+          regenerate,
+          originalMessageId,
         } = message.data;
 
         console.log(
@@ -396,7 +398,11 @@ wss.on('connection', (ws, req) => {
           'with images:',
           !!images,
           'format:',
-          !!format
+          !!format,
+          'regenerate:',
+          !!regenerate,
+          'originalMessageId:',
+          originalMessageId
         );
 
         // Get session with user authentication
@@ -644,8 +650,39 @@ wss.on('connection', (ws, req) => {
             if (assistantContent && assistantMessageId) {
               console.log(
                 'Backend: Saving complete assistant message with ID:',
-                assistantMessageId
+                assistantMessageId,
+                'regenerate:',
+                !!regenerate
               );
+
+              // Calculate branching fields if this is a regeneration
+              let branchingFields: {
+                parentId?: string;
+                branchIndex?: number;
+                isActive?: boolean;
+              } = {};
+              if (regenerate && originalMessageId) {
+                // Find the original message to get its parentId or use its ID as parent
+                const originalMsg = session.messages.find(
+                  m => m.id === originalMessageId
+                );
+                const parentId = originalMsg?.parentId || originalMessageId;
+
+                // Count existing siblings to determine branch index
+                const siblingCount = session.messages.filter(
+                  m => m.id === parentId || m.parentId === parentId
+                ).length;
+
+                branchingFields = {
+                  parentId,
+                  branchIndex: siblingCount, // New branch gets next index
+                  isActive: true,
+                };
+                console.log(
+                  'Backend: Setting branching fields:',
+                  branchingFields
+                );
+              }
 
               const assistantMessage = chatService.addMessage(
                 sessionId,
@@ -654,6 +691,7 @@ wss.on('connection', (ws, req) => {
                   content: assistantContent,
                   model: session.model,
                   id: assistantMessageId,
+                  ...branchingFields,
                 },
                 userId
               );
@@ -767,8 +805,39 @@ wss.on('connection', (ws, req) => {
             if (assistantContent && assistantMessageId) {
               console.log(
                 'Backend: Saving complete assistant message with ID:',
-                assistantMessageId
+                assistantMessageId,
+                'regenerate:',
+                !!regenerate
               );
+
+              // Calculate branching fields if this is a regeneration
+              let branchingFields: {
+                parentId?: string;
+                branchIndex?: number;
+                isActive?: boolean;
+              } = {};
+              if (regenerate && originalMessageId) {
+                // Find the original message to get its parentId or use its ID as parent
+                const originalMsg = session.messages.find(
+                  m => m.id === originalMessageId
+                );
+                const parentId = originalMsg?.parentId || originalMessageId;
+
+                // Count existing siblings to determine branch index
+                const siblingCount = session.messages.filter(
+                  m => m.id === parentId || m.parentId === parentId
+                ).length;
+
+                branchingFields = {
+                  parentId,
+                  branchIndex: siblingCount, // New branch gets next index
+                  isActive: true,
+                };
+                console.log(
+                  'Backend: Setting branching fields:',
+                  branchingFields
+                );
+              }
 
               const assistantMessage = chatService.addMessage(
                 sessionId,
@@ -778,6 +847,7 @@ wss.on('connection', (ws, req) => {
                   model: session.model,
                   id: assistantMessageId,
                   statistics: finalStatistics,
+                  ...branchingFields,
                 },
                 userId
               );
@@ -797,6 +867,7 @@ wss.on('connection', (ws, req) => {
                     timestamp: Date.now(),
                     messageId: assistantMessageId,
                     statistics: finalStatistics,
+                    ...branchingFields,
                   },
                 })
               );

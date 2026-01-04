@@ -2297,9 +2297,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Version Info */}
               <div className='mt-6 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
                 <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400'>
-                  <span>Version {packageJson.version}</span>
+                  <a
+                    href={`https://github.com/libre-webui/libre-webui/releases/tag/v${packageJson.version}`}
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+                  >
+                    Version {packageJson.version}
+                  </a>
                   <span>
-                    Built with ☕️ for the FOSS community by{' '}
+                    Open source by{' '}
                     <a
                       href='https://kroonen.ai'
                       target='_blank'

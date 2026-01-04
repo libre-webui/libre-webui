@@ -127,10 +127,25 @@ function initializeTables(): void {
       email TEXT UNIQUE,
       password_hash TEXT NOT NULL,
       role TEXT DEFAULT 'user',
+      avatar TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
     )
   `);
+
+  // Migration: Add avatar column if it doesn't exist
+  try {
+    const tableInfo = db.prepare('PRAGMA table_info(users)').all() as {
+      name: string;
+    }[];
+    const hasAvatar = tableInfo.some(col => col.name === 'avatar');
+    if (!hasAvatar) {
+      db.exec('ALTER TABLE users ADD COLUMN avatar TEXT');
+      console.log('Migration: Added avatar column to users table');
+    }
+  } catch {
+    // Column might already exist or table doesn't exist yet
+  }
 
   // Sessions table - migrated from sessions.json
   db.exec(`
@@ -305,6 +320,10 @@ function runMigrations(): void {
       { name: 'images', type: 'TEXT' },
       { name: 'statistics', type: 'TEXT' },
       { name: 'artifacts', type: 'TEXT' },
+      // Branching support columns
+      { name: 'parent_id', type: 'TEXT' }, // ID of the original message this is a variant of
+      { name: 'branch_index', type: 'INTEGER DEFAULT 0' }, // Index within branch group (0 = original)
+      { name: 'is_active', type: 'INTEGER DEFAULT 1' }, // Whether this is the active variant (1 = true)
     ];
 
     for (const column of newSessionMessagesColumns) {
@@ -315,6 +334,11 @@ function runMigrations(): void {
         );
       }
     }
+
+    // Create index for branching queries
+    db.exec(
+      'CREATE INDEX IF NOT EXISTS idx_session_messages_parent_id ON session_messages(parent_id)'
+    );
 
     // Check if we need to add persona_id column to sessions table
     const sessionsTableInfo = db

@@ -20,8 +20,17 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
-import { authApi } from '@/utils/api';
-import { User, LogOut, Settings, Shield, ChevronDown } from 'lucide-react';
+import { authApi, usersApi } from '@/utils/api';
+import {
+  User,
+  LogOut,
+  Settings,
+  Shield,
+  ChevronDown,
+  Camera,
+  X,
+} from 'lucide-react';
+import { AvatarUpload } from '@/components/AvatarUpload';
 
 interface UserMenuProps {
   onSettingsClick?: () => void;
@@ -29,14 +38,24 @@ interface UserMenuProps {
 
 export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [avatarValue, setAvatarValue] = useState('');
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({
     top: 0,
     right: 0,
   });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { user, logout, isAdmin, systemInfo } = useAuthStore();
+  const { user, logout, isAdmin, systemInfo, setUser } = useAuthStore();
   const navigate = useNavigate();
+
+  // Initialize avatar value when user changes
+  useEffect(() => {
+    if (user?.avatar) {
+      setAvatarValue(user.avatar);
+    }
+  }, [user?.avatar]);
 
   // Calculate dropdown position
   useEffect(() => {
@@ -92,6 +111,30 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
     setIsOpen(false);
   };
 
+  const handleAvatarClick = () => {
+    setShowAvatarModal(true);
+    setIsOpen(false);
+  };
+
+  const handleSaveAvatar = async () => {
+    setIsSavingAvatar(true);
+    try {
+      const response = await usersApi.updateMyAvatar(avatarValue || null);
+      if (response.success && response.data) {
+        setUser(response.data);
+        toast.success('Profile picture updated');
+        setShowAvatarModal(false);
+      } else {
+        toast.error(response.message || 'Failed to update avatar');
+      }
+    } catch (error) {
+      console.error('Failed to update avatar:', error);
+      toast.error('Failed to update profile picture');
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  };
+
   // Don't show user menu if system doesn't require auth
   if (!systemInfo?.requiresAuth || !user) {
     return null;
@@ -105,11 +148,19 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
         className='flex items-center space-x-2 p-1.5 sm:p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 transition-colors touch-manipulation'
       >
         <div className='flex items-center space-x-2'>
-          <div className='w-7 h-7 sm:w-8 sm:h-8 bg-primary-500 rounded-full flex items-center justify-center'>
-            <span className='text-white text-xs sm:text-sm font-medium'>
-              {user.username.charAt(0).toUpperCase()}
-            </span>
-          </div>
+          {user.avatar ? (
+            <img
+              src={user.avatar}
+              alt={user.username}
+              className='w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover'
+            />
+          ) : (
+            <div className='w-7 h-7 sm:w-8 sm:h-8 bg-primary-500 rounded-full flex items-center justify-center'>
+              <span className='text-white text-xs sm:text-sm font-medium'>
+                {user.username.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
           <div className='hidden sm:block text-left'>
             <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
               {user.username}
@@ -173,6 +224,14 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
 
             <div className='py-1'>
               <button
+                onClick={handleAvatarClick}
+                className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
+              >
+                <Camera size={16} className='mr-3 flex-shrink-0' />
+                Change Picture
+              </button>
+
+              <button
                 onClick={handleSettings}
                 className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
               >
@@ -198,6 +257,53 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                   <LogOut size={16} className='mr-3 flex-shrink-0' />
                   Sign Out
                 </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Avatar Upload Modal */}
+      {showAvatarModal &&
+        createPortal(
+          <div
+            className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/50'
+            onClick={() => setShowAvatarModal(false)}
+          >
+            <div
+              className='bg-white dark:bg-dark-100 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4'
+              onClick={e => e.stopPropagation()}
+            >
+              <div className='flex items-center justify-between mb-4'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                  Change Profile Picture
+                </h3>
+                <button
+                  onClick={() => setShowAvatarModal(false)}
+                  className='p-1 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors'
+                >
+                  <X size={20} className='text-gray-500' />
+                </button>
+              </div>
+
+              <div className='space-y-4'>
+                <AvatarUpload value={avatarValue} onChange={setAvatarValue} />
+
+                <div className='flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-300'>
+                  <button
+                    onClick={() => setShowAvatarModal(false)}
+                    className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveAvatar}
+                    disabled={isSavingAvatar}
+                    className='px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors'
+                  >
+                    {isSavingAvatar ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>,

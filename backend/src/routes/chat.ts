@@ -925,4 +925,141 @@ Title:`;
   }
 );
 
+/**
+ * Switch to a different branch of a message
+ * POST /api/chat/sessions/:sessionId/messages/:messageId/branch
+ */
+router.post(
+  '/sessions/:sessionId/messages/:messageId/branch',
+  authenticate,
+  chatRateLimiter,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { sessionId, messageId } = req.params;
+      const { branchIndex } = req.body;
+      const userId = req.user?.userId || 'default';
+
+      if (typeof branchIndex !== 'number') {
+        res.status(400).json({
+          success: false,
+          error: 'branchIndex is required and must be a number',
+        });
+        return;
+      }
+
+      const updatedMessage = chatService.switchMessageBranch(
+        sessionId,
+        messageId,
+        branchIndex,
+        userId
+      );
+
+      if (!updatedMessage) {
+        res.status(404).json({
+          success: false,
+          error: 'Message or branch not found',
+        });
+        return;
+      }
+
+      // Return the updated session
+      const session = chatService.getSession(sessionId, userId);
+      res.json({
+        success: true,
+        data: session,
+      });
+    } catch (error) {
+      console.error('Switch branch error:', error);
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to switch branch'),
+      });
+    }
+  }
+);
+
+/**
+ * Get all branches for a message
+ * GET /api/chat/sessions/:sessionId/messages/:messageId/branches
+ */
+router.get(
+  '/sessions/:sessionId/messages/:messageId/branches',
+  authenticate,
+  chatRateLimiter,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { sessionId, messageId } = req.params;
+      const userId = req.user?.userId || 'default';
+
+      const branches = chatService.getMessageBranches(
+        sessionId,
+        messageId,
+        userId
+      );
+
+      res.json({
+        success: true,
+        data: branches,
+      });
+    } catch (error) {
+      console.error('Get branches error:', error);
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get branches'),
+      });
+    }
+  }
+);
+
+/**
+ * Create a new branch for a message (for regeneration)
+ * POST /api/chat/sessions/:sessionId/messages/:messageId/branches
+ */
+router.post(
+  '/sessions/:sessionId/messages/:messageId/branches',
+  authenticate,
+  chatRateLimiter,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { sessionId, messageId } = req.params;
+      const userId = req.user?.userId || 'default';
+      const messageData = req.body;
+
+      if (!messageData || !messageData.role || !messageData.content) {
+        res.status(400).json({
+          success: false,
+          error: 'Message data with role and content is required',
+        });
+        return;
+      }
+
+      const newBranch = chatService.createMessageBranch(
+        sessionId,
+        messageId,
+        messageData,
+        userId
+      );
+
+      if (!newBranch) {
+        res.status(404).json({
+          success: false,
+          error: 'Failed to create branch - session or message not found',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: newBranch,
+      });
+    } catch (error) {
+      console.error('Create branch error:', error);
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to create branch'),
+      });
+    }
+  }
+);
+
 export default router;

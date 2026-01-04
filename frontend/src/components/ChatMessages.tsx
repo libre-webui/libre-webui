@@ -15,43 +15,155 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { ChatMessage } from '@/components/ChatMessage';
+import { MessageBranch } from '@/components/MessageBranch';
 import { ChatMessage as ChatMessageType } from '@/types';
 import { cn } from '@/utils';
 
 interface ChatMessagesProps {
   messages: ChatMessageType[];
   streamingMessage?: string;
+  streamingMessageId?: string | null;
   isStreaming?: boolean;
   className?: string;
+  onRegenerate?: () => void;
+  onSelectBranch?: (messageId: string) => void;
+}
+
+// Group messages by their position in the conversation, handling branches
+interface MessageGroup {
+  id: string; // The parent message ID or the message ID itself
+  messages: ChatMessageType[]; // All variants at this position
+  messageIndex: number; // Original position in conversation
 }
 
 export const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
   streamingMessage,
+  streamingMessageId,
   isStreaming = false,
   className,
+  onRegenerate,
+  onSelectBranch,
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isUserScrolledUpRef = useRef<boolean>(false);
 
+  // Group messages by their branch parent for side-by-side display
+  const messageGroups = useMemo(() => {
+    const groups: MessageGroup[] = [];
+    const processedIds = new Set<string>();
+
+    // Debug: Log messages with branching info
+    console.log(
+      '[ChatMessages] Grouping messages:',
+      messages.map(m => ({
+        id: m.id?.substring(0, 8),
+        role: m.role,
+        parentId: m.parentId?.substring(0, 8),
+        branchIndex: m.branchIndex,
+        isActive: m.isActive,
+      }))
+    );
+
+    // Sort messages by their original index, then by branch index
+    const sortedMessages = [...messages].sort((a, b) => {
+      // System messages always come first
+      if (a.role === 'system' && b.role !== 'system') return -1;
+      if (b.role === 'system' && a.role !== 'system') return 1;
+      // Then sort by timestamp or branch index
+      if (a.parentId === b.parentId) {
+        return (a.branchIndex || 0) - (b.branchIndex || 0);
+      }
+      return a.timestamp - b.timestamp;
+    });
+
+    for (const message of sortedMessages) {
+      if (processedIds.has(message.id)) continue;
+
+      // Check if this message is a branch variant
+      const parentId = message.parentId;
+
+      if (parentId) {
+        // This is a branch variant - find or create a group for its parent
+        const existingGroupIndex = groups.findIndex(g => g.id === parentId);
+
+        if (existingGroupIndex >= 0) {
+          // Add to existing group
+          groups[existingGroupIndex].messages.push(message);
+        } else {
+          // Find the parent message
+          const parentMessage = messages.find(m => m.id === parentId);
+          if (parentMessage && !processedIds.has(parentId)) {
+            // Create a new group with parent and this variant
+            groups.push({
+              id: parentId,
+              messages: [parentMessage, message],
+              messageIndex: groups.length,
+            });
+            processedIds.add(parentId);
+          } else {
+            // Parent already processed or not found, add as single message
+            groups.push({
+              id: message.id,
+              messages: [message],
+              messageIndex: groups.length,
+            });
+          }
+        }
+        processedIds.add(message.id);
+      } else {
+        // Check if this message has any variants (children that point to it as parent)
+        const variants = messages.filter(m => m.parentId === message.id);
+
+        if (variants.length > 0) {
+          // This message has variants - create a group with all variants
+          groups.push({
+            id: message.id,
+            messages: [message, ...variants],
+            messageIndex: groups.length,
+          });
+          processedIds.add(message.id);
+          variants.forEach(v => processedIds.add(v.id));
+        } else {
+          // Regular message without branches
+          groups.push({
+            id: message.id,
+            messages: [message],
+            messageIndex: groups.length,
+          });
+          processedIds.add(message.id);
+        }
+      }
+    }
+
+    // Sort groups to ensure proper conversation order
+    // System messages first, then by the timestamp of the first message in the group
+    return groups.sort((a, b) => {
+      const aFirstMsg = a.messages[0];
+      const bFirstMsg = b.messages[0];
+
+      if (aFirstMsg.role === 'system' && bFirstMsg.role !== 'system') return -1;
+      if (bFirstMsg.role === 'system' && aFirstMsg.role !== 'system') return 1;
+
+      return aFirstMsg.timestamp - bFirstMsg.timestamp;
+    });
+  }, [messages]);
+
   const scrollToBottom = useCallback(
     (force: boolean = false) => {
-      // During streaming, always scroll to bottom unless explicitly prevented
       if (isStreaming || force) {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         return;
       }
 
-      // For non-streaming, respect user scroll position
       if (isUserScrolledUpRef.current) {
-        return; // Don't auto-scroll if user has manually scrolled up
+        return;
       }
 
-      // Use throttled approach for normal scrolling
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
@@ -63,16 +175,14 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     [isStreaming]
   );
 
-  // Check if user has scrolled up manually - but only when not actively streaming
   const handleScroll = useCallback(() => {
-    // Don't interfere with auto-scroll during active streaming
     if (isStreaming) return;
 
     const container = scrollContainerRef.current;
     if (!container) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20; // 20px threshold
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20;
 
     isUserScrolledUpRef.current = !isAtBottom;
   }, [isStreaming]);
@@ -81,10 +191,8 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     scrollToBottom();
   }, [messages.length, scrollToBottom]);
 
-  // Enhanced streaming scroll - direct scroll manipulation for reliability
   useEffect(() => {
     if (isStreaming && streamingMessage) {
-      // Use requestAnimationFrame for smooth, consistent scrolling
       requestAnimationFrame(() => {
         const container = scrollContainerRef.current;
         if (container) {
@@ -94,12 +202,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   }, [isStreaming, streamingMessage]);
 
-  // Reset scroll tracking when streaming starts
   useEffect(() => {
     if (isStreaming) {
-      isUserScrolledUpRef.current = false; // Allow auto-scroll during new streaming
+      isUserScrolledUpRef.current = false;
     }
-  }, [isStreaming]); // Cleanup timeout on unmount
+  }, [isStreaming]);
+
   useEffect(() => {
     return () => {
       if (scrollTimeoutRef.current) {
@@ -130,6 +238,15 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     );
   }
 
+  // Find the last assistant message group for regenerate button
+  let lastAssistantGroupIndex = -1;
+  for (let i = messageGroups.length - 1; i >= 0; i--) {
+    if (messageGroups[i].messages.some(m => m.role === 'assistant')) {
+      lastAssistantGroupIndex = i;
+      break;
+    }
+  }
+
   return (
     <div
       ref={scrollContainerRef}
@@ -137,41 +254,60 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       className={cn(
         'flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600',
         'scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500',
-        // Better mobile scrolling
         'overscroll-behavior-y-contain scroll-smooth',
-        // iOS momentum scrolling
         '[-webkit-overflow-scrolling:touch]',
         className
       )}
       style={
         {
-          // Ensure proper touch scrolling on mobile
           WebkitOverflowScrolling: 'touch',
-          // Prevent rubber banding on iOS
           overscrollBehaviorY: 'contain',
-          // Ensure scrolling works in Electron (not captured by title bar drag)
           WebkitAppRegion: 'no-drag',
         } as React.CSSProperties
       }
     >
-      <div className='max-w-4xl mx-auto px-3 sm:px-4 md:px-6 w-full min-w-0'>
-        {messages.map((message, index) => {
-          const isLastMessage = index === messages.length - 1;
-          const isStreamingThisMessage =
-            isStreaming && isLastMessage && message.role === 'assistant';
+      <div className='max-w-5xl mx-auto px-3 sm:px-4 md:px-6 w-full min-w-0'>
+        {messageGroups.map((group, groupIndex) => {
+          const isLastAssistantGroup = groupIndex === lastAssistantGroupIndex;
+          // Check if any message in this group is being streamed
+          const isStreamingThisGroup =
+            isStreaming &&
+            group.messages.some(m => m.id === streamingMessageId);
 
-          // For the last assistant message during streaming, use streamingMessage content
-          const displayMessage =
-            isStreamingThisMessage && streamingMessage
-              ? { ...message, content: streamingMessage }
-              : message;
+          // For single messages (no branches), render normally
+          if (group.messages.length === 1) {
+            const message = group.messages[0];
+            const isThisMessageStreaming =
+              isStreaming && message.id === streamingMessageId;
+            const displayMessage =
+              isThisMessageStreaming && streamingMessage
+                ? { ...message, content: streamingMessage }
+                : message;
 
+            return (
+              <ChatMessage
+                key={message.id}
+                message={displayMessage}
+                isStreaming={isThisMessageStreaming}
+                isLastAssistantMessage={isLastAssistantGroup}
+                onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
+                className={groupIndex === 0 ? 'mt-3 sm:mt-4 md:mt-6' : ''}
+              />
+            );
+          }
+
+          // For branched messages, use MessageBranch component
           return (
-            <ChatMessage
-              key={message.id}
-              message={displayMessage}
-              isStreaming={isStreamingThisMessage}
-              className={index === 0 ? 'mt-3 sm:mt-4 md:mt-6' : ''}
+            <MessageBranch
+              key={group.id}
+              messages={group.messages}
+              isStreaming={isStreamingThisGroup}
+              streamingMessage={streamingMessage}
+              streamingMessageId={streamingMessageId || undefined}
+              isLastAssistantMessage={isLastAssistantGroup}
+              onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
+              onSelectBranch={onSelectBranch}
+              className={groupIndex === 0 ? 'mt-3 sm:mt-4 md:mt-6' : ''}
             />
           );
         })}

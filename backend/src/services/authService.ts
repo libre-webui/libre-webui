@@ -104,6 +104,7 @@ export class AuthService {
       username: user.username,
       email: user.email,
       role: user.role,
+      avatar: user.avatar,
       createdAt: new Date(user.created_at).toISOString(),
       updatedAt: new Date(user.updated_at).toISOString(),
     };
@@ -148,6 +149,7 @@ export class AuthService {
       username: user.username,
       email: user.email,
       role: user.role,
+      avatar: user.avatar,
       createdAt: new Date(user.created_at).toISOString(),
       updatedAt: new Date(user.updated_at).toISOString(),
     };

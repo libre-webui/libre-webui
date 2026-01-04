@@ -35,6 +35,7 @@ import {
   ChevronDown,
   ChevronUp,
   Brain,
+  RefreshCw,
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
@@ -44,12 +45,16 @@ interface ChatMessageProps {
   message: ChatMessageType;
   isStreaming?: boolean;
   className?: string;
+  isLastAssistantMessage?: boolean;
+  onRegenerate?: () => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   message,
   isStreaming = false,
   className,
+  isLastAssistantMessage = false,
+  onRegenerate,
 }) => {
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
@@ -189,11 +194,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       }
       return 'You';
     }
-    // For assistant messages, use persona name if available
+    // For assistant messages, use persona name if available, otherwise model name
     if (currentPersona?.name) {
       return currentPersona.name;
     }
-    return 'Assistant';
+    return message.model || 'Assistant';
   };
 
   const handleEditSystemMessage = () => {
@@ -252,7 +257,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         )}
       >
         {isUser ? (
-          <User className='h-4 w-4' />
+          user?.avatar ? (
+            <img
+              src={user.avatar}
+              alt={user.username}
+              className='w-full h-full object-cover'
+            />
+          ) : (
+            <User className='h-4 w-4' />
+          )
         ) : isSystem ? (
           <Settings className='h-2.5 w-2.5' />
         ) : currentPersona?.avatar ? (
@@ -271,7 +284,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <span className='text-sm font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
             {getDisplayName()}
           </span>
-          {message.model && !isUser && !isSystem && (
+          {message.model && !isUser && !isSystem && currentPersona?.name && (
             <span
               className='text-xs text-gray-500 dark:text-dark-600 ophelia:text-[#737373] bg-gray-100 dark:bg-dark-200 ophelia:bg-[#121212] px-2 py-0.5 rounded-full truncate max-w-32 sm:max-w-48'
               title={message.model}
@@ -295,6 +308,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               )}
             />
           )}
+          {/* Regenerate Button for last assistant message */}
+          {!isUser &&
+            !isSystem &&
+            !isStreaming &&
+            isLastAssistantMessage &&
+            onRegenerate && (
+              <button
+                onClick={onRegenerate}
+                className='p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.2)] transition-opacity opacity-0 group-hover:opacity-100'
+                title='Regenerate response'
+              >
+                <RefreshCw className='h-3.5 w-3.5 text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3]' />
+              </button>
+            )}
         </div>
 
         <div className='text-gray-700 dark:text-dark-700 ophelia:text-[#e5e5e5]'>

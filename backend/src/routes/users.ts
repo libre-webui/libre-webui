@@ -111,11 +111,14 @@ router.post(
         return;
       }
 
+      const { avatar } = req.body;
+
       const user = await userModel.createUser({
         username,
         email,
         password,
         role,
+        avatar,
       });
 
       res.status(201).json({
@@ -124,6 +127,50 @@ router.post(
       });
     } catch (error) {
       console.error('Create user error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
+);
+
+/**
+ * Update current user's profile (self-update, avatar only)
+ */
+router.patch(
+  '/me/avatar',
+  userRateLimiter,
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          message: 'Not authenticated',
+        });
+        return;
+      }
+
+      const { avatar } = req.body;
+
+      const user = await userModel.updateUser(userId, { avatar });
+
+      if (!user) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: user,
+      });
+    } catch (error) {
+      console.error('Update avatar error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -143,7 +190,7 @@ router.patch(
   async (req: AuthenticatedRequest, res) => {
     try {
       const { id } = req.params;
-      const { username, email, password, role } = req.body;
+      const { username, email, password, role, avatar } = req.body;
 
       // Validate role if provided
       if (role && role !== 'admin' && role !== 'user') {
@@ -183,6 +230,7 @@ router.patch(
         email,
         password,
         role,
+        avatar,
       });
 
       if (!user) {

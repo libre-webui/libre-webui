@@ -405,6 +405,52 @@ export const chatApi = {
       },
     };
   },
+
+  // Branching API
+  getMessageBranches: (
+    sessionId: string,
+    messageId: string
+  ): Promise<ApiResponse<ChatMessage[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse([]);
+    }
+    return api
+      .get(`/chat/sessions/${sessionId}/messages/${messageId}/branches`)
+      .then(res => res.data);
+  },
+
+  switchMessageBranch: (
+    sessionId: string,
+    messageId: string,
+    branchIndex: number
+  ): Promise<ApiResponse<ChatMessage>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<ChatMessage>({} as ChatMessage);
+    }
+    return api
+      .post(`/chat/sessions/${sessionId}/messages/${messageId}/branch`, {
+        branchIndex,
+      })
+      .then(res => res.data);
+  },
+
+  createMessageBranch: (
+    sessionId: string,
+    originalMessageId: string,
+    message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }
+  ): Promise<ApiResponse<ChatMessage>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<ChatMessage>({} as ChatMessage);
+    }
+    return api
+      .post(
+        `/chat/sessions/${sessionId}/messages/${originalMessageId}/branches`,
+        {
+          ...message,
+        }
+      )
+      .then(res => res.data);
+  },
 };
 
 export const ollamaApi = {
@@ -1173,6 +1219,22 @@ export const usersApi = {
     }
 
     return api.delete(`/users/${id}`).then(res => res.data);
+  },
+
+  updateMyAvatar: (avatar: string | null): Promise<ApiResponse<User>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        id: 'demo-user',
+        username: 'demo',
+        email: 'demo@example.com',
+        role: 'admin' as const,
+        avatar,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    return api.patch('/users/me/avatar', { avatar }).then(res => res.data);
   },
 };
 

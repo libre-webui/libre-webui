@@ -325,9 +325,37 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       const updatedSessions = state.sessions.map(session => {
         if (session.id === sessionId) {
+          let updatedMessages = [...session.messages];
+
+          // If this is a branch message (has parentId), update sibling messages
+          if (newMessage.parentId) {
+            const parentId = newMessage.parentId;
+
+            // Mark all sibling messages (including the parent) as inactive
+            updatedMessages = updatedMessages.map(msg => {
+              // Check if this message is a sibling (same parent or is the parent itself)
+              const isSibling =
+                msg.id === parentId || msg.parentId === parentId;
+              if (isSibling) {
+                return {
+                  ...msg,
+                  isActive: false,
+                  // Ensure the parent has branchIndex 0 if it doesn't have one
+                  branchIndex: msg.branchIndex ?? 0,
+                  // Update siblingCount for all siblings
+                  siblingCount: (newMessage.branchIndex || 0) + 1,
+                };
+              }
+              return msg;
+            });
+          }
+
+          // Add the new message
+          updatedMessages.push(newMessage);
+
           return {
             ...session,
-            messages: [...session.messages, newMessage],
+            messages: updatedMessages,
             updatedAt: Date.now(),
           };
         }
@@ -466,9 +494,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       try {
         const pluginsResponse = await pluginApi.getAllPlugins();
         if (pluginsResponse.success && pluginsResponse.data) {
-          // Find ALL active plugins and add their models
+          // Find ALL active plugins and add their models (excluding TTS-only plugins)
           const activePlugins = pluginsResponse.data.filter(
-            plugin => plugin.active
+            plugin => plugin.active && plugin.type !== 'tts'
           );
           console.log(
             '🔌 Active plugins found:',

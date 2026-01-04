@@ -288,6 +288,25 @@ class ChatService {
       timestamp: Date.now(),
     };
 
+    // If this is a branch message (has parentId), update sibling messages
+    if (newMessage.parentId) {
+      const parentId = newMessage.parentId;
+
+      // Mark all sibling messages (including the parent) as inactive
+      for (const msg of session.messages) {
+        const isSibling = msg.id === parentId || msg.parentId === parentId;
+        if (isSibling) {
+          msg.isActive = false;
+          // Ensure the parent has branchIndex 0 if it doesn't have one
+          if (msg.branchIndex === undefined) {
+            msg.branchIndex = 0;
+          }
+          // Update siblingCount for all siblings
+          msg.siblingCount = (newMessage.branchIndex || 0) + 1;
+        }
+      }
+    }
+
     session.messages.push(newMessage);
     session.updatedAt = Date.now();
 
@@ -428,11 +447,12 @@ class ChatService {
     if (!session) return [];
 
     // Separate system messages from conversation messages
+    // Only include active messages (isActive !== false) to respect branch selection
     const systemMessages = session.messages.filter(
       msg => msg.role === 'system'
     );
     const conversationMessages = session.messages.filter(
-      msg => msg.role !== 'system'
+      msg => msg.role !== 'system' && msg.isActive !== false
     );
 
     // Take the last N conversation messages, but always include all system messages first
@@ -783,6 +803,122 @@ Use these memories to provide more personalized and contextually aware responses
     } catch (error) {
       console.error(`[ADVANCED] Error processing persona response:`, error);
     }
+  }
+
+  /**
+   * Create a new branch for a message (used for regeneration)
+   * This marks the original message as inactive and creates a new active variant
+   */
+  createMessageBranch(
+    sessionId: string,
+    originalMessageId: string,
+    newMessage: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string },
+    userId: string = 'default'
+  ): ChatMessage | undefined {
+    const session = this.getSession(sessionId, userId);
+    if (!session) return undefined;
+
+    const originalMessage = session.messages.find(
+      msg => msg.id === originalMessageId
+    );
+    if (!originalMessage) return undefined;
+
+    // The parent is either the original's parent (if it's already a variant) or the original itself
+    const parentId = originalMessage.parentId || originalMessageId;
+
+    // Find all siblings to determine the new branch index
+    const siblings = session.messages.filter(
+      msg => msg.id === parentId || msg.parentId === parentId
+    );
+    const newBranchIndex = siblings.length;
+
+    // Mark all current siblings as inactive
+    for (const sibling of siblings) {
+      sibling.isActive = false;
+    }
+
+    const messageId = newMessage.id || uuidv4();
+    const newBranchMessage: ChatMessage = {
+      ...newMessage,
+      id: messageId,
+      timestamp: Date.now(),
+      parentId: parentId,
+      branchIndex: newBranchIndex,
+      isActive: true,
+      siblingCount: newBranchIndex + 1,
+    };
+
+    // Update sibling counts for all related messages
+    for (const sibling of siblings) {
+      sibling.siblingCount = newBranchIndex + 1;
+    }
+
+    session.messages.push(newBranchMessage);
+    session.updatedAt = Date.now();
+
+    this.sessions.set(sessionId, session);
+    storageService.saveSession(session, userId);
+
+    return newBranchMessage;
+  }
+
+  /**
+   * Switch to a different branch of a message
+   */
+  switchMessageBranch(
+    sessionId: string,
+    messageId: string,
+    targetBranchIndex: number,
+    userId: string = 'default'
+  ): ChatMessage | undefined {
+    const session = this.getSession(sessionId, userId);
+    if (!session) return undefined;
+
+    // Find the target message directly by ID
+    const targetMessage = session.messages.find(msg => msg.id === messageId);
+    if (!targetMessage) return undefined;
+
+    // Find the parent ID (the original message that spawned branches)
+    const parentId = targetMessage.parentId || messageId;
+
+    // Find all siblings (including the original parent message)
+    const siblings = session.messages.filter(
+      msg => msg.id === parentId || msg.parentId === parentId
+    );
+
+    // Mark all siblings as inactive, then mark the target as active
+    for (const sibling of siblings) {
+      sibling.isActive = false;
+    }
+    targetMessage.isActive = true;
+
+    session.updatedAt = Date.now();
+    this.sessions.set(sessionId, session);
+    storageService.saveSession(session, userId);
+
+    return targetMessage;
+  }
+
+  /**
+   * Get all branches for a message
+   */
+  getMessageBranches(
+    sessionId: string,
+    messageId: string,
+    userId: string = 'default'
+  ): ChatMessage[] {
+    const session = this.getSession(sessionId, userId);
+    if (!session) return [];
+
+    const message = session.messages.find(msg => msg.id === messageId);
+    if (!message) return [];
+
+    const parentId = message.parentId || messageId;
+
+    // Find all siblings (including the original parent message)
+    return session.messages
+      .filter(msg => msg.id === parentId || msg.parentId === parentId)
+      .sort((a, b) => (a.branchIndex ?? 0) - (b.branchIndex ?? 0));
   }
 }
 

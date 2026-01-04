@@ -25,6 +25,7 @@ export interface User {
   email: string | null;
   password_hash: string;
   role: 'admin' | 'user';
+  avatar: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -34,6 +35,7 @@ export interface UserCreateData {
   email: string | null;
   password: string;
   role: 'admin' | 'user';
+  avatar?: string | null;
 }
 
 export interface UserUpdateData {
@@ -41,6 +43,7 @@ export interface UserUpdateData {
   email?: string | null;
   password?: string;
   role?: 'admin' | 'user';
+  avatar?: string | null;
 }
 
 export interface UserPublic {
@@ -48,6 +51,7 @@ export interface UserPublic {
   username: string;
   email: string | null;
   role: 'admin' | 'user';
+  avatar: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -71,7 +75,7 @@ export class UserModel {
   getAllUsers(): UserPublic[] {
     const db = this.ensureDatabase();
     const stmt = db.prepare(`
-      SELECT id, username, email, role, created_at, updated_at
+      SELECT id, username, email, role, avatar, created_at, updated_at
       FROM users
       WHERE id != 'default'
       ORDER BY created_at DESC
@@ -83,6 +87,7 @@ export class UserModel {
       username: user.username,
       email: user.email,
       role: user.role,
+      avatar: user.avatar,
       createdAt: new Date(user.created_at).toISOString(),
       updatedAt: new Date(user.updated_at).toISOString(),
     }));
@@ -94,7 +99,7 @@ export class UserModel {
   getUserById(id: string): UserPublic | null {
     const db = this.ensureDatabase();
     const stmt = db.prepare(`
-      SELECT id, username, email, role, created_at, updated_at
+      SELECT id, username, email, role, avatar, created_at, updated_at
       FROM users
       WHERE id = ?
     `);
@@ -107,6 +112,7 @@ export class UserModel {
       username: user.username,
       email: user.email,
       role: user.role,
+      avatar: user.avatar,
       createdAt: new Date(user.created_at).toISOString(),
       updatedAt: new Date(user.updated_at).toISOString(),
     };
@@ -136,8 +142,8 @@ export class UserModel {
 
     const db = this.ensureDatabase();
     const stmt = db.prepare(`
-      INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, username, email, password_hash, role, avatar, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     stmt.run(
@@ -146,6 +152,7 @@ export class UserModel {
       userData.email || null, // Store NULL instead of empty string
       passwordHash,
       userData.role,
+      userData.avatar || null,
       now,
       now
     );
@@ -155,6 +162,7 @@ export class UserModel {
       username: userData.username,
       email: userData.email,
       role: userData.role,
+      avatar: userData.avatar || null,
       createdAt: new Date(now).toISOString(),
       updatedAt: new Date(now).toISOString(),
     };
@@ -193,6 +201,11 @@ export class UserModel {
     if (userData.role !== undefined) {
       updates.push('role = ?');
       values.push(userData.role);
+    }
+
+    if (userData.avatar !== undefined) {
+      updates.push('avatar = ?');
+      values.push(userData.avatar);
     }
 
     if (updates.length === 0) {

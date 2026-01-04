@@ -55,6 +55,11 @@ export interface ChatMessage {
   images?: string[]; // Base64 encoded images for multimodal support
   statistics?: GenerationStatistics; // Generation statistics from Ollama
   artifacts?: Artifact[]; // Artifacts associated with this message
+  // Branching support
+  parentId?: string; // ID of the original message this is a variant of
+  branchIndex?: number; // Index within branch group (0 = original)
+  isActive?: boolean; // Whether this is the active variant
+  siblingCount?: number; // Total number of variants (including this one)
 }
 
 export interface ChatSession {
@@ -433,6 +438,7 @@ export interface User {
   email?: string;
   password_hash?: string; // Optional for responses (never sent to client)
   role: 'admin' | 'user';
+  avatar?: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -442,12 +448,14 @@ export interface UserCreateRequest {
   email?: string;
   password: string;
   role?: 'admin' | 'user';
+  avatar?: string | null;
 }
 
 export interface UserUpdateRequest {
   username?: string;
   email?: string;
   role?: 'admin' | 'user';
+  avatar?: string | null;
 }
 
 export interface LoginRequest {

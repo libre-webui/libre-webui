@@ -26,6 +26,9 @@ import toast from 'react-hot-toast';
 
 export const useChat = (sessionId: string) => {
   const [streamingMessage, setStreamingMessage] = useState<string>('');
+  const [streamingMessageId, setStreamingMessageId] = useState<string | null>(
+    null
+  );
   const [isStreaming, setIsStreaming] = useState(false);
   const {
     addMessage,
@@ -285,6 +288,7 @@ export const useChat = (sessionId: string) => {
         // Create placeholder for assistant message
         const assistantMessageId = generateId();
         streamingMessageIdRef.current = assistantMessageId;
+        setStreamingMessageId(assistantMessageId);
 
         addMessage(sessionId, {
           role: 'assistant',
@@ -313,6 +317,7 @@ export const useChat = (sessionId: string) => {
         console.error('Failed to send message:', error);
         setIsStreaming(false);
         setStreamingMessage('');
+        setStreamingMessageId(null);
         setIsGenerating(false);
         streamingMessageIdRef.current = null;
         toast.error('Failed to send message');
@@ -324,16 +329,182 @@ export const useChat = (sessionId: string) => {
   const stopGeneration = useCallback(() => {
     setIsStreaming(false);
     setStreamingMessage('');
+    setStreamingMessageId(null);
     setIsGenerating(false);
     streamingMessageIdRef.current = null;
     // Note: WebSocket connection doesn't have a built-in stop mechanism
     // You might want to implement this on the backend
   }, [setIsGenerating]);
 
+  // Regenerate the last assistant message (creates a new branch)
+  const regenerateLastMessage = useCallback(async () => {
+    const session = useChatStore.getState().currentSession;
+    if (!session || !sessionId) return;
+
+    // Find the last user message (before the last assistant message)
+    const messages = session.messages;
+    let lastUserMessageIndex = -1;
+    let lastAssistantMessageIndex = -1;
+
+    // Find the last assistant message
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant') {
+        lastAssistantMessageIndex = i;
+        break;
+      }
+    }
+
+    // Find the user message before that assistant message
+    if (lastAssistantMessageIndex > 0) {
+      for (let i = lastAssistantMessageIndex - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') {
+          lastUserMessageIndex = i;
+          break;
+        }
+      }
+    }
+
+    if (lastUserMessageIndex === -1 || lastAssistantMessageIndex === -1) {
+      toast.error('No message to regenerate');
+      return;
+    }
+
+    const lastUserMessage = messages[lastUserMessageIndex];
+    const lastAssistantMessage = messages[lastAssistantMessageIndex];
+
+    try {
+      setIsGenerating(true);
+      setIsStreaming(true);
+      setStreamingMessage('');
+
+      // Reset batching timers for new stream
+      if (storeUpdateTimer.current) {
+        clearTimeout(storeUpdateTimer.current);
+      }
+      lastStoreUpdate.current = Date.now();
+
+      // Generate a new message ID for the branch
+      const newBranchMessageId = generateId();
+      streamingMessageIdRef.current = newBranchMessageId;
+      setStreamingMessageId(newBranchMessageId);
+
+      // Create a placeholder for the new branch message in the store
+      // This will replace the current assistant message in the UI
+      addMessage(sessionId, {
+        role: 'assistant',
+        content: '',
+        id: newBranchMessageId,
+        parentId: lastAssistantMessage.parentId || lastAssistantMessage.id, // Link to original or parent
+        branchIndex: lastAssistantMessage.siblingCount || 1, // New branch index
+        isActive: true,
+      });
+
+      // Connect WebSocket if not connected
+      if (!websocketService.isConnected) {
+        await websocketService.connect();
+      }
+
+      // Send chat stream request to regenerate with branching
+      websocketService.send({
+        type: 'chat_stream',
+        data: {
+          sessionId,
+          content: lastUserMessage.content,
+          images: lastUserMessage.images,
+          options: preferences.generationOptions,
+          assistantMessageId: newBranchMessageId,
+          regenerate: true,
+          originalMessageId: lastAssistantMessage.id, // For branching
+        },
+      });
+    } catch (error: unknown) {
+      console.error('Failed to regenerate message:', error);
+      setIsStreaming(false);
+      setStreamingMessage('');
+      setIsGenerating(false);
+      streamingMessageIdRef.current = null;
+      toast.error('Failed to regenerate message');
+    }
+  }, [sessionId, setIsGenerating, addMessage, preferences.generationOptions]);
+
+  // Select a specific branch by message ID (for side-by-side UI)
+  const selectBranch = useCallback(
+    async (messageId: string) => {
+      const state = useChatStore.getState();
+      const session = state.currentSession;
+      if (!session || !sessionId) return;
+
+      // Find the message in the current session
+      const message = session.messages.find(m => m.id === messageId);
+      if (!message) {
+        toast.error('Message not found');
+        return;
+      }
+
+      // If this message is already active, do nothing
+      if (message.isActive !== false) {
+        return;
+      }
+
+      // Find the parent ID for this branch group
+      const parentId = message.parentId || message.id;
+      const branchIndex = message.branchIndex || 0;
+
+      try {
+        const response = await chatApi.switchMessageBranch(
+          sessionId,
+          messageId,
+          branchIndex
+        );
+
+        if (response.success && response.data) {
+          // Update local state immediately for better UX
+          // Mark all siblings as inactive, then mark the target as active
+          const updatedMessages = session.messages.map(msg => {
+            const isSibling = msg.id === parentId || msg.parentId === parentId;
+            if (isSibling) {
+              return {
+                ...msg,
+                isActive: msg.id === messageId,
+              };
+            }
+            return msg;
+          });
+
+          // Update the session in the store
+          const updatedSession = {
+            ...session,
+            messages: updatedMessages,
+            updatedAt: Date.now(),
+          };
+
+          // Update both sessions array and currentSession
+          useChatStore.setState(prevState => ({
+            sessions: prevState.sessions.map(s =>
+              s.id === sessionId ? updatedSession : s
+            ),
+            currentSession: updatedSession,
+          }));
+
+          toast.success(`Switched to variant ${branchIndex + 1}`);
+        } else {
+          toast.error(response.error || 'Failed to select branch');
+        }
+      } catch (error) {
+        console.error('Failed to select branch:', error);
+        toast.error('Failed to select branch');
+      }
+    },
+    [sessionId]
+  );
+
   return {
     sendMessage,
     stopGeneration,
+    regenerateLastMessage,
+    selectBranch,
     isStreaming,
     streamingMessage,
+    streamingMessageId,
   };
 };

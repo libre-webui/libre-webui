@@ -19,6 +19,7 @@ export { Sidebar } from './Sidebar';
 export { ChatInput } from './ChatInput';
 export { ChatMessage } from './ChatMessage';
 export { ChatMessages } from './ChatMessages';
+export { MessageBranch } from './MessageBranch';
 export { SettingsModal } from './SettingsModal';
 export { ModelTools } from './ModelTools';
 export { ThemeToggle } from './ThemeToggle';

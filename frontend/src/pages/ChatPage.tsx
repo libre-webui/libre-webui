@@ -64,8 +64,15 @@ export const ChatPage: React.FC = () => {
   } = useChatStore();
   const { setBackgroundImage } = useAppStore();
   const { user } = useAuthStore();
-  const { sendMessage, stopGeneration, isStreaming, streamingMessage } =
-    useChat(currentSession?.id || '');
+  const {
+    sendMessage,
+    stopGeneration,
+    regenerateLastMessage,
+    selectBranch,
+    isStreaming,
+    streamingMessage,
+    streamingMessageId,
+  } = useChat(currentSession?.id || '');
   const currentPersona = getCurrentPersona();
 
   // Personalized greeting based on time of day
@@ -447,7 +454,10 @@ export const ChatPage: React.FC = () => {
         <ChatMessages
           messages={currentSession.messages}
           streamingMessage={streamingMessage}
+          streamingMessageId={streamingMessageId}
           isStreaming={isStreaming}
+          onRegenerate={regenerateLastMessage}
+          onSelectBranch={selectBranch}
           className='flex-1'
         />
         <ChatInput

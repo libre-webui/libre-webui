@@ -24,7 +24,9 @@ import { useChat } from '@/hooks/useChat';
 
 export const Chat: React.FC = () => {
   const { currentSession } = useChatStore();
-  const { sendMessage, stopGeneration } = useChat(currentSession?.id || '');
+  const { sendMessage, stopGeneration, regenerateLastMessage } = useChat(
+    currentSession?.id || ''
+  );
 
   const handleSendMessage = (message: string) => {
     if (!currentSession) return;
@@ -34,7 +36,10 @@ export const Chat: React.FC = () => {
   return (
     <ChatLayout>
       <div className='flex-1 flex flex-col h-full'>
-        <ChatMessages messages={currentSession?.messages || []} />
+        <ChatMessages
+          messages={currentSession?.messages || []}
+          onRegenerate={regenerateLastMessage}
+        />
         <ChatInput
           onSendMessage={handleSendMessage}
           onStopGeneration={stopGeneration}

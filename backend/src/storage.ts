@@ -64,6 +64,10 @@ interface MessageRow {
   images?: string;
   statistics?: string;
   artifacts?: string;
+  // Branching support
+  parent_id?: string;
+  branch_index?: number;
+  is_active?: number; // SQLite uses 0/1 for boolean
 }
 
 interface DocumentRow {
@@ -98,6 +102,7 @@ export interface User {
   email?: string;
   password_hash: string;
   role: string;
+  avatar?: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -215,13 +220,33 @@ class StorageService {
       `);
       const sessions = sessionsStmt.all(userId) as SessionRow[];
 
-      // Get messages for each session
+      // Get ALL messages for each session (including branches for side-by-side display)
       const messagesStmt = db.prepare(`
-        SELECT * FROM session_messages WHERE session_id = ? ORDER BY message_index ASC
+        SELECT * FROM session_messages
+        WHERE session_id = ?
+        ORDER BY message_index ASC, branch_index ASC
+      `);
+
+      // Get sibling counts for branching (count all variants for each parent)
+      const siblingCountStmt = db.prepare(`
+        SELECT parent_id, COUNT(*) as count FROM session_messages
+        WHERE session_id = ? AND parent_id IS NOT NULL
+        GROUP BY parent_id
       `);
 
       return sessions.map(session => {
         const messages = messagesStmt.all(session.id) as MessageRow[];
+        const siblingCounts = siblingCountStmt.all(session.id) as {
+          parent_id: string;
+          count: number;
+        }[];
+
+        // Create a map for quick lookup of sibling counts
+        const siblingCountMap = new Map<string, number>();
+        for (const sc of siblingCounts) {
+          // Add 1 to include the original message in the count
+          siblingCountMap.set(sc.parent_id, sc.count + 1);
+        }
 
         // Decrypt session data
         const decryptedTitle = encryptionService.decrypt(session.title);
@@ -246,6 +271,11 @@ class StorageService {
               ? JSON.parse(encryptionService.decrypt(msg.artifacts))
               : undefined;
 
+            // Calculate sibling count: if this message has variants, count them
+            // A message has siblings if it's a parent (has variants) or is a variant itself
+            const parentId = msg.parent_id || msg.id;
+            const siblingCount = siblingCountMap.get(parentId) || 1;
+
             return {
               id: msg.id,
               role: msg.role as 'user' | 'assistant' | 'system',
@@ -255,6 +285,10 @@ class StorageService {
               images: decryptedImages,
               statistics: decryptedStatistics,
               artifacts: decryptedArtifacts,
+              parentId: msg.parent_id,
+              branchIndex: msg.branch_index ?? 0,
+              isActive: msg.is_active !== 0,
+              siblingCount: siblingCount > 1 ? siblingCount : undefined,
             };
           }),
         };
@@ -288,11 +322,30 @@ class StorageService {
 
       if (!session) return undefined;
 
-      // Get messages
+      // Get ALL messages (including branches for side-by-side display)
       const messagesStmt = db.prepare(`
-        SELECT * FROM session_messages WHERE session_id = ? ORDER BY message_index ASC
+        SELECT * FROM session_messages
+        WHERE session_id = ?
+        ORDER BY message_index ASC, branch_index ASC
       `);
       const messages = messagesStmt.all(sessionId) as MessageRow[];
+
+      // Get sibling counts for branching
+      const siblingCountStmt = db.prepare(`
+        SELECT parent_id, COUNT(*) as count FROM session_messages
+        WHERE session_id = ? AND parent_id IS NOT NULL
+        GROUP BY parent_id
+      `);
+      const siblingCounts = siblingCountStmt.all(sessionId) as {
+        parent_id: string;
+        count: number;
+      }[];
+
+      // Create a map for quick lookup of sibling counts
+      const siblingCountMap = new Map<string, number>();
+      for (const sc of siblingCounts) {
+        siblingCountMap.set(sc.parent_id, sc.count + 1);
+      }
 
       // Decrypt session data
       const decryptedTitle = encryptionService.decrypt(session.title);
@@ -316,6 +369,9 @@ class StorageService {
             ? JSON.parse(encryptionService.decrypt(msg.artifacts))
             : undefined;
 
+          const parentId = msg.parent_id || msg.id;
+          const siblingCount = siblingCountMap.get(parentId) || 1;
+
           return {
             id: msg.id,
             role: msg.role as 'user' | 'assistant' | 'system',
@@ -325,6 +381,10 @@ class StorageService {
             images: decryptedImages,
             statistics: decryptedStatistics,
             artifacts: decryptedArtifacts,
+            parentId: msg.parent_id,
+            branchIndex: msg.branch_index ?? 0,
+            isActive: msg.is_active !== 0,
+            siblingCount: siblingCount > 1 ? siblingCount : undefined,
           };
         }),
       };
@@ -369,8 +429,8 @@ class StorageService {
         // Insert messages
         if (session.messages && session.messages.length > 0) {
           const insertMessageStmt = db.prepare(`
-            INSERT INTO session_messages (id, session_id, role, content, timestamp, message_index, model, images, statistics, artifacts)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO session_messages (id, session_id, role, content, timestamp, message_index, model, images, statistics, artifacts, parent_id, branch_index, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
 
           session.messages.forEach((message, index) => {
@@ -386,8 +446,11 @@ class StorageService {
               ? encryptionService.encrypt(JSON.stringify(message.artifacts))
               : null;
 
+            // Use the message's own ID if it has one, otherwise generate a new one
+            const messageId = message.id || uuidv4();
+
             insertMessageStmt.run(
-              uuidv4(),
+              messageId,
               session.id,
               message.role,
               encryptedContent,
@@ -396,7 +459,10 @@ class StorageService {
               message.model || null,
               encryptedImages,
               encryptedStatistics,
-              encryptedArtifacts
+              encryptedArtifacts,
+              message.parentId || null,
+              message.branchIndex ?? 0,
+              message.isActive !== false ? 1 : 0
             );
           });
         }

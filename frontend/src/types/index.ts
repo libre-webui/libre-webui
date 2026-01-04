@@ -55,6 +55,11 @@ export interface ChatMessage {
   images?: string[]; // Base64 encoded images for multimodal support
   statistics?: GenerationStatistics; // Generation statistics from Ollama
   artifacts?: Artifact[]; // Artifacts associated with this message
+  // Branching support
+  parentId?: string; // ID of the original message this is a variant of
+  branchIndex?: number; // Index within branch group (0 = original)
+  isActive?: boolean; // Whether this is the active variant
+  siblingCount?: number; // Total number of variants (including this one)
 }
 
 export interface ChatSession {
@@ -254,7 +259,7 @@ export interface PluginAuthConfig {
 export interface Plugin {
   id: string;
   name: string;
-  type: 'completion' | 'embedding' | 'chat';
+  type: 'completion' | 'embedding' | 'chat' | 'tts';
   endpoint: string;
   auth: PluginAuthConfig;
   model_map: string[];
@@ -301,6 +306,7 @@ export interface User {
   username: string;
   email: string | null;
   role: 'admin' | 'user';
+  avatar?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -310,6 +316,7 @@ export interface UserCreateRequest {
   email: string;
   password: string;
   role: 'admin' | 'user';
+  avatar?: string | null;
 }
 
 export interface UserUpdateRequest {
@@ -317,6 +324,7 @@ export interface UserUpdateRequest {
   email?: string | null;
   password?: string;
   role?: 'admin' | 'user';
+  avatar?: string | null;
 }
 
 export interface LoginRequest {
