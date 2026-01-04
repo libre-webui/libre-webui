@@ -42,7 +42,7 @@
     "analyze:metrics": "node scripts/analyze-development.js --metrics",
     "version": "npm run changelog && git add CHANGELOG.md",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
-    "electron:build": "ELECTRON_BUILD=true npm run build:frontend && npm run build:backend && electron-builder build --mac --arm64",
+    "electron:build": "ELECTRON_BUILD=true npm run build:frontend && npm run build:backend && electron-builder build --mac --arm64 --publish never",
     "electron:build:universal": "npm run build && electron-builder build --mac --arm64 --x64",
     "electron:pack": "electron-builder --dir",
     "generate-icons": "node scripts/generate-icons.js"
