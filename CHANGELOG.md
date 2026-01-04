@@ -7,13 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### ✨ Added
+### ✨ New Features
 
-### 🔧 Technical Improvements
+### 🔧 Improvements
 
 ### 🐛 Bug Fixes
 
 ### 📚 Documentation
+
+## [0.2.0] - 2026-01-04
+
+### What's New
+
+This release introduces a native desktop app for macOS, comprehensive text-to-speech functionality, and enhanced model discovery with Ollama integration. The update also brings visual improvements with new themes and better chat experience features.
+
+### ✨ New Features
+
+- **Desktop App**: Native Electron app for macOS Silicon with DMG installer and proper macOS integration
+- **Text-to-Speech**: Complete TTS system with voice selection, settings panel, and one-click message playback
+- **Model Discovery**: Browse Library section with Ollama model discovery and installation
+- **Auto-Title Generation**: Automatic chat session titles for better organization
+- **Chain-of-Thought**: Support for `<thinking>` tag in AI responses
+- **New Theme**: Purple/AMOLED theme option
+
+### 🔧 Improvements
+
+- Enhanced first-time setup wizard now displays encryption key
+- Improved new session styling and user experience
+- Better plugin support for images across Anthropic, Gemini, and OpenAI
+- Updated model provider configurations
+- Darkened background view for better readability
+
+### 🐛 Bug Fixes
+
+- Fixed background image persistence and user data isolation
+- Resolved TTS voice settings not being saved or loaded properly
+- Fixed macOS desktop app click issues and traffic light button overlap
+- Corrected API URL handling in Electron file:// protocol
+- Auto-retry backend connection when starting desktop app
+- Fixed environment file path detection for encryption key generation
 
 ## [0.1.11] - 2025-12-16
 

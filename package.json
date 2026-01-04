@@ -1,6 +1,6 @@
 {
   "name": "libre-webui",
-  "version": "0.1.11",
+  "version": "0.2.0",
   "description": "A modern, minimalist WebUI for interacting with local LLMs through Ollama API",
   "private": true,
   "main": "electron/main.js",
