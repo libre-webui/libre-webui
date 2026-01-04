@@ -15,6 +15,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.2.1] - 2026-01-04
+
+### What's New
+
+This release introduces conversation branching functionality, allowing users to explore different response paths and regenerate AI responses while maintaining conversation history. We've also enhanced the visual experience with improved syntax highlighting and better text-to-speech handling for longer messages.
+
+### ✨ New Features
+
+- **Conversation Branching**: Create and navigate different response paths within conversations with persistent branching support
+- **Response Regeneration**: Regenerate AI responses while preserving conversation branches
+- **Desktop Application**: Added official desktop app support
+- **Cosmic Space Theme**: New purple AMOLED theme with custom syntax highlighting
+
+### 🔧 Improvements
+
+- Updated title generation prompts for better conversation naming
+- Enhanced syntax highlighter with optimized performance
+- Improved settings interface with cleaner organization
+- Updated documentation with new screenshots and v0.2.0 features
+
+### 🐛 Bug Fixes
+
+- Fixed text-to-speech chunking for large messages to prevent audio cutoffs
+- Resolved background chat image display issues
+- Fixed database saving to skip undefined values and prevent data corruption
+
 ## [0.2.0] - 2026-01-04
 
 ### What's New
