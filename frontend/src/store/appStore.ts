@@ -17,7 +17,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { UserPreferences, Theme } from '@/types';
+import { UserPreferences, Theme, TitleSettings } from '@/types';
 import { isDemoMode, getDemoConfig } from '@/utils/demoMode';
 
 interface AppState {
@@ -118,6 +118,10 @@ export const useAppStore = create<AppState>()(
           chunkSize: 1000,
           chunkOverlap: 200,
           similarityThreshold: 0.3,
+        },
+        titleSettings: {
+          autoTitle: false,
+          taskModel: '',
         },
         showUsername: false, // Default to showing "you" instead of username
         backgroundSettings: {
@@ -271,6 +275,10 @@ export const useAppStore = create<AppState>()(
               chunkSize: 1000,
               chunkOverlap: 200,
               similarityThreshold: 0.3,
+            },
+            titleSettings: {
+              autoTitle: false,
+              taskModel: '',
             },
             showUsername: false,
             backgroundSettings: {

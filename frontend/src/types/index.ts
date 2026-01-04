@@ -158,6 +158,11 @@ export interface TTSSettings {
   pluginId?: string;
 }
 
+export interface TitleSettings {
+  autoTitle: boolean;
+  taskModel: string;
+}
+
 export interface UserPreferences {
   theme: Theme;
   defaultModel: string;
@@ -171,6 +176,7 @@ export interface UserPreferences {
     similarityThreshold: number;
   };
   ttsSettings?: TTSSettings;
+  titleSettings?: TitleSettings;
   showUsername: boolean; // If true, show username in chat; if false, show "you"
   backgroundSettings?: {
     enabled: boolean;

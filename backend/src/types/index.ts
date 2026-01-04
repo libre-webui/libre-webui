@@ -121,6 +121,11 @@ export interface TTSSettings {
   pluginId?: string;
 }
 
+export interface TitleSettings {
+  autoTitle: boolean;
+  taskModel: string;
+}
+
 export interface UserPreferences {
   defaultModel: string;
   theme: { mode: 'light' | 'dark' | 'ophelia' };
@@ -130,6 +135,8 @@ export interface UserPreferences {
   embeddingSettings: EmbeddingSettings;
   // Text-to-speech settings
   ttsSettings?: TTSSettings;
+  // Auto-title settings
+  titleSettings?: TitleSettings;
   showUsername: boolean; // If true, show username in chat; if false, show "you"
   backgroundSettings?: {
     enabled: boolean;

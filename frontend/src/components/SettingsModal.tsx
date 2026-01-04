@@ -1027,6 +1027,90 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </div>
               </div>
 
+              {/* Auto Title Generation Settings */}
+              <div className='mt-6'>
+                <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+                    Auto Title Generation
+                  </label>
+                  <div className='space-y-4'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex flex-col'>
+                        <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                          Enable auto-title
+                        </span>
+                        <span className='text-xs text-gray-500 dark:text-gray-400'>
+                          Automatically generate chat titles from the first
+                          message
+                        </span>
+                      </div>
+                      <label className='relative inline-flex items-center cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          className='sr-only peer'
+                          checked={
+                            preferences.titleSettings?.autoTitle || false
+                          }
+                          onChange={e => {
+                            const autoTitle = e.target.checked;
+                            const newTitleSettings = {
+                              ...preferences.titleSettings,
+                              autoTitle,
+                              taskModel:
+                                preferences.titleSettings?.taskModel || '',
+                            };
+                            setPreferences({ titleSettings: newTitleSettings });
+                            preferencesApi.updatePreferences({
+                              titleSettings: newTitleSettings,
+                            });
+                          }}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                      </label>
+                    </div>
+
+                    {preferences.titleSettings?.autoTitle && (
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                          Task Model
+                        </label>
+                        <Select
+                          value={preferences.titleSettings?.taskModel || ''}
+                          onChange={e => {
+                            const taskModel = e.target.value;
+                            const newTitleSettings = {
+                              ...preferences.titleSettings,
+                              autoTitle:
+                                preferences.titleSettings?.autoTitle || false,
+                              taskModel,
+                            };
+                            setPreferences({ titleSettings: newTitleSettings });
+                            preferencesApi.updatePreferences({
+                              titleSettings: newTitleSettings,
+                            });
+                          }}
+                          options={[
+                            {
+                              value: '',
+                              label: 'Select a model for title generation',
+                            },
+                            ...models.map(model => ({
+                              value: model.name,
+                              label: model.name,
+                            })),
+                          ]}
+                        />
+                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
+                          This model will summarize your first message to create
+                          a chat title. Use a smaller, faster model for best
+                          performance.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Update All Models Section */}
               <div className='mt-6'>
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>

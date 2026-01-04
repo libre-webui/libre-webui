@@ -244,6 +244,21 @@ export const chatApi = {
   clearAllSessions: (): Promise<ApiResponse> =>
     api.delete('/chat/sessions').then(res => res.data),
 
+  generateTitle: (
+    sessionId: string,
+    model: string,
+    message: string
+  ): Promise<ApiResponse<{ title: string }>> => {
+    if (isDemoMode()) {
+      const title =
+        message.substring(0, 30) + (message.length > 30 ? '...' : '');
+      return createDemoResponse({ title });
+    }
+    return api
+      .post(`/chat/sessions/${sessionId}/generate-title`, { model, message })
+      .then(res => res.data);
+  },
+
   // Messages
   sendMessage: (
     sessionId: string,

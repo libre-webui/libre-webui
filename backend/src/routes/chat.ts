@@ -814,4 +814,115 @@ router.post(
   }
 );
 
+// Generate a title for a chat session based on the first message
+router.post(
+  '/sessions/:sessionId/generate-title',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<{ title: string }>>
+  ): Promise<void> => {
+    try {
+      const { sessionId } = req.params;
+      const { model, message } = req.body;
+
+      if (!model) {
+        res.status(400).json({
+          success: false,
+          error: 'Model is required for title generation',
+        });
+        return;
+      }
+
+      if (!message) {
+        res.status(400).json({
+          success: false,
+          error: 'Message is required for title generation',
+        });
+        return;
+      }
+
+      const userId = req.user?.userId || 'default';
+      const session = chatService.getSession(sessionId, userId);
+      if (!session) {
+        res.status(404).json({
+          success: false,
+          error: 'Session not found',
+        });
+        return;
+      }
+
+      // Generate title using a simple prompt
+      const titlePrompt = `Generate a very short, concise title (3-6 words max) for a chat that starts with this message. Only respond with the title, nothing else. No quotes, no punctuation at the end.
+
+Message: "${message.substring(0, 500)}"
+
+Title:`;
+
+      try {
+        const response = await ollamaService.generateResponse({
+          model: model,
+          prompt: titlePrompt,
+          stream: false,
+          options: {
+            temperature: 0.3,
+            num_predict: 20,
+            stop: ['\n', '.', '!', '?'],
+          },
+        });
+
+        // Clean up the generated title
+        let title = response.response
+          .trim()
+          .replace(/^["']|["']$/g, '') // Remove quotes
+          .replace(/[.!?]+$/, '') // Remove trailing punctuation
+          .trim();
+
+        // Fallback if title is empty or too long
+        if (!title || title.length > 50) {
+          title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
+        }
+
+        // Update the session with the new title
+        const updatedSession = await chatService.updateSession(
+          sessionId,
+          { title },
+          userId
+        );
+
+        if (!updatedSession) {
+          res.status(500).json({
+            success: false,
+            error: 'Failed to update session title',
+          });
+          return;
+        }
+
+        res.json({
+          success: true,
+          data: { title },
+        });
+      } catch (ollamaError) {
+        console.error('Error generating title with Ollama:', ollamaError);
+        // Fallback to using the first part of the message as title
+        const fallbackTitle =
+          message.substring(0, 30) + (message.length > 30 ? '...' : '');
+        await chatService.updateSession(
+          sessionId,
+          { title: fallbackTitle },
+          userId
+        );
+        res.json({
+          success: true,
+          data: { title: fallbackTitle },
+        });
+      }
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to generate title'),
+      });
+    }
+  }
+);
+
 export default router;
