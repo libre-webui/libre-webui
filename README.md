@@ -1,878 +1,141 @@
 <div align="center">
 
-# 🚀 Libre WebUI
+# Libre WebUI
 
-### **The Privacy-First AI Chat Interface**
-
-<p align="center">
-  <strong>Self-hosted • Secure • Open Source</strong><br>
-  Connect to local Ollama models + 7 external AI services with 500+ models
-</p>
+### The Beautiful, Privacy-First AI Chat Interface
 
 <p align="center">
-  <a href="https://librewebui.org">🌐 Website</a> •
-  <a href="https://docs.librewebui.org">📖 Documentation</a> •
-  <a href="#-quick-start">⚡ Quick Start</a> •
-  <a href="#-community">💬 Community</a>
+  <strong>Self-hosted • Open Source • 500+ AI Models</strong>
 </p>
 
-![Libre WebUI - Privacy-first AI chat interface](./screenshot.png)
+<p>
+  <img src="./screenshot_white.png" width="32%" alt="Light Theme">
+  <img src="./screenshot.png" width="32%" alt="Dark Theme">
+  <img src="./screenshot_dark.png" width="32%" alt="Ophelia Theme">
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/github/package-json/v/libre-webui/libre-webui" alt="Version">
   <img src="https://img.shields.io/github/license/libre-webui/libre-webui" alt="License">
-  <img src="https://img.shields.io/github/commit-activity/w/libre-webui/libre-webui" alt="Commits">
-  <img src="https://img.shields.io/github/last-commit/libre-webui/libre-webui" alt="Last Commit">
-  <img src="https://img.shields.io/github/issues-pr/libre-webui/libre-webui?label=open%20PRs" alt="Open PRs">
-  <img src="https://img.shields.io/github/issues-pr-closed/libre-webui/libre-webui?label=merged%20PRs&color=purple" alt="Merged PRs">
+  <img src="https://img.shields.io/github/stars/libre-webui/libre-webui" alt="Stars">
 </p>
 
+[Website](https://librewebui.org) • [Documentation](https://docs.librewebui.org) • [Get Started](#-quick-start)
+
 </div>
 
 ---
 
-## 🌟 Why Choose Libre WebUI?
+## Why Libre WebUI?
+
+A stunning, modern interface for AI chat that puts **you** in control. Run it locally with Ollama, connect to OpenAI, Anthropic, or any of 9+ providers—all from one beautiful UI.
+
+- **Your data stays yours** — Zero telemetry, fully self-hosted
+- **One interface, 500+ models** — Ollama, GPT-4, Claude, Gemini, and more
+- **Built for productivity** — Keyboard shortcuts, dark mode, responsive design
+
+---
+
+## Features
 
 <table>
 <tr>
 <td width="50%">
 
-### 🔒 **Privacy-First Architecture**
+### Core Experience
 
-- **100% self-hosted** - Your data never leaves your machine
-- **Zero telemetry** - No tracking, no analytics, no data collection
-- **Local processing** - Chat with AI models running on your hardware
-- **Optional external** - Connect to cloud services only when you choose
+- Real-time streaming chat
+- Beautiful dark/light themes
+- VS Code-style keyboard shortcuts
+- Mobile-responsive design
+- Native macOS desktop app
+
+### AI Providers
+
+- **Local**: Ollama (full integration)
+- **Cloud**: OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, and more
 
 </td>
 <td width="50%">
 
-### 🛡️ **Enterprise Security**
+### Advanced Capabilities
 
-- **Military-grade encryption** - AES-256-GCM for all sensitive data
-- **Compliance ready** - GDPR, HIPAA, SOC 2, PCI DSS compatible
-- **Your keys, your control** - Encryption keys never leave your environment
-- **Zero performance impact** - Hardware-accelerated security
+- **Document Chat (RAG)** — Upload PDFs, chat with your docs
+- **Custom Personas** — AI personalities with memory
+- **Interactive Artifacts** — Live HTML, SVG, code preview
+- **Text-to-Speech** — Multiple voices and providers
+- **SSO Authentication** — GitHub, Hugging Face OAuth
 
-</td>
-</tr>
-</table>
+### Security
 
----
-
-## ✨ Key Features
-
-<div align="center">
-
-|     🎯 **Core Features**     |   🤖 **AI Integration**    |   🔧 **Developer Tools**   |
-| :--------------------------: | :------------------------: | :------------------------: |
-|      🏠 **Self-Hosted**      |   🧠 **500+ AI Models**    |    🏗️ **Modern Stack**     |
-|    💬 **Real-time Chat**     |   🔌 **7+ AI Services**    | 🎨 **React + TypeScript**  |
-|    🎭 **Custom Personas**    | 📚 **Document Chat (RAG)** |    🐳 **Docker Ready**     |
-| 🎨 **Interactive Artifacts** | 🔑 **SSO Authentication**  |  ⌨️ **VS Code Shortcuts**  |
-|   📱 **Responsive Design**   |  🧮 **Embedding Models**   | 📖 **Comprehensive Docs**  |
-|    🌓 **Dark/Light Mode**    | 🚀 **Streaming Responses** |    🔄 **Auto Updates**     |
-|    🔊 **Text-to-Speech**     |   🔍 **Model Discovery**   | 🖥️ **Desktop App (macOS)** |
-
-</div>
-
----
-
-## 💼 Enterprise Services
-
-<div align="center">
-
-### **Professional Deployment & Support for Organizations**
-
-Need help deploying LibreWebUI for your team? Kroonen AI offers enterprise services for organizations requiring professional setup, compliance consulting, and ongoing support.
-
-</div>
-
-<table>
-<tr>
-<td width="50%" align="center">
-
-### 🚀 **What We Offer**
-
-- **Production Deployment** - AWS, Azure, GCP, on-premise
-- **SSO Integration** - GitHub, Okta, Azure AD, SAML
-- **Compliance Consulting** - GDPR, HIPAA, SOC 2
-- **Custom Development** - Integrations, features, workflows
-- **Managed Support** - Ongoing maintenance and updates
-
-</td>
-<td width="50%" align="center">
-
-### 🎯 **Perfect For**
-
-- **Healthcare** - HIPAA-compliant AI infrastructure
-- **Legal** - Privileged document analysis
-- **Finance** - SOC 2 compliant AI platforms
-- **Research** - Private data processing
-- **Enterprise** - Teams requiring professional support
+- AES-256-GCM encryption
+- Role-based access control
+- Enterprise compliance ready
 
 </td>
 </tr>
 </table>
 
-<div align="center">
-
-**[📋 Learn More About Enterprise Services →](https://kroonen.ai/librewebui)**
-
-</div>
-
 ---
 
-## ⚡ Quick Start
-
-<div align="center">
-
-### **Get Running in Under 5 Minutes!**
-
-</div>
-
-<table>
-<tr>
-<td width="25%" align="center">
-
-### 🚀 **Instant Setup**
+## Quick Start
 
 ```bash
-./start.sh
-```
-
-_One-command deployment_
-
-</td>
-<td width="25%" align="center">
-
-### 🔧 **Manual Install**
-
-```bash
-npm install
-npm run dev
-```
-
-_Full control setup_
-
-</td>
-<td width="25%" align="center">
-
-### 🐳 **Docker Deploy**
-
-```bash
-docker-compose up -d
-```
-
-_Production ready_
-
-</td>
-<td width="25%" align="center">
-
-### 🦙 **Docker + Existing Ollama**
-
-```bash
-docker-compose -f docker-compose.external-ollama.yml up -d
-```
-
-_Use your Ollama instance_
-
-</td>
-</tr>
-<tr>
-<td colspan="4" align="center">
-
-### 🖥️ **Desktop App (macOS)**
-
-```bash
-npm run electron:build
-```
-
-_Native macOS app with DMG installer - [See documentation](https://docs.librewebui.org/ELECTRON_DESKTOP_APP)_
-
-</td>
-</tr>
-</table>
-
-<div align="center">
-
-**🎉 Access your instance at:**
-Development: `http://localhost:5173` | Docker: `http://localhost:8080` | Desktop: Native app
-
-</div>
-
----
-
-## 🤖 AI Provider Universe
-
-<div align="center">
-
-### **Access 500+ Models Across 7+ Providers**
-
-</div>
-
-<table>
-<tr>
-<td width="50%">
-
-### 🏠 **Local AI (Primary)**
-
-- **🦙 Ollama** - Complete integration with all endpoints
-  - Chat, models, embeddings, streaming
-  - No external dependencies required
-  - Full privacy and control
-
-### 🌐 **External AI Services (Optional)**
-
-- **🤖 OpenAI** - GPT-4o, GPT-4, ChatGPT (67 models)
-- **🧠 Anthropic** - Claude 3.5 Sonnet, Claude 3 Opus (13 models)
-- **💎 Google Gemini** - Gemini 2.0 Flash, Gemini 1.5 Pro (45 models)
-- **⚡ Groq** - Llama 3.3, DeepSeek R1, Qwen QwQ (14 models)
-
-</td>
-<td width="50%">
-
-### 🎯 **More Providers**
-
-- **🎨 Mistral** - Mistral Large, Codestral, Pixtral (48 models)
-- **🐙 GitHub Models** - Llama 3.2, Phi-3.5, Command R+ (20 models)
-- **🔄 OpenRouter** - 400+ models from multiple providers
-- **🔧 Custom APIs** - Any OpenAI-compatible endpoint
-
-<div align="center">
-
-**🎉 Total: 500+ models at your fingertips!**
-
-</div>
-
-</td>
-</tr>
-</table>
-
----
-
-## 🔑 Enterprise Authentication
-
-<div align="center">
-
-### **Secure Access for Teams & Individuals**
-
-</div>
-
-<table>
-<tr>
-<td width="50%" align="center">
-
-### 🔐 **Single Sign-On (SSO)**
-
-- **🐙 GitHub OAuth2** - Seamless team integration
-- **🤗 Hugging Face OAuth2** - Direct ML ecosystem access
-- **⚙️ Auto-provisioning** - Automatic account creation
-- **⏱️ 5-minute setup** - Simple environment configuration
-
-</td>
-<td width="50%" align="center">
-
-### 👤 **Traditional Authentication**
-
-- **🔒 Local Accounts** - Secure local user management
-- **🎭 Role-based Access** - Admin and user roles
-- **🛡️ Password Security** - Advanced hashing and validation
-- **🏢 Multi-user Support** - Perfect for teams
-
-</td>
-</tr>
-</table>
-
----
-
-## 📚 Document Intelligence (RAG)
-
-<div align="center">
-
-### **Chat with Your Documents Using AI**
-
-</div>
-
-<table>
-<tr>
-<td width="25%" align="center">
-
-### 📄 **Supported Formats**
-
-- **PDF** documents
-- **DOCX** files
-- **TXT** plain text
-- **Markdown** files
-
-</td>
-<td width="25%" align="center">
-
-### 🧠 **Smart Processing**
-
-- **Vector embeddings**
-- **Semantic search**
-- **Smart chunking**
-- **Context overlap**
-
-</td>
-<td width="25%" align="center">
-
-### 🔒 **Privacy First**
-
-- **Local processing**
-- **Ollama embeddings**
-- **No cloud uploads**
-- **Your data stays home**
-
-</td>
-<td width="25%" align="center">
-
-### ⚙️ **Configurable**
-
-- **Chunk size control**
-- **Similarity thresholds**
-- **Memory management**
-- **Easy document removal**
-
-</td>
-</tr>
-</table>
-
-<div align="center">
-
-**🎯 Perfect for:** Research, Documentation, Legal, Education, Business Analysis
-
-</div>
-
----
-
-## 🎭 Persona Development Framework
-
-<div align="center">
-
-### **Create Sophisticated AI Personalities**
-
-</div>
-
-<table>
-<tr>
-<td width="33%" align="center">
-
-### 🧠 **Advanced Memory**
-
-- **Per-user isolation**
-- **Semantic storage**
-- **Importance scoring**
-- **Configurable retention**
-
-</td>
-<td width="33%" align="center">
-
-### 🎯 **Adaptive Learning**
-
-- **Top-K retrieval**
-- **Dynamic updates**
-- **Sentiment analysis**
-- **Behavior patterns**
-
-</td>
-<td width="33%" align="center">
-
-### 🔄 **Full Portability**
-
-- **Complete export/import**
-- **Memory preservation**
-- **Behavior transfer**
-- **Persona sharing**
-
-</td>
-</tr>
-</table>
-
----
-
-## 🎨 Interactive Artifacts
-
-<div align="center">
-
-### **Create & Execute Content in Real-Time**
-
-</div>
-
-<table>
-<tr>
-<td width="50%">
-
-### ✨ **Supported Content Types**
-
-- **🌐 HTML Pages** - Interactive web pages with JavaScript
-- **🎨 SVG Graphics** - Scalable vector graphics with animations
-- **💻 Code Snippets** - Syntax-highlighted code with copy function
-- **📊 JSON Data** - Formatted data structures with validation
-- **⚛️ React Components** - Interactive UI components _(coming soon)_
-- **📈 Visualizations** - Charts and data visualizations _(coming soon)_
-
-</td>
-<td width="50%">
-
-### 🛡️ **Security & Features**
-
-- **🔒 Sandboxed execution** - Safe isolated environments
-- **🖥️ Full-screen mode** - Expand for better viewing
-- **📥 Copy & download** - Easy content export
-- **🔍 Auto-detection** - Automatic artifact creation
-- **⚡ Real-time rendering** - Instant content updates
-- **🎯 Context aware** - Smart content suggestions
-
-</td>
-</tr>
-</table>
-
----
-
-## 🔌 Plugin Ecosystem
-
-<div align="center">
-
-### **Extensible AI Service Integration**
-
-</div>
-
-<table>
-<tr>
-<td width="50%">
-
-### 🛠️ **Easy Management**
-
-- **📦 JSON configuration** - Simple plugin installation
-- **📊 Status monitoring** - Real-time health indicators
-- **🔄 Automatic fallback** - Local Ollama backup
-- **🔐 Secure storage** - Environment variable API keys
-
-</td>
-<td width="50%">
-
-### 🚀 **Auto Updates**
-
-```bash
-# Update all providers (500+ models)
-./scripts/update-all-models.sh
-
-# Individual provider updates
-./scripts/update-openrouter-models.sh   # 400+ models
-./scripts/update-openai-models.sh       # 67 models
-./scripts/update-anthropic-models.sh    # 13 models
-```
-
-</td>
-</tr>
-</table>
-
----
-
-## 🐳 Docker Deployment
-
-<div align="center">
-
-### **Production-Ready Container Deployment**
-
-</div>
-
-<table>
-<tr>
-<td width="50%" align="center">
-
-### 🏗️ **Standard Setup**
-
-```bash
-# Complete setup with bundled Ollama
-docker-compose up -d
-```
-
-_Everything included, ready to go_
-
-</td>
-<td width="50%" align="center">
-
-### 🔧 **External Ollama**
-
-```bash
-# If you already have Ollama running
-docker-compose -f docker-compose.external-ollama.yml up -d
-```
-
-_Uses your existing Ollama instance_
-
-</td>
-</tr>
-</table>
-
-<div align="center">
-
-**🌐 Access Points:**  
-Frontend: `http://localhost:8080` | Backend: `http://localhost:3001` | Ollama: `http://localhost:11434`
-
-</div>
-
----
-
-## ⚙️ Configuration
-
-<div align="center">
-
-### **Environment Setup**
-
-</div>
-
-<details>
-<summary><b>🔧 Click to expand environment variables</b></summary>
-
-```bash
-# 🤖 AI Service API Keys (Optional)
-OPENROUTER_API_KEY=your_openrouter_key
-OPENAI_API_KEY=your_openai_key
-ANTHROPIC_API_KEY=your_anthropic_key
-GROQ_API_KEY=your_groq_key
-GEMINI_API_KEY=your_gemini_key
-MISTRAL_API_KEY=your_mistral_key
-GITHUB_API_KEY=your_github_token
-HUGGING_FACE_API_KEY=your_hugging_face_token
-
-# 🔒 Security (Highly Recommended)
-ENCRYPTION_KEY=your_64_character_encryption_key_here
-
-# 🔑 GitHub SSO (Optional)
-GITHUB_CLIENT_ID=your_github_oauth_client_id
-GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
-GITHUB_CALLBACK_URL=http://localhost:3001/auth/github/callback
-
-# 🤗 Hugging Face SSO (Optional)
-HUGGING_FACE_CLIENT_ID=your_hf_oauth_client_id
-HUGGING_FACE_CLIENT_SECRET=your_hf_oauth_client_secret
-
-# 💾 Database Configuration
-DATA_DIR=./data  # Custom database path
-```
-
-</details>
-
----
-
-## 💻 Development
-
-<div align="center">
-
-### **Developer-Friendly Setup**
-
-</div>
-
-<table>
-<tr>
-<td width="50%">
-
-### 🚀 **Quick Development Start**
-
-```bash
+# Clone and run
 git clone https://github.com/libre-webui/libre-webui
 cd libre-webui
-npm install    # Installs all workspace dependencies
-npm run dev    # Start development servers
+npm install && npm run dev
 ```
 
-### 📋 **Available Scripts**
+**Or with Docker:**
 
-- `npm run dev` - Development mode (localhost only)
-- `npm run dev:host` - Development with network access
-- `npm run build` - Production build
-- `npm run lint` - Code linting
-- `npm run format` - Code formatting
-
-</td>
-<td width="50%">
-
-### 🏗️ **Architecture Overview**
-
-```
-libre-webui/
-├── frontend/           # React + TypeScript + Tailwind
-├── backend/            # Node.js + Express + TypeScript
-├── plugins/            # AI service configurations
-├── docs/              # Documentation
-└── scripts/           # Automation scripts
+```bash
+docker-compose up -d
 ```
 
-### 🌐 **Development Ports**
-
-- **Frontend**: `http://localhost:5173`
-- **Backend**: `http://localhost:3001`
-- **Ollama**: `http://localhost:11434`
-
-</td>
-</tr>
-</table>
+Access at `http://localhost:5173` (dev) or `http://localhost:8080` (Docker)
 
 ---
 
-## ⌨️ Keyboard Shortcuts
+> [!NOTE]
+>
+> ## Enterprise Services
+>
+> **Need a custom deployment?** [Kroonen AI, Inc.](https://kroonen.ai) offers professional services for organizations requiring enterprise-grade AI infrastructure.
+>
+> | What We Offer                                       | Perfect For             |
+> | --------------------------------------------------- | ----------------------- |
+> | Production deployment (AWS, Azure, GCP, on-premise) | Healthcare (HIPAA)      |
+> | SSO integration (Okta, Azure AD, SAML)              | Legal & Finance (SOC 2) |
+> | Custom development & integrations                   | Enterprise teams        |
+> | Ongoing support & maintenance                       | Research institutions   |
+>
+> **[Contact Kroonen AI →](https://kroonen.ai/librewebui)**
 
-<div align="center">
-
-### **VS Code-Inspired Productivity**
-
-</div>
-
-<table>
-<tr>
-<td width="33%" align="center">
-
-### 🧭 **Navigation**
-
-- **⌘B** - Toggle sidebar
-- **⌘D** - Toggle theme
-- **⌘,** - Open settings
-
-</td>
-<td width="33%" align="center">
-
-### 💬 **Chat**
-
-- **Enter** - Send message
-- **Shift+Enter** - New line
-- **?** - Show all shortcuts
-
-</td>
-<td width="33%" align="center">
-
-### 🎛️ **System**
-
-- **Esc** - Close modals
-- **⌘K** - Command palette
-- **⌘/** - Toggle help
-
-</td>
-</tr>
-</table>
-
-<div align="center">
-
-**💡 Press `?` anywhere to see the complete shortcuts reference**
-
-</div>
+> [!TIP]
+>
+> ## Support Development
+>
+> Libre WebUI is built and maintained independently. Your support keeps it free and open source.
+>
+> [![Sponsor](https://img.shields.io/badge/Sponsor-❤️-red?style=for-the-badge&logo=github)](https://github.com/sponsors/libre-webui)
+>
+> **[Become a Sponsor](https://github.com/sponsors/libre-webui)** — Help fund active development
 
 ---
 
-## 📖 Documentation Hub
+## Community
 
-<div align="center">
-
-### **Comprehensive Guides & References**
-
-**[📖 Complete Documentation →](https://docs.librewebui.org)**
-
-</div>
-
-<table>
-<tr>
-<td width="50%">
-
-### 🚀 **Getting Started**
-
-- **[⚡ Quick Start](https://docs.librewebui.org/QUICK_START)** - 5-minute setup
-- **[🤖 Working with Models](https://docs.librewebui.org/WORKING_WITH_MODELS)** - AI models guide
-- **[🎯 Pro Tips](https://docs.librewebui.org/PRO_TIPS)** - Advanced workflows
-- **[⌨️ Keyboard Shortcuts](https://docs.librewebui.org/KEYBOARD_SHORTCUTS)** - Productivity hotkeys
-- **[🔧 Troubleshooting](https://docs.librewebui.org/TROUBLESHOOTING)** - Problem solving
-
-</td>
-<td width="50%">
-
-### 🏗️ **Advanced Features**
-
-- **[🔌 Plugin Architecture](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)** - AI service integration
-- **[📚 RAG Feature](https://docs.librewebui.org/RAG_FEATURE)** - Document chat
-- **[🎭 Persona Framework](https://docs.librewebui.org/PERSONA_DEVELOPMENT_FRAMEWORK)** - AI personalities
-- **[🔐 Authentication](https://docs.librewebui.org/AUTHENTICATION)** - User management
-- **[🔑 Single Sign-On](https://docs.librewebui.org/SSO)** - OAuth2 setup
-- **[🔒 Database Encryption](https://docs.librewebui.org/DATABASE_ENCRYPTION)** - Security guide
-- **[🎨 Artifacts Feature](https://docs.librewebui.org/ARTIFACTS_FEATURE)** - Interactive content
-- **[🐳 Docker Guide](https://docs.librewebui.org/DOCKER_EXTERNAL_OLLAMA)** - Container deployment
-- **[🖥️ Desktop App](https://docs.librewebui.org/ELECTRON_DESKTOP_APP)** - Electron build guide
-
-</td>
-</tr>
-</table>
+- [Mastodon](https://fosstodon.org/@librewebui) — Follow for updates
+- [GitHub Issues](https://github.com/libre-webui/libre-webui/issues) — Bug reports & feature requests
+- [Documentation](https://docs.librewebui.org) — Guides & API reference
 
 ---
 
-## 🗺️ Roadmap
-
 <div align="center">
 
-### **Upcoming Features & Integrations**
+**Apache 2.0 License** • Copyright © 2025 Libre WebUI
 
-</div>
-
-<table>
-<tr>
-<td width="50%">
-
-### 🆕 **Latest in v0.2.0**
-
-- **🖥️ Native Desktop App** - macOS Silicon app with DMG installer
-- **🔊 Text-to-Speech** - Full TTS system with voice selection and playback
-- **🔍 Model Discovery** - Browse and install Ollama models from the UI
-- **📝 Auto-Title Generation** - Automatic chat session naming
-- **💭 Chain-of-Thought** - Support for `<thinking>` tags in responses
-- **🎨 New Theme** - Purple/AMOLED dark theme option
-
-</td>
-<td width="50%">
-
-### 💡 **Coming Soon**
-
-- **🤗 Hugging Face Integration** - Direct access to HF model hub
-- **⚛️ React Component Artifacts** - Interactive UI generation
-- **📈 Data Visualizations** - Charts and graphs in artifacts
-- **📱 Mobile App** - Native mobile applications
-- **🌐 Multi-language** - Internationalization support
-
-</td>
-</tr>
-</table>
-
----
-
-## 🚀 Performance & Accessibility
-
-<table>
-<tr>
-<td width="50%">
-
-### ⚡ **Performance Optimizations**
-
-- **🔄 Code splitting** - Lazy loading for faster load times
-- **📦 Bundle optimization** - Vendor chunks for better caching
-- **💨 Streaming responses** - Real-time message batching
-- **🧠 Memory management** - Efficient resource utilization
-- **🎯 Optimized rendering** - Smooth UI interactions
-
-</td>
-<td width="50%">
-
-### ♿ **Accessibility Features**
-
-- **🌓 High contrast** - Improved readability in both themes
-- **⌨️ Keyboard navigation** - Full keyboard support
-- **🗣️ Screen reader friendly** - Semantic HTML and ARIA labels
-- **📱 Responsive design** - Works on all device sizes
-- **🎨 Focus indicators** - Clear navigation cues
-
-</td>
-</tr>
-</table>
-
----
-
-## 🌟 Community
-
-<div align="center">
-
-### **Join Our Growing Community**
-
-<p align="center">
-  <a href="https://fosstodon.org/@librewebui">🐘 <strong>Follow on Mastodon</strong></a><br>
-  <code>@librewebui@fosstodon.org</code>
-</p>
-
-<p align="center">
-  <strong>🤝 Contributors Welcome!</strong><br>
-  Check out our <a href="https://docs.librewebui.org">Contributing Guide</a> to get started
-</p>
-
-<p align="center">
-  <strong>💡 Feature Requests • 🐛 Bug Reports • 🙋 Questions</strong><br>
-  Open an issue on GitHub to get help or share ideas
-</p>
-
-</div>
-
----
-
-## 💖 Support This Project
-
-<div align="center">
-
-### **Help Keep LibreWebUI Free & Open Source**
-
-LibreWebUI is built with passion and maintained independently. Your support helps fund development, infrastructure, and new features.
-
-</div>
-
-<table>
-<tr>
-<td width="50%" align="center">
-
-### ☕ **For Individuals**
-
-**Every contribution matters!**
-
-- ✨ Sponsor badge on your profile
-- 🙏 Eternal gratitude from the maintainer
-- 🚀 Help fund active development
-- 🔒 Keep privacy-first AI accessible
-
-<p align="center">
-  <a href="https://github.com/sponsors/libre-webui">
-    <img src="https://img.shields.io/badge/Sponsor-❤️-red?style=for-the-badge&logo=github" alt="Sponsor on GitHub">
-  </a>
-</p>
-
-</td>
-<td width="50%" align="center">
-
-### 🏢 **For Companies**
-
-**Using LibreWebUI in production?**
-
-Consider sponsoring or [enterprise support](https://kroonen.ai/librewebui):
-
-- 💼 Company logo on README (optional)
-- 🎯 Influence roadmap priorities
-- 📧 Direct communication channel
-- ⚡ Priority issue responses
-
-**Sponsorship helps us:**
-
-- 🛠️ Maintain and improve LibreWebUI
-- 🔐 Keep security updates flowing
-- 📚 Create better documentation
-- 🌟 Add community-requested features
-
-</td>
-</tr>
-</table>
-
-<div align="center">
-
-**[💝 Become a Sponsor](https://github.com/sponsors/libre-webui)** | **[🏢 Enterprise Services](https://kroonen.ai/librewebui)**
-
-</div>
-
----
-
-## 📄 License
-
-<div align="center">
-
-**Licensed under the Apache License, Version 2.0**
-
-[📄 View Full License](http://www.apache.org/licenses/LICENSE-2.0)
-
-_Copyright (C) 2025 Libre WebUI_
-
----
-
-💖 [Sponsor Development](https://github.com/sponsors/libre-webui) | 🏢 [Enterprise Services](https://kroonen.ai/librewebui) | 🚀 Built by [Kroonen AI](https://kroonen.ai)
+Built by [Kroonen AI](https://kroonen.ai)
 
 </div>
