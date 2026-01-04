@@ -41,7 +41,7 @@ interface AppState {
 
   // Background settings
   backgroundImage: string | null;
-  setBackgroundImage: (imageUrl: string | null) => void;
+  setBackgroundImage: (imageUrl: string | null) => Promise<void>;
   uploadBackgroundImage: (file: File) => Promise<void>;
   removeBackgroundImage: () => void;
 
@@ -215,11 +215,16 @@ export const useAppStore = create<AppState>()(
           // Create a file reader to convert to base64
           const reader = new FileReader();
           return new Promise((resolve, reject) => {
-            reader.onload = e => {
-              const dataUrl = e.target?.result as string;
-              const state = get();
-              state.setBackgroundImage(dataUrl);
-              resolve();
+            reader.onload = async e => {
+              try {
+                const dataUrl = e.target?.result as string;
+                const state = get();
+                // Await the setBackgroundImage to ensure backend save completes
+                await state.setBackgroundImage(dataUrl);
+                resolve();
+              } catch (error) {
+                reject(error);
+              }
             };
             reader.onerror = reject;
             reader.readAsDataURL(file);
