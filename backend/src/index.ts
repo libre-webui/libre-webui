@@ -430,34 +430,37 @@ wss.on('connection', (ws, req) => {
           return;
         }
 
-        // Add user message with images if provided
-        const userMessage = chatService.addMessage(
-          sessionId,
-          {
-            role: 'user',
-            content,
-            images: images || undefined,
-          },
-          userId
-        );
+        // Add user message with images if provided (skip for regenerations)
+        let userMessage;
+        if (!regenerate) {
+          userMessage = chatService.addMessage(
+            sessionId,
+            {
+              role: 'user',
+              content,
+              images: images || undefined,
+            },
+            userId
+          );
 
-        if (!userMessage) {
+          if (!userMessage) {
+            ws.send(
+              JSON.stringify({
+                type: 'error',
+                data: { error: 'Failed to add user message' },
+              })
+            );
+            return;
+          }
+
+          // Send user message confirmation
           ws.send(
             JSON.stringify({
-              type: 'error',
-              data: { error: 'Failed to add user message' },
+              type: 'user_message',
+              data: userMessage,
             })
           );
-          return;
         }
-
-        // Send user message confirmation
-        ws.send(
-          JSON.stringify({
-            type: 'user_message',
-            data: userMessage,
-          })
-        );
 
         // RAG: Get relevant document context for the user's query
         const relevantContext = await documentService.getRelevantContext(
@@ -609,9 +612,13 @@ wss.on('connection', (ws, req) => {
               chatService.getMessagesForContext(sessionId);
 
             // Use plugin for generation (non-streaming for now)
+            // For regenerations, the user message is already in context; for new messages, we need to add it
+            const messagesForPlugin = regenerate
+              ? contextMessages
+              : contextMessages.concat([userMessage!]);
             const pluginResponse = await pluginService.executePluginRequest(
               actualModelName,
-              contextMessages.concat([userMessage]),
+              messagesForPlugin,
               mergedOptions
             );
 
@@ -839,6 +846,14 @@ wss.on('connection', (ws, req) => {
                 );
               }
 
+              console.log('Backend: About to save assistant message:', {
+                sessionId,
+                messageId: assistantMessageId,
+                contentLength: assistantContent.length,
+                hasBranchingFields: Object.keys(branchingFields).length > 0,
+                branchingFields,
+              });
+
               const assistantMessage = chatService.addMessage(
                 sessionId,
                 {
@@ -854,7 +869,13 @@ wss.on('connection', (ws, req) => {
 
               console.log(
                 'Backend: Assistant message saved:',
-                !!assistantMessage
+                !!assistantMessage,
+                assistantMessage
+                  ? {
+                      id: assistantMessage.id,
+                      contentLength: assistantMessage.content.length,
+                    }
+                  : 'FAILED TO SAVE'
               );
 
               // Send completion signal with statistics

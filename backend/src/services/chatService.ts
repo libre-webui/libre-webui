@@ -266,9 +266,20 @@ class ChatService {
     message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string },
     userId: string = 'default'
   ): ChatMessage | undefined {
+    console.log(
+      `[addMessage] Called with sessionId=${sessionId}, role=${message.role}, id=${message.id}, userId=${userId}`
+    );
+
     // First verify the session belongs to the user
     const session = this.getSession(sessionId, userId);
-    if (!session) return undefined;
+    if (!session) {
+      console.log(`[addMessage] Session not found: ${sessionId}`);
+      return undefined;
+    }
+
+    console.log(
+      `[addMessage] Session found with ${session.messages.length} messages`
+    );
 
     const messageId = message.id || uuidv4();
 
@@ -276,8 +287,7 @@ class ChatService {
     const existingMessage = session.messages.find(msg => msg.id === messageId);
     if (existingMessage) {
       console.log(
-        'Message with ID already exists, skipping duplicate:',
-        messageId
+        `[addMessage] Message with ID already exists, skipping duplicate: ${messageId}, existing content length: ${existingMessage.content.length}`
       );
       return existingMessage;
     }
@@ -360,6 +370,9 @@ class ChatService {
 
     this.sessions.set(sessionId, session);
     storageService.saveSession(session, userId);
+    console.log(
+      `[addMessage] Message saved successfully: ${newMessage.id}, session now has ${session.messages.length} messages`
+    );
     return newMessage;
   }
 
