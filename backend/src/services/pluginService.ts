@@ -992,11 +992,31 @@ class PluginService {
       options.response_format || ttsConfig?.default_format || 'mp3';
     const speed = options.speed || 1.0;
 
-    // Validate input length if max_characters is set
-    if (ttsConfig?.max_characters && input.length > ttsConfig.max_characters) {
-      throw new Error(
-        `Input text exceeds maximum length of ${ttsConfig.max_characters} characters`
+    // Check if input needs chunking (for long texts)
+    const maxChars = ttsConfig?.max_characters || 4096;
+    if (input.length > maxChars) {
+      // Split text into chunks and process each, then concatenate audio
+      const chunks = this.splitTextForTTS(input, maxChars);
+      console.log(
+        `[TTS] Input too long (${input.length} chars), splitting into ${chunks.length} chunks`
       );
+
+      const audioBuffers: Buffer[] = [];
+      for (let i = 0; i < chunks.length; i++) {
+        console.log(
+          `[TTS] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`
+        );
+        // Recursive call with chunk (will not re-chunk since it's under limit)
+        const chunkAudio = await this.executeTTSRequest(
+          model,
+          chunks[i],
+          options
+        );
+        audioBuffers.push(chunkAudio);
+      }
+
+      // Concatenate all audio buffers
+      return Buffer.concat(audioBuffers);
     }
 
     // Prepare request payload and endpoint based on plugin type
@@ -1127,6 +1147,50 @@ class PluginService {
         throw new Error(`TTS error: ${errorMessage}`);
       }
     }
+  }
+
+  // Split text into chunks for TTS, trying to break at sentence boundaries
+  private splitTextForTTS(text: string, maxChars: number): string[] {
+    const chunks: string[] = [];
+    let remaining = text;
+
+    while (remaining.length > 0) {
+      if (remaining.length <= maxChars) {
+        chunks.push(remaining);
+        break;
+      }
+
+      // Try to find a good break point (sentence end) within the limit
+      let breakPoint = maxChars;
+      const searchStart = Math.max(0, maxChars - 500); // Look in last 500 chars for sentence end
+
+      // Look for sentence endings (. ! ?) followed by space or end
+      const sentenceEnders = ['. ', '! ', '? ', '.\n', '!\n', '?\n'];
+      let bestBreak = -1;
+
+      for (const ender of sentenceEnders) {
+        const lastIndex = remaining.lastIndexOf(ender, maxChars);
+        if (lastIndex > searchStart && lastIndex > bestBreak) {
+          bestBreak = lastIndex + ender.length;
+        }
+      }
+
+      if (bestBreak > searchStart) {
+        breakPoint = bestBreak;
+      } else {
+        // Fall back to breaking at whitespace
+        const lastSpace = remaining.lastIndexOf(' ', maxChars);
+        if (lastSpace > searchStart) {
+          breakPoint = lastSpace + 1;
+        }
+        // If no good break found, just break at maxChars (may split mid-word)
+      }
+
+      chunks.push(remaining.slice(0, breakPoint).trim());
+      remaining = remaining.slice(breakPoint).trim();
+    }
+
+    return chunks.filter(chunk => chunk.length > 0);
   }
 
   // Get TTS configuration for a specific plugin
