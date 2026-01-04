@@ -2,7 +2,7 @@
 
 # Libre WebUI
 
-### The Beautiful, Privacy-First AI Chat Interface
+### Privacy-First AI Chat Interface
 
 <p align="center">
   <strong>Self-hosted • Open Source • 500+ AI Models</strong>
@@ -48,7 +48,7 @@ A stunning, modern interface for AI chat that puts **you** in control. Run it lo
 - Beautiful dark/light themes
 - VS Code-style keyboard shortcuts
 - Mobile-responsive design
-- Native macOS desktop app
+- **Native Desktop App** — macOS (Windows & Linux coming soon)
 
 ### AI Providers
 
@@ -94,6 +94,16 @@ docker-compose up -d
 ```
 
 Access at `http://localhost:5173` (dev) or `http://localhost:8080` (Docker)
+
+### Desktop App
+
+Download the native desktop app from [GitHub Releases](https://github.com/libre-webui/libre-webui/releases):
+
+| Platform              | Download         |
+| --------------------- | ---------------- |
+| macOS (Apple Silicon) | `.dmg` or `.zip` |
+| Windows               | Coming soon      |
+| Linux                 | Coming soon      |
 
 ---
 
