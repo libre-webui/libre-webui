@@ -30,13 +30,13 @@ interface OptimizedSyntaxHighlighterProps {
   className?: string;
 }
 
-// Custom Ophelia theme - AMOLED black with purple accents
+// Custom Ophelia theme - Cosmic Space (matching Kitty terminal)
 const opheliaTheme: { [key: string]: React.CSSProperties } = {
   'code[class*="language-"]': {
-    color: '#e5e5e5',
+    color: '#f8f8f2',
     background: 'none',
     textShadow: 'none',
-    fontFamily: "Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace",
+    fontFamily: "'JetBrains Mono', Consolas, Monaco, 'Andale Mono', monospace",
     fontSize: '1em',
     textAlign: 'left',
     whiteSpace: 'pre',
@@ -48,10 +48,10 @@ const opheliaTheme: { [key: string]: React.CSSProperties } = {
     hyphens: 'none',
   },
   'pre[class*="language-"]': {
-    color: '#e5e5e5',
-    background: '#050505',
+    color: '#f8f8f2',
+    background: '#1a1b26',
     textShadow: 'none',
-    fontFamily: "Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace",
+    fontFamily: "'JetBrains Mono', Consolas, Monaco, 'Andale Mono', monospace",
     fontSize: '1em',
     textAlign: 'left',
     whiteSpace: 'pre',
@@ -66,37 +66,37 @@ const opheliaTheme: { [key: string]: React.CSSProperties } = {
     overflow: 'auto',
     borderRadius: '0.5rem',
   },
-  comment: { color: '#525252' },
-  prolog: { color: '#525252' },
-  doctype: { color: '#525252' },
-  cdata: { color: '#525252' },
-  punctuation: { color: '#737373' },
-  property: { color: '#c084fc' },
-  tag: { color: '#c084fc' },
-  boolean: { color: '#c084fc' },
-  number: { color: '#c084fc' },
-  constant: { color: '#c084fc' },
-  symbol: { color: '#c084fc' },
-  deleted: { color: '#f87171' },
-  selector: { color: '#a855f7' },
-  'attr-name': { color: '#a855f7' },
-  string: { color: '#86efac' },
-  char: { color: '#86efac' },
-  builtin: { color: '#a855f7' },
-  inserted: { color: '#86efac' },
-  operator: { color: '#e5e5e5' },
-  entity: { color: '#e5e5e5', cursor: 'help' },
-  url: { color: '#a855f7' },
-  '.language-css .token.string': { color: '#e5e5e5' },
-  '.style .token.string': { color: '#e5e5e5' },
-  atrule: { color: '#e9d5ff' },
-  'attr-value': { color: '#e9d5ff' },
-  keyword: { color: '#e9d5ff' },
-  function: { color: '#c084fc' },
-  'class-name': { color: '#c084fc' },
-  regex: { color: '#fcd34d' },
-  important: { color: '#fcd34d', fontWeight: 'bold' },
-  variable: { color: '#e5e5e5' },
+  comment: { color: '#6272a4' },
+  prolog: { color: '#6272a4' },
+  doctype: { color: '#6272a4' },
+  cdata: { color: '#6272a4' },
+  punctuation: { color: '#f8f8f2' },
+  property: { color: '#ff79c6' },
+  tag: { color: '#ff79c6' },
+  boolean: { color: '#bd93f9' },
+  number: { color: '#bd93f9' },
+  constant: { color: '#bd93f9' },
+  symbol: { color: '#bd93f9' },
+  deleted: { color: '#ff5555' },
+  selector: { color: '#50fa7b' },
+  'attr-name': { color: '#50fa7b' },
+  string: { color: '#f1fa8c' },
+  char: { color: '#f1fa8c' },
+  builtin: { color: '#8be9fd' },
+  inserted: { color: '#50fa7b' },
+  operator: { color: '#ff79c6' },
+  entity: { color: '#f8f8f2', cursor: 'help' },
+  url: { color: '#8be9fd' },
+  '.language-css .token.string': { color: '#f1fa8c' },
+  '.style .token.string': { color: '#f1fa8c' },
+  atrule: { color: '#ff79c6' },
+  'attr-value': { color: '#f1fa8c' },
+  keyword: { color: '#ff79c6' },
+  function: { color: '#50fa7b' },
+  'class-name': { color: '#8be9fd' },
+  regex: { color: '#f1fa8c' },
+  important: { color: '#ff5555', fontWeight: 'bold' },
+  variable: { color: '#f8f8f2' },
 };
 
 const languageMap: Record<string, string> = {
@@ -138,9 +138,9 @@ export const OptimizedSyntaxHighlighter: React.FC<
   if (!supportedLanguages.includes(normalizedLanguage)) {
     return (
       <pre
-        className={`bg-gray-100 dark:bg-dark-200 ophelia:bg-[#050505] p-3 rounded-lg overflow-x-auto text-sm font-mono ${className}`}
+        className={`bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1b26] p-3 rounded-lg overflow-x-auto text-sm font-mono ${className}`}
       >
-        <code className='ophelia:text-[#e5e5e5]'>{children}</code>
+        <code className='ophelia:text-[#f8f8f2]'>{children}</code>
       </pre>
     );
   }
@@ -158,7 +158,7 @@ export const OptimizedSyntaxHighlighter: React.FC<
         padding: '0.75rem',
         borderRadius: '0.5rem',
         fontSize: '0.875rem',
-        ...(isOphelia && { background: '#050505' }),
+        ...(isOphelia && { background: '#1a1b26' }),
       }}
       showLineNumbers={false}
     >
