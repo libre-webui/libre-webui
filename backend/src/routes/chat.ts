@@ -852,7 +852,7 @@ router.post(
       }
 
       // Generate title using a simple prompt
-      const titlePrompt = `Generate a very short, concise title (3-6 words max) for a chat that starts with this message. Only respond with the title, nothing else. No quotes, no punctuation at the end.
+      const titlePrompt = `Generate a very short, concise title (3-6 words max) for a chat that starts with this message. Only respond with the title, nothing else. No quotes, no punctuation at the end. Do not use any markdown formatting.
 
 Message: "${message.substring(0, 500)}"
 
