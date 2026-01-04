@@ -309,6 +309,18 @@ const chatRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for the /api/tts route (moderate limit for TTS generation)
+const ttsRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 TTS requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many TTS requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // API routes
 app.use('/api/auth', authRateLimiter, optionalAuth, authRoutes);
 app.use('/api/users', usersRateLimiter, optionalAuth, usersRoutes);
@@ -323,7 +335,7 @@ app.use(
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
-app.use('/api/tts', optionalAuth, ttsRoutes);
+app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
 
 // API-only backend - no static file serving
 
