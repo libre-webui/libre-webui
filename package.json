@@ -30,6 +30,7 @@
     "setup-hooks": "git config core.hooksPath .githooks",
     "postinstall": "npm run setup-hooks",
     "release": "node scripts/release.js",
+    "release:patch": "node scripts/release.js patch",
     "release:minor": "node scripts/release.js minor",
     "release:major": "node scripts/release.js major",
     "changelog": "node scripts/generate-changelog.js",

@@ -21,18 +21,61 @@ on:
           - major
 
 jobs:
+  # Build Electron app for macOS
+  build-electron-mac:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Build frontend and backend
+        run: npm run build
+
+      - name: Build Electron app for macOS
+        run: |
+          cd frontend
+          npm run electron:build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_BUILD: true
+
+      - name: Upload Electron artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-mac-arm64
+          path: |
+            dist-electron/*.dmg
+            dist-electron/*.zip
+          if-no-files-found: warn
+
+  # Create the GitHub release with all artifacts
   create-release:
+    needs: build-electron-mac
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
@@ -68,30 +111,42 @@ jobs:
         id: release_notes
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
-            # Extract changelog for this version
             VERSION="${{ steps.extract_version.outputs.version }}"
             CHANGELOG_SECTION=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
             echo "notes<<EOF" >> $GITHUB_OUTPUT
             echo "$CHANGELOG_SECTION" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
-            # Generate changelog for unreleased changes
             CHANGELOG=$(npm run changelog --silent)
             echo "notes<<EOF" >> $GITHUB_OUTPUT
             echo "$CHANGELOG" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           fi
 
+      - name: Download Electron artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: electron-builds
+        continue-on-error: true
+
+      - name: List downloaded artifacts
+        run: |
+          echo "Downloaded artifacts:"
+          find electron-builds -type f 2>/dev/null || echo "No artifacts found"
+
       - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: ${{ steps.release_notes.outputs.notes }}
           draft: false
           prerelease: false
+          files: |
+            electron-builds/**/*.dmg
+            electron-builds/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker images
         run: |

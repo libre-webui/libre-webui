@@ -7,7 +7,7 @@ const semver = require('semver');
 
 /**
  * Release script for Libre WebUI
- * Automatically updates version, generates changelog, and creates git tags
+ * Uses Claude Sonnet to generate intelligent release summaries
  */
 
 class ReleaseManager {
@@ -15,9 +15,28 @@ class ReleaseManager {
     this.packageJsonPaths = [
       path.join(__dirname, '..', 'package.json'),
       path.join(__dirname, '..', 'frontend', 'package.json'),
-      path.join(__dirname, '..', 'backend', 'package.json')
+      path.join(__dirname, '..', 'backend', 'package.json'),
     ];
     this.changelogPath = path.join(__dirname, '..', 'CHANGELOG.md');
+    this.backendEnvPath = path.join(__dirname, '..', 'backend', '.env');
+  }
+
+  /**
+   * Load Anthropic API key from backend .env
+   */
+  loadAnthropicApiKey() {
+    try {
+      if (fs.existsSync(this.backendEnvPath)) {
+        const envContent = fs.readFileSync(this.backendEnvPath, 'utf8');
+        const match = envContent.match(/^ANTHROPIC_API_KEY=(.+)$/m);
+        if (match && match[1] && match[1].trim()) {
+          return match[1].trim();
+        }
+      }
+    } catch (error) {
+      console.log('  ⚠️  Could not read backend .env file');
+    }
+    return null;
   }
 
   /**
@@ -139,17 +158,32 @@ class ReleaseManager {
         .split('\n')
         .filter(line => line.trim())
         .filter(line => {
-          // Filter out previous release commits and merge commits
-          return !line.includes('chore(release):') && 
+          return !line.includes('chore(release):') &&
                  !line.includes('Merge branch') &&
                  !line.includes('chore: run fmt') &&
                  !line.includes('Update README.md') &&
                  !line.includes('docs: add unreleased section');
         });
-      return commits;
+      return { commits, lastTag };
     } catch {
-      // No previous tags
-      return this.exec('git log --oneline', { silent: true }).split('\n').filter(line => line.trim());
+      return {
+        commits: this.exec('git log --oneline -50', { silent: true }).split('\n').filter(line => line.trim()),
+        lastTag: null
+      };
+    }
+  }
+
+  /**
+   * Get code diff stats since last tag
+   */
+  getCodeChanges(lastTag) {
+    try {
+      const range = lastTag ? `${lastTag}..HEAD` : 'HEAD~10..HEAD';
+      const fileStats = this.exec(`git diff --stat ${range}`, { silent: true, allowFailure: true });
+      const changedFiles = this.exec(`git diff --name-only ${range}`, { silent: true, allowFailure: true });
+      return { fileStats, changedFiles };
+    } catch {
+      return { fileStats: '', changedFiles: '' };
     }
   }
 
@@ -205,12 +239,19 @@ class ReleaseManager {
   /**
    * Generate changelog content for new version
    */
-  generateChangelogSection(version, parsedCommits) {
+  generateChangelogSection(version, parsedCommits, aiSummary = null) {
     const date = new Date().toISOString().split('T')[0];
+
+    // If we have an AI summary, use it directly
+    if (aiSummary) {
+      return `## [${version}] - ${date}\n\n${aiSummary}\n\n`;
+    }
+
+    // Fallback to standard changelog generation
     let section = `## [${version}] - ${date}\n\n`;
 
     if (parsedCommits.features.length > 0) {
-      section += '### ✨ Added\n\n';
+      section += '### ✨ New Features\n\n';
       parsedCommits.features.forEach(feature => {
         section += `- ${feature}\n`;
       });
@@ -218,7 +259,7 @@ class ReleaseManager {
     }
 
     if (parsedCommits.improvements.length > 0) {
-      section += '### 🔧 Technical Improvements\n\n';
+      section += '### 🔧 Improvements\n\n';
       parsedCommits.improvements.forEach(improvement => {
         section += `- ${improvement}\n`;
       });
@@ -255,17 +296,16 @@ class ReleaseManager {
   /**
    * Update changelog with new version
    */
-  updateChangelog(version, parsedCommits) {
+  updateChangelog(version, parsedCommits, aiSummary = null) {
     const changelogContent = fs.readFileSync(this.changelogPath, 'utf8');
-    const newSection = this.generateChangelogSection(version, parsedCommits);
-    
-    // Find the [Unreleased] section and replace it
+    const newSection = this.generateChangelogSection(version, parsedCommits, aiSummary);
+
     const unreleasedSectionRegex = /## \[Unreleased\][\s\S]*?(?=## \[|$)/;
     const unreleasedSection = `## [Unreleased]
 
-### ✨ Added
+### ✨ New Features
 
-### 🔧 Technical Improvements
+### 🔧 Improvements
 
 ### 🐛 Bug Fixes
 
@@ -284,19 +324,15 @@ class ReleaseManager {
   /**
    * Determine next version based on commits
    */
-  determineNextVersion(currentVersion, commits, releaseType = null, forceType = false) {
-    if (forceType && releaseType) {
-      return semver.inc(currentVersion, releaseType);
-    }
-    
+  determineNextVersion(currentVersion, commits, releaseType = null) {
     if (releaseType) {
       return semver.inc(currentVersion, releaseType);
     }
 
-    const hasBreaking = commits.some(commit => 
+    const hasBreaking = commits.some(commit =>
       commit.includes('BREAKING CHANGE') || commit.includes('!')
     );
-    const hasFeatures = commits.some(commit => 
+    const hasFeatures = commits.some(commit =>
       commit.match(/^[a-f0-9]+\s+feat(\(.+\))?:/)
     );
 
@@ -310,62 +346,96 @@ class ReleaseManager {
   }
 
   /**
-   * Generate AI-powered release summary
+   * Generate AI release summary using Claude Sonnet
    */
-  async generateAIReleaseSummary(commits) {
-    try {
-      const { spawn } = require('child_process');
-      
-      console.log('🤖 Generating AI-powered release summary...');
-      
-      return new Promise((resolve, reject) => {
-        const aiProcess = spawn('node', [
-          path.join(__dirname, 'ai-changelog-generator.js'),
-          'release'
-        ], {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          cwd: path.join(__dirname, '..')
-        });
+  async generateAIReleaseSummary(commits, codeChanges, version) {
+    const apiKey = this.loadAnthropicApiKey();
 
-        let output = '';
-        let error = '';
-
-        aiProcess.stdout.on('data', (data) => {
-          output += data.toString();
-        });
-
-        aiProcess.stderr.on('data', (data) => {
-          error += data.toString();
-        });
-
-        aiProcess.on('close', (code) => {
-          if (code === 0) {
-            console.log('  ✅ AI summary generated successfully');
-            resolve(output);
-          } else {
-            console.log('  ⚠️  AI summary generation failed, using standard changelog');
-            resolve(null);
-          }
-        });
-
-        // Set a timeout for AI generation
-        setTimeout(() => {
-          aiProcess.kill();
-          console.log('  ⚠️  AI summary generation timed out, using standard changelog');
-          resolve(null);
-        }, 45000); // 45 second timeout
-      });
-    } catch (error) {
-      console.log('  ⚠️  AI summary generation failed, using standard changelog');
+    if (!apiKey) {
+      console.log('  ⚠️  No ANTHROPIC_API_KEY in backend/.env, using standard changelog');
       return null;
     }
+
+    console.log('🤖 Generating AI release summary with Claude Sonnet...');
+
+    const commitList = commits.join('\n');
+    const prompt = `You are a technical writer creating release notes for Libre WebUI, an open-source AI chat interface.
+
+## Commits since last release:
+${commitList}
+
+## Files changed:
+${codeChanges.changedFiles}
+
+## Change statistics:
+${codeChanges.fileStats}
+
+---
+
+Generate a professional, concise release summary. Follow this exact format:
+
+### What's New
+
+[2-3 sentence overview of the most important changes]
+
+### ✨ New Features
+- [List key new features]
+
+### 🔧 Improvements
+- [List improvements]
+
+### 🐛 Bug Fixes
+- [List bug fixes]
+
+---
+
+Rules:
+- Be concise but informative
+- Focus on user-facing changes
+- Group related changes together
+- Skip empty sections entirely (don't include headers with no items)
+- Use active voice
+- No generic phrases like "various improvements"
+- Each bullet should be specific`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1024,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        console.log(`  ⚠️  Claude API error: ${error}`);
+        return null;
+      }
+
+      const data = await response.json();
+      if (data.content && data.content[0] && data.content[0].text) {
+        console.log('  ✅ AI summary generated successfully');
+        return data.content[0].text;
+      }
+    } catch (error) {
+      console.log(`  ⚠️  Failed to generate AI summary: ${error.message}`);
+    }
+
+    return null;
   }
 
   /**
    * Create a new release
    */
-  async createRelease(releaseType = null, forceType = false) {
-    console.log('🚀 Starting release process...\n');
+  async createRelease(releaseType = null) {
+    console.log('🚀 Starting Libre WebUI release process...\n');
 
     // Check if working directory is clean
     try {
@@ -378,42 +448,48 @@ class ReleaseManager {
 
     // Get current version and commits
     const currentVersion = this.getCurrentVersion();
-    const commits = this.getCommitsSinceLastTag();
-    
+    const { commits, lastTag } = this.getCommitsSinceLastTag();
+
     if (commits.length === 0) {
       console.log('ℹ️  No new commits since last release.');
       return;
     }
 
-    console.log(`📝 Found ${commits.length} commits since last release:`);
-    commits.forEach(commit => console.log(`  - ${commit}`));
+    console.log(`📝 Found ${commits.length} commits since ${lastTag || 'start'}:`);
+    commits.slice(0, 10).forEach(commit => console.log(`  - ${commit}`));
+    if (commits.length > 10) {
+      console.log(`  ... and ${commits.length - 10} more`);
+    }
     console.log();
 
-    // Generate AI-powered release summary if available
-    const aiSummary = await this.generateAIReleaseSummary(commits);
+    // Determine next version
+    const nextVersion = this.determineNextVersion(currentVersion, commits, releaseType);
+    console.log(`📦 Current version: ${currentVersion}`);
+    console.log(`📦 Next version: ${nextVersion}\n`);
+
+    // Get code changes for AI analysis
+    const codeChanges = this.getCodeChanges(lastTag);
+
+    // Generate AI-powered release summary
+    const aiSummary = await this.generateAIReleaseSummary(commits, codeChanges, nextVersion);
     if (aiSummary) {
-      console.log('🤖 AI Release Summary:');
+      console.log('\n🤖 AI Release Summary:');
       console.log('─'.repeat(60));
       console.log(aiSummary);
       console.log('─'.repeat(60));
       console.log();
     }
 
-    // Determine next version
-    const nextVersion = this.determineNextVersion(currentVersion, commits, releaseType, forceType);
-    console.log(`📦 Current version: ${currentVersion}`);
-    console.log(`📦 Next version: ${nextVersion}\n`);
-
-    // Parse commits for changelog
+    // Parse commits for fallback changelog
     const parsedCommits = this.parseCommits(commits);
 
     // Update package.json version
     console.log('📝 Updating package.json files...');
     this.updatePackageVersion(nextVersion);
 
-    // Update changelog
+    // Update changelog (use AI summary if available)
     console.log('📝 Updating CHANGELOG.md...');
-    this.updateChangelog(nextVersion, parsedCommits);
+    this.updateChangelog(nextVersion, parsedCommits, aiSummary);
 
     // Run any pre-release scripts (linting, building, etc.)
     console.log('🔍 Running pre-release checks...');
@@ -490,28 +566,24 @@ class ReleaseManager {
     console.log(`     git show v${nextVersion}`);
     console.log('  2. Push to remote:');
     console.log('     git push origin main && git push origin --tags');
-    console.log('  3. GitHub release will be created automatically when tag is pushed');
+    console.log('  3. GitHub release with Electron builds will be created automatically');
   }
 }
 
 // CLI interface
 const args = process.argv.slice(2);
 const releaseType = args.find(arg => ['patch', 'minor', 'major'].includes(arg));
-const forcePatch = args.includes('--patch');
-const forceMinor = args.includes('--minor');
-const forceMajor = args.includes('--major');
 
 if (releaseType && !['patch', 'minor', 'major'].includes(releaseType)) {
   console.error(`❌ Invalid release type: ${releaseType}`);
-  console.error(`Valid types: patch, minor, major`);
+  console.error('Valid types: patch, minor, major');
   process.exit(1);
 }
 
-// Determine the final release type
 let finalReleaseType = releaseType;
-if (forcePatch) finalReleaseType = 'patch';
-if (forceMinor) finalReleaseType = 'minor';
-if (forceMajor) finalReleaseType = 'major';
+if (args.includes('--patch')) finalReleaseType = 'patch';
+if (args.includes('--minor')) finalReleaseType = 'minor';
+if (args.includes('--major')) finalReleaseType = 'major';
 
 const releaseManager = new ReleaseManager();
-releaseManager.createRelease(finalReleaseType, forcePatch || forceMinor || forceMajor);
+releaseManager.createRelease(finalReleaseType);
