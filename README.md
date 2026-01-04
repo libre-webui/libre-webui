@@ -64,14 +64,15 @@
 
 <div align="center">
 
-|     🎯 **Core Features**     |   🤖 **AI Integration**    |  🔧 **Developer Tools**   |
-| :--------------------------: | :------------------------: | :-----------------------: |
-|      🏠 **Self-Hosted**      |   🧠 **500+ AI Models**    |    🏗️ **Modern Stack**    |
-|    💬 **Real-time Chat**     |   🔌 **7+ AI Services**    | 🎨 **React + TypeScript** |
-|    🎭 **Custom Personas**    | 📚 **Document Chat (RAG)** |    🐳 **Docker Ready**    |
-| 🎨 **Interactive Artifacts** | 🔑 **SSO Authentication**  | ⌨️ **VS Code Shortcuts**  |
-|   📱 **Responsive Design**   |  🧮 **Embedding Models**   | 📖 **Comprehensive Docs** |
-|    🌓 **Dark/Light Mode**    | 🚀 **Streaming Responses** |    🔄 **Auto Updates**    |
+|     🎯 **Core Features**     |   🤖 **AI Integration**    |   🔧 **Developer Tools**   |
+| :--------------------------: | :------------------------: | :------------------------: |
+|      🏠 **Self-Hosted**      |   🧠 **500+ AI Models**    |    🏗️ **Modern Stack**     |
+|    💬 **Real-time Chat**     |   🔌 **7+ AI Services**    | 🎨 **React + TypeScript**  |
+|    🎭 **Custom Personas**    | 📚 **Document Chat (RAG)** |    🐳 **Docker Ready**     |
+| 🎨 **Interactive Artifacts** | 🔑 **SSO Authentication**  |  ⌨️ **VS Code Shortcuts**  |
+|   📱 **Responsive Design**   |  🧮 **Embedding Models**   | 📖 **Comprehensive Docs**  |
+|    🌓 **Dark/Light Mode**    | 🚀 **Streaming Responses** |    🔄 **Auto Updates**     |
+|    🔊 **Text-to-Speech**     |   🔍 **Model Discovery**   | 🖥️ **Desktop App (macOS)** |
 
 </div>
 
@@ -716,24 +717,25 @@ libre-webui/
 <tr>
 <td width="50%">
 
-### 🔜 **Coming Soon**
+### 🆕 **Latest in v0.2.0**
 
-- **🤗 Hugging Face Model Integration** - Direct access to thousands of models via Hugging Face Hub
-- **⚛️ React Component Artifacts** - Interactive UI component generation
-- **📈 Data Visualizations** - Charts and graph generation in artifacts
-- **🧠 Advanced Memory** - Enhanced persona memory capabilities
-- **🔍 Advanced Search** - Semantic search across all conversations
+- **🖥️ Native Desktop App** - macOS Silicon app with DMG installer
+- **🔊 Text-to-Speech** - Full TTS system with voice selection and playback
+- **🔍 Model Discovery** - Browse and install Ollama models from the UI
+- **📝 Auto-Title Generation** - Automatic chat session naming
+- **💭 Chain-of-Thought** - Support for `<thinking>` tags in responses
+- **🎨 New Theme** - Purple/AMOLED dark theme option
 
 </td>
 <td width="50%">
 
-### 💡 **Planned Features**
+### 💡 **Coming Soon**
 
+- **🤗 Hugging Face Integration** - Direct access to HF model hub
+- **⚛️ React Component Artifacts** - Interactive UI generation
+- **📈 Data Visualizations** - Charts and graphs in artifacts
 - **📱 Mobile App** - Native mobile applications
 - **🌐 Multi-language** - Internationalization support
-- **🔄 Model Fine-tuning** - Local model customization tools
-- **📊 Analytics Dashboard** - Usage insights and metrics
-- **🎨 Theme Customization** - Advanced UI personalization
 
 </td>
 </tr>
