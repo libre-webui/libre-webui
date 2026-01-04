@@ -5,22 +5,21 @@
 ### Privacy-First AI Chat Interface
 
 <p align="center">
-  <strong>Self-hosted • Open Source • 500+ AI Models</strong>
+  <strong>Self-hosted • Open Source • Extensible</strong>
 </p>
 
 <p>
-  <img src="./screenshot_white.png" width="32%" alt="Light Theme">
-  <img src="./screenshot.png" width="32%" alt="Dark Theme">
-  <img src="./screenshot_dark.png" width="32%" alt="Ophelia Theme">
+  <img src="./screenshot_white.png" width="49%" alt="Light Theme">
+  <img src="./screenshot.png" width="49%" alt="Dark Theme">
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/github/package-json/v/libre-webui/libre-webui" alt="Version">
   <img src="https://img.shields.io/github/license/libre-webui/libre-webui" alt="License">
-  <img src="https://img.shields.io/github/stars/libre-webui/libre-webui" alt="Stars">
+  <a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=social" alt="Stars"></a>
 </p>
 
-[Website](https://librewebui.org) • [Documentation](https://docs.librewebui.org) • [Get Started](#-quick-start)
+[Website](https://librewebui.org) • [Documentation](https://docs.librewebui.org) • [𝕏](https://x.com/librewebui) • [Sponsor](https://github.com/sponsors/libre-webui) • [Get Started](#quick-start)
 
 </div>
 
@@ -28,11 +27,11 @@
 
 ## Why Libre WebUI?
 
-A stunning, modern interface for AI chat that puts **you** in control. Run it locally with Ollama, connect to OpenAI, Anthropic, or any of 9+ providers—all from one beautiful UI.
+A simple, self-hosted interface for AI chat. Run it locally with Ollama, connect to OpenAI, Anthropic, or 9+ providers—all from one UI.
 
 - **Your data stays yours** — Zero telemetry, fully self-hosted
-- **One interface, 500+ models** — Ollama, GPT-4, Claude, Gemini, and more
-- **Built for productivity** — Keyboard shortcuts, dark mode, responsive design
+- **Extensible plugin system** — Ollama, OpenAI, Anthropic, and any OpenAI-compatible API
+- **Simple & focused** — Keyboard shortcuts, dark mode, responsive design
 
 ---
 
@@ -45,7 +44,7 @@ A stunning, modern interface for AI chat that puts **you** in control. Run it lo
 ### Core Experience
 
 - Real-time streaming chat
-- Beautiful dark/light themes
+- Dark/light themes
 - VS Code-style keyboard shortcuts
 - Mobile-responsive design
 - **Native Desktop App** — macOS (Windows & Linux coming soon)
@@ -54,6 +53,7 @@ A stunning, modern interface for AI chat that puts **you** in control. Run it lo
 
 - **Local**: Ollama (full integration)
 - **Cloud**: OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, and more
+- **Plugin System** — Add any OpenAI-compatible API via JSON config
 
 </td>
 <td width="50%">
@@ -80,18 +80,45 @@ A stunning, modern interface for AI chat that puts **you** in control. Run it lo
 
 ## Quick Start
 
+**Requirements:** [Ollama](https://ollama.ai) (for local AI) or API keys for cloud providers
+
 ```bash
-# Clone and run
+# 1. Clone the repo
 git clone https://github.com/libre-webui/libre-webui
 cd libre-webui
+
+# 2. Configure environment
+cp backend/.env.example backend/.env
+
+# 3. Install and run
 npm install && npm run dev
 ```
 
-**Or with Docker:**
+### Configuration
+
+Edit `backend/.env` to add your API keys:
+
+```env
+# Local AI (Ollama)
+OLLAMA_BASE_URL=http://localhost:11434
+
+# Cloud AI Providers (add the ones you need)
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+GROQ_API_KEY=gsk_...
+GEMINI_API_KEY=...
+
+# Optional: Text-to-Speech
+ELEVENLABS_API_KEY=...
+```
+
+**Or with Docker** (requires Ollama running on host):
 
 ```bash
-docker-compose up -d
+docker-compose -f docker-compose.external-ollama.yml up -d
 ```
+
+> A bundled `docker-compose.yml` with Ollama included exists but is untested.
 
 Access at `http://localhost:5173` (dev) or `http://localhost:8080` (Docker)
 
@@ -136,7 +163,10 @@ Download the native desktop app from [GitHub Releases](https://github.com/libre-
 
 ## Community
 
-- [Mastodon](https://fosstodon.org/@librewebui) — Follow for updates
+- [Ethical Charter](./CHARTER.md) — Our commitment to privacy, freedom & transparency
+- [Contributing](https://github.com/libre-webui/libre-webui/contribute) — Help improve Libre WebUI
+- [𝕏 @librewebui](https://x.com/librewebui) — Follow for updates
+- [Mastodon](https://fosstodon.org/@librewebui) — Fediverse updates
 - [GitHub Issues](https://github.com/libre-webui/libre-webui/issues) — Bug reports & feature requests
 - [Documentation](https://docs.librewebui.org) — Guides & API reference
 
@@ -144,7 +174,7 @@ Download the native desktop app from [GitHub Releases](https://github.com/libre-
 
 <div align="center">
 
-**Apache 2.0 License** • Copyright © 2025 Libre WebUI
+**Apache 2.0 License** • Copyright © 2025–present Libre WebUI™
 
 Built by [Kroonen AI](https://kroonen.ai)
 
