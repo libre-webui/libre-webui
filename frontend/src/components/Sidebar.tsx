@@ -63,6 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     selectedModel,
     models,
     currentSession,
+    generatingTitleForSession,
   } = useChatStore();
   const { user, isAdmin, systemInfo } = useAuthStore();
   const { backgroundImage, sidebarCompact, toggleSidebarCompact } =
@@ -505,9 +506,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             <div
                               className={cn(
                                 'w-3 h-3 rounded-full',
-                                isActive
-                                  ? 'bg-primary-500'
-                                  : 'bg-gray-300 dark:bg-gray-600'
+                                generatingTitleForSession === session.id
+                                  ? 'bg-primary-400 animate-pulse'
+                                  : isActive
+                                    ? 'bg-primary-500'
+                                    : 'bg-gray-300 dark:bg-gray-600'
                               )}
                             />
                           </div>
@@ -559,7 +562,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                     : 'text-gray-900 dark:text-gray-100'
                                 )}
                               >
-                                {truncateText(session.title, 32)}
+                                {generatingTitleForSession === session.id ? (
+                                  <span className='inline-flex items-center gap-1'>
+                                    <span className='animate-pulse'>
+                                      Generating title
+                                    </span>
+                                    <span className='inline-flex'>
+                                      <span
+                                        className='animate-bounce'
+                                        style={{ animationDelay: '0ms' }}
+                                      >
+                                        .
+                                      </span>
+                                      <span
+                                        className='animate-bounce'
+                                        style={{ animationDelay: '150ms' }}
+                                      >
+                                        .
+                                      </span>
+                                      <span
+                                        className='animate-bounce'
+                                        style={{ animationDelay: '300ms' }}
+                                      >
+                                        .
+                                      </span>
+                                    </span>
+                                  </span>
+                                ) : (
+                                  truncateText(session.title, 32)
+                                )}
                               </h3>
                               <div className='flex items-center gap-1.5 mt-0.5'>
                                 <span

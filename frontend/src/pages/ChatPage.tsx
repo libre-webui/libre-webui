@@ -402,7 +402,7 @@ export const ChatPage: React.FC = () => {
                   •
                 </span>{' '}
                 <span className='text-xs text-gray-400 dark:text-gray-500 ophelia:text-[#525252]'>
-                  LLM can make mistakes
+                  LLM can make mistakes - verify important information
                 </span>
               </div>
             </div>

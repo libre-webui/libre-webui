@@ -96,6 +96,10 @@ interface ChatState {
   loading: boolean;
   error: string | null;
   setError: (error: string | null) => void;
+
+  // Title generation state
+  generatingTitleForSession: string | null;
+  setGeneratingTitleForSession: (sessionId: string | null) => void;
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -761,6 +765,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loading: false,
   error: null,
   setError: error => set({ error }),
+
+  // Title generation state
+  generatingTitleForSession: null,
+  setGeneratingTitleForSession: sessionId =>
+    set({ generatingTitleForSession: sessionId }),
 
   // Add a global test function for debugging
   ...(typeof window !== 'undefined' && {

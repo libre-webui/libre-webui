@@ -33,6 +33,7 @@ export const useChat = (sessionId: string) => {
     updateMessageWithStatistics,
     currentSession,
     updateSessionTitle,
+    setGeneratingTitleForSession,
   } = useChatStore();
   const { setIsGenerating, preferences } = useAppStore();
   const streamingMessageIdRef = useRef<string | null>(null);
@@ -146,24 +147,44 @@ export const useChat = (sessionId: string) => {
       }
 
       // Auto-title generation: Check if this is the first message and auto-title is enabled
-      const titleSettings = preferences.titleSettings;
+      // Get fresh values from stores to avoid stale closure issues
+      const currentPrefs = useAppStore.getState().preferences;
+      const titleSettings = currentPrefs.titleSettings;
+      const currentSess = useChatStore.getState().currentSession;
       const firstMessage = firstUserMessageRef.current;
+
+      console.log('Auto-title check:', {
+        firstMessage,
+        autoTitle: titleSettings?.autoTitle,
+        taskModel: titleSettings?.taskModel,
+        sessionTitle: currentSess?.title,
+      });
+
       if (
         firstMessage &&
         titleSettings?.autoTitle &&
         titleSettings?.taskModel &&
-        currentSession?.title === 'New Chat'
+        currentSess?.title === 'New Chat'
       ) {
+        console.log('Triggering auto-title generation...');
+        // Set generating state for animation
+        setGeneratingTitleForSession(sessionId);
+
         // Generate title asynchronously (don't block the UI)
         chatApi
           .generateTitle(sessionId, titleSettings.taskModel, firstMessage)
           .then(response => {
+            console.log('Title generation response:', response);
             if (response.success && response.data?.title) {
               updateSessionTitle(sessionId, response.data.title);
             }
           })
           .catch(error => {
             console.error('Failed to generate title:', error);
+          })
+          .finally(() => {
+            // Clear generating state
+            setGeneratingTitleForSession(null);
           });
         // Clear the first message ref after triggering title generation
         firstUserMessageRef.current = null;
@@ -222,9 +243,8 @@ export const useChat = (sessionId: string) => {
     updateMessage,
     updateMessageWithStatistics,
     setIsGenerating,
-    preferences.titleSettings,
-    currentSession,
     updateSessionTitle,
+    setGeneratingTitleForSession,
   ]);
 
   const sendMessage = useCallback(
@@ -246,14 +266,7 @@ export const useChat = (sessionId: string) => {
         }
         lastStoreUpdate.current = Date.now();
 
-        // Add user message immediately
-        addMessage(sessionId, {
-          role: 'user',
-          content: content.trim(),
-          images: images, // Store images in the message if provided
-        });
-
-        // Track the first user message for auto-title generation
+        // Track the first user message for auto-title generation BEFORE adding message
         // Only set if it's the first message in this session (no existing user messages)
         const session = useChatStore.getState().currentSession;
         const hasExistingUserMessages = session?.messages?.some(
@@ -262,6 +275,13 @@ export const useChat = (sessionId: string) => {
         if (!hasExistingUserMessages && session?.title === 'New Chat') {
           firstUserMessageRef.current = content.trim();
         }
+
+        // Add user message immediately
+        addMessage(sessionId, {
+          role: 'user',
+          content: content.trim(),
+          images: images, // Store images in the message if provided
+        });
 
         // Create placeholder for assistant message
         const assistantMessageId = generateId();
