@@ -583,6 +583,11 @@ class StorageService {
         `);
 
         Object.entries(preferences).forEach(([key, value]) => {
+          // Skip undefined values - they would cause NOT NULL constraint errors
+          if (value === undefined) {
+            return;
+          }
+
           // Encrypt the preference value before storing
           const encryptedValue = encryptionService.encrypt(
             JSON.stringify(value)
