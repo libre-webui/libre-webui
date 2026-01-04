@@ -25,7 +25,6 @@ import {
   PluginResponse,
   ChatMessage,
   GenerationOptions,
-  TTSRequest,
   TTSConfig,
   PluginType,
 } from '../types/index.js';

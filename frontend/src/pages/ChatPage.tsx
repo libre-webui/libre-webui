@@ -182,7 +182,7 @@ export const ChatPage: React.FC = () => {
     }
   }, [welcomeMessage]);
 
-  const handleCreateSession = async () => {
+  const _handleCreateSession = async () => {
     if (selectedModel) {
       const newSession = await createSession(selectedModel);
       if (newSession) {

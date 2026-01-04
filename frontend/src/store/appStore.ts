@@ -17,7 +17,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { UserPreferences, Theme, TitleSettings } from '@/types';
+import { UserPreferences, Theme } from '@/types';
 import { isDemoMode, getDemoConfig } from '@/utils/demoMode';
 
 interface AppState {

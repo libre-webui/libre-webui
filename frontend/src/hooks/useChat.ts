@@ -31,7 +31,6 @@ export const useChat = (sessionId: string) => {
     addMessage,
     updateMessage,
     updateMessageWithStatistics,
-    currentSession,
     updateSessionTitle,
     setGeneratingTitleForSession,
   } = useChatStore();
