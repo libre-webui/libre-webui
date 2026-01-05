@@ -15,6 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.2.2] - 2026-01-05
+
+### What's New
+
+This release brings significant enhancements to the chat experience with live LaTeX formula rendering and improved UI navigation. The persona system has been upgraded with better memory capabilities and streamlined display, while new code-aware input features enhance developer workflows.
+
+### ✨ New Features
+
+- **Live LaTeX formatting** - Scientific formulas now render automatically in chat messages
+- **Code-aware text input** - Enhanced text area with syntax highlighting and code-specific features
+- **Copy button for messages** - Quickly copy any chat message content
+- **Scroll-to-bottom button** - Easy navigation in long chat conversations
+- **Media upload component** - New interface for uploading files and media
+
+### 🔧 Improvements
+
+- **Enhanced persona memory system** - Improved context retention and recall capabilities
+- **Redesigned persona display** - Cleaner sidebar layout for persona and TTS controls
+- **Better persona management** - Streamlined persona cards and quick-switch functionality
+- **Code signing support** - Electron app builds now include code signing with fallback options
+- **Updated dependencies** - Latest versions of development tools and GitHub Actions
+
+### 🐛 Bug Fixes
+
+- Fixed background image state conflicts between system and persona themes
+- Resolved persona button z-index layering issues
+- Improved sidebar display consistency for persona and TTS elements
+
 ## [0.2.1] - 2026-01-04
 
 ### What's New
