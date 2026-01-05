@@ -36,6 +36,8 @@ import {
   ChevronUp,
   Brain,
   RefreshCw,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
@@ -72,9 +74,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [thinkingContent, setThinkingContent] = useState<string | null>(null);
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
   const autoPlayAudioRef = useRef<HTMLAudioElement | null>(null);
   const wasStreamingRef = useRef(isStreaming);
   const hasAutoPlayedRef = useRef(false);
+
+  const handleCopyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy message:', err);
+    }
+  };
 
   // Parse thinking content and artifacts from message content on mount or when content changes
   useEffect(() => {
@@ -307,6 +320,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   : 'opacity-0 group-hover:opacity-100'
               )}
             />
+          )}
+          {/* Copy Button for all messages */}
+          {!isSystem && !isStreaming && (
+            <button
+              onClick={handleCopyMessage}
+              className='p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.2)] transition-opacity opacity-0 group-hover:opacity-100'
+              title={isCopied ? 'Copied!' : 'Copy message'}
+            >
+              {isCopied ? (
+                <Check className='h-3.5 w-3.5 text-green-500 dark:text-green-400' />
+              ) : (
+                <Copy className='h-3.5 w-3.5 text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3]' />
+              )}
+            </button>
           )}
           {/* Regenerate Button for last assistant message */}
           {!isUser &&
