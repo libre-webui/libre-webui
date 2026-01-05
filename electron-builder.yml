@@ -41,6 +41,7 @@ mac:
   entitlements: electron/entitlements.mac.plist
   entitlementsInherit: electron/entitlements.mac.plist
   artifactName: '${productName}-${version}-mac-arm64.${ext}'
+  notarize: true
 
 dmg:
   background: electron/assets/dmg-background.png
