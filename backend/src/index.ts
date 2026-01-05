@@ -342,56 +342,62 @@ if (
   process.env.NODE_ENV === 'production' ||
   process.env.SERVE_FRONTEND === 'true'
 ) {
-  import('path').then(pathModule => {
-    import('url').then(urlModule => {
-      import('fs').then(fsModule => {
-        const __filename = urlModule.fileURLToPath(import.meta.url);
-        const __dirname = pathModule.dirname(__filename);
+  const pathModule = await import('path');
+  const urlModule = await import('url');
+  const fsModule = await import('fs');
 
-        // Try multiple possible frontend locations
-        const possiblePaths = [
-          pathModule.join(__dirname, '../../frontend/dist'), // npm package structure
-          pathModule.join(__dirname, '../../../frontend/dist'), // development
-          pathModule.join(process.cwd(), 'frontend/dist'), // running from project root
-        ];
+  const __filename = urlModule.fileURLToPath(import.meta.url);
+  const __dirname = pathModule.dirname(__filename);
 
-        let frontendPath = '';
-        for (const p of possiblePaths) {
-          if (fsModule.existsSync(pathModule.join(p, 'index.html'))) {
-            frontendPath = p;
-            break;
-          }
-        }
+  // Try multiple possible frontend locations
+  const possiblePaths = [
+    pathModule.join(__dirname, '../../frontend/dist'), // npm package structure
+    pathModule.join(__dirname, '../../../frontend/dist'), // development
+    pathModule.join(process.cwd(), 'frontend/dist'), // running from project root
+  ];
 
-        if (frontendPath) {
-          console.log(`Serving frontend from: ${frontendPath}`);
+  let frontendPath = '';
+  for (const p of possiblePaths) {
+    if (fsModule.existsSync(pathModule.join(p, 'index.html'))) {
+      frontendPath = p;
+      break;
+    }
+  }
 
-          // Rate limiter for static files
-          const staticRateLimiter = rateLimit({
-            windowMs: 15 * 60 * 1000, // 15 minutes
-            max: 1000, // limit each IP to 1000 requests per windowMs
-            message: 'Too many requests, please try again later.',
-            standardHeaders: true,
-            legacyHeaders: false,
-          });
+  if (frontendPath) {
+    console.log(`Serving frontend from: ${frontendPath}`);
 
-          app.use(staticRateLimiter, express.static(frontendPath));
-
-          // SPA fallback - serve index.html for all non-API routes
-          app.get('*', staticRateLimiter, (req, res, next) => {
-            if (req.path.startsWith('/api/') || req.path.startsWith('/ws')) {
-              return next();
-            }
-            res.sendFile(pathModule.join(frontendPath, 'index.html'));
-          });
-        } else {
-          console.warn(
-            'Frontend build not found. Run `npm run build:frontend` first.'
-          );
-        }
-      });
+    // Rate limiter for static files
+    const staticRateLimiter = rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 1000, // limit each IP to 1000 requests per windowMs
+      message: 'Too many requests, please try again later.',
+      standardHeaders: true,
+      legacyHeaders: false,
     });
-  });
+
+    app.use(staticRateLimiter, express.static(frontendPath));
+
+    // SPA fallback - serve index.html for all non-API routes
+    const indexPath = pathModule.join(frontendPath, 'index.html');
+
+    // Root route
+    app.get('/', staticRateLimiter, (_req, res) => {
+      res.sendFile(indexPath);
+    });
+
+    // All other non-API routes (Express 5 wildcard syntax)
+    app.get('/{*splat}', staticRateLimiter, (req, res, next) => {
+      if (req.path.startsWith('/api/') || req.path.startsWith('/ws')) {
+        return next();
+      }
+      res.sendFile(indexPath);
+    });
+  } else {
+    console.warn(
+      'Frontend build not found. Run `npm run build:frontend` first.'
+    );
+  }
 }
 
 // Error handling

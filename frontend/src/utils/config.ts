@@ -29,7 +29,13 @@ export const getApiBaseUrl = (): string => {
     return 'http://localhost:3001/api';
   }
 
-  // Default: use same host with port 3001
+  // In production (npx, docker), API is on same origin
+  // In development, API is on port 3001
+  if (import.meta.env.PROD) {
+    return `${window.location.origin}/api`;
+  }
+
+  // Development: use same host with port 3001
   return `${window.location.protocol}//${window.location.hostname}:3001/api`;
 };
 

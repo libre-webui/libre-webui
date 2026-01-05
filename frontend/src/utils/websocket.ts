@@ -38,8 +38,12 @@ class WebSocketService {
       // Explicit API URL configured
       const apiUrl = import.meta.env.VITE_API_BASE_URL.replace(/\/api$/, '');
       wsUrl = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+    } else if (import.meta.env.PROD) {
+      // Production (npx, docker): use same origin
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${protocol}//${window.location.host}`;
     } else {
-      // Default: derive from window location
+      // Development: derive from window location with port 3001
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       wsUrl = `${protocol}//${window.location.hostname}:3001`;
     }

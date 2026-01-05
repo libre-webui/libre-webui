@@ -81,6 +81,30 @@ A simple, self-hosted interface for AI chat. Run it locally with Ollama, connect
 
 **Requirements:** [Ollama](https://ollama.ai) (for local AI) or API keys for cloud providers
 
+### One Command Install
+
+```bash
+npx libre-webui
+```
+
+That's it. Opens at `http://localhost:8080`
+
+**Options:**
+
+```bash
+npx libre-webui --port 3000      # Custom port
+npx libre-webui --help           # Show all options
+```
+
+**Environment variables:**
+
+```bash
+OPENAI_API_KEY=sk-... npx libre-webui
+ANTHROPIC_API_KEY=sk-ant-... npx libre-webui
+```
+
+### Development Setup
+
 ```bash
 # 1. Clone the repo
 git clone https://github.com/libre-webui/libre-webui

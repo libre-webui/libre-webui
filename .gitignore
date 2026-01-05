@@ -100,3 +100,4 @@ electron/assets/*.icns
 electron/assets/*.ico
 electron/assets/*.png
 !electron/assets/icon.svg
+.claude/
