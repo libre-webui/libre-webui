@@ -20,8 +20,9 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Send, Plus, Paperclip, Minus } from 'lucide-react';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
+import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
 import { ModelSelector } from '@/components/ModelSelector';
-import { Button, Textarea } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
@@ -323,10 +324,12 @@ export const ChatPage: React.FC = () => {
 
                   {/* Text Input */}
                   <div className='flex-1 min-w-0'>
-                    <Textarea
+                    <CodeAwareTextarea
                       ref={welcomeTextareaRef}
                       value={welcomeMessage}
-                      onChange={e => setWelcomeMessage(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setWelcomeMessage(e.target.value)
+                      }
                       onKeyDown={handleWelcomeKeyDown}
                       placeholder='Message...'
                       className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 ophelia:scrollbar-thumb-[#3f3f46] focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 ophelia:placeholder:text-[#737373] text-base sm:text-sm leading-none touch-manipulation'
@@ -335,7 +338,6 @@ export const ChatPage: React.FC = () => {
                         boxShadow: 'none !important',
                         border: 'none !important',
                         outline: 'none !important',
-                        background: 'transparent !important',
                         padding: '0 !important',
                         margin: '0 !important',
                         lineHeight: '1.2 !important',

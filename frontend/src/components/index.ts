@@ -17,6 +17,7 @@
 
 export { Sidebar } from './Sidebar';
 export { ChatInput } from './ChatInput';
+export { CodeAwareTextarea } from './CodeAwareTextarea';
 export { ChatMessage } from './ChatMessage';
 export { ChatMessages } from './ChatMessages';
 export { MessageBranch } from './MessageBranch';

@@ -19,7 +19,7 @@ import React from 'react';
 import { ChatMessage as ChatMessageType } from '@/types';
 import { ChatMessage } from '@/components/ChatMessage';
 import { cn } from '@/utils';
-import { GitBranch } from 'lucide-react';
+import { GitBranch, Check } from 'lucide-react';
 
 interface MessageBranchProps {
   messages: ChatMessageType[]; // All variants of a message (branches)
@@ -65,18 +65,17 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
 
   // Multiple messages - render side by side as branches
   return (
-    <div className={cn('relative', className)}>
-      {/* Branch indicator */}
-      <div className='flex items-center gap-2 px-4 py-2 text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-        <GitBranch className='h-3.5 w-3.5' />
-        <span>{messages.length} response variants</span>
+    <div className={cn('relative py-1', className)}>
+      {/* Branch indicator - minimal */}
+      <div className='flex items-center gap-1.5 px-4 pb-2 text-[10px] text-gray-400 dark:text-gray-500 ophelia:text-[#525252]'>
+        <GitBranch className='h-3 w-3' />
+        <span>{messages.length} variants</span>
       </div>
 
-      {/* Branch container - horizontal scroll on mobile, grid on desktop */}
-      <div className='flex flex-col md:flex-row gap-3 px-4 overflow-x-auto md:overflow-visible pb-2'>
+      {/* Branch container */}
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 px-4'>
         {messages.map((message, index) => {
           const isActive = message.isActive !== false;
-          // Check if THIS specific message is being streamed (by ID)
           const isThisMessageStreaming =
             isStreaming && streamingMessageId === message.id;
           const displayMessage =
@@ -88,10 +87,14 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
             <div
               key={message.id}
               className={cn(
-                'flex-shrink-0 md:flex-1 min-w-[280px] md:min-w-0 rounded-xl border-2 transition-all cursor-pointer',
+                'relative rounded-lg overflow-hidden transition-all duration-200',
+                'border shadow-sm',
                 isActive || isThisMessageStreaming
-                  ? 'border-primary-400 dark:border-primary-500 ophelia:border-[#9333ea] bg-white dark:bg-dark-50 ophelia:bg-[#0a0a0a]'
-                  : 'border-gray-200 dark:border-dark-300 ophelia:border-[#262626] bg-gray-50/50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a]/50 opacity-75 hover:opacity-100 hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#3f3f46]'
+                  ? 'border-primary-300 dark:border-primary-600 ophelia:border-[#7c3aed] shadow-primary-100 dark:shadow-primary-900/20 ophelia:shadow-[#9333ea]/10'
+                  : 'border-gray-200 dark:border-dark-300 ophelia:border-[#262626] hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#3f3f46]',
+                !isActive &&
+                  !isThisMessageStreaming &&
+                  'cursor-pointer hover:shadow-md'
               )}
               onClick={() =>
                 !isActive &&
@@ -102,26 +105,35 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
               {/* Branch header */}
               <div
                 className={cn(
-                  'flex items-center justify-between px-3 py-1.5 border-b text-xs',
+                  'flex items-center justify-between px-2.5 py-1 text-[11px]',
                   isActive || isThisMessageStreaming
-                    ? 'border-primary-200 dark:border-primary-800 ophelia:border-[#7c3aed]/30 bg-primary-50 dark:bg-primary-900/20 ophelia:bg-[#9333ea]/10 text-primary-700 dark:text-primary-300 ophelia:text-[#c084fc]'
-                    : 'border-gray-200 dark:border-dark-300 ophelia:border-[#262626] bg-gray-100 dark:bg-dark-200 ophelia:bg-[#121212] text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'
+                    ? 'bg-primary-50/80 dark:bg-primary-900/20 ophelia:bg-[#9333ea]/10 text-primary-600 dark:text-primary-400 ophelia:text-[#c084fc]'
+                    : 'bg-gray-50/80 dark:bg-dark-100/80 ophelia:bg-[#121212]/80 text-gray-500 dark:text-gray-500 ophelia:text-[#737373]'
                 )}
               >
-                <span className='font-medium'>
-                  Variant {index + 1}
-                  {isThisMessageStreaming && ' (generating...)'}
-                  {isActive && !isThisMessageStreaming && ' (active)'}
-                </span>
+                <div className='flex items-center gap-1.5'>
+                  <span className='font-medium'>{index + 1}</span>
+                  {isThisMessageStreaming && (
+                    <span className='text-[10px] opacity-70 animate-pulse'>
+                      generating...
+                    </span>
+                  )}
+                </div>
+                {isActive && !isThisMessageStreaming && (
+                  <Check className='h-3 w-3' />
+                )}
                 {!isActive && !isThisMessageStreaming && (
-                  <span className='text-[10px] opacity-70'>
-                    Click to select
-                  </span>
+                  <span className='text-[10px] opacity-50'>select</span>
                 )}
               </div>
 
               {/* Message content */}
-              <div className='p-0'>
+              <div
+                className={cn(
+                  'bg-white dark:bg-dark-50 ophelia:bg-[#0a0a0a]',
+                  !isActive && !isThisMessageStreaming && 'opacity-80'
+                )}
+              >
                 <ChatMessage
                   message={displayMessage}
                   isStreaming={isThisMessageStreaming}
@@ -132,7 +144,7 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
                   onRegenerate={
                     isActive && !isStreaming ? onRegenerate : undefined
                   }
-                  className='!bg-transparent !p-4'
+                  className='!bg-transparent !p-3 !text-sm'
                 />
               </div>
             </div>
