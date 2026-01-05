@@ -98,12 +98,12 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
   return (
     <>
       {/* Backdrop */}
-      <div className='fixed inset-0 z-40' onClick={onClose} />
+      <div className='fixed inset-0 z-[9998]' onClick={onClose} />
 
       {/* Panel */}
       <div
         className={cn(
-          'fixed z-50 w-80 max-h-[70vh] flex flex-col',
+          'fixed z-[9999] w-80 max-h-[70vh] flex flex-col',
           'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
           'rounded-2xl shadow-2xl',
           'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
