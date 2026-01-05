@@ -394,6 +394,8 @@ export interface Persona extends AdvancedFeatures {
   background?: string;
   created_at: number;
   updated_at: number;
+  is_favorite?: boolean;
+  category?: string;
   // Advanced features (unified from legacy system)
 }
 
@@ -414,6 +416,8 @@ export interface UpdatePersonaRequest extends Partial<AdvancedFeatures> {
   parameters?: PersonaParameters;
   avatar?: string;
   background?: string;
+  is_favorite?: boolean;
+  category?: string;
   // Advanced features
 }
 

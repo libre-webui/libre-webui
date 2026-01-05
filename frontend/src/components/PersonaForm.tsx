@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import { Button } from '@/components/ui/Button';
 import { personaApi, ollamaApi } from '@/utils/api';
 import {
@@ -26,10 +32,25 @@ import {
   OllamaModel,
   EmbeddingModel,
 } from '@/types';
-import { Brain, Database, Info, User, Sliders } from 'lucide-react';
+import {
+  Brain,
+  Database,
+  Info,
+  User,
+  Sliders,
+  Check,
+  Sparkles,
+  Trash2,
+  HardDrive,
+  Clock,
+  TrendingUp,
+  Zap,
+  RefreshCw,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AvatarUpload } from '@/components/AvatarUpload';
 import { PersonaBackgroundUpload } from '@/components/PersonaBackgroundUpload';
+import { cn } from '@/utils';
 
 interface PersonaFormProps {
   persona: Persona | null;
@@ -52,42 +73,159 @@ interface ExtendedFormData extends CreatePersonaRequest {
   };
 }
 
+// Reusable slider component to eliminate duplication
+interface ParameterSliderProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+  hint?: string;
+  format?: (value: number) => string;
+  colorClass?: string;
+}
+
+const ParameterSlider: React.FC<ParameterSliderProps> = ({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+  hint,
+  format = v => String(v),
+  colorClass = 'text-gray-700 dark:text-dark-600',
+}) => {
+  const progress = ((value - min) / (max - min)) * 100;
+
+  return (
+    <div>
+      <label className={cn('block text-sm font-medium mb-2', colorClass)}>
+        {label}: {format(value)}
+      </label>
+      <input
+        type='range'
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={e => onChange(parseFloat(e.target.value))}
+        className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
+        style={{ '--progress': `${progress}%` } as React.CSSProperties}
+      />
+      {hint && (
+        <p
+          className={cn(
+            'text-xs mt-1',
+            colorClass.replace('700', '500').replace('600', '400')
+          )}
+        >
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+};
+
+// Reusable toggle switch component
+interface ToggleSwitchProps {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  colorClass?: string;
+}
+
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
+  label,
+  checked,
+  onChange,
+  colorClass = 'text-gray-700 dark:text-dark-600',
+}) => (
+  <label className='flex items-center gap-3 cursor-pointer'>
+    <div
+      className={cn(
+        'relative w-10 h-5 rounded-full transition-colors',
+        checked
+          ? 'bg-primary-500 dark:bg-primary-600'
+          : 'bg-gray-300 dark:bg-dark-300'
+      )}
+      onClick={() => onChange(!checked)}
+    >
+      <div
+        className={cn(
+          'absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform',
+          checked && 'translate-x-5'
+        )}
+      />
+    </div>
+    <span className={cn('text-sm font-medium', colorClass)}>{label}</span>
+  </label>
+);
+
+// Default form values
+const DEFAULT_FORM_DATA: ExtendedFormData = {
+  name: '',
+  description: '',
+  model: '',
+  parameters: {
+    temperature: 0.7,
+    top_p: 0.9,
+    top_k: 40,
+    context_window: 4096,
+    max_tokens: 1024,
+    system_prompt: '',
+    repeat_penalty: 1.1,
+    presence_penalty: 0.0,
+    frequency_penalty: 0.0,
+  },
+  avatar: '',
+  background: '',
+  embedding_model: '',
+  memory_settings: {
+    enabled: false,
+    max_memories: 1000,
+    auto_cleanup: true,
+    retention_days: 90,
+  },
+  mutation_settings: {
+    enabled: false,
+    sensitivity: 'medium',
+    auto_adapt: true,
+  },
+};
+
+// Embedding model patterns for detection - expanded to catch more embedding models
+const EMBEDDING_PATTERNS = [
+  'embed', // Catches most embedding models (mxbai-embed, nomic-embed, snowflake-arctic-embed, etc.)
+  'e5', // Microsoft E5 models
+  'bge', // BGE models
+  'gte', // GTE models
+  'minilm', // MiniLM models
+  'multilingual',
+  'sentence',
+  'universal',
+  'instructor', // Instructor embedding models
+  'jina', // Jina embedding models
+  'paraphrase', // Paraphrase models
+  'mpnet', // MPNet models
+  'contriever', // Contriever models
+];
+
+// Memory status interface
+interface MemoryStatus {
+  status: 'active' | 'wiped' | 'backed_up';
+  memory_count: number;
+  last_backup?: number;
+  size_mb: number;
+}
+
 const PersonaForm: React.FC<PersonaFormProps> = ({
   persona,
   onSubmit,
   onCancel,
 }) => {
-  const [formData, setFormData] = useState<ExtendedFormData>({
-    name: '',
-    description: '',
-    model: '',
-    parameters: {
-      temperature: 0.7,
-      top_p: 0.9,
-      top_k: 40,
-      context_window: 4096,
-      max_tokens: 1024,
-      system_prompt: '',
-      repeat_penalty: 1.1,
-      presence_penalty: 0.0,
-      frequency_penalty: 0.0,
-    },
-    avatar: '',
-    background: '',
-    embedding_model: '',
-    memory_settings: {
-      enabled: false,
-      max_memories: 1000,
-      auto_cleanup: true,
-      retention_days: 90,
-    },
-    mutation_settings: {
-      enabled: false,
-      sensitivity: 'medium',
-      auto_adapt: true,
-    },
-  });
-
+  const [formData, setFormData] = useState<ExtendedFormData>(DEFAULT_FORM_DATA);
   const [availableModels, setAvailableModels] = useState<OllamaModel[]>([]);
   const [embeddingModels, setEmbeddingModels] = useState<EmbeddingModel[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,85 +233,229 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   const [saveAndClose, setSaveAndClose] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<
-    'basic' | 'parameters' | 'advanced'
+    'basic' | 'parameters' | 'memory' | 'advanced'
   >('basic');
+  const [memoryStatus, setMemoryStatus] = useState<MemoryStatus | null>(null);
+  const [loadingMemoryStatus, setLoadingMemoryStatus] = useState(false);
+  const [wipingMemories, setWipingMemories] = useState(false);
   const hasLoadedRef = useRef(false);
 
-  // Update form data with the ability to clear last saved status
-  const updateFormData = useCallback(
-    (updates: Partial<ExtendedFormData>) => {
-      setFormData(prev => ({ ...prev, ...updates }));
-      // Clear last saved indicator when making changes
-      if (lastSaved) {
-        setLastSaved(null);
-      }
+  // Generic update function that clears lastSaved indicator
+  const updateForm = useCallback(
+    <K extends keyof ExtendedFormData>(key: K, value: ExtendedFormData[K]) => {
+      setFormData(prev => ({ ...prev, [key]: value }));
+      setLastSaved(null);
     },
-    [lastSaved]
+    []
   );
 
-  // Load available models and populate form if editing
+  // Update nested parameter
+  const updateParameter = useCallback(
+    (key: keyof PersonaParameters, value: string | number) => {
+      setFormData(prev => ({
+        ...prev,
+        parameters: { ...prev.parameters, [key]: value },
+      }));
+      setLastSaved(null);
+    },
+    []
+  );
+
+  // Update nested settings (memory or mutation)
+  const updateSettings = useCallback(
+    <T extends 'memory_settings' | 'mutation_settings'>(
+      settingsKey: T,
+      updates: Partial<NonNullable<ExtendedFormData[T]>>
+    ) => {
+      setFormData(prev => ({
+        ...prev,
+        [settingsKey]: { ...prev[settingsKey]!, ...updates },
+      }));
+      setLastSaved(null);
+    },
+    []
+  );
+
+  // Extract embedding models from Ollama models
+  // Shows detected embedding models first, then all other models as alternatives
+  const extractEmbeddingModels = useCallback(
+    (models: OllamaModel[]): EmbeddingModel[] => {
+      // First, find models that match embedding patterns
+      const detectedEmbedding = models
+        .filter(model =>
+          EMBEDDING_PATTERNS.some(pattern =>
+            model.name.toLowerCase().includes(pattern.toLowerCase())
+          )
+        )
+        .map(model => ({
+          id: model.name,
+          name: model.name,
+          description: `${model.details?.parameter_size || 'Unknown size'} - ${model.details?.family || 'Ollama model'}`,
+          provider: 'ollama' as const,
+          dimensions: 768,
+          isDetectedEmbedding: true,
+        }));
+
+      // Then add all other models as potential alternatives (some embedding models might not match patterns)
+      const otherModels = models
+        .filter(
+          model =>
+            !EMBEDDING_PATTERNS.some(pattern =>
+              model.name.toLowerCase().includes(pattern.toLowerCase())
+            )
+        )
+        .map(model => ({
+          id: model.name,
+          name: model.name,
+          description: `${model.details?.parameter_size || 'Unknown size'} - ${model.details?.family || 'Other model'}`,
+          provider: 'ollama' as const,
+          dimensions: 768,
+          isDetectedEmbedding: false,
+        }));
+
+      // Combine: detected embedding models first, then others
+      const allModels = [...detectedEmbedding, ...otherModels];
+
+      // Remove duplicates
+      const unique = allModels.reduce((acc: EmbeddingModel[], model) => {
+        if (!acc.find(m => m.id === model.id)) acc.push(model);
+        return acc;
+      }, []);
+
+      return unique.length > 0
+        ? unique
+        : [
+            {
+              id: 'nomic-embed-text',
+              name: 'nomic-embed-text',
+              description: 'Default embedding model (install if needed)',
+              provider: 'ollama' as const,
+              dimensions: 768,
+            },
+          ];
+    },
+    []
+  );
+
+  // Load memory status for existing persona
+  const loadMemoryStatus = useCallback(async () => {
+    if (!persona?.id) return;
+    setLoadingMemoryStatus(true);
+    try {
+      const response = await personaApi.getMemoryStatus(persona.id);
+      if (response.success && response.data) {
+        setMemoryStatus(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load memory status:', error);
+    } finally {
+      setLoadingMemoryStatus(false);
+    }
+  }, [persona?.id]);
+
+  // Wipe all memories for persona
+  const handleWipeMemories = async () => {
+    if (!persona?.id) return;
+    if (
+      !confirm(
+        'Are you sure you want to wipe all memories? This cannot be undone.'
+      )
+    )
+      return;
+
+    setWipingMemories(true);
+    try {
+      const response = await personaApi.wipeMemories(persona.id);
+      if (response.success) {
+        toast.success(`Wiped ${response.data?.deleted_count || 0} memories`);
+        await loadMemoryStatus();
+      } else {
+        toast.error('Failed to wipe memories');
+      }
+    } catch (_error) {
+      toast.error('Failed to wipe memories');
+    } finally {
+      setWipingMemories(false);
+    }
+  };
+
+  // Single consolidated initialization effect
   useEffect(() => {
     if (hasLoadedRef.current) return;
+    hasLoadedRef.current = true;
 
-    const loadData = async () => {
+    const initialize = async () => {
       setLoading(true);
-      hasLoadedRef.current = true;
       try {
-        // Load available models
-        const modelsResponse = await ollamaApi.getModels();
-        if (modelsResponse.success) {
-          setAvailableModels(modelsResponse.data || []);
+        // Load models and default parameters in parallel
+        const [modelsResponse, defaultsResponse] = await Promise.all([
+          ollamaApi.getModels(),
+          !persona ? personaApi.getDefaultParameters() : Promise.resolve(null),
+        ]);
 
-          // Filter embedding models from available Ollama models
-          // Common embedding model patterns
-          const embeddingPatterns = [
-            'embed',
-            'nomic',
-            'bge',
-            'gte',
-            'multilingual',
-            'sentence',
-            'universal',
-            'minilm',
-          ];
+        if (modelsResponse.success && modelsResponse.data) {
+          setAvailableModels(modelsResponse.data);
+          const embModels = extractEmbeddingModels(modelsResponse.data);
+          setEmbeddingModels(embModels);
 
-          const ollamaEmbeddingModels: EmbeddingModel[] = (
-            modelsResponse.data || []
-          )
-            .filter(model =>
-              embeddingPatterns.some(pattern =>
-                model.name.toLowerCase().includes(pattern.toLowerCase())
-              )
-            )
-            .map(model => ({
-              id: model.name, // Use full model name including tag
-              name: model.name,
-              description: `${model.details?.parameter_size || 'Unknown size'} - ${model.details?.family || 'Ollama model'}`,
-              provider: 'ollama' as const,
-              dimensions: 768, // Default dimensions, will be determined at runtime
-            }))
-            // Remove duplicates based on ID
-            .reduce((unique: EmbeddingModel[], model) => {
-              if (!unique.find((m: EmbeddingModel) => m.id === model.id)) {
-                unique.push(model);
+          // Set initial form data
+          if (persona) {
+            // Editing existing persona
+            setFormData({
+              name: persona.name,
+              description: persona.description || '',
+              model: persona.model,
+              parameters: persona.parameters,
+              avatar: persona.avatar || '',
+              background: persona.background || '',
+              embedding_model:
+                persona.embedding_model || embModels[0]?.id || '',
+              memory_settings:
+                persona.memory_settings || DEFAULT_FORM_DATA.memory_settings,
+              mutation_settings:
+                persona.mutation_settings ||
+                DEFAULT_FORM_DATA.mutation_settings,
+            });
+
+            // Handle missing embedding model in available list
+            if (
+              persona.embedding_model &&
+              !embModels.find(m => m.id === persona.embedding_model)
+            ) {
+              const baseModelName = persona.embedding_model.split(':')[0];
+              const taggedMatch = embModels.find(
+                m =>
+                  m.id.startsWith(baseModelName + ':') || m.id === baseModelName
+              );
+              if (taggedMatch) {
+                setFormData(prev => ({
+                  ...prev,
+                  embedding_model: taggedMatch.id,
+                }));
+              } else {
+                setEmbeddingModels(prev => [
+                  ...prev,
+                  {
+                    id: persona.embedding_model!,
+                    name: persona.embedding_model!,
+                    description:
+                      'Previously selected model (not currently installed)',
+                    provider: 'ollama' as const,
+                    dimensions: 768,
+                  },
+                ]);
               }
-              return unique;
-            }, []);
-
-          // Set embedding models from Ollama, with fallback to default options
-          if (ollamaEmbeddingModels.length > 0) {
-            setEmbeddingModels(ollamaEmbeddingModels);
+            }
           } else {
-            // Fallback to hardcoded options if no embedding models found
-            setEmbeddingModels([
-              {
-                id: 'nomic-embed-text',
-                name: 'nomic-embed-text',
-                description: 'Default embedding model (install if needed)',
-                provider: 'ollama' as const,
-                dimensions: 768,
-              },
-            ]);
+            // Creating new persona - apply defaults
+            const defaults = defaultsResponse?.success
+              ? defaultsResponse.data
+              : {};
+            setFormData(prev => ({
+              ...prev,
+              parameters: { ...prev.parameters, ...defaults },
+              embedding_model: embModels[0]?.id || '',
+            }));
           }
         }
       } catch (error) {
@@ -183,239 +465,138 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
       }
     };
 
-    loadData();
-  }, []); // Only run once on mount
+    initialize();
+  }, [persona, extractEmbeddingModels]);
 
-  // Handle persona-specific embedding model logic
+  // Load memory status when editing existing persona
   useEffect(() => {
-    if (persona && persona.embedding_model && embeddingModels.length > 0) {
-      setEmbeddingModels(prevModels => {
-        const savedModel = persona.embedding_model!;
-
-        // Check if exact match exists
-        const exactMatch = prevModels.some(model => model.id === savedModel);
-
-        // Check if there's a model that matches without tag (e.g., "nomic-embed-text" vs "nomic-embed-text:latest")
-        const baseModelName = savedModel.split(':')[0];
-        const taggedMatch = prevModels.find(
-          model =>
-            model.id.startsWith(baseModelName + ':') ||
-            model.id === baseModelName
-        );
-
-        if (exactMatch) {
-          // Exact match found, no need to add anything
-          return prevModels;
-        } else if (taggedMatch) {
-          // Found a tagged version, update the persona's form data to use the tagged version
-          setFormData(prev => ({
-            ...prev,
-            embedding_model: taggedMatch.id,
-          }));
-          return prevModels;
-        } else {
-          // No match found, add the saved model as unavailable
-          return [
-            ...prevModels,
-            {
-              id: savedModel,
-              name: savedModel,
-              description:
-                'Previously selected model (not currently installed)',
-              provider: 'ollama' as const,
-              dimensions: 768,
-            },
-          ];
-        }
-      });
+    if (persona?.id && formData.memory_settings?.enabled) {
+      loadMemoryStatus();
     }
-  }, [persona, embeddingModels]);
+  }, [persona?.id, formData.memory_settings?.enabled, loadMemoryStatus]);
 
-  // Load default parameters for new personas
-  useEffect(() => {
-    if (!persona) {
-      const loadDefaults = async () => {
-        try {
-          const defaultsResponse = await personaApi.getDefaultParameters();
-          if (defaultsResponse.success && defaultsResponse.data) {
-            setFormData(prev => ({
-              ...prev,
-              parameters: {
-                ...prev.parameters,
-                ...defaultsResponse.data,
-              },
-            }));
-          }
-        } catch (error) {
-          console.error('Error loading default parameters:', error);
-        }
-      };
-      loadDefaults();
-    }
-  }, [persona]);
-
-  // Populate form when editing
-  useEffect(() => {
-    if (persona) {
-      setFormData({
-        name: persona.name,
-        description: persona.description || '',
-        model: persona.model,
-        parameters: persona.parameters,
-        avatar: persona.avatar || '',
-        background: persona.background || '',
-        embedding_model: persona.embedding_model || '',
-        memory_settings: persona.memory_settings || {
-          enabled: false,
-          max_memories: 1000,
-          auto_cleanup: true,
-          retention_days: 90,
-        },
-        mutation_settings: persona.mutation_settings || {
-          enabled: false,
-          sensitivity: 'medium',
-          auto_adapt: true,
-        },
-      });
-    }
-  }, [persona]);
-
-  // Set default embedding model when embedding models are loaded (for new personas only)
-  useEffect(() => {
-    if (embeddingModels.length > 0 && !formData.embedding_model && !persona) {
-      updateFormData({ embedding_model: embeddingModels[0].id });
-    }
-  }, [embeddingModels, formData.embedding_model, persona, updateFormData]);
-
-  // Set default embedding model for existing persona if it doesn't have one
-  useEffect(() => {
-    if (
-      persona &&
-      embeddingModels.length > 0 &&
-      !persona.embedding_model &&
-      !formData.embedding_model
-    ) {
-      updateFormData({ embedding_model: embeddingModels[0].id });
-    }
-  }, [persona, embeddingModels, formData.embedding_model, updateFormData]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (closeAfter: boolean) => {
     setSubmitting(true);
+    setSaveAndClose(closeAfter);
 
     try {
-      if (persona) {
-        // Update existing persona
-        const updateData: UpdatePersonaRequest = {
-          name: formData.name,
-          description: formData.description,
-          model: formData.model,
-          parameters: formData.parameters,
-          avatar: formData.avatar,
-          background: formData.background,
-          embedding_model: formData.embedding_model,
-          memory_settings: formData.memory_settings,
-          mutation_settings: formData.mutation_settings,
-        };
+      const payload: UpdatePersonaRequest = {
+        name: formData.name,
+        description: formData.description,
+        model: formData.model,
+        parameters: formData.parameters,
+        avatar: formData.avatar,
+        background: formData.background,
+        embedding_model: formData.embedding_model,
+        memory_settings: formData.memory_settings,
+        mutation_settings: formData.mutation_settings,
+      };
 
-        const response = await personaApi.updatePersona(persona.id, updateData);
-        if (response.success) {
-          toast.success('Persona updated successfully');
-          setLastSaved(new Date());
-          // Only call onSubmit (which closes the form) if saveAndClose is true
-          if (saveAndClose) {
-            onSubmit();
-          }
-        } else {
-          toast.error('Failed to update persona: ' + response.error);
-        }
+      const response = persona
+        ? await personaApi.updatePersona(persona.id, payload)
+        : await personaApi.createPersona(formData);
+
+      if (response.success) {
+        toast.success(persona ? 'Persona updated' : 'Persona created');
+        setLastSaved(new Date());
+        if (closeAfter) onSubmit();
       } else {
-        // Create new persona
-        const response = await personaApi.createPersona(formData);
-        if (response.success) {
-          toast.success('Persona created successfully');
-          setLastSaved(new Date());
-          // Only call onSubmit (which closes the form) if saveAndClose is true
-          if (saveAndClose) {
-            onSubmit();
-          }
-        } else {
-          toast.error('Failed to create persona: ' + response.error);
-        }
+        toast.error(`Failed to save: ${response.error}`);
       }
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      toast.error('Failed to save persona: ' + errorMessage);
+      toast.error(
+        `Failed to save: ${error instanceof Error ? error.message : String(error)}`
+      );
     } finally {
       setSubmitting(false);
-      setSaveAndClose(false); // Reset the flag
+      setSaveAndClose(false);
     }
   };
 
-  const handleSaveAndContinue = (e: React.FormEvent) => {
-    setSaveAndClose(false);
-    handleSubmit(e);
-  };
+  // Tab configuration
+  const tabs = useMemo(
+    () => [
+      { id: 'basic' as const, label: 'Basic', icon: User },
+      { id: 'parameters' as const, label: 'Parameters', icon: Sliders },
+      { id: 'memory' as const, label: 'Memory & Learning', icon: Sparkles },
+      { id: 'advanced' as const, label: 'Advanced', icon: Brain },
+    ],
+    []
+  );
 
-  const handleSaveAndClose = (e: React.FormEvent) => {
-    setSaveAndClose(true);
-    handleSubmit(e);
-  };
-
-  const handleParameterChange = (
-    key: keyof PersonaParameters,
-    value: string | number
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      parameters: {
-        ...prev.parameters,
-        [key]: value,
+  // Parameter slider configurations for cleaner rendering
+  const parameterSliders = useMemo(
+    () => [
+      {
+        key: 'temperature' as const,
+        label: 'Temperature',
+        min: 0,
+        max: 2,
+        step: 0.1,
+        hint: 'Controls creativity vs consistency',
+        format: (v: number) => v.toFixed(1),
       },
-    }));
-  };
-
-  const updateMemorySettings = (
-    updates: Partial<ExtendedFormData['memory_settings']>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      memory_settings: { ...prev.memory_settings!, ...updates },
-    }));
-  };
-
-  const updateMutationSettings = (
-    updates: Partial<ExtendedFormData['mutation_settings']>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      mutation_settings: { ...prev.mutation_settings!, ...updates },
-    }));
-  };
-
-  // Helper function to calculate slider progress percentage
-  const getSliderProgress = (
-    value: number,
-    min: number,
-    max: number
-  ): number => {
-    return ((value - min) / (max - min)) * 100;
-  };
+      {
+        key: 'top_p' as const,
+        label: 'Top-P',
+        min: 0,
+        max: 1,
+        step: 0.1,
+        hint: 'Controls response diversity',
+        format: (v: number) => v.toFixed(1),
+      },
+      {
+        key: 'top_k' as const,
+        label: 'Top-K',
+        min: 1,
+        max: 100,
+        step: 1,
+        hint: 'Limits vocabulary to top-k tokens',
+        format: (v: number) => String(Math.round(v)),
+      },
+      {
+        key: 'context_window' as const,
+        label: 'Context Window',
+        min: 128,
+        max: 131072,
+        step: 128,
+        hint: 'Maximum conversation history length',
+        format: (v: number) => String(Math.round(v)),
+      },
+      {
+        key: 'max_tokens' as const,
+        label: 'Max Tokens',
+        min: 1,
+        max: 8192,
+        step: 1,
+        hint: 'Maximum response length',
+        format: (v: number) => String(Math.round(v)),
+      },
+      {
+        key: 'repeat_penalty' as const,
+        label: 'Repeat Penalty',
+        min: 0.5,
+        max: 2,
+        step: 0.1,
+        hint: 'Reduces repetitive responses',
+        format: (v: number) => v.toFixed(1),
+      },
+    ],
+    []
+  );
 
   if (loading) {
     return (
       <div className='flex items-center justify-center p-8'>
-        <div className='text-gray-600 dark:text-gray-400'>Loading form...</div>
+        <div className='animate-pulse flex items-center gap-3'>
+          <div className='w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin' />
+          <span className='text-gray-600 dark:text-gray-400'>
+            Loading form...
+          </span>
+        </div>
       </div>
     );
   }
-
-  const tabs = [
-    { id: 'basic', label: 'Basic Info', icon: User },
-    { id: 'parameters', label: 'Parameters', icon: Sliders },
-    { id: 'advanced', label: 'Advanced', icon: Brain },
-  ];
 
   return (
     <div className='max-w-4xl mx-auto'>
@@ -473,8 +654,8 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                     <input
                       type='text'
                       value={formData.name}
-                      onChange={e => updateFormData({ name: e.target.value })}
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
+                      onChange={e => updateForm('name', e.target.value)}
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors'
                       placeholder='Enter persona name'
                       required
                     />
@@ -486,8 +667,8 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                     </label>
                     <select
                       value={formData.model}
-                      onChange={e => updateFormData({ model: e.target.value })}
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
+                      onChange={e => updateForm('model', e.target.value)}
+                      className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors'
                       required
                     >
                       <option value=''>Select a model</option>
@@ -506,28 +687,24 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                   </label>
                   <textarea
                     value={formData.description}
-                    onChange={e =>
-                      updateFormData({ description: e.target.value })
-                    }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
+                    onChange={e => updateForm('description', e.target.value)}
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors resize-none'
                     rows={3}
                     placeholder='Describe your persona...'
                   />
                 </div>
 
-                {/* Avatar Upload */}
-                <AvatarUpload
-                  value={formData.avatar || ''}
-                  onChange={avatarUrl => updateFormData({ avatar: avatarUrl })}
-                />
-
-                {/* Background Upload */}
-                <PersonaBackgroundUpload
-                  value={formData.background || ''}
-                  onChange={backgroundUrl =>
-                    updateFormData({ background: backgroundUrl })
-                  }
-                />
+                {/* Avatar & Background side by side on larger screens */}
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <AvatarUpload
+                    value={formData.avatar || ''}
+                    onChange={url => updateForm('avatar', url)}
+                  />
+                  <PersonaBackgroundUpload
+                    value={formData.background || ''}
+                    onChange={url => updateForm('background', url)}
+                  />
+                </div>
 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
@@ -536,15 +713,15 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                   <textarea
                     value={formData.parameters.system_prompt}
                     onChange={e =>
-                      handleParameterChange('system_prompt', e.target.value)
+                      updateParameter('system_prompt', e.target.value)
                     }
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors resize-none font-mono text-sm'
                     rows={6}
                     placeholder='Enter the system prompt that defines your persona behavior...'
                   />
-                  <p className='text-sm text-gray-500 dark:text-dark-600 mt-2'>
+                  <p className='text-xs text-gray-500 dark:text-dark-600 mt-2'>
                     The system prompt defines how your persona will behave and
-                    respond to users.
+                    respond.
                   </p>
                 </div>
               </div>
@@ -552,429 +729,440 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
 
             {/* Parameters Tab */}
             {activeTab === 'parameters' && (
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                {parameterSliders.map(
+                  ({ key, label, min, max, step, hint, format }) => (
+                    <ParameterSlider
+                      key={key}
+                      label={label}
+                      value={(formData.parameters[key] as number) || 0}
+                      min={min}
+                      max={max}
+                      step={step}
+                      hint={hint}
+                      format={format}
+                      onChange={v => updateParameter(key, v)}
+                    />
+                  )
+                )}
+              </div>
+            )}
+
+            {/* Memory & Learning Tab */}
+            {activeTab === 'memory' && (
               <div className='space-y-6'>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Temperature: {formData.parameters.temperature?.toFixed(1)}
-                    </label>
-                    <input
-                      type='range'
-                      min='0'
-                      max='2'
-                      step='0.1'
-                      value={formData.parameters.temperature}
-                      onChange={e =>
-                        handleParameterChange(
-                          'temperature',
-                          parseFloat(e.target.value)
-                        )
-                      }
-                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
-                      style={
-                        {
-                          '--progress': `${getSliderProgress(formData.parameters.temperature || 0.8, 0, 2)}%`,
-                        } as React.CSSProperties
-                      }
-                    />
-                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
-                      Controls creativity vs consistency
-                    </p>
+                {/* Memory System Header Card */}
+                <div className='rounded-xl overflow-hidden border border-emerald-200/50 dark:border-emerald-700/30'>
+                  {/* Header */}
+                  <div className='px-5 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-3'>
+                        <div className='w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center'>
+                          <Database className='h-5 w-5 text-white' />
+                        </div>
+                        <div>
+                          <h3 className='font-semibold text-white'>
+                            Memory System
+                          </h3>
+                          <p className='text-xs text-white/80'>
+                            Persona remembers conversations over time
+                          </p>
+                        </div>
+                      </div>
+                      <ToggleSwitch
+                        label=''
+                        checked={formData.memory_settings?.enabled || false}
+                        onChange={checked =>
+                          updateSettings('memory_settings', {
+                            enabled: checked,
+                          })
+                        }
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Top-P: {formData.parameters.top_p?.toFixed(1)}
-                    </label>
-                    <input
-                      type='range'
-                      min='0'
-                      max='1'
-                      step='0.1'
-                      value={formData.parameters.top_p}
-                      onChange={e =>
-                        handleParameterChange(
-                          'top_p',
-                          parseFloat(e.target.value)
-                        )
-                      }
-                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
-                      style={
-                        {
-                          '--progress': `${getSliderProgress(formData.parameters.top_p || 0.9, 0, 1)}%`,
-                        } as React.CSSProperties
-                      }
-                    />
-                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
-                      Controls response diversity
-                    </p>
+                  {/* Memory Status Dashboard (only for existing personas with memory enabled) */}
+                  {formData.memory_settings?.enabled && persona?.id && (
+                    <div className='px-5 py-4 bg-emerald-50 dark:bg-emerald-900/20 border-b border-emerald-100 dark:border-emerald-800/30'>
+                      {loadingMemoryStatus ? (
+                        <div className='flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400'>
+                          <RefreshCw className='h-4 w-4 animate-spin' />
+                          Loading memory status...
+                        </div>
+                      ) : memoryStatus ? (
+                        <div className='grid grid-cols-3 gap-4'>
+                          <div className='text-center'>
+                            <div className='flex items-center justify-center gap-1 text-2xl font-bold text-emerald-700 dark:text-emerald-300'>
+                              <Database className='h-5 w-5' />
+                              {memoryStatus.memory_count.toLocaleString()}
+                            </div>
+                            <p className='text-xs text-emerald-600 dark:text-emerald-400'>
+                              Memories
+                            </p>
+                          </div>
+                          <div className='text-center'>
+                            <div className='flex items-center justify-center gap-1 text-2xl font-bold text-emerald-700 dark:text-emerald-300'>
+                              <HardDrive className='h-5 w-5' />
+                              {memoryStatus.size_mb.toFixed(1)}
+                            </div>
+                            <p className='text-xs text-emerald-600 dark:text-emerald-400'>
+                              MB Used
+                            </p>
+                          </div>
+                          <div className='text-center'>
+                            <div className='flex items-center justify-center gap-1 text-2xl font-bold text-emerald-700 dark:text-emerald-300'>
+                              <Clock className='h-5 w-5' />
+                              {memoryStatus.last_backup
+                                ? new Date(
+                                    memoryStatus.last_backup
+                                  ).toLocaleDateString()
+                                : 'Never'}
+                            </div>
+                            <p className='text-xs text-emerald-600 dark:text-emerald-400'>
+                              Last Backup
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className='text-sm text-emerald-600 dark:text-emerald-400'>
+                          No memory data yet
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Memory Settings */}
+                  {formData.memory_settings?.enabled && (
+                    <div className='p-5 bg-white dark:bg-dark-100 space-y-4'>
+                      <ParameterSlider
+                        label='Maximum Memories'
+                        value={formData.memory_settings.max_memories}
+                        min={100}
+                        max={10000}
+                        step={100}
+                        hint='How many memories this persona can store'
+                        format={v => v.toLocaleString()}
+                        colorClass='text-emerald-700 dark:text-emerald-300'
+                        onChange={v =>
+                          updateSettings('memory_settings', { max_memories: v })
+                        }
+                      />
+                      <ParameterSlider
+                        label='Memory Retention'
+                        value={formData.memory_settings.retention_days}
+                        min={7}
+                        max={365}
+                        step={7}
+                        hint='Days to keep memories before cleanup'
+                        format={v => `${Math.round(v)} days`}
+                        colorClass='text-emerald-700 dark:text-emerald-300'
+                        onChange={v =>
+                          updateSettings('memory_settings', {
+                            retention_days: v,
+                          })
+                        }
+                      />
+                      <ToggleSwitch
+                        label='Auto-cleanup old memories'
+                        checked={formData.memory_settings.auto_cleanup}
+                        onChange={checked =>
+                          updateSettings('memory_settings', {
+                            auto_cleanup: checked,
+                          })
+                        }
+                        colorClass='text-emerald-700 dark:text-emerald-300'
+                      />
+
+                      {/* Danger Zone - Wipe Memories */}
+                      {persona?.id &&
+                        memoryStatus &&
+                        memoryStatus.memory_count > 0 && (
+                          <div className='pt-4 border-t border-gray-200 dark:border-dark-300'>
+                            <div className='flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30'>
+                              <div>
+                                <p className='text-sm font-medium text-red-700 dark:text-red-300'>
+                                  Wipe All Memories
+                                </p>
+                                <p className='text-xs text-red-600 dark:text-red-400'>
+                                  This cannot be undone
+                                </p>
+                              </div>
+                              <button
+                                type='button'
+                                onClick={handleWipeMemories}
+                                disabled={wipingMemories}
+                                className='px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1.5'
+                              >
+                                {wipingMemories ? (
+                                  <RefreshCw className='h-3.5 w-3.5 animate-spin' />
+                                ) : (
+                                  <Trash2 className='h-3.5 w-3.5' />
+                                )}
+                                {wipingMemories ? 'Wiping...' : 'Wipe'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                    </div>
+                  )}
+
+                  {/* Disabled state message */}
+                  {!formData.memory_settings?.enabled && (
+                    <div className='p-5 bg-gray-50 dark:bg-dark-50'>
+                      <p className='text-sm text-gray-500 dark:text-gray-400 text-center'>
+                        Enable the memory system to let your persona remember
+                        conversations and build context over time.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Adaptive Learning Card */}
+                <div className='rounded-xl overflow-hidden border border-violet-200/50 dark:border-violet-700/30'>
+                  {/* Header */}
+                  <div className='px-5 py-4 bg-gradient-to-r from-violet-500 to-purple-500 dark:from-violet-600 dark:to-purple-600'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-3'>
+                        <div className='w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center'>
+                          <TrendingUp className='h-5 w-5 text-white' />
+                        </div>
+                        <div>
+                          <h3 className='font-semibold text-white'>
+                            Adaptive Learning
+                          </h3>
+                          <p className='text-xs text-white/80'>
+                            Persona evolves based on interactions
+                          </p>
+                        </div>
+                      </div>
+                      <ToggleSwitch
+                        label=''
+                        checked={formData.mutation_settings?.enabled || false}
+                        onChange={checked =>
+                          updateSettings('mutation_settings', {
+                            enabled: checked,
+                          })
+                        }
+                      />
+                    </div>
                   </div>
 
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Top-K: {formData.parameters.top_k}
-                    </label>
-                    <input
-                      type='range'
-                      min='1'
-                      max='100'
-                      step='1'
-                      value={formData.parameters.top_k}
-                      onChange={e =>
-                        handleParameterChange('top_k', parseInt(e.target.value))
-                      }
-                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
-                      style={
-                        {
-                          '--progress': `${getSliderProgress(formData.parameters.top_k || 40, 1, 100)}%`,
-                        } as React.CSSProperties
-                      }
-                    />
-                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
-                      Limits vocabulary to top-k tokens
-                    </p>
-                  </div>
+                  {/* Learning Settings */}
+                  {formData.mutation_settings?.enabled && (
+                    <div className='p-5 bg-white dark:bg-dark-100 space-y-5'>
+                      {/* Sensitivity Selection */}
+                      <div>
+                        <label className='block text-sm font-medium text-violet-700 dark:text-violet-300 mb-3'>
+                          Learning Speed
+                        </label>
+                        <div className='grid grid-cols-3 gap-3'>
+                          {[
+                            {
+                              level: 'low' as const,
+                              icon: Zap,
+                              label: 'Slow',
+                              desc: 'Gradual changes',
+                            },
+                            {
+                              level: 'medium' as const,
+                              icon: TrendingUp,
+                              label: 'Balanced',
+                              desc: 'Moderate pace',
+                            },
+                            {
+                              level: 'high' as const,
+                              icon: Sparkles,
+                              label: 'Fast',
+                              desc: 'Quick adaptation',
+                            },
+                          ].map(({ level, icon: Icon, label, desc }) => (
+                            <button
+                              key={level}
+                              type='button'
+                              onClick={() =>
+                                updateSettings('mutation_settings', {
+                                  sensitivity: level,
+                                })
+                              }
+                              className={cn(
+                                'p-3 rounded-xl text-center transition-all border',
+                                formData.mutation_settings?.sensitivity ===
+                                  level
+                                  ? 'bg-violet-500 border-violet-500 text-white shadow-lg shadow-violet-500/25'
+                                  : 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-700/30 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/30'
+                              )}
+                            >
+                              <Icon className='h-5 w-5 mx-auto mb-1' />
+                              <p className='text-sm font-medium'>{label}</p>
+                              <p className='text-[10px] opacity-70'>{desc}</p>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Context Window: {formData.parameters.context_window}
-                    </label>
-                    <input
-                      type='range'
-                      min='128'
-                      max='131072'
-                      step='128'
-                      value={formData.parameters.context_window}
-                      onChange={e =>
-                        handleParameterChange(
-                          'context_window',
-                          parseInt(e.target.value)
-                        )
-                      }
-                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
-                      style={
-                        {
-                          '--progress': `${getSliderProgress(formData.parameters.context_window || 4096, 128, 131072)}%`,
-                        } as React.CSSProperties
-                      }
-                    />
-                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
-                      Maximum conversation history length
-                    </p>
-                  </div>
+                      <ToggleSwitch
+                        label='Auto-adapt to user preferences'
+                        checked={formData.mutation_settings.auto_adapt}
+                        onChange={checked =>
+                          updateSettings('mutation_settings', {
+                            auto_adapt: checked,
+                          })
+                        }
+                        colorClass='text-violet-700 dark:text-violet-300'
+                      />
 
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Max Tokens: {formData.parameters.max_tokens}
-                    </label>
-                    <input
-                      type='range'
-                      min='1'
-                      max='8192'
-                      step='1'
-                      value={formData.parameters.max_tokens}
-                      onChange={e =>
-                        handleParameterChange(
-                          'max_tokens',
-                          parseInt(e.target.value)
-                        )
-                      }
-                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
-                      style={
-                        {
-                          '--progress': `${getSliderProgress(formData.parameters.max_tokens || 1024, 1, 8192)}%`,
-                        } as React.CSSProperties
-                      }
-                    />
-                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
-                      Maximum response length
-                    </p>
-                  </div>
+                      {/* What it learns */}
+                      <div className='p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl'>
+                        <p className='text-xs font-medium text-violet-700 dark:text-violet-300 mb-2 flex items-center gap-1.5'>
+                          <Brain className='h-3.5 w-3.5' />
+                          What the persona learns:
+                        </p>
+                        <div className='grid grid-cols-2 gap-2 text-xs text-violet-600 dark:text-violet-400'>
+                          <div className='flex items-center gap-1.5'>
+                            <div className='w-1 h-1 rounded-full bg-violet-400' />
+                            Conversation tone
+                          </div>
+                          <div className='flex items-center gap-1.5'>
+                            <div className='w-1 h-1 rounded-full bg-violet-400' />
+                            Response style
+                          </div>
+                          <div className='flex items-center gap-1.5'>
+                            <div className='w-1 h-1 rounded-full bg-violet-400' />
+                            User preferences
+                          </div>
+                          <div className='flex items-center gap-1.5'>
+                            <div className='w-1 h-1 rounded-full bg-violet-400' />
+                            Topic interests
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Repeat Penalty:{' '}
-                      {formData.parameters.repeat_penalty?.toFixed(1)}
-                    </label>
-                    <input
-                      type='range'
-                      min='0.5'
-                      max='2'
-                      step='0.1'
-                      value={formData.parameters.repeat_penalty}
-                      onChange={e =>
-                        handleParameterChange(
-                          'repeat_penalty',
-                          parseFloat(e.target.value)
-                        )
-                      }
-                      className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
-                      style={
-                        {
-                          '--progress': `${getSliderProgress(formData.parameters.repeat_penalty || 1.1, 0.5, 2)}%`,
-                        } as React.CSSProperties
-                      }
-                    />
-                    <p className='text-xs text-gray-500 dark:text-dark-600 mt-1'>
-                      Reduces repetitive responses
-                    </p>
-                  </div>
+                  {/* Disabled state message */}
+                  {!formData.mutation_settings?.enabled && (
+                    <div className='p-5 bg-gray-50 dark:bg-dark-50'>
+                      <p className='text-sm text-gray-500 dark:text-gray-400 text-center'>
+                        Enable adaptive learning to let your persona evolve and
+                        personalize responses based on your interactions.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Advanced Tab */}
             {activeTab === 'advanced' && (
-              <div className='space-y-8'>
+              <div className='space-y-6'>
                 {/* Embedding Model Selection */}
-                <div className='bg-primary-50 dark:bg-primary-900/20 rounded-lg p-6 border border-primary-200 dark:border-primary-800'>
-                  <div className='flex items-center gap-3 mb-4'>
+                <div className='rounded-xl p-5 bg-gradient-to-br from-primary-50 to-primary-100/50 dark:from-primary-900/30 dark:to-primary-800/20 border border-primary-200/50 dark:border-primary-700/30'>
+                  <div className='flex items-center gap-2 mb-4'>
                     <Database className='h-5 w-5 text-primary-600 dark:text-primary-400' />
-                    <h3 className='text-lg font-semibold text-primary-900 dark:text-primary-100'>
+                    <h3 className='font-semibold text-primary-900 dark:text-primary-100'>
                       Embedding Model
                     </h3>
                   </div>
-                  <div>
-                    <label className='block text-sm font-medium text-primary-700 dark:text-primary-300 mb-2'>
-                      Embedding Model
-                    </label>
-                    <select
-                      value={formData.embedding_model}
-                      onChange={e =>
-                        updateFormData({ embedding_model: e.target.value })
-                      }
-                      className='w-full px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
-                    >
-                      {embeddingModels.length === 0 ? (
-                        <option value='' disabled>
-                          No embedding models found - install one first
-                        </option>
-                      ) : (
-                        embeddingModels.map(model => (
-                          <option key={model.id} value={model.id}>
-                            {model.name} - {model.description}
-                          </option>
-                        ))
-                      )}
-                    </select>
+                  <p className='text-xs text-primary-600 dark:text-primary-400 mb-3'>
+                    Select the model used for memory encoding and semantic
+                    search. Embedding models are shown first, followed by other
+                    available models.
+                  </p>
+                  <select
+                    value={formData.embedding_model}
+                    onChange={e =>
+                      updateForm('embedding_model', e.target.value)
+                    }
+                    className='w-full px-3 py-2.5 border border-primary-200 dark:border-primary-700 rounded-lg bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-primary-500/20'
+                  >
                     {embeddingModels.length === 0 ? (
-                      <div className='mt-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md'>
-                        <p className='text-sm text-yellow-800 dark:text-yellow-200'>
-                          <strong>No embedding models detected.</strong> To
-                          enable memory features, install an embedding model
-                          like:
-                        </p>
-                        <code className='block mt-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 p-1 rounded'>
+                      <option value='' disabled>
+                        No models found
+                      </option>
+                    ) : (
+                      <>
+                        {/* Detected embedding models */}
+                        {embeddingModels.filter(
+                          (
+                            m: EmbeddingModel & {
+                              isDetectedEmbedding?: boolean;
+                            }
+                          ) => m.isDetectedEmbedding
+                        ).length > 0 && (
+                          <optgroup label='Embedding Models'>
+                            {embeddingModels
+                              .filter(
+                                (
+                                  m: EmbeddingModel & {
+                                    isDetectedEmbedding?: boolean;
+                                  }
+                                ) => m.isDetectedEmbedding
+                              )
+                              .map(model => (
+                                <option key={model.id} value={model.id}>
+                                  {model.name} - {model.description}
+                                </option>
+                              ))}
+                          </optgroup>
+                        )}
+                        {/* Other models */}
+                        {embeddingModels.filter(
+                          (
+                            m: EmbeddingModel & {
+                              isDetectedEmbedding?: boolean;
+                            }
+                          ) => !m.isDetectedEmbedding
+                        ).length > 0 && (
+                          <optgroup label='Other Models'>
+                            {embeddingModels
+                              .filter(
+                                (
+                                  m: EmbeddingModel & {
+                                    isDetectedEmbedding?: boolean;
+                                  }
+                                ) => !m.isDetectedEmbedding
+                              )
+                              .map(model => (
+                                <option key={model.id} value={model.id}>
+                                  {model.name} - {model.description}
+                                </option>
+                              ))}
+                          </optgroup>
+                        )}
+                      </>
+                    )}
+                  </select>
+                  {embeddingModels.length === 0 && (
+                    <div className='mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg'>
+                      <p className='text-sm text-amber-800 dark:text-amber-200'>
+                        Install an embedding model:{' '}
+                        <code className='px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded text-xs'>
                           ollama pull nomic-embed-text
                         </code>
-                      </div>
-                    ) : (
-                      <p className='text-xs text-primary-600 dark:text-primary-400 mt-1'>
-                        Choose from available Ollama embedding models for memory
-                        encoding and semantic search. Models are automatically
-                        detected from your Ollama installation.
                       </p>
-                    )}
-                  </div>
+                    </div>
+                  )}
+                  <p className='text-[10px] text-primary-500 dark:text-primary-500 mt-2'>
+                    Recommended: nomic-embed-text, mxbai-embed-large, bge-m3,
+                    snowflake-arctic-embed
+                  </p>
                 </div>
 
-                {/* Memory Settings */}
-                <div className='bg-green-50 dark:bg-green-900/20 rounded-lg p-6 border border-green-200 dark:border-green-800'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <Database className='h-5 w-5 text-green-600 dark:text-green-400' />
-                    <h3 className='text-lg font-semibold text-green-900 dark:text-green-100'>
-                      Memory System
-                    </h3>
-                  </div>
-
-                  <div className='space-y-4'>
-                    <div className='flex items-center gap-3'>
-                      <input
-                        type='checkbox'
-                        checked={formData.memory_settings?.enabled}
-                        onChange={e =>
-                          updateMemorySettings({ enabled: e.target.checked })
-                        }
-                        className='rounded'
-                      />
-                      <label className='text-sm font-medium text-green-700 dark:text-green-300'>
-                        Enable Memory System
-                      </label>
+                {/* Info about advanced features */}
+                <div className='p-4 bg-gray-50 dark:bg-dark-50 rounded-xl border border-gray-200 dark:border-dark-300'>
+                  <div className='flex items-start gap-3'>
+                    <Info className='h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0' />
+                    <div>
+                      <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                        About Advanced Settings
+                      </p>
+                      <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                        The embedding model is used by the memory system to
+                        understand semantic meaning and find relevant memories
+                        during conversations. Choose a model that matches your
+                        use case and available resources.
+                      </p>
                     </div>
-
-                    {formData.memory_settings?.enabled && (
-                      <>
-                        <div>
-                          <label className='block text-sm font-medium text-green-700 dark:text-green-300 mb-2'>
-                            Max Memories:{' '}
-                            {formData.memory_settings.max_memories}
-                          </label>
-                          <input
-                            type='range'
-                            min='100'
-                            max='10000'
-                            step='100'
-                            value={formData.memory_settings.max_memories}
-                            onChange={e =>
-                              updateMemorySettings({
-                                max_memories: parseInt(e.target.value),
-                              })
-                            }
-                            className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
-                            style={
-                              {
-                                '--progress': `${getSliderProgress(formData.memory_settings.max_memories, 100, 10000)}%`,
-                              } as React.CSSProperties
-                            }
-                          />
-                          <p className='text-xs text-green-600 dark:text-green-400 mt-1'>
-                            Maximum number of memories to store
-                          </p>
-                        </div>
-
-                        <div>
-                          <label className='block text-sm font-medium text-green-700 dark:text-green-300 mb-2'>
-                            Retention Days:{' '}
-                            {formData.memory_settings.retention_days}
-                          </label>
-                          <input
-                            type='range'
-                            min='7'
-                            max='365'
-                            step='7'
-                            value={formData.memory_settings.retention_days}
-                            onChange={e =>
-                              updateMemorySettings({
-                                retention_days: parseInt(e.target.value),
-                              })
-                            }
-                            className='w-full h-2 bg-gray-200 dark:bg-dark-200 rounded-lg appearance-none cursor-pointer slider'
-                            style={
-                              {
-                                '--progress': `${getSliderProgress(formData.memory_settings.retention_days, 7, 365)}%`,
-                              } as React.CSSProperties
-                            }
-                          />
-                          <p className='text-xs text-green-600 dark:text-green-400 mt-1'>
-                            How long to keep memories before automatic cleanup
-                          </p>
-                        </div>
-
-                        <div className='flex items-center gap-3'>
-                          <input
-                            type='checkbox'
-                            checked={formData.memory_settings.auto_cleanup}
-                            onChange={e =>
-                              updateMemorySettings({
-                                auto_cleanup: e.target.checked,
-                              })
-                            }
-                            className='rounded'
-                          />
-                          <label className='text-sm font-medium text-green-700 dark:text-green-300'>
-                            Auto-cleanup old memories
-                          </label>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Mutation Settings */}
-                <div className='bg-primary-50 dark:bg-primary-900/20 rounded-lg p-6 border border-primary-200 dark:border-primary-800'>
-                  <div className='flex items-center gap-3 mb-4'>
-                    <Brain className='h-5 w-5 text-primary-600 dark:text-primary-400' />
-                    <h3 className='text-lg font-semibold text-primary-900 dark:text-primary-100'>
-                      Adaptive Learning
-                    </h3>
-                  </div>
-
-                  <div className='space-y-4'>
-                    <div className='flex items-center gap-3'>
-                      <input
-                        type='checkbox'
-                        checked={formData.mutation_settings?.enabled}
-                        onChange={e =>
-                          updateMutationSettings({ enabled: e.target.checked })
-                        }
-                        className='rounded'
-                      />
-                      <label className='text-sm font-medium text-primary-700 dark:text-primary-300'>
-                        Enable Adaptive Learning
-                      </label>
-                    </div>
-
-                    {formData.mutation_settings?.enabled && (
-                      <>
-                        <div>
-                          <label className='block text-sm font-medium text-primary-700 dark:text-primary-300 mb-2'>
-                            Learning Sensitivity
-                          </label>
-                          <select
-                            value={formData.mutation_settings.sensitivity}
-                            onChange={e =>
-                              updateMutationSettings({
-                                sensitivity: e.target.value as
-                                  | 'low'
-                                  | 'medium'
-                                  | 'high',
-                              })
-                            }
-                            className='w-full px-3 py-2 border border-primary-300 dark:border-primary-600 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800'
-                          >
-                            <option value='low'>
-                              Low - Minimal adaptation
-                            </option>
-                            <option value='medium'>
-                              Medium - Balanced adaptation
-                            </option>
-                            <option value='high'>
-                              High - Rapid adaptation
-                            </option>
-                          </select>
-                          <p className='text-xs text-primary-600 dark:text-primary-400 mt-1'>
-                            How quickly the persona adapts to user preferences
-                          </p>
-                        </div>
-
-                        <div className='flex items-center gap-3'>
-                          <input
-                            type='checkbox'
-                            checked={formData.mutation_settings.auto_adapt}
-                            onChange={e =>
-                              updateMutationSettings({
-                                auto_adapt: e.target.checked,
-                              })
-                            }
-                            className='rounded'
-                          />
-                          <label className='text-sm font-medium text-primary-700 dark:text-primary-300'>
-                            Auto-adapt to user preferences
-                          </label>
-                        </div>
-
-                        <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4'>
-                          <div className='flex items-start gap-3'>
-                            <Info className='h-4 w-4 text-yellow-600 mt-0.5' />
-                            <div className='text-sm text-yellow-800 dark:text-yellow-300'>
-                              <p className='font-medium mb-1'>
-                                Learning Capabilities:
-                              </p>
-                              <ul className='text-xs space-y-1'>
-                                <li>
-                                  • Mood adjustments based on conversation tone
-                                </li>
-                                <li>
-                                  • Learning user communication preferences
-                                </li>
-                                <li>• Adapting response style and length</li>
-                                <li>• Building contextual understanding</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
                   </div>
                 </div>
               </div>
@@ -983,39 +1171,42 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         </div>
 
         {/* Form Actions */}
-        <div className='flex justify-between gap-4'>
+        <div className='flex items-center justify-between'>
           <Button
             type='button'
-            variant='outline'
+            variant='ghost'
             onClick={onCancel}
             disabled={submitting}
+            className='text-gray-600 dark:text-gray-400'
           >
             Cancel
           </Button>
 
-          <div className='flex gap-3'>
+          <div className='flex items-center gap-3'>
+            {lastSaved && (
+              <div className='flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400'>
+                <Check className='h-4 w-4' />
+                <span>Saved</span>
+              </div>
+            )}
             <Button
               type='button'
               variant='outline'
-              onClick={handleSaveAndContinue}
+              onClick={() => handleSubmit(false)}
               disabled={submitting}
             >
-              {submitting && !saveAndClose
-                ? 'Saving...'
-                : persona
-                  ? 'Save & Continue Editing'
-                  : 'Save & Continue Editing'}
+              {submitting && !saveAndClose ? 'Saving...' : 'Save'}
             </Button>
             <Button
               type='button'
-              onClick={handleSaveAndClose}
+              onClick={() => handleSubmit(true)}
               disabled={submitting}
             >
               {submitting && saveAndClose
                 ? 'Saving...'
                 : persona
                   ? 'Save & Close'
-                  : 'Create & Close'}
+                  : 'Create'}
             </Button>
           </div>
         </div>

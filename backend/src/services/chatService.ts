@@ -698,25 +698,68 @@ class ChatService {
     try {
       const baseSystemPrompt = persona.parameters?.system_prompt || '';
 
-      if (memories.length === 0) return;
+      // Get core memories (always-include important facts, preferences, instructions)
+      const coreMemories = await memoryService.getCoreMemories(
+        userId,
+        persona.id,
+        3
+      );
 
-      // Build memory context
-      const memoryContext = memories
-        .slice(0, 3) // Use top 3 most relevant memories
-        .map(
-          (memory, index) =>
-            `Memory ${index + 1} (relevance: ${(memory.similarity_score * 100).toFixed(1)}%): ${memory.entry.content}`
-        )
-        .join('\n');
+      // Combine core memories with contextual memories, avoiding duplicates
+      const coreIds = new Set(coreMemories.map(m => m.id));
+      const contextualMemories = memories
+        .filter(m => !coreIds.has(m.entry.id))
+        .slice(0, 3);
+
+      if (coreMemories.length === 0 && contextualMemories.length === 0) return;
+
+      // Build memory context sections
+      let memoryContext = '';
+
+      // Core memories section (always relevant)
+      if (coreMemories.length > 0) {
+        memoryContext += '=== Core Knowledge ===\n';
+        memoryContext += coreMemories
+          .map(memory => {
+            const type =
+              (memory as { memory_type?: string }).memory_type || 'general';
+            const typeLabel =
+              type === 'fact'
+                ? 'Fact'
+                : type === 'preference'
+                  ? 'Preference'
+                  : type === 'instruction'
+                    ? 'Instruction'
+                    : 'Info';
+            return `[${typeLabel}] ${memory.content}`;
+          })
+          .join('\n');
+        memoryContext += '\n\n';
+      }
+
+      // Contextual memories section (relevant to current query)
+      if (contextualMemories.length > 0) {
+        memoryContext += '=== Relevant Context ===\n';
+        memoryContext += contextualMemories
+          .map(memory => {
+            const relevance = (memory.similarity_score * 100).toFixed(0);
+            return `[${relevance}% match] ${memory.entry.content}`;
+          })
+          .join('\n');
+      }
 
       const enhancedSystemPrompt = `${baseSystemPrompt}
 
 [PERSONA MEMORY CONTEXT]
-You have access to the following relevant memories from past interactions with this user:
+You have access to the following memories from past interactions with this user:
 
-${memoryContext}
+${memoryContext.trim()}
 
-Use these memories to provide more personalized and contextually aware responses. Reference these memories naturally when relevant to the conversation.
+Guidelines:
+- Use Core Knowledge naturally in your responses - these are established facts about the user
+- Reference Relevant Context when it helps answer the current question
+- Don't explicitly mention having "memories" - integrate knowledge seamlessly
+- If memories conflict with current information, prioritize the most recent
 [END MEMORY CONTEXT]`;
 
       // Update the system message
@@ -746,7 +789,7 @@ Use these memories to provide more personalized and contextually aware responses
       storageService.saveSession(session, userId);
 
       console.log(
-        `[ADVANCED] Updated system message with ${memories.length} memories`
+        `[ADVANCED] Updated system message with ${coreMemories.length} core + ${contextualMemories.length} contextual memories`
       );
     } catch (error) {
       console.error(

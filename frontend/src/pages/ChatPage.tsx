@@ -22,6 +22,7 @@ import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
 import { ModelSelector } from '@/components/ModelSelector';
+import { PersonaIndicator } from '@/components/PersonaIndicator';
 import { Button } from '@/components/ui';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useChatStore } from '@/store/chatStore';
@@ -453,6 +454,33 @@ export const ChatPage: React.FC = () => {
       )}
 
       <div className='flex flex-col h-full relative z-10'>
+        {/* Persona indicator header */}
+        {currentPersona && (
+          <div className='flex-shrink-0 px-4 py-2 border-b border-gray-100 dark:border-dark-200 ophelia:border-[#262626] bg-white/50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a]/50 backdrop-blur-sm'>
+            <PersonaIndicator
+              persona={currentPersona}
+              onClear={() => {
+                // Clear persona from session
+                if (currentSession) {
+                  const { sessions } = useChatStore.getState();
+                  const updatedSession = {
+                    ...currentSession,
+                    model: currentPersona.model,
+                    personaId: undefined,
+                  };
+                  const updatedSessions = sessions.map(s =>
+                    s.id === currentSession.id ? updatedSession : s
+                  );
+                  useChatStore.setState({
+                    sessions: updatedSessions,
+                    currentSession: updatedSession,
+                  });
+                  setBackgroundImage(null);
+                }
+              }}
+            />
+          </div>
+        )}
         <ChatMessages
           messages={currentSession.messages}
           streamingMessage={streamingMessage}

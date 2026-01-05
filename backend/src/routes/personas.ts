@@ -450,6 +450,136 @@ router.get(
 );
 
 /**
+ * Get detailed memory statistics for a persona
+ */
+router.get(
+  '/:id/memory/stats',
+  personaRateLimit,
+  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId || 'default';
+
+      const { memoryService } = await import('../services/memoryService.js');
+      const stats = await memoryService.getMemoryStats(userId, id);
+
+      res.json({
+        success: true,
+        data: stats,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get memory statistics'),
+      });
+    }
+  }
+);
+
+/**
+ * Consolidate similar memories for a persona
+ */
+router.post(
+  '/:id/memory/consolidate',
+  personaWriteRateLimit,
+  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId || 'default';
+      const { similarity_threshold = 0.8 } = req.body;
+
+      // Get the persona to find its embedding model
+      const persona = await personaService.getPersonaById(id, userId);
+      if (!persona) {
+        res.status(404).json({
+          success: false,
+          error: 'Persona not found',
+        });
+        return;
+      }
+
+      const embeddingModel = persona.embedding_model || 'nomic-embed-text';
+
+      const { memoryService } = await import('../services/memoryService.js');
+      const result = await memoryService.consolidateMemories(
+        userId,
+        id,
+        embeddingModel,
+        similarity_threshold
+      );
+
+      res.json({
+        success: true,
+        data: result,
+        message: `Consolidated ${result.consolidated} memory groups, deleted ${result.deleted} redundant memories`,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to consolidate memories'),
+      });
+    }
+  }
+);
+
+/**
+ * Apply decay to all memories for a persona
+ */
+router.post(
+  '/:id/memory/decay',
+  personaWriteRateLimit,
+  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId || 'default';
+
+      const { memoryService } = await import('../services/memoryService.js');
+      const updated = await memoryService.applyGlobalDecay(userId, id);
+
+      res.json({
+        success: true,
+        data: { updated_count: updated },
+        message: `Applied decay to ${updated} memories`,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to apply memory decay'),
+      });
+    }
+  }
+);
+
+/**
+ * Get core memories (important facts, preferences, instructions)
+ */
+router.get(
+  '/:id/memory/core',
+  personaRateLimit,
+  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const userId = req.user?.userId || 'default';
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const { memoryService } = await import('../services/memoryService.js');
+      const memories = await memoryService.getCoreMemories(userId, id, limit);
+
+      res.json({
+        success: true,
+        data: memories,
+        message: `Found ${memories.length} core memories`,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get core memories'),
+      });
+    }
+  }
+);
+
+/**
  * Export persona DNA
  */
 router.get(
