@@ -82,6 +82,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: |
@@ -155,6 +156,11 @@ jobs:
         run: |
           docker build -t libre-webui:${{ steps.extract_version.outputs.version || 'latest' }} .
           docker build -t libre-webui:latest .
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Push changes (manual trigger)
         if: github.event_name == 'workflow_dispatch'
