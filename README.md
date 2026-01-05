@@ -9,8 +9,7 @@
 </p>
 
 <p>
-  <img src="./screenshot_white.png" width="49%" alt="Light Theme">
-  <img src="./screenshot.png" width="49%" alt="Dark Theme">
+  <img src="./screenshot.png" width="100%" alt="Dark Theme">
 </p>
 
 <p align="center">

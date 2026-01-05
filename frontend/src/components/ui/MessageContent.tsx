@@ -17,6 +17,9 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
 import { Copy, Check } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
@@ -27,12 +30,43 @@ interface MessageContentProps {
   className?: string;
 }
 
+// Preprocess content to normalize LaTeX delimiters
+// Converts \[...\] to $$...$$ and \(...\) to $...$
+const preprocessLaTeX = (content: string): string => {
+  // First, protect code blocks from LaTeX processing
+  const codeBlocks: string[] = [];
+  let processed = content.replace(/```[\s\S]*?```|`[^`\n]+`/g, match => {
+    codeBlocks.push(match);
+    return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+  });
+
+  // Convert \[...\] to $$...$$ (block math)
+  // Using function replacement to avoid backreference issues
+  processed = processed.replace(/\\\[([\s\S]*?)\\\]/g, (_, p1) => `$$${p1}$$`);
+
+  // Convert \(...\) to $...$ (inline math)
+  processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, (_, p1) => `$${p1}$`);
+
+  // Restore code blocks
+  codeBlocks.forEach((block, i) => {
+    processed = processed.replace(`__CODE_BLOCK_${i}__`, block);
+  });
+
+  return processed;
+};
+
 export const MessageContent: React.FC<MessageContentProps> = ({
   content,
   className,
 }) => {
   const { theme } = useAppStore();
   const [copiedCode, setCopiedCode] = React.useState<string | null>(null);
+
+  // Preprocess content to normalize LaTeX delimiters
+  const processedContent = React.useMemo(
+    () => preprocessLaTeX(content),
+    [content]
+  );
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -48,10 +82,14 @@ export const MessageContent: React.FC<MessageContentProps> = ({
     <div
       className={cn(
         'prose prose-sm max-w-none dark:prose-invert prose-gray',
+        '[&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:py-2',
+        '[&_.katex]:text-inherit',
         className
       )}
     >
       <ReactMarkdown
+        remarkPlugins={[remarkMath]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           code({ inline, className, children, ...props }: any) {
@@ -186,7 +224,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
           },
         }}
       >
-        {content}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
