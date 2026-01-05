@@ -26,7 +26,6 @@ import { PersonaIndicator } from '@/components/PersonaIndicator';
 import { Button } from '@/components/ui';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useChatStore } from '@/store/chatStore';
-import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChat } from '@/hooks/useChat';
 import { cn } from '@/utils';
@@ -64,7 +63,6 @@ export const ChatPage: React.FC = () => {
     loadSessions,
     getCurrentPersona,
   } = useChatStore();
-  const { setBackgroundImage } = useAppStore();
   const { user } = useAuthStore();
   const {
     sendMessage,
@@ -148,17 +146,9 @@ export const ChatPage: React.FC = () => {
     location.pathname,
   ]);
 
-  // Manage background image state based on current persona
-  useEffect(() => {
-    if (currentPersona?.background) {
-      // Set persona background - this will override general background settings
-      setBackgroundImage(currentPersona.background);
-    } else {
-      // Clear persona background when no persona or persona has no background
-      // This allows the general background settings to work independently
-      setBackgroundImage(null);
-    }
-  }, [currentPersona?.background, setBackgroundImage]);
+  // Note: Persona backgrounds are handled locally in this component's JSX
+  // and should NOT set the global backgroundImage state, which is for user-configured
+  // backgrounds in settings. Persona backgrounds only apply to the current chat view.
 
   // Check for pending message from welcome screen and send it
   useEffect(() => {
@@ -475,7 +465,7 @@ export const ChatPage: React.FC = () => {
                     sessions: updatedSessions,
                     currentSession: updatedSession,
                   });
-                  setBackgroundImage(null);
+                  // Persona background is handled locally - clearing personaId removes the background
                 }
               }}
             />
