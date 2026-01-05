@@ -365,10 +365,20 @@ if (
 
         if (frontendPath) {
           console.log(`Serving frontend from: ${frontendPath}`);
-          app.use(express.static(frontendPath));
+
+          // Rate limiter for static files
+          const staticRateLimiter = rateLimit({
+            windowMs: 15 * 60 * 1000, // 15 minutes
+            max: 1000, // limit each IP to 1000 requests per windowMs
+            message: 'Too many requests, please try again later.',
+            standardHeaders: true,
+            legacyHeaders: false,
+          });
+
+          app.use(staticRateLimiter, express.static(frontendPath));
 
           // SPA fallback - serve index.html for all non-API routes
-          app.get('*', (req, res, next) => {
+          app.get('*', staticRateLimiter, (req, res, next) => {
             if (req.path.startsWith('/api/') || req.path.startsWith('/ws')) {
               return next();
             }
