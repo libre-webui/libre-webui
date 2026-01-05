@@ -309,7 +309,17 @@ const chatRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Note: TTS rate limiting is handled internally by the tts routes module
+// Rate limiter for TTS routes (higher limit for info endpoints, generation has stricter limits in route)
+const ttsRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // limit each IP to 500 requests per windowMs
+  message: {
+    success: false,
+    error: 'Too many TTS requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // API routes
 app.use('/api/auth', authRateLimiter, optionalAuth, authRoutes);
@@ -325,8 +335,7 @@ app.use(
 app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
-// TTS routes - rate limit only applies to generation endpoints, not info endpoints
-app.use('/api/tts', optionalAuth, ttsRoutes);
+app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
 
 // API-only backend - no static file serving
 
