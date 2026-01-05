@@ -17,7 +17,6 @@
 
 import React, { useRef, useState } from 'react';
 import { Upload, X, FileText, File, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
 import { documentsApi } from '@/utils/api';
 import { DocumentSummary } from '@/types';
 import { cn } from '@/utils';

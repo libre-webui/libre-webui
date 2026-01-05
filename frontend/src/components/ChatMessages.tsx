@@ -209,9 +209,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   }, [isStreaming, streamingMessage]);
 
   useEffect(() => {
+    const timeoutRef = scrollTimeoutRef.current;
     return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+      if (timeoutRef) {
+        clearTimeout(timeoutRef);
       }
     };
   }, []);
