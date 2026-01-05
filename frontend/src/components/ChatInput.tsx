@@ -19,8 +19,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Square, Paperclip, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { CodeAwareTextarea } from './CodeAwareTextarea';
-import { ImageUpload } from './ImageUpload';
-import { DocumentUpload } from './DocumentUpload';
+import { MediaUpload } from './MediaUpload';
 import { DocumentIndicator } from './DocumentIndicator';
 import { StructuredOutput } from './StructuredOutput';
 import { ModelSelector } from './ModelSelector';
@@ -208,221 +207,221 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const hasAdvancedFeatures = images.length > 0 || format !== null;
   return (
-    <div className='border-t border-gray-100/50 dark:border-dark-200/50 ophelia:border-[#262626]/50 bg-gradient-to-t from-white via-white to-gray-50/50 dark:from-dark-100 dark:via-dark-100 dark:to-dark-50/30 ophelia:from-[#0a0a0a] ophelia:via-[#0a0a0a] ophelia:to-[#121212]/50'>
-      {/* Advanced Features Panel */}
-      {showAdvanced && (
-        <div className='border-b border-gray-100 dark:border-dark-200 p-4 space-y-4'>
-          <ImageUpload
-            images={images}
-            onImagesChange={setImages}
-            maxImages={5}
-          />
-          <DocumentUpload sessionId={currentSession?.id} disabled={disabled} />
-          <StructuredOutput format={format} onFormatChange={setFormat} />
-        </div>
-      )}
-
-      {/* Main Input Area - Unified Input Bar */}
-      <div className='p-3 sm:p-4'>
-        <form onSubmit={handleSubmit}>
-          {/* Unified Input Container */}
-          <div
-            className={cn(
-              'flex items-center gap-2 p-2 sm:p-3 rounded-2xl sm:rounded-3xl border transition-all duration-300 ease-out',
-              'bg-white/80 dark:bg-dark-50/90 ophelia:bg-[#0a0a0a]/95 backdrop-blur-sm',
-              'border-gray-200/60 dark:border-dark-300/60 ophelia:border-[#262626]/80',
-              'hover:border-gray-300/80 dark:hover:border-dark-400/80 ophelia:hover:border-[#3f3f46]',
-              'focus-within:border-primary-400/80 dark:focus-within:border-primary-500/80 ophelia:focus-within:border-[#9333ea]/80',
-              'focus-within:bg-white dark:focus-within:bg-dark-50 ophelia:focus-within:bg-[#0a0a0a]',
-              'shadow-[0_2px_12px_-3px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_12px_-3px_rgba(0,0,0,0.3)]',
-              'hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.12)] dark:hover:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4)]',
-              'focus-within:shadow-[0_4px_24px_-4px_rgba(99,102,241,0.15)] dark:focus-within:shadow-[0_4px_24px_-4px_rgba(99,102,241,0.25)] ophelia:focus-within:shadow-[0_4px_24px_-4px_rgba(147,51,234,0.25)]',
-              'focus-within:ring-1 focus-within:ring-primary-400/20 dark:focus-within:ring-primary-500/20 ophelia:focus-within:ring-[#9333ea]/30'
-            )}
-          >
-            {/* Advanced Features Toggle - Integrated Left */}
-            <Button
-              type='button'
-              variant='ghost'
-              size='sm'
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className={cn(
-                'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
-                'hover:bg-gray-100 dark:hover:bg-dark-200/80 ophelia:hover:bg-[#1a1a1a]',
-                'transition-all duration-200 touch-manipulation',
-                'hover:scale-105 active:scale-95',
-                hasAdvancedFeatures &&
-                  'text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]',
-                showAdvanced &&
-                  'bg-gray-100 dark:bg-dark-200/80 ophelia:bg-[#1a1a1a]'
-              )}
-              title='Attachments and advanced features'
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '0',
-              }}
-            >
-              {hasAdvancedFeatures ? (
-                <div className='relative flex items-center justify-center'>
-                  <Paperclip className='h-4 w-4' />
-                  <div className='absolute -top-0.5 -right-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 ophelia:bg-[#a855f7] rounded-full ring-2 ring-white dark:ring-dark-50 ophelia:ring-[#0a0a0a]' />
-                </div>
-              ) : showAdvanced ? (
-                <Minus className='h-4 w-4' />
-              ) : (
-                <Plus className='h-4 w-4' />
-              )}
-            </Button>
-
-            {/* Text Input Area */}
-            <div className='flex-1 min-w-0'>
-              <CodeAwareTextarea
-                ref={textareaRef}
-                value={message}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                  setMessage(e.target.value)
-                }
-                onKeyDown={handleKeyDown}
-                placeholder='Send a message'
-                disabled={disabled}
-                className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 text-base sm:text-sm leading-none touch-manipulation'
-                rows={1}
-                style={{
-                  boxShadow: 'none !important',
-                  border: 'none !important',
-                  outline: 'none !important',
-                  padding: '0 !important',
-                  margin: '0 !important',
-                  lineHeight: '1.2 !important',
-                  verticalAlign: 'middle',
-                }}
-              />
-            </div>
-
-            {/* Integrated Controls Row */}
-            <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
-              {/* Model Selector - Integrated */}
-              {currentSession && models.length > 0 && (
-                <div className='hidden sm:block'>
-                  <ModelSelector
-                    models={models}
-                    selectedModel={
-                      currentSession.personaId
-                        ? `persona:${currentSession.personaId}`
-                        : currentSession.model
-                    }
-                    onModelChange={handleModelOrPersonaChange}
-                    currentPersona={currentPersona}
-                    className='min-w-[160px] max-w-[240px] border-0 bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 rounded-xl text-sm hover:bg-gray-200/80 dark:hover:bg-dark-200/60 ophelia:hover:bg-[#262626]/80 transition-colors duration-200'
-                    compact
-                  />
-                </div>
-              )}
-
-              {/* Send/Stop Button - Integrated Right */}
-              {isGenerating ? (
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  onClick={handleStopGeneration}
-                  className={cn(
-                    'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                    'bg-red-50 dark:bg-red-900/20 ophelia:bg-red-900/30',
-                    'text-red-500 dark:text-red-400 ophelia:text-red-400',
-                    'hover:bg-red-100 dark:hover:bg-red-900/30 ophelia:hover:bg-red-900/40',
-                    'transition-all duration-200 touch-manipulation',
-                    'hover:scale-105 active:scale-95'
-                  )}
-                  title='Stop generation'
-                >
-                  <Square className='h-4 w-4' />
-                </Button>
-              ) : (
-                <Button
-                  type='submit'
-                  variant='ghost'
-                  size='sm'
-                  disabled={!message.trim() || disabled}
-                  className={cn(
-                    'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                    'text-gray-400 dark:text-dark-500 ophelia:text-[#525252]',
-                    'disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed',
-                    'transition-all duration-200 touch-manipulation',
-                    message.trim() &&
-                      !disabled && [
-                        'bg-primary-500 dark:bg-primary-600 ophelia:bg-[#9333ea]',
-                        'text-white dark:text-white ophelia:text-white',
-                        'hover:bg-primary-600 dark:hover:bg-primary-500 ophelia:hover:bg-[#a855f7]',
-                        'shadow-md hover:shadow-lg',
-                        'hover:scale-105 active:scale-95',
-                      ]
-                  )}
-                  title='Send message'
-                >
-                  <Send className='h-4 w-4' />
-                </Button>
-              )}
-            </div>
-          </div>
-        </form>
-
-        {/* Mobile-only Model Selector */}
-        {currentSession && models.length > 0 && (
-          <div className='sm:hidden mt-3'>
-            <ModelSelector
-              models={models}
-              selectedModel={
-                currentSession.personaId
-                  ? `persona:${currentSession.personaId}`
-                  : currentSession.model
-              }
-              onModelChange={handleModelOrPersonaChange}
-              currentPersona={currentPersona}
-              className='w-full rounded-xl bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 border-0 transition-colors duration-200'
-              compact
+    <div className='pointer-events-none'>
+      {/* Centered container matching chat messages width */}
+      <div className='max-w-5xl mx-auto px-3 sm:px-4 md:px-6 w-full pointer-events-auto'>
+        {/* Advanced Features Panel */}
+        {showAdvanced && (
+          <div className='mb-2 p-3 rounded-2xl bg-white/95 dark:bg-dark-100/95 ophelia:bg-[#0a0a0a]/95 backdrop-blur-md border border-gray-200/50 dark:border-dark-300/50 ophelia:border-[#262626]/50 shadow-lg'>
+            <MediaUpload
+              images={images}
+              onImagesChange={setImages}
+              maxImages={5}
+              sessionId={currentSession?.id}
+              disabled={disabled}
             />
+            <StructuredOutput format={format} onFormatChange={setFormat} />
           </div>
         )}
 
-        <div className='mt-2 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-dark-600'>
-          <DocumentIndicator sessionId={currentSession?.id} />
-          <div className='text-center'>
-            <a
-              href='https://librewebui.org'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='libre-brand underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
-              style={{ fontSize: '1.1em', lineHeight: 1 }}
+        {/* Main Input Area - Unified Input Bar */}
+        <div className='py-2 sm:py-3'>
+          <form onSubmit={handleSubmit}>
+            {/* Unified Input Container */}
+            <div
+              className={cn(
+                'flex items-center gap-2 p-2 sm:p-3 rounded-2xl sm:rounded-3xl border transition-all duration-300 ease-out shadow-lg',
+                'bg-white/95 dark:bg-dark-100/95 ophelia:bg-[#0a0a0a]/95 backdrop-blur-md',
+                'border-gray-200/50 dark:border-dark-300/50 ophelia:border-[#262626]/60',
+                'hover:border-gray-300/70 dark:hover:border-dark-400/70 ophelia:hover:border-[#3f3f46]/80',
+                'focus-within:border-primary-400/70 dark:focus-within:border-primary-500/70 ophelia:focus-within:border-[#9333ea]/70',
+                'focus-within:shadow-xl'
+              )}
             >
-              Libre WebUI
-            </a>{' '}
-            <span
-              className='text-xs text-gray-400 dark:text-gray-500'
-              style={{ fontSize: '0.55rem' }}
-            >
-              v{import.meta.env.VITE_APP_VERSION || '0.1.3'}
-            </span>{' '}
-            <span className='text-gray-300 dark:text-gray-600 opacity-50'>
-              •
-            </span>{' '}
-            <span
-              className='text-gray-400 dark:text-gray-500'
-              style={{ fontSize: '0.55rem' }}
-            >
-              LLM can make mistakes - verify important information
-            </span>
-            {hasAdvancedFeatures && (
-              <span className='ml-2 text-primary-600 dark:text-primary-400'>
-                •{' '}
-                {images.length > 0 &&
-                  `${images.length} image${images.length > 1 ? 's' : ''}`}
-                {images.length > 0 && format && ' • '}
-                {format && 'Structured output'}
+              {/* Advanced Features Toggle - Integrated Left */}
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className={cn(
+                  'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
+                  'hover:bg-gray-100 dark:hover:bg-dark-200/80 ophelia:hover:bg-[#1a1a1a]',
+                  'transition-all duration-200 touch-manipulation',
+                  'hover:scale-105 active:scale-95',
+                  hasAdvancedFeatures &&
+                    'text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]',
+                  showAdvanced &&
+                    'bg-gray-100 dark:bg-dark-200/80 ophelia:bg-[#1a1a1a]'
+                )}
+                title='Attachments and advanced features'
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '0',
+                }}
+              >
+                {hasAdvancedFeatures ? (
+                  <div className='relative flex items-center justify-center'>
+                    <Paperclip className='h-4 w-4' />
+                    <div className='absolute -top-0.5 -right-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 ophelia:bg-[#a855f7] rounded-full ring-2 ring-white dark:ring-dark-50 ophelia:ring-[#0a0a0a]' />
+                  </div>
+                ) : showAdvanced ? (
+                  <Minus className='h-4 w-4' />
+                ) : (
+                  <Plus className='h-4 w-4' />
+                )}
+              </Button>
+
+              {/* Text Input Area */}
+              <div className='flex-1 min-w-0'>
+                <CodeAwareTextarea
+                  ref={textareaRef}
+                  value={message}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setMessage(e.target.value)
+                  }
+                  onKeyDown={handleKeyDown}
+                  placeholder='Send a message'
+                  disabled={disabled}
+                  className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 text-base sm:text-sm leading-none touch-manipulation'
+                  rows={1}
+                  style={{
+                    boxShadow: 'none !important',
+                    border: 'none !important',
+                    outline: 'none !important',
+                    padding: '0 !important',
+                    margin: '0 !important',
+                    lineHeight: '1.2 !important',
+                    verticalAlign: 'middle',
+                  }}
+                />
+              </div>
+
+              {/* Integrated Controls Row */}
+              <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
+                {/* Model Selector - Integrated */}
+                {currentSession && models.length > 0 && (
+                  <div className='hidden sm:block'>
+                    <ModelSelector
+                      models={models}
+                      selectedModel={
+                        currentSession.personaId
+                          ? `persona:${currentSession.personaId}`
+                          : currentSession.model
+                      }
+                      onModelChange={handleModelOrPersonaChange}
+                      currentPersona={currentPersona}
+                      className='min-w-[160px] max-w-[240px] border-0 bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 rounded-xl text-sm hover:bg-gray-200/80 dark:hover:bg-dark-200/60 ophelia:hover:bg-[#262626]/80 transition-colors duration-200'
+                      compact
+                    />
+                  </div>
+                )}
+
+                {/* Send/Stop Button - Integrated Right */}
+                {isGenerating ? (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    onClick={handleStopGeneration}
+                    className={cn(
+                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'bg-red-50 dark:bg-red-900/20 ophelia:bg-red-900/30',
+                      'text-red-500 dark:text-red-400 ophelia:text-red-400',
+                      'hover:bg-red-100 dark:hover:bg-red-900/30 ophelia:hover:bg-red-900/40',
+                      'transition-all duration-200 touch-manipulation',
+                      'hover:scale-105 active:scale-95'
+                    )}
+                    title='Stop generation'
+                  >
+                    <Square className='h-4 w-4' />
+                  </Button>
+                ) : (
+                  <Button
+                    type='submit'
+                    variant='ghost'
+                    size='sm'
+                    disabled={!message.trim() || disabled}
+                    className={cn(
+                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'text-gray-400 dark:text-dark-500 ophelia:text-[#525252]',
+                      'disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed',
+                      'transition-all duration-200 touch-manipulation',
+                      message.trim() &&
+                        !disabled && [
+                          'bg-primary-500 dark:bg-primary-600 ophelia:bg-[#9333ea]',
+                          'text-white dark:text-white ophelia:text-white',
+                          'hover:bg-primary-600 dark:hover:bg-primary-500 ophelia:hover:bg-[#a855f7]',
+                          'shadow-md hover:shadow-lg',
+                          'hover:scale-105 active:scale-95',
+                        ]
+                    )}
+                    title='Send message'
+                  >
+                    <Send className='h-4 w-4' />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </form>
+
+          {/* Mobile-only Model Selector */}
+          {currentSession && models.length > 0 && (
+            <div className='sm:hidden mt-3'>
+              <ModelSelector
+                models={models}
+                selectedModel={
+                  currentSession.personaId
+                    ? `persona:${currentSession.personaId}`
+                    : currentSession.model
+                }
+                onModelChange={handleModelOrPersonaChange}
+                currentPersona={currentPersona}
+                className='w-full rounded-xl bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 border-0 transition-colors duration-200'
+                compact
+              />
+            </div>
+          )}
+
+          <div className='mt-2 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-dark-600'>
+            <DocumentIndicator sessionId={currentSession?.id} />
+            <div className='text-center'>
+              <a
+                href='https://librewebui.org'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='libre-brand underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+                style={{ fontSize: '1.1em', lineHeight: 1 }}
+              >
+                Libre WebUI
+              </a>{' '}
+              <span
+                className='text-xs text-gray-400 dark:text-gray-500'
+                style={{ fontSize: '0.55rem' }}
+              >
+                v{import.meta.env.VITE_APP_VERSION || '0.1.3'}
+              </span>{' '}
+              <span className='text-gray-300 dark:text-gray-600 opacity-50'>
+                •
+              </span>{' '}
+              <span
+                className='text-gray-400 dark:text-gray-500'
+                style={{ fontSize: '0.55rem' }}
+              >
+                LLM can make mistakes - verify important information
               </span>
-            )}
+              {hasAdvancedFeatures && (
+                <span className='ml-2 text-primary-600 dark:text-primary-400'>
+                  •{' '}
+                  {images.length > 0 &&
+                    `${images.length} image${images.length > 1 ? 's' : ''}`}
+                  {images.length > 0 && format && ' • '}
+                  {format && 'Structured output'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>

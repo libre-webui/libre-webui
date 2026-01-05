@@ -15,11 +15,18 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import { ChatMessage } from '@/components/ChatMessage';
 import { MessageBranch } from '@/components/MessageBranch';
 import { ChatMessage as ChatMessageType } from '@/types';
 import { cn } from '@/utils';
+import { ArrowDown } from 'lucide-react';
 
 interface ChatMessagesProps {
   messages: ChatMessageType[];
@@ -51,6 +58,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const isUserScrolledUpRef = useRef<boolean>(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   // Group messages by their branch parent for side-by-side display
   const messageGroups = useMemo(() => {
@@ -153,46 +161,44 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     });
   }, [messages]);
 
-  const scrollToBottom = useCallback(
-    (force: boolean = false) => {
-      if (isStreaming || force) {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
+  const scrollToBottom = useCallback((force: boolean = false) => {
+    // Respect user scroll position unless forced
+    if (isUserScrolledUpRef.current && !force) {
+      return;
+    }
 
-      if (isUserScrolledUpRef.current) {
-        return;
-      }
-
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-
-      scrollTimeoutRef.current = setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 50);
-    },
-    [isStreaming]
-  );
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   const handleScroll = useCallback(() => {
-    if (isStreaming) return;
-
     const container = scrollContainerRef.current;
     if (!container) return;
 
     const { scrollTop, scrollHeight, clientHeight } = container;
-    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 20;
+    // Show button when scrolled up more than 100px from bottom
+    const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+    const isAtBottom = distanceFromBottom < 100;
 
     isUserScrolledUpRef.current = !isAtBottom;
-  }, [isStreaming]);
+    setShowScrollButton(!isAtBottom && messages.length > 0);
+  }, [messages.length]);
 
+  // Only scroll to bottom when a NEW message is added (not on every render)
+  const prevMessagesLengthRef = useRef(messages.length);
   useEffect(() => {
-    scrollToBottom();
+    // Only auto-scroll if messages were added AND user is at bottom
+    if (
+      messages.length > prevMessagesLengthRef.current &&
+      !isUserScrolledUpRef.current
+    ) {
+      scrollToBottom();
+    }
+    prevMessagesLengthRef.current = messages.length;
   }, [messages.length, scrollToBottom]);
 
   useEffect(() => {
-    if (isStreaming && streamingMessage) {
+    // Only auto-scroll during streaming if user hasn't scrolled up
+    if (isStreaming && streamingMessage && !isUserScrolledUpRef.current) {
       requestAnimationFrame(() => {
         const container = scrollContainerRef.current;
         if (container) {
@@ -201,12 +207,6 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       });
     }
   }, [isStreaming, streamingMessage]);
-
-  useEffect(() => {
-    if (isStreaming) {
-      isUserScrolledUpRef.current = false;
-    }
-  }, [isStreaming]);
 
   useEffect(() => {
     return () => {
@@ -247,14 +247,20 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   }
 
+  const handleScrollToBottom = () => {
+    isUserScrolledUpRef.current = false;
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setShowScrollButton(false);
+  };
+
   return (
     <div
       ref={scrollContainerRef}
       onScroll={handleScroll}
       className={cn(
-        'flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600',
+        'relative flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600',
         'scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500',
-        'overscroll-behavior-y-contain scroll-smooth',
+        'overscroll-behavior-y-contain',
         '[-webkit-overflow-scrolling:touch]',
         className
       )}
@@ -313,6 +319,30 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         })}
         <div ref={messagesEndRef} className='h-3 sm:h-4 md:h-6' />
       </div>
+
+      {/* Scroll to bottom button */}
+      {showScrollButton && (
+        <button
+          onClick={handleScrollToBottom}
+          className={cn(
+            'absolute bottom-4 left-1/2 -translate-x-1/2 z-10',
+            'flex items-center justify-center gap-1.5',
+            'px-3 py-2 rounded-full',
+            'bg-white/95 dark:bg-dark-100/95 ophelia:bg-[#0a0a0a]/95',
+            'border border-gray-200/50 dark:border-dark-300/50 ophelia:border-[#262626]/60',
+            'shadow-lg backdrop-blur-sm',
+            'text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3]',
+            'hover:bg-gray-50 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a]',
+            'hover:text-gray-900 dark:hover:text-dark-800 ophelia:hover:text-[#fafafa]',
+            'transition-all duration-200',
+            'hover:shadow-xl hover:scale-105 active:scale-95'
+          )}
+          title='Scroll to bottom'
+        >
+          <ArrowDown className='h-4 w-4' />
+          <span className='text-xs font-medium'>New messages</span>
+        </button>
+      )}
     </div>
   );
 };
