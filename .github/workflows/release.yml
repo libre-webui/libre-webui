@@ -55,7 +55,7 @@ jobs:
           ELECTRON_BUILD: true
 
       - name: Upload Electron artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: electron-mac-arm64
           path: |
