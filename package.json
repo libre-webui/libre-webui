@@ -1,9 +1,19 @@
 {
   "name": "libre-webui",
   "version": "0.2.2",
-  "description": "A modern, minimalist WebUI for interacting with local LLMs through Ollama API",
-  "private": true,
+  "description": "Privacy-first AI chat interface. Self-hosted, open source, extensible.",
   "main": "electron/main.js",
+  "bin": {
+    "libre-webui": "./bin/cli.js"
+  },
+  "files": [
+    "bin",
+    "backend/dist",
+    "frontend/dist",
+    "plugins/*.json",
+    "README.md",
+    "LICENSE"
+  ],
   "workspaces": [
     "frontend",
     "backend"
@@ -45,7 +55,20 @@
     "electron:build": "ELECTRON_BUILD=true npm run build:frontend && npm run build:backend && electron-builder build --mac --arm64 --publish never",
     "electron:build:universal": "npm run build && electron-builder build --mac --arm64 --x64",
     "electron:pack": "electron-builder --dir",
-    "generate-icons": "node scripts/generate-icons.js"
+    "generate-icons": "node scripts/generate-icons.js",
+    "prepublishOnly": "npm run build",
+    "npm:publish": "npm publish --access public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/libre-webui/libre-webui.git"
+  },
+  "bugs": {
+    "url": "https://github.com/libre-webui/libre-webui/issues"
+  },
+  "homepage": "https://librewebui.org",
+  "engines": {
+    "node": ">=18.0.0"
   },
   "overrides": {
     "prismjs": "^1.30.0",

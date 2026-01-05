@@ -337,7 +337,52 @@ app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
 
-// API-only backend - no static file serving
+// Serve frontend static files in production (for npx libre-webui)
+if (
+  process.env.NODE_ENV === 'production' ||
+  process.env.SERVE_FRONTEND === 'true'
+) {
+  import('path').then(pathModule => {
+    import('url').then(urlModule => {
+      import('fs').then(fsModule => {
+        const __filename = urlModule.fileURLToPath(import.meta.url);
+        const __dirname = pathModule.dirname(__filename);
+
+        // Try multiple possible frontend locations
+        const possiblePaths = [
+          pathModule.join(__dirname, '../../frontend/dist'), // npm package structure
+          pathModule.join(__dirname, '../../../frontend/dist'), // development
+          pathModule.join(process.cwd(), 'frontend/dist'), // running from project root
+        ];
+
+        let frontendPath = '';
+        for (const p of possiblePaths) {
+          if (fsModule.existsSync(pathModule.join(p, 'index.html'))) {
+            frontendPath = p;
+            break;
+          }
+        }
+
+        if (frontendPath) {
+          console.log(`Serving frontend from: ${frontendPath}`);
+          app.use(express.static(frontendPath));
+
+          // SPA fallback - serve index.html for all non-API routes
+          app.get('*', (req, res, next) => {
+            if (req.path.startsWith('/api/') || req.path.startsWith('/ws')) {
+              return next();
+            }
+            res.sendFile(pathModule.join(frontendPath, 'index.html'));
+          });
+        } else {
+          console.warn(
+            'Frontend build not found. Run `npm run build:frontend` first.'
+          );
+        }
+      });
+    });
+  });
+}
 
 // Error handling
 app.use(notFoundHandler);
