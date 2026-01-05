@@ -38,7 +38,7 @@
     "lint:fix:frontend": "cd frontend && npm run lint:fix",
     "lint:fix:backend": "cd backend && npm run lint:fix",
     "setup-hooks": "git config core.hooksPath .githooks",
-    "postinstall": "npm run setup-hooks",
+    "postinstall": "node -e \"try { require('child_process').execSync('git rev-parse --git-dir', {stdio:'ignore'}); require('child_process').execSync('npm run setup-hooks', {stdio:'inherit'}); } catch(e) {}\"",
     "release": "node scripts/release.js",
     "release:patch": "node scripts/release.js patch",
     "release:minor": "node scripts/release.js minor",
@@ -107,6 +107,22 @@
   "author": "Libre WebUI Contributors",
   "license": "Apache-2.0",
   "dependencies": {
-    "sonner": "^2.0.7"
+    "sonner": "^2.0.7",
+    "@journeyapps/sqlcipher": "^5.3.1",
+    "axios": "^1.13.2",
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.0",
+    "multer": "^2.0.1",
+    "pdfjs-dist": "^5.4.530",
+    "sanitize-filename": "^1.6.3",
+    "uuid": "^13.0.0",
+    "ws": "^8.14.2"
   }
 }
