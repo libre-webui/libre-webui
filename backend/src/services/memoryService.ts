@@ -266,7 +266,7 @@ export class MemoryService {
   calculateEnhancedImportance(
     content: string,
     memoryType: MemoryType,
-    context?: string
+    _context?: string
   ): number {
     let score = 0.5; // Base score
 
@@ -619,12 +619,8 @@ export class MemoryService {
       decay_factor: number | null;
     }>;
 
-    // Detect query type for better matching
-    const queryType = this.classifyMemoryType(query);
-
     // Calculate enhanced relevance scores
     const results: MemorySearchResult[] = [];
-    const now = Date.now();
 
     for (const memory of memories) {
       // Convert buffer back to float array
@@ -642,22 +638,6 @@ export class MemoryService {
           memory.access_count || 0,
           memory.last_accessed || undefined
         );
-
-        // Calculate recency bonus (memories from last 24 hours get a boost)
-        const ageInHours = (now - memory.timestamp) / (1000 * 60 * 60);
-        const recencyBonus =
-          ageInHours < 24 ? 0.1 : ageInHours < 168 ? 0.05 : 0;
-
-        // Type matching bonus (if query type matches memory type)
-        const typeMatchBonus = memory.memory_type === queryType ? 0.1 : 0;
-
-        // Calculate composite relevance score
-        // Weights: similarity (50%), importance (25%), recency (15%), type match (10%)
-        const compositeScore =
-          similarity * 0.5 +
-          decayedImportance * 0.25 +
-          recencyBonus +
-          typeMatchBonus;
 
         results.push({
           entry: {

@@ -67,6 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     models,
     currentSession,
     generatingTitleForSession,
+    personas,
   } = useChatStore();
   const { user, isAdmin, systemInfo, setUser } = useAuthStore();
   const { backgroundImage, sidebarCompact, toggleSidebarCompact } =
@@ -638,16 +639,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 <span className='text-gray-400 dark:text-gray-600'>
                                   •
                                 </span>
-                                <span
-                                  className={cn(
-                                    'text-xs font-medium',
-                                    isActive
-                                      ? 'text-gray-700 dark:text-gray-300'
-                                      : 'text-gray-600 dark:text-gray-400'
-                                  )}
-                                >
-                                  {session.model}
-                                </span>
+                                {session.personaId ? (
+                                  (() => {
+                                    const persona = personas[session.personaId];
+                                    return persona ? (
+                                      <span
+                                        className={cn(
+                                          'flex items-center gap-1 text-xs font-medium',
+                                          isActive
+                                            ? 'text-primary-600 dark:text-primary-400'
+                                            : 'text-primary-500 dark:text-primary-500'
+                                        )}
+                                        title={
+                                          persona.description || persona.name
+                                        }
+                                      >
+                                        {persona.avatar &&
+                                          !persona.avatar.startsWith(
+                                            'data:'
+                                          ) && (
+                                            <span className='text-[10px]'>
+                                              {persona.avatar}
+                                            </span>
+                                          )}
+                                        <span className='truncate max-w-[100px]'>
+                                          {persona.name}
+                                        </span>
+                                      </span>
+                                    ) : (
+                                      <span
+                                        className={cn(
+                                          'text-xs font-medium italic',
+                                          isActive
+                                            ? 'text-gray-500 dark:text-gray-500'
+                                            : 'text-gray-400 dark:text-gray-600'
+                                        )}
+                                      >
+                                        Persona
+                                      </span>
+                                    );
+                                  })()
+                                ) : (
+                                  <span
+                                    className={cn(
+                                      'text-xs font-medium truncate max-w-[120px]',
+                                      isActive
+                                        ? 'text-gray-700 dark:text-gray-300'
+                                        : 'text-gray-600 dark:text-gray-400'
+                                    )}
+                                    title={session.model}
+                                  >
+                                    {session.model}
+                                  </span>
+                                )}
                               </div>
                             </div>
 

@@ -21,6 +21,49 @@ import { ttsApi, TTSModel } from '@/utils/api';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
 
+// Module-level cache for TTS models to avoid repeated API calls
+let cachedModels: TTSModel[] | null = null;
+let cachePromise: Promise<TTSModel[]> | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
+async function getCachedTTSModels(): Promise<TTSModel[]> {
+  const now = Date.now();
+
+  // Return cached models if still valid
+  if (cachedModels !== null && now - cacheTimestamp < CACHE_TTL) {
+    return cachedModels;
+  }
+
+  // If a request is already in flight, wait for it
+  if (cachePromise) {
+    return cachePromise;
+  }
+
+  // Make new request
+  cachePromise = (async () => {
+    try {
+      const response = await ttsApi.getModels();
+      if (response.success && response.data && response.data.length > 0) {
+        cachedModels = response.data;
+        cacheTimestamp = now;
+        return response.data;
+      }
+      cachedModels = [];
+      cacheTimestamp = now;
+      return [];
+    } catch {
+      cachedModels = [];
+      cacheTimestamp = now;
+      return [];
+    } finally {
+      cachePromise = null;
+    }
+  })();
+
+  return cachePromise;
+}
+
 interface TTSButtonProps {
   text: string;
   className?: string;
@@ -40,23 +83,20 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
   const [hasModels, setHasModels] = useState<boolean | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Check for available TTS models on mount
+  // Check for available TTS models on mount (using cache)
   useEffect(() => {
-    const checkModels = async () => {
-      try {
-        const response = await ttsApi.getModels();
-        if (response.success && response.data && response.data.length > 0) {
-          setAvailableModels(response.data);
-          setHasModels(true);
-        } else {
-          setHasModels(false);
-        }
-      } catch {
-        setHasModels(false);
-      }
-    };
+    let mounted = true;
 
-    checkModels();
+    getCachedTTSModels().then(models => {
+      if (mounted) {
+        setAvailableModels(models);
+        setHasModels(models.length > 0);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handlePlay = async () => {
