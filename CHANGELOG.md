@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.2.6] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- Fixed CLI bin file not executable in npm package
+
 ## [0.2.5] - 2026-01-06
 
 ### 🐛 Bug Fixes
