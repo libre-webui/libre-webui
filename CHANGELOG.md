@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.2.5] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- Fixed CORS blocking API requests when frontend is served from the same port as the backend
+
 ## [0.2.4] - 2026-01-06
 
 ### What's New

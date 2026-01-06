@@ -80,6 +80,7 @@ const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:8080',
+  `http://localhost:${port}`, // Allow same-origin when serving frontend
 ];
 
 // Multi-user safe CORS configuration
