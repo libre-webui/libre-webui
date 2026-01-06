@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
-## [0.2.3] - 2026-01-06
+## [0.2.4] - 2026-01-06
 
 ### What's New
 
@@ -29,6 +29,10 @@ This release fixes critical issues preventing `npx libre-webui` from running cor
 - Fixed frontend connecting to wrong API port in production builds
 - Fixed route registration order (routes now register before error handlers)
 - Fixed missing packages error when installing via npx
+
+## [0.2.3] - 2026-01-06
+
+_Skipped due to npm registry issues._
 
 ## [0.2.2] - 2026-01-05
 
