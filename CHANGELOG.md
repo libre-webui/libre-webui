@@ -15,16 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
-## [0.2.3] - 2026-01-05
+## [0.2.3] - 2026-01-06
 
 ### What's New
 
-This release focuses on fixing dependency issues that were preventing proper installation and setup via npx. Package dependencies have been updated and reorganized to ensure a smoother installation experience.
+This release fixes critical issues preventing `npx libre-webui` from running correctly. The ESM module compatibility and Express 5 routing have been fixed, and the frontend now properly connects to the backend in production builds.
 
 ### 🐛 Bug Fixes
 
+- Fixed `__dirname is not defined` error in ESM modules (encryptionService)
+- Fixed Express 5 wildcard route syntax (`*` → `{*splat}`)
+- Fixed frontend not serving on root path in production
+- Fixed frontend connecting to wrong API port in production builds
+- Fixed route registration order (routes now register before error handlers)
 - Fixed missing packages error when installing via npx
-- Resolved dependency conflicts in package configuration
 
 ## [0.2.2] - 2026-01-05
 
