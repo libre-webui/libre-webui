@@ -111,6 +111,8 @@ const App: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [setupComplete, setSetupComplete] = useState(false);
+  const [inFirstTimeSetup, setInFirstTimeSetup] = useState(false);
   const {
     sidebarOpen,
     sidebarCompact,
@@ -301,6 +303,18 @@ const App: React.FC = () => {
     }
   }, [systemInfo, authLoading, retryCount]);
 
+  // Enter first-time setup mode when conditions are met
+  React.useEffect(() => {
+    if (
+      systemInfo &&
+      systemInfo.requiresAuth &&
+      !systemInfo.hasUsers &&
+      !setupComplete
+    ) {
+      setInFirstTimeSetup(true);
+    }
+  }, [systemInfo, setupComplete]);
+
   // Show loading spinner while initializing auth
   if (authLoading) {
     return (
@@ -355,11 +369,16 @@ const App: React.FC = () => {
     );
   }
 
-  // Show FirstTimeSetup if system requires auth but has no users
-  if (systemInfo && systemInfo.requiresAuth && !systemInfo.hasUsers) {
+  // Show FirstTimeSetup if we're in setup mode and haven't completed it
+  if (inFirstTimeSetup && !setupComplete) {
     return (
       <ErrorBoundary>
-        <FirstTimeSetup />
+        <FirstTimeSetup
+          onComplete={() => {
+            setSetupComplete(true);
+            setInFirstTimeSetup(false);
+          }}
+        />
       </ErrorBoundary>
     );
   }

@@ -101,3 +101,5 @@ electron/assets/*.ico
 electron/assets/*.png
 !electron/assets/icon.svg
 .claude/
+backend/data/data.sqlite-shm
+backend/data/data.sqlite-wal

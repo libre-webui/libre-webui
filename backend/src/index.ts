@@ -42,6 +42,10 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const pkg = require('../package.json');
 
 import {
   errorHandler,
@@ -75,7 +79,8 @@ import {
 } from './types/index.js';
 
 const app = express();
-const port = process.env.PORT || 3001;
+const isProduction = process.env.NODE_ENV === 'production';
+const port = process.env.PORT || (isProduction ? 8080 : 3001);
 const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
   'http://localhost:5173',
   'http://localhost:3000',
@@ -990,9 +995,22 @@ wss.on('connection', (ws, req) => {
 
 // Start server
 server.listen({ port, host: '0.0.0.0' }, () => {
-  console.log(`🚀 Libre WebUI Backend running on port ${port}`);
-  console.log(`📡 WebSocket server running on ws://localhost:${port}/ws`);
-  console.log(`🌐 CORS enabled for: ${corsOrigins.join(', ')}`);
+  const url = `http://localhost:${port}`;
+  console.log(`\n🚀 Libre WebUI v${pkg.version}`);
+  console.log(`   ${url}\n`);
+
+  // Open browser in production mode
+  if (process.env.SERVE_FRONTEND === 'true') {
+    import('child_process').then(({ exec }) => {
+      const cmd =
+        process.platform === 'darwin'
+          ? 'open'
+          : process.platform === 'win32'
+            ? 'start'
+            : 'xdg-open';
+      exec(`${cmd} ${url}`);
+    });
+  }
 
   // Check OAuth providers configuration on startup
   const githubOAuth = new GitHubOAuthService();

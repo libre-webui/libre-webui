@@ -36,14 +36,15 @@ export class EncryptionService {
   /**
    * Automatically add the encryption key to the .env file or persistent storage
    */
-  private addKeyToEnvFile(encryptionKey: string): void {
+  private addKeyToStorage(encryptionKey: string): void {
     const isDocker = process.env.DOCKER_ENV === 'true';
+    const hasDataDir = Boolean(process.env.DATA_DIR);
 
-    if (isDocker) {
-      // In Docker, store key in persistent data directory
+    if (isDocker || hasDataDir) {
+      // In Docker or npx (DATA_DIR set), store key in persistent data directory
       this.saveKeyToPersistentStorage(encryptionKey);
     } else {
-      // In regular environment, store in .env file
+      // In regular dev environment, store in .env file
       this.saveKeyToEnvFile(encryptionKey);
     }
   }
@@ -200,8 +201,11 @@ export class EncryptionService {
     // Get encryption key from environment, persistent storage, or generate one
     let keyString = process.env.ENCRYPTION_KEY;
 
-    // If no environment variable, try loading from persistent storage in Docker
-    if (!keyString && process.env.DOCKER_ENV === 'true') {
+    // If no environment variable, try loading from persistent storage (Docker or npx)
+    if (
+      !keyString &&
+      (process.env.DOCKER_ENV === 'true' || process.env.DATA_DIR)
+    ) {
       const persistentKey = this.loadKeyFromPersistentStorage();
       if (persistentKey) {
         keyString = persistentKey;
@@ -227,12 +231,12 @@ export class EncryptionService {
         `⚠️  No ENCRYPTION_KEY found. Generated key: ${newKeyString}`
       );
 
-      // Automatically add the key to appropriate storage (Docker vs regular)
-      this.addKeyToEnvFile(newKeyString);
+      // Automatically add the key to appropriate storage (Docker/npx vs dev)
+      this.addKeyToStorage(newKeyString);
 
-      if (process.env.DOCKER_ENV === 'true') {
+      if (process.env.DOCKER_ENV === 'true' || process.env.DATA_DIR) {
         console.info('🔐 Generated encryption key saved to persistent storage');
-        console.info('   Key will persist across container restarts');
+        console.info('   Key will persist across restarts');
       } else {
         console.info(
           '🔐 Generated encryption key has been automatically added to your .env file'

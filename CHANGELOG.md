@@ -15,36 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.2.7] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- Fixed data persistence when running via npx (data now stored in `~/.libre-webui/`)
+- Fixed first-time setup not showing encryption key to user
+
+### 🔧 Improvements
+
+- Changed default port to 8080 in production
+- Added startup message with version and URL
+- Browser now opens automatically on startup
+
 ## [0.2.6] - 2026-01-06
-
-### 🐛 Bug Fixes
-
-- Fixed CLI bin file not executable in npm package
-
-## [0.2.5] - 2026-01-06
-
-### 🐛 Bug Fixes
-
-- Fixed CORS blocking API requests when frontend is served from the same port as the backend
-
-## [0.2.4] - 2026-01-06
 
 ### What's New
 
-This release fixes critical issues preventing `npx libre-webui` from running correctly. The ESM module compatibility and Express 5 routing have been fixed, and the frontend now properly connects to the backend in production builds.
+This release fixes critical issues preventing `npx libre-webui` from running correctly.
 
 ### 🐛 Bug Fixes
 
 - Fixed `__dirname is not defined` error in ESM modules (encryptionService)
 - Fixed Express 5 wildcard route syntax (`*` → `{*splat}`)
+- Fixed CORS blocking API requests when frontend is served from same port
 - Fixed frontend not serving on root path in production
 - Fixed frontend connecting to wrong API port in production builds
 - Fixed route registration order (routes now register before error handlers)
 - Fixed missing packages error when installing via npx
-
-## [0.2.3] - 2026-01-06
-
-_Skipped due to npm registry issues._
 
 ## [0.2.2] - 2026-01-05
 
