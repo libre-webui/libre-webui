@@ -119,7 +119,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             value={username}
             onChange={e => setUsername(e.target.value)}
             onKeyDown={handleKeyDown}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
+            className='w-full px-3 py-2 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
             placeholder='Choose a username'
             required
             disabled={isLoading}
@@ -139,7 +139,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             value={email}
             onChange={e => setEmail(e.target.value)}
             onKeyDown={handleKeyDown}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
+            className='w-full px-3 py-2 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
             placeholder='your@email.com'
             disabled={isLoading}
           />
@@ -159,7 +159,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='w-full px-3 py-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
+              className='w-full px-3 py-2 pr-10 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
               placeholder='Choose a password'
               required
               disabled={isLoading}
@@ -189,7 +189,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='w-full px-3 py-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
+              className='w-full px-3 py-2 pr-10 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
               placeholder='Confirm your password'
               required
               disabled={isLoading}

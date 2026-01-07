@@ -1752,7 +1752,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         type='file'
                         accept='.json,.zip'
                         onChange={handleFileUpload}
-                        className='flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                        className='flex-1 p-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 dark:file:bg-dark-200 dark:file:text-dark-700 hover:file:bg-gray-200 dark:hover:file:bg-dark-300'
                         disabled={isUploading}
                       />
                       <Button
@@ -1780,7 +1780,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         value={jsonInput}
                         onChange={e => setJsonInput(e.target.value)}
                         placeholder='Paste plugin JSON here...'
-                        className='w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm'
+                        className='w-full h-32 p-3 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 font-mono text-sm'
                         disabled={pluginLoading}
                       />
                       <div className='flex items-center justify-end space-x-2'>
