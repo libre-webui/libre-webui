@@ -241,6 +241,20 @@ function initializeTables(): void {
     )
   `);
 
+  // Plugin credentials table - for per-user API keys
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plugin_credentials (
+      id TEXT PRIMARY KEY,
+      user_id TEXT DEFAULT 'default',
+      plugin_id TEXT NOT NULL,
+      api_key TEXT NOT NULL, -- Encrypted API key
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, plugin_id)
+    )
+  `);
+
   // Create indexes for better performance
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
@@ -255,6 +269,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_user_preferences_key ON user_preferences(key);
     CREATE INDEX IF NOT EXISTS idx_personas_user_id ON personas(user_id);
     CREATE INDEX IF NOT EXISTS idx_personas_name ON personas(name);
+    CREATE INDEX IF NOT EXISTS idx_plugin_credentials_user_id ON plugin_credentials(user_id);
+    CREATE INDEX IF NOT EXISTS idx_plugin_credentials_plugin_id ON plugin_credentials(plugin_id);
   `);
 
   console.log('Database tables initialized successfully');

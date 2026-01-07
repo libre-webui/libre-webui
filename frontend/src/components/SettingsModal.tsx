@@ -41,6 +41,11 @@ import {
   Play,
   Square,
   Loader2,
+  Key,
+  Eye,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Button, Select, Textarea } from '@/components/ui';
 import { BackgroundUpload } from '@/components/BackgroundUpload';
@@ -52,6 +57,7 @@ import {
   ollamaApi,
   documentsApi,
   ttsApi,
+  pluginApi,
   TTSModel,
   TTSPlugin,
 } from '@/utils/api';
@@ -126,6 +132,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [showJsonForm, setShowJsonForm] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Plugin API key state
+  const [expandedPluginId, setExpandedPluginId] = useState<string | null>(null);
+  const [pluginApiKeys, setPluginApiKeys] = useState<Record<string, string>>(
+    {}
+  );
+  const [pluginHasKeys, setPluginHasKeys] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
+  const [savingApiKey, setSavingApiKey] = useState<string | null>(null);
 
   // Generation options state
   const [tempGenerationOptions, setTempGenerationOptions] = useState(
@@ -212,6 +229,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         }
       );
       loadPlugins(); // Load plugins when modal opens
+      loadPluginCredentials(); // Load plugin API key status
       loadModels(); // Ensure models are up to date when modal opens
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,6 +253,65 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       });
     } catch (_error) {
       console.error('Failed to load system info:', _error);
+    }
+  };
+
+  const loadPluginCredentials = async () => {
+    try {
+      const response = await pluginApi.getCredentials();
+      if (response.success && response.data) {
+        const hasKeysMap: Record<string, boolean> = {};
+        for (const cred of response.data) {
+          hasKeysMap[cred.plugin_id] = cred.has_api_key;
+        }
+        setPluginHasKeys(hasKeysMap);
+      }
+    } catch (_error) {
+      console.error('Failed to load plugin credentials:', _error);
+    }
+  };
+
+  const handleSaveApiKey = async (pluginId: string) => {
+    const apiKey = pluginApiKeys[pluginId];
+    if (!apiKey?.trim()) {
+      toast.error('Please enter an API key');
+      return;
+    }
+
+    setSavingApiKey(pluginId);
+    try {
+      const response = await pluginApi.setApiKey(pluginId, apiKey.trim());
+      if (response.success) {
+        toast.success('API key saved successfully');
+        setPluginHasKeys(prev => ({ ...prev, [pluginId]: true }));
+        setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
+        setShowApiKey(prev => ({ ...prev, [pluginId]: false }));
+        setExpandedPluginId(null);
+      } else {
+        toast.error(response.error || 'Failed to save API key');
+      }
+    } catch (_error) {
+      toast.error('Failed to save API key');
+    } finally {
+      setSavingApiKey(null);
+    }
+  };
+
+  const handleDeleteApiKey = async (pluginId: string) => {
+    setSavingApiKey(pluginId);
+    try {
+      const response = await pluginApi.deleteApiKey(pluginId);
+      if (response.success) {
+        toast.success('API key removed');
+        setPluginHasKeys(prev => ({ ...prev, [pluginId]: false }));
+        setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
+      } else {
+        toast.error(response.error || 'Failed to remove API key');
+      }
+    } catch (_error) {
+      toast.error('Failed to remove API key');
+    } finally {
+      setSavingApiKey(null);
     }
   };
 
@@ -1900,12 +1977,45 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                       </span>
                                     </>
                                   )}
+                                  {pluginHasKeys[plugin.id] && (
+                                    <>
+                                      <span>•</span>
+                                      <span className='text-green-600'>
+                                        API key set
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>
                           </div>
 
                           <div className='flex items-center space-x-2'>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              onClick={() =>
+                                setExpandedPluginId(
+                                  expandedPluginId === plugin.id
+                                    ? null
+                                    : plugin.id
+                                )
+                              }
+                              title='Configure API key'
+                              className={
+                                pluginHasKeys[plugin.id]
+                                  ? 'text-green-600'
+                                  : 'text-amber-600'
+                              }
+                            >
+                              <Key className='h-4 w-4' />
+                              {expandedPluginId === plugin.id ? (
+                                <ChevronUp className='h-3 w-3 ml-1' />
+                              ) : (
+                                <ChevronDown className='h-3 w-3 ml-1' />
+                              )}
+                            </Button>
+
                             <Button
                               variant='outline'
                               size='sm'
@@ -1949,6 +2059,111 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             </Button>
                           </div>
                         </div>
+
+                        {/* API Key Configuration Section */}
+                        {expandedPluginId === plugin.id && (
+                          <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-50 rounded-lg border border-gray-200 dark:border-dark-300'>
+                            <div className='flex items-center gap-2 mb-3'>
+                              <Key className='h-4 w-4 text-gray-500' />
+                              <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                                API Key Configuration
+                              </h6>
+                            </div>
+                            <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
+                              Enter your API key for {plugin.name}. This will be
+                              stored securely and used for API requests.
+                              {plugin.auth?.key_env && (
+                                <span className='block mt-1'>
+                                  Alternatively, set the{' '}
+                                  <code className='bg-gray-200 dark:bg-dark-200 px-1 rounded'>
+                                    {plugin.auth.key_env}
+                                  </code>{' '}
+                                  environment variable.
+                                </span>
+                              )}
+                            </p>
+
+                            {pluginHasKeys[plugin.id] ? (
+                              <div className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg'>
+                                <div className='flex items-center gap-2'>
+                                  <Check className='h-4 w-4 text-green-600' />
+                                  <span className='text-sm text-green-700 dark:text-green-300'>
+                                    API key is configured
+                                  </span>
+                                </div>
+                                <Button
+                                  variant='outline'
+                                  size='sm'
+                                  onClick={() => handleDeleteApiKey(plugin.id)}
+                                  disabled={savingApiKey === plugin.id}
+                                  className='text-red-600 border-red-300 hover:bg-red-50'
+                                >
+                                  {savingApiKey === plugin.id ? (
+                                    <Loader2 className='h-4 w-4 animate-spin' />
+                                  ) : (
+                                    'Remove'
+                                  )}
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className='space-y-3'>
+                                <div className='relative'>
+                                  <input
+                                    type={
+                                      showApiKey[plugin.id]
+                                        ? 'text'
+                                        : 'password'
+                                    }
+                                    value={pluginApiKeys[plugin.id] || ''}
+                                    onChange={e =>
+                                      setPluginApiKeys(prev => ({
+                                        ...prev,
+                                        [plugin.id]: e.target.value,
+                                      }))
+                                    }
+                                    placeholder='Enter your API key...'
+                                    className='w-full p-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500'
+                                  />
+                                  <button
+                                    type='button'
+                                    onClick={() =>
+                                      setShowApiKey(prev => ({
+                                        ...prev,
+                                        [plugin.id]: !prev[plugin.id],
+                                      }))
+                                    }
+                                    className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
+                                  >
+                                    {showApiKey[plugin.id] ? (
+                                      <EyeOff className='h-4 w-4' />
+                                    ) : (
+                                      <Eye className='h-4 w-4' />
+                                    )}
+                                  </button>
+                                </div>
+                                <div className='flex justify-end'>
+                                  <Button
+                                    size='sm'
+                                    onClick={() => handleSaveApiKey(plugin.id)}
+                                    disabled={
+                                      savingApiKey === plugin.id ||
+                                      !pluginApiKeys[plugin.id]?.trim()
+                                    }
+                                  >
+                                    {savingApiKey === plugin.id ? (
+                                      <>
+                                        <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                                        Saving...
+                                      </>
+                                    ) : (
+                                      'Save API Key'
+                                    )}
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

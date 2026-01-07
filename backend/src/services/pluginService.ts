@@ -28,6 +28,7 @@ import {
   TTSConfig,
   PluginType,
 } from '../types/index.js';
+import pluginCredentialsService from './pluginCredentialsService.js';
 
 class PluginService {
   private pluginsDir: string;
@@ -69,6 +70,20 @@ class PluginService {
       lastUpdated: new Date().toISOString(),
     };
     fs.writeFileSync(statusFile, JSON.stringify(status, null, 2));
+  }
+
+  /**
+   * Get API key for a plugin from database (per-user) or environment variable (fallback)
+   * @param plugin The plugin to get the API key for
+   * @param userId Optional user ID for per-user credentials
+   * @returns The API key or null if not found
+   */
+  getApiKey(plugin: Plugin, userId?: string): string | null {
+    return pluginCredentialsService.getApiKey(
+      plugin.id,
+      plugin.auth.key_env,
+      userId
+    );
   }
 
   // List all installed plugins
@@ -244,11 +259,11 @@ class PluginService {
       if (plugin.model_map.includes(model)) {
         console.log(`[DEBUG] Found plugin ${plugin.id} for model ${model}`);
 
-        // Check if we have the required API key
-        const apiKey = process.env[plugin.auth.key_env];
+        // Check if we have the required API key (from DB or env)
+        const apiKey = this.getApiKey(plugin);
         if (!apiKey) {
           console.log(
-            `[DEBUG] Plugin ${plugin.id} found but API key ${plugin.auth.key_env} not set`
+            `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
           );
           continue;
         }
@@ -341,11 +356,11 @@ class PluginService {
       throw new Error(`No active plugin found for model: ${model}`);
     }
 
-    // Get API key from environment
-    const apiKey = process.env[activePlugin.auth.key_env];
+    // Get API key from database (per-user) or environment variable (fallback)
+    const apiKey = this.getApiKey(activePlugin);
     if (!apiKey) {
       throw new Error(
-        `API key not found in environment variable: ${activePlugin.auth.key_env}`
+        `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
       );
     }
 
@@ -842,11 +857,11 @@ class PluginService {
             `[DEBUG] Found TTS plugin ${plugin.id} for model ${model}`
           );
 
-          // Check if we have the required API key
-          const apiKey = process.env[plugin.auth.key_env];
+          // Check if we have the required API key (from DB or env)
+          const apiKey = this.getApiKey(plugin);
           if (!apiKey) {
             console.log(
-              `[DEBUG] Plugin ${plugin.id} found but API key ${plugin.auth.key_env} not set`
+              `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
             );
             continue;
           }
@@ -861,10 +876,10 @@ class PluginService {
           `[DEBUG] Found TTS-type plugin ${plugin.id} for model ${model}`
         );
 
-        const apiKey = process.env[plugin.auth.key_env];
+        const apiKey = this.getApiKey(plugin);
         if (!apiKey) {
           console.log(
-            `[DEBUG] Plugin ${plugin.id} found but API key ${plugin.auth.key_env} not set`
+            `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
           );
           continue;
         }
@@ -890,8 +905,8 @@ class PluginService {
       // Check capabilities-based TTS
       if (plugin.capabilities?.tts) {
         const ttsCapability = plugin.capabilities.tts;
-        // Check if API key is available
-        const apiKey = process.env[plugin.auth.key_env];
+        // Check if API key is available (from DB or env)
+        const apiKey = this.getApiKey(plugin);
         if (apiKey) {
           for (const model of ttsCapability.model_map) {
             models.push({
@@ -905,7 +920,7 @@ class PluginService {
 
       // Check primary type for TTS-only plugins
       if (plugin.type === 'tts') {
-        const apiKey = process.env[plugin.auth.key_env];
+        const apiKey = this.getApiKey(plugin);
         if (apiKey) {
           for (const model of plugin.model_map) {
             models.push({
@@ -955,11 +970,11 @@ class PluginService {
       throw new Error(`No TTS plugin found for model: ${model}`);
     }
 
-    // Get API key from environment
-    const apiKey = process.env[plugin.auth.key_env];
+    // Get API key from database (per-user) or environment variable (fallback)
+    const apiKey = this.getApiKey(plugin);
     if (!apiKey) {
       throw new Error(
-        `API key not found in environment variable: ${plugin.auth.key_env}`
+        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
       );
     }
 
@@ -1212,7 +1227,7 @@ class PluginService {
     for (const plugin of allPlugins) {
       // Check if primary type matches
       if (plugin.type === capabilityType) {
-        const apiKey = process.env[plugin.auth.key_env];
+        const apiKey = this.getApiKey(plugin);
         if (apiKey) {
           result.push(plugin);
         }
@@ -1243,7 +1258,7 @@ class PluginService {
         }
 
         if (hasCapability) {
-          const apiKey = process.env[plugin.auth.key_env];
+          const apiKey = this.getApiKey(plugin);
           if (apiKey) {
             result.push(plugin);
           }

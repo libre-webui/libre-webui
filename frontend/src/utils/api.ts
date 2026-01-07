@@ -865,6 +865,48 @@ export const pluginApi = {
       })
       .then(res => res.data);
   },
+
+  // Plugin credentials (API keys)
+  getCredentials: (): Promise<
+    ApiResponse<
+      Array<{ plugin_id: string; has_api_key: boolean; updated_at: number }>
+    >
+  > => {
+    if (isDemoMode()) {
+      return createDemoResponse<
+        Array<{ plugin_id: string; has_api_key: boolean; updated_at: number }>
+      >([]);
+    }
+    return api.get('/plugins/credentials/all').then(res => res.data);
+  },
+
+  setApiKey: (
+    pluginId: string,
+    apiKey: string
+  ): Promise<ApiResponse<boolean>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<boolean>(false, false);
+    }
+    return api
+      .post(`/plugins/${pluginId}/credentials`, { api_key: apiKey })
+      .then(res => res.data);
+  },
+
+  deleteApiKey: (pluginId: string): Promise<ApiResponse<boolean>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<boolean>(false, false);
+    }
+    return api.delete(`/plugins/${pluginId}/credentials`).then(res => res.data);
+  },
+
+  checkApiKey: (pluginId: string): Promise<ApiResponse<boolean>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<boolean>(false);
+    }
+    return api
+      .get(`/plugins/${pluginId}/credentials/check`)
+      .then(res => res.data);
+  },
 };
 
 export const preferencesApi = {

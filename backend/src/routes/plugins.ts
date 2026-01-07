@@ -21,6 +21,7 @@ import path from 'path';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
+import pluginCredentialsService from '../services/pluginCredentialsService.js';
 import {
   ApiResponse,
   Plugin,
@@ -507,6 +508,163 @@ router.get(
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to export plugin'),
+      });
+    }
+  }
+);
+
+// ============================================
+// Plugin Credentials Endpoints
+// ============================================
+
+// Get all credentials for current user (API keys are masked)
+router.get(
+  '/credentials/all',
+  async (
+    req: Request,
+    res: Response<
+      ApiResponse<
+        Array<{ plugin_id: string; has_api_key: boolean; updated_at: number }>
+      >
+    >
+  ): Promise<void> => {
+    try {
+      // Get userId from auth context (defaults to 'default' for single-user mode)
+      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const credentials = pluginCredentialsService.getCredentials(userId);
+
+      res.json({
+        success: true,
+        data: credentials,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get plugin credentials'),
+      });
+    }
+  }
+);
+
+// Set API key for a plugin
+router.post(
+  '/:id/credentials',
+  pluginRateLimit,
+  async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
+    try {
+      const { id } = req.params;
+      const { api_key } = req.body;
+
+      if (!api_key || typeof api_key !== 'string') {
+        res.status(400).json({
+          success: false,
+          error: 'API key is required',
+        });
+        return;
+      }
+
+      // Verify plugin exists
+      const plugin = pluginService.getPlugin(id);
+      if (!plugin) {
+        res.status(404).json({
+          success: false,
+          error: 'Plugin not found',
+        });
+        return;
+      }
+
+      // Get userId from auth context
+      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const success = pluginCredentialsService.setApiKey(id, api_key, userId);
+
+      if (success) {
+        res.json({
+          success: true,
+          data: true,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: 'Failed to save API key',
+        });
+      }
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to set API key'),
+      });
+    }
+  }
+);
+
+// Delete API key for a plugin
+router.delete(
+  '/:id/credentials',
+  pluginRateLimit,
+  async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      // Verify plugin exists
+      const plugin = pluginService.getPlugin(id);
+      if (!plugin) {
+        res.status(404).json({
+          success: false,
+          error: 'Plugin not found',
+        });
+        return;
+      }
+
+      // Get userId from auth context
+      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const success = pluginCredentialsService.deleteApiKey(id, userId);
+
+      res.json({
+        success: true,
+        data: success,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to delete API key'),
+      });
+    }
+  }
+);
+
+// Check if API key exists for a plugin (without revealing the key)
+router.get(
+  '/:id/credentials/check',
+  async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      // Verify plugin exists
+      const plugin = pluginService.getPlugin(id);
+      if (!plugin) {
+        res.status(404).json({
+          success: false,
+          error: 'Plugin not found',
+        });
+        return;
+      }
+
+      // Get userId from auth context
+      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const hasKey = pluginCredentialsService.hasApiKey(
+        id,
+        plugin.auth.key_env,
+        userId
+      );
+
+      res.json({
+        success: true,
+        data: hasKey,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to check API key'),
       });
     }
   }
