@@ -111,6 +111,8 @@ const App: React.FC = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  const [setupComplete, setSetupComplete] = useState(false);
+  const [inFirstTimeSetup, setInFirstTimeSetup] = useState(false);
   const {
     sidebarOpen,
     sidebarCompact,
@@ -301,6 +303,18 @@ const App: React.FC = () => {
     }
   }, [systemInfo, authLoading, retryCount]);
 
+  // Enter first-time setup mode when conditions are met
+  React.useEffect(() => {
+    if (
+      systemInfo &&
+      systemInfo.requiresAuth &&
+      !systemInfo.hasUsers &&
+      !setupComplete
+    ) {
+      setInFirstTimeSetup(true);
+    }
+  }, [systemInfo, setupComplete]);
+
   // Show loading spinner while initializing auth
   if (authLoading) {
     return (
@@ -355,11 +369,16 @@ const App: React.FC = () => {
     );
   }
 
-  // Show FirstTimeSetup if system requires auth but has no users
-  if (systemInfo && systemInfo.requiresAuth && !systemInfo.hasUsers) {
+  // Show FirstTimeSetup if we're in setup mode and haven't completed it
+  if (inFirstTimeSetup && !setupComplete) {
     return (
       <ErrorBoundary>
-        <FirstTimeSetup />
+        <FirstTimeSetup
+          onComplete={() => {
+            setSetupComplete(true);
+            setInFirstTimeSetup(false);
+          }}
+        />
       </ErrorBoundary>
     );
   }
@@ -367,8 +386,8 @@ const App: React.FC = () => {
   // Show loading state while processing OAuth
   if (!oauthProcessed) {
     return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
+      <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex items-center justify-center'>
+        <div className='w-8 h-8 border-4 border-gray-300 dark:border-gray-600 border-t-primary-500 dark:border-t-primary-400 rounded-full animate-spin'></div>
       </div>
     );
   }

@@ -15,16 +15,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
-## [0.2.3] - 2026-01-05
-
-### What's New
-
-This release focuses on fixing dependency issues that were preventing proper installation and setup via npx. Package dependencies have been updated and reorganized to ensure a smoother installation experience.
+## [0.2.8] - 2026-01-07
 
 ### 🐛 Bug Fixes
 
+- Fixed crash when running via `npx libre-webui` - the backend couldn't find `package.json` to read the version number because the file path structure is different when installed via npm vs development. The server would start but immediately crash with "Cannot find module '../package.json'".
+
+## [0.2.7] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- Fixed data persistence when running via npx (data now stored in `~/.libre-webui/`)
+- Fixed first-time setup not showing encryption key to user
+
+### 🔧 Improvements
+
+- Changed default port to 8080 in production
+- Added startup message with version and URL
+- Browser now opens automatically on startup
+
+## [0.2.6] - 2026-01-06
+
+### What's New
+
+This release fixes critical issues preventing `npx libre-webui` from running correctly.
+
+### 🐛 Bug Fixes
+
+- Fixed `__dirname is not defined` error in ESM modules (encryptionService)
+- Fixed Express 5 wildcard route syntax (`*` → `{*splat}`)
+- Fixed CORS blocking API requests when frontend is served from same port
+- Fixed frontend not serving on root path in production
+- Fixed frontend connecting to wrong API port in production builds
+- Fixed route registration order (routes now register before error handlers)
 - Fixed missing packages error when installing via npx
-- Resolved dependency conflicts in package configuration
 
 ## [0.2.2] - 2026-01-05
 

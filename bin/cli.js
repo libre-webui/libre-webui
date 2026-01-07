@@ -105,11 +105,22 @@ if (!frontendExists) {
   process.exit(1);
 }
 
+// Set up persistent data directory in user's home
+const os = require('os');
+const dataDir = process.env.DATA_DIR || path.join(os.homedir(), '.libre-webui');
+
+// Create data directory if it doesn't exist
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+  console.log(`📁 Created data directory: ${dataDir}`);
+}
+
 // Set production environment
 const env = {
   ...process.env,
   NODE_ENV: 'production',
   SERVE_FRONTEND: 'true',
+  DATA_DIR: dataDir,
 };
 
 const port = env.PORT || '8080';
