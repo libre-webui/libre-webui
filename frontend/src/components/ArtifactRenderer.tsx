@@ -361,20 +361,20 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
         </div>
 
         {/* Desktop: Horizontal Layout */}
-        <div className='hidden sm:flex items-center justify-between'>
-          <div className='flex items-center gap-3'>
-            <div className='flex items-center gap-2'>
-              {getIcon()}
+        <div className='hidden sm:flex items-center justify-between gap-2'>
+          <div className='flex items-center gap-3 min-w-0 flex-1'>
+            <div className='flex items-center gap-2 min-w-0 flex-1'>
+              <div className='flex-shrink-0'>{getIcon()}</div>
               <h3 className='font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] truncate'>
                 {artifact.title}
               </h3>
             </div>
-            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 ophelia:bg-[rgba(147,51,234,0.2)] text-primary-700 dark:text-primary-300 ophelia:text-[#c084fc] px-2 py-1 rounded-full font-medium'>
+            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 ophelia:bg-[rgba(147,51,234,0.2)] text-primary-700 dark:text-primary-300 ophelia:text-[#c084fc] px-2 py-1 rounded-full font-medium flex-shrink-0'>
               {artifact.type.toUpperCase()}
             </span>
           </div>
 
-          <div className='flex items-center gap-1'>
+          <div className='flex items-center gap-1 flex-shrink-0'>
             {/* View mode toggle for previewable artifacts */}
             {shouldShowViewToggle() && (
               <>
