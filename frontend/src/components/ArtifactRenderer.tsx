@@ -279,11 +279,12 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       className={cn(
         'border border-gray-200 dark:border-dark-200 ophelia:border-[#1a1a1a] rounded-xl bg-white dark:bg-dark-25 ophelia:bg-[#050505] shadow-lg transition-all duration-300 hover:shadow-xl',
         'w-full max-w-full overflow-hidden animate-fade-in',
+        'max-h-[400px] flex flex-col', // Constrain height in chat bubbles
         className
       )}
     >
       {/* Header */}
-      <div className='px-1.5 py-1.5 sm:p-4 border-b border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a]'>
+      <div className='px-1.5 py-1.5 sm:p-4 border-b border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] flex-shrink-0'>
         {/* Mobile: Vertical Stack */}
         <div className='flex flex-col gap-2 sm:hidden'>
           {/* Title Row */}
@@ -439,18 +440,18 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       </div>
 
       {/* Content */}
-      <div className='p-4'>
+      <div className='p-4 flex-1 overflow-hidden min-h-0'>
         {artifact.description && (
           <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] mb-4'>
             {artifact.description}
           </p>
         )}
 
-        {renderContent()}
+        <div className='h-full overflow-auto'>{renderContent()}</div>
       </div>
 
       {/* Footer */}
-      <div className='flex items-center justify-between p-3 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] bg-gray-50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a]'>
+      <div className='flex items-center justify-between p-3 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] bg-gray-50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a] flex-shrink-0'>
         <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
           Created: {new Date(artifact.createdAt).toLocaleString()}
         </div>
