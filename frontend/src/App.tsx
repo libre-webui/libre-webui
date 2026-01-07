@@ -386,8 +386,8 @@ const App: React.FC = () => {
   // Show loading state while processing OAuth
   if (!oauthProcessed) {
     return (
-      <div className='min-h-screen flex items-center justify-center'>
-        <div className='w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
+      <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex items-center justify-center'>
+        <div className='w-8 h-8 border-4 border-gray-300 dark:border-gray-600 border-t-primary-500 dark:border-t-primary-400 rounded-full animate-spin'></div>
       </div>
     );
   }

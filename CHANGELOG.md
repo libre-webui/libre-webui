@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.2.8] - 2026-01-07
+
+### 🐛 Bug Fixes
+
+- Fixed crash when running via `npx libre-webui` - the backend couldn't find `package.json` to read the version number because the file path structure is different when installed via npm vs development. The server would start but immediately crash with "Cannot find module '../package.json'".
+
 ## [0.2.7] - 2026-01-06
 
 ### 🐛 Bug Fixes

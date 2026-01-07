@@ -45,7 +45,20 @@ import { WebSocketServer } from 'ws';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const pkg = require('../package.json');
+
+// Try to load package.json from multiple locations
+let pkg = { version: '0.0.0' };
+try {
+  // Development: ../package.json (backend/package.json doesn't exist, but root does via symlink)
+  pkg = require('../package.json');
+} catch {
+  try {
+    // npm install: package is at node_modules/libre-webui, package.json is at root
+    pkg = require('../../package.json');
+  } catch {
+    console.warn('Could not read version from package.json, using default');
+  }
+}
 
 import {
   errorHandler,
