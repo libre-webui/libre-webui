@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Code,
@@ -29,11 +29,17 @@ import {
   ExternalLink,
   Eye,
   Code2,
+  GripVertical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
+
+// Min/max panel widths
+const MIN_PANEL_WIDTH = 320;
+const MAX_PANEL_WIDTH_RATIO = 0.9; // 90% of screen width
+const DEFAULT_PANEL_WIDTH = 600;
 
 export const ArtifactSlideOutPanel: React.FC = () => {
   const {
@@ -44,9 +50,13 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   } = useAppStore();
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
+  const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH);
+  const [isResizing, setIsResizing] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevArtifactIdRef = useRef<string | null>(null);
+  const resizeStartXRef = useRef(0);
+  const resizeStartWidthRef = useRef(0);
 
   // Reset view mode when artifact changes (using ref pattern to avoid effect setState)
   const currentArtifactId = artifactPanelArtifact?.id ?? null;
@@ -56,6 +66,73 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       setViewMode('preview');
     }
   }
+
+  // Handle resize
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      e.preventDefault();
+      setIsResizing(true);
+      resizeStartWidthRef.current = panelWidth;
+      resizeStartXRef.current =
+        'touches' in e ? e.touches[0].clientX : e.clientX;
+    },
+    [panelWidth]
+  );
+
+  const handleResizeMove = useCallback(
+    (e: MouseEvent | TouchEvent) => {
+      if (!isResizing) return;
+
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const deltaX = resizeStartXRef.current - clientX;
+      const maxWidth = window.innerWidth * MAX_PANEL_WIDTH_RATIO;
+      const newWidth = Math.min(
+        maxWidth,
+        Math.max(MIN_PANEL_WIDTH, resizeStartWidthRef.current + deltaX)
+      );
+      setPanelWidth(newWidth);
+    },
+    [isResizing]
+  );
+
+  const handleResizeEnd = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  // Resize event listeners
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener('mousemove', handleResizeMove);
+      window.addEventListener('mouseup', handleResizeEnd);
+      window.addEventListener('touchmove', handleResizeMove);
+      window.addEventListener('touchend', handleResizeEnd);
+      // Prevent text selection during resize
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleResizeMove);
+      window.removeEventListener('mouseup', handleResizeEnd);
+      window.removeEventListener('touchmove', handleResizeMove);
+      window.removeEventListener('touchend', handleResizeEnd);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    };
+  }, [isResizing, handleResizeMove, handleResizeEnd]);
+
+  // Handle window resize to ensure panel doesn't exceed max width
+  useEffect(() => {
+    const handleWindowResize = () => {
+      const maxWidth = window.innerWidth * MAX_PANEL_WIDTH_RATIO;
+      if (panelWidth > maxWidth) {
+        setPanelWidth(maxWidth);
+      }
+    };
+
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, [panelWidth]);
 
   // Handle escape key to close panel
   useEffect(() => {
@@ -68,9 +145,11 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [artifactPanelOpen, closeArtifactPanel]);
 
-  // Handle click outside to close panel
+  // Handle click outside to close panel (but not on resize handle)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      if (isResizing) return; // Don't close while resizing
+
       if (
         panelRef.current &&
         !panelRef.current.contains(e.target as Node) &&
@@ -87,7 +166,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       clearTimeout(timer);
       window.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [artifactPanelOpen, closeArtifactPanel]);
+  }, [artifactPanelOpen, closeArtifactPanel, isResizing]);
 
   if (!artifactPanelArtifact) return null;
 
@@ -313,6 +392,10 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     );
   };
 
+  // On mobile, use full width
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const effectiveWidth = isMobile ? '100%' : `${panelWidth}px`;
+
   const panel = (
     <>
       {/* Backdrop */}
@@ -326,8 +409,9 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       {/* Panel */}
       <div
         ref={panelRef}
+        style={{ width: effectiveWidth }}
         className={cn(
-          'fixed top-0 right-0 h-full w-full sm:w-[600px] lg:w-[700px] xl:w-[800px] z-50',
+          'fixed top-0 right-0 h-full z-50',
           'bg-white dark:bg-dark-25 ophelia:bg-[#050505]',
           'shadow-2xl border-l border-gray-200 dark:border-dark-200 ophelia:border-[#1a1a1a]',
           'flex flex-col',
@@ -335,6 +419,39 @@ export const ArtifactSlideOutPanel: React.FC = () => {
           artifactPanelOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >
+        {/* Resize Handle - only show on non-mobile */}
+        {!isMobile && (
+          <div
+            onMouseDown={handleResizeStart}
+            onTouchStart={handleResizeStart}
+            className={cn(
+              'absolute left-0 top-0 bottom-0 w-4 -ml-2 cursor-col-resize z-10',
+              'flex items-center justify-center',
+              'group'
+            )}
+          >
+            {/* Visual handle */}
+            <div
+              className={cn(
+                'w-1 h-16 rounded-full transition-all duration-200',
+                'bg-gray-300 dark:bg-dark-300 ophelia:bg-[#262626]',
+                'group-hover:bg-primary-500 group-hover:h-24',
+                isResizing && 'bg-primary-500 h-24'
+              )}
+            />
+            {/* Grip icon on hover */}
+            <div
+              className={cn(
+                'absolute left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity',
+                'text-gray-400 dark:text-dark-500 ophelia:text-[#525252]',
+                isResizing && 'opacity-100'
+              )}
+            >
+              <GripVertical className='h-4 w-4' />
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-200 ophelia:border-[#1a1a1a]'>
           <div className='flex items-center gap-3 min-w-0 flex-1'>
@@ -456,8 +573,15 @@ export const ArtifactSlideOutPanel: React.FC = () => {
 
         {/* Footer */}
         <div className='px-4 py-2 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] bg-gray-50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a]'>
-          <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-            Created: {new Date(artifact.createdAt).toLocaleString()}
+          <div className='flex items-center justify-between'>
+            <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+              Created: {new Date(artifact.createdAt).toLocaleString()}
+            </div>
+            {!isMobile && (
+              <div className='text-xs text-gray-400 dark:text-dark-500 ophelia:text-[#525252]'>
+                Drag edge to resize
+              </div>
+            )}
           </div>
         </div>
       </div>
