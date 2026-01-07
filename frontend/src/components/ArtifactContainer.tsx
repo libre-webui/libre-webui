@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ArtifactRenderer } from './ArtifactRenderer';
 import { Artifact } from '@/types';
 import { cn } from '@/utils';
@@ -29,29 +29,14 @@ export const ArtifactContainer: React.FC<ArtifactContainerProps> = ({
   artifacts,
   className,
 }) => {
-  const [fullscreenArtifact, setFullscreenArtifact] = useState<string | null>(
-    null
-  );
-
   if (!artifacts || artifacts.length === 0) {
     return null;
   }
 
-  const handleFullscreenToggle = (artifactId: string) => {
-    setFullscreenArtifact(
-      fullscreenArtifact === artifactId ? null : artifactId
-    );
-  };
-
   return (
     <div className={cn('space-y-3', className)}>
       {artifacts.map(artifact => (
-        <ArtifactRenderer
-          key={artifact.id}
-          artifact={artifact}
-          isFullscreen={fullscreenArtifact === artifact.id}
-          onFullscreenToggle={() => handleFullscreenToggle(artifact.id)}
-        />
+        <ArtifactRenderer key={artifact.id} artifact={artifact} />
       ))}
     </div>
   );

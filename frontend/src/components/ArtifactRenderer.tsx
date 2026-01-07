@@ -21,7 +21,6 @@ import {
   FileText,
   Globe,
   Maximize2,
-  Minimize2,
   Copy,
   Check,
   AlertTriangle,
@@ -39,20 +38,16 @@ import { cn } from '@/utils';
 interface ArtifactRendererProps {
   artifact: Artifact;
   className?: string;
-  isFullscreen?: boolean;
-  onFullscreenToggle?: () => void;
 }
 
 export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   artifact,
   className,
-  isFullscreen = false,
-  onFullscreenToggle,
 }) => {
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { theme } = useAppStore();
+  const { theme, openArtifactPanel } = useAppStore();
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -283,9 +278,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     <div
       className={cn(
         'border border-gray-200 dark:border-dark-200 ophelia:border-[#1a1a1a] rounded-xl bg-white dark:bg-dark-25 ophelia:bg-[#050505] shadow-lg transition-all duration-300 hover:shadow-xl',
-        'w-full max-w-full overflow-hidden', // Ensure it doesn't overflow on mobile
-        isFullscreen && 'fixed inset-4 z-50 shadow-2xl animate-scale-in',
-        !isFullscreen && 'animate-fade-in',
+        'w-full max-w-full overflow-hidden animate-fade-in',
         className
       )}
     >
@@ -354,21 +347,15 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               <Download className='h-2.5 w-2.5' />
             </Button>
 
-            {onFullscreenToggle && (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={onFullscreenToggle}
-                className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] touch-manipulation border border-gray-200 dark:border-dark-300 ophelia:border-[#262626] hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#3f3f46]'
-                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-              >
-                {isFullscreen ? (
-                  <Minimize2 className='h-2.5 w-2.5' />
-                ) : (
-                  <Maximize2 className='h-2.5 w-2.5' />
-                )}
-              </Button>
-            )}
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => openArtifactPanel(artifact)}
+              className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] touch-manipulation border border-gray-200 dark:border-dark-300 ophelia:border-[#262626] hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#3f3f46]'
+              title='Open in panel'
+            >
+              <Maximize2 className='h-2.5 w-2.5' />
+            </Button>
           </div>
         </div>
 
@@ -438,21 +425,15 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               <Download className='h-4 w-4' />
             </Button>
 
-            {onFullscreenToggle && (
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={onFullscreenToggle}
-                className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
-                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-              >
-                {isFullscreen ? (
-                  <Minimize2 className='h-4 w-4' />
-                ) : (
-                  <Maximize2 className='h-4 w-4' />
-                )}
-              </Button>
-            )}
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={() => openArtifactPanel(artifact)}
+              className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
+              title='Open in panel'
+            >
+              <Maximize2 className='h-4 w-4' />
+            </Button>
           </div>
         </div>
       </div>

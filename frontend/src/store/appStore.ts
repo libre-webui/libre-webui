@@ -17,7 +17,7 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { UserPreferences, Theme } from '@/types';
+import { UserPreferences, Theme, Artifact } from '@/types';
 import { isDemoMode, getDemoConfig } from '@/utils/demoMode';
 
 interface AppState {
@@ -33,6 +33,12 @@ interface AppState {
   setSidebarCompact: (compact: boolean) => void;
   toggleSidebar: () => void;
   toggleSidebarCompact: () => void;
+
+  // Artifact Panel
+  artifactPanelOpen: boolean;
+  artifactPanelArtifact: Artifact | null;
+  openArtifactPanel: (artifact: Artifact) => void;
+  closeArtifactPanel: () => void;
 
   // User preferences
   preferences: UserPreferences;
@@ -100,6 +106,14 @@ export const useAppStore = create<AppState>()(
       toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
       toggleSidebarCompact: () =>
         set(state => ({ sidebarCompact: !state.sidebarCompact })),
+
+      // Artifact Panel
+      artifactPanelOpen: false,
+      artifactPanelArtifact: null,
+      openArtifactPanel: artifact =>
+        set({ artifactPanelOpen: true, artifactPanelArtifact: artifact }),
+      closeArtifactPanel: () =>
+        set({ artifactPanelOpen: false, artifactPanelArtifact: null }),
 
       // User preferences
       preferences: {

@@ -51,6 +51,7 @@ import {
 import { SettingsModal } from '@/components/SettingsModal';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
+import { ArtifactSlideOutPanel } from '@/components/ArtifactSlideOutPanel';
 import { Logo } from '@/components/Logo';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
@@ -565,6 +566,9 @@ const App: React.FC = () => {
         <ConditionalKeyboardShortcutsIndicator
           onClick={() => setShortcutsOpen(true)}
         />
+
+        {/* Artifact slide-out panel */}
+        <ArtifactSlideOutPanel />
 
         <Toaster
           position='top-right'
