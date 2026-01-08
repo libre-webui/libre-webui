@@ -15,6 +15,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.3.0] - 2026-01-08
+
+### What's New
+
+This release introduces a comprehensive image generation system with gallery management, plugin support, and enhanced UI components. Major security improvements include rate limiting and vulnerability fixes, while the interface receives theme consistency updates and better navigation.
+
+### ✨ New Features
+
+- **Image Generation Plugin System**: Full plugin architecture supporting image generation with ComfyUI integration
+- **Image Gallery**: Dedicated gallery page with lightbox viewer and organized image management
+- **Enhanced Model Selector**: Improved model selection interface with expanded options
+- **Plugin Credentials Service**: Secure credential management for plugin authentication
+
+### 🔧 Improvements
+
+- **Imagine Workflow**: Image generation now redirects to gallery page with additional options
+- **Chat Input**: Removed auto-send behavior when generating images for better user control
+- **Theme Consistency**: Primary theme colors now applied to Imagine page
+- **Plugin Network Access**: HTTP connections now allowed for private network IPs
+
+### 🐛 Bug Fixes
+
+- **Security**: Added rate limiting and resolved format string vulnerabilities
+- **Artifact Navigation**: Fixed navigation issues within iframe components
+- **AMOLED Theme**: Drag handle now correctly uses purple accent color
+
 ## [0.2.9] - 2026-01-08
 
 ### What's New
