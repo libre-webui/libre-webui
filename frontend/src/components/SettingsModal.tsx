@@ -2182,11 +2182,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </h3>
               <div className='space-y-4'>
                 <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                  <div>
+                  <div className='flex flex-col'>
                     <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       Export Data
                     </h4>
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
                       Download your settings and chat history as a JSON file.
                     </p>
                     <Button
@@ -2199,11 +2199,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </Button>
                   </div>
 
-                  <div>
+                  <div className='flex flex-col'>
                     <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       Import Data
                     </h4>
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
                       Restore your settings and chat history from a JSON file.
                     </p>
                     <input
@@ -2224,11 +2224,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </Button>
                   </div>
 
-                  <div>
+                  <div className='flex flex-col'>
                     <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                       Clear Sessions
                     </h4>
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
                       Delete all chat sessions permanently. This cannot be
                       undone.
                     </p>
@@ -2241,7 +2241,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     >
                       {loading
                         ? 'Clearing...'
-                        : `Clear All Sessions (${sessions.length})`}
+                        : `Clear All (${sessions.length})`}
                     </Button>
                   </div>
                 </div>

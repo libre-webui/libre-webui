@@ -185,7 +185,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
           blockquote({ children, ...props }) {
             return (
               <blockquote
-                className='border-l-4 border-primary-400 dark:border-primary-500 bg-primary-25 dark:bg-primary-950/30 pl-4 py-3 my-4 rounded-r-lg italic text-gray-700 dark:text-dark-700'
+                className='border-l-4 border-primary-400 dark:border-primary-500 ophelia:border-[#a855f7] bg-primary-25 dark:bg-primary-950/30 ophelia:bg-[rgba(168,85,247,0.1)] pl-4 py-3 my-4 rounded-r-lg italic text-gray-700 dark:text-dark-700 ophelia:text-[#d4d4d4]'
                 {...props}
               >
                 {children}
