@@ -567,15 +567,17 @@ class PluginService {
     try {
       const url = new URL(processedEndpoint);
 
-      // Allow HTTP only for localhost/127.0.0.1 (safe for local development)
+      // Allow HTTP for localhost and private network IPs (safe for local/LAN development)
       const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
         url.hostname
       );
+      const isPrivateNetwork =
+        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
 
-      if (url.protocol !== 'https:' && !isLocalhost) {
+      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
         throw new Error(
           `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints. ` +
-            `(HTTP is permitted only for localhost during local development)`
+            `(HTTP is permitted for localhost and private network IPs)`
         );
       }
     } catch (_error) {
@@ -1104,10 +1106,13 @@ class PluginService {
       const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
         url.hostname
       );
+      const isPrivateNetwork =
+        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
 
-      if (url.protocol !== 'https:' && !isLocalhost) {
+      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
         throw new Error(
-          `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints.`
+          `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints. ` +
+            `(HTTP is permitted for localhost and private network IPs)`
         );
       }
     } catch (_error) {
