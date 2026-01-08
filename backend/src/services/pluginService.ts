@@ -1752,8 +1752,16 @@ class PluginService {
     for (const plugin of allPlugins) {
       // Check if primary type matches
       if (plugin.type === capabilityType) {
+        // Check if no auth is required for image plugins
+        const noAuthRequired =
+          capabilityType === 'image' &&
+          (
+            plugin.capabilities?.image?.config as
+              | Record<string, unknown>
+              | undefined
+          )?.no_auth_required === true;
         const apiKey = this.getApiKey(plugin);
-        if (apiKey) {
+        if (apiKey || noAuthRequired) {
           result.push(plugin);
         }
         continue;
@@ -1762,6 +1770,7 @@ class PluginService {
       // Check capabilities object based on capability type
       if (plugin.capabilities) {
         let hasCapability = false;
+        let noAuthRequired = false;
 
         switch (capabilityType) {
           case 'tts':
@@ -1775,6 +1784,13 @@ class PluginService {
             break;
           case 'image':
             hasCapability = !!plugin.capabilities.image;
+            // Check if no auth is required for image capability
+            noAuthRequired =
+              (
+                plugin.capabilities.image?.config as
+                  | Record<string, unknown>
+                  | undefined
+              )?.no_auth_required === true;
             break;
           case 'completion':
           case 'chat':
@@ -1784,7 +1800,7 @@ class PluginService {
 
         if (hasCapability) {
           const apiKey = this.getApiKey(plugin);
-          if (apiKey) {
+          if (apiKey || noAuthRequired) {
             result.push(plugin);
           }
         }
