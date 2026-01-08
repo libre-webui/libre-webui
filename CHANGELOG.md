@@ -15,6 +15,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.3.1] - 2026-01-08
+
+### What's New
+
+This release focuses on security and stability improvements with a critical fix for plugin authentication handling and updated dependencies. The plugin service now properly respects authentication requirements, ensuring better security for authenticated environments.
+
+### 🔧 Improvements
+
+- Updated React Router to version 7.12.0 for enhanced security and performance
+
+### 🐛 Bug Fixes
+
+- Fixed plugin service to properly respect `no_auth_required` setting when filtering plugins by capability
+
 ## [0.3.0] - 2026-01-08
 
 ### What's New
