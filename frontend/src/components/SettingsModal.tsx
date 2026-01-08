@@ -46,6 +46,7 @@ import {
   EyeOff,
   ChevronDown,
   ChevronUp,
+  ImageIcon,
 } from 'lucide-react';
 import { Button, Select, Textarea } from '@/components/ui';
 import { BackgroundUpload } from '@/components/BackgroundUpload';
@@ -57,9 +58,12 @@ import {
   ollamaApi,
   documentsApi,
   ttsApi,
+  imageGenApi,
   pluginApi,
   TTSModel,
   TTSPlugin,
+  ImageGenModel,
+  ImageGenPlugin,
 } from '@/utils/api';
 import toast from 'react-hot-toast';
 // Import package.json to get version dynamically
@@ -185,6 +189,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [testingTTS, setTestingTTS] = useState(false);
   const [testAudio, setTestAudio] = useState<HTMLAudioElement | null>(null);
 
+  // Image Generation settings state
+  const [imageGenSettings, setImageGenSettings] = useState(
+    preferences.imageGenSettings || {
+      enabled: false,
+      model: '',
+      size: '1024x1024',
+      quality: 'standard',
+      style: 'vivid',
+      pluginId: '',
+    }
+  );
+  const [imageGenModels, setImageGenModels] = useState<ImageGenModel[]>([]);
+  const [imageGenPlugins, setImageGenPlugins] = useState<ImageGenPlugin[]>([]);
+  const [imageGenSizes, setImageGenSizes] = useState<string[]>([]);
+  const [imageGenQualities, setImageGenQualities] = useState<string[]>([]);
+  const [imageGenStyles, setImageGenStyles] = useState<string[]>([]);
+  const [loadingImageGen, setLoadingImageGen] = useState(false);
+
   // Import data state
   const [importing, setImporting] = useState(false);
   const [showImportOptions, setShowImportOptions] = useState(false);
@@ -228,6 +250,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           pluginId: '',
         }
       );
+      setImageGenSettings(
+        preferences.imageGenSettings || {
+          enabled: false,
+          model: '',
+          size: '1024x1024',
+          quality: 'standard',
+          style: 'vivid',
+          pluginId: '',
+        }
+      );
+      loadImageGenData();
       loadPlugins(); // Load plugins when modal opens
       loadPluginCredentials(); // Load plugin API key status
       loadModels(); // Ensure models are up to date when modal opens
@@ -386,6 +419,91 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
+  // Image Generation data loading
+  const loadImageGenData = async () => {
+    setLoadingImageGen(true);
+    try {
+      const [modelsResponse, pluginsResponse] = await Promise.all([
+        imageGenApi.getModels(),
+        imageGenApi.getPlugins(),
+      ]);
+
+      if (modelsResponse.success && modelsResponse.data) {
+        setImageGenModels(modelsResponse.data);
+        // Set default model if not set
+        if (!imageGenSettings.model && modelsResponse.data.length > 0) {
+          const firstModel = modelsResponse.data[0];
+          setImageGenSettings(prev => ({
+            ...prev,
+            model: firstModel.model,
+            pluginId: firstModel.plugin,
+            size: firstModel.config?.default_size || '1024x1024',
+            quality: firstModel.config?.default_quality || 'standard',
+            style: firstModel.config?.default_style || 'vivid',
+          }));
+          // Also load options for this plugin
+          if (firstModel.config?.sizes) {
+            setImageGenSizes(firstModel.config.sizes);
+          }
+          if (firstModel.config?.qualities) {
+            setImageGenQualities(firstModel.config.qualities);
+          }
+          if (firstModel.config?.styles) {
+            setImageGenStyles(firstModel.config.styles);
+          }
+        } else if (imageGenSettings.model) {
+          // Load options for the currently selected model
+          const currentModel = modelsResponse.data.find(
+            m => m.model === imageGenSettings.model
+          );
+          if (currentModel?.config) {
+            if (currentModel.config.sizes) {
+              setImageGenSizes(currentModel.config.sizes);
+            }
+            if (currentModel.config.qualities) {
+              setImageGenQualities(currentModel.config.qualities);
+            }
+            if (currentModel.config.styles) {
+              setImageGenStyles(currentModel.config.styles);
+            }
+          }
+        }
+      }
+
+      if (pluginsResponse.success && pluginsResponse.data) {
+        setImageGenPlugins(pluginsResponse.data);
+      }
+    } catch (error) {
+      console.error('Failed to load image generation data:', error);
+    } finally {
+      setLoadingImageGen(false);
+    }
+  };
+
+  const handleImageGenModelChange = async (modelName: string) => {
+    const selectedModel = imageGenModels.find(m => m.model === modelName);
+    if (selectedModel) {
+      setImageGenSettings(prev => ({
+        ...prev,
+        model: modelName,
+        pluginId: selectedModel.plugin,
+        size: selectedModel.config?.default_size || prev.size,
+        quality: selectedModel.config?.default_quality || prev.quality,
+        style: selectedModel.config?.default_style || prev.style,
+      }));
+      // Update available options
+      if (selectedModel.config?.sizes) {
+        setImageGenSizes(selectedModel.config.sizes);
+      }
+      if (selectedModel.config?.qualities) {
+        setImageGenQualities(selectedModel.config.qualities);
+      }
+      if (selectedModel.config?.styles) {
+        setImageGenStyles(selectedModel.config.styles);
+      }
+    }
+  };
+
   const handleTtsSettingChange = (
     key: keyof typeof ttsSettings,
     value: string | number | boolean
@@ -470,6 +588,44 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       voice: ttsModels[0]?.config?.default_voice || '',
       speed: 1.0,
       pluginId: ttsModels[0]?.plugin || '',
+    });
+  };
+
+  // Image Generation settings handlers
+  const handleImageGenSettingChange = (
+    key: keyof typeof imageGenSettings,
+    value: string | boolean
+  ) => {
+    setImageGenSettings(prev => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleSaveImageGenSettings = async () => {
+    try {
+      const response = await preferencesApi.updatePreferences({
+        imageGenSettings,
+      });
+      if (response.success && response.data) {
+        setPreferences(response.data);
+        toast.success('Image generation settings saved successfully');
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to save image generation settings: ' + errorMessage);
+    }
+  };
+
+  const handleResetImageGenSettings = () => {
+    setImageGenSettings({
+      enabled: false,
+      model: imageGenModels[0]?.model || '',
+      size: imageGenModels[0]?.config?.default_size || '1024x1024',
+      quality: imageGenModels[0]?.config?.default_quality || 'standard',
+      style: imageGenModels[0]?.config?.default_style || 'vivid',
+      pluginId: imageGenModels[0]?.plugin || '',
     });
   };
 
@@ -802,6 +958,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     { id: 'models', label: 'Models', icon: Bot },
     { id: 'generation', label: 'Generation', icon: Sliders },
     { id: 'tts', label: 'Text-to-Speech', icon: Volume2 },
+    { id: 'image-gen', label: 'Image Generation', icon: ImageIcon },
     {
       id: 'documents',
       label: 'Documents & RAG',
@@ -1515,6 +1672,252 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                     <Button
                       onClick={handleSaveTtsSettings}
+                      className='flex items-center gap-2'
+                    >
+                      <Check size={16} />
+                      Save Settings
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'image-gen':
+        return (
+          <div className='space-y-6'>
+            <div>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+                Image Generation Settings
+              </h3>
+              <p className='text-sm text-gray-600 dark:text-gray-400 mb-6'>
+                Configure AI image generation providers and default settings.
+              </p>
+
+              {loadingImageGen ? (
+                <div className='flex items-center justify-center py-8'>
+                  <Loader2 className='h-8 w-8 animate-spin text-primary-500' />
+                  <span className='ml-3 text-gray-600 dark:text-gray-400'>
+                    Loading image generation providers...
+                  </span>
+                </div>
+              ) : imageGenModels.length === 0 ? (
+                <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4'>
+                  <div className='flex items-start gap-3'>
+                    <ImageIcon className='h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5' />
+                    <div>
+                      <h4 className='text-sm font-medium text-yellow-800 dark:text-yellow-200'>
+                        No Image Generation Providers Available
+                      </h4>
+                      <p className='text-sm text-yellow-700 dark:text-yellow-300 mt-1'>
+                        To enable image generation, install a plugin with image
+                        generation capability (like OpenAI DALL-E) and configure
+                        the API key in your environment or via the Plugins tab.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className='space-y-6'>
+                  {/* Enable Image Generation Toggle */}
+                  <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                          Enable Image Generation
+                        </h4>
+                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                          Allow generating images from text prompts
+                        </p>
+                      </div>
+                      <label className='flex items-center cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={imageGenSettings.enabled}
+                          onChange={e =>
+                            handleImageGenSettingChange(
+                              'enabled',
+                              e.target.checked
+                            )
+                          }
+                          className='sr-only'
+                        />
+                        <div
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                            imageGenSettings.enabled
+                              ? 'bg-primary-600 dark:bg-primary-500'
+                              : 'bg-gray-200 dark:bg-dark-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              imageGenSettings.enabled
+                                ? 'translate-x-6'
+                                : 'translate-x-1'
+                            }`}
+                          />
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Image Generation Settings */}
+                  <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                    <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-4'>
+                      Generation Configuration
+                    </h4>
+                    <div className='space-y-4'>
+                      {/* Model Selection */}
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                          Image Model
+                        </label>
+                        <Select
+                          value={imageGenSettings.model}
+                          onChange={e =>
+                            handleImageGenModelChange(e.target.value)
+                          }
+                          disabled={!imageGenSettings.enabled}
+                          options={[
+                            { value: '', label: 'Select a model' },
+                            ...imageGenModels.map(model => ({
+                              value: model.model,
+                              label: `${model.model} (${model.plugin})`,
+                            })),
+                          ]}
+                        />
+                        <p className='text-xs text-gray-500 mt-1'>
+                          The AI model used for image generation
+                        </p>
+                      </div>
+
+                      {/* Size Selection */}
+                      <div>
+                        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                          Image Size
+                        </label>
+                        <Select
+                          value={imageGenSettings.size}
+                          onChange={e =>
+                            handleImageGenSettingChange('size', e.target.value)
+                          }
+                          disabled={
+                            !imageGenSettings.enabled ||
+                            imageGenSizes.length === 0
+                          }
+                          options={[
+                            ...(imageGenSizes.length > 0
+                              ? imageGenSizes.map(size => ({
+                                  value: size,
+                                  label: size,
+                                }))
+                              : [
+                                  { value: '1024x1024', label: '1024x1024' },
+                                  { value: '1792x1024', label: '1792x1024' },
+                                  { value: '1024x1792', label: '1024x1792' },
+                                ]),
+                          ]}
+                        />
+                        <p className='text-xs text-gray-500 mt-1'>
+                          The dimensions of the generated image
+                        </p>
+                      </div>
+
+                      {/* Quality Selection */}
+                      {imageGenQualities.length > 0 && (
+                        <div>
+                          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                            Quality
+                          </label>
+                          <Select
+                            value={imageGenSettings.quality}
+                            onChange={e =>
+                              handleImageGenSettingChange(
+                                'quality',
+                                e.target.value
+                              )
+                            }
+                            disabled={!imageGenSettings.enabled}
+                            options={imageGenQualities.map(quality => ({
+                              value: quality,
+                              label:
+                                quality.charAt(0).toUpperCase() +
+                                quality.slice(1),
+                            }))}
+                          />
+                          <p className='text-xs text-gray-500 mt-1'>
+                            Higher quality may take longer to generate
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Style Selection */}
+                      {imageGenStyles.length > 0 && (
+                        <div>
+                          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                            Style
+                          </label>
+                          <Select
+                            value={imageGenSettings.style}
+                            onChange={e =>
+                              handleImageGenSettingChange(
+                                'style',
+                                e.target.value
+                              )
+                            }
+                            disabled={!imageGenSettings.enabled}
+                            options={imageGenStyles.map(style => ({
+                              value: style,
+                              label:
+                                style.charAt(0).toUpperCase() + style.slice(1),
+                            }))}
+                          />
+                          <p className='text-xs text-gray-500 mt-1'>
+                            The artistic style of the generated image
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Available Providers Info */}
+                  {imageGenPlugins.length > 0 && (
+                    <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                      <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+                        Available Image Generation Providers
+                      </h4>
+                      <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
+                        {imageGenPlugins.map(plugin => (
+                          <div
+                            key={plugin.id}
+                            className='flex items-center gap-2 p-2 bg-white dark:bg-dark-100 rounded border border-gray-200 dark:border-dark-300'
+                          >
+                            <div className='w-2 h-2 rounded-full bg-green-500' />
+                            <span className='text-sm text-gray-700 dark:text-gray-300'>
+                              {plugin.name}
+                            </span>
+                            <span className='text-xs text-gray-500 dark:text-gray-400'>
+                              ({plugin.models?.length || 0} models)
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className='flex justify-between items-center pt-4 border-t border-gray-200 dark:border-dark-300'>
+                    <Button
+                      onClick={handleResetImageGenSettings}
+                      variant='outline'
+                      className='flex items-center gap-2'
+                    >
+                      <RotateCcw size={16} />
+                      Reset
+                    </Button>
+                    <Button
+                      onClick={handleSaveImageGenSettings}
                       className='flex items-center gap-2'
                     >
                       <Check size={16} />

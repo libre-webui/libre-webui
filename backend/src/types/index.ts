@@ -343,6 +343,19 @@ export interface TTSConfig {
   supports_streaming?: boolean; // Whether streaming is supported
 }
 
+// Image Generation-specific configuration
+export interface ImageGenConfig {
+  sizes?: string[]; // Available image sizes (e.g., "1024x1024", "1792x1024")
+  default_size?: string; // Default size to use
+  qualities?: string[]; // Available quality options (e.g., "standard", "hd")
+  default_quality?: string; // Default quality
+  styles?: string[]; // Available style options (e.g., "vivid", "natural")
+  default_style?: string; // Default style
+  max_prompt_length?: number; // Maximum prompt length
+  supports_n?: boolean; // Whether multiple images can be requested
+  max_n?: number; // Maximum number of images per request
+}
+
 // Plugin capabilities for multi-capability plugins
 export interface PluginCapabilities {
   completion?: {
@@ -365,6 +378,7 @@ export interface PluginCapabilities {
   image?: {
     endpoint: string;
     model_map: string[];
+    config?: ImageGenConfig;
   };
 }
 
@@ -395,6 +409,26 @@ export interface TTSResponse {
   format: string;
   model: string;
   voice: string;
+}
+
+// Image Generation Request/Response types
+export interface ImageGenRequest {
+  model: string;
+  prompt: string;
+  size?: string;
+  quality?: string;
+  style?: string;
+  n?: number; // Number of images to generate
+  response_format?: 'url' | 'b64_json';
+}
+
+export interface ImageGenResponse {
+  images: Array<{
+    url?: string;
+    b64_json?: string;
+    revised_prompt?: string;
+  }>;
+  model: string;
 }
 
 export interface PluginStatus {

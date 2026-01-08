@@ -75,6 +75,7 @@ import authRoutes from './routes/auth.js';
 import usersRoutes from './routes/users.js';
 import personaRoutes from './routes/personas.js';
 import ttsRoutes from './routes/tts.js';
+import imageGenRoutes from './routes/imageGen.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import { GitHubOAuthService } from './services/simpleGitHubOAuth.js';
@@ -355,6 +356,7 @@ app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
+app.use('/api/image-gen', optionalAuth, imageGenRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (

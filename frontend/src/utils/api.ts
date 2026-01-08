@@ -1783,4 +1783,126 @@ export const ttsApi = {
   },
 };
 
+// Image Generation API
+export interface ImageGenModel {
+  model: string;
+  plugin: string;
+  config?: {
+    sizes?: string[];
+    default_size?: string;
+    qualities?: string[];
+    default_quality?: string;
+    styles?: string[];
+    default_style?: string;
+    max_prompt_length?: number;
+  };
+}
+
+export interface ImageGenPlugin {
+  id: string;
+  name: string;
+  models: string[];
+  config?: ImageGenModel['config'];
+}
+
+export interface ImageGenRequest {
+  model: string;
+  prompt: string;
+  size?: string;
+  quality?: string;
+  style?: string;
+  n?: number;
+}
+
+export interface ImageGenResponse {
+  images: Array<{
+    url?: string;
+    b64_json?: string;
+    revised_prompt?: string;
+  }>;
+}
+
+export const imageGenApi = {
+  // Get all available image generation models
+  getModels: (): Promise<ApiResponse<ImageGenModel[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<ImageGenModel[]>([
+        {
+          model: 'dall-e-3',
+          plugin: 'openai',
+          config: {
+            sizes: ['1024x1024', '1792x1024', '1024x1792'],
+            default_size: '1024x1024',
+            qualities: ['standard', 'hd'],
+            default_quality: 'standard',
+            styles: ['vivid', 'natural'],
+            default_style: 'vivid',
+            max_prompt_length: 4000,
+          },
+        },
+      ]);
+    }
+
+    return api.get('/image-gen/models').then(res => res.data);
+  },
+
+  // Get image generation plugins
+  getPlugins: (): Promise<ApiResponse<ImageGenPlugin[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<ImageGenPlugin[]>([
+        {
+          id: 'openai',
+          name: 'OpenAI DALL-E',
+          models: ['dall-e-3', 'dall-e-2'],
+          config: {
+            sizes: ['1024x1024', '1792x1024', '1024x1792'],
+            default_size: '1024x1024',
+            qualities: ['standard', 'hd'],
+            default_quality: 'standard',
+          },
+        },
+      ]);
+    }
+
+    return api.get('/image-gen/plugins').then(res => res.data);
+  },
+
+  // Get config for a specific plugin
+  getConfig: (
+    pluginId: string
+  ): Promise<ApiResponse<ImageGenModel['config']>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        sizes: ['1024x1024', '1792x1024', '1024x1792'],
+        default_size: '1024x1024',
+        qualities: ['standard', 'hd'],
+        default_quality: 'standard',
+        styles: ['vivid', 'natural'],
+        default_style: 'vivid',
+        max_prompt_length: 4000,
+      });
+    }
+
+    return api.get(`/image-gen/config/${pluginId}`).then(res => res.data);
+  },
+
+  // Generate image
+  generate: (
+    request: ImageGenRequest
+  ): Promise<ApiResponse<ImageGenResponse>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<ImageGenResponse>({
+        images: [
+          {
+            url: 'https://placehold.co/1024x1024/purple/white?text=Demo+Image',
+            revised_prompt: request.prompt,
+          },
+        ],
+      });
+    }
+
+    return api.post('/image-gen/generate', request).then(res => res.data);
+  },
+};
+
 export default api;

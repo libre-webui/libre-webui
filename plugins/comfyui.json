@@ -1,0 +1,35 @@
+{
+  "id": "comfyui",
+  "name": "ComfyUI Flux",
+  "type": "image",
+  "endpoint": "http://192.168.2.112:8189/prompt",
+  "auth": {
+    "header": "X-ComfyUI-Auth",
+    "prefix": "",
+    "key_env": "COMFYUI_API_KEY",
+    "optional": true
+  },
+  "model_map": [
+    "flux1-dev",
+    "flux1-dev-fp8",
+    "flux1-schnell"
+  ],
+  "capabilities": {
+    "image": {
+      "endpoint": "http://192.168.2.112:8189/prompt",
+      "model_map": [
+        "flux1-dev",
+        "flux1-dev-fp8",
+        "flux1-schnell"
+      ],
+      "config": {
+        "sizes": ["512x512", "768x768", "1024x1024", "1280x720", "720x1280", "1920x1080", "1080x1920"],
+        "default_size": "1024x1024",
+        "qualities": ["standard", "high"],
+        "default_quality": "standard",
+        "max_prompt_length": 2000,
+        "no_auth_required": true
+      }
+    }
+  }
+}

@@ -163,6 +163,15 @@ export interface TTSSettings {
   pluginId?: string;
 }
 
+export interface ImageGenSettings {
+  enabled: boolean;
+  model: string;
+  size: string;
+  quality: string;
+  style: string;
+  pluginId?: string;
+}
+
 export interface TitleSettings {
   autoTitle: boolean;
   taskModel: string;
@@ -181,6 +190,7 @@ export interface UserPreferences {
     similarityThreshold: number;
   };
   ttsSettings?: TTSSettings;
+  imageGenSettings?: ImageGenSettings;
   titleSettings?: TitleSettings;
   showUsername: boolean; // If true, show username in chat; if false, show "you"
   backgroundSettings?: {
@@ -259,7 +269,7 @@ export interface PluginAuthConfig {
 export interface Plugin {
   id: string;
   name: string;
-  type: 'completion' | 'embedding' | 'chat' | 'tts';
+  type: 'completion' | 'embedding' | 'chat' | 'tts' | 'image';
   endpoint: string;
   auth: PluginAuthConfig;
   model_map: string[];

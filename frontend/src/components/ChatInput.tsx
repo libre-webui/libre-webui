@@ -23,9 +23,10 @@ import { MediaUpload } from './MediaUpload';
 import { DocumentIndicator } from './DocumentIndicator';
 import { StructuredOutput } from './StructuredOutput';
 import { ModelSelector } from './ModelSelector';
+import { ImageGenerationPanel } from './ImageGenerationPanel';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
-import { personaApi, chatApi } from '@/utils/api';
+import { personaApi, chatApi, imageGenApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 import { Persona } from '@/types';
@@ -52,9 +53,26 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
+  const [showImageGen, setShowImageGen] = useState(false);
+  const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
   const { isGenerating, setBackgroundImage } = useAppStore();
   const { currentSession, models } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Check if image generation plugins are available
+  useEffect(() => {
+    const checkImageGenPlugins = async () => {
+      try {
+        const response = await imageGenApi.getPlugins();
+        setHasImageGenPlugins(
+          !!(response.success && response.data && response.data.length > 0)
+        );
+      } catch {
+        setHasImageGenPlugins(false);
+      }
+    };
+    checkImageGenPlugins();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -315,6 +333,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       currentPersona={currentPersona}
                       className='min-w-[160px] max-w-[240px] border-0 bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 rounded-xl text-sm hover:bg-gray-200/80 dark:hover:bg-dark-200/60 ophelia:hover:bg-[#262626]/80 transition-colors duration-200'
                       compact
+                      showImageGen={hasImageGenPlugins}
+                      onImageGenClick={() => setShowImageGen(true)}
                     />
                   </div>
                 )}
@@ -381,6 +401,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 currentPersona={currentPersona}
                 className='w-full rounded-xl bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 border-0 transition-colors duration-200'
                 compact
+                showImageGen={hasImageGenPlugins}
+                onImageGenClick={() => setShowImageGen(true)}
               />
             </div>
           )}
@@ -425,6 +447,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Image Generation Panel */}
+      <ImageGenerationPanel
+        isOpen={showImageGen}
+        onClose={() => setShowImageGen(false)}
+        onImageGenerated={(imageData, prompt, model) => {
+          // Send the generated image to chat with the prompt as context
+          const messageText = `Generated image using ${model}:\n"${prompt}"`;
+          onSendMessage(messageText, [imageData]);
+        }}
+      />
     </div>
   );
 };

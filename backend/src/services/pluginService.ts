@@ -26,6 +26,8 @@ import {
   ChatMessage,
   GenerationOptions,
   TTSConfig,
+  ImageGenConfig,
+  ImageGenResponse,
   PluginType,
 } from '../types/index.js';
 import pluginCredentialsService from './pluginCredentialsService.js';
@@ -1219,6 +1221,512 @@ class PluginService {
 
     if (plugin.capabilities?.tts?.config) {
       return plugin.capabilities.tts.config;
+    }
+
+    return null;
+  }
+
+  // ==================== Image Generation Methods ====================
+
+  // Get plugin that supports a specific image generation model
+  getPluginForImageGen(model: string): Plugin | null {
+    const allPlugins = this.getAllPlugins();
+
+    for (const plugin of allPlugins) {
+      // Check capabilities-based image generation
+      if (plugin.capabilities?.image) {
+        const imageCapability = plugin.capabilities.image;
+        if (imageCapability.model_map.includes(model)) {
+          return plugin;
+        }
+      }
+
+      // Check primary type for image-only plugins
+      if (plugin.type === 'image' && plugin.model_map.includes(model)) {
+        return plugin;
+      }
+    }
+
+    console.log(`[DEBUG] No image generation plugin found for model: ${model}`);
+    return null;
+  }
+
+  // Get all available image generation models from all plugins
+  getAvailableImageGenModels(): {
+    model: string;
+    plugin: string;
+    config?: ImageGenConfig;
+  }[] {
+    const models: { model: string; plugin: string; config?: ImageGenConfig }[] =
+      [];
+    const allPlugins = this.getAllPlugins();
+
+    for (const plugin of allPlugins) {
+      // Check capabilities-based image generation
+      if (plugin.capabilities?.image) {
+        const imageCapability = plugin.capabilities.image;
+        // Check if API key is available (from DB or env) or if no auth is required
+        const noAuthRequired =
+          (imageCapability.config as Record<string, unknown> | undefined)
+            ?.no_auth_required === true;
+        const apiKey = this.getApiKey(plugin);
+        if (apiKey || noAuthRequired) {
+          for (const model of imageCapability.model_map) {
+            models.push({
+              model,
+              plugin: plugin.id,
+              config: imageCapability.config,
+            });
+          }
+        }
+      }
+
+      // Check primary type for image-only plugins
+      if (plugin.type === 'image') {
+        const apiKey = this.getApiKey(plugin);
+        if (apiKey) {
+          for (const model of plugin.model_map) {
+            models.push({
+              model,
+              plugin: plugin.id,
+            });
+          }
+        }
+      }
+    }
+
+    return models;
+  }
+
+  // Execute an image generation request through the appropriate plugin
+  async executeImageGenRequest(
+    model: string,
+    prompt: string,
+    options: {
+      size?: string;
+      quality?: string;
+      style?: string;
+      n?: number;
+      response_format?: 'url' | 'b64_json';
+    } = {}
+  ): Promise<ImageGenResponse> {
+    // Validate model parameter
+    if (!model || typeof model !== 'string') {
+      throw new Error('Invalid model parameter: must be a non-empty string');
+    }
+
+    // Sanitize model parameter
+    const modelPattern = /^[a-zA-Z0-9\-_:.]+$/;
+    if (!modelPattern.test(model)) {
+      throw new Error(
+        `Invalid model parameter: ${model} contains invalid characters`
+      );
+    }
+
+    // Validate prompt
+    if (!prompt || typeof prompt !== 'string') {
+      throw new Error('Invalid prompt: must be a non-empty string');
+    }
+
+    const plugin = this.getPluginForImageGen(model);
+    if (!plugin) {
+      throw new Error(`No image generation plugin found for model: ${model}`);
+    }
+
+    // Determine endpoint and config first (needed for auth check)
+    let endpoint: string;
+    let imageConfig: ImageGenConfig | undefined;
+
+    if (plugin.capabilities?.image) {
+      endpoint = plugin.capabilities.image.endpoint;
+      imageConfig = plugin.capabilities.image.config;
+    } else {
+      endpoint = plugin.endpoint;
+    }
+
+    // Get API key from database (per-user) or environment variable (fallback)
+    // Some plugins (like local ComfyUI) don't require auth
+    const noAuthRequired =
+      (imageConfig as Record<string, unknown> | undefined)?.no_auth_required === true;
+    const apiKey = this.getApiKey(plugin);
+    if (!apiKey && !noAuthRequired) {
+      throw new Error(
+        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
+      );
+    }
+
+    // Validate prompt length
+    if (imageConfig?.max_prompt_length && prompt.length > imageConfig.max_prompt_length) {
+      throw new Error(
+        `Prompt exceeds maximum length of ${imageConfig.max_prompt_length} characters`
+      );
+    }
+
+    // Build headers
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Only add auth header if API key is available
+    if (apiKey) {
+      if (plugin.auth.prefix) {
+        headers[plugin.auth.header] = `${plugin.auth.prefix}${apiKey}`;
+      } else {
+        headers[plugin.auth.header] = apiKey;
+      }
+    }
+
+    // Build payload (OpenAI-compatible format)
+    const payload: Record<string, unknown> = {
+      model,
+      prompt,
+      size: options.size || imageConfig?.default_size || '1024x1024',
+      quality: options.quality || imageConfig?.default_quality || 'standard',
+      n: options.n || 1,
+      response_format: options.response_format || 'url',
+    };
+
+    // Add style if supported
+    if (options.style || imageConfig?.default_style) {
+      payload.style = options.style || imageConfig?.default_style;
+    }
+
+    // Validate the final endpoint URL
+    let baseUrl: URL;
+    try {
+      baseUrl = new URL(endpoint);
+      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
+        baseUrl.hostname
+      );
+      const isPrivateNetwork =
+        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(baseUrl.hostname);
+
+      if (baseUrl.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
+        throw new Error(
+          `Insecure endpoint protocol: ${baseUrl.protocol}. Only HTTPS is allowed for remote endpoints.`
+        );
+      }
+    } catch (_error) {
+      throw new Error(`Invalid endpoint URL: ${endpoint}`);
+    }
+
+    // Check if this is ComfyUI (special handling required)
+    if (plugin.id === 'comfyui' || endpoint.includes('/prompt')) {
+      return this.executeComfyUIRequest(baseUrl, prompt, { ...options, model });
+    }
+
+    try {
+      const response = await axios.post(endpoint, payload, {
+        headers,
+        timeout: 120000, // 2 minute timeout for image generation
+      });
+
+      // Handle OpenAI-style response
+      if (response.data?.data) {
+        return {
+          images: response.data.data.map(
+            (img: { url?: string; b64_json?: string; revised_prompt?: string }) => ({
+              url: img.url,
+              b64_json: img.b64_json,
+              revised_prompt: img.revised_prompt,
+            })
+          ),
+          model,
+        };
+      }
+
+      // Handle direct response format
+      return {
+        images: Array.isArray(response.data) ? response.data : [response.data],
+        model,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.error?.message ||
+          error.response?.data?.message ||
+          error.message;
+        throw new Error(`Image generation failed: ${message}`);
+      }
+      throw error;
+    }
+  }
+
+  // Execute ComfyUI image generation request (Flux.1 workflow)
+  private async executeComfyUIRequest(
+    baseUrl: URL,
+    prompt: string,
+    options: {
+      size?: string;
+      quality?: string;
+      model?: string;
+    } = {}
+  ): Promise<ImageGenResponse> {
+    const comfyBaseUrl = `${baseUrl.protocol}//${baseUrl.host}`;
+
+    // Parse size
+    const size = options.size || '1024x1024';
+    const [width, height] = size.split('x').map(Number);
+
+    // Determine model-specific settings
+    const model = options.model || 'flux1-dev';
+
+    // Model configurations for Flux variants
+    interface FluxModelConfig {
+      unetFile: string;
+      t5File: string;
+      steps: { standard: number; high: number };
+      guidance: number;
+      useCheckpointLoader: boolean;
+    }
+
+    const modelConfigs: Record<string, FluxModelConfig> = {
+      'flux1-dev': {
+        unetFile: 'flux1-dev.safetensors',
+        t5File: 't5xxl_fp16.safetensors',
+        steps: { standard: 20, high: 28 },
+        guidance: 3.5,
+        useCheckpointLoader: false,
+      },
+      'flux1-dev-fp8': {
+        unetFile: 'flux1-dev-fp8.safetensors',
+        t5File: 't5xxl_fp8_e4m3fn_scaled.safetensors',
+        steps: { standard: 20, high: 28 },
+        guidance: 3.5,
+        useCheckpointLoader: false,
+      },
+      'flux1-schnell': {
+        unetFile: 'flux1-schnell.safetensors',
+        t5File: 't5xxl_fp16.safetensors',
+        steps: { standard: 4, high: 6 },
+        guidance: 0, // Schnell doesn't use guidance
+        useCheckpointLoader: false,
+      },
+    };
+
+    const config = modelConfigs[model] || modelConfigs['flux1-dev'];
+    const steps = options.quality === 'high' ? config.steps.high : config.steps.standard;
+
+    // Create a Flux.1 workflow for ComfyUI
+    // Flux uses UNET loader + dual CLIP + VAE separately
+    const workflow: Record<string, unknown> = {
+      '6': {
+        inputs: {
+          text: prompt,
+          clip: ['11', 0],
+        },
+        class_type: 'CLIPTextEncode',
+        _meta: { title: 'CLIP Text Encode (Prompt)' },
+      },
+      '8': {
+        inputs: {
+          samples: ['13', 0],
+          vae: ['10', 0],
+        },
+        class_type: 'VAEDecode',
+        _meta: { title: 'VAE Decode' },
+      },
+      '9': {
+        inputs: {
+          filename_prefix: `LibreWebUI_${model}`,
+          images: ['8', 0],
+        },
+        class_type: 'SaveImage',
+        _meta: { title: 'Save Image' },
+      },
+      '10': {
+        inputs: {
+          vae_name: 'ae.safetensors',
+        },
+        class_type: 'VAELoader',
+        _meta: { title: 'Load VAE' },
+      },
+      '11': {
+        inputs: {
+          clip_name1: 'clip_l.safetensors',
+          clip_name2: config.t5File,
+          type: 'flux',
+        },
+        class_type: 'DualCLIPLoader',
+        _meta: { title: 'DualCLIPLoader' },
+      },
+      '12': {
+        inputs: {
+          unet_name: config.unetFile,
+          weight_dtype: 'default',
+        },
+        class_type: 'UNETLoader',
+        _meta: { title: 'Load Diffusion Model' },
+      },
+      '13': {
+        inputs: {
+          noise: ['25', 0],
+          guider: ['22', 0],
+          sampler: ['16', 0],
+          sigmas: ['17', 0],
+          latent_image: ['27', 0],
+        },
+        class_type: 'SamplerCustomAdvanced',
+        _meta: { title: 'SamplerCustomAdvanced' },
+      },
+      '16': {
+        inputs: {
+          sampler_name: 'euler',
+        },
+        class_type: 'KSamplerSelect',
+        _meta: { title: 'KSamplerSelect' },
+      },
+      '17': {
+        inputs: {
+          scheduler: 'simple',
+          steps: steps,
+          denoise: 1,
+          model: ['12', 0],
+        },
+        class_type: 'BasicScheduler',
+        _meta: { title: 'BasicScheduler' },
+      },
+      '22': {
+        inputs: {
+          model: ['12', 0],
+          conditioning: config.guidance > 0 ? ['26', 0] : ['6', 0],
+        },
+        class_type: 'BasicGuider',
+        _meta: { title: 'BasicGuider' },
+      },
+      '25': {
+        inputs: {
+          noise_seed: Math.floor(Math.random() * 1000000000000000),
+        },
+        class_type: 'RandomNoise',
+        _meta: { title: 'RandomNoise' },
+      },
+      '27': {
+        inputs: {
+          width: width,
+          height: height,
+          batch_size: 1,
+        },
+        class_type: 'EmptySD3LatentImage',
+        _meta: { title: 'EmptySD3LatentImage' },
+      },
+    };
+
+    // Only add FluxGuidance node if guidance > 0 (not needed for schnell)
+    if (config.guidance > 0) {
+      workflow['26'] = {
+        inputs: {
+          guidance: config.guidance,
+          conditioning: ['6', 0],
+        },
+        class_type: 'FluxGuidance',
+        _meta: { title: 'FluxGuidance' },
+      };
+    }
+
+    try {
+      // Generate a unique client ID
+      const clientId = `libre-webui-${Date.now()}`;
+
+      // Submit the workflow
+      const promptResponse = await axios.post(
+        `${comfyBaseUrl}/prompt`,
+        {
+          prompt: workflow,
+          client_id: clientId,
+        },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000,
+        }
+      );
+
+      const promptId = promptResponse.data.prompt_id;
+      if (!promptId) {
+        throw new Error('Failed to get prompt ID from ComfyUI');
+      }
+
+      // Poll for completion
+      let completed = false;
+      let attempts = 0;
+      const maxAttempts = 120; // 2 minutes with 1 second intervals
+
+      while (!completed && attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        attempts++;
+
+        const historyResponse = await axios.get(
+          `${comfyBaseUrl}/history/${promptId}`,
+          { timeout: 5000 }
+        );
+
+        if (historyResponse.data[promptId]) {
+          const outputs = historyResponse.data[promptId].outputs;
+          if (outputs && Object.keys(outputs).length > 0) {
+            completed = true;
+
+            // Find the SaveImage output
+            for (const nodeId in outputs) {
+              const nodeOutput = outputs[nodeId];
+              if (nodeOutput.images && nodeOutput.images.length > 0) {
+                const imageInfo = nodeOutput.images[0];
+
+                // Get the image data
+                const imageUrl = `${comfyBaseUrl}/view?filename=${encodeURIComponent(
+                  imageInfo.filename
+                )}&subfolder=${encodeURIComponent(
+                  imageInfo.subfolder || ''
+                )}&type=${encodeURIComponent(imageInfo.type || 'output')}`;
+
+                // Fetch image and convert to base64
+                const imageResponse = await axios.get(imageUrl, {
+                  responseType: 'arraybuffer',
+                  timeout: 30000,
+                });
+
+                const base64Image = Buffer.from(imageResponse.data).toString(
+                  'base64'
+                );
+
+                return {
+                  images: [
+                    {
+                      b64_json: base64Image,
+                      revised_prompt: prompt,
+                    },
+                  ],
+                  model,
+                };
+              }
+            }
+          }
+        }
+      }
+
+      if (!completed) {
+        throw new Error('ComfyUI generation timed out');
+      }
+
+      throw new Error('No image output found from ComfyUI');
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const message =
+          error.response?.data?.error ||
+          error.response?.data?.message ||
+          error.message;
+        throw new Error(`ComfyUI generation failed: ${message}`);
+      }
+      throw error;
+    }
+  }
+
+  // Get image generation configuration for a specific plugin
+  getImageGenConfig(pluginId: string): ImageGenConfig | null {
+    const plugin = this.getPlugin(pluginId);
+    if (!plugin) return null;
+
+    if (plugin.capabilities?.image?.config) {
+      return plugin.capabilities.image.config;
     }
 
     return null;

@@ -494,9 +494,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
       try {
         const pluginsResponse = await pluginApi.getAllPlugins();
         if (pluginsResponse.success && pluginsResponse.data) {
-          // Find ALL active plugins and add their models (excluding TTS-only plugins)
+          // Find ALL active plugins and add their models (excluding TTS and image generation plugins)
           const activePlugins = pluginsResponse.data.filter(
-            plugin => plugin.active && plugin.type !== 'tts'
+            plugin => plugin.active && plugin.type !== 'tts' && plugin.type !== 'image'
           );
           console.log(
             '🔌 Active plugins found:',

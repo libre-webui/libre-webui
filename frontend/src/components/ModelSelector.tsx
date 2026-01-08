@@ -26,6 +26,8 @@ import {
   Sparkles,
   Bot,
   Zap,
+  ImageIcon,
+  Plus,
 } from 'lucide-react';
 import { cn } from '@/utils';
 import { OllamaModel, Persona } from '@/types';
@@ -46,6 +48,8 @@ interface ModelSelectorProps {
   className?: string;
   disabled?: boolean;
   compact?: boolean;
+  onImageGenClick?: () => void;
+  showImageGen?: boolean;
 }
 
 export const ModelSelector: React.FC<ModelSelectorProps> = ({
@@ -56,6 +60,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   className,
   disabled = false,
   compact = false,
+  onImageGenClick,
+  showImageGen = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -372,6 +378,48 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   <div className='px-4 py-8 text-center text-gray-500 dark:text-gray-400 ophelia:text-[#737373] bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]'>
                     <Cpu className='h-8 w-8 mx-auto mb-2 text-gray-300 dark:text-gray-600 ophelia:text-[#525252]' />
                     <p className='text-sm'>No models found</p>
+                  </div>
+                )}
+
+                {/* Image Generation Action */}
+                {showImageGen && onImageGenClick && (
+                  <div className='border-t border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'>
+                    <div className='px-3 sm:px-3 py-2.5 sm:py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3] bg-gray-100 dark:bg-dark-300 ophelia:bg-[#0a0a0a] border-b border-gray-200 dark:border-dark-400 ophelia:border-[#1a1a1a]'>
+                      <div className='flex items-center gap-2'>
+                        <Plus className='h-4 w-4 text-blue-600 dark:text-blue-400 ophelia:text-[#a855f7]' />
+                        Actions
+                      </div>
+                    </div>
+                    <div
+                      onMouseDown={e => {
+                        e.preventDefault();
+                        setIsOpen(false);
+                        onImageGenClick();
+                      }}
+                      onTouchStart={e => {
+                        e.preventDefault();
+                        setIsOpen(false);
+                        onImageGenClick();
+                      }}
+                      className={cn(
+                        'px-3 sm:px-4 py-3.5 sm:py-3 cursor-pointer',
+                        'hover:bg-blue-50 dark:hover:bg-blue-900/20 ophelia:hover:bg-[rgba(147,51,234,0.1)]',
+                        'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a] touch-manipulation',
+                        'transition-colors duration-150 ease-in-out'
+                      )}
+                    >
+                      <div className='flex items-center gap-3'>
+                        <ImageIcon className='h-4 w-4 text-blue-600 dark:text-blue-400 ophelia:text-[#a855f7]' />
+                        <div className='flex-1 min-w-0'>
+                          <div className='text-sm font-medium text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                            Generate Image
+                          </div>
+                          <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+                            Create images with AI
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
