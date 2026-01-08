@@ -341,6 +341,19 @@ const ttsRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for image generation routes (stricter limits applied within route)
+const imageGenRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
+  message: {
+    success: false,
+    error:
+      'Too many image generation requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // API routes
 app.use('/api/auth', authRateLimiter, optionalAuth, authRoutes);
 app.use('/api/users', usersRateLimiter, optionalAuth, usersRoutes);
@@ -356,7 +369,7 @@ app.use('/api/plugins', pluginRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
-app.use('/api/image-gen', optionalAuth, imageGenRoutes);
+app.use('/api/image-gen', imageGenRateLimiter, optionalAuth, imageGenRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (

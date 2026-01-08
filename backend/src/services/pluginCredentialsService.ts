@@ -62,7 +62,7 @@ class PluginCredentialsService {
           }
         }
       } catch (error) {
-        console.error(`Failed to get API key for plugin ${pluginId}:`, error);
+        console.error('Failed to get API key for plugin %s:', pluginId, error);
       }
     }
 
@@ -148,7 +148,7 @@ class PluginCredentialsService {
       );
       return true;
     } catch (error) {
-      console.error(`Failed to set API key for plugin ${pluginId}:`, error);
+      console.error('Failed to set API key for plugin %s:', pluginId, error);
       return false;
     }
   }
@@ -179,7 +179,7 @@ class PluginCredentialsService {
       }
       return false;
     } catch (error) {
-      console.error(`Failed to delete API key for plugin ${pluginId}:`, error);
+      console.error('Failed to delete API key for plugin %s:', pluginId, error);
       return false;
     }
   }

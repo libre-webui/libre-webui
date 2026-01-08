@@ -35,6 +35,18 @@ const imageGenRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for gallery routes: 60 requests per minute
+const galleryRateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // limit each IP to 60 requests per windowMs
+  message: {
+    success: false,
+    message: 'Too many gallery requests, please try again later',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /**
  * GET /api/image-gen/models
  * Get all available image generation models from plugins
@@ -245,26 +257,31 @@ router.post(
  * GET /api/image-gen/gallery
  * Get user's generated images with pagination
  */
-router.get('/gallery', optionalAuth, async (req: AuthenticatedRequest, res) => {
-  try {
-    const userId = req.user?.userId || 'default';
-    const limit = parseInt(req.query.limit as string) || 20;
-    const offset = parseInt(req.query.offset as string) || 0;
+router.get(
+  '/gallery',
+  galleryRateLimiter,
+  optionalAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const limit = parseInt(req.query.limit as string) || 20;
+      const offset = parseInt(req.query.offset as string) || 0;
 
-    const result = galleryService.getImages(userId, { limit, offset });
+      const result = galleryService.getImages(userId, { limit, offset });
 
-    res.json({
-      success: true,
-      data: result,
-    });
-  } catch (error) {
-    console.error('Failed to get gallery images:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get gallery images',
-    });
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error('Failed to get gallery images:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get gallery images',
+      });
+    }
   }
-});
+);
 
 /**
  * GET /api/image-gen/gallery/:imageId
@@ -272,6 +289,7 @@ router.get('/gallery', optionalAuth, async (req: AuthenticatedRequest, res) => {
  */
 router.get(
   '/gallery/:imageId',
+  galleryRateLimiter,
   optionalAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -308,6 +326,7 @@ router.get(
  */
 router.delete(
   '/gallery/:imageId',
+  galleryRateLimiter,
   optionalAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
