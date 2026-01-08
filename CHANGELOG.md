@@ -15,6 +15,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.2.9] - 2026-01-08
+
+### What's New
+
+This release introduces a major overhaul of the artifacts viewing experience with a new slide-out panel system and resizable interface. We've also added secure per-user API key storage for plugins, giving users better control over their plugin credentials.
+
+### ✨ New Features
+
+- **Artifacts slide-out panel**: View artifacts in a dedicated resizable panel with drag handle for better content inspection
+- **Per-user plugin API keys**: Store and manage API keys securely on a per-user basis for enhanced plugin functionality
+
+### 🔧 Improvements
+
+- Enhanced input field styling consistency across dark and light themes
+- Updated plugin interface with improved button alignment and status indicators
+
+### 🐛 Bug Fixes
+
+- Fixed artifact expand button visibility when titles are too long
+- Prevented inline artifact height overflow by adding proper constraints
+- Resolved package version synchronization issues
+- Corrected plugin status dot visibility problems
+
 ## [0.2.8] - 2026-01-07
 
 ### 🐛 Bug Fixes
