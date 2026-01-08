@@ -18,6 +18,8 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
+import galleryService from '../services/galleryService.js';
+import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -113,92 +115,227 @@ router.get('/plugins', async (_req, res) => {
 /**
  * POST /api/image-gen/generate
  * Generate an image using an image generation plugin
+ * Auto-saves generated images to the user's gallery
  */
-router.post('/generate', imageGenRateLimiter, async (req, res) => {
-  try {
-    const { model, prompt, size, quality, style, n, response_format } =
-      req.body;
+router.post(
+  '/generate',
+  optionalAuth,
+  imageGenRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { model, prompt, size, quality, style, n, response_format } =
+        req.body;
 
-    // Validate required fields
-    if (!model || typeof model !== 'string') {
-      res.status(400).json({
-        success: false,
-        message: 'Model is required and must be a string',
-      });
-      return;
-    }
-
-    if (!prompt || typeof prompt !== 'string') {
-      res.status(400).json({
-        success: false,
-        message: 'Prompt is required and must be a string',
-      });
-      return;
-    }
-
-    if (prompt.length === 0) {
-      res.status(400).json({
-        success: false,
-        message: 'Prompt cannot be empty',
-      });
-      return;
-    }
-
-    // Validate optional parameters
-    if (n !== undefined) {
-      const nNum = Number(n);
-      if (isNaN(nNum) || nNum < 1 || nNum > 10) {
+      // Validate required fields
+      if (!model || typeof model !== 'string') {
         res.status(400).json({
           success: false,
-          message: 'n must be a number between 1 and 10',
+          message: 'Model is required and must be a string',
         });
         return;
       }
-    }
 
-    const validFormats = ['url', 'b64_json'];
-    if (response_format && !validFormats.includes(response_format)) {
-      res.status(400).json({
-        success: false,
-        message: `Invalid response_format. Must be one of: ${validFormats.join(', ')}`,
+      if (!prompt || typeof prompt !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Prompt is required and must be a string',
+        });
+        return;
+      }
+
+      if (prompt.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Prompt cannot be empty',
+        });
+        return;
+      }
+
+      // Validate optional parameters
+      if (n !== undefined) {
+        const nNum = Number(n);
+        if (isNaN(nNum) || nNum < 1 || nNum > 10) {
+          res.status(400).json({
+            success: false,
+            message: 'n must be a number between 1 and 10',
+          });
+          return;
+        }
+      }
+
+      const validFormats = ['url', 'b64_json'];
+      if (response_format && !validFormats.includes(response_format)) {
+        res.status(400).json({
+          success: false,
+          message: `Invalid response_format. Must be one of: ${validFormats.join(', ')}`,
+        });
+        return;
+      }
+
+      // Execute image generation request
+      const result = await pluginService.executeImageGenRequest(model, prompt, {
+        size,
+        quality,
+        style,
+        n,
+        response_format,
       });
-      return;
-    }
 
-    // Execute image generation request
-    const result = await pluginService.executeImageGenRequest(model, prompt, {
-      size,
-      quality,
-      style,
-      n,
-      response_format,
-    });
+      // Auto-save generated images to gallery
+      const userId = req.user?.userId || 'default';
+      const savedImages: string[] = [];
+
+      if (result.images && result.images.length > 0) {
+        for (const image of result.images) {
+          // Get the image data as base64 data URL
+          let imageData: string | null = null;
+          if (image.b64_json) {
+            imageData = `data:image/png;base64,${image.b64_json}`;
+          } else if (image.url) {
+            imageData = image.url;
+          }
+
+          if (imageData) {
+            const saved = galleryService.saveImage(userId, {
+              prompt,
+              model,
+              imageData,
+              size,
+              quality,
+            });
+            if (saved) {
+              savedImages.push(saved.id);
+            }
+          }
+        }
+      }
+
+      res.json({
+        success: true,
+        data: {
+          ...result,
+          savedToGallery: savedImages,
+        },
+      });
+    } catch (error) {
+      console.error('Image generation failed:', error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      // Determine appropriate status code
+      let statusCode = 500;
+      if (errorMessage.includes('No image generation plugin found')) {
+        statusCode = 404;
+      } else if (errorMessage.includes('API key not found')) {
+        statusCode = 503; // Service unavailable
+      } else if (errorMessage.includes('exceeds maximum')) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        message: errorMessage,
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/image-gen/gallery
+ * Get user's generated images with pagination
+ */
+router.get('/gallery', optionalAuth, async (req: AuthenticatedRequest, res) => {
+  try {
+    const userId = req.user?.userId || 'default';
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = parseInt(req.query.offset as string) || 0;
+
+    const result = galleryService.getImages(userId, { limit, offset });
 
     res.json({
       success: true,
       data: result,
     });
   } catch (error) {
-    console.error('Image generation failed:', error);
-
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-
-    // Determine appropriate status code
-    let statusCode = 500;
-    if (errorMessage.includes('No image generation plugin found')) {
-      statusCode = 404;
-    } else if (errorMessage.includes('API key not found')) {
-      statusCode = 503; // Service unavailable
-    } else if (errorMessage.includes('exceeds maximum')) {
-      statusCode = 400;
-    }
-
-    res.status(statusCode).json({
+    console.error('Failed to get gallery images:', error);
+    res.status(500).json({
       success: false,
-      message: errorMessage,
+      message: 'Failed to get gallery images',
     });
   }
 });
+
+/**
+ * GET /api/image-gen/gallery/:imageId
+ * Get a single image by ID
+ */
+router.get(
+  '/gallery/:imageId',
+  optionalAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const { imageId } = req.params;
+
+      const image = galleryService.getImage(imageId, userId);
+
+      if (!image) {
+        res.status(404).json({
+          success: false,
+          message: 'Image not found',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        data: image,
+      });
+    } catch (error) {
+      console.error('Failed to get gallery image:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get gallery image',
+      });
+    }
+  }
+);
+
+/**
+ * DELETE /api/image-gen/gallery/:imageId
+ * Delete an image from the gallery
+ */
+router.delete(
+  '/gallery/:imageId',
+  optionalAuth,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const userId = req.user?.userId || 'default';
+      const { imageId } = req.params;
+
+      const deleted = galleryService.deleteImage(imageId, userId);
+
+      if (!deleted) {
+        res.status(404).json({
+          success: false,
+          message: 'Image not found or already deleted',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        message: 'Image deleted successfully',
+      });
+    } catch (error) {
+      console.error('Failed to delete gallery image:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete gallery image',
+      });
+    }
+  }
+);
 
 export default router;

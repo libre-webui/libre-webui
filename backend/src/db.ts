@@ -255,6 +255,21 @@ function initializeTables(): void {
     )
   `);
 
+  // Generated images table - for image gallery
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS generated_images (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL DEFAULT 'default',
+      prompt TEXT NOT NULL,
+      model TEXT NOT NULL,
+      image_data TEXT NOT NULL,
+      size TEXT,
+      quality TEXT,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   // Create indexes for better performance
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
@@ -271,6 +286,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_personas_name ON personas(name);
     CREATE INDEX IF NOT EXISTS idx_plugin_credentials_user_id ON plugin_credentials(user_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_credentials_plugin_id ON plugin_credentials(plugin_id);
+    CREATE INDEX IF NOT EXISTS idx_generated_images_user_id ON generated_images(user_id);
+    CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
   `);
 
   console.log('Database tables initialized successfully');

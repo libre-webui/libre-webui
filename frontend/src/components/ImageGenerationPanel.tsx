@@ -147,7 +147,11 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         quality,
       });
 
-      if (response.success && response.data?.images && response.data.images.length > 0) {
+      if (
+        response.success &&
+        response.data?.images &&
+        response.data.images.length > 0
+      ) {
         const image = response.data.images[0];
         let imageData: string | null = null;
 

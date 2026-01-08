@@ -68,6 +68,7 @@ import toast from 'react-hot-toast';
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
 const ModelsPage = React.lazy(() => import('@/pages/ModelsPage'));
 const PersonasPage = React.lazy(() => import('@/pages/PersonasPage'));
+const GalleryPage = React.lazy(() => import('@/pages/GalleryPage'));
 const UserManagementPage = React.lazy(
   () => import('@/pages/UserManagementPage')
 );
@@ -525,6 +526,10 @@ const App: React.FC = () => {
                               <Route
                                 path='/personas'
                                 element={<PersonasPage />}
+                              />
+                              <Route
+                                path='/gallery'
+                                element={<GalleryPage />}
                               />
                               <Route
                                 path='/artifacts'

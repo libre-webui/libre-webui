@@ -1347,7 +1347,8 @@ class PluginService {
     // Get API key from database (per-user) or environment variable (fallback)
     // Some plugins (like local ComfyUI) don't require auth
     const noAuthRequired =
-      (imageConfig as Record<string, unknown> | undefined)?.no_auth_required === true;
+      (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
+      true;
     const apiKey = this.getApiKey(plugin);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
@@ -1356,7 +1357,10 @@ class PluginService {
     }
 
     // Validate prompt length
-    if (imageConfig?.max_prompt_length && prompt.length > imageConfig.max_prompt_length) {
+    if (
+      imageConfig?.max_prompt_length &&
+      prompt.length > imageConfig.max_prompt_length
+    ) {
       throw new Error(
         `Prompt exceeds maximum length of ${imageConfig.max_prompt_length} characters`
       );
@@ -1399,7 +1403,9 @@ class PluginService {
         baseUrl.hostname
       );
       const isPrivateNetwork =
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(baseUrl.hostname);
+        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(
+          baseUrl.hostname
+        );
 
       if (baseUrl.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
         throw new Error(
@@ -1425,7 +1431,11 @@ class PluginService {
       if (response.data?.data) {
         return {
           images: response.data.data.map(
-            (img: { url?: string; b64_json?: string; revised_prompt?: string }) => ({
+            (img: {
+              url?: string;
+              b64_json?: string;
+              revised_prompt?: string;
+            }) => ({
               url: img.url,
               b64_json: img.b64_json,
               revised_prompt: img.revised_prompt,
@@ -1505,7 +1515,8 @@ class PluginService {
     };
 
     const config = modelConfigs[model] || modelConfigs['flux1-dev'];
-    const steps = options.quality === 'high' ? config.steps.high : config.steps.standard;
+    const steps =
+      options.quality === 'high' ? config.steps.high : config.steps.standard;
 
     // Create a Flux.1 workflow for ComfyUI
     // Flux uses UNET loader + dual CLIP + VAE separately

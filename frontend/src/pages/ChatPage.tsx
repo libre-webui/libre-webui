@@ -105,7 +105,9 @@ export const ChatPage: React.FC = () => {
     const checkImageGenPlugins = async () => {
       try {
         const response = await imageGenApi.getPlugins();
-        setHasImageGenPlugins(!!(response.success && response.data && response.data.length > 0));
+        setHasImageGenPlugins(
+          !!(response.success && response.data && response.data.length > 0)
+        );
       } catch {
         setHasImageGenPlugins(false);
       }
@@ -456,7 +458,10 @@ export const ChatPage: React.FC = () => {
               content: `Generated image using ${model}:\n"${prompt}"`,
               images: [imageData],
             };
-            sessionStorage.setItem('pendingMessage', JSON.stringify(pendingMessage));
+            sessionStorage.setItem(
+              'pendingMessage',
+              JSON.stringify(pendingMessage)
+            );
 
             // Create a new session and navigate to it
             const newSession = await createSession(selectedModel);

@@ -33,6 +33,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Camera,
+  Sparkles,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { Logo } from '@/components/Logo';
@@ -452,6 +453,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                 <User className='h-4 w-4 shrink-0' />
                 {!sidebarCompact && 'Personas'}
+              </Link>
+
+              <Link
+                to='/gallery'
+                onClick={() =>
+                  window.innerWidth < 768 &&
+                  !sidebarCompact &&
+                  toggleSidebarCompact()
+                }
+                className={cn(
+                  'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation',
+                  sidebarCompact
+                    ? 'w-11 h-11 justify-center p-0'
+                    : 'w-full px-2.5 py-2',
+                  location.pathname === '/gallery'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[rgba(147,51,234,0.25)] text-primary-800 dark:text-primary-200 ophelia:text-[#e9d5ff] shadow-sm'
+                    : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200/50 ophelia:hover:bg-[rgba(147,51,234,0.1)] hover:text-gray-900 dark:hover:text-gray-100 ophelia:hover:text-[#e9d5ff] active:bg-gray-100 dark:active:bg-dark-200 ophelia:active:bg-[rgba(147,51,234,0.15)]'
+                )}
+                title={sidebarCompact ? 'Imagine' : undefined}
+              >
+                <Sparkles className='h-4 w-4 shrink-0' />
+                {!sidebarCompact && 'Imagine'}
               </Link>
             </nav>
           </div>

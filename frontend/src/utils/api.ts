@@ -43,6 +43,7 @@ import {
   CreatePersonaRequest,
   UpdatePersonaRequest,
   PersonaExport,
+  GeneratedImage,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 import { API_BASE_URL, logConfigInfo } from '@/utils/config';
@@ -1902,6 +1903,44 @@ export const imageGenApi = {
     }
 
     return api.post('/image-gen/generate', request).then(res => res.data);
+  },
+
+  // Gallery endpoints
+  getGallery: (params?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<ApiResponse<{ images: GeneratedImage[]; total: number }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<{ images: GeneratedImage[]; total: number }>({
+        images: [],
+        total: 0,
+      });
+    }
+
+    return api.get('/image-gen/gallery', { params }).then(res => res.data);
+  },
+
+  getGalleryImage: (imageId: string): Promise<ApiResponse<GeneratedImage>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<GeneratedImage>({
+        id: imageId,
+        userId: 'demo',
+        prompt: 'Demo image prompt',
+        model: 'dall-e-3',
+        imageData: 'https://placehold.co/1024x1024/purple/white?text=Demo',
+        createdAt: Date.now(),
+      });
+    }
+
+    return api.get(`/image-gen/gallery/${imageId}`).then(res => res.data);
+  },
+
+  deleteGalleryImage: (imageId: string): Promise<ApiResponse<void>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<void>(undefined);
+    }
+
+    return api.delete(`/image-gen/gallery/${imageId}`).then(res => res.data);
   },
 };
 

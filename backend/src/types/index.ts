@@ -431,6 +431,18 @@ export interface ImageGenResponse {
   model: string;
 }
 
+// Generated image for gallery
+export interface GeneratedImage {
+  id: string;
+  userId: string;
+  prompt: string;
+  model: string;
+  imageData: string; // base64 data URL
+  size?: string;
+  quality?: string;
+  createdAt: number;
+}
+
 export interface PluginStatus {
   id: string;
   active: boolean;
