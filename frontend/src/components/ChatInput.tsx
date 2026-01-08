@@ -452,10 +452,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       <ImageGenerationPanel
         isOpen={showImageGen}
         onClose={() => setShowImageGen(false)}
-        onImageGenerated={(imageData, prompt, model) => {
-          // Send the generated image to chat with the prompt as context
-          const messageText = `Generated image using ${model}:\n"${prompt}"`;
-          onSendMessage(messageText, [imageData]);
+        onImageGenerated={(imageData, _prompt, _model) => {
+          // Just add the image to the current message attachments without auto-sending
+          setImages(prev => [...prev, imageData]);
         }}
       />
     </div>

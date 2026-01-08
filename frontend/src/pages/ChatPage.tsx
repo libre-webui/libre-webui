@@ -450,12 +450,12 @@ export const ChatPage: React.FC = () => {
         <ImageGenerationPanel
           isOpen={showImageGen}
           onClose={() => setShowImageGen(false)}
-          onImageGenerated={async (imageData, prompt, model) => {
+          onImageGenerated={async (imageData, _prompt, _model) => {
             if (!selectedModel) return;
 
-            // Store the pending message with the generated image
+            // Store just the image as a pending attachment (no auto-text)
             const pendingMessage = {
-              content: `Generated image using ${model}:\n"${prompt}"`,
+              content: '',
               images: [imageData],
             };
             sessionStorage.setItem(
