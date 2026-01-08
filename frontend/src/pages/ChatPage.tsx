@@ -23,7 +23,6 @@ import { ChatInput } from '@/components/ChatInput';
 import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
 import { ModelSelector } from '@/components/ModelSelector';
 import { PersonaIndicator } from '@/components/PersonaIndicator';
-import { ImageGenerationPanel } from '@/components/ImageGenerationPanel';
 import { Button } from '@/components/ui';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useChatStore } from '@/store/chatStore';
@@ -90,7 +89,6 @@ export const ChatPage: React.FC = () => {
   const welcomeTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Image generation state
-  const [showImageGen, setShowImageGen] = useState(false);
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
 
   // Load sessions on mount
@@ -367,7 +365,6 @@ export const ChatPage: React.FC = () => {
                       className='min-w-[140px] max-w-[200px] border-0 bg-gray-100 dark:bg-dark-100 ophelia:bg-[#121212] rounded-xl text-sm'
                       compact
                       showImageGen={hasImageGenPlugins}
-                      onImageGenClick={() => setShowImageGen(true)}
                     />
                   </div>
 
@@ -402,7 +399,6 @@ export const ChatPage: React.FC = () => {
                   className='w-full rounded-xl bg-gray-100 dark:bg-dark-100 ophelia:bg-[#121212] border-0'
                   compact
                   showImageGen={hasImageGenPlugins}
-                  onImageGenClick={() => setShowImageGen(true)}
                 />
               </div>
 
@@ -445,31 +441,6 @@ export const ChatPage: React.FC = () => {
             </div>
           )}
         </div>
-
-        {/* Image Generation Panel */}
-        <ImageGenerationPanel
-          isOpen={showImageGen}
-          onClose={() => setShowImageGen(false)}
-          onImageGenerated={async (imageData, _prompt, _model) => {
-            if (!selectedModel) return;
-
-            // Store just the image as a pending attachment (no auto-text)
-            const pendingMessage = {
-              content: '',
-              images: [imageData],
-            };
-            sessionStorage.setItem(
-              'pendingMessage',
-              JSON.stringify(pendingMessage)
-            );
-
-            // Create a new session and navigate to it
-            const newSession = await createSession(selectedModel);
-            if (newSession) {
-              navigate(`/c/${newSession.id}`, { replace: true });
-            }
-          }}
-        />
       </div>
     );
   }

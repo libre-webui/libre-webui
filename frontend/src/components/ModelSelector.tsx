@@ -17,6 +17,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   ChevronDown,
   User,
@@ -48,7 +49,6 @@ interface ModelSelectorProps {
   className?: string;
   disabled?: boolean;
   compact?: boolean;
-  onImageGenClick?: () => void;
   showImageGen?: boolean;
 }
 
@@ -60,13 +60,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   className,
   disabled = false,
   compact = false,
-  onImageGenClick,
   showImageGen = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   // Group models by type
   const groupedModels: ModelGroup[] = [
@@ -382,7 +382,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                 )}
 
                 {/* Image Generation Action */}
-                {showImageGen && onImageGenClick && (
+                {showImageGen && (
                   <div className='border-t border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'>
                     <div className='px-3 sm:px-3 py-2.5 sm:py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3] bg-gray-100 dark:bg-dark-300 ophelia:bg-[#0a0a0a] border-b border-gray-200 dark:border-dark-400 ophelia:border-[#1a1a1a]'>
                       <div className='flex items-center gap-2'>
@@ -394,12 +394,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       onMouseDown={e => {
                         e.preventDefault();
                         setIsOpen(false);
-                        onImageGenClick();
+                        navigate('/gallery');
                       }}
                       onTouchStart={e => {
                         e.preventDefault();
                         setIsOpen(false);
-                        onImageGenClick();
+                        navigate('/gallery');
                       }}
                       className={cn(
                         'px-3 sm:px-4 py-3.5 sm:py-3 cursor-pointer',

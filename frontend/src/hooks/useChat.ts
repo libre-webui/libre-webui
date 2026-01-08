@@ -255,7 +255,9 @@ export const useChat = (sessionId: string) => {
       images?: string[],
       format?: string | Record<string, unknown>
     ) => {
-      if (!sessionId || !content.trim()) return;
+      // Allow sending if there's content OR if there are images
+      if (!sessionId || (!content.trim() && (!images || images.length === 0)))
+        return;
 
       try {
         setIsGenerating(true);

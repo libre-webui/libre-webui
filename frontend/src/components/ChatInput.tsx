@@ -23,7 +23,6 @@ import { MediaUpload } from './MediaUpload';
 import { DocumentIndicator } from './DocumentIndicator';
 import { StructuredOutput } from './StructuredOutput';
 import { ModelSelector } from './ModelSelector';
-import { ImageGenerationPanel } from './ImageGenerationPanel';
 import { useAppStore } from '@/store/appStore';
 import { useChatStore } from '@/store/chatStore';
 import { personaApi, chatApi, imageGenApi } from '@/utils/api';
@@ -53,7 +52,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
-  const [showImageGen, setShowImageGen] = useState(false);
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
   const { isGenerating, setBackgroundImage } = useAppStore();
   const { currentSession, models } = useChatStore();
@@ -334,7 +332,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       className='min-w-[160px] max-w-[240px] border-0 bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 rounded-xl text-sm hover:bg-gray-200/80 dark:hover:bg-dark-200/60 ophelia:hover:bg-[#262626]/80 transition-colors duration-200'
                       compact
                       showImageGen={hasImageGenPlugins}
-                      onImageGenClick={() => setShowImageGen(true)}
                     />
                   </div>
                 )}
@@ -402,7 +399,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 className='w-full rounded-xl bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 border-0 transition-colors duration-200'
                 compact
                 showImageGen={hasImageGenPlugins}
-                onImageGenClick={() => setShowImageGen(true)}
               />
             </div>
           )}
@@ -447,16 +443,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </div>
         </div>
       </div>
-
-      {/* Image Generation Panel */}
-      <ImageGenerationPanel
-        isOpen={showImageGen}
-        onClose={() => setShowImageGen(false)}
-        onImageGenerated={(imageData, _prompt, _model) => {
-          // Just add the image to the current message attachments without auto-sending
-          setImages(prev => [...prev, imageData]);
-        }}
-      />
     </div>
   );
 };

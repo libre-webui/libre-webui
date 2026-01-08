@@ -15,12 +15,22 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Sparkles, Plus } from 'lucide-react';
 import ImageGallery from '@/components/ImageGallery';
+import { ImageGenerationPanel } from '@/components/ImageGenerationPanel';
+import { Button } from '@/components/ui';
+import { cn } from '@/utils';
 
 export const GalleryPage: React.FC = () => {
   const [imageCount, setImageCount] = useState<number | null>(null);
+  const [showImageGen, setShowImageGen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleImageGenerated = useCallback(() => {
+    // Refresh the gallery when a new image is generated
+    setRefreshKey(prev => prev + 1);
+  }, []);
 
   return (
     <div className='h-full overflow-auto'>
@@ -45,11 +55,33 @@ export const GalleryPage: React.FC = () => {
               </span>
             )}
           </p>
+
+          {/* Generate Button */}
+          <Button
+            onClick={() => setShowImageGen(true)}
+            className={cn(
+              'mt-4 px-6 py-2.5 rounded-xl font-medium',
+              'bg-purple-600 dark:bg-purple-600 ophelia:bg-[#9333ea]',
+              'hover:bg-purple-700 dark:hover:bg-purple-500 ophelia:hover:bg-[#a855f7]',
+              'text-white',
+              'transition-colors'
+            )}
+          >
+            <Plus className='h-4 w-4 mr-2' />
+            Generate Image
+          </Button>
         </div>
 
         {/* Gallery */}
-        <ImageGallery onImageCountChange={setImageCount} />
+        <ImageGallery key={refreshKey} onImageCountChange={setImageCount} />
       </div>
+
+      {/* Image Generation Panel */}
+      <ImageGenerationPanel
+        isOpen={showImageGen}
+        onClose={() => setShowImageGen(false)}
+        onImageGenerated={handleImageGenerated}
+      />
     </div>
   );
 };

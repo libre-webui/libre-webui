@@ -1485,7 +1485,7 @@ class PluginService {
     interface FluxModelConfig {
       unetFile: string;
       t5File: string;
-      steps: { standard: number; high: number };
+      steps: { draft: number; standard: number; high: number; ultra: number };
       guidance: number;
       useCheckpointLoader: boolean;
     }
@@ -1494,29 +1494,30 @@ class PluginService {
       'flux1-dev': {
         unetFile: 'flux1-dev.safetensors',
         t5File: 't5xxl_fp16.safetensors',
-        steps: { standard: 20, high: 28 },
+        steps: { draft: 12, standard: 20, high: 28, ultra: 40 },
         guidance: 3.5,
         useCheckpointLoader: false,
       },
       'flux1-dev-fp8': {
         unetFile: 'flux1-dev-fp8.safetensors',
         t5File: 't5xxl_fp8_e4m3fn_scaled.safetensors',
-        steps: { standard: 20, high: 28 },
+        steps: { draft: 12, standard: 20, high: 28, ultra: 40 },
         guidance: 3.5,
         useCheckpointLoader: false,
       },
       'flux1-schnell': {
         unetFile: 'flux1-schnell.safetensors',
         t5File: 't5xxl_fp16.safetensors',
-        steps: { standard: 4, high: 6 },
+        steps: { draft: 2, standard: 4, high: 6, ultra: 8 },
         guidance: 0, // Schnell doesn't use guidance
         useCheckpointLoader: false,
       },
     };
 
     const config = modelConfigs[model] || modelConfigs['flux1-dev'];
-    const steps =
-      options.quality === 'high' ? config.steps.high : config.steps.standard;
+    const quality = (options.quality ||
+      'standard') as keyof typeof config.steps;
+    const steps = config.steps[quality] || config.steps.standard;
 
     // Create a Flux.1 workflow for ComfyUI
     // Flux uses UNET loader + dual CLIP + VAE separately
