@@ -184,8 +184,8 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
               onClick={handleDownload}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg',
-                'bg-blue-600 dark:bg-blue-600 ophelia:bg-[#9333ea]',
-                'hover:bg-blue-700 dark:hover:bg-blue-500 ophelia:hover:bg-[#a855f7]',
+                'bg-primary-600 dark:bg-primary-600 ophelia:bg-[#9333ea]',
+                'hover:bg-primary-700 dark:hover:bg-primary-500 ophelia:hover:bg-[#a855f7]',
                 'text-white font-medium text-sm',
                 'transition-colors'
               )}

@@ -224,7 +224,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         {/* Header */}
         <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'>
           <div className='flex items-center gap-2'>
-            <ImageIcon className='h-5 w-5 text-blue-600 dark:text-blue-400 ophelia:text-[#a855f7]' />
+            <ImageIcon className='h-5 w-5 text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]' />
             <h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
               Image Generation
             </h2>
@@ -405,8 +405,8 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
               disabled={isGenerating || !prompt.trim() || !selectedModel}
               className={cn(
                 'w-full py-2.5 rounded-xl font-medium',
-                'bg-blue-600 dark:bg-blue-600 ophelia:bg-[#9333ea]',
-                'hover:bg-blue-700 dark:hover:bg-blue-500 ophelia:hover:bg-[#a855f7]',
+                'bg-primary-600 dark:bg-primary-600 ophelia:bg-[#9333ea]',
+                'hover:bg-primary-700 dark:hover:bg-primary-500 ophelia:hover:bg-[#a855f7]',
                 'text-white',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
                 'transition-colors'

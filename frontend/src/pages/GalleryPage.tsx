@@ -16,7 +16,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { Sparkles, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import ImageGallery from '@/components/ImageGallery';
 import { ImageGenerationPanel } from '@/components/ImageGenerationPanel';
 import { Button } from '@/components/ui';
@@ -37,15 +37,12 @@ export const GalleryPage: React.FC = () => {
       <div className='max-w-7xl mx-auto p-6'>
         {/* Header */}
         <div className='text-center max-w-md mx-auto mb-8'>
-          <div className='flex items-center justify-center gap-3 mb-3'>
-            <Sparkles className='h-8 w-8 text-purple-500 dark:text-purple-400 ophelia:text-[#a855f7]' />
-            <h2
-              className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'
-              style={{ fontWeight: 300, letterSpacing: '0.01em' }}
-            >
-              Imagine
-            </h2>
-          </div>
+          <h2
+            className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] mb-3'
+            style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+          >
+            Imagine
+          </h2>
           <p className='text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3] leading-relaxed'>
             Your AI-generated image gallery
             {imageCount !== null && imageCount > 0 && (
@@ -61,8 +58,8 @@ export const GalleryPage: React.FC = () => {
             onClick={() => setShowImageGen(true)}
             className={cn(
               'mt-4 px-6 py-2.5 rounded-xl font-medium',
-              'bg-purple-600 dark:bg-purple-600 ophelia:bg-[#9333ea]',
-              'hover:bg-purple-700 dark:hover:bg-purple-500 ophelia:hover:bg-[#a855f7]',
+              'bg-primary-600 dark:bg-primary-600 ophelia:bg-[#9333ea]',
+              'hover:bg-primary-700 dark:hover:bg-primary-500 ophelia:hover:bg-[#a855f7]',
               'text-white',
               'transition-colors'
             )}
