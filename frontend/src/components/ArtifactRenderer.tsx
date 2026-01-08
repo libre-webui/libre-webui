@@ -129,11 +129,12 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <base target="_blank">
           <title>${artifact.title}</title>
           <style>
-            body { 
+            body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              margin: 0; 
+              margin: 0;
               padding: 16px;
               background: white;
               color: #333;

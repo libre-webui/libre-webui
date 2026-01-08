@@ -252,6 +252,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <base target="_blank">
           <title>${artifact.title}</title>
           <style>
             body {
