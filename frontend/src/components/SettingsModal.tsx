@@ -1953,11 +1953,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className='divide-y divide-gray-200 dark:divide-dark-300'>
                     {plugins.map(plugin => (
                       <div key={plugin.id} className='p-4'>
-                        <div className='flex items-center justify-between'>
-                          <div className='flex-1'>
+                        <div className='flex items-center justify-between gap-2'>
+                          <div className='flex-1 min-w-0'>
                             <div className='flex items-center space-x-3'>
                               <div
-                                className={`w-3 h-3 rounded-full ${plugin.active ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+                                className={`w-3 h-3 rounded-full flex-shrink-0 ${plugin.active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`}
                               />
                               <div>
                                 <h5 className='font-medium text-gray-900 dark:text-gray-100'>
@@ -1990,7 +1990,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             </div>
                           </div>
 
-                          <div className='flex items-center space-x-2'>
+                          <div className='flex items-center space-x-1 flex-shrink-0'>
                             <Button
                               variant='ghost'
                               size='sm'
@@ -2010,9 +2010,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             >
                               <Key className='h-4 w-4' />
                               {expandedPluginId === plugin.id ? (
-                                <ChevronUp className='h-3 w-3 ml-1' />
+                                <ChevronUp className='h-3 w-3' />
                               ) : (
-                                <ChevronDown className='h-3 w-3 ml-1' />
+                                <ChevronDown className='h-3 w-3' />
                               )}
                             </Button>
 
