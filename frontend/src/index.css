@@ -170,6 +170,10 @@
   --tw-ring-color: #a855f7 !important;
 }
 
+.ophelia .group-hover\:bg-primary-500:is(.group:hover *) {
+  background-color: #a855f7 !important;
+}
+
 /* Toast positioning to avoid header overlap */
 [data-hot-toast] {
   z-index: 9999 !important;
