@@ -5,7 +5,8 @@
 ### Privacy-First AI Chat Interface
 
 <p align="center">
-  <strong>Self-hosted • Open Source • Extensible</strong>
+  <strong>Self-hosted • Open Source • Extensible</strong><br>
+  <sub>Enterprise support by <a href="https://kroonen.ai">Kroonen AI</a></sub>
 </p>
 
 <p>
@@ -16,6 +17,12 @@
   <img src="https://img.shields.io/github/package-json/v/libre-webui/libre-webui" alt="Version">
   <img src="https://img.shields.io/github/license/libre-webui/libre-webui" alt="License">
   <a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=social" alt="Stars"></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/GDPR-Ready-green" alt="GDPR Ready">
+  <img src="https://img.shields.io/badge/HIPAA-Compatible-blue" alt="HIPAA Compatible">
+  <img src="https://img.shields.io/badge/SOC_2-Ready-purple" alt="SOC 2 Ready">
 </p>
 
 [Website](https://librewebui.org) • [Documentation](https://docs.librewebui.org) • [𝕏](https://x.com/librewebui) • [Sponsor](https://github.com/sponsors/libre-webui) • [Get Started](#quick-start)
@@ -145,15 +152,17 @@ docker-compose -f docker-compose.external-ollama.yml up -d
 
 Access at `http://localhost:5173` (dev) or `http://localhost:8080` (Docker)
 
-### Desktop App
+### Desktop App (In Development)
+
+> **Note:** The desktop app is currently in active development. The macOS build is pending Apple notarization, which may cause security warnings or installation issues on some systems. We're working to resolve this. Feedback and bug reports are welcome!
 
 Download the native desktop app from [GitHub Releases](https://github.com/libre-webui/libre-webui/releases):
 
-| Platform              | Download         |
-| --------------------- | ---------------- |
-| macOS (Apple Silicon) | `.dmg` or `.zip` |
-| Windows               | Coming soon      |
-| Linux                 | Coming soon      |
+| Platform              | Status                  |
+| --------------------- | ----------------------- |
+| macOS (Apple Silicon) | Beta (`.dmg` or `.zip`) |
+| Windows               | Coming soon             |
+| Linux                 | Coming soon             |
 
 ---
 
@@ -161,16 +170,16 @@ Download the native desktop app from [GitHub Releases](https://github.com/libre-
 >
 > ## Enterprise Services
 >
-> **Need a custom deployment?** [Kroonen AI, Inc.](https://kroonen.ai) offers professional services for organizations requiring enterprise-grade AI infrastructure.
+> **Need a custom deployment?** [Kroonen AI](https://kroonen.ai) provides professional services for Libre WebUI deployments.
 >
-> | What We Offer                                       | Perfect For             |
-> | --------------------------------------------------- | ----------------------- |
-> | Production deployment (AWS, Azure, GCP, on-premise) | Healthcare (HIPAA)      |
-> | SSO integration (Okta, Azure AD, SAML)              | Legal & Finance (SOC 2) |
-> | Custom development & integrations                   | Enterprise teams        |
-> | Ongoing support & maintenance                       | Research institutions   |
+> | Service                       | Use Case                              |
+> | ----------------------------- | ------------------------------------- |
+> | On-premise & cloud deployment | HIPAA, SOC 2, air-gapped environments |
+> | SSO integration               | Okta, Azure AD, SAML, LDAP            |
+> | Custom development            | Integrations, white-labeling, plugins |
+> | SLA-backed support            | Priority response, dedicated channel  |
 >
-> **[Contact Kroonen AI →](https://kroonen.ai/librewebui)**
+> **Contact:** enterprise@kroonen.ai | **[Learn more →](https://kroonen.ai/services)**
 
 > [!TIP]
 >
@@ -199,6 +208,6 @@ Download the native desktop app from [GitHub Releases](https://github.com/libre-
 
 **Apache 2.0 License** • Copyright © 2025–present Libre WebUI™
 
-Built by [Kroonen AI](https://kroonen.ai)
+Built & maintained by [Kroonen AI](https://kroonen.ai) • [Enterprise Support](https://kroonen.ai/services)
 
 </div>
