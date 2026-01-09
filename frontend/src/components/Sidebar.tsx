@@ -36,7 +36,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { Logo } from '@/components/Logo';
 import { SettingsModal } from '@/components/SettingsModal';
 import { AvatarUpload } from '@/components/AvatarUpload';
 import { useChatStore } from '@/store/chatStore';
@@ -306,15 +305,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               {!sidebarCompact ? (
                 <>
-                  <div className='flex items-center gap-2'>
-                    <Logo size='sm' />
-                    <span
-                      className='libre-brand text-base font-semibold text-gray-900 dark:text-dark-800'
-                      style={{ lineHeight: 1 }}
-                    >
-                      Libre WebUI
-                    </span>
-                  </div>
+                  <span className='libre-brand text-xl text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+                    Libre WebUI
+                  </span>
                   <div className='flex items-center gap-1'>
                     <Button
                       variant='ghost'
@@ -329,7 +322,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </>
               ) : (
                 <div className='flex flex-col items-center gap-1.5'>
-                  <Logo size='sm' />
+                  <span className='libre-brand text-xl text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+                    Libre
+                  </span>
                   <Button
                     variant='ghost'
                     size='sm'

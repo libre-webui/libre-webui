@@ -15,10 +15,6 @@
  * limitations under the License.
  */
 
-// Instrument Serif Regular font import (Google Fonts)
-// Add this to your index.html if not already present:
-// <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&display=swap" rel="stylesheet" />
-
 import React from 'react';
 import { cn } from '@/utils';
 
@@ -29,26 +25,20 @@ interface LogoProps {
 
 export const Logo: React.FC<LogoProps> = ({ className, size = 'md' }) => {
   const sizeClasses = {
-    sm: 'h-12 w-12',
-    md: 'h-20 w-20',
-    lg: 'h-32 w-32',
+    sm: 'text-xl',
+    md: 'text-3xl',
+    lg: 'text-5xl',
   };
 
-  // Render text logo with Instrument Serif font
   return (
-    <div
+    <span
       className={cn(
-        'flex-shrink-0 rounded-lg flex items-center justify-center bg-transparent',
+        'libre-brand text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
         sizeClasses[size],
         className
       )}
     >
-      <img
-        src='/logo-dark.png'
-        alt='Libre WebUI Logo'
-        className='w-full h-full object-contain'
-        draggable={false}
-      />
-    </div>
+      Libre
+    </span>
   );
 };

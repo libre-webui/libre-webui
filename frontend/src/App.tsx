@@ -345,18 +345,11 @@ const App: React.FC = () => {
     return (
       <div className='min-h-screen bg-dark-50 flex items-center justify-center p-4'>
         <div className='text-center'>
-          <div className='flex justify-center mb-8'>
-            <img
-              src='./logo-dark.png'
-              alt='Libre WebUI'
-              className='h-24 w-24 rounded-xl'
-            />
-          </div>
           <h1
-            className='libre-brand text-3xl text-white mb-8'
-            style={{ fontWeight: 300, letterSpacing: '0.02em' }}
+            className='libre-brand text-5xl text-white mb-8'
+            style={{ fontWeight: 400, letterSpacing: '0.02em' }}
           >
-            Libre WebUI
+            Libre
           </h1>
           <div className='flex justify-center mb-4'>
             <div className='w-8 h-8 border-3 border-gray-700 border-t-primary-500 rounded-full animate-spin'></div>

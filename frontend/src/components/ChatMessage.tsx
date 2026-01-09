@@ -290,11 +290,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 className='w-full h-full object-cover'
               />
             ) : (
-              <img
-                src='/logo-dark.png'
-                alt='Libre WebUI'
-                className='w-full h-full object-contain p-1'
-              />
+              <span className='libre-brand text-sm text-gray-700 dark:text-gray-200 ophelia:text-[#e5e5e5]'>
+                L
+              </span>
             )}
           </div>
         )}
