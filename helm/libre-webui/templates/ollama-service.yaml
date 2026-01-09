@@ -1,0 +1,19 @@
+{{- if .Values.ollama.bundled.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-ollama
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+spec:
+  type: ClusterIP
+  ports:
+    - port: 11434
+      targetPort: 11434
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "libre-webui.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+{{- end }}

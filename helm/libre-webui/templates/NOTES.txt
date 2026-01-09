@@ -1,0 +1,38 @@
+Thank you for installing {{ .Chart.Name }}!
+
+Your release is named: {{ .Release.Name }}
+
+To access Libre WebUI:
+
+{{- if .Values.ingress.enabled }}
+1. Access via Ingress:
+{{- range $host := .Values.ingress.hosts }}
+   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ $host.host }}
+{{- end }}
+{{- else if contains "NodePort" .Values.service.type }}
+1. Get the NodePort:
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "libre-webui.fullname" . }})
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo http://$NODE_IP:$NODE_PORT
+{{- else if contains "LoadBalancer" .Values.service.type }}
+1. Get the LoadBalancer IP:
+   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+   kubectl get --namespace {{ .Release.Namespace }} svc {{ include "libre-webui.fullname" . }} -w
+{{- else if contains "ClusterIP" .Values.service.type }}
+1. Port-forward to access locally:
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "libre-webui.fullname" . }} 8080:{{ .Values.service.port }}
+   Then open: http://localhost:8080
+{{- end }}
+
+{{- if .Values.ollama.bundled.enabled }}
+
+Ollama is bundled and running in your cluster.
+To pull models, exec into the Ollama pod:
+   kubectl exec -it --namespace {{ .Release.Namespace }} deployment/{{ include "libre-webui.fullname" . }}-ollama -- ollama pull llama3.2
+{{- else if .Values.ollama.external.enabled }}
+
+Using external Ollama at: {{ .Values.ollama.external.url }}
+Make sure Ollama is accessible from within the cluster.
+{{- end }}
+
+For more information, visit: https://librewebui.org

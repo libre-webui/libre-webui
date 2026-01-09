@@ -1,0 +1,148 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "libre-webui.fullname" . }}
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "libre-webui.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "libre-webui.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "libre-webui.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3001
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.env.NODE_ENV | quote }}
+            - name: DOCKER_ENV
+              value: {{ .Values.env.DOCKER_ENV | quote }}
+            - name: PORT
+              value: {{ .Values.env.PORT | quote }}
+            - name: OLLAMA_BASE_URL
+              value: {{ include "libre-webui.ollamaUrl" . | quote }}
+            - name: CORS_ORIGIN
+              value: {{ .Values.env.CORS_ORIGIN | quote }}
+            - name: SINGLE_USER_MODE
+              value: {{ .Values.env.SINGLE_USER_MODE | quote }}
+            - name: JWT_EXPIRES_IN
+              value: {{ .Values.env.JWT_EXPIRES_IN | quote }}
+            - name: OLLAMA_TIMEOUT
+              value: {{ .Values.env.OLLAMA_TIMEOUT | quote }}
+            - name: OLLAMA_LONG_OPERATION_TIMEOUT
+              value: {{ .Values.env.OLLAMA_LONG_OPERATION_TIMEOUT | quote }}
+            - name: VITE_API_TIMEOUT
+              value: {{ .Values.env.VITE_API_TIMEOUT | quote }}
+            - name: DATA_DIR
+              value: {{ .Values.env.DATA_DIR | quote }}
+            {{- if .Values.secrets.jwtSecret }}
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: jwt-secret
+            {{- end }}
+            {{- if .Values.secrets.encryptionKey }}
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: encryption-key
+            {{- end }}
+            {{- if .Values.secrets.sessionSecret }}
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: session-secret
+            {{- end }}
+            {{- if .Values.secrets.githubClientId }}
+            - name: GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: github-client-id
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: github-client-secret
+            {{- end }}
+            {{- if .Values.secrets.huggingfaceClientId }}
+            - name: HUGGINGFACE_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: huggingface-client-id
+            - name: HUGGINGFACE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "libre-webui.fullname" . }}-secrets
+                  key: huggingface-client-secret
+            {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/backend/data
+            - name: temp
+              mountPath: /app/backend/temp
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "libre-webui.fullname" . }}-data
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        - name: temp
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

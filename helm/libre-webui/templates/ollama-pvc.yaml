@@ -1,0 +1,18 @@
+{{- if and .Values.ollama.bundled.enabled .Values.ollama.bundled.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-ollama
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+spec:
+  accessModes:
+    - {{ .Values.ollama.bundled.persistence.accessMode }}
+  {{- if .Values.ollama.bundled.persistence.storageClass }}
+  storageClassName: {{ .Values.ollama.bundled.persistence.storageClass }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.ollama.bundled.persistence.size }}
+{{- end }}

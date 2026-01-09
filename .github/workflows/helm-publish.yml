@@ -1,0 +1,45 @@
+name: Helm Chart Publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'helm/**'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.0
+
+      - name: Get chart version
+        id: chart
+        run: |
+          VERSION=$(grep '^version:' helm/libre-webui/Chart.yaml | awk '{print $2}')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Chart version: $VERSION"
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package Helm chart
+        run: helm package helm/libre-webui --destination .helm-packages
+
+      - name: Push to GHCR
+        run: |
+          helm push .helm-packages/libre-webui-${{ steps.chart.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}/charts

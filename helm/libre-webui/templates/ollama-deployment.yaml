@@ -1,0 +1,73 @@
+{{- if .Values.ollama.bundled.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "libre-webui.fullname" . }}-ollama
+  labels:
+    {{- include "libre-webui.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "libre-webui.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ollama
+  template:
+    metadata:
+      labels:
+        {{- include "libre-webui.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ollama
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: ollama
+          image: "{{ .Values.ollama.bundled.image.repository }}:{{ .Values.ollama.bundled.image.tag }}"
+          imagePullPolicy: {{ .Values.ollama.bundled.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 11434
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+          resources:
+            {{- toYaml .Values.ollama.bundled.resources | nindent 12 }}
+          {{- if .Values.ollama.bundled.gpu.enabled }}
+          env:
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "all"
+          {{- end }}
+      volumes:
+        - name: ollama-data
+          {{- if .Values.ollama.bundled.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "libre-webui.fullname" . }}-ollama
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.ollama.bundled.gpu.enabled }}
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
+      {{- end }}
+{{- end }}

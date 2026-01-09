@@ -1,0 +1,21 @@
+apiVersion: v2
+name: libre-webui
+description: Privacy-first AI chat interface - self-hosted, open source, extensible
+type: application
+version: 0.1.0
+appVersion: "0.3.1"
+keywords:
+  - ai
+  - chat
+  - ollama
+  - llm
+  - openai
+  - anthropic
+  - self-hosted
+home: https://librewebui.org
+sources:
+  - https://github.com/libre-webui/libre-webui
+maintainers:
+  - name: Kroonen AI
+    email: enterprise@kroonen.ai
+    url: https://kroonen.ai

@@ -127,6 +127,36 @@ docker pull librewebui/libre-webui:dev
 
 </details>
 
+### Kubernetes (Helm)
+
+```bash
+helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui
+```
+
+<details>
+<summary><strong>Helm configuration options</strong></summary>
+
+```bash
+# With external Ollama
+helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
+  --set ollama.bundled.enabled=false \
+  --set ollama.external.enabled=true \
+  --set ollama.external.url=http://my-ollama:11434
+
+# With NVIDIA GPU support
+helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
+  --set ollama.bundled.gpu.enabled=true
+
+# With Ingress
+helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
+  --set ingress.enabled=true \
+  --set ingress.hosts[0].host=chat.example.com
+```
+
+See [helm/libre-webui/values.yaml](helm/libre-webui/values.yaml) for all configuration options.
+
+</details>
+
 ### Development Setup
 
 ```bash

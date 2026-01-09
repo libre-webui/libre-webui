@@ -1,0 +1,127 @@
+# Default values for libre-webui
+
+replicaCount: 1
+
+image:
+  repository: librewebui/libre-webui
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podSecurityContext: {}
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 3001
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+  hosts:
+    - host: libre-webui.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: libre-webui-tls
+  #    hosts:
+  #      - libre-webui.local
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Persistence for data
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 5Gi
+  annotations: {}
+
+# Environment configuration
+env:
+  NODE_ENV: production
+  DOCKER_ENV: "true"
+  PORT: "3001"
+  CORS_ORIGIN: "http://localhost:8080"
+  SINGLE_USER_MODE: "false"
+  JWT_EXPIRES_IN: "7d"
+  OLLAMA_TIMEOUT: "300000"
+  OLLAMA_LONG_OPERATION_TIMEOUT: "900000"
+  VITE_API_TIMEOUT: "300000"
+  DATA_DIR: "/app/backend/data"
+
+# Secrets - provide via --set or external secret management
+secrets:
+  jwtSecret: ""
+  encryptionKey: ""
+  sessionSecret: ""
+  # OAuth
+  githubClientId: ""
+  githubClientSecret: ""
+  huggingfaceClientId: ""
+  huggingfaceClientSecret: ""
+
+# Ollama configuration
+ollama:
+  # Use external Ollama instance
+  external:
+    enabled: false
+    url: "http://ollama.default.svc.cluster.local:11434"
+
+  # Deploy Ollama as part of this chart
+  bundled:
+    enabled: true
+    image:
+      repository: ollama/ollama
+      tag: latest
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 500m
+        memory: 2Gi
+    persistence:
+      enabled: true
+      storageClass: ""
+      accessMode: ReadWriteOnce
+      size: 50Gi
+    # GPU support (NVIDIA)
+    gpu:
+      enabled: false
+      count: 1
