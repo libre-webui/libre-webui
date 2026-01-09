@@ -1,8 +1,6 @@
 services:
   libre-webui:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: librewebui/libre-webui:latest
     ports:
       - '8080:3001'
     environment:

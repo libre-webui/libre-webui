@@ -96,19 +96,15 @@ npx libre-webui
 
 That's it. Opens at `http://localhost:8080`
 
-**Options:**
+### Docker
 
-```bash
-npx libre-webui --port 3000      # Custom port
-npx libre-webui --help           # Show all options
-```
+| Setup                                     | Command                                                      |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| Bundled Ollama (CPU)                      | `docker-compose up -d`                                       |
+| Bundled Ollama (NVIDIA GPU)               | `docker-compose -f docker-compose.gpu.yml up -d`             |
+| External Ollama (already running on host) | `docker-compose -f docker-compose.external-ollama.yml up -d` |
 
-**Environment variables:**
-
-```bash
-OPENAI_API_KEY=sk-... npx libre-webui
-ANTHROPIC_API_KEY=sk-ant-... npx libre-webui
-```
+Access at `http://localhost:8080`
 
 ### Development Setup
 
@@ -135,22 +131,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 # Cloud AI Providers (add the ones you need)
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
-GROQ_API_KEY=gsk_...
-GEMINI_API_KEY=...
-
-# Optional: Text-to-Speech
-ELEVENLABS_API_KEY=...
 ```
-
-**Or with Docker** (requires Ollama running on host):
-
-```bash
-docker-compose -f docker-compose.external-ollama.yml up -d
-```
-
-> A bundled `docker-compose.yml` with Ollama included exists but is untested.
-
-Access at `http://localhost:5173` (dev) or `http://localhost:8080` (Docker)
 
 ### Desktop App (In Development)
 
