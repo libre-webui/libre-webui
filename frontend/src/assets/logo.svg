@@ -1,14 +1,4 @@
-<svg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'>
-  <defs>
-    <linearGradient id='iconGradient' x1='0%' y1='0%' x2='100%' y2='100%'>
-      <stop offset='0%' style='stop-color:#ff6b6b;stop-opacity:1' />
-      <stop offset='20%' style='stop-color:#feca57;stop-opacity:1' />
-      <stop offset='40%' style='stop-color:#48dbfb;stop-opacity:1' />
-      <stop offset='60%' style='stop-color:#ff9ff3;stop-opacity:1' />
-      <stop offset='80%' style='stop-color:#54a0ff;stop-opacity:1' />
-      <stop offset='100%' style='stop-color:#5f27cd;stop-opacity:1' />
-    </linearGradient>
-  </defs>
-  <rect x='0' y='0' width='64' height='64' rx='12' ry='12' fill='url(#iconGradient)'/>
-  <path d='M 16 12 L 16 52 L 48 52 L 48 44 L 24 44 L 24 12 Z' fill='white' opacity='0.95'/>
+<svg width="500" height="500" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
+  <rect width="500" height="500" fill="#2d2d2d"/>
+  <text x="250" y="280" font-family="Georgia, 'Times New Roman', serif" font-size="120" font-weight="400" fill="#f5e6d3" text-anchor="middle">Libre</text>
 </svg>
