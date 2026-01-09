@@ -2,7 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 import dotenv from 'dotenv';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
+import { execSync } from 'child_process';
 
 dotenv.config();
 
@@ -10,6 +11,34 @@ dotenv.config();
 const packageJson = JSON.parse(
   readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8')
 );
+
+// Get version - use VITE_APP_VERSION env var if set (Docker builds), otherwise detect git branch
+const getVersion = () => {
+  // If explicitly set via environment (Docker CI builds)
+  if (process.env.VITE_APP_VERSION) {
+    return process.env.VITE_APP_VERSION;
+  }
+
+  // Try to detect git branch for local dev
+  try {
+    const gitDir = path.resolve(__dirname, '../.git');
+    if (existsSync(gitDir)) {
+      const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+        cwd: path.resolve(__dirname, '..'),
+        encoding: 'utf-8'
+      }).trim();
+      if (branch === 'dev') {
+        return `${packageJson.version}-dev`;
+      }
+    }
+  } catch {
+    // Git not available, use package.json version
+  }
+
+  return packageJson.version;
+};
+
+const appVersion = getVersion();
 
 const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:3001';
 const WS_BASE_URL = process.env.VITE_WS_BASE_URL || 'ws://localhost:3001';
@@ -22,7 +51,7 @@ export default defineConfig({
   plugins: [react()],
   base: isElectron ? './' : '/',
   define: {
-    'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
   },
   resolve: {
     alias: {
