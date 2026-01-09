@@ -106,6 +106,27 @@ That's it. Opens at `http://localhost:8080`
 
 Access at `http://localhost:8080`
 
+<details>
+<summary><strong>Development builds (unstable)</strong></summary>
+
+> **Warning:** Development builds are automatically generated from the `dev` branch and may contain experimental features, breaking changes, or bugs. Use at your own risk and do not use in production environments.
+
+| Setup                             | Command                                                          |
+| --------------------------------- | ---------------------------------------------------------------- |
+| Dev + Bundled Ollama (CPU)        | `docker-compose -f docker-compose.dev.yml up -d`                 |
+| Dev + Bundled Ollama (NVIDIA GPU) | `docker-compose -f docker-compose.dev.gpu.yml up -d`             |
+| Dev + External Ollama             | `docker-compose -f docker-compose.dev.external-ollama.yml up -d` |
+
+Development builds use separate data volumes (`libre_webui_dev_data`) to prevent conflicts with stable installations.
+
+To pull the latest dev image manually:
+
+```bash
+docker pull librewebui/libre-webui:dev
+```
+
+</details>
+
 ### Development Setup
 
 ```bash
