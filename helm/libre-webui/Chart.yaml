@@ -3,7 +3,7 @@ name: libre-webui
 description: Privacy-first AI chat interface - self-hosted, open source, extensible
 type: application
 version: 0.1.0
-appVersion: "0.3.1"
+appVersion: "0.3.2"
 keywords:
   - ai
   - chat

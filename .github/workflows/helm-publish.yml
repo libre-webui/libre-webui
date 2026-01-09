@@ -23,12 +23,18 @@ jobs:
         with:
           version: v3.14.0
 
-      - name: Get chart version
-        id: chart
+      - name: Get versions
+        id: versions
         run: |
-          VERSION=$(grep '^version:' helm/libre-webui/Chart.yaml | awk '{print $2}')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Chart version: $VERSION"
+          CHART_VERSION=$(grep '^version:' helm/libre-webui/Chart.yaml | awk '{print $2}')
+          APP_VERSION=$(node -p "require('./package.json').version")
+          echo "chart_version=$CHART_VERSION" >> $GITHUB_OUTPUT
+          echo "app_version=$APP_VERSION" >> $GITHUB_OUTPUT
+          echo "Chart version: $CHART_VERSION, App version: $APP_VERSION"
+
+      - name: Update appVersion in Chart.yaml
+        run: |
+          sed -i "s/^appVersion:.*/appVersion: \"${{ steps.versions.outputs.app_version }}\"/" helm/libre-webui/Chart.yaml
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -42,4 +48,4 @@ jobs:
 
       - name: Push to GHCR
         run: |
-          helm push .helm-packages/libre-webui-${{ steps.chart.outputs.version }}.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+          helm push .helm-packages/libre-webui-${{ steps.versions.outputs.chart_version }}.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
