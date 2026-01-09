@@ -2,8 +2,7 @@ services:
   libre-webui:
     image: libre-webui:latest
     ports:
-      - '8080:5173'
-      - '3001:3001'
+      - '8080:3001'
     environment:
       - NODE_ENV=production
       - DOCKER_ENV=true
@@ -15,7 +14,6 @@ services:
       # JWT_SECRET: Generate with 'openssl rand -hex 64' and set via .env file or environment
       - JWT_SECRET=${JWT_SECRET:-}
       - JWT_EXPIRES_IN=7d
-      - FRONTEND_PORT=5173
       # Encryption: Optional 64-character hex key. If not provided, one will be auto-generated
       # and stored in the persistent data volume for security across container restarts
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}

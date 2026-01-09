@@ -4,13 +4,11 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '8080:5173'
-      - '3001:3001'
+      - '8080:3001'
     environment:
       - NODE_ENV=production
       - DOCKER_ENV=true
       - PORT=3001
-      - FRONTEND_PORT=5173
       - OLLAMA_BASE_URL=http://ollama:11434
       # For network access, add your IP/hostname to CORS_ORIGIN:
       - CORS_ORIGIN=http://localhost:8080
