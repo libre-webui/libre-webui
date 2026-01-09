@@ -1,5 +1,5 @@
 ---
-sidebar_position: 21
+sidebar_position: 3
 title: "AI Development Analysis"
 description: "AI-powered development insights using local Ollama. Generate intelligent changelogs, analyze project health, and automate release documentation with 100% privacy-first analysis."
 slug: /AI_DEVELOPMENT_ANALYSIS
@@ -183,7 +183,7 @@ CHANGELOG_AI_MODEL=gemma3:27b npm run changelog:ai
 The AI analyzes both quantitative metrics (commit counts, file changes) and qualitative patterns (development trends, architectural decisions) to provide actionable insights.
 :::
 
-## Example Outputs
+## � Example Outputs
 
 ### 🤖 AI Changelog Generation
 
@@ -377,7 +377,7 @@ import DocCard from '@theme/DocCard';
     <DocCard
       item={{
         type: 'link',
-        href: '/14-RELEASE_AUTOMATION',
+        href: './RELEASE_AUTOMATION',
         label: '🚀 Release Automation',
         description: 'Standard release process and automation'
       }}
@@ -387,7 +387,7 @@ import DocCard from '@theme/DocCard';
     <DocCard
       item={{
         type: 'link',
-        href: '/08-PLUGIN_ARCHITECTURE',
+        href: './PLUGIN_ARCHITECTURE',
         label: '🧩 Plugin Architecture', 
         description: 'Extending AI capabilities with plugins'
       }}
@@ -400,7 +400,7 @@ import DocCard from '@theme/DocCard';
     <DocCard
       item={{
         type: 'link',
-        href: '/02-WORKING_WITH_MODELS',
+        href: './WORKING_WITH_MODELS',
         label: '🤖 Working with Models',
         description: 'Comprehensive guide to Ollama model management'
       }}

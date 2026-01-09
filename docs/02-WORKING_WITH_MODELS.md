@@ -282,6 +282,23 @@ Ask for responses in specific formats:
 - Try rephrasing your question
 - Use a different model for your task
 
+## 📚 Related Documentation
+
+import DocCard from '@theme/DocCard';
+
+<div className="row">
+  <div className="col col--12">
+    <DocCard
+      item={{
+        type: 'link',
+        href: './AI_DEVELOPMENT_ANALYSIS',
+        label: '🤖 AI Development Analysis',
+        description: 'Use your local models for development insights and smart changelogs'
+      }}
+    />
+  </div>
+</div>
+
 ---
 
 **Ready to explore?** Head to the [Quick Start Guide](./01-QUICK_START.md) to get your first conversation going!

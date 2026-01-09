@@ -300,6 +300,23 @@ This will:
 - Create a git tag v0.1.1
 - Provide instructions for the next steps
 
+## 📚 Related Documentation
+
+import DocCard from '@theme/DocCard';
+
+<div className="row">
+  <div className="col col--12">
+    <DocCard
+      item={{
+        type: 'link',
+        href: './AI_DEVELOPMENT_ANALYSIS',
+        label: '🤖 AI Development Analysis',
+        description: 'Enhance releases with AI-powered changelogs and project insights'
+      }}
+    />
+  </div>
+</div>
+
 ---
 
 For more information about conventional commits, visit: https://www.conventionalcommits.org/
