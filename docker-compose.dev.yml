@@ -1,0 +1,61 @@
+services:
+  libre-webui:
+    image: librewebui/libre-webui:dev
+    ports:
+      - '8080:3001'
+    environment:
+      - NODE_ENV=production
+      - DOCKER_ENV=true
+      - PORT=3001
+      - OLLAMA_BASE_URL=http://ollama:11434
+      # For network access, add your IP/hostname to CORS_ORIGIN:
+      - CORS_ORIGIN=http://localhost:8080
+      - SINGLE_USER_MODE=false
+      # JWT_SECRET: Generate with 'openssl rand -hex 64' and set via .env file or environment
+      - JWT_SECRET=${JWT_SECRET:-}
+      - JWT_EXPIRES_IN=7d
+      # Encryption: Optional 64-character hex key. If not provided, one will be auto-generated
+      # and stored in the persistent data volume for security across container restarts
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
+      # Timeout configuration for large models on multiple GPUs
+      - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300000}
+      - OLLAMA_LONG_OPERATION_TIMEOUT=${OLLAMA_LONG_OPERATION_TIMEOUT:-900000}
+      - VITE_API_TIMEOUT=${VITE_API_TIMEOUT:-300000}
+      # Database path - points to the volume mount
+      - DATA_DIR=/app/backend/data
+      # GitHub OAuth2 SSO Configuration
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+      - GITHUB_CALLBACK_URL=${GITHUB_CALLBACK_URL:-http://localhost:8080/api/auth/oauth/github/callback}
+      # Hugging Face OAuth2 SSO Configuration
+      - HUGGINGFACE_CLIENT_ID=${HUGGINGFACE_CLIENT_ID:-}
+      - HUGGINGFACE_CLIENT_SECRET=${HUGGINGFACE_CLIENT_SECRET:-}
+      - HUGGINGFACE_CALLBACK_URL=${HUGGINGFACE_CALLBACK_URL:-http://localhost:8080/api/auth/oauth/huggingface/callback}
+      - SESSION_SECRET=${SESSION_SECRET:-}
+    volumes:
+      - libre_webui_dev_data:/app/backend/data
+      - libre_webui_dev_temp:/app/backend/temp
+    depends_on:
+      - ollama
+    restart: unless-stopped
+    networks:
+      - libre-webui-network
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - '11434:11434'
+    volumes:
+      - ollama_dev_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - libre-webui-network
+
+volumes:
+  libre_webui_dev_data:
+  libre_webui_dev_temp:
+  ollama_dev_data:
+
+networks:
+  libre-webui-network:
+    driver: bridge
