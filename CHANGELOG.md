@@ -15,6 +15,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.3.2] - 2026-01-09
+
+### What's New
+
+This release introduces Kubernetes deployment support with a complete Helm chart, making it easier to deploy Libre WebUI in production environments. We've also enhanced the Docker development workflow with dedicated development builds and improved documentation.
+
+### ✨ New Features
+
+- **Kubernetes Support**: Added comprehensive Helm chart for Kubernetes deployments with configurable services, ingress, autoscaling, and Ollama integration
+- **Development Docker Images**: Introduced dedicated `-dev` tagged Docker images for development builds
+- **Enhanced Docker Compose**: Added GPU-enabled and external Ollama configurations for both development and production environments
+
+### 🔧 Improvements
+
+- **CI/CD Pipeline**: Automated Docker image building and Helm chart publishing workflows
+- **Documentation**: Expanded README with comprehensive Docker and Kubernetes deployment guides
+- **Development Experience**: Added development-specific Docker Compose configurations for various use cases
+- **Version Display**: Settings modal now clearly shows `-dev` tag for development builds
+
 ## [0.3.1] - 2026-01-08
 
 ### What's New
