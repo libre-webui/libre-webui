@@ -95,6 +95,15 @@ COPY frontend/ ./frontend/
 ENV VITE_API_BASE_URL=""
 ENV VITE_API_URL=""
 
+# Accept version from build arg (set by CI, includes -dev suffix for dev branch)
+ARG APP_VERSION
+ENV VITE_APP_VERSION=${APP_VERSION}
+
+# If APP_VERSION is set, update package.json version before build
+RUN if [ -n "$APP_VERSION" ]; then \
+      cd frontend && node -e "const p=require('./package.json'); p.version='$APP_VERSION'; require('fs').writeFileSync('./package.json', JSON.stringify(p, null, 2))"; \
+    fi
+
 RUN cd frontend && npm run build
 
 # Build backend
