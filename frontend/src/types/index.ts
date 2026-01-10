@@ -70,6 +70,7 @@ export interface ChatSession {
   createdAt: number;
   updatedAt: number;
   personaId?: string;
+  isPrivate?: boolean; // Private sessions are not saved to backend
 }
 
 export interface OllamaModel {

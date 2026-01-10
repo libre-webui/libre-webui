@@ -282,10 +282,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
     message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }
   ) => {
     const state = get();
-    // Block if currentSession is not valid
+
+    // Allow private sessions (they're not in the sessions array)
+    const isPrivateSession =
+      state.currentSession?.isPrivate && state.currentSession?.id === sessionId;
+
+    // Block if currentSession is not valid (unless it's a private session)
     if (
       !state.currentSession ||
-      !state.sessions.find(s => s.id === state.currentSession?.id)
+      (!isPrivateSession &&
+        !state.sessions.find(s => s.id === state.currentSession?.id))
     ) {
       toast.error('No valid chat session. Please create or select a chat.');
       console.error(
@@ -294,8 +300,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       );
       return;
     }
-    // Block if sessionId is not in the current sessions list
-    if (!state.sessions.find(s => s.id === sessionId)) {
+    // Block if sessionId is not in the current sessions list (unless it's a private session)
+    if (!isPrivateSession && !state.sessions.find(s => s.id === sessionId)) {
       toast.error(
         'Session not found or invalid. Please select or create a valid chat session.'
       );
@@ -312,6 +318,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
     };
 
     set(state => {
+      // Handle private sessions - only update currentSession, not the sessions array
+      if (
+        state.currentSession?.isPrivate &&
+        state.currentSession?.id === sessionId
+      ) {
+        // Prevent adding duplicate messages
+        const existingMessage = state.currentSession.messages.find(
+          m => m.id === newMessage.id
+        );
+        if (existingMessage) {
+          return state;
+        }
+
+        return {
+          ...state,
+          currentSession: {
+            ...state.currentSession,
+            messages: [...state.currentSession.messages, newMessage],
+            updatedAt: Date.now(),
+          },
+        };
+      }
+
       // Prevent adding duplicate messages
       const session = state.sessions.find(s => s.id === sessionId);
       if (session) {
@@ -384,6 +413,32 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return state;
       }
 
+      // Handle private sessions
+      if (state.currentSession?.isPrivate) {
+        const targetMessage = state.currentSession.messages.find(
+          m => m.id === messageId
+        );
+        if (!targetMessage || targetMessage.content === content) {
+          return state;
+        }
+
+        const updatedMessages = state.currentSession.messages.map(msg => {
+          if (msg.id === messageId) {
+            return { ...msg, content };
+          }
+          return msg;
+        });
+
+        return {
+          ...state,
+          currentSession: {
+            ...state.currentSession,
+            messages: updatedMessages,
+            updatedAt: Date.now(),
+          },
+        };
+      }
+
       // Find the session directly instead of mapping all sessions
       const targetSession = state.sessions.find(s => s.id === sessionId);
       if (!targetSession) {
@@ -440,6 +495,25 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // Only update if this is for the current session
       if (state.currentSession?.id !== sessionId) {
         return state;
+      }
+
+      // Handle private sessions
+      if (state.currentSession?.isPrivate) {
+        const updatedMessages = state.currentSession.messages.map(msg => {
+          if (msg.id === messageId) {
+            return { ...msg, content, statistics };
+          }
+          return msg;
+        });
+
+        return {
+          ...state,
+          currentSession: {
+            ...state.currentSession,
+            messages: updatedMessages,
+            updatedAt: Date.now(),
+          },
+        };
       }
 
       const updatedSessions = state.sessions.map(session => {

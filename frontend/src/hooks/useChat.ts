@@ -273,10 +273,15 @@ export const useChat = (sessionId: string) => {
         // Track the first user message for auto-title generation BEFORE adding message
         // Only set if it's the first message in this session (no existing user messages)
         const session = useChatStore.getState().currentSession;
+        const isPrivateSession = session?.isPrivate === true;
         const hasExistingUserMessages = session?.messages?.some(
           m => m.role === 'user'
         );
-        if (!hasExistingUserMessages && session?.title === 'New Chat') {
+        if (
+          !isPrivateSession &&
+          !hasExistingUserMessages &&
+          session?.title === 'New Chat'
+        ) {
           firstUserMessageRef.current = content.trim();
         }
 
@@ -313,6 +318,8 @@ export const useChat = (sessionId: string) => {
             format: format,
             options: preferences.generationOptions,
             assistantMessageId, // Send the message ID to backend
+            isPrivate: isPrivateSession, // Private sessions don't persist to DB
+            model: isPrivateSession ? session?.model : undefined, // Include model for private sessions
           },
         });
       } catch (error: unknown) {

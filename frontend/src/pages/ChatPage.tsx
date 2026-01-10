@@ -17,7 +17,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Send, Plus, Paperclip, Minus } from 'lucide-react';
+import { Send, Plus, Paperclip, Minus, Ghost } from 'lucide-react';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
 import { CodeAwareTextarea } from '@/components/CodeAwareTextarea';
@@ -123,6 +123,11 @@ export const ChatPage: React.FC = () => {
         return; // Don't load any session, show welcome screen
       }
 
+      // Skip session routing if we have a private session active
+      if (currentSession?.isPrivate) {
+        return;
+      }
+
       // Only proceed if sessions are loaded
       if (sessions.length === 0) {
         return; // Sessions not loaded yet, wait for them
@@ -162,6 +167,7 @@ export const ChatPage: React.FC = () => {
     setCurrentSession,
     navigate,
     currentSession?.id,
+    currentSession?.isPrivate,
     location.pathname,
   ]);
 
@@ -261,7 +267,35 @@ export const ChatPage: React.FC = () => {
     const hasAdvancedFeatures = welcomeImages.length > 0;
 
     return (
-      <div className='h-full flex-1 flex flex-col items-center justify-center p-4 sm:p-8'>
+      <div className='h-full flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative'>
+        {/* Private Mode Button - Top Right Corner */}
+        <button
+          onClick={() => {
+            if (!selectedModel && models.length === 0) {
+              return;
+            }
+            // Create a private session that won't be saved
+            // Don't navigate - just set the session and it will show the chat UI
+            const now = Date.now();
+            const privateSession = {
+              id: `private-${now}`,
+              title: 'Private Chat',
+              model: selectedModel || models[0]?.name || '',
+              messages: [],
+              createdAt: now,
+              updatedAt: now,
+              isPrivate: true,
+            };
+            setCurrentSession(privateSession);
+          }}
+          disabled={!selectedModel && models.length === 0}
+          className='absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-300 dark:border-dark-400 ophelia:border-[#3f3f46] bg-transparent hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+          title="Start a private conversation that won't be saved"
+        >
+          <Ghost className='h-4 w-4' />
+          <span className='text-sm'>Private</span>
+        </button>
+
         <div className='w-full max-w-2xl mx-auto flex flex-col items-center justify-center'>
           {/* Personalized greeting based on time of day */}
           <h1
@@ -465,8 +499,20 @@ export const ChatPage: React.FC = () => {
       )}
 
       <div className='flex flex-col h-full relative z-10'>
+        {/* Private mode indicator */}
+        {currentSession?.isPrivate && (
+          <div className='flex-shrink-0 px-4 py-2 border-b border-gray-200 dark:border-dark-300 ophelia:border-[#262626] bg-gray-50/80 dark:bg-dark-100/80 ophelia:bg-[#0a0a0a]/80 backdrop-blur-sm'>
+            <div className='flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+              <Ghost className='h-4 w-4' />
+              <span className='text-sm font-medium'>Private Mode</span>
+              <span className='text-xs text-gray-500 dark:text-gray-500 ophelia:text-[#737373]'>
+                — This conversation won&apos;t be saved
+              </span>
+            </div>
+          </div>
+        )}
         {/* Persona indicator header */}
-        {currentPersona && (
+        {currentPersona && !currentSession?.isPrivate && (
           <div className='flex-shrink-0 px-4 py-2 border-b border-gray-100 dark:border-dark-200 ophelia:border-[#262626] bg-white/50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a]/50 backdrop-blur-sm'>
             <PersonaIndicator
               persona={currentPersona}
