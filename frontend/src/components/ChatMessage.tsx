@@ -267,10 +267,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {!isSystem && (
           <div
             className={cn(
-              'flex shrink-0 items-start justify-center rounded-full shadow-sm overflow-hidden mt-1',
+              'flex shrink-0 items-center justify-center shadow-sm overflow-hidden mt-1',
               isUser
-                ? 'h-8 w-8 bg-primary-600 ophelia:bg-[#9333ea] text-white'
-                : 'h-8 w-8 bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]'
+                ? 'h-8 w-8 rounded-full bg-primary-600 ophelia:bg-[#9333ea] text-white'
+                : currentPersona?.avatar
+                  ? 'h-8 w-8 rounded-full bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]'
+                  : 'h-8 px-2 rounded-full bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]'
             )}
           >
             {isUser ? (
@@ -290,8 +292,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 className='w-full h-full object-cover'
               />
             ) : (
-              <span className='libre-brand text-sm text-gray-700 dark:text-gray-200 ophelia:text-[#e5e5e5]'>
-                L
+              <span className='libre-brand text-xs text-gray-700 dark:text-gray-200 ophelia:text-[#e5e5e5]'>
+                Libre
               </span>
             )}
           </div>

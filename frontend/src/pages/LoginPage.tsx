@@ -20,7 +20,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { LoginForm } from '@/components/LoginForm';
 import { SignupForm } from '@/components/SignupForm';
-import { Logo } from '@/components/Logo';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -43,12 +42,9 @@ export const LoginPage: React.FC = () => {
   return (
     <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-        <div className='flex justify-center'>
-          <Logo />
-        </div>
         <h2
-          className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
-          style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+          className='libre-brand text-center text-4xl sm:text-5xl font-normal text-gray-900 dark:text-gray-100'
+          style={{ fontWeight: 400, letterSpacing: '0.01em' }}
         >
           Libre WebUI
         </h2>
