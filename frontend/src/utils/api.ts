@@ -153,12 +153,34 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
+// Response interceptor - handle 401 errors globally
 api.interceptors.response.use(
   response => {
     return response;
   },
   error => {
+    // Handle 401 Unauthorized - session expired or invalid token
+    if (error.response?.status === 401) {
+      console.warn('🔒 Session expired or unauthorized, logging out...');
+
+      // Clear auth state and redirect to login
+      localStorage.removeItem('auth-token');
+
+      // Import authStore dynamically to avoid circular dependency
+      import('@/store/authStore').then(({ useAuthStore }) => {
+        const authStore = useAuthStore.getState();
+        authStore.logout();
+      });
+
+      // Redirect to login page if not already there
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+
+      // Return a rejected promise but don't show the error toast
+      return Promise.reject(new Error('Session expired'));
+    }
+
     console.error('API Error:', error);
     return Promise.reject(error);
   }
