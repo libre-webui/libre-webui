@@ -308,6 +308,17 @@ export const useChat = (sessionId: string) => {
           await websocketService.connect();
         }
 
+        // For private sessions, send the message history since it's not stored on backend
+        const messageHistory = isPrivateSession
+          ? session?.messages
+              ?.filter(m => m.role !== 'system' && m.id !== assistantMessageId)
+              .map(m => ({
+                role: m.role,
+                content: m.content,
+                images: m.images,
+              }))
+          : undefined;
+
         // Send chat stream request with new parameters
         websocketService.send({
           type: 'chat_stream',
@@ -320,6 +331,7 @@ export const useChat = (sessionId: string) => {
             assistantMessageId, // Send the message ID to backend
             isPrivate: isPrivateSession, // Private sessions don't persist to DB
             model: isPrivateSession ? session?.model : undefined, // Include model for private sessions
+            messageHistory, // Send history for private sessions
           },
         });
       } catch (error: unknown) {

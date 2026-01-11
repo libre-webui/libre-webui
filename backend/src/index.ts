@@ -487,6 +487,7 @@ wss.on('connection', (ws, req) => {
           originalMessageId,
           isPrivate,
           model: privateModel,
+          messageHistory,
         } = message.data;
 
         console.log(
@@ -614,9 +615,16 @@ wss.on('connection', (ws, req) => {
 
         // Use the modern chat completion API instead of legacy generate API
         // This supports multimodal input and structured outputs
-        // For private sessions, we only have the current message (no history stored)
-        const contextMessages = isPrivate
-          ? [{ role: 'user' as const, content, images: images || undefined }]
+        // For private sessions, use the message history sent from frontend
+        type ContextMessage = {
+          role: 'user' | 'assistant' | 'system';
+          content: string;
+          images?: string[];
+        };
+        const contextMessages: ContextMessage[] = isPrivate
+          ? (messageHistory || []).concat([
+              { role: 'user' as const, content, images: images || undefined },
+            ])
           : chatService.getMessagesForContext(sessionId);
 
         // Convert our messages to Ollama format
