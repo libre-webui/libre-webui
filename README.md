@@ -96,6 +96,24 @@ npx libre-webui
 
 That's it. Opens at `http://localhost:8080`
 
+### Homebrew (macOS)
+
+```bash
+# CLI version (includes backend server)
+brew tap libre-webui/tap
+brew install libre-webui
+libre-webui
+
+# Or desktop app
+brew install --cask libre-webui
+```
+
+Run as a background service:
+
+```bash
+brew services start libre-webui
+```
+
 ### Docker
 
 | Setup                                     | Command                                                      |

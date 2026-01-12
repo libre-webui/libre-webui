@@ -1,0 +1,227 @@
+name: Publish to Homebrew Tap
+
+on:
+  release:
+    types: [published]
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 0.3.2)'
+        required: true
+
+jobs:
+  update-homebrew-tap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main repo
+        uses: actions/checkout@v4
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing version: $VERSION"
+
+      - name: Calculate SHA256 for source tarball
+        id: sha_source
+        run: |
+          curl -sL "https://github.com/${{ github.repository }}/archive/refs/tags/v${{ steps.version.outputs.version }}.tar.gz" -o source.tar.gz
+          SHA=$(shasum -a 256 source.tar.gz | cut -d' ' -f1)
+          echo "sha256=$SHA" >> $GITHUB_OUTPUT
+          echo "Source SHA256: $SHA"
+
+      - name: Calculate SHA256 for DMG
+        id: sha_dmg
+        run: |
+          DMG_URL="https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/Libre.WebUI-${{ steps.version.outputs.version }}-mac-arm64.dmg"
+          echo "Downloading: $DMG_URL"
+          if curl -sL "$DMG_URL" -o app.dmg --fail; then
+            SHA=$(shasum -a 256 app.dmg | cut -d' ' -f1)
+            echo "sha256=$SHA" >> $GITHUB_OUTPUT
+            echo "DMG SHA256: $SHA"
+          else
+            echo "sha256=" >> $GITHUB_OUTPUT
+            echo "DMG not found, skipping cask update"
+          fi
+
+      - name: Checkout homebrew-tap repo
+        uses: actions/checkout@v4
+        with:
+          repository: libre-webui/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update Formula
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SHA="${{ steps.sha_source.outputs.sha256 }}"
+
+          cat > homebrew-tap/Formula/libre-webui.rb << 'FORMULA_EOF'
+          # Libre WebUI Homebrew Formula
+          # Privacy-first AI chat interface - Self-hosted, open source, extensible
+          #
+          # Installation:
+          #   brew tap libre-webui/tap
+          #   brew install libre-webui
+
+          class LibreWebui < Formula
+            desc "Privacy-first AI chat interface - Self-hosted, open source, extensible"
+            homepage "https://librewebui.org"
+            url "https://github.com/libre-webui/libre-webui/archive/refs/tags/v${VERSION}.tar.gz"
+            sha256 "${SHA}"
+            license "Apache-2.0"
+            head "https://github.com/libre-webui/libre-webui.git", branch: "main"
+
+            depends_on "node@20"
+
+            def install
+              system "npm", "install", "--ignore-scripts", "--legacy-peer-deps"
+              system "npm", "run", "build"
+
+              libexec.install Dir["*"]
+              libexec.install ".env.example" if File.exist?(".env.example")
+
+              (bin/"libre-webui").write <<~EOS
+                #!/bin/bash
+                export PATH="#{Formula["node@20"].opt_bin}:$PATH"
+                exec "#{libexec}/bin/cli.js" "$@"
+              EOS
+            end
+
+            def post_install
+              (var/"libre-webui").mkpath
+            end
+
+            def caveats
+              <<~EOS
+                Libre WebUI has been installed!
+
+                To start the server:
+                  libre-webui
+
+                To start on a custom port:
+                  libre-webui --port 3000
+
+                Configuration:
+                  Data is stored in: #{var}/libre-webui
+                  Or set DATA_DIR environment variable
+
+                Optional: Connect to Ollama for local LLM support:
+                  brew install ollama
+                  ollama serve
+
+                For API providers, set environment variables:
+                  export OLLAMA_BASE_URL=http://localhost:11434
+                  export OPENAI_API_KEY=your-key
+                  export ANTHROPIC_API_KEY=your-key
+
+                Documentation: https://docs.librewebui.org
+              EOS
+            end
+
+            service do
+              run [opt_bin/"libre-webui"]
+              keep_alive true
+              working_dir var/"libre-webui"
+              log_path var/"log/libre-webui.log"
+              error_log_path var/"log/libre-webui.log"
+              environment_variables PATH: std_service_path_env
+            end
+
+            test do
+              assert_match "libre-webui", shell_output("#{bin}/libre-webui --version")
+            end
+          end
+          FORMULA_EOF
+
+          # Replace placeholders
+          sed -i "s/\${VERSION}/$VERSION/g" homebrew-tap/Formula/libre-webui.rb
+          sed -i "s/\${SHA}/$SHA/g" homebrew-tap/Formula/libre-webui.rb
+
+      - name: Update Cask
+        if: steps.sha_dmg.outputs.sha256 != ''
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SHA="${{ steps.sha_dmg.outputs.sha256 }}"
+
+          mkdir -p homebrew-tap/Casks
+
+          cat > homebrew-tap/Casks/libre-webui.rb << 'CASK_EOF'
+          # Libre WebUI Cask Formula
+          # Desktop application for Libre WebUI
+          #
+          # Installation:
+          #   brew tap libre-webui/tap
+          #   brew install --cask libre-webui
+
+          cask "libre-webui" do
+            version "${VERSION}"
+            sha256 "${SHA}"
+
+            url "https://github.com/libre-webui/libre-webui/releases/download/v#{version}/Libre.WebUI-#{version}-mac-arm64.dmg"
+
+            name "Libre WebUI"
+            desc "Privacy-first AI chat interface - Self-hosted, open source, extensible"
+            homepage "https://librewebui.org"
+
+            livecheck do
+              url :url
+              strategy :github_latest
+            end
+
+            auto_updates true
+            depends_on macos: ">= :monterey"
+
+            app "Libre WebUI.app"
+
+            zap trash: [
+              "~/Library/Application Support/libre-webui",
+              "~/Library/Caches/libre-webui",
+              "~/Library/Preferences/org.librewebui.app.plist",
+              "~/Library/Saved Application State/org.librewebui.app.savedState",
+              "~/.libre-webui",
+            ]
+
+            caveats <<~EOS
+              Libre WebUI desktop app has been installed!
+
+              For local LLM support, install and run Ollama:
+                brew install ollama
+                ollama serve
+
+              For API providers, configure in the app settings or set:
+                export OPENAI_API_KEY=your-key
+                export ANTHROPIC_API_KEY=your-key
+
+              CLI version also available:
+                brew install libre-webui
+
+              Documentation: https://docs.librewebui.org
+            EOS
+          end
+          CASK_EOF
+
+          # Replace placeholders
+          sed -i "s/\${VERSION}/$VERSION/g" homebrew-tap/Casks/libre-webui.rb
+          sed -i "s/\${SHA}/$SHA/g" homebrew-tap/Casks/libre-webui.rb
+
+      - name: Commit and push to tap
+        run: |
+          cd homebrew-tap
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update to v${{ steps.version.outputs.version }}"
+            git push
+          fi
