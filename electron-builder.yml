@@ -36,11 +36,10 @@ mac:
         - arm64
   icon: electron/assets/icon.icns
   darkModeSupport: true
-  # Disable hardened runtime and notarization until code signing is configured
-  # hardenedRuntime: true
-  # entitlements: electron/entitlements.mac.plist
-  # entitlementsInherit: electron/entitlements.mac.plist
-  # notarize: true
+  hardenedRuntime: true
+  entitlements: electron/entitlements.mac.plist
+  entitlementsInherit: electron/entitlements.mac.plist
+  notarize: true
   gatekeeperAssess: false
   artifactName: '${productName}-${version}-mac-arm64.${ext}'
 
