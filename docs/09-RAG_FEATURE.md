@@ -165,34 +165,50 @@ If you change embedding settings:
 For developers and advanced users:
 
 ### How It Works
-1. **Document Upload**: Files are uploaded to the local backend
-2. **Text Extraction**: Content is extracted from various file formats
-3. **Chunking**: Text is split into overlapping segments
-4. **Embedding**: Each chunk gets a vector representation using Ollama
-5. **Storage**: Embeddings are stored locally in JSON files
-6. **Search**: When you ask a question, it's compared against all chunks
-7. **Context**: Most relevant chunks are included in the AI response
+1. **Document Upload**: Files uploaded to backend (max 10MB per file)
+2. **Text Extraction**: PDF.js extracts text from PDFs; other formats parsed directly
+3. **Chunking**: Text split into segments (default 1000 chars, 200 overlap)
+4. **Embedding**: Each chunk gets a vector using Ollama's `nomic-embed-text`
+5. **Storage**: Embeddings stored in SQLite database
+6. **Search**: Cosine similarity matching against your question embedding
+7. **Context**: Relevant chunks (above threshold) injected into AI prompt
+
+### Database Schema
+```sql
+-- Documents table
+documents (id, user_id, filename, content, created_at, updated_at)
+
+-- Chunks with embeddings
+document_chunks (id, document_id, content, embedding, chunk_index)
+```
 
 ### Storage Location
-- Documents: `backend/documents.json`
-- Embeddings: `backend/document-chunks.json`
-- Settings: `backend/preferences.json`
+- **Database**: `backend/data/data.sqlite` (dev) or `~/.libre-webui/data.sqlite` (npx)
+- **Uploads**: `backend/data/uploads/` or `~/.libre-webui/uploads/`
 
 ### API Endpoints
-- `POST /api/documents/upload` - Upload documents
-- `GET /api/documents` - List documents  
-- `DELETE /api/documents/:id` - Remove document
-- `POST /api/documents/regenerate-embeddings` - Reprocess all documents
-- `GET /api/documents/embedding-status` - Check processing status
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/documents/upload` | POST | Upload documents (multipart/form-data) |
+| `/api/documents` | GET | List documents for current user |
+| `/api/documents/:id` | GET | Get specific document |
+| `/api/documents/:id` | DELETE | Remove document and chunks |
+| `/api/documents/regenerate-embeddings` | POST | Reprocess all embeddings |
+
+### Embedding Model Setup
+
+The default embedding model must be available in Ollama:
+```bash
+ollama pull nomic-embed-text
+```
+
+Change the embedding model in Settings → Documents → Embedding Model.
 
 ---
 
 ## Need Help?
 
-- **General Issues**: Check the [Troubleshooting Guide](./06-TROUBLESHOOTING.md)
-- **Quick Start**: See the [Quick Start Guide](./01-QUICK_START.md)
-- **Keyboard Shortcuts**: View [Keyboard Shortcuts](./04-KEYBOARD_SHORTCUTS.md)
-
----
-
-*Happy document chatting! 📄✨*
+- **General Issues**: Check the [Troubleshooting Guide](./TROUBLESHOOTING)
+- **Quick Start**: See the [Quick Start Guide](./QUICK_START)
+- **Hardware**: View [Hardware Requirements](./HARDWARE_REQUIREMENTS)

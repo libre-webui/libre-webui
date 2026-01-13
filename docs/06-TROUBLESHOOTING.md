@@ -80,17 +80,17 @@ ollama list
 
 **Download a recommended model:**
 ```bash
-# Current best single-GPU model (recommended)
-ollama pull gemma3:4b
+# Best balance of quality and speed (recommended, ~5GB)
+ollama pull llama3.1:8b
 
-# Or ultra-fast for slower computers
-ollama pull llama3.2:1b
+# Ultra-fast for slower computers (~2GB)
+ollama pull llama3.2:3b
 
-# For advanced users with good hardware
-ollama pull llama3.3:70b
+# For 16GB+ VRAM systems (~9GB)
+ollama pull qwen2.5:14b
 ```
 
-**Wait for the download to finish** (1-32GB depending on the model).
+**Wait for the download to finish** (2-50GB depending on the model).
 :::
 
   </TabItem>
@@ -161,7 +161,7 @@ npm run dev
 **Solution:** Start Ollama: `ollama serve`
 
 ### **"No models found"**
-**Solution:** Download a model: `ollama pull gemma3:4b`
+**Solution:** Download a model: `ollama pull llama3.1:8b`
 
 ### **"Failed to fetch" or "Network Error"**
 **Solution:** Start the backend: `cd backend && npm run dev`
@@ -188,10 +188,11 @@ kill -9 XXXX
 
 ### **AI Responses Are Very Slow**
 **Solutions:**
-1. **Try a more efficient model:** `ollama pull phi4:14b` (compact powerhouse)
-2. **Use ultra-fast models:** `ollama pull llama3.2:1b` or `ollama pull gemma3:1b`
-3. **Close other applications** to free up memory
-4. **Check your RAM:** You need at least 4GB free for most models
+1. **Check if model fits in VRAM:** Run `ollama ps` to see memory usage
+2. **Use a smaller model:** `ollama pull llama3.2:3b` (~2GB VRAM)
+3. **Use Q4 quantization:** Models ending in `:latest` use Q4 by default
+4. **Close GPU-intensive apps** (games, video editors)
+5. **CPU-only inference:** Expect 5-15 tokens/sec (this is normal without GPU)
 
 ### **"Timeout of 30000ms exceeded" Errors**
 **Problem:** Large models on multiple GPUs need more time to load into memory.
@@ -305,10 +306,12 @@ Please include:
 5. **Restart everything occasionally** to clear memory
 
 ### **System Requirements Reminder:**
-- **Minimum:** 4GB RAM, 15GB free disk space (for compact models)
-- **Recommended:** 8GB+ RAM, 50GB+ free disk space (for mid-size models)  
-- **Power User:** 16GB+ RAM, 100GB+ free disk space (for large models)
-- **Enthusiast:** 32GB+ RAM, 200GB+ SSD storage (for state-of-the-art models)
+- **Minimum:** 8GB RAM, 10GB free disk space
+- **Recommended:** 16GB RAM, 8GB VRAM GPU, 50GB+ disk space
+- **Power User:** 32GB RAM, 16-24GB VRAM GPU, 100GB+ disk space
+- **Professional:** 64GB+ RAM, 48GB+ VRAM, 200GB+ SSD
+
+See the [Hardware Requirements Guide](./HARDWARE_REQUIREMENTS) for detailed GPU recommendations.
 
 ---
 
@@ -316,7 +319,82 @@ Please include:
 
 *Remember: Ollama (AI engine) + Backend (API) + Frontend (interface) = Working Libre WebUI*
 
-**Still having trouble?** The [Quick Start Guide](./01-QUICK_START.md) has step-by-step setup instructions.
+**Still having trouble?** The [Quick Start Guide](./QUICK_START) has step-by-step setup instructions.
+
+---
+
+## 🐳 **Docker Issues**
+
+### **Container Won't Start**
+```bash
+# Check container logs
+docker-compose logs libre-webui
+
+# Check if ports are in use
+lsof -i :8080
+lsof -i :11434
+```
+
+### **Can't Connect to Ollama in Docker**
+```bash
+# For bundled Ollama, check both containers
+docker-compose logs ollama
+
+# For external Ollama, verify host connection
+curl http://localhost:11434/api/version
+
+# Make sure OLLAMA_BASE_URL is correct in docker-compose
+# Bundled: http://ollama:11434
+# External: http://host.docker.internal:11434 (Mac/Windows)
+# External: http://172.17.0.1:11434 (Linux)
+```
+
+### **Data Not Persisting**
+```bash
+# Check volumes exist
+docker volume ls | grep libre
+
+# Inspect volume
+docker volume inspect libre_webui_data
+```
+
+### **GPU Not Working in Docker**
+```bash
+# Verify NVIDIA Container Toolkit
+nvidia-smi
+docker run --rm --gpus all nvidia/cuda:12.0-base nvidia-smi
+
+# Use GPU compose file
+docker-compose -f docker-compose.gpu.yml up -d
+```
+
+---
+
+## 📦 **NPX Installation Issues**
+
+### **"Cannot find module" Errors**
+```bash
+# Clear npm cache and reinstall
+npm cache clean --force
+npx libre-webui@latest
+```
+
+### **Data Location**
+When using `npx libre-webui`, data is stored in:
+- **Linux/macOS:** `~/.libre-webui/`
+- **Windows:** `%USERPROFILE%\.libre-webui\`
+
+### **Port Already in Use**
+```bash
+# Default port is 8080, use different port
+PORT=9000 npx libre-webui
+```
+
+### **First-Time Setup Not Showing Encryption Key**
+This was fixed in v0.2.7. Update to latest:
+```bash
+npx libre-webui@latest
+```
 
 ---
 

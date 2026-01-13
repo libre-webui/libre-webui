@@ -322,11 +322,60 @@ All components are fully functional and ready for production use.
 - Development: Relaxed CORS, detailed error messages
 - Production: Strict CORS, minimal error disclosure, secure headers
 
+## Single Sign-On (SSO)
+
+Libre WebUI supports OAuth2 authentication with GitHub and Hugging Face.
+
+### GitHub OAuth
+
+1. **Create a GitHub OAuth App:**
+   - Go to GitHub Settings → Developer Settings → OAuth Apps → New OAuth App
+   - Set Homepage URL: `http://localhost:8080` (or your domain)
+   - Set Callback URL: `http://localhost:3001/api/auth/oauth/github/callback`
+
+2. **Configure environment variables:**
+   ```env
+   GITHUB_CLIENT_ID=your_client_id
+   GITHUB_CLIENT_SECRET=your_client_secret
+   ```
+
+3. **Enable in the UI:** The GitHub login button appears automatically when configured.
+
+### Hugging Face OAuth
+
+1. **Create a Hugging Face OAuth App:**
+   - Go to Hugging Face Settings → Access Tokens → Create new OAuth app
+   - Set Callback URL: `http://localhost:3001/api/auth/oauth/huggingface/callback`
+
+2. **Configure environment variables:**
+   ```env
+   HUGGINGFACE_CLIENT_ID=your_client_id
+   HUGGINGFACE_CLIENT_SECRET=your_client_secret
+   ```
+
+3. **Enable in the UI:** The Hugging Face login button appears automatically when configured.
+
+### SSO Behavior
+
+- **New users**: Automatically created with `user` role on first SSO login
+- **Existing users**: Matched by email address if already registered
+- **Admin promotion**: First SSO user is NOT automatically admin (use local account for first admin)
+
+For detailed SSO setup, see the [Single Sign-On Guide](./SSO).
+
 ## Extensibility
 
+### Available Features
+- GitHub OAuth2 integration
+- Hugging Face OAuth2 integration
+- JWT-based session management
+- Role-based access control (admin/user)
+- Per-user data isolation
+
 ### Future Enhancements
-- OAuth2/SSO integration points available
 - Two-factor authentication support
+- Additional OAuth providers (Google, Microsoft)
+- SAML/LDAP integration
 - Advanced role permissions
 - User groups and organizations
 - Audit logging

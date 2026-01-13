@@ -20,17 +20,18 @@ Connect to cloud AI providers alongside local Ollama models.
 
 ### Supported Providers
 
-| Provider | Models | API Key Variable |
-|----------|--------|------------------|
-| OpenAI | GPT-4, GPT-4o, o3, o4 | `OPENAI_API_KEY` |
-| Anthropic | Claude 4 Sonnet, Opus, Haiku | `ANTHROPIC_API_KEY` |
-| Google | Gemini 2.0, 2.5 | `GEMINI_API_KEY` |
-| Groq | Llama, Gemma (fast) | `GROQ_API_KEY` |
-| Mistral | Mistral Large, Codestral | `MISTRAL_API_KEY` |
-| GitHub Models | Free premium models | `GITHUB_API_KEY` |
-| OpenRouter | 300+ models | `OPENROUTER_API_KEY` |
+| Provider | Models | API Key Variable | Notes |
+|----------|--------|------------------|-------|
+| **OpenAI** | GPT-4o, GPT-4, o1, o3, o4 (110+ models) | `OPENAI_API_KEY` | Also provides TTS |
+| **Anthropic** | Claude Opus 4.5, Claude 4 Sonnet/Opus | `ANTHROPIC_API_KEY` | Best for reasoning |
+| **Google Gemini** | Gemini 2.0/2.5 Flash/Pro (55+ models) | `GEMINI_API_KEY` | Includes Imagen |
+| **Groq** | Llama 3.1, Gemma, Qwen3 | `GROQ_API_KEY` | Fastest inference |
+| **Mistral** | Large, Medium, Codestral (71+ models) | `MISTRAL_API_KEY` | EU-based |
+| **OpenRouter** | 300+ models from all providers | `OPENROUTER_API_KEY` | Pay-per-token |
 
 ### Setup
+
+**Option 1: Environment variables** (recommended for self-hosting)
 
 Add API keys to `backend/.env`:
 
@@ -38,7 +39,14 @@ Add API keys to `backend/.env`:
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 GROQ_API_KEY=gsk_...
+GEMINI_API_KEY=...
+MISTRAL_API_KEY=...
+OPENROUTER_API_KEY=sk-or-...
 ```
+
+**Option 2: Per-user API keys** (multi-user deployments)
+
+Users can add their own API keys in Settings → Plugins → Configure. Keys are encrypted and stored per-user.
 
 Enable plugins in Settings → Plugins.
 
@@ -93,17 +101,23 @@ Voices: alloy, ash, coral, echo, fable, onyx, nova, sage, shimmer
 
 ### ElevenLabs
 
-High-quality multilingual voices.
+High-quality multilingual voices with 7 TTS models.
 
 ```env
 ELEVENLABS_API_KEY=...
 ```
 
-Voices: Rachel, Domi, Bella, Antoni, Josh, Adam, and more.
+**Models:** eleven_multilingual_v2, eleven_turbo_v2_5, eleven_flash_v2_5, and more
+
+**Voices (16 available):** Rachel, Domi, Bella, Antoni, Josh, Adam, Arnold, Sam, and more
+
+**Formats:** MP3, PCM, ulaw (5000 character limit per request)
 
 ### Usage
 
-Click the speaker icon on any message to hear it spoken.
+1. Click the speaker icon on any message to hear it spoken
+2. Configure voice and model in Settings → Text-to-Speech
+3. Select between OpenAI TTS or ElevenLabs as your provider
 
 ## Plugin Configuration
 

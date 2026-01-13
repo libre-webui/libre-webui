@@ -51,8 +51,9 @@ Opens at `http://localhost:8080`. That's it.
 ## Documentation
 
 ### Getting Started
-- [Quick Start](./QUICK_START) - 5 minute setup
-- [Working with Models](./WORKING_WITH_MODELS) - Model management
+- [Quick Start](./QUICK_START) - Install and run in 60 seconds
+- [Hardware Requirements](./HARDWARE_REQUIREMENTS) - GPU, RAM, and CPU guide
+- [Working with Models](./WORKING_WITH_MODELS) - Model selection and optimization
 - [Keyboard Shortcuts](./KEYBOARD_SHORTCUTS) - Productivity tips
 
 ### Deployment
@@ -68,7 +69,12 @@ Opens at `http://localhost:8080`. That's it.
 
 ### Administration
 - [Authentication](./AUTHENTICATION) - User management and SSO
-- [Single Sign-On](./SINGLE_SIGN_ON) - GitHub, Hugging Face OAuth
+- [Single Sign-On](./SSO) - GitHub, Hugging Face OAuth
+- [Environment Variables](./ENVIRONMENT_VARIABLES) - Complete configuration reference
+
+### Troubleshooting
+- [Troubleshooting Guide](./TROUBLESHOOTING) - Common issues and fixes
+- [Pro Tips](./PRO_TIPS) - Advanced workflows and features
 
 ## Configuration
 

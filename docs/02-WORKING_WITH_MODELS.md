@@ -1,18 +1,18 @@
 ---
 sidebar_position: 3
 title: "Working with AI Models"
-description: "Complete guide to 207+ AI models in Libre WebUI. Advanced model management with Ollama, OpenAI, Claude, Gemini, and more. Superior features for AI enthusiasts."
+description: "Complete guide to AI models in Libre WebUI. Model selection, hardware requirements, and best practices for Ollama, OpenAI, Claude, Gemini, and more."
 slug: /WORKING_WITH_MODELS
-keywords: [libre webui ai models, 207+ ai models, ollama models, ai model management, gemma, llama, phi4, deepseek, qwen, claude models, openai models, local ai models, open webui alternative]
+keywords: [libre webui ai models, ollama models, ai model management, gemma, llama, phi4, deepseek, qwen, claude models, openai models, local ai models, hardware requirements]
 image: /img/social/02.png
 ---
 
-# 🤖 Working with AI Models in Libre WebUI
+# Working with AI Models
 
-This guide explains how to use AI models in Libre WebUI. Whether you're new to AI or an experienced user, this guide will help you get the most out of your local AI assistant.
+This guide explains how to use AI models in Libre WebUI. Whether you're new to AI or an experienced user, this guide will help you choose the right models and get the best performance.
 
 :::tip Reading Time
-**~8 minutes** - Complete guide from basics to advanced model management
+**~10 minutes** - Complete guide from model selection to optimization
 :::
 
 ## 🎯 What You Can Do
@@ -91,69 +91,95 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 <Tabs>
-  <TabItem value="starter" label="🌱 Starter Models" default>
-    
-**Perfect for newcomers and everyday use:**
+  <TabItem value="starter" label="Starter (8GB VRAM)" default>
 
-| Model | Size | Memory | Best For |
-|-------|------|--------|----------|
-| **gemma3:4b** | ~4GB | 8GB RAM | **Most users** - Best balance |
-| **llama3.2:1b** | ~1GB | 4GB RAM | **Fast responses** - Ultra-quick |
-| **phi4:14b** | ~14GB | 16GB RAM | **Power users** - Microsoft's best |
+**For systems with 8GB VRAM or 16GB RAM:**
 
-:::tip Recommended Starting Point
-**gemma3:4b** is currently the best single-GPU model for most users. Great balance of speed and intelligence.
+| Model | Download Size | VRAM (Q4_K_M) | Speed | Best For |
+|-------|--------------|---------------|-------|----------|
+| **llama3.2:3b** | 2GB | ~2GB | 60+ tok/s | Fast general use |
+| **gemma2:2b** | 1.6GB | ~1.5GB | 70+ tok/s | Quick responses |
+| **phi3:3.8b** | 2.3GB | ~2.5GB | 50+ tok/s | Reasoning tasks |
+| **llama3.1:8b** | 4.7GB | ~5GB | 40+ tok/s | **Recommended** |
+| **qwen2.5:7b** | 4.7GB | ~5GB | 40+ tok/s | Multilingual |
+
+:::tip Best Starting Point
+**llama3.1:8b** offers the best balance of quality and speed for most users with 8GB+ VRAM. Use Q4_K_M quantization.
 :::
 
   </TabItem>
-  <TabItem value="advanced" label="🚀 Advanced Models">
-    
-**For users with powerful hardware:**
+  <TabItem value="midrange" label="Mid-Range (16GB VRAM)">
 
-| Model | Size | Memory | Best For |
-|-------|------|--------|----------|
-| **llama3.3:70b** | ~40GB | 64GB RAM | **State-of-the-art** performance |
-| **deepseek-r1:32b** | ~16GB | 32GB RAM | **Advanced reasoning** |
-| **devstral:24b** | ~12GB | 24GB RAM | **Best for coding** |
-| **qwen2.5vl:32b** | ~16GB | 32GB RAM | **Image understanding** |
+**For systems with 16GB VRAM or 32GB RAM:**
 
-:::warning Hardware Requirements
-These models require significant RAM and processing power. Check your system specifications first.
+| Model | Download Size | VRAM (Q4_K_M) | Speed | Best For |
+|-------|--------------|---------------|-------|----------|
+| **llama3.1:8b** | 4.7GB | ~5GB | 50+ tok/s | General use (Q8) |
+| **phi4:14b** | 9GB | ~8GB | 35+ tok/s | Microsoft's best |
+| **qwen2.5:14b** | 9GB | ~8GB | 35+ tok/s | Strong reasoning |
+| **mistral-nemo:12b** | 7GB | ~7GB | 40+ tok/s | Efficient performer |
+| **deepseek-coder:6.7b** | 4GB | ~4GB | 45+ tok/s | Code generation |
+
+:::info 16GB Sweet Spot
+With 16GB VRAM, you can run 8B models at higher quality (Q8_0) or comfortably run 13-14B models at Q4_K_M.
 :::
 
   </TabItem>
-  <TabItem value="specialized" label="🎯 Specialized Models">
-    
-**For specific use cases:**
+  <TabItem value="highend" label="High-End (24GB+ VRAM)">
 
-| Model | Size | Specialty | Use Case |
+**For RTX 4090, Mac M3 Max, or better:**
+
+| Model | Download Size | VRAM (Q4_K_M) | Speed | Best For |
+|-------|--------------|---------------|-------|----------|
+| **llama3.3:70b** | 43GB | ~42GB | 15-25 tok/s | State-of-the-art |
+| **qwen2.5:32b** | 20GB | ~20GB | 25+ tok/s | Strong all-around |
+| **deepseek-r1:32b** | 20GB | ~20GB | 25+ tok/s | Advanced reasoning |
+| **codestral:22b** | 13GB | ~13GB | 30+ tok/s | Best for coding |
+| **llava:34b** | 20GB | ~20GB | 20+ tok/s | Vision + language |
+
+:::warning 70B Model Requirements
+**llama3.3:70b** requires 42GB+ VRAM for Q4 quantization. Options: Mac with 64GB+ unified memory, dual RTX 3090, or use with memory offloading (slower).
+:::
+
+  </TabItem>
+  <TabItem value="specialized" label="Specialized">
+
+**Models optimized for specific tasks:**
+
+| Model | VRAM | Specialty | Use Case |
 |-------|------|-----------|----------|
-| **qwen2.5vl:3b** | ~3GB | **Vision** | Analyze images and photos |
-| **devstral:24b** | ~12GB | **Coding** | Programming assistance |
-| **deepseek-r1:32b** | ~16GB | **Reasoning** | Complex problem solving |
-| **llama4:16x17b** | ~16GB | **Multimodal** | Text, images, and more |
+| **llava:7b** | ~5GB | Vision | Image analysis, OCR |
+| **llava:13b** | ~8GB | Vision | Better image understanding |
+| **codestral:22b** | ~13GB | Code | Programming, debugging |
+| **deepseek-coder:33b** | ~20GB | Code | Complex code generation |
+| **deepseek-r1:7b** | ~5GB | Reasoning | Chain-of-thought |
+| **deepseek-r1:32b** | ~20GB | Reasoning | Advanced problem-solving |
 
-:::info Model Selection Tips
-- **Vision tasks** → qwen2.5vl models
-- **Programming** → devstral models  
+:::info Choosing Specialized Models
+- **Vision/Images** → llava or qwen-vl models
+- **Programming** → codestral or deepseek-coder
 - **Reasoning** → deepseek-r1 models
-- **General use** → gemma3 or llama3 models
+- **General** → llama3 or qwen2.5 models
 :::
 
   </TabItem>
 </Tabs>
 
-### **Advanced Models**
-- **llama3.3:70b** - State-of-the-art performance (40GB+)
-- **deepseek-r1:32b** - Advanced reasoning (16GB)
-- **devstral:24b** - Best for coding (12GB)
-- **qwen2.5vl:32b** - Image understanding (16GB)
+### Understanding Model Sizes and Quantization
 
-### **Model Sizes**
-- **1B** = ~1GB memory, ultra-fast
-- **4B** = ~3GB memory, great balance
-- **14B** = ~8GB memory, powerful
-- **32B+** = 16GB+ memory, professional use
+Model sizes refer to the number of parameters. Quantization compresses these parameters to reduce memory usage:
+
+| Parameters | Q4_K_M Size | Q8_0 Size | FP16 Size | Use Case |
+|------------|-------------|-----------|-----------|----------|
+| **1-3B** | 1-2GB | 2-4GB | 2-6GB | Fast tasks, mobile |
+| **7-8B** | 4-5GB | 7-8GB | 14-16GB | General use |
+| **13-14B** | 8-9GB | 13-14GB | 26-28GB | Power users |
+| **30-34B** | 18-20GB | 30-34GB | 60-68GB | High-end |
+| **70B** | 40-42GB | 70GB | 140GB | Professional |
+
+:::tip Quantization Recommendation
+**Q4_K_M** is the recommended quantization for most users. It reduces memory by ~75% with minimal quality loss. Use Q8_0 when you have extra VRAM for better quality.
+:::
 
 ## 🚀 Getting Started with Models
 
@@ -234,16 +260,20 @@ Ask for responses in specific formats:
 - **Medium temperature (0.5-0.7)**: Balanced creativity and coherence  
 - **High temperature (0.8-1.0)**: More creative and varied responses
 
-## 🔍 Model Capabilities Reference
+## Hardware Requirements Quick Reference
 
-| Model Type | Best For | Memory Needed | Speed |
-|------------|----------|---------------|-------|
-| **Compact Efficiency** | Quick tasks, edge devices | 1-3GB | Ultra-Fast |
-| **Single-GPU Champions** | Balanced performance, daily use | 3-8GB | Fast |
-| **Reasoning Specialists** | Complex thinking, problem-solving | 12-16GB | Medium |
-| **Vision-Language** | Image analysis, multimodal tasks | 8-32GB | Medium |
-| **Coding Agents** | Advanced programming, debugging | 12-24GB | Medium |
-| **State-of-the-Art** | Maximum capability, research | 32GB+ | Slower |
+| Your System | Recommended Models | Expected Speed |
+|-------------|-------------------|----------------|
+| **8GB VRAM** (RTX 3060, RTX 4060) | 7-8B Q4 | 40-60 tok/s |
+| **12GB VRAM** (RTX 3060 12GB, RTX 4070) | 8B Q8 or 13B Q4 | 35-50 tok/s |
+| **16GB VRAM** (RTX 4070 Ti, RX 7800 XT) | 13-14B Q4 | 30-45 tok/s |
+| **24GB VRAM** (RTX 4090, RX 7900 XTX) | 30B Q4 | 25-40 tok/s |
+| **48GB+ VRAM** (Dual GPU, Mac M3 Max) | 70B Q4 | 15-30 tok/s |
+| **CPU Only** (16GB RAM) | 7B Q4 | 5-15 tok/s |
+
+:::info Need More Details?
+See the complete [Hardware Requirements Guide](./HARDWARE_REQUIREMENTS) for GPU recommendations, Apple Silicon performance, and optimization tips.
+:::
 
 ## 💡 Tips for Better Results
 
@@ -265,40 +295,38 @@ Ask for responses in specific formats:
 ✅ **Full control over your conversations**
 ✅ **No tracking or data collection**
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 **Model won't download?**
 - Check your internet connection
-- Make sure you have enough disk space
-- Try a smaller model first
+- Ensure you have enough disk space (models can be 2-50GB)
+- Try: `ollama pull llama3.1:8b` from terminal to see detailed errors
 
 **Responses are slow?**
-- Try a smaller model (1B or 3B parameters)
-- Close other applications to free up memory
-- Check if multiple models are loaded
+- Check if model fits in VRAM: `ollama ps` shows memory usage
+- Try a smaller model or lower quantization (Q4 instead of Q8)
+- Close other GPU-intensive applications
+- If using CPU only, expect 5-15 tokens/sec
 
-**AI gives strange responses?**
-- Adjust the temperature setting
-- Try rephrasing your question
-- Use a different model for your task
+**Out of memory errors?**
+- Use Q4_K_M quantization instead of Q8 or FP16
+- Try a smaller model size (8B instead of 14B)
+- Check VRAM usage: `nvidia-smi` (NVIDIA) or Activity Monitor (Mac)
+- Reduce context length in settings
 
-## 📚 Related Documentation
+**AI gives strange or repetitive responses?**
+- Lower the temperature setting (try 0.5-0.7)
+- Try a different model for your task
+- Clear the conversation and start fresh
+- Check if you're using the right model type (vision model for images, etc.)
 
-import DocCard from '@theme/DocCard';
+## Related Documentation
 
-<div className="row">
-  <div className="col col--12">
-    <DocCard
-      item={{
-        type: 'link',
-        href: './AI_DEVELOPMENT_ANALYSIS',
-        label: '🤖 AI Development Analysis',
-        description: 'Use your local models for development insights and smart changelogs'
-      }}
-    />
-  </div>
-</div>
+- [Hardware Requirements](./HARDWARE_REQUIREMENTS) - Complete GPU and RAM guide
+- [Quick Start](./QUICK_START) - Get running in 60 seconds
+- [Plugin Architecture](./PLUGIN_ARCHITECTURE) - Add cloud providers (OpenAI, Anthropic, etc.)
+- [Troubleshooting](./TROUBLESHOOTING) - Common issues and solutions
 
 ---
 
-**Ready to explore?** Head to the [Quick Start Guide](./01-QUICK_START.md) to get your first conversation going!
+**Ready to get started?** Head to the [Quick Start Guide](./QUICK_START) to install Libre WebUI, or check [Hardware Requirements](./HARDWARE_REQUIREMENTS) to optimize your setup.

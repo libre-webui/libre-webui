@@ -120,6 +120,72 @@ Focus on clarity, professionalism, and actionable outcomes.
 
 ## 🛠️ Advanced Features Mastery
 
+### 🔀 **Message Branching**
+
+Explore alternative AI responses without losing your conversation history:
+
+**What is Message Branching?**
+- **Regenerate responses** to create alternative versions
+- **Compare variants** side-by-side in a grid layout
+- **Switch between branches** with a single click
+- **Preserve all versions** for reference
+
+**How to Use:**
+1. Hover over any assistant message
+2. Click the **regenerate** button (↻)
+3. A new variant appears alongside the original
+4. Click any variant to make it the active response
+5. Continue the conversation from your chosen branch
+
+**Pro Tips:**
+- Use branching to explore different approaches to the same question
+- Compare coding solutions or writing styles
+- Keep multiple draft options before committing
+- Each branch maintains full conversation context
+
+**Visual Indicators:**
+- Active branch shows a checkmark (✓)
+- Branch count displays with git icon (e.g., "3 variants")
+- Streaming variants show "generating..." with pulse animation
+
+---
+
+### 🖼️ **Image Generation Gallery**
+
+Generate and manage AI-created images in a dedicated gallery:
+
+**Accessing the Gallery:**
+- Click **Imagine** in the sidebar
+- View all generated images in a masonry grid layout
+- Images load progressively with infinite scroll
+
+**Generating Images:**
+1. Click **Generate Image** button
+2. Enter your prompt describing the image
+3. Select model and size options
+4. Click generate and watch it appear in the gallery
+
+**Gallery Features:**
+- **Masonry layout**: 1-4 columns adapts to screen size
+- **Lightbox view**: Click any image for full-screen preview
+- **Image details**: View prompt, model, size, quality, and creation date
+- **Download**: Save images locally with proper filenames
+- **Delete**: Remove images with confirmation
+
+**Lightbox Information Panel:**
+- Full prompt text
+- Model used for generation
+- Image dimensions
+- Quality setting
+- Creation timestamp
+
+**Storage:**
+- Images encrypted at rest
+- Stored per-user for privacy
+- Accessible only to the creating user
+
+---
+
 ### 🖼️ **Multimodal Excellence**
 **Best Practices for Image Analysis:**
 

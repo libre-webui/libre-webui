@@ -1,12 +1,27 @@
 ---
 sidebar_position: 2
 title: "Quick Start"
-description: "Get Libre WebUI running in 60 seconds"
+description: "Get Libre WebUI running in 60 seconds with Ollama"
 slug: /QUICK_START
-keywords: [libre webui, quick start, installation, setup, ollama]
+keywords: [libre webui, quick start, installation, setup, ollama, hardware requirements]
 ---
 
 # Quick Start
+
+## Requirements
+
+Before you begin, make sure you have:
+
+| Requirement | Minimum | Recommended |
+|-------------|---------|-------------|
+| **RAM** | 8GB | 16GB+ |
+| **GPU VRAM** | None (CPU works) | 8GB+ for speed |
+| **Disk Space** | 5GB | 20GB+ for models |
+| **Node.js** | v18+ | v20+ |
+
+:::tip No GPU? No Problem
+Libre WebUI works with CPU-only inference. Expect 5-15 tokens/second with smaller models (3-7B). For faster performance, see [Hardware Requirements](./HARDWARE_REQUIREMENTS).
+:::
 
 ## Install
 
@@ -23,14 +38,18 @@ Opens at [http://localhost:8080](http://localhost:8080).
 **macOS / Linux:**
 ```bash
 curl -fsSL https://ollama.ai/install.sh | sh
-ollama pull llama3.2
+ollama pull llama3.1:8b
 ```
 
 **Windows:**
 Download from [ollama.ai](https://ollama.ai), then:
 ```bash
-ollama pull llama3.2
+ollama pull llama3.1:8b
 ```
+
+:::info Model Size
+`llama3.1:8b` downloads ~5GB and needs ~5GB VRAM (GPU) or ~8GB RAM (CPU). For smaller systems, try `llama3.2:3b` (~2GB).
+:::
 
 ## Alternative: Docker
 
@@ -84,7 +103,8 @@ Enable in Settings → Plugins.
 
 ## Next Steps
 
-- [Plugins](./PLUGIN_ARCHITECTURE) - Cloud providers, image generation, TTS
+- [Hardware Requirements](./HARDWARE_REQUIREMENTS) - GPU and memory guide
+- [Working with Models](./WORKING_WITH_MODELS) - Model selection and optimization
+- [Plugins](./PLUGIN_ARCHITECTURE) - Cloud providers (OpenAI, Anthropic, etc.)
 - [Docker](./DOCKER) - Docker Compose options
 - [Kubernetes](./KUBERNETES) - Helm chart configuration
-- [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK) - Custom AI personalities
