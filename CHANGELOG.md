@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.3.3] - 2026-01-13
+
+### What's New
+
+This release introduces private chat sessions with in-memory storage, allowing users to have conversations that aren't persisted to the main chat history. We've also refreshed the brand with a new "Libre" wordmark and improved typography, plus added native macOS installation support through Homebrew.
+
+### ✨ New Features
+
+- **Private Chat Sessions**: Start private conversations with in-memory storage and clear UI indicators to distinguish from regular chats
+- **macOS Installation**: Native Homebrew formula and cask support for easy installation on macOS systems
+- **Enhanced WebSocket Communication**: Message history now included in private chat sessions for better context preservation
+
+### 🔧 Improvements
+
+- **New Branding**: Updated to "Libre" wordmark with refreshed logos and favicons across the application
+- **Typography Update**: Switched to 'Roboto Slab' font for consistent branding throughout the interface
+- **Better Error Handling**: Global 401 Unauthorized error handling in API response interceptor
+- **Enhanced Chat Layout**: Improved ChatMessage component styling and updated LoginPage branding
+- **Documentation Expansion**: Added comprehensive guides for Docker, Kubernetes, hardware requirements, and environment variables
+
+### 🐛 Bug Fixes
+
+- Fixed Helm package version synchronization in CI pipeline
+
 ## [0.3.2] - 2026-01-09
 
 ### What's New
