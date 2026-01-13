@@ -294,7 +294,7 @@ router.get(
   async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.userId || 'default';
-      const { imageId } = req.params;
+      const imageId = req.params.imageId as string;
 
       const image = galleryService.getImage(imageId, userId);
 
@@ -331,7 +331,7 @@ router.delete(
   async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user?.userId || 'default';
-      const { imageId } = req.params;
+      const imageId = req.params.imageId as string;
 
       const deleted = galleryService.deleteImage(imageId, userId);
 

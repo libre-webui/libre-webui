@@ -135,7 +135,7 @@ router.post(
   '/models/:modelName/pull',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { modelName } = req.params;
+      const modelName = req.params.modelName as string;
       await ollamaService.pullModel(modelName);
 
       res.json({
@@ -156,7 +156,7 @@ router.get(
   '/models/:modelName/pull/stream',
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { modelName } = req.params;
+      const modelName = req.params.modelName as string;
 
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -195,7 +195,7 @@ router.delete(
   '/models/:modelName',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { modelName } = req.params;
+      const modelName = req.params.modelName as string;
       await ollamaService.deleteModel(modelName);
 
       res.json({
@@ -216,7 +216,7 @@ router.get(
   '/models/:modelName',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { modelName } = req.params;
+      const modelName = req.params.modelName as string;
       const verbose = req.query.verbose === 'true';
       const data = await ollamaService.showModel(modelName, verbose);
       res.json({ success: true, data });
@@ -267,7 +267,7 @@ router.post(
   '/models/:modelName/push',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { modelName } = req.params;
+      const modelName = req.params.modelName as string;
       await ollamaService.pushModel(modelName);
       res.json({
         success: true,
@@ -384,7 +384,7 @@ router.head(
   '/blobs/:digest',
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { digest } = req.params;
+      const digest = req.params.digest as string;
       // Only allow lowercase hex strings of length 64 (SHA256)
       if (!/^[a-f0-9]{64}$/.test(digest)) {
         res.status(400).json({ error: 'Invalid digest format' });
@@ -407,7 +407,7 @@ router.post(
   '/blobs/:digest',
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { digest } = req.params;
+      const digest = req.params.digest as string;
       // Only allow lowercase hex strings of length 64 (SHA256)
       if (!/^[a-f0-9]{64}$/.test(digest)) {
         res.status(400).json({ error: 'Invalid digest format' });

@@ -189,7 +189,7 @@ router.patch(
   requireAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { username, email, password, role, avatar } = req.body;
 
       // Validate role if provided
@@ -265,7 +265,7 @@ router.delete(
   requireAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
 
       // Prevent deleting yourself
       if (req.user?.userId === id) {

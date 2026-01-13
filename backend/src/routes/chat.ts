@@ -173,7 +173,7 @@ router.get(
     res: Response<ApiResponse<ChatSession>>
   ): Promise<void> => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = req.params.sessionId as string;
       const userId = req.user?.userId || 'default';
       const session = chatService.getSession(sessionId, userId);
 
@@ -206,7 +206,7 @@ router.put(
     res: Response<ApiResponse<ChatSession>>
   ): Promise<void> => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = req.params.sessionId as string;
       const updates = req.body;
 
       const userId = req.user?.userId || 'default';
@@ -245,7 +245,8 @@ router.put(
     res: Response<ApiResponse<ChatMessage>>
   ): Promise<void> => {
     try {
-      const { sessionId, messageId } = req.params;
+      const sessionId = req.params.sessionId as string;
+      const messageId = req.params.messageId as string;
       const updates = req.body;
       const userId = req.user?.userId || 'default';
 
@@ -285,7 +286,7 @@ router.delete(
     res: Response<ApiResponse>
   ): Promise<void> => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = req.params.sessionId as string;
       const userId = req.user?.userId || 'default';
       const deleted = chatService.deleteSession(sessionId, userId);
 
@@ -341,7 +342,7 @@ router.post(
     res: Response<ApiResponse<ChatMessage>>
   ): Promise<void> => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = req.params.sessionId as string;
       const { role, content, id, model } = req.body;
 
       if (!role || !content) {
@@ -402,7 +403,7 @@ router.post(
     res: Response<ApiResponse<ChatMessage>>
   ): Promise<void> => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = req.params.sessionId as string;
       const { message, options = {} } = req.body;
 
       if (!message) {
@@ -653,7 +654,7 @@ router.post(
   '/sessions/:sessionId/generate/stream',
   async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = req.params.sessionId as string;
       const { message, options = {} } = req.body;
 
       if (!message) {
@@ -822,7 +823,7 @@ router.post(
     res: Response<ApiResponse<{ title: string }>>
   ): Promise<void> => {
     try {
-      const { sessionId } = req.params;
+      const sessionId = req.params.sessionId as string;
       const { model, message } = req.body;
 
       if (!model) {
@@ -935,7 +936,8 @@ router.post(
   chatRateLimiter,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { sessionId, messageId } = req.params;
+      const sessionId = req.params.sessionId as string;
+      const messageId = req.params.messageId as string;
       const { branchIndex } = req.body;
       const userId = req.user?.userId || 'default';
 
@@ -988,7 +990,8 @@ router.get(
   chatRateLimiter,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { sessionId, messageId } = req.params;
+      const sessionId = req.params.sessionId as string;
+      const messageId = req.params.messageId as string;
       const userId = req.user?.userId || 'default';
 
       const branches = chatService.getMessageBranches(
@@ -1021,7 +1024,8 @@ router.post(
   chatRateLimiter,
   async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { sessionId, messageId } = req.params;
+      const sessionId = req.params.sessionId as string;
+      const messageId = req.params.messageId as string;
       const userId = req.user?.userId || 'default';
       const messageData = req.body;
 

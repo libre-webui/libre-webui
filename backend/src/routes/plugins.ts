@@ -186,7 +186,7 @@ router.get(
   '/:id',
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const plugin = pluginService.getPlugin(id);
 
       if (!plugin) {
@@ -345,7 +345,7 @@ router.put(
   '/:id',
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const updates = req.body;
 
       // Ensure the ID matches
@@ -379,7 +379,7 @@ router.delete(
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const success = pluginService.deletePlugin(id);
 
       if (!success) {
@@ -409,7 +409,7 @@ router.post(
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const success = pluginService.activatePlugin(id);
 
       res.json({
@@ -440,7 +440,7 @@ router.post(
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const success = pluginService.deactivatePlugin(id);
 
       res.json({
@@ -482,7 +482,7 @@ router.get(
   '/:id/export',
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const plugin = pluginService.exportPlugin(id);
 
       if (!plugin) {
@@ -552,7 +552,7 @@ router.post(
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const { api_key } = req.body;
 
       if (!api_key || typeof api_key !== 'string') {
@@ -603,7 +603,7 @@ router.delete(
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
 
       // Verify plugin exists
       const plugin = pluginService.getPlugin(id);
@@ -637,7 +637,7 @@ router.get(
   '/:id/credentials/check',
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
 
       // Verify plugin exists
       const plugin = pluginService.getPlugin(id);

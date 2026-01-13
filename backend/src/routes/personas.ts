@@ -80,7 +80,7 @@ router.get(
   personaRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const persona = await personaService.getPersonaById(id, userId);
@@ -139,7 +139,7 @@ router.put(
   personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const persona = await personaService.updatePersona(id, req.body, userId);
@@ -174,7 +174,7 @@ router.delete(
   personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const success = await personaService.deletePersona(id, userId);
@@ -208,7 +208,7 @@ router.get(
   personaRateLimit,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const personaExport = await personaService.exportPersona(id, userId);
@@ -310,7 +310,7 @@ router.get(
   personaRateLimit,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const persona = await personaService.getPersonaById(id, userId);
@@ -362,7 +362,7 @@ router.get(
   personaRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       // Import memory service dynamically to avoid dependency issues
@@ -390,7 +390,7 @@ router.delete(
   personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const { memoryService } = await import('../services/memoryService.js');
@@ -418,7 +418,7 @@ router.get(
   personaRateLimit,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const persona = await personaService.getPersonaById(id, userId);
@@ -457,7 +457,7 @@ router.get(
   personaRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const { memoryService } = await import('../services/memoryService.js');
@@ -484,7 +484,7 @@ router.post(
   personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
       const { similarity_threshold = 0.8 } = req.body;
 
@@ -530,7 +530,7 @@ router.post(
   personaWriteRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const { memoryService } = await import('../services/memoryService.js');
@@ -558,7 +558,7 @@ router.get(
   personaRateLimit,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
       const limit = parseInt(req.query.limit as string) || 10;
 
@@ -587,7 +587,7 @@ router.get(
   personaRateLimit,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
+      const id = req.params.id as string;
       const userId = req.user?.userId || 'default';
 
       const persona = await personaService.getPersonaById(id, userId);
