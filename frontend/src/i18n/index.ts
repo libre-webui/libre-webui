@@ -21,17 +21,20 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import en from './locales/en.json';
 import fr from './locales/fr.json';
+import ko from './locales/ko.json';
 import zh from './locales/zh.json';
 
 export const resources = {
   en: { translation: en },
   fr: { translation: fr },
+  ko: { translation: ko },
   zh: { translation: zh },
 } as const;
 
 export const supportedLanguages = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'ko', name: 'Korean', nativeName: '한국어' },
   { code: 'zh', name: 'Chinese', nativeName: '中文' },
 ] as const;
 
