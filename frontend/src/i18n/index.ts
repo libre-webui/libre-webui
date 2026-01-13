@@ -21,6 +21,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import en from './locales/en.json';
 import fr from './locales/fr.json';
+import hi from './locales/hi.json';
 import ja from './locales/ja.json';
 import ko from './locales/ko.json';
 import zh from './locales/zh.json';
@@ -28,6 +29,7 @@ import zh from './locales/zh.json';
 export const resources = {
   en: { translation: en },
   fr: { translation: fr },
+  hi: { translation: hi },
   ja: { translation: ja },
   ko: { translation: ko },
   zh: { translation: zh },
@@ -36,6 +38,7 @@ export const resources = {
 export const supportedLanguages = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
   { code: 'ja', name: 'Japanese', nativeName: '日本語' },
   { code: 'ko', name: 'Korean', nativeName: '한국어' },
   { code: 'zh', name: 'Chinese', nativeName: '中文' },
