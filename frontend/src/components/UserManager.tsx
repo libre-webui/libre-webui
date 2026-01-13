@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { usersApi } from '@/utils/api';
@@ -33,6 +34,7 @@ import {
 import { Plus, Edit, Trash2, User as UserIcon, Shield } from 'lucide-react';
 
 export const UserManager: React.FC = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -49,6 +51,7 @@ export const UserManager: React.FC = () => {
   // Load users on component mount
   useEffect(() => {
     loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadUsers = async () => {
@@ -60,7 +63,7 @@ export const UserManager: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading users:', error);
-      toast.error('Failed to load users');
+      toast.error(t('errors.generic'));
     } finally {
       setLoading(false);
     }
@@ -74,18 +77,19 @@ export const UserManager: React.FC = () => {
         setUsers([...users, response.data]);
         setFormData({ username: '', email: '', password: '', role: 'user' });
         setShowCreateForm(false);
-        toast.success('User created successfully');
+        toast.success(t('userManager.form.createSuccess'));
       }
     } catch (error: unknown) {
       console.error('Error creating user:', error);
-      let errorMessage = 'Failed to create user';
+      let errorMessage = t('userManager.form.createFailed');
 
       if (error instanceof Error && 'response' in error) {
         const apiError = error as Error & {
           response?: { data?: { message?: string } };
         };
         errorMessage =
-          apiError.response?.data?.message || 'Failed to create user';
+          apiError.response?.data?.message ||
+          t('userManager.form.createFailed');
       }
 
       toast.error(errorMessage);
@@ -115,18 +119,19 @@ export const UserManager: React.FC = () => {
         );
         setEditingUser(null);
         setFormData({ username: '', email: '', password: '', role: 'user' });
-        toast.success('User updated successfully');
+        toast.success(t('userManager.form.updateSuccess'));
       }
     } catch (error: unknown) {
       console.error('Error updating user:', error);
-      let errorMessage = 'Failed to update user';
+      let errorMessage = t('userManager.form.updateFailed');
 
       if (error instanceof Error && 'response' in error) {
         const apiError = error as Error & {
           response?: { data?: { message?: string } };
         };
         errorMessage =
-          apiError.response?.data?.message || 'Failed to update user';
+          apiError.response?.data?.message ||
+          t('userManager.form.updateFailed');
       }
 
       toast.error(errorMessage);
@@ -134,7 +139,7 @@ export const UserManager: React.FC = () => {
   };
 
   const handleDeleteUser = async (userId: string, username: string) => {
-    if (!confirm(`Are you sure you want to delete user "${username}"?`)) {
+    if (!confirm(t('userManager.deleteConfirm', { name: username }))) {
       return;
     }
 
@@ -142,18 +147,18 @@ export const UserManager: React.FC = () => {
       const response = await usersApi.deleteUser(userId);
       if (response.success) {
         setUsers(users.filter(u => u.id !== userId));
-        toast.success('User deleted successfully');
+        toast.success(t('userManager.deleteSuccess'));
       }
     } catch (error: unknown) {
       console.error('Error deleting user:', error);
-      let errorMessage = 'Failed to delete user';
+      let errorMessage = t('userManager.deleteFailed');
 
       if (error instanceof Error && 'response' in error) {
         const apiError = error as Error & {
           response?: { data?: { message?: string } };
         };
         errorMessage =
-          apiError.response?.data?.message || 'Failed to delete user';
+          apiError.response?.data?.message || t('userManager.deleteFailed');
       }
 
       toast.error(errorMessage);
@@ -198,7 +203,7 @@ export const UserManager: React.FC = () => {
           className='flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600'
         >
           <Plus size={16} />
-          <span>Add User</span>
+          <span>{t('userManager.createUser')}</span>
         </Button>
       </div>
 
@@ -207,10 +212,10 @@ export const UserManager: React.FC = () => {
         <Card className='bg-white dark:bg-dark-25 border border-gray-200 dark:border-dark-200 shadow-lg'>
           <CardHeader>
             <CardTitle className='text-gray-900 dark:text-gray-100'>
-              Create New User
+              {t('userManager.form.title.create')}
             </CardTitle>
             <CardDescription className='text-gray-600 dark:text-gray-400'>
-              Add a new user to the system
+              {t('userManager.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -221,7 +226,7 @@ export const UserManager: React.FC = () => {
                     htmlFor='username'
                     className='text-gray-700 dark:text-gray-300'
                   >
-                    Username
+                    {t('userManager.form.username')}
                   </Label>
                   <Input
                     id='username'
@@ -238,7 +243,7 @@ export const UserManager: React.FC = () => {
                     htmlFor='email'
                     className='text-gray-700 dark:text-gray-300'
                   >
-                    Email
+                    {t('userManager.form.email')}
                   </Label>
                   <Input
                     id='email'
@@ -258,7 +263,7 @@ export const UserManager: React.FC = () => {
                     htmlFor='password'
                     className='text-gray-700 dark:text-gray-300'
                   >
-                    Password
+                    {t('userManager.form.password')}
                   </Label>
                   <Input
                     id='password'
@@ -276,7 +281,7 @@ export const UserManager: React.FC = () => {
                     htmlFor='role'
                     className='text-gray-700 dark:text-gray-300'
                   >
-                    Role
+                    {t('userManager.form.role')}
                   </Label>
                   <select
                     id='role'
@@ -289,15 +294,19 @@ export const UserManager: React.FC = () => {
                     }
                     className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-gray-100 transition-colors duration-200'
                   >
-                    <option value='user'>User</option>
-                    <option value='admin'>Admin</option>
+                    <option value='user'>{t('userManager.roles.user')}</option>
+                    <option value='admin'>
+                      {t('userManager.roles.admin')}
+                    </option>
                   </select>
                 </div>
               </div>
               <div className='flex space-x-2'>
-                <Button type='submit'>Create User</Button>
+                <Button type='submit'>
+                  {t('userManager.form.createButton')}
+                </Button>
                 <Button type='button' variant='outline' onClick={resetForm}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </form>
@@ -310,10 +319,10 @@ export const UserManager: React.FC = () => {
         <Card className='bg-white dark:bg-dark-25 border border-gray-200 dark:border-dark-200 shadow-lg'>
           <CardHeader>
             <CardTitle className='text-gray-900 dark:text-gray-100'>
-              Edit User: {editingUser.username}
+              {t('userManager.form.title.edit')}: {editingUser.username}
             </CardTitle>
             <CardDescription className='text-gray-600 dark:text-gray-400'>
-              Modify user information and permissions
+              {t('userManager.subtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -324,7 +333,7 @@ export const UserManager: React.FC = () => {
                     htmlFor='edit-username'
                     className='text-gray-700 dark:text-gray-300'
                   >
-                    Username
+                    {t('userManager.form.username')}
                   </Label>
                   <Input
                     id='edit-username'
@@ -341,7 +350,7 @@ export const UserManager: React.FC = () => {
                     htmlFor='edit-email'
                     className='text-gray-700 dark:text-gray-300'
                   >
-                    Email
+                    {t('userManager.form.email')}
                   </Label>
                   <Input
                     id='edit-email'
@@ -361,7 +370,7 @@ export const UserManager: React.FC = () => {
                     htmlFor='edit-password'
                     className='text-gray-700 dark:text-gray-300'
                   >
-                    New Password (optional)
+                    {t('userManager.form.password')} ({t('common.optional')})
                   </Label>
                   <Input
                     id='edit-password'
@@ -370,7 +379,7 @@ export const UserManager: React.FC = () => {
                     onChange={e =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    placeholder='Leave empty to keep current password'
+                    placeholder={t('userManager.form.passwordHint')}
                     className='bg-white dark:bg-dark-100 border-gray-300 dark:border-dark-300 text-gray-900 dark:text-gray-100'
                   />
                 </div>
@@ -379,7 +388,7 @@ export const UserManager: React.FC = () => {
                     htmlFor='edit-role'
                     className='text-gray-700 dark:text-gray-300'
                   >
-                    Role
+                    {t('userManager.form.role')}
                   </Label>
                   <select
                     id='edit-role'
@@ -396,21 +405,25 @@ export const UserManager: React.FC = () => {
                     }
                     className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-gray-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
                   >
-                    <option value='user'>User</option>
-                    <option value='admin'>Admin</option>
+                    <option value='user'>{t('userManager.roles.user')}</option>
+                    <option value='admin'>
+                      {t('userManager.roles.admin')}
+                    </option>
                   </select>
                   {editingUser?.id === currentUser?.id &&
                     currentUser?.role === 'admin' && (
                       <p className='text-xs text-amber-600 dark:text-amber-400 mt-1'>
-                        Cannot change your own admin role to prevent lockout
+                        {t('userManager.cannotDeleteSelf')}
                       </p>
                     )}
                 </div>
               </div>
               <div className='flex space-x-2'>
-                <Button type='submit'>Update User</Button>
+                <Button type='submit'>
+                  {t('userManager.form.updateButton')}
+                </Button>
                 <Button type='button' variant='outline' onClick={cancelEdit}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </form>
@@ -422,10 +435,10 @@ export const UserManager: React.FC = () => {
       <Card className='bg-white dark:bg-dark-25 border border-gray-200 dark:border-dark-200 shadow-lg'>
         <CardHeader>
           <CardTitle className='text-gray-900 dark:text-gray-100'>
-            All Users ({users.length})
+            {t('userManager.title')} ({users.length})
           </CardTitle>
           <CardDescription className='text-gray-600 dark:text-gray-400'>
-            Manage existing user accounts
+            {t('userManager.subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -448,15 +461,19 @@ export const UserManager: React.FC = () => {
                       {user.username}
                       {user.id === currentUser?.id && (
                         <span className='ml-2 text-xs text-primary-600 dark:text-primary-400 font-normal'>
-                          (You)
+                          ({t('chatMessage.you')})
                         </span>
                       )}
                     </h3>
                     <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      {user.email || 'No email provided'} • {user.role}
+                      {user.email || t('userManager.noEmail')} •{' '}
+                      {user.role === 'admin'
+                        ? t('userManager.roles.admin')
+                        : t('userManager.roles.user')}
                     </p>
                     <p className='text-xs text-gray-500 dark:text-gray-500'>
-                      Created: {new Date(user.createdAt).toLocaleDateString()}
+                      {t('userManager.columns.created')}:{' '}
+                      {new Date(user.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 </div>

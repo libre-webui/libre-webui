@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
   Code,
@@ -42,6 +43,7 @@ const MAX_PANEL_WIDTH_RATIO = 0.9; // 90% of screen width
 const DEFAULT_PANEL_WIDTH = 600;
 
 export const ArtifactSlideOutPanel: React.FC = () => {
+  const { t } = useTranslation();
   const {
     artifactPanelOpen,
     artifactPanelArtifact,
@@ -296,7 +298,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
           <div className='text-center'>
             <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
             <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
-              Invalid SVG content
+              {t('artifacts.invalidSvg')}
             </p>
           </div>
         </div>
@@ -358,7 +360,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
           <div className='text-center'>
             <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
             <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
-              Invalid JSON content
+              {t('artifacts.invalidJson')}
             </p>
           </div>
         </div>
@@ -472,7 +474,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             size='sm'
             onClick={closeArtifactPanel}
             className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] flex-shrink-0'
-            title='Close panel (Esc)'
+            title={t('artifacts.closePanelEsc')}
           >
             <X className='h-5 w-5' />
           </Button>
@@ -488,20 +490,20 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                   size='sm'
                   onClick={() => setViewMode('preview')}
                   className='h-8 px-3 text-xs'
-                  title='Preview mode'
+                  title={t('artifacts.previewMode')}
                 >
                   <Eye className='h-3.5 w-3.5 mr-1.5' />
-                  Preview
+                  {t('artifacts.preview')}
                 </Button>
                 <Button
                   variant={viewMode === 'code' ? 'primary' : 'ghost'}
                   size='sm'
                   onClick={() => setViewMode('code')}
                   className='h-8 px-3 text-xs'
-                  title='Code mode'
+                  title={t('artifacts.codeMode')}
                 >
                   <Code2 className='h-3.5 w-3.5 mr-1.5' />
-                  Code
+                  {t('artifacts.code')}
                 </Button>
               </>
             )}
@@ -513,17 +515,17 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               size='sm'
               onClick={() => copyToClipboard(artifact.content)}
               className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
-              title='Copy content'
+              title={t('artifacts.copyContent')}
             >
               {copied ? (
                 <>
                   <Check className='h-3.5 w-3.5 mr-1.5 text-green-500' />
-                  Copied
+                  {t('artifacts.copied')}
                 </>
               ) : (
                 <>
                   <Copy className='h-3.5 w-3.5 mr-1.5' />
-                  Copy
+                  {t('artifacts.copyButton')}
                 </>
               )}
             </Button>
@@ -533,10 +535,10 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               size='sm'
               onClick={downloadArtifact}
               className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
-              title='Download'
+              title={t('artifacts.download')}
             >
               <Download className='h-3.5 w-3.5 mr-1.5' />
-              Download
+              {t('artifacts.download')}
             </Button>
 
             {(artifact.type === 'html' || artifact.type === 'react') && (
@@ -551,10 +553,10 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                   }
                 }}
                 className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
-                title='Open in new window'
+                title={t('artifacts.openInNewWindow')}
               >
                 <ExternalLink className='h-3.5 w-3.5 mr-1.5' />
-                Open
+                {t('artifacts.open')}
               </Button>
             )}
           </div>
@@ -576,11 +578,12 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         <div className='px-4 py-2 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] bg-gray-50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a]'>
           <div className='flex items-center justify-between'>
             <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-              Created: {new Date(artifact.createdAt).toLocaleString()}
+              {t('artifacts.created')}:{' '}
+              {new Date(artifact.createdAt).toLocaleString()}
             </div>
             {!isMobile && (
               <div className='text-xs text-gray-400 dark:text-dark-500 ophelia:text-[#525252]'>
-                Drag edge to resize
+                {t('artifacts.dragEdgeToResize')}
               </div>
             )}
           </div>

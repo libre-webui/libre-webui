@@ -17,6 +17,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
@@ -32,6 +33,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   onSignup,
   onBackToLogin,
 }) => {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,17 +48,17 @@ export const SignupForm: React.FC<SignupFormProps> = ({
     e.preventDefault();
 
     if (!username.trim() || !password.trim()) {
-      toast.error('Username and password are required');
+      toast.error(t('auth.signup.usernameRequired'));
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error(t('auth.signup.passwordMismatch'));
       return;
     }
 
     if (password.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+      toast.error(t('auth.signup.passwordTooShort'));
       return;
     }
 
@@ -71,15 +73,15 @@ export const SignupForm: React.FC<SignupFormProps> = ({
           response.data.token,
           response.data.systemInfo
         );
-        toast.success('Account created successfully!');
+        toast.success(t('auth.signup.signupSuccess'));
         onSignup?.();
         navigate('/');
       } else {
-        toast.error(response.message || 'Signup failed');
+        toast.error(response.message || t('auth.signup.signupFailed'));
       }
     } catch (error) {
       console.error('Signup error:', error);
-      toast.error('Signup failed. Please try again.');
+      toast.error(t('auth.signup.tryAgain'));
     } finally {
       setIsLoading(false);
     }
@@ -98,10 +100,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({
     <div className='w-full max-w-md mx-auto bg-white dark:bg-dark-25 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 p-6 border border-gray-200 dark:border-dark-200'>
       <div className='text-center mb-6'>
         <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
-          Create Account
+          {t('auth.signup.title')}
         </h1>
         <p className='text-gray-600 dark:text-dark-500'>
-          Sign up for your new account
+          {t('auth.signup.subtitle')}
         </p>
       </div>
 
@@ -111,7 +113,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             htmlFor='username'
             className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
           >
-            Username
+            {t('auth.signup.username')}
           </label>
           <input
             id='username'
@@ -120,7 +122,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             onChange={e => setUsername(e.target.value)}
             onKeyDown={handleKeyDown}
             className='w-full px-3 py-2 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
-            placeholder='Choose a username'
+            placeholder={t('auth.signup.usernamePlaceholder')}
             required
             disabled={isLoading}
           />
@@ -131,7 +133,8 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             htmlFor='email'
             className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
           >
-            Email <span className='text-gray-400'>(optional)</span>
+            {t('auth.signup.email')}{' '}
+            <span className='text-gray-400'>({t('common.optional')})</span>
           </label>
           <input
             id='email'
@@ -140,7 +143,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             onChange={e => setEmail(e.target.value)}
             onKeyDown={handleKeyDown}
             className='w-full px-3 py-2 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
-            placeholder='your@email.com'
+            placeholder={t('auth.signup.emailPlaceholder')}
             disabled={isLoading}
           />
         </div>
@@ -150,7 +153,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             htmlFor='password'
             className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
           >
-            Password
+            {t('auth.signup.password')}
           </label>
           <div className='relative'>
             <input
@@ -160,7 +163,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               onChange={e => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
               className='w-full px-3 py-2 pr-10 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
-              placeholder='Choose a password'
+              placeholder={t('auth.signup.passwordPlaceholder')}
               required
               disabled={isLoading}
             />
@@ -180,7 +183,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             htmlFor='confirmPassword'
             className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
           >
-            Confirm Password
+            {t('auth.signup.confirmPassword')}
           </label>
           <div className='relative'>
             <input
@@ -190,7 +193,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               onChange={e => setConfirmPassword(e.target.value)}
               onKeyDown={handleKeyDown}
               className='w-full px-3 py-2 pr-10 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
-              placeholder='Confirm your password'
+              placeholder={t('auth.signup.confirmPasswordPlaceholder')}
               required
               disabled={isLoading}
             />
@@ -213,12 +216,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({
           {isLoading ? (
             <div className='flex items-center'>
               <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
-              Creating account...
+              {t('auth.signup.creatingAccount')}
             </div>
           ) : (
             <div className='flex items-center'>
               <UserPlus size={16} className='mr-2' />
-              Create Account
+              {t('auth.signup.createAccount')}
             </div>
           )}
         </button>
@@ -229,19 +232,19 @@ export const SignupForm: React.FC<SignupFormProps> = ({
 
       <div className='mt-6 text-center'>
         <p className='text-sm text-gray-600 dark:text-dark-500'>
-          Already have an account?{' '}
+          {t('auth.signup.hasAccount')}{' '}
           <button
             onClick={onBackToLogin}
-            className='text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors duration-200'
+            className='text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors duration-200'
           >
-            Sign in here
+            {t('auth.signup.signInHere')}
           </button>
         </p>
       </div>
 
       <div className='mt-4 text-center'>
         <p className='text-xs text-gray-500 dark:text-dark-500'>
-          Mode: Multi User
+          {t('common.mode')}: {t('common.multiUser')}
         </p>
       </div>
     </div>

@@ -22,6 +22,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { personaApi, ollamaApi } from '@/utils/api';
 import {
@@ -225,6 +226,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<ExtendedFormData>(DEFAULT_FORM_DATA);
   const [availableModels, setAvailableModels] = useState<OllamaModel[]>([]);
   const [embeddingModels, setEmbeddingModels] = useState<EmbeddingModel[]>([]);
@@ -356,24 +358,23 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   // Wipe all memories for persona
   const handleWipeMemories = async () => {
     if (!persona?.id) return;
-    if (
-      !confirm(
-        'Are you sure you want to wipe all memories? This cannot be undone.'
-      )
-    )
-      return;
+    if (!confirm(t('personaForm.memory.wipeConfirm'))) return;
 
     setWipingMemories(true);
     try {
       const response = await personaApi.wipeMemories(persona.id);
       if (response.success) {
-        toast.success(`Wiped ${response.data?.deleted_count || 0} memories`);
+        toast.success(
+          t('personaForm.memory.wipeSuccess', {
+            count: response.data?.deleted_count || 0,
+          })
+        );
         await loadMemoryStatus();
       } else {
-        toast.error('Failed to wipe memories');
+        toast.error(t('personaForm.error.saveFailed'));
       }
     } catch (_error) {
-      toast.error('Failed to wipe memories');
+      toast.error(t('personaForm.error.saveFailed'));
     } finally {
       setWipingMemories(false);
     }
@@ -497,15 +498,19 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         : await personaApi.createPersona(formData);
 
       if (response.success) {
-        toast.success(persona ? 'Persona updated' : 'Persona created');
+        toast.success(
+          persona
+            ? t('personaForm.success.updated')
+            : t('personaForm.success.created')
+        );
         setLastSaved(new Date());
         if (closeAfter) onSubmit();
       } else {
-        toast.error(`Failed to save: ${response.error}`);
+        toast.error(`${t('personaForm.error.saveFailed')}: ${response.error}`);
       }
     } catch (error: unknown) {
       toast.error(
-        `Failed to save: ${error instanceof Error ? error.message : String(error)}`
+        `${t('personaForm.error.saveFailed')}: ${error instanceof Error ? error.message : String(error)}`
       );
     } finally {
       setSubmitting(false);
@@ -516,12 +521,24 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   // Tab configuration
   const tabs = useMemo(
     () => [
-      { id: 'basic' as const, label: 'Basic', icon: User },
-      { id: 'parameters' as const, label: 'Parameters', icon: Sliders },
-      { id: 'memory' as const, label: 'Memory & Learning', icon: Sparkles },
-      { id: 'advanced' as const, label: 'Advanced', icon: Brain },
+      { id: 'basic' as const, label: t('personaForm.tabs.basic'), icon: User },
+      {
+        id: 'parameters' as const,
+        label: t('personaForm.tabs.parameters'),
+        icon: Sliders,
+      },
+      {
+        id: 'memory' as const,
+        label: t('personaForm.tabs.memory'),
+        icon: Sparkles,
+      },
+      {
+        id: 'advanced' as const,
+        label: t('personaForm.tabs.advanced'),
+        icon: Brain,
+      },
     ],
-    []
+    [t]
   );
 
   // Parameter slider configurations for cleaner rendering
@@ -529,60 +546,60 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     () => [
       {
         key: 'temperature' as const,
-        label: 'Temperature',
+        label: t('personaForm.parameters.temperature'),
         min: 0,
         max: 2,
         step: 0.1,
-        hint: 'Controls creativity vs consistency',
+        hint: t('personaForm.parameters.temperatureHint'),
         format: (v: number) => v.toFixed(1),
       },
       {
         key: 'top_p' as const,
-        label: 'Top-P',
+        label: t('personaForm.parameters.topP'),
         min: 0,
         max: 1,
         step: 0.1,
-        hint: 'Controls response diversity',
+        hint: t('personaForm.parameters.topPHint'),
         format: (v: number) => v.toFixed(1),
       },
       {
         key: 'top_k' as const,
-        label: 'Top-K',
+        label: t('personaForm.parameters.topK'),
         min: 1,
         max: 100,
         step: 1,
-        hint: 'Limits vocabulary to top-k tokens',
+        hint: t('personaForm.parameters.topKHint'),
         format: (v: number) => String(Math.round(v)),
       },
       {
         key: 'context_window' as const,
-        label: 'Context Window',
+        label: t('personaForm.parameters.contextWindow'),
         min: 128,
         max: 131072,
         step: 128,
-        hint: 'Maximum conversation history length',
+        hint: t('personaForm.parameters.contextWindowHint'),
         format: (v: number) => String(Math.round(v)),
       },
       {
         key: 'max_tokens' as const,
-        label: 'Max Tokens',
+        label: t('personaForm.parameters.maxTokens'),
         min: 1,
         max: 8192,
         step: 1,
-        hint: 'Maximum response length',
+        hint: t('personaForm.parameters.maxTokensHint'),
         format: (v: number) => String(Math.round(v)),
       },
       {
         key: 'repeat_penalty' as const,
-        label: 'Repeat Penalty',
+        label: t('personaForm.parameters.repeatPenalty'),
         min: 0.5,
         max: 2,
         step: 0.1,
-        hint: 'Reduces repetitive responses',
+        hint: t('personaForm.parameters.repeatPenaltyHint'),
         format: (v: number) => v.toFixed(1),
       },
     ],
-    []
+    [t]
   );
 
   if (loading) {
@@ -591,7 +608,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         <div className='animate-pulse flex items-center gap-3'>
           <div className='w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin' />
           <span className='text-gray-600 dark:text-gray-400'>
-            Loading form...
+            {t('personaForm.loading')}
           </span>
         </div>
       </div>
@@ -602,18 +619,20 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     <div className='max-w-4xl mx-auto'>
       <div className='mb-6'>
         <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-800'>
-          {persona ? 'Edit Persona' : 'Create New Persona'}
+          {persona
+            ? t('personaForm.title.edit')
+            : t('personaForm.title.create')}
         </h1>
         <div className='flex items-center gap-4 mt-1'>
           <p className='text-gray-600 dark:text-dark-600'>
             {persona
-              ? 'Customize your AI persona with advanced memory, adaptive learning, and intelligent parameters'
-              : 'Create a new AI persona with custom personality, memory systems, and adaptive learning capabilities'}
+              ? t('personaForm.subtitle.edit')
+              : t('personaForm.subtitle.create')}
           </p>
           {lastSaved && (
             <div className='flex items-center gap-2 text-sm text-green-600 dark:text-green-400'>
               <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-              Saved {lastSaved.toLocaleTimeString()}
+              {t('personaForm.saved')} {lastSaved.toLocaleTimeString()}
             </div>
           )}
         </div>
@@ -649,21 +668,21 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div>
                     <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Name *
+                      {t('personaForm.basic.name')} *
                     </label>
                     <input
                       type='text'
                       value={formData.name}
                       onChange={e => updateForm('name', e.target.value)}
                       className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors'
-                      placeholder='Enter persona name'
+                      placeholder={t('personaForm.basic.namePlaceholder')}
                       required
                     />
                   </div>
 
                   <div>
                     <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                      Model *
+                      {t('personaForm.basic.model')} *
                     </label>
                     <select
                       value={formData.model}
@@ -671,7 +690,9 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                       className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors'
                       required
                     >
-                      <option value=''>Select a model</option>
+                      <option value=''>
+                        {t('personaForm.basic.selectModel')}
+                      </option>
                       {availableModels.map(model => (
                         <option key={model.name} value={model.name}>
                           {model.name}
@@ -683,14 +704,14 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                    Description
+                    {t('personaForm.basic.description')}
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={e => updateForm('description', e.target.value)}
                     className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors resize-none'
                     rows={3}
-                    placeholder='Describe your persona...'
+                    placeholder={t('personaForm.basic.descriptionPlaceholder')}
                   />
                 </div>
 
@@ -708,7 +729,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-                    System Prompt
+                    {t('personaForm.basic.systemPrompt')}
                   </label>
                   <textarea
                     value={formData.parameters.system_prompt}
@@ -717,11 +738,10 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                     }
                     className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-colors resize-none font-mono text-sm'
                     rows={6}
-                    placeholder='Enter the system prompt that defines your persona behavior...'
+                    placeholder={t('personaForm.basic.systemPromptPlaceholder')}
                   />
                   <p className='text-xs text-gray-500 dark:text-dark-600 mt-2'>
-                    The system prompt defines how your persona will behave and
-                    respond.
+                    {t('personaForm.basic.systemPromptHint')}
                   </p>
                 </div>
               </div>
@@ -762,10 +782,10 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                         </div>
                         <div>
                           <h3 className='font-semibold text-white'>
-                            Memory System
+                            {t('personaForm.memory.title')}
                           </h3>
                           <p className='text-xs text-white/80'>
-                            Persona remembers conversations over time
+                            {t('personaForm.memory.subtitle')}
                           </p>
                         </div>
                       </div>
@@ -787,7 +807,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                       {loadingMemoryStatus ? (
                         <div className='flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400'>
                           <RefreshCw className='h-4 w-4 animate-spin' />
-                          Loading memory status...
+                          {t('personaForm.memory.loading')}
                         </div>
                       ) : memoryStatus ? (
                         <div className='grid grid-cols-3 gap-4'>
@@ -797,7 +817,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                               {memoryStatus.memory_count.toLocaleString()}
                             </div>
                             <p className='text-xs text-emerald-600 dark:text-emerald-400'>
-                              Memories
+                              {t('personaForm.memory.memories')}
                             </p>
                           </div>
                           <div className='text-center'>
@@ -806,7 +826,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                               {memoryStatus.size_mb.toFixed(1)}
                             </div>
                             <p className='text-xs text-emerald-600 dark:text-emerald-400'>
-                              MB Used
+                              {t('personaForm.memory.mbUsed')}
                             </p>
                           </div>
                           <div className='text-center'>
@@ -816,16 +836,16 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                                 ? new Date(
                                     memoryStatus.last_backup
                                   ).toLocaleDateString()
-                                : 'Never'}
+                                : t('personaForm.memory.never')}
                             </div>
                             <p className='text-xs text-emerald-600 dark:text-emerald-400'>
-                              Last Backup
+                              {t('personaForm.memory.lastBackup')}
                             </p>
                           </div>
                         </div>
                       ) : (
                         <p className='text-sm text-emerald-600 dark:text-emerald-400'>
-                          No memory data yet
+                          {t('personaForm.memory.noData')}
                         </p>
                       )}
                     </div>
@@ -835,12 +855,12 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                   {formData.memory_settings?.enabled && (
                     <div className='p-5 bg-white dark:bg-dark-100 space-y-4'>
                       <ParameterSlider
-                        label='Maximum Memories'
+                        label={t('personaForm.memory.maxMemories')}
                         value={formData.memory_settings.max_memories}
                         min={100}
                         max={10000}
                         step={100}
-                        hint='How many memories this persona can store'
+                        hint={t('personaForm.memory.maxMemoriesHint')}
                         format={v => v.toLocaleString()}
                         colorClass='text-emerald-700 dark:text-emerald-300'
                         onChange={v =>
@@ -848,12 +868,12 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                         }
                       />
                       <ParameterSlider
-                        label='Memory Retention'
+                        label={t('personaForm.memory.retention')}
                         value={formData.memory_settings.retention_days}
                         min={7}
                         max={365}
                         step={7}
-                        hint='Days to keep memories before cleanup'
+                        hint={t('personaForm.memory.retentionHint')}
                         format={v => `${Math.round(v)} days`}
                         colorClass='text-emerald-700 dark:text-emerald-300'
                         onChange={v =>
@@ -863,7 +883,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                         }
                       />
                       <ToggleSwitch
-                        label='Auto-cleanup old memories'
+                        label={t('personaForm.memory.autoCleanup')}
                         checked={formData.memory_settings.auto_cleanup}
                         onChange={checked =>
                           updateSettings('memory_settings', {
@@ -881,10 +901,10 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                             <div className='flex items-center justify-between p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800/30'>
                               <div>
                                 <p className='text-sm font-medium text-red-700 dark:text-red-300'>
-                                  Wipe All Memories
+                                  {t('personaForm.memory.wipeAll')}
                                 </p>
                                 <p className='text-xs text-red-600 dark:text-red-400'>
-                                  This cannot be undone
+                                  {t('personaForm.memory.wipeCannot')}
                                 </p>
                               </div>
                               <button
@@ -898,7 +918,9 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                                 ) : (
                                   <Trash2 className='h-3.5 w-3.5' />
                                 )}
-                                {wipingMemories ? 'Wiping...' : 'Wipe'}
+                                {wipingMemories
+                                  ? t('personaForm.memory.wiping')
+                                  : t('personaForm.memory.wipeButton')}
                               </button>
                             </div>
                           </div>
@@ -910,8 +932,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                   {!formData.memory_settings?.enabled && (
                     <div className='p-5 bg-gray-50 dark:bg-dark-50'>
                       <p className='text-sm text-gray-500 dark:text-gray-400 text-center'>
-                        Enable the memory system to let your persona remember
-                        conversations and build context over time.
+                        {t('personaForm.memory.enableHint')}
                       </p>
                     </div>
                   )}
@@ -928,10 +949,10 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                         </div>
                         <div>
                           <h3 className='font-semibold text-white'>
-                            Adaptive Learning
+                            {t('personaForm.learning.title')}
                           </h3>
                           <p className='text-xs text-white/80'>
-                            Persona evolves based on interactions
+                            {t('personaForm.learning.subtitle')}
                           </p>
                         </div>
                       </div>
@@ -953,27 +974,27 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                       {/* Sensitivity Selection */}
                       <div>
                         <label className='block text-sm font-medium text-violet-700 dark:text-violet-300 mb-3'>
-                          Learning Speed
+                          {t('personaForm.learning.speed')}
                         </label>
                         <div className='grid grid-cols-3 gap-3'>
                           {[
                             {
                               level: 'low' as const,
                               icon: Zap,
-                              label: 'Slow',
-                              desc: 'Gradual changes',
+                              label: t('personaForm.learning.slow'),
+                              desc: t('personaForm.learning.slowDesc'),
                             },
                             {
                               level: 'medium' as const,
                               icon: TrendingUp,
-                              label: 'Balanced',
-                              desc: 'Moderate pace',
+                              label: t('personaForm.learning.balanced'),
+                              desc: t('personaForm.learning.balancedDesc'),
                             },
                             {
                               level: 'high' as const,
                               icon: Sparkles,
-                              label: 'Fast',
-                              desc: 'Quick adaptation',
+                              label: t('personaForm.learning.fast'),
+                              desc: t('personaForm.learning.fastDesc'),
                             },
                           ].map(({ level, icon: Icon, label, desc }) => (
                             <button
@@ -1001,7 +1022,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                       </div>
 
                       <ToggleSwitch
-                        label='Auto-adapt to user preferences'
+                        label={t('personaForm.learning.autoAdapt')}
                         checked={formData.mutation_settings.auto_adapt}
                         onChange={checked =>
                           updateSettings('mutation_settings', {
@@ -1015,24 +1036,24 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                       <div className='p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl'>
                         <p className='text-xs font-medium text-violet-700 dark:text-violet-300 mb-2 flex items-center gap-1.5'>
                           <Brain className='h-3.5 w-3.5' />
-                          What the persona learns:
+                          {t('personaForm.learning.whatLearns')}
                         </p>
                         <div className='grid grid-cols-2 gap-2 text-xs text-violet-600 dark:text-violet-400'>
                           <div className='flex items-center gap-1.5'>
                             <div className='w-1 h-1 rounded-full bg-violet-400' />
-                            Conversation tone
+                            {t('personaForm.learning.conversationTone')}
                           </div>
                           <div className='flex items-center gap-1.5'>
                             <div className='w-1 h-1 rounded-full bg-violet-400' />
-                            Response style
+                            {t('personaForm.learning.responseStyle')}
                           </div>
                           <div className='flex items-center gap-1.5'>
                             <div className='w-1 h-1 rounded-full bg-violet-400' />
-                            User preferences
+                            {t('personaForm.learning.userPreferences')}
                           </div>
                           <div className='flex items-center gap-1.5'>
                             <div className='w-1 h-1 rounded-full bg-violet-400' />
-                            Topic interests
+                            {t('personaForm.learning.topicInterests')}
                           </div>
                         </div>
                       </div>
@@ -1043,8 +1064,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                   {!formData.mutation_settings?.enabled && (
                     <div className='p-5 bg-gray-50 dark:bg-dark-50'>
                       <p className='text-sm text-gray-500 dark:text-gray-400 text-center'>
-                        Enable adaptive learning to let your persona evolve and
-                        personalize responses based on your interactions.
+                        {t('personaForm.learning.enableHint')}
                       </p>
                     </div>
                   )}
@@ -1060,13 +1080,11 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                   <div className='flex items-center gap-2 mb-4'>
                     <Database className='h-5 w-5 text-primary-600 dark:text-primary-400' />
                     <h3 className='font-semibold text-primary-900 dark:text-primary-100'>
-                      Embedding Model
+                      {t('personaForm.advanced.embeddingModel')}
                     </h3>
                   </div>
                   <p className='text-xs text-primary-600 dark:text-primary-400 mb-3'>
-                    Select the model used for memory encoding and semantic
-                    search. Embedding models are shown first, followed by other
-                    available models.
+                    {t('personaForm.advanced.embeddingHint')}
                   </p>
                   <select
                     value={formData.embedding_model}
@@ -1077,7 +1095,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                   >
                     {embeddingModels.length === 0 ? (
                       <option value='' disabled>
-                        No models found
+                        {t('personaForm.advanced.noModels')}
                       </option>
                     ) : (
                       <>
@@ -1089,7 +1107,9 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                             }
                           ) => m.isDetectedEmbedding
                         ).length > 0 && (
-                          <optgroup label='Embedding Models'>
+                          <optgroup
+                            label={t('personaForm.advanced.embeddingModels')}
+                          >
                             {embeddingModels
                               .filter(
                                 (
@@ -1113,7 +1133,9 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                             }
                           ) => !m.isDetectedEmbedding
                         ).length > 0 && (
-                          <optgroup label='Other Models'>
+                          <optgroup
+                            label={t('personaForm.advanced.otherModels')}
+                          >
                             {embeddingModels
                               .filter(
                                 (
@@ -1135,7 +1157,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                   {embeddingModels.length === 0 && (
                     <div className='mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg'>
                       <p className='text-sm text-amber-800 dark:text-amber-200'>
-                        Install an embedding model:{' '}
+                        {t('personaForm.advanced.installHint')}{' '}
                         <code className='px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 rounded text-xs'>
                           ollama pull nomic-embed-text
                         </code>
@@ -1143,8 +1165,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                     </div>
                   )}
                   <p className='text-[10px] text-primary-500 dark:text-primary-500 mt-2'>
-                    Recommended: nomic-embed-text, mxbai-embed-large, bge-m3,
-                    snowflake-arctic-embed
+                    {t('personaForm.advanced.recommended')}
                   </p>
                 </div>
 
@@ -1154,13 +1175,10 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                     <Info className='h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0' />
                     <div>
                       <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                        About Advanced Settings
+                        {t('personaForm.advanced.aboutTitle')}
                       </p>
                       <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                        The embedding model is used by the memory system to
-                        understand semantic meaning and find relevant memories
-                        during conversations. Choose a model that matches your
-                        use case and available resources.
+                        {t('personaForm.advanced.aboutDescription')}
                       </p>
                     </div>
                   </div>
@@ -1179,14 +1197,14 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
             disabled={submitting}
             className='text-gray-600 dark:text-gray-400'
           >
-            Cancel
+            {t('personaForm.actions.cancel')}
           </Button>
 
           <div className='flex items-center gap-3'>
             {lastSaved && (
               <div className='flex items-center gap-1.5 text-sm text-emerald-600 dark:text-emerald-400'>
                 <Check className='h-4 w-4' />
-                <span>Saved</span>
+                <span>{t('personaForm.saved')}</span>
               </div>
             )}
             <Button
@@ -1195,7 +1213,9 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
               onClick={() => handleSubmit(false)}
               disabled={submitting}
             >
-              {submitting && !saveAndClose ? 'Saving...' : 'Save'}
+              {submitting && !saveAndClose
+                ? t('personaForm.actions.saving')
+                : t('personaForm.actions.save')}
             </Button>
             <Button
               type='button'
@@ -1203,10 +1223,10 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
               disabled={submitting}
             >
               {submitting && saveAndClose
-                ? 'Saving...'
+                ? t('personaForm.actions.saving')
                 : persona
-                  ? 'Save & Close'
-                  : 'Create'}
+                  ? t('personaForm.actions.saveClose')
+                  : t('personaForm.actions.create')}
             </Button>
           </div>
         </div>

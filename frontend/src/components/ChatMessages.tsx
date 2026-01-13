@@ -22,6 +22,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChatMessage } from '@/components/ChatMessage';
 import { MessageBranch } from '@/components/MessageBranch';
 import { ChatMessage as ChatMessageType } from '@/types';
@@ -54,6 +55,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   onRegenerate,
   onSelectBranch,
 }) => {
+  const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -228,11 +230,10 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         <div className='text-center text-gray-500 dark:text-dark-600 max-w-md'>
           <div className='text-5xl sm:text-7xl mb-4 sm:mb-6 opacity-60'>💬</div>
           <h3 className='text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-gray-700 dark:text-dark-700'>
-            Start a conversation
+            {t('chatMessage.startConversation')}
           </h3>
           <p className='text-sm leading-relaxed px-4'>
-            Send a message to begin chatting with your AI assistant. Ask
-            questions, get help with code, or have a natural conversation.
+            {t('chatMessage.startConversationDescription')}
           </p>
         </div>
       </div>
@@ -338,10 +339,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             'transition-all duration-200',
             'hover:shadow-xl hover:scale-105 active:scale-95'
           )}
-          title='Scroll to bottom'
+          title={t('chatMessage.scrollToBottom')}
         >
           <ArrowDown className='h-4 w-4' />
-          <span className='text-xs font-medium'>New messages</span>
+          <span className='text-xs font-medium'>
+            {t('chatMessage.newMessages')}
+          </span>
         </button>
       )}
     </div>

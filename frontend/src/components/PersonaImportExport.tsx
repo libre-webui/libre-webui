@@ -16,6 +16,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { personaApi } from '@/utils/api';
 import { Persona } from '@/types';
@@ -32,6 +33,7 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
   onImport,
   onClose,
 }) => {
+  const { t } = useTranslation();
   const [importing, setImporting] = useState(false);
   const [importData, setImportData] = useState('');
 
@@ -52,11 +54,13 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success(`Persona "${persona.name}" exported successfully`);
+      toast.success(
+        t('personaImportExport.exportSuccess', { name: persona.name })
+      );
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to export persona: ' + errorMessage);
+      toast.error(t('personaImportExport.exportFailed') + ': ' + errorMessage);
     }
   };
 
@@ -87,17 +91,21 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success(`All ${personas.length} personas exported successfully`);
+      toast.success(
+        t('personaImportExport.exportAllSuccess', { count: personas.length })
+      );
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to export personas: ' + errorMessage);
+      toast.error(
+        t('personaImportExport.exportAllFailed') + ': ' + errorMessage
+      );
     }
   };
 
   const handleImport = async () => {
     if (!importData.trim()) {
-      toast.error('Please paste the persona JSON data');
+      toast.error(t('personaImportExport.pasteJsonData'));
       return;
     }
 
@@ -122,17 +130,25 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
         }
 
         if (successCount > 0) {
-          toast.success(`Successfully imported ${successCount} personas`);
+          toast.success(
+            t('personaImportExport.importMultipleSuccess', {
+              count: successCount,
+            })
+          );
           if (failCount > 0) {
-            toast.error(`Failed to import ${failCount} personas`);
+            toast.error(
+              t('personaImportExport.importMultipleFailed', {
+                count: failCount,
+              })
+            );
           }
         } else {
-          toast.error('Failed to import any personas');
+          toast.error(t('personaImportExport.importNoneFailed'));
         }
       } else {
         // Single persona import
         await personaApi.importPersona(data);
-        toast.success('Persona imported successfully');
+        toast.success(t('personaImportExport.importSuccess'));
       }
 
       setImportData('');
@@ -140,7 +156,7 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to import persona: ' + errorMessage);
+      toast.error(t('personaImportExport.importFailed') + ': ' + errorMessage);
     } finally {
       setImporting(false);
     }
@@ -164,10 +180,10 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
     <div className='max-w-4xl mx-auto'>
       <div className='mb-6'>
         <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-800'>
-          Import & Export Personas
+          {t('personaImportExport.title')}
         </h1>
         <p className='text-gray-600 dark:text-dark-600 mt-1'>
-          Export your personas to share them or import personas from others
+          {t('personaImportExport.description')}
         </p>
       </div>
 
@@ -175,19 +191,20 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
         {/* Export Section */}
         <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
           <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-4'>
-            Export Personas
+            {t('personaImportExport.exportPersonas')}
           </h3>
 
           {personas.length === 0 ? (
             <p className='text-gray-600 dark:text-dark-600 text-center py-8'>
-              No personas to export
+              {t('personaImportExport.noPersonasToExport')}
             </p>
           ) : (
             <div className='space-y-4'>
               <div className='flex justify-between items-center'>
                 <span className='text-sm text-gray-600 dark:text-dark-600'>
-                  {personas.length} persona{personas.length !== 1 ? 's' : ''}{' '}
-                  available
+                  {t('personaImportExport.personasAvailable', {
+                    count: personas.length,
+                  })}
                 </span>
                 <Button
                   onClick={handleExportAll}
@@ -195,7 +212,7 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
                   size='sm'
                   className='px-3 py-1'
                 >
-                  Export All
+                  {t('personaImportExport.exportAll')}
                 </Button>
               </div>
 
@@ -229,7 +246,7 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
                       size='sm'
                       className='px-3 py-1'
                     >
-                      Export
+                      {t('common.export')}
                     </Button>
                   </div>
                 ))}
@@ -241,13 +258,13 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
         {/* Import Section */}
         <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
           <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-4'>
-            Import Personas
+            {t('personaImportExport.importPersonas')}
           </h3>
 
           <div className='space-y-4'>
             <div>
               <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Upload JSON File
+                {t('personaImportExport.uploadJsonFile')}
               </label>
               <input
                 type='file'
@@ -258,19 +275,19 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
             </div>
 
             <div className='text-center text-gray-500 dark:text-dark-500'>
-              OR
+              {t('common.or').toUpperCase()}
             </div>
 
             <div>
               <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Paste JSON Data
+                {t('personaImportExport.pasteJsonLabel')}
               </label>
               <textarea
                 value={importData}
                 onChange={e => setImportData(e.target.value)}
                 className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-50 text-gray-900 dark:text-dark-700'
                 rows={8}
-                placeholder='Paste persona JSON data here...'
+                placeholder={t('personaImportExport.pasteJsonPlaceholder')}
               />
             </div>
 
@@ -279,7 +296,9 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
               disabled={!importData.trim() || importing}
               className='w-full'
             >
-              {importing ? 'Importing...' : 'Import Persona(s)'}
+              {importing
+                ? t('personaImportExport.importing')
+                : t('personaImportExport.importButton')}
             </Button>
           </div>
         </div>
@@ -288,7 +307,7 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
       {/* JSON Format Example */}
       <div className='mt-6 bg-gray-50 dark:bg-dark-200 rounded-lg p-4'>
         <h4 className='text-sm font-medium text-gray-900 dark:text-dark-800 mb-2'>
-          Expected JSON Format:
+          {t('personaImportExport.expectedFormat')}
         </h4>
         <pre className='text-xs text-gray-600 dark:text-dark-600 overflow-x-auto'>
           {`{
@@ -310,7 +329,7 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
       {/* Actions */}
       <div className='mt-6 flex justify-end'>
         <Button onClick={onClose} variant='outline'>
-          Close
+          {t('common.close')}
         </Button>
       </div>
     </div>

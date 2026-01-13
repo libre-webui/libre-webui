@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, FileText, Loader2, X, File } from 'lucide-react';
 import { documentsApi } from '@/utils/api';
 import { DocumentSummary } from '@/types';
@@ -32,6 +33,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   onDocumentUploaded,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedDocuments, setUploadedDocuments] = useState<DocumentSummary[]>(
     []
@@ -46,13 +48,13 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
     // Validate file type
     if (!file.type.includes('pdf') && !file.type.includes('text')) {
-      toast.error('Only PDF and TXT files are supported');
+      toast.error(t('documents.unsupportedFileType'));
       return;
     }
 
     // Validate file size (10MB limit)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('File size must be less than 10MB');
+      toast.error(t('documents.fileSizeTooLarge'));
       return;
     }
 
@@ -65,13 +67,15 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         const document = response.data;
         setUploadedDocuments(prev => [...prev, document]);
         onDocumentUploaded?.(document);
-        toast.success(`Document "${file.name}" uploaded successfully`);
+        toast.success(
+          t('documents.uploadSuccessWithName', { name: file.name })
+        );
       } else {
-        toast.error(response.error || 'Failed to upload document');
+        toast.error(response.error || t('documents.uploadFailed'));
       }
     } catch (error) {
       console.error('Document upload error:', error);
-      toast.error('Failed to upload document');
+      toast.error(t('documents.uploadFailed'));
     } finally {
       setIsUploading(false);
       // Clear the file input
@@ -115,13 +119,13 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       const response = await documentsApi.deleteDocument(documentId);
       if (response.success) {
         setUploadedDocuments(prev => prev.filter(doc => doc.id !== documentId));
-        toast.success('Document removed successfully');
+        toast.success(t('documents.removeSuccess'));
       } else {
-        toast.error(response.error || 'Failed to remove document');
+        toast.error(response.error || t('documents.removeFailed'));
       }
     } catch (error) {
       console.error('Error removing document:', error);
-      toast.error('An error occurred while removing the document');
+      toast.error(t('documents.removeError'));
     }
   };
 
@@ -160,18 +164,20 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
           <div className='flex items-center justify-center space-x-2'>
             <Loader2 className='w-5 h-5 animate-spin' />
             <span className='text-sm text-gray-600 dark:text-gray-400'>
-              Uploading...
+              {t('documents.uploading')}
             </span>
           </div>
         ) : (
           <div className='space-y-2'>
             <Upload className='w-8 h-8 mx-auto text-gray-400' />
             <div className='text-sm text-gray-600 dark:text-gray-400'>
-              <span className='font-medium'>Click to upload</span> or drag and
-              drop
+              <span className='font-medium'>
+                {t('documents.clickToUpload')}
+              </span>{' '}
+              {t('documents.orDragAndDrop')}
             </div>
             <div className='text-xs text-gray-500 dark:text-gray-500'>
-              PDF or TXT files up to 10MB
+              {t('documents.fileTypesAndSize')}
             </div>
           </div>
         )}
@@ -181,7 +187,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
       {uploadedDocuments.length > 0 && (
         <div className='space-y-2'>
           <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-            Uploaded Documents
+            {t('documents.uploadedDocuments')}
           </h4>
           <div className='space-y-2'>
             {uploadedDocuments.map(doc => (
@@ -207,7 +213,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
                 <button
                   onClick={() => handleRemoveDocument(doc.id)}
                   className='p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors'
-                  title='Remove document'
+                  title={t('documents.removeDocument')}
                 >
                   <X className='w-4 h-4 text-gray-500' />
                 </button>

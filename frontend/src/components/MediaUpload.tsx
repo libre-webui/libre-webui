@@ -16,6 +16,7 @@
  */
 
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, X, FileText, File, Loader2 } from 'lucide-react';
 import { documentsApi } from '@/utils/api';
 import { DocumentSummary } from '@/types';
@@ -41,6 +42,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
   disabled = false,
   className,
 }) => {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
@@ -204,13 +206,13 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
             <Upload className='h-8 w-8 text-gray-400 dark:text-gray-500 ophelia:text-[#737373] mb-2' />
           )}
           <p className='text-sm text-gray-700 dark:text-gray-300 ophelia:text-[#d4d4d4]'>
-            Drop images here or{' '}
+            {t('chat.mediaUpload.dropImagesHere')}{' '}
             <span className='text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7] font-medium'>
-              browse
+              {t('chat.mediaUpload.browse')}
             </span>
           </p>
           <p className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mt-1'>
-            Supports: JPG, PNG, GIF, WebP (max 10MB each)
+            {t('chat.mediaUpload.supportedFormats')}
           </p>
         </div>
       </div>

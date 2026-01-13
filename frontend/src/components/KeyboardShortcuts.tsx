@@ -16,6 +16,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Keyboard, X } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { formatShortcut, KeyboardShortcut } from '@/hooks/useKeyboardShortcuts';
@@ -32,18 +33,20 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
   onClose,
   shortcuts,
 }) => {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   const shortcutGroups = {
-    Navigation: shortcuts.filter(
+    navigation: shortcuts.filter(
       s => s.description.includes('sidebar') || s.description.includes('Toggle')
     ),
-    Settings: shortcuts.filter(
+    settings: shortcuts.filter(
       s =>
         s.description.includes('settings') ||
         s.description.includes('dark mode')
     ),
-    General: shortcuts.filter(
+    general: shortcuts.filter(
       s =>
         !s.description.includes('sidebar') &&
         !s.description.includes('settings') &&
@@ -60,7 +63,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
           <div className='flex items-center gap-2'>
             <Keyboard className='h-5 w-5 text-gray-700 dark:text-dark-600 ophelia:text-[#a3a3a3]' />
             <h2 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
-              Keyboard Shortcuts
+              {t('keyboard.title')}
             </h2>
           </div>
           <Button
@@ -75,13 +78,13 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 
         {/* Content */}
         <div className='p-6 space-y-6 overflow-y-auto max-h-[60vh]'>
-          {Object.entries(shortcutGroups).map(([groupName, groupShortcuts]) => {
+          {Object.entries(shortcutGroups).map(([groupKey, groupShortcuts]) => {
             if (groupShortcuts.length === 0) return null;
 
             return (
-              <div key={groupName}>
+              <div key={groupKey}>
                 <h3 className='text-sm font-medium text-gray-700 dark:text-dark-600 mb-3'>
-                  {groupName}
+                  {t(`keyboard.groups.${groupKey}`)}
                 </h3>
                 <div className='space-y-2'>
                   {groupShortcuts.map((shortcut, index) => (
@@ -105,12 +108,12 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
           {/* Additional helpful shortcuts */}
           <div>
             <h3 className='text-sm font-medium text-gray-700 dark:text-dark-600 mb-3'>
-              Chat
+              {t('keyboard.groups.chat')}
             </h3>
             <div className='space-y-2'>
               <div className='flex items-center justify-between py-2'>
                 <span className='text-sm text-gray-600 dark:text-dark-500'>
-                  Send message
+                  {t('keyboard.actions.sendMessage')}
                 </span>
                 <kbd className='px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-dark-200 ophelia:bg-[#121212] text-gray-700 dark:text-dark-600 ophelia:text-[#a3a3a3] rounded border border-gray-300 dark:border-dark-400 ophelia:border-[#262626]'>
                   Enter
@@ -118,10 +121,10 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
               </div>
               <div className='flex items-center justify-between py-2'>
                 <span className='text-sm text-gray-600 dark:text-dark-500'>
-                  New line in message
+                  {t('keyboard.actions.newLine')}
                 </span>
                 <kbd className='px-2 py-1 text-xs font-mono bg-gray-100 dark:bg-dark-200 ophelia:bg-[#121212] text-gray-700 dark:text-dark-600 ophelia:text-[#a3a3a3] rounded border border-gray-300 dark:border-dark-400 ophelia:border-[#262626]'>
-                  ⇧+Enter
+                  Shift+Enter
                 </kbd>
               </div>
             </div>
@@ -131,15 +134,19 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         {/* Footer */}
         <div className='px-6 py-4 bg-gray-50 dark:bg-dark-200 ophelia:bg-[#0a0a0a] border-t border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'>
           <p className='text-xs text-gray-500 dark:text-dark-400 ophelia:text-[#737373] text-center'>
-            Press{' '}
+            {t('keyboard.footer', { key1: '?', key2: 'H' }).split('?')[0]}
             <kbd className='px-1 py-0.5 text-xs font-mono bg-gray-200 dark:bg-dark-300 ophelia:bg-[#1a1a1a] rounded'>
               ?
-            </kbd>{' '}
-            or{' '}
+            </kbd>
+            {
+              t('keyboard.footer', { key1: '?', key2: 'H' })
+                .split('?')[1]
+                .split('H')[0]
+            }
             <kbd className='px-1 py-0.5 text-xs font-mono bg-gray-200 dark:bg-dark-300 ophelia:bg-[#1a1a1a] rounded'>
               H
-            </kbd>{' '}
-            to show this help
+            </kbd>
+            {t('keyboard.footer', { key1: '?', key2: 'H' }).split('H')[1]}
           </p>
         </div>
       </div>
@@ -152,6 +159,7 @@ export const KeyboardShortcutsIndicator: React.FC<{
   onClick: () => void;
   className?: string;
 }> = ({ onClick, className }) => {
+  const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -166,12 +174,12 @@ export const KeyboardShortcutsIndicator: React.FC<{
         'hover:bg-white dark:hover:bg-dark-100 ophelia:hover:bg-[#121212]',
         className
       )}
-      title='Keyboard shortcuts'
+      title={t('keyboard.tooltip')}
     >
       <Keyboard className='h-4 w-4' />
       {isHovered && (
         <div className='absolute bottom-full mb-2 right-0 px-2 py-1 text-xs bg-gray-900 text-white rounded whitespace-nowrap'>
-          Keyboard shortcuts
+          {t('keyboard.tooltip')}
         </div>
       )}
     </Button>

@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Code,
   FileText,
@@ -44,6 +45,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   artifact,
   className,
 }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'code'>('preview');
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -173,7 +175,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           <div className='text-center'>
             <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
             <p className='text-sm text-gray-600 dark:text-gray-400'>
-              Invalid SVG content
+              {t('artifacts.invalidSvg')}
             </p>
           </div>
         </div>
@@ -237,7 +239,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
           <div className='text-center'>
             <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
             <p className='text-sm text-gray-600 dark:text-gray-400'>
-              Invalid JSON content
+              {t('artifacts.invalidJson')}
             </p>
           </div>
         </div>
@@ -308,7 +310,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
                   size='sm'
                   onClick={() => setViewMode('preview')}
                   className='h-5 px-0.5 text-xs'
-                  title='Preview mode'
+                  title={t('artifacts.previewMode')}
                 >
                   <Eye className='h-2.5 w-2.5' />
                 </Button>
@@ -317,7 +319,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
                   size='sm'
                   onClick={() => setViewMode('code')}
                   className='h-5 px-0.5 text-xs'
-                  title='Code mode'
+                  title={t('artifacts.codeMode')}
                 >
                   <Code2 className='h-2.5 w-2.5' />
                 </Button>
@@ -330,7 +332,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               size='sm'
               onClick={() => copyToClipboard(artifact.content)}
               className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] touch-manipulation'
-              title='Copy content'
+              title={t('artifacts.copyContent')}
             >
               {copied ? (
                 <Check className='h-2.5 w-2.5 text-green-500' />
@@ -344,7 +346,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               size='sm'
               onClick={downloadArtifact}
               className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] touch-manipulation'
-              title='Download'
+              title={t('artifacts.download')}
             >
               <Download className='h-2.5 w-2.5' />
             </Button>
@@ -354,7 +356,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               size='sm'
               onClick={() => openArtifactPanel(artifact)}
               className='h-5 w-5 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] touch-manipulation border border-gray-200 dark:border-dark-300 ophelia:border-[#262626] hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#3f3f46]'
-              title='Open in panel'
+              title={t('artifacts.openInPanel')}
             >
               <Maximize2 className='h-2.5 w-2.5' />
             </Button>
@@ -384,20 +386,20 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
                   size='sm'
                   onClick={() => setViewMode('preview')}
                   className='h-8 px-3 text-xs'
-                  title='Preview mode'
+                  title={t('artifacts.previewMode')}
                 >
                   <Eye className='h-3 w-3 mr-1' />
-                  Preview
+                  {t('artifacts.preview')}
                 </Button>
                 <Button
                   variant={viewMode === 'code' ? 'primary' : 'ghost'}
                   size='sm'
                   onClick={() => setViewMode('code')}
                   className='h-8 px-3 text-xs'
-                  title='Code mode'
+                  title={t('artifacts.codeMode')}
                 >
                   <Code2 className='h-3 w-3 mr-1' />
-                  Code
+                  {t('artifacts.code')}
                 </Button>
                 <div className='w-px h-4 bg-gray-300 dark:bg-gray-600 ophelia:bg-[#262626] mx-1' />
               </>
@@ -408,7 +410,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               size='sm'
               onClick={() => copyToClipboard(artifact.content)}
               className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
-              title='Copy content'
+              title={t('artifacts.copyContent')}
             >
               {copied ? (
                 <Check className='h-4 w-4 text-green-500' />
@@ -422,7 +424,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               size='sm'
               onClick={downloadArtifact}
               className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
-              title='Download'
+              title={t('artifacts.download')}
             >
               <Download className='h-4 w-4' />
             </Button>
@@ -432,7 +434,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
               size='sm'
               onClick={() => openArtifactPanel(artifact)}
               className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
-              title='Open in panel'
+              title={t('artifacts.openInPanel')}
             >
               <Maximize2 className='h-4 w-4' />
             </Button>
@@ -454,7 +456,8 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       {/* Footer */}
       <div className='flex items-center justify-between p-3 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] bg-gray-50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a] flex-shrink-0'>
         <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-          Created: {new Date(artifact.createdAt).toLocaleString()}
+          {t('artifacts.created')}:{' '}
+          {new Date(artifact.createdAt).toLocaleString()}
         </div>
 
         {(artifact.type === 'html' || artifact.type === 'react') && (
@@ -471,7 +474,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
             className='text-xs hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] ophelia:text-[#a3a3a3]'
           >
             <ExternalLink className='h-3 w-3 mr-1' />
-            Open in new window
+            {t('artifacts.openInNewWindow')}
           </Button>
         )}
       </div>

@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Github, Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '../utils/config';
 
@@ -24,6 +25,7 @@ import { API_BASE_URL } from '../utils/config';
  * Only shows if GitHub OAuth is configured (env variables present)
  */
 export const GitHubAuthButton: React.FC = () => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
 
@@ -92,12 +94,12 @@ export const GitHubAuthButton: React.FC = () => {
       {isLoading ? (
         <div className='flex items-center'>
           <Loader2 size={16} className='animate-spin mr-2' />
-          Connecting to GitHub...
+          {t('auth.oauth.connectingTo', { provider: t('auth.oauth.github') })}
         </div>
       ) : (
         <div className='flex items-center'>
           <Github size={16} className='mr-2' />
-          Continue with GitHub
+          {t('auth.oauth.continueWith', { provider: t('auth.oauth.github') })}
         </div>
       )}
     </button>

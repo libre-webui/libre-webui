@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -62,6 +63,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   compact = false,
   showImageGen = false,
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -412,10 +414,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                         <ImageIcon className='h-4 w-4 text-blue-600 dark:text-blue-400 ophelia:text-[#a855f7]' />
                         <div className='flex-1 min-w-0'>
                           <div className='text-sm font-medium text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
-                            Generate Image
+                            {t('gallery.generate')}
                           </div>
                           <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-                            Create images with AI
+                            {t('gallery.generateDescription')}
                           </div>
                         </div>
                       </div>

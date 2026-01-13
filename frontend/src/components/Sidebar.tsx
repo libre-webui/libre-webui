@@ -17,6 +17,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
   Plus,
@@ -57,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onClose: _onClose,
   className,
 }) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const {
@@ -144,14 +146,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       const response = await usersApi.updateMyAvatar(avatarValue || null);
       if (response.success && response.data) {
         setUser(response.data);
-        toast.success('Profile picture updated');
+        toast.success(t('user.avatar.updated'));
         setShowAvatarModal(false);
       } else {
-        toast.error(response.message || 'Failed to update avatar');
+        toast.error(response.message || t('user.avatar.updateFailed'));
       }
     } catch (error) {
       console.error('Failed to update avatar:', error);
-      toast.error('Failed to update profile picture');
+      toast.error(t('user.avatar.updateFailed'));
     } finally {
       setIsSavingAvatar(false);
     }
@@ -186,7 +188,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       console.log('Delete session clicked:', sessionId);
     }
 
-    if (window.confirm('Are you sure you want to delete this chat?')) {
+    if (window.confirm(t('chat.session.deleteConfirm'))) {
       try {
         if (process.env.NODE_ENV === 'development') {
           console.log('Attempting to delete session:', sessionId);
@@ -240,7 +242,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       const { logout } = useAuthStore.getState();
       logout();
       navigate('/login');
-      toast.success('Logged out successfully');
+      toast.success(t('auth.logout.success'));
     } catch (error) {
       console.error('Logout error:', error);
       // Still logout locally even if API call fails
@@ -314,7 +316,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       size='sm'
                       onClick={toggleSidebarCompact}
                       className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.15)] active:bg-gray-200 dark:active:bg-dark-100 ophelia:active:bg-[rgba(147,51,234,0.25)] touch-manipulation ophelia:text-[#a3a3a3] ophelia:hover:text-[#c084fc]'
-                      title='Toggle sidebar size'
+                      title={t('sidebar.toggleSize')}
                     >
                       <ChevronLeft className='h-4 w-4' />
                     </Button>
@@ -330,7 +332,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     size='sm'
                     onClick={toggleSidebarCompact}
                     className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.15)] active:bg-gray-200 dark:active:bg-dark-100 ophelia:active:bg-[rgba(147,51,234,0.25)] touch-manipulation ophelia:text-[#a3a3a3] ophelia:hover:text-[#c084fc]'
-                    title='Expand sidebar'
+                    title={t('sidebar.expandSidebar')}
                   >
                     <ChevronRight className='h-4 w-4' />
                   </Button>
@@ -346,12 +348,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 size='sm'
                 title={
                   !selectedModel || models.length === 0
-                    ? 'No models available. Please ensure Ollama is running and models are installed.'
+                    ? t('chat.model.noModelsTooltip')
                     : ''
                 }
               >
                 <Plus className='h-4 w-4 mr-2' />
-                New Chat
+                {t('chat.session.new')}
               </Button>
             )}
 
@@ -362,8 +364,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className='w-full h-9 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white shadow-sm hover:shadow-md active:shadow-lg transition-all duration-200 border-0 touch-manipulation p-0'
                 title={
                   !selectedModel || models.length === 0
-                    ? 'No models available. Please ensure Ollama is running and models are installed.'
-                    : 'New Chat'
+                    ? t('chat.model.noModelsTooltip')
+                    : t('chat.session.new')
                 }
               >
                 <Plus className='h-4 w-4' />
@@ -400,10 +402,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[rgba(147,51,234,0.25)] text-primary-800 dark:text-primary-200 ophelia:text-[#e9d5ff] shadow-sm'
                     : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200/50 ophelia:hover:bg-[rgba(147,51,234,0.1)] hover:text-gray-900 dark:hover:text-gray-100 ophelia:hover:text-[#e9d5ff] active:bg-gray-100 dark:active:bg-dark-200 ophelia:active:bg-[rgba(147,51,234,0.15)]'
                 )}
-                title={sidebarCompact ? 'Chat' : undefined}
+                title={
+                  sidebarCompact ? t('sidebar.navigation.chat') : undefined
+                }
               >
                 <MessageSquare className='h-4 w-4 shrink-0' />
-                {!sidebarCompact && 'Chat'}
+                {!sidebarCompact && t('sidebar.navigation.chat')}
               </button>
 
               <Link
@@ -422,10 +426,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[rgba(147,51,234,0.25)] text-primary-800 dark:text-primary-200 ophelia:text-[#e9d5ff] shadow-sm'
                     : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200/50 ophelia:hover:bg-[rgba(147,51,234,0.1)] hover:text-gray-900 dark:hover:text-gray-100 ophelia:hover:text-[#e9d5ff] active:bg-gray-100 dark:active:bg-dark-200 ophelia:active:bg-[rgba(147,51,234,0.15)]'
                 )}
-                title={sidebarCompact ? 'Models' : undefined}
+                title={
+                  sidebarCompact ? t('sidebar.navigation.models') : undefined
+                }
               >
                 <Database className='h-4 w-4 shrink-0' />
-                {!sidebarCompact && 'Models'}
+                {!sidebarCompact && t('sidebar.navigation.models')}
               </Link>
 
               <Link
@@ -444,10 +450,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[rgba(147,51,234,0.25)] text-primary-800 dark:text-primary-200 ophelia:text-[#e9d5ff] shadow-sm'
                     : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200/50 ophelia:hover:bg-[rgba(147,51,234,0.1)] hover:text-gray-900 dark:hover:text-gray-100 ophelia:hover:text-[#e9d5ff] active:bg-gray-100 dark:active:bg-dark-200 ophelia:active:bg-[rgba(147,51,234,0.15)]'
                 )}
-                title={sidebarCompact ? 'Personas' : undefined}
+                title={
+                  sidebarCompact ? t('sidebar.navigation.personas') : undefined
+                }
               >
                 <User className='h-4 w-4 shrink-0' />
-                {!sidebarCompact && 'Personas'}
+                {!sidebarCompact && t('sidebar.navigation.personas')}
               </Link>
 
               <Link
@@ -466,10 +474,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     ? 'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[rgba(147,51,234,0.25)] text-primary-800 dark:text-primary-200 ophelia:text-[#e9d5ff] shadow-sm'
                     : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200/50 ophelia:hover:bg-[rgba(147,51,234,0.1)] hover:text-gray-900 dark:hover:text-gray-100 ophelia:hover:text-[#e9d5ff] active:bg-gray-100 dark:active:bg-dark-200 ophelia:active:bg-[rgba(147,51,234,0.15)]'
                 )}
-                title={sidebarCompact ? 'Imagine' : undefined}
+                title={
+                  sidebarCompact ? t('sidebar.navigation.imagine') : undefined
+                }
               >
                 <Sparkles className='h-4 w-4 shrink-0' />
-                {!sidebarCompact && 'Imagine'}
+                {!sidebarCompact && t('sidebar.navigation.imagine')}
               </Link>
             </nav>
           </div>
@@ -487,7 +497,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!sidebarCompact && sessions.length > 0 && (
                 <div className='flex items-center justify-between mb-1.5 px-1'>
                   <h3 className='text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide'>
-                    Chats
+                    {t('chat.session.chats')}
                   </h3>
                   <span className='text-xs text-gray-500 dark:text-gray-500 font-medium'>
                     {sessions.length}
@@ -517,10 +527,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   {!sidebarCompact && (
                     <>
                       <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
-                        No chats yet
+                        {t('chat.session.noChats')}
                       </p>
                       <p className='text-xs mt-1 text-gray-500 dark:text-gray-500'>
-                        Create your first chat above
+                        {t('chat.session.createFirst')}
                       </p>
                     </>
                   )}
@@ -616,7 +626,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 {generatingTitleForSession === session.id ? (
                                   <span className='inline-flex items-center gap-1'>
                                     <span className='animate-pulse'>
-                                      Generating title
+                                      {t('chat.session.generatingTitle')}
                                     </span>
                                     <span className='inline-flex'>
                                       <span
@@ -719,7 +729,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 size='sm'
                                 onClick={e => handleStartEditing(session, e)}
                                 className='h-7 w-7 sm:h-6 sm:w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 rounded-md touch-manipulation'
-                                title='Rename chat'
+                                title={t('chat.session.renameChat')}
                               >
                                 <Edit3 className='h-3 w-3' />
                               </Button>
@@ -730,7 +740,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                   handleDeleteSession(session.id, e)
                                 }
                                 className='h-7 w-7 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 rounded-md touch-manipulation'
-                                title='Delete chat'
+                                title={t('chat.session.deleteChat')}
                               >
                                 <Trash2 className='h-3 w-3' />
                               </Button>
@@ -782,7 +792,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       }
                     }}
                     className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
-                    title='Settings'
+                    title={t('sidebar.navigation.settings')}
                   >
                     <Settings className='h-4 w-4' />
                   </button>
@@ -796,7 +806,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         toggleSidebarCompact()
                       }
                       className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
-                      title='User Management'
+                      title={t('sidebar.navigation.userManagement')}
                     >
                       <User className='h-4 w-4' />
                     </Link>
@@ -805,7 +815,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     onClick={handleLogout}
                     className='w-9 h-9 flex items-center justify-center rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 touch-manipulation transition-all duration-200'
-                    title='Sign Out'
+                    title={t('sidebar.navigation.signOut')}
                   >
                     <LogOut className='h-4 w-4' />
                   </button>
@@ -879,7 +889,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               {user.username}
                             </p>
                             <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
-                              {user.email || 'No email provided'}
+                              {user.email || t('user.profile.noEmail')}
                             </p>
                           </div>
                         </div>
@@ -894,7 +904,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
                         >
                           <Camera className='h-4 w-4 shrink-0' />
-                          Change Picture
+                          {t('user.menu.changePicture')}
                         </button>
 
                         <button
@@ -908,7 +918,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
                         >
                           <Settings className='h-4 w-4 shrink-0' />
-                          Settings
+                          {t('user.menu.settings')}
                         </button>
 
                         {isAdmin() && (
@@ -923,7 +933,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200'
                           >
                             <User className='h-4 w-4 shrink-0' />
-                            User Management
+                            {t('user.menu.userManagement')}
                           </Link>
                         )}
 
@@ -937,7 +947,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200 text-left'
                         >
                           <LogOut className='h-4 w-4 shrink-0' />
-                          Log out
+                          {t('user.menu.logout')}
                         </button>
                       </div>
                     </div>
@@ -967,7 +977,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <div className='flex items-center justify-between mb-4'>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                  Change Profile Picture
+                  {t('user.avatar.title')}
                 </h3>
                 <button
                   onClick={() => setShowAvatarModal(false)}

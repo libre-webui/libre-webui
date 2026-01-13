@@ -17,6 +17,7 @@
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Send, Plus, Paperclip, Minus, Ghost } from 'lucide-react';
 import { ChatMessages } from '@/components/ChatMessages';
 import { ChatInput } from '@/components/ChatInput';
@@ -33,23 +34,29 @@ import { cn } from '@/utils';
 
 // Get personalized greeting and time-appropriate suffix based on time of day
 const getGreeting = (
-  username?: string
+  username?: string,
+  t?: (key: string) => string
 ): { greeting: string; timeSuffix: string } => {
   const hour = new Date().getHours();
   const name = username ? `, ${username}` : '';
 
   if (hour >= 5 && hour < 12) {
-    return { greeting: `Good morning${name}`, timeSuffix: 'today' };
+    const greetingText = t ? t('chat.greeting.morning') : 'Good morning';
+    return { greeting: `${greetingText}${name}`, timeSuffix: 'today' };
   } else if (hour >= 12 && hour < 17) {
-    return { greeting: `Good afternoon${name}`, timeSuffix: 'today' };
+    const greetingText = t ? t('chat.greeting.afternoon') : 'Good afternoon';
+    return { greeting: `${greetingText}${name}`, timeSuffix: 'today' };
   } else if (hour >= 17 && hour < 21) {
-    return { greeting: `Good evening${name}`, timeSuffix: 'tonight' };
+    const greetingText = t ? t('chat.greeting.evening') : 'Good evening';
+    return { greeting: `${greetingText}${name}`, timeSuffix: 'tonight' };
   } else {
-    return { greeting: `Good night${name}`, timeSuffix: 'tonight' };
+    const greetingText = t ? t('chat.greeting.night') : 'Good night';
+    return { greeting: `${greetingText}${name}`, timeSuffix: 'tonight' };
   }
 };
 
 export const ChatPage: React.FC = () => {
+  const { t } = useTranslation();
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,8 +85,8 @@ export const ChatPage: React.FC = () => {
 
   // Personalized greeting based on time of day
   const { greeting, timeSuffix } = useMemo(
-    () => getGreeting(user?.username),
-    [user?.username]
+    () => getGreeting(user?.username, t),
+    [user?.username, t]
   );
 
   // Welcome screen state
@@ -279,7 +286,7 @@ export const ChatPage: React.FC = () => {
             const now = Date.now();
             const privateSession = {
               id: `private-${now}`,
-              title: 'Private Chat',
+              title: t('chat.session.private'),
               model: selectedModel || models[0]?.name || '',
               messages: [],
               createdAt: now,
@@ -290,10 +297,10 @@ export const ChatPage: React.FC = () => {
           }}
           disabled={!selectedModel && models.length === 0}
           className='absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-300 dark:border-dark-400 ophelia:border-[#3f3f46] bg-transparent hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a] text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
-          title="Start a private conversation that won't be saved"
+          title={t('chat.session.privateTooltip')}
         >
           <Ghost className='h-4 w-4' />
-          <span className='text-sm'>Private</span>
+          <span className='text-sm'>{t('chat.session.private')}</span>
         </button>
 
         <div className='w-full max-w-2xl mx-auto flex flex-col items-center justify-center'>
@@ -305,7 +312,9 @@ export const ChatPage: React.FC = () => {
             {greeting}
           </h1>
           <p className='text-base sm:text-lg text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mb-8 text-center'>
-            What can I help with {timeSuffix}?
+            {timeSuffix === 'today'
+              ? t('chat.welcome.helpToday')
+              : t('chat.welcome.helpTonight')}
           </p>
 
           {models.length > 0 ? (
@@ -346,7 +355,7 @@ export const ChatPage: React.FC = () => {
                       showWelcomeAdvanced &&
                         'bg-gray-200 dark:bg-dark-200 ophelia:bg-[#1a1a1a]'
                     )}
-                    title='Attach images'
+                    title={t('chat.input.attachImages')}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -375,7 +384,7 @@ export const ChatPage: React.FC = () => {
                         setWelcomeMessage(e.target.value)
                       }
                       onKeyDown={handleWelcomeKeyDown}
-                      placeholder='Message...'
+                      placeholder={t('chat.input.messagePlaceholder')}
                       className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 ophelia:scrollbar-thumb-[#3f3f46] focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 ophelia:placeholder:text-[#737373] text-base sm:text-sm leading-none touch-manipulation'
                       rows={1}
                       style={{
@@ -417,7 +426,7 @@ export const ChatPage: React.FC = () => {
                         selectedModel &&
                         'hover:scale-105 active:scale-95'
                     )}
-                    title='Send message'
+                    title={t('chat.input.sendMessage')}
                   >
                     <Send className='h-4 w-4' />
                   </Button>
@@ -457,7 +466,7 @@ export const ChatPage: React.FC = () => {
                   •
                 </span>{' '}
                 <span className='text-xs text-gray-400 dark:text-gray-500 ophelia:text-[#525252]'>
-                  LLM can make mistakes - verify important information
+                  {t('chat.footer.disclaimer')}
                 </span>
               </div>
             </div>
@@ -465,11 +474,10 @@ export const ChatPage: React.FC = () => {
             <div className='w-full max-w-md'>
               <div className='p-6 bg-gray-50 dark:bg-dark-100 ophelia:bg-[#121212] border border-gray-200 dark:border-dark-300 ophelia:border-[#262626] rounded-xl'>
                 <p className='text-sm text-gray-700 dark:text-dark-700 ophelia:text-[#a3a3a3] mb-4'>
-                  No models available. Make sure Ollama is running and has
-                  models installed.
+                  {t('chat.model.noModelsDescription')}
                 </p>
                 <code className='block text-xs bg-gray-100 dark:bg-dark-200 ophelia:bg-[#0a0a0a] p-3 rounded-lg font-mono text-gray-800 dark:text-dark-600 ophelia:text-[#737373]'>
-                  ollama pull llama3.2:3b
+                  {t('chat.model.pullCommand')}
                 </code>
               </div>
             </div>
@@ -504,9 +512,11 @@ export const ChatPage: React.FC = () => {
           <div className='flex-shrink-0 px-4 py-2 border-b border-gray-200 dark:border-dark-300 ophelia:border-[#262626] bg-gray-50/80 dark:bg-dark-100/80 ophelia:bg-[#0a0a0a]/80 backdrop-blur-sm'>
             <div className='flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
               <Ghost className='h-4 w-4' />
-              <span className='text-sm font-medium'>Private Mode</span>
+              <span className='text-sm font-medium'>
+                {t('chat.session.privateMode')}
+              </span>
               <span className='text-xs text-gray-500 dark:text-gray-500 ophelia:text-[#737373]'>
-                — This conversation won&apos;t be saved
+                — {t('chat.session.privateDescription')}
               </span>
             </div>
           </div>

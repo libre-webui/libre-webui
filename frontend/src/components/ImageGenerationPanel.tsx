@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { X, ImageIcon, Loader2, Download, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -46,6 +47,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
   onClose,
   onImageGenerated,
 }) => {
+  const { t } = useTranslation();
   const [plugins, setPlugins] = useState<ImageGenPlugin[]>([]);
   const [selectedPlugin, setSelectedPlugin] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string>('');
@@ -132,7 +134,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
   const handleGenerate = async () => {
     if (!selectedModel || !prompt.trim()) {
-      toast.error('Please select a model and enter a prompt');
+      toast.error(t('imageGeneration.enterPrompt'));
       return;
     }
 
@@ -162,7 +164,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         }
 
         if (imageData) {
-          toast.success('Image generated successfully!');
+          toast.success(t('imageGeneration.success'));
 
           // If callback provided, send to chat and close
           if (onImageGenerated) {
@@ -176,12 +178,12 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
           }
         }
       } else {
-        toast.error('Failed to generate image');
+        toast.error(t('imageGeneration.failed'));
       }
     } catch (error) {
       console.error('Image generation failed:', error);
       const message =
-        error instanceof Error ? error.message : 'Failed to generate image';
+        error instanceof Error ? error.message : t('imageGeneration.failed');
       toast.error(message);
     } finally {
       setIsGenerating(false);
@@ -226,7 +228,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
           <div className='flex items-center gap-2'>
             <ImageIcon className='h-5 w-5 text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]' />
             <h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
-              Image Generation
+              {t('imageGeneration.title')}
             </h2>
           </div>
           <button
@@ -243,10 +245,10 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
             <div className='text-center py-8'>
               <ImageIcon className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600 ophelia:text-[#525252]' />
               <p className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-                No image generation plugins available.
+                {t('imageGeneration.noModels')}
               </p>
               <p className='text-sm text-gray-400 dark:text-gray-500 mt-1'>
-                Configure an image plugin in Settings.
+                {t('imageGeneration.configurePlugin')}
               </p>
             </div>
           ) : (
@@ -255,7 +257,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
               <div className='grid grid-cols-2 gap-4'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    Plugin
+                    {t('settings.plugins.title')}
                   </label>
                   <select
                     value={selectedPlugin}
@@ -278,7 +280,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    Model
+                    {t('imageGeneration.model')}
                   </label>
                   <select
                     value={selectedModel}
@@ -304,7 +306,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
               <div className='grid grid-cols-2 gap-4'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    Size
+                    {t('imageGeneration.size')}
                   </label>
                   <select
                     value={size}
@@ -327,7 +329,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    Quality
+                    {t('imageGeneration.quality')}
                   </label>
                   <select
                     value={quality}
@@ -352,12 +354,12 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
               {/* Prompt */}
               <div>
                 <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                  Prompt
+                  {t('imageGeneration.prompt')}
                 </label>
                 <textarea
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
-                  placeholder='Describe the image you want to generate...'
+                  placeholder={t('imageGeneration.promptPlaceholder')}
                   rows={3}
                   className={cn(
                     'w-full px-3 py-2 rounded-lg text-sm resize-none',
@@ -387,7 +389,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                       'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
                       'transition-colors'
                     )}
-                    title='Download image'
+                    title={t('imageGallery.download')}
                   >
                     <Download className='h-5 w-5 text-gray-700 dark:text-gray-200 ophelia:text-[#fafafa]' />
                   </button>
@@ -415,12 +417,12 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
               {isGenerating ? (
                 <span className='flex items-center justify-center gap-2'>
                   <Loader2 className='h-4 w-4 animate-spin' />
-                  Generating...
+                  {t('imageGeneration.generating')}
                 </span>
               ) : (
                 <span className='flex items-center justify-center gap-2'>
                   <Sparkles className='h-4 w-4' />
-                  Generate Image
+                  {t('imageGeneration.generate')}
                 </span>
               )}
             </Button>

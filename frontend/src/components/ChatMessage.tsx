@@ -17,6 +17,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { ChatMessage as ChatMessageType } from '@/types';
 import { MessageContent } from '@/components/ui';
 import { GenerationStats } from '@/components/GenerationStats';
@@ -57,6 +58,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   isLastAssistantMessage = false,
   onRegenerate,
 }) => {
+  const { t } = useTranslation();
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
   const { preferences } = useAppStore();
@@ -199,18 +201,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   // Determine display name for messages
   const getDisplayName = () => {
-    if (isSystem) return 'System';
+    if (isSystem) return t('chatMessage.system');
     if (isUser) {
       if (preferences.showUsername && user?.username) {
         return user.username;
       }
-      return 'You';
+      return t('chatMessage.you');
     }
     // For assistant messages, use persona name if available, otherwise model name
     if (currentPersona?.name) {
       return currentPersona.name;
     }
-    return message.model || 'Assistant';
+    return message.model || t('chatMessage.assistant');
   };
 
   const handleEditSystemMessage = () => {
@@ -363,7 +365,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 <button
                   onClick={handleCopyMessage}
                   className='p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.2)] transition-opacity opacity-0 group-hover:opacity-100'
-                  title={isCopied ? 'Copied!' : 'Copy message'}
+                  title={
+                    isCopied
+                      ? t('chatMessage.copied')
+                      : t('chatMessage.copyMessage')
+                  }
                 >
                   {isCopied ? (
                     <Check className='h-3.5 w-3.5 text-green-500 dark:text-green-400' />
@@ -381,7 +387,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   <button
                     onClick={onRegenerate}
                     className='p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.2)] transition-opacity opacity-0 group-hover:opacity-100'
-                    title='Regenerate response'
+                    title={t('chatMessage.regenerateResponse')}
                   >
                     <RefreshCw className='h-3.5 w-3.5 text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3]' />
                   </button>
@@ -424,7 +430,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 <div className='text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 ophelia:text-[#737373] flex items-center justify-between'>
                   <div className='flex items-center gap-1'>
                     <Settings className='h-2.5 w-2.5 opacity-50' />
-                    System
+                    {t('chatMessage.system')}
                   </div>
                   <div className='flex items-center gap-1'>
                     {isEditing ? (
@@ -433,7 +439,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                           onClick={handleSaveSystemMessage}
                           disabled={isSaving}
                           className='p-1 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.2)] rounded transition-colors disabled:opacity-50'
-                          title='Save changes'
+                          title={t('chatMessage.saveChanges')}
                         >
                           <Save className='h-3 w-3 text-green-600 dark:text-green-400 ophelia:text-[#a855f7]' />
                         </button>
@@ -441,7 +447,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                           onClick={handleCancelEdit}
                           disabled={isSaving}
                           className='p-1 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(239,68,68,0.15)] rounded transition-colors disabled:opacity-50'
-                          title='Cancel editing'
+                          title={t('chatMessage.cancelEditing')}
                         >
                           <X className='h-3 w-3 text-red-600 dark:text-red-400 ophelia:text-[#f87171]' />
                         </button>
@@ -450,7 +456,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                       <button
                         onClick={handleEditSystemMessage}
                         className='p-1 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[rgba(147,51,234,0.2)] rounded transition-colors'
-                        title='Edit system message'
+                        title={t('chatMessage.editSystemMessage')}
                       >
                         <Edit3 className='h-3 w-3 text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] ophelia:hover:text-[#c084fc]' />
                       </button>
@@ -462,7 +468,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     value={editedContent}
                     onChange={e => setEditedContent(e.target.value)}
                     className='w-full min-h-[100px] p-3 text-sm text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] bg-gray-50 dark:bg-dark-50 ophelia:bg-[#0a0a0a] border border-gray-200 dark:border-dark-300 ophelia:border-[#262626] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 ophelia:focus:ring-[#a855f7] focus:border-transparent'
-                    placeholder='Enter your system message...'
+                    placeholder={t('chatMessage.systemMessagePlaceholder')}
                     disabled={isSaving}
                   />
                 ) : (
@@ -482,12 +488,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                         {isSystemMessageExpanded ? (
                           <>
                             <ChevronUp className='h-3 w-3' />
-                            Show less
+                            {t('chatMessage.showLess')}
                           </>
                         ) : (
                           <>
                             <ChevronDown className='h-3 w-3' />
-                            Show more
+                            {t('chatMessage.showMore')}
                           </>
                         )}
                       </button>
@@ -505,7 +511,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                       className='flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3] hover:text-primary-600 dark:hover:text-primary-400 ophelia:hover:text-[#c084fc] transition-colors'
                     >
                       <Brain className='h-4 w-4' />
-                      <span className='font-medium'>Thinking</span>
+                      <span className='font-medium'>
+                        {t('chatMessage.thinking')}
+                      </span>
                       {isThinkingExpanded ? (
                         <ChevronUp className='h-4 w-4' />
                       ) : (
@@ -563,7 +571,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             </button>
             <img
               src={lightboxImage}
-              alt='Full size image'
+              alt={t('chatMessage.fullSizeImage')}
               className='max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl'
               onClick={e => e.stopPropagation()}
             />

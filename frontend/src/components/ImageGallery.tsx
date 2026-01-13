@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Trash2, Download, Loader2, ImageOff } from 'lucide-react';
 import { cn } from '@/utils';
 import { imageGenApi } from '@/utils/api';
@@ -30,6 +31,7 @@ interface ImageGalleryProps {
 export const ImageGallery: React.FC<ImageGalleryProps> = ({
   onImageCountChange,
 }) => {
+  const { t } = useTranslation();
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,13 +65,13 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
         }
       } catch (error) {
         console.error('Failed to load gallery:', error);
-        toast.error('Failed to load gallery');
+        toast.error(t('imageGallery.loadFailed'));
       } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
       }
     },
-    [onImageCountChange]
+    [onImageCountChange, t]
   );
 
   useEffect(() => {
@@ -92,18 +94,18 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
         setImages(prev => prev.filter(img => img.id !== imageId));
         setTotal(prev => prev - 1);
         onImageCountChange?.(total - 1);
-        toast.success('Image deleted');
+        toast.success(t('imageGallery.deleteSuccess'));
 
         // Close lightbox if deleting the currently viewed image
         if (selectedImage?.id === imageId) {
           setSelectedImage(null);
         }
       } else {
-        toast.error('Failed to delete image');
+        toast.error(t('imageGallery.deleteFailed'));
       }
     } catch (error) {
       console.error('Failed to delete image:', error);
-      toast.error('Failed to delete image');
+      toast.error(t('imageGallery.deleteFailed'));
     } finally {
       setDeletingId(null);
     }
@@ -141,11 +143,10 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
       <div className='flex flex-col items-center justify-center py-20 text-center'>
         <ImageOff className='h-16 w-16 text-gray-300 dark:text-gray-600 ophelia:text-[#404040] mb-4' />
         <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] mb-2'>
-          No images yet
+          {t('imageGallery.noImages')}
         </h3>
         <p className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373] max-w-sm'>
-          Generated images will appear here. Use the image generation feature to
-          create your first image.
+          {t('imageGallery.noImagesHint')}
         </p>
       </div>
     );
@@ -210,7 +211,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                       'bg-white/20 hover:bg-white/30',
                       'transition-colors'
                     )}
-                    title='Download'
+                    title={t('imageGallery.download')}
                   >
                     <Download className='h-4 w-4 text-white' />
                   </button>
@@ -223,7 +224,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                       'transition-colors',
                       deletingId === image.id && 'opacity-50 cursor-not-allowed'
                     )}
-                    title='Delete'
+                    title={t('imageGallery.delete')}
                   >
                     {deletingId === image.id ? (
                       <Loader2 className='h-4 w-4 text-white animate-spin' />
@@ -257,10 +258,10 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
             {isLoadingMore ? (
               <span className='flex items-center gap-2'>
                 <Loader2 className='h-4 w-4 animate-spin' />
-                Loading...
+                {t('common.loading')}
               </span>
             ) : (
-              `Load More (${images.length} of ${total})`
+              t('imageGallery.loadMore', { current: images.length, total })
             )}
           </button>
         </div>

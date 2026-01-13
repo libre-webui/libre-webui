@@ -16,9 +16,12 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ModelManager } from '@/components/ModelManager';
 
 export const ModelsPage: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <div className='h-full overflow-auto'>
       <div className='max-w-6xl mx-auto p-6'>
@@ -28,10 +31,10 @@ export const ModelsPage: React.FC = () => {
             className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] mb-3'
             style={{ fontWeight: 300, letterSpacing: '0.01em' }}
           >
-            Models
+            {t('models.title')}
           </h2>
           <p className='text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3] leading-relaxed'>
-            Pull, manage, and monitor your Ollama models
+            {t('models.subtitle')}
           </p>
         </div>
 

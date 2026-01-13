@@ -24,6 +24,10 @@ import {
   useLocation,
 } from 'react-router-dom';
 
+// Initialize i18n
+import '@/i18n';
+import { useTranslation } from 'react-i18next';
+
 // Use HashRouter for Electron (file:// protocol) since BrowserRouter doesn't work with file://
 const Router =
   window.location.protocol === 'file:' ? HashRouter : BrowserRouter;
@@ -79,14 +83,19 @@ import { LoginPage } from '@/pages/LoginPage';
 import { FirstTimeSetup } from '@/components/FirstTimeSetup';
 
 // Loading component
-const PageLoader = () => (
-  <div className='flex items-center justify-center h-full min-h-screen'>
-    <div className='flex flex-col items-center gap-3'>
-      <div className='w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
-      <div className='text-gray-600 dark:text-dark-600'>Loading...</div>
+const PageLoader = () => {
+  const { t } = useTranslation();
+  return (
+    <div className='flex items-center justify-center h-full min-h-screen'>
+      <div className='flex flex-col items-center gap-3'>
+        <div className='w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
+        <div className='text-gray-600 dark:text-dark-600'>
+          {t('common.loading')}
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Conditional keyboard shortcuts indicator - only shows on chat pages and desktop
 const ConditionalKeyboardShortcutsIndicator: React.FC<{
@@ -110,6 +119,7 @@ const ConditionalKeyboardShortcutsIndicator: React.FC<{
 };
 
 const App: React.FC = () => {
+  const { t } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -247,24 +257,24 @@ const App: React.FC = () => {
           toggleSidebar();
         }
       },
-      description: 'Toggle sidebar',
+      description: t('keyboard.toggleSidebar'),
     },
     {
       key: ',',
       metaKey: true,
       action: () => setSettingsOpen(true),
-      description: 'Open settings',
+      description: t('keyboard.openSettings'),
     },
     {
       key: 'd',
       metaKey: true,
       action: toggleTheme,
-      description: 'Toggle dark mode',
+      description: t('keyboard.toggleDarkMode'),
     },
     {
       key: 'h',
       action: () => setShortcutsOpen(true),
-      description: 'Show keyboard shortcuts',
+      description: t('keyboard.showShortcuts'),
     },
     {
       key: 'Escape',
@@ -272,7 +282,7 @@ const App: React.FC = () => {
         setSettingsOpen(false);
         setShortcutsOpen(false);
       },
-      description: 'Close modals',
+      description: t('keyboard.closeModals'),
     },
   ];
 

@@ -17,6 +17,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { ollamaApi } from '@/utils/api';
 import { Button } from '@/components/ui/Button';
 import { RunningModel } from '@/types';
@@ -92,6 +93,7 @@ interface LibraryModel {
 }
 
 export const ModelManager: React.FC = () => {
+  const { t } = useTranslation();
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [runningModels, setRunningModels] = useState<RunningModel[]>([]);
   const [libraryModels, setLibraryModels] = useState<LibraryModel[]>([]);
@@ -188,7 +190,7 @@ export const ModelManager: React.FC = () => {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to load models: ' + errorMessage);
+      toast.error(t('modelManager.pull.failed') + ': ' + errorMessage);
       setIsHealthy(false);
     } finally {
       setLoading(false);
@@ -213,11 +215,12 @@ export const ModelManager: React.FC = () => {
   useEffect(() => {
     loadData();
     loadLibraryModels();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePullModel = async () => {
     if (!pullModelName.trim()) {
-      toast.error('Please enter a model name');
+      toast.error(t('modelManager.pull.enterName'));
       return;
     }
 
@@ -234,7 +237,9 @@ export const ModelManager: React.FC = () => {
           setPullProgress(null);
           setPulling(false);
           setCancelPull(null);
-          toast.success(`Model ${pullModelName} pulled successfully`);
+          toast.success(
+            t('modelManager.pull.success', { name: pullModelName })
+          );
           setPullModelName('');
           loadData();
         },
@@ -242,14 +247,14 @@ export const ModelManager: React.FC = () => {
           setPullProgress(null);
           setPulling(false);
           setCancelPull(null);
-          toast.error('Failed to pull model: ' + error);
+          toast.error(t('modelManager.pull.failed') + ': ' + error);
         }
       );
       setCancelPull(() => cancelFn);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to pull model: ' + errorMessage);
+      toast.error(t('modelManager.pull.failed') + ': ' + errorMessage);
       setPullProgress(null);
       setPulling(false);
       setCancelPull(null);
@@ -262,23 +267,23 @@ export const ModelManager: React.FC = () => {
       setCancelPull(null);
       setPulling(false);
       setPullProgress(null);
-      toast.success('Model pull cancelled');
+      toast.success(t('modelManager.pull.cancelled'));
     }
   };
 
   const handleDeleteModel = async (modelName: string) => {
-    if (!confirm(`Are you sure you want to delete model "${modelName}"?`)) {
+    if (!confirm(t('modelManager.local.deleteConfirm', { name: modelName }))) {
       return;
     }
 
     try {
       await ollamaApi.deleteModel(modelName);
-      toast.success(`Model ${modelName} deleted successfully`);
+      toast.success(t('modelManager.local.deleteSuccess', { name: modelName }));
       await loadData();
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to delete model: ' + errorMessage);
+      toast.error(t('modelManager.local.deleteFailed') + ': ' + errorMessage);
     }
   };
 
@@ -292,12 +297,14 @@ export const ModelManager: React.FC = () => {
       if (response.success && response.data) {
         setSelectedModelDetails(response.data as unknown as ModelDetails);
       } else {
-        toast.error('Failed to load model details');
+        toast.error(t('modelManager.modals.details.noDetails'));
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to get model info: ' + errorMessage);
+      toast.error(
+        t('modelManager.modals.details.noDetails') + ': ' + errorMessage
+      );
     } finally {
       setLoadingDetails(false);
     }
@@ -305,14 +312,16 @@ export const ModelManager: React.FC = () => {
 
   const handleCopyModel = async () => {
     if (!copySource.trim() || !copyDestination.trim()) {
-      toast.error('Please enter both source and destination names');
+      toast.error(t('modelManager.modals.copy.enterBoth'));
       return;
     }
 
     setCopying(true);
     try {
       await ollamaApi.copyModel(copySource.trim(), copyDestination.trim());
-      toast.success(`Model copied to ${copyDestination}`);
+      toast.success(
+        t('modelManager.modals.copy.success', { name: copyDestination })
+      );
       setShowCopyModal(false);
       setCopySource('');
       setCopyDestination('');
@@ -320,7 +329,7 @@ export const ModelManager: React.FC = () => {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to copy model: ' + errorMessage);
+      toast.error(t('modelManager.modals.copy.failed') + ': ' + errorMessage);
     } finally {
       setCopying(false);
     }
@@ -328,7 +337,7 @@ export const ModelManager: React.FC = () => {
 
   const handleCreateModel = async () => {
     if (!createModelName.trim() || !createModelfile.trim()) {
-      toast.error('Please enter model name and Modelfile content');
+      toast.error(t('modelManager.modals.create.enterBoth'));
       return;
     }
 
@@ -338,7 +347,9 @@ export const ModelManager: React.FC = () => {
         model: createModelName.trim(),
         modelfile: createModelfile.trim(),
       });
-      toast.success(`Model ${createModelName} created successfully`);
+      toast.success(
+        t('modelManager.modals.create.success', { name: createModelName })
+      );
       setShowCreateModal(false);
       setCreateModelName('');
       setCreateModelfile('');
@@ -346,7 +357,7 @@ export const ModelManager: React.FC = () => {
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to create model: ' + errorMessage);
+      toast.error(t('modelManager.modals.create.failed') + ': ' + errorMessage);
     } finally {
       setCreating(false);
     }
@@ -354,7 +365,7 @@ export const ModelManager: React.FC = () => {
 
   const handleGenerateEmbeddings = async () => {
     if (!embeddingsModel.trim() || !embeddingsInput.trim()) {
-      toast.error('Please select a model and enter text');
+      toast.error(t('modelManager.modals.embeddings.enterBoth'));
       return;
     }
 
@@ -370,13 +381,17 @@ export const ModelManager: React.FC = () => {
         const embeddings = response.data.embeddings?.[0] || [];
         setEmbeddingsResult(embeddings);
         toast.success(
-          `Generated ${embeddings.length}-dimensional embedding vector`
+          t('modelManager.modals.embeddings.success', {
+            count: embeddings.length,
+          })
         );
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to generate embeddings: ' + errorMessage);
+      toast.error(
+        t('modelManager.modals.embeddings.failed') + ': ' + errorMessage
+      );
     } finally {
       setGeneratingEmbeddings(false);
     }
@@ -453,7 +468,7 @@ export const ModelManager: React.FC = () => {
       <div className='flex items-center justify-center p-8'>
         <div className='flex items-center gap-3 text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3]'>
           <RefreshCw className='h-5 w-5 animate-spin' />
-          Loading models...
+          {t('modelManager.loading')}
         </div>
       </div>
     );
@@ -482,7 +497,9 @@ export const ModelManager: React.FC = () => {
                 )}
               />
               <span className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5]'>
-                {isHealthy ? 'Ollama Online' : 'Ollama Offline'}
+                {isHealthy
+                  ? t('modelManager.systemStatus.online')
+                  : t('modelManager.systemStatus.offline')}
               </span>
             </div>
 
@@ -498,7 +515,10 @@ export const ModelManager: React.FC = () => {
             <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
               <HardDrive className='h-4 w-4' />
               <span>
-                {models.length} model{models.length !== 1 ? 's' : ''}
+                {models.length}{' '}
+                {models.length !== 1
+                  ? t('modelManager.systemStatus.models_plural')
+                  : t('modelManager.systemStatus.models')}
               </span>
             </div>
 
@@ -513,8 +533,10 @@ export const ModelManager: React.FC = () => {
               <div className='flex items-center gap-2 text-sm text-green-600 dark:text-green-400 ophelia:text-[#4ade80]'>
                 <Activity className='h-4 w-4' />
                 <span>
-                  {runningModels.length} running ({formatSize(getTotalVRAM())}{' '}
-                  VRAM)
+                  {runningModels.length}{' '}
+                  {t('modelManager.systemStatus.running')} (
+                  {formatSize(getTotalVRAM())}{' '}
+                  {t('modelManager.systemStatus.vram')})
                 </span>
               </div>
             )}
@@ -532,7 +554,7 @@ export const ModelManager: React.FC = () => {
               )}
             >
               <RefreshCw className='h-3.5 w-3.5' />
-              Refresh
+              {t('common.refresh')}
             </Button>
           </div>
         </div>
@@ -564,7 +586,7 @@ export const ModelManager: React.FC = () => {
               <Download className='h-5 w-5 text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]' />
             </div>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
-              Pull New Model
+              {t('modelManager.sections.pull')}
             </h3>
           </div>
           {expandedSections.has('pull') ? (
@@ -583,7 +605,7 @@ export const ModelManager: React.FC = () => {
                   type='text'
                   value={pullModelName}
                   onChange={e => setPullModelName(e.target.value)}
-                  placeholder='Enter model name (e.g., llama3.2:3b, deepseek-r1:14b)'
+                  placeholder={t('modelManager.pull.placeholder')}
                   className={cn(
                     'w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm',
                     'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
@@ -611,7 +633,7 @@ export const ModelManager: React.FC = () => {
                   )}
                 >
                   <X className='h-4 w-4' />
-                  Cancel
+                  {t('modelManager.pull.cancel')}
                 </Button>
               ) : (
                 <Button
@@ -623,7 +645,7 @@ export const ModelManager: React.FC = () => {
                   )}
                 >
                   <Download className='h-4 w-4' />
-                  Pull
+                  {t('modelManager.pull.button')}
                 </Button>
               )}
             </div>
@@ -640,16 +662,16 @@ export const ModelManager: React.FC = () => {
                 <div className='flex items-center justify-between mb-2'>
                   <span className='text-sm font-medium text-gray-800 dark:text-dark-700 ophelia:text-[#e5e5e5]'>
                     {pullProgress.status === 'starting'
-                      ? 'Initializing...'
+                      ? t('modelManager.progress.starting')
                       : pullProgress.status === 'pulling'
-                        ? 'Downloading model...'
+                        ? t('modelManager.progress.pulling')
                         : pullProgress.status === 'verifying sha256'
-                          ? 'Verifying integrity...'
+                          ? t('modelManager.progress.verifying')
                           : pullProgress.status === 'writing manifest'
-                            ? 'Writing manifest...'
+                            ? t('modelManager.progress.writing')
                             : pullProgress.status ===
                                 'removing any unused layers'
-                              ? 'Cleaning up...'
+                              ? t('modelManager.progress.cleaning')
                               : pullProgress.status}
                   </span>
                   {pullProgress.percent !== undefined && (
@@ -683,7 +705,7 @@ export const ModelManager: React.FC = () => {
             {/* Popular Models */}
             <div>
               <p className='text-xs font-medium text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mb-2'>
-                Popular models:
+                {t('modelManager.pull.popular')}
               </p>
               <div className='flex flex-wrap gap-2'>
                 {popularModels.map(model => (
@@ -721,7 +743,7 @@ export const ModelManager: React.FC = () => {
               )}
             >
               <ExternalLink className='h-3 w-3' />
-              Browse all models on ollama.com
+              {t('modelManager.pull.browseAll')}
             </a>
           </div>
         )}
@@ -753,7 +775,7 @@ export const ModelManager: React.FC = () => {
               <Cloud className='h-5 w-5 text-cyan-600 dark:text-cyan-400 ophelia:text-[#22d3ee]' />
             </div>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
-              Browse Library
+              {t('modelManager.sections.library')}
             </h3>
             <span
               className={cn(
@@ -762,7 +784,7 @@ export const ModelManager: React.FC = () => {
                 'text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'
               )}
             >
-              {libraryModels.length} available
+              {libraryModels.length} {t('modelManager.library.available')}
             </span>
           </div>
           {expandedSections.has('library') ? (
@@ -782,7 +804,7 @@ export const ModelManager: React.FC = () => {
                   type='text'
                   value={librarySearch}
                   onChange={e => setLibrarySearch(e.target.value)}
-                  placeholder='Search models...'
+                  placeholder={t('modelManager.library.search')}
                   className={cn(
                     'w-full pl-10 pr-4 py-2 rounded-lg border text-sm',
                     'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
@@ -824,7 +846,7 @@ export const ModelManager: React.FC = () => {
               </div>
             ) : filteredLibraryModels.length === 0 ? (
               <div className='text-center py-8 text-gray-500 ophelia:text-[#737373]'>
-                No models found matching your criteria
+                {t('modelManager.library.noResults')}
               </div>
             ) : (
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
@@ -855,7 +877,7 @@ export const ModelManager: React.FC = () => {
                             )}
                           >
                             <Check className='h-3 w-3' />
-                            Installed
+                            {t('modelManager.library.installed')}
                           </span>
                         )}
                       </div>
@@ -879,7 +901,9 @@ export const ModelManager: React.FC = () => {
                         ))}
                         {model.sizes.length > 4 && (
                           <span className='text-xs text-gray-400 ophelia:text-[#737373]'>
-                            +{model.sizes.length - 4} more
+                            {t('modelManager.library.more', {
+                              count: model.sizes.length - 4,
+                            })}
                           </span>
                         )}
                       </div>
@@ -920,7 +944,7 @@ export const ModelManager: React.FC = () => {
                           )}
                         >
                           <Download className='h-3 w-3' />
-                          Pull
+                          {t('modelManager.pull.button')}
                         </Button>
                       </div>
                     </div>
@@ -948,7 +972,7 @@ export const ModelManager: React.FC = () => {
                     loadingLibrary && 'animate-spin'
                   )}
                 />
-                Refresh Library
+                {t('modelManager.library.refresh')}
               </Button>
             </div>
           </div>
@@ -974,7 +998,7 @@ export const ModelManager: React.FC = () => {
               <Activity className='h-5 w-5 text-green-600 dark:text-green-400 ophelia:text-[#4ade80]' />
             </div>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
-              Running Models
+              {t('modelManager.sections.running')}
             </h3>
             <span
               className={cn(
@@ -983,7 +1007,7 @@ export const ModelManager: React.FC = () => {
                 'text-green-700 dark:text-green-400 ophelia:text-[#4ade80]'
               )}
             >
-              {runningModels.length} active
+              {runningModels.length} {t('modelManager.systemStatus.running')}
             </span>
           </div>
           <div className='space-y-2'>
@@ -1010,12 +1034,13 @@ export const ModelManager: React.FC = () => {
                     <div className='flex items-center gap-3 text-sm text-green-600 dark:text-green-500 ophelia:text-[#22c55e]/80'>
                       <span className='flex items-center gap-1'>
                         <MemoryStick className='h-3 w-3' />
-                        VRAM: {formatSize(model.size_vram || 0)}
+                        {t('modelManager.systemStatus.vram')}:{' '}
+                        {formatSize(model.size_vram || 0)}
                       </span>
                       {model.size && (
                         <span className='flex items-center gap-1'>
                           <HardDrive className='h-3 w-3' />
-                          Size: {formatSize(model.size)}
+                          {t('models.size')}: {formatSize(model.size)}
                         </span>
                       )}
                     </div>
@@ -1029,7 +1054,7 @@ export const ModelManager: React.FC = () => {
                   )}
                 >
                   <Zap className='h-3 w-3' />
-                  Active
+                  {t('modelManager.local.running')}
                 </div>
               </div>
             ))}
@@ -1063,7 +1088,7 @@ export const ModelManager: React.FC = () => {
               <HardDrive className='h-5 w-5 text-blue-600 dark:text-blue-400 ophelia:text-[#a855f7]' />
             </div>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
-              Local Models
+              {t('modelManager.sections.local')}
             </h3>
             <span
               className={cn(
@@ -1072,7 +1097,7 @@ export const ModelManager: React.FC = () => {
                 'text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'
               )}
             >
-              {models.length} installed
+              {models.length} {t('modelManager.local.installed')}
             </span>
           </div>
           {expandedSections.has('local') ? (
@@ -1093,10 +1118,10 @@ export const ModelManager: React.FC = () => {
               >
                 <HardDrive className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600 ophelia:text-[#525252]' />
                 <p className='text-gray-600 dark:text-dark-600 ophelia:text-[#737373] mb-2'>
-                  No models installed yet
+                  {t('modelManager.local.noModels')}
                 </p>
                 <p className='text-sm text-gray-500 dark:text-gray-500 ophelia:text-[#525252]'>
-                  Pull a model above to get started
+                  {t('modelManager.local.pullToStart')}
                 </p>
               </div>
             ) : (
@@ -1126,7 +1151,7 @@ export const ModelManager: React.FC = () => {
                               )}
                             >
                               <span className='w-1.5 h-1.5 rounded-full bg-green-500 ophelia:bg-[#4ade80] animate-pulse' />
-                              Running
+                              {t('modelManager.local.running')}
                             </span>
                           )}
                         </div>
@@ -1187,7 +1212,7 @@ export const ModelManager: React.FC = () => {
                           )}
                         >
                           <Info className='h-3.5 w-3.5' />
-                          Info
+                          {t('modelManager.local.info')}
                         </Button>
                         <Button
                           onClick={() => {
@@ -1203,7 +1228,7 @@ export const ModelManager: React.FC = () => {
                           )}
                         >
                           <Copy className='h-3.5 w-3.5' />
-                          Copy
+                          {t('modelManager.local.copy')}
                         </Button>
                         <Button
                           onClick={() => handleDeleteModel(model.name)}
@@ -1217,7 +1242,7 @@ export const ModelManager: React.FC = () => {
                           )}
                         >
                           <Trash2 className='h-3.5 w-3.5' />
-                          Delete
+                          {t('modelManager.local.delete')}
                         </Button>
                       </div>
                     </div>
@@ -1255,7 +1280,7 @@ export const ModelManager: React.FC = () => {
               <Settings className='h-5 w-5 text-amber-600 dark:text-amber-400 ophelia:text-[#fbbf24]' />
             </div>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
-              Advanced Actions
+              {t('modelManager.sections.advanced')}
             </h3>
           </div>
           {expandedSections.has('advanced') ? (
@@ -1279,8 +1304,12 @@ export const ModelManager: React.FC = () => {
               >
                 <FileCode className='h-5 w-5 text-purple-500 ophelia:text-[#a855f7]' />
                 <div className='text-left'>
-                  <div className='font-medium'>Create Model</div>
-                  <div className='text-xs opacity-70'>From Modelfile</div>
+                  <div className='font-medium'>
+                    {t('modelManager.advanced.createModel')}
+                  </div>
+                  <div className='text-xs opacity-70'>
+                    {t('modelManager.advanced.fromModelfile')}
+                  </div>
                 </div>
               </Button>
 
@@ -1295,8 +1324,12 @@ export const ModelManager: React.FC = () => {
               >
                 <Copy className='h-5 w-5 text-blue-500 ophelia:text-[#60a5fa]' />
                 <div className='text-left'>
-                  <div className='font-medium'>Copy Model</div>
-                  <div className='text-xs opacity-70'>Duplicate existing</div>
+                  <div className='font-medium'>
+                    {t('modelManager.advanced.copyModel')}
+                  </div>
+                  <div className='text-xs opacity-70'>
+                    {t('modelManager.advanced.duplicateExisting')}
+                  </div>
                 </div>
               </Button>
 
@@ -1311,8 +1344,12 @@ export const ModelManager: React.FC = () => {
               >
                 <TestTube className='h-5 w-5 text-green-500 ophelia:text-[#4ade80]' />
                 <div className='text-left'>
-                  <div className='font-medium'>Test Embeddings</div>
-                  <div className='text-xs opacity-70'>Generate vectors</div>
+                  <div className='font-medium'>
+                    {t('modelManager.advanced.testEmbeddings')}
+                  </div>
+                  <div className='text-xs opacity-70'>
+                    {t('modelManager.advanced.generateVectors')}
+                  </div>
                 </div>
               </Button>
 
@@ -1322,11 +1359,11 @@ export const ModelManager: React.FC = () => {
                     const response = await ollamaApi.checkHealth();
                     if (response.success) {
                       setIsHealthy(true);
-                      toast.success('Ollama is healthy!');
+                      toast.success(t('modelManager.advanced.healthy'));
                     }
                   } catch {
                     setIsHealthy(false);
-                    toast.error('Ollama health check failed');
+                    toast.error(t('modelManager.systemStatus.offline'));
                   }
                 }}
                 variant='outline'
@@ -1338,8 +1375,12 @@ export const ModelManager: React.FC = () => {
               >
                 <Gauge className='h-5 w-5 text-rose-500 ophelia:text-[#fb7185]' />
                 <div className='text-left'>
-                  <div className='font-medium'>Health Check</div>
-                  <div className='text-xs opacity-70'>Test connection</div>
+                  <div className='font-medium'>
+                    {t('modelManager.advanced.healthCheck')}
+                  </div>
+                  <div className='text-xs opacity-70'>
+                    {t('modelManager.advanced.testConnection')}
+                  </div>
                 </div>
               </Button>
             </div>
@@ -1369,7 +1410,7 @@ export const ModelManager: React.FC = () => {
                 )}
               >
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
-                  Model Details: {selectedModelName}
+                  {t('modelManager.modals.details.title')}: {selectedModelName}
                 </h3>
                 <button
                   onClick={() => setShowDetailsModal(false)}
@@ -1390,7 +1431,7 @@ export const ModelManager: React.FC = () => {
                     {selectedModelDetails.details && (
                       <div>
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
-                          Model Information
+                          {t('modelManager.modals.details.info')}
                         </h4>
                         <div
                           className={cn(
@@ -1402,7 +1443,7 @@ export const ModelManager: React.FC = () => {
                             {selectedModelDetails.details.family && (
                               <div>
                                 <span className='text-gray-500 ophelia:text-[#737373]'>
-                                  Family:
+                                  {t('modelManager.modals.details.family')}:
                                 </span>{' '}
                                 <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
                                   {selectedModelDetails.details.family}
@@ -1412,7 +1453,7 @@ export const ModelManager: React.FC = () => {
                             {selectedModelDetails.details.parameter_size && (
                               <div>
                                 <span className='text-gray-500 ophelia:text-[#737373]'>
-                                  Parameters:
+                                  {t('modelManager.modals.details.parameters')}:
                                 </span>{' '}
                                 <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
                                   {selectedModelDetails.details.parameter_size}
@@ -1423,7 +1464,10 @@ export const ModelManager: React.FC = () => {
                               .quantization_level && (
                               <div>
                                 <span className='text-gray-500 ophelia:text-[#737373]'>
-                                  Quantization:
+                                  {t(
+                                    'modelManager.modals.details.quantization'
+                                  )}
+                                  :
                                 </span>{' '}
                                 <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
                                   {
@@ -1436,7 +1480,7 @@ export const ModelManager: React.FC = () => {
                             {selectedModelDetails.details.format && (
                               <div>
                                 <span className='text-gray-500 ophelia:text-[#737373]'>
-                                  Format:
+                                  {t('modelManager.modals.details.format')}:
                                 </span>{' '}
                                 <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
                                   {selectedModelDetails.details.format}
@@ -1452,7 +1496,7 @@ export const ModelManager: React.FC = () => {
                     {selectedModelDetails.system && (
                       <div>
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
-                          System Prompt
+                          {t('modelManager.modals.details.systemPrompt')}
                         </h4>
                         <pre
                           className={cn(
@@ -1470,7 +1514,7 @@ export const ModelManager: React.FC = () => {
                     {selectedModelDetails.template && (
                       <div>
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
-                          Template
+                          {t('modelManager.modals.details.template')}
                         </h4>
                         <pre
                           className={cn(
@@ -1488,7 +1532,7 @@ export const ModelManager: React.FC = () => {
                     {selectedModelDetails.parameters && (
                       <div>
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
-                          Parameters
+                          {t('modelManager.modals.details.parameters')}
                         </h4>
                         <pre
                           className={cn(
@@ -1506,7 +1550,7 @@ export const ModelManager: React.FC = () => {
                     {selectedModelDetails.license && (
                       <div>
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
-                          License
+                          {t('modelManager.modals.details.license')}
                         </h4>
                         <pre
                           className={cn(
@@ -1524,7 +1568,7 @@ export const ModelManager: React.FC = () => {
                     {selectedModelDetails.modelfile && (
                       <div>
                         <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
-                          Modelfile
+                          {t('modelManager.modals.details.modelfile')}
                         </h4>
                         <pre
                           className={cn(
@@ -1540,7 +1584,7 @@ export const ModelManager: React.FC = () => {
                   </>
                 ) : (
                   <p className='text-center text-gray-500 ophelia:text-[#737373]'>
-                    No details available
+                    {t('modelManager.modals.details.noDetails')}
                   </p>
                 )}
               </div>
@@ -1571,7 +1615,7 @@ export const ModelManager: React.FC = () => {
                 )}
               >
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
-                  Copy Model
+                  {t('modelManager.modals.copy.title')}
                 </h3>
                 <button
                   onClick={() => setShowCopyModal(false)}
@@ -1584,7 +1628,7 @@ export const ModelManager: React.FC = () => {
               <div className='p-4 space-y-4'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    Source Model
+                    {t('modelManager.modals.copy.source')}
                   </label>
                   <select
                     value={copySource}
@@ -1596,7 +1640,9 @@ export const ModelManager: React.FC = () => {
                       'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
                     )}
                   >
-                    <option value=''>Select a model...</option>
+                    <option value=''>
+                      {t('modelManager.modals.copy.selectModel')}
+                    </option>
                     {models.map(model => (
                       <option key={model.name} value={model.name}>
                         {model.name}
@@ -1607,13 +1653,13 @@ export const ModelManager: React.FC = () => {
 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    New Model Name
+                    {t('modelManager.modals.copy.newName')}
                   </label>
                   <input
                     type='text'
                     value={copyDestination}
                     onChange={e => setCopyDestination(e.target.value)}
-                    placeholder='e.g., my-custom-model'
+                    placeholder={t('modelManager.modals.copy.placeholder')}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm',
                       'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
@@ -1639,7 +1685,9 @@ export const ModelManager: React.FC = () => {
                   ) : (
                     <Copy className='h-4 w-4' />
                   )}
-                  {copying ? 'Copying...' : 'Copy Model'}
+                  {copying
+                    ? t('modelManager.modals.copy.copying')
+                    : t('modelManager.modals.copy.button')}
                 </Button>
               </div>
             </div>
@@ -1669,7 +1717,7 @@ export const ModelManager: React.FC = () => {
                 )}
               >
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
-                  Create Custom Model
+                  {t('modelManager.modals.create.title')}
                 </h3>
                 <button
                   onClick={() => setShowCreateModal(false)}
@@ -1682,13 +1730,15 @@ export const ModelManager: React.FC = () => {
               <div className='p-4 space-y-4'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    Model Name
+                    {t('modelManager.modals.create.name')}
                   </label>
                   <input
                     type='text'
                     value={createModelName}
                     onChange={e => setCreateModelName(e.target.value)}
-                    placeholder='e.g., my-assistant'
+                    placeholder={t(
+                      'modelManager.modals.create.namePlaceholder'
+                    )}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm',
                       'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
@@ -1701,12 +1751,14 @@ export const ModelManager: React.FC = () => {
 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    Modelfile
+                    {t('modelManager.modals.create.modelfile')}
                   </label>
                   <textarea
                     value={createModelfile}
                     onChange={e => setCreateModelfile(e.target.value)}
-                    placeholder={`FROM llama3.2\nSYSTEM You are a helpful assistant.`}
+                    placeholder={t(
+                      'modelManager.modals.create.modelfilePlaceholder'
+                    )}
                     rows={8}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm font-mono',
@@ -1725,9 +1777,9 @@ export const ModelManager: React.FC = () => {
                       rel='noopener noreferrer'
                       className='text-primary-600 ophelia:text-[#a855f7] hover:underline'
                     >
-                      Modelfile docs
+                      {t('modelManager.modals.create.docs')}
                     </a>{' '}
-                    for syntax reference
+                    {t('modelManager.modals.create.docsLink')}
                   </p>
                 </div>
 
@@ -1748,7 +1800,9 @@ export const ModelManager: React.FC = () => {
                   ) : (
                     <FileCode className='h-4 w-4' />
                   )}
-                  {creating ? 'Creating...' : 'Create Model'}
+                  {creating
+                    ? t('modelManager.modals.create.creating')
+                    : t('modelManager.modals.create.button')}
                 </Button>
               </div>
             </div>
@@ -1778,7 +1832,7 @@ export const ModelManager: React.FC = () => {
                 )}
               >
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
-                  Test Embeddings
+                  {t('modelManager.modals.embeddings.title')}
                 </h3>
                 <button
                   onClick={() => setShowEmbeddingsModal(false)}
@@ -1791,7 +1845,7 @@ export const ModelManager: React.FC = () => {
               <div className='p-4 space-y-4'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    Embedding Model
+                    {t('modelManager.modals.embeddings.model')}
                   </label>
                   <select
                     value={embeddingsModel}
@@ -1803,7 +1857,9 @@ export const ModelManager: React.FC = () => {
                       'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
                     )}
                   >
-                    <option value=''>Select a model...</option>
+                    <option value=''>
+                      {t('modelManager.modals.embeddings.selectModel')}
+                    </option>
                     {models.map(model => (
                       <option key={model.name} value={model.name}>
                         {model.name}
@@ -1811,18 +1867,20 @@ export const ModelManager: React.FC = () => {
                     ))}
                   </select>
                   <p className='mt-1 text-xs text-gray-500 ophelia:text-[#737373]'>
-                    Recommended: nomic-embed-text, mxbai-embed-large
+                    {t('modelManager.modals.embeddings.recommended')}
                   </p>
                 </div>
 
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                    Input Text
+                    {t('modelManager.modals.embeddings.input')}
                   </label>
                   <textarea
                     value={embeddingsInput}
                     onChange={e => setEmbeddingsInput(e.target.value)}
-                    placeholder='Enter text to generate embeddings for...'
+                    placeholder={t(
+                      'modelManager.modals.embeddings.placeholder'
+                    )}
                     rows={3}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm',
@@ -1853,14 +1911,16 @@ export const ModelManager: React.FC = () => {
                     <TestTube className='h-4 w-4' />
                   )}
                   {generatingEmbeddings
-                    ? 'Generating...'
-                    : 'Generate Embeddings'}
+                    ? t('modelManager.modals.embeddings.generating')
+                    : t('modelManager.modals.embeddings.button')}
                 </Button>
 
                 {embeddingsResult && (
                   <div>
                     <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
-                      Result ({embeddingsResult.length} dimensions)
+                      {t('modelManager.modals.embeddings.result', {
+                        count: embeddingsResult.length,
+                      })}
                     </label>
                     <pre
                       className={cn(

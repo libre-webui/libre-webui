@@ -16,6 +16,7 @@
  */
 
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { useAppStore } from '@/store/appStore';
@@ -29,6 +30,7 @@ interface BackgroundUploadProps {
 export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
   className = '',
 }) => {
+  const { t } = useTranslation();
   const {
     preferences,
     setPreferences,
@@ -185,17 +187,17 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
     <div className={`space-y-4 ${className}`}>
       <div>
         <h4 className='text-md font-medium text-gray-900 dark:text-gray-100 mb-3'>
-          Background Image
+          {t('settings.appearance.background.title')}
         </h4>
 
         {/* Toggle Background */}
         <div className='flex items-center justify-between mb-4'>
           <div className='flex flex-col'>
             <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-              Enable background image
+              {t('settings.appearance.background.enable')}
             </span>
             <span className='text-xs text-gray-500 dark:text-gray-400'>
-              Show custom background with blur effect
+              {t('settings.appearance.background.enableDescription')}
             </span>
           </div>
           <label className='relative inline-flex items-center cursor-pointer'>
@@ -253,10 +255,10 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
             >
               <ImageIcon className='h-12 w-12 mx-auto text-gray-400 dark:text-gray-500 mb-4' />
               <p className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-2'>
-                Upload background image
+                {t('settings.appearance.background.upload')}
               </p>
               <p className='text-xs text-gray-500 dark:text-gray-400 mb-4'>
-                Drag and drop an image or click to browse
+                {t('settings.appearance.background.dragDrop')}
               </p>
               <Button
                 variant='outline'
@@ -265,7 +267,9 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
                 className='mx-auto'
               >
                 <Upload className='h-4 w-4 mr-2' />
-                {uploading ? 'Uploading...' : 'Choose Image'}
+                {uploading
+                  ? t('common.loading')
+                  : t('settings.appearance.background.chooseImage')}
               </Button>
             </div>
           )}
@@ -285,7 +289,8 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
             {/* Blur Amount */}
             <div>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                Blur Amount: {backgroundSettings.blurAmount}px
+                {t('settings.appearance.background.blur')}:{' '}
+                {backgroundSettings.blurAmount}px
               </label>
               <input
                 type='range'
@@ -301,7 +306,8 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
             {/* Opacity */}
             <div>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                Opacity: {Math.round(backgroundSettings.opacity * 100)}%
+                {t('settings.appearance.background.opacity')}:{' '}
+                {Math.round(backgroundSettings.opacity * 100)}%
               </label>
               <input
                 type='range'

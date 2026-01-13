@@ -16,6 +16,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Code, FileText, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
@@ -28,19 +29,12 @@ interface StructuredOutputProps {
   className?: string;
 }
 
-const PRESET_FORMATS = [
+// Keys for translation lookup
+const PRESET_FORMAT_KEYS = [
+  { key: 'none', value: null },
+  { key: 'json', value: 'json' },
   {
-    label: 'None (Natural Language)',
-    value: null,
-    description: 'Default natural language response',
-  },
-  {
-    label: 'JSON',
-    value: 'json',
-    description: 'Structured JSON format',
-  },
-  {
-    label: 'List',
+    key: 'list',
     value: {
       type: 'object',
       properties: {
@@ -51,10 +45,9 @@ const PRESET_FORMATS = [
       },
       required: ['items'],
     },
-    description: 'Array of items',
   },
   {
-    label: 'Summary',
+    key: 'summary',
     value: {
       type: 'object',
       properties: {
@@ -67,10 +60,9 @@ const PRESET_FORMATS = [
       },
       required: ['title', 'summary', 'key_points'],
     },
-    description: 'Document summary with key points',
   },
   {
-    label: 'Analysis',
+    key: 'analysis',
     value: {
       type: 'object',
       properties: {
@@ -87,13 +79,8 @@ const PRESET_FORMATS = [
       },
       required: ['analysis', 'pros', 'cons', 'recommendation'],
     },
-    description: 'Structured analysis with pros/cons',
   },
-  {
-    label: 'Custom Schema',
-    value: 'custom',
-    description: 'Define your own JSON schema',
-  },
+  { key: 'custom', value: 'custom' },
 ];
 
 export const StructuredOutput: React.FC<StructuredOutputProps> = ({
@@ -101,30 +88,43 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
   onFormatChange,
   className,
 }) => {
+  const { t } = useTranslation();
   const [showCustom, setShowCustom] = useState(false);
   const [customSchema, setCustomSchema] = useState('');
 
+  // Build translated presets
+  const getPresetFormats = () =>
+    PRESET_FORMAT_KEYS.map(preset => ({
+      key: preset.key,
+      label: t(`chat.structuredOutput.${preset.key}`),
+      value: preset.value,
+      description: t(`chat.structuredOutput.${preset.key}Description`),
+    }));
+
   const getCurrentPreset = () => {
-    if (format === null) return PRESET_FORMATS[0];
-    if (format === 'json') return PRESET_FORMATS[1];
+    const presets = getPresetFormats();
+    if (format === null) return presets[0];
+    if (format === 'json') return presets[1];
     if (typeof format === 'object') {
-      const preset = PRESET_FORMATS.find(
+      const preset = presets.find(
         p =>
           typeof p.value === 'object' &&
           JSON.stringify(p.value) === JSON.stringify(format)
       );
       if (preset) return preset;
       return {
-        label: 'Custom',
+        key: 'customSchema',
+        label: t('chat.structuredOutput.custom'),
         value: format,
-        description: 'Custom JSON schema',
+        description: t('chat.structuredOutput.customSchema'),
       };
     }
-    return PRESET_FORMATS[0];
+    return presets[0];
   };
 
   const handlePresetChange = (value: string) => {
-    const preset = PRESET_FORMATS.find(p => p.label === value);
+    const presets = getPresetFormats();
+    const preset = presets.find(p => p.label === value);
     if (!preset) return;
 
     if (preset.value === 'custom') {
@@ -156,7 +156,7 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
         <div className='flex items-center mb-2'>
           <Code className='h-4 w-4 text-gray-500 mr-2' />
           <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-            Schema Preview
+            {t('chat.structuredOutput.schemaPreview')}
           </span>
         </div>
         <pre className='text-xs text-gray-700 dark:text-gray-300 overflow-x-auto'>
@@ -172,7 +172,7 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
         <div className='flex items-center'>
           <Settings className='h-4 w-4 text-gray-500 mr-2' />
           <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-            Response Format
+            {t('chat.structuredOutput.title')}
           </span>
         </div>
       </div>
@@ -180,7 +180,7 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
       <Select
         value={getCurrentPreset().label}
         onChange={e => handlePresetChange(e.target.value)}
-        options={PRESET_FORMATS.map(preset => ({
+        options={getPresetFormats().map(preset => ({
           value: preset.label,
           label: preset.label,
         }))}
@@ -212,7 +212,7 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
               size='sm'
               disabled={!customSchema.trim()}
             >
-              Apply Schema
+              {t('chat.structuredOutput.applySchema')}
             </Button>
             <Button
               onClick={() => {
@@ -222,7 +222,7 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
               variant='outline'
               size='sm'
             >
-              Cancel
+              {t('chat.structuredOutput.cancel')}
             </Button>
           </div>
         </div>
@@ -233,7 +233,7 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
       {format && (
         <div className='flex items-center text-xs text-green-600 dark:text-green-400'>
           <FileText className='h-3 w-3 mr-1' />
-          Structured output enabled
+          {t('chat.structuredOutput.enabled')}
         </div>
       )}
     </div>

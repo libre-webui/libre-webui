@@ -17,6 +17,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
@@ -33,6 +34,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onLogin,
   onShowSignup,
 }) => {
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,7 +46,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     e.preventDefault();
 
     if (!username.trim() || !password.trim()) {
-      toast.error('Please enter both username and password');
+      toast.error(t('auth.login.enterBoth'));
       return;
     }
 
@@ -62,15 +64,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           response.data.token,
           response.data.systemInfo
         );
-        toast.success('Login successful!');
+        toast.success(t('auth.login.loginSuccess'));
         onLogin?.();
         navigate('/');
       } else {
-        toast.error(response.message || 'Login failed');
+        toast.error(response.message || t('auth.login.loginFailed'));
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('Login failed. Please check your credentials.');
+      toast.error(t('auth.login.checkCredentials'));
     } finally {
       setIsLoading(false);
     }
@@ -90,10 +92,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     <div className='w-full max-w-md mx-auto bg-white dark:bg-dark-25 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 p-6 border border-gray-200 dark:border-dark-200'>
       <div className='text-center mb-6'>
         <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
-          Welcome Back
+          {t('auth.login.title')}
         </h1>
         <p className='text-gray-600 dark:text-dark-500'>
-          Sign in to your account to continue
+          {t('auth.login.subtitle')}
         </p>
       </div>
 
@@ -103,7 +105,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             htmlFor='username'
             className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
           >
-            Username
+            {t('auth.login.username')}
           </label>
           <input
             id='username'
@@ -112,7 +114,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             onChange={e => setUsername(e.target.value)}
             onKeyDown={handleKeyDown}
             className='w-full px-3 py-2 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
-            placeholder='Enter your username'
+            placeholder={t('auth.login.usernamePlaceholder')}
             required
             disabled={isLoading}
           />
@@ -123,7 +125,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             htmlFor='password'
             className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
           >
-            Password
+            {t('auth.login.password')}
           </label>
           <div className='relative'>
             <input
@@ -133,7 +135,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               onChange={e => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
               className='w-full px-3 py-2 pr-10 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
-              placeholder='Enter your password'
+              placeholder={t('auth.login.passwordPlaceholder')}
               required
               disabled={isLoading}
             />
@@ -156,12 +158,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           {isLoading ? (
             <div className='flex items-center'>
               <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
-              Signing in...
+              {t('auth.login.signingIn')}
             </div>
           ) : (
             <div className='flex items-center'>
               <LogIn size={16} className='mr-2' />
-              Sign In
+              {t('auth.login.signIn')}
             </div>
           )}
         </button>
@@ -175,7 +177,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </div>
           <div className='relative flex justify-center text-sm'>
             <span className='px-2 bg-white dark:bg-dark-25 text-gray-500 dark:text-dark-500'>
-              or
+              {t('common.or')}
             </span>
           </div>
         </div>
@@ -188,19 +190,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
       <div className='mt-6 text-center'>
         <p className='text-sm text-gray-600 dark:text-dark-500'>
-          Don&apos;t have an account?{' '}
+          {t('auth.login.noAccount')}{' '}
           <button
             onClick={() => onShowSignup?.()}
-            className='text-accent-500 hover:text-accent-600 dark:text-accent-400 dark:hover:text-accent-300 font-medium transition-colors duration-200'
+            className='text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors duration-200'
           >
-            Sign up here
+            {t('auth.login.signUpHere')}
           </button>
         </p>
       </div>
 
       <div className='mt-4 text-center'>
         <p className='text-xs text-gray-500 dark:text-dark-500'>
-          Mode: Multi User
+          {t('common.mode')}: {t('common.multiUser')}
         </p>
       </div>
     </div>

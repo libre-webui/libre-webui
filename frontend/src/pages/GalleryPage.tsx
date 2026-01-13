@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import ImageGallery from '@/components/ImageGallery';
 import { ImageGenerationPanel } from '@/components/ImageGenerationPanel';
@@ -23,6 +24,7 @@ import { Button } from '@/components/ui';
 import { cn } from '@/utils';
 
 export const GalleryPage: React.FC = () => {
+  const { t } = useTranslation();
   const [imageCount, setImageCount] = useState<number | null>(null);
   const [showImageGen, setShowImageGen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -41,14 +43,14 @@ export const GalleryPage: React.FC = () => {
             className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] mb-3'
             style={{ fontWeight: 300, letterSpacing: '0.01em' }}
           >
-            Imagine
+            {t('sidebar.navigation.imagine')}
           </h2>
           <p className='text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3] leading-relaxed'>
-            Your AI-generated image gallery
+            {t('gallery.subtitle')}
             {imageCount !== null && imageCount > 0 && (
               <span className='text-gray-400 dark:text-gray-500 ophelia:text-[#737373]'>
                 {' '}
-                · {imageCount} {imageCount === 1 ? 'image' : 'images'}
+                · {t('gallery.imageCount', { count: imageCount })}
               </span>
             )}
           </p>
@@ -65,7 +67,7 @@ export const GalleryPage: React.FC = () => {
             )}
           >
             <Plus className='h-4 w-4 mr-2' />
-            Generate Image
+            {t('gallery.generate')}
           </Button>
         </div>
 

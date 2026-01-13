@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { personaApi } from '@/utils/api';
 import { Persona } from '@/types';
@@ -25,6 +26,7 @@ import PersonaForm from './PersonaForm';
 import PersonaImportExport from './PersonaImportExport';
 
 export const PersonaManager: React.FC = () => {
+  const { t } = useTranslation();
   const [personas, setPersonas] = useState<Persona[]>([]);
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -39,12 +41,16 @@ export const PersonaManager: React.FC = () => {
       if (response.success) {
         setPersonas(response.data || []);
       } else {
-        toast.error('Failed to load personas: ' + response.error);
+        toast.error(
+          t('personaManager.failed', { action: 'load' }) + ': ' + response.error
+        );
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to load personas: ' + errorMessage);
+      toast.error(
+        t('personaManager.failed', { action: 'load' }) + ': ' + errorMessage
+      );
     } finally {
       setLoading(false);
     }
@@ -52,6 +58,7 @@ export const PersonaManager: React.FC = () => {
 
   useEffect(() => {
     loadPersonas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleCreatePersona = () => {
@@ -65,33 +72,45 @@ export const PersonaManager: React.FC = () => {
   };
 
   const handleDeletePersona = async (persona: Persona) => {
-    if (!confirm(`Are you sure you want to delete "${persona.name}"?`)) {
+    if (!confirm(t('personaManager.deleteConfirm', { name: persona.name }))) {
       return;
     }
 
     try {
       const response = await personaApi.deletePersona(persona.id);
       if (response.success) {
-        toast.success(`Persona "${persona.name}" deleted successfully`);
+        toast.success(
+          t('personaManager.deleteSuccess', { name: persona.name })
+        );
         await loadPersonas();
       } else {
-        toast.error('Failed to delete persona: ' + response.error);
+        toast.error(
+          t('personaManager.failed', { action: 'delete' }) +
+            ': ' +
+            response.error
+        );
       }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to delete persona: ' + errorMessage);
+      toast.error(
+        t('personaManager.failed', { action: 'delete' }) + ': ' + errorMessage
+      );
     }
   };
 
   const handleDownloadPersona = async (persona: Persona) => {
     try {
       await personaApi.downloadPersona(persona.id, persona.name);
-      toast.success(`Persona "${persona.name}" downloaded successfully`);
+      toast.success(
+        t('personaManager.downloadSuccess', { name: persona.name })
+      );
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to download persona: ' + errorMessage);
+      toast.error(
+        t('personaManager.failed', { action: 'download' }) + ': ' + errorMessage
+      );
     }
   };
 
@@ -110,7 +129,7 @@ export const PersonaManager: React.FC = () => {
     return (
       <div className='flex items-center justify-center p-8'>
         <div className='text-gray-600 dark:text-dark-600'>
-          Loading personas...
+          {t('personaManager.loading')}
         </div>
       </div>
     );
@@ -142,10 +161,10 @@ export const PersonaManager: React.FC = () => {
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-800'>
-            Personas
+            {t('personaManager.title')}
           </h1>
           <p className='text-gray-600 dark:text-dark-600 mt-1'>
-            Create and manage AI personas with custom personalities and settings
+            {t('personaManager.subtitle')}
           </p>
         </div>
         <div className='flex gap-3'>
@@ -154,10 +173,10 @@ export const PersonaManager: React.FC = () => {
             variant='outline'
             className='px-4 py-2'
           >
-            Import/Export
+            {t('personaManager.importExport')}
           </Button>
           <Button onClick={handleCreatePersona} className='px-4 py-2'>
-            Create Persona
+            {t('personaManager.createButton')}
           </Button>
         </div>
       </div>
@@ -167,11 +186,10 @@ export const PersonaManager: React.FC = () => {
         <div className='flex items-center justify-between'>
           <div>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
-              Your Personas
+              {t('personaManager.stats.title')}
             </h3>
             <p className='text-gray-600 dark:text-dark-600'>
-              {personas.length} {personas.length === 1 ? 'persona' : 'personas'}{' '}
-              created
+              {t('personaManager.stats.count', { count: personas.length })}
             </p>
           </div>
           <div className='text-3xl font-bold text-gray-900 dark:text-dark-800'>
@@ -200,14 +218,13 @@ export const PersonaManager: React.FC = () => {
             </svg>
           </div>
           <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 mb-2'>
-            No personas yet
+            {t('personaManager.empty.title')}
           </h3>
           <p className='text-gray-600 dark:text-dark-600 mb-6'>
-            Create your first persona to get started with personalized AI
-            interactions
+            {t('personaManager.empty.description')}
           </p>
           <Button onClick={handleCreatePersona} className='px-6 py-2'>
-            Create Your First Persona
+            {t('personaManager.empty.button')}
           </Button>
         </div>
       ) : (

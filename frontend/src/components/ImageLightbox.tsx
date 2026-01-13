@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { X, Download, Trash2, Clock, Cpu, Maximize2 } from 'lucide-react';
 import { cn } from '@/utils';
@@ -34,6 +35,8 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
   onDelete,
   onDownload,
 }) => {
+  const { t } = useTranslation();
+
   // Close on escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -122,7 +125,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
           {/* Prompt */}
           <div className='mb-4'>
             <h3 className='text-sm font-medium text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mb-1'>
-              Prompt
+              {t('gallery.prompt')}
             </h3>
             <p className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] text-sm leading-relaxed'>
               {image.prompt}
@@ -134,7 +137,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
             <div className='flex items-center gap-2 text-sm'>
               <Cpu className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
               <span className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-                Model:
+                {t('gallery.model')}:
               </span>
               <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
                 {image.model}
@@ -145,7 +148,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
               <div className='flex items-center gap-2 text-sm'>
                 <Maximize2 className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
                 <span className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-                  Size:
+                  {t('gallery.size')}:
                 </span>
                 <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
                   {image.size}
@@ -159,7 +162,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
                   Q
                 </span>
                 <span className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-                  Quality:
+                  {t('gallery.quality')}:
                 </span>
                 <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] capitalize'>
                   {image.quality}
@@ -170,7 +173,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
             <div className='flex items-center gap-2 text-sm'>
               <Clock className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
               <span className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
-                Created:
+                {t('gallery.created')}:
               </span>
               <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
                 {formatDate(image.createdAt)}
@@ -191,7 +194,7 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
               )}
             >
               <Download className='h-4 w-4' />
-              Download
+              {t('gallery.download')}
             </button>
 
             {onDelete && (

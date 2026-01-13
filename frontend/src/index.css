@@ -250,6 +250,87 @@
   display: none;
 }
 
+/* Reset link colors to use Tailwind classes properly */
+a,
+button {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/* Ensure primary (teal/green) colors work on links and buttons */
+.text-primary-500 {
+  color: #14b8a6 !important;
+}
+
+.text-primary-400 {
+  color: #2dd4bf !important;
+}
+
+.text-primary-600 {
+  color: #0d9488 !important;
+}
+
+.hover\:text-primary-600:hover {
+  color: #0d9488 !important;
+}
+
+.hover\:text-primary-300:hover {
+  color: #5eead4 !important;
+}
+
+.dark .text-primary-500 {
+  color: #14b8a6 !important;
+}
+
+.dark .text-primary-400 {
+  color: #2dd4bf !important;
+}
+
+.dark .dark\:text-primary-400 {
+  color: #2dd4bf !important;
+}
+
+.dark .dark\:hover\:text-primary-300:hover {
+  color: #5eead4 !important;
+}
+
+/* Ensure accent colors work on links */
+.text-accent-500 {
+  color: #0ea5e9 !important;
+}
+
+.text-accent-400 {
+  color: #38bdf8 !important;
+}
+
+.text-accent-600 {
+  color: #0284c7 !important;
+}
+
+.hover\:text-accent-600:hover {
+  color: #0284c7 !important;
+}
+
+.hover\:text-accent-300:hover {
+  color: #7dd3fc !important;
+}
+
+.dark .text-accent-500 {
+  color: #0ea5e9 !important;
+}
+
+.dark .text-accent-400 {
+  color: #38bdf8 !important;
+}
+
+.dark .dark\:text-accent-400 {
+  color: #38bdf8 !important;
+}
+
+.dark .dark\:hover\:text-accent-300:hover {
+  color: #7dd3fc !important;
+}
+
 /* Custom focus states */
 .focus-ring:focus {
   outline: none;
@@ -614,6 +695,35 @@ select {
 
 .ophelia .dark\:border-dark-100 {
   border-color: rgba(10, 10, 10, 0.3) !important;
+}
+
+/* Ophelia theme - Override accent colors to purple */
+.ophelia .text-accent-500 {
+  color: #a855f7 !important;
+}
+
+.ophelia .text-accent-400 {
+  color: #c084fc !important;
+}
+
+.ophelia .text-accent-600 {
+  color: #9333ea !important;
+}
+
+.ophelia .hover\:text-accent-600:hover {
+  color: #9333ea !important;
+}
+
+.ophelia .hover\:text-accent-300:hover {
+  color: #d8b4fe !important;
+}
+
+.ophelia .dark\:text-accent-400 {
+  color: #c084fc !important;
+}
+
+.ophelia .dark\:hover\:text-accent-300:hover {
+  color: #d8b4fe !important;
 }
 
 /* Ophelia theme - Override primary/teal colors to purple */

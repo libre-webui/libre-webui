@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '../utils/config';
 
@@ -24,6 +25,7 @@ import { API_BASE_URL } from '../utils/config';
  * Only shows if Hugging Face OAuth is configured (env variables present)
  */
 export const HuggingFaceAuthButton: React.FC = () => {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
 
@@ -92,12 +94,16 @@ export const HuggingFaceAuthButton: React.FC = () => {
       {isLoading ? (
         <div className='flex items-center'>
           <Loader2 size={16} className='animate-spin mr-2' />
-          Connecting to Hugging Face...
+          {t('auth.oauth.connectingTo', {
+            provider: t('auth.oauth.huggingFace'),
+          })}
         </div>
       ) : (
         <div className='flex items-center'>
           <span className='mr-2 text-base'>🤗</span>
-          Continue with Hugging Face
+          {t('auth.oauth.continueWith', {
+            provider: t('auth.oauth.huggingFace'),
+          })}
         </div>
       )}
     </button>

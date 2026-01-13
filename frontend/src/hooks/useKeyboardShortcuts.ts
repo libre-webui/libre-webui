@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/appStore';
 
 export interface KeyboardShortcut {
@@ -97,6 +98,7 @@ export const useKeyboardShortcuts = (
 
 // Global keyboard shortcuts hook
 export const useGlobalKeyboardShortcuts = () => {
+  const { t } = useTranslation();
   const { toggleSidebar, toggleTheme } = useAppStore();
 
   const shortcuts: KeyboardShortcut[] = [
@@ -104,7 +106,7 @@ export const useGlobalKeyboardShortcuts = () => {
       key: 'b',
       metaKey: true,
       action: toggleSidebar,
-      description: 'Toggle sidebar',
+      description: t('keyboard.toggleSidebar'),
     },
     {
       key: ',',
@@ -113,13 +115,13 @@ export const useGlobalKeyboardShortcuts = () => {
         // We'll need to trigger settings modal from here
         // This will be handled by passing a callback from the component that manages the modal
       },
-      description: 'Open settings',
+      description: t('keyboard.openSettings'),
     },
     {
       key: 'd',
       metaKey: true,
       action: toggleTheme,
-      description: 'Toggle dark mode',
+      description: t('keyboard.toggleDarkMode'),
     },
   ];
 

@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Send, Square, Paperclip, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { CodeAwareTextarea } from './CodeAwareTextarea';
@@ -45,6 +46,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   onStopGeneration,
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   const [message, setMessage] = useState('');
   const [images, setImages] = useState<string[]>([]);
   const [format, setFormat] = useState<string | Record<string, unknown> | null>(
@@ -191,7 +193,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             setBackgroundImage(persona.background);
           }
 
-          toast.success('Persona applied');
+          toast.success(t('chat.persona.applied'));
         }
       } else {
         // It's a regular model - update the model and clear persona
@@ -212,7 +214,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           });
 
           setBackgroundImage(null);
-          toast.success('Model updated');
+          toast.success(t('chat.model.updated'));
         }
       }
     } catch (error) {
@@ -270,7 +272,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   showAdvanced &&
                     'bg-gray-100 dark:bg-dark-200/80 ophelia:bg-[#1a1a1a]'
                 )}
-                title='Attachments and advanced features'
+                title={t('chat.input.attachments')}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -299,7 +301,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     setMessage(e.target.value)
                   }
                   onKeyDown={handleKeyDown}
-                  placeholder='Send a message'
+                  placeholder={t('chat.input.placeholder')}
                   disabled={disabled}
                   className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 text-base sm:text-sm leading-none touch-manipulation'
                   rows={1}
@@ -351,7 +353,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       'transition-all duration-200 touch-manipulation',
                       'hover:scale-105 active:scale-95'
                     )}
-                    title='Stop generation'
+                    title={t('chat.input.stopGeneration')}
                   >
                     <Square className='h-4 w-4' />
                   </Button>
@@ -375,7 +377,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                           'hover:scale-105 active:scale-95',
                         ]
                     )}
-                    title='Send message'
+                    title={t('chat.input.sendMessage')}
                   >
                     <Send className='h-4 w-4' />
                   </Button>
@@ -428,15 +430,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 className='text-gray-400 dark:text-gray-500'
                 style={{ fontSize: '0.55rem' }}
               >
-                LLM can make mistakes - verify important information
+                {t('chat.footer.disclaimer')}
               </span>
               {hasAdvancedFeatures && (
                 <span className='ml-2 text-primary-600 dark:text-primary-400'>
                   •{' '}
                   {images.length > 0 &&
-                    `${images.length} image${images.length > 1 ? 's' : ''}`}
+                    t('chat.footer.images', { count: images.length })}
                   {images.length > 0 && format && ' • '}
-                  {format && 'Structured output'}
+                  {format && t('chat.footer.structuredOutput')}
                 </span>
               )}
             </div>

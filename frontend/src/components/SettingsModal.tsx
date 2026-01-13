@@ -50,6 +50,8 @@ import {
 } from 'lucide-react';
 import { Button, Select, Textarea } from '@/components/ui';
 import { BackgroundUpload } from '@/components/BackgroundUpload';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
@@ -114,6 +116,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     clearError: clearPluginError,
     installPlugin,
   } = usePluginStore();
+  const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState('appearance');
   const [tempSystemMessage, setTempSystemMessage] = useState(systemMessage);
@@ -955,20 +958,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const tabs = [
-    { id: 'appearance', label: 'Appearance', icon: Palette },
-    { id: 'models', label: 'Models', icon: Bot },
-    { id: 'generation', label: 'Generation', icon: Sliders },
-    { id: 'tts', label: 'Text-to-Speech', icon: Volume2 },
-    { id: 'image-gen', label: 'Image Generation', icon: ImageIcon },
+    { id: 'appearance', label: t('settings.tabs.appearance'), icon: Palette },
+    { id: 'models', label: t('settings.tabs.model'), icon: Bot },
+    { id: 'generation', label: t('settings.tabs.generation'), icon: Sliders },
+    { id: 'tts', label: t('settings.tabs.tts'), icon: Volume2 },
+    { id: 'image-gen', label: t('settings.tabs.imageGen'), icon: ImageIcon },
     {
       id: 'documents',
-      label: 'Documents & RAG',
+      label: t('settings.tabs.documents'),
       icon: Database,
     },
-    { id: 'plugins', label: 'Plugins', icon: Puzzle },
-    { id: 'system', label: 'System', icon: Monitor },
-    { id: 'data', label: 'Data', icon: Database },
-    { id: 'about', label: 'About', icon: Info },
+    { id: 'plugins', label: t('settings.tabs.plugins'), icon: Puzzle },
+    { id: 'system', label: t('settings.tabs.system'), icon: Monitor },
+    { id: 'data', label: t('settings.tabs.data'), icon: Database },
+    { id: 'about', label: t('settings.tabs.about'), icon: Info },
   ];
 
   const renderTabContent = () => {
@@ -976,60 +979,64 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       case 'appearance':
         return (
           <div className='space-y-6'>
-            <div>
+            {/* Language Switcher */}
+            <LanguageSwitcher />
+
+            <div className='border-t border-gray-200 dark:border-dark-300 pt-6'>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                Appearance
+                {t('settings.appearance.title')}
               </h3>
-              <div className='grid grid-cols-3 gap-3'>
-                <button
-                  onClick={() => handleThemeChange('light')}
-                  className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    theme.mode === 'light'
-                      ? 'bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow-md focus:ring-primary-500'
-                      : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400 ophelia:border-[#262626] ophelia:text-[#e5e5e5] ophelia:bg-[#0a0a0a] ophelia:hover:bg-[#121212]'
-                  }`}
-                >
-                  <Sun className='h-4 w-4' />
-                  Light
-                </button>
-                <button
-                  onClick={() => handleThemeChange('dark')}
-                  className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    theme.mode === 'dark'
-                      ? 'bg-dark-300 text-dark-800 border border-dark-400 shadow-sm hover:bg-dark-400 focus:ring-dark-500'
-                      : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400 ophelia:border-[#262626] ophelia:text-[#e5e5e5] ophelia:bg-[#0a0a0a] ophelia:hover:bg-[#121212]'
-                  }`}
-                >
-                  <Moon className='h-4 w-4' />
-                  Dark
-                </button>
-                <button
-                  onClick={() => handleThemeChange('ophelia')}
-                  className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    theme.mode === 'ophelia'
-                      ? 'bg-purple-600 text-white shadow-sm hover:bg-purple-700 hover:shadow-md focus:ring-purple-500 border border-purple-500'
-                      : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400'
-                  }`}
-                >
-                  <Sparkles className='h-4 w-4' />
-                  AMOLED
-                </button>
-              </div>
+            </div>
+            <div className='grid grid-cols-3 gap-3'>
+              <button
+                onClick={() => handleThemeChange('light')}
+                className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  theme.mode === 'light'
+                    ? 'bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow-md focus:ring-primary-500'
+                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400 ophelia:border-[#262626] ophelia:text-[#e5e5e5] ophelia:bg-[#0a0a0a] ophelia:hover:bg-[#121212]'
+                }`}
+              >
+                <Sun className='h-4 w-4' />
+                {t('settings.appearance.theme.light')}
+              </button>
+              <button
+                onClick={() => handleThemeChange('dark')}
+                className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  theme.mode === 'dark'
+                    ? 'bg-dark-300 text-dark-800 border border-dark-400 shadow-sm hover:bg-dark-400 focus:ring-dark-500'
+                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400 ophelia:border-[#262626] ophelia:text-[#e5e5e5] ophelia:bg-[#0a0a0a] ophelia:hover:bg-[#121212]'
+                }`}
+              >
+                <Moon className='h-4 w-4' />
+                {t('settings.appearance.theme.dark')}
+              </button>
+              <button
+                onClick={() => handleThemeChange('ophelia')}
+                className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  theme.mode === 'ophelia'
+                    ? 'bg-purple-600 text-white shadow-sm hover:bg-purple-700 hover:shadow-md focus:ring-purple-500 border border-purple-500'
+                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400'
+                }`}
+              >
+                <Sparkles className='h-4 w-4' />
+                {t('settings.appearance.theme.amoled')}
+              </button>
             </div>
 
             <div>
               <h4 className='text-md font-medium text-gray-900 dark:text-gray-100 mb-3'>
-                Chat Interface
+                {t('settings.appearance.chatInterface.title')}
               </h4>
               <div className='space-y-3'>
                 <div className='flex items-center justify-between'>
                   <div className='flex flex-col'>
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      Show username in chat
+                      {t('settings.appearance.chatInterface.showUsername')}
                     </span>
                     <span className='text-xs text-gray-500 dark:text-gray-400'>
-                      Display your username instead of &quot;you&quot; in chat
-                      messages
+                      {t(
+                        'settings.appearance.chatInterface.showUsernameDescription'
+                      )}
                     </span>
                   </div>
                   <label className='relative inline-flex items-center cursor-pointer'>
@@ -1060,7 +1067,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='space-y-6'>
             <div>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                System Status
+                {t('settings.system.title')}
               </h3>
 
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
@@ -1070,11 +1077,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className={`w-3 h-3 rounded-full ${systemInfo.isHealthy ? 'bg-green-500' : 'bg-red-500'}`}
                     />
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      Ollama Status
+                      {t('settings.about.ollama.title')}
                     </span>
                   </div>
                   <p className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                    {systemInfo.isHealthy ? 'Healthy' : 'Offline'}
+                    {systemInfo.isHealthy
+                      ? t('settings.about.ollama.healthy')
+                      : t('settings.about.ollama.unhealthy')}
                   </p>
                   {systemInfo.ollamaVersion && (
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
@@ -1087,7 +1096,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className='flex items-center gap-2 mb-2'>
                     <Cpu className='h-3 w-3 text-gray-500 dark:text-dark-500' />
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      Models
+                      {t('settings.about.stats.models')}
                     </span>
                   </div>
                   <p className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
@@ -1099,7 +1108,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className='flex items-center gap-2 mb-2'>
                     <MessageSquare className='h-3 w-3 text-green-500' />
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      Chat Sessions
+                      {t('settings.about.stats.sessions')}
                     </span>
                   </div>
                   <p className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
@@ -1111,17 +1120,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <div className='flex items-center gap-2 mb-2'>
                     <Database className='h-3 w-3 text-purple-500' />
                     <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      Current Model
+                      {t('settings.system.currentModel')}
                     </span>
                   </div>
                   <p className='text-sm font-semibold text-gray-900 dark:text-gray-100 truncate'>
-                    {selectedModel || 'Not set'}
+                    {selectedModel || t('settings.system.notSet')}
                   </p>
                 </div>
               </div>
 
               <Button onClick={loadSystemInfo} variant='outline' size='sm'>
-                Refresh Status
+                {t('common.refresh')}
               </Button>
             </div>
           </div>
@@ -1132,19 +1141,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='space-y-6'>
             <div>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                Model Settings
+                {t('settings.model.title')}
               </h3>
               <div className='space-y-6'>
                 {/* Default Model Selection */}
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-                    Default Model
+                    {t('settings.model.defaultModel')}
                   </label>
                   <Select
                     value={selectedModel || ''}
                     onChange={handleModelChange}
                     options={[
-                      { value: '', label: 'Select a model' },
+                      { value: '', label: t('settings.model.selectModel') },
                       ...models.map(model => ({
                         value: model.name,
                         label: model.name,
@@ -1152,7 +1161,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     ]}
                   />
                   <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
-                    This model will be used for new conversations
+                    {t('settings.model.defaultModelDescription')}
                   </p>
                 </div>
 
@@ -1160,13 +1169,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {selectedModel && (
                   <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                     <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-                      Current Model Information
+                      {t('settings.model.currentModelInfo')}
                     </label>
                     <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                       <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                         <div className='flex items-center justify-between p-3 bg-white dark:bg-dark-100 rounded-md border border-gray-200 dark:border-dark-300'>
                           <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                            Name:
+                            {t('settings.model.name')}:
                           </span>
                           <span className='text-sm font-semibold text-gray-900 dark:text-gray-100 truncate ml-2'>
                             {selectedModel}
@@ -1181,7 +1190,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               <>
                                 <div className='flex items-center justify-between p-3 bg-white dark:bg-dark-100 rounded-md border border-gray-200 dark:border-dark-300'>
                                   <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                                    Size:
+                                    {t('settings.model.size')}:
                                   </span>
                                   <span className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
                                     {model.details.parameter_size}
@@ -1189,7 +1198,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </div>
                                 <div className='flex items-center justify-between p-3 bg-white dark:bg-dark-100 rounded-md border border-gray-200 dark:border-dark-300'>
                                   <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                                    Family:
+                                    {t('settings.model.family')}:
                                   </span>
                                   <span className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
                                     {model.details.family}
@@ -1197,7 +1206,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </div>
                                 <div className='flex items-center justify-between p-3 bg-white dark:bg-dark-100 rounded-md border border-gray-200 dark:border-dark-300'>
                                   <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                                    Format:
+                                    {t('settings.model.format')}:
                                   </span>
                                   <span className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
                                     {model.details.format}
@@ -1216,27 +1225,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {/* System Message */}
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-                    System Message
+                    {t('settings.systemMessage.title')}
                   </label>
                   <Textarea
                     value={tempSystemMessage}
                     onChange={handleSystemMessageChange}
-                    placeholder='Enter a system message that will be added to the beginning of new chat sessions...'
+                    placeholder={t('settings.systemMessage.placeholder')}
                     className='w-full min-h-[100px] bg-gray-50 dark:bg-dark-50 border-gray-200 dark:border-dark-300 text-gray-900 dark:text-gray-100'
                     rows={4}
                   />
                   <div className='flex items-center justify-between mt-3'>
                     <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      This message will be automatically added to the start of
-                      new conversations to set the AI&apos;s behavior and
-                      context.
+                      {t('settings.systemMessage.description')}
                     </p>
                     <Button
                       onClick={handleSystemMessageSave}
                       size='sm'
                       disabled={loading || tempSystemMessage === systemMessage}
                     >
-                      Save
+                      {t('common.save')}
                     </Button>
                   </div>
                 </div>
@@ -1246,17 +1253,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className='mt-6'>
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-                    Auto Title Generation
+                    {t('settings.model.autoTitle.title')}
                   </label>
                   <div className='space-y-4'>
                     <div className='flex items-center justify-between'>
                       <div className='flex flex-col'>
                         <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                          Enable auto-title
+                          {t('settings.model.autoTitle.enable')}
                         </span>
                         <span className='text-xs text-gray-500 dark:text-gray-400'>
-                          Automatically generate chat titles from the first
-                          message
+                          {t('settings.model.autoTitle.enableDescription')}
                         </span>
                       </div>
                       <label className='relative inline-flex items-center cursor-pointer'>
@@ -1287,7 +1293,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {preferences.titleSettings?.autoTitle && (
                       <div>
                         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          Task Model
+                          {t('settings.model.autoTitle.taskModel')}
                         </label>
                         <Select
                           value={preferences.titleSettings?.taskModel || ''}
@@ -1307,7 +1313,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           options={[
                             {
                               value: '',
-                              label: 'Select a model for title generation',
+                              label: t(
+                                'settings.model.autoTitle.selectTaskModel'
+                              ),
                             },
                             ...models.map(model => ({
                               value: model.name,
@@ -1316,9 +1324,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           ]}
                         />
                         <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
-                          This model will summarize your first message to create
-                          a chat title. Use a smaller, faster model for best
-                          performance.
+                          {t('settings.model.autoTitle.taskModelDescription')}
                         </p>
                       </div>
                     )}
@@ -1330,24 +1336,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className='mt-6'>
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-                    Bulk Model Operations
+                    {t('settings.model.bulkOperations')}
                   </label>
                   <div className='space-y-3'>
                     <div>
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Update All Models
+                        {t('settings.model.updateAll')}
                       </h4>
                       <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
-                        Pull the latest versions of all currently installed
-                        models from the registry.
+                        {t('settings.model.updateAllDescription')}
                       </p>
 
                       {updatingAllModels && updateProgress && (
                         <div className='mb-4 space-y-3'>
                           <div className='flex items-center justify-between text-xs'>
                             <span className='text-gray-600 dark:text-dark-600 font-medium'>
-                              Updating {updateProgress.modelName}... (
-                              {updateProgress.current}/{updateProgress.total})
+                              {t('settings.model.updatingModel', {
+                                name: updateProgress.modelName,
+                                current: updateProgress.current,
+                                total: updateProgress.total,
+                              })}
                             </span>
                             <span className='text-primary-600 dark:text-primary-400 font-semibold'>
                               {Math.round(
@@ -1368,26 +1376,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           </div>
                           <div className='text-xs flex items-center justify-between'>
                             <span className='text-gray-500 dark:text-dark-500'>
-                              Status:{' '}
+                              {t('settings.model.status')}:{' '}
                               {updateProgress.status === 'starting' ? (
                                 <span className='text-accent-500 dark:text-accent-400'>
-                                  🔄 Starting...
+                                  {t('settings.model.statusStarting')}
                                 </span>
                               ) : updateProgress.status === 'success' ? (
                                 <span className='text-success-600 dark:text-success-500'>
-                                  ✓ Complete
+                                  {t('settings.model.statusComplete')}
                                 </span>
                               ) : updateProgress.status === 'error' ? (
                                 <span className='text-error-600 dark:text-error-500'>
-                                  ✗ Error: {updateProgress.error}
+                                  {t('settings.model.statusError')}:{' '}
+                                  {updateProgress.error}
                                 </span>
                               ) : (
                                 ''
                               )}
                             </span>
                             <span className='text-gray-400 dark:text-dark-600 text-[10px]'>
-                              {updateProgress.current} of {updateProgress.total}{' '}
-                              models
+                              {t('settings.model.modelsProgress', {
+                                current: updateProgress.current,
+                                total: updateProgress.total,
+                              })}
                             </span>
                           </div>
                         </div>
@@ -1403,8 +1414,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         }
                       >
                         {updatingAllModels
-                          ? 'Updating Models...'
-                          : `Update All Models (${models.length})`}
+                          ? t('settings.model.updating')
+                          : t('settings.model.updateAllButton', {
+                              count: models.length,
+                            })}
                       </Button>
                     </div>
                   </div>
@@ -1419,17 +1432,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='space-y-6'>
             <div>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                Text-to-Speech Settings
+                {t('settings.tts.title')}
               </h3>
               <p className='text-sm text-gray-600 dark:text-gray-400 mb-6'>
-                Configure text-to-speech for reading assistant messages aloud.
+                {t('settings.tts.description')}
               </p>
 
               {loadingTTS ? (
                 <div className='flex items-center justify-center py-8'>
                   <Loader2 className='h-8 w-8 animate-spin text-primary-500' />
                   <span className='ml-3 text-gray-600 dark:text-gray-400'>
-                    Loading TTS providers...
+                    {t('settings.tts.loadingProviders')}
                   </span>
                 </div>
               ) : ttsModels.length === 0 ? (
@@ -1438,12 +1451,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <Volume2 className='h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5' />
                     <div>
                       <h4 className='text-sm font-medium text-yellow-800 dark:text-yellow-200'>
-                        No TTS Providers Available
+                        {t('settings.tts.noProviders')}
                       </h4>
                       <p className='text-sm text-yellow-700 dark:text-yellow-300 mt-1'>
-                        To enable text-to-speech, install a TTS plugin (like
-                        OpenAI TTS or ElevenLabs) and configure the API key in
-                        your environment.
+                        {t('settings.tts.noProvidersDescription')}
                       </p>
                     </div>
                   </div>
@@ -1455,10 +1466,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className='flex items-center justify-between'>
                       <div>
                         <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                          Enable Text-to-Speech
+                          {t('settings.tts.enable')}
                         </h4>
                         <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                          Show TTS button on assistant messages
+                          {t('settings.tts.enableDescription')}
                         </p>
                       </div>
                       <label className='flex items-center cursor-pointer'>
@@ -1494,11 +1505,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className='flex items-center justify-between'>
                       <div>
                         <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                          Auto-Play Messages
+                          {t('settings.tts.autoPlay')}
                         </h4>
                         <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                          Automatically read assistant messages aloud when they
-                          complete
+                          {t('settings.tts.autoPlayDescription')}
                         </p>
                       </div>
                       <label className='flex items-center cursor-pointer'>
@@ -1535,20 +1545,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {/* Voice Settings */}
                   <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                     <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-4'>
-                      Voice Configuration
+                      {t('settings.tts.voiceConfiguration')}
                     </h4>
                     <div className='space-y-4'>
                       {/* Model Selection */}
                       <div>
                         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          TTS Model
+                          {t('settings.tts.model')}
                         </label>
                         <Select
                           value={ttsSettings.model}
                           onChange={e => handleTtsModelChange(e.target.value)}
                           disabled={!ttsSettings.enabled}
                           options={[
-                            { value: '', label: 'Select a model' },
+                            {
+                              value: '',
+                              label: t('settings.model.selectModel'),
+                            },
                             ...ttsModels.map(model => ({
                               value: model.model,
                               label: `${model.model} (${model.plugin})`,
@@ -1556,14 +1569,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           ]}
                         />
                         <p className='text-xs text-gray-500 mt-1'>
-                          The AI model used for speech synthesis
+                          {t('settings.tts.modelDescription')}
                         </p>
                       </div>
 
                       {/* Voice Selection */}
                       <div>
                         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          Voice
+                          {t('settings.tts.voice')}
                         </label>
                         <Select
                           value={ttsSettings.voice}
@@ -1574,7 +1587,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             !ttsSettings.enabled || ttsVoices.length === 0
                           }
                           options={[
-                            { value: '', label: 'Select a voice' },
+                            { value: '', label: t('settings.tts.selectVoice') },
                             ...ttsVoices.map(voice => ({
                               value: voice,
                               label:
@@ -1583,14 +1596,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           ]}
                         />
                         <p className='text-xs text-gray-500 mt-1'>
-                          The voice persona for speech output
+                          {t('settings.tts.voiceDescription')}
                         </p>
                       </div>
 
                       {/* Speed Control */}
                       <div>
                         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          Speed: {ttsSettings.speed.toFixed(1)}x
+                          {t('settings.tts.speed')}:{' '}
+                          {ttsSettings.speed.toFixed(1)}x
                         </label>
                         <input
                           type='range'
@@ -1608,9 +1622,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           className='w-full range-slider'
                         />
                         <div className='flex justify-between text-xs text-gray-500 mt-1'>
-                          <span>0.25x (Slow)</span>
-                          <span>1.0x (Normal)</span>
-                          <span>4.0x (Fast)</span>
+                          <span>{t('settings.tts.speedSlow')}</span>
+                          <span>{t('settings.tts.speedNormal')}</span>
+                          <span>{t('settings.tts.speedFast')}</span>
                         </div>
                       </div>
                     </div>
@@ -1620,7 +1634,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {ttsPlugins.length > 0 && (
                     <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-                        Available TTS Providers
+                        {t('settings.tts.availableProviders')}
                       </h4>
                       <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
                         {ttsPlugins.map(plugin => (
@@ -1633,7 +1647,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               {plugin.name}
                             </span>
                             <span className='text-xs text-gray-500 dark:text-gray-400'>
-                              ({plugin.models?.length || 0} models)
+                              ({plugin.models?.length || 0}{' '}
+                              {t('settings.tts.models')})
                             </span>
                           </div>
                         ))}
@@ -1650,7 +1665,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='flex items-center gap-2'
                       >
                         <RotateCcw size={16} />
-                        Reset
+                        {t('common.reset')}
                       </Button>
                       <Button
                         onClick={handleTestTTS}
@@ -1661,12 +1676,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         {testingTTS ? (
                           <>
                             <Square size={16} />
-                            Stop
+                            {t('settings.tts.stop')}
                           </>
                         ) : (
                           <>
                             <Play size={16} />
-                            Test Voice
+                            {t('settings.tts.test')}
                           </>
                         )}
                       </Button>
@@ -1676,7 +1691,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className='flex items-center gap-2'
                     >
                       <Check size={16} />
-                      Save Settings
+                      {t('settings.saveSettings')}
                     </Button>
                   </div>
                 </div>
@@ -1690,17 +1705,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='space-y-6'>
             <div>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                Image Generation Settings
+                {t('settings.imageGen.title')}
               </h3>
               <p className='text-sm text-gray-600 dark:text-gray-400 mb-6'>
-                Configure AI image generation providers and default settings.
+                {t('settings.imageGen.description')}
               </p>
 
               {loadingImageGen ? (
                 <div className='flex items-center justify-center py-8'>
                   <Loader2 className='h-8 w-8 animate-spin text-primary-500' />
                   <span className='ml-3 text-gray-600 dark:text-gray-400'>
-                    Loading image generation providers...
+                    {t('settings.imageGen.loadingProviders')}
                   </span>
                 </div>
               ) : imageGenModels.length === 0 ? (
@@ -1709,12 +1724,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <ImageIcon className='h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5' />
                     <div>
                       <h4 className='text-sm font-medium text-yellow-800 dark:text-yellow-200'>
-                        No Image Generation Providers Available
+                        {t('settings.imageGen.noProviders')}
                       </h4>
                       <p className='text-sm text-yellow-700 dark:text-yellow-300 mt-1'>
-                        To enable image generation, install a plugin with image
-                        generation capability (like OpenAI DALL-E) and configure
-                        the API key in your environment or via the Plugins tab.
+                        {t('settings.imageGen.noProvidersDescription')}
                       </p>
                     </div>
                   </div>
@@ -1726,10 +1739,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className='flex items-center justify-between'>
                       <div>
                         <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                          Enable Image Generation
+                          {t('settings.imageGen.enable')}
                         </h4>
                         <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                          Allow generating images from text prompts
+                          {t('settings.imageGen.enableDescription')}
                         </p>
                       </div>
                       <label className='flex items-center cursor-pointer'>
@@ -1766,13 +1779,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {/* Image Generation Settings */}
                   <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                     <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-4'>
-                      Generation Configuration
+                      {t('settings.imageGen.configuration')}
                     </h4>
                     <div className='space-y-4'>
                       {/* Model Selection */}
                       <div>
                         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          Image Model
+                          {t('settings.imageGen.model')}
                         </label>
                         <Select
                           value={imageGenSettings.model}
@@ -1781,7 +1794,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           }
                           disabled={!imageGenSettings.enabled}
                           options={[
-                            { value: '', label: 'Select a model' },
+                            {
+                              value: '',
+                              label: t('settings.model.selectModel'),
+                            },
                             ...imageGenModels.map(model => ({
                               value: model.model,
                               label: `${model.model} (${model.plugin})`,
@@ -1789,14 +1805,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           ]}
                         />
                         <p className='text-xs text-gray-500 mt-1'>
-                          The AI model used for image generation
+                          {t('settings.imageGen.modelDescription')}
                         </p>
                       </div>
 
                       {/* Size Selection */}
                       <div>
                         <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          Image Size
+                          {t('settings.imageGen.size')}
                         </label>
                         <Select
                           value={imageGenSettings.size}
@@ -1821,7 +1837,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           ]}
                         />
                         <p className='text-xs text-gray-500 mt-1'>
-                          The dimensions of the generated image
+                          {t('settings.imageGen.sizeDescription')}
                         </p>
                       </div>
 
@@ -1829,7 +1845,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       {imageGenQualities.length > 0 && (
                         <div>
                           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                            Quality
+                            {t('settings.imageGen.quality')}
                           </label>
                           <Select
                             value={imageGenSettings.quality}
@@ -1848,7 +1864,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             }))}
                           />
                           <p className='text-xs text-gray-500 mt-1'>
-                            Higher quality may take longer to generate
+                            {t('settings.imageGen.qualityDescription')}
                           </p>
                         </div>
                       )}
@@ -1857,7 +1873,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       {imageGenStyles.length > 0 && (
                         <div>
                           <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                            Style
+                            {t('settings.imageGen.style')}
                           </label>
                           <Select
                             value={imageGenSettings.style}
@@ -1875,7 +1891,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             }))}
                           />
                           <p className='text-xs text-gray-500 mt-1'>
-                            The artistic style of the generated image
+                            {t('settings.imageGen.styleDescription')}
                           </p>
                         </div>
                       )}
@@ -1886,7 +1902,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {imageGenPlugins.length > 0 && (
                     <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                       <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-                        Available Image Generation Providers
+                        {t('settings.imageGen.availableProviders')}
                       </h4>
                       <div className='grid grid-cols-1 sm:grid-cols-2 gap-2'>
                         {imageGenPlugins.map(plugin => (
@@ -1899,7 +1915,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               {plugin.name}
                             </span>
                             <span className='text-xs text-gray-500 dark:text-gray-400'>
-                              ({plugin.models?.length || 0} models)
+                              ({plugin.models?.length || 0}{' '}
+                              {t('settings.imageGen.models')})
                             </span>
                           </div>
                         ))}
@@ -1915,14 +1932,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className='flex items-center gap-2'
                     >
                       <RotateCcw size={16} />
-                      Reset
+                      {t('common.reset')}
                     </Button>
                     <Button
                       onClick={handleSaveImageGenSettings}
                       className='flex items-center gap-2'
                     >
                       <Check size={16} />
-                      Save Settings
+                      {t('settings.saveSettings')}
                     </Button>
                   </div>
                 </div>
@@ -1936,7 +1953,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='space-y-6'>
             <div>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                Documents & RAG Settings
+                {t('settings.documents.title')}
               </h3>
 
               {/* Embedding Settings */}
@@ -1944,11 +1961,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div className='flex items-center justify-between'>
                   <div>
                     <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                      Vector Embeddings
+                      {t('settings.documents.embeddings.title')}
                     </h4>
                     <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                      Enable semantic search using vector embeddings for better
-                      document relevance
+                      {t('settings.documents.embeddings.enable')}
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
@@ -1986,7 +2002,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* Embedding Model */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Embedding Model
+                        {t('settings.documents.embeddings.model')}
                       </label>
                       <Select
                         value={embeddingSettings.model}
@@ -2006,14 +2022,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         ]}
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Model used for generating embeddings
+                        {t('settings.documents.embeddings.modelDescription')}
                       </p>
                     </div>
 
                     {/* Chunk Size */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Chunk Size: {embeddingSettings.chunkSize}
+                        {t('settings.documents.embeddings.chunkSize')}:{' '}
+                        {embeddingSettings.chunkSize}
                       </label>
                       <input
                         type='range'
@@ -2030,14 +2047,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full range-slider'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Size of text chunks for processing
+                        {t(
+                          'settings.documents.embeddings.chunkSizeDescription'
+                        )}
                       </p>
                     </div>
 
                     {/* Chunk Overlap */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Chunk Overlap: {embeddingSettings.chunkOverlap}
+                        {t('settings.documents.embeddings.chunkOverlap')}:{' '}
+                        {embeddingSettings.chunkOverlap}
                       </label>
                       <input
                         type='range'
@@ -2054,15 +2074,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full range-slider'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Character overlap between chunks
+                        {t(
+                          'settings.documents.embeddings.chunkOverlapDescription'
+                        )}
                       </p>
                     </div>
 
                     {/* Similarity Threshold */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Similarity Threshold:{' '}
-                        {embeddingSettings.similarityThreshold.toFixed(2)}
+                        {t('settings.documents.embeddings.similarityThreshold')}
+                        : {embeddingSettings.similarityThreshold.toFixed(2)}
                       </label>
                       <input
                         type='range'
@@ -2079,7 +2101,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full range-slider'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Minimum similarity score for search results
+                        {t(
+                          'settings.documents.embeddings.similarityDescription'
+                        )}
                       </p>
                     </div>
                   </div>
@@ -2090,25 +2114,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {embeddingStatus && (
                 <div className='bg-gray-50 dark:bg-dark-100 p-4 rounded-lg border border-gray-200 dark:border-dark-300'>
                   <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-2'>
-                    Embedding Status
+                    {t('settings.documents.embeddings.status')}
                   </h4>
                   <div className='text-sm text-gray-700 dark:text-gray-300 space-y-1'>
                     <div>
-                      Status:{' '}
+                      {t('settings.documents.embeddings.statusLabel')}:{' '}
                       <span
                         className={`font-medium ${embeddingStatus.available ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
                       >
-                        {embeddingStatus.available ? 'Enabled' : 'Disabled'}
+                        {embeddingStatus.available
+                          ? t('settings.documents.embeddings.available')
+                          : t('settings.documents.embeddings.unavailable')}
                       </span>
                     </div>
                     <div>
-                      Model:{' '}
+                      {t('settings.documents.embeddings.model')}:{' '}
                       <span className='font-medium'>
                         {embeddingStatus.model}
                       </span>
                     </div>
                     <div>
-                      Chunks with embeddings:{' '}
+                      {t('settings.documents.embeddings.chunksWithEmbeddings')}:{' '}
                       <span className='font-medium'>
                         {embeddingStatus.chunksWithEmbeddings} /{' '}
                         {embeddingStatus.totalChunks}
@@ -2116,7 +2142,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     </div>
                     {embeddingStatus.totalChunks > 0 && (
                       <div>
-                        Coverage:{' '}
+                        {t('settings.documents.embeddings.coverage')}:{' '}
                         <span className='font-medium'>
                           {Math.round(
                             (embeddingStatus.chunksWithEmbeddings /
@@ -2140,7 +2166,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     className='flex items-center gap-2'
                   >
                     <RotateCcw size={16} />
-                    Reset to Defaults
+                    {t('settings.generation.resetDefaults')}
                   </Button>
                   {embeddingSettings.enabled &&
                     embeddingStatus &&
@@ -2153,8 +2179,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       >
                         <Database size={16} />
                         {regeneratingEmbeddings
-                          ? 'Regenerating...'
-                          : 'Regenerate Embeddings'}
+                          ? t('settings.documents.embeddings.regenerating')
+                          : t('settings.documents.embeddings.regenerate')}
                       </Button>
                     )}
                 </div>
@@ -2163,7 +2189,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   className='flex items-center gap-2'
                 >
                   <Check size={16} />
-                  Save Settings
+                  {t('settings.saveSettings')}
                 </Button>
               </div>
             </div>
@@ -2175,7 +2201,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='space-y-6'>
             <div>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                Plugin Management
+                {t('settings.plugins.title')}
               </h3>
 
               {/* Error Message */}
@@ -2201,7 +2227,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300 mb-6'>
                 <div className='flex items-center justify-between mb-4'>
                   <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    Add New Plugin
+                    {t('settings.plugins.addNew')}
                   </h4>
                   <div className='flex items-center space-x-2'>
                     <Button
@@ -2211,7 +2237,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       disabled={pluginLoading || isUploading}
                     >
                       <Upload className='h-4 w-4 mr-2' />
-                      Upload File
+                      {t('settings.plugins.upload')}
                     </Button>
                     <Button
                       variant='outline'
@@ -2219,7 +2245,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onClick={() => setShowJsonForm(!showJsonForm)}
                       disabled={pluginLoading}
                     >
-                      Add JSON
+                      {t('settings.plugins.addJson')}
                     </Button>
                   </div>
                 </div>
@@ -2242,12 +2268,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         onClick={() => setShowUploadForm(false)}
                         disabled={isUploading}
                       >
-                        Cancel
+                        {t('common.cancel')}
                       </Button>
                     </div>
                     {isUploading && (
                       <p className='text-sm text-gray-600 dark:text-gray-400 mt-2'>
-                        Uploading plugin...
+                        {t('settings.plugins.uploading')}
                       </p>
                     )}
                   </div>
@@ -2260,7 +2286,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <textarea
                         value={jsonInput}
                         onChange={e => setJsonInput(e.target.value)}
-                        placeholder='Paste plugin JSON here...'
+                        placeholder={t('settings.plugins.jsonPlaceholder')}
                         className='w-full h-32 p-3 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 font-mono text-sm'
                         disabled={pluginLoading}
                       />
@@ -2273,14 +2299,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             setJsonInput('');
                           }}
                         >
-                          Cancel
+                          {t('common.cancel')}
                         </Button>
                         <Button
                           size='sm'
                           onClick={handleJsonSubmit}
                           disabled={!jsonInput.trim() || pluginLoading}
                         >
-                          Install Plugin
+                          {t('settings.plugins.install')}
                         </Button>
                       </div>
                     </div>
@@ -2292,7 +2318,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {plugins.filter(p => p.active).length > 0 && (
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300 mb-6'>
                   <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-                    Active Plugins ({plugins.filter(p => p.active).length})
+                    {t('settings.plugins.active')} (
+                    {plugins.filter(p => p.active).length})
                   </h4>
                   <div className='space-y-2'>
                     {plugins
@@ -2308,7 +2335,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             </p>
                             <p className='text-xs text-green-600 dark:text-green-300'>
                               {plugin.type} • {plugin.model_map?.length || 0}{' '}
-                              models
+                              {t('settings.plugins.models')}
                             </p>
                           </div>
                           <Button
@@ -2320,7 +2347,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             }}
                             className='text-green-600 border-green-300 hover:bg-green-100'
                           >
-                            Deactivate
+                            {t('settings.plugins.deactivate')}
                           </Button>
                         </div>
                       ))}
@@ -2332,25 +2359,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className='bg-white dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-300'>
                 <div className='p-4 border-b border-gray-200 dark:border-dark-300'>
                   <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    Installed Plugins ({plugins.length})
+                    {t('settings.plugins.installed')} ({plugins.length})
                   </h4>
                 </div>
 
                 {pluginLoading ? (
                   <div className='p-8 text-center'>
                     <p className='text-gray-500 dark:text-gray-400'>
-                      Loading plugins...
+                      {t('settings.plugins.loading')}
                     </p>
                   </div>
                 ) : plugins.length === 0 ? (
                   <div className='p-8 text-center'>
                     <Puzzle className='h-12 w-12 text-gray-400 mx-auto mb-4' />
                     <p className='text-gray-500 dark:text-gray-400 mb-2'>
-                      No plugins installed
+                      {t('settings.plugins.noPlugins')}
                     </p>
                     <p className='text-xs text-gray-400 dark:text-gray-500'>
-                      Upload a plugin file or add JSON configuration to get
-                      started
+                      {t('settings.plugins.noPluginsDescription')}
                     </p>
                   </div>
                 ) : (
@@ -2371,7 +2397,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                   <span>{plugin.type}</span>
                                   <span>•</span>
                                   <span>
-                                    {plugin.model_map?.length || 0} models
+                                    {plugin.model_map?.length || 0}{' '}
+                                    {t('settings.plugins.models')}
                                   </span>
                                   {plugin.endpoint && (
                                     <>
@@ -2385,7 +2412,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     <>
                                       <span>•</span>
                                       <span className='text-green-600'>
-                                        API key set
+                                        {t('settings.plugins.apiKeySet')}
                                       </span>
                                     </>
                                   )}
@@ -2434,10 +2461,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               {plugin.active ? (
                                 <>
                                   <Check className='h-4 w-4 mr-1' />
-                                  Active
+                                  {t('settings.plugins.activeLabel')}
                                 </>
                               ) : (
-                                'Activate'
+                                t('settings.plugins.activate')
                               )}
                             </Button>
 
@@ -2470,19 +2497,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             <div className='flex items-center gap-2 mb-3'>
                               <Key className='h-4 w-4 text-gray-500' />
                               <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                                API Key Configuration
+                                {t('settings.plugins.apiKeyConfiguration')}
                               </h6>
                             </div>
                             <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
-                              Enter your API key for {plugin.name}. This will be
-                              stored securely and used for API requests.
+                              {t('settings.plugins.apiKeyDescription', {
+                                name: plugin.name,
+                              })}
                               {plugin.auth?.key_env && (
                                 <span className='block mt-1'>
-                                  Alternatively, set the{' '}
+                                  {t('settings.plugins.apiKeyEnvAlternative')}{' '}
                                   <code className='bg-gray-200 dark:bg-dark-200 px-1 rounded'>
                                     {plugin.auth.key_env}
                                   </code>{' '}
-                                  environment variable.
+                                  {t('settings.plugins.environmentVariable')}.
                                 </span>
                               )}
                             </p>
@@ -2492,7 +2520,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 <div className='flex items-center gap-2'>
                                   <Check className='h-4 w-4 text-green-600' />
                                   <span className='text-sm text-green-700 dark:text-green-300'>
-                                    API key is configured
+                                    {t('settings.plugins.apiKeyConfigured')}
                                   </span>
                                 </div>
                                 <Button
@@ -2505,7 +2533,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                   {savingApiKey === plugin.id ? (
                                     <Loader2 className='h-4 w-4 animate-spin' />
                                   ) : (
-                                    'Remove'
+                                    t('common.remove')
                                   )}
                                 </Button>
                               </div>
@@ -2525,7 +2553,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                         [plugin.id]: e.target.value,
                                       }))
                                     }
-                                    placeholder='Enter your API key...'
+                                    placeholder={t(
+                                      'settings.plugins.apiKeyPlaceholder'
+                                    )}
                                     className='w-full p-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500'
                                   />
                                   <button
@@ -2557,10 +2587,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                     {savingApiKey === plugin.id ? (
                                       <>
                                         <Loader2 className='h-4 w-4 mr-2 animate-spin' />
-                                        Saving...
+                                        {t('common.saving')}
                                       </>
                                     ) : (
-                                      'Save API Key'
+                                      t('settings.plugins.saveApiKey')
                                     )}
                                   </Button>
                                 </div>
@@ -2582,16 +2612,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='space-y-6'>
             <div>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                Data Management
+                {t('settings.data.title')}
               </h3>
               <div className='space-y-4'>
                 <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                   <div className='flex flex-col'>
                     <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      Export Data
+                      {t('settings.data.export')}
                     </h4>
                     <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
-                      Download your settings and chat history as a JSON file.
+                      {t('settings.data.exportDescription')}
                     </p>
                     <Button
                       onClick={handleExportData}
@@ -2599,16 +2629,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       size='sm'
                       className='w-full'
                     >
-                      Export All Data
+                      {t('settings.data.exportAll')}
                     </Button>
                   </div>
 
                   <div className='flex flex-col'>
                     <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      Import Data
+                      {t('settings.data.import')}
                     </h4>
                     <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
-                      Restore your settings and chat history from a JSON file.
+                      {t('settings.data.importDescription')}
                     </p>
                     <input
                       ref={importFileInputRef}
@@ -2624,17 +2654,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className='w-full'
                       disabled={importing}
                     >
-                      {importing ? 'Importing...' : 'Import Data'}
+                      {importing
+                        ? t('settings.data.importing')
+                        : t('settings.data.importData')}
                     </Button>
                   </div>
 
                   <div className='flex flex-col'>
                     <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      Clear Sessions
+                      {t('settings.data.clearSessions')}
                     </h4>
                     <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
-                      Delete all chat sessions permanently. This cannot be
-                      undone.
+                      {t('settings.data.clearSessionsDescription')}
                     </p>
                     <Button
                       onClick={handleClearAllHistory}
@@ -2644,8 +2675,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       disabled={sessions.length === 0 || loading}
                     >
                       {loading
-                        ? 'Clearing...'
-                        : `Clear All (${sessions.length})`}
+                        ? t('settings.data.clearing')
+                        : t('settings.data.clearAll', {
+                            count: sessions.length,
+                          })}
                     </Button>
                   </div>
                 </div>
@@ -2654,10 +2687,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {showImportOptions && (
                   <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
                     <h5 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-3'>
-                      Import Options
+                      {t('settings.data.importOptions')}
                     </h5>
                     <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
-                      How should we handle existing data with the same IDs?
+                      {t('settings.data.importOptionsDescription')}
                     </p>
                     <div className='space-y-2 mb-4'>
                       <label className='flex items-center'>
@@ -2674,7 +2707,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           className='mr-2'
                         />
                         <span className='text-sm text-gray-700 dark:text-gray-300'>
-                          Skip duplicates (keep existing data)
+                          {t('settings.data.skipDuplicates')}
                         </span>
                       </label>
                       <label className='flex items-center'>
@@ -2691,7 +2724,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           className='mr-2'
                         />
                         <span className='text-sm text-gray-700 dark:text-gray-300'>
-                          Overwrite existing data
+                          {t('settings.data.overwrite')}
                         </span>
                       </label>
                     </div>
@@ -2701,14 +2734,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         size='sm'
                         disabled={importing}
                       >
-                        {importing ? 'Importing...' : 'Import'}
+                        {importing
+                          ? t('settings.data.importing')
+                          : t('settings.data.import')}
                       </Button>
                       <Button
                         onClick={handleCancelImport}
                         variant='outline'
                         size='sm'
                       >
-                        Cancel
+                        {t('common.cancel')}
                       </Button>
                     </div>
                   </div>
@@ -2718,27 +2753,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {importResult && (
                   <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
                     <h5 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-2'>
-                      Import Results
+                      {t('settings.data.importResults')}
                     </h5>
                     <div className='text-xs text-gray-700 dark:text-gray-300 space-y-1'>
                       <div>
-                        Preferences:{' '}
+                        {t('settings.data.preferences')}:{' '}
                         {importResult.preferences.imported
-                          ? '✅ Imported'
-                          : '❌ Failed'}
+                          ? t('settings.data.imported')
+                          : t('settings.data.failed')}
                       </div>
                       <div>
-                        Sessions: ✅ {importResult.sessions.imported} imported,
-                        ⏭️ {importResult.sessions.skipped} skipped
+                        {t('settings.data.sessions')}:{' '}
+                        {importResult.sessions.imported}{' '}
+                        {t('settings.data.importedLabel')},
+                        {importResult.sessions.skipped}{' '}
+                        {t('settings.data.skipped')}
                       </div>
                       <div>
-                        Documents: ✅ {importResult.documents.imported}{' '}
-                        imported, ⏭️ {importResult.documents.skipped} skipped
+                        {t('settings.data.documents')}:{' '}
+                        {importResult.documents.imported}{' '}
+                        {t('settings.data.importedLabel')},{' '}
+                        {importResult.documents.skipped}{' '}
+                        {t('settings.data.skipped')}
                       </div>
                       {(importResult.sessions.errors.length > 0 ||
                         importResult.documents.errors.length > 0) && (
                         <div className='mt-2'>
-                          <p className='font-medium'>Errors:</p>
+                          <p className='font-medium'>
+                            {t('settings.data.errors')}:
+                          </p>
                           {importResult.sessions.errors.map(
                             (error: string, idx: number) => (
                               <p
@@ -2768,7 +2811,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       size='sm'
                       className='mt-2'
                     >
-                      Close
+                      {t('common.close')}
                     </Button>
                   </div>
                 )}
@@ -2788,7 +2831,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 Libre WebUI
               </h3>
               <div className='text-sm text-gray-700 dark:text-gray-300 mb-6'>
-                <span>About</span>
+                <span>{t('settings.about.title')}</span>
               </div>
               <div className='bg-gray-50 dark:bg-dark-100 rounded-lg p-6 border border-gray-200 dark:border-dark-300'>
                 <div className='space-y-4 text-sm text-gray-700 dark:text-gray-300'>
@@ -2796,12 +2839,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className='w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0'></div>
                     <div>
                       <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
-                        Privacy First
+                        {t('settings.about.features.privacy.title')}
                       </p>
-                      <p>
-                        All your data stays on your machine. No telemetry, no
-                        tracking, no cloud dependencies.
-                      </p>
+                      <p>{t('settings.about.features.privacy.description')}</p>
                     </div>
                   </div>
 
@@ -2809,11 +2849,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className='w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0'></div>
                     <div>
                       <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
-                        Open Source
+                        {t('settings.about.features.openSource.title')}
                       </p>
                       <p>
-                        100% free and open source software licensed under Apache
-                        2.0. Community-driven development.
+                        {t('settings.about.features.openSource.description')}
                       </p>
                     </div>
                   </div>
@@ -2822,11 +2861,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className='w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0'></div>
                     <div>
                       <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
-                        Local Inference
+                        {t('settings.about.features.localInference.title')}
                       </p>
                       <p>
-                        Powered by Ollama for completely offline AI inference.
-                        No internet required once models are downloaded.
+                        {t(
+                          'settings.about.features.localInference.description'
+                        )}
                       </p>
                     </div>
                   </div>
@@ -2836,7 +2876,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Links Section */}
               <div className='mt-6 space-y-4'>
                 <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-                  Links & Resources
+                  {t('settings.about.links.title')}
                 </h4>
                 <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                   <a
@@ -2848,10 +2888,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <Github className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
                     <div>
                       <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        GitHub Repository
+                        {t('settings.about.links.github')}
                       </p>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        Source code & contributions
+                        {t('settings.about.links.githubDescription')}
                       </p>
                     </div>
                     <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
@@ -2866,10 +2906,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <ExternalLink className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
                     <div>
                       <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        Official Website
+                        {t('settings.about.links.website')}
                       </p>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        Documentation & guides
+                        {t('settings.about.links.websiteDescription')}
                       </p>
                     </div>
                     <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
@@ -2884,10 +2924,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <Bot className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
                     <div>
                       <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        Ollama
+                        {t('settings.about.links.ollama')}
                       </p>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        Local AI inference engine
+                        {t('settings.about.links.ollamaDescription')}
                       </p>
                     </div>
                     <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
@@ -2902,10 +2942,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <MessageSquare className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
                     <div>
                       <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        Report Issues
+                        {t('settings.about.links.reportIssue')}
                       </p>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        Bug reports & feature requests
+                        {t('settings.about.links.reportIssueDescription')}
                       </p>
                     </div>
                     <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
@@ -2922,10 +2962,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     rel='noopener noreferrer'
                     className='hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
                   >
-                    Version {appVersion}
+                    {t('settings.about.version', { version: appVersion })}
                   </a>
                   <span>
-                    Open source by{' '}
+                    {t('settings.about.openSourceBy', { company: '' })}
                     <a
                       href='https://kroonen.ai'
                       target='_blank'
@@ -2946,24 +2986,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='space-y-6'>
             <div>
               <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                Generation Options
+                {t('settings.generation.title')}
               </h3>
               <p className='text-sm text-gray-600 dark:text-gray-400 mb-6'>
-                Fine-tune AI generation parameters to control response behavior
-                and quality.
+                {t('settings.generation.description')}
               </p>
 
               <div className='space-y-6'>
                 {/* Core Parameters */}
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                   <h4 className='text-md font-medium text-gray-900 dark:text-gray-100 mb-4'>
-                    Core Parameters
+                    {t('settings.generation.coreParameters')}
                   </h4>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                     {/* Temperature */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Temperature
+                        {t('settings.generation.temperature')}
                         <span className='text-xs text-gray-500 ml-1'>
                           (0.0-2.0)
                         </span>
@@ -2986,15 +3025,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Controls randomness. Lower = more focused, Higher = more
-                        creative
+                        {t('settings.generation.temperatureDescription')}
                       </p>
                     </div>
 
                     {/* Top P */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Top P
+                        {t('settings.generation.topP')}
                         <span className='text-xs text-gray-500 ml-1'>
                           (0.0-1.0)
                         </span>
@@ -3017,14 +3055,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Nucleus sampling. Lower = more constrained vocabulary
+                        {t('settings.generation.topPDescription')}
                       </p>
                     </div>
 
                     {/* Top K */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Top K
+                        {t('settings.generation.topK')}
                         <span className='text-xs text-gray-500 ml-1'>
                           (1-100)
                         </span>
@@ -3046,14 +3084,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Limits vocabulary to top K tokens
+                        {t('settings.generation.topKDescription')}
                       </p>
                     </div>
 
                     {/* Min P */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Min P
+                        {t('settings.generation.minP')}
                         <span className='text-xs text-gray-500 ml-1'>
                           (0.0-1.0)
                         </span>
@@ -3076,7 +3114,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Minimum probability threshold
+                        {t('settings.generation.minPDescription')}
                       </p>
                     </div>
                   </div>
@@ -3085,13 +3123,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {/* Generation Control */}
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                   <h4 className='text-md font-medium text-gray-900 dark:text-gray-100 mb-4'>
-                    Generation Control
+                    {t('settings.generation.generationControl')}
                   </h4>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                     {/* Max Tokens */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Max Tokens
+                        {t('settings.generation.maxTokens')}
                       </label>
                       <input
                         type='number'
@@ -3110,15 +3148,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Maximum number of tokens to generate. Leave empty to use
-                        default. Use -1 for unlimited.
+                        {t('settings.generation.maxTokensDescription')}
                       </p>
                     </div>
 
                     {/* Repeat Penalty */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Repeat Penalty
+                        {t('settings.generation.repeatPenalty')}
                         <span className='text-xs text-gray-500 ml-1'>
                           (0.0-2.0)
                         </span>
@@ -3141,14 +3178,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Penalty for repeating tokens
+                        {t('settings.generation.repeatPenaltyDescription')}
                       </p>
                     </div>
 
                     {/* Context Length */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Context Length
+                        {t('settings.generation.contextLength')}
                       </label>
                       <input
                         type='number'
@@ -3168,16 +3205,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Context window size
+                        {t('settings.generation.contextLengthDescription')}
                       </p>
                     </div>
 
                     {/* Seed */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Seed
+                        {t('settings.generation.seed')}
                         <span className='text-xs text-gray-500 ml-1'>
-                          (optional)
+                          ({t('settings.generation.optional')})
                         </span>
                       </label>
                       <input
@@ -3192,10 +3229,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           )
                         }
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
-                        placeholder='Random'
+                        placeholder={t('settings.generation.random')}
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Seed for reproducible outputs
+                        {t('settings.generation.seedDescription')}
                       </p>
                     </div>
                   </div>
@@ -3204,13 +3241,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {/* Advanced Options */}
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                   <h4 className='text-md font-medium text-gray-900 dark:text-gray-100 mb-4'>
-                    Advanced Options
+                    {t('settings.generation.advancedOptions')}
                   </h4>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                     {/* Presence Penalty */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Presence Penalty
+                        {t('settings.generation.presencePenalty')}
                         <span className='text-xs text-gray-500 ml-1'>
                           (-2.0-2.0)
                         </span>
@@ -3233,14 +3270,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Penalty for token presence
+                        {t('settings.generation.presencePenaltyDescription')}
                       </p>
                     </div>
 
                     {/* Frequency Penalty */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Frequency Penalty
+                        {t('settings.generation.frequencyPenalty')}
                         <span className='text-xs text-gray-500 ml-1'>
                           (-2.0-2.0)
                         </span>
@@ -3263,7 +3300,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
                       />
                       <p className='text-xs text-gray-500 mt-1'>
-                        Penalty for token frequency
+                        {t('settings.generation.frequencyPenaltyDescription')}
                       </p>
                     </div>
                   </div>
@@ -3271,9 +3308,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   {/* Stop Sequences */}
                   <div className='mt-4'>
                     <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      Stop Sequences
+                      {t('settings.generation.stopSequences')}
                       <span className='text-xs text-gray-500 ml-1'>
-                        (comma-separated)
+                        ({t('settings.generation.commaSeparated')})
                       </span>
                     </label>
                     <input
@@ -3298,7 +3335,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       placeholder='\\n, ###, STOP'
                     />
                     <p className='text-xs text-gray-500 mt-1'>
-                      Sequences that will stop generation
+                      {t('settings.generation.stopSequencesDescription')}
                     </p>
                   </div>
                 </div>
@@ -3311,14 +3348,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     className='flex items-center gap-2'
                   >
                     <RotateCcw size={16} />
-                    Reset to Defaults
+                    {t('settings.generation.resetDefaults')}
                   </Button>
                   <Button
                     onClick={handleSaveGenerationOptions}
                     className='flex items-center gap-2'
                   >
                     <Check size={16} />
-                    Save Options
+                    {t('settings.generation.saveOptions')}
                   </Button>
                 </div>
               </div>
@@ -3327,13 +3364,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <div className='mt-6'>
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-                    Embedding Settings
+                    {t('settings.generation.embeddingSettings')}
                   </label>
                   <div className='space-y-4'>
                     {/* Enable/Disable Embeddings */}
                     <div className='flex items-center justify-between'>
                       <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                        Enable Embeddings
+                        {t('settings.generation.enableEmbeddings')}
                       </span>
                       <label className='flex items-center cursor-pointer'>
                         <input
@@ -3368,7 +3405,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* Model Selection */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Embedding Model
+                        {t('settings.documents.embeddings.model')}
                       </label>
                       <Select
                         value={embeddingSettings.model}
@@ -3392,9 +3429,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* Chunk Size */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Chunk Size
+                        {t('settings.documents.embeddings.chunkSize')}
                         <span className='text-xs text-gray-500 ml-1'>
-                          (in tokens)
+                          {t('settings.documents.embeddings.chunkSizeInTokens')}
                         </span>
                       </label>
                       <input
@@ -3415,9 +3452,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* Chunk Overlap */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Chunk Overlap
+                        {t('settings.documents.embeddings.chunkOverlap')}
                         <span className='text-xs text-gray-500 ml-1'>
-                          (in tokens)
+                          {t(
+                            'settings.documents.embeddings.chunkOverlapInTokens'
+                          )}
                         </span>
                       </label>
                       <input
@@ -3438,7 +3477,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     {/* Similarity Threshold */}
                     <div>
                       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                        Similarity Threshold
+                        {t('settings.documents.embeddings.similarityThreshold')}
                       </label>
                       <input
                         type='number'
@@ -3463,18 +3502,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     <div className='mt-4'>
                       <div className='flex items-center justify-between text-sm'>
                         <span className='text-gray-700 dark:text-gray-300'>
-                          Embedding Status:
+                          {t('settings.documents.embeddings.status')}:
                         </span>
                         <span className='font-medium text-gray-900 dark:text-gray-100'>
                           {embeddingStatus.available
-                            ? 'Available'
-                            : 'Not Available'}
+                            ? t('settings.documents.embeddings.available')
+                            : t('settings.documents.embeddings.unavailable')}
                         </span>
                       </div>
                       {embeddingStatus.available && (
                         <div className='flex items-center justify-between text-sm mt-1'>
                           <span className='text-gray-700 dark:text-gray-300'>
-                            Chunks with Embeddings:
+                            {t(
+                              'settings.documents.embeddings.chunksWithEmbeddings'
+                            )}
+                            :
                           </span>
                           <span className='font-medium text-gray-900 dark:text-gray-100'>
                             {embeddingStatus.chunksWithEmbeddings} /{' '}
@@ -3492,14 +3534,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       className='flex items-center gap-2'
                     >
                       <RotateCcw size={16} />
-                      Reset to Defaults
+                      {t('settings.generation.resetDefaults')}
                     </Button>
                     <Button
                       onClick={handleSaveEmbeddingSettings}
                       className='flex items-center gap-2'
                     >
                       <Check size={16} />
-                      Save Settings
+                      {t('settings.saveSettings')}
                     </Button>
                   </div>
                 </div>
@@ -3527,7 +3569,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* Header */}
           <div className='flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-dark-200 sticky top-0 z-10 rounded-t-2xl'>
             <h2 className='text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100'>
-              Settings
+              {t('settings.title')}
             </h2>
             <Button
               variant='ghost'

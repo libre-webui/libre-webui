@@ -17,6 +17,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
 import {
@@ -41,6 +42,7 @@ interface FirstTimeSetupProps {
 export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
   onComplete,
 }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState<
     'welcome' | 'create-admin' | 'encryption-key'
   >('welcome');
@@ -70,17 +72,17 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
     e.preventDefault();
 
     if (!username.trim() || !password.trim() || !confirmPassword.trim()) {
-      toast.error('Please fill in all fields');
+      toast.error(t('setup.admin.fillAllFields'));
       return;
     }
 
     if (password !== confirmPassword) {
-      toast.error('Passwords do not match');
+      toast.error(t('auth.signup.passwordMismatch'));
       return;
     }
 
     if (password.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+      toast.error(t('auth.signup.passwordTooShort'));
       return;
     }
 
@@ -99,15 +101,15 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
           response.data.token,
           response.data.systemInfo
         );
-        toast.success('Admin account created successfully!');
+        toast.success(t('setup.admin.success'));
         // Show encryption key step before completing
         setStep('encryption-key');
       } else {
-        toast.error(response.message || 'Failed to create admin account');
+        toast.error(response.message || t('setup.admin.failed'));
       }
     } catch (error) {
       console.error('Admin creation error:', error);
-      toast.error('Failed to create admin account. Please try again.');
+      toast.error(t('setup.admin.failed'));
     } finally {
       setIsLoading(false);
     }
@@ -118,17 +120,17 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
       try {
         await navigator.clipboard.writeText(encryptionKey);
         setKeyCopied(true);
-        toast.success('Encryption key copied to clipboard!');
+        toast.success(t('setup.encryptionKey.copied'));
         setTimeout(() => setKeyCopied(false), 3000);
       } catch {
-        toast.error('Failed to copy key to clipboard');
+        toast.error(t('setup.encryptionKey.copyFailed'));
       }
     }
   };
 
   const handleComplete = () => {
     if (!keyAcknowledged) {
-      toast.error('Please confirm that you have saved the encryption key');
+      toast.error(t('setup.encryptionKey.confirmRequired'));
       return;
     }
     onComplete?.();
@@ -155,7 +157,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
             style={{ fontWeight: 300, letterSpacing: '0.01em' }}
           >
-            Welcome to Libre WebUI
+            {t('setup.welcome.title')}
           </h2>
         </div>
 
@@ -163,10 +165,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
           <div className='w-full max-w-md mx-auto bg-white dark:bg-dark-25 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 p-6 border border-gray-200 dark:border-dark-200'>
             <div className='text-center mb-6'>
               <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
-                Let&apos;s Get Started
+                {t('setup.welcome.subtitle')}
               </h1>
               <p className='text-gray-600 dark:text-dark-500'>
-                Set up your Libre WebUI instance in just a few steps
+                {t('setup.welcome.description')}
               </p>
             </div>
 
@@ -178,10 +180,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 </div>
                 <div>
                   <h3 className='text-sm font-medium text-gray-900 dark:text-dark-950'>
-                    Secure & Private
+                    {t('setup.welcome.features.secure.title')}
                   </h3>
                   <p className='text-sm text-gray-600 dark:text-dark-500'>
-                    Your conversations stay on your device
+                    {t('setup.welcome.features.secure.description')}
                   </p>
                 </div>
               </div>
@@ -192,10 +194,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 </div>
                 <div>
                   <h3 className='text-sm font-medium text-gray-900 dark:text-dark-950'>
-                    Fast & Responsive
+                    {t('setup.welcome.features.fast.title')}
                   </h3>
                   <p className='text-sm text-gray-600 dark:text-dark-500'>
-                    Optimized for speed and performance
+                    {t('setup.welcome.features.fast.description')}
                   </p>
                 </div>
               </div>
@@ -206,10 +208,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 </div>
                 <div>
                   <h3 className='text-sm font-medium text-gray-900 dark:text-dark-950'>
-                    Open Source
+                    {t('setup.welcome.features.openSource.title')}
                   </h3>
                   <p className='text-sm text-gray-600 dark:text-dark-500'>
-                    Free and open source software
+                    {t('setup.welcome.features.openSource.description')}
                   </p>
                 </div>
               </div>
@@ -220,7 +222,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               className='w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200'
             >
               <div className='flex items-center'>
-                <span>Create Admin Account</span>
+                <span>{t('setup.welcome.createAdmin')}</span>
                 <ArrowRight size={16} className='ml-2' />
               </div>
             </button>
@@ -241,7 +243,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
             style={{ fontWeight: 300, letterSpacing: '0.01em' }}
           >
-            Save Your Encryption Key
+            {t('setup.encryptionKey.title')}
           </h2>
         </div>
 
@@ -254,12 +256,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 </div>
               </div>
               <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
-                Important: Save This Key
+                {t('setup.encryptionKey.subtitle')}
               </h1>
               <p className='text-gray-600 dark:text-dark-500'>
-                This encryption key protects your sensitive data. Store it
-                securely - you&apos;ll need it if you ever need to restore your
-                database.
+                {t('setup.encryptionKey.description')}
               </p>
             </div>
 
@@ -268,12 +268,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               <div className='flex items-start space-x-3'>
                 <AlertTriangle className='h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5' />
                 <div className='text-sm text-amber-800 dark:text-amber-200'>
-                  <p className='font-medium mb-1'>Warning</p>
-                  <p>
-                    If you lose this key and need to restore your database, your
-                    encrypted data (API keys, preferences) will be
-                    unrecoverable.
+                  <p className='font-medium mb-1'>
+                    {t('setup.encryptionKey.warning')}
                   </p>
+                  <p>{t('setup.encryptionKey.warningText')}</p>
                 </div>
               </div>
             </div>
@@ -281,18 +279,18 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             {/* Encryption Key Display */}
             <div className='mb-6'>
               <label className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'>
-                Your Encryption Key
+                {t('setup.encryptionKey.label')}
               </label>
               <div className='relative'>
                 <div className='w-full px-3 py-3 pr-12 border border-gray-300 dark:border-dark-300 rounded-lg bg-gray-50 dark:bg-dark-100 font-mono text-sm text-gray-900 dark:text-dark-800 break-all'>
-                  {encryptionKey || 'Loading...'}
+                  {encryptionKey || t('setup.encryptionKey.loading')}
                 </div>
                 <button
                   type='button'
                   onClick={handleCopyKey}
                   disabled={!encryptionKey}
                   className='absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-700 disabled:opacity-50'
-                  title='Copy to clipboard'
+                  title={t('setup.encryptionKey.copyToClipboard')}
                 >
                   {keyCopied ? (
                     <Check className='h-5 w-5 text-green-500' />
@@ -302,8 +300,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 </button>
               </div>
               <p className='mt-2 text-xs text-gray-500 dark:text-dark-500'>
-                This key is also saved in your backend/.env file as
-                ENCRYPTION_KEY
+                {t('setup.encryptionKey.envNote')}
               </p>
             </div>
 
@@ -317,8 +314,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   className='mt-1 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-dark-300 rounded'
                 />
                 <span className='text-sm text-gray-700 dark:text-dark-700'>
-                  I have saved my encryption key in a secure location and
-                  understand that losing it may result in data loss.
+                  {t('setup.encryptionKey.acknowledgment')}
                 </span>
               </label>
             </div>
@@ -329,7 +325,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               className='w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
             >
               <div className='flex items-center'>
-                <span>Continue to Libre WebUI</span>
+                <span>{t('setup.encryptionKey.continue')}</span>
                 <ArrowRight size={16} className='ml-2' />
               </div>
             </button>
@@ -349,7 +345,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
           className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
           style={{ fontWeight: 300, letterSpacing: '0.01em' }}
         >
-          Create Admin Account
+          {t('setup.admin.title')}
         </h2>
       </div>
 
@@ -357,10 +353,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
         <div className='w-full max-w-md mx-auto bg-white dark:bg-dark-25 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 p-6 border border-gray-200 dark:border-dark-200'>
           <div className='text-center mb-6'>
             <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
-              Administrator Setup
+              {t('setup.admin.subtitle')}
             </h1>
             <p className='text-gray-600 dark:text-dark-500'>
-              Create the first admin account for your Libre WebUI instance
+              {t('setup.admin.description')}
             </p>
           </div>
 
@@ -370,7 +366,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 htmlFor='username'
                 className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
               >
-                Username
+                {t('auth.login.username')}
               </label>
               <input
                 id='username'
@@ -379,7 +375,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 onChange={e => setUsername(e.target.value)}
                 onKeyDown={handleKeyDown}
                 className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
-                placeholder='Enter admin username'
+                placeholder={t('setup.admin.usernamePlaceholder')}
                 required
                 disabled={isLoading}
               />
@@ -390,7 +386,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 htmlFor='password'
                 className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
               >
-                Password
+                {t('auth.login.password')}
               </label>
               <div className='relative'>
                 <input
@@ -400,7 +396,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   onChange={e => setPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
                   className='w-full px-3 py-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
-                  placeholder='Enter password (min 6 characters)'
+                  placeholder={t('setup.admin.passwordPlaceholder')}
                   required
                   disabled={isLoading}
                 />
@@ -420,7 +416,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 htmlFor='confirmPassword'
                 className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
               >
-                Confirm Password
+                {t('auth.signup.confirmPassword')}
               </label>
               <div className='relative'>
                 <input
@@ -430,7 +426,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   onChange={e => setConfirmPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
                   className='w-full px-3 py-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
-                  placeholder='Confirm your password'
+                  placeholder={t('setup.admin.confirmPlaceholder')}
                   required
                   disabled={isLoading}
                 />
@@ -456,7 +452,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 disabled={isLoading}
                 className='flex-1 px-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-dark-700 bg-white dark:bg-dark-100 hover:bg-gray-50 dark:hover:bg-dark-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
               >
-                Back
+                {t('common.back')}
               </button>
               <button
                 type='submit'
@@ -466,12 +462,12 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 {isLoading ? (
                   <div className='flex items-center'>
                     <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
-                    Creating...
+                    {t('setup.admin.creating')}
                   </div>
                 ) : (
                   <div className='flex items-center'>
                     <UserPlus size={16} className='mr-2' />
-                    Create Admin
+                    {t('setup.admin.createAdmin')}
                   </div>
                 )}
               </button>
@@ -480,8 +476,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
 
           <div className='mt-6 text-center'>
             <p className='text-xs text-gray-500 dark:text-dark-500'>
-              This will be the primary administrator account for your Libre
-              WebUI instance
+              {t('setup.admin.note')}
             </p>
           </div>
         </div>

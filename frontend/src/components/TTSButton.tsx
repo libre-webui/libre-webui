@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Volume2, VolumeX, Loader2, Square } from 'lucide-react';
 import { ttsApi, TTSModel } from '@/utils/api';
 import { useAppStore } from '@/store/appStore';
@@ -75,6 +76,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
   className,
   size = 'sm',
 }) => {
+  const { t } = useTranslation();
   const { preferences } = useAppStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -132,7 +134,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
       });
 
       if (!response.success || !response.data?.audio) {
-        throw new Error(response.message || 'Failed to generate speech');
+        throw new Error(response.message || t('ttsButton.generateFailed'));
       }
 
       const audioUrl = `data:${response.data.mimeType};base64,${response.data.audio}`;
@@ -145,7 +147,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
       };
 
       audio.onerror = () => {
-        setError('Audio playback failed');
+        setError(t('ttsButton.playbackFailed'));
         setIsPlaying(false);
         audioRef.current = null;
       };
@@ -154,7 +156,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
       setIsPlaying(true);
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Failed to generate speech';
+        err instanceof Error ? err.message : t('ttsButton.generateFailed');
       setError(errorMessage);
       console.error('TTS error:', err);
     } finally {
@@ -202,10 +204,10 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
         error
           ? error
           : isPlaying
-            ? 'Stop speaking'
+            ? t('ttsButton.stopSpeaking')
             : isLoading
-              ? 'Generating speech...'
-              : 'Read aloud'
+              ? t('ttsButton.generatingSpeech')
+              : t('ttsButton.readAloud')
       }
       className={cn(
         'rounded-full transition-all duration-200',

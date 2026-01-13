@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Persona, MemoryStatus } from '@/types';
 import {
@@ -60,6 +61,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
   isSelected = false,
   compact = false,
 }) => {
+  const { t } = useTranslation();
   const [memoryStatus, setMemoryStatus] = useState<MemoryStatus | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,11 +88,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
   }, [loadMemoryStatus]);
 
   const handleWipeMemories = async () => {
-    if (
-      !confirm(
-        'Are you sure you want to wipe all memories for this persona? This action cannot be undone.'
-      )
-    ) {
+    if (!confirm(t('personaCard.wipeConfirm'))) {
       return;
     }
 
@@ -98,13 +96,17 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
     try {
       const response = await personaApi.wipeMemories(persona.id);
       if (response.success) {
-        toast.success(`Wiped ${response.data?.deleted_count || 0} memories`);
+        toast.success(
+          t('personaCard.wipeSuccess', {
+            count: response.data?.deleted_count || 0,
+          })
+        );
         await loadMemoryStatus();
       } else {
-        toast.error('Failed to wipe memories');
+        toast.error(t('personaCard.failed', { action: 'wipe memories' }));
       }
     } catch (error) {
-      toast.error('Failed to wipe memories');
+      toast.error(t('personaCard.failed', { action: 'wipe memories' }));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -124,9 +126,9 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success('Persona backup downloaded successfully');
+      toast.success(t('personaCard.backupSuccess'));
     } catch (error) {
-      toast.error('Failed to backup persona');
+      toast.error(t('personaCard.failed', { action: 'backup persona' }));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -146,9 +148,9 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      toast.success('Persona DNA exported successfully');
+      toast.success(t('personaCard.dnaSuccess'));
     } catch (error) {
-      toast.error('Failed to export persona DNA');
+      toast.error(t('personaCard.failed', { action: 'export persona DNA' }));
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -281,7 +283,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
           {hasAdvancedFeatures && (
             <div className='flex items-center gap-1 px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-[10px] font-medium'>
               <Sparkles className='h-3 w-3' />
-              Enhanced
+              {t('personaCard.enhanced')}
             </div>
           )}
         </div>
@@ -329,7 +331,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             <div className='flex items-center gap-1.5 mb-1'>
               <MessageSquare className='h-3 w-3 text-gray-400 dark:text-gray-500 ophelia:text-[#737373]' />
               <span className='text-[10px] uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 ophelia:text-[#737373]'>
-                System Prompt
+                {t('personaCard.systemPrompt')}
               </span>
             </div>
             <p className='text-xs text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] line-clamp-2 italic'>
@@ -360,7 +362,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                 <Database className='h-4 w-4 text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]' />
                 <div>
                   <span className='text-xs font-medium text-primary-700 dark:text-primary-300 ophelia:text-[#c084fc]'>
-                    {memoryStatus.memory_count} memories
+                    {memoryStatus.memory_count} {t('personaCard.memories')}
                   </span>
                   <span className='text-[10px] text-primary-600/70 dark:text-primary-400/70 ophelia:text-[#a855f7]/70 ml-2'>
                     {formatMemorySize(memoryStatus.size_mb)}
@@ -393,7 +395,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
               className='bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-500 ophelia:bg-[#9333ea] ophelia:hover:bg-[#a855f7] text-white px-4'
             >
               <Play className='h-3.5 w-3.5 mr-1.5' />
-              Use
+              {t('personaCard.use')}
             </Button>
           )}
 
@@ -402,14 +404,14 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             <button
               onClick={() => onEdit(persona)}
               className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ophelia:text-[#737373] ophelia:hover:text-[#e5e5e5] hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a] transition-colors'
-              title='Edit persona'
+              title={t('personaCard.editTooltip')}
             >
               <Edit className='h-4 w-4' />
             </button>
             <button
               onClick={() => onDownload(persona)}
               className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ophelia:text-[#737373] ophelia:hover:text-[#e5e5e5] hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a] transition-colors'
-              title='Download persona'
+              title={t('personaCard.downloadTooltip')}
             >
               <Download className='h-4 w-4' />
             </button>
@@ -438,7 +440,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                           className='w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5] hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#1a1a1a] disabled:opacity-50'
                         >
                           <Archive className='h-4 w-4' />
-                          Backup
+                          {t('personaCard.backup')}
                         </button>
                         <button
                           onClick={handleExportDNA}
@@ -446,7 +448,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                           className='w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5] hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#1a1a1a] disabled:opacity-50'
                         >
                           <FileDown className='h-4 w-4' />
-                          Export DNA
+                          {t('personaCard.exportDNA')}
                         </button>
                         {memoryStatus && memoryStatus.memory_count > 0 && (
                           <button
@@ -455,7 +457,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                             className='w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50'
                           >
                             <AlertTriangle className='h-4 w-4' />
-                            Wipe Memories
+                            {t('personaCard.wipeMemories')}
                           </button>
                         )}
                         <div className='my-1 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a]' />
@@ -469,7 +471,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                       className='w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
                     >
                       <Trash2 className='h-4 w-4' />
-                      Delete
+                      {t('common.delete')}
                     </button>
                   </div>
                 </>
