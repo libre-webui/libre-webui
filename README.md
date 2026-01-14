@@ -16,7 +16,7 @@
 <p align="center">
   <img src="https://img.shields.io/github/package-json/v/libre-webui/libre-webui" alt="Version">
   <img src="https://img.shields.io/github/license/libre-webui/libre-webui" alt="License">
-  <img src="https://img.shields.io/badge/languages-8-blue" alt="8 Languages">
+  <img src="https://img.shields.io/badge/languages-9-blue" alt="9 Languages">
   <a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=social" alt="Stars"></a>
 </p>
 

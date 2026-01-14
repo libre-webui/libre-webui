@@ -26,6 +26,7 @@ import fr from './locales/fr.json';
 import hi from './locales/hi.json';
 import ja from './locales/ja.json';
 import ko from './locales/ko.json';
+import vi from './locales/vi.json';
 import zh from './locales/zh.json';
 
 export const resources = {
@@ -36,6 +37,7 @@ export const resources = {
   hi: { translation: hi },
   ja: { translation: ja },
   ko: { translation: ko },
+  vi: { translation: vi },
   zh: { translation: zh },
 } as const;
 
@@ -47,6 +49,7 @@ export const supportedLanguages = [
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', dir: 'ltr' },
   { code: 'ja', name: 'Japanese', nativeName: '日本語', dir: 'ltr' },
   { code: 'ko', name: 'Korean', nativeName: '한국어', dir: 'ltr' },
+  { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', dir: 'ltr' },
   { code: 'zh', name: 'Chinese', nativeName: '中文', dir: 'ltr' },
 ] as const;
 
