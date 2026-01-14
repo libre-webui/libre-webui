@@ -29,6 +29,7 @@ import ja from './locales/ja.json';
 import ko from './locales/ko.json';
 import ru from './locales/ru.json';
 import th from './locales/th.json';
+import uk from './locales/uk.json';
 import vi from './locales/vi.json';
 import zh from './locales/zh.json';
 
@@ -43,6 +44,7 @@ export const resources = {
   ko: { translation: ko },
   ru: { translation: ru },
   th: { translation: th },
+  uk: { translation: uk },
   vi: { translation: vi },
   zh: { translation: zh },
 } as const;
@@ -63,6 +65,7 @@ export const supportedLanguages = [
   { code: 'ko', name: 'Korean', nativeName: '한국어', dir: 'ltr' },
   { code: 'ru', name: 'Russian', nativeName: 'Русский', dir: 'ltr' },
   { code: 'th', name: 'Thai', nativeName: 'ไทย', dir: 'ltr' },
+  { code: 'uk', name: 'Ukrainian', nativeName: 'Українська', dir: 'ltr' },
   { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', dir: 'ltr' },
   { code: 'zh', name: 'Chinese', nativeName: '中文', dir: 'ltr' },
 ] as const;
