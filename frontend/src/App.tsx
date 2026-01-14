@@ -26,6 +26,7 @@ import {
 
 // Initialize i18n
 import '@/i18n';
+import { isRTL } from '@/i18n';
 import { useTranslation } from 'react-i18next';
 
 // Use HashRouter for Electron (file:// protocol) since BrowserRouter doesn't work with file://
@@ -119,7 +120,14 @@ const ConditionalKeyboardShortcutsIndicator: React.FC<{
 };
 
 const App: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Handle RTL direction based on language
+  React.useEffect(() => {
+    const dir = isRTL(i18n.language) ? 'rtl' : 'ltr';
+    document.documentElement.dir = dir;
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);

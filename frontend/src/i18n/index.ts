@@ -19,6 +19,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
+import ar from './locales/ar.json';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
 import hi from './locales/hi.json';
@@ -27,6 +28,7 @@ import ko from './locales/ko.json';
 import zh from './locales/zh.json';
 
 export const resources = {
+  ar: { translation: ar },
   en: { translation: en },
   fr: { translation: fr },
   hi: { translation: hi },
@@ -36,13 +38,22 @@ export const resources = {
 } as const;
 
 export const supportedLanguages = [
-  { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'fr', name: 'French', nativeName: 'Français' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
-  { code: 'ja', name: 'Japanese', nativeName: '日本語' },
-  { code: 'ko', name: 'Korean', nativeName: '한국어' },
-  { code: 'zh', name: 'Chinese', nativeName: '中文' },
+  { code: 'ar', name: 'Arabic', nativeName: 'العربية', dir: 'rtl' },
+  { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
+  { code: 'fr', name: 'French', nativeName: 'Français', dir: 'ltr' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', dir: 'ltr' },
+  { code: 'ja', name: 'Japanese', nativeName: '日本語', dir: 'ltr' },
+  { code: 'ko', name: 'Korean', nativeName: '한국어', dir: 'ltr' },
+  { code: 'zh', name: 'Chinese', nativeName: '中文', dir: 'ltr' },
 ] as const;
+
+// RTL languages list
+export const rtlLanguages = ['ar', 'he', 'fa', 'ur'] as const;
+
+// Helper function to check if a language is RTL
+export const isRTL = (langCode: string): boolean => {
+  return rtlLanguages.includes(langCode as (typeof rtlLanguages)[number]);
+};
 
 i18n
   .use(LanguageDetector)
