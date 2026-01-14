@@ -27,6 +27,7 @@ import en from './locales/en.json';
 import fr from './locales/fr.json';
 import hi from './locales/hi.json';
 import id from './locales/id.json';
+import it from './locales/it.json';
 import ja from './locales/ja.json';
 import ko from './locales/ko.json';
 import nl from './locales/nl.json';
@@ -46,6 +47,7 @@ export const resources = {
   fr: { translation: fr },
   hi: { translation: hi },
   id: { translation: id },
+  it: { translation: it },
   ja: { translation: ja },
   ko: { translation: ko },
   nl: { translation: nl },
@@ -71,6 +73,7 @@ export const supportedLanguages = [
     nativeName: 'Bahasa Indonesia',
     dir: 'ltr',
   },
+  { code: 'it', name: 'Italian', nativeName: 'Italiano', dir: 'ltr' },
   { code: 'ja', name: 'Japanese', nativeName: '日本語', dir: 'ltr' },
   { code: 'ko', name: 'Korean', nativeName: '한국어', dir: 'ltr' },
   { code: 'nl', name: 'Dutch', nativeName: 'Nederlands', dir: 'ltr' },
