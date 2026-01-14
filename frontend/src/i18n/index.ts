@@ -22,18 +22,25 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import ar from './locales/ar.json';
 import bn from './locales/bn.json';
 import cs from './locales/cs.json';
+import da from './locales/da.json';
 import de from './locales/de.json';
 import en from './locales/en.json';
+import es from './locales/es.json';
 import fr from './locales/fr.json';
 import hi from './locales/hi.json';
 import id from './locales/id.json';
+import is from './locales/is.json';
 import it from './locales/it.json';
 import ja from './locales/ja.json';
 import ko from './locales/ko.json';
+import ms from './locales/ms.json';
 import nl from './locales/nl.json';
 import pl from './locales/pl.json';
+import pt from './locales/pt.json';
 import ru from './locales/ru.json';
+import sv from './locales/sv.json';
 import th from './locales/th.json';
+import tr from './locales/tr.json';
 import uk from './locales/uk.json';
 import vi from './locales/vi.json';
 import zh from './locales/zh.json';
@@ -42,18 +49,25 @@ export const resources = {
   ar: { translation: ar },
   bn: { translation: bn },
   cs: { translation: cs },
+  da: { translation: da },
   de: { translation: de },
   en: { translation: en },
+  es: { translation: es },
   fr: { translation: fr },
   hi: { translation: hi },
   id: { translation: id },
+  is: { translation: is },
   it: { translation: it },
   ja: { translation: ja },
   ko: { translation: ko },
+  ms: { translation: ms },
   nl: { translation: nl },
   pl: { translation: pl },
+  pt: { translation: pt },
   ru: { translation: ru },
+  sv: { translation: sv },
   th: { translation: th },
+  tr: { translation: tr },
   uk: { translation: uk },
   vi: { translation: vi },
   zh: { translation: zh },
@@ -63,8 +77,10 @@ export const supportedLanguages = [
   { code: 'ar', name: 'Arabic', nativeName: 'العربية', dir: 'rtl' },
   { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', dir: 'ltr' },
   { code: 'cs', name: 'Czech', nativeName: 'Čeština', dir: 'ltr' },
+  { code: 'da', name: 'Danish', nativeName: 'Dansk', dir: 'ltr' },
   { code: 'de', name: 'German', nativeName: 'Deutsch', dir: 'ltr' },
   { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español', dir: 'ltr' },
   { code: 'fr', name: 'French', nativeName: 'Français', dir: 'ltr' },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', dir: 'ltr' },
   {
@@ -73,13 +89,18 @@ export const supportedLanguages = [
     nativeName: 'Bahasa Indonesia',
     dir: 'ltr',
   },
+  { code: 'is', name: 'Icelandic', nativeName: 'Íslenska', dir: 'ltr' },
   { code: 'it', name: 'Italian', nativeName: 'Italiano', dir: 'ltr' },
   { code: 'ja', name: 'Japanese', nativeName: '日本語', dir: 'ltr' },
   { code: 'ko', name: 'Korean', nativeName: '한국어', dir: 'ltr' },
+  { code: 'ms', name: 'Malay', nativeName: 'Bahasa Melayu', dir: 'ltr' },
   { code: 'nl', name: 'Dutch', nativeName: 'Nederlands', dir: 'ltr' },
   { code: 'pl', name: 'Polish', nativeName: 'Polski', dir: 'ltr' },
+  { code: 'pt', name: 'Portuguese', nativeName: 'Português', dir: 'ltr' },
   { code: 'ru', name: 'Russian', nativeName: 'Русский', dir: 'ltr' },
+  { code: 'sv', name: 'Swedish', nativeName: 'Svenska', dir: 'ltr' },
   { code: 'th', name: 'Thai', nativeName: 'ไทย', dir: 'ltr' },
+  { code: 'tr', name: 'Turkish', nativeName: 'Türkçe', dir: 'ltr' },
   { code: 'uk', name: 'Ukrainian', nativeName: 'Українська', dir: 'ltr' },
   { code: 'vi', name: 'Vietnamese', nativeName: 'Tiếng Việt', dir: 'ltr' },
   { code: 'zh', name: 'Chinese', nativeName: '中文', dir: 'ltr' },
