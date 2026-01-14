@@ -20,6 +20,7 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
 import ar from './locales/ar.json';
+import bn from './locales/bn.json';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
 import hi from './locales/hi.json';
@@ -29,6 +30,7 @@ import zh from './locales/zh.json';
 
 export const resources = {
   ar: { translation: ar },
+  bn: { translation: bn },
   en: { translation: en },
   fr: { translation: fr },
   hi: { translation: hi },
@@ -39,6 +41,7 @@ export const resources = {
 
 export const supportedLanguages = [
   { code: 'ar', name: 'Arabic', nativeName: 'العربية', dir: 'rtl' },
+  { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', dir: 'ltr' },
   { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
   { code: 'fr', name: 'French', nativeName: 'Français', dir: 'ltr' },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', dir: 'ltr' },
