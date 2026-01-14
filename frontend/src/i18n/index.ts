@@ -24,6 +24,7 @@ import bn from './locales/bn.json';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
 import hi from './locales/hi.json';
+import id from './locales/id.json';
 import ja from './locales/ja.json';
 import ko from './locales/ko.json';
 import ru from './locales/ru.json';
@@ -36,6 +37,7 @@ export const resources = {
   en: { translation: en },
   fr: { translation: fr },
   hi: { translation: hi },
+  id: { translation: id },
   ja: { translation: ja },
   ko: { translation: ko },
   ru: { translation: ru },
@@ -49,6 +51,12 @@ export const supportedLanguages = [
   { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
   { code: 'fr', name: 'French', nativeName: 'Français', dir: 'ltr' },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', dir: 'ltr' },
+  {
+    code: 'id',
+    name: 'Indonesian',
+    nativeName: 'Bahasa Indonesia',
+    dir: 'ltr',
+  },
   { code: 'ja', name: 'Japanese', nativeName: '日本語', dir: 'ltr' },
   { code: 'ko', name: 'Korean', nativeName: '한국어', dir: 'ltr' },
   { code: 'ru', name: 'Russian', nativeName: 'Русский', dir: 'ltr' },
