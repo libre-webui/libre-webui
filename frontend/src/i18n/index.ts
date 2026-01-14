@@ -22,6 +22,7 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 import ar from './locales/ar.json';
 import bn from './locales/bn.json';
 import cs from './locales/cs.json';
+import de from './locales/de.json';
 import en from './locales/en.json';
 import fr from './locales/fr.json';
 import hi from './locales/hi.json';
@@ -39,6 +40,7 @@ export const resources = {
   ar: { translation: ar },
   bn: { translation: bn },
   cs: { translation: cs },
+  de: { translation: de },
   en: { translation: en },
   fr: { translation: fr },
   hi: { translation: hi },
@@ -57,6 +59,7 @@ export const supportedLanguages = [
   { code: 'ar', name: 'Arabic', nativeName: 'العربية', dir: 'rtl' },
   { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', dir: 'ltr' },
   { code: 'cs', name: 'Czech', nativeName: 'Čeština', dir: 'ltr' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch', dir: 'ltr' },
   { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
   { code: 'fr', name: 'French', nativeName: 'Français', dir: 'ltr' },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', dir: 'ltr' },
