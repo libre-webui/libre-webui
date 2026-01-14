@@ -15,6 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.4.0] - 2026-01-14
+
+### What's New
+
+This release introduces comprehensive internationalization support, making Libre WebUI accessible to users worldwide with 21 new language options. The interface now supports multiple languages with proper right-to-left text rendering for Arabic and includes a convenient language switcher component.
+
+### ✨ New Features
+
+- **Multi-language support**: Added translations for 24 languages including Arabic (with RTL support), Chinese, French, German, Spanish, Italian, Japanese, Korean, Russian, Hindi, Bengali, Thai, Vietnamese, Indonesian, Dutch, Polish, Czech, Ukrainian, Danish, Swedish, Portuguese, Icelandic, Malay, and Turkish
+- **Language switcher component**: New interface element allowing users to easily change the application language
+- **Right-to-left text support**: Proper RTL rendering for Arabic and other RTL languages
+
+### 🔧 Improvements
+
+- Enhanced type safety across backend routes with improved type assertions
+- Updated workflow permissions configuration for better security compliance
+
 ## [0.3.3] - 2026-01-13
 
 ### What's New
