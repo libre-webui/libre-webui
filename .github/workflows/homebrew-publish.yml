@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout main repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Get version
         id: version
@@ -56,7 +56,7 @@ jobs:
           fi
 
       - name: Checkout homebrew-tap repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: libre-webui/homebrew-tap
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
