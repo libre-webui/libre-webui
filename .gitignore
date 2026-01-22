@@ -103,3 +103,9 @@ electron/assets/*.png
 .claude/
 backend/data/data.sqlite-shm
 backend/data/data.sqlite-wal
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+.Python
