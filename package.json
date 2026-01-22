@@ -75,9 +75,11 @@
     "brace-expansion": "2.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "tar": "^7.5.4",
     "lodash": "^4.17.23",
-    "@electron/rebuild": "^4.0.2",
+    "tar": "^7.5.4",
+    "electron-builder": {
+      "tar": "^6.2.1"
+    },
     "refractor": {
       "prismjs": "^1.30.0"
     },
