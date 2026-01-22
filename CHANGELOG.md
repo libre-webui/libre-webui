@@ -15,6 +15,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.4.2] - 2026-01-22
+
+### What's New
+
+This release focuses on security and stability improvements with critical dependency updates. We've addressed a prototype pollution vulnerability and updated key build tools to their latest versions.
+
+### 🔧 Improvements
+
+- Updated Electron build tools to latest versions for better compatibility and performance
+- Refreshed development dependencies to ensure optimal build processes
+
+### 🐛 Bug Fixes
+
+- Resolved prototype pollution vulnerability by updating lodash to version 4.17.23
+
 ## [0.4.1] - 2026-01-22
 
 ### What's New
