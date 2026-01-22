@@ -66,6 +66,7 @@ Opens at `http://localhost:8080`. That's it.
 - [Document Chat (RAG)](./RAG_FEATURE) - Upload and chat with documents
 - [Artifacts](./ARTIFACTS_FEATURE) - Interactive content
 - [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK) - Custom AI personalities
+- [Qwen3-TTS](./QWEN3_TTS) - Local text-to-speech with voice cloning
 
 ### Administration
 - [Authentication](./AUTHENTICATION) - User management and SSO
