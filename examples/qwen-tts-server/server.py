@@ -173,7 +173,14 @@ def audio_to_bytes(audio_data, sample_rate: int, format: str) -> bytes:
     if isinstance(audio_data, list):
         if len(audio_data) == 0:
             raise ValueError("Empty audio list")
-        audio = torch.cat([t.cpu() if hasattr(t, 'cpu') else torch.tensor(t) for t in audio_data], dim=-1)
+        # Move all tensors to CPU first, then concatenate
+        cpu_tensors = []
+        for t in audio_data:
+            if hasattr(t, 'cpu'):
+                cpu_tensors.append(t.cpu())
+            else:
+                cpu_tensors.append(torch.tensor(t))
+        audio = torch.cat(cpu_tensors, dim=-1)
     else:
         audio = audio_data.cpu() if hasattr(audio_data, 'cpu') else torch.tensor(audio_data)
 
