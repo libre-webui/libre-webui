@@ -166,6 +166,48 @@ def detect_language(text: str) -> str:
     return "English"
 
 
+def chunk_text(text: str, max_chunk_size: int = 500) -> list[str]:
+    """Split text into speakable chunks at sentence boundaries"""
+    # Split on sentence endings
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+
+    chunks = []
+    current_chunk = ""
+
+    for sentence in sentences:
+        if len(current_chunk) + len(sentence) + 1 <= max_chunk_size:
+            current_chunk = (current_chunk + " " + sentence).strip()
+        else:
+            if current_chunk:
+                chunks.append(current_chunk)
+            # If single sentence is too long, split on commas or just force split
+            if len(sentence) > max_chunk_size:
+                # Split on commas
+                parts = re.split(r',\s*', sentence)
+                sub_chunk = ""
+                for part in parts:
+                    if len(sub_chunk) + len(part) + 2 <= max_chunk_size:
+                        sub_chunk = (sub_chunk + ", " + part).strip(", ")
+                    else:
+                        if sub_chunk:
+                            chunks.append(sub_chunk)
+                        # Force split if still too long
+                        while len(part) > max_chunk_size:
+                            chunks.append(part[:max_chunk_size])
+                            part = part[max_chunk_size:]
+                        sub_chunk = part
+                if sub_chunk:
+                    chunks.append(sub_chunk)
+                current_chunk = ""
+            else:
+                current_chunk = sentence
+
+    if current_chunk:
+        chunks.append(current_chunk)
+
+    return chunks if chunks else [text[:max_chunk_size]]
+
+
 def sanitize_text(text: str) -> str:
     """Sanitize text to prevent model hangs on problematic input"""
     # Remove emojis and other symbols that can cause issues
@@ -318,21 +360,19 @@ async def create_speech(request: TTSRequest):
     if not clean_text:
         raise HTTPException(status_code=400, detail="Input text is empty after sanitization")
 
-    # Truncate if too long (model can hang on very long inputs)
-    max_chars = 2000
-    if len(clean_text) > max_chars:
-        clean_text = clean_text[:max_chars]
+    # Split into chunks for reliable generation
+    chunks = chunk_text(clean_text, max_chunk_size=500)
 
     language = request.language or voice_info.get("language") or detect_language(clean_text)
 
-    async def generate_audio():
-        """Run TTS generation in thread pool with timeout"""
+    async def generate_chunk(chunk_text: str):
+        """Generate audio for a single chunk"""
         loop = asyncio.get_event_loop()
 
         def _generate():
             if model_type.startswith("customvoice"):
                 return model.generate_custom_voice(
-                    text=clean_text,
+                    text=chunk_text,
                     language=language,
                     speaker=voice_info["name"],
                     instruct=request.instruct or "",
@@ -340,29 +380,47 @@ async def create_speech(request: TTSRequest):
             elif model_type.startswith("voicedesign"):
                 description = request.instruct or f"A clear, natural {voice_info['name']}'s voice"
                 return model.generate_voice_design(
-                    text=clean_text,
+                    text=chunk_text,
                     language=language,
                     instruct=description,
                 )
             else:
                 return model.generate(
-                    text=clean_text,
+                    text=chunk_text,
                     language=language,
                 )
 
         return await loop.run_in_executor(None, _generate)
 
     try:
-        # 60 second timeout for generation
-        audio, sample_rate = await asyncio.wait_for(generate_audio(), timeout=60.0)
+        all_audio = []
+        final_sample_rate = None
 
-        audio_bytes = audio_to_bytes(audio, sample_rate, request.response_format)
+        # Generate each chunk with individual timeout
+        for i, chunk in enumerate(chunks):
+            try:
+                audio, sample_rate = await asyncio.wait_for(
+                    generate_chunk(chunk),
+                    timeout=30.0  # 30s per chunk
+                )
+                all_audio.append(audio)
+                final_sample_rate = sample_rate
+            except asyncio.TimeoutError:
+                # Skip this chunk if it times out, continue with others
+                print(f"Chunk {i} timed out, skipping: {chunk[:50]}...")
+                continue
+
+        if not all_audio:
+            raise HTTPException(status_code=504, detail="All chunks timed out")
+
+        # Concatenate all audio chunks
+        audio_bytes = audio_to_bytes(all_audio, final_sample_rate, request.response_format)
 
         # Always return wav (other formats require additional codecs)
         return Response(content=audio_bytes, media_type="audio/wav")
 
-    except asyncio.TimeoutError:
-        raise HTTPException(status_code=504, detail="TTS generation timed out (60s limit)")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
