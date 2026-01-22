@@ -1,0 +1,38 @@
+{
+  "id": "qwen-tts",
+  "name": "Qwen3 TTS",
+  "type": "tts",
+  "endpoint": "http://localhost:8100/v1/audio/speech",
+  "auth": {
+    "header": "",
+    "key_env": ""
+  },
+  "model_map": [
+    "qwen3-tts",
+    "qwen3-tts-customvoice",
+    "qwen3-tts-voicedesign",
+    "qwen3-tts-clone"
+  ],
+  "capabilities": {
+    "tts": {
+      "endpoint": "http://localhost:8100/v1/audio/speech",
+      "model_map": [
+        "qwen3-tts",
+        "qwen3-tts-customvoice",
+        "qwen3-tts-voicedesign",
+        "qwen3-tts-clone"
+      ],
+      "config": {
+        "voices": ["Ryan", "Aiden", "Vivian", "Serena", "Uncle_Fu", "Dylan", "Eric", "Ono_Anna", "Sohee"],
+        "default_voice": "Ryan",
+        "formats": ["wav"],
+        "default_format": "wav",
+        "max_characters": 10000,
+        "supports_streaming": false,
+        "no_auth_required": true
+      }
+    }
+  },
+  "description": "Qwen3-TTS local TTS server (NVIDIA CUDA, Apple MPS, or CPU)",
+  "documentation_url": "https://github.com/QwenLM/Qwen3-TTS"
+}

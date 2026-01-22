@@ -38,7 +38,7 @@
     "lint:fix:frontend": "cd frontend && npm run lint:fix",
     "lint:fix:backend": "cd backend && npm run lint:fix",
     "setup-hooks": "git config core.hooksPath .githooks",
-    "postinstall": "node -e \"try { require('child_process').execSync('git rev-parse --git-dir', {stdio:'ignore'}); require('child_process').execSync('npm run setup-hooks', {stdio:'inherit'}); } catch(e) {}\"",
+    "postinstall": "npm rebuild better-sqlite3 --workspace=backend 2>/dev/null || npm rebuild better-sqlite3 2>/dev/null || true; node -e \"try { require('child_process').execSync('git rev-parse --git-dir', {stdio:'ignore'}); require('child_process').execSync('npm run setup-hooks', {stdio:'inherit'}); } catch(e) {}\"",
     "release": "node scripts/release.js",
     "release:patch": "node scripts/release.js patch",
     "release:minor": "node scripts/release.js minor",
