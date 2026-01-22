@@ -861,9 +861,14 @@ class PluginService {
             `[DEBUG] Found TTS plugin ${plugin.id} for model ${model}`
           );
 
+          // Check if no auth is required (e.g., local TTS servers)
+          const noAuthRequired =
+            (ttsCapability.config as Record<string, unknown> | undefined)
+              ?.no_auth_required === true;
+
           // Check if we have the required API key (from DB or env)
           const apiKey = this.getApiKey(plugin);
-          if (!apiKey) {
+          if (!apiKey && !noAuthRequired) {
             console.log(
               `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
             );
@@ -880,8 +885,16 @@ class PluginService {
           `[DEBUG] Found TTS-type plugin ${plugin.id} for model ${model}`
         );
 
+        // Check if no auth is required
+        const noAuthRequired =
+          (
+            plugin.capabilities?.tts?.config as
+              | Record<string, unknown>
+              | undefined
+          )?.no_auth_required === true;
+
         const apiKey = this.getApiKey(plugin);
-        if (!apiKey) {
+        if (!apiKey && !noAuthRequired) {
           console.log(
             `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
           );
@@ -909,9 +922,13 @@ class PluginService {
       // Check capabilities-based TTS
       if (plugin.capabilities?.tts) {
         const ttsCapability = plugin.capabilities.tts;
+        // Check if no auth is required (e.g., local TTS servers)
+        const noAuthRequired =
+          (ttsCapability.config as Record<string, unknown> | undefined)
+            ?.no_auth_required === true;
         // Check if API key is available (from DB or env)
         const apiKey = this.getApiKey(plugin);
-        if (apiKey) {
+        if (apiKey || noAuthRequired) {
           for (const model of ttsCapability.model_map) {
             models.push({
               model,
@@ -924,8 +941,15 @@ class PluginService {
 
       // Check primary type for TTS-only plugins
       if (plugin.type === 'tts') {
+        // Check if no auth is required
+        const noAuthRequired =
+          (
+            plugin.capabilities?.tts?.config as
+              | Record<string, unknown>
+              | undefined
+          )?.no_auth_required === true;
         const apiKey = this.getApiKey(plugin);
-        if (apiKey) {
+        if (apiKey || noAuthRequired) {
           for (const model of plugin.model_map) {
             models.push({
               model,
@@ -974,15 +998,7 @@ class PluginService {
       throw new Error(`No TTS plugin found for model: ${model}`);
     }
 
-    // Get API key from database (per-user) or environment variable (fallback)
-    const apiKey = this.getApiKey(plugin);
-    if (!apiKey) {
-      throw new Error(
-        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
-      );
-    }
-
-    // Determine endpoint
+    // Determine endpoint and config
     let endpoint: string;
     let ttsConfig: TTSConfig | undefined;
 
@@ -993,16 +1009,31 @@ class PluginService {
       endpoint = plugin.endpoint;
     }
 
+    // Check if no auth is required (e.g., local TTS servers like Qwen3-TTS)
+    const noAuthRequired =
+      (ttsConfig as Record<string, unknown> | undefined)?.no_auth_required ===
+      true;
+
+    // Get API key from database (per-user) or environment variable (fallback)
+    const apiKey = this.getApiKey(plugin);
+    if (!apiKey && !noAuthRequired) {
+      throw new Error(
+        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
+      );
+    }
+
     // Prepare headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
 
-    const authValue = plugin.auth.prefix
-      ? `${plugin.auth.prefix}${apiKey}`
-      : apiKey;
-
-    headers[plugin.auth.header] = authValue;
+    // Only add auth header if API key exists and auth header is configured
+    if (apiKey && plugin.auth.header) {
+      const authValue = plugin.auth.prefix
+        ? `${plugin.auth.prefix}${apiKey}`
+        : apiKey;
+      headers[plugin.auth.header] = authValue;
+    }
 
     // Apply defaults from config
     const voice = options.voice || ttsConfig?.default_voice || 'alloy';
@@ -1775,6 +1806,13 @@ class PluginService {
         switch (capabilityType) {
           case 'tts':
             hasCapability = !!plugin.capabilities.tts;
+            // Check if no auth is required for TTS capability (e.g., local servers)
+            noAuthRequired =
+              (
+                plugin.capabilities.tts?.config as
+                  | Record<string, unknown>
+                  | undefined
+              )?.no_auth_required === true;
             break;
           case 'stt':
             hasCapability = !!plugin.capabilities.stt;
