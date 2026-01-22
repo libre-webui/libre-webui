@@ -246,7 +246,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
           const audio = new Audio(audioData.audioUrl);
           audioRef.current = audio;
 
-          await new Promise<void>((resolve, reject) => {
+          await new Promise<void>((resolve, _reject) => {
             audio.onended = () => {
               audioRef.current = null;
               resolve();
