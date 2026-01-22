@@ -109,3 +109,4 @@ venv/
 __pycache__/
 *.py[cod]
 .Python
+examples/qwen-tts-server/venv/
