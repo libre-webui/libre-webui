@@ -124,6 +124,7 @@ export interface TTSSettings {
   voice: string;
   speed: number;
   pluginId?: string;
+  streamSentences?: boolean; // Play sentence by sentence instead of full message
 }
 
 export interface TitleSettings {

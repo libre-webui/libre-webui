@@ -451,6 +451,8 @@
       "enableDescription": "Allow text-to-speech for assistant messages",
       "autoPlay": "Auto-play Responses",
       "autoPlayDescription": "Automatically read new assistant messages aloud",
+      "streamSentences": "Stream Sentences",
+      "streamSentencesDescription": "Play audio sentence by sentence instead of waiting for the full message. Recommended for local TTS to avoid timeouts on long messages.",
       "voiceConfiguration": "Voice Configuration",
       "model": "TTS Model",
       "modelDescription": "Select the model for text-to-speech generation",

@@ -451,6 +451,8 @@
       "enableDescription": "アシスタントメッセージの音声読み上げを許可",
       "autoPlay": "レスポンスを自動再生",
       "autoPlayDescription": "新しいアシスタントメッセージを自動的に読み上げ",
+      "streamSentences": "文章ごとにストリーミング",
+      "streamSentencesDescription": "メッセージ全体を待たずに、文章ごとに音声を再生します。長いメッセージでのタイムアウトを避けるため、ローカルTTSに推奨されます。",
       "voiceConfiguration": "音声設定",
       "model": "TTSモデル",
       "modelDescription": "音声合成に使用するモデルを選択",

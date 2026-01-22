@@ -451,6 +451,8 @@
       "enableDescription": "Povolit syntézu řeči pro zprávy asistenta",
       "autoPlay": "Automatické přehrávání odpovědí",
       "autoPlayDescription": "Automaticky číst nové zprávy asistenta",
+      "streamSentences": "Streamovat věty",
+      "streamSentencesDescription": "Přehrávat zvuk větu po větě namísto čekání na celou zprávu. Doporučeno pro lokální TTS, aby se předešlo časovému limitu u dlouhých zpráv.",
       "voiceConfiguration": "Konfigurace hlasu",
       "model": "Model TTS",
       "modelDescription": "Vyberte model pro syntézu řeči",

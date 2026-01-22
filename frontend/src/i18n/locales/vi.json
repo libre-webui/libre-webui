@@ -451,6 +451,8 @@
       "enableDescription": "Cho phép chuyển văn bản thành giọng nói cho tin nhắn trợ lý",
       "autoPlay": "Tự động phát phản hồi",
       "autoPlayDescription": "Tự động đọc to các tin nhắn trợ lý mới",
+      "streamSentences": "Phát từng câu",
+      "streamSentencesDescription": "Phát âm thanh từng câu một thay vì đợi toàn bộ tin nhắn. Khuyến nghị cho TTS cục bộ để tránh hết thời gian chờ với tin nhắn dài.",
       "voiceConfiguration": "Cấu hình giọng nói",
       "model": "Mô hình TTS",
       "modelDescription": "Chọn mô hình để chuyển văn bản thành giọng nói",

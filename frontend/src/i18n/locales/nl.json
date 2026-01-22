@@ -451,6 +451,8 @@
       "enableDescription": "Tekst-naar-spraak toestaan voor assistentberichten",
       "autoPlay": "Automatisch afspelen",
       "autoPlayDescription": "Nieuwe assistentberichten automatisch voorlezen",
+      "streamSentences": "Zinnen streamen",
+      "streamSentencesDescription": "Audio zin voor zin afspelen in plaats van te wachten op het volledige bericht. Aanbevolen voor lokale TTS om time-outs bij lange berichten te voorkomen.",
       "voiceConfiguration": "Stemconfiguratie",
       "model": "TTS-model",
       "modelDescription": "Selecteer het model voor tekst-naar-spraak generatie",

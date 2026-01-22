@@ -451,6 +451,8 @@
       "enableDescription": "允许对助手消息进行语音合成",
       "autoPlay": "自动播放响应",
       "autoPlayDescription": "自动朗读新的助手消息",
+      "streamSentences": "逐句播放",
+      "streamSentencesDescription": "逐句播放音频，而不是等待完整消息。建议用于本地TTS以避免长消息超时。",
       "voiceConfiguration": "语音配置",
       "model": "TTS 模型",
       "modelDescription": "选择用于语音合成的模型",

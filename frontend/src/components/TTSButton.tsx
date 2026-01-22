@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Volume2, VolumeX, Loader2, Square } from 'lucide-react';
 import { ttsApi, TTSModel } from '@/utils/api';
@@ -65,6 +65,19 @@ async function getCachedTTSModels(): Promise<TTSModel[]> {
   return cachePromise;
 }
 
+/**
+ * Split text into sentences for sentence-by-sentence TTS playback.
+ * Handles common sentence endings while preserving abbreviations.
+ */
+function splitIntoSentences(text: string): string[] {
+  // Split on sentence-ending punctuation followed by space or end of string
+  // This regex handles: . ! ? and also handles quotes after punctuation
+  const sentences = text.split(/(?<=[.!?]["']?\s)|(?<=[.!?]["']?$)/);
+
+  // Filter out empty strings and trim whitespace
+  return sentences.map(s => s.trim()).filter(s => s.length > 0);
+}
+
 interface TTSButtonProps {
   text: string;
   className?: string;
@@ -83,7 +96,12 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [availableModels, setAvailableModels] = useState<TTSModel[]>([]);
   const [hasModels, setHasModels] = useState<boolean | null>(null);
+
+  // Refs for audio playback
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const stopRequestedRef = useRef(false);
+  const sentenceQueueRef = useRef<string[]>([]);
+  const currentIndexRef = useRef(0);
 
   // Check for available TTS models on mount (using cache)
   useEffect(() => {
@@ -101,33 +119,19 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
     };
   }, []);
 
-  const handlePlay = async () => {
-    if (isLoading) return;
-
-    // If currently playing, stop
-    if (isPlaying && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Use saved settings from preferences, fall back to first available model
-      const ttsSettings = preferences.ttsSettings;
-      const model = ttsSettings?.model || availableModels[0]?.model || 'tts-1';
-      const voice =
-        ttsSettings?.voice ||
-        availableModels[0]?.config?.default_voice ||
-        'alloy';
-      const speed = ttsSettings?.speed || 1.0;
-
+  /**
+   * Generate and play audio for a single piece of text
+   */
+  const generateAndPlayAudio = useCallback(
+    async (
+      inputText: string,
+      model: string,
+      voice: string,
+      speed: number
+    ): Promise<void> => {
       const response = await ttsApi.generateBase64({
         model,
-        input: text,
+        input: inputText,
         voice,
         speed,
         response_format: 'mp3',
@@ -141,25 +145,213 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
 
-      audio.onended = () => {
-        setIsPlaying(false);
-        audioRef.current = null;
+      return new Promise((resolve, reject) => {
+        audio.onended = () => {
+          audioRef.current = null;
+          resolve();
+        };
+
+        audio.onerror = () => {
+          audioRef.current = null;
+          reject(new Error(t('ttsButton.playbackFailed')));
+        };
+
+        audio.play().catch(reject);
+      });
+    },
+    [t]
+  );
+
+  /**
+   * Play sentences one by one, pre-fetching the next sentence while current plays
+   */
+  const playSentenceBysentence = useCallback(
+    async (
+      sentences: string[],
+      model: string,
+      voice: string,
+      speed: number
+    ) => {
+      sentenceQueueRef.current = sentences;
+      currentIndexRef.current = 0;
+      stopRequestedRef.current = false;
+
+      // Pre-fetch the first sentence audio
+      let nextAudioPromise: Promise<{
+        audioUrl: string;
+        mimeType: string;
+      } | null> | null = null;
+
+      const prefetchAudio = async (
+        inputText: string
+      ): Promise<{ audioUrl: string; mimeType: string } | null> => {
+        try {
+          const response = await ttsApi.generateBase64({
+            model,
+            input: inputText,
+            voice,
+            speed,
+            response_format: 'mp3',
+          });
+
+          if (!response.success || !response.data?.audio) {
+            return null;
+          }
+
+          return {
+            audioUrl: `data:${response.data.mimeType};base64,${response.data.audio}`,
+            mimeType: response.data.mimeType,
+          };
+        } catch {
+          return null;
+        }
       };
 
-      audio.onerror = () => {
-        setError(t('ttsButton.playbackFailed'));
-        setIsPlaying(false);
-        audioRef.current = null;
-      };
+      // Start pre-fetching first sentence
+      if (sentences.length > 0) {
+        nextAudioPromise = prefetchAudio(sentences[0]);
+      }
 
-      await audio.play();
-      setIsPlaying(true);
+      for (let i = 0; i < sentences.length; i++) {
+        if (stopRequestedRef.current) {
+          break;
+        }
+
+        currentIndexRef.current = i;
+
+        try {
+          // Wait for current sentence's audio (already being fetched)
+          const audioData = await nextAudioPromise;
+
+          if (stopRequestedRef.current) {
+            break;
+          }
+
+          // Start pre-fetching next sentence while this one plays
+          if (i + 1 < sentences.length) {
+            nextAudioPromise = prefetchAudio(sentences[i + 1]);
+          } else {
+            nextAudioPromise = null;
+          }
+
+          if (!audioData) {
+            // Skip this sentence if generation failed
+            console.warn(
+              `Failed to generate audio for sentence ${i + 1}, skipping`
+            );
+            continue;
+          }
+
+          // Play current sentence
+          const audio = new Audio(audioData.audioUrl);
+          audioRef.current = audio;
+
+          await new Promise<void>((resolve, reject) => {
+            audio.onended = () => {
+              audioRef.current = null;
+              resolve();
+            };
+
+            audio.onerror = () => {
+              audioRef.current = null;
+              // Don't reject, just skip to next sentence
+              resolve();
+            };
+
+            audio.play().catch(() => {
+              // Don't reject, just skip to next sentence
+              resolve();
+            });
+          });
+        } catch (err) {
+          console.error(`Error playing sentence ${i + 1}:`, err);
+          // Continue to next sentence
+        }
+      }
+    },
+    []
+  );
+
+  /**
+   * Stop playback and reset state
+   */
+  const stopPlayback = useCallback(() => {
+    stopRequestedRef.current = true;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current = null;
+    }
+    setIsPlaying(false);
+    setIsLoading(false);
+  }, []);
+
+  const handlePlay = async () => {
+    if (isLoading) return;
+
+    // If currently playing, stop
+    if (isPlaying) {
+      stopPlayback();
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    stopRequestedRef.current = false;
+
+    try {
+      // Use saved settings from preferences, fall back to first available model
+      const ttsSettings = preferences.ttsSettings;
+      const model = ttsSettings?.model || availableModels[0]?.model || 'tts-1';
+      const voice =
+        ttsSettings?.voice ||
+        availableModels[0]?.config?.default_voice ||
+        'alloy';
+      const speed = ttsSettings?.speed || 1.0;
+      const streamSentences = ttsSettings?.streamSentences || false;
+
+      if (streamSentences) {
+        // Sentence-by-sentence playback mode
+        const sentences = splitIntoSentences(text);
+
+        if (sentences.length === 0) {
+          throw new Error(t('ttsButton.generateFailed'));
+        }
+
+        setIsLoading(false);
+        setIsPlaying(true);
+
+        await playSentenceBysentence(sentences, model, voice, speed);
+
+        if (!stopRequestedRef.current) {
+          setIsPlaying(false);
+        }
+      } else {
+        // Traditional full-message playback
+        await generateAndPlayAudio(text, model, voice, speed);
+        setIsLoading(false);
+        setIsPlaying(true);
+
+        // Wait for playback to complete
+        if (audioRef.current) {
+          audioRef.current.onended = () => {
+            setIsPlaying(false);
+            audioRef.current = null;
+          };
+
+          audioRef.current.onerror = () => {
+            setError(t('ttsButton.playbackFailed'));
+            setIsPlaying(false);
+            audioRef.current = null;
+          };
+        }
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : t('ttsButton.generateFailed');
       setError(errorMessage);
       console.error('TTS error:', err);
-    } finally {
+      setIsPlaying(false);
       setIsLoading(false);
     }
   };
@@ -167,6 +359,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      stopRequestedRef.current = true;
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;

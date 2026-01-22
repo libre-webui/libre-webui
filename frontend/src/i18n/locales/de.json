@@ -451,6 +451,8 @@
       "enableDescription": "Text-zu-Sprache für Assistenten-Nachrichten erlauben",
       "autoPlay": "Automatische Wiedergabe",
       "autoPlayDescription": "Neue Assistenten-Nachrichten automatisch vorlesen",
+      "streamSentences": "Sätze streamen",
+      "streamSentencesDescription": "Audio Satz für Satz abspielen, anstatt auf die vollständige Nachricht zu warten. Empfohlen für lokale TTS, um Zeitüberschreitungen bei langen Nachrichten zu vermeiden.",
       "voiceConfiguration": "Sprachkonfiguration",
       "model": "TTS-Modell",
       "modelDescription": "Wählen Sie das Modell für die Text-zu-Sprache-Generierung",

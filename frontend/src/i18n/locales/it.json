@@ -451,6 +451,8 @@
       "enableDescription": "Permetti sintesi vocale per i messaggi dell'assistente",
       "autoPlay": "Riproduzione automatica",
       "autoPlayDescription": "Leggi automaticamente i nuovi messaggi dell'assistente",
+      "streamSentences": "Trasmetti frasi",
+      "streamSentencesDescription": "Riproduci l'audio frase per frase invece di aspettare il messaggio completo. Consigliato per TTS locale per evitare timeout sui messaggi lunghi.",
       "voiceConfiguration": "Configurazione voce",
       "model": "Modello TTS",
       "modelDescription": "Seleziona il modello per la generazione sintesi vocale",

@@ -451,6 +451,8 @@
       "enableDescription": "Leyfa talgervingu fyrir skilaboð aðstoðarmanns",
       "autoPlay": "Sjálfvirk spilun svara",
       "autoPlayDescription": "Lesa ný skilaboð aðstoðarmanns sjálfkrafa upphátt",
+      "streamSentences": "Streyma setningar",
+      "streamSentencesDescription": "Spila hljóð setningu fyrir setningu í stað þess að bíða eftir heilum skilaboðum. Mælt með fyrir staðbundna talgervingu til að forðast tímamörk á löngum skilaboðum.",
       "voiceConfiguration": "Raddstilling",
       "model": "Talgervingarlíkan",
       "modelDescription": "Veldu líkan fyrir talgervingu",

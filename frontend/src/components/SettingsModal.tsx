@@ -184,6 +184,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       voice: '',
       speed: 1.0,
       pluginId: '',
+      streamSentences: false,
     }
   );
   const [ttsModels, setTtsModels] = useState<TTSModel[]>([]);
@@ -592,6 +593,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       voice: ttsModels[0]?.config?.default_voice || '',
       speed: 1.0,
       pluginId: ttsModels[0]?.plugin || '',
+      streamSentences: false,
     });
   };
 
@@ -1533,6 +1535,51 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           <span
                             className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
                               ttsSettings.autoPlay
+                                ? 'translate-x-6'
+                                : 'translate-x-1'
+                            }`}
+                          />
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Stream Sentences Toggle */}
+                  <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                          {t('settings.tts.streamSentences')}
+                        </h4>
+                        <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                          {t('settings.tts.streamSentencesDescription')}
+                        </p>
+                      </div>
+                      <label className='flex items-center cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          checked={ttsSettings.streamSentences || false}
+                          onChange={e =>
+                            handleTtsSettingChange(
+                              'streamSentences',
+                              e.target.checked
+                            )
+                          }
+                          disabled={!ttsSettings.enabled}
+                          className='sr-only'
+                        />
+                        <div
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                            !ttsSettings.enabled
+                              ? 'bg-gray-100 dark:bg-dark-200 opacity-50 cursor-not-allowed'
+                              : ttsSettings.streamSentences
+                                ? 'bg-primary-600 dark:bg-primary-500'
+                                : 'bg-gray-200 dark:bg-dark-300'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              ttsSettings.streamSentences
                                 ? 'translate-x-6'
                                 : 'translate-x-1'
                             }`}

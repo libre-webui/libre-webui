@@ -451,6 +451,8 @@
       "enableDescription": "어시스턴트 메시지에 대한 음성 합성 허용",
       "autoPlay": "응답 자동 재생",
       "autoPlayDescription": "새 어시스턴트 메시지를 자동으로 소리로 읽기",
+      "streamSentences": "문장 단위 스트리밍",
+      "streamSentencesDescription": "전체 메시지를 기다리지 않고 문장 단위로 오디오를 재생합니다. 긴 메시지의 타임아웃을 방지하기 위해 로컬 TTS에 권장됩니다.",
       "voiceConfiguration": "음성 구성",
       "model": "TTS 모델",
       "modelDescription": "음성 합성에 사용할 모델 선택",
