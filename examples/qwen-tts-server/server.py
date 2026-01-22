@@ -20,8 +20,10 @@ Models available:
 """
 
 import argparse
+import asyncio
 import io
 import os
+import re
 import tempfile
 from typing import Optional
 
@@ -164,6 +166,39 @@ def detect_language(text: str) -> str:
     return "English"
 
 
+def sanitize_text(text: str) -> str:
+    """Sanitize text to prevent model hangs on problematic input"""
+    # Remove emojis and other symbols that can cause issues
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F1E0-\U0001F1FF"  # flags
+        "\U00002702-\U000027B0"  # dingbats
+        "\U000024C2-\U0001F251"  # enclosed characters
+        "\U0001F900-\U0001F9FF"  # supplemental symbols
+        "\U0001FA00-\U0001FA6F"  # chess symbols
+        "\U0001FA70-\U0001FAFF"  # symbols and pictographs extended-A
+        "\U00002600-\U000026FF"  # misc symbols
+        "\U00002700-\U000027BF"  # dingbats
+        "]+",
+        flags=re.UNICODE
+    )
+    text = emoji_pattern.sub('', text)
+
+    # Remove zero-width characters and other invisible chars
+    text = re.sub(r'[\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff]', '', text)
+
+    # Normalize whitespace
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    # Remove any remaining control characters except newlines
+    text = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]').sub('', text)
+
+    return text
+
+
 def audio_to_bytes(audio_data, sample_rate: int, format: str) -> bytes:
     """Convert audio tensor or list of tensors to bytes in specified format"""
     import scipy.io.wavfile as wavfile
@@ -262,34 +297,57 @@ async def create_speech(request: TTSRequest):
         voice_key = VOICE_ALIASES[voice_key]
 
     voice_info = CUSTOM_VOICES.get(voice_key, CUSTOM_VOICES["ryan"])
-    language = request.language or voice_info.get("language") or detect_language(request.input)
+
+    # Sanitize input text to prevent hangs
+    clean_text = sanitize_text(request.input)
+    if not clean_text:
+        raise HTTPException(status_code=400, detail="Input text is empty after sanitization")
+
+    # Truncate if too long (model can hang on very long inputs)
+    max_chars = 2000
+    if len(clean_text) > max_chars:
+        clean_text = clean_text[:max_chars]
+
+    language = request.language or voice_info.get("language") or detect_language(clean_text)
+
+    async def generate_audio():
+        """Run TTS generation in thread pool with timeout"""
+        loop = asyncio.get_event_loop()
+
+        def _generate():
+            if model_type.startswith("customvoice"):
+                return model.generate_custom_voice(
+                    text=clean_text,
+                    language=language,
+                    speaker=voice_info["name"],
+                    instruct=request.instruct or "",
+                )
+            elif model_type.startswith("voicedesign"):
+                description = request.instruct or f"A clear, natural {voice_info['name']}'s voice"
+                return model.generate_voice_design(
+                    text=clean_text,
+                    language=language,
+                    instruct=description,
+                )
+            else:
+                return model.generate(
+                    text=clean_text,
+                    language=language,
+                )
+
+        return await loop.run_in_executor(None, _generate)
 
     try:
-        if model_type.startswith("customvoice"):
-            audio, sample_rate = model.generate_custom_voice(
-                text=request.input,
-                language=language,
-                speaker=voice_info["name"],
-                instruct=request.instruct or "",
-            )
-        elif model_type.startswith("voicedesign"):
-            description = request.instruct or f"A clear, natural {voice_info['name']}'s voice"
-            audio, sample_rate = model.generate_voice_design(
-                text=request.input,
-                language=language,
-                instruct=description,
-            )
-        else:
-            audio, sample_rate = model.generate(
-                text=request.input,
-                language=language,
-            )
+        # 60 second timeout for generation
+        audio, sample_rate = await asyncio.wait_for(generate_audio(), timeout=60.0)
 
         audio_bytes = audio_to_bytes(audio, sample_rate, request.response_format)
 
         # Always return wav (other formats require additional codecs)
         return Response(content=audio_bytes, media_type="audio/wav")
 
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="TTS generation timed out (60s limit)")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
