@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.5.1] - 2026-01-22
+
+### What's New
+
+This release addresses dependency version requirements for the Qwen3-TTS integration. The update ensures proper compatibility and resolves potential installation issues with the text-to-speech functionality.
+
+### 🐛 Bug Fixes
+
+- Fixed incorrect Qwen-TTS version requirement in example server dependencies
+
 ## [0.5.0] - 2026-01-22
 
 ### What's New
