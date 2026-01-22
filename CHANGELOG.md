@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.4.1] - 2026-01-22
+
+### What's New
+
+This release brings comprehensive internationalization support with 22 new language translations, including Arabic with right-to-left (RTL) text support. The update also includes critical security patches and improved CI/CD infrastructure for better reliability.
+
+### ✨ New Features
+
+- **Multi-language Support**: Added translations for 22 languages including Arabic (with RTL support), Chinese, French, German, Spanish, Italian, Japanese, Korean, Russian, and 13 others
+- **Language Switcher**: New component allows users to change interface language dynamically
+- **Enhanced Error Handling**: Improved error boundary component with better user feedback
+
+### 🔧 Improvements
+
+- **ARM64 Performance**: Switched to native ARM64 runners to eliminate QEMU emulation overhead
+- **CI/CD Updates**: Upgraded GitHub Actions checkout from v4 to v6 and enhanced workflow permissions
+- **UI Enhancements**: Updated styling for RTL language support and improved component layouts
+
+### 🐛 Bug Fixes
+
+- **Security Patches**: Updated node-tar to version 7.5.4+ to resolve CVE-2026-23950 and CVE-2026-23745
+- **Type Safety**: Fixed TypeScript type assertions across multiple backend routes
+- **Dependency Updates**: Bumped all dependency groups with 3 critical updates
+
 ## [0.4.0] - 2026-01-14
 
 ### What's New
