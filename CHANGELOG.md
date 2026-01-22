@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.5.0] - 2026-01-22
+
+### What's New
+
+This release introduces Qwen3-TTS integration, bringing advanced text-to-speech capabilities to Libre WebUI. Users can now generate high-quality speech output using Qwen's latest TTS model with a complete server setup and plugin configuration.
+
+### ✨ New Features
+
+- **Qwen3-TTS Integration**: Added full support for Qwen3 text-to-speech model with dedicated plugin
+- **TTS Server Example**: Included complete server implementation with setup instructions and dependencies
+- **Plugin Service Enhancement**: Expanded plugin service to support TTS functionality and improved plugin management
+
 ## [0.4.3] - 2026-01-22
 
 ### What's New
