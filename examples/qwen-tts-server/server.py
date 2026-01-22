@@ -187,6 +187,21 @@ def sanitize_text(text: str) -> str:
     )
     text = emoji_pattern.sub('', text)
 
+    # Remove markdown formatting
+    text = re.sub(r'\*+', '', text)  # asterisks (bold/italic)
+    text = re.sub(r'_+', ' ', text)  # underscores
+    text = re.sub(r'~+', '', text)  # strikethrough
+    text = re.sub(r'`+', '', text)  # code
+    text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)  # headers
+    text = re.sub(r'^-{3,}$', '', text, flags=re.MULTILINE)  # horizontal rules
+    text = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', text)  # links
+
+    # Collapse repeated characters (more than 3 of the same char)
+    text = re.sub(r'(.)\1{3,}', r'\1\1\1', text)
+
+    # Remove parenthetical stage directions like *(action)* or (action)
+    text = re.sub(r'\*?\([^)]*\)\*?', '', text)
+
     # Remove zero-width characters and other invisible chars
     text = re.sub(r'[\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff]', '', text)
 
