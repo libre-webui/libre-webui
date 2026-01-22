@@ -1,6 +1,6 @@
 {
   "name": "libre-webui",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Privacy-first AI chat interface. Self-hosted, open source, extensible.",
   "main": "electron/main.js",
   "bin": {

@@ -15,6 +15,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.4.3] - 2026-01-22
+
+### What's New
+
+This maintenance release focuses on security improvements and dependency updates. We've addressed a critical security vulnerability in lodash and improved ESM compatibility for the Electron build process.
+
+### 🔧 Improvements
+
+- Updated Electron build tools to latest versions (electron-builder 26.5.0, @electron/rebuild 4.0.2) for better compatibility and performance
+- Scoped tar v6 override specifically to electron-builder to improve ESM module compatibility
+
+### 🐛 Bug Fixes
+
+- **Security**: Updated lodash to version 4.17.23 to resolve prototype pollution vulnerability
+- Fixed ESM compatibility issues in the Electron build process
+
 ## [0.4.2] - 2026-01-22
 
 ### What's New
