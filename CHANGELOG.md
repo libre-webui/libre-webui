@@ -15,6 +15,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.5.2] - 2026-01-22
+
+### What's New
+
+This release introduces comprehensive Qwen3-TTS support with a new text-to-speech server implementation and complete documentation. Multiple stability improvements ensure reliable audio generation, including better handling of long text inputs and multi-GPU environments.
+
+### ✨ New Features
+
+- Added Qwen3-TTS server with complete setup documentation and examples
+- Implemented text chunking for reliable generation of long audio content
+
+### 🔧 Improvements
+
+- Enhanced text sanitization with more aggressive filtering for cleaner TTS input
+- Optimized memory handling by moving tensors to CPU before concatenation
+
+### 🐛 Bug Fixes
+
+- Fixed multi-GPU tensor mismatches by forcing single GPU usage
+- Resolved server hangs with improved text sanitization and timeout handling
+
 ## [0.5.1] - 2026-01-22
 
 ### What's New
