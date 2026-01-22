@@ -451,6 +451,8 @@
       "enableDescription": "Izinkan text-to-speech untuk pesan asisten",
       "autoPlay": "Putar Otomatis Respons",
       "autoPlayDescription": "Otomatis membaca pesan asisten baru dengan suara",
+      "streamSentences": "Stream Kalimat",
+      "streamSentencesDescription": "Putar audio kalimat per kalimat alih-alih menunggu pesan lengkap. Disarankan untuk TTS lokal untuk menghindari timeout pada pesan panjang.",
       "voiceConfiguration": "Konfigurasi Suara",
       "model": "Model TTS",
       "modelDescription": "Pilih model untuk pembuatan text-to-speech",

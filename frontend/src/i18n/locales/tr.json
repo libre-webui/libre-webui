@@ -451,6 +451,8 @@
       "enableDescription": "Asistan mesajları için metin-konuşmaya izin ver",
       "autoPlay": "Yanıtları Otomatik Oynat",
       "autoPlayDescription": "Yeni asistan mesajlarını otomatik olarak sesli oku",
+      "streamSentences": "Cümleleri Aktar",
+      "streamSentencesDescription": "Tam mesajı beklemek yerine cümle cümle ses çal. Uzun mesajlarda zaman aşımını önlemek için yerel TTS'de önerilir.",
       "voiceConfiguration": "Ses Yapılandırması",
       "model": "TTS Modeli",
       "modelDescription": "Metin-konuşma üretimi için modeli seçin",

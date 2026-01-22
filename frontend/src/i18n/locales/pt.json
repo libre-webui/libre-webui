@@ -451,6 +451,8 @@
       "enableDescription": "Permitir texto para fala nas mensagens do assistente",
       "autoPlay": "Reprodução Automática de Respostas",
       "autoPlayDescription": "Ler automaticamente novas mensagens do assistente em voz alta",
+      "streamSentences": "Transmitir Frases",
+      "streamSentencesDescription": "Reproduzir áudio frase por frase em vez de esperar pela mensagem completa. Recomendado para TTS local para evitar timeouts em mensagens longas.",
       "voiceConfiguration": "Configuração de Voz",
       "model": "Modelo TTS",
       "modelDescription": "Selecione o modelo para geração de texto para fala",

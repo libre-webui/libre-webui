@@ -451,6 +451,8 @@
       "enableDescription": "Zezwól na syntezę mowy dla wiadomości asystenta",
       "autoPlay": "Automatyczne odtwarzanie odpowiedzi",
       "autoPlayDescription": "Automatycznie odczytuj nowe wiadomości asystenta",
+      "streamSentences": "Strumieniuj zdania",
+      "streamSentencesDescription": "Odtwarzaj dźwięk zdanie po zdaniu zamiast czekać na pełną wiadomość. Zalecane dla lokalnego TTS, aby uniknąć przekroczenia limitu czasu dla długich wiadomości.",
       "voiceConfiguration": "Konfiguracja głosu",
       "model": "Model TTS",
       "modelDescription": "Wybierz model do syntezy mowy",

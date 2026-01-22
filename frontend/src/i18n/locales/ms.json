@@ -451,6 +451,8 @@
       "enableDescription": "Benarkan teks ke pertuturan untuk mesej pembantu",
       "autoPlay": "Main Auto Respons",
       "autoPlayDescription": "Baca mesej pembantu baharu secara automatik dengan kuat",
+      "streamSentences": "Strim Ayat",
+      "streamSentencesDescription": "Main audio ayat demi ayat berbanding menunggu mesej penuh. Disyorkan untuk TTS tempatan bagi mengelakkan tamat masa pada mesej panjang.",
       "voiceConfiguration": "Konfigurasi Suara",
       "model": "Model TTS",
       "modelDescription": "Pilih model untuk penjanaan teks ke pertuturan",

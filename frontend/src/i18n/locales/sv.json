@@ -451,6 +451,8 @@
       "enableDescription": "Tillåt text-till-tal för assistentmeddelanden",
       "autoPlay": "Spela upp svar automatiskt",
       "autoPlayDescription": "Läs automatiskt upp nya assistentmeddelanden",
+      "streamSentences": "Strömma meningar",
+      "streamSentencesDescription": "Spela upp ljud mening för mening istället för att vänta på hela meddelandet. Rekommenderas för lokal TTS för att undvika timeout vid långa meddelanden.",
       "voiceConfiguration": "Röstkonfiguration",
       "model": "TTS-modell",
       "modelDescription": "Välj modell för text-till-tal-generering",

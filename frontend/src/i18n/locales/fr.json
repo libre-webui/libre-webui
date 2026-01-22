@@ -451,6 +451,8 @@
       "enableDescription": "Autoriser la synthèse vocale pour les messages de l'assistant",
       "autoPlay": "Lecture automatique des réponses",
       "autoPlayDescription": "Lire automatiquement les nouveaux messages de l'assistant",
+      "streamSentences": "Diffuser par phrases",
+      "streamSentencesDescription": "Lire l'audio phrase par phrase au lieu d'attendre le message complet. Recommandé pour le TTS local afin d'éviter les délais d'attente sur les longs messages.",
       "voiceConfiguration": "Configuration de la voix",
       "model": "Modèle TTS",
       "modelDescription": "Sélectionnez le modèle pour la génération de synthèse vocale",

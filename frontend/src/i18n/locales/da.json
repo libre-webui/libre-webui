@@ -451,6 +451,8 @@
       "enableDescription": "Tillad tekst-til-tale for assistentbeskeder",
       "autoPlay": "Automatisk afspilning af svar",
       "autoPlayDescription": "Læs automatisk nye assistentbeskeder højt",
+      "streamSentences": "Stream sætninger",
+      "streamSentencesDescription": "Afspil lyd sætning for sætning i stedet for at vente på den fulde besked. Anbefales til lokal TTS for at undgå timeout ved lange beskeder.",
       "voiceConfiguration": "Stemmekonfiguration",
       "model": "TTS-model",
       "modelDescription": "Vælg modellen til tekst-til-tale-generering",
