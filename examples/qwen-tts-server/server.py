@@ -135,7 +135,7 @@ def load_model(model_name: str):
     # Use float32 for MPS/CPU compatibility, bfloat16 for CUDA
     if device == "cuda":
         dtype = torch.bfloat16
-        device_map = "auto"
+        device_map = {"": "cuda:0"}  # Force single GPU (model is small enough)
     elif device == "mps":
         dtype = torch.float32  # MPS doesn't support bfloat16
         device_map = {"": device}
