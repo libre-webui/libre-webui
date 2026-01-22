@@ -1,0 +1,8 @@
+# Qwen3-TTS OpenAI-Compatible Server Requirements
+# Requires Python 3.12+ and GPU (NVIDIA CUDA, Apple MPS) or CPU
+
+qwen-tts>=0.1.0
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.9
+scipy>=1.11.0
