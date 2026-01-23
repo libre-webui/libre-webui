@@ -76,6 +76,7 @@ import usersRoutes from './routes/users.js';
 import personaRoutes from './routes/personas.js';
 import ttsRoutes from './routes/tts.js';
 import imageGenRoutes from './routes/imageGen.js';
+import huggingfaceHubRoutes from './routes/huggingfaceHub.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import { GitHubOAuthService } from './services/simpleGitHubOAuth.js';
@@ -370,6 +371,7 @@ app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
 app.use('/api/image-gen', imageGenRateLimiter, optionalAuth, imageGenRoutes);
+app.use('/api/huggingface-hub', huggingfaceHubRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (

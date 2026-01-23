@@ -68,4 +68,14 @@ export {
   RotateCcw,
   Info,
   Puzzle,
+
+  // Search & Discovery
+  Search,
+  Filter,
+  TrendingUp,
+
+  // Social & Links
+  Heart,
+  ExternalLink,
+  Zap,
 } from 'lucide-react';

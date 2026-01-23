@@ -34,7 +34,7 @@
 
 ## Why Libre WebUI?
 
-A simple, self-hosted interface for AI chat. Run it locally with Ollama, connect to OpenAI, Anthropic, or 9+ providers—all from one UI.
+A simple, self-hosted interface for AI chat. Run it locally with Ollama, connect to OpenAI, Anthropic, HuggingFace, or 10+ providers—all from one UI.
 
 - **Your data stays yours** — Zero telemetry, fully self-hosted
 - **Extensible plugin system** — Ollama, OpenAI, Anthropic, and any OpenAI-compatible API
@@ -59,7 +59,8 @@ A simple, self-hosted interface for AI chat. Run it locally with Ollama, connect
 ### AI Providers
 
 - **Local**: Ollama (full integration)
-- **Cloud**: OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, and more
+- **Cloud**: OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, HuggingFace, and more
+- **HuggingFace Hub** — 1M+ models for chat, TTS, image gen, embeddings, STT
 - **Plugin System** — Add any OpenAI-compatible API via JSON config
 
 </td>
@@ -201,6 +202,7 @@ OLLAMA_BASE_URL=http://localhost:11434
 # Cloud AI Providers (add the ones you need)
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
+HUGGINGFACE_API_KEY=hf_...
 ```
 
 ### Desktop App (In Development)
