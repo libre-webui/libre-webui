@@ -266,7 +266,6 @@
       "documents": "Dokumenty",
       "tts": "Tekst na mowę",
       "imageGen": "Generowanie obrazów",
-      "system": "System",
       "data": "Dane",
       "about": "O programie"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Przeciągnij i upuść obraz lub kliknij, aby przeglądać",
         "chooseImage": "Wybierz obraz"
       }
-    },
-    "system": {
-      "title": "System",
-      "currentModel": "Bieżący model",
-      "notSet": "Nie ustawiono"
     },
     "saveSettings": "Zapisz ustawienia",
     "model": {

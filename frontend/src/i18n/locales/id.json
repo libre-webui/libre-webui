@@ -266,7 +266,6 @@
       "documents": "Dokumen",
       "tts": "Text-to-Speech",
       "imageGen": "Pembuatan Gambar",
-      "system": "Sistem",
       "data": "Data",
       "about": "Tentang"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Seret dan lepas gambar atau klik untuk menelusuri",
         "chooseImage": "Pilih Gambar"
       }
-    },
-    "system": {
-      "title": "Sistem",
-      "currentModel": "Model Saat Ini",
-      "notSet": "Belum diatur"
     },
     "saveSettings": "Simpan Pengaturan",
     "model": {

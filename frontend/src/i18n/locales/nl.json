@@ -266,7 +266,6 @@
       "documents": "Documenten",
       "tts": "Tekst-naar-spraak",
       "imageGen": "Beeldgeneratie",
-      "system": "Systeem",
       "data": "Gegevens",
       "about": "Over"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Sleep een afbeelding of klik om te bladeren",
         "chooseImage": "Afbeelding kiezen"
       }
-    },
-    "system": {
-      "title": "Systeem",
-      "currentModel": "Huidig model",
-      "notSet": "Niet ingesteld"
     },
     "saveSettings": "Instellingen opslaan",
     "model": {

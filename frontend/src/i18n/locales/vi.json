@@ -266,7 +266,6 @@
       "documents": "Tài liệu",
       "tts": "Chuyển văn bản thành giọng nói",
       "imageGen": "Tạo hình ảnh",
-      "system": "Hệ thống",
       "data": "Dữ liệu",
       "about": "Giới thiệu"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Kéo và thả hình ảnh hoặc nhấp để duyệt",
         "chooseImage": "Chọn hình ảnh"
       }
-    },
-    "system": {
-      "title": "Hệ thống",
-      "currentModel": "Mô hình hiện tại",
-      "notSet": "Chưa đặt"
     },
     "saveSettings": "Lưu cài đặt",
     "model": {
