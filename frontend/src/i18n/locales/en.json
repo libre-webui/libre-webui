@@ -1002,7 +1002,8 @@
     "generating": "Generating...",
     "success": "Image generated successfully",
     "failed": "Failed to generate image",
-    "enterPrompt": "Please enter a prompt"
+    "enterPrompt": "Please enter a prompt",
+    "promptTooLong": "Prompt exceeds maximum length of {{max}} characters"
   },
   "errorBoundary": {
     "title": "Something went wrong",
