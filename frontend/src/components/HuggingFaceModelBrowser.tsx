@@ -1,0 +1,351 @@
+/*
+ * Libre WebUI
+ * Copyright (C) 2025 Kroonen AI, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import React, { useEffect, useState, useCallback } from 'react';
+import { huggingfaceHubApi, HuggingFaceModel } from '@/utils/api';
+import { Button } from '@/components/ui/Button';
+import {
+  Search,
+  X,
+  Download,
+  Heart,
+  ExternalLink,
+  Zap,
+  Filter,
+  TrendingUp,
+  Check,
+  Loader,
+} from '@/components/icons';
+
+interface HuggingFaceModelBrowserProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSelectModel?: (modelId: string) => void;
+  selectedModels?: string[];
+}
+
+type SortOption = 'downloads' | 'likes' | 'trending';
+type TaskOption =
+  | 'text-generation'
+  | 'text-to-speech'
+  | 'text-to-image'
+  | 'automatic-speech-recognition';
+
+const TASK_OPTIONS: { value: TaskOption; label: string }[] = [
+  { value: 'text-generation', label: 'Text Generation' },
+  { value: 'text-to-speech', label: 'Text to Speech' },
+  { value: 'text-to-image', label: 'Text to Image' },
+  { value: 'automatic-speech-recognition', label: 'Speech Recognition' },
+];
+
+const SORT_OPTIONS: { value: SortOption; label: string }[] = [
+  { value: 'trending', label: 'Trending' },
+  { value: 'downloads', label: 'Most Downloads' },
+  { value: 'likes', label: 'Most Liked' },
+];
+
+export const HuggingFaceModelBrowser: React.FC<
+  HuggingFaceModelBrowserProps
+> = ({ isOpen, onClose, onSelectModel, selectedModels = [] }) => {
+  const [models, setModels] = useState<HuggingFaceModel[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [task, setTask] = useState<TaskOption>('text-generation');
+  const [sort, setSort] = useState<SortOption>('trending');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Debounced search
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const fetchModels = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await huggingfaceHubApi.getModels({
+        task,
+        search: debouncedSearch || undefined,
+        sort,
+        limit: 50,
+      });
+
+      if (response.success && response.data) {
+        setModels(response.data);
+      } else {
+        setError(response.error || 'Failed to fetch models');
+      }
+    } catch (_err) {
+      setError('Failed to connect to HuggingFace Hub');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [task, debouncedSearch, sort]);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchModels();
+    }
+  }, [isOpen, fetchModels]);
+
+  const formatNumber = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  const handleSelectModel = (modelId: string) => {
+    if (onSelectModel) {
+      onSelectModel(modelId);
+    }
+  };
+
+  const isModelSelected = (modelId: string) => selectedModels.includes(modelId);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'>
+      <div className='relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col overflow-hidden'>
+        {/* Header */}
+        <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center gap-3'>
+            <div className='p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg'>
+              <Zap className='w-5 h-5 text-yellow-600 dark:text-yellow-400' />
+            </div>
+            <div>
+              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+                HuggingFace Model Browser
+              </h2>
+              <p className='text-sm text-gray-500 dark:text-gray-400'>
+                Browse and select models from the Hub
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+          >
+            <X className='w-5 h-5 text-gray-500' />
+          </button>
+        </div>
+
+        {/* Search and Filters */}
+        <div className='px-6 py-4 border-b border-gray-200 dark:border-gray-700 space-y-4'>
+          {/* Search Bar */}
+          <div className='relative'>
+            <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+            <input
+              type='text'
+              placeholder='Search models...'
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className='w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 dark:text-white placeholder-gray-500'
+            />
+          </div>
+
+          {/* Filter Toggle */}
+          <div className='flex items-center justify-between'>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className='flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors'
+            >
+              <Filter className='w-4 h-4' />
+              Filters
+            </button>
+            <div className='text-sm text-gray-500 dark:text-gray-400'>
+              {models.length} models found
+            </div>
+          </div>
+
+          {/* Expanded Filters */}
+          {showFilters && (
+            <div className='flex flex-wrap gap-4'>
+              {/* Task Filter */}
+              <div className='flex-1 min-w-[200px]'>
+                <label className='block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'>
+                  Task
+                </label>
+                <select
+                  value={task}
+                  onChange={e => setTask(e.target.value as TaskOption)}
+                  className='w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none'
+                >
+                  {TASK_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sort Filter */}
+              <div className='flex-1 min-w-[200px]'>
+                <label className='block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'>
+                  Sort By
+                </label>
+                <select
+                  value={sort}
+                  onChange={e => setSort(e.target.value as SortOption)}
+                  className='w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none'
+                >
+                  {SORT_OPTIONS.map(option => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Model List */}
+        <div className='flex-1 overflow-y-auto px-6 py-4'>
+          {isLoading ? (
+            <div className='flex items-center justify-center py-12'>
+              <Loader className='w-8 h-8 text-blue-500 animate-spin' />
+            </div>
+          ) : error ? (
+            <div className='flex flex-col items-center justify-center py-12'>
+              <p className='text-red-500 dark:text-red-400 mb-4'>{error}</p>
+              <Button onClick={fetchModels} variant='outline' size='sm'>
+                Retry
+              </Button>
+            </div>
+          ) : models.length === 0 ? (
+            <div className='flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400'>
+              <Search className='w-12 h-12 mb-4 opacity-50' />
+              <p>No models found</p>
+              <p className='text-sm'>Try adjusting your search or filters</p>
+            </div>
+          ) : (
+            <div className='space-y-3'>
+              {models.map(model => (
+                <div
+                  key={model.id}
+                  className={`p-4 rounded-lg border transition-all ${
+                    isModelSelected(model.id)
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                  }`}
+                >
+                  <div className='flex items-start justify-between gap-4'>
+                    <div className='flex-1 min-w-0'>
+                      <div className='flex items-center gap-2 mb-1'>
+                        <h3 className='font-medium text-gray-900 dark:text-white truncate'>
+                          {model.id}
+                        </h3>
+                        {model.gated && (
+                          <span className='px-1.5 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded'>
+                            Gated
+                          </span>
+                        )}
+                      </div>
+                      <p className='text-sm text-gray-500 dark:text-gray-400 mb-2'>
+                        by {model.author}
+                      </p>
+                      <div className='flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400'>
+                        <span className='flex items-center gap-1'>
+                          <Download className='w-4 h-4' />
+                          {formatNumber(model.downloads)}
+                        </span>
+                        <span className='flex items-center gap-1'>
+                          <Heart className='w-4 h-4' />
+                          {formatNumber(model.likes)}
+                        </span>
+                        {model.pipeline_tag && (
+                          <span className='px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs'>
+                            {model.pipeline_tag}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <a
+                        href={`https://huggingface.co/${model.id}`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                        title='View on HuggingFace'
+                      >
+                        <ExternalLink className='w-4 h-4' />
+                      </a>
+                      {onSelectModel && (
+                        <Button
+                          onClick={() => handleSelectModel(model.id)}
+                          variant={
+                            isModelSelected(model.id) ? 'primary' : 'outline'
+                          }
+                          size='sm'
+                        >
+                          {isModelSelected(model.id) ? (
+                            <>
+                              <Check className='w-4 h-4 mr-1' />
+                              Selected
+                            </>
+                          ) : (
+                            'Select'
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className='px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'>
+          <div className='flex items-center justify-between'>
+            <p className='text-sm text-gray-500 dark:text-gray-400'>
+              Powered by{' '}
+              <a
+                href='https://huggingface.co'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-blue-500 hover:underline'
+              >
+                HuggingFace Hub
+              </a>
+            </p>
+            <div className='flex items-center gap-2'>
+              <Button onClick={fetchModels} variant='outline' size='sm'>
+                <TrendingUp className='w-4 h-4 mr-1' />
+                Refresh
+              </Button>
+              <Button onClick={onClose} variant='outline' size='sm'>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default HuggingFaceModelBrowser;

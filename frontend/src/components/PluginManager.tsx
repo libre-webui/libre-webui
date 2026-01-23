@@ -26,7 +26,9 @@ import {
   Trash2,
   Check,
   X,
+  Zap,
 } from '@/components/icons';
+import { HuggingFaceModelBrowser } from './HuggingFaceModelBrowser';
 
 interface PluginManagerProps {
   onClose?: () => void;
@@ -52,6 +54,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showJsonForm, setShowJsonForm] = useState(false);
+  const [showHuggingFaceBrowser, setShowHuggingFaceBrowser] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -129,6 +132,16 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
               disabled={isLoading}
             >
               Add JSON
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setShowHuggingFaceBrowser(true)}
+              disabled={isLoading}
+              className='text-yellow-600 border-yellow-300 hover:bg-yellow-50 dark:text-yellow-400 dark:border-yellow-600 dark:hover:bg-yellow-900/20'
+            >
+              <Zap className='w-4 h-4 mr-2' />
+              Browse HF Hub
             </Button>
             {onClose && (
               <Button variant='ghost' size='sm' onClick={onClose}>
@@ -334,6 +347,17 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
           </div>
         )}
       </div>
+
+      {/* HuggingFace Model Browser */}
+      <HuggingFaceModelBrowser
+        isOpen={showHuggingFaceBrowser}
+        onClose={() => setShowHuggingFaceBrowser(false)}
+        onSelectModel={modelId => {
+          // Copy model ID to clipboard for easy use
+          navigator.clipboard.writeText(modelId);
+          // Show a brief notification (the user can add the model to their HF plugin manually)
+        }}
+      />
     </div>
   );
 };

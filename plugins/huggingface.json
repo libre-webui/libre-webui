@@ -1,0 +1,148 @@
+{
+  "id": "huggingface",
+  "name": "HuggingFace",
+  "type": "completion",
+  "endpoint": "https://router.huggingface.co/v1/chat/completions",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "HUGGINGFACE_API_KEY"
+  },
+  "model_map": [
+    "meta-llama/Llama-3.3-70B-Instruct",
+    "meta-llama/Llama-3.1-70B-Instruct",
+    "meta-llama/Llama-3.1-8B-Instruct",
+    "meta-llama/Llama-3.2-3B-Instruct",
+    "meta-llama/Llama-3.2-1B-Instruct",
+    "meta-llama/Llama-4-Scout-17B-16E-Instruct",
+    "meta-llama/Llama-4-Maverick-17B-128E-Instruct",
+    "Qwen/Qwen2.5-72B-Instruct",
+    "Qwen/Qwen2.5-32B-Instruct",
+    "Qwen/Qwen2.5-7B-Instruct",
+    "Qwen/Qwen2.5-Coder-32B-Instruct",
+    "Qwen/Qwen3-235B-A22B",
+    "Qwen/Qwen3-32B",
+    "Qwen/QwQ-32B",
+    "mistralai/Mistral-7B-Instruct-v0.3",
+    "mistralai/Mistral-Nemo-Instruct-2407",
+    "mistralai/Mixtral-8x7B-Instruct-v0.1",
+    "mistralai/Mistral-Small-24B-Instruct-2501",
+    "google/gemma-2-27b-it",
+    "google/gemma-2-9b-it",
+    "google/gemma-3-27b-it",
+    "google/gemma-3-12b-it",
+    "microsoft/Phi-4",
+    "microsoft/Phi-3.5-mini-instruct",
+    "deepseek-ai/DeepSeek-R1-Distill-Qwen-32B",
+    "deepseek-ai/DeepSeek-R1-Distill-Llama-70B",
+    "NousResearch/Hermes-3-Llama-3.1-70B",
+    "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",
+    "CohereForAI/c4ai-command-r-plus-08-2024",
+    "01-ai/Yi-1.5-34B-Chat"
+  ],
+  "description": "Access 1M+ models via HuggingFace Inference Providers. Billing centralized on your HF account.",
+  "documentation_url": "https://huggingface.co/docs/inference-providers",
+  "capabilities": {
+    "tts": {
+      "endpoint": "https://router.huggingface.co/hf-inference/models",
+      "model_map": [
+        "facebook/mms-tts-eng",
+        "facebook/mms-tts-fra",
+        "facebook/mms-tts-deu",
+        "facebook/mms-tts-spa",
+        "coqui/XTTS-v2",
+        "suno/bark",
+        "suno/bark-small",
+        "parler-tts/parler-tts-mini-v1",
+        "parler-tts/parler-tts-large-v1",
+        "OuteAI/OuteTTS-0.3-1B"
+      ],
+      "config": {
+        "voices": ["default"],
+        "default_voice": "default",
+        "formats": ["flac", "wav", "mp3"],
+        "default_format": "flac",
+        "max_characters": 5000,
+        "supports_streaming": false
+      }
+    },
+    "image": {
+      "endpoint": "https://router.huggingface.co/hf-inference/models",
+      "model_map": [
+        "black-forest-labs/FLUX.1-dev",
+        "black-forest-labs/FLUX.1-schnell",
+        "stabilityai/stable-diffusion-xl-base-1.0",
+        "stabilityai/stable-diffusion-3.5-large",
+        "stabilityai/stable-diffusion-3.5-large-turbo",
+        "stabilityai/stable-diffusion-3-medium",
+        "runwayml/stable-diffusion-v1-5",
+        "CompVis/stable-diffusion-v1-4",
+        "prompthero/openjourney-v4",
+        "segmind/SSD-1B"
+      ],
+      "config": {
+        "sizes": [
+          "512x512",
+          "768x768",
+          "1024x1024",
+          "1024x768",
+          "768x1024"
+        ],
+        "default_size": "1024x1024",
+        "qualities": ["standard", "high"],
+        "default_quality": "standard",
+        "max_prompt_length": 2000
+      }
+    },
+    "embeddings": {
+      "endpoint": "https://router.huggingface.co/hf-inference/models",
+      "model_map": [
+        "sentence-transformers/all-MiniLM-L6-v2",
+        "sentence-transformers/all-mpnet-base-v2",
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+        "BAAI/bge-small-en-v1.5",
+        "BAAI/bge-base-en-v1.5",
+        "BAAI/bge-large-en-v1.5",
+        "jinaai/jina-embeddings-v2-base-en",
+        "jinaai/jina-embeddings-v2-small-en",
+        "intfloat/e5-small-v2",
+        "intfloat/e5-base-v2",
+        "intfloat/e5-large-v2",
+        "thenlper/gte-small",
+        "thenlper/gte-base",
+        "thenlper/gte-large"
+      ],
+      "config": {
+        "max_tokens": 512,
+        "dimensions": {
+          "sentence-transformers/all-MiniLM-L6-v2": 384,
+          "sentence-transformers/all-mpnet-base-v2": 768,
+          "BAAI/bge-small-en-v1.5": 384,
+          "BAAI/bge-base-en-v1.5": 768,
+          "BAAI/bge-large-en-v1.5": 1024
+        }
+      }
+    },
+    "stt": {
+      "endpoint": "https://router.huggingface.co/hf-inference/models",
+      "model_map": [
+        "openai/whisper-large-v3",
+        "openai/whisper-large-v3-turbo",
+        "openai/whisper-medium",
+        "openai/whisper-small",
+        "openai/whisper-base",
+        "openai/whisper-tiny",
+        "facebook/wav2vec2-large-960h-lv60-self",
+        "facebook/wav2vec2-base-960h",
+        "nvidia/canary-1b",
+        "Systran/faster-whisper-large-v3"
+      ],
+      "config": {
+        "formats": ["flac", "mp3", "wav", "webm", "ogg"],
+        "max_duration_seconds": 300,
+        "languages": ["en", "es", "fr", "de", "it", "pt", "nl", "ja", "ko", "zh"],
+        "supports_timestamps": true
+      }
+    }
+  }
+}

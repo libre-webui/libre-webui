@@ -1966,4 +1966,113 @@ export const imageGenApi = {
   },
 };
 
+// HuggingFace Hub API types
+export interface HuggingFaceModel {
+  id: string;
+  modelId: string;
+  author: string;
+  downloads: number;
+  likes: number;
+  tags: string[];
+  pipeline_tag?: string;
+  library_name?: string;
+  gated: boolean | string;
+}
+
+// HuggingFace Hub API
+export const huggingfaceHubApi = {
+  // Get models with filters
+  getModels: (params?: {
+    task?: string;
+    search?: string;
+    author?: string;
+    sort?: 'downloads' | 'likes' | 'trending';
+    direction?: 'asc' | 'desc';
+    limit?: number;
+    inference?: boolean;
+  }): Promise<ApiResponse<HuggingFaceModel[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<HuggingFaceModel[]>([
+        {
+          id: 'meta-llama/Llama-3.3-70B-Instruct',
+          modelId: 'meta-llama/Llama-3.3-70B-Instruct',
+          author: 'meta-llama',
+          downloads: 1000000,
+          likes: 5000,
+          tags: ['text-generation', 'llama'],
+          pipeline_tag: 'text-generation',
+          gated: false,
+        },
+      ]);
+    }
+
+    return api
+      .get('/huggingface-hub/models', {
+        params: {
+          ...params,
+          inference: params?.inference !== false ? 'true' : 'false',
+        },
+      })
+      .then(res => res.data);
+  },
+
+  // Get trending models
+  getTrending: (params?: {
+    task?: string;
+    limit?: number;
+  }): Promise<ApiResponse<HuggingFaceModel[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<HuggingFaceModel[]>([]);
+    }
+
+    return api
+      .get('/huggingface-hub/trending', { params })
+      .then(res => res.data);
+  },
+
+  // Get specific model details
+  getModel: (
+    author: string,
+    modelName: string
+  ): Promise<ApiResponse<HuggingFaceModel>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<HuggingFaceModel>({
+        id: `${author}/${modelName}`,
+        modelId: `${author}/${modelName}`,
+        author,
+        downloads: 0,
+        likes: 0,
+        tags: [],
+        gated: false,
+      });
+    }
+
+    return api
+      .get(`/huggingface-hub/models/${author}/${modelName}`)
+      .then(res => res.data);
+  },
+
+  // Get available tasks
+  getTasks: (): Promise<ApiResponse<string[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<string[]>([
+        'text-generation',
+        'text-to-speech',
+        'text-to-image',
+      ]);
+    }
+
+    return api.get('/huggingface-hub/tasks').then(res => res.data);
+  },
+
+  // Clear model cache
+  clearCache: (): Promise<ApiResponse<boolean>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<boolean>(true);
+    }
+
+    return api.post('/huggingface-hub/cache/clear').then(res => res.data);
+  },
+};
+
 export default api;

@@ -46,7 +46,7 @@ Opens at `http://localhost:8080`. That's it.
 - Ollama (full integration)
 
 **Cloud (via plugins):**
-- OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, and more
+- OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, HuggingFace, and more
 
 ## Documentation
 
@@ -63,6 +63,7 @@ Opens at `http://localhost:8080`. That's it.
 
 ### Features
 - [Plugin Architecture](./PLUGIN_ARCHITECTURE) - External AI providers
+- [HuggingFace Hub](./HUGGINGFACE_HUB) - 1M+ models: chat, TTS, image gen, embeddings, STT
 - [Document Chat (RAG)](./RAG_FEATURE) - Upload and chat with documents
 - [Artifacts](./ARTIFACTS_FEATURE) - Interactive content
 - [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK) - Custom AI personalities
