@@ -20,7 +20,7 @@ import {
   X,
   Moon,
   Sun,
-  Sparkles,
+  Circle,
   Bot,
   Database,
   Palette,
@@ -982,7 +982,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400'
                 }`}
               >
-                <Sparkles className='h-4 w-4' />
+                <Circle className='h-4 w-4' />
                 {t('settings.appearance.theme.amoled')}
               </button>
             </div>
