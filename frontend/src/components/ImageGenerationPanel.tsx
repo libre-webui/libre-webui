@@ -373,7 +373,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
                   placeholder={t('imageGeneration.promptPlaceholder')}
-                  rows={3}
+                  rows={5}
                   className={cn(
                     'w-full px-3 py-2 rounded-lg text-sm resize-none',
                     'bg-gray-50 dark:bg-dark-200 ophelia:bg-[#121212]',
