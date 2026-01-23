@@ -1,0 +1,36 @@
+{
+  "id": "kyutai-tts",
+  "name": "Kyutai TTS",
+  "type": "tts",
+  "endpoint": "http://localhost:8200/v1/audio/speech",
+  "auth": {
+    "header": "",
+    "key_env": ""
+  },
+  "model_map": [
+    "kyutai-tts",
+    "kyutai-tts-clone",
+    "tts-1"
+  ],
+  "capabilities": {
+    "tts": {
+      "endpoint": "http://localhost:8200/v1/audio/speech",
+      "model_map": [
+        "kyutai-tts",
+        "kyutai-tts-clone",
+        "tts-1"
+      ],
+      "config": {
+        "voices": ["Alba", "Marius", "Javert", "Jean", "Fantine", "Cosette", "Eponine", "Azelma"],
+        "default_voice": "Alba",
+        "formats": ["wav"],
+        "default_format": "wav",
+        "max_characters": 10000,
+        "supports_streaming": true,
+        "no_auth_required": true
+      }
+    }
+  },
+  "description": "Kyutai Pocket TTS local server (CPU-based, voice cloning support)",
+  "documentation_url": "https://github.com/kyutai-labs/pocket-tts"
+}
