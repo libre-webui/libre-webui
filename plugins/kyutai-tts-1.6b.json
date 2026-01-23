@@ -1,0 +1,34 @@
+{
+  "id": "kyutai-tts-1.6b",
+  "name": "Kyutai TTS 1.6B",
+  "type": "tts",
+  "endpoint": "http://localhost:8201/v1/audio/speech",
+  "auth": {
+    "header": "",
+    "key_env": ""
+  },
+  "model_map": [
+    "kyutai-tts-1.6b",
+    "tts-1-hd"
+  ],
+  "capabilities": {
+    "tts": {
+      "endpoint": "http://localhost:8201/v1/audio/speech",
+      "model_map": [
+        "kyutai-tts-1.6b",
+        "tts-1-hd"
+      ],
+      "config": {
+        "voices": ["Alba", "Alba-Casual", "Alba-Merchant", "Alba-Announcer", "Expresso-Happy", "Expresso-Sad", "Expresso-Angry", "VCTK-P225", "VCTK-P226", "VCTK-P227", "VCTK-P228"],
+        "default_voice": "Alba",
+        "formats": ["wav"],
+        "default_format": "wav",
+        "max_characters": 10000,
+        "supports_streaming": true,
+        "no_auth_required": true
+      }
+    }
+  },
+  "description": "Kyutai TTS 1.6B GPU-accelerated server (CUDA, MPS, CPU)",
+  "documentation_url": "https://github.com/kyutai-labs/delayed-streams-modeling"
+}

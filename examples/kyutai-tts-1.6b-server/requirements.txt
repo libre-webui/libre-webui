@@ -1,0 +1,6 @@
+moshi>=0.2.6
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart>=0.0.6
+scipy>=1.11.0
+torch>=2.1.0
