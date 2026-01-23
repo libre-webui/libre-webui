@@ -33,6 +33,7 @@ interface ImageGenPlugin {
     default_size?: string;
     qualities?: string[];
     default_quality?: string;
+    max_prompt_length?: number;
   };
 }
 
@@ -65,6 +66,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
     'standard',
     'high',
   ]);
+  const [maxPromptLength, setMaxPromptLength] = useState<number | null>(null);
 
   // Load available plugins on mount
   useEffect(() => {
@@ -96,6 +98,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                   'standard'
               );
             }
+            setMaxPromptLength(firstPlugin.config?.max_prompt_length ?? null);
           }
         }
       } catch (error) {
@@ -129,12 +132,22 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
           );
         }
       }
+      setMaxPromptLength(plugin.config?.max_prompt_length ?? null);
     }
   }, [selectedPlugin, plugins, selectedModel, size, quality]);
 
   const handleGenerate = async () => {
     if (!selectedModel || !prompt.trim()) {
       toast.error(t('imageGeneration.enterPrompt'));
+      return;
+    }
+
+    if (maxPromptLength && prompt.length > maxPromptLength) {
+      toast.error(
+        t('imageGeneration.promptTooLong', {
+          max: maxPromptLength.toLocaleString(),
+        })
+      );
       return;
     }
 
@@ -367,9 +380,25 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
                     'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
                     'placeholder-gray-500 dark:placeholder-gray-400 ophelia:placeholder-[#737373]',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                    maxPromptLength &&
+                      prompt.length > maxPromptLength &&
+                      'border-red-500 dark:border-red-500 ophelia:border-red-500'
                   )}
                 />
+                {maxPromptLength && (
+                  <div
+                    className={cn(
+                      'text-xs mt-1 text-right',
+                      prompt.length > maxPromptLength
+                        ? 'text-red-500'
+                        : 'text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'
+                    )}
+                  >
+                    {prompt.length.toLocaleString()} /{' '}
+                    {maxPromptLength.toLocaleString()}
+                  </div>
+                )}
               </div>
 
               {/* Generated Image Preview */}
