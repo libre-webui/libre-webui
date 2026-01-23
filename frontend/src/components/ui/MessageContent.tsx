@@ -95,13 +95,15 @@ export const MessageContent: React.FC<MessageContentProps> = ({
           code({ inline, className, children, ...props }: any) {
             const match = /language-(\w+)/.exec(className || '');
             const codeString = String(children).replace(/\n$/, '');
+            const language = match ? match[1] : null;
 
-            if (!inline && match) {
+            // Handle block code (with or without language)
+            if (!inline) {
               return (
                 <div className='relative group my-4 overflow-hidden rounded-xl border border-gray-200 dark:border-dark-300 shadow-sm'>
                   <div className='flex items-center justify-between bg-gray-50 dark:bg-dark-100 px-4 py-3 border-b border-gray-200 dark:border-dark-300'>
                     <span className='text-xs font-semibold text-gray-700 dark:text-dark-700 uppercase tracking-wide'>
-                      {match[1]}
+                      {language || 'text'}
                     </span>
                     <button
                       onClick={() => copyToClipboard(codeString)}
@@ -117,7 +119,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
                   </div>
                   <div className='overflow-x-auto'>
                     <OptimizedSyntaxHighlighter
-                      language={match[1]}
+                      language={language || 'text'}
                       isDark={theme.mode === 'dark'}
                       className='!m-0 !rounded-none !border-none'
                     >
