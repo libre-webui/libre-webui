@@ -266,7 +266,6 @@
       "documents": "ドキュメント",
       "tts": "音声読み上げ",
       "imageGen": "画像生成",
-      "system": "システム",
       "data": "データ",
       "about": "概要"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "画像をドラッグ＆ドロップするか、クリックして参照",
         "chooseImage": "画像を選択"
       }
-    },
-    "system": {
-      "title": "システム",
-      "currentModel": "現在のモデル",
-      "notSet": "未設定"
     },
     "saveSettings": "設定を保存",
     "model": {

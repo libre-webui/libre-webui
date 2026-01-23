@@ -266,7 +266,6 @@
       "documents": "Belgeler",
       "tts": "Metin-Konuşma",
       "imageGen": "Görsel Üretimi",
-      "system": "Sistem",
       "data": "Veri",
       "about": "Hakkında"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Bir görsel sürükleyip bırakın veya göz atmak için tıklayın",
         "chooseImage": "Görsel Seç"
       }
-    },
-    "system": {
-      "title": "Sistem",
-      "currentModel": "Mevcut Model",
-      "notSet": "Ayarlanmamış"
     },
     "saveSettings": "Ayarları Kaydet",
     "model": {

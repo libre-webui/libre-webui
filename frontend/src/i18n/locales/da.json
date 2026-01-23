@@ -266,7 +266,6 @@
       "documents": "Dokumenter",
       "tts": "Tekst-til-tale",
       "imageGen": "Billedgenerering",
-      "system": "System",
       "data": "Data",
       "about": "Om"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Træk og slip et billede eller klik for at gennemse",
         "chooseImage": "Vælg billede"
       }
-    },
-    "system": {
-      "title": "System",
-      "currentModel": "Nuværende model",
-      "notSet": "Ikke angivet"
     },
     "saveSettings": "Gem indstillinger",
     "model": {

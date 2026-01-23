@@ -266,7 +266,6 @@
       "documents": "Documents",
       "tts": "Text-to-Speech",
       "imageGen": "Image Generation",
-      "system": "System",
       "data": "Data",
       "about": "About"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Drag and drop an image or click to browse",
         "chooseImage": "Choose Image"
       }
-    },
-    "system": {
-      "title": "System",
-      "currentModel": "Current Model",
-      "notSet": "Not set"
     },
     "saveSettings": "Save Settings",
     "model": {

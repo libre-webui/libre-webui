@@ -24,9 +24,7 @@ import {
   Bot,
   Database,
   Palette,
-  Monitor,
   MessageSquare,
-  Cpu,
   Info,
   Github,
   ExternalLink,
@@ -72,13 +70,6 @@ import toast from 'react-hot-toast';
 // Get version from Vite env (includes -dev suffix on dev branch)
 const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.0';
 
-interface SystemInfo {
-  ollamaVersion?: string;
-  modelsCount: number;
-  sessionsCount: number;
-  isHealthy: boolean;
-}
-
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -120,11 +111,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const [activeTab, setActiveTab] = useState('appearance');
   const [tempSystemMessage, setTempSystemMessage] = useState(systemMessage);
-  const [systemInfo, setSystemInfo] = useState<SystemInfo>({
-    modelsCount: 0,
-    sessionsCount: 0,
-    isHealthy: false,
-  });
 
   const [updatingAllModels, setUpdatingAllModels] = useState(false);
   const [updateProgress, setUpdateProgress] = useState<{
@@ -228,10 +214,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   );
   const importFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load system information
+  // Load data when modal opens
   useEffect(() => {
     if (isOpen) {
-      loadSystemInfo();
       loadEmbeddingStatus();
       loadTTSData();
       setTempSystemMessage(systemMessage);
@@ -272,27 +257,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, systemMessage]);
-
-  const loadSystemInfo = async () => {
-    try {
-      const [healthResponse, versionResponse] = await Promise.all([
-        ollamaApi.checkHealth().catch(() => ({ success: false })),
-        ollamaApi.getVersion().catch(() => ({ success: false, data: null })),
-      ]);
-
-      setSystemInfo({
-        ollamaVersion:
-          versionResponse.success && versionResponse.data
-            ? versionResponse.data.version
-            : undefined,
-        modelsCount: models.length,
-        sessionsCount: sessions.length,
-        isHealthy: healthResponse.success,
-      });
-    } catch (_error) {
-      console.error('Failed to load system info:', _error);
-    }
-  };
 
   const loadPluginCredentials = async () => {
     try {
@@ -755,7 +719,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       )
     ) {
       await clearAllSessions();
-      loadSystemInfo(); // Refresh system info
       toast.success('All chat sessions deleted');
     }
   };
@@ -868,7 +831,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         setUpdatingAllModels(false);
         setUpdateProgress(null);
         toast.success('All models updated successfully!');
-        loadSystemInfo(); // Refresh models after update
+        loadModels(); // Refresh models list after update
       },
       error => {
         setUpdatingAllModels(false);
@@ -971,7 +934,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       icon: Database,
     },
     { id: 'plugins', label: t('settings.tabs.plugins'), icon: Puzzle },
-    { id: 'system', label: t('settings.tabs.system'), icon: Monitor },
     { id: 'data', label: t('settings.tabs.data'), icon: Database },
     { id: 'about', label: t('settings.tabs.about'), icon: Info },
   ];
@@ -1061,80 +1023,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Background Upload Section */}
             <BackgroundUpload />
-          </div>
-        );
-
-      case 'system':
-        return (
-          <div className='space-y-6'>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                {t('settings.system.title')}
-              </h3>
-
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
-                <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-                  <div className='flex items-center gap-2 mb-2'>
-                    <div
-                      className={`w-3 h-3 rounded-full ${systemInfo.isHealthy ? 'bg-green-500' : 'bg-red-500'}`}
-                    />
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      {t('settings.about.ollama.title')}
-                    </span>
-                  </div>
-                  <p className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                    {systemInfo.isHealthy
-                      ? t('settings.about.ollama.healthy')
-                      : t('settings.about.ollama.unhealthy')}
-                  </p>
-                  {systemInfo.ollamaVersion && (
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      v{systemInfo.ollamaVersion}
-                    </p>
-                  )}
-                </div>
-
-                <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-                  <div className='flex items-center gap-2 mb-2'>
-                    <Cpu className='h-3 w-3 text-gray-500 dark:text-dark-500' />
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      {t('settings.about.stats.models')}
-                    </span>
-                  </div>
-                  <p className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                    {systemInfo.modelsCount}
-                  </p>
-                </div>
-
-                <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-                  <div className='flex items-center gap-2 mb-2'>
-                    <MessageSquare className='h-3 w-3 text-green-500' />
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      {t('settings.about.stats.sessions')}
-                    </span>
-                  </div>
-                  <p className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                    {systemInfo.sessionsCount}
-                  </p>
-                </div>
-
-                <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-                  <div className='flex items-center gap-2 mb-2'>
-                    <Database className='h-3 w-3 text-purple-500' />
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      {t('settings.system.currentModel')}
-                    </span>
-                  </div>
-                  <p className='text-sm font-semibold text-gray-900 dark:text-gray-100 truncate'>
-                    {selectedModel || t('settings.system.notSet')}
-                  </p>
-                </div>
-              </div>
-
-              <Button onClick={loadSystemInfo} variant='outline' size='sm'>
-                {t('common.refresh')}
-              </Button>
-            </div>
           </div>
         );
 

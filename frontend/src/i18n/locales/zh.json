@@ -266,7 +266,6 @@
       "documents": "文档",
       "tts": "语音合成",
       "imageGen": "图像生成",
-      "system": "系统",
       "data": "数据",
       "about": "关于"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "拖放图片或点击浏览",
         "chooseImage": "选择图片"
       }
-    },
-    "system": {
-      "title": "系统",
-      "currentModel": "当前模型",
-      "notSet": "未设置"
     },
     "saveSettings": "保存设置",
     "model": {

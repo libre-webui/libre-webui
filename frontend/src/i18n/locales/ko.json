@@ -266,7 +266,6 @@
       "documents": "문서",
       "tts": "음성 합성",
       "imageGen": "이미지 생성",
-      "system": "시스템",
       "data": "데이터",
       "about": "정보"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "이미지를 끌어다 놓거나 클릭하여 찾아보기",
         "chooseImage": "이미지 선택"
       }
-    },
-    "system": {
-      "title": "시스템",
-      "currentModel": "현재 모델",
-      "notSet": "설정되지 않음"
     },
     "saveSettings": "설정 저장",
     "model": {

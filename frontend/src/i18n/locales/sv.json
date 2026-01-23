@@ -266,7 +266,6 @@
       "documents": "Dokument",
       "tts": "Text-till-tal",
       "imageGen": "Bildgenerering",
-      "system": "System",
       "data": "Data",
       "about": "Om"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Dra och släpp en bild eller klicka för att bläddra",
         "chooseImage": "Välj bild"
       }
-    },
-    "system": {
-      "title": "System",
-      "currentModel": "Nuvarande modell",
-      "notSet": "Ej inställd"
     },
     "saveSettings": "Spara inställningar",
     "model": {

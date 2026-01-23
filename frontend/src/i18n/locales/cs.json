@@ -266,7 +266,6 @@
       "documents": "Dokumenty",
       "tts": "Text na řeč",
       "imageGen": "Generování obrázků",
-      "system": "Systém",
       "data": "Data",
       "about": "O aplikaci"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Přetáhněte obrázek nebo klikněte pro procházení",
         "chooseImage": "Vybrat obrázek"
       }
-    },
-    "system": {
-      "title": "Systém",
-      "currentModel": "Aktuální model",
-      "notSet": "Nenastaveno"
     },
     "saveSettings": "Uložit nastavení",
     "model": {

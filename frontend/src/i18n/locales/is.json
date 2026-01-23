@@ -266,7 +266,6 @@
       "documents": "Skjöl",
       "tts": "Talgerving",
       "imageGen": "Myndsköpun",
-      "system": "Kerfi",
       "data": "Gögn",
       "about": "Um"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Dragðu og slepptu mynd eða smelltu til að fletta",
         "chooseImage": "Velja mynd"
       }
-    },
-    "system": {
-      "title": "Kerfi",
-      "currentModel": "Núverandi líkan",
-      "notSet": "Ekki stillt"
     },
     "saveSettings": "Vista stillingar",
     "model": {

@@ -266,7 +266,6 @@
       "documents": "Documentos",
       "tts": "Texto para Fala",
       "imageGen": "Geração de Imagens",
-      "system": "Sistema",
       "data": "Dados",
       "about": "Sobre"
     },
@@ -298,11 +297,6 @@
         "dragDrop": "Arraste e solte uma imagem ou clique para procurar",
         "chooseImage": "Escolher Imagem"
       }
-    },
-    "system": {
-      "title": "Sistema",
-      "currentModel": "Modelo Atual",
-      "notSet": "Não definido"
     },
     "saveSettings": "Salvar Configurações",
     "model": {
