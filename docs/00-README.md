@@ -67,6 +67,7 @@ Opens at `http://localhost:8080`. That's it.
 - [Artifacts](./ARTIFACTS_FEATURE) - Interactive content
 - [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK) - Custom AI personalities
 - [Qwen3-TTS](./QWEN3_TTS) - Local text-to-speech with voice cloning
+- [Kyutai TTS](./KYUTAI_TTS) - CPU and GPU text-to-speech with voice cloning
 
 ### Administration
 - [Authentication](./AUTHENTICATION) - User management and SSO
