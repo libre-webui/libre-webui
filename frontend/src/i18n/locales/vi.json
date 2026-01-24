@@ -751,6 +751,37 @@
         "failed": "Không thể tạo nhúng",
         "enterBoth": "Vui lòng chọn mô hình và nhập văn bản"
       }
+    },
+    "huggingface": {
+      "browseAll": "Xem tất cả trên HuggingFace",
+      "checkingGguf": "Đang tìm tệp GGUF...",
+      "noGgufAvailable": "Không có tệp GGUF để tải trực tiếp vào Ollama",
+      "ggufFilesCount": "Tệp GGUF ({{count}}) - Tải trực tiếp vào Ollama",
+      "noModelsFound": "Không tìm thấy mô hình",
+      "noResults": "Không tìm thấy mô hình. Thử điều chỉnh tìm kiếm hoặc bộ lọc.",
+      "browseAllLink": "Xem tất cả",
+      "search": "Tìm kiếm mô hình HuggingFace...",
+      "by": "bởi",
+      "gated": "Truy cập hạn chế",
+      "viewOnHF": "Xem trên HuggingFace",
+      "sortDownloads": "Lượt tải",
+      "sortLikes": "Lượt thích",
+      "sortRecent": "Gần đây",
+      "taskTextGeneration": "Tạo văn bản",
+      "taskTextToSpeech": "Văn bản thành giọng nói",
+      "taskTextToImage": "Văn bản thành hình ảnh",
+      "taskSpeechRecognition": "Nhận dạng giọng nói",
+      "tasks": {
+        "textGen": "Tạo văn bản",
+        "tts": "Văn bản thành giọng nói",
+        "image": "Văn bản thành hình ảnh",
+        "stt": "Nhận dạng giọng nói"
+      },
+      "sort": {
+        "downloads": "Tải nhiều nhất",
+        "likes": "Được thích nhiều nhất",
+        "recent": "Cập nhật gần đây"
+      }
     }
   },
   "personaManager": {

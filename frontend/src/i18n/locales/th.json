@@ -751,6 +751,37 @@
         "failed": "ไม่สามารถสร้าง embeddings",
         "enterBoth": "กรุณาเลือกโมเดลและป้อนข้อความ"
       }
+    },
+    "huggingface": {
+      "browseAll": "ดูทั้งหมดบน HuggingFace",
+      "checkingGguf": "กำลังค้นหาไฟล์ GGUF...",
+      "noGgufAvailable": "ไม่มีไฟล์ GGUF สำหรับดึงไปยัง Ollama โดยตรง",
+      "ggufFilesCount": "ไฟล์ GGUF ({{count}}) - ดึงไปยัง Ollama โดยตรง",
+      "noModelsFound": "ไม่พบโมเดล",
+      "noResults": "ไม่พบโมเดล ลองปรับการค้นหาหรือตัวกรอง",
+      "browseAllLink": "ดูทั้งหมด",
+      "search": "ค้นหาโมเดล HuggingFace...",
+      "by": "โดย",
+      "gated": "การเข้าถึงจำกัด",
+      "viewOnHF": "ดูบน HuggingFace",
+      "sortDownloads": "ดาวน์โหลด",
+      "sortLikes": "ถูกใจ",
+      "sortRecent": "ล่าสุด",
+      "taskTextGeneration": "การสร้างข้อความ",
+      "taskTextToSpeech": "ข้อความเป็นเสียง",
+      "taskTextToImage": "ข้อความเป็นภาพ",
+      "taskSpeechRecognition": "การรู้จำเสียง",
+      "tasks": {
+        "textGen": "การสร้างข้อความ",
+        "tts": "ข้อความเป็นเสียง",
+        "image": "ข้อความเป็นภาพ",
+        "stt": "การรู้จำเสียง"
+      },
+      "sort": {
+        "downloads": "ดาวน์โหลดมากที่สุด",
+        "likes": "ถูกใจมากที่สุด",
+        "recent": "อัปเดตล่าสุด"
+      }
     }
   },
   "personaManager": {

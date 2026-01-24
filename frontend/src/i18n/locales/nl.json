@@ -751,6 +751,37 @@
         "failed": "Kon embeddings niet genereren",
         "enterBoth": "Selecteer een model en voer tekst in"
       }
+    },
+    "huggingface": {
+      "browseAll": "Alles bekijken op HuggingFace",
+      "checkingGguf": "GGUF-bestanden zoeken...",
+      "noGgufAvailable": "Geen GGUF-bestanden beschikbaar voor directe Ollama pull",
+      "ggufFilesCount": "GGUF-bestanden ({{count}}) - Direct naar Ollama pullen",
+      "noModelsFound": "Geen modellen gevonden",
+      "noResults": "Geen modellen gevonden. Probeer je zoekopdracht of filters aan te passen.",
+      "browseAllLink": "Alles bekijken",
+      "search": "HuggingFace-modellen zoeken...",
+      "by": "door",
+      "gated": "Beperkte toegang",
+      "viewOnHF": "Bekijk op HuggingFace",
+      "sortDownloads": "Downloads",
+      "sortLikes": "Likes",
+      "sortRecent": "Recent",
+      "taskTextGeneration": "Tekstgeneratie",
+      "taskTextToSpeech": "Tekst naar spraak",
+      "taskTextToImage": "Tekst naar afbeelding",
+      "taskSpeechRecognition": "Spraakherkenning",
+      "tasks": {
+        "textGen": "Tekstgeneratie",
+        "tts": "Tekst naar spraak",
+        "image": "Tekst naar afbeelding",
+        "stt": "Spraakherkenning"
+      },
+      "sort": {
+        "downloads": "Meest gedownload",
+        "likes": "Meest geliked",
+        "recent": "Recent bijgewerkt"
+      }
     }
   },
   "personaManager": {

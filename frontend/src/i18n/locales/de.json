@@ -751,6 +751,37 @@
         "failed": "Embeddings konnten nicht generiert werden",
         "enterBoth": "Bitte wählen Sie ein Modell und geben Sie Text ein"
       }
+    },
+    "huggingface": {
+      "browseAll": "Alle auf HuggingFace durchsuchen",
+      "checkingGguf": "Suche nach GGUF-Dateien...",
+      "noGgufAvailable": "Keine GGUF-Dateien für direkten Ollama-Pull verfügbar",
+      "ggufFilesCount": "GGUF-Dateien ({{count}}) - Direkt zu Ollama pullen",
+      "noModelsFound": "Keine Modelle gefunden",
+      "noResults": "Keine Modelle gefunden. Versuchen Sie, Ihre Suche oder Filter anzupassen.",
+      "browseAllLink": "Alle durchsuchen",
+      "search": "HuggingFace-Modelle suchen...",
+      "by": "von",
+      "gated": "Zugriffsbeschränkt",
+      "viewOnHF": "Auf HuggingFace ansehen",
+      "sortDownloads": "Downloads",
+      "sortLikes": "Likes",
+      "sortRecent": "Aktuell",
+      "taskTextGeneration": "Textgenerierung",
+      "taskTextToSpeech": "Text-zu-Sprache",
+      "taskTextToImage": "Text-zu-Bild",
+      "taskSpeechRecognition": "Spracherkennung",
+      "tasks": {
+        "textGen": "Textgenerierung",
+        "tts": "Text-zu-Sprache",
+        "image": "Text-zu-Bild",
+        "stt": "Spracherkennung"
+      },
+      "sort": {
+        "downloads": "Meiste Downloads",
+        "likes": "Beliebteste",
+        "recent": "Kürzlich aktualisiert"
+      }
     }
   },
   "personaManager": {

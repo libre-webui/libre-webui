@@ -751,6 +751,37 @@
         "failed": "Kunde inte generera inbäddningar",
         "enterBoth": "Välj en modell och ange text"
       }
+    },
+    "huggingface": {
+      "browseAll": "Bläddra bland alla på HuggingFace",
+      "checkingGguf": "Söker efter GGUF-filer...",
+      "noGgufAvailable": "Inga GGUF-filer tillgängliga för direkt Ollama-hämtning",
+      "ggufFilesCount": "GGUF-filer ({{count}}) - Hämta direkt till Ollama",
+      "noModelsFound": "Inga modeller hittades",
+      "noResults": "Inga modeller hittades. Försök justera din sökning eller filter.",
+      "browseAllLink": "Visa alla",
+      "search": "Sök HuggingFace-modeller...",
+      "by": "av",
+      "gated": "Begränsad åtkomst",
+      "viewOnHF": "Visa på HuggingFace",
+      "sortDownloads": "Nedladdningar",
+      "sortLikes": "Gillar",
+      "sortRecent": "Senaste",
+      "taskTextGeneration": "Textgenerering",
+      "taskTextToSpeech": "Text till tal",
+      "taskTextToImage": "Text till bild",
+      "taskSpeechRecognition": "Taligenkänning",
+      "tasks": {
+        "textGen": "Textgenerering",
+        "tts": "Text till tal",
+        "image": "Text till bild",
+        "stt": "Taligenkänning"
+      },
+      "sort": {
+        "downloads": "Mest nedladdade",
+        "likes": "Mest gillade",
+        "recent": "Nyligen uppdaterade"
+      }
     }
   },
   "personaManager": {

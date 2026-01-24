@@ -751,6 +751,37 @@
         "failed": "Nepodařilo se vygenerovat embeddingy",
         "enterBoth": "Vyberte model a zadejte text"
       }
+    },
+    "huggingface": {
+      "browseAll": "Procházet vše na HuggingFace",
+      "checkingGguf": "Hledání GGUF souborů...",
+      "noGgufAvailable": "Žádné GGUF soubory nejsou dostupné pro přímé stažení do Ollama",
+      "ggufFilesCount": "GGUF soubory ({{count}}) - Stáhnout přímo do Ollama",
+      "noModelsFound": "Nenalezeny žádné modely",
+      "noResults": "Nenalezeny žádné modely. Zkuste upravit vyhledávání nebo filtry.",
+      "browseAllLink": "Zobrazit vše",
+      "search": "Hledat modely HuggingFace...",
+      "by": "od",
+      "gated": "Omezený přístup",
+      "viewOnHF": "Zobrazit na HuggingFace",
+      "sortDownloads": "Stažení",
+      "sortLikes": "Líbí se",
+      "sortRecent": "Nedávné",
+      "taskTextGeneration": "Generování textu",
+      "taskTextToSpeech": "Text na řeč",
+      "taskTextToImage": "Text na obrázek",
+      "taskSpeechRecognition": "Rozpoznávání řeči",
+      "tasks": {
+        "textGen": "Generování textu",
+        "tts": "Text na řeč",
+        "image": "Text na obrázek",
+        "stt": "Rozpoznávání řeči"
+      },
+      "sort": {
+        "downloads": "Nejstahovanější",
+        "likes": "Nejoblíbenější",
+        "recent": "Nedávno aktualizované"
+      }
     }
   },
   "personaManager": {

@@ -751,6 +751,37 @@
         "failed": "埋め込みの生成に失敗しました",
         "enterBoth": "モデルを選択してテキストを入力してください"
       }
+    },
+    "huggingface": {
+      "browseAll": "HuggingFaceで全て見る",
+      "checkingGguf": "GGUFファイルを確認中...",
+      "noGgufAvailable": "Ollamaで直接プルできるGGUFファイルがありません",
+      "ggufFilesCount": "GGUFファイル ({{count}}) - Ollamaに直接プル",
+      "noModelsFound": "モデルが見つかりません",
+      "noResults": "モデルが見つかりません。検索条件やフィルターを調整してください。",
+      "browseAllLink": "すべて見る",
+      "search": "HuggingFaceモデルを検索...",
+      "by": "作成者",
+      "gated": "アクセス制限",
+      "viewOnHF": "HuggingFaceで表示",
+      "sortDownloads": "ダウンロード数",
+      "sortLikes": "いいね",
+      "sortRecent": "最近",
+      "taskTextGeneration": "テキスト生成",
+      "taskTextToSpeech": "音声合成",
+      "taskTextToImage": "画像生成",
+      "taskSpeechRecognition": "音声認識",
+      "tasks": {
+        "textGen": "テキスト生成",
+        "tts": "音声合成",
+        "image": "画像生成",
+        "stt": "音声認識"
+      },
+      "sort": {
+        "downloads": "ダウンロード数順",
+        "likes": "人気順",
+        "recent": "更新順"
+      }
     }
   },
   "personaManager": {

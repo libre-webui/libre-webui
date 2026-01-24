@@ -751,6 +751,37 @@
         "failed": "فشل توليد التضمينات",
         "enterBoth": "يرجى اختيار نموذج وإدخال نص"
       }
+    },
+    "huggingface": {
+      "browseAll": "تصفح الكل على HuggingFace",
+      "checkingGguf": "البحث عن ملفات GGUF...",
+      "noGgufAvailable": "لا توجد ملفات GGUF متاحة للسحب المباشر من Ollama",
+      "ggufFilesCount": "ملفات GGUF ({{count}}) - سحب مباشر إلى Ollama",
+      "noModelsFound": "لم يتم العثور على نماذج",
+      "noResults": "لم يتم العثور على نماذج. حاول تعديل البحث أو المرشحات.",
+      "browseAllLink": "تصفح الكل",
+      "search": "البحث في نماذج HuggingFace...",
+      "by": "بواسطة",
+      "gated": "وصول مقيد",
+      "viewOnHF": "عرض على HuggingFace",
+      "sortDownloads": "التنزيلات",
+      "sortLikes": "الإعجابات",
+      "sortRecent": "الأحدث",
+      "taskTextGeneration": "توليد النص",
+      "taskTextToSpeech": "تحويل النص إلى كلام",
+      "taskTextToImage": "تحويل النص إلى صورة",
+      "taskSpeechRecognition": "التعرف على الكلام",
+      "tasks": {
+        "textGen": "توليد النص",
+        "tts": "تحويل النص إلى كلام",
+        "image": "تحويل النص إلى صورة",
+        "stt": "التعرف على الكلام"
+      },
+      "sort": {
+        "downloads": "الأكثر تنزيلاً",
+        "likes": "الأكثر إعجاباً",
+        "recent": "المحدثة مؤخراً"
+      }
     }
   },
   "personaManager": {

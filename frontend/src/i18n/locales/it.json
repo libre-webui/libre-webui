@@ -751,6 +751,37 @@
         "failed": "Impossibile generare embedding",
         "enterBoth": "Seleziona un modello e inserisci del testo"
       }
+    },
+    "huggingface": {
+      "browseAll": "Sfoglia tutto su HuggingFace",
+      "checkingGguf": "Ricerca file GGUF...",
+      "noGgufAvailable": "Nessun file GGUF disponibile per il pull diretto di Ollama",
+      "ggufFilesCount": "File GGUF ({{count}}) - Pull diretto su Ollama",
+      "noModelsFound": "Nessun modello trovato",
+      "noResults": "Nessun modello trovato. Prova a modificare la ricerca o i filtri.",
+      "browseAllLink": "Sfoglia tutto",
+      "search": "Cerca modelli HuggingFace...",
+      "by": "di",
+      "gated": "Accesso limitato",
+      "viewOnHF": "Visualizza su HuggingFace",
+      "sortDownloads": "Download",
+      "sortLikes": "Mi piace",
+      "sortRecent": "Recente",
+      "taskTextGeneration": "Generazione testo",
+      "taskTextToSpeech": "Testo a voce",
+      "taskTextToImage": "Testo a immagine",
+      "taskSpeechRecognition": "Riconoscimento vocale",
+      "tasks": {
+        "textGen": "Generazione testo",
+        "tts": "Testo a voce",
+        "image": "Testo a immagine",
+        "stt": "Riconoscimento vocale"
+      },
+      "sort": {
+        "downloads": "Più scaricati",
+        "likes": "Più apprezzati",
+        "recent": "Aggiornati di recente"
+      }
     }
   },
   "personaManager": {

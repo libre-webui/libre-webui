@@ -751,6 +751,37 @@
         "failed": "Не вдалося згенерувати ембединги",
         "enterBoth": "Виберіть модель та введіть текст"
       }
+    },
+    "huggingface": {
+      "browseAll": "Переглянути все на HuggingFace",
+      "checkingGguf": "Пошук GGUF-файлів...",
+      "noGgufAvailable": "Немає GGUF-файлів для прямого завантаження в Ollama",
+      "ggufFilesCount": "GGUF-файли ({{count}}) - Завантажити напряму в Ollama",
+      "noModelsFound": "Моделей не знайдено",
+      "noResults": "Моделей не знайдено. Спробуйте змінити пошук або фільтри.",
+      "browseAllLink": "Переглянути все",
+      "search": "Пошук моделей HuggingFace...",
+      "by": "від",
+      "gated": "Обмежений доступ",
+      "viewOnHF": "Переглянути на HuggingFace",
+      "sortDownloads": "Завантаження",
+      "sortLikes": "Вподобання",
+      "sortRecent": "Нещодавні",
+      "taskTextGeneration": "Генерація тексту",
+      "taskTextToSpeech": "Текст у мовлення",
+      "taskTextToImage": "Текст у зображення",
+      "taskSpeechRecognition": "Розпізнавання мовлення",
+      "tasks": {
+        "textGen": "Генерація тексту",
+        "tts": "Текст у мовлення",
+        "image": "Текст у зображення",
+        "stt": "Розпізнавання мовлення"
+      },
+      "sort": {
+        "downloads": "Найбільш завантажувані",
+        "likes": "Найпопулярніші",
+        "recent": "Нещодавно оновлені"
+      }
     }
   },
   "personaManager": {

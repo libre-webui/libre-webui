@@ -751,6 +751,37 @@
         "failed": "Gömme oluşturulamadı",
         "enterBoth": "Lütfen bir model seçin ve metin girin"
       }
+    },
+    "huggingface": {
+      "browseAll": "HuggingFace'te tümünü görüntüle",
+      "checkingGguf": "GGUF dosyaları aranıyor...",
+      "noGgufAvailable": "Doğrudan Ollama çekmesi için GGUF dosyası yok",
+      "ggufFilesCount": "GGUF Dosyaları ({{count}}) - Doğrudan Ollama'ya çek",
+      "noModelsFound": "Model bulunamadı",
+      "noResults": "Model bulunamadı. Aramanızı veya filtrelerinizi ayarlamayı deneyin.",
+      "browseAllLink": "Tümünü görüntüle",
+      "search": "HuggingFace modellerini ara...",
+      "by": "tarafından",
+      "gated": "Kısıtlı erişim",
+      "viewOnHF": "HuggingFace'te görüntüle",
+      "sortDownloads": "İndirmeler",
+      "sortLikes": "Beğeniler",
+      "sortRecent": "Son",
+      "taskTextGeneration": "Metin Oluşturma",
+      "taskTextToSpeech": "Metinden Konuşmaya",
+      "taskTextToImage": "Metinden Görüntüye",
+      "taskSpeechRecognition": "Konuşma Tanıma",
+      "tasks": {
+        "textGen": "Metin Oluşturma",
+        "tts": "Metinden Konuşmaya",
+        "image": "Metinden Görüntüye",
+        "stt": "Konuşma Tanıma"
+      },
+      "sort": {
+        "downloads": "En Çok İndirilen",
+        "likes": "En Beğenilen",
+        "recent": "Son Güncellenen"
+      }
     }
   },
   "personaManager": {

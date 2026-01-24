@@ -751,6 +751,37 @@
         "failed": "Falha ao gerar embeddings",
         "enterBoth": "Por favor, selecione um modelo e digite o texto"
       }
+    },
+    "huggingface": {
+      "browseAll": "Ver tudo no HuggingFace",
+      "checkingGguf": "Verificando arquivos GGUF...",
+      "noGgufAvailable": "Nenhum arquivo GGUF disponível para pull direto do Ollama",
+      "ggufFilesCount": "Arquivos GGUF ({{count}}) - Pull direto para Ollama",
+      "noModelsFound": "Nenhum modelo encontrado",
+      "noResults": "Nenhum modelo encontrado. Tente ajustar sua pesquisa ou filtros.",
+      "browseAllLink": "Ver tudo",
+      "search": "Pesquisar modelos HuggingFace...",
+      "by": "por",
+      "gated": "Acesso restrito",
+      "viewOnHF": "Ver no HuggingFace",
+      "sortDownloads": "Downloads",
+      "sortLikes": "Curtidas",
+      "sortRecent": "Recente",
+      "taskTextGeneration": "Geração de texto",
+      "taskTextToSpeech": "Texto para fala",
+      "taskTextToImage": "Texto para imagem",
+      "taskSpeechRecognition": "Reconhecimento de voz",
+      "tasks": {
+        "textGen": "Geração de texto",
+        "tts": "Texto para fala",
+        "image": "Texto para imagem",
+        "stt": "Reconhecimento de voz"
+      },
+      "sort": {
+        "downloads": "Mais baixados",
+        "likes": "Mais curtidos",
+        "recent": "Atualizados recentemente"
+      }
     }
   },
   "personaManager": {
