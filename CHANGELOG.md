@@ -15,6 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.6.0] - 2026-01-24
+
+### What's New
+
+This release introduces full HuggingFace Hub integration with GGUF model detection and direct Ollama pulls, along with significant improvements to the Kyutai TTS system including GPU acceleration and expanded voice libraries. The update also addresses critical security vulnerabilities and enhances internationalization support across all 23 supported languages.
+
+### ✨ New Features
+
+- **HuggingFace Hub Integration**: Browse and pull models directly from HuggingFace with automatic GGUF detection
+- **Kyutai TTS 1.6B Model**: Added GPU-accelerated TTS with expanded voice library and sentence-by-sentence streaming
+- **Enhanced Model Browser**: New HuggingFace model browser component with improved UI and filtering
+- **Comprehensive Documentation**: Added detailed guides for Kyutai TTS and HuggingFace Hub integration
+
+### 🔧 Improvements
+
+- **UI Enhancements**: Renamed AMOLED theme to "Pure Black" with improved borders and styling
+- **Image Generation**: Expanded textarea from 3 to 5 rows with client-side prompt length validation
+- **Code Rendering**: Improved code block display in chat messages
+- **Settings Reorganization**: Moved System tab to Manage Models page for better organization
+- **Plugin Management**: Allow dots in plugin IDs for more flexible naming
+
+### 🐛 Bug Fixes
+
+- **Critical Security**: Fixed SSRF vulnerabilities and sensitive data logging issues
+- **TTS Audio Quality**: Resolved audio crackling, improved normalization, and fixed tensor processing errors
+- **Voice Downloads**: Implemented auto-retry for corrupted voice downloads with force re-download capability
+- **Internationalization**: Added missing translation keys across all 23 supported languages
+
 ## [0.5.2] - 2026-01-22
 
 ### What's New
