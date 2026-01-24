@@ -19,8 +19,8 @@
         "tts-1-hd"
       ],
       "config": {
-        "voices": ["Alba", "Alba-Casual", "Alba-Merchant", "Alba-Announcer", "Expresso-Happy", "Expresso-Sad", "Expresso-Angry", "VCTK-P225", "VCTK-P226", "VCTK-P227", "VCTK-P228"],
-        "default_voice": "Alba",
+        "voices": ["vctk/p225_023", "vctk/p226_023", "vctk/p227_023", "vctk/p228_023", "alba-mackenna/casual", "alba-mackenna/announcer", "alba-mackenna/merchant", "alba-mackenna/a-moment-by"],
+        "default_voice": "vctk/p225_023",
         "formats": ["wav"],
         "default_format": "wav",
         "max_characters": 10000,
