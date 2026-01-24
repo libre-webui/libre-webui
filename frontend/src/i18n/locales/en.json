@@ -644,6 +644,7 @@
     "sections": {
       "pull": "Pull New Model",
       "library": "Browse Library",
+      "huggingface": "HuggingFace Hub",
       "running": "Running Models",
       "local": "Local Models",
       "advanced": "Advanced Actions"
@@ -673,6 +674,21 @@
       "installed": "Installed",
       "more": "+{{count}} more",
       "refresh": "Refresh Library"
+    },
+    "huggingface": {
+      "browseAll": "Browse all on HuggingFace",
+      "checkingGguf": "Checking for GGUF files...",
+      "noGgufAvailable": "No GGUF files available for direct Ollama pull",
+      "ggufFilesCount": "GGUF Files ({{count}}) - Pull directly to Ollama",
+      "noModelsFound": "No models found",
+      "browseAllLink": "Browse all",
+      "sortDownloads": "Downloads",
+      "sortLikes": "Likes",
+      "sortRecent": "Recent",
+      "taskTextGeneration": "Text Generation",
+      "taskTextToSpeech": "Text to Speech",
+      "taskTextToImage": "Text to Image",
+      "taskSpeechRecognition": "Speech Recognition"
     },
     "local": {
       "noModels": "No models installed yet",
