@@ -462,7 +462,7 @@ async def create_speech(request: TTSRequest):
         loop = asyncio.get_event_loop()
 
         def _generate():
-            # Prepare the script
+            # Prepare the script - returns list of Entry objects
             entries = model.prepare_script([clean_text], padding_between=1)
 
             # Prepare condition attributes using voice safetensors file
@@ -477,8 +477,9 @@ async def create_speech(request: TTSRequest):
                     pcm = model.mimi.decode(frame[:, 1:, :])
                     pcms.append(pcm.clip(-1, 1))
 
-            # Run generation - cond_attrs needs to be wrapped in a list
-            model.generate(entries, [cond_attrs], on_frame=on_frame)
+            # Run generation - needs list of (entries_list, cond_attrs) pairs
+            # Each element in all_entries should be a list of Entry objects for one batch item
+            model.generate([entries], [cond_attrs], on_frame=on_frame)
 
             return pcms
 
