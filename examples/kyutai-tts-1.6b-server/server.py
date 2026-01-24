@@ -313,6 +313,7 @@ def force_download_voice(voice_file: str) -> str:
     """Force download a voice file from HuggingFace with integrity checks"""
     from huggingface_hub import hf_hub_download
     from pathlib import Path
+    import safetensors.torch
 
     # The voice file path is like "alba-mackenna/casual.wav"
     # The safetensors file is "alba-mackenna/casual.wav.1e68beda@240.safetensors"
@@ -327,15 +328,27 @@ def force_download_voice(voice_file: str) -> str:
         repo_id="kyutai/tts-voices",
         filename=safetensors_file,
         force_download=True,
-        resume_download=False,  # Don't resume - start fresh
     )
 
     print(f"Downloaded to: {local_path}")
 
     # Verify file size is reasonable (should be ~256KB)
     file_size = Path(local_path).stat().st_size
+    print(f"File size: {file_size} bytes")
     if file_size < 200000:  # Less than 200KB is suspicious
         raise ValueError(f"Downloaded file too small ({file_size} bytes), likely corrupted")
+
+    # Debug: try to load the safetensors file directly
+    try:
+        data = safetensors.torch.load_file(local_path)
+        print(f"Safetensors loaded successfully, keys: {list(data.keys())}")
+    except Exception as e:
+        print(f"Safetensors direct load failed: {e}")
+        # Check first few bytes of file
+        with open(local_path, 'rb') as f:
+            header = f.read(100)
+            print(f"File header (first 100 bytes): {header[:50]}...")
+        raise
 
     return local_path
 
