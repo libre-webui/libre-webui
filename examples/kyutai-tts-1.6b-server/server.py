@@ -58,9 +58,6 @@ app.add_middleware(
 model: Optional[TTSModel] = None
 current_device: str = "cpu"
 
-# Voice prefix cache
-voice_prefixes: dict = {}
-
 # Available voices from kyutai/tts-voices
 # These are paths relative to the voice repository
 AVAILABLE_VOICES = {
@@ -309,67 +306,13 @@ def load_model(device: Optional[str] = None):
         raise
 
 
-def force_download_voice(voice_file: str) -> str:
-    """Force download a voice file from HuggingFace with integrity checks"""
-    from huggingface_hub import hf_hub_download
-    from pathlib import Path
-    import safetensors.torch
-
-    # The voice file path is like "alba-mackenna/casual.wav"
-    # The safetensors file is "alba-mackenna/casual.wav.1e68beda@240.safetensors"
-    safetensors_file = voice_file.replace(".wav", ".wav.1e68beda@240.safetensors")
-    if voice_file.endswith(".mp3"):
-        safetensors_file = voice_file.replace(".mp3", ".mp3.1e68beda@240.safetensors")
-
-    print(f"Force downloading voice file: {safetensors_file}")
-
-    # Use hf_hub_download with force_download to bypass cache
-    local_path = hf_hub_download(
-        repo_id="kyutai/tts-voices",
-        filename=safetensors_file,
-        force_download=True,
-    )
-
-    print(f"Downloaded to: {local_path}")
-
-    # Verify file size is reasonable (should be ~256KB)
-    file_size = Path(local_path).stat().st_size
-    print(f"File size: {file_size} bytes")
-    if file_size < 200000:  # Less than 200KB is suspicious
-        raise ValueError(f"Downloaded file too small ({file_size} bytes), likely corrupted")
-
-    # Load the safetensors file directly and re-save it to fix any corruption
-    try:
-        data = safetensors.torch.load_file(local_path)
-        print(f"Safetensors loaded successfully, keys: {list(data.keys())}")
-
-        # Re-save the file to ensure it's in a clean format
-        safetensors.torch.save_file(data, local_path)
-        print(f"Re-saved safetensors file to: {local_path}")
-
-        return local_path
-    except Exception as e:
-        print(f"Safetensors direct load failed: {e}")
-        # Check first few bytes of file
-        with open(local_path, 'rb') as f:
-            header = f.read(100)
-            print(f"File header (first 100 bytes): {header[:50]}...")
-        raise
-
-
-def get_voice_prefix(voice: str, retry_on_error: bool = True):
-    """Get or create voice prefix for a given voice identifier"""
-    global voice_prefixes
-
+def get_voice_path(voice: str) -> str:
+    """Get the path to a voice safetensors file"""
     voice_lower = voice.lower()
 
     # Check aliases first
     if voice_lower in VOICE_ALIASES:
         voice_lower = VOICE_ALIASES[voice_lower]
-
-    # Check cache
-    if voice_lower in voice_prefixes:
-        return voice_prefixes[voice_lower]
 
     # Get voice file path
     if voice_lower in AVAILABLE_VOICES:
@@ -380,28 +323,8 @@ def get_voice_prefix(voice: str, retry_on_error: bool = True):
         # Default to alba
         voice_file = AVAILABLE_VOICES["alba"]
 
-    try:
-        voice_path = model.get_voice_path(voice_file)
-        # Get prefix from voice path
-        prefix = model.get_prefix(voice_path)
-        voice_prefixes[voice_lower] = prefix
-        return prefix
-    except Exception as e:
-        error_msg = str(e)
-        # If "end of stream" error, the safetensors file is corrupted - force re-download
-        if "end of stream" in error_msg.lower() and retry_on_error:
-            print(f"Voice file corrupted, force re-downloading: {voice_file}")
-            try:
-                # Force download and re-save to fix the file
-                local_path = force_download_voice(voice_file)
-                # Now try loading with the fixed file using moshi's method
-                prefix = model.get_prefix(local_path)
-                voice_prefixes[voice_lower] = prefix
-                return prefix
-            except Exception as retry_error:
-                print(f"Force download failed: {retry_error}")
-                raise
-        raise
+    # Get the path from the model (this downloads if needed)
+    return model.get_voice_path(voice_file)
 
 
 def sanitize_text(text: str) -> str:
@@ -528,9 +451,9 @@ async def create_speech(request: TTSRequest):
     if not clean_text:
         raise HTTPException(status_code=400, detail="Input text is empty after sanitization")
 
-    # Get voice prefix
+    # Get voice path (safetensors file)
     try:
-        prefix = get_voice_prefix(request.voice)
+        voice_path = get_voice_path(request.voice)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Voice not found: {request.voice} - {e}")
 
@@ -542,8 +465,8 @@ async def create_speech(request: TTSRequest):
             # Prepare the script
             entries = model.prepare_script([clean_text], padding_between=1)
 
-            # Prepare condition attributes with CFG
-            cond_attrs = model.get_cond_attrs(prefix, cfg_coef=request.cfg_coef)
+            # Prepare condition attributes using voice safetensors file
+            cond_attrs = model.make_condition_attributes([voice_path], cfg_coef=request.cfg_coef)
 
             # Generate frames and decode
             pcms = []
