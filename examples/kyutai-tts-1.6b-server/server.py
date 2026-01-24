@@ -309,21 +309,35 @@ def load_model(device: Optional[str] = None):
         raise
 
 
-def clear_hf_cache_for_voice(voice_file: str):
-    """Clear HuggingFace cache for a specific voice file to force re-download"""
-    import shutil
+def force_download_voice(voice_file: str) -> str:
+    """Force download a voice file from HuggingFace with integrity checks"""
+    from huggingface_hub import hf_hub_download
     from pathlib import Path
 
-    cache_dir = Path.home() / ".cache" / "huggingface" / "hub" / "models--kyutai--tts-voices"
-    if cache_dir.exists():
-        # Find and delete the specific file in snapshots
-        for snapshot_dir in cache_dir.glob("snapshots/*"):
-            voice_path = snapshot_dir / voice_file.replace(".wav", ".wav.1e68beda@240.safetensors")
-            if voice_path.exists():
-                print(f"Removing corrupted cache file: {voice_path}")
-                voice_path.unlink()
-                return True
-    return False
+    # The voice file path is like "alba-mackenna/casual.wav"
+    # The safetensors file is "alba-mackenna/casual.wav.1e68beda@240.safetensors"
+    safetensors_file = voice_file.replace(".wav", ".wav.1e68beda@240.safetensors")
+    if voice_file.endswith(".mp3"):
+        safetensors_file = voice_file.replace(".mp3", ".mp3.1e68beda@240.safetensors")
+
+    print(f"Force downloading voice file: {safetensors_file}")
+
+    # Use hf_hub_download with force_download to bypass cache
+    local_path = hf_hub_download(
+        repo_id="kyutai/tts-voices",
+        filename=safetensors_file,
+        force_download=True,
+        resume_download=False,  # Don't resume - start fresh
+    )
+
+    print(f"Downloaded to: {local_path}")
+
+    # Verify file size is reasonable (should be ~256KB)
+    file_size = Path(local_path).stat().st_size
+    if file_size < 200000:  # Less than 200KB is suspicious
+        raise ValueError(f"Downloaded file too small ({file_size} bytes), likely corrupted")
+
+    return local_path
 
 
 def get_voice_prefix(voice: str, retry_on_error: bool = True):
@@ -357,12 +371,19 @@ def get_voice_prefix(voice: str, retry_on_error: bool = True):
         return prefix
     except Exception as e:
         error_msg = str(e)
-        # If "end of stream" error, the safetensors file is corrupted - clear cache and retry
+        # If "end of stream" error, the safetensors file is corrupted - force re-download
         if "end of stream" in error_msg.lower() and retry_on_error:
-            print(f"Voice file corrupted, clearing cache and retrying: {voice_file}")
-            if clear_hf_cache_for_voice(voice_file):
-                # Retry once without retry flag to prevent infinite loop
-                return get_voice_prefix(voice, retry_on_error=False)
+            print(f"Voice file corrupted, force re-downloading: {voice_file}")
+            try:
+                # Force download with integrity check
+                local_path = force_download_voice(voice_file)
+                # Now try loading with the direct path
+                prefix = model.get_prefix(local_path)
+                voice_prefixes[voice_lower] = prefix
+                return prefix
+            except Exception as retry_error:
+                print(f"Force download failed: {retry_error}")
+                raise
         raise
 
 
