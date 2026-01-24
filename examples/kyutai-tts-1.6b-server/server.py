@@ -387,7 +387,7 @@ def audio_to_bytes(pcm_list: list, sample_rate: int) -> bytes:
         combined = combined.squeeze(0)
 
     # Move to CPU and convert to numpy float32
-    audio_np = combined.cpu().float().numpy()
+    audio_np = combined.detach().cpu().float().numpy()
 
     # Simple normalization - scale to use full dynamic range without clipping
     max_val = np.abs(audio_np).max()
