@@ -387,10 +387,17 @@ def audio_to_bytes(pcm_list: list, sample_rate: int) -> bytes:
         combined = combined.squeeze(0)
 
     # Move to CPU and convert to numpy
-    audio_np = combined.cpu().numpy()
+    audio_np = combined.cpu().float().numpy()
 
-    # Clip and convert to int16
-    audio_np = np.clip(audio_np, -1.0, 1.0)
+    # Normalize to prevent clipping artifacts
+    max_val = np.abs(audio_np).max()
+    if max_val > 1.0:
+        audio_np = audio_np / max_val * 0.95  # Leave headroom
+
+    # Soft clip to avoid harsh distortion
+    audio_np = np.tanh(audio_np * 1.5) / np.tanh(1.5)
+
+    # Convert to int16
     audio_int16 = (audio_np * 32767).astype(np.int16)
 
     buffer = io.BytesIO()
@@ -475,7 +482,7 @@ async def create_speech(request: TTSRequest):
                 # Decode frame if valid
                 if (frame[:, 1:] != -1).all():
                     pcm = model.mimi.decode(frame[:, 1:, :])
-                    pcms.append(pcm.clip(-1, 1))
+                    pcms.append(pcm)
 
             # Run generation - needs list of (entries_list, cond_attrs) pairs
             # Each element in all_entries should be a list of Entry objects for one batch item
