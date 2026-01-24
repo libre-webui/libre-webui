@@ -23,10 +23,18 @@ import asyncio
 import io
 import os
 import re
+import sys
 from typing import Optional
 
 import numpy as np
 import torch
+
+# Disable torch.compile on Python 3.12+ (Dynamo not supported)
+if sys.version_info >= (3, 12):
+    torch._dynamo.config.suppress_errors = True
+    # Monkey-patch torch.compile to be a no-op
+    _original_compile = torch.compile
+    torch.compile = lambda func, *args, **kwargs: func
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
@@ -58,6 +66,8 @@ app.add_middleware(
 # Global model instance
 model: Optional[TTSModel] = None
 current_device: str = "cpu"
+# Lock to prevent concurrent generation (moshi doesn't support concurrent streaming)
+generation_lock: Optional[asyncio.Lock] = None
 
 # Available voices from kyutai/tts-voices
 # These are paths relative to the voice repository
@@ -430,8 +440,14 @@ async def list_voices():
 @app.post("/v1/audio/speech")
 async def create_speech(request: TTSRequest):
     """OpenAI-compatible TTS endpoint"""
+    global generation_lock
+
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
+
+    # Initialize lock if needed (must be done in async context)
+    if generation_lock is None:
+        generation_lock = asyncio.Lock()
 
     # Sanitize input text
     clean_text = sanitize_text(request.input)
@@ -472,23 +488,25 @@ async def create_speech(request: TTSRequest):
 
         return await loop.run_in_executor(None, _generate)
 
-    try:
-        audio_np = await asyncio.wait_for(generate_audio(), timeout=120.0)
+    # Use lock to prevent concurrent generation (moshi doesn't support it)
+    async with generation_lock:
+        try:
+            audio_np = await asyncio.wait_for(generate_audio(), timeout=120.0)
 
-        if audio_np is None:
-            raise HTTPException(status_code=500, detail="No audio generated")
+            if audio_np is None:
+                raise HTTPException(status_code=500, detail="No audio generated")
 
-        audio_bytes = audio_to_bytes(audio_np, model.mimi.sample_rate)
-        return Response(content=audio_bytes, media_type="audio/wav")
+            audio_bytes = audio_to_bytes(audio_np, model.mimi.sample_rate)
+            return Response(content=audio_bytes, media_type="audio/wav")
 
-    except asyncio.TimeoutError:
-        raise HTTPException(status_code=504, detail="Generation timed out")
-    except HTTPException:
-        raise
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        except asyncio.TimeoutError:
+            raise HTTPException(status_code=504, detail="Generation timed out")
+        except HTTPException:
+            raise
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
