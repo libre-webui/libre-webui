@@ -386,16 +386,13 @@ def audio_to_bytes(pcm_list: list, sample_rate: int) -> bytes:
     elif combined.dim() == 2:
         combined = combined.squeeze(0)
 
-    # Move to CPU and convert to numpy
+    # Move to CPU and convert to numpy float32
     audio_np = combined.cpu().float().numpy()
 
-    # Normalize to prevent clipping artifacts
+    # Simple normalization - scale to use full dynamic range without clipping
     max_val = np.abs(audio_np).max()
-    if max_val > 1.0:
-        audio_np = audio_np / max_val * 0.95  # Leave headroom
-
-    # Soft clip to avoid harsh distortion
-    audio_np = np.tanh(audio_np * 1.5) / np.tanh(1.5)
+    if max_val > 0:
+        audio_np = audio_np / max_val * 0.9  # 90% of max to leave headroom
 
     # Convert to int16
     audio_int16 = (audio_np * 32767).astype(np.int16)
