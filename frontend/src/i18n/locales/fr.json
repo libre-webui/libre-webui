@@ -680,14 +680,30 @@
       "noGgufAvailable": "Aucun fichier GGUF disponible pour Ollama",
       "ggufFilesCount": "Fichiers GGUF ({{count}}) - Télécharger vers Ollama",
       "noModelsFound": "Aucun modèle trouvé",
+      "noResults": "Aucun modèle trouvé. Essayez d'ajuster votre recherche.",
       "browseAllLink": "Voir tout",
+      "search": "Rechercher des modèles HuggingFace...",
+      "by": "par",
+      "gated": "Accès restreint",
+      "viewOnHF": "Voir sur HuggingFace",
       "sortDownloads": "Téléchargements",
       "sortLikes": "Likes",
       "sortRecent": "Récent",
       "taskTextGeneration": "Génération de texte",
       "taskTextToSpeech": "Synthèse vocale",
       "taskTextToImage": "Texte vers image",
-      "taskSpeechRecognition": "Reconnaissance vocale"
+      "taskSpeechRecognition": "Reconnaissance vocale",
+      "tasks": {
+        "textGen": "Génération de texte",
+        "tts": "Synthèse vocale",
+        "image": "Texte vers image",
+        "stt": "Reconnaissance vocale"
+      },
+      "sort": {
+        "downloads": "Plus téléchargés",
+        "likes": "Plus aimés",
+        "recent": "Récemment mis à jour"
+      }
     },
     "local": {
       "noModels": "Aucun modèle installé",

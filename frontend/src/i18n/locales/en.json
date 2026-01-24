@@ -681,14 +681,30 @@
       "noGgufAvailable": "No GGUF files available for direct Ollama pull",
       "ggufFilesCount": "GGUF Files ({{count}}) - Pull directly to Ollama",
       "noModelsFound": "No models found",
+      "noResults": "No models found. Try adjusting your search or filters.",
       "browseAllLink": "Browse all",
+      "search": "Search HuggingFace models...",
+      "by": "by",
+      "gated": "Gated",
+      "viewOnHF": "View on HuggingFace",
       "sortDownloads": "Downloads",
       "sortLikes": "Likes",
       "sortRecent": "Recent",
       "taskTextGeneration": "Text Generation",
       "taskTextToSpeech": "Text to Speech",
       "taskTextToImage": "Text to Image",
-      "taskSpeechRecognition": "Speech Recognition"
+      "taskSpeechRecognition": "Speech Recognition",
+      "tasks": {
+        "textGen": "Text Generation",
+        "tts": "Text to Speech",
+        "image": "Text to Image",
+        "stt": "Speech Recognition"
+      },
+      "sort": {
+        "downloads": "Most Downloads",
+        "likes": "Most Liked",
+        "recent": "Recently Updated"
+      }
     },
     "local": {
       "noModels": "No models installed yet",
