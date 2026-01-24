@@ -394,8 +394,9 @@ def get_voice_prefix(voice: str, retry_on_error: bool = True):
                 if 'speaker_wavs' in data:
                     speaker_wavs = data['speaker_wavs']
                     print(f"Speaker wavs shape: {speaker_wavs.shape}, dtype: {speaker_wavs.dtype}")
-                    # Move to correct device
-                    speaker_wavs = speaker_wavs.to(device=model.device, dtype=model.dtype)
+                    # Move to correct device (use current_device global)
+                    target_device = torch.device(current_device)
+                    speaker_wavs = speaker_wavs.to(device=target_device)
                     # Create prefix from the speaker embeddings
                     prefix = speaker_wavs
                     voice_prefixes[voice_lower] = prefix
