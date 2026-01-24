@@ -338,10 +338,12 @@ def force_download_voice(voice_file: str) -> str:
     if file_size < 200000:  # Less than 200KB is suspicious
         raise ValueError(f"Downloaded file too small ({file_size} bytes), likely corrupted")
 
-    # Debug: try to load the safetensors file directly
+    # Load the safetensors file directly and return the tensor data
     try:
         data = safetensors.torch.load_file(local_path)
         print(f"Safetensors loaded successfully, keys: {list(data.keys())}")
+        # Return both the path and the loaded data
+        return local_path, data
     except Exception as e:
         print(f"Safetensors direct load failed: {e}")
         # Check first few bytes of file
@@ -349,8 +351,6 @@ def force_download_voice(voice_file: str) -> str:
             header = f.read(100)
             print(f"File header (first 100 bytes): {header[:50]}...")
         raise
-
-    return local_path
 
 
 def get_voice_prefix(voice: str, retry_on_error: bool = True):
@@ -389,11 +389,20 @@ def get_voice_prefix(voice: str, retry_on_error: bool = True):
             print(f"Voice file corrupted, force re-downloading: {voice_file}")
             try:
                 # Force download with integrity check
-                local_path = force_download_voice(voice_file)
-                # Now try loading with the direct path
-                prefix = model.get_prefix(local_path)
-                voice_prefixes[voice_lower] = prefix
-                return prefix
+                local_path, data = force_download_voice(voice_file)
+                # Get the speaker_wavs tensor and use it directly
+                if 'speaker_wavs' in data:
+                    speaker_wavs = data['speaker_wavs']
+                    print(f"Speaker wavs shape: {speaker_wavs.shape}, dtype: {speaker_wavs.dtype}")
+                    # Move to correct device
+                    speaker_wavs = speaker_wavs.to(device=model.device, dtype=model.dtype)
+                    # Create prefix from the speaker embeddings
+                    prefix = speaker_wavs
+                    voice_prefixes[voice_lower] = prefix
+                    return prefix
+                else:
+                    print(f"No speaker_wavs key in data, keys: {list(data.keys())}")
+                    raise ValueError("Invalid voice file format")
             except Exception as retry_error:
                 print(f"Force download failed: {retry_error}")
                 raise
