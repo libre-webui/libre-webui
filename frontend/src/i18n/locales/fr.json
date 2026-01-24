@@ -674,6 +674,21 @@
       "more": "+{{count}} de plus",
       "refresh": "Actualiser la bibliothèque"
     },
+    "huggingface": {
+      "browseAll": "Parcourir tout sur HuggingFace",
+      "checkingGguf": "Recherche des fichiers GGUF...",
+      "noGgufAvailable": "Aucun fichier GGUF disponible pour Ollama",
+      "ggufFilesCount": "Fichiers GGUF ({{count}}) - Télécharger vers Ollama",
+      "noModelsFound": "Aucun modèle trouvé",
+      "browseAllLink": "Voir tout",
+      "sortDownloads": "Téléchargements",
+      "sortLikes": "Likes",
+      "sortRecent": "Récent",
+      "taskTextGeneration": "Génération de texte",
+      "taskTextToSpeech": "Synthèse vocale",
+      "taskTextToImage": "Texte vers image",
+      "taskSpeechRecognition": "Reconnaissance vocale"
+    },
     "local": {
       "noModels": "Aucun modèle installé",
       "pullToStart": "Téléchargez un modèle ci-dessus pour commencer",
