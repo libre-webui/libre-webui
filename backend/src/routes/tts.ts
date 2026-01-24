@@ -258,7 +258,22 @@ router.post('/generate-base64', ttsRateLimiter, async (req, res) => {
       speed,
     });
 
-    const format = response_format || 'mp3';
+    // Auto-detect actual audio format from buffer header
+    let detectedFormat = response_format || 'mp3';
+    if (audioBuffer.length >= 4) {
+      const header = audioBuffer.slice(0, 4).toString('ascii');
+      if (header === 'RIFF') {
+        detectedFormat = 'wav';
+      } else if (header === 'fLaC') {
+        detectedFormat = 'flac';
+      } else if (header === 'OggS') {
+        detectedFormat = 'opus';
+      } else if (audioBuffer[0] === 0xff && (audioBuffer[1] & 0xe0) === 0xe0) {
+        detectedFormat = 'mp3';
+      }
+    }
+
+    const format = detectedFormat;
 
     // Determine MIME type for data URL
     const mimeTypeMap: Record<string, string> = {
