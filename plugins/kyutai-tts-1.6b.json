@@ -2,7 +2,7 @@
   "id": "kyutai-tts-1.6b",
   "name": "Kyutai TTS 1.6B",
   "type": "tts",
-  "endpoint": "http://localhost:8201/v1/audio/speech",
+  "endpoint": "http://192.168.2.112:8201/v1/audio/speech",
   "auth": {
     "header": "",
     "key_env": ""
@@ -13,14 +13,25 @@
   ],
   "capabilities": {
     "tts": {
-      "endpoint": "http://localhost:8201/v1/audio/speech",
+      "endpoint": "http://192.168.2.112:8201/v1/audio/speech",
       "model_map": [
         "kyutai-tts-1.6b",
         "tts-1-hd"
       ],
       "config": {
-        "voices": ["vctk/p225_023", "vctk/p226_023", "vctk/p227_023", "vctk/p228_023", "alba-mackenna/casual", "alba-mackenna/announcer", "alba-mackenna/merchant", "alba-mackenna/a-moment-by"],
-        "default_voice": "vctk/p225_023",
+        "voices": [
+          "alba", "alba-casual", "alba-merchant", "alba-announcer", "alba-moment",
+          "angry-f", "calm-f", "confused-f", "desire-f", "fear-f", "happy-f", "sad-f", "neutral-f",
+          "angry-m", "calm-m", "confused-m", "desire-m", "fear-m", "happy-m", "sad-m", "neutral-m",
+          "expresso-happy", "expresso-sad", "expresso-angry", "expresso-calm", "expresso-confused",
+          "expresso-sarcastic", "expresso-sleepy", "expresso-laughing", "expresso-awe",
+          "expresso-desire", "expresso-whisper", "expresso-fast", "expresso-narration",
+          "cml-12977-fr-f", "cml-1406-fr-m", "cml-2154-fr-f", "cml-4724-fr-m",
+          "vctk-p225", "vctk-p226", "vctk-p228", "vctk-p231", "vctk-p255", "vctk-p277", "vctk-p292",
+          "unmute-degaulle", "unmute-developer", "unmute-developpeuse", "unmute-narration",
+          "unmute-default", "unmute-fabien", "voice-donation-dwp"
+        ],
+        "default_voice": "alba",
         "formats": ["wav"],
         "default_format": "wav",
         "max_characters": 10000,
