@@ -175,28 +175,36 @@ class PluginService {
 
   // Delete a plugin
   deletePlugin(id: string): boolean {
-    // Validate the ID parameter using a strict pattern
-    const idPattern = /^[a-zA-Z0-9_-]+$/;
+    console.log('[Plugin Delete] Attempting to delete plugin:', id);
+    console.log('[Plugin Delete] Plugins directory:', this.pluginsDir);
+
+    // Validate the ID parameter using a strict pattern (allows dots for version numbers like 1.6b)
+    const idPattern = /^[a-zA-Z0-9._-]+$/;
     if (!idPattern.test(id)) {
-      console.error('Invalid plugin ID format:', id);
+      console.error('[Plugin Delete] Invalid plugin ID format:', id);
       return false;
     }
 
     // Sanitize the ID to prevent path traversal
     const sanitizedId = sanitize(id);
     if (!sanitizedId || sanitizedId !== id) {
-      console.error('Plugin ID failed sanitization:', id);
+      console.error('[Plugin Delete] Plugin ID failed sanitization:', id);
       return false;
     }
 
     const filePath = path.resolve(this.pluginsDir, `${sanitizedId}.json`);
+    console.log('[Plugin Delete] Resolved file path:', filePath);
+    console.log('[Plugin Delete] File exists:', fs.existsSync(filePath));
 
     // Ensure the file path is within the plugins directory
     if (
       !filePath.startsWith(path.resolve(this.pluginsDir)) ||
       !fs.existsSync(filePath)
     ) {
-      console.error('File path is invalid or does not exist:', filePath);
+      console.error(
+        '[Plugin Delete] File path is invalid or does not exist:',
+        filePath
+      );
       return false;
     }
 
@@ -1152,6 +1160,11 @@ class PluginService {
       throw new Error(`Invalid endpoint URL constructed: ${processedEndpoint}`);
     }
 
+    // Debug logging for TTS request
+    console.log(`[TTS Debug] Endpoint: ${processedEndpoint}`);
+    console.log(`[TTS Debug] Payload:`, JSON.stringify(payload, null, 2));
+    console.log(`[TTS Debug] Headers:`, JSON.stringify(headers, null, 2));
+
     try {
       const response = await axios.post(processedEndpoint, payload, {
         headers,
@@ -1179,10 +1192,22 @@ class PluginService {
             const errorText = Buffer.from(axiosError.response.data).toString(
               'utf8'
             );
+            console.error(`[TTS Debug] Error response body:`, errorText);
             const errorJson = JSON.parse(errorText);
-            errorMessage = errorJson.error?.message || errorMessage;
+            errorMessage =
+              errorJson.error?.message ||
+              errorJson.detail ||
+              errorJson.message ||
+              errorMessage;
           } catch {
-            // Ignore parse errors
+            // If not JSON, show raw text
+            const rawText = Buffer.from(axiosError.response.data).toString(
+              'utf8'
+            );
+            if (rawText) {
+              console.error(`[TTS Debug] Raw error response:`, rawText);
+              errorMessage = rawText.substring(0, 200);
+            }
           }
         }
 
