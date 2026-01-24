@@ -3534,7 +3534,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onClick={() => setActiveTab(tab.id)}
                       className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2.5 sm:py-2.5 text-left rounded-lg transition-colors duration-200 touch-manipulation ${
                         activeTab === tab.id
-                          ? 'bg-gray-100 dark:bg-dark-100 ophelia:bg-[#0a0a0a] text-gray-900 dark:text-white ophelia:text-[#fafafa] border border-gray-200 dark:border-dark-300 ophelia:border-[rgba(38,38,38,0.3)]'
+                          ? 'bg-gray-100 dark:bg-dark-100 ophelia:bg-[#1a1a1a] text-gray-900 dark:text-white ophelia:text-[#fafafa] border border-gray-200 dark:border-dark-300 ophelia:border-[#3a3a3a]'
                           : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200 ophelia:hover:bg-[#0a0a0a] active:bg-gray-100 dark:active:bg-dark-100 ophelia:active:bg-[#121212]'
                       }`}
                     >
