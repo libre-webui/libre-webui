@@ -477,8 +477,8 @@ async def create_speech(request: TTSRequest):
                     pcm = model.mimi.decode(frame[:, 1:, :])
                     pcms.append(pcm.clip(-1, 1))
 
-            # Run generation
-            model.generate(entries, cond_attrs, on_frame=on_frame)
+            # Run generation - cond_attrs needs to be wrapped in a list
+            model.generate(entries, [cond_attrs], on_frame=on_frame)
 
             return pcms
 
