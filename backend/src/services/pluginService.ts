@@ -1160,10 +1160,25 @@ class PluginService {
       throw new Error(`Invalid endpoint URL constructed: ${processedEndpoint}`);
     }
 
-    // Debug logging for TTS request
+    // Debug logging for TTS request (redact sensitive headers)
+    const redactedHeaders = Object.fromEntries(
+      Object.entries(headers).map(([key, value]) => [
+        key,
+        key.toLowerCase().includes('authorization') ||
+        key.toLowerCase().includes('api-key') ||
+        key.toLowerCase().includes('apikey') ||
+        key.toLowerCase().includes('token') ||
+        key.toLowerCase().includes('secret')
+          ? '[REDACTED]'
+          : value,
+      ])
+    );
     console.log(`[TTS Debug] Endpoint: ${processedEndpoint}`);
     console.log(`[TTS Debug] Payload:`, JSON.stringify(payload, null, 2));
-    console.log(`[TTS Debug] Headers:`, JSON.stringify(headers, null, 2));
+    console.log(
+      `[TTS Debug] Headers:`,
+      JSON.stringify(redactedHeaders, null, 2)
+    );
 
     try {
       const response = await axios.post(processedEndpoint, payload, {
