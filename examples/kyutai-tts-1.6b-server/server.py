@@ -309,7 +309,24 @@ def load_model(device: Optional[str] = None):
         raise
 
 
-def get_voice_prefix(voice: str):
+def clear_hf_cache_for_voice(voice_file: str):
+    """Clear HuggingFace cache for a specific voice file to force re-download"""
+    import shutil
+    from pathlib import Path
+
+    cache_dir = Path.home() / ".cache" / "huggingface" / "hub" / "models--kyutai--tts-voices"
+    if cache_dir.exists():
+        # Find and delete the specific file in snapshots
+        for snapshot_dir in cache_dir.glob("snapshots/*"):
+            voice_path = snapshot_dir / voice_file.replace(".wav", ".wav.1e68beda@240.safetensors")
+            if voice_path.exists():
+                print(f"Removing corrupted cache file: {voice_path}")
+                voice_path.unlink()
+                return True
+    return False
+
+
+def get_voice_prefix(voice: str, retry_on_error: bool = True):
     """Get or create voice prefix for a given voice identifier"""
     global voice_prefixes
 
@@ -323,20 +340,30 @@ def get_voice_prefix(voice: str):
     if voice_lower in voice_prefixes:
         return voice_prefixes[voice_lower]
 
-    # Get voice path
+    # Get voice file path
     if voice_lower in AVAILABLE_VOICES:
-        voice_path = model.get_voice_path(AVAILABLE_VOICES[voice_lower])
+        voice_file = AVAILABLE_VOICES[voice_lower]
     elif voice.startswith("hf://") or voice.endswith(".safetensors"):
-        voice_path = voice if voice.endswith(".safetensors") else model.get_voice_path(voice)
+        voice_file = voice
     else:
         # Default to alba
-        voice_path = model.get_voice_path(AVAILABLE_VOICES["alba"])
+        voice_file = AVAILABLE_VOICES["alba"]
 
-    # Get prefix from voice path
-    prefix = model.get_prefix(voice_path)
-    voice_prefixes[voice_lower] = prefix
-
-    return prefix
+    try:
+        voice_path = model.get_voice_path(voice_file)
+        # Get prefix from voice path
+        prefix = model.get_prefix(voice_path)
+        voice_prefixes[voice_lower] = prefix
+        return prefix
+    except Exception as e:
+        error_msg = str(e)
+        # If "end of stream" error, the safetensors file is corrupted - clear cache and retry
+        if "end of stream" in error_msg.lower() and retry_on_error:
+            print(f"Voice file corrupted, clearing cache and retrying: {voice_file}")
+            if clear_hf_cache_for_voice(voice_file):
+                # Retry once without retry flag to prevent infinite loop
+                return get_voice_prefix(voice, retry_on_error=False)
+        raise
 
 
 def sanitize_text(text: str) -> str:
