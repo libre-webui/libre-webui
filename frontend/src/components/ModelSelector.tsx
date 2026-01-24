@@ -742,7 +742,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           className='text-xs text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7] hover:underline flex items-center gap-1'
         >
           <ExternalLink className='h-3 w-3' />
-          Browse all
+          {t('modelManager.huggingface.browseAllLink')}
         </a>
         <button
           onMouseDown={e => {
@@ -775,11 +775,17 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             onMouseDown={e => e.stopPropagation()}
             className='flex-1 px-2 py-1.5 rounded-lg border text-xs bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212] border-gray-200 dark:border-dark-300 ophelia:border-[#262626] text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
           >
-            <option value='text-generation'>Text Generation</option>
-            <option value='text-to-speech'>Text to Speech</option>
-            <option value='text-to-image'>Text to Image</option>
+            <option value='text-generation'>
+              {t('modelManager.huggingface.taskTextGeneration')}
+            </option>
+            <option value='text-to-speech'>
+              {t('modelManager.huggingface.taskTextToSpeech')}
+            </option>
+            <option value='text-to-image'>
+              {t('modelManager.huggingface.taskTextToImage')}
+            </option>
             <option value='automatic-speech-recognition'>
-              Speech Recognition
+              {t('modelManager.huggingface.taskSpeechRecognition')}
             </option>
           </select>
           <select
@@ -788,9 +794,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             onMouseDown={e => e.stopPropagation()}
             className='px-2 py-1.5 rounded-lg border text-xs bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212] border-gray-200 dark:border-dark-300 ophelia:border-[#262626] text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
           >
-            <option value='downloads'>Downloads</option>
-            <option value='likes'>Likes</option>
-            <option value='lastModified'>Recent</option>
+            <option value='downloads'>
+              {t('modelManager.huggingface.sortDownloads')}
+            </option>
+            <option value='likes'>
+              {t('modelManager.huggingface.sortLikes')}
+            </option>
+            <option value='lastModified'>
+              {t('modelManager.huggingface.sortRecent')}
+            </option>
           </select>
         </div>
       </div>
@@ -804,7 +816,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         ) : hfModels.length === 0 ? (
           <div className='px-4 py-8 text-center text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
             <Zap className='h-8 w-8 mx-auto mb-2 text-gray-300 dark:text-gray-600' />
-            <p className='text-sm'>No models found</p>
+            <p className='text-sm'>
+              {t('modelManager.huggingface.noModelsFound')}
+            </p>
           </div>
         ) : (
           <div className='divide-y divide-gray-100 dark:divide-dark-200 ophelia:divide-[#1a1a1a]'>
@@ -887,18 +901,19 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                         <div className='flex items-center justify-center py-4'>
                           <Loader className='h-4 w-4 animate-spin text-gray-400' />
                           <span className='ml-2 text-xs text-gray-500'>
-                            Checking for GGUF files...
+                            {t('modelManager.huggingface.checkingGguf')}
                           </span>
                         </div>
                       ) : ggufFiles.length === 0 ? (
                         <div className='py-4 text-center text-xs text-gray-500 dark:text-gray-400'>
-                          No GGUF files available for direct Ollama pull
+                          {t('modelManager.huggingface.noGgufAvailable')}
                         </div>
                       ) : (
                         <div className='space-y-2'>
                           <div className='text-xs font-medium text-gray-600 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
-                            GGUF Files ({ggufFiles.length}) - Pull directly to
-                            Ollama
+                            {t('modelManager.huggingface.ggufFilesCount', {
+                              count: ggufFiles.length,
+                            })}
                           </div>
                           {ggufFiles.map(file => {
                             const isPullingThis =
@@ -960,7 +975,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                     )}
                                   >
                                     <Download className='h-3 w-3 inline mr-1' />
-                                    Pull
+                                    {t('models.pull')}
                                   </button>
                                 )}
                               </div>
@@ -999,7 +1014,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           className='text-xs text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7] hover:underline flex items-center gap-1'
         >
           <ExternalLink className='h-3 w-3' />
-          Browse all
+          {t('modelManager.huggingface.browseAllLink')}
         </a>
         <button
           onMouseDown={e => {
