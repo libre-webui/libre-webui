@@ -85,6 +85,30 @@ interface HfFileInfo {
   };
 }
 
+// Validate and sanitize HuggingFace model ID components to prevent SSRF
+// Valid characters: alphanumeric, hyphens, underscores, dots
+const VALID_HF_ID_PATTERN = /^[a-zA-Z0-9_.-]+$/;
+
+function sanitizeHfId(id: unknown, fieldName: string): string {
+  if (!id || typeof id !== 'string') {
+    throw new Error(`Invalid ${fieldName}: must be a non-empty string`);
+  }
+  if (id.length > 100) {
+    throw new Error(`Invalid ${fieldName}: too long (max 100 characters)`);
+  }
+  if (!VALID_HF_ID_PATTERN.test(id)) {
+    throw new Error(
+      `Invalid ${fieldName}: contains invalid characters. Only alphanumeric, hyphens, underscores, and dots are allowed.`
+    );
+  }
+  // Prevent path traversal
+  if (id.includes('..') || id.startsWith('.') || id.endsWith('.')) {
+    throw new Error(`Invalid ${fieldName}: invalid format`);
+  }
+  // Return the validated string - this creates a clear data flow for static analysis
+  return id;
+}
+
 // Rate limiting for Hub API requests
 const hubRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -196,9 +220,11 @@ router.get(
     res: Response<ApiResponse<HuggingFaceModel>>
   ): Promise<void> => {
     try {
-      const { author, modelName } = req.params;
-      const modelId = `${author}/${modelName}`;
+      // Sanitize inputs to prevent SSRF - only use sanitized values for URL
+      const author = sanitizeHfId(req.params.author, 'author');
+      const modelName = sanitizeHfId(req.params.modelName, 'modelName');
 
+      const modelId = `${author}/${modelName}`;
       const url = `https://huggingface.co/api/models/${modelId}`;
 
       const response = await axios.get<HuggingFaceModel>(url, {
@@ -343,7 +369,10 @@ router.get(
     res: Response<ApiResponse<GgufFileInfo[]>>
   ): Promise<void> => {
     try {
-      const { author, modelName } = req.params;
+      // Sanitize inputs to prevent SSRF - only use sanitized values for URL
+      const author = sanitizeHfId(req.params.author, 'author');
+      const modelName = sanitizeHfId(req.params.modelName, 'modelName');
+
       const modelId = `${author}/${modelName}`;
 
       // Get the file tree from HuggingFace
@@ -445,7 +474,10 @@ router.get(
     res: Response<ApiResponse<{ hasGguf: boolean; count: number }>>
   ): Promise<void> => {
     try {
-      const { author, modelName } = req.params;
+      // Sanitize inputs to prevent SSRF - only use sanitized values for URL
+      const author = sanitizeHfId(req.params.author, 'author');
+      const modelName = sanitizeHfId(req.params.modelName, 'modelName');
+
       const modelId = `${author}/${modelName}`;
 
       // Check cache first
