@@ -540,7 +540,7 @@ export const ollamaApi = {
     }
 
     const eventSource = new EventSource(
-      `${API_BASE_URL}/ollama/models/${modelName}/pull/stream`
+      `${API_BASE_URL}/ollama/pull/stream?model=${encodeURIComponent(modelName)}`
     );
 
     eventSource.onmessage = event => {
@@ -770,7 +770,11 @@ export const ollamaApi = {
     return api.post('/ollama/embeddings', payload).then(res => res.data);
   },
 
-  getLibraryModels: (): Promise<
+  getLibraryModels: (params?: {
+    search?: string;
+    sort?: 'popular' | 'newest';
+    category?: string;
+  }): Promise<
     ApiResponse<
       Array<{
         name: string;
@@ -802,7 +806,14 @@ export const ollamaApi = {
         },
       ]);
     }
-    return api.get('/ollama/library').then(res => res.data);
+    const queryParams = new URLSearchParams();
+    if (params?.search) queryParams.set('search', params.search);
+    if (params?.sort) queryParams.set('sort', params.sort);
+    if (params?.category) queryParams.set('category', params.category);
+    const queryString = queryParams.toString();
+    return api
+      .get(`/ollama/library${queryString ? `?${queryString}` : ''}`)
+      .then(res => res.data);
   },
 };
 
@@ -1977,6 +1988,17 @@ export interface HuggingFaceModel {
   pipeline_tag?: string;
   library_name?: string;
   gated: boolean | string;
+  hasGguf?: boolean;
+}
+
+// GGUF file info from HuggingFace
+export interface GgufFileInfo {
+  filename: string;
+  size: number;
+  sizeFormatted: string;
+  quantization?: string;
+  url: string;
+  ollamaCommand: string;
 }
 
 // HuggingFace Hub API
@@ -1986,10 +2008,9 @@ export const huggingfaceHubApi = {
     task?: string;
     search?: string;
     author?: string;
-    sort?: 'downloads' | 'likes' | 'trending';
+    sort?: 'downloads' | 'likes' | 'lastModified';
     direction?: 'asc' | 'desc';
     limit?: number;
-    inference?: boolean;
   }): Promise<ApiResponse<HuggingFaceModel[]>> => {
     if (isDemoMode()) {
       return createDemoResponse<HuggingFaceModel[]>([
@@ -2008,10 +2029,7 @@ export const huggingfaceHubApi = {
 
     return api
       .get('/huggingface-hub/models', {
-        params: {
-          ...params,
-          inference: params?.inference !== false ? 'true' : 'false',
-        },
+        params,
       })
       .then(res => res.data);
   },
@@ -2072,6 +2090,43 @@ export const huggingfaceHubApi = {
     }
 
     return api.post('/huggingface-hub/cache/clear').then(res => res.data);
+  },
+
+  // Get GGUF files for a model
+  getGgufFiles: (
+    author: string,
+    modelName: string
+  ): Promise<ApiResponse<GgufFileInfo[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<GgufFileInfo[]>([
+        {
+          filename: 'model-Q4_K_M.gguf',
+          size: 4500000000,
+          sizeFormatted: '4.19 GB',
+          quantization: 'Q4_K_M',
+          url: `https://huggingface.co/${author}/${modelName}/resolve/main/model-Q4_K_M.gguf`,
+          ollamaCommand: `hf.co/${author}/${modelName}:Q4_K_M`,
+        },
+      ]);
+    }
+
+    return api
+      .get(`/huggingface-hub/models/${author}/${modelName}/gguf`)
+      .then(res => res.data);
+  },
+
+  // Check if a model has GGUF files
+  hasGgufFiles: (
+    author: string,
+    modelName: string
+  ): Promise<ApiResponse<{ hasGguf: boolean; count: number }>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ hasGguf: false, count: 0 });
+    }
+
+    return api
+      .get(`/huggingface-hub/models/${author}/${modelName}/has-gguf`)
+      .then(res => res.data);
   },
 };
 

@@ -59,6 +59,30 @@ interface HuggingFaceModelResponse {
   pipeline_tag?: string;
   library_name?: string;
   gated: boolean | string;
+  hasGguf?: boolean;
+}
+
+// GGUF file info from HuggingFace
+interface GgufFileInfo {
+  filename: string;
+  size: number;
+  sizeFormatted: string;
+  quantization?: string;
+  url: string;
+  ollamaCommand: string;
+}
+
+// HuggingFace file tree response
+interface HfFileInfo {
+  type: 'file' | 'directory';
+  path: string;
+  size?: number;
+  oid?: string;
+  lfs?: {
+    size: number;
+    sha256: string;
+    pointerSize: number;
+  };
 }
 
 // Rate limiting for Hub API requests
@@ -124,7 +148,7 @@ router.get(
       if (sort) params.append('sort', sort as string);
       if (direction === 'asc') params.append('direction', '-1');
       if (limit) params.append('limit', limit as string);
-      if (inference === 'true') params.append('inference', 'warm');
+      // Note: 'inference' parameter removed - HuggingFace API changed
 
       const url = `https://huggingface.co/api/models?${params.toString()}`;
 
@@ -277,9 +301,8 @@ router.get(
 
       const params = new URLSearchParams();
       params.append('pipeline_tag', task as string);
-      params.append('sort', 'trending');
+      params.append('sort', 'downloads'); // Use downloads as proxy for popularity
       params.append('limit', limit as string);
-      params.append('inference', 'warm');
 
       const url = `https://huggingface.co/api/models?${params.toString()}`;
 
@@ -308,6 +331,181 @@ router.get(
     }
   }
 );
+
+/**
+ * Get GGUF files available for a model
+ * Returns list of GGUF files with size, quantization info, and Ollama pull command
+ */
+router.get(
+  '/models/:author/:modelName/gguf',
+  async (
+    req: Request,
+    res: Response<ApiResponse<GgufFileInfo[]>>
+  ): Promise<void> => {
+    try {
+      const { author, modelName } = req.params;
+      const modelId = `${author}/${modelName}`;
+
+      // Get the file tree from HuggingFace
+      const url = `https://huggingface.co/api/models/${modelId}/tree/main`;
+
+      const response = await axios.get<HfFileInfo[]>(url, {
+        timeout: 15000,
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      // Filter for GGUF files
+      const ggufFiles: GgufFileInfo[] = response.data
+        .filter(
+          (file): file is HfFileInfo & { size: number } =>
+            file.type === 'file' &&
+            file.path.toLowerCase().endsWith('.gguf') &&
+            file.size !== undefined
+        )
+        .map(file => {
+          // Extract quantization from filename (e.g., Q4_K_M, Q8_0, etc.)
+          const quantMatch = file.path.match(
+            /[_.-](Q\d+_?[A-Z0-9_]*|F16|F32|BF16)/i
+          );
+          const quantization = quantMatch
+            ? quantMatch[1].toUpperCase()
+            : undefined;
+
+          // Use LFS size if available, otherwise regular size
+          const size = file.lfs?.size || file.size;
+
+          // Ollama HF pull format: hf.co/{author}/{repo}:{tag}
+          // Tag should match the filename pattern (without .gguf extension)
+          // e.g., "Qwen3-0.6B-Q2_K.gguf" -> tag is "Qwen3-0.6B-Q2_K" or just "Q2_K"
+          const filenameWithoutExt = file.path.replace(/\.gguf$/i, '');
+
+          return {
+            filename: file.path,
+            size,
+            sizeFormatted: formatFileSize(size),
+            quantization,
+            url: `https://huggingface.co/${modelId}/resolve/main/${file.path}`,
+            // Use the quantization as tag if available, otherwise use full filename
+            ollamaCommand: quantization
+              ? `hf.co/${modelId}:${quantization}`
+              : `hf.co/${modelId}:${filenameWithoutExt}`,
+          };
+        })
+        .sort((a, b) => {
+          // Sort by quantization quality (higher bits first)
+          const getQuantOrder = (q?: string): number => {
+            if (!q) return 0;
+            if (q.includes('F32')) return 100;
+            if (q.includes('F16') || q.includes('BF16')) return 90;
+            if (q.includes('Q8')) return 80;
+            if (q.includes('Q6')) return 70;
+            if (q.includes('Q5')) return 60;
+            if (q.includes('Q4')) return 50;
+            if (q.includes('Q3')) return 40;
+            if (q.includes('Q2')) return 30;
+            return 10;
+          };
+          return getQuantOrder(b.quantization) - getQuantOrder(a.quantization);
+        });
+
+      res.json({
+        success: true,
+        data: ggufFiles,
+      });
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status || 500;
+        res.status(status).json({
+          success: false,
+          error:
+            status === 404
+              ? 'Model not found or no files available'
+              : `HuggingFace API error: ${error.message}`,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: getErrorMessage(error, 'Failed to fetch GGUF files'),
+        });
+      }
+    }
+  }
+);
+
+/**
+ * Check if a model has GGUF files available
+ * Quick check without fetching full file list
+ */
+router.get(
+  '/models/:author/:modelName/has-gguf',
+  async (
+    req: Request,
+    res: Response<ApiResponse<{ hasGguf: boolean; count: number }>>
+  ): Promise<void> => {
+    try {
+      const { author, modelName } = req.params;
+      const modelId = `${author}/${modelName}`;
+
+      // Check cache first
+      const cacheKey = `gguf_check_${modelId}`;
+      const cached = modelCache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        const ggufCount = (cached.data as unknown as { count: number }).count;
+        res.json({
+          success: true,
+          data: { hasGguf: ggufCount > 0, count: ggufCount },
+        });
+        return;
+      }
+
+      // Get the file tree from HuggingFace
+      const url = `https://huggingface.co/api/models/${modelId}/tree/main`;
+
+      const response = await axios.get<HfFileInfo[]>(url, {
+        timeout: 10000,
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      // Count GGUF files
+      const ggufCount = response.data.filter(
+        file =>
+          file.type === 'file' && file.path.toLowerCase().endsWith('.gguf')
+      ).length;
+
+      // Cache the result
+      modelCache.set(cacheKey, {
+        data: [{ count: ggufCount }] as unknown as HuggingFaceModel[],
+        timestamp: Date.now(),
+      });
+
+      res.json({
+        success: true,
+        data: { hasGguf: ggufCount > 0, count: ggufCount },
+      });
+    } catch (error: unknown) {
+      // If we can't check, assume no GGUF files
+      res.json({
+        success: true,
+        data: { hasGguf: false, count: 0 },
+      });
+    }
+  }
+);
+
+/**
+ * Format file size to human readable string
+ */
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 /**
  * Format model response to include only necessary fields
