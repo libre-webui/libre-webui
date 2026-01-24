@@ -38,7 +38,7 @@ interface HuggingFaceModelBrowserProps {
   selectedModels?: string[];
 }
 
-type SortOption = 'downloads' | 'likes' | 'trending';
+type SortOption = 'downloads' | 'likes' | 'lastModified';
 type TaskOption =
   | 'text-generation'
   | 'text-to-speech'
@@ -53,9 +53,9 @@ const TASK_OPTIONS: { value: TaskOption; label: string }[] = [
 ];
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'trending', label: 'Trending' },
   { value: 'downloads', label: 'Most Downloads' },
   { value: 'likes', label: 'Most Liked' },
+  { value: 'lastModified', label: 'Recently Updated' },
 ];
 
 export const HuggingFaceModelBrowser: React.FC<
@@ -66,7 +66,7 @@ export const HuggingFaceModelBrowser: React.FC<
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [task, setTask] = useState<TaskOption>('text-generation');
-  const [sort, setSort] = useState<SortOption>('trending');
+  const [sort, setSort] = useState<SortOption>('downloads');
   const [showFilters, setShowFilters] = useState(false);
 
   // Debounced search
@@ -127,41 +127,41 @@ export const HuggingFaceModelBrowser: React.FC<
 
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-      <div className='relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-2xl flex flex-col overflow-hidden'>
+      <div className='relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-dark-100 rounded-xl shadow-2xl flex flex-col overflow-hidden'>
         {/* Header */}
-        <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-dark-300'>
           <div className='flex items-center gap-3'>
             <div className='p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg'>
               <Zap className='w-5 h-5 text-yellow-600 dark:text-yellow-400' />
             </div>
             <div>
-              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+              <h2 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
                 HuggingFace Model Browser
               </h2>
-              <p className='text-sm text-gray-500 dark:text-gray-400'>
+              <p className='text-sm text-gray-500 dark:text-dark-600'>
                 Browse and select models from the Hub
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
           >
-            <X className='w-5 h-5 text-gray-500' />
+            <X className='w-5 h-5 text-gray-500 dark:text-dark-600' />
           </button>
         </div>
 
         {/* Search and Filters */}
-        <div className='px-6 py-4 border-b border-gray-200 dark:border-gray-700 space-y-4'>
+        <div className='px-6 py-4 border-b border-gray-200 dark:border-dark-300 space-y-4'>
           {/* Search Bar */}
           <div className='relative'>
-            <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400' />
+            <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-dark-500' />
             <input
               type='text'
               placeholder='Search models...'
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className='w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 dark:text-white placeholder-gray-500'
+              className='w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 dark:text-dark-800 placeholder-gray-500 dark:placeholder-dark-500'
             />
           </div>
 
@@ -169,12 +169,12 @@ export const HuggingFaceModelBrowser: React.FC<
           <div className='flex items-center justify-between'>
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className='flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors'
+              className='flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors'
             >
               <Filter className='w-4 h-4' />
               Filters
             </button>
-            <div className='text-sm text-gray-500 dark:text-gray-400'>
+            <div className='text-sm text-gray-500 dark:text-dark-600'>
               {models.length} models found
             </div>
           </div>
@@ -184,13 +184,13 @@ export const HuggingFaceModelBrowser: React.FC<
             <div className='flex flex-wrap gap-4'>
               {/* Task Filter */}
               <div className='flex-1 min-w-[200px]'>
-                <label className='block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'>
+                <label className='block text-xs font-medium text-gray-500 dark:text-dark-600 mb-1'>
                   Task
                 </label>
                 <select
                   value={task}
                   onChange={e => setTask(e.target.value as TaskOption)}
-                  className='w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none'
+                  className='w-full px-3 py-2 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg text-sm text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-blue-500 outline-none'
                 >
                   {TASK_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -202,13 +202,13 @@ export const HuggingFaceModelBrowser: React.FC<
 
               {/* Sort Filter */}
               <div className='flex-1 min-w-[200px]'>
-                <label className='block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1'>
+                <label className='block text-xs font-medium text-gray-500 dark:text-dark-600 mb-1'>
                   Sort By
                 </label>
                 <select
                   value={sort}
                   onChange={e => setSort(e.target.value as SortOption)}
-                  className='w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none'
+                  className='w-full px-3 py-2 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg text-sm text-gray-900 dark:text-dark-800 focus:ring-2 focus:ring-blue-500 outline-none'
                 >
                   {SORT_OPTIONS.map(option => (
                     <option key={option.value} value={option.value}>
@@ -235,7 +235,7 @@ export const HuggingFaceModelBrowser: React.FC<
               </Button>
             </div>
           ) : models.length === 0 ? (
-            <div className='flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400'>
+            <div className='flex flex-col items-center justify-center py-12 text-gray-500 dark:text-dark-600'>
               <Search className='w-12 h-12 mb-4 opacity-50' />
               <p>No models found</p>
               <p className='text-sm'>Try adjusting your search or filters</p>
@@ -248,13 +248,13 @@ export const HuggingFaceModelBrowser: React.FC<
                   className={`p-4 rounded-lg border transition-all ${
                     isModelSelected(model.id)
                       ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                      : 'border-gray-200 dark:border-dark-300 hover:border-gray-300 dark:hover:border-dark-400'
                   }`}
                 >
                   <div className='flex items-start justify-between gap-4'>
                     <div className='flex-1 min-w-0'>
                       <div className='flex items-center gap-2 mb-1'>
-                        <h3 className='font-medium text-gray-900 dark:text-white truncate'>
+                        <h3 className='font-medium text-gray-900 dark:text-dark-800 truncate'>
                           {model.id}
                         </h3>
                         {model.gated && (
@@ -263,10 +263,10 @@ export const HuggingFaceModelBrowser: React.FC<
                           </span>
                         )}
                       </div>
-                      <p className='text-sm text-gray-500 dark:text-gray-400 mb-2'>
+                      <p className='text-sm text-gray-500 dark:text-dark-600 mb-2'>
                         by {model.author}
                       </p>
-                      <div className='flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400'>
+                      <div className='flex items-center gap-4 text-sm text-gray-500 dark:text-dark-600'>
                         <span className='flex items-center gap-1'>
                           <Download className='w-4 h-4' />
                           {formatNumber(model.downloads)}
@@ -276,7 +276,7 @@ export const HuggingFaceModelBrowser: React.FC<
                           {formatNumber(model.likes)}
                         </span>
                         {model.pipeline_tag && (
-                          <span className='px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs'>
+                          <span className='px-2 py-0.5 bg-gray-100 dark:bg-dark-200 rounded text-xs'>
                             {model.pipeline_tag}
                           </span>
                         )}
@@ -287,7 +287,7 @@ export const HuggingFaceModelBrowser: React.FC<
                         href={`https://huggingface.co/${model.id}`}
                         target='_blank'
                         rel='noopener noreferrer'
-                        className='p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                        className='p-2 text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700 transition-colors'
                         title='View on HuggingFace'
                       >
                         <ExternalLink className='w-4 h-4' />
@@ -319,9 +319,9 @@ export const HuggingFaceModelBrowser: React.FC<
         </div>
 
         {/* Footer */}
-        <div className='px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'>
+        <div className='px-6 py-4 border-t border-gray-200 dark:border-dark-300 bg-gray-50 dark:bg-dark-50'>
           <div className='flex items-center justify-between'>
-            <p className='text-sm text-gray-500 dark:text-gray-400'>
+            <p className='text-sm text-gray-500 dark:text-dark-600'>
               Powered by{' '}
               <a
                 href='https://huggingface.co'
