@@ -466,24 +466,30 @@ async def create_speech(request: TTSRequest):
         loop = asyncio.get_event_loop()
 
         def _generate():
-            # Prepare the script - returns list of Entry objects
-            entries = model.prepare_script([clean_text], padding_between=1)
+            with torch.no_grad():
+                # Prepare the script - returns list of Entry objects
+                entries = model.prepare_script([clean_text], padding_between=1)
 
-            # Prepare condition attributes using voice safetensors file
-            cond_attrs = model.make_condition_attributes([voice_path], cfg_coef=request.cfg_coef)
+                # Prepare condition attributes using voice safetensors file
+                cond_attrs = model.make_condition_attributes([voice_path], cfg_coef=request.cfg_coef)
 
-            # Generate all frames first, then decode
-            # Using result.frames gives smoother audio than on_frame callback
-            result = model.generate([entries], [cond_attrs])
+                # Generate all frames first, then decode
+                result = model.generate([entries], [cond_attrs])
 
-            # Decode frames after delay_steps for proper audio alignment
-            pcms = []
-            for frame in result.frames[model.delay_steps:]:
-                if (frame[:, 1:] != -1).all():
-                    pcm = model.mimi.decode(frame[:, 1:, :])
-                    pcms.append(pcm)
+                # Collect all valid frames first
+                frames_to_decode = []
+                for frame in result.frames[model.delay_steps:]:
+                    if (frame[:, 1:] != -1).all():
+                        frames_to_decode.append(frame[:, 1:, :])
 
-            return pcms
+                # Decode all frames at once for smoother output
+                if frames_to_decode:
+                    # Stack frames and decode in one go
+                    all_frames = torch.cat(frames_to_decode, dim=-1)
+                    pcm = model.mimi.decode(all_frames)
+                    return [pcm]
+
+                return []
 
         return await loop.run_in_executor(None, _generate)
 
