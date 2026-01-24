@@ -472,18 +472,16 @@ async def create_speech(request: TTSRequest):
             # Prepare condition attributes using voice safetensors file
             cond_attrs = model.make_condition_attributes([voice_path], cfg_coef=request.cfg_coef)
 
-            # Generate frames and decode
-            pcms = []
+            # Generate all frames first, then decode
+            # Using result.frames gives smoother audio than on_frame callback
+            result = model.generate([entries], [cond_attrs])
 
-            def on_frame(frame):
-                # Decode frame if valid
+            # Decode frames after delay_steps for proper audio alignment
+            pcms = []
+            for frame in result.frames[model.delay_steps:]:
                 if (frame[:, 1:] != -1).all():
                     pcm = model.mimi.decode(frame[:, 1:, :])
                     pcms.append(pcm)
-
-            # Run generation - needs list of (entries_list, cond_attrs) pairs
-            # Each element in all_entries should be a list of Entry objects for one batch item
-            model.generate([entries], [cond_attrs], on_frame=on_frame)
 
             return pcms
 
