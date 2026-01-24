@@ -543,34 +543,43 @@ class StorageService {
 
   /**
    * Safely decrypt and parse a preference value with proper error handling
+   * Returns null for corrupted data (which will be cleaned up)
    */
-  private safeDecryptPreference(key: string, value: string): unknown {
+  private safeDecryptPreference(
+    key: string,
+    value: string,
+    userId?: string
+  ): unknown | null {
     try {
-      // Decrypt the preference value
       const decryptedValue = encryptionService.decrypt(value);
       try {
-        // Parse the decrypted value
         return JSON.parse(decryptedValue);
-      } catch (parseError) {
-        console.error(`Parsing error for preference key "${key}":`, parseError);
-        // Fallback to raw decrypted value
-        return decryptedValue;
+      } catch {
+        // Corrupted - will be cleaned up
+        return null;
       }
-    } catch (decryptError) {
-      console.error(
-        `Decryption error for preference key "${key}":`,
-        decryptError
-      );
-      // Fallback to raw value (assuming unencrypted legacy data)
+    } catch {
+      // Try as unencrypted legacy data
       try {
         return JSON.parse(value);
-      } catch (parseError) {
-        console.error(
-          `Parsing error for raw preference key "${key}":`,
-          parseError
-        );
-        return value;
+      } catch {
+        // Corrupted - will be cleaned up
+        return null;
       }
+    }
+  }
+
+  /**
+   * Delete a corrupted preference from the database
+   */
+  private deleteCorruptedPreference(userId: string, key: string): void {
+    if (this.useSQLite) {
+      const db = getDatabase();
+      db.prepare('DELETE FROM user_preferences WHERE user_id = ? AND key = ?').run(
+        userId,
+        key
+      );
+      console.log(`Cleaned up corrupted preference: ${key}`);
     }
   }
 
@@ -598,11 +607,25 @@ class StorageService {
       if (rows.length === 0) return null;
 
       const preferences: Record<string, unknown> = {};
+      const corruptedKeys: string[] = [];
+
       rows.forEach(row => {
-        preferences[row.key] = this.safeDecryptPreference(row.key, row.value);
+        const value = this.safeDecryptPreference(row.key, row.value, userId);
+        if (value === null) {
+          corruptedKeys.push(row.key);
+        } else {
+          preferences[row.key] = value;
+        }
       });
 
-      return preferences as unknown as UserPreferences;
+      // Clean up corrupted preferences
+      if (corruptedKeys.length > 0 && userId) {
+        corruptedKeys.forEach(key => this.deleteCorruptedPreference(userId, key));
+      }
+
+      return Object.keys(preferences).length > 0
+        ? (preferences as unknown as UserPreferences)
+        : null;
     } else {
       // Fallback to JSON
       try {
