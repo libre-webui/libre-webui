@@ -130,12 +130,19 @@ router.get(
   }
 );
 
-// Pull a new model
+// Pull a new model (uses request body to support model names with slashes like hf.co/author/model:tag)
 router.post(
-  '/models/:modelName/pull',
+  '/models/pull',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const modelName = req.params.modelName as string;
+      const modelName = req.body.name as string;
+      if (!modelName) {
+        res.status(400).json({
+          success: false,
+          error: 'Model name is required in request body',
+        });
+        return;
+      }
       await ollamaService.pullModel(modelName);
 
       res.json({
@@ -198,12 +205,19 @@ router.get(
   }
 );
 
-// Delete a model
+// Delete a model (uses query param ?name= to support model names with slashes like hf.co/author/model:tag)
 router.delete(
-  '/models/:modelName',
+  '/models',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const modelName = req.params.modelName as string;
+      const modelName = req.query.name as string;
+      if (!modelName) {
+        res.status(400).json({
+          success: false,
+          error: 'Model name is required as query parameter',
+        });
+        return;
+      }
       await ollamaService.deleteModel(modelName);
 
       res.json({
@@ -219,12 +233,19 @@ router.delete(
   }
 );
 
-// Show model information
+// Show model information (uses query param ?name= to support model names with slashes like hf.co/author/model:tag)
 router.get(
-  '/models/:modelName',
+  '/models/show',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const modelName = req.params.modelName as string;
+      const modelName = req.query.name as string;
+      if (!modelName) {
+        res.status(400).json({
+          success: false,
+          error: 'Model name is required as query parameter',
+        });
+        return;
+      }
       const verbose = req.query.verbose === 'true';
       const data = await ollamaService.showModel(modelName, verbose);
       res.json({ success: true, data });
@@ -270,12 +291,19 @@ router.post(
   }
 );
 
-// Push a model
+// Push a model (uses request body to support model names with slashes like hf.co/author/model:tag)
 router.post(
-  '/models/:modelName/push',
+  '/models/push',
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
-      const modelName = req.params.modelName as string;
+      const modelName = req.body.name as string;
+      if (!modelName) {
+        res.status(400).json({
+          success: false,
+          error: 'Model name is required in request body',
+        });
+        return;
+      }
       await ollamaService.pushModel(modelName);
       res.json({
         success: true,
