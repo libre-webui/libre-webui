@@ -486,7 +486,7 @@ router.get(
         success: true,
         data: { hasGguf: ggufCount > 0, count: ggufCount },
       });
-    } catch (error: unknown) {
+    } catch (_error: unknown) {
       // If we can't check, assume no GGUF files
       res.json({
         success: true,
