@@ -497,7 +497,9 @@ export const ollamaApi = {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
     }
-    return api.post(`/ollama/models/${modelName}/pull`).then(res => res.data);
+    return api
+      .post('/ollama/models/pull', { name: modelName })
+      .then(res => res.data);
   },
 
   pullModelStream: (
@@ -582,7 +584,9 @@ export const ollamaApi = {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
     }
-    return api.delete(`/ollama/models/${modelName}`).then(res => res.data);
+    return api
+      .delete('/ollama/models', { params: { name: modelName } })
+      .then(res => res.data);
   },
 
   showModel: (
@@ -594,7 +598,7 @@ export const ollamaApi = {
       return createDemoResponse(model || null, !!model);
     }
     return api
-      .get(`/ollama/models/${modelName}`, { params: { verbose } })
+      .get('/ollama/models/show', { params: { name: modelName, verbose } })
       .then(res => res.data);
   },
 
@@ -618,7 +622,9 @@ export const ollamaApi = {
     if (isDemoMode()) {
       return createDemoResponse(null, false);
     }
-    return api.post(`/ollama/models/${modelName}/push`).then(res => res.data);
+    return api
+      .post('/ollama/models/push', { name: modelName })
+      .then(res => res.data);
   },
 
   pullAllModels: (): Promise<ApiResponse> => {
