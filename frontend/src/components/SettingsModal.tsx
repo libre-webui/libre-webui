@@ -1534,34 +1534,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           {t('settings.tts.voiceDescription')}
                         </p>
                       </div>
-
-                      {/* Speed Control */}
-                      <div>
-                        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          {t('settings.tts.speed')}:{' '}
-                          {ttsSettings.speed.toFixed(1)}x
-                        </label>
-                        <input
-                          type='range'
-                          min='0.25'
-                          max='4.0'
-                          step='0.25'
-                          value={ttsSettings.speed}
-                          onChange={e =>
-                            handleTtsSettingChange(
-                              'speed',
-                              parseFloat(e.target.value)
-                            )
-                          }
-                          disabled={!ttsSettings.enabled}
-                          className='w-full range-slider'
-                        />
-                        <div className='flex justify-between text-xs text-gray-500 mt-1'>
-                          <span>{t('settings.tts.speedSlow')}</span>
-                          <span>{t('settings.tts.speedNormal')}</span>
-                          <span>{t('settings.tts.speedFast')}</span>
-                        </div>
-                      </div>
                     </div>
                   </div>
 
@@ -3528,15 +3500,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <nav className='space-y-1'>
                 {tabs.map(tab => {
                   const Icon = tab.icon;
+                  const isOphelia = theme.mode === 'ophelia';
+                  const isActive = activeTab === tab.id;
+
+                  // Build className based on theme
+                  let buttonClass =
+                    'w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2.5 sm:py-2.5 text-left rounded-lg transition-colors duration-200 touch-manipulation border';
+
+                  if (isOphelia) {
+                    buttonClass += isActive
+                      ? ' bg-purple-600 text-white border-purple-600'
+                      : ' border-transparent text-neutral-500 hover:bg-neutral-800';
+                  } else {
+                    buttonClass += isActive
+                      ? ' bg-gray-100 dark:bg-dark-100 text-gray-900 dark:text-white border-gray-200 dark:border-dark-300'
+                      : ' border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200';
+                  }
+
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2.5 sm:py-2.5 text-left rounded-lg transition-colors duration-200 touch-manipulation ${
-                        activeTab === tab.id
-                          ? 'bg-gray-100 dark:bg-dark-100 ophelia:bg-[#1a1a1a] text-gray-900 dark:text-white ophelia:text-[#fafafa] border border-gray-200 dark:border-dark-300 ophelia:border-[#3a3a3a]'
-                          : 'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] hover:bg-gray-50 dark:hover:bg-dark-200 ophelia:hover:bg-[#0a0a0a] active:bg-gray-100 dark:active:bg-dark-100 ophelia:active:bg-[#121212]'
-                      }`}
+                      className={buttonClass}
                     >
                       <Icon className='h-4 w-4 flex-shrink-0' />
                       <span className='text-xs sm:text-sm font-medium truncate'>
