@@ -338,12 +338,16 @@ def force_download_voice(voice_file: str) -> str:
     if file_size < 200000:  # Less than 200KB is suspicious
         raise ValueError(f"Downloaded file too small ({file_size} bytes), likely corrupted")
 
-    # Load the safetensors file directly and return the tensor data
+    # Load the safetensors file directly and re-save it to fix any corruption
     try:
         data = safetensors.torch.load_file(local_path)
         print(f"Safetensors loaded successfully, keys: {list(data.keys())}")
-        # Return both the path and the loaded data
-        return local_path, data
+
+        # Re-save the file to ensure it's in a clean format
+        safetensors.torch.save_file(data, local_path)
+        print(f"Re-saved safetensors file to: {local_path}")
+
+        return local_path
     except Exception as e:
         print(f"Safetensors direct load failed: {e}")
         # Check first few bytes of file
@@ -388,22 +392,12 @@ def get_voice_prefix(voice: str, retry_on_error: bool = True):
         if "end of stream" in error_msg.lower() and retry_on_error:
             print(f"Voice file corrupted, force re-downloading: {voice_file}")
             try:
-                # Force download with integrity check
-                local_path, data = force_download_voice(voice_file)
-                # Get the speaker_wavs tensor and use it directly
-                if 'speaker_wavs' in data:
-                    speaker_wavs = data['speaker_wavs']
-                    print(f"Speaker wavs shape: {speaker_wavs.shape}, dtype: {speaker_wavs.dtype}")
-                    # Move to correct device (use current_device global)
-                    target_device = torch.device(current_device)
-                    speaker_wavs = speaker_wavs.to(device=target_device)
-                    # Create prefix from the speaker embeddings
-                    prefix = speaker_wavs
-                    voice_prefixes[voice_lower] = prefix
-                    return prefix
-                else:
-                    print(f"No speaker_wavs key in data, keys: {list(data.keys())}")
-                    raise ValueError("Invalid voice file format")
+                # Force download and re-save to fix the file
+                local_path = force_download_voice(voice_file)
+                # Now try loading with the fixed file using moshi's method
+                prefix = model.get_prefix(local_path)
+                voice_prefixes[voice_lower] = prefix
+                return prefix
             except Exception as retry_error:
                 print(f"Force download failed: {retry_error}")
                 raise
