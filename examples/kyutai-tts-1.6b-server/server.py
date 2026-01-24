@@ -25,6 +25,7 @@ import os
 import re
 from typing import Optional
 
+import numpy as np
 import torch
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -369,30 +370,12 @@ def sanitize_text(text: str) -> str:
     return text
 
 
-def audio_to_bytes(pcm_list: list, sample_rate: int) -> bytes:
-    """Convert list of PCM tensors to WAV bytes"""
+def audio_to_bytes(audio_np: np.ndarray, sample_rate: int) -> bytes:
+    """Convert numpy PCM array to WAV bytes"""
     import scipy.io.wavfile as wavfile
-    import numpy as np
 
-    if not pcm_list:
-        raise ValueError("Empty audio list")
-
-    # Concatenate all PCM chunks
-    combined = torch.cat(pcm_list, dim=-1)
-
-    # Remove batch and channel dims if present
-    if combined.dim() == 3:
-        combined = combined.squeeze(0).squeeze(0)
-    elif combined.dim() == 2:
-        combined = combined.squeeze(0)
-
-    # Move to CPU and convert to numpy float32
-    audio_np = combined.detach().cpu().float().numpy()
-
-    # Simple normalization - scale to use full dynamic range without clipping
-    max_val = np.abs(audio_np).max()
-    if max_val > 0:
-        audio_np = audio_np / max_val * 0.9  # 90% of max to leave headroom
+    if audio_np is None or len(audio_np) == 0:
+        raise ValueError("Empty audio")
 
     # Convert to int16
     audio_int16 = (audio_np * 32767).astype(np.int16)
@@ -466,40 +449,36 @@ async def create_speech(request: TTSRequest):
         loop = asyncio.get_event_loop()
 
         def _generate():
-            with torch.no_grad():
-                # Prepare the script - returns list of Entry objects
-                entries = model.prepare_script([clean_text], padding_between=1)
+            # Prepare the script - returns list of Entry objects
+            entries = model.prepare_script([clean_text], padding_between=1)
 
-                # Prepare condition attributes using voice safetensors file
-                cond_attrs = model.make_condition_attributes([voice_path], cfg_coef=request.cfg_coef)
+            # Prepare condition attributes using voice safetensors file
+            cond_attrs = model.make_condition_attributes([voice_path], cfg_coef=request.cfg_coef)
 
-                # Generate all frames first, then decode
-                result = model.generate([entries], [cond_attrs])
+            # Generate all frames first
+            result = model.generate([entries], [cond_attrs])
 
-                # Collect all valid frames first
-                frames_to_decode = []
+            # Decode with streaming context - this is crucial for smooth audio
+            # The mimi codec needs streaming mode for proper decoding
+            with model.mimi.streaming(1), torch.no_grad():
+                pcms = []
                 for frame in result.frames[model.delay_steps:]:
-                    if (frame[:, 1:] != -1).all():
-                        frames_to_decode.append(frame[:, 1:, :])
+                    pcm = model.mimi.decode(frame[:, 1:, :]).cpu().numpy()
+                    pcms.append(np.clip(pcm[0, 0], -1, 1))
 
-                # Decode all frames at once for smoother output
-                if frames_to_decode:
-                    # Stack frames and decode in one go
-                    all_frames = torch.cat(frames_to_decode, dim=-1)
-                    pcm = model.mimi.decode(all_frames)
-                    return [pcm]
-
-                return []
+            if pcms:
+                return np.concatenate(pcms, axis=-1)
+            return None
 
         return await loop.run_in_executor(None, _generate)
 
     try:
-        pcms = await asyncio.wait_for(generate_audio(), timeout=120.0)
+        audio_np = await asyncio.wait_for(generate_audio(), timeout=120.0)
 
-        if not pcms:
+        if audio_np is None:
             raise HTTPException(status_code=500, detail="No audio generated")
 
-        audio_bytes = audio_to_bytes(pcms, model.mimi.sample_rate)
+        audio_bytes = audio_to_bytes(audio_np, model.mimi.sample_rate)
         return Response(content=audio_bytes, media_type="audio/wav")
 
     except asyncio.TimeoutError:
