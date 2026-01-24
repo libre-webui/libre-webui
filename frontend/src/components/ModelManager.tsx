@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { ollamaApi } from '@/utils/api';
+import { ollamaApi, huggingfaceHubApi, HuggingFaceModel } from '@/utils/api';
 import { Button } from '@/components/ui/Button';
 import { RunningModel } from '@/types';
 import toast from 'react-hot-toast';
@@ -49,6 +49,8 @@ import {
   Cloud,
   Check,
   Filter,
+  Heart,
+  Loader,
 } from 'lucide-react';
 import { cn } from '@/utils';
 
@@ -143,6 +145,14 @@ export const ModelManager: React.FC = () => {
   const [ollamaVersion, setOllamaVersion] = useState<string | null>(null);
   const [isHealthy, setIsHealthy] = useState<boolean | null>(null);
 
+  // HuggingFace Hub state
+  const [hfModels, setHfModels] = useState<HuggingFaceModel[]>([]);
+  const [loadingHfModels, setLoadingHfModels] = useState(false);
+  const [hfSearch, setHfSearch] = useState('');
+  const [hfDebouncedSearch, setHfDebouncedSearch] = useState('');
+  const [hfTask, setHfTask] = useState<string>('text-generation');
+  const [hfSort, setHfSort] = useState<string>('downloads');
+
   // Expanded sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['pull', 'local'])
@@ -218,10 +228,52 @@ export const ModelManager: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handlePullModel = async () => {
-    if (!pullModelName.trim()) {
+  // HuggingFace search debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHfDebouncedSearch(hfSearch);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [hfSearch]);
+
+  // Load HuggingFace models
+  const loadHfModels = async () => {
+    setLoadingHfModels(true);
+    try {
+      const response = await huggingfaceHubApi.getModels({
+        task: hfTask,
+        search: hfDebouncedSearch || undefined,
+        sort: hfSort as 'downloads' | 'likes' | 'lastModified',
+        limit: 30,
+      });
+      if (response.success && response.data) {
+        setHfModels(response.data);
+      }
+    } catch (error: unknown) {
+      console.error('Failed to load HuggingFace models:', error);
+    } finally {
+      setLoadingHfModels(false);
+    }
+  };
+
+  // Load HF models when section is expanded or filters change
+  useEffect(() => {
+    if (expandedSections.has('huggingface')) {
+      loadHfModels();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandedSections, hfTask, hfDebouncedSearch, hfSort]);
+
+  const handlePullModel = async (modelName?: string) => {
+    const nameToUse = modelName || pullModelName.trim();
+    if (!nameToUse) {
       toast.error(t('modelManager.pull.enterName'));
       return;
+    }
+
+    // If called with a model name from library, update the input field too
+    if (modelName) {
+      setPullModelName(modelName);
     }
 
     setPulling(true);
@@ -229,7 +281,7 @@ export const ModelManager: React.FC = () => {
 
     try {
       const cancelFn = ollamaApi.pullModelStream(
-        pullModelName.trim(),
+        nameToUse,
         progress => {
           setPullProgress(progress);
         },
@@ -237,9 +289,7 @@ export const ModelManager: React.FC = () => {
           setPullProgress(null);
           setPulling(false);
           setCancelPull(null);
-          toast.success(
-            t('modelManager.pull.success', { name: pullModelName })
-          );
+          toast.success(t('modelManager.pull.success', { name: nameToUse }));
           setPullModelName('');
           loadData();
         },
@@ -449,19 +499,34 @@ export const ModelManager: React.FC = () => {
     ...new Set(libraryModels.map(m => m.category)),
   ];
 
-  // Popular model suggestions with categories (fallback for quick picks)
-  const popularModels = [
-    { name: 'deepseek-r1', category: 'reasoning', size: '7B' },
-    { name: 'llama3.2', category: 'general', size: '3B' },
-    { name: 'gemma3', category: 'general', size: '4B' },
-    { name: 'qwen2.5', category: 'general', size: '7B' },
-    { name: 'mistral', category: 'general', size: '7B' },
-    { name: 'codellama', category: 'coding', size: '7B' },
-    { name: 'nomic-embed-text', category: 'embedding', size: '137M' },
-    { name: 'llava', category: 'vision', size: '7B' },
-    { name: 'phi3', category: 'general', size: '3.8B' },
-    { name: 'gemma2', category: 'general', size: '9B' },
-  ];
+  // Popular model suggestions - use live data from library, fallback to hardcoded
+  const popularModels = useMemo((): {
+    name: string;
+    category: string;
+    size: string;
+  }[] => {
+    if (libraryModels.length > 0) {
+      // Use top 10 from live library data (already sorted by popularity)
+      return libraryModels.slice(0, 10).map(m => ({
+        name: m.name,
+        category: m.category,
+        size: m.sizes?.[0] || '',
+      }));
+    }
+    // Fallback when library hasn't loaded yet
+    return [
+      { name: 'deepseek-r1', category: 'reasoning', size: '7B' },
+      { name: 'llama3.2', category: 'general', size: '3B' },
+      { name: 'gemma3', category: 'general', size: '4B' },
+      { name: 'qwen2.5', category: 'general', size: '7B' },
+      { name: 'mistral', category: 'general', size: '7B' },
+      { name: 'codellama', category: 'coding', size: '7B' },
+      { name: 'nomic-embed-text', category: 'embedding', size: '137M' },
+      { name: 'llava', category: 'vision', size: '7B' },
+      { name: 'phi3', category: 'general', size: '3.8B' },
+      { name: 'gemma2', category: 'general', size: '9B' },
+    ];
+  }, [libraryModels]);
 
   if (loading) {
     return (
@@ -637,7 +702,7 @@ export const ModelManager: React.FC = () => {
                 </Button>
               ) : (
                 <Button
-                  onClick={handlePullModel}
+                  onClick={() => handlePullModel()}
                   disabled={!pullModelName.trim()}
                   className={cn(
                     'px-4 py-2.5 gap-2',
@@ -928,11 +993,12 @@ export const ModelManager: React.FC = () => {
 
                         <Button
                           onClick={() => {
-                            setPullModelName(model.name);
-                            toggleSection('pull');
+                            // Open the pull section so user can see progress
                             if (!expandedSections.has('pull')) {
                               toggleSection('pull');
                             }
+                            // Start the pull immediately
+                            handlePullModel(model.name);
                           }}
                           variant='outline'
                           size='sm'
@@ -973,6 +1039,276 @@ export const ModelManager: React.FC = () => {
                   )}
                 />
                 {t('modelManager.library.refresh')}
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* HuggingFace Hub Section */}
+      <div
+        className={cn(
+          'rounded-xl border overflow-hidden',
+          'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
+          'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+        )}
+      >
+        <button
+          onClick={() => toggleSection('huggingface')}
+          className={cn(
+            'w-full flex items-center justify-between p-4',
+            'hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#121212]',
+            'transition-colors'
+          )}
+        >
+          <div className='flex items-center gap-3'>
+            <div
+              className={cn(
+                'p-2 rounded-lg',
+                'bg-yellow-100 dark:bg-yellow-900/30 ophelia:bg-[#eab308]/20'
+              )}
+            >
+              <Zap className='h-5 w-5 text-yellow-600 dark:text-yellow-400 ophelia:text-[#facc15]' />
+            </div>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+              {t('modelManager.sections.huggingface', 'HuggingFace Hub')}
+            </h3>
+            {hfModels.length > 0 && (
+              <span
+                className={cn(
+                  'px-2 py-0.5 rounded-full text-xs font-medium',
+                  'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]',
+                  'text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'
+                )}
+              >
+                {hfModels.length}{' '}
+                {t('modelManager.library.available', 'available')}
+              </span>
+            )}
+          </div>
+          {expandedSections.has('huggingface') ? (
+            <ChevronUp className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+          ) : (
+            <ChevronDown className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+          )}
+        </button>
+
+        {expandedSections.has('huggingface') && (
+          <div className='p-4 pt-0 space-y-4'>
+            {/* Search and Filters */}
+            <div className='flex flex-col sm:flex-row gap-3'>
+              <div className='relative flex-1'>
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
+                <input
+                  type='text'
+                  value={hfSearch}
+                  onChange={e => setHfSearch(e.target.value)}
+                  placeholder={t(
+                    'modelManager.huggingface.search',
+                    'Search HuggingFace models...'
+                  )}
+                  className={cn(
+                    'w-full pl-10 pr-4 py-2 rounded-lg border text-sm',
+                    'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
+                    'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
+                    'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
+                    'placeholder-gray-500 dark:placeholder-gray-400 ophelia:placeholder-[#525252]',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20 ophelia:focus:ring-[#9333ea]/20',
+                    'focus:border-primary-500 ophelia:focus:border-[#9333ea]'
+                  )}
+                />
+              </div>
+
+              {/* Task Filter */}
+              <select
+                value={hfTask}
+                onChange={e => setHfTask(e.target.value)}
+                className={cn(
+                  'px-3 py-2 rounded-lg border text-sm min-w-[160px]',
+                  'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
+                  'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
+                  'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
+                  'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                )}
+              >
+                <option value='text-generation'>
+                  {t(
+                    'modelManager.huggingface.tasks.textGen',
+                    'Text Generation'
+                  )}
+                </option>
+                <option value='text-to-speech'>
+                  {t('modelManager.huggingface.tasks.tts', 'Text to Speech')}
+                </option>
+                <option value='text-to-image'>
+                  {t('modelManager.huggingface.tasks.image', 'Text to Image')}
+                </option>
+                <option value='automatic-speech-recognition'>
+                  {t(
+                    'modelManager.huggingface.tasks.stt',
+                    'Speech Recognition'
+                  )}
+                </option>
+              </select>
+
+              {/* Sort */}
+              <select
+                value={hfSort}
+                onChange={e => setHfSort(e.target.value)}
+                className={cn(
+                  'px-3 py-2 rounded-lg border text-sm min-w-[140px]',
+                  'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
+                  'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
+                  'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
+                  'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                )}
+              >
+                <option value='downloads'>
+                  {t(
+                    'modelManager.huggingface.sort.downloads',
+                    'Most Downloads'
+                  )}
+                </option>
+                <option value='likes'>
+                  {t('modelManager.huggingface.sort.likes', 'Most Liked')}
+                </option>
+                <option value='lastModified'>
+                  {t(
+                    'modelManager.huggingface.sort.recent',
+                    'Recently Updated'
+                  )}
+                </option>
+              </select>
+            </div>
+
+            {/* Models Grid */}
+            {loadingHfModels ? (
+              <div className='flex items-center justify-center py-8'>
+                <Loader className='h-5 w-5 animate-spin text-gray-400 ophelia:text-[#737373]' />
+              </div>
+            ) : hfModels.length === 0 ? (
+              <div className='text-center py-8 text-gray-500 ophelia:text-[#737373]'>
+                {t(
+                  'modelManager.huggingface.noResults',
+                  'No models found. Try adjusting your search or filters.'
+                )}
+              </div>
+            ) : (
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                {hfModels.map(model => (
+                  <div
+                    key={model.id}
+                    className={cn(
+                      'p-4 rounded-lg border transition-all',
+                      'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
+                      'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]',
+                      'hover:shadow-md hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#262626]'
+                    )}
+                  >
+                    <div className='flex items-start justify-between gap-2 mb-2'>
+                      <div className='flex-1 min-w-0'>
+                        <div className='flex items-center gap-2'>
+                          <h4 className='font-medium text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] truncate'>
+                            {model.id}
+                          </h4>
+                          {model.gated && (
+                            <span
+                              className={cn(
+                                'px-1.5 py-0.5 rounded text-xs',
+                                'bg-yellow-100 dark:bg-yellow-900/30 ophelia:bg-[#eab308]/20',
+                                'text-yellow-700 dark:text-yellow-400 ophelia:text-[#facc15]'
+                              )}
+                            >
+                              {t('modelManager.huggingface.gated', 'Gated')}
+                            </span>
+                          )}
+                        </div>
+                        <p className='text-xs text-gray-500 dark:text-dark-600 ophelia:text-[#737373] mt-0.5'>
+                          {t('modelManager.huggingface.by', 'by')}{' '}
+                          {model.author}
+                        </p>
+                      </div>
+                      <a
+                        href={`https://huggingface.co/${model.id}`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-300 ophelia:hover:bg-[#262626] transition-colors'
+                        title={t(
+                          'modelManager.huggingface.viewOnHF',
+                          'View on HuggingFace'
+                        )}
+                      >
+                        <ExternalLink className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
+                      </a>
+                    </div>
+
+                    <div className='flex items-center gap-3 text-xs text-gray-500 dark:text-dark-600 ophelia:text-[#737373]'>
+                      <span className='flex items-center gap-1'>
+                        <Download className='h-3.5 w-3.5' />
+                        {model.downloads >= 1000000
+                          ? `${(model.downloads / 1000000).toFixed(1)}M`
+                          : model.downloads >= 1000
+                            ? `${(model.downloads / 1000).toFixed(1)}K`
+                            : model.downloads}
+                      </span>
+                      <span className='flex items-center gap-1'>
+                        <Heart className='h-3.5 w-3.5' />
+                        {model.likes >= 1000
+                          ? `${(model.likes / 1000).toFixed(1)}K`
+                          : model.likes}
+                      </span>
+                      {model.pipeline_tag && (
+                        <span
+                          className={cn(
+                            'px-1.5 py-0.5 rounded',
+                            'bg-gray-200 dark:bg-dark-300 ophelia:bg-[#262626]'
+                          )}
+                        >
+                          {model.pipeline_tag}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className='flex items-center justify-between pt-2'>
+              <a
+                href='https://huggingface.co/models'
+                target='_blank'
+                rel='noopener noreferrer'
+                className={cn(
+                  'inline-flex items-center gap-1.5 text-xs',
+                  'text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]',
+                  'hover:underline'
+                )}
+              >
+                <ExternalLink className='h-3 w-3' />
+                {t(
+                  'modelManager.huggingface.browseAll',
+                  'Browse all on HuggingFace'
+                )}
+              </a>
+              <Button
+                onClick={loadHfModels}
+                variant='outline'
+                size='sm'
+                disabled={loadingHfModels}
+                className={cn(
+                  'gap-1.5',
+                  'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
+                  'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
+                )}
+              >
+                <RefreshCw
+                  className={cn(
+                    'h-3.5 w-3.5',
+                    loadingHfModels && 'animate-spin'
+                  )}
+                />
+                {t('modelManager.library.refresh', 'Refresh')}
               </Button>
             </div>
           </div>
