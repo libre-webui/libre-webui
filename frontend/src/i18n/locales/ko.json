@@ -751,6 +751,37 @@
         "failed": "임베딩 생성 실패",
         "enterBoth": "모델을 선택하고 텍스트를 입력하세요"
       }
+    },
+    "huggingface": {
+      "browseAll": "HuggingFace에서 모두 보기",
+      "checkingGguf": "GGUF 파일 확인 중...",
+      "noGgufAvailable": "Ollama로 직접 풀할 수 있는 GGUF 파일이 없습니다",
+      "ggufFilesCount": "GGUF 파일 ({{count}}) - Ollama로 직접 풀",
+      "noModelsFound": "모델을 찾을 수 없습니다",
+      "noResults": "모델을 찾을 수 없습니다. 검색어나 필터를 조정해 보세요.",
+      "browseAllLink": "모두 보기",
+      "search": "HuggingFace 모델 검색...",
+      "by": "작성자",
+      "gated": "제한된 액세스",
+      "viewOnHF": "HuggingFace에서 보기",
+      "sortDownloads": "다운로드",
+      "sortLikes": "좋아요",
+      "sortRecent": "최근",
+      "taskTextGeneration": "텍스트 생성",
+      "taskTextToSpeech": "텍스트 음성 변환",
+      "taskTextToImage": "텍스트 이미지 변환",
+      "taskSpeechRecognition": "음성 인식",
+      "tasks": {
+        "textGen": "텍스트 생성",
+        "tts": "텍스트 음성 변환",
+        "image": "텍스트 이미지 변환",
+        "stt": "음성 인식"
+      },
+      "sort": {
+        "downloads": "다운로드 순",
+        "likes": "인기 순",
+        "recent": "최근 업데이트"
+      }
     }
   },
   "personaManager": {

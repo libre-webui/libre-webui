@@ -751,6 +751,37 @@
         "failed": "Gagal membuat embedding",
         "enterBoth": "Silakan pilih model dan masukkan teks"
       }
+    },
+    "huggingface": {
+      "browseAll": "Jelajahi semua di HuggingFace",
+      "checkingGguf": "Mencari file GGUF...",
+      "noGgufAvailable": "Tidak ada file GGUF yang tersedia untuk pull langsung ke Ollama",
+      "ggufFilesCount": "File GGUF ({{count}}) - Pull langsung ke Ollama",
+      "noModelsFound": "Tidak ada model ditemukan",
+      "noResults": "Tidak ada model ditemukan. Coba sesuaikan pencarian atau filter.",
+      "browseAllLink": "Lihat semua",
+      "search": "Cari model HuggingFace...",
+      "by": "oleh",
+      "gated": "Akses terbatas",
+      "viewOnHF": "Lihat di HuggingFace",
+      "sortDownloads": "Unduhan",
+      "sortLikes": "Suka",
+      "sortRecent": "Terbaru",
+      "taskTextGeneration": "Pembuatan Teks",
+      "taskTextToSpeech": "Teks ke Suara",
+      "taskTextToImage": "Teks ke Gambar",
+      "taskSpeechRecognition": "Pengenalan Suara",
+      "tasks": {
+        "textGen": "Pembuatan Teks",
+        "tts": "Teks ke Suara",
+        "image": "Teks ke Gambar",
+        "stt": "Pengenalan Suara"
+      },
+      "sort": {
+        "downloads": "Paling Banyak Diunduh",
+        "likes": "Paling Disukai",
+        "recent": "Baru Diperbarui"
+      }
     }
   },
   "personaManager": {

@@ -751,6 +751,37 @@
         "failed": "Не удалось создать встраивание",
         "enterBoth": "Пожалуйста, выберите модель и введите текст"
       }
+    },
+    "huggingface": {
+      "browseAll": "Смотреть всё на HuggingFace",
+      "checkingGguf": "Поиск GGUF-файлов...",
+      "noGgufAvailable": "Нет доступных GGUF-файлов для прямой загрузки в Ollama",
+      "ggufFilesCount": "GGUF-файлы ({{count}}) - Загрузить напрямую в Ollama",
+      "noModelsFound": "Модели не найдены",
+      "noResults": "Модели не найдены. Попробуйте изменить поиск или фильтры.",
+      "browseAllLink": "Смотреть всё",
+      "search": "Поиск моделей HuggingFace...",
+      "by": "от",
+      "gated": "Ограниченный доступ",
+      "viewOnHF": "Открыть на HuggingFace",
+      "sortDownloads": "Загрузки",
+      "sortLikes": "Лайки",
+      "sortRecent": "Недавние",
+      "taskTextGeneration": "Генерация текста",
+      "taskTextToSpeech": "Текст в речь",
+      "taskTextToImage": "Текст в изображение",
+      "taskSpeechRecognition": "Распознавание речи",
+      "tasks": {
+        "textGen": "Генерация текста",
+        "tts": "Текст в речь",
+        "image": "Текст в изображение",
+        "stt": "Распознавание речи"
+      },
+      "sort": {
+        "downloads": "Самые загружаемые",
+        "likes": "Самые популярные",
+        "recent": "Недавно обновлённые"
+      }
     }
   },
   "personaManager": {

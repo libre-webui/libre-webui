@@ -751,6 +751,37 @@
         "failed": "एम्बेडिंग जनरेट करने में विफल",
         "enterBoth": "कृपया मॉडल चुनें और टेक्स्ट दर्ज करें"
       }
+    },
+    "huggingface": {
+      "browseAll": "HuggingFace पर सभी देखें",
+      "checkingGguf": "GGUF फ़ाइलें खोज रहे हैं...",
+      "noGgufAvailable": "सीधे Ollama पुल के लिए कोई GGUF फ़ाइल उपलब्ध नहीं",
+      "ggufFilesCount": "GGUF फ़ाइलें ({{count}}) - सीधे Ollama में पुल करें",
+      "noModelsFound": "कोई मॉडल नहीं मिला",
+      "noResults": "कोई मॉडल नहीं मिला। अपनी खोज या फ़िल्टर समायोजित करें।",
+      "browseAllLink": "सभी देखें",
+      "search": "HuggingFace मॉडल खोजें...",
+      "by": "द्वारा",
+      "gated": "प्रतिबंधित पहुंच",
+      "viewOnHF": "HuggingFace पर देखें",
+      "sortDownloads": "डाउनलोड",
+      "sortLikes": "पसंद",
+      "sortRecent": "हाल के",
+      "taskTextGeneration": "टेक्स्ट जनरेशन",
+      "taskTextToSpeech": "टेक्स्ट टू स्पीच",
+      "taskTextToImage": "टेक्स्ट टू इमेज",
+      "taskSpeechRecognition": "स्पीच रिकग्निशन",
+      "tasks": {
+        "textGen": "टेक्स्ट जनरेशन",
+        "tts": "टेक्स्ट टू स्पीच",
+        "image": "टेक्स्ट टू इमेज",
+        "stt": "स्पीच रिकग्निशन"
+      },
+      "sort": {
+        "downloads": "सबसे ज़्यादा डाउनलोड",
+        "likes": "सबसे लोकप्रिय",
+        "recent": "हाल में अपडेट किए गए"
+      }
     }
   },
   "personaManager": {

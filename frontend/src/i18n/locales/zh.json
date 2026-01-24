@@ -751,6 +751,37 @@
         "failed": "生成嵌入失败",
         "enterBoth": "请选择模型并输入文本"
       }
+    },
+    "huggingface": {
+      "browseAll": "在 HuggingFace 上浏览全部",
+      "checkingGguf": "正在检查 GGUF 文件...",
+      "noGgufAvailable": "没有可用于直接 Ollama 拉取的 GGUF 文件",
+      "ggufFilesCount": "GGUF 文件 ({{count}}) - 直接拉取到 Ollama",
+      "noModelsFound": "未找到模型",
+      "noResults": "未找到模型。请尝试调整搜索或筛选条件。",
+      "browseAllLink": "浏览全部",
+      "search": "搜索 HuggingFace 模型...",
+      "by": "作者",
+      "gated": "受限访问",
+      "viewOnHF": "在 HuggingFace 上查看",
+      "sortDownloads": "下载量",
+      "sortLikes": "点赞",
+      "sortRecent": "最近",
+      "taskTextGeneration": "文本生成",
+      "taskTextToSpeech": "语音合成",
+      "taskTextToImage": "图像生成",
+      "taskSpeechRecognition": "语音识别",
+      "tasks": {
+        "textGen": "文本生成",
+        "tts": "语音合成",
+        "image": "图像生成",
+        "stt": "语音识别"
+      },
+      "sort": {
+        "downloads": "下载最多",
+        "likes": "最受欢迎",
+        "recent": "最近更新"
+      }
     }
   },
   "personaManager": {

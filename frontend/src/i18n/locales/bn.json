@@ -751,6 +751,37 @@
         "failed": "এমবেডিং তৈরি করতে ব্যর্থ",
         "enterBoth": "অনুগ্রহ করে একটি মডেল নির্বাচন করুন এবং টেক্সট লিখুন"
       }
+    },
+    "huggingface": {
+      "browseAll": "HuggingFace-এ সব দেখুন",
+      "checkingGguf": "GGUF ফাইল খোঁজা হচ্ছে...",
+      "noGgufAvailable": "সরাসরি Ollama পুলের জন্য কোনো GGUF ফাইল নেই",
+      "ggufFilesCount": "GGUF ফাইল ({{count}}) - সরাসরি Ollama-তে পুল করুন",
+      "noModelsFound": "কোনো মডেল পাওয়া যায়নি",
+      "noResults": "কোনো মডেল পাওয়া যায়নি। আপনার অনুসন্ধান বা ফিল্টার পরিবর্তন করুন।",
+      "browseAllLink": "সব দেখুন",
+      "search": "HuggingFace মডেল খুঁজুন...",
+      "by": "দ্বারা",
+      "gated": "সীমাবদ্ধ অ্যাক্সেস",
+      "viewOnHF": "HuggingFace-এ দেখুন",
+      "sortDownloads": "ডাউনলোড",
+      "sortLikes": "লাইক",
+      "sortRecent": "সাম্প্রতিক",
+      "taskTextGeneration": "টেক্সট জেনারেশন",
+      "taskTextToSpeech": "টেক্সট টু স্পিচ",
+      "taskTextToImage": "টেক্সট টু ইমেজ",
+      "taskSpeechRecognition": "স্পিচ রিকগনিশন",
+      "tasks": {
+        "textGen": "টেক্সট জেনারেশন",
+        "tts": "টেক্সট টু স্পিচ",
+        "image": "টেক্সট টু ইমেজ",
+        "stt": "স্পিচ রিকগনিশন"
+      },
+      "sort": {
+        "downloads": "সর্বাধিক ডাউনলোড",
+        "likes": "সর্বাধিক জনপ্রিয়",
+        "recent": "সম্প্রতি আপডেট"
+      }
     }
   },
   "personaManager": {

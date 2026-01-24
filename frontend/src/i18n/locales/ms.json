@@ -751,6 +751,37 @@
         "failed": "Gagal menjana pembenaman",
         "enterBoth": "Sila pilih model dan masukkan teks"
       }
+    },
+    "huggingface": {
+      "browseAll": "Layari semua di HuggingFace",
+      "checkingGguf": "Mencari fail GGUF...",
+      "noGgufAvailable": "Tiada fail GGUF tersedia untuk muat turun terus ke Ollama",
+      "ggufFilesCount": "Fail GGUF ({{count}}) - Muat turun terus ke Ollama",
+      "noModelsFound": "Tiada model dijumpai",
+      "noResults": "Tiada model dijumpai. Cuba laraskan carian atau penapis anda.",
+      "browseAllLink": "Lihat semua",
+      "search": "Cari model HuggingFace...",
+      "by": "oleh",
+      "gated": "Akses terhad",
+      "viewOnHF": "Lihat di HuggingFace",
+      "sortDownloads": "Muat turun",
+      "sortLikes": "Suka",
+      "sortRecent": "Terkini",
+      "taskTextGeneration": "Penjanaan Teks",
+      "taskTextToSpeech": "Teks ke Pertuturan",
+      "taskTextToImage": "Teks ke Imej",
+      "taskSpeechRecognition": "Pengecaman Pertuturan",
+      "tasks": {
+        "textGen": "Penjanaan Teks",
+        "tts": "Teks ke Pertuturan",
+        "image": "Teks ke Imej",
+        "stt": "Pengecaman Pertuturan"
+      },
+      "sort": {
+        "downloads": "Paling Banyak Dimuat Turun",
+        "likes": "Paling Disukai",
+        "recent": "Dikemas Kini Baru-baru Ini"
+      }
     }
   },
   "personaManager": {

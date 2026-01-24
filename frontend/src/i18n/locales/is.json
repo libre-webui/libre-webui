@@ -751,6 +751,37 @@
         "failed": "Ekki tókst að búa til innfellingar",
         "enterBoth": "Veldu líkan og sláðu inn texta"
       }
+    },
+    "huggingface": {
+      "browseAll": "Skoða allt á HuggingFace",
+      "checkingGguf": "Leita að GGUF skrám...",
+      "noGgufAvailable": "Engar GGUF skrár tiltækar fyrir beina Ollama niðurhal",
+      "ggufFilesCount": "GGUF skrár ({{count}}) - Sækja beint í Ollama",
+      "noModelsFound": "Engin líkön fundust",
+      "noResults": "Engin líkön fundust. Prófaðu að breyta leit eða síum.",
+      "browseAllLink": "Skoða allt",
+      "search": "Leita í HuggingFace líkönum...",
+      "by": "eftir",
+      "gated": "Takmarkaður aðgangur",
+      "viewOnHF": "Skoða á HuggingFace",
+      "sortDownloads": "Niðurhal",
+      "sortLikes": "Líkar við",
+      "sortRecent": "Nýlegt",
+      "taskTextGeneration": "Textagerð",
+      "taskTextToSpeech": "Texti í tal",
+      "taskTextToImage": "Texti í mynd",
+      "taskSpeechRecognition": "Talgreining",
+      "tasks": {
+        "textGen": "Textagerð",
+        "tts": "Texti í tal",
+        "image": "Texti í mynd",
+        "stt": "Talgreining"
+      },
+      "sort": {
+        "downloads": "Mest niðurhlaðið",
+        "likes": "Mest vinsælt",
+        "recent": "Nýlega uppfært"
+      }
     }
   },
   "personaManager": {

@@ -751,6 +751,37 @@
         "failed": "Kunne ikke generere embeddings",
         "enterBoth": "Vælg venligst en model og indtast tekst"
       }
+    },
+    "huggingface": {
+      "browseAll": "Gennemse alle på HuggingFace",
+      "checkingGguf": "Søger efter GGUF-filer...",
+      "noGgufAvailable": "Ingen GGUF-filer tilgængelige til direkte Ollama-hentning",
+      "ggufFilesCount": "GGUF-filer ({{count}}) - Hent direkte til Ollama",
+      "noModelsFound": "Ingen modeller fundet",
+      "noResults": "Ingen modeller fundet. Prøv at justere din søgning eller filtre.",
+      "browseAllLink": "Se alle",
+      "search": "Søg i HuggingFace-modeller...",
+      "by": "af",
+      "gated": "Begrænset adgang",
+      "viewOnHF": "Vis på HuggingFace",
+      "sortDownloads": "Downloads",
+      "sortLikes": "Likes",
+      "sortRecent": "Seneste",
+      "taskTextGeneration": "Tekstgenerering",
+      "taskTextToSpeech": "Tekst til tale",
+      "taskTextToImage": "Tekst til billede",
+      "taskSpeechRecognition": "Talegenkendelse",
+      "tasks": {
+        "textGen": "Tekstgenerering",
+        "tts": "Tekst til tale",
+        "image": "Tekst til billede",
+        "stt": "Talegenkendelse"
+      },
+      "sort": {
+        "downloads": "Flest downloads",
+        "likes": "Mest populære",
+        "recent": "Senest opdateret"
+      }
     }
   },
   "personaManager": {
