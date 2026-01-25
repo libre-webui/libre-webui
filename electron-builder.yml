@@ -8,7 +8,9 @@ directories:
 
 files:
   - electron/**/*
-  - '!electron/assets'
+  - '!electron/assets/dmg-background.png'
+  - '!electron/assets/icon.icns'
+  - '!electron/assets/icon.ico'
 
 extraResources:
   - from: frontend/dist
@@ -19,6 +21,10 @@ extraResources:
     to: plugins
     filter:
       - '**/*.json'
+  - from: electron/assets/icons
+    to: icons
+    filter:
+      - '**/*.png'
 
 # Note: This desktop app connects to a locally-running backend server.
 # The backend must be started separately or the user needs Ollama running.
