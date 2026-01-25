@@ -15,6 +15,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.6.2] - 2026-01-25
+
+### ✨ New Features
+
+- add Windows and Linux electron builds
+
+### 🐛 Bug Fixes
+
+- add proper icon support for Linux builds
+- fix Linux build and hash-based routing for file:// protocol
+
+### 🔄 Other Changes
+
+- ci: add -frontend to electron artifact names
+- ci: add dev build workflow for Electron on all platforms
+
 ## [0.6.1] - 2026-01-25
 
 ### What's New
