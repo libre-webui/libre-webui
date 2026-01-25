@@ -50,7 +50,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: libre-webui-mac-dev
+          name: libre-webui-frontend-mac-dev
           path: |
             dist-electron/*.dmg
             dist-electron/*.zip
@@ -95,7 +95,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: libre-webui-win-dev
+          name: libre-webui-frontend-win-dev
           path: |
             dist-electron/*.exe
           if-no-files-found: warn
@@ -139,7 +139,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: libre-webui-linux-dev
+          name: libre-webui-frontend-linux-dev
           path: |
             dist-electron/*.AppImage
             dist-electron/*.deb
