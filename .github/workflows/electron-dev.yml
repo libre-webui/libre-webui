@@ -1,0 +1,147 @@
+name: Electron Dev Build
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+  # Build Electron app for macOS
+  build-mac:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Build frontend and backend
+        run: npm run build
+        env:
+          ELECTRON_BUILD: true
+
+      - name: Generate Electron icons
+        run: npm run generate-icons
+
+      - name: Build Electron app for macOS
+        run: npm run electron:build
+        env:
+          ELECTRON_BUILD: true
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: libre-webui-mac-dev
+          path: |
+            dist-electron/*.dmg
+            dist-electron/*.zip
+          if-no-files-found: warn
+          retention-days: 7
+
+  # Build Electron app for Windows
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Rebuild native modules for Electron
+        run: npx electron-rebuild -f -w better-sqlite3
+
+      - name: Build frontend and backend
+        run: npm run build
+        env:
+          ELECTRON_BUILD: true
+
+      - name: Generate Electron icons
+        run: npm run generate-icons
+
+      - name: Build Electron app for Windows
+        run: npm run electron:build:win
+        env:
+          ELECTRON_BUILD: true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: libre-webui-win-dev
+          path: |
+            dist-electron/*.exe
+          if-no-files-found: warn
+          retention-days: 7
+
+  # Build Electron app for Linux
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm run install:all
+
+      - name: Rebuild native modules for Electron
+        run: npx electron-rebuild -f -w better-sqlite3
+
+      - name: Build frontend and backend
+        run: npm run build
+        env:
+          ELECTRON_BUILD: true
+
+      - name: Generate Electron icons
+        run: npm run generate-icons
+
+      - name: Build Electron app for Linux
+        run: npm run electron:build:linux
+        env:
+          ELECTRON_BUILD: true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: libre-webui-linux-dev
+          path: |
+            dist-electron/*.AppImage
+            dist-electron/*.deb
+          if-no-files-found: warn
+          retention-days: 7
