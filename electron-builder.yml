@@ -1,5 +1,5 @@
 appId: com.librewebui.app
-productName: Libre WebUI
+productName: Libre WebUI Frontend
 copyright: Copyright © 2025 Kroonen AI, Inc.
 
 directories:
@@ -47,7 +47,7 @@ mac:
   entitlementsInherit: electron/entitlements.mac.plist
   notarize: true
   gatekeeperAssess: false
-  artifactName: '${productName}-${version}-mac-arm64.${ext}'
+  artifactName: 'Libre-WebUI-Frontend-${version}-mac-arm64.${ext}'
 
 dmg:
   background: electron/assets/dmg-background.png
@@ -78,18 +78,21 @@ linux:
     - deb
   category: Utility
   icon: electron/assets/icons
+  artifactName: 'Libre-WebUI-Frontend-${version}.${ext}'
 
 win:
   target:
     - nsis
     - portable
   icon: electron/assets/icon.ico
+  artifactName: 'Libre-WebUI-Frontend-${version}.${ext}'
 
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
+  artifactName: 'Libre-WebUI-Frontend-Setup-${version}.${ext}'
 
 publish:
   provider: github
