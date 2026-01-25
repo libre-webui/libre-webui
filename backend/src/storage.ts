@@ -575,10 +575,9 @@ class StorageService {
   private deleteCorruptedPreference(userId: string, key: string): void {
     if (this.useSQLite) {
       const db = getDatabase();
-      db.prepare('DELETE FROM user_preferences WHERE user_id = ? AND key = ?').run(
-        userId,
-        key
-      );
+      db.prepare(
+        'DELETE FROM user_preferences WHERE user_id = ? AND key = ?'
+      ).run(userId, key);
       console.log(`Cleaned up corrupted preference: ${key}`);
     }
   }
@@ -620,7 +619,9 @@ class StorageService {
 
       // Clean up corrupted preferences
       if (corruptedKeys.length > 0 && userId) {
-        corruptedKeys.forEach(key => this.deleteCorruptedPreference(userId, key));
+        corruptedKeys.forEach(key =>
+          this.deleteCorruptedPreference(userId!, key)
+        );
       }
 
       return Object.keys(preferences).length > 0

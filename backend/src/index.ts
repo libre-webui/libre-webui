@@ -112,20 +112,27 @@ const corsConfig = {
     // Allow requests with no origin (mobile apps, etc.)
     if (!origin) return callback(null, true);
 
+    // Allow all origins if CORS_ORIGIN is set to '*'
+    if (corsOrigins.includes('*')) {
+      return callback(null, true);
+    }
+
     // Check if the origin is in our allowed list
     if (corsOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      // In development mode, allow network access (when --host is used)
+      // Allow network access in development mode or Docker environment
       // This allows access from network IPs like http://192.168.x.x:8080 or http://10.x.x.x:8080
-      const isDevelopment = process.env.NODE_ENV !== 'production';
+      const allowNetworkAccess =
+        process.env.NODE_ENV !== 'production' ||
+        process.env.DOCKER_ENV === 'true';
       const isNetworkOrigin =
         origin &&
         /^https?:\/\/(?:192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(
           origin
         );
 
-      if (isDevelopment && isNetworkOrigin) {
+      if (allowNetworkAccess && isNetworkOrigin) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
