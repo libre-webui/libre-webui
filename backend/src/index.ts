@@ -187,6 +187,7 @@ app.use(
             : []),
         ],
         fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+        mediaSrc: ["'self'", 'data:', 'blob:'],
         objectSrc: ["'none'"],
         frameAncestors: ["'self'"],
         formAction: ["'self'"],
