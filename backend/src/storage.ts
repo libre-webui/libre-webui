@@ -548,7 +548,7 @@ class StorageService {
   private safeDecryptPreference(
     key: string,
     value: string,
-    userId?: string
+    _userId?: string
   ): unknown | null {
     try {
       const decryptedValue = encryptionService.decrypt(value);
