@@ -80,6 +80,9 @@ linux:
   icon: electron/assets/icons
   artifactName: 'Libre-WebUI-Frontend-${version}.${ext}'
 
+deb:
+  artifactName: 'Libre-WebUI-Frontend-${version}-${arch}.${ext}'
+
 win:
   target:
     - nsis
