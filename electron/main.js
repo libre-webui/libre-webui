@@ -9,10 +9,32 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
-const { app, BrowserWindow, shell, Menu, dialog, nativeTheme } = require('electron');
+const { app, BrowserWindow, shell, Menu, dialog, nativeTheme, nativeImage } = require('electron');
 const path = require('path');
 const http = require('http');
 const { spawn } = require('child_process');
+
+// Get icon path for Linux (icons are in extraResources for production)
+const getIconPath = () => {
+  const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+  if (isDev) {
+    return path.join(__dirname, 'assets', 'icons', '256x256.png');
+  }
+  return path.join(process.resourcesPath, 'icons', '256x256.png');
+};
+
+// Set app icon for Linux About dialog
+if (process.platform === 'linux') {
+  app.whenReady().then(() => {
+    const iconPath = getIconPath();
+    app.setAboutPanelOptions({
+      applicationName: 'Libre WebUI',
+      applicationVersion: app.getVersion(),
+      copyright: 'Copyright © 2025 Kroonen AI, Inc.',
+      iconPath: iconPath,
+    });
+  });
+}
 
 // Prevent multiple instances (fixes fork bomb issue)
 const gotTheLock = app.requestSingleInstanceLock();
@@ -60,12 +82,20 @@ function createSplashWindow() {
 
 // Create the main application window
 function createMainWindow() {
+  // Get icon for Linux
+  let windowIcon;
+  if (process.platform === 'linux') {
+    const iconPath = getIconPath();
+    windowIcon = nativeImage.createFromPath(iconPath);
+  }
+
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
     minWidth: 800,
     minHeight: 600,
     show: false,
+    icon: windowIcon,
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 12, y: 12 },
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#1a1a1a' : '#ffffff',
