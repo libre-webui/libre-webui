@@ -15,6 +15,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.6.1] - 2026-01-25
+
+### What's New
+
+This release focuses on stability and Docker deployment improvements. Key fixes include enabling TTS audio playback in browsers, allowing network access from other devices on your LAN, and better compatibility with HuggingFace model names containing slashes.
+
+### 🐛 Bug Fixes
+
+- **CSP**: Allow data and blob URIs for media-src to enable TTS audio playback
+- **CORS**: Allow network IPs in Docker environment for LAN access
+- **UI**: Pure dark theme tab visibility and remove TTS speed slider
+- **Storage**: Auto-cleanup corrupted preferences to prevent app crashes
+- **TTS**: Add Python 3.12 support and audio format detection
+- **Ollama**: Support HuggingFace model names with slashes in API routes
+  - Change routes to avoid path params with slashes (path-to-regexp limitation)
+  - DELETE /models/:name -> DELETE /models?name=
+  - GET /models/:name -> GET /models/show?name=
+  - POST /models/:name/pull -> POST /models/pull with { name } body
+  - POST /models/:name/push -> POST /models/push with { name } body
+  - Updated frontend API calls to match new endpoint signatures
+
 ## [0.6.0] - 2026-01-24
 
 ### What's New
