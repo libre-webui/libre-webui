@@ -59,7 +59,7 @@ jobs:
       - name: Upload Electron artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: electron-mac-arm64
+          name: electron-frontend-mac-arm64
           path: |
             dist-electron/*.dmg
             dist-electron/*.zip
@@ -106,7 +106,7 @@ jobs:
       - name: Upload Electron artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: electron-win
+          name: electron-frontend-win
           path: |
             dist-electron/*.exe
             dist-electron/*.msi
@@ -153,7 +153,7 @@ jobs:
       - name: Upload Electron artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: electron-linux
+          name: electron-frontend-linux
           path: |
             dist-electron/*.AppImage
             dist-electron/*.deb
