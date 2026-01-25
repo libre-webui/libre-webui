@@ -100,7 +100,9 @@ const setupAxiosInterceptors = () => {
         localStorage.removeItem('auth-token');
         const { logout } = useAuthStore.getState();
         logout();
-        window.location.href = '/login';
+        // Use hash-based navigation for Electron (file:// protocol)
+        const isElectron = window.location.protocol === 'file:';
+        window.location.href = isElectron ? '#/login' : '/login';
       }
       return Promise.reject(error);
     }

@@ -173,8 +173,13 @@ api.interceptors.response.use(
       });
 
       // Redirect to login page if not already there
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login';
+      // Use hash-based navigation for Electron (file:// protocol)
+      const isElectron = window.location.protocol === 'file:';
+      const currentPath = isElectron
+        ? window.location.hash
+        : window.location.pathname;
+      if (!currentPath.includes('/login')) {
+        window.location.href = isElectron ? '#/login' : '/login';
       }
 
       // Return a rejected promise but don't show the error toast
