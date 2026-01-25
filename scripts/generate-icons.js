@@ -114,12 +114,22 @@ async function generateIcons() {
     console.log('  ✓ dmg-background.png generated');
   }
 
-  // Generate Windows .ico (requires multiple sizes embedded)
-  // For now, just copy the 256x256 as a placeholder
-  console.log('\n📝 Note: For Windows .ico file:');
-  console.log('   Use an online converter or tool like png2ico\n');
+  // Generate Windows .ico file
+  console.log('\nGenerating Windows .ico...');
+  try {
+    const pngToIcoModule = require('png-to-ico');
+    const pngToIco = pngToIcoModule.default || pngToIcoModule;
+    const icoSizes = [16, 32, 48, 256];
+    const icoPngs = icoSizes.map(size => path.join(iconsDir, `${size}x${size}.png`));
+    const icoBuffer = await pngToIco(icoPngs);
+    fs.writeFileSync(path.join(assetsDir, 'icon.ico'), icoBuffer);
+    console.log('  ✓ icon.ico generated');
+  } catch (error) {
+    console.log('  ⚠ Could not generate .ico:', error.message);
+    console.log('    Run: npm install png-to-ico --save-dev');
+  }
 
-  console.log('✅ Icon generation complete!');
+  console.log('\n✅ Icon generation complete!');
 }
 
 generateIcons().catch(console.error);
