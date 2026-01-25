@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.6.2] - 2026-01-25
+
+### What's New
+
+This release brings Libre WebUI desktop app to Windows and Linux, alongside the existing macOS version. The Electron frontend app now works on all three major platforms, allowing users to run the UI natively while connecting to a locally-running backend server.
+
+### ✨ New Features
+
+- **Windows Electron App**: Native Windows installer (.exe) and portable builds
+- **Linux Electron App**: AppImage and .deb packages for Linux distributions
+- **Cross-Platform Dev Builds**: New CI workflow builds dev artifacts for all platforms on every push
+
+### 🐛 Bug Fixes
+
+- **Linux Icon Support**: Fixed missing app icon in Linux builds by properly extracting icons to extraResources
+- **File Protocol Routing**: Fixed "Not allowed to load local resource: file:///login" error by switching to hash-based navigation for Electron's file:// protocol
+- **Linux About Dialog**: Fixed empty About dialog on Linux with proper icon path detection
+
+### 🔄 CI/CD
+
+- Added `electron-dev.yml` workflow to build dev versions on all platforms when pushing to dev/main
+- Renamed artifact uploads to include `-frontend` suffix to clarify these are frontend-only builds
+- Added `ELECTRON_BUILD=true` environment variable to Linux build script
+
 ## [0.6.1] - 2026-01-25
 
 ### What's New
