@@ -53,6 +53,8 @@
     "version": "npm run changelog && git add CHANGELOG.md",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron .\"",
     "electron:build": "ELECTRON_BUILD=true npm run build:frontend && npm run build:backend && electron-builder build --mac --arm64 --publish never",
+    "electron:build:win": "npm run build:frontend && npm run build:backend && electron-builder build --win --publish never",
+    "electron:build:linux": "npm run build:frontend && npm run build:backend && electron-builder build --linux --publish never",
     "electron:build:universal": "npm run build && electron-builder build --mac --arm64 --x64",
     "electron:pack": "electron-builder --dir",
     "generate-icons": "node scripts/generate-icons.js",
@@ -93,6 +95,7 @@
     "electron": "^40.0.0",
     "electron-builder": "^26.5.0",
     "eslint": "^9.39.2",
+    "png-to-ico": "^3.0.1",
     "prettier": "^3.7.4",
     "sharp": "^0.34.5",
     "wait-on": "^9.0.3"
@@ -108,7 +111,6 @@
   "author": "Libre WebUI Contributors",
   "license": "Apache-2.0",
   "dependencies": {
-    "sonner": "^2.0.7",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.5.0",
@@ -122,6 +124,7 @@
     "multer": "^2.0.1",
     "pdfjs-dist": "^5.4.530",
     "sanitize-filename": "^1.6.3",
+    "sonner": "^2.0.7",
     "uuid": "^13.0.0",
     "ws": "^8.14.2"
   }
