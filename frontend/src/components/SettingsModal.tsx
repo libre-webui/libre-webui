@@ -1046,7 +1046,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       { value: '', label: t('settings.model.selectModel') },
                       ...models.map(model => ({
                         value: model.name,
-                        label: model.name,
+                        label: model.isPersona
+                          ? `${model.personaName} (${t('settings.model.persona')})`
+                          : model.name,
                       })),
                     ]}
                   />
