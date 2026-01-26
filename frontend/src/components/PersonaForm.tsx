@@ -100,11 +100,31 @@ const ParameterSlider: React.FC<ParameterSliderProps> = ({
 }) => {
   const progress = ((value - min) / (max - min)) * 100;
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = parseFloat(e.target.value);
+    if (!isNaN(newValue)) {
+      // Clamp value to min/max range
+      const clampedValue = Math.min(max, Math.max(min, newValue));
+      onChange(clampedValue);
+    }
+  };
+
   return (
     <div>
-      <label className={cn('block text-sm font-medium mb-2', colorClass)}>
-        {label}: {format(value)}
-      </label>
+      <div className='flex items-center justify-between mb-2'>
+        <label className={cn('block text-sm font-medium', colorClass)}>
+          {label}
+        </label>
+        <input
+          type='number'
+          min={min}
+          max={max}
+          step={step}
+          value={format(value)}
+          onChange={handleInputChange}
+          className='w-20 px-2 py-1 text-sm text-right bg-gray-100 dark:bg-dark-200 border border-gray-300 dark:border-dark-300 rounded focus:outline-none focus:ring-1 focus:ring-primary-500 dark:text-dark-600'
+        />
+      </div>
       <input
         type='range'
         min={min}
