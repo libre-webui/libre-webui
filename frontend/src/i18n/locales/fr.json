@@ -304,6 +304,7 @@
       "defaultModel": "Modèle par défaut",
       "defaultModelDescription": "Ce modèle sera utilisé par défaut pour les nouvelles conversations",
       "selectModel": "Sélectionnez un modèle",
+      "persona": "Persona",
       "updateAll": "Mettre à jour tous les modèles",
       "updateAllDescription": "Vérifier les mises à jour et télécharger les dernières versions de tous les modèles installés",
       "updateAllButton": "Tout mettre à jour",
