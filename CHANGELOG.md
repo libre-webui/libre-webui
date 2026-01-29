@@ -15,6 +15,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.6.3] - 2026-01-29
+
+### What's New
+
+This release introduces comprehensive desktop support with native Windows and Linux Electron builds, alongside significant persona management improvements. The update also includes enhanced internationalization support and important security fixes.
+
+### ✨ New Features
+
+- **Desktop Applications**: Native Windows and Linux Electron builds now available
+- **Enhanced Persona Controls**: Keyboard input support for precise parameter value entry in persona configuration
+
+### 🔧 Improvements
+
+- **Better User Experience**: Model selector now displays persona names instead of technical IDs
+- **Expanded Localization**: Added missing translations for persona settings, Hugging Face Hub integration, and prompt length indicators across all supported languages
+- **Improved Build Pipeline**: Enhanced CI/CD workflows with better artifact naming and cross-platform development builds
+
+### 🐛 Bug Fixes
+
+- **Security**: Patched node-tar CVE-2026-24842 vulnerability through npm override
+- **Linux Desktop**: Fixed Electron builds with proper icon support and hash-based routing for file:// protocol
+- **Package Consistency**: Standardized Debian package naming for Linux distributions
+
 ## [0.6.2] - 2026-01-25
 
 ### What's New
