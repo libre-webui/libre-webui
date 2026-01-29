@@ -647,7 +647,8 @@
       "library": "Parcourir la bibliothèque",
       "running": "Modèles en cours d'exécution",
       "local": "Modèles locaux",
-      "advanced": "Actions avancées"
+      "advanced": "Actions avancées",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Entrez le nom du modèle (ex: llama3.2:3b, deepseek-r1:14b)",
@@ -1034,7 +1035,8 @@
     "generating": "Génération...",
     "success": "Image générée avec succès",
     "failed": "Échec de la génération de l'image",
-    "enterPrompt": "Veuillez entrer une description"
+    "enterPrompt": "Veuillez entrer une description",
+    "promptTooLong": "Le prompt dépasse la longueur maximale de {{max}} caractères"
   },
   "errorBoundary": {
     "title": "Une erreur s'est produite",

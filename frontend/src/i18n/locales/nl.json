@@ -325,7 +325,8 @@
         "taskModel": "Taakmodel",
         "selectTaskModel": "Selecteer taakmodel",
         "taskModelDescription": "Model gebruikt voor het genereren van gesprekstitels"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Systeembericht",
@@ -646,7 +647,8 @@
       "library": "Bibliotheek doorzoeken",
       "running": "Actieve modellen",
       "local": "Lokale modellen",
-      "advanced": "Geavanceerde acties"
+      "advanced": "Geavanceerde acties",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Voer modelnaam in (bijv. llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Genereren...",
     "success": "Afbeelding succesvol gegenereerd",
     "failed": "Kon afbeelding niet genereren",
-    "enterPrompt": "Voer een prompt in"
+    "enterPrompt": "Voer een prompt in",
+    "promptTooLong": "Prompt overschrijdt de maximale lengte van {{max}} tekens"
   },
   "errorBoundary": {
     "title": "Er is iets misgegaan",

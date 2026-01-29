@@ -325,7 +325,8 @@
         "taskModel": "โมเดลงาน",
         "selectTaskModel": "เลือกโมเดลงาน",
         "taskModelDescription": "โมเดลที่ใช้สำหรับสร้างชื่อเรื่องการสนทนา"
-      }
+      },
+      "persona": "เพอร์โซน่า"
     },
     "systemMessage": {
       "title": "ข้อความระบบ",
@@ -646,7 +647,8 @@
       "library": "เรียกดูไลบรารี",
       "running": "โมเดลที่กำลังทำงาน",
       "local": "โมเดลในเครื่อง",
-      "advanced": "การดำเนินการขั้นสูง"
+      "advanced": "การดำเนินการขั้นสูง",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "ป้อนชื่อโมเดล (เช่น llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "กำลังสร้าง...",
     "success": "สร้างรูปภาพสำเร็จ",
     "failed": "ไม่สามารถสร้างรูปภาพ",
-    "enterPrompt": "กรุณาป้อน prompt"
+    "enterPrompt": "กรุณาป้อน prompt",
+    "promptTooLong": "พรอมต์เกินความยาวสูงสุด {{max}} ตัวอักษร"
   },
   "errorBoundary": {
     "title": "เกิดข้อผิดพลาด",

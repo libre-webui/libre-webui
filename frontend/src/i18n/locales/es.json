@@ -325,7 +325,8 @@
         "taskModel": "Modelo de tarea",
         "selectTaskModel": "Seleccionar modelo de tarea",
         "taskModelDescription": "Modelo usado para generar títulos de conversación"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Mensaje del sistema",
@@ -646,7 +647,8 @@
       "library": "Explorar biblioteca",
       "running": "Modelos en ejecución",
       "local": "Modelos locales",
-      "advanced": "Acciones avanzadas"
+      "advanced": "Acciones avanzadas",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Ingresa nombre del modelo (ej. llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Generando...",
     "success": "Imagen generada exitosamente",
     "failed": "Error al generar imagen",
-    "enterPrompt": "Por favor ingresa un prompt"
+    "enterPrompt": "Por favor ingresa un prompt",
+    "promptTooLong": "El prompt excede la longitud máxima de {{max}} caracteres"
   },
   "errorBoundary": {
     "title": "Algo salió mal",

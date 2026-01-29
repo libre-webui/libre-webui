@@ -325,7 +325,8 @@
         "taskModel": "Model Tugas",
         "selectTaskModel": "Pilih model tugas",
         "taskModelDescription": "Model yang digunakan untuk menjana tajuk perbualan"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Mesej Sistem",
@@ -646,7 +647,8 @@
       "library": "Layari Pustaka",
       "running": "Model Sedang Berjalan",
       "local": "Model Tempatan",
-      "advanced": "Tindakan Lanjutan"
+      "advanced": "Tindakan Lanjutan",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Masukkan nama model (cth., llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Menjana...",
     "success": "Imej berjaya dijana",
     "failed": "Gagal menjana imej",
-    "enterPrompt": "Sila masukkan arahan"
+    "enterPrompt": "Sila masukkan arahan",
+    "promptTooLong": "Prompt melebihi panjang maksimum {{max}} aksara"
   },
   "errorBoundary": {
     "title": "Sesuatu tidak kena",

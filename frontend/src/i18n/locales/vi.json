@@ -325,7 +325,8 @@
         "taskModel": "Mô hình tác vụ",
         "selectTaskModel": "Chọn mô hình tác vụ",
         "taskModelDescription": "Mô hình được sử dụng để tạo tiêu đề cuộc trò chuyện"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Tin nhắn hệ thống",
@@ -646,7 +647,8 @@
       "library": "Duyệt thư viện",
       "running": "Mô hình đang chạy",
       "local": "Mô hình cục bộ",
-      "advanced": "Hành động nâng cao"
+      "advanced": "Hành động nâng cao",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Nhập tên mô hình (vd: llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Đang tạo...",
     "success": "Đã tạo hình ảnh thành công",
     "failed": "Không thể tạo hình ảnh",
-    "enterPrompt": "Vui lòng nhập prompt"
+    "enterPrompt": "Vui lòng nhập prompt",
+    "promptTooLong": "Prompt vượt quá độ dài tối đa {{max}} ký tự"
   },
   "errorBoundary": {
     "title": "Đã xảy ra lỗi",

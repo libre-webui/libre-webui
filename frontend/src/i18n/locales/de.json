@@ -325,7 +325,8 @@
         "taskModel": "Aufgabenmodell",
         "selectTaskModel": "Aufgabenmodell auswählen",
         "taskModelDescription": "Modell für die Generierung von Gesprächstiteln"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Systemnachricht",
@@ -646,7 +647,8 @@
       "library": "Bibliothek durchsuchen",
       "running": "Laufende Modelle",
       "local": "Lokale Modelle",
-      "advanced": "Erweiterte Aktionen"
+      "advanced": "Erweiterte Aktionen",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Modellname eingeben (z.B. llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Wird generiert...",
     "success": "Bild erfolgreich generiert",
     "failed": "Bild konnte nicht generiert werden",
-    "enterPrompt": "Bitte geben Sie einen Prompt ein"
+    "enterPrompt": "Bitte geben Sie einen Prompt ein",
+    "promptTooLong": "Prompt überschreitet die maximale Länge von {{max}} Zeichen"
   },
   "errorBoundary": {
     "title": "Etwas ist schiefgelaufen",

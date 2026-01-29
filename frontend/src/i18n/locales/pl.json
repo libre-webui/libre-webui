@@ -325,7 +325,8 @@
         "taskModel": "Model zadań",
         "selectTaskModel": "Wybierz model zadań",
         "taskModelDescription": "Model używany do generowania tytułów rozmów"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Wiadomość systemowa",
@@ -646,7 +647,8 @@
       "library": "Przeglądaj bibliotekę",
       "running": "Działające modele",
       "local": "Lokalne modele",
-      "advanced": "Zaawansowane akcje"
+      "advanced": "Zaawansowane akcje",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Wprowadź nazwę modelu (np. llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Generowanie...",
     "success": "Obraz wygenerowany pomyślnie",
     "failed": "Nie udało się wygenerować obrazu",
-    "enterPrompt": "Wprowadź prompt"
+    "enterPrompt": "Wprowadź prompt",
+    "promptTooLong": "Prompt przekracza maksymalną długość {{max}} znaków"
   },
   "errorBoundary": {
     "title": "Coś poszło nie tak",

@@ -325,7 +325,8 @@
         "taskModel": "Model Tugas",
         "selectTaskModel": "Pilih model tugas",
         "taskModelDescription": "Model yang digunakan untuk membuat judul percakapan"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Pesan Sistem",
@@ -646,7 +647,8 @@
       "library": "Telusuri Pustaka",
       "running": "Model Berjalan",
       "local": "Model Lokal",
-      "advanced": "Tindakan Lanjutan"
+      "advanced": "Tindakan Lanjutan",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Masukkan nama model (mis., llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Membuat...",
     "success": "Gambar berhasil dibuat",
     "failed": "Gagal membuat gambar",
-    "enterPrompt": "Silakan masukkan prompt"
+    "enterPrompt": "Silakan masukkan prompt",
+    "promptTooLong": "Prompt melebihi panjang maksimum {{max}} karakter"
   },
   "errorBoundary": {
     "title": "Terjadi kesalahan",

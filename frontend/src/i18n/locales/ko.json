@@ -325,7 +325,8 @@
         "taskModel": "작업 모델",
         "selectTaskModel": "작업 모델 선택",
         "taskModelDescription": "대화 제목 생성에 사용되는 모델"
-      }
+      },
+      "persona": "페르소나"
     },
     "systemMessage": {
       "title": "시스템 메시지",
@@ -646,7 +647,8 @@
       "library": "라이브러리 찾아보기",
       "running": "실행 중인 모델",
       "local": "로컬 모델",
-      "advanced": "고급 작업"
+      "advanced": "고급 작업",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "모델 이름 입력 (예: llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "생성 중...",
     "success": "이미지가 성공적으로 생성되었습니다",
     "failed": "이미지 생성 실패",
-    "enterPrompt": "프롬프트를 입력하세요"
+    "enterPrompt": "프롬프트를 입력하세요",
+    "promptTooLong": "프롬프트가 최대 {{max}}자를 초과합니다"
   },
   "errorBoundary": {
     "title": "문제가 발생했습니다",

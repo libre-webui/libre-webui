@@ -325,7 +325,8 @@
         "taskModel": "Verkefnislíkan",
         "selectTaskModel": "Veldu verkefnislíkan",
         "taskModelDescription": "Líkan notað til að búa til samtalstitla"
-      }
+      },
+      "persona": "Persóna"
     },
     "systemMessage": {
       "title": "Kerfisskilaboð",
@@ -646,7 +647,8 @@
       "library": "Skoða safn",
       "running": "Líkön í gangi",
       "local": "Staðbundin líkön",
-      "advanced": "Ítarlegar aðgerðir"
+      "advanced": "Ítarlegar aðgerðir",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Sláðu inn nafn líkans (t.d. llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Býr til...",
     "success": "Mynd búin til",
     "failed": "Ekki tókst að búa til mynd",
-    "enterPrompt": "Sláðu inn fyrirmæli"
+    "enterPrompt": "Sláðu inn fyrirmæli",
+    "promptTooLong": "Fyrirmæli fara yfir hámarkslengd {{max}} stafa"
   },
   "errorBoundary": {
     "title": "Eitthvað fór úrskeiðis",
