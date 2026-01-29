@@ -325,7 +325,8 @@
         "taskModel": "টাস্ক মডেল",
         "selectTaskModel": "টাস্ক মডেল নির্বাচন করুন",
         "taskModelDescription": "কথোপকথনের শিরোনাম তৈরিতে ব্যবহৃত মডেল"
-      }
+      },
+      "persona": "পারসোনা"
     },
     "systemMessage": {
       "title": "সিস্টেম বার্তা",
@@ -646,7 +647,8 @@
       "library": "লাইব্রেরি ব্রাউজ করুন",
       "running": "চলমান মডেল",
       "local": "লোকাল মডেল",
-      "advanced": "উন্নত অ্যাকশন"
+      "advanced": "উন্নত অ্যাকশন",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "মডেলের নাম লিখুন (যেমন llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "তৈরি হচ্ছে...",
     "success": "ইমেজ সফলভাবে তৈরি হয়েছে",
     "failed": "ইমেজ তৈরি করতে ব্যর্থ",
-    "enterPrompt": "অনুগ্রহ করে একটি প্রম্পট লিখুন"
+    "enterPrompt": "অনুগ্রহ করে একটি প্রম্পট লিখুন",
+    "promptTooLong": "প্রম্পট সর্বোচ্চ {{max}} অক্ষরের সীমা অতিক্রম করেছে"
   },
   "errorBoundary": {
     "title": "কিছু ভুল হয়েছে",

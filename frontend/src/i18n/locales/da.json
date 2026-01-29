@@ -325,7 +325,8 @@
         "taskModel": "Opgavemodel",
         "selectTaskModel": "Vælg opgavemodel",
         "taskModelDescription": "Model brugt til at generere samtaletitler"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Systembesked",
@@ -646,7 +647,8 @@
       "library": "Gennemse bibliotek",
       "running": "Kørende modeller",
       "local": "Lokale modeller",
-      "advanced": "Avancerede handlinger"
+      "advanced": "Avancerede handlinger",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Indtast modelnavn (f.eks. llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Genererer...",
     "success": "Billede genereret",
     "failed": "Kunne ikke generere billede",
-    "enterPrompt": "Indtast venligst en prompt"
+    "enterPrompt": "Indtast venligst en prompt",
+    "promptTooLong": "Prompt overstiger den maksimale længde på {{max}} tegn"
   },
   "errorBoundary": {
     "title": "Noget gik galt",

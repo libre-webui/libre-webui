@@ -325,7 +325,8 @@
         "taskModel": "Görev Modeli",
         "selectTaskModel": "Görev modelini seçin",
         "taskModelDescription": "Konuşma başlıkları oluşturmak için kullanılan model"
-      }
+      },
+      "persona": "Kişilik"
     },
     "systemMessage": {
       "title": "Sistem Mesajı",
@@ -646,7 +647,8 @@
       "library": "Kütüphaneye Göz At",
       "running": "Çalışan Modeller",
       "local": "Yerel Modeller",
-      "advanced": "Gelişmiş İşlemler"
+      "advanced": "Gelişmiş İşlemler",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Model adını girin (ör., llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Oluşturuluyor...",
     "success": "Görsel başarıyla oluşturuldu",
     "failed": "Görsel oluşturulamadı",
-    "enterPrompt": "Lütfen bir komut girin"
+    "enterPrompt": "Lütfen bir komut girin",
+    "promptTooLong": "İstem {{max}} karakter maksimum uzunluğunu aşıyor"
   },
   "errorBoundary": {
     "title": "Bir şeyler yanlış gitti",

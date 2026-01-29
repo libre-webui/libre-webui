@@ -325,7 +325,8 @@
         "taskModel": "نموذج المهام",
         "selectTaskModel": "اختر نموذج المهام",
         "taskModelDescription": "النموذج المستخدم لتوليد عناوين المحادثات"
-      }
+      },
+      "persona": "شخصية"
     },
     "systemMessage": {
       "title": "رسالة النظام",
@@ -646,7 +647,8 @@
       "library": "تصفح المكتبة",
       "running": "النماذج قيد التشغيل",
       "local": "النماذج المحلية",
-      "advanced": "إجراءات متقدمة"
+      "advanced": "إجراءات متقدمة",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "أدخل اسم النموذج (مثل llama3.2:3b، deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "جاري التوليد...",
     "success": "تم توليد الصورة بنجاح",
     "failed": "فشل توليد الصورة",
-    "enterPrompt": "يرجى إدخال موجه"
+    "enterPrompt": "يرجى إدخال موجه",
+    "promptTooLong": "يتجاوز النص الحد الأقصى البالغ {{max}} حرف"
   },
   "errorBoundary": {
     "title": "حدث خطأ ما",

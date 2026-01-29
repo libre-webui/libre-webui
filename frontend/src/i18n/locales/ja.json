@@ -325,7 +325,8 @@
         "taskModel": "タスクモデル",
         "selectTaskModel": "タスクモデルを選択",
         "taskModelDescription": "会話タイトルの生成に使用するモデル"
-      }
+      },
+      "persona": "ペルソナ"
     },
     "systemMessage": {
       "title": "システムメッセージ",
@@ -646,7 +647,8 @@
       "library": "ライブラリを閲覧",
       "running": "実行中のモデル",
       "local": "ローカルモデル",
-      "advanced": "詳細アクション"
+      "advanced": "詳細アクション",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "モデル名を入力（例: llama3.2:3b, deepseek-r1:14b）",
@@ -1033,7 +1035,8 @@
     "generating": "生成中...",
     "success": "画像が正常に生成されました",
     "failed": "画像の生成に失敗しました",
-    "enterPrompt": "プロンプトを入力してください"
+    "enterPrompt": "プロンプトを入力してください",
+    "promptTooLong": "プロンプトが最大文字数{{max}}文字を超えています"
   },
   "errorBoundary": {
     "title": "エラーが発生しました",

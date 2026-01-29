@@ -325,7 +325,8 @@
         "taskModel": "任务模型",
         "selectTaskModel": "选择任务模型",
         "taskModelDescription": "用于生成对话标题的模型"
-      }
+      },
+      "persona": "角色"
     },
     "systemMessage": {
       "title": "系统消息",
@@ -646,7 +647,8 @@
       "library": "浏览模型库",
       "running": "运行中的模型",
       "local": "本地模型",
-      "advanced": "高级操作"
+      "advanced": "高级操作",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "输入模型名称（例如：llama3.2:3b、deepseek-r1:14b）",
@@ -1033,7 +1035,8 @@
     "generating": "生成中...",
     "success": "图像生成成功",
     "failed": "图像生成失败",
-    "enterPrompt": "请输入提示词"
+    "enterPrompt": "请输入提示词",
+    "promptTooLong": "提示词超过最大长度 {{max}} 个字符"
   },
   "errorBoundary": {
     "title": "出错了",

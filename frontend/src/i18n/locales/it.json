@@ -325,7 +325,8 @@
         "taskModel": "Modello attività",
         "selectTaskModel": "Seleziona modello attività",
         "taskModelDescription": "Modello usato per generare titoli conversazioni"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Messaggio di sistema",
@@ -646,7 +647,8 @@
       "library": "Sfoglia libreria",
       "running": "Modelli in esecuzione",
       "local": "Modelli locali",
-      "advanced": "Azioni avanzate"
+      "advanced": "Azioni avanzate",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Inserisci nome modello (es. llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Generazione...",
     "success": "Immagine generata con successo",
     "failed": "Impossibile generare l'immagine",
-    "enterPrompt": "Inserisci un prompt"
+    "enterPrompt": "Inserisci un prompt",
+    "promptTooLong": "Il prompt supera la lunghezza massima di {{max}} caratteri"
   },
   "errorBoundary": {
     "title": "Qualcosa è andato storto",

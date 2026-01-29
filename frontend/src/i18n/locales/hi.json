@@ -325,7 +325,8 @@
         "taskModel": "टास्क मॉडल",
         "selectTaskModel": "टास्क मॉडल चुनें",
         "taskModelDescription": "बातचीत शीर्षक बनाने के लिए उपयोग किया जाने वाला मॉडल"
-      }
+      },
+      "persona": "पर्सोना"
     },
     "systemMessage": {
       "title": "सिस्टम संदेश",
@@ -646,7 +647,8 @@
       "library": "लाइब्रेरी ब्राउज़ करें",
       "running": "चल रहे मॉडल",
       "local": "स्थानीय मॉडल",
-      "advanced": "उन्नत क्रियाएं"
+      "advanced": "उन्नत क्रियाएं",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "मॉडल नाम दर्ज करें (जैसे, llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "बनाया जा रहा है...",
     "success": "छवि सफलतापूर्वक बनाई गई",
     "failed": "छवि बनाने में विफल",
-    "enterPrompt": "कृपया प्रॉम्प्ट दर्ज करें"
+    "enterPrompt": "कृपया प्रॉम्प्ट दर्ज करें",
+    "promptTooLong": "प्रॉम्प्ट अधिकतम {{max}} अक्षरों की सीमा से अधिक है"
   },
   "errorBoundary": {
     "title": "कुछ गलत हो गया",

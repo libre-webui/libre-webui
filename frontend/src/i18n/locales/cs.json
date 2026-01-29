@@ -325,7 +325,8 @@
         "taskModel": "Model úloh",
         "selectTaskModel": "Vyberte model úloh",
         "taskModelDescription": "Model používaný pro generování titulků konverzací"
-      }
+      },
+      "persona": "Persona"
     },
     "systemMessage": {
       "title": "Systémová zpráva",
@@ -646,7 +647,8 @@
       "library": "Procházet knihovnu",
       "running": "Běžící modely",
       "local": "Lokální modely",
-      "advanced": "Pokročilé akce"
+      "advanced": "Pokročilé akce",
+      "huggingface": "HuggingFace Hub"
     },
     "pull": {
       "placeholder": "Zadejte název modelu (např. llama3.2:3b, deepseek-r1:14b)",
@@ -1033,7 +1035,8 @@
     "generating": "Generování...",
     "success": "Obrázek úspěšně vygenerován",
     "failed": "Nepodařilo se vygenerovat obrázek",
-    "enterPrompt": "Zadejte prompt"
+    "enterPrompt": "Zadejte prompt",
+    "promptTooLong": "Prompt překračuje maximální délku {{max}} znaků"
   },
   "errorBoundary": {
     "title": "Něco se pokazilo",
