@@ -110,3 +110,4 @@ __pycache__/
 *.py[cod]
 .Python
 examples/qwen-tts-server/venv/
+docker-compose.dev.external-ollama.watchtower.yml
