@@ -19,6 +19,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { authApi, usersApi } from '@/utils/api';
 import {
@@ -49,6 +50,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const { user, logout, isAdmin, systemInfo, setUser } = useAuthStore();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Initialize avatar value when user changes
   useEffect(() => {
@@ -90,7 +92,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
       await authApi.logout();
       logout();
       navigate('/login');
-      toast.success('Logged out successfully');
+      toast.success(t('userMenu.loggedOut'));
     } catch (error) {
       console.error('Logout error:', error);
       // Still logout locally even if API call fails
@@ -122,14 +124,14 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
       const response = await usersApi.updateMyAvatar(avatarValue || null);
       if (response.success && response.data) {
         setUser(response.data);
-        toast.success('Profile picture updated');
+        toast.success(t('userMenu.pictureUpdated'));
         setShowAvatarModal(false);
       } else {
-        toast.error(response.message || 'Failed to update avatar');
+        toast.error(response.message || t('userMenu.failedUpdateAvatar'));
       }
     } catch (error) {
       console.error('Failed to update avatar:', error);
-      toast.error('Failed to update profile picture');
+      toast.error(t('userMenu.failedUpdatePicture'));
     } finally {
       setIsSavingAvatar(false);
     }
@@ -210,7 +212,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                 {user.username}
               </p>
               <p className='text-xs text-gray-500 dark:text-gray-400'>
-                {user.email || 'No email provided'}
+                {user.email || t('userMenu.noEmail')}
               </p>
               <div className='flex items-center mt-1'>
                 {user.role === 'admin' && (
@@ -228,7 +230,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                 className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
               >
                 <Camera size={16} className='mr-3 flex-shrink-0' />
-                Change Picture
+                {t('userMenu.changePicture')}
               </button>
 
               <button
@@ -236,7 +238,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                 className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
               >
                 <Settings size={16} className='mr-3 flex-shrink-0' />
-                Settings
+                {t('userMenu.settings')}
               </button>
 
               {isAdmin() && (
@@ -245,7 +247,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                   className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200 active:bg-gray-100 dark:active:bg-dark-100 touch-manipulation transition-colors'
                 >
                   <User size={16} className='mr-3 flex-shrink-0' />
-                  User Management
+                  {t('userMenu.userManagement')}
                 </button>
               )}
 
@@ -255,7 +257,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                   className='w-full flex items-center px-3 py-2.5 sm:py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 touch-manipulation transition-colors'
                 >
                   <LogOut size={16} className='mr-3 flex-shrink-0' />
-                  Sign Out
+                  {t('userMenu.signOut')}
                 </button>
               </div>
             </div>
@@ -276,7 +278,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
             >
               <div className='flex items-center justify-between mb-4'>
                 <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                  Change Profile Picture
+                  {t('userMenu.changeProfilePicture')}
                 </h3>
                 <button
                   onClick={() => setShowAvatarModal(false)}
@@ -301,7 +303,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                     disabled={isSavingAvatar}
                     className='px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors'
                   >
-                    {isSavingAvatar ? 'Saving...' : 'Save'}
+                    {isSavingAvatar ? t('common.saving') : t('common.save')}
                   </button>
                 </div>
               </div>

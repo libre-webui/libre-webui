@@ -17,6 +17,7 @@
 
 import React, { useState } from 'react';
 import { X, Info, ExternalLink } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
 import { cn } from '@/utils';
 
@@ -32,6 +33,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
   className,
 }) => {
   const [isDismissed, setIsDismissed] = useState(false);
+  const { t } = useTranslation();
 
   const handleDismiss = () => {
     setIsDismissed(true);
@@ -56,7 +58,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
           </div>
           <div className='flex-1 min-w-0'>
             <p className='text-sm font-medium text-amber-800 dark:text-amber-200'>
-              Demo Mode
+              {t('demoMode.title')}
             </p>
             <p className='text-xs text-amber-700 dark:text-amber-300 mt-0.5'>
               {message}
@@ -79,7 +81,9 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
             title='View on GitHub'
           >
             <ExternalLink className='h-4 w-4' />
-            <span className='ml-1 hidden sm:inline'>GitHub</span>
+            <span className='ml-1 hidden sm:inline'>
+              {t('demoMode.github')}
+            </span>
           </Button>
 
           {/* Dismiss button */}

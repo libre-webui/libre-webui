@@ -95,7 +95,19 @@
       "connectingTo": "กำลังเชื่อมต่อกับ {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "กำลังตรวจสอบการยืนยันตัวตน...",
+    "welcome": "ยินดีต้อนรับ",
+    "noEmail": "ไม่มีอีเมล",
+    "role": "บทบาท",
+    "id": "ID",
+    "userId": "ID ผู้ใช้",
+    "signInDescription": "ลงชื่อเข้าใช้ด้วยบัญชี GitHub เพื่อดำเนินการต่อ",
+    "signInWithGitHub": "ลงชื่อเข้าใช้ด้วย GitHub",
+    "jwtActive": "การยืนยันตัวตน JWT ใช้งานอยู่",
+    "jwtDescription": "การยืนยันตัวตนแบบ JWT ด้วย GitHub OAuth",
+    "github": "GitHub",
+    "provider": "ผู้ให้บริการ"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "พารามิเตอร์",
     "quantization": "การควอนไทเซชัน",
     "noModels": "ไม่มีโมเดลที่ติดตั้ง",
-    "pullFirst": "ดาวน์โหลดโมเดลเพื่อเริ่มต้น"
+    "pullFirst": "ดาวน์โหลดโมเดลเพื่อเริ่มต้น",
+    "noModelsFound": "ไม่พบโมเดล"
   },
   "personas": {
     "title": "เพอร์โซน่า",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "ไม่สามารถนำเข้าเพอร์โซน่าใดๆ",
     "importSuccess": "นำเข้าเพอร์โซน่าสำเร็จ",
     "importFailed": "ไม่สามารถนำเข้าเพอร์โซน่า"
+  },
+  "generationStats": {
+    "details": "รายละเอียด",
+    "promptTokens": "โทเค็นพรอมต์:",
+    "generatedTokens": "โทเค็นที่สร้าง:",
+    "totalTokens": "โทเค็นทั้งหมด:",
+    "speed": "ความเร็ว:",
+    "promptEval": "ประเมินพรอมต์:",
+    "generation": "การสร้าง:",
+    "modelLoad": "โหลดโมเดล:",
+    "totalTime": "เวลาทั้งหมด:",
+    "generatedAt": "สร้างเมื่อ:"
+  },
+  "userMenu": {
+    "loggedOut": "ออกจากระบบสำเร็จ",
+    "pictureUpdated": "อัปเดตรูปโปรไฟล์แล้ว",
+    "failedUpdateAvatar": "ไม่สามารถอัปเดตรูปแทนตัวได้",
+    "failedUpdatePicture": "ไม่สามารถอัปเดตรูปโปรไฟล์ได้",
+    "noEmail": "ไม่มีอีเมล",
+    "changePicture": "เปลี่ยนรูปภาพ",
+    "settings": "การตั้งค่า",
+    "userManagement": "จัดการผู้ใช้",
+    "signOut": "ออกจากระบบ",
+    "changeProfilePicture": "เปลี่ยนรูปโปรไฟล์"
+  },
+  "pluginManager": {
+    "title": "จัดการปลั๊กอิน",
+    "upload": "อัปโหลด",
+    "addJson": "เพิ่ม JSON",
+    "browseHF": "เรียกดู HF Hub",
+    "confirmDelete": "คุณแน่ใจหรือไม่ว่าต้องการลบปลั๊กอินนี้?",
+    "uploading": "กำลังอัปโหลดปลั๊กอิน...",
+    "pasteJson": "วาง JSON ของปลั๊กอินที่นี่...",
+    "installPlugin": "ติดตั้งปลั๊กอิน",
+    "loading": "กำลังโหลดปลั๊กอิน...",
+    "noPlugins": "ไม่มีปลั๊กอินติดตั้ง",
+    "noPluginsDescription": "อัปโหลดไฟล์ปลั๊กอินหรือเพิ่มปลั๊กอินจาก JSON เพื่อเริ่มต้น",
+    "active": "ใช้งานอยู่",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "เปิดใช้งาน",
+    "deactivate": "ปิดใช้งาน",
+    "activePlugin": "ปลั๊กอินที่ใช้งานอยู่",
+    "activePluginDescription": "คำขอแชททั้งหมดจะถูกส่งผ่านปลั๊กอินนี้"
+  },
+  "huggingface": {
+    "title": "เบราว์เซอร์โมเดล HuggingFace",
+    "subtitle": "เรียกดูและเลือกโมเดลจาก Hub",
+    "searchPlaceholder": "ค้นหาโมเดล...",
+    "filters": "ตัวกรอง",
+    "task": "งาน",
+    "sortBy": "เรียงตาม",
+    "noModels": "ไม่พบโมเดล",
+    "adjustSearch": "ลองปรับคำค้นหาหรือตัวกรอง",
+    "gated": "จำกัดการเข้าถึง",
+    "selected": "เลือกแล้ว",
+    "select": "เลือก",
+    "refresh": "รีเฟรช"
+  },
+  "demoMode": {
+    "title": "โหมดสาธิต",
+    "github": "GitHub"
   }
 }

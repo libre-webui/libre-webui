@@ -95,7 +95,19 @@
       "connectingTo": "Подключение к {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Проверка аутентификации...",
+    "welcome": "Добро пожаловать",
+    "noEmail": "Email не указан",
+    "role": "Роль",
+    "id": "ID",
+    "userId": "ID пользователя",
+    "signInDescription": "Войдите с помощью учётной записи GitHub, чтобы продолжить",
+    "signInWithGitHub": "Войти через GitHub",
+    "jwtActive": "JWT-аутентификация активна",
+    "jwtDescription": "JWT-аутентификация с GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Провайдер"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Параметры",
     "quantization": "Квантование",
     "noModels": "Модели не установлены",
-    "pullFirst": "Загрузите модель, чтобы начать"
+    "pullFirst": "Загрузите модель, чтобы начать",
+    "noModelsFound": "Модели не найдены"
   },
   "personas": {
     "title": "Персоны",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Не удалось импортировать ни одну персону",
     "importSuccess": "Персона успешно импортирована",
     "importFailed": "Не удалось импортировать персону"
+  },
+  "generationStats": {
+    "details": "Подробности",
+    "promptTokens": "Токены промпта:",
+    "generatedTokens": "Сгенерированные токены:",
+    "totalTokens": "Всего токенов:",
+    "speed": "Скорость:",
+    "promptEval": "Оценка промпта:",
+    "generation": "Генерация:",
+    "modelLoad": "Загрузка модели:",
+    "totalTime": "Общее время:",
+    "generatedAt": "Сгенерировано в:"
+  },
+  "userMenu": {
+    "loggedOut": "Вы вышли из системы",
+    "pictureUpdated": "Фото профиля обновлено",
+    "failedUpdateAvatar": "Не удалось обновить аватар",
+    "failedUpdatePicture": "Не удалось обновить фото профиля",
+    "noEmail": "Email не указан",
+    "changePicture": "Изменить фото",
+    "settings": "Настройки",
+    "userManagement": "Управление пользователями",
+    "signOut": "Выйти",
+    "changeProfilePicture": "Изменить фото профиля"
+  },
+  "pluginManager": {
+    "title": "Менеджер плагинов",
+    "upload": "Загрузить",
+    "addJson": "Добавить JSON",
+    "browseHF": "Обзор HF Hub",
+    "confirmDelete": "Вы уверены, что хотите удалить этот плагин?",
+    "uploading": "Загрузка плагина...",
+    "pasteJson": "Вставьте JSON плагина сюда...",
+    "installPlugin": "Установить плагин",
+    "loading": "Загрузка плагинов...",
+    "noPlugins": "Нет установленных плагинов",
+    "noPluginsDescription": "Загрузите файл плагина или добавьте плагин из JSON.",
+    "active": "Активен",
+    "id": "ID",
+    "endpoint": "Эндпоинт",
+    "activate": "Активировать",
+    "deactivate": "Деактивировать",
+    "activePlugin": "Активный плагин",
+    "activePluginDescription": "Все запросы чата будут направляться через этот плагин"
+  },
+  "huggingface": {
+    "title": "Браузер моделей HuggingFace",
+    "subtitle": "Просматривайте и выбирайте модели из Hub",
+    "searchPlaceholder": "Поиск моделей...",
+    "filters": "Фильтры",
+    "task": "Задача",
+    "sortBy": "Сортировать по",
+    "noModels": "Модели не найдены",
+    "adjustSearch": "Попробуйте изменить поисковый запрос или фильтры",
+    "gated": "Ограниченный",
+    "selected": "Выбрано",
+    "select": "Выбрать",
+    "refresh": "Обновить"
+  },
+  "demoMode": {
+    "title": "Демо-режим",
+    "github": "GitHub"
   }
 }

@@ -95,7 +95,19 @@
       "connectingTo": "Připojování k {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Kontrola ověření...",
+    "welcome": "Vítejte",
+    "noEmail": "E-mail nebyl zadán",
+    "role": "Role",
+    "id": "ID",
+    "userId": "ID uživatele",
+    "signInDescription": "Pro pokračování se přihlaste pomocí účtu GitHub",
+    "signInWithGitHub": "Přihlásit se přes GitHub",
+    "jwtActive": "JWT autentizace aktivní",
+    "jwtDescription": "JWT autentizace s GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Poskytovatel"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Parametry",
     "quantization": "Kvantizace",
     "noModels": "Žádné nainstalované modely",
-    "pullFirst": "Stáhněte model pro začátek"
+    "pullFirst": "Stáhněte model pro začátek",
+    "noModelsFound": "Žádné modely nenalezeny"
   },
   "personas": {
     "title": "Persony",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Nepodařilo se importovat žádnou personu",
     "importSuccess": "Persona úspěšně importována",
     "importFailed": "Nepodařilo se importovat personu"
+  },
+  "generationStats": {
+    "details": "Podrobnosti",
+    "promptTokens": "Tokeny promptu:",
+    "generatedTokens": "Vygenerované tokeny:",
+    "totalTokens": "Celkem tokenů:",
+    "speed": "Rychlost:",
+    "promptEval": "Vyhodnocení promptu:",
+    "generation": "Generování:",
+    "modelLoad": "Načtení modelu:",
+    "totalTime": "Celkový čas:",
+    "generatedAt": "Vygenerováno v:"
+  },
+  "userMenu": {
+    "loggedOut": "Úspěšně odhlášeno",
+    "pictureUpdated": "Profilový obrázek aktualizován",
+    "failedUpdateAvatar": "Aktualizace avataru selhala",
+    "failedUpdatePicture": "Aktualizace profilového obrázku selhala",
+    "noEmail": "E-mail nebyl zadán",
+    "changePicture": "Změnit obrázek",
+    "settings": "Nastavení",
+    "userManagement": "Správa uživatelů",
+    "signOut": "Odhlásit se",
+    "changeProfilePicture": "Změnit profilový obrázek"
+  },
+  "pluginManager": {
+    "title": "Správce pluginů",
+    "upload": "Nahrát",
+    "addJson": "Přidat JSON",
+    "browseHF": "Procházet HF Hub",
+    "confirmDelete": "Opravdu chcete smazat tento plugin?",
+    "uploading": "Nahrávání pluginu...",
+    "pasteJson": "Vložte JSON pluginu...",
+    "installPlugin": "Nainstalovat plugin",
+    "loading": "Načítání pluginů...",
+    "noPlugins": "Žádné nainstalované pluginy",
+    "noPluginsDescription": "Nahrajte soubor pluginu nebo přidejte plugin z JSON.",
+    "active": "Aktivní",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Aktivovat",
+    "deactivate": "Deaktivovat",
+    "activePlugin": "Aktivní plugin",
+    "activePluginDescription": "Všechny chatové požadavky budou směrovány přes tento plugin"
+  },
+  "huggingface": {
+    "title": "Prohlížeč modelů HuggingFace",
+    "subtitle": "Procházejte a vybírejte modely z Hubu",
+    "searchPlaceholder": "Hledat modely...",
+    "filters": "Filtry",
+    "task": "Úloha",
+    "sortBy": "Řadit podle",
+    "noModels": "Žádné modely nenalezeny",
+    "adjustSearch": "Zkuste upravit hledání nebo filtry",
+    "gated": "Omezený",
+    "selected": "Vybráno",
+    "select": "Vybrat",
+    "refresh": "Obnovit"
+  },
+  "demoMode": {
+    "title": "Demo režim",
+    "github": "GitHub"
   }
 }

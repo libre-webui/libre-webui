@@ -95,7 +95,19 @@
       "connectingTo": "Connecting to {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Checking authentication...",
+    "welcome": "Welcome",
+    "noEmail": "No email provided",
+    "role": "Role",
+    "id": "ID",
+    "userId": "User ID",
+    "signInDescription": "Sign in with your GitHub account to continue",
+    "signInWithGitHub": "Sign in with GitHub",
+    "jwtActive": "JWT Authentication Active",
+    "jwtDescription": "JWT-based authentication with GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Provider"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Parameters",
     "quantization": "Quantization",
     "noModels": "No models installed",
-    "pullFirst": "Pull a model to get started"
+    "pullFirst": "Pull a model to get started",
+    "noModelsFound": "No models found"
   },
   "personas": {
     "title": "Personas",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Failed to import any personas",
     "importSuccess": "Persona imported successfully",
     "importFailed": "Failed to import persona"
+  },
+  "generationStats": {
+    "details": "Details",
+    "promptTokens": "Prompt tokens:",
+    "generatedTokens": "Generated tokens:",
+    "totalTokens": "Total tokens:",
+    "speed": "Speed:",
+    "promptEval": "Prompt eval:",
+    "generation": "Generation:",
+    "modelLoad": "Model load:",
+    "totalTime": "Total time:",
+    "generatedAt": "Generated at:"
+  },
+  "userMenu": {
+    "loggedOut": "Logged out successfully",
+    "pictureUpdated": "Profile picture updated",
+    "failedUpdateAvatar": "Failed to update avatar",
+    "failedUpdatePicture": "Failed to update profile picture",
+    "noEmail": "No email provided",
+    "changePicture": "Change Picture",
+    "settings": "Settings",
+    "userManagement": "User Management",
+    "signOut": "Sign Out",
+    "changeProfilePicture": "Change Profile Picture"
+  },
+  "pluginManager": {
+    "title": "Plugin Manager",
+    "upload": "Upload",
+    "addJson": "Add JSON",
+    "browseHF": "Browse HF Hub",
+    "confirmDelete": "Are you sure you want to delete this plugin?",
+    "uploading": "Uploading plugin...",
+    "pasteJson": "Paste plugin JSON here...",
+    "installPlugin": "Install Plugin",
+    "loading": "Loading plugins...",
+    "noPlugins": "No Plugins Installed",
+    "noPluginsDescription": "Upload a plugin file or add a plugin from JSON to get started.",
+    "active": "Active",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "activePlugin": "Active Plugin",
+    "activePluginDescription": "All chat requests will be routed through this plugin"
+  },
+  "huggingface": {
+    "title": "HuggingFace Model Browser",
+    "subtitle": "Browse and select models from the Hub",
+    "searchPlaceholder": "Search models...",
+    "filters": "Filters",
+    "task": "Task",
+    "sortBy": "Sort By",
+    "noModels": "No models found",
+    "adjustSearch": "Try adjusting your search or filters",
+    "gated": "Gated",
+    "selected": "Selected",
+    "select": "Select",
+    "refresh": "Refresh"
+  },
+  "demoMode": {
+    "title": "Demo Mode",
+    "github": "GitHub"
   }
 }

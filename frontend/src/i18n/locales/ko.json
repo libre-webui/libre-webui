@@ -95,7 +95,19 @@
       "connectingTo": "{{provider}}에 연결 중...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "인증 확인 중...",
+    "welcome": "환영합니다",
+    "noEmail": "이메일 없음",
+    "role": "역할",
+    "id": "ID",
+    "userId": "사용자 ID",
+    "signInDescription": "계속하려면 GitHub 계정으로 로그인하세요",
+    "signInWithGitHub": "GitHub로 로그인",
+    "jwtActive": "JWT 인증 활성",
+    "jwtDescription": "GitHub OAuth 기반 JWT 인증",
+    "github": "GitHub",
+    "provider": "제공자"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "매개변수",
     "quantization": "양자화",
     "noModels": "설치된 모델 없음",
-    "pullFirst": "시작하려면 모델을 풀하세요"
+    "pullFirst": "시작하려면 모델을 풀하세요",
+    "noModelsFound": "모델을 찾을 수 없습니다"
   },
   "personas": {
     "title": "페르소나",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "페르소나를 가져오지 못했습니다",
     "importSuccess": "페르소나가 성공적으로 가져왔습니다",
     "importFailed": "페르소나 가져오기 실패"
+  },
+  "generationStats": {
+    "details": "세부 정보",
+    "promptTokens": "프롬프트 토큰:",
+    "generatedTokens": "생성된 토큰:",
+    "totalTokens": "총 토큰:",
+    "speed": "속도:",
+    "promptEval": "프롬프트 평가:",
+    "generation": "생성:",
+    "modelLoad": "모델 로드:",
+    "totalTime": "총 시간:",
+    "generatedAt": "생성 시각:"
+  },
+  "userMenu": {
+    "loggedOut": "로그아웃되었습니다",
+    "pictureUpdated": "프로필 사진이 업데이트되었습니다",
+    "failedUpdateAvatar": "아바타 업데이트 실패",
+    "failedUpdatePicture": "프로필 사진 업데이트 실패",
+    "noEmail": "이메일 없음",
+    "changePicture": "사진 변경",
+    "settings": "설정",
+    "userManagement": "사용자 관리",
+    "signOut": "로그아웃",
+    "changeProfilePicture": "프로필 사진 변경"
+  },
+  "pluginManager": {
+    "title": "플러그인 관리자",
+    "upload": "업로드",
+    "addJson": "JSON 추가",
+    "browseHF": "HF Hub 찾아보기",
+    "confirmDelete": "이 플러그인을 삭제하시겠습니까?",
+    "uploading": "플러그인 업로드 중...",
+    "pasteJson": "플러그인 JSON을 여기에 붙여넣기...",
+    "installPlugin": "플러그인 설치",
+    "loading": "플러그인 로딩 중...",
+    "noPlugins": "설치된 플러그인 없음",
+    "noPluginsDescription": "시작하려면 플러그인 파일을 업로드하거나 JSON에서 추가하세요.",
+    "active": "활성",
+    "id": "ID",
+    "endpoint": "엔드포인트",
+    "activate": "활성화",
+    "deactivate": "비활성화",
+    "activePlugin": "활성 플러그인",
+    "activePluginDescription": "모든 채팅 요청이 이 플러그인을 통해 라우팅됩니다"
+  },
+  "huggingface": {
+    "title": "HuggingFace 모델 브라우저",
+    "subtitle": "Hub에서 모델을 찾아 선택하세요",
+    "searchPlaceholder": "모델 검색...",
+    "filters": "필터",
+    "task": "태스크",
+    "sortBy": "정렬",
+    "noModels": "모델을 찾을 수 없습니다",
+    "adjustSearch": "검색어나 필터를 조정해보세요",
+    "gated": "제한됨",
+    "selected": "선택됨",
+    "select": "선택",
+    "refresh": "새로고침"
+  },
+  "demoMode": {
+    "title": "데모 모드",
+    "github": "GitHub"
   }
 }

@@ -95,7 +95,19 @@
       "connectingTo": "Opretter forbindelse til {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Kontrollerer godkendelse...",
+    "welcome": "Velkommen",
+    "noEmail": "Ingen e-mail angivet",
+    "role": "Rolle",
+    "id": "ID",
+    "userId": "Bruger-ID",
+    "signInDescription": "Log ind med din GitHub-konto for at fortsætte",
+    "signInWithGitHub": "Log ind med GitHub",
+    "jwtActive": "JWT-godkendelse aktiv",
+    "jwtDescription": "JWT-baseret godkendelse med GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Udbyder"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Parametre",
     "quantization": "Kvantisering",
     "noModels": "Ingen modeller installeret",
-    "pullFirst": "Hent en model for at komme i gang"
+    "pullFirst": "Hent en model for at komme i gang",
+    "noModelsFound": "Ingen modeller fundet"
   },
   "personas": {
     "title": "Personaer",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Kunne ikke importere nogen personaer",
     "importSuccess": "Persona importeret",
     "importFailed": "Kunne ikke importere persona"
+  },
+  "generationStats": {
+    "details": "Detaljer",
+    "promptTokens": "Prompt-tokens:",
+    "generatedTokens": "Genererede tokens:",
+    "totalTokens": "Tokens i alt:",
+    "speed": "Hastighed:",
+    "promptEval": "Prompt-evaluering:",
+    "generation": "Generering:",
+    "modelLoad": "Model indlæsning:",
+    "totalTime": "Samlet tid:",
+    "generatedAt": "Genereret kl.:"
+  },
+  "userMenu": {
+    "loggedOut": "Logget ud",
+    "pictureUpdated": "Profilbillede opdateret",
+    "failedUpdateAvatar": "Kunne ikke opdatere avatar",
+    "failedUpdatePicture": "Kunne ikke opdatere profilbillede",
+    "noEmail": "Ingen e-mail angivet",
+    "changePicture": "Skift billede",
+    "settings": "Indstillinger",
+    "userManagement": "Brugeradministration",
+    "signOut": "Log ud",
+    "changeProfilePicture": "Skift profilbillede"
+  },
+  "pluginManager": {
+    "title": "Plugin-manager",
+    "upload": "Upload",
+    "addJson": "Tilføj JSON",
+    "browseHF": "Gennemse HF Hub",
+    "confirmDelete": "Er du sikker på, at du vil slette dette plugin?",
+    "uploading": "Uploader plugin...",
+    "pasteJson": "Indsæt plugin-JSON her...",
+    "installPlugin": "Installer plugin",
+    "loading": "Indlæser plugins...",
+    "noPlugins": "Ingen plugins installeret",
+    "noPluginsDescription": "Upload en plugin-fil eller tilføj en plugin fra JSON for at komme i gang.",
+    "active": "Aktiv",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Aktiver",
+    "deactivate": "Deaktiver",
+    "activePlugin": "Aktivt plugin",
+    "activePluginDescription": "Alle chatanmodninger vil blive dirigeret gennem dette plugin"
+  },
+  "huggingface": {
+    "title": "HuggingFace-modelbrowser",
+    "subtitle": "Gennemse og vælg modeller fra Hub",
+    "searchPlaceholder": "Søg modeller...",
+    "filters": "Filtre",
+    "task": "Opgave",
+    "sortBy": "Sorter efter",
+    "noModels": "Ingen modeller fundet",
+    "adjustSearch": "Prøv at justere din søgning eller filtre",
+    "gated": "Begrænset",
+    "selected": "Valgt",
+    "select": "Vælg",
+    "refresh": "Opdater"
+  },
+  "demoMode": {
+    "title": "Demotilstand",
+    "github": "GitHub"
   }
 }

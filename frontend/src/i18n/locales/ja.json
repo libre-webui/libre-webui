@@ -95,7 +95,19 @@
       "connectingTo": "{{provider}}に接続中...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "認証を確認中...",
+    "welcome": "ようこそ",
+    "noEmail": "メールアドレスなし",
+    "role": "ロール",
+    "id": "ID",
+    "userId": "ユーザーID",
+    "signInDescription": "続行するにはGitHubアカウントでサインインしてください",
+    "signInWithGitHub": "GitHubでサインイン",
+    "jwtActive": "JWT認証アクティブ",
+    "jwtDescription": "GitHub OAuthによるJWT認証",
+    "github": "GitHub",
+    "provider": "プロバイダー"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "パラメータ",
     "quantization": "量子化",
     "noModels": "モデルがインストールされていません",
-    "pullFirst": "モデルをプルして開始"
+    "pullFirst": "モデルをプルして開始",
+    "noModelsFound": "モデルが見つかりません"
   },
   "personas": {
     "title": "ペルソナ",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "ペルソナのインポートに失敗しました",
     "importSuccess": "ペルソナが正常にインポートされました",
     "importFailed": "ペルソナのインポートに失敗しました"
+  },
+  "generationStats": {
+    "details": "詳細",
+    "promptTokens": "プロンプトトークン:",
+    "generatedTokens": "生成トークン:",
+    "totalTokens": "合計トークン:",
+    "speed": "速度:",
+    "promptEval": "プロンプト評価:",
+    "generation": "生成:",
+    "modelLoad": "モデル読み込み:",
+    "totalTime": "合計時間:",
+    "generatedAt": "生成日時:"
+  },
+  "userMenu": {
+    "loggedOut": "ログアウトしました",
+    "pictureUpdated": "プロフィール画像を更新しました",
+    "failedUpdateAvatar": "アバターの更新に失敗しました",
+    "failedUpdatePicture": "プロフィール画像の更新に失敗しました",
+    "noEmail": "メールアドレスなし",
+    "changePicture": "画像を変更",
+    "settings": "設定",
+    "userManagement": "ユーザー管理",
+    "signOut": "サインアウト",
+    "changeProfilePicture": "プロフィール画像を変更"
+  },
+  "pluginManager": {
+    "title": "プラグインマネージャー",
+    "upload": "アップロード",
+    "addJson": "JSON追加",
+    "browseHF": "HF Hubを閲覧",
+    "confirmDelete": "このプラグインを削除してもよろしいですか？",
+    "uploading": "プラグインをアップロード中...",
+    "pasteJson": "プラグインのJSONをここに貼り付け...",
+    "installPlugin": "プラグインをインストール",
+    "loading": "プラグインを読み込み中...",
+    "noPlugins": "インストール済みプラグインなし",
+    "noPluginsDescription": "プラグインファイルをアップロードするかJSONから追加してください。",
+    "active": "アクティブ",
+    "id": "ID",
+    "endpoint": "エンドポイント",
+    "activate": "有効化",
+    "deactivate": "無効化",
+    "activePlugin": "アクティブなプラグイン",
+    "activePluginDescription": "すべてのチャットリクエストはこのプラグインを通じてルーティングされます"
+  },
+  "huggingface": {
+    "title": "HuggingFaceモデルブラウザ",
+    "subtitle": "Hubからモデルを閲覧・選択",
+    "searchPlaceholder": "モデルを検索...",
+    "filters": "フィルター",
+    "task": "タスク",
+    "sortBy": "並び替え",
+    "noModels": "モデルが見つかりません",
+    "adjustSearch": "検索条件やフィルターを調整してみてください",
+    "gated": "制限付き",
+    "selected": "選択済み",
+    "select": "選択",
+    "refresh": "更新"
+  },
+  "demoMode": {
+    "title": "デモモード",
+    "github": "GitHub"
   }
 }

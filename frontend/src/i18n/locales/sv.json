@@ -95,7 +95,19 @@
       "connectingTo": "Ansluter till {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Kontrollerar autentisering...",
+    "welcome": "Välkommen",
+    "noEmail": "Ingen e-post angiven",
+    "role": "Roll",
+    "id": "ID",
+    "userId": "Användar-ID",
+    "signInDescription": "Logga in med ditt GitHub-konto för att fortsätta",
+    "signInWithGitHub": "Logga in med GitHub",
+    "jwtActive": "JWT-autentisering aktiv",
+    "jwtDescription": "JWT-baserad autentisering med GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Leverantör"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Parametrar",
     "quantization": "Kvantisering",
     "noModels": "Inga modeller installerade",
-    "pullFirst": "Hämta en modell för att komma igång"
+    "pullFirst": "Hämta en modell för att komma igång",
+    "noModelsFound": "Inga modeller hittades"
   },
   "personas": {
     "title": "Personas",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Kunde inte importera några personas",
     "importSuccess": "Persona importerades",
     "importFailed": "Kunde inte importera persona"
+  },
+  "generationStats": {
+    "details": "Detaljer",
+    "promptTokens": "Prompttokens:",
+    "generatedTokens": "Genererade tokens:",
+    "totalTokens": "Totalt tokens:",
+    "speed": "Hastighet:",
+    "promptEval": "Promptutvärdering:",
+    "generation": "Generering:",
+    "modelLoad": "Modellladdning:",
+    "totalTime": "Total tid:",
+    "generatedAt": "Genererat kl.:"
+  },
+  "userMenu": {
+    "loggedOut": "Utloggad",
+    "pictureUpdated": "Profilbild uppdaterad",
+    "failedUpdateAvatar": "Det gick inte att uppdatera avatar",
+    "failedUpdatePicture": "Det gick inte att uppdatera profilbild",
+    "noEmail": "Ingen e-post angiven",
+    "changePicture": "Byt bild",
+    "settings": "Inställningar",
+    "userManagement": "Användarhantering",
+    "signOut": "Logga ut",
+    "changeProfilePicture": "Byt profilbild"
+  },
+  "pluginManager": {
+    "title": "Pluginhanterare",
+    "upload": "Ladda upp",
+    "addJson": "Lägg till JSON",
+    "browseHF": "Bläddra i HF Hub",
+    "confirmDelete": "Är du säker på att du vill ta bort detta plugin?",
+    "uploading": "Laddar upp plugin...",
+    "pasteJson": "Klistra in plugin-JSON här...",
+    "installPlugin": "Installera plugin",
+    "loading": "Laddar plugins...",
+    "noPlugins": "Inga plugins installerade",
+    "noPluginsDescription": "Ladda upp en pluginfil eller lägg till ett plugin från JSON för att komma igång.",
+    "active": "Aktiv",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Aktivera",
+    "deactivate": "Inaktivera",
+    "activePlugin": "Aktivt plugin",
+    "activePluginDescription": "Alla chattförfrågningar dirigeras genom detta plugin"
+  },
+  "huggingface": {
+    "title": "HuggingFace modellbläddrare",
+    "subtitle": "Bläddra och välj modeller från Hub",
+    "searchPlaceholder": "Sök modeller...",
+    "filters": "Filter",
+    "task": "Uppgift",
+    "sortBy": "Sortera efter",
+    "noModels": "Inga modeller hittades",
+    "adjustSearch": "Försök justera din sökning eller filter",
+    "gated": "Begränsad",
+    "selected": "Valt",
+    "select": "Välj",
+    "refresh": "Uppdatera"
+  },
+  "demoMode": {
+    "title": "Demoläge",
+    "github": "GitHub"
   }
 }

@@ -95,7 +95,19 @@
       "connectingTo": "{{provider}} bağlanılıyor...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Kimlik doğrulama kontrol ediliyor...",
+    "welcome": "Hoş geldiniz",
+    "noEmail": "E-posta belirtilmedi",
+    "role": "Rol",
+    "id": "ID",
+    "userId": "Kullanıcı ID",
+    "signInDescription": "Devam etmek için GitHub hesabınızla giriş yapın",
+    "signInWithGitHub": "GitHub ile giriş yap",
+    "jwtActive": "JWT kimlik doğrulama aktif",
+    "jwtDescription": "GitHub OAuth ile JWT tabanlı kimlik doğrulama",
+    "github": "GitHub",
+    "provider": "Sağlayıcı"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Parametreler",
     "quantization": "Niceleme",
     "noModels": "Yüklü model yok",
-    "pullFirst": "Başlamak için bir model çekin"
+    "pullFirst": "Başlamak için bir model çekin",
+    "noModelsFound": "Model bulunamadı"
   },
   "personas": {
     "title": "Personalar",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Hiçbir persona içe aktarılamadı",
     "importSuccess": "Persona başarıyla içe aktarıldı",
     "importFailed": "Persona içe aktarılamadı"
+  },
+  "generationStats": {
+    "details": "Detaylar",
+    "promptTokens": "İstem tokenleri:",
+    "generatedTokens": "Üretilen tokenler:",
+    "totalTokens": "Toplam token:",
+    "speed": "Hız:",
+    "promptEval": "İstem değerlendirme:",
+    "generation": "Üretim:",
+    "modelLoad": "Model yükleme:",
+    "totalTime": "Toplam süre:",
+    "generatedAt": "Oluşturulma zamanı:"
+  },
+  "userMenu": {
+    "loggedOut": "Başarıyla çıkış yapıldı",
+    "pictureUpdated": "Profil resmi güncellendi",
+    "failedUpdateAvatar": "Avatar güncellenemedi",
+    "failedUpdatePicture": "Profil resmi güncellenemedi",
+    "noEmail": "E-posta belirtilmedi",
+    "changePicture": "Resmi değiştir",
+    "settings": "Ayarlar",
+    "userManagement": "Kullanıcı yönetimi",
+    "signOut": "Çıkış yap",
+    "changeProfilePicture": "Profil resmini değiştir"
+  },
+  "pluginManager": {
+    "title": "Eklenti yöneticisi",
+    "upload": "Yükle",
+    "addJson": "JSON ekle",
+    "browseHF": "HF Hub'ı gözat",
+    "confirmDelete": "Bu eklentiyi silmek istediğinizden emin misiniz?",
+    "uploading": "Eklenti yükleniyor...",
+    "pasteJson": "Eklenti JSON'ını buraya yapıştırın...",
+    "installPlugin": "Eklentiyi yükle",
+    "loading": "Eklentiler yükleniyor...",
+    "noPlugins": "Yüklü eklenti yok",
+    "noPluginsDescription": "Başlamak için bir eklenti dosyası yükleyin veya JSON'dan ekleyin.",
+    "active": "Aktif",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Etkinleştir",
+    "deactivate": "Devre dışı bırak",
+    "activePlugin": "Aktif eklenti",
+    "activePluginDescription": "Tüm sohbet istekleri bu eklenti üzerinden yönlendirilecektir"
+  },
+  "huggingface": {
+    "title": "HuggingFace model tarayıcı",
+    "subtitle": "Hub'dan modelleri göz atın ve seçin",
+    "searchPlaceholder": "Model ara...",
+    "filters": "Filtreler",
+    "task": "Görev",
+    "sortBy": "Sırala",
+    "noModels": "Model bulunamadı",
+    "adjustSearch": "Aramanızı veya filtrelerinizi düzenlemeyi deneyin",
+    "gated": "Kısıtlı",
+    "selected": "Seçildi",
+    "select": "Seç",
+    "refresh": "Yenile"
+  },
+  "demoMode": {
+    "title": "Demo modu",
+    "github": "GitHub"
   }
 }

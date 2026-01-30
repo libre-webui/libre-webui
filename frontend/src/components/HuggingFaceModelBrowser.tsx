@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { huggingfaceHubApi, HuggingFaceModel } from '@/utils/api';
 import { Button } from '@/components/ui/Button';
 import {
@@ -61,6 +62,7 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 export const HuggingFaceModelBrowser: React.FC<
   HuggingFaceModelBrowserProps
 > = ({ isOpen, onClose, onSelectModel, selectedModels = [] }) => {
+  const { t } = useTranslation();
   const [models, setModels] = useState<HuggingFaceModel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,10 +138,10 @@ export const HuggingFaceModelBrowser: React.FC<
             </div>
             <div>
               <h2 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
-                HuggingFace Model Browser
+                {t('huggingface.title')}
               </h2>
               <p className='text-sm text-gray-500 dark:text-dark-600'>
-                Browse and select models from the Hub
+                {t('huggingface.subtitle')}
               </p>
             </div>
           </div>
@@ -158,7 +160,7 @@ export const HuggingFaceModelBrowser: React.FC<
             <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-dark-500' />
             <input
               type='text'
-              placeholder='Search models...'
+              placeholder={t('huggingface.searchPlaceholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className='w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900 dark:text-dark-800 placeholder-gray-500 dark:placeholder-dark-500'
@@ -172,7 +174,7 @@ export const HuggingFaceModelBrowser: React.FC<
               className='flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors'
             >
               <Filter className='w-4 h-4' />
-              Filters
+              {t('huggingface.filters')}
             </button>
             <div className='text-sm text-gray-500 dark:text-dark-600'>
               {models.length} models found
@@ -185,7 +187,7 @@ export const HuggingFaceModelBrowser: React.FC<
               {/* Task Filter */}
               <div className='flex-1 min-w-[200px]'>
                 <label className='block text-xs font-medium text-gray-500 dark:text-dark-600 mb-1'>
-                  Task
+                  {t('huggingface.task')}
                 </label>
                 <select
                   value={task}
@@ -203,7 +205,7 @@ export const HuggingFaceModelBrowser: React.FC<
               {/* Sort Filter */}
               <div className='flex-1 min-w-[200px]'>
                 <label className='block text-xs font-medium text-gray-500 dark:text-dark-600 mb-1'>
-                  Sort By
+                  {t('huggingface.sortBy')}
                 </label>
                 <select
                   value={sort}
@@ -231,14 +233,14 @@ export const HuggingFaceModelBrowser: React.FC<
             <div className='flex flex-col items-center justify-center py-12'>
               <p className='text-red-500 dark:text-red-400 mb-4'>{error}</p>
               <Button onClick={fetchModels} variant='outline' size='sm'>
-                Retry
+                {t('common.retry')}
               </Button>
             </div>
           ) : models.length === 0 ? (
             <div className='flex flex-col items-center justify-center py-12 text-gray-500 dark:text-dark-600'>
               <Search className='w-12 h-12 mb-4 opacity-50' />
-              <p>No models found</p>
-              <p className='text-sm'>Try adjusting your search or filters</p>
+              <p>{t('huggingface.noModels')}</p>
+              <p className='text-sm'>{t('huggingface.adjustSearch')}</p>
             </div>
           ) : (
             <div className='space-y-3'>
@@ -259,7 +261,7 @@ export const HuggingFaceModelBrowser: React.FC<
                         </h3>
                         {model.gated && (
                           <span className='px-1.5 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded'>
-                            Gated
+                            {t('huggingface.gated')}
                           </span>
                         )}
                       </div>
@@ -303,10 +305,10 @@ export const HuggingFaceModelBrowser: React.FC<
                           {isModelSelected(model.id) ? (
                             <>
                               <Check className='w-4 h-4 mr-1' />
-                              Selected
+                              {t('huggingface.selected')}
                             </>
                           ) : (
-                            'Select'
+                            t('huggingface.select')
                           )}
                         </Button>
                       )}
@@ -335,10 +337,10 @@ export const HuggingFaceModelBrowser: React.FC<
             <div className='flex items-center gap-2'>
               <Button onClick={fetchModels} variant='outline' size='sm'>
                 <TrendingUp className='w-4 h-4 mr-1' />
-                Refresh
+                {t('huggingface.refresh')}
               </Button>
               <Button onClick={onClose} variant='outline' size='sm'>
-                Close
+                {t('common.close')}
               </Button>
             </div>
           </div>

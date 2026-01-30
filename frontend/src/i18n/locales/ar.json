@@ -95,7 +95,19 @@
       "connectingTo": "جاري الاتصال بـ {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "جاري التحقق من المصادقة...",
+    "welcome": "مرحباً",
+    "noEmail": "لم يتم تقديم بريد إلكتروني",
+    "role": "الدور",
+    "id": "المعرف",
+    "userId": "معرف المستخدم",
+    "signInDescription": "سجّل الدخول بحساب GitHub الخاص بك للمتابعة",
+    "signInWithGitHub": "تسجيل الدخول بواسطة GitHub",
+    "jwtActive": "مصادقة JWT نشطة",
+    "jwtDescription": "مصادقة JWT مع GitHub OAuth",
+    "github": "GitHub",
+    "provider": "المزود"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "المعلمات",
     "quantization": "التكميم",
     "noModels": "لا توجد نماذج مثبتة",
-    "pullFirst": "اسحب نموذجاً للبدء"
+    "pullFirst": "اسحب نموذجاً للبدء",
+    "noModelsFound": "لم يتم العثور على نماذج"
   },
   "personas": {
     "title": "الشخصيات",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "فشل استيراد أي شخصيات",
     "importSuccess": "تم استيراد الشخصية بنجاح",
     "importFailed": "فشل استيراد الشخصية"
+  },
+  "generationStats": {
+    "details": "التفاصيل",
+    "promptTokens": "رموز الإدخال:",
+    "generatedTokens": "الرموز المولدة:",
+    "totalTokens": "إجمالي الرموز:",
+    "speed": "السرعة:",
+    "promptEval": "تقييم الإدخال:",
+    "generation": "التوليد:",
+    "modelLoad": "تحميل النموذج:",
+    "totalTime": "الوقت الإجمالي:",
+    "generatedAt": "تم التوليد في:"
+  },
+  "userMenu": {
+    "loggedOut": "تم تسجيل الخروج بنجاح",
+    "pictureUpdated": "تم تحديث صورة الملف الشخصي",
+    "failedUpdateAvatar": "فشل تحديث الصورة الرمزية",
+    "failedUpdatePicture": "فشل تحديث صورة الملف الشخصي",
+    "noEmail": "لم يتم تقديم بريد إلكتروني",
+    "changePicture": "تغيير الصورة",
+    "settings": "الإعدادات",
+    "userManagement": "إدارة المستخدمين",
+    "signOut": "تسجيل الخروج",
+    "changeProfilePicture": "تغيير صورة الملف الشخصي"
+  },
+  "pluginManager": {
+    "title": "مدير الإضافات",
+    "upload": "تحميل",
+    "addJson": "إضافة JSON",
+    "browseHF": "تصفح HF Hub",
+    "confirmDelete": "هل أنت متأكد من حذف هذا الإضافة؟",
+    "uploading": "جاري تحميل الإضافة...",
+    "pasteJson": "الصق JSON الإضافة هنا...",
+    "installPlugin": "تثبيت الإضافة",
+    "loading": "جاري تحميل الإضافات...",
+    "noPlugins": "لم يتم تثبيت أي إضافة",
+    "noPluginsDescription": "قم بتحميل ملف إضافة أو أضف إضافة من JSON للبدء.",
+    "active": "نشط",
+    "id": "المعرف",
+    "endpoint": "نقطة النهاية",
+    "activate": "تفعيل",
+    "deactivate": "تعطيل",
+    "activePlugin": "الإضافة النشطة",
+    "activePluginDescription": "سيتم توجيه جميع طلبات الدردشة عبر هذه الإضافة"
+  },
+  "huggingface": {
+    "title": "متصفح نماذج HuggingFace",
+    "subtitle": "تصفح واختيار النماذج من المركز",
+    "searchPlaceholder": "البحث عن نماذج...",
+    "filters": "عوامل التصفية",
+    "task": "المهمة",
+    "sortBy": "ترتيب حسب",
+    "noModels": "لم يتم العثور على نماذج",
+    "adjustSearch": "حاول ضبط البحث أو عوامل التصفية",
+    "gated": "مقيد",
+    "selected": "محدد",
+    "select": "اختيار",
+    "refresh": "تحديث"
+  },
+  "demoMode": {
+    "title": "وضع تجريبي",
+    "github": "GitHub"
   }
 }

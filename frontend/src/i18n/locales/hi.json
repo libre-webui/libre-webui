@@ -95,7 +95,19 @@
       "connectingTo": "{{provider}} से कनेक्ट हो रहा है...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "प्रमाणीकरण जाँच रहा है...",
+    "welcome": "स्वागत है",
+    "noEmail": "कोई ईमेल नहीं दिया गया",
+    "role": "भूमिका",
+    "id": "आईडी",
+    "userId": "उपयोगकर्ता आईडी",
+    "signInDescription": "जारी रखने के लिए अपने GitHub खाते से साइन इन करें",
+    "signInWithGitHub": "GitHub से साइन इन करें",
+    "jwtActive": "JWT प्रमाणीकरण सक्रिय",
+    "jwtDescription": "GitHub OAuth के साथ JWT प्रमाणीकरण",
+    "github": "GitHub",
+    "provider": "प्रदाता"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "पैरामीटर",
     "quantization": "क्वांटाइज़ेशन",
     "noModels": "कोई मॉडल इंस्टॉल नहीं",
-    "pullFirst": "शुरू करने के लिए मॉडल पुल करें"
+    "pullFirst": "शुरू करने के लिए मॉडल पुल करें",
+    "noModelsFound": "कोई मॉडल नहीं मिला"
   },
   "personas": {
     "title": "पर्सोना",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "कोई भी पर्सोना आयात करने में विफल",
     "importSuccess": "पर्सोना सफलतापूर्वक आयात किया गया",
     "importFailed": "पर्सोना आयात करने में विफल"
+  },
+  "generationStats": {
+    "details": "विवरण",
+    "promptTokens": "प्रॉम्प्ट टोकन:",
+    "generatedTokens": "उत्पन्न टोकन:",
+    "totalTokens": "कुल टोकन:",
+    "speed": "गति:",
+    "promptEval": "प्रॉम्प्ट मूल्यांकन:",
+    "generation": "जनरेशन:",
+    "modelLoad": "मॉडल लोड:",
+    "totalTime": "कुल समय:",
+    "generatedAt": "जनरेट किया गया:"
+  },
+  "userMenu": {
+    "loggedOut": "सफलतापूर्वक लॉग आउट",
+    "pictureUpdated": "प्रोफ़ाइल चित्र अपडेट किया गया",
+    "failedUpdateAvatar": "अवतार अपडेट विफल",
+    "failedUpdatePicture": "प्रोफ़ाइल चित्र अपडेट विफल",
+    "noEmail": "कोई ईमेल नहीं दिया गया",
+    "changePicture": "चित्र बदलें",
+    "settings": "सेटिंग्स",
+    "userManagement": "उपयोगकर्ता प्रबंधन",
+    "signOut": "साइन आउट",
+    "changeProfilePicture": "प्रोफ़ाइल चित्र बदलें"
+  },
+  "pluginManager": {
+    "title": "प्लगइन प्रबंधक",
+    "upload": "अपलोड",
+    "addJson": "JSON जोड़ें",
+    "browseHF": "HF Hub ब्राउज़ करें",
+    "confirmDelete": "क्या आप इस प्लगइन को हटाना चाहते हैं?",
+    "uploading": "प्लगइन अपलोड हो रहा है...",
+    "pasteJson": "प्लगइन JSON यहाँ पेस्ट करें...",
+    "installPlugin": "प्लगइन इंस्टॉल करें",
+    "loading": "प्लगइन लोड हो रहे हैं...",
+    "noPlugins": "कोई प्लगइन इंस्टॉल नहीं",
+    "noPluginsDescription": "शुरू करने के लिए एक प्लगइन फ़ाइल अपलोड करें या JSON से जोड़ें।",
+    "active": "सक्रिय",
+    "id": "आईडी",
+    "endpoint": "एंडपॉइंट",
+    "activate": "सक्रिय करें",
+    "deactivate": "निष्क्रिय करें",
+    "activePlugin": "सक्रिय प्लगइन",
+    "activePluginDescription": "सभी चैट अनुरोध इस प्लगइन के माध्यम से भेजे जाएंगे"
+  },
+  "huggingface": {
+    "title": "HuggingFace मॉडल ब्राउज़र",
+    "subtitle": "Hub से मॉडल ब्राउज़ करें और चुनें",
+    "searchPlaceholder": "मॉडल खोजें...",
+    "filters": "फ़िल्टर",
+    "task": "कार्य",
+    "sortBy": "क्रमबद्ध करें",
+    "noModels": "कोई मॉडल नहीं मिला",
+    "adjustSearch": "अपनी खोज या फ़िल्टर समायोजित करें",
+    "gated": "प्रतिबंधित",
+    "selected": "चयनित",
+    "select": "चुनें",
+    "refresh": "रीफ़्रेश"
+  },
+  "demoMode": {
+    "title": "डेमो मोड",
+    "github": "GitHub"
   }
 }
