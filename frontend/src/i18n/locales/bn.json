@@ -326,7 +326,9 @@
         "selectTaskModel": "টাস্ক মডেল নির্বাচন করুন",
         "taskModelDescription": "কথোপকথনের শিরোনাম তৈরিতে ব্যবহৃত মডেল"
       },
-      "persona": "পারসোনা"
+      "persona": "পারসোনা",
+      "updatingModel": "{{name}} আপডেট হচ্ছে ({{current}}/{{total}})",
+      "modelsProgress": "{{total}} টি মডেলের মধ্যে {{current}} টি"
     },
     "systemMessage": {
       "title": "সিস্টেম বার্তা",

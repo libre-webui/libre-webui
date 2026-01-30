@@ -326,7 +326,9 @@
         "selectTaskModel": "टास्क मॉडल चुनें",
         "taskModelDescription": "बातचीत शीर्षक बनाने के लिए उपयोग किया जाने वाला मॉडल"
       },
-      "persona": "पर्सोना"
+      "persona": "पर्सोना",
+      "updatingModel": "{{name}} अपडेट हो रहा है ({{current}}/{{total}})",
+      "modelsProgress": "{{total}} मॉडलों में से {{current}}"
     },
     "systemMessage": {
       "title": "सिस्टम संदेश",

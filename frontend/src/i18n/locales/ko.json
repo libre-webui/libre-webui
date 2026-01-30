@@ -326,7 +326,9 @@
         "selectTaskModel": "작업 모델 선택",
         "taskModelDescription": "대화 제목 생성에 사용되는 모델"
       },
-      "persona": "페르소나"
+      "persona": "페르소나",
+      "updatingModel": "{{name}} 업데이트 중 ({{current}}/{{total}})",
+      "modelsProgress": "{{total}}개 모델 중 {{current}}개"
     },
     "systemMessage": {
       "title": "시스템 메시지",

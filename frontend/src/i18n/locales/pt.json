@@ -326,7 +326,9 @@
         "selectTaskModel": "Selecione o modelo de tarefas",
         "taskModelDescription": "Modelo usado para gerar títulos das conversas"
       },
-      "persona": "Persona"
+      "persona": "Persona",
+      "updatingModel": "Atualizando {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} de {{total}} modelos"
     },
     "systemMessage": {
       "title": "Mensagem do Sistema",

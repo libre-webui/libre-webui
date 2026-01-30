@@ -326,7 +326,9 @@
         "selectTaskModel": "Chọn mô hình tác vụ",
         "taskModelDescription": "Mô hình được sử dụng để tạo tiêu đề cuộc trò chuyện"
       },
-      "persona": "Persona"
+      "persona": "Persona",
+      "updatingModel": "Đang cập nhật {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} trong {{total}} mô hình"
     },
     "systemMessage": {
       "title": "Tin nhắn hệ thống",

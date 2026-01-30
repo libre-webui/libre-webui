@@ -326,7 +326,9 @@
         "selectTaskModel": "Veldu verkefnislíkan",
         "taskModelDescription": "Líkan notað til að búa til samtalstitla"
       },
-      "persona": "Persóna"
+      "persona": "Persóna",
+      "updatingModel": "Uppfæri {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} af {{total}} módel"
     },
     "systemMessage": {
       "title": "Kerfisskilaboð",

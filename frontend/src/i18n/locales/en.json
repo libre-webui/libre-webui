@@ -326,7 +326,9 @@
         "taskModel": "Task Model",
         "selectTaskModel": "Select task model",
         "taskModelDescription": "Model used for generating conversation titles"
-      }
+      },
+      "updatingModel": "Updating {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} of {{total}} models"
     },
     "systemMessage": {
       "title": "System Message",

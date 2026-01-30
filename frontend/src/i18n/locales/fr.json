@@ -326,7 +326,9 @@
         "taskModel": "Modèle de tâche",
         "selectTaskModel": "Sélectionnez le modèle de tâche",
         "taskModelDescription": "Modèle utilisé pour générer les titres des conversations"
-      }
+      },
+      "updatingModel": "Mise à jour de {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} sur {{total}} modèles"
     },
     "systemMessage": {
       "title": "Message système",

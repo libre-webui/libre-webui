@@ -326,7 +326,9 @@
         "selectTaskModel": "اختر نموذج المهام",
         "taskModelDescription": "النموذج المستخدم لتوليد عناوين المحادثات"
       },
-      "persona": "شخصية"
+      "persona": "شخصية",
+      "updatingModel": "تحديث {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} من {{total}} نماذج"
     },
     "systemMessage": {
       "title": "رسالة النظام",

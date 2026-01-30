@@ -326,7 +326,9 @@
         "selectTaskModel": "Görev modelini seçin",
         "taskModelDescription": "Konuşma başlıkları oluşturmak için kullanılan model"
       },
-      "persona": "Kişilik"
+      "persona": "Kişilik",
+      "updatingModel": "{{name}} güncelleniyor ({{current}}/{{total}})",
+      "modelsProgress": "{{total}} modelden {{current}}"
     },
     "systemMessage": {
       "title": "Sistem Mesajı",
