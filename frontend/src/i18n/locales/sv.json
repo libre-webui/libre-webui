@@ -326,7 +326,9 @@
         "selectTaskModel": "Välj uppgiftsmodell",
         "taskModelDescription": "Modell som används för att generera konversationstitlar"
       },
-      "persona": "Persona"
+      "persona": "Persona",
+      "updatingModel": "Uppdaterar {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} av {{total}} modeller"
     },
     "systemMessage": {
       "title": "Systemmeddelande",

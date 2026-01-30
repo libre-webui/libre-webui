@@ -326,7 +326,9 @@
         "selectTaskModel": "Vyberte model úloh",
         "taskModelDescription": "Model používaný pro generování titulků konverzací"
       },
-      "persona": "Persona"
+      "persona": "Persona",
+      "updatingModel": "Aktualizace {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} z {{total}} modelů"
     },
     "systemMessage": {
       "title": "Systémová zpráva",

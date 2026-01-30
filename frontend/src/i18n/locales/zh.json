@@ -326,7 +326,9 @@
         "selectTaskModel": "选择任务模型",
         "taskModelDescription": "用于生成对话标题的模型"
       },
-      "persona": "角色"
+      "persona": "角色",
+      "updatingModel": "正在更新 {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{total}} 个模型中的第 {{current}} 个"
     },
     "systemMessage": {
       "title": "系统消息",

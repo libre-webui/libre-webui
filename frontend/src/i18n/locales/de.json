@@ -326,7 +326,9 @@
         "selectTaskModel": "Aufgabenmodell auswählen",
         "taskModelDescription": "Modell für die Generierung von Gesprächstiteln"
       },
-      "persona": "Persona"
+      "persona": "Persona",
+      "updatingModel": "{{name}} wird aktualisiert ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} von {{total}} Modellen"
     },
     "systemMessage": {
       "title": "Systemnachricht",

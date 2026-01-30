@@ -326,7 +326,9 @@
         "selectTaskModel": "Pilih model tugas",
         "taskModelDescription": "Model yang digunakan untuk menjana tajuk perbualan"
       },
-      "persona": "Persona"
+      "persona": "Persona",
+      "updatingModel": "Mengemas kini {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} daripada {{total}} model"
     },
     "systemMessage": {
       "title": "Mesej Sistem",

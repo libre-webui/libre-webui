@@ -326,7 +326,9 @@
         "selectTaskModel": "Выберите модель для задач",
         "taskModelDescription": "Модель для генерации заголовков разговоров"
       },
-      "persona": "Персона"
+      "persona": "Персона",
+      "updatingModel": "Обновление {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} из {{total}} моделей"
     },
     "systemMessage": {
       "title": "Системное сообщение",

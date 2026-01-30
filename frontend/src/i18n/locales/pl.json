@@ -326,7 +326,9 @@
         "selectTaskModel": "Wybierz model zadań",
         "taskModelDescription": "Model używany do generowania tytułów rozmów"
       },
-      "persona": "Persona"
+      "persona": "Persona",
+      "updatingModel": "Aktualizacja {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} z {{total}} modeli"
     },
     "systemMessage": {
       "title": "Wiadomość systemowa",

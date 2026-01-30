@@ -326,7 +326,9 @@
         "selectTaskModel": "Vælg opgavemodel",
         "taskModelDescription": "Model brugt til at generere samtaletitler"
       },
-      "persona": "Persona"
+      "persona": "Persona",
+      "updatingModel": "Opdaterer {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} af {{total}} modeller"
     },
     "systemMessage": {
       "title": "Systembesked",

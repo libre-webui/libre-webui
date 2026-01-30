@@ -326,7 +326,9 @@
         "selectTaskModel": "タスクモデルを選択",
         "taskModelDescription": "会話タイトルの生成に使用するモデル"
       },
-      "persona": "ペルソナ"
+      "persona": "ペルソナ",
+      "updatingModel": "{{name}} を更新中 ({{current}}/{{total}})",
+      "modelsProgress": "{{total}} モデル中 {{current}}"
     },
     "systemMessage": {
       "title": "システムメッセージ",

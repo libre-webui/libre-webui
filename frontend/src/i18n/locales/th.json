@@ -326,7 +326,9 @@
         "selectTaskModel": "เลือกโมเดลงาน",
         "taskModelDescription": "โมเดลที่ใช้สำหรับสร้างชื่อเรื่องการสนทนา"
       },
-      "persona": "เพอร์โซน่า"
+      "persona": "เพอร์โซน่า",
+      "updatingModel": "กำลังอัปเดต {{name}} ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} จาก {{total}} โมเดล"
     },
     "systemMessage": {
       "title": "ข้อความระบบ",

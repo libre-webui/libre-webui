@@ -326,7 +326,9 @@
         "selectTaskModel": "Selecteer taakmodel",
         "taskModelDescription": "Model gebruikt voor het genereren van gesprekstitels"
       },
-      "persona": "Persona"
+      "persona": "Persona",
+      "updatingModel": "{{name}} bijwerken ({{current}}/{{total}})",
+      "modelsProgress": "{{current}} van {{total}} modellen"
     },
     "systemMessage": {
       "title": "Systeembericht",
