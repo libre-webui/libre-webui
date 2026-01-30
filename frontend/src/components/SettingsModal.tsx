@@ -2737,7 +2737,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className='libre-brand text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100 mb-4'
                 style={{ fontWeight: 300, letterSpacing: '0.01em' }}
               >
-                Libre WebUI
+                Libre <span className='text-lg'>WebUI</span>
               </h3>
               <div className='text-sm text-gray-700 dark:text-gray-300 mb-6'>
                 <span>{t('settings.about.title')}</span>

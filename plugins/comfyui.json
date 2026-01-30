@@ -2,7 +2,7 @@
   "id": "comfyui",
   "name": "ComfyUI Flux",
   "type": "image",
-  "endpoint": "http://192.168.2.112:8189/prompt",
+  "endpoint": "http://localhost:8189/prompt",
   "auth": {
     "header": "X-ComfyUI-Auth",
     "prefix": "",
@@ -16,7 +16,7 @@
   ],
   "capabilities": {
     "image": {
-      "endpoint": "http://192.168.2.112:8189/prompt",
+      "endpoint": "http://localhost:8189/prompt",
       "model_map": [
         "flux1-dev",
         "flux1-dev-fp8",

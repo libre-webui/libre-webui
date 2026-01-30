@@ -74,12 +74,12 @@ export const resources = {
 } as const;
 
 export const supportedLanguages = [
+  { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
   { code: 'ar', name: 'Arabic', nativeName: 'العربية', dir: 'rtl' },
   { code: 'bn', name: 'Bengali', nativeName: 'বাংলা', dir: 'ltr' },
   { code: 'cs', name: 'Czech', nativeName: 'Čeština', dir: 'ltr' },
   { code: 'da', name: 'Danish', nativeName: 'Dansk', dir: 'ltr' },
   { code: 'de', name: 'German', nativeName: 'Deutsch', dir: 'ltr' },
-  { code: 'en', name: 'English', nativeName: 'English', dir: 'ltr' },
   { code: 'es', name: 'Spanish', nativeName: 'Español', dir: 'ltr' },
   { code: 'fr', name: 'French', nativeName: 'Français', dir: 'ltr' },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', dir: 'ltr' },

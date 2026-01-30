@@ -2,7 +2,7 @@
   "id": "kyutai-tts-1.6b",
   "name": "Kyutai TTS 1.6B",
   "type": "tts",
-  "endpoint": "http://192.168.2.112:8201/v1/audio/speech",
+  "endpoint": "http://localhost:8201/v1/audio/speech",
   "auth": {
     "header": "",
     "key_env": ""
@@ -13,7 +13,7 @@
   ],
   "capabilities": {
     "tts": {
-      "endpoint": "http://192.168.2.112:8201/v1/audio/speech",
+      "endpoint": "http://localhost:8201/v1/audio/speech",
       "model_map": [
         "kyutai-tts-1.6b",
         "tts-1-hd"

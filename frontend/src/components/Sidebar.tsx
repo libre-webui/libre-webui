@@ -308,7 +308,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!sidebarCompact ? (
                 <>
                   <span className='libre-brand text-xl text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
-                    Libre WebUI
+                    Libre <span className='text-sm'>WebUI</span>
                   </span>
                   <div className='flex items-center gap-1'>
                     <Button
