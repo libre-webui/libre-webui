@@ -95,7 +95,19 @@
       "connectingTo": "{{provider}} এ সংযোগ হচ্ছে...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "প্রমাণীকরণ যাচাই হচ্ছে...",
+    "welcome": "স্বাগতম",
+    "noEmail": "কোনো ইমেইল দেওয়া হয়নি",
+    "role": "ভূমিকা",
+    "id": "আইডি",
+    "userId": "ইউজার আইডি",
+    "signInDescription": "চালিয়ে যেতে আপনার GitHub অ্যাকাউন্ট দিয়ে সাইন ইন করুন",
+    "signInWithGitHub": "GitHub দিয়ে সাইন ইন করুন",
+    "jwtActive": "JWT প্রমাণীকরণ সক্রিয়",
+    "jwtDescription": "GitHub OAuth সহ JWT প্রমাণীকরণ",
+    "github": "GitHub",
+    "provider": "প্রদানকারী"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "প্যারামিটার",
     "quantization": "কোয়ান্টাইজেশন",
     "noModels": "কোনো মডেল ইনস্টল করা নেই",
-    "pullFirst": "শুরু করতে একটি মডেল পুল করুন"
+    "pullFirst": "শুরু করতে একটি মডেল পুল করুন",
+    "noModelsFound": "কোনো মডেল পাওয়া যায়নি"
   },
   "personas": {
     "title": "পার্সোনা",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "কোনো পার্সোনা ইম্পোর্ট করতে ব্যর্থ",
     "importSuccess": "পার্সোনা সফলভাবে ইম্পোর্ট হয়েছে",
     "importFailed": "পার্সোনা ইম্পোর্ট করতে ব্যর্থ"
+  },
+  "generationStats": {
+    "details": "বিবরণ",
+    "promptTokens": "প্রম্পট টোকেন:",
+    "generatedTokens": "তৈরি টোকেন:",
+    "totalTokens": "মোট টোকেন:",
+    "speed": "গতি:",
+    "promptEval": "প্রম্পট মূল্যায়ন:",
+    "generation": "জেনারেশন:",
+    "modelLoad": "মডেল লোড:",
+    "totalTime": "মোট সময়:",
+    "generatedAt": "তৈরির সময়:"
+  },
+  "userMenu": {
+    "loggedOut": "সফলভাবে লগ আউট হয়েছে",
+    "pictureUpdated": "প্রোফাইল ছবি আপডেট হয়েছে",
+    "failedUpdateAvatar": "অবতার আপডেট ব্যর্থ",
+    "failedUpdatePicture": "প্রোফাইল ছবি আপডেট ব্যর্থ",
+    "noEmail": "কোনো ইমেইল দেওয়া হয়নি",
+    "changePicture": "ছবি পরিবর্তন করুন",
+    "settings": "সেটিংস",
+    "userManagement": "ব্যবহারকারী ব্যবস্থাপনা",
+    "signOut": "সাইন আউট",
+    "changeProfilePicture": "প্রোফাইল ছবি পরিবর্তন করুন"
+  },
+  "pluginManager": {
+    "title": "প্লাগইন ম্যানেজার",
+    "upload": "আপলোড",
+    "addJson": "JSON যোগ করুন",
+    "browseHF": "HF Hub ব্রাউজ করুন",
+    "confirmDelete": "আপনি কি এই প্লাগইনটি মুছতে চান?",
+    "uploading": "প্লাগইন আপলোড হচ্ছে...",
+    "pasteJson": "প্লাগইন JSON এখানে পেস্ট করুন...",
+    "installPlugin": "প্লাগইন ইনস্টল করুন",
+    "loading": "প্লাগইন লোড হচ্ছে...",
+    "noPlugins": "কোনো প্লাগইন ইনস্টল করা হয়নি",
+    "noPluginsDescription": "শুরু করতে একটি প্লাগইন ফাইল আপলোড করুন বা JSON থেকে যোগ করুন।",
+    "active": "সক্রিয়",
+    "id": "আইডি",
+    "endpoint": "এন্ডপয়েন্ট",
+    "activate": "সক্রিয় করুন",
+    "deactivate": "নিষ্ক্রিয় করুন",
+    "activePlugin": "সক্রিয় প্লাগইন",
+    "activePluginDescription": "সব চ্যাট অনুরোধ এই প্লাগইনের মাধ্যমে পাঠানো হবে"
+  },
+  "huggingface": {
+    "title": "HuggingFace মডেল ব্রাউজার",
+    "subtitle": "Hub থেকে মডেল ব্রাউজ করুন ও নির্বাচন করুন",
+    "searchPlaceholder": "মডেল খুঁজুন...",
+    "filters": "ফিল্টার",
+    "task": "টাস্ক",
+    "sortBy": "সাজান",
+    "noModels": "কোনো মডেল পাওয়া যায়নি",
+    "adjustSearch": "আপনার অনুসন্ধান বা ফিল্টার সামঞ্জস্য করুন",
+    "gated": "সীমাবদ্ধ",
+    "selected": "নির্বাচিত",
+    "select": "নির্বাচন",
+    "refresh": "রিফ্রেশ"
+  },
+  "demoMode": {
+    "title": "ডেমো মোড",
+    "github": "GitHub"
   }
 }

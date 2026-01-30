@@ -95,7 +95,19 @@
       "connectingTo": "Tengist {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Athugar auðkenningu...",
+    "welcome": "Velkomin",
+    "noEmail": "Ekkert netfang gefið",
+    "role": "Hlutverk",
+    "id": "ID",
+    "userId": "Notanda-ID",
+    "signInDescription": "Skráðu þig inn með GitHub reikningnum þínum til að halda áfram",
+    "signInWithGitHub": "Skrá inn með GitHub",
+    "jwtActive": "JWT auðkenning virk",
+    "jwtDescription": "JWT-auðkenning með GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Veitandi"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Færibreytur",
     "quantization": "Magngreining",
     "noModels": "Engin líkön uppsett",
-    "pullFirst": "Sæktu líkan til að byrja"
+    "pullFirst": "Sæktu líkan til að byrja",
+    "noModelsFound": "Engin líkön fundust"
   },
   "personas": {
     "title": "Persónur",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Ekki tókst að flytja inn neinar persónur",
     "importSuccess": "Persóna flutt inn",
     "importFailed": "Ekki tókst að flytja inn persónu"
+  },
+  "generationStats": {
+    "details": "Upplýsingar",
+    "promptTokens": "Fyrirmælatóknar:",
+    "generatedTokens": "Mynduð tóknar:",
+    "totalTokens": "Samtals tóknar:",
+    "speed": "Hraði:",
+    "promptEval": "Mat fyrirmæla:",
+    "generation": "Myndun:",
+    "modelLoad": "Hleðsla líkans:",
+    "totalTime": "Heildartími:",
+    "generatedAt": "Myndað kl.:"
+  },
+  "userMenu": {
+    "loggedOut": "Útskráning tókst",
+    "pictureUpdated": "Prófílmynd uppfærð",
+    "failedUpdateAvatar": "Ekki tókst að uppfæra mynd",
+    "failedUpdatePicture": "Ekki tókst að uppfæra prófílmynd",
+    "noEmail": "Ekkert netfang gefið",
+    "changePicture": "Breyta mynd",
+    "settings": "Stillingar",
+    "userManagement": "Notendastjórnun",
+    "signOut": "Útskrá",
+    "changeProfilePicture": "Breyta prófílmynd"
+  },
+  "pluginManager": {
+    "title": "Viðbótastjóri",
+    "upload": "Hlaða upp",
+    "addJson": "Bæta við JSON",
+    "browseHF": "Skoða HF Hub",
+    "confirmDelete": "Ertu viss um að þú viljir eyða þessari viðbót?",
+    "uploading": "Hleður viðbót...",
+    "pasteJson": "Límdu JSON viðbótar hér...",
+    "installPlugin": "Setja upp viðbót",
+    "loading": "Hleður viðbótum...",
+    "noPlugins": "Engar viðbætur uppsettar",
+    "noPluginsDescription": "Hlaðið upp viðbótarskrá eða bætið við viðbót úr JSON til að byrja.",
+    "active": "Virkt",
+    "id": "ID",
+    "endpoint": "Endapunktur",
+    "activate": "Virkja",
+    "deactivate": "Slökkva",
+    "activePlugin": "Virk viðbót",
+    "activePluginDescription": "Allar spjallbeiðnir verða sendar í gegnum þessa viðbót"
+  },
+  "huggingface": {
+    "title": "HuggingFace líkanaskoðari",
+    "subtitle": "Skoðaðu og veldu líkön úr Hub",
+    "searchPlaceholder": "Leita að líkönum...",
+    "filters": "Síur",
+    "task": "Verkefni",
+    "sortBy": "Raða eftir",
+    "noModels": "Engin líkön fundust",
+    "adjustSearch": "Reyndu að breyta leit eða síum",
+    "gated": "Takmarkað",
+    "selected": "Valið",
+    "select": "Velja",
+    "refresh": "Endurhlaða"
+  },
+  "demoMode": {
+    "title": "Kynningarhamur",
+    "github": "GitHub"
   }
 }

@@ -7,6 +7,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { Github, Loader2, User, LogOut } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
 /**
@@ -38,6 +39,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
  * Integrates seamlessly with existing Libre WebUI authentication
  */
 export const GitHubAuth: React.FC = () => {
+  const { t } = useTranslation();
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -138,7 +140,7 @@ export const GitHubAuth: React.FC = () => {
       <div className='flex items-center justify-center min-h-screen bg-gray-50'>
         <div className='text-center'>
           <Loader2 className='mx-auto h-8 w-8 animate-spin text-blue-600' />
-          <p className='mt-2 text-gray-600'>Checking authentication...</p>
+          <p className='mt-2 text-gray-600'>{t('auth.checkingAuth')}</p>
         </div>
       </div>
     );
@@ -152,7 +154,9 @@ export const GitHubAuth: React.FC = () => {
       <div className='min-h-screen bg-gray-50 p-8'>
         <div className='max-w-md mx-auto bg-white rounded-lg shadow-md p-6'>
           <div className='text-center'>
-            <h1 className='text-2xl font-bold text-gray-900 mb-6'>Welcome</h1>
+            <h1 className='text-2xl font-bold text-gray-900 mb-6'>
+              {t('auth.welcome')}
+            </h1>
 
             <div className='flex items-center justify-center mb-4'>
               <User className='w-16 h-16 text-gray-400' />
@@ -163,11 +167,11 @@ export const GitHubAuth: React.FC = () => {
             </h2>
 
             <p className='text-gray-600 mb-2'>
-              {user.email || 'No email provided'}
+              {user.email || t('auth.noEmail')}
             </p>
 
             <p className='text-sm text-gray-500 mb-6'>
-              Role: {user.role} | ID: {user.id}
+              {t('auth.role')}: {user.role} | {t('auth.id')}: {user.id}
             </p>
 
             <div className='space-y-3'>
@@ -176,11 +180,11 @@ export const GitHubAuth: React.FC = () => {
                 className='inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md transition-colors duration-200'
               >
                 <LogOut className='w-4 h-4 mr-2' />
-                Logout
+                {t('auth.logout')}
               </button>
 
               <div className='text-xs text-green-600 bg-green-50 p-2 rounded'>
-                ✅ JWT Authentication Active
+                ✅ {t('auth.jwtActive')}
               </div>
             </div>
 
@@ -205,20 +209,18 @@ export const GitHubAuth: React.FC = () => {
           <h1 className='text-3xl font-bold text-gray-900 mb-2'>
             Libre <span className='text-xl'>WebUI</span>
           </h1>
-          <p className='text-gray-600 mb-8'>
-            Sign in with your GitHub account to continue
-          </p>
+          <p className='text-gray-600 mb-8'>{t('auth.signInDescription')}</p>
 
           <button
             onClick={handleGitHubLogin}
             className='w-full inline-flex items-center justify-center px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-md transition-colors duration-200'
           >
             <Github className='w-5 h-5 mr-3' />
-            Sign in with GitHub
+            {t('auth.signInWithGitHub')}
           </button>
 
           <div className='mt-4 text-xs text-blue-600 bg-blue-50 p-2 rounded'>
-            🔑 JWT-based authentication with GitHub OAuth
+            🔑 {t('auth.jwtDescription')}
           </div>
 
           {error && (

@@ -95,7 +95,19 @@
       "connectingTo": "Đang kết nối đến {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Đang kiểm tra xác thực...",
+    "welcome": "Chào mừng",
+    "noEmail": "Chưa cung cấp email",
+    "role": "Vai trò",
+    "id": "ID",
+    "userId": "ID người dùng",
+    "signInDescription": "Đăng nhập bằng tài khoản GitHub để tiếp tục",
+    "signInWithGitHub": "Đăng nhập bằng GitHub",
+    "jwtActive": "Xác thực JWT đang hoạt động",
+    "jwtDescription": "Xác thực dựa trên JWT với GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Nhà cung cấp"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Tham số",
     "quantization": "Lượng tử hóa",
     "noModels": "Chưa có mô hình nào được cài đặt",
-    "pullFirst": "Tải mô hình để bắt đầu"
+    "pullFirst": "Tải mô hình để bắt đầu",
+    "noModelsFound": "Không tìm thấy mô hình"
   },
   "personas": {
     "title": "Personas",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Không thể nhập bất kỳ personas nào",
     "importSuccess": "Đã nhập persona thành công",
     "importFailed": "Không thể nhập persona"
+  },
+  "generationStats": {
+    "details": "Chi tiết",
+    "promptTokens": "Token prompt:",
+    "generatedTokens": "Token đã tạo:",
+    "totalTokens": "Tổng token:",
+    "speed": "Tốc độ:",
+    "promptEval": "Đánh giá prompt:",
+    "generation": "Tạo:",
+    "modelLoad": "Tải mô hình:",
+    "totalTime": "Tổng thời gian:",
+    "generatedAt": "Tạo lúc:"
+  },
+  "userMenu": {
+    "loggedOut": "Đăng xuất thành công",
+    "pictureUpdated": "Ảnh đại diện đã cập nhật",
+    "failedUpdateAvatar": "Cập nhật ảnh đại diện thất bại",
+    "failedUpdatePicture": "Cập nhật ảnh đại diện thất bại",
+    "noEmail": "Chưa cung cấp email",
+    "changePicture": "Đổi ảnh",
+    "settings": "Cài đặt",
+    "userManagement": "Quản lý người dùng",
+    "signOut": "Đăng xuất",
+    "changeProfilePicture": "Đổi ảnh đại diện"
+  },
+  "pluginManager": {
+    "title": "Quản lý plugin",
+    "upload": "Tải lên",
+    "addJson": "Thêm JSON",
+    "browseHF": "Duyệt HF Hub",
+    "confirmDelete": "Bạn có chắc chắn muốn xóa plugin này?",
+    "uploading": "Đang tải plugin lên...",
+    "pasteJson": "Dán JSON plugin vào đây...",
+    "installPlugin": "Cài đặt plugin",
+    "loading": "Đang tải plugin...",
+    "noPlugins": "Chưa cài đặt plugin nào",
+    "noPluginsDescription": "Tải lên tệp plugin hoặc thêm plugin từ JSON để bắt đầu.",
+    "active": "Hoạt động",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Kích hoạt",
+    "deactivate": "Vô hiệu hóa",
+    "activePlugin": "Plugin đang hoạt động",
+    "activePluginDescription": "Tất cả yêu cầu chat sẽ được chuyển qua plugin này"
+  },
+  "huggingface": {
+    "title": "Trình duyệt mô hình HuggingFace",
+    "subtitle": "Duyệt và chọn mô hình từ Hub",
+    "searchPlaceholder": "Tìm mô hình...",
+    "filters": "Bộ lọc",
+    "task": "Nhiệm vụ",
+    "sortBy": "Sắp xếp theo",
+    "noModels": "Không tìm thấy mô hình",
+    "adjustSearch": "Thử điều chỉnh tìm kiếm hoặc bộ lọc",
+    "gated": "Hạn chế",
+    "selected": "Đã chọn",
+    "select": "Chọn",
+    "refresh": "Làm mới"
+  },
+  "demoMode": {
+    "title": "Chế độ demo",
+    "github": "GitHub"
   }
 }

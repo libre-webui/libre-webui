@@ -95,7 +95,19 @@
       "connectingTo": "Menyambung ke {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Memeriksa pengesahan...",
+    "welcome": "Selamat datang",
+    "noEmail": "Tiada e-mel",
+    "role": "Peranan",
+    "id": "ID",
+    "userId": "ID pengguna",
+    "signInDescription": "Log masuk dengan akaun GitHub anda untuk meneruskan",
+    "signInWithGitHub": "Log masuk dengan GitHub",
+    "jwtActive": "Pengesahan JWT aktif",
+    "jwtDescription": "Pengesahan berasaskan JWT dengan GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Pembekal"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Parameter",
     "quantization": "Kuantisasi",
     "noModels": "Tiada model dipasang",
-    "pullFirst": "Tarik model untuk bermula"
+    "pullFirst": "Tarik model untuk bermula",
+    "noModelsFound": "Tiada model ditemui"
   },
   "personas": {
     "title": "Persona",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Gagal mengimport mana-mana persona",
     "importSuccess": "Persona berjaya diimport",
     "importFailed": "Gagal mengimport persona"
+  },
+  "generationStats": {
+    "details": "Butiran",
+    "promptTokens": "Token prompt:",
+    "generatedTokens": "Token dijana:",
+    "totalTokens": "Jumlah token:",
+    "speed": "Kelajuan:",
+    "promptEval": "Penilaian prompt:",
+    "generation": "Penjanaan:",
+    "modelLoad": "Muat model:",
+    "totalTime": "Jumlah masa:",
+    "generatedAt": "Dijana pada:"
+  },
+  "userMenu": {
+    "loggedOut": "Berjaya log keluar",
+    "pictureUpdated": "Gambar profil dikemas kini",
+    "failedUpdateAvatar": "Gagal mengemas kini avatar",
+    "failedUpdatePicture": "Gagal mengemas kini gambar profil",
+    "noEmail": "Tiada e-mel",
+    "changePicture": "Tukar gambar",
+    "settings": "Tetapan",
+    "userManagement": "Pengurusan pengguna",
+    "signOut": "Log keluar",
+    "changeProfilePicture": "Tukar gambar profil"
+  },
+  "pluginManager": {
+    "title": "Pengurus plugin",
+    "upload": "Muat naik",
+    "addJson": "Tambah JSON",
+    "browseHF": "Layari HF Hub",
+    "confirmDelete": "Adakah anda pasti mahu memadam plugin ini?",
+    "uploading": "Memuat naik plugin...",
+    "pasteJson": "Tampal JSON plugin di sini...",
+    "installPlugin": "Pasang plugin",
+    "loading": "Memuatkan plugin...",
+    "noPlugins": "Tiada plugin dipasang",
+    "noPluginsDescription": "Muat naik fail plugin atau tambah plugin dari JSON untuk bermula.",
+    "active": "Aktif",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Aktifkan",
+    "deactivate": "Nyahaktifkan",
+    "activePlugin": "Plugin aktif",
+    "activePluginDescription": "Semua permintaan sembang akan dihalakan melalui plugin ini"
+  },
+  "huggingface": {
+    "title": "Pelayar model HuggingFace",
+    "subtitle": "Layari dan pilih model dari Hub",
+    "searchPlaceholder": "Cari model...",
+    "filters": "Penapis",
+    "task": "Tugas",
+    "sortBy": "Isih mengikut",
+    "noModels": "Tiada model ditemui",
+    "adjustSearch": "Cuba laraskan carian atau penapis anda",
+    "gated": "Terhad",
+    "selected": "Dipilih",
+    "select": "Pilih",
+    "refresh": "Muat semula"
+  },
+  "demoMode": {
+    "title": "Mod demo",
+    "github": "GitHub"
   }
 }

@@ -95,7 +95,19 @@
       "connectingTo": "Verbinden met {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Authenticatie controleren...",
+    "welcome": "Welkom",
+    "noEmail": "Geen e-mail opgegeven",
+    "role": "Rol",
+    "id": "ID",
+    "userId": "Gebruikers-ID",
+    "signInDescription": "Log in met uw GitHub-account om door te gaan",
+    "signInWithGitHub": "Inloggen met GitHub",
+    "jwtActive": "JWT-authenticatie actief",
+    "jwtDescription": "JWT-authenticatie met GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Provider"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Parameters",
     "quantization": "Kwantisatie",
     "noModels": "Geen modellen geïnstalleerd",
-    "pullFirst": "Haal een model op om te beginnen"
+    "pullFirst": "Haal een model op om te beginnen",
+    "noModelsFound": "Geen modellen gevonden"
   },
   "personas": {
     "title": "Personas",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Kon geen personas importeren",
     "importSuccess": "Persona succesvol geïmporteerd",
     "importFailed": "Kon persona niet importeren"
+  },
+  "generationStats": {
+    "details": "Details",
+    "promptTokens": "Prompttokens:",
+    "generatedTokens": "Gegenereerde tokens:",
+    "totalTokens": "Totaal tokens:",
+    "speed": "Snelheid:",
+    "promptEval": "Promptevaluatie:",
+    "generation": "Generatie:",
+    "modelLoad": "Model laden:",
+    "totalTime": "Totale tijd:",
+    "generatedAt": "Gegenereerd om:"
+  },
+  "userMenu": {
+    "loggedOut": "Succesvol uitgelogd",
+    "pictureUpdated": "Profielfoto bijgewerkt",
+    "failedUpdateAvatar": "Avatar bijwerken mislukt",
+    "failedUpdatePicture": "Profielfoto bijwerken mislukt",
+    "noEmail": "Geen e-mail opgegeven",
+    "changePicture": "Afbeelding wijzigen",
+    "settings": "Instellingen",
+    "userManagement": "Gebruikersbeheer",
+    "signOut": "Uitloggen",
+    "changeProfilePicture": "Profielfoto wijzigen"
+  },
+  "pluginManager": {
+    "title": "Pluginbeheer",
+    "upload": "Uploaden",
+    "addJson": "JSON toevoegen",
+    "browseHF": "HF Hub bladeren",
+    "confirmDelete": "Weet u zeker dat u deze plugin wilt verwijderen?",
+    "uploading": "Plugin uploaden...",
+    "pasteJson": "Plak plugin JSON hier...",
+    "installPlugin": "Plugin installeren",
+    "loading": "Plugins laden...",
+    "noPlugins": "Geen plugins geïnstalleerd",
+    "noPluginsDescription": "Upload een pluginbestand of voeg een plugin toe vanuit JSON om te beginnen.",
+    "active": "Actief",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Activeren",
+    "deactivate": "Deactiveren",
+    "activePlugin": "Actieve plugin",
+    "activePluginDescription": "Alle chatverzoeken worden via deze plugin gerouteerd"
+  },
+  "huggingface": {
+    "title": "HuggingFace modelbrowser",
+    "subtitle": "Blader door modellen op de Hub",
+    "searchPlaceholder": "Modellen zoeken...",
+    "filters": "Filters",
+    "task": "Taak",
+    "sortBy": "Sorteren op",
+    "noModels": "Geen modellen gevonden",
+    "adjustSearch": "Probeer uw zoekopdracht of filters aan te passen",
+    "gated": "Beperkt",
+    "selected": "Geselecteerd",
+    "select": "Selecteren",
+    "refresh": "Vernieuwen"
+  },
+  "demoMode": {
+    "title": "Demomodus",
+    "github": "GitHub"
   }
 }

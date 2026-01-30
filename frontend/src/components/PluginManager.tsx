@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { usePluginStore } from '@/store/pluginStore';
 import { Plugin } from '@/types';
 import { Button } from '@/components/ui/Button';
@@ -48,6 +49,8 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
     exportPlugin,
     clearError,
   } = usePluginStore();
+
+  const { t } = useTranslation();
 
   // Get the active plugin from the plugins array
   const activePlugin = plugins.find(plugin => plugin.active);
@@ -95,7 +98,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   };
 
   const handleDeletePlugin = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this plugin?')) {
+    if (window.confirm(t('pluginManager.confirmDelete'))) {
       await deletePlugin(id);
     }
   };
@@ -112,7 +115,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
           <div className='flex items-center space-x-3'>
             <Settings className='w-6 h-6 text-blue-600 ophelia:text-[#a855f7]' />
             <h2 className='text-xl font-semibold text-gray-900 dark:text-white ophelia:text-[#fafafa]'>
-              Plugin Manager
+              {t('pluginManager.title')}
             </h2>
           </div>
           <div className='flex items-center space-x-2'>
@@ -123,7 +126,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
               disabled={isLoading || isUploading}
             >
               <Upload className='w-4 h-4 mr-2' />
-              Upload
+              {t('pluginManager.upload')}
             </Button>
             <Button
               variant='outline'
@@ -131,7 +134,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
               onClick={() => setShowJsonForm(!showJsonForm)}
               disabled={isLoading}
             >
-              Add JSON
+              {t('pluginManager.addJson')}
             </Button>
             <Button
               variant='outline'
@@ -141,7 +144,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
               className='text-yellow-600 border-yellow-300 hover:bg-yellow-50 dark:text-yellow-400 dark:border-yellow-600 dark:hover:bg-yellow-900/20'
             >
               <Zap className='w-4 h-4 mr-2' />
-              Browse HF Hub
+              {t('pluginManager.browseHF')}
             </Button>
             {onClose && (
               <Button variant='ghost' size='sm' onClick={onClose}>
@@ -193,7 +196,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
             </div>
             {isUploading && (
               <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] mt-2'>
-                Uploading plugin...
+                {t('pluginManager.uploading')}
               </p>
             )}
           </div>
@@ -206,7 +209,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
               <textarea
                 value={jsonInput}
                 onChange={e => setJsonInput(e.target.value)}
-                placeholder='Paste plugin JSON here...'
+                placeholder={t('pluginManager.pasteJson')}
                 className='w-full h-32 p-3 border border-gray-300 dark:border-gray-600 ophelia:border-[#262626] rounded-md bg-white dark:bg-gray-700 ophelia:bg-[#121212] text-gray-900 dark:text-white ophelia:text-[#fafafa] font-mono text-sm'
                 disabled={isLoading}
               />
@@ -228,7 +231,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                   onClick={handleJsonSubmit}
                   disabled={isLoading || !jsonInput.trim()}
                 >
-                  Install Plugin
+                  {t('pluginManager.installPlugin')}
                 </Button>
               </div>
             </div>
@@ -241,17 +244,17 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
             <div className='flex items-center justify-center p-8'>
               <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 ophelia:border-[#a855f7]'></div>
               <span className='ml-2 text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
-                Loading plugins...
+                {t('pluginManager.loading')}
               </span>
             </div>
           ) : plugins.length === 0 ? (
             <div className='text-center p-8'>
               <Settings className='w-12 h-12 mx-auto mb-4 text-gray-400 ophelia:text-[#737373]' />
               <h3 className='text-lg font-medium text-gray-900 dark:text-white ophelia:text-[#fafafa] mb-2'>
-                No Plugins Installed
+                {t('pluginManager.noPlugins')}
               </h3>
               <p className='text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
-                Upload a plugin file or add a plugin from JSON to get started.
+                {t('pluginManager.noPluginsDescription')}
               </p>
             </div>
           ) : (
@@ -270,7 +273,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                         {plugin.active && (
                           <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'>
                             <Check className='w-3 h-3 mr-1' />
-                            Active
+                            {t('pluginManager.active')}
                           </span>
                         )}
                         <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 ophelia:bg-[#1a1a1a] ophelia:text-[#a3a3a3]'>
@@ -278,10 +281,10 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                         </span>
                       </div>
                       <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#737373] mb-2'>
-                        ID: {plugin.id}
+                        {t('pluginManager.id')}: {plugin.id}
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#737373] mb-2'>
-                        Endpoint: {plugin.endpoint}
+                        {t('pluginManager.endpoint')}: {plugin.endpoint}
                       </p>
                       <div className='flex flex-wrap gap-1'>
                         {plugin.model_map.map(model => (
@@ -301,7 +304,9 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                         onClick={() => handleActivatePlugin(plugin.id)}
                         disabled={isLoading}
                       >
-                        {plugin.active ? 'Deactivate' : 'Activate'}
+                        {plugin.active
+                          ? t('pluginManager.deactivate')
+                          : t('pluginManager.activate')}
                       </Button>
                       <Button
                         variant='ghost'
@@ -337,10 +342,10 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
               <Check className='w-5 h-5 text-green-600 dark:text-green-400' />
               <div>
                 <p className='text-sm font-medium text-green-800 dark:text-green-200 ophelia:text-[#86efac]'>
-                  Active Plugin: {activePlugin.name}
+                  {t('pluginManager.activePlugin')}: {activePlugin.name}
                 </p>
                 <p className='text-xs text-green-600 dark:text-green-400 ophelia:text-[#4ade80]'>
-                  All chat requests will be routed through this plugin
+                  {t('pluginManager.activePluginDescription')}
                 </p>
               </div>
             </div>

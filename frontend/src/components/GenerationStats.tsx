@@ -17,6 +17,7 @@
 
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Info } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { GenerationStatistics } from '@/types';
 
 interface GenerationStatsProps {
@@ -29,6 +30,7 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
   className = '',
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { t } = useTranslation();
 
   // Helper function to format duration from nanoseconds
   const formatDuration = (nanoseconds?: number): string => {
@@ -88,7 +90,7 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
         className='flex items-center gap-1 text-gray-400 dark:text-dark-400 hover:text-gray-600 dark:hover:text-dark-600 transition-colors'
       >
         {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        <span>Details</span>
+        <span>{t('generationStats.details')}</span>
       </button>
 
       {isExpanded && (
@@ -96,49 +98,49 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
           <div className='grid grid-cols-2 gap-x-4 gap-y-2'>
             <div className='text-gray-700 dark:text-dark-700'>
               <span className='font-medium text-gray-800 dark:text-dark-800'>
-                Prompt tokens:
+                {t('generationStats.promptTokens')}
               </span>{' '}
               {promptTokens}
             </div>
             <div className='text-gray-700 dark:text-dark-700'>
               <span className='font-medium text-gray-800 dark:text-dark-800'>
-                Generated tokens:
+                {t('generationStats.generatedTokens')}
               </span>{' '}
               {generatedTokens}
             </div>
             <div className='text-gray-700 dark:text-dark-700'>
               <span className='font-medium text-gray-800 dark:text-dark-800'>
-                Total tokens:
+                {t('generationStats.totalTokens')}
               </span>{' '}
               {totalTokens}
             </div>
             <div className='text-gray-700 dark:text-dark-700'>
               <span className='font-medium text-gray-800 dark:text-dark-800'>
-                Speed:
+                {t('generationStats.speed')}
               </span>{' '}
               {tokensPerSecond}
             </div>
             <div className='text-gray-700 dark:text-dark-700'>
               <span className='font-medium text-gray-800 dark:text-dark-800'>
-                Prompt eval:
+                {t('generationStats.promptEval')}
               </span>{' '}
               {formatDuration(statistics.prompt_eval_duration)}
             </div>
             <div className='text-gray-700 dark:text-dark-700'>
               <span className='font-medium text-gray-800 dark:text-dark-800'>
-                Generation:
+                {t('generationStats.generation')}
               </span>{' '}
               {formatDuration(statistics.eval_duration)}
             </div>
             <div className='text-gray-700 dark:text-dark-700'>
               <span className='font-medium text-gray-800 dark:text-dark-800'>
-                Model load:
+                {t('generationStats.modelLoad')}
               </span>{' '}
               {formatDuration(statistics.load_duration)}
             </div>
             <div className='text-gray-700 dark:text-dark-700'>
               <span className='font-medium text-gray-800 dark:text-dark-800'>
-                Total time:
+                {t('generationStats.totalTime')}
               </span>{' '}
               {totalDuration}
             </div>
@@ -147,7 +149,7 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
           {statistics.created_at && (
             <div className='pt-2 border-t border-gray-200 dark:border-dark-300 text-gray-600 dark:text-dark-600'>
               <span className='font-medium text-gray-800 dark:text-dark-800'>
-                Generated at:
+                {t('generationStats.generatedAt')}
               </span>{' '}
               {new Date(statistics.created_at).toLocaleTimeString()}
             </div>

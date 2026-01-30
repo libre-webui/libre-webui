@@ -95,7 +95,19 @@
       "connectingTo": "Conectando ao {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Verificando autenticação...",
+    "welcome": "Bem-vindo",
+    "noEmail": "Sem e-mail fornecido",
+    "role": "Função",
+    "id": "ID",
+    "userId": "ID do usuário",
+    "signInDescription": "Entre com sua conta GitHub para continuar",
+    "signInWithGitHub": "Entrar com GitHub",
+    "jwtActive": "Autenticação JWT ativa",
+    "jwtDescription": "Autenticação baseada em JWT com GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Provedor"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Parâmetros",
     "quantization": "Quantização",
     "noModels": "Nenhum modelo instalado",
-    "pullFirst": "Baixe um modelo para começar"
+    "pullFirst": "Baixe um modelo para começar",
+    "noModelsFound": "Nenhum modelo encontrado"
   },
   "personas": {
     "title": "Personas",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Falha ao importar qualquer persona",
     "importSuccess": "Persona importada com sucesso",
     "importFailed": "Falha ao importar persona"
+  },
+  "generationStats": {
+    "details": "Detalhes",
+    "promptTokens": "Tokens do prompt:",
+    "generatedTokens": "Tokens gerados:",
+    "totalTokens": "Tokens totais:",
+    "speed": "Velocidade:",
+    "promptEval": "Avaliação do prompt:",
+    "generation": "Geração:",
+    "modelLoad": "Carregamento do modelo:",
+    "totalTime": "Tempo total:",
+    "generatedAt": "Gerado às:"
+  },
+  "userMenu": {
+    "loggedOut": "Desconectado com sucesso",
+    "pictureUpdated": "Foto de perfil atualizada",
+    "failedUpdateAvatar": "Falha ao atualizar avatar",
+    "failedUpdatePicture": "Falha ao atualizar foto de perfil",
+    "noEmail": "Sem e-mail fornecido",
+    "changePicture": "Alterar foto",
+    "settings": "Configurações",
+    "userManagement": "Gerenciamento de usuários",
+    "signOut": "Sair",
+    "changeProfilePicture": "Alterar foto de perfil"
+  },
+  "pluginManager": {
+    "title": "Gerenciador de plugins",
+    "upload": "Enviar",
+    "addJson": "Adicionar JSON",
+    "browseHF": "Explorar HF Hub",
+    "confirmDelete": "Tem certeza que deseja excluir este plugin?",
+    "uploading": "Enviando plugin...",
+    "pasteJson": "Cole o JSON do plugin aqui...",
+    "installPlugin": "Instalar plugin",
+    "loading": "Carregando plugins...",
+    "noPlugins": "Nenhum plugin instalado",
+    "noPluginsDescription": "Envie um arquivo de plugin ou adicione um plugin a partir de JSON para começar.",
+    "active": "Ativo",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Ativar",
+    "deactivate": "Desativar",
+    "activePlugin": "Plugin ativo",
+    "activePluginDescription": "Todas as solicitações de chat serão roteadas por este plugin"
+  },
+  "huggingface": {
+    "title": "Navegador de modelos HuggingFace",
+    "subtitle": "Navegue e selecione modelos do Hub",
+    "searchPlaceholder": "Pesquisar modelos...",
+    "filters": "Filtros",
+    "task": "Tarefa",
+    "sortBy": "Ordenar por",
+    "noModels": "Nenhum modelo encontrado",
+    "adjustSearch": "Tente ajustar sua pesquisa ou filtros",
+    "gated": "Restrito",
+    "selected": "Selecionado",
+    "select": "Selecionar",
+    "refresh": "Atualizar"
+  },
+  "demoMode": {
+    "title": "Modo demo",
+    "github": "GitHub"
   }
 }

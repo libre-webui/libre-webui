@@ -95,7 +95,19 @@
       "connectingTo": "正在连接 {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "正在检查认证...",
+    "welcome": "欢迎",
+    "noEmail": "未提供邮箱",
+    "role": "角色",
+    "id": "ID",
+    "userId": "用户 ID",
+    "signInDescription": "使用 GitHub 账户登录以继续",
+    "signInWithGitHub": "使用 GitHub 登录",
+    "jwtActive": "JWT 认证已激活",
+    "jwtDescription": "基于 JWT 的 GitHub OAuth 认证",
+    "github": "GitHub",
+    "provider": "提供商"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "参数",
     "quantization": "量化",
     "noModels": "未安装模型",
-    "pullFirst": "拉取模型以开始使用"
+    "pullFirst": "拉取模型以开始使用",
+    "noModelsFound": "未找到模型"
   },
   "personas": {
     "title": "角色",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "未能导入任何角色",
     "importSuccess": "角色导入成功",
     "importFailed": "导入角色失败"
+  },
+  "generationStats": {
+    "details": "详情",
+    "promptTokens": "提示词令牌:",
+    "generatedTokens": "生成令牌:",
+    "totalTokens": "总令牌:",
+    "speed": "速度:",
+    "promptEval": "提示词评估:",
+    "generation": "生成:",
+    "modelLoad": "模型加载:",
+    "totalTime": "总时间:",
+    "generatedAt": "生成于:"
+  },
+  "userMenu": {
+    "loggedOut": "已成功退出",
+    "pictureUpdated": "头像已更新",
+    "failedUpdateAvatar": "更新头像失败",
+    "failedUpdatePicture": "更新头像失败",
+    "noEmail": "未提供邮箱",
+    "changePicture": "更改图片",
+    "settings": "设置",
+    "userManagement": "用户管理",
+    "signOut": "退出登录",
+    "changeProfilePicture": "更改头像"
+  },
+  "pluginManager": {
+    "title": "插件管理器",
+    "upload": "上传",
+    "addJson": "添加 JSON",
+    "browseHF": "浏览 HF Hub",
+    "confirmDelete": "确定要删除此插件吗？",
+    "uploading": "正在上传插件...",
+    "pasteJson": "在此粘贴插件 JSON...",
+    "installPlugin": "安装插件",
+    "loading": "正在加载插件...",
+    "noPlugins": "未安装插件",
+    "noPluginsDescription": "上传插件文件或从 JSON 添加插件以开始使用。",
+    "active": "已激活",
+    "id": "ID",
+    "endpoint": "端点",
+    "activate": "激活",
+    "deactivate": "停用",
+    "activePlugin": "活跃插件",
+    "activePluginDescription": "所有聊天请求将通过此插件路由"
+  },
+  "huggingface": {
+    "title": "HuggingFace 模型浏览器",
+    "subtitle": "从 Hub 浏览和选择模型",
+    "searchPlaceholder": "搜索模型...",
+    "filters": "筛选",
+    "task": "任务",
+    "sortBy": "排序方式",
+    "noModels": "未找到模型",
+    "adjustSearch": "尝试调整搜索条件或筛选器",
+    "gated": "受限",
+    "selected": "已选择",
+    "select": "选择",
+    "refresh": "刷新"
+  },
+  "demoMode": {
+    "title": "演示模式",
+    "github": "GitHub"
   }
 }

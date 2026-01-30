@@ -95,7 +95,19 @@
       "connectingTo": "Łączenie z {{provider}}...",
       "github": "GitHub",
       "huggingFace": "Hugging Face"
-    }
+    },
+    "checkingAuth": "Sprawdzanie uwierzytelniania...",
+    "welcome": "Witaj",
+    "noEmail": "Brak adresu e-mail",
+    "role": "Rola",
+    "id": "ID",
+    "userId": "ID użytkownika",
+    "signInDescription": "Zaloguj się kontem GitHub, aby kontynuować",
+    "signInWithGitHub": "Zaloguj się przez GitHub",
+    "jwtActive": "Uwierzytelnianie JWT aktywne",
+    "jwtDescription": "Uwierzytelnianie JWT z GitHub OAuth",
+    "github": "GitHub",
+    "provider": "Dostawca"
   },
   "setup": {
     "welcome": {
@@ -571,7 +583,8 @@
     "parameters": "Parametry",
     "quantization": "Kwantyzacja",
     "noModels": "Brak zainstalowanych modeli",
-    "pullFirst": "Pobierz model, aby rozpocząć"
+    "pullFirst": "Pobierz model, aby rozpocząć",
+    "noModelsFound": "Nie znaleziono modeli"
   },
   "personas": {
     "title": "Persony",
@@ -1130,5 +1143,67 @@
     "importNoneFailed": "Nie udało się zaimportować żadnej persony",
     "importSuccess": "Persona zaimportowana pomyślnie",
     "importFailed": "Nie udało się zaimportować persony"
+  },
+  "generationStats": {
+    "details": "Szczegóły",
+    "promptTokens": "Tokeny promptu:",
+    "generatedTokens": "Wygenerowane tokeny:",
+    "totalTokens": "Łącznie tokenów:",
+    "speed": "Szybkość:",
+    "promptEval": "Ocena promptu:",
+    "generation": "Generowanie:",
+    "modelLoad": "Ładowanie modelu:",
+    "totalTime": "Łączny czas:",
+    "generatedAt": "Wygenerowano o:"
+  },
+  "userMenu": {
+    "loggedOut": "Wylogowano pomyślnie",
+    "pictureUpdated": "Zdjęcie profilowe zaktualizowane",
+    "failedUpdateAvatar": "Nie udało się zaktualizować awatara",
+    "failedUpdatePicture": "Nie udało się zaktualizować zdjęcia profilowego",
+    "noEmail": "Brak adresu e-mail",
+    "changePicture": "Zmień zdjęcie",
+    "settings": "Ustawienia",
+    "userManagement": "Zarządzanie użytkownikami",
+    "signOut": "Wyloguj się",
+    "changeProfilePicture": "Zmień zdjęcie profilowe"
+  },
+  "pluginManager": {
+    "title": "Menedżer wtyczek",
+    "upload": "Prześlij",
+    "addJson": "Dodaj JSON",
+    "browseHF": "Przeglądaj HF Hub",
+    "confirmDelete": "Czy na pewno chcesz usunąć tę wtyczkę?",
+    "uploading": "Przesyłanie wtyczki...",
+    "pasteJson": "Wklej JSON wtyczki tutaj...",
+    "installPlugin": "Zainstaluj wtyczkę",
+    "loading": "Ładowanie wtyczek...",
+    "noPlugins": "Brak zainstalowanych wtyczek",
+    "noPluginsDescription": "Prześlij plik wtyczki lub dodaj wtyczkę z JSON, aby rozpocząć.",
+    "active": "Aktywna",
+    "id": "ID",
+    "endpoint": "Endpoint",
+    "activate": "Aktywuj",
+    "deactivate": "Dezaktywuj",
+    "activePlugin": "Aktywna wtyczka",
+    "activePluginDescription": "Wszystkie żądania czatu będą kierowane przez tę wtyczkę"
+  },
+  "huggingface": {
+    "title": "Przeglądarka modeli HuggingFace",
+    "subtitle": "Przeglądaj i wybieraj modele z Huba",
+    "searchPlaceholder": "Szukaj modeli...",
+    "filters": "Filtry",
+    "task": "Zadanie",
+    "sortBy": "Sortuj wg",
+    "noModels": "Nie znaleziono modeli",
+    "adjustSearch": "Spróbuj dostosować wyszukiwanie lub filtry",
+    "gated": "Ograniczony",
+    "selected": "Wybrano",
+    "select": "Wybierz",
+    "refresh": "Odśwież"
+  },
+  "demoMode": {
+    "title": "Tryb demo",
+    "github": "GitHub"
   }
 }
