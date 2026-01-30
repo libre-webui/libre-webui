@@ -340,15 +340,15 @@ const App: React.FC = () => {
     return (
       <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
         <div className='sm:mx-auto sm:w-full sm:max-w-md'>
-          <div className='flex justify-center'>
+          <div className='flex flex-col items-center'>
             <Logo />
+            <span
+              className='libre-brand text-xl text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
+              style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+            >
+              WebUI
+            </span>
           </div>
-          <h2
-            className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
-            style={{ fontWeight: 300, letterSpacing: '0.01em' }}
-          >
-            Libre WebUI
-          </h2>
         </div>
 
         <div className='mt-8 flex flex-col items-center gap-4'>

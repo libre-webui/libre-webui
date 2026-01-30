@@ -454,7 +454,7 @@ export const ChatPage: React.FC = () => {
                   className='libre-brand underline hover:text-primary-600 dark:hover:text-primary-400 ophelia:hover:text-[#a855f7] transition-colors text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'
                   style={{ fontSize: '0.75rem', lineHeight: 1 }}
                 >
-                  Libre WebUI
+                  Libre <span style={{ fontSize: '0.6rem' }}>WebUI</span>
                 </a>{' '}
                 <span
                   className='text-gray-400 dark:text-gray-500 ophelia:text-[#525252]'
