@@ -1200,7 +1200,8 @@
     "gated": "制限付き",
     "selected": "選択済み",
     "select": "選択",
-    "refresh": "更新"
+    "refresh": "更新",
+    "modelsFound": "件のモデルが見つかりました"
   },
   "demoMode": {
     "title": "デモモード",

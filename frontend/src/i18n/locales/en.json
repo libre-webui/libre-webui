@@ -1200,7 +1200,8 @@
     "gated": "Gated",
     "selected": "Selected",
     "select": "Select",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "modelsFound": "models found"
   },
   "demoMode": {
     "title": "Demo Mode",

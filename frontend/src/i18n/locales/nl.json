@@ -1200,7 +1200,8 @@
     "gated": "Beperkt",
     "selected": "Geselecteerd",
     "select": "Selecteren",
-    "refresh": "Vernieuwen"
+    "refresh": "Vernieuwen",
+    "modelsFound": "modellen gevonden"
   },
   "demoMode": {
     "title": "Demomodus",

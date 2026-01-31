@@ -1200,7 +1200,8 @@
     "gated": "Takmarkað",
     "selected": "Valið",
     "select": "Velja",
-    "refresh": "Endurhlaða"
+    "refresh": "Endurhlaða",
+    "modelsFound": "módel fundust"
   },
   "demoMode": {
     "title": "Kynningarhamur",

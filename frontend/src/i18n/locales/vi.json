@@ -1200,7 +1200,8 @@
     "gated": "Hạn chế",
     "selected": "Đã chọn",
     "select": "Chọn",
-    "refresh": "Làm mới"
+    "refresh": "Làm mới",
+    "modelsFound": "mô hình được tìm thấy"
   },
   "demoMode": {
     "title": "Chế độ demo",

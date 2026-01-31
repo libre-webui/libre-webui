@@ -1200,7 +1200,8 @@
     "gated": "Terbatas",
     "selected": "Dipilih",
     "select": "Pilih",
-    "refresh": "Segarkan"
+    "refresh": "Segarkan",
+    "modelsFound": "model ditemukan"
   },
   "demoMode": {
     "title": "Mode demo",

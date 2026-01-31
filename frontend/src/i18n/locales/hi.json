@@ -1200,7 +1200,8 @@
     "gated": "प्रतिबंधित",
     "selected": "चयनित",
     "select": "चुनें",
-    "refresh": "रीफ़्रेश"
+    "refresh": "रीफ़्रेश",
+    "modelsFound": "मॉडल मिले"
   },
   "demoMode": {
     "title": "डेमो मोड",

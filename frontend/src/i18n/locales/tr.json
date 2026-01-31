@@ -1200,7 +1200,8 @@
     "gated": "Kısıtlı",
     "selected": "Seçildi",
     "select": "Seç",
-    "refresh": "Yenile"
+    "refresh": "Yenile",
+    "modelsFound": "model bulundu"
   },
   "demoMode": {
     "title": "Demo modu",

@@ -1200,7 +1200,8 @@
     "gated": "จำกัดการเข้าถึง",
     "selected": "เลือกแล้ว",
     "select": "เลือก",
-    "refresh": "รีเฟรช"
+    "refresh": "รีเฟรช",
+    "modelsFound": "โมเดลที่พบ"
   },
   "demoMode": {
     "title": "โหมดสาธิต",

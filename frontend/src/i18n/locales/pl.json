@@ -1200,7 +1200,8 @@
     "gated": "Ograniczony",
     "selected": "Wybrano",
     "select": "Wybierz",
-    "refresh": "Odśwież"
+    "refresh": "Odśwież",
+    "modelsFound": "znalezionych modeli"
   },
   "demoMode": {
     "title": "Tryb demo",

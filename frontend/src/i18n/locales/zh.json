@@ -1200,7 +1200,8 @@
     "gated": "受限",
     "selected": "已选择",
     "select": "选择",
-    "refresh": "刷新"
+    "refresh": "刷新",
+    "modelsFound": "个模型"
   },
   "demoMode": {
     "title": "演示模式",

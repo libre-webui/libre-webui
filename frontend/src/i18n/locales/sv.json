@@ -1200,7 +1200,8 @@
     "gated": "Begränsad",
     "selected": "Valt",
     "select": "Välj",
-    "refresh": "Uppdatera"
+    "refresh": "Uppdatera",
+    "modelsFound": "modeller hittade"
   },
   "demoMode": {
     "title": "Demoläge",

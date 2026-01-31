@@ -1200,7 +1200,8 @@
     "gated": "Begrænset",
     "selected": "Valgt",
     "select": "Vælg",
-    "refresh": "Opdater"
+    "refresh": "Opdater",
+    "modelsFound": "modeller fundet"
   },
   "demoMode": {
     "title": "Demotilstand",
