@@ -177,14 +177,14 @@ router.get('/system-info', async (req, res) => {
 
 /**
  * Get encryption key for first-time setup
- * Only accessible during initial setup (single user mode - just created first admin)
+ * Only accessible during initial setup (when only one user exists - the newly created admin)
  */
 router.get('/encryption-key', generalAuthRateLimiter, async (req, res) => {
   try {
     const systemInfo = authService.getSystemInfo();
 
     // Only allow access during first-time setup (when only one user exists - the newly created admin)
-    if (!systemInfo.singleUserMode) {
+    if (systemInfo.userCount !== 1) {
       res.status(403).json({
         success: false,
         message: 'Encryption key is only available during first-time setup',

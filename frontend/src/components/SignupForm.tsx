@@ -241,12 +241,6 @@ export const SignupForm: React.FC<SignupFormProps> = ({
           </button>
         </p>
       </div>
-
-      <div className='mt-4 text-center'>
-        <p className='text-xs text-gray-500 dark:text-dark-500'>
-          {t('common.mode')}: {t('common.multiUser')}
-        </p>
-      </div>
     </div>
   );
 };
