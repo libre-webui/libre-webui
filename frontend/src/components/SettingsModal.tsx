@@ -2880,14 +2880,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               {/* Version Info */}
               <div className='mt-6 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
                 <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400'>
-                  <a
-                    href={`https://github.com/libre-webui/libre-webui/releases/tag/v${appVersion}`}
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
-                  >
-                    {t('settings.about.version', { version: appVersion })}
-                  </a>
+                  {appVersion.includes('-dev') ? (
+                    <span>
+                      {t('settings.about.version', { version: appVersion })}
+                    </span>
+                  ) : (
+                    <a
+                      href={`https://github.com/libre-webui/libre-webui/releases/tag/v${appVersion}`}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+                    >
+                      {t('settings.about.version', { version: appVersion })}
+                    </a>
+                  )}
                   <span>
                     {t('settings.about.openSourceBy', { company: '' })}
                     <a
