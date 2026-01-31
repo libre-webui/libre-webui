@@ -3,7 +3,7 @@ sidebar_position: 3
 title: "Model Updater"
 description: "Revolutionary auto-updating system for 500+ AI models in Libre WebUI. Automatic model management with updates for OpenAI, Anthropic, Claude, Groq, Gemini, Mistral, GitHub Models, and OpenRouter."
 slug: /MODEL_UPDATER
-keywords: [libre webui model updater, auto-update ai models, 500+ ai models, automatic model management, ai model automation, openai model updates, claude model updates, gemini model updates, openrouter model updates, open webui alternative]
+keywords: [libre webui model updater, auto-update ai models, 500+ ai models, automatic model management, ai model automation, openai model updates, claude model updates, gemini model updates, openrouter model updates, webui alternative]
 image: /img/social/11.png
 ---
 
