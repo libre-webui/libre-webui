@@ -49,6 +49,13 @@
   "documentation_url": "https://github.com/QwenLM/Qwen3-TTS",
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "http://localhost:8100/v1/audio/speech"
+    },
+    {
       "name": "speed",
       "type": "number",
       "label": "Speed",

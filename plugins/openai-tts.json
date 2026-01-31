@@ -54,6 +54,13 @@
   },
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "https://api.openai.com/v1/audio/speech"
+    },
+    {
       "name": "speed",
       "type": "number",
       "label": "Speed",

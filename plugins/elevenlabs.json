@@ -61,6 +61,13 @@
   },
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+    },
+    {
       "name": "stability",
       "type": "number",
       "label": "Stability",

@@ -46,6 +46,13 @@
   "documentation_url": "https://github.com/kyutai-labs/pocket-tts",
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "http://localhost:8200/v1/audio/speech"
+    },
+    {
       "name": "speed",
       "type": "number",
       "label": "Speed",

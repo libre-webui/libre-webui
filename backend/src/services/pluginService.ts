@@ -397,6 +397,11 @@ class PluginService {
 
     // Load plugin variables (valves) - these serve as defaults that options can override
     const pluginVars = this.getPluginVariables(activePlugin);
+
+    // Allow endpoint override via plugin variables
+    const effectiveEndpoint =
+      (pluginVars.endpoint as string | undefined) || activePlugin.endpoint;
+
     const temperature =
       options.temperature ??
       (pluginVars.temperature as number | undefined) ??
@@ -604,7 +609,7 @@ class PluginService {
     // Process endpoint template - replace {model} with actual model name
     // Final validation before URL construction to prevent SSRF
     const sanitizedModel = encodeURIComponent(model);
-    const processedEndpoint = activePlugin.endpoint.replace(
+    const processedEndpoint = effectiveEndpoint.replace(
       '{model}',
       sanitizedModel
     );
@@ -1082,6 +1087,11 @@ class PluginService {
     // Load plugin variables for TTS defaults
     const ttsVars = this.getPluginVariables(plugin);
 
+    // Allow endpoint override via plugin variables
+    if (ttsVars.endpoint && typeof ttsVars.endpoint === 'string') {
+      endpoint = ttsVars.endpoint;
+    }
+
     // Apply defaults from config, then plugin variables, then request options
     const voice = options.voice || ttsConfig?.default_voice || 'alloy';
     const responseFormat =
@@ -1453,6 +1463,12 @@ class PluginService {
       imageConfig = plugin.capabilities.image.config;
     } else {
       endpoint = plugin.endpoint;
+    }
+
+    // Allow endpoint override via plugin variables
+    const imageVars = this.getPluginVariables(plugin);
+    if (imageVars.endpoint && typeof imageVars.endpoint === 'string') {
+      endpoint = imageVars.endpoint;
     }
 
     // Get API key from database (per-user) or environment variable (fallback)

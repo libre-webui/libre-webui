@@ -88,6 +88,13 @@
   "documentation_url": "https://github.com/kyutai-labs/delayed-streams-modeling",
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "http://localhost:8201/v1/audio/speech"
+    },
+    {
       "name": "speed",
       "type": "number",
       "label": "Speed",

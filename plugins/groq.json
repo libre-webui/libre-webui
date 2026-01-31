@@ -24,6 +24,13 @@
   ],
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "https://api.groq.com/openai/v1/chat/completions"
+    },
+    {
       "name": "temperature",
       "type": "number",
       "label": "Temperature",
