@@ -191,7 +191,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                 onClick={() => setShowUploadForm(false)}
                 disabled={isUploading}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
             {isUploading && (
@@ -223,7 +223,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                   }}
                   disabled={isLoading}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
                 <Button
                   variant='primary'
