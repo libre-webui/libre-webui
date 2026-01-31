@@ -57,8 +57,8 @@ export interface AuthTokenPayload {
 
 export interface SystemInfo {
   requiresAuth: boolean;
-  singleUserMode: boolean;
   hasUsers: boolean;
+  userCount: number;
   version?: string;
 }
 
@@ -121,8 +121,8 @@ export class AuthService {
 
     return {
       requiresAuth: true, // For now, always require auth
-      singleUserMode: userCount === 1,
       hasUsers: userCount > 0,
+      userCount,
       version: packageVersion,
     };
   }

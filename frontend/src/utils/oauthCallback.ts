@@ -48,8 +48,8 @@ const _handleTokenLogin = async (token: string): Promise<boolean> => {
         const { login } = useAuthStore.getState();
         login(data.data, token, {
           requiresAuth: true,
-          singleUserMode: false,
           hasUsers: true,
+          userCount: 1,
         });
         // Don't show success toast here since App.tsx handles it
         return true;

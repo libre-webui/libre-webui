@@ -380,8 +380,8 @@ export interface LoginResponse {
 
 export interface SystemInfo {
   requiresAuth: boolean;
-  singleUserMode: boolean;
   hasUsers: boolean;
+  userCount: number;
   version?: string;
 }
 

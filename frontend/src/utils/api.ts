@@ -1162,8 +1162,8 @@ export const authApi = {
         token: 'demo-token',
         systemInfo: {
           requiresAuth: true,
-          singleUserMode: false,
           hasUsers: true,
+          userCount: 1,
           version: '0.1.0',
         },
       });
@@ -1190,8 +1190,8 @@ export const authApi = {
         token: 'demo-token-new',
         systemInfo: {
           requiresAuth: true,
-          singleUserMode: false,
           hasUsers: true,
+          userCount: 1,
           version: '0.1.0',
         },
       });
@@ -1214,8 +1214,8 @@ export const authApi = {
     if (isDemoMode()) {
       return createDemoResponse<SystemInfo>({
         requiresAuth: true,
-        singleUserMode: false,
         hasUsers: true,
+        userCount: 1,
         version: '0.1.0',
       });
     }

@@ -191,8 +191,8 @@ const App: React.FC = () => {
                 token,
                 systemInfo || {
                   requiresAuth: true,
-                  singleUserMode: false,
                   hasUsers: true,
+                  userCount: 1,
                   version: '0.1.6',
                 }
               );
