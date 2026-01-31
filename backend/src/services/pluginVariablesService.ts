@@ -36,6 +36,29 @@ export interface PluginVariableValue {
 }
 
 class PluginVariablesService {
+  // Cache resolved variables with a 5-second TTL to avoid DB reads on every request
+  private resolvedCache = new Map<
+    string,
+    { data: Record<string, string | number | boolean>; expires: number }
+  >();
+
+  private getCacheKey(pluginId: string, userId: string): string {
+    return `${pluginId}:${userId}`;
+  }
+
+  private invalidateCache(pluginId: string, userId?: string): void {
+    if (userId) {
+      this.resolvedCache.delete(this.getCacheKey(pluginId, userId));
+    } else {
+      // Invalidate all entries for this plugin
+      for (const key of this.resolvedCache.keys()) {
+        if (key.startsWith(`${pluginId}:`)) {
+          this.resolvedCache.delete(key);
+        }
+      }
+    }
+  }
+
   /**
    * Get all variable values for a plugin, merged with schema defaults.
    * If forDisplay is true, sensitive values are masked.
@@ -121,11 +144,25 @@ class PluginVariablesService {
     schema: PluginVariableDefinition[],
     userId?: string
   ): Record<string, string | number | boolean> {
+    const effectiveUserId = userId || 'default';
+    const cacheKey = this.getCacheKey(pluginId, effectiveUserId);
+    const cached = this.resolvedCache.get(cacheKey);
+
+    if (cached && cached.expires > Date.now()) {
+      return cached.data;
+    }
+
     const vars = this.getVariables(pluginId, schema, userId, false);
     const result: Record<string, string | number | boolean> = {};
     for (const [key, val] of Object.entries(vars)) {
       result[key] = val.value;
     }
+
+    this.resolvedCache.set(cacheKey, {
+      data: result,
+      expires: Date.now() + 5000, // 5 second TTL
+    });
+
     return result;
   }
 
@@ -189,6 +226,7 @@ class PluginVariablesService {
       });
 
       transaction();
+      this.invalidateCache(pluginId, effectiveUserId);
       return true;
     } catch (error) {
       console.error('Failed to set variables for plugin %s:', pluginId, error);
@@ -213,6 +251,7 @@ class PluginVariablesService {
           pluginId
         );
       }
+      this.invalidateCache(pluginId, userId);
       return true;
     } catch (error) {
       console.error(
@@ -233,6 +272,12 @@ class PluginVariablesService {
 
     try {
       db.prepare('DELETE FROM plugin_variables WHERE user_id = ?').run(userId);
+      // Clear all cache entries for this user
+      for (const key of this.resolvedCache.keys()) {
+        if (key.endsWith(`:${userId}`)) {
+          this.resolvedCache.delete(key);
+        }
+      }
       return true;
     } catch (error) {
       console.error(
