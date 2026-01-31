@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { Button, Select, Textarea } from '@/components/ui';
 import { BackgroundUpload } from '@/components/BackgroundUpload';
+import { PluginVariablesEditor } from '@/components/PluginManager';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
@@ -2505,6 +2506,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                                 </div>
                               </div>
                             )}
+                          </div>
+                        )}
+
+                        {/* Plugin Variables (Valves) */}
+                        {plugin.variables && plugin.variables.length > 0 && (
+                          <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-50 rounded-lg border border-gray-200 dark:border-dark-300'>
+                            <div className='flex items-center gap-2 mb-2'>
+                              <Sliders className='h-4 w-4 text-gray-500' />
+                              <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                                {t('settings.plugins.variables', 'Variables')} (
+                                {plugin.variables.length})
+                              </h6>
+                            </div>
+                            <PluginVariablesEditor plugin={plugin} />
                           </div>
                         )}
                       </div>

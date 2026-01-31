@@ -36,7 +36,7 @@ import toast from 'react-hot-toast';
 import { HuggingFaceModelBrowser } from './HuggingFaceModelBrowser';
 
 // Inline variables editor for a plugin
-const PluginVariablesEditor: React.FC<{
+export const PluginVariablesEditor: React.FC<{
   plugin: Plugin;
 }> = ({ plugin }) => {
   const { t } = useTranslation();

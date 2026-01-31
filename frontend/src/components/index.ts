@@ -37,7 +37,7 @@ export {
   KeyboardShortcutsIndicator,
 } from './KeyboardShortcuts';
 export { DemoModeBanner } from './DemoModeBanner';
-export { PluginManager } from './PluginManager';
+export { PluginManager, PluginVariablesEditor } from './PluginManager';
 export { GenerationStats } from './GenerationStats';
 export { ArtifactRenderer } from './ArtifactRenderer';
 export { ArtifactContainer } from './ArtifactContainer';
