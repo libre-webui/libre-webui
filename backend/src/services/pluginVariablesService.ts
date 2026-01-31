@@ -52,10 +52,11 @@ class PluginVariablesService {
 
     // Initialize with defaults from schema
     for (const def of schema) {
+      const isSensitive = def.sensitive ?? false;
       result[def.name] = {
         name: def.name,
-        value: def.default ?? '',
-        is_sensitive: def.sensitive ?? false,
+        value: forDisplay && isSensitive ? '' : (def.default ?? ''),
+        is_sensitive: isSensitive,
         has_value: false,
       };
     }
