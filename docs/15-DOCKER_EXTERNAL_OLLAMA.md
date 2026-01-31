@@ -3,7 +3,7 @@ sidebar_position: 1
 title: "Docker External Ollama Setup"
 description: "Simple Docker deployment for Libre WebUI with external Ollama. Complete guide for Docker Compose, networking, and container management."
 slug: /DOCKER_EXTERNAL_OLLAMA
-keywords: [libre webui docker, docker external ollama, easy docker ai setup, libre webui vs open webui docker, docker compose ai, container ai deployment, ollama docker network, simplified docker setup]
+keywords: [libre webui docker, docker external ollama, easy docker ai setup, webui docker, docker compose ai, container ai deployment, ollama docker network, simplified docker setup]
 image: /img/social/15.png
 ---
 

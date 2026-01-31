@@ -216,6 +216,147 @@ The API must follow the OpenAI chat completions format.
 }
 ```
 
+## Plugin Variables (Valves)
+
+Plugins can define configurable variables that users set through the UI. Variables are persisted to the database and used at request time, similar to similar WebUI's "valves" system.
+
+### Defining Variables
+
+Add a `variables` array to your plugin JSON:
+
+```json
+{
+  "id": "openai",
+  "name": "OpenAI",
+  "type": "completion",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "OPENAI_API_KEY"
+  },
+  "model_map": ["gpt-4o", "gpt-4o-mini"],
+  "variables": [
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Lower values are more deterministic.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens to generate.",
+      "default": 4096,
+      "min": 1,
+      "max": 128000
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Stream Responses",
+      "description": "Stream tokens as they are generated.",
+      "default": true
+    }
+  ]
+}
+```
+
+### Variable Types
+
+| Type | Input | Notes |
+|------|-------|-------|
+| `string` | Text field | Use `sensitive: true` for secrets (encrypted + masked) |
+| `number` | Number field | Supports `min` and `max` constraints |
+| `boolean` | Checkbox | Stored as `true`/`false` |
+| `select` | Dropdown | Requires `options` array |
+
+### Full Variable Definition
+
+```typescript
+{
+  name: string;         // Unique key used in code
+  type: 'string' | 'number' | 'boolean' | 'select';
+  label: string;        // Display name in UI
+  description?: string; // Help text shown below the input
+  default?: any;        // Default value if user hasn't set one
+  required?: boolean;   // Whether a value is required
+  sensitive?: boolean;  // Encrypt in DB, mask in UI (for API keys, tokens)
+  options?: string[];   // Choices for 'select' type
+  min?: number;         // Minimum value for 'number' type
+  max?: number;         // Maximum value for 'number' type
+}
+```
+
+### Sensitive Variables
+
+Mark variables as `sensitive` to encrypt them at rest and mask them in the UI:
+
+```json
+{
+  "name": "custom_token",
+  "type": "string",
+  "label": "Custom Auth Token",
+  "description": "Additional authentication token for this provider.",
+  "sensitive": true
+}
+```
+
+Sensitive values are encrypted using AES-256-GCM before being stored in the database and displayed as `••••••••` in the Plugin Manager.
+
+### Select Variables
+
+Use `select` type with an `options` array for dropdown fields:
+
+```json
+{
+  "name": "response_format",
+  "type": "select",
+  "label": "Response Format",
+  "description": "Format of the model output.",
+  "default": "text",
+  "options": ["text", "json"]
+}
+```
+
+### How Variables Are Used
+
+Variables are loaded at request time and applied as defaults to outbound API calls. The priority chain is:
+
+1. **Per-request options** (from the chat UI) — highest priority
+2. **Plugin variables** (user-configured values from the database)
+3. **Hardcoded defaults** (built into the application)
+
+For example, if a user sets `temperature: 0.3` in a plugin's variables and then sends a message with the default UI settings, the request to the provider will use `temperature: 0.3`. If the user overrides temperature in the chat UI for a specific message, that value takes precedence.
+
+### Configuring Variables in the UI
+
+1. Go to **Settings → Plugins → Plugin Manager**
+2. Find the plugin and expand the **Variables** section
+3. Set your desired values
+4. Click **Save**
+
+Use **Reset to Defaults** to clear all saved values and revert to the plugin's defaults.
+
+### Variables API
+
+```bash
+# Get current variable values (sensitive values masked)
+GET /api/plugins/:id/variables
+
+# Set variable values
+PUT /api/plugins/:id/variables
+Content-Type: application/json
+{ "variables": { "temperature": 0.5, "max_tokens": 2048 } }
+
+# Reset all variables to defaults
+DELETE /api/plugins/:id/variables
+```
+
 ## Troubleshooting
 
 **Plugin not working:**
