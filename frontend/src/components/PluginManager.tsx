@@ -52,6 +52,7 @@ const PluginVariablesEditor: React.FC<{
   const [saving, setSaving] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [revealedFields, setRevealedFields] = useState<Set<string>>(new Set());
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const schema = useMemo(() => plugin.variables || [], [plugin.variables]);
   const storedVars = useMemo(
@@ -89,6 +90,47 @@ const PluginVariablesEditor: React.FC<{
   }, [storedVarsJson, schema]);
 
   const handleSave = async () => {
+    // Validate fields before saving
+    const errors: Record<string, string> = {};
+    for (const def of schema) {
+      const val = localValues[def.name];
+      if (
+        def.name === 'endpoint' &&
+        typeof val === 'string' &&
+        val.length > 0
+      ) {
+        try {
+          new URL(val);
+        } catch {
+          errors[def.name] = t(
+            'pluginManager.variables.invalidUrl',
+            'Must be a valid URL'
+          );
+        }
+      }
+      if (def.type === 'number') {
+        const num = Number(val);
+        if (def.min !== undefined && num < def.min) {
+          errors[def.name] = `Min: ${def.min}`;
+        }
+        if (def.max !== undefined && num > def.max) {
+          errors[def.name] = `Max: ${def.max}`;
+        }
+      }
+      if (
+        def.type === 'string' &&
+        typeof val === 'string' &&
+        val.length > 2048
+      ) {
+        errors[def.name] = t(
+          'pluginManager.variables.tooLong',
+          'Value is too long'
+        );
+      }
+    }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setSaving(true);
     const success = await updatePluginVariables(plugin.id, localValues);
     setSaving(false);
@@ -255,6 +297,11 @@ const PluginVariablesEditor: React.FC<{
               </p>
             )}
             {renderField(def)}
+            {fieldErrors[def.name] && (
+              <p className='text-xs text-red-500 mt-1'>
+                {fieldErrors[def.name]}
+              </p>
+            )}
           </div>
         ))}
       </div>
