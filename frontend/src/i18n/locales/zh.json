@@ -1184,7 +1184,17 @@
     "activate": "激活",
     "deactivate": "停用",
     "activePlugin": "活跃插件",
-    "activePluginDescription": "所有聊天请求将通过此插件路由"
+    "activePluginDescription": "所有聊天请求将通过此插件路由",
+    "variables": {
+      "title": "变量",
+      "save": "保存",
+      "saving": "保存中...",
+      "saved": "变量已保存",
+      "saveFailed": "保存变量失败",
+      "resetDefaults": "重置为默认值",
+      "reset": "变量已重置",
+      "sensitiveSet": "值已设置（输入新值以更改）"
+    }
   },
   "huggingface": {
     "title": "HuggingFace 模型浏览器",

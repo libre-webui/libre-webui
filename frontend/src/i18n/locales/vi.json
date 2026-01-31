@@ -1184,7 +1184,17 @@
     "activate": "Kích hoạt",
     "deactivate": "Vô hiệu hóa",
     "activePlugin": "Plugin đang hoạt động",
-    "activePluginDescription": "Tất cả yêu cầu chat sẽ được chuyển qua plugin này"
+    "activePluginDescription": "Tất cả yêu cầu chat sẽ được chuyển qua plugin này",
+    "variables": {
+      "title": "Biến",
+      "save": "Lưu",
+      "saving": "Đang lưu...",
+      "saved": "Đã lưu biến",
+      "saveFailed": "Không thể lưu biến",
+      "resetDefaults": "Đặt lại mặc định",
+      "reset": "Đã đặt lại biến",
+      "sensitiveSet": "Giá trị đã được đặt (nhập giá trị mới để thay đổi)"
+    }
   },
   "huggingface": {
     "title": "Trình duyệt mô hình HuggingFace",

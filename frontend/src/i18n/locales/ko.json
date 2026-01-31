@@ -1184,7 +1184,17 @@
     "activate": "활성화",
     "deactivate": "비활성화",
     "activePlugin": "활성 플러그인",
-    "activePluginDescription": "모든 채팅 요청이 이 플러그인을 통해 라우팅됩니다"
+    "activePluginDescription": "모든 채팅 요청이 이 플러그인을 통해 라우팅됩니다",
+    "variables": {
+      "title": "변수",
+      "save": "저장",
+      "saving": "저장 중...",
+      "saved": "변수가 저장되었습니다",
+      "saveFailed": "변수 저장 실패",
+      "resetDefaults": "기본값으로 재설정",
+      "reset": "변수가 재설정되었습니다",
+      "sensitiveSet": "값이 설정됨 (변경하려면 새 값 입력)"
+    }
   },
   "huggingface": {
     "title": "HuggingFace 모델 브라우저",

@@ -1184,7 +1184,17 @@
     "activate": "Aktifkan",
     "deactivate": "Nyahaktifkan",
     "activePlugin": "Plugin aktif",
-    "activePluginDescription": "Semua permintaan sembang akan dihalakan melalui plugin ini"
+    "activePluginDescription": "Semua permintaan sembang akan dihalakan melalui plugin ini",
+    "variables": {
+      "title": "Pembolehubah",
+      "save": "Simpan",
+      "saving": "Menyimpan...",
+      "saved": "Pembolehubah disimpan",
+      "saveFailed": "Gagal menyimpan pembolehubah",
+      "resetDefaults": "Set semula lalai",
+      "reset": "Pembolehubah ditetapkan semula",
+      "sensitiveSet": "Nilai ditetapkan (masukkan nilai baharu untuk menukar)"
+    }
   },
   "huggingface": {
     "title": "Pelayar model HuggingFace",

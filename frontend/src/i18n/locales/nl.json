@@ -1184,7 +1184,17 @@
     "activate": "Activeren",
     "deactivate": "Deactiveren",
     "activePlugin": "Actieve plugin",
-    "activePluginDescription": "Alle chatverzoeken worden via deze plugin gerouteerd"
+    "activePluginDescription": "Alle chatverzoeken worden via deze plugin gerouteerd",
+    "variables": {
+      "title": "Variabelen",
+      "save": "Opslaan",
+      "saving": "Opslaan...",
+      "saved": "Variabelen opgeslagen",
+      "saveFailed": "Variabelen opslaan mislukt",
+      "resetDefaults": "Standaardwaarden herstellen",
+      "reset": "Variabelen hersteld",
+      "sensitiveSet": "Waarde is ingesteld (voer nieuwe waarde in om te wijzigen)"
+    }
   },
   "huggingface": {
     "title": "HuggingFace modelbrowser",

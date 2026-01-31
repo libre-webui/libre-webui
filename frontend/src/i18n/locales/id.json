@@ -1184,7 +1184,17 @@
     "activate": "Aktifkan",
     "deactivate": "Nonaktifkan",
     "activePlugin": "Plugin aktif",
-    "activePluginDescription": "Semua permintaan chat akan dialihkan melalui plugin ini"
+    "activePluginDescription": "Semua permintaan chat akan dialihkan melalui plugin ini",
+    "variables": {
+      "title": "Variabel",
+      "save": "Simpan",
+      "saving": "Menyimpan...",
+      "saved": "Variabel disimpan",
+      "saveFailed": "Gagal menyimpan variabel",
+      "resetDefaults": "Reset ke Default",
+      "reset": "Variabel direset",
+      "sensitiveSet": "Nilai telah diatur (masukkan nilai baru untuk mengubah)"
+    }
   },
   "huggingface": {
     "title": "Peramban model HuggingFace",

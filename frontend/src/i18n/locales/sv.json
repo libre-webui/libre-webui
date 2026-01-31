@@ -1184,7 +1184,17 @@
     "activate": "Aktivera",
     "deactivate": "Inaktivera",
     "activePlugin": "Aktivt plugin",
-    "activePluginDescription": "Alla chattförfrågningar dirigeras genom detta plugin"
+    "activePluginDescription": "Alla chattförfrågningar dirigeras genom detta plugin",
+    "variables": {
+      "title": "Variabler",
+      "save": "Spara",
+      "saving": "Sparar...",
+      "saved": "Variabler sparade",
+      "saveFailed": "Kunde inte spara variabler",
+      "resetDefaults": "Återställ standard",
+      "reset": "Variabler återställda",
+      "sensitiveSet": "Värde är satt (ange nytt för att ändra)"
+    }
   },
   "huggingface": {
     "title": "HuggingFace modellbläddrare",

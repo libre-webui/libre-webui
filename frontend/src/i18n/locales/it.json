@@ -1184,7 +1184,17 @@
     "activate": "Attiva",
     "deactivate": "Disattiva",
     "activePlugin": "Plugin attivo",
-    "activePluginDescription": "Tutte le richieste chat verranno instradate attraverso questo plugin"
+    "activePluginDescription": "Tutte le richieste chat verranno instradate attraverso questo plugin",
+    "variables": {
+      "title": "Variabili",
+      "save": "Salva",
+      "saving": "Salvataggio...",
+      "saved": "Variabili salvate",
+      "saveFailed": "Salvataggio variabili fallito",
+      "resetDefaults": "Ripristina predefiniti",
+      "reset": "Variabili ripristinate",
+      "sensitiveSet": "Valore impostato (inserire nuovo valore per modificare)"
+    }
   },
   "huggingface": {
     "title": "Browser modelli HuggingFace",
