@@ -395,6 +395,26 @@ class PluginService {
       );
     }
 
+    // Load plugin variables (valves) - these serve as defaults that options can override
+    const pluginVars = this.getPluginVariables(activePlugin);
+    const temperature =
+      options.temperature ??
+      (pluginVars.temperature as number | undefined) ??
+      0.7;
+    const maxTokens =
+      options.num_predict === -1
+        ? undefined
+        : (options.num_predict ??
+          (pluginVars.max_tokens as number | undefined) ??
+          undefined);
+    const topP =
+      options.top_p ?? (pluginVars.top_p as number | undefined) ?? undefined;
+    const frequencyPenalty =
+      (pluginVars.frequency_penalty as number | undefined) ?? undefined;
+    const presencePenalty =
+      (pluginVars.presence_penalty as number | undefined) ?? undefined;
+    const shouldStream = (pluginVars.stream as boolean | undefined) ?? false;
+
     // Prepare headers
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -476,14 +496,11 @@ class PluginService {
       payload = {
         model,
         messages: anthropicMessages,
-        max_tokens:
-          options.num_predict && options.num_predict !== -1
-            ? options.num_predict
-            : 1024,
-        temperature: options.temperature || 0.7,
-        top_p: options.top_p,
+        max_tokens: maxTokens ?? 1024,
+        temperature,
+        top_p: topP,
         stop_sequences: options.stop,
-        stream: false,
+        stream: shouldStream,
       };
 
       // Add system message as top-level parameter if present
@@ -532,12 +549,9 @@ class PluginService {
       payload = {
         contents: [{ parts }],
         generationConfig: {
-          temperature: options.temperature || 0.7,
-          maxOutputTokens:
-            options.num_predict && options.num_predict !== -1
-              ? options.num_predict
-              : 1024,
-          topP: options.top_p,
+          temperature,
+          maxOutputTokens: maxTokens ?? 1024,
+          topP: topP,
           stopSequences: options.stop,
         },
       };
@@ -577,12 +591,13 @@ class PluginService {
       payload = {
         model,
         messages: openaiMessages,
-        temperature: options.temperature || 0.7,
-        max_tokens:
-          options.num_predict === -1 ? undefined : options.num_predict,
-        top_p: options.top_p,
+        temperature,
+        max_tokens: maxTokens,
+        top_p: topP,
+        frequency_penalty: frequencyPenalty,
+        presence_penalty: presencePenalty,
         stop: options.stop,
-        stream: false,
+        stream: shouldStream,
       };
     }
 
@@ -1064,11 +1079,14 @@ class PluginService {
       headers[plugin.auth.header] = authValue;
     }
 
-    // Apply defaults from config
+    // Load plugin variables for TTS defaults
+    const ttsVars = this.getPluginVariables(plugin);
+
+    // Apply defaults from config, then plugin variables, then request options
     const voice = options.voice || ttsConfig?.default_voice || 'alloy';
     const responseFormat =
       options.response_format || ttsConfig?.default_format || 'mp3';
-    const speed = options.speed || 1.0;
+    const speed = options.speed || (ttsVars.speed as number | undefined) || 1.0;
 
     // Check if input needs chunking (for long texts)
     const maxChars = ttsConfig?.max_characters || 4096;
@@ -1143,8 +1161,9 @@ class PluginService {
         text: input,
         model_id: model,
         voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
+          stability: (ttsVars.stability as number | undefined) ?? 0.5,
+          similarity_boost:
+            (ttsVars.similarity_boost as number | undefined) ?? 0.75,
         },
       };
     } else {
@@ -1510,7 +1529,11 @@ class PluginService {
 
     // Check if this is ComfyUI (special handling required)
     if (plugin.id === 'comfyui' || endpoint.includes('/prompt')) {
-      return this.executeComfyUIRequest(baseUrl, prompt, { ...options, model });
+      return this.executeComfyUIRequest(baseUrl, prompt, {
+        ...options,
+        model,
+        pluginVars: this.getPluginVariables(plugin),
+      });
     }
 
     try {
@@ -1562,6 +1585,7 @@ class PluginService {
       size?: string;
       quality?: string;
       model?: string;
+      pluginVars?: Record<string, string | number | boolean>;
     } = {}
   ): Promise<ImageGenResponse> {
     const comfyBaseUrl = `${baseUrl.protocol}//${baseUrl.host}`;
@@ -1609,7 +1633,12 @@ class PluginService {
     const config = modelConfigs[model] || modelConfigs['flux1-dev'];
     const quality = (options.quality ||
       'standard') as keyof typeof config.steps;
-    const steps = config.steps[quality] || config.steps.standard;
+    const pVars = options.pluginVars || {};
+    // Plugin variable overrides quality-based steps if set and non-default
+    const steps =
+      pVars.steps && (pVars.steps as number) > 0
+        ? (pVars.steps as number)
+        : config.steps[quality] || config.steps.standard;
 
     // Create a Flux.1 workflow for ComfyUI
     // Flux uses UNET loader + dual CLIP + VAE separately
@@ -1700,7 +1729,10 @@ class PluginService {
       },
       '25': {
         inputs: {
-          noise_seed: Math.floor(Math.random() * 1000000000000000),
+          noise_seed:
+            pVars.seed && (pVars.seed as number) >= 0
+              ? (pVars.seed as number)
+              : Math.floor(Math.random() * 1000000000000000),
         },
         class_type: 'RandomNoise',
         _meta: { title: 'RandomNoise' },
@@ -1720,7 +1752,10 @@ class PluginService {
     if (config.guidance > 0) {
       workflow['26'] = {
         inputs: {
-          guidance: config.guidance,
+          guidance:
+            pVars.cfg_scale && (pVars.cfg_scale as number) > 0
+              ? (pVars.cfg_scale as number)
+              : config.guidance,
           conditioning: ['6', 0],
         },
         class_type: 'FluxGuidance',
