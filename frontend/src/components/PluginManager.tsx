@@ -175,9 +175,9 @@ export const PluginVariablesEditor: React.FC<{
 
     const inputClasses = cn(
       'w-full px-3 py-2 rounded-lg border text-sm',
-      'bg-white dark:bg-gray-900 ophelia:bg-[#0a0a0a]',
-      'border-gray-300 dark:border-gray-600 ophelia:border-[#262626]',
-      'text-gray-900 dark:text-white ophelia:text-[#fafafa]',
+      'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
+      'border-gray-300 dark:border-dark-300 ophelia:border-[#262626]',
+      'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
       'focus:outline-none focus:ring-2 focus:ring-blue-500/20 ophelia:focus:ring-[#a855f7]/20'
     );
 
