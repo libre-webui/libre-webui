@@ -15,10 +15,15 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { ollamaApi, huggingfaceHubApi, HuggingFaceModel } from '@/utils/api';
+import {
+  ollamaApi,
+  huggingfaceHubApi,
+  HuggingFaceModel,
+  GgufFileInfo,
+} from '@/utils/api';
 import { Button } from '@/components/ui/Button';
 import { RunningModel } from '@/types';
 import toast from 'react-hot-toast';
@@ -153,6 +158,19 @@ export const ModelManager: React.FC = () => {
   const [hfTask, setHfTask] = useState<string>('text-generation');
   const [hfSort, setHfSort] = useState<string>('downloads');
 
+  // HuggingFace GGUF state
+  const [expandedHfModel, setExpandedHfModel] = useState<string | null>(null);
+  const [hfGgufFiles, setHfGgufFiles] = useState<
+    Record<string, GgufFileInfo[]>
+  >({});
+  const [loadingGguf, setLoadingGguf] = useState<string | null>(null);
+  const [hfPullingModel, setHfPullingModel] = useState<string | null>(null);
+  const [hfPullProgress, setHfPullProgress] = useState<{
+    status: string;
+    percent?: number;
+  } | null>(null);
+  const [cancelHfPull, setCancelHfPull] = useState<(() => void) | null>(null);
+
   // Expanded sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['pull', 'local'])
@@ -263,6 +281,86 @@ export const ModelManager: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expandedSections, hfTask, hfDebouncedSearch, hfSort]);
+
+  // Load GGUF files for a HuggingFace model
+  const loadGgufFiles = useCallback(async (modelId: string) => {
+    const [author, modelName] = modelId.split('/');
+    if (!author || !modelName) return;
+
+    setLoadingGguf(modelId);
+    try {
+      const response = await huggingfaceHubApi.getGgufFiles(author, modelName);
+      if (response.success && response.data) {
+        setHfGgufFiles(prev => ({ ...prev, [modelId]: response.data! }));
+      }
+    } catch (error) {
+      console.error('Failed to load GGUF files:', error);
+    } finally {
+      setLoadingGguf(null);
+    }
+  }, []);
+
+  // Toggle expanded HF model and load GGUF files
+  const handleToggleHfModel = useCallback(
+    (modelId: string) => {
+      if (expandedHfModel === modelId) {
+        setExpandedHfModel(null);
+      } else {
+        setExpandedHfModel(modelId);
+        if (!hfGgufFiles[modelId]) {
+          loadGgufFiles(modelId);
+        }
+      }
+    },
+    [expandedHfModel, hfGgufFiles, loadGgufFiles]
+  );
+
+  // Pull a GGUF model from HuggingFace via Ollama
+  const handlePullHfGguf = useCallback(
+    (ollamaCommand: string, filename: string) => {
+      if (hfPullingModel) return;
+
+      setHfPullingModel(ollamaCommand);
+      setHfPullProgress({ status: 'starting' });
+
+      try {
+        const cancelFn = ollamaApi.pullModelStream(
+          ollamaCommand,
+          progress => {
+            setHfPullProgress(progress);
+          },
+          () => {
+            setHfPullProgress(null);
+            setHfPullingModel(null);
+            setCancelHfPull(null);
+            toast.success(`Downloaded ${filename}`);
+            loadData();
+          },
+          error => {
+            setHfPullProgress(null);
+            setHfPullingModel(null);
+            setCancelHfPull(null);
+            toast.error(`Failed to download: ${error}`);
+          }
+        );
+        setCancelHfPull(() => cancelFn);
+      } catch (_error) {
+        setHfPullProgress(null);
+        setHfPullingModel(null);
+        toast.error('Failed to start download');
+      }
+    },
+    [hfPullingModel]
+  );
+
+  const handleCancelHfPull = useCallback(() => {
+    if (cancelHfPull) {
+      cancelHfPull();
+      setCancelHfPull(null);
+      setHfPullingModel(null);
+      setHfPullProgress(null);
+    }
+  }, [cancelHfPull]);
 
   const handlePullModel = async (modelName?: string) => {
     const nameToUse = modelName || pullModelName.trim();
@@ -1195,81 +1293,205 @@ export const ModelManager: React.FC = () => {
               </div>
             ) : (
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-                {hfModels.map(model => (
-                  <div
-                    key={model.id}
-                    className={cn(
-                      'p-4 rounded-lg border transition-all',
-                      'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                      'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]',
-                      'hover:shadow-md hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#262626]'
-                    )}
-                  >
-                    <div className='flex items-start justify-between gap-2 mb-2'>
-                      <div className='flex-1 min-w-0'>
-                        <div className='flex items-center gap-2'>
-                          <h4 className='font-medium text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] truncate'>
-                            {model.id}
-                          </h4>
-                          {model.gated && (
-                            <span
-                              className={cn(
-                                'px-1.5 py-0.5 rounded text-xs',
-                                'bg-yellow-100 dark:bg-yellow-900/30 ophelia:bg-[#eab308]/20',
-                                'text-yellow-700 dark:text-yellow-400 ophelia:text-[#facc15]'
+                {hfModels.map(model => {
+                  const isExpanded = expandedHfModel === model.id;
+                  const isLoadingGguf = loadingGguf === model.id;
+                  const ggufFiles = hfGgufFiles[model.id] || [];
+
+                  return (
+                    <div
+                      key={model.id}
+                      className={cn(
+                        'rounded-lg border transition-all overflow-hidden',
+                        'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
+                        'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]',
+                        'hover:shadow-md hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#262626]'
+                      )}
+                    >
+                      <div
+                        className='p-4 cursor-pointer'
+                        onClick={() => handleToggleHfModel(model.id)}
+                      >
+                        <div className='flex items-start justify-between gap-2 mb-2'>
+                          <div className='flex-1 min-w-0'>
+                            <div className='flex items-center gap-2'>
+                              <h4 className='font-medium text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] truncate'>
+                                {model.id}
+                              </h4>
+                              {model.gated && (
+                                <span
+                                  className={cn(
+                                    'px-1.5 py-0.5 rounded text-xs',
+                                    'bg-yellow-100 dark:bg-yellow-900/30 ophelia:bg-[#eab308]/20',
+                                    'text-yellow-700 dark:text-yellow-400 ophelia:text-[#facc15]'
+                                  )}
+                                >
+                                  {t('modelManager.huggingface.gated', 'Gated')}
+                                </span>
+                              )}
+                            </div>
+                            <p className='text-xs text-gray-500 dark:text-dark-600 ophelia:text-[#737373] mt-0.5'>
+                              {t('modelManager.huggingface.by', 'by')}{' '}
+                              {model.author}
+                            </p>
+                          </div>
+                          <div className='flex items-center gap-2 flex-shrink-0'>
+                            <a
+                              href={`https://huggingface.co/${model.id}`}
+                              target='_blank'
+                              rel='noopener noreferrer'
+                              onClick={e => e.stopPropagation()}
+                              className='p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-300 ophelia:hover:bg-[#262626] transition-colors'
+                              title={t(
+                                'modelManager.huggingface.viewOnHF',
+                                'View on HuggingFace'
                               )}
                             >
-                              {t('modelManager.huggingface.gated', 'Gated')}
+                              <ExternalLink className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
+                            </a>
+                            <ChevronDown
+                              className={cn(
+                                'h-4 w-4 text-gray-400 transition-transform',
+                                isExpanded && 'rotate-180'
+                              )}
+                            />
+                          </div>
+                        </div>
+
+                        <div className='flex items-center gap-3 text-xs text-gray-500 dark:text-dark-600 ophelia:text-[#737373]'>
+                          <span className='flex items-center gap-1'>
+                            <Download className='h-3.5 w-3.5' />
+                            {model.downloads >= 1000000
+                              ? `${(model.downloads / 1000000).toFixed(1)}M`
+                              : model.downloads >= 1000
+                                ? `${(model.downloads / 1000).toFixed(1)}K`
+                                : model.downloads}
+                          </span>
+                          <span className='flex items-center gap-1'>
+                            <Heart className='h-3.5 w-3.5' />
+                            {model.likes >= 1000
+                              ? `${(model.likes / 1000).toFixed(1)}K`
+                              : model.likes}
+                          </span>
+                          {model.pipeline_tag && (
+                            <span
+                              className={cn(
+                                'px-1.5 py-0.5 rounded',
+                                'bg-gray-200 dark:bg-dark-300 ophelia:bg-[#262626]'
+                              )}
+                            >
+                              {model.pipeline_tag}
                             </span>
                           )}
                         </div>
-                        <p className='text-xs text-gray-500 dark:text-dark-600 ophelia:text-[#737373] mt-0.5'>
-                          {t('modelManager.huggingface.by', 'by')}{' '}
-                          {model.author}
-                        </p>
                       </div>
-                      <a
-                        href={`https://huggingface.co/${model.id}`}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-300 ophelia:hover:bg-[#262626] transition-colors'
-                        title={t(
-                          'modelManager.huggingface.viewOnHF',
-                          'View on HuggingFace'
-                        )}
-                      >
-                        <ExternalLink className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
-                      </a>
-                    </div>
 
-                    <div className='flex items-center gap-3 text-xs text-gray-500 dark:text-dark-600 ophelia:text-[#737373]'>
-                      <span className='flex items-center gap-1'>
-                        <Download className='h-3.5 w-3.5' />
-                        {model.downloads >= 1000000
-                          ? `${(model.downloads / 1000000).toFixed(1)}M`
-                          : model.downloads >= 1000
-                            ? `${(model.downloads / 1000).toFixed(1)}K`
-                            : model.downloads}
-                      </span>
-                      <span className='flex items-center gap-1'>
-                        <Heart className='h-3.5 w-3.5' />
-                        {model.likes >= 1000
-                          ? `${(model.likes / 1000).toFixed(1)}K`
-                          : model.likes}
-                      </span>
-                      {model.pipeline_tag && (
-                        <span
-                          className={cn(
-                            'px-1.5 py-0.5 rounded',
-                            'bg-gray-200 dark:bg-dark-300 ophelia:bg-[#262626]'
+                      {/* Expanded GGUF files section */}
+                      {isExpanded && (
+                        <div className='px-4 pb-4 pt-1 border-t border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a] bg-white dark:bg-dark-100 ophelia:bg-[#0d0d0d]'>
+                          {isLoadingGguf ? (
+                            <div className='flex items-center justify-center py-4'>
+                              <Loader className='h-4 w-4 animate-spin text-gray-400' />
+                              <span className='ml-2 text-xs text-gray-500'>
+                                {t('modelManager.huggingface.checkingGguf')}
+                              </span>
+                            </div>
+                          ) : ggufFiles.length === 0 ? (
+                            <div className='py-4 text-center text-xs text-gray-500 dark:text-gray-400'>
+                              {t('modelManager.huggingface.noGgufAvailable')}
+                            </div>
+                          ) : (
+                            <div className='space-y-2'>
+                              <div className='text-xs font-medium text-gray-600 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
+                                {t('modelManager.huggingface.ggufFilesCount', {
+                                  count: ggufFiles.length,
+                                })}
+                              </div>
+                              {ggufFiles.map(file => {
+                                const isPullingThis =
+                                  hfPullingModel === file.ollamaCommand;
+
+                                return (
+                                  <div
+                                    key={file.filename}
+                                    className='flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-dark-50 ophelia:bg-[#0a0a0a] border border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                                  >
+                                    <div className='flex-1 min-w-0'>
+                                      <div className='text-xs font-medium text-gray-800 dark:text-gray-200 ophelia:text-[#e5e5e5] truncate'>
+                                        {file.filename}
+                                      </div>
+                                      <div className='flex items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
+                                        <span>{file.sizeFormatted}</span>
+                                        {file.quantization && (
+                                          <span className='px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 ophelia:bg-[#9333ea]/20 text-purple-700 dark:text-purple-400 ophelia:text-[#a855f7]'>
+                                            {file.quantization}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {isPullingThis ? (
+                                      <div className='flex items-center gap-2'>
+                                        <div className='text-xs text-gray-500 w-12 text-right'>
+                                          {hfPullProgress?.percent !== undefined
+                                            ? `${hfPullProgress.percent}%`
+                                            : '...'}
+                                        </div>
+                                        <button
+                                          onClick={e => {
+                                            e.stopPropagation();
+                                            handleCancelHfPull();
+                                          }}
+                                          className='p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                        >
+                                          <X className='h-4 w-4' />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={e => {
+                                          e.stopPropagation();
+                                          handlePullHfGguf(
+                                            file.ollamaCommand,
+                                            file.filename
+                                          );
+                                        }}
+                                        disabled={!!hfPullingModel}
+                                        className={cn(
+                                          'px-3 py-1.5 rounded-lg text-xs font-medium',
+                                          'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[#9333ea]/20',
+                                          'text-primary-700 dark:text-primary-400 ophelia:text-[#a855f7]',
+                                          'hover:bg-primary-200 dark:hover:bg-primary-900/50',
+                                          'disabled:opacity-50 disabled:cursor-not-allowed'
+                                        )}
+                                      >
+                                        <Download className='h-3 w-3 inline mr-1' />
+                                        {t('models.pull')}
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              })}
+
+                              {/* Pull progress bar */}
+                              {hfPullingModel?.startsWith('hf.co/') &&
+                                hfPullingModel.includes(model.id) &&
+                                hfPullProgress?.percent !== undefined && (
+                                  <div className='w-full bg-gray-200 dark:bg-dark-300 rounded-full h-1.5 overflow-hidden mt-2'>
+                                    <div
+                                      className='h-1.5 rounded-full bg-primary-500 transition-all duration-300'
+                                      style={{
+                                        width: `${hfPullProgress.percent}%`,
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                            </div>
                           )}
-                        >
-                          {model.pipeline_tag}
-                        </span>
+                        </div>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
