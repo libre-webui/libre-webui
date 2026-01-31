@@ -28,7 +28,11 @@ const getVersion = () => {
         encoding: 'utf-8'
       }).trim();
       if (branch === 'dev') {
-        return `${packageJson.version}-dev`;
+        const commitHash = execSync('git rev-parse --short HEAD', {
+          cwd: path.resolve(__dirname, '..'),
+          encoding: 'utf-8'
+        }).trim();
+        return `${packageJson.version}-dev (${commitHash})`;
       }
     }
   } catch {
