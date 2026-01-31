@@ -95,6 +95,10 @@ export const useInitializeApp = () => {
   // Set default model when models are loaded
   useEffect(() => {
     if (models.length > 0) {
+      // Filter out embedding models — they can't be used for chat
+      const chatModels = models.filter(m => !m.name.includes('embed'));
+      const fallback = chatModels[0] || models[0];
+
       // Check if we already have a selected model from backend preferences
       const { selectedModel: currentSelected } = useChatStore.getState();
 
@@ -103,24 +107,24 @@ export const useInitializeApp = () => {
         const availableModelNames = models.map(m => m.name);
 
         if (!availableModelNames.includes(currentSelected)) {
-          // Selected model no longer available, use first available
+          // Selected model no longer available, use first non-embedding model
           if (process.env.NODE_ENV === 'development') {
             console.log(
-              '⚠️ Selected model not available, falling back to first model:',
-              models[0].name
+              '⚠️ Selected model not available, falling back to:',
+              fallback.name
             );
           }
-          setSelectedModel(models[0].name);
+          setSelectedModel(fallback.name);
         }
       } else {
-        // No model selected, use first available
+        // No model selected, use first non-embedding model
         if (process.env.NODE_ENV === 'development') {
           console.log(
             '📋 No model selected, using first available:',
-            models[0].name
+            fallback.name
           );
         }
-        setSelectedModel(models[0].name);
+        setSelectedModel(fallback.name);
       }
     }
   }, [models, setSelectedModel]);
