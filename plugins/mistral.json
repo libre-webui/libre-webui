@@ -72,6 +72,13 @@
   ],
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "https://api.mistral.ai/v1/chat/completions"
+    },
+    {
       "name": "temperature",
       "type": "number",
       "label": "Temperature",

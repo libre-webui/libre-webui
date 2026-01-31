@@ -173,6 +173,13 @@
   },
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "https://router.huggingface.co/v1/chat/completions"
+    },
+    {
       "name": "temperature",
       "type": "number",
       "label": "Temperature",

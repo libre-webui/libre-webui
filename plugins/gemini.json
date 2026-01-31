@@ -56,6 +56,13 @@
   ],
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    },
+    {
       "name": "temperature",
       "type": "number",
       "label": "Temperature",

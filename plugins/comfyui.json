@@ -53,6 +53,13 @@
   },
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "http://localhost:8189/prompt"
+    },
+    {
       "name": "steps",
       "type": "number",
       "label": "Steps",

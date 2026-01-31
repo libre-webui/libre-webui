@@ -24,6 +24,13 @@
   ],
   "variables": [
     {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Override the default API endpoint URL.",
+      "default": "https://api.anthropic.com/v1/messages"
+    },
+    {
       "name": "temperature",
       "type": "number",
       "label": "Temperature",
