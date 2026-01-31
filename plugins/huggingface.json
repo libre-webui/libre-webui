@@ -58,9 +58,15 @@
         "OuteAI/OuteTTS-0.3-1B"
       ],
       "config": {
-        "voices": ["default"],
+        "voices": [
+          "default"
+        ],
         "default_voice": "default",
-        "formats": ["flac", "wav", "mp3"],
+        "formats": [
+          "flac",
+          "wav",
+          "mp3"
+        ],
         "default_format": "flac",
         "max_characters": 5000,
         "supports_streaming": false
@@ -89,7 +95,10 @@
           "768x1024"
         ],
         "default_size": "1024x1024",
-        "qualities": ["standard", "high"],
+        "qualities": [
+          "standard",
+          "high"
+        ],
         "default_quality": "standard",
         "max_prompt_length": 2000
       }
@@ -138,11 +147,82 @@
         "Systran/faster-whisper-large-v3"
       ],
       "config": {
-        "formats": ["flac", "mp3", "wav", "webm", "ogg"],
+        "formats": [
+          "flac",
+          "mp3",
+          "wav",
+          "webm",
+          "ogg"
+        ],
         "max_duration_seconds": 300,
-        "languages": ["en", "es", "fr", "de", "it", "pt", "nl", "ja", "ko", "zh"],
+        "languages": [
+          "en",
+          "es",
+          "fr",
+          "de",
+          "it",
+          "pt",
+          "nl",
+          "ja",
+          "ko",
+          "zh"
+        ],
         "supports_timestamps": true
       }
     }
-  }
+  },
+  "variables": [
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Lower values are more focused, higher values more creative.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens to generate in the response.",
+      "default": 4096,
+      "min": 1,
+      "max": 128000
+    },
+    {
+      "name": "top_p",
+      "type": "number",
+      "label": "Top P",
+      "description": "Nucleus sampling. Lower values make output more focused.",
+      "default": 1,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "frequency_penalty",
+      "type": "number",
+      "label": "Frequency Penalty",
+      "description": "Reduces repetition of frequent tokens.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "presence_penalty",
+      "type": "number",
+      "label": "Presence Penalty",
+      "description": "Encourages the model to talk about new topics.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Stream Response",
+      "description": "Stream the response token by token.",
+      "default": true
+    }
+  ]
 }

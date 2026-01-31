@@ -39,11 +39,45 @@
           "1080x1920"
         ],
         "default_size": "1024x1024",
-        "qualities": ["draft", "standard", "high", "ultra"],
+        "qualities": [
+          "draft",
+          "standard",
+          "high",
+          "ultra"
+        ],
         "default_quality": "standard",
         "max_prompt_length": 2000,
         "no_auth_required": true
       }
     }
-  }
+  },
+  "variables": [
+    {
+      "name": "steps",
+      "type": "number",
+      "label": "Steps",
+      "description": "Number of sampling steps. More steps = higher quality but slower.",
+      "default": 20,
+      "min": 1,
+      "max": 150
+    },
+    {
+      "name": "cfg_scale",
+      "type": "number",
+      "label": "CFG Scale",
+      "description": "Classifier-free guidance scale. Higher values follow the prompt more closely.",
+      "default": 7,
+      "min": 1,
+      "max": 30
+    },
+    {
+      "name": "seed",
+      "type": "number",
+      "label": "Seed",
+      "description": "Random seed for reproducibility. Use -1 for random.",
+      "default": -1,
+      "min": -1,
+      "max": 2147483647
+    }
+  ]
 }
