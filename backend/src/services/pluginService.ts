@@ -31,6 +31,7 @@ import {
   PluginType,
 } from '../types/index.js';
 import pluginCredentialsService from './pluginCredentialsService.js';
+import pluginVariablesService from './pluginVariablesService.js';
 
 class PluginService {
   private pluginsDir: string;
@@ -84,6 +85,23 @@ class PluginService {
     return pluginCredentialsService.getApiKey(
       plugin.id,
       plugin.auth.key_env,
+      userId
+    );
+  }
+
+  /**
+   * Get resolved variable values for a plugin (decrypted, typed).
+   */
+  getPluginVariables(
+    plugin: Plugin,
+    userId?: string
+  ): Record<string, string | number | boolean> {
+    if (!plugin.variables || plugin.variables.length === 0) {
+      return {};
+    }
+    return pluginVariablesService.getResolvedVariables(
+      plugin.id,
+      plugin.variables,
       userId
     );
   }
@@ -216,6 +234,9 @@ class PluginService {
         this.activePluginIds.delete(id);
         this.saveActivePlugins();
       }
+
+      // Clean up stored variables
+      pluginVariablesService.deletePluginVariables(id);
 
       return true;
     } catch (error) {

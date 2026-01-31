@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePluginStore } from '@/store/pluginStore';
-import { Plugin } from '@/types';
+import { Plugin, PluginVariableDefinition } from '@/types';
+import { PluginVariableValue } from '@/utils/api';
 import { Button } from '@/components/ui/Button';
 import {
   Settings,
@@ -29,7 +30,259 @@ import {
   X,
   Zap,
 } from '@/components/icons';
+import { ChevronDown, RotateCcw, Save, Eye, EyeOff } from 'lucide-react';
+import { cn } from '@/utils';
+import toast from 'react-hot-toast';
 import { HuggingFaceModelBrowser } from './HuggingFaceModelBrowser';
+
+// Inline variables editor for a plugin
+const PluginVariablesEditor: React.FC<{
+  plugin: Plugin;
+}> = ({ plugin }) => {
+  const { t } = useTranslation();
+  const {
+    pluginVariables,
+    fetchPluginVariables,
+    updatePluginVariables,
+    resetPluginVariables,
+  } = usePluginStore();
+  const [localValues, setLocalValues] = useState<
+    Record<string, string | number | boolean>
+  >({});
+  const [saving, setSaving] = useState(false);
+  const [initialized, setInitialized] = useState(false);
+  const [revealedFields, setRevealedFields] = useState<Set<string>>(new Set());
+
+  const schema = useMemo(() => plugin.variables || [], [plugin.variables]);
+  const storedVars = useMemo(
+    () => pluginVariables[plugin.id] || {},
+    [pluginVariables, plugin.id]
+  );
+
+  // Load variables on mount
+  useEffect(() => {
+    fetchPluginVariables(plugin.id);
+  }, [fetchPluginVariables, plugin.id]);
+
+  // Initialize local values from store once available
+  const storedVarsJson = JSON.stringify(storedVars);
+  useEffect(() => {
+    const vars = JSON.parse(storedVarsJson) as Record<
+      string,
+      PluginVariableValue
+    >;
+    if (Object.keys(vars).length === 0 && initialized) return;
+    const values: Record<string, string | number | boolean> = {};
+    for (const def of schema) {
+      const stored = vars[def.name];
+      if (stored?.has_value && !stored.is_sensitive) {
+        values[def.name] = stored.value;
+      } else {
+        values[def.name] =
+          def.default ??
+          (def.type === 'boolean' ? false : def.type === 'number' ? 0 : '');
+      }
+    }
+    setLocalValues(values);
+    setInitialized(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storedVarsJson, schema]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    const success = await updatePluginVariables(plugin.id, localValues);
+    setSaving(false);
+    if (success) {
+      toast.success(t('pluginManager.variables.saved', 'Variables saved'));
+    } else {
+      toast.error(
+        t('pluginManager.variables.saveFailed', 'Failed to save variables')
+      );
+    }
+  };
+
+  const handleReset = async () => {
+    await resetPluginVariables(plugin.id);
+    // Reset local values to defaults
+    const defaults: Record<string, string | number | boolean> = {};
+    for (const def of schema) {
+      defaults[def.name] =
+        def.default ??
+        (def.type === 'boolean' ? false : def.type === 'number' ? 0 : '');
+    }
+    setLocalValues(defaults);
+    toast.success(
+      t('pluginManager.variables.reset', 'Variables reset to defaults')
+    );
+  };
+
+  const toggleReveal = (name: string) => {
+    setRevealedFields(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
+
+  const renderField = (def: PluginVariableDefinition) => {
+    const value = localValues[def.name];
+    const isSensitive = def.sensitive ?? false;
+    const isRevealed = revealedFields.has(def.name);
+    const storedVar = storedVars[def.name] as PluginVariableValue | undefined;
+
+    const inputClasses = cn(
+      'w-full px-3 py-2 rounded-lg border text-sm',
+      'bg-white dark:bg-gray-900 ophelia:bg-[#0a0a0a]',
+      'border-gray-300 dark:border-gray-600 ophelia:border-[#262626]',
+      'text-gray-900 dark:text-white ophelia:text-[#fafafa]',
+      'focus:outline-none focus:ring-2 focus:ring-blue-500/20 ophelia:focus:ring-[#a855f7]/20'
+    );
+
+    switch (def.type) {
+      case 'boolean':
+        return (
+          <label className='flex items-center gap-2 cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={Boolean(value)}
+              onChange={e =>
+                setLocalValues(prev => ({
+                  ...prev,
+                  [def.name]: e.target.checked,
+                }))
+              }
+              className='rounded border-gray-300 dark:border-gray-600 text-blue-600 ophelia:text-[#a855f7] focus:ring-blue-500 ophelia:focus:ring-[#a855f7]'
+            />
+            <span className='text-sm text-gray-700 dark:text-gray-300 ophelia:text-[#d4d4d4]'>
+              {def.label}
+            </span>
+          </label>
+        );
+
+      case 'select':
+        return (
+          <select
+            value={String(value)}
+            onChange={e =>
+              setLocalValues(prev => ({ ...prev, [def.name]: e.target.value }))
+            }
+            className={inputClasses}
+          >
+            {(def.options || []).map(opt => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        );
+
+      case 'number':
+        return (
+          <input
+            type='number'
+            value={value as number}
+            min={def.min}
+            max={def.max}
+            onChange={e =>
+              setLocalValues(prev => ({
+                ...prev,
+                [def.name]: e.target.value === '' ? 0 : Number(e.target.value),
+              }))
+            }
+            className={inputClasses}
+          />
+        );
+
+      default: // string
+        return (
+          <div className='relative'>
+            <input
+              type={isSensitive && !isRevealed ? 'password' : 'text'}
+              value={
+                isSensitive && storedVar?.has_value && value === ''
+                  ? ''
+                  : String(value)
+              }
+              placeholder={
+                isSensitive && storedVar?.has_value
+                  ? t(
+                      'pluginManager.variables.sensitiveSet',
+                      'Value is set (enter new value to change)'
+                    )
+                  : undefined
+              }
+              onChange={e =>
+                setLocalValues(prev => ({
+                  ...prev,
+                  [def.name]: e.target.value,
+                }))
+              }
+              className={cn(inputClasses, isSensitive && 'pr-10')}
+            />
+            {isSensitive && (
+              <button
+                type='button'
+                onClick={() => toggleReveal(def.name)}
+                className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              >
+                {isRevealed ? (
+                  <EyeOff className='w-4 h-4' />
+                ) : (
+                  <Eye className='w-4 h-4' />
+                )}
+              </button>
+            )}
+          </div>
+        );
+    }
+  };
+
+  return (
+    <div className='mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 ophelia:border-[#1a1a1a]'>
+      <div className='space-y-3'>
+        {schema.map(def => (
+          <div key={def.name}>
+            {def.type !== 'boolean' && (
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#d4d4d4] mb-1'>
+                {def.label}
+                {def.required && <span className='text-red-500 ml-1'>*</span>}
+              </label>
+            )}
+            {def.description && def.type !== 'boolean' && (
+              <p className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mb-1'>
+                {def.description}
+              </p>
+            )}
+            {renderField(def)}
+          </div>
+        ))}
+      </div>
+      <div className='flex items-center gap-2 mt-4'>
+        <Button
+          size='sm'
+          onClick={handleSave}
+          disabled={saving}
+          className='gap-1.5'
+        >
+          <Save className='w-3.5 h-3.5' />
+          {saving
+            ? t('pluginManager.variables.saving', 'Saving...')
+            : t('pluginManager.variables.save', 'Save')}
+        </Button>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={handleReset}
+          className='gap-1.5'
+        >
+          <RotateCcw className='w-3.5 h-3.5' />
+          {t('pluginManager.variables.resetDefaults', 'Reset to Defaults')}
+        </Button>
+      </div>
+    </div>
+  );
+};
 
 interface PluginManagerProps {
   onClose?: () => void;
@@ -59,6 +312,9 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   const [showJsonForm, setShowJsonForm] = useState(false);
   const [showHuggingFaceBrowser, setShowHuggingFaceBrowser] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
+  const [expandedVarsPlugin, setExpandedVarsPlugin] = useState<string | null>(
+    null
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -296,6 +552,39 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                           </span>
                         ))}
                       </div>
+
+                      {/* Variables (Valves) section */}
+                      {plugin.variables && plugin.variables.length > 0 && (
+                        <div className='mt-3'>
+                          <button
+                            onClick={() =>
+                              setExpandedVarsPlugin(
+                                expandedVarsPlugin === plugin.id
+                                  ? null
+                                  : plugin.id
+                              )
+                            }
+                            className={cn(
+                              'flex items-center gap-1.5 text-xs font-medium',
+                              'text-blue-600 dark:text-blue-400 ophelia:text-[#a855f7]',
+                              'hover:underline'
+                            )}
+                          >
+                            <Settings className='w-3.5 h-3.5' />
+                            {t('pluginManager.variables.title', 'Variables')}(
+                            {plugin.variables.length})
+                            <ChevronDown
+                              className={cn(
+                                'w-3.5 h-3.5 transition-transform',
+                                expandedVarsPlugin === plugin.id && 'rotate-180'
+                              )}
+                            />
+                          </button>
+                          {expandedVarsPlugin === plugin.id && (
+                            <PluginVariablesEditor plugin={plugin} />
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className='flex items-center space-x-2 ml-4'>
                       <Button

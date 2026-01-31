@@ -952,6 +952,35 @@ export const pluginApi = {
       .get(`/plugins/${pluginId}/credentials/check`)
       .then(res => res.data);
   },
+
+  // Plugin variables (valves)
+  getVariables: (
+    pluginId: string
+  ): Promise<ApiResponse<Record<string, PluginVariableValue>>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<Record<string, PluginVariableValue>>({});
+    }
+    return api.get(`/plugins/${pluginId}/variables`).then(res => res.data);
+  },
+
+  setVariables: (
+    pluginId: string,
+    variables: Record<string, string | number | boolean>
+  ): Promise<ApiResponse<boolean>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<boolean>(true);
+    }
+    return api
+      .put(`/plugins/${pluginId}/variables`, { variables })
+      .then(res => res.data);
+  },
+
+  resetVariables: (pluginId: string): Promise<ApiResponse<boolean>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<boolean>(true);
+    }
+    return api.delete(`/plugins/${pluginId}/variables`).then(res => res.data);
+  },
 };
 
 export const preferencesApi = {
@@ -2003,6 +2032,13 @@ export interface HuggingFaceModel {
 }
 
 // GGUF file info from HuggingFace
+export interface PluginVariableValue {
+  name: string;
+  value: string | number | boolean;
+  is_sensitive: boolean;
+  has_value: boolean;
+}
+
 export interface GgufFileInfo {
   filename: string;
   size: number;

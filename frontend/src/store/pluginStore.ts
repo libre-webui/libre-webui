@@ -17,7 +17,7 @@
 
 import { create } from 'zustand';
 import { Plugin, PluginStatus } from '@/types';
-import { pluginApi } from '@/utils/api';
+import { pluginApi, PluginVariableValue } from '@/utils/api';
 
 interface PluginState {
   // Plugin data
@@ -27,6 +27,9 @@ interface PluginState {
   // Loading states
   isLoading: boolean;
   isUploading: boolean;
+
+  // Plugin variables (valves)
+  pluginVariables: Record<string, Record<string, PluginVariableValue>>;
 
   // Error state
   error: string | null;
@@ -42,6 +45,14 @@ interface PluginState {
   loadPluginStatus: () => Promise<void>;
   exportPlugin: (id: string) => Promise<void>;
 
+  // Variable actions
+  fetchPluginVariables: (pluginId: string) => Promise<void>;
+  updatePluginVariables: (
+    pluginId: string,
+    variables: Record<string, string | number | boolean>
+  ) => Promise<boolean>;
+  resetPluginVariables: (pluginId: string) => Promise<void>;
+
   // UI state
   clearError: () => void;
   setError: (error: string) => void;
@@ -51,6 +62,7 @@ export const usePluginStore = create<PluginState>((set, get) => ({
   // Initial state
   plugins: [],
   pluginStatus: [],
+  pluginVariables: {},
   isLoading: false,
   isUploading: false,
   error: null,
@@ -229,6 +241,55 @@ export const usePluginStore = create<PluginState>((set, get) => ({
       });
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  // Variable actions
+  fetchPluginVariables: async (pluginId: string) => {
+    try {
+      const response = await pluginApi.getVariables(pluginId);
+      if (response.success && response.data) {
+        set(state => ({
+          pluginVariables: {
+            ...state.pluginVariables,
+            [pluginId]: response.data!,
+          },
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch plugin variables:', error);
+    }
+  },
+
+  updatePluginVariables: async (
+    pluginId: string,
+    variables: Record<string, string | number | boolean>
+  ): Promise<boolean> => {
+    try {
+      const response = await pluginApi.setVariables(pluginId, variables);
+      if (response.success) {
+        await get().fetchPluginVariables(pluginId);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to update plugin variables:', error);
+      return false;
+    }
+  },
+
+  resetPluginVariables: async (pluginId: string) => {
+    try {
+      const response = await pluginApi.resetVariables(pluginId);
+      if (response.success) {
+        set(state => {
+          const newVars = { ...state.pluginVariables };
+          delete newVars[pluginId];
+          return { pluginVariables: newVars };
+        });
+      }
+    } catch (error) {
+      console.error('Failed to reset plugin variables:', error);
     }
   },
 
