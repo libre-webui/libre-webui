@@ -48,11 +48,44 @@
           "Serena"
         ],
         "default_voice": "Rachel",
-        "formats": ["mp3", "pcm", "ulaw"],
+        "formats": [
+          "mp3",
+          "pcm",
+          "ulaw"
+        ],
         "default_format": "mp3",
         "max_characters": 5000,
         "supports_streaming": true
       }
     }
-  }
+  },
+  "variables": [
+    {
+      "name": "stability",
+      "type": "number",
+      "label": "Stability",
+      "description": "Voice stability (0-1). Higher values are more consistent.",
+      "default": 0.5,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "similarity_boost",
+      "type": "number",
+      "label": "Similarity Boost",
+      "description": "Voice similarity boost (0-1).",
+      "default": 0.75,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "speed",
+      "type": "number",
+      "label": "Speed",
+      "description": "Playback speed multiplier.",
+      "default": 1,
+      "min": 0.25,
+      "max": 4
+    }
+  ]
 }

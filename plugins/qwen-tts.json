@@ -23,9 +23,21 @@
         "qwen3-tts-clone"
       ],
       "config": {
-        "voices": ["Ryan", "Aiden", "Vivian", "Serena", "Uncle_Fu", "Dylan", "Eric", "Ono_Anna", "Sohee"],
+        "voices": [
+          "Ryan",
+          "Aiden",
+          "Vivian",
+          "Serena",
+          "Uncle_Fu",
+          "Dylan",
+          "Eric",
+          "Ono_Anna",
+          "Sohee"
+        ],
         "default_voice": "Ryan",
-        "formats": ["wav"],
+        "formats": [
+          "wav"
+        ],
         "default_format": "wav",
         "max_characters": 10000,
         "supports_streaming": false,
@@ -34,5 +46,16 @@
     }
   },
   "description": "Qwen3-TTS local TTS server (NVIDIA CUDA, Apple MPS, or CPU)",
-  "documentation_url": "https://github.com/QwenLM/Qwen3-TTS"
+  "documentation_url": "https://github.com/QwenLM/Qwen3-TTS",
+  "variables": [
+    {
+      "name": "speed",
+      "type": "number",
+      "label": "Speed",
+      "description": "Playback speed multiplier.",
+      "default": 1,
+      "min": 0.25,
+      "max": 4
+    }
+  ]
 }

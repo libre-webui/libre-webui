@@ -21,9 +21,20 @@
         "tts-1"
       ],
       "config": {
-        "voices": ["Alba", "Marius", "Javert", "Jean", "Fantine", "Cosette", "Eponine", "Azelma"],
+        "voices": [
+          "Alba",
+          "Marius",
+          "Javert",
+          "Jean",
+          "Fantine",
+          "Cosette",
+          "Eponine",
+          "Azelma"
+        ],
         "default_voice": "Alba",
-        "formats": ["wav"],
+        "formats": [
+          "wav"
+        ],
         "default_format": "wav",
         "max_characters": 10000,
         "supports_streaming": true,
@@ -32,5 +43,16 @@
     }
   },
   "description": "Kyutai Pocket TTS local server (CPU-based, voice cloning support)",
-  "documentation_url": "https://github.com/kyutai-labs/pocket-tts"
+  "documentation_url": "https://github.com/kyutai-labs/pocket-tts",
+  "variables": [
+    {
+      "name": "speed",
+      "type": "number",
+      "label": "Speed",
+      "description": "Playback speed multiplier.",
+      "default": 1,
+      "min": 0.25,
+      "max": 4
+    }
+  ]
 }

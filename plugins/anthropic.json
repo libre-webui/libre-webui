@@ -9,17 +9,71 @@
     "key_env": "ANTHROPIC_API_KEY"
   },
   "model_map": [
-  "claude-3-5-haiku-20241022",
-  "claude-3-7-sonnet-20250219",
-  "claude-3-haiku-20240307",
-  "claude-3-opus-20240229",
-  "claude-4-opus-20250514",
-  "claude-4-sonnet-20250514",
-  "claude-haiku-4-5-20251001",
-  "claude-opus-4-1-20250805",
-  "claude-opus-4-20250514",
-  "claude-opus-4-5-20251101",
-  "claude-sonnet-4-20250514",
-  "claude-sonnet-4-5-20250929"
-]
+    "claude-3-5-haiku-20241022",
+    "claude-3-7-sonnet-20250219",
+    "claude-3-haiku-20240307",
+    "claude-3-opus-20240229",
+    "claude-4-opus-20250514",
+    "claude-4-sonnet-20250514",
+    "claude-haiku-4-5-20251001",
+    "claude-opus-4-1-20250805",
+    "claude-opus-4-20250514",
+    "claude-opus-4-5-20251101",
+    "claude-sonnet-4-20250514",
+    "claude-sonnet-4-5-20250929"
+  ],
+  "variables": [
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Lower values are more focused, higher values more creative.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens to generate in the response.",
+      "default": 4096,
+      "min": 1,
+      "max": 128000
+    },
+    {
+      "name": "top_p",
+      "type": "number",
+      "label": "Top P",
+      "description": "Nucleus sampling. Lower values make output more focused.",
+      "default": 1,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "frequency_penalty",
+      "type": "number",
+      "label": "Frequency Penalty",
+      "description": "Reduces repetition of frequent tokens.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "presence_penalty",
+      "type": "number",
+      "label": "Presence Penalty",
+      "description": "Encourages the model to talk about new topics.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Stream Response",
+      "description": "Stream the response token by token.",
+      "default": true
+    }
+  ]
 }
