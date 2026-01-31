@@ -106,6 +106,32 @@ class PluginService {
     );
   }
 
+  /**
+   * Validate an endpoint URL for safety (SSRF protection).
+   * Returns the URL string if valid, or null if invalid.
+   */
+  private validateEndpointUrl(endpoint: string): string | null {
+    try {
+      const url = new URL(endpoint);
+      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
+        url.hostname
+      );
+      const isPrivateNetwork =
+        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
+
+      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
+        console.warn(
+          `Rejected insecure endpoint override: ${endpoint} (only HTTPS or localhost/private IPs allowed)`
+        );
+        return null;
+      }
+      return endpoint;
+    } catch {
+      console.warn(`Rejected invalid endpoint override URL: ${endpoint}`);
+      return null;
+    }
+  }
+
   // List all installed plugins
   getAllPlugins(): Plugin[] {
     const plugins: Plugin[] = [];
@@ -399,8 +425,10 @@ class PluginService {
     const pluginVars = this.getPluginVariables(activePlugin);
 
     // Allow endpoint override via plugin variables
+    const endpointOverride = pluginVars.endpoint as string | undefined;
     const effectiveEndpoint =
-      (pluginVars.endpoint as string | undefined) || activePlugin.endpoint;
+      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
+      activePlugin.endpoint;
 
     const temperature =
       options.temperature ??
@@ -1089,7 +1117,8 @@ class PluginService {
 
     // Allow endpoint override via plugin variables
     if (ttsVars.endpoint && typeof ttsVars.endpoint === 'string') {
-      endpoint = ttsVars.endpoint;
+      const validated = this.validateEndpointUrl(ttsVars.endpoint);
+      if (validated) endpoint = validated;
     }
 
     // Apply defaults from config, then plugin variables, then request options
@@ -1468,7 +1497,8 @@ class PluginService {
     // Allow endpoint override via plugin variables
     const imageVars = this.getPluginVariables(plugin);
     if (imageVars.endpoint && typeof imageVars.endpoint === 'string') {
-      endpoint = imageVars.endpoint;
+      const validated = this.validateEndpointUrl(imageVars.endpoint);
+      if (validated) endpoint = validated;
     }
 
     // Get API key from database (per-user) or environment variable (fallback)

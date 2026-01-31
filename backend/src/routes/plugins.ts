@@ -746,10 +746,80 @@ router.put(
         return;
       }
 
+      // Validate variable values against schema
+      const schemaMap = new Map(plugin.variables.map(v => [v.name, v]));
+      const validated: Record<string, string | number | boolean> = {};
+
+      for (const [key, value] of Object.entries(variables)) {
+        const def = schemaMap.get(key);
+        if (!def) continue; // Ignore unknown variables
+
+        // Type validation
+        if (def.type === 'number') {
+          const num = Number(value);
+          if (isNaN(num)) {
+            res.status(400).json({
+              success: false,
+              error: `Variable "${key}" must be a number`,
+            });
+            return;
+          }
+          if (def.min !== undefined && num < def.min) {
+            res.status(400).json({
+              success: false,
+              error: `Variable "${key}" must be >= ${def.min}`,
+            });
+            return;
+          }
+          if (def.max !== undefined && num > def.max) {
+            res.status(400).json({
+              success: false,
+              error: `Variable "${key}" must be <= ${def.max}`,
+            });
+            return;
+          }
+          validated[key] = num;
+        } else if (def.type === 'boolean') {
+          validated[key] = value === true || value === 'true';
+        } else if (def.type === 'select') {
+          if (def.options && !def.options.includes(String(value))) {
+            res.status(400).json({
+              success: false,
+              error: `Variable "${key}" must be one of: ${def.options.join(', ')}`,
+            });
+            return;
+          }
+          validated[key] = String(value);
+        } else {
+          // String type
+          const str = String(value);
+          if (str.length > 2048) {
+            res.status(400).json({
+              success: false,
+              error: `Variable "${key}" exceeds maximum length of 2048 characters`,
+            });
+            return;
+          }
+          // Validate URL format for endpoint variables
+          if (key === 'endpoint' && str.length > 0) {
+            try {
+              new URL(str);
+            } catch {
+              res.status(400).json({
+                success: false,
+                error: `Variable "${key}" must be a valid URL`,
+              });
+              return;
+            }
+          }
+          validated[key] = str;
+        }
+      }
+
       const userId = (req as Request & { userId?: string }).userId || 'default';
       const success = pluginVariablesService.setVariables(
         id,
-        variables,
+        validated,
         plugin.variables,
         userId
       );
