@@ -153,7 +153,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       icon: (
         <Bot className='h-4 w-4 text-green-600 dark:text-green-400 ophelia:text-[#a855f7]' />
       ),
-      models: models.filter(model => !model.isPersona && !model.isPlugin),
+      models: models.filter(
+        model =>
+          !model.isPersona && !model.isPlugin && !model.name.includes('embed')
+      ),
       color: 'green',
     },
     {
