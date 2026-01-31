@@ -383,6 +383,21 @@ export interface PluginCapabilities {
   };
 }
 
+export type PluginVariableType = 'string' | 'number' | 'boolean' | 'select';
+
+export interface PluginVariableDefinition {
+  name: string;
+  type: PluginVariableType;
+  label: string;
+  description?: string;
+  default?: string | number | boolean;
+  required?: boolean;
+  sensitive?: boolean;
+  options?: string[]; // for 'select' type
+  min?: number; // for 'number' type
+  max?: number; // for 'number' type
+}
+
 export interface Plugin {
   id: string;
   name: string;
@@ -391,6 +406,7 @@ export interface Plugin {
   auth: PluginAuthConfig;
   model_map: string[]; // Primary model map for backward compatibility
   capabilities?: PluginCapabilities; // Multi-capability support
+  variables?: PluginVariableDefinition[];
   active?: boolean;
   created_at?: number;
   updated_at?: number;

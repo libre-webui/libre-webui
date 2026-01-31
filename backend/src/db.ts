@@ -255,6 +255,22 @@ function initializeTables(): void {
     )
   `);
 
+  // Plugin variables table - for per-user plugin configuration (valves)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plugin_variables (
+      id TEXT PRIMARY KEY,
+      user_id TEXT DEFAULT 'default',
+      plugin_id TEXT NOT NULL,
+      variable_name TEXT NOT NULL,
+      variable_value TEXT NOT NULL,
+      is_encrypted INTEGER DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE(user_id, plugin_id, variable_name)
+    )
+  `);
+
   // Generated images table - for image gallery
   db.exec(`
     CREATE TABLE IF NOT EXISTS generated_images (
@@ -286,6 +302,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_personas_name ON personas(name);
     CREATE INDEX IF NOT EXISTS idx_plugin_credentials_user_id ON plugin_credentials(user_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_credentials_plugin_id ON plugin_credentials(plugin_id);
+    CREATE INDEX IF NOT EXISTS idx_plugin_variables_user_id ON plugin_variables(user_id);
+    CREATE INDEX IF NOT EXISTS idx_plugin_variables_plugin_id ON plugin_variables(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_user_id ON generated_images(user_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
   `);

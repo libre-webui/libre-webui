@@ -22,6 +22,9 @@ import fs from 'fs';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
 import pluginCredentialsService from '../services/pluginCredentialsService.js';
+import pluginVariablesService, {
+  PluginVariableValue,
+} from '../services/pluginVariablesService.js';
 import {
   ApiResponse,
   Plugin,
@@ -665,6 +668,130 @@ router.get(
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to check API key'),
+      });
+    }
+  }
+);
+
+// ============================================================================
+// Plugin Variables (Valves)
+// ============================================================================
+
+// Get variable values for a plugin
+router.get(
+  '/:id/variables',
+  async (
+    req: Request,
+    res: Response<ApiResponse<Record<string, PluginVariableValue>>>
+  ): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+
+      const plugin = pluginService.getPlugin(id);
+      if (!plugin) {
+        res.status(404).json({ success: false, error: 'Plugin not found' });
+        return;
+      }
+
+      if (!plugin.variables || plugin.variables.length === 0) {
+        res.json({ success: true, data: {} });
+        return;
+      }
+
+      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const variables = pluginVariablesService.getVariables(
+        id,
+        plugin.variables,
+        userId,
+        true // forDisplay - mask sensitive values
+      );
+
+      res.json({ success: true, data: variables });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to get plugin variables'),
+      });
+    }
+  }
+);
+
+// Set variable values for a plugin
+router.put(
+  '/:id/variables',
+  pluginRateLimit,
+  async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const { variables } = req.body;
+
+      if (!variables || typeof variables !== 'object') {
+        res
+          .status(400)
+          .json({ success: false, error: 'Variables object is required' });
+        return;
+      }
+
+      const plugin = pluginService.getPlugin(id);
+      if (!plugin) {
+        res.status(404).json({ success: false, error: 'Plugin not found' });
+        return;
+      }
+
+      if (!plugin.variables || plugin.variables.length === 0) {
+        res.status(400).json({
+          success: false,
+          error: 'Plugin has no configurable variables',
+        });
+        return;
+      }
+
+      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const success = pluginVariablesService.setVariables(
+        id,
+        variables,
+        plugin.variables,
+        userId
+      );
+
+      if (success) {
+        res.json({ success: true, data: true });
+      } else {
+        res
+          .status(500)
+          .json({ success: false, error: 'Failed to save plugin variables' });
+      }
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to set plugin variables'),
+      });
+    }
+  }
+);
+
+// Reset all variable values for a plugin (back to defaults)
+router.delete(
+  '/:id/variables',
+  pluginRateLimit,
+  async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+
+      const plugin = pluginService.getPlugin(id);
+      if (!plugin) {
+        res.status(404).json({ success: false, error: 'Plugin not found' });
+        return;
+      }
+
+      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const success = pluginVariablesService.deletePluginVariables(id, userId);
+
+      res.json({ success: true, data: success });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to reset plugin variables'),
       });
     }
   }

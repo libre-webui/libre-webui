@@ -1186,7 +1186,17 @@
     "activate": "Activate",
     "deactivate": "Deactivate",
     "activePlugin": "Active Plugin",
-    "activePluginDescription": "All chat requests will be routed through this plugin"
+    "activePluginDescription": "All chat requests will be routed through this plugin",
+    "variables": {
+      "title": "Variables",
+      "save": "Save",
+      "saving": "Saving...",
+      "saved": "Variables saved",
+      "saveFailed": "Failed to save variables",
+      "resetDefaults": "Reset to Defaults",
+      "reset": "Variables reset to defaults",
+      "sensitiveSet": "Value is set (enter new value to change)"
+    }
   },
   "huggingface": {
     "title": "HuggingFace Model Browser",
