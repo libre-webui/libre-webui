@@ -17,7 +17,12 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { huggingfaceHubApi, HuggingFaceModel } from '@/utils/api';
+import {
+  huggingfaceHubApi,
+  ollamaApi,
+  HuggingFaceModel,
+  GgufFileInfo,
+} from '@/utils/api';
 import { Button } from '@/components/ui/Button';
 import {
   Search,
@@ -30,7 +35,10 @@ import {
   TrendingUp,
   Check,
   Loader,
+  ChevronDown,
 } from '@/components/icons';
+import toast from 'react-hot-toast';
+import { cn } from '@/utils';
 
 interface HuggingFaceModelBrowserProps {
   isOpen: boolean;
@@ -70,6 +78,19 @@ export const HuggingFaceModelBrowser: React.FC<
   const [task, setTask] = useState<TaskOption>('text-generation');
   const [sort, setSort] = useState<SortOption>('downloads');
   const [showFilters, setShowFilters] = useState(false);
+
+  // GGUF state
+  const [expandedModel, setExpandedModel] = useState<string | null>(null);
+  const [ggufFiles, setGgufFiles] = useState<Record<string, GgufFileInfo[]>>(
+    {}
+  );
+  const [loadingGguf, setLoadingGguf] = useState<string | null>(null);
+  const [pullingModel, setPullingModel] = useState<string | null>(null);
+  const [pullProgress, setPullProgress] = useState<{
+    status: string;
+    percent?: number;
+  } | null>(null);
+  const [cancelPull, setCancelPull] = useState<(() => void) | null>(null);
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -124,6 +145,86 @@ export const HuggingFaceModelBrowser: React.FC<
   };
 
   const isModelSelected = (modelId: string) => selectedModels.includes(modelId);
+
+  // Load GGUF files for a HuggingFace model
+  const loadGgufFiles = useCallback(async (modelId: string) => {
+    const [author, modelName] = modelId.split('/');
+    if (!author || !modelName) return;
+
+    setLoadingGguf(modelId);
+    try {
+      const response = await huggingfaceHubApi.getGgufFiles(author, modelName);
+      if (response.success && response.data) {
+        setGgufFiles(prev => ({ ...prev, [modelId]: response.data! }));
+      }
+    } catch (error) {
+      console.error('Failed to load GGUF files:', error);
+    } finally {
+      setLoadingGguf(null);
+    }
+  }, []);
+
+  // Toggle expanded model and load GGUF files
+  const handleToggleModel = useCallback(
+    (modelId: string) => {
+      if (expandedModel === modelId) {
+        setExpandedModel(null);
+      } else {
+        setExpandedModel(modelId);
+        if (!ggufFiles[modelId]) {
+          loadGgufFiles(modelId);
+        }
+      }
+    },
+    [expandedModel, ggufFiles, loadGgufFiles]
+  );
+
+  // Pull a GGUF model from HuggingFace via Ollama
+  const handlePullGguf = useCallback(
+    (ollamaCommand: string, filename: string) => {
+      if (pullingModel) return;
+
+      setPullingModel(ollamaCommand);
+      setPullProgress({ status: 'starting' });
+
+      try {
+        const cancelFn = ollamaApi.pullModelStream(
+          ollamaCommand,
+          progress => {
+            setPullProgress(progress);
+          },
+          () => {
+            setPullProgress(null);
+            setPullingModel(null);
+            setCancelPull(null);
+            toast.success(`Downloaded ${filename}`);
+          },
+          error => {
+            setPullProgress(null);
+            setPullingModel(null);
+            setCancelPull(null);
+            toast.error(`Failed to download: ${error}`);
+          }
+        );
+        setCancelPull(() => cancelFn);
+      } catch (_error) {
+        setPullProgress(null);
+        setPullingModel(null);
+        toast.error('Failed to start download');
+      }
+    },
+    [pullingModel]
+  );
+
+  // Cancel in-progress pull
+  const handleCancelPull = useCallback(() => {
+    if (cancelPull) {
+      cancelPull();
+      setCancelPull(null);
+      setPullingModel(null);
+      setPullProgress(null);
+    }
+  }, [cancelPull]);
 
   if (!isOpen) return null;
 
@@ -244,78 +345,213 @@ export const HuggingFaceModelBrowser: React.FC<
             </div>
           ) : (
             <div className='space-y-3'>
-              {models.map(model => (
-                <div
-                  key={model.id}
-                  className={`p-4 rounded-lg border transition-all ${
-                    isModelSelected(model.id)
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-dark-300 hover:border-gray-300 dark:hover:border-dark-400'
-                  }`}
-                >
-                  <div className='flex items-start justify-between gap-4'>
-                    <div className='flex-1 min-w-0'>
-                      <div className='flex items-center gap-2 mb-1'>
-                        <h3 className='font-medium text-gray-900 dark:text-dark-800 truncate'>
-                          {model.id}
-                        </h3>
-                        {model.gated && (
-                          <span className='px-1.5 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded'>
-                            {t('huggingface.gated')}
-                          </span>
-                        )}
-                      </div>
-                      <p className='text-sm text-gray-500 dark:text-dark-600 mb-2'>
-                        by {model.author}
-                      </p>
-                      <div className='flex items-center gap-4 text-sm text-gray-500 dark:text-dark-600'>
-                        <span className='flex items-center gap-1'>
-                          <Download className='w-4 h-4' />
-                          {formatNumber(model.downloads)}
-                        </span>
-                        <span className='flex items-center gap-1'>
-                          <Heart className='w-4 h-4' />
-                          {formatNumber(model.likes)}
-                        </span>
-                        {model.pipeline_tag && (
-                          <span className='px-2 py-0.5 bg-gray-100 dark:bg-dark-200 rounded text-xs'>
-                            {model.pipeline_tag}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <a
-                        href={`https://huggingface.co/${model.id}`}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='p-2 text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700 transition-colors'
-                        title='View on HuggingFace'
-                      >
-                        <ExternalLink className='w-4 h-4' />
-                      </a>
-                      {onSelectModel && (
-                        <Button
-                          onClick={() => handleSelectModel(model.id)}
-                          variant={
-                            isModelSelected(model.id) ? 'primary' : 'outline'
-                          }
-                          size='sm'
-                        >
-                          {isModelSelected(model.id) ? (
-                            <>
-                              <Check className='w-4 h-4 mr-1' />
-                              {t('huggingface.selected')}
-                            </>
-                          ) : (
-                            t('huggingface.select')
+              {models.map(model => {
+                const isExpanded = expandedModel === model.id;
+                const modelGgufFiles = ggufFiles[model.id] || [];
+                const isLoadingGguf = loadingGguf === model.id;
+
+                return (
+                  <div
+                    key={model.id}
+                    className={`rounded-lg border transition-all ${
+                      isModelSelected(model.id)
+                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-gray-200 dark:border-dark-300 hover:border-gray-300 dark:hover:border-dark-400'
+                    }`}
+                  >
+                    {/* Model header - clickable to expand */}
+                    <div
+                      className='p-4 cursor-pointer'
+                      onClick={() => handleToggleModel(model.id)}
+                    >
+                      <div className='flex items-start justify-between gap-4'>
+                        <div className='flex-1 min-w-0'>
+                          <div className='flex items-center gap-2 mb-1'>
+                            <h3 className='font-medium text-gray-900 dark:text-dark-800 truncate'>
+                              {model.id}
+                            </h3>
+                            {model.gated && (
+                              <span className='px-1.5 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded'>
+                                {t('huggingface.gated')}
+                              </span>
+                            )}
+                          </div>
+                          <p className='text-sm text-gray-500 dark:text-dark-600 mb-2'>
+                            by {model.author}
+                          </p>
+                          <div className='flex items-center gap-4 text-sm text-gray-500 dark:text-dark-600'>
+                            <span className='flex items-center gap-1'>
+                              <Download className='w-4 h-4' />
+                              {formatNumber(model.downloads)}
+                            </span>
+                            <span className='flex items-center gap-1'>
+                              <Heart className='w-4 h-4' />
+                              {formatNumber(model.likes)}
+                            </span>
+                            {model.pipeline_tag && (
+                              <span className='px-2 py-0.5 bg-gray-100 dark:bg-dark-200 rounded text-xs'>
+                                {model.pipeline_tag}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <a
+                            href={`https://huggingface.co/${model.id}`}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='p-2 text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700 transition-colors'
+                            title='View on HuggingFace'
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <ExternalLink className='w-4 h-4' />
+                          </a>
+                          {onSelectModel && (
+                            <Button
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleSelectModel(model.id);
+                              }}
+                              variant={
+                                isModelSelected(model.id)
+                                  ? 'primary'
+                                  : 'outline'
+                              }
+                              size='sm'
+                            >
+                              {isModelSelected(model.id) ? (
+                                <>
+                                  <Check className='w-4 h-4 mr-1' />
+                                  {t('huggingface.selected')}
+                                </>
+                              ) : (
+                                t('huggingface.select')
+                              )}
+                            </Button>
                           )}
-                        </Button>
-                      )}
+                          <ChevronDown
+                            className={cn(
+                              'w-5 h-5 text-gray-400 transition-transform',
+                              isExpanded && 'rotate-180'
+                            )}
+                          />
+                        </div>
+                      </div>
                     </div>
+
+                    {/* Expanded GGUF files section */}
+                    {isExpanded && (
+                      <div className='px-4 pb-4 pt-2 border-t border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-50'>
+                        {isLoadingGguf ? (
+                          <div className='flex items-center justify-center py-4'>
+                            <Loader className='w-4 h-4 animate-spin text-gray-400' />
+                            <span className='ml-2 text-xs text-gray-500'>
+                              {t(
+                                'modelManager.huggingface.checkingGguf',
+                                'Checking for GGUF files...'
+                              )}
+                            </span>
+                          </div>
+                        ) : modelGgufFiles.length === 0 ? (
+                          <div className='py-4 text-center text-xs text-gray-500 dark:text-gray-400'>
+                            {t(
+                              'modelManager.huggingface.noGgufAvailable',
+                              'No GGUF files available for direct Ollama pull'
+                            )}
+                          </div>
+                        ) : (
+                          <div className='space-y-2'>
+                            <div className='text-xs font-medium text-gray-600 dark:text-gray-300 mb-2'>
+                              {t('modelManager.huggingface.ggufFilesCount', {
+                                count: modelGgufFiles.length,
+                                defaultValue: `GGUF Files (${modelGgufFiles.length}) - Pull directly to Ollama`,
+                              })}
+                            </div>
+                            {modelGgufFiles.map(file => {
+                              const isPullingThis =
+                                pullingModel === file.ollamaCommand;
+
+                              return (
+                                <div
+                                  key={file.filename}
+                                  className='flex items-center gap-3 p-3 rounded-lg bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300'
+                                >
+                                  <div className='flex-1 min-w-0'>
+                                    <div className='text-sm font-medium text-gray-800 dark:text-gray-200 truncate'>
+                                      {file.filename}
+                                    </div>
+                                    <div className='flex items-center gap-2 mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                                      <span>{file.sizeFormatted}</span>
+                                      {file.quantization && (
+                                        <span className='px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'>
+                                          {file.quantization}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  {isPullingThis ? (
+                                    <div className='flex items-center gap-2'>
+                                      <div className='text-xs text-gray-500 w-12 text-right'>
+                                        {pullProgress?.percent !== undefined
+                                          ? `${pullProgress.percent}%`
+                                          : '...'}
+                                      </div>
+                                      <button
+                                        onClick={e => {
+                                          e.stopPropagation();
+                                          handleCancelPull();
+                                        }}
+                                        className='p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                      >
+                                        <X className='w-4 h-4' />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        handlePullGguf(
+                                          file.ollamaCommand,
+                                          file.filename
+                                        );
+                                      }}
+                                      disabled={!!pullingModel}
+                                      className={cn(
+                                        'px-3 py-1.5 rounded-lg text-xs font-medium',
+                                        'bg-blue-100 dark:bg-blue-900/30',
+                                        'text-blue-700 dark:text-blue-400',
+                                        'hover:bg-blue-200 dark:hover:bg-blue-900/50',
+                                        'disabled:opacity-50 disabled:cursor-not-allowed'
+                                      )}
+                                    >
+                                      <Download className='w-3 h-3 inline mr-1' />
+                                      {t('models.pull', 'Pull')}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+
+                            {/* Pull progress bar */}
+                            {pullingModel?.startsWith('hf.co/') &&
+                              pullingModel.includes(model.id) &&
+                              pullProgress?.percent !== undefined && (
+                                <div className='w-full bg-gray-200 dark:bg-dark-300 rounded-full h-1.5 overflow-hidden mt-2'>
+                                  <div
+                                    className='h-1.5 rounded-full bg-blue-500 transition-all duration-300'
+                                    style={{
+                                      width: `${pullProgress.percent}%`,
+                                    }}
+                                  />
+                                </div>
+                              )}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
