@@ -1200,7 +1200,8 @@
     "gated": "Restrito",
     "selected": "Selecionado",
     "select": "Selecionar",
-    "refresh": "Atualizar"
+    "refresh": "Atualizar",
+    "modelsFound": "modelos encontrados"
   },
   "demoMode": {
     "title": "Modo demo",

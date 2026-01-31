@@ -1200,7 +1200,8 @@
     "gated": "সীমাবদ্ধ",
     "selected": "নির্বাচিত",
     "select": "নির্বাচন",
-    "refresh": "রিফ্রেশ"
+    "refresh": "রিফ্রেশ",
+    "modelsFound": "মডেল পাওয়া গেছে"
   },
   "demoMode": {
     "title": "ডেমো মোড",

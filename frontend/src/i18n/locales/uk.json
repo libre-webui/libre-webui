@@ -1200,7 +1200,8 @@
     "gated": "Обмежений",
     "selected": "Обрано",
     "select": "Обрати",
-    "refresh": "Оновити"
+    "refresh": "Оновити",
+    "modelsFound": "моделей знайдено"
   },
   "demoMode": {
     "title": "Демо-режим",

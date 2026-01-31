@@ -1200,7 +1200,8 @@
     "gated": "Omezený",
     "selected": "Vybráno",
     "select": "Vybrat",
-    "refresh": "Obnovit"
+    "refresh": "Obnovit",
+    "modelsFound": "nalezených modelů"
   },
   "demoMode": {
     "title": "Demo režim",

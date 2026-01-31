@@ -1200,7 +1200,8 @@
     "gated": "Terhad",
     "selected": "Dipilih",
     "select": "Pilih",
-    "refresh": "Muat semula"
+    "refresh": "Muat semula",
+    "modelsFound": "model ditemui"
   },
   "demoMode": {
     "title": "Mod demo",

@@ -308,8 +308,12 @@ export const GitHubAuth: React.FC = () => {
             </h2>
 
             <div className='text-gray-600 mb-6 space-y-1'>
-              <p>User ID: {user.id}</p>
-              <p>Role: {user.role}</p>
+              <p>
+                {t('auth.userId')}: {user.id}
+              </p>
+              <p>
+                {t('auth.role')}: {user.role}
+              </p>
               {oauthProfile && (
                 <>
                   <p>

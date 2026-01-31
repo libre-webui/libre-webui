@@ -1200,7 +1200,8 @@
     "gated": "제한됨",
     "selected": "선택됨",
     "select": "선택",
-    "refresh": "새로고침"
+    "refresh": "새로고침",
+    "modelsFound": "개 모델 발견"
   },
   "demoMode": {
     "title": "데모 모드",

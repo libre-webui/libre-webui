@@ -1200,7 +1200,8 @@
     "gated": "مقيد",
     "selected": "محدد",
     "select": "اختيار",
-    "refresh": "تحديث"
+    "refresh": "تحديث",
+    "modelsFound": "نماذج موجودة"
   },
   "demoMode": {
     "title": "وضع تجريبي",
