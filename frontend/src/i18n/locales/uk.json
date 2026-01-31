@@ -1184,7 +1184,17 @@
     "activate": "Активувати",
     "deactivate": "Деактивувати",
     "activePlugin": "Активний плагін",
-    "activePluginDescription": "Усі запити чату будуть спрямовані через цей плагін"
+    "activePluginDescription": "Усі запити чату будуть спрямовані через цей плагін",
+    "variables": {
+      "title": "Змінні",
+      "save": "Зберегти",
+      "saving": "Збереження...",
+      "saved": "Змінні збережені",
+      "saveFailed": "Не вдалося зберегти змінні",
+      "resetDefaults": "Скинути до стандартних",
+      "reset": "Змінні скинуті",
+      "sensitiveSet": "Значення встановлено (введіть нове для зміни)"
+    }
   },
   "huggingface": {
     "title": "Браузер моделей HuggingFace",

@@ -1184,7 +1184,17 @@
     "activate": "सक्रिय करें",
     "deactivate": "निष्क्रिय करें",
     "activePlugin": "सक्रिय प्लगइन",
-    "activePluginDescription": "सभी चैट अनुरोध इस प्लगइन के माध्यम से भेजे जाएंगे"
+    "activePluginDescription": "सभी चैट अनुरोध इस प्लगइन के माध्यम से भेजे जाएंगे",
+    "variables": {
+      "title": "वेरिएबल",
+      "save": "सहेजें",
+      "saving": "सहेज रहे हैं...",
+      "saved": "वेरिएबल सहेजे गए",
+      "saveFailed": "वेरिएबल सहेजने में विफल",
+      "resetDefaults": "डिफ़ॉल्ट पर रीसेट",
+      "reset": "वेरिएबल रीसेट हो गए",
+      "sensitiveSet": "मान सेट है (बदलने के लिए नया मान दर्ज करें)"
+    }
   },
   "huggingface": {
     "title": "HuggingFace मॉडल ब्राउज़र",

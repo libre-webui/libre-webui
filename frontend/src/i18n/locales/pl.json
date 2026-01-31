@@ -1184,7 +1184,17 @@
     "activate": "Aktywuj",
     "deactivate": "Dezaktywuj",
     "activePlugin": "Aktywna wtyczka",
-    "activePluginDescription": "Wszystkie żądania czatu będą kierowane przez tę wtyczkę"
+    "activePluginDescription": "Wszystkie żądania czatu będą kierowane przez tę wtyczkę",
+    "variables": {
+      "title": "Zmienne",
+      "save": "Zapisz",
+      "saving": "Zapisywanie...",
+      "saved": "Zmienne zapisane",
+      "saveFailed": "Nie udało się zapisać zmiennych",
+      "resetDefaults": "Przywróć domyślne",
+      "reset": "Zmienne przywrócone",
+      "sensitiveSet": "Wartość ustawiona (wprowadź nową, aby zmienić)"
+    }
   },
   "huggingface": {
     "title": "Przeglądarka modeli HuggingFace",

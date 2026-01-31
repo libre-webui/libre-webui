@@ -1184,7 +1184,17 @@
     "activate": "Aktivieren",
     "deactivate": "Deaktivieren",
     "activePlugin": "Aktives Plugin",
-    "activePluginDescription": "Alle Chat-Anfragen werden über dieses Plugin geleitet"
+    "activePluginDescription": "Alle Chat-Anfragen werden über dieses Plugin geleitet",
+    "variables": {
+      "title": "Variablen",
+      "save": "Speichern",
+      "saving": "Speichern...",
+      "saved": "Variablen gespeichert",
+      "saveFailed": "Variablen konnten nicht gespeichert werden",
+      "resetDefaults": "Auf Standard zurücksetzen",
+      "reset": "Variablen zurückgesetzt",
+      "sensitiveSet": "Wert ist gesetzt (neuen Wert eingeben zum Ändern)"
+    }
   },
   "huggingface": {
     "title": "HuggingFace Modell-Browser",

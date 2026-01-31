@@ -1184,7 +1184,17 @@
     "activate": "Aktivovat",
     "deactivate": "Deaktivovat",
     "activePlugin": "Aktivní plugin",
-    "activePluginDescription": "Všechny chatové požadavky budou směrovány přes tento plugin"
+    "activePluginDescription": "Všechny chatové požadavky budou směrovány přes tento plugin",
+    "variables": {
+      "title": "Proměnné",
+      "save": "Uložit",
+      "saving": "Ukládání...",
+      "saved": "Proměnné uloženy",
+      "saveFailed": "Nepodařilo se uložit proměnné",
+      "resetDefaults": "Obnovit výchozí",
+      "reset": "Proměnné obnoveny na výchozí",
+      "sensitiveSet": "Hodnota je nastavena (zadejte novou pro změnu)"
+    }
   },
   "huggingface": {
     "title": "Prohlížeč modelů HuggingFace",

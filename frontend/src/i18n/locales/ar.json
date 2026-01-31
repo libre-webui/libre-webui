@@ -1184,7 +1184,17 @@
     "activate": "تفعيل",
     "deactivate": "تعطيل",
     "activePlugin": "الإضافة النشطة",
-    "activePluginDescription": "سيتم توجيه جميع طلبات الدردشة عبر هذه الإضافة"
+    "activePluginDescription": "سيتم توجيه جميع طلبات الدردشة عبر هذه الإضافة",
+    "variables": {
+      "title": "المتغيرات",
+      "save": "حفظ",
+      "saving": "جاري الحفظ...",
+      "saved": "تم حفظ المتغيرات",
+      "saveFailed": "فشل حفظ المتغيرات",
+      "resetDefaults": "إعادة التعيين للافتراضي",
+      "reset": "تم إعادة تعيين المتغيرات",
+      "sensitiveSet": "تم تعيين القيمة (أدخل قيمة جديدة للتغيير)"
+    }
   },
   "huggingface": {
     "title": "متصفح نماذج HuggingFace",

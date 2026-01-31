@@ -1184,7 +1184,17 @@
     "activate": "Aktiver",
     "deactivate": "Deaktiver",
     "activePlugin": "Aktivt plugin",
-    "activePluginDescription": "Alle chatanmodninger vil blive dirigeret gennem dette plugin"
+    "activePluginDescription": "Alle chatanmodninger vil blive dirigeret gennem dette plugin",
+    "variables": {
+      "title": "Variabler",
+      "save": "Gem",
+      "saving": "Gemmer...",
+      "saved": "Variabler gemt",
+      "saveFailed": "Kunne ikke gemme variabler",
+      "resetDefaults": "Nulstil til standard",
+      "reset": "Variabler nulstillet",
+      "sensitiveSet": "Værdi er sat (indtast ny for at ændre)"
+    }
   },
   "huggingface": {
     "title": "HuggingFace-modelbrowser",

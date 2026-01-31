@@ -1184,7 +1184,17 @@
     "activate": "有効化",
     "deactivate": "無効化",
     "activePlugin": "アクティブなプラグイン",
-    "activePluginDescription": "すべてのチャットリクエストはこのプラグインを通じてルーティングされます"
+    "activePluginDescription": "すべてのチャットリクエストはこのプラグインを通じてルーティングされます",
+    "variables": {
+      "title": "変数",
+      "save": "保存",
+      "saving": "保存中...",
+      "saved": "変数を保存しました",
+      "saveFailed": "変数の保存に失敗しました",
+      "resetDefaults": "デフォルトにリセット",
+      "reset": "変数をリセットしました",
+      "sensitiveSet": "値が設定済み（変更するには新しい値を入力）"
+    }
   },
   "huggingface": {
     "title": "HuggingFaceモデルブラウザ",

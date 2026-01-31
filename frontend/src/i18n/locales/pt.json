@@ -1184,7 +1184,17 @@
     "activate": "Ativar",
     "deactivate": "Desativar",
     "activePlugin": "Plugin ativo",
-    "activePluginDescription": "Todas as solicitações de chat serão roteadas por este plugin"
+    "activePluginDescription": "Todas as solicitações de chat serão roteadas por este plugin",
+    "variables": {
+      "title": "Variáveis",
+      "save": "Salvar",
+      "saving": "Salvando...",
+      "saved": "Variáveis salvas",
+      "saveFailed": "Falha ao salvar variáveis",
+      "resetDefaults": "Restaurar padrões",
+      "reset": "Variáveis restauradas",
+      "sensitiveSet": "Valor definido (insira novo valor para alterar)"
+    }
   },
   "huggingface": {
     "title": "Navegador de modelos HuggingFace",

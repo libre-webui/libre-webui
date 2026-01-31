@@ -1184,7 +1184,17 @@
     "activate": "เปิดใช้งาน",
     "deactivate": "ปิดใช้งาน",
     "activePlugin": "ปลั๊กอินที่ใช้งานอยู่",
-    "activePluginDescription": "คำขอแชททั้งหมดจะถูกส่งผ่านปลั๊กอินนี้"
+    "activePluginDescription": "คำขอแชททั้งหมดจะถูกส่งผ่านปลั๊กอินนี้",
+    "variables": {
+      "title": "ตัวแปร",
+      "save": "บันทึก",
+      "saving": "กำลังบันทึก...",
+      "saved": "บันทึกตัวแปรแล้ว",
+      "saveFailed": "ไม่สามารถบันทึกตัวแปรได้",
+      "resetDefaults": "รีเซ็ตค่าเริ่มต้น",
+      "reset": "รีเซ็ตตัวแปรแล้ว",
+      "sensitiveSet": "ตั้งค่าแล้ว (ป้อนค่าใหม่เพื่อเปลี่ยน)"
+    }
   },
   "huggingface": {
     "title": "เบราว์เซอร์โมเดล HuggingFace",
