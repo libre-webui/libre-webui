@@ -177,7 +177,7 @@ export const HuggingFaceModelBrowser: React.FC<
               {t('huggingface.filters')}
             </button>
             <div className='text-sm text-gray-500 dark:text-dark-600'>
-              {models.length} models found
+              {models.length} {t('huggingface.modelsFound')}
             </div>
           </div>
 

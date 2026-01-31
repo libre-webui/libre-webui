@@ -296,7 +296,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
                     onClick={() => setShowAvatarModal(false)}
                     className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors'
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     onClick={handleSaveAvatar}
