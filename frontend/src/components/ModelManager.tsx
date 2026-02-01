@@ -189,7 +189,7 @@ export const ModelManager: React.FC = () => {
   };
 
   // Load models and running models
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [modelsResponse, runningResponse, versionResponse, healthResponse] =
@@ -223,7 +223,7 @@ export const ModelManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   // Load library models
   const loadLibraryModels = async () => {
@@ -350,7 +350,7 @@ export const ModelManager: React.FC = () => {
         toast.error('Failed to start download');
       }
     },
-    [hfPullingModel]
+    [hfPullingModel, loadData]
   );
 
   const handleCancelHfPull = useCallback(() => {
