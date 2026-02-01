@@ -207,6 +207,95 @@ ANTHROPIC_API_KEY=sk-ant-...
 HUGGINGFACE_API_KEY=hf_...
 ```
 
+---
+
+## Plugin System
+
+Plugins let you connect any OpenAI-compatible (or custom) API to Libre WebUI using a simple JSON file. Built-in plugins are included for OpenAI, Anthropic, Google Gemini, Groq, Mistral, OpenRouter, HuggingFace, and more.
+
+### How It Works
+
+A plugin is a JSON config file stored in the `plugins/` directory. Each plugin defines:
+
+- **Endpoint** — The API URL to send requests to
+- **Auth** — How to authenticate (header name, prefix, env variable fallback)
+- **Model map** — Which models the plugin supports
+- **Capabilities** — Optional multi-capability support (chat, TTS, image generation, embeddings, STT)
+- **Variables** — Per-plugin configurable settings users can adjust from the UI
+
+### Example Plugin
+
+```json
+{
+  "id": "my-provider",
+  "name": "My Provider",
+  "type": "completion",
+  "endpoint": "https://api.example.com/v1/chat/completions",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "MY_PROVIDER_API_KEY"
+  },
+  "model_map": ["model-a", "model-b"],
+  "variables": [
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    }
+  ]
+}
+```
+
+### Plugin Management
+
+Plugins are managed from **Settings > Plugins** in the UI where you can:
+
+- **Upload** a JSON plugin file or paste JSON directly
+- **Browse HuggingFace** to discover and import models
+- **Activate/deactivate** plugins
+- **Set API keys** per plugin (encrypted at rest with AES-256-GCM, with env variable fallback)
+- **Configure variables** — override endpoint, temperature, max tokens, and other settings per plugin
+- **Export** plugins as JSON
+
+### Plugin Variables
+
+Variables are typed settings defined in the plugin JSON that users can configure from the UI. Supported types: `string`, `number`, `boolean`, `select`. Sensitive variables (like API keys) are encrypted in the database. Variable values are stored per-user.
+
+### Multi-Capability Plugins
+
+A single plugin can support multiple capabilities. For example, OpenAI's plugin handles both chat completions and TTS:
+
+```json
+{
+  "id": "openai",
+  "type": "completion",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "capabilities": {
+    "tts": {
+      "endpoint": "https://api.openai.com/v1/audio/speech",
+      "model_map": ["tts-1", "tts-1-hd"],
+      "config": {
+        "voices": ["alloy", "echo", "nova", "shimmer"],
+        "default_voice": "alloy"
+      }
+    }
+  }
+}
+```
+
+### Creating Custom Plugins
+
+To add a new provider, create a JSON file in the `plugins/` directory following the schema above, or upload one through the UI. Any OpenAI-compatible API works out of the box — just set the correct endpoint and auth config.
+
+For the full plugin reference (variables, credentials, security, API endpoints), see the [Plugin Architecture docs](./docs/08-PLUGIN_ARCHITECTURE.md).
+
+---
+
 ### Desktop App (In Development)
 
 > **Note:** The desktop app is currently in active development. The macOS build is pending Apple notarization, which may cause security warnings or installation issues on some systems. We're working to resolve this. Feedback and bug reports are welcome!
