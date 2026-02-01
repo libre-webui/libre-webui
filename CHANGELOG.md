@@ -15,6 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.7.0] - 2026-02-01
+
+### What's New
+
+This release introduces a major new plugin variables (valves) system that allows dynamic configuration of plugin settings with database persistence and security validation. Enhanced HuggingFace model management now supports GGUF model downloads directly from the browser, and comprehensive internationalization improvements make the interface more accessible across all supported languages.
+
+### ✨ New Features
+
+- **Plugin Variables (Valves)**: Configure plugin settings dynamically with database persistence, input validation, and configurable endpoint overrides
+- **GGUF Model Downloads**: Download GGUF models directly from HuggingFace through the model browser interface
+- **Development Version Display**: Show commit hash in version string for development builds
+- **Enhanced Documentation**: New local GPU stack guide and Hetzner GPU deployment tutorial
+
+### 🔧 Improvements
+
+- **Plugin Variables Performance**: Added 5-second TTL cache for resolved plugin variables to improve response times
+- **Model Selection**: Filter embedding models from chat model selector for cleaner interface
+- **Dark Theme Consistency**: Plugin variables input styling now matches dark theme design
+- **Internationalization**: Comprehensive translation updates across all 21 supported languages with missing keys added
+- **Settings Interface**: Plugin variables editor now properly displays in settings modal
+
+### 🐛 Bug Fixes
+
+- **Security**: Added input validation and SSRF protection for plugin variables to prevent sensitive data exposure
+- **Model Manager**: Fixed missing loadData dependency in ModelManager useCallback hook
+- **UI Components**: Resolved hardcoded strings in multiple components that weren't using translation keys
+- **HuggingFace Integration**: Fixed GGUF pull functionality in model manager's HuggingFace section
+
 ## [0.6.3] - 2026-01-29
 
 ### What's New
