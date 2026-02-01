@@ -8,11 +8,13 @@ keywords: [plugins, openai, anthropic, tts, image generation, comfyui]
 
 # Plugins
 
-Libre WebUI supports three types of plugins:
+Libre WebUI supports several types of plugins:
 
 - **Chat** - AI language models (OpenAI, Anthropic, Groq, etc.)
 - **Image Generation** - Create images from text (ComfyUI, Flux)
 - **Text-to-Speech** - Convert text to audio (OpenAI TTS, ElevenLabs)
+- **Speech-to-Text** - Transcribe audio to text
+- **Embeddings** - Generate vector embeddings for RAG
 
 ## Chat Plugins
 
@@ -28,6 +30,8 @@ Connect to cloud AI providers alongside local Ollama models.
 | **Groq** | Llama 3.1, Gemma, Qwen3 | `GROQ_API_KEY` | Fastest inference |
 | **Mistral** | Large, Medium, Codestral (71+ models) | `MISTRAL_API_KEY` | EU-based |
 | **OpenRouter** | 300+ models from all providers | `OPENROUTER_API_KEY` | Pay-per-token |
+| **HuggingFace** | Llama, Qwen, Mistral, Phi, and more (220+ models) | `HUGGINGFACE_API_KEY` | Free tier available |
+| **GitHub Models** | Llama, Mistral, Phi, Jamba, and more | `GITHUB_API_KEY` | Free with GitHub account |
 
 ### Setup
 
@@ -113,11 +117,27 @@ ELEVENLABS_API_KEY=...
 
 **Formats:** MP3, PCM, ulaw (5000 character limit per request)
 
+### Qwen3 TTS (Local)
+
+High-quality local TTS with voice cloning and voice design. Runs on your own hardware, no API key needed.
+
+**Models:** qwen3-tts, qwen3-tts-customvoice, qwen3-tts-voicedesign, qwen3-tts-clone
+
+See [Qwen3 TTS guide](./27-QWEN3_TTS.md) for setup instructions.
+
+### Kyutai TTS (Local)
+
+Local TTS with voice cloning support. No API key needed.
+
+**Models:** kyutai-tts, kyutai-tts-clone
+
+See [Kyutai TTS guide](./28-KYUTAI_TTS.md) for setup instructions.
+
 ### Usage
 
 1. Click the speaker icon on any message to hear it spoken
 2. Configure voice and model in Settings → Text-to-Speech
-3. Select between OpenAI TTS or ElevenLabs as your provider
+3. Select between OpenAI TTS, ElevenLabs, Qwen3, or Kyutai as your provider
 
 ## Plugin Configuration
 
@@ -148,6 +168,8 @@ Plugins are JSON files in the `plugins/` directory.
 | `completion` | Chat/text generation | OpenAI, Anthropic |
 | `image` | Image generation | ComfyUI |
 | `tts` | Text-to-speech | OpenAI TTS, ElevenLabs |
+| `stt` | Speech-to-text | Whisper |
+| `embedding` | Vector embeddings | OpenAI Embeddings |
 
 ## Managing Plugins
 
@@ -156,8 +178,10 @@ Plugins are JSON files in the `plugins/` directory.
 Settings → Plugins → Plugin Manager
 
 - Enable/disable plugins
-- Upload new plugins
-- Configure settings
+- Upload new plugin JSON files or paste JSON directly
+- Browse HuggingFace Hub to discover and import models
+- Configure API keys and variables
+- Export plugins as JSON
 
 ### Via API
 
@@ -206,11 +230,18 @@ The API must follow the OpenAI chat completions format.
     "prefix": "Bearer ",
     "key_env": "CUSTOM_TTS_KEY"
   },
+  "model_map": ["tts-model-1"],
   "capabilities": {
     "tts": {
-      "voices": ["voice-1", "voice-2"],
-      "default_voice": "voice-1",
-      "formats": ["mp3", "wav"]
+      "endpoint": "https://your-api.com/v1/audio/speech",
+      "model_map": ["tts-model-1"],
+      "config": {
+        "voices": ["voice-1", "voice-2"],
+        "default_voice": "voice-1",
+        "formats": ["mp3", "wav"],
+        "max_characters": 4096,
+        "supports_streaming": true
+      }
     }
   }
 }
@@ -356,6 +387,57 @@ Content-Type: application/json
 # Reset all variables to defaults
 DELETE /api/plugins/:id/variables
 ```
+
+## Multi-Capability Plugins
+
+A single plugin can serve multiple purposes by defining a `capabilities` object. For example, OpenAI's plugin handles both chat completions and TTS with a single API key:
+
+```json
+{
+  "id": "openai",
+  "name": "OpenAI GPT",
+  "type": "completion",
+  "endpoint": "https://api.openai.com/v1/chat/completions",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "OPENAI_API_KEY"
+  },
+  "model_map": ["gpt-4o", "gpt-4o-mini"],
+  "capabilities": {
+    "tts": {
+      "endpoint": "https://api.openai.com/v1/audio/speech",
+      "model_map": ["tts-1", "tts-1-hd", "gpt-4o-mini-tts"],
+      "config": {
+        "voices": ["alloy", "echo", "nova", "shimmer"],
+        "default_voice": "alloy",
+        "formats": ["mp3", "opus", "aac", "flac", "wav"],
+        "supports_streaming": true
+      }
+    }
+  }
+}
+```
+
+Each capability has its own `endpoint` and `model_map`, while sharing the plugin's auth configuration. Supported capability keys: `completion`, `tts`, `stt`, `embedding`, `image`.
+
+## Credentials
+
+API keys are resolved in the following priority order:
+
+1. **Per-user database key** — Set via the UI in Settings → Plugins, encrypted with AES-256-GCM
+2. **Environment variable** — The `key_env` value from the plugin's auth config (e.g., `OPENAI_API_KEY`)
+3. **No auth** — For local servers (e.g., Ollama, local ComfyUI) that don't require authentication
+
+Per-user keys take precedence over environment variables, allowing multi-user deployments where each user brings their own API key.
+
+## Security
+
+- **Credential encryption** — API keys and sensitive variables are encrypted at rest using AES-256-GCM
+- **SSRF prevention** — Plugin endpoints are validated (HTTPS required for remote URLs, HTTP allowed only for localhost and private IPs)
+- **Path traversal protection** — Plugin IDs are sanitized, file paths are resolved and boundary-checked
+- **Model name sanitization** — Model parameters are validated with regex patterns (no `..`, `//`, or path separators)
+- **Rate limiting** — Plugin management endpoints: 100 requests/15 min per IP; upload endpoints: 10 requests/15 min per IP
 
 ## Troubleshooting
 
