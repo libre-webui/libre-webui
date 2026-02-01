@@ -61,7 +61,9 @@ A simple, self-hosted interface for AI chat. Run it locally with Ollama, connect
 - **Local**: Ollama (full integration)
 - **Cloud**: OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, HuggingFace, and more
 - **HuggingFace Hub** — 1M+ models for chat, TTS, image gen, embeddings, STT
+- **Image Generation** — ComfyUI with Flux models
 - **Plugin System** — Add any OpenAI-compatible API via JSON config
+- **Plugin Variables** — Per-plugin configurable settings (temperature, endpoint, etc.)
 
 </td>
 <td width="50%">
