@@ -26,7 +26,7 @@
   <img src="https://img.shields.io/badge/SOC_2-Ready-purple" alt="SOC 2 Ready">
 </p>
 
-[Website](https://librewebui.org) • [Documentation](https://docs.librewebui.org) • [𝕏](https://x.com/librewebui) • [Sponsor](https://github.com/sponsors/libre-webui) • [Get Started](#quick-start)
+[Website](https://librewebui.org) • [Documentation](https://docs.librewebui.org) • [GitLab](https://git.kroonen.ai/libre-webui/libre-webui) • [𝕏](https://x.com/librewebui) • [Sponsor](https://github.com/sponsors/libre-webui) • [Get Started](#quick-start)
 
 </div>
 
@@ -343,6 +343,7 @@ Download the native desktop app from [GitHub Releases](https://github.com/libre-
 - [Contributing](https://github.com/libre-webui/libre-webui/contribute) — Help improve Libre WebUI
 - [𝕏 @librewebui](https://x.com/librewebui) — Follow for updates
 - [Mastodon](https://fosstodon.org/@librewebui) — Fediverse updates
+- [GitLab](https://git.kroonen.ai/libre-webui/libre-webui) — Self-hosted mirror
 - [GitHub Issues](https://github.com/libre-webui/libre-webui/issues) — Bug reports & feature requests
 - [Documentation](https://docs.librewebui.org) — Guides & API reference
 
