@@ -29,7 +29,6 @@ interface State {
 }
 
 // Default error UI component with translations - defined inline to colocate with ErrorBoundary
-// eslint-disable-next-line react-refresh/only-export-components
 const DefaultErrorFallback: React.FC<{ error?: Error }> = ({ error }) => {
   const { t } = useTranslation();
 
