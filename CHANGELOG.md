@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.7.1] - 2026-02-03
+
+### What's New
+
+This release improves Windows compatibility with automatic VRAM management when switching models, preventing memory exhaustion issues that could freeze the system. Security vulnerabilities have been patched and TTS stability has been improved.
+
+### ✨ New Features
+
+- **Auto-Unload Models**: Automatically unload running Ollama models before switching to a new one, preventing VRAM exhaustion on Windows (where GPU memory cannot spill to system RAM like on Linux)
+
+### 🔧 Improvements
+
+- **Code Quality**: Remove unused eslint-disable directive after eslint-plugin-react-refresh 0.5.0 upgrade
+
+### 🐛 Bug Fixes
+
+- **Security**: Patch @isaacs/brace-expansion ReDoS vulnerability (CVE) via npm override
+- **TTS Stability**: Add thread lock for audio generation concurrency to prevent race conditions
+
+### 🔄 Dependencies
+
+- Bump pdfjs-dist, eslint-plugin-react-refresh, @types/node
+- Bump the all-dependencies group with 3 updates
+
 ## [0.7.0] - 2026-02-01
 
 ### What's New
@@ -26,7 +50,7 @@ This release introduces a major new plugin variables (valves) system that allows
 - **Plugin Variables (Valves)**: Configure plugin settings dynamically with database persistence, input validation, and configurable endpoint overrides
 - **GGUF Model Downloads**: Download GGUF models directly from HuggingFace through the model browser interface
 - **Development Version Display**: Show commit hash in version string for development builds
-- **Enhanced Documentation**: New local GPU stack guide and Hetzner GPU deployment tutorial
+- **Enhanced Documentation**: New local GPU stack guide, Hetzner GPU deployment tutorial, plugin system architecture docs, and GitLab mirror link
 
 ### 🔧 Improvements
 
