@@ -723,6 +723,24 @@ export const ollamaApi = {
     return api.get('/ollama/running').then(res => res.data);
   },
 
+  // Unload a model from VRAM (useful on Windows to free memory before switching)
+  unloadModel: (modelName: string): Promise<ApiResponse> => {
+    if (isDemoMode()) {
+      return createDemoResponse(null);
+    }
+    return api
+      .post('/ollama/models/unload', { name: modelName })
+      .then(res => res.data);
+  },
+
+  // Unload all running models from VRAM
+  unloadAllModels: (): Promise<ApiResponse> => {
+    if (isDemoMode()) {
+      return createDemoResponse(null);
+    }
+    return api.post('/ollama/models/unload-all').then(res => res.data);
+  },
+
   getVersion: (): Promise<ApiResponse<{ version: string }>> => {
     if (isDemoMode()) {
       return createDemoResponse({ version: 'demo-mode' }, false);

@@ -362,14 +362,37 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     }
   }, [isOpen]);
 
-  const handleModelSelect = (modelName: string) => {
+  const handleModelSelect = async (modelName: string) => {
+    // Close dropdown immediately for better UX
+    setIsOpen(false);
+    setSearchTerm('');
+
+    // Unload running models before switching (helps on Windows where VRAM can't spill to RAM)
+    try {
+      const runningModelsResponse = await ollamaApi.listRunningModels();
+      if (runningModelsResponse.success && runningModelsResponse.data) {
+        const runningModels = runningModelsResponse.data;
+        // Only unload if there are running models and we're switching to a different one
+        if (runningModels.length > 0) {
+          const currentlyLoaded = runningModels.some(
+            m => m.name === modelName || modelName.startsWith('persona:')
+          );
+          if (!currentlyLoaded) {
+            // Unload all running models to free VRAM
+            await ollamaApi.unloadAllModels();
+          }
+        }
+      }
+    } catch (error) {
+      // Don't block model selection if unload fails - just log it
+      console.warn('Failed to unload models before switch:', error);
+    }
+
     const syntheticEvent = {
       target: { value: modelName },
     } as React.ChangeEvent<HTMLSelectElement>;
 
     onModelChange(syntheticEvent);
-    setIsOpen(false);
-    setSearchTerm('');
   };
 
   const handlePullModel = async (modelName: string) => {
