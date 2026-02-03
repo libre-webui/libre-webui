@@ -350,6 +350,52 @@ router.get(
   }
 );
 
+// Unload a model from memory (free VRAM)
+router.post(
+  '/models/unload',
+  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    try {
+      const modelName = req.body.name as string;
+      if (!modelName) {
+        res.status(400).json({
+          success: false,
+          error: 'Model name is required in request body',
+        });
+        return;
+      }
+      await ollamaService.unloadModel(modelName);
+      res.json({
+        success: true,
+        message: `Model ${modelName} unloaded successfully`,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to unload model'),
+      });
+    }
+  }
+);
+
+// Unload all running models from memory
+router.post(
+  '/models/unload-all',
+  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+    try {
+      await ollamaService.unloadAllModels();
+      res.json({
+        success: true,
+        message: 'All models unloaded successfully',
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to unload all models'),
+      });
+    }
+  }
+);
+
 // Get Ollama version
 router.get(
   '/version',

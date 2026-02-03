@@ -361,6 +361,37 @@ class OllamaService {
     }
   }
 
+  async unloadModel(modelName: string): Promise<void> {
+    try {
+      console.log(`Unloading model: ${modelName}`);
+      // Sending keep_alive: 0 tells Ollama to immediately unload the model from memory
+      await this.client.post('/api/generate', {
+        model: modelName,
+        keep_alive: 0,
+      });
+      console.log(`Successfully unloaded model: ${modelName}`);
+    } catch (error: unknown) {
+      console.error('Failed to unload model:', error);
+      throw new Error(getErrorMessage(error, 'Failed to unload model'));
+    }
+  }
+
+  async unloadAllModels(): Promise<void> {
+    try {
+      const runningModels = await this.listRunningModels();
+      const models = runningModels.models || [];
+      for (const model of models) {
+        const modelName = (model as { name?: string }).name;
+        if (modelName) {
+          await this.unloadModel(modelName);
+        }
+      }
+    } catch (error: unknown) {
+      console.error('Failed to unload all models:', error);
+      throw new Error(getErrorMessage(error, 'Failed to unload all models'));
+    }
+  }
+
   async getVersion(): Promise<{ version: string }> {
     try {
       const response = await this.client.get('/api/version');
