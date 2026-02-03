@@ -259,7 +259,22 @@
       "title": "Profielfoto wijzigen",
       "updated": "Profielfoto bijgewerkt",
       "updateFailed": "Kon profielfoto niet bijwerken",
-      "saving": "Opslaan..."
+      "saving": "Opslaan...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Avatar-afbeelding uploaden",
+      "dragAndDrop": "Sleep een afbeelding of klik om te bladeren",
+      "chooseImage": "Afbeelding kiezen",
+      "uploading": "Uploaden...",
+      "enterImageUrl": "Of voer afbeeldings-URL in",
+      "supportedFormats": "Ondersteunt: JPG, PNG, GIF, WebP (max 2 MB). Vierkante afbeeldingen werken het beste.",
+      "customAvatar": "Aangepaste avatar-afbeelding",
+      "clickToChange": "Klik om te wijzigen of verwijderen",
+      "removed": "Avatar verwijderd",
+      "uploaded": "Avatar succesvol geüpload",
+      "invalidFile": "Selecteer een geldig afbeeldingsbestand",
+      "fileTooLarge": "Avatar-afbeelding moet kleiner zijn dan 2 MB",
+      "readFailed": "Kon afbeeldingsbestand niet lezen",
+      "uploadFailed": "Kon avatar-afbeelding niet uploaden"
     },
     "profile": {
       "noEmail": "Geen e-mail opgegeven"

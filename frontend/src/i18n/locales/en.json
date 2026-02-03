@@ -259,7 +259,22 @@
       "title": "Change Profile Picture",
       "updated": "Profile picture updated",
       "updateFailed": "Failed to update profile picture",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Upload avatar image",
+      "dragAndDrop": "Drag and drop an image or click to browse",
+      "chooseImage": "Choose Image",
+      "uploading": "Uploading...",
+      "enterImageUrl": "Or enter image URL",
+      "supportedFormats": "Supports: JPG, PNG, GIF, WebP (max 2MB). Square images work best.",
+      "customAvatar": "Custom avatar image",
+      "clickToChange": "Click to change or remove",
+      "removed": "Avatar removed",
+      "uploaded": "Avatar uploaded successfully",
+      "invalidFile": "Please select a valid image file",
+      "fileTooLarge": "Avatar image size must be less than 2MB",
+      "readFailed": "Failed to read image file",
+      "uploadFailed": "Failed to upload avatar image"
     },
     "profile": {
       "noEmail": "No email provided"

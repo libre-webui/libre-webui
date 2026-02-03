@@ -259,7 +259,22 @@
       "title": "Profil Resmini Değiştir",
       "updated": "Profil resmi güncellendi",
       "updateFailed": "Profil resmi güncellenemedi",
-      "saving": "Kaydediliyor..."
+      "saving": "Kaydediliyor...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Avatar resmi yükle",
+      "dragAndDrop": "Bir resmi sürükleyip bırakın veya göz atmak için tıklayın",
+      "chooseImage": "Resim Seç",
+      "uploading": "Yükleniyor...",
+      "enterImageUrl": "Veya resim URL'si girin",
+      "supportedFormats": "Desteklenen: JPG, PNG, GIF, WebP (maks. 2MB). Kare resimler en iyi sonucu verir.",
+      "customAvatar": "Özel avatar resmi",
+      "clickToChange": "Değiştirmek veya kaldırmak için tıklayın",
+      "removed": "Avatar kaldırıldı",
+      "uploaded": "Avatar başarıyla yüklendi",
+      "invalidFile": "Lütfen geçerli bir resim dosyası seçin",
+      "fileTooLarge": "Avatar resim boyutu 2MB'dan küçük olmalıdır",
+      "readFailed": "Resim dosyası okunamadı",
+      "uploadFailed": "Avatar resmi yüklenemedi"
     },
     "profile": {
       "noEmail": "E-posta belirtilmemiş"

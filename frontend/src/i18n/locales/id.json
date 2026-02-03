@@ -259,7 +259,22 @@
       "title": "Ubah Foto Profil",
       "updated": "Foto profil diperbarui",
       "updateFailed": "Gagal memperbarui foto profil",
-      "saving": "Menyimpan..."
+      "saving": "Menyimpan...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Unggah gambar avatar",
+      "dragAndDrop": "Seret dan lepas gambar atau klik untuk menelusuri",
+      "chooseImage": "Pilih Gambar",
+      "uploading": "Mengunggah...",
+      "enterImageUrl": "Atau masukkan URL gambar",
+      "supportedFormats": "Mendukung: JPG, PNG, GIF, WebP (maks. 2MB). Gambar persegi paling cocok.",
+      "customAvatar": "Gambar avatar kustom",
+      "clickToChange": "Klik untuk mengubah atau menghapus",
+      "removed": "Avatar dihapus",
+      "uploaded": "Avatar berhasil diunggah",
+      "invalidFile": "Silakan pilih file gambar yang valid",
+      "fileTooLarge": "Ukuran gambar avatar harus kurang dari 2MB",
+      "readFailed": "Gagal membaca file gambar",
+      "uploadFailed": "Gagal mengunggah gambar avatar"
     },
     "profile": {
       "noEmail": "Tidak ada email"

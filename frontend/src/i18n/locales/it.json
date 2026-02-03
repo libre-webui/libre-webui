@@ -259,7 +259,22 @@
       "title": "Cambia immagine profilo",
       "updated": "Immagine profilo aggiornata",
       "updateFailed": "Impossibile aggiornare immagine profilo",
-      "saving": "Salvataggio..."
+      "saving": "Salvataggio...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Carica immagine avatar",
+      "dragAndDrop": "Trascina e rilascia un'immagine o clicca per sfogliare",
+      "chooseImage": "Scegli immagine",
+      "uploading": "Caricamento...",
+      "enterImageUrl": "Oppure inserisci URL immagine",
+      "supportedFormats": "Supporta: JPG, PNG, GIF, WebP (max 2 MB). Le immagini quadrate funzionano meglio.",
+      "customAvatar": "Immagine avatar personalizzata",
+      "clickToChange": "Clicca per modificare o rimuovere",
+      "removed": "Avatar rimosso",
+      "uploaded": "Avatar caricato con successo",
+      "invalidFile": "Seleziona un file immagine valido",
+      "fileTooLarge": "La dimensione dell'immagine avatar deve essere inferiore a 2 MB",
+      "readFailed": "Impossibile leggere il file immagine",
+      "uploadFailed": "Impossibile caricare l'immagine avatar"
     },
     "profile": {
       "noEmail": "Nessuna email fornita"

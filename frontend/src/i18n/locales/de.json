@@ -259,7 +259,22 @@
       "title": "Profilbild ändern",
       "updated": "Profilbild aktualisiert",
       "updateFailed": "Profilbild konnte nicht aktualisiert werden",
-      "saving": "Wird gespeichert..."
+      "saving": "Wird gespeichert...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Avatar-Bild hochladen",
+      "dragAndDrop": "Bild hierher ziehen oder zum Durchsuchen klicken",
+      "chooseImage": "Bild auswählen",
+      "uploading": "Wird hochgeladen...",
+      "enterImageUrl": "Oder Bild-URL eingeben",
+      "supportedFormats": "Unterstützt: JPG, PNG, GIF, WebP (max. 2 MB). Quadratische Bilder funktionieren am besten.",
+      "customAvatar": "Benutzerdefiniertes Avatar-Bild",
+      "clickToChange": "Zum Ändern oder Entfernen klicken",
+      "removed": "Avatar entfernt",
+      "uploaded": "Avatar erfolgreich hochgeladen",
+      "invalidFile": "Bitte wählen Sie eine gültige Bilddatei aus",
+      "fileTooLarge": "Die Avatar-Bildgröße muss kleiner als 2 MB sein",
+      "readFailed": "Bilddatei konnte nicht gelesen werden",
+      "uploadFailed": "Avatar-Bild konnte nicht hochgeladen werden"
     },
     "profile": {
       "noEmail": "Keine E-Mail angegeben"
