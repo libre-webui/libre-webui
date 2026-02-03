@@ -24,6 +24,7 @@ import io
 import os
 import re
 import sys
+import threading
 from typing import Optional
 
 import numpy as np
@@ -68,6 +69,8 @@ model: Optional[TTSModel] = None
 current_device: str = "cpu"
 # Lock to prevent concurrent generation (moshi doesn't support concurrent streaming)
 generation_lock: Optional[asyncio.Lock] = None
+# Thread lock for executor - moshi model is not thread-safe
+_thread_lock = threading.Lock()
 
 # Available voices from kyutai/tts-voices
 # These are paths relative to the voice repository
@@ -465,26 +468,28 @@ async def create_speech(request: TTSRequest):
         loop = asyncio.get_event_loop()
 
         def _generate():
-            # Prepare the script - returns list of Entry objects
-            entries = model.prepare_script([clean_text], padding_between=1)
+            # Thread lock to prevent concurrent model access
+            with _thread_lock:
+                # Prepare the script - returns list of Entry objects
+                entries = model.prepare_script([clean_text], padding_between=1)
 
-            # Prepare condition attributes using voice safetensors file
-            cond_attrs = model.make_condition_attributes([voice_path], cfg_coef=request.cfg_coef)
+                # Prepare condition attributes using voice safetensors file
+                cond_attrs = model.make_condition_attributes([voice_path], cfg_coef=request.cfg_coef)
 
-            # Generate all frames first
-            result = model.generate([entries], [cond_attrs])
+                # Generate all frames first
+                result = model.generate([entries], [cond_attrs])
 
-            # Decode with streaming context - this is crucial for smooth audio
-            # The mimi codec needs streaming mode for proper decoding
-            with model.mimi.streaming(1), torch.no_grad():
-                pcms = []
-                for frame in result.frames[model.delay_steps:]:
-                    pcm = model.mimi.decode(frame[:, 1:, :]).cpu().numpy()
-                    pcms.append(np.clip(pcm[0, 0], -1, 1))
+                # Decode with streaming context - this is crucial for smooth audio
+                # The mimi codec needs streaming mode for proper decoding
+                with model.mimi.streaming(1), torch.no_grad():
+                    pcms = []
+                    for frame in result.frames[model.delay_steps:]:
+                        pcm = model.mimi.decode(frame[:, 1:, :]).cpu().numpy()
+                        pcms.append(np.clip(pcm[0, 0], -1, 1))
 
-            if pcms:
-                return np.concatenate(pcms, axis=-1)
-            return None
+                if pcms:
+                    return np.concatenate(pcms, axis=-1)
+                return None
 
         return await loop.run_in_executor(None, _generate)
 
