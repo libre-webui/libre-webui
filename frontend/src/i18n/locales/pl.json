@@ -259,7 +259,22 @@
       "title": "Zmień zdjęcie profilowe",
       "updated": "Zdjęcie profilowe zaktualizowane",
       "updateFailed": "Nie udało się zaktualizować zdjęcia profilowego",
-      "saving": "Zapisywanie..."
+      "saving": "Zapisywanie...",
+      "label": "Awatar",
+      "uploadAvatarImage": "Prześlij zdjęcie awatara",
+      "dragAndDrop": "Przeciągnij i upuść obraz lub kliknij, aby przeglądać",
+      "chooseImage": "Wybierz obraz",
+      "uploading": "Przesyłanie...",
+      "enterImageUrl": "Lub wprowadź URL obrazu",
+      "supportedFormats": "Obsługiwane: JPG, PNG, GIF, WebP (maks. 2 MB). Kwadratowe obrazy działają najlepiej.",
+      "customAvatar": "Niestandardowy obraz awatara",
+      "clickToChange": "Kliknij, aby zmienić lub usunąć",
+      "removed": "Awatar usunięty",
+      "uploaded": "Awatar przesłany pomyślnie",
+      "invalidFile": "Proszę wybrać prawidłowy plik obrazu",
+      "fileTooLarge": "Rozmiar obrazu awatara musi być mniejszy niż 2 MB",
+      "readFailed": "Nie udało się odczytać pliku obrazu",
+      "uploadFailed": "Nie udało się przesłać obrazu awatara"
     },
     "profile": {
       "noEmail": "Brak adresu email"

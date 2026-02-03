@@ -259,7 +259,22 @@
       "title": "更换头像",
       "updated": "头像已更新",
       "updateFailed": "更新头像失败",
-      "saving": "保存中..."
+      "saving": "保存中...",
+      "label": "头像",
+      "uploadAvatarImage": "上传头像图片",
+      "dragAndDrop": "拖放图片或点击浏览",
+      "chooseImage": "选择图片",
+      "uploading": "上传中...",
+      "enterImageUrl": "或输入图片URL",
+      "supportedFormats": "支持格式：JPG、PNG、GIF、WebP（最大2MB）。方形图片效果最佳。",
+      "customAvatar": "自定义头像图片",
+      "clickToChange": "点击更改或删除",
+      "removed": "头像已删除",
+      "uploaded": "头像上传成功",
+      "invalidFile": "请选择有效的图片文件",
+      "fileTooLarge": "头像图片大小必须小于2MB",
+      "readFailed": "读取图片文件失败",
+      "uploadFailed": "上传头像图片失败"
     },
     "profile": {
       "noEmail": "未提供邮箱"

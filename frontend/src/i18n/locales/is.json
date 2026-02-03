@@ -259,7 +259,22 @@
       "title": "Breyta prófílmynd",
       "updated": "Prófílmynd uppfærð",
       "updateFailed": "Ekki tókst að uppfæra prófílmynd",
-      "saving": "Vistar..."
+      "saving": "Vistar...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Hlaða upp avatar mynd",
+      "dragAndDrop": "Dragðu og slepptu mynd eða smelltu til að vafra",
+      "chooseImage": "Velja mynd",
+      "uploading": "Hleð upp...",
+      "enterImageUrl": "Eða sláðu inn slóð myndar",
+      "supportedFormats": "Styður: JPG, PNG, GIF, WebP (hámark 2MB). Ferningslaga myndir virka best.",
+      "customAvatar": "Sérsniðin avatar mynd",
+      "clickToChange": "Smelltu til að breyta eða fjarlægja",
+      "removed": "Avatar fjarlægður",
+      "uploaded": "Avatar hlaðið upp",
+      "invalidFile": "Vinsamlegast veldu gilda myndskrá",
+      "fileTooLarge": "Avatar mynd verður að vera minni en 2MB",
+      "readFailed": "Ekki tókst að lesa myndskrá",
+      "uploadFailed": "Ekki tókst að hlaða upp avatar mynd"
     },
     "profile": {
       "noEmail": "Ekkert netfang skráð"

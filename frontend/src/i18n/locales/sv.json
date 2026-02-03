@@ -259,7 +259,22 @@
       "title": "Ändra profilbild",
       "updated": "Profilbilden uppdaterad",
       "updateFailed": "Kunde inte uppdatera profilbilden",
-      "saving": "Sparar..."
+      "saving": "Sparar...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Ladda upp avatarbild",
+      "dragAndDrop": "Dra och släpp en bild eller klicka för att bläddra",
+      "chooseImage": "Välj bild",
+      "uploading": "Laddar upp...",
+      "enterImageUrl": "Eller ange bild-URL",
+      "supportedFormats": "Stöder: JPG, PNG, GIF, WebP (max 2 MB). Fyrkantiga bilder fungerar bäst.",
+      "customAvatar": "Anpassad avatarbild",
+      "clickToChange": "Klicka för att ändra eller ta bort",
+      "removed": "Avatar borttagen",
+      "uploaded": "Avatar uppladdad",
+      "invalidFile": "Vänligen välj en giltig bildfil",
+      "fileTooLarge": "Avatarbildens storlek måste vara mindre än 2 MB",
+      "readFailed": "Kunde inte läsa bildfilen",
+      "uploadFailed": "Kunde inte ladda upp avatarbild"
     },
     "profile": {
       "noEmail": "Ingen e-post angiven"

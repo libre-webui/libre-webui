@@ -259,7 +259,22 @@
       "title": "Skift profilbillede",
       "updated": "Profilbillede opdateret",
       "updateFailed": "Kunne ikke opdatere profilbillede",
-      "saving": "Gemmer..."
+      "saving": "Gemmer...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Upload avatarbillede",
+      "dragAndDrop": "Træk og slip et billede eller klik for at gennemse",
+      "chooseImage": "Vælg billede",
+      "uploading": "Uploader...",
+      "enterImageUrl": "Eller indtast billed-URL",
+      "supportedFormats": "Understøtter: JPG, PNG, GIF, WebP (maks. 2 MB). Firkantede billeder fungerer bedst.",
+      "customAvatar": "Brugerdefineret avatarbillede",
+      "clickToChange": "Klik for at ændre eller fjerne",
+      "removed": "Avatar fjernet",
+      "uploaded": "Avatar uploadet",
+      "invalidFile": "Vælg venligst en gyldig billedfil",
+      "fileTooLarge": "Avatarbilledets størrelse skal være mindre end 2 MB",
+      "readFailed": "Kunne ikke læse billedfilen",
+      "uploadFailed": "Kunne ikke uploade avatarbillede"
     },
     "profile": {
       "noEmail": "Ingen e-mail angivet"

@@ -259,7 +259,22 @@
       "title": "Đổi ảnh hồ sơ",
       "updated": "Đã cập nhật ảnh hồ sơ",
       "updateFailed": "Không thể cập nhật ảnh hồ sơ",
-      "saving": "Đang lưu..."
+      "saving": "Đang lưu...",
+      "label": "Ảnh đại diện",
+      "uploadAvatarImage": "Tải lên ảnh đại diện",
+      "dragAndDrop": "Kéo và thả ảnh hoặc nhấp để duyệt",
+      "chooseImage": "Chọn ảnh",
+      "uploading": "Đang tải lên...",
+      "enterImageUrl": "Hoặc nhập URL ảnh",
+      "supportedFormats": "Hỗ trợ: JPG, PNG, GIF, WebP (tối đa 2MB). Ảnh vuông hoạt động tốt nhất.",
+      "customAvatar": "Ảnh đại diện tùy chỉnh",
+      "clickToChange": "Nhấp để thay đổi hoặc xóa",
+      "removed": "Đã xóa ảnh đại diện",
+      "uploaded": "Tải lên ảnh đại diện thành công",
+      "invalidFile": "Vui lòng chọn tệp ảnh hợp lệ",
+      "fileTooLarge": "Kích thước ảnh đại diện phải nhỏ hơn 2MB",
+      "readFailed": "Không thể đọc tệp ảnh",
+      "uploadFailed": "Không thể tải lên ảnh đại diện"
     },
     "profile": {
       "noEmail": "Chưa cung cấp email"

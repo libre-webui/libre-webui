@@ -259,7 +259,22 @@
       "title": "Změnit profilový obrázek",
       "updated": "Profilový obrázek aktualizován",
       "updateFailed": "Nepodařilo se aktualizovat profilový obrázek",
-      "saving": "Ukládání..."
+      "saving": "Ukládání...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Nahrát obrázek avatara",
+      "dragAndDrop": "Přetáhněte obrázek nebo klikněte pro procházení",
+      "chooseImage": "Vybrat obrázek",
+      "uploading": "Nahrávání...",
+      "enterImageUrl": "Nebo zadejte URL obrázku",
+      "supportedFormats": "Podporuje: JPG, PNG, GIF, WebP (max. 2 MB). Čtvercové obrázky fungují nejlépe.",
+      "customAvatar": "Vlastní obrázek avatara",
+      "clickToChange": "Klikněte pro změnu nebo odstranění",
+      "removed": "Avatar odstraněn",
+      "uploaded": "Avatar úspěšně nahrán",
+      "invalidFile": "Prosím vyberte platný soubor obrázku",
+      "fileTooLarge": "Velikost obrázku avatara musí být menší než 2 MB",
+      "readFailed": "Nepodařilo se přečíst soubor obrázku",
+      "uploadFailed": "Nepodařilo se nahrát obrázek avatara"
     },
     "profile": {
       "noEmail": "Email není uveden"

@@ -259,7 +259,22 @@
       "title": "Changer la photo de profil",
       "updated": "Photo de profil mise à jour",
       "updateFailed": "Échec de la mise à jour de la photo de profil",
-      "saving": "Enregistrement..."
+      "saving": "Enregistrement...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Télécharger une image d'avatar",
+      "dragAndDrop": "Glissez-déposez une image ou cliquez pour parcourir",
+      "chooseImage": "Choisir une image",
+      "uploading": "Téléchargement...",
+      "enterImageUrl": "Ou entrez l'URL de l'image",
+      "supportedFormats": "Formats supportés : JPG, PNG, GIF, WebP (max 2 Mo). Les images carrées fonctionnent mieux.",
+      "customAvatar": "Image d'avatar personnalisée",
+      "clickToChange": "Cliquez pour modifier ou supprimer",
+      "removed": "Avatar supprimé",
+      "uploaded": "Avatar téléchargé avec succès",
+      "invalidFile": "Veuillez sélectionner un fichier image valide",
+      "fileTooLarge": "La taille de l'image d'avatar doit être inférieure à 2 Mo",
+      "readFailed": "Échec de la lecture du fichier image",
+      "uploadFailed": "Échec du téléchargement de l'image d'avatar"
     },
     "profile": {
       "noEmail": "Aucun email fourni"

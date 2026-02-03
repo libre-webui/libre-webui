@@ -259,7 +259,22 @@
       "title": "Tukar Gambar Profil",
       "updated": "Gambar profil dikemas kini",
       "updateFailed": "Gagal mengemas kini gambar profil",
-      "saving": "Menyimpan..."
+      "saving": "Menyimpan...",
+      "label": "Avatar",
+      "uploadAvatarImage": "Muat naik gambar avatar",
+      "dragAndDrop": "Seret dan lepas gambar atau klik untuk menyemak imbas",
+      "chooseImage": "Pilih Gambar",
+      "uploading": "Memuat naik...",
+      "enterImageUrl": "Atau masukkan URL gambar",
+      "supportedFormats": "Menyokong: JPG, PNG, GIF, WebP (maks. 2MB). Gambar segi empat sama berfungsi paling baik.",
+      "customAvatar": "Gambar avatar tersuai",
+      "clickToChange": "Klik untuk menukar atau mengalih keluar",
+      "removed": "Avatar dialih keluar",
+      "uploaded": "Avatar berjaya dimuat naik",
+      "invalidFile": "Sila pilih fail gambar yang sah",
+      "fileTooLarge": "Saiz gambar avatar mesti kurang daripada 2MB",
+      "readFailed": "Gagal membaca fail gambar",
+      "uploadFailed": "Gagal memuat naik gambar avatar"
     },
     "profile": {
       "noEmail": "Tiada e-mel diberikan"
