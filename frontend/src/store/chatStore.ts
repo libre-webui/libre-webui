@@ -677,7 +677,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
 
       console.log('Total models loaded:', allModels.length);
-      set({ models: allModels, loading: false });
+
+      // Validate that the currently selected model still exists in the models list
+      const currentState = get();
+      const currentSelectedModel = currentState.selectedModel;
+      const modelExists = allModels.some(m => m.name === currentSelectedModel);
+
+      if (currentSelectedModel && !modelExists && allModels.length > 0) {
+        // Current model is no longer available, fallback to first available model
+        const fallbackModel = allModels[0].name;
+        console.log(
+          `⚠️ Selected model "${currentSelectedModel}" no longer available, falling back to "${fallbackModel}"`
+        );
+        set({
+          models: allModels,
+          loading: false,
+          selectedModel: fallbackModel,
+        });
+        toast.success(
+          `Switched to ${fallbackModel} (previous model no longer available)`
+        );
+      } else {
+        set({ models: allModels, loading: false });
+      }
     } catch (error: unknown) {
       console.error('Error loading models:', error);
       const errorMessage = getErrorMessage(error, 'Failed to load models');
