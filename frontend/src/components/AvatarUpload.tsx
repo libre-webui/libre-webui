@@ -39,13 +39,13 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toast.error(t('header.avatar.invalidFile'));
+      toast.error(t('user.avatar.invalidFile'));
       return;
     }
 
     if (file.size > 2 * 1024 * 1024) {
       // 2MB limit for avatars
-      toast.error(t('header.avatar.fileTooLarge'));
+      toast.error(t('user.avatar.fileTooLarge'));
       return;
     }
 
@@ -56,15 +56,15 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       reader.onload = e => {
         const dataUrl = e.target?.result as string;
         onChange(dataUrl);
-        toast.success(t('header.avatar.uploaded'));
+        toast.success(t('user.avatar.uploaded'));
       };
       reader.onerror = () => {
-        toast.error(t('header.avatar.readFailed'));
+        toast.error(t('user.avatar.readFailed'));
       };
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Failed to upload avatar:', error);
-      toast.error(t('header.avatar.uploadFailed'));
+      toast.error(t('user.avatar.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -101,7 +101,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
   const handleRemoveAvatar = () => {
     onChange('');
-    toast.success(t('header.avatar.removed'));
+    toast.success(t('user.avatar.removed'));
   };
 
   const getAvatarSrc = () => {
@@ -115,7 +115,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     <div className={`space-y-4 ${className}`}>
       <div>
         <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-          {t('header.avatar.label')}
+          {t('user.avatar.label')}
         </label>
 
         {/* Avatar Preview and Upload Area */}
@@ -141,10 +141,10 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
               <div className='flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-200 rounded-lg'>
                 <div className='flex-1 min-w-0'>
                   <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
-                    {t('header.avatar.customAvatar')}
+                    {t('user.avatar.customAvatar')}
                   </p>
                   <p className='text-xs text-gray-500 dark:text-gray-400'>
-                    {t('header.avatar.clickToChange')}
+                    {t('user.avatar.clickToChange')}
                   </p>
                 </div>
                 <Button
@@ -170,10 +170,10 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
               >
                 <Upload className='h-8 w-8 mx-auto text-gray-400 dark:text-gray-500 mb-2' />
                 <p className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-2'>
-                  {t('header.avatar.uploadAvatarImage')}
+                  {t('user.avatar.uploadAvatarImage')}
                 </p>
                 <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
-                  {t('header.avatar.dragAndDrop')}
+                  {t('user.avatar.dragAndDrop')}
                 </p>
                 <Button
                   variant='outline'
@@ -183,8 +183,8 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
                 >
                   <Upload className='h-4 w-4 mr-2' />
                   {uploading
-                    ? t('header.avatar.uploading')
-                    : t('header.avatar.chooseImage')}
+                    ? t('user.avatar.uploading')
+                    : t('user.avatar.chooseImage')}
                 </Button>
               </div>
             )}
@@ -192,7 +192,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
             {/* URL Input Alternative */}
             <div>
               <label className='block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1'>
-                {t('header.avatar.enterImageUrl')}
+                {t('user.avatar.enterImageUrl')}
               </label>
               <input
                 type='url'
@@ -214,7 +214,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
         />
 
         <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
-          {t('header.avatar.supportedFormats')}
+          {t('user.avatar.supportedFormats')}
         </p>
       </div>
     </div>
