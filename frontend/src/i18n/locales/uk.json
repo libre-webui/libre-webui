@@ -576,7 +576,9 @@
         "ollamaDescription": "Дізнайтеся більше про Ollama",
         "documentation": "Документація",
         "reportIssue": "Повідомити про проблему",
-        "reportIssueDescription": "Звіти про помилки та запити функцій"
+        "reportIssueDescription": "Звіти про помилки та запити функцій",
+        "gitlab": "Дзеркало GitLab",
+        "gitlabDescription": "Самостійно розміщений репозиторій GitLab"
       },
       "version": "Версія {{version}}"
     }

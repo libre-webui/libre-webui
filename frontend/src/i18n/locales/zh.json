@@ -576,7 +576,9 @@
         "ollamaDescription": "了解更多关于 Ollama",
         "documentation": "文档",
         "reportIssue": "报告问题",
-        "reportIssueDescription": "错误报告和功能请求"
+        "reportIssueDescription": "错误报告和功能请求",
+        "gitlab": "GitLab镜像",
+        "gitlabDescription": "自托管GitLab仓库"
       },
       "version": "版本 {{version}}"
     }

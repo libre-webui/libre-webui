@@ -576,7 +576,9 @@
         "ollamaDescription": "Frekari upplýsingar um Ollama",
         "documentation": "Skjölun",
         "reportIssue": "Tilkynna vandamál",
-        "reportIssueDescription": "Villutilkynningar og eiginleikabeiðnir"
+        "reportIssueDescription": "Villutilkynningar og eiginleikabeiðnir",
+        "gitlab": "GitLab Mirror",
+        "gitlabDescription": "Self-hosted GitLab repository"
       },
       "version": "Útgáfa {{version}}"
     }

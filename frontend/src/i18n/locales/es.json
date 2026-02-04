@@ -576,7 +576,9 @@
         "ollamaDescription": "Aprende más sobre Ollama",
         "documentation": "Documentación",
         "reportIssue": "Reportar problemas",
-        "reportIssueDescription": "Reportes de bugs y solicitudes de funciones"
+        "reportIssueDescription": "Reportes de bugs y solicitudes de funciones",
+        "gitlab": "Espejo GitLab",
+        "gitlabDescription": "Repositorio GitLab auto-alojado"
       },
       "version": "Versión {{version}}"
     }

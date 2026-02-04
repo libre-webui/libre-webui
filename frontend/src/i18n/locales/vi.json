@@ -576,7 +576,9 @@
         "ollamaDescription": "Tìm hiểu thêm về Ollama",
         "documentation": "Tài liệu",
         "reportIssue": "Báo cáo vấn đề",
-        "reportIssueDescription": "Báo lỗi & yêu cầu tính năng"
+        "reportIssueDescription": "Báo lỗi & yêu cầu tính năng",
+        "gitlab": "Bản sao GitLab",
+        "gitlabDescription": "Kho GitLab tự lưu trữ"
       },
       "version": "Phiên bản {{version}}"
     }

@@ -576,7 +576,9 @@
         "ollamaDescription": "Ollama সম্পর্কে আরও জানুন",
         "documentation": "ডকুমেন্টেশন",
         "reportIssue": "সমস্যা রিপোর্ট করুন",
-        "reportIssueDescription": "বাগ রিপোর্ট এবং ফিচার অনুরোধ"
+        "reportIssueDescription": "বাগ রিপোর্ট এবং ফিচার অনুরোধ",
+        "gitlab": "GitLab Mirror",
+        "gitlabDescription": "Self-hosted GitLab repository"
       },
       "version": "সংস্করণ {{version}}"
     }

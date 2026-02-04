@@ -27,6 +27,7 @@ import {
   MessageSquare,
   Info,
   Github,
+  Gitlab,
   ExternalLink,
   Puzzle,
   Upload,
@@ -2816,6 +2817,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       </p>
                       <p className='text-xs text-gray-500 dark:text-gray-400'>
                         {t('settings.about.links.githubDescription')}
+                      </p>
+                    </div>
+                    <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
+                  </a>
+
+                  <a
+                    href='https://git.kroonen.ai/libre-webui/libre-webui'
+                    target='_blank'
+                    rel='noopener noreferrer'
+                    className='flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group'
+                  >
+                    <Gitlab className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
+                    <div>
+                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                        {t('settings.about.links.gitlab')}
+                      </p>
+                      <p className='text-xs text-gray-500 dark:text-gray-400'>
+                        {t('settings.about.links.gitlabDescription')}
                       </p>
                     </div>
                     <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
