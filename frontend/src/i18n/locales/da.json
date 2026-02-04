@@ -761,6 +761,7 @@
         "namePlaceholder": "f.eks. min-assistent",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM Du er en hjælpsom assistent.",
+        "see": "Se",
         "docs": "Modelfile-dokumentation",
         "docsLink": "for syntaksreference",
         "creating": "Opretter...",

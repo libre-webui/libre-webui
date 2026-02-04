@@ -761,6 +761,7 @@
         "namePlaceholder": "例如：my-assistant",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM You are a helpful assistant.",
+        "see": "查看",
         "docs": "Modelfile 文档",
         "docsLink": "语法参考",
         "creating": "创建中...",

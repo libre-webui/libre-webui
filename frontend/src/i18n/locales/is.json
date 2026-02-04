@@ -761,6 +761,7 @@
         "namePlaceholder": "t.d. minn-aðstoðarmaður",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM Þú ert hjálpsamur aðstoðarmaður.",
+        "see": "Sjá",
         "docs": "Modelfile skjölun",
         "docsLink": "fyrir setningafræðiviðmið",
         "creating": "Býr til...",

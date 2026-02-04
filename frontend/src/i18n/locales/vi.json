@@ -761,6 +761,7 @@
         "namePlaceholder": "vd: my-assistant",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM You are a helpful assistant.",
+        "see": "Xem",
         "docs": "Tài liệu Modelfile",
         "docsLink": "để tham khảo cú pháp",
         "creating": "Đang tạo...",

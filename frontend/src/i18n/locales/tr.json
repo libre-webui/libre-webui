@@ -761,6 +761,7 @@
         "namePlaceholder": "ör., benim-asistanım",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM Yardımcı bir asistansınız.",
+        "see": "Bkz.",
         "docs": "Modelfile belgeleri",
         "docsLink": "söz dizimi referansı için",
         "creating": "Oluşturuluyor...",

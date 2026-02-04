@@ -761,6 +761,7 @@
         "namePlaceholder": "เช่น my-assistant",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM You are a helpful assistant.",
+        "see": "ดู",
         "docs": "เอกสาร Modelfile",
         "docsLink": "สำหรับอ้างอิงไวยากรณ์",
         "creating": "กำลังสร้าง...",
