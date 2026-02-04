@@ -761,6 +761,7 @@
         "namePlaceholder": "ej. mi-asistente",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM Eres un asistente útil.",
+        "see": "Ver",
         "docs": "Documentación de Modelfile",
         "docsLink": "para referencia de sintaxis",
         "creating": "Creando...",

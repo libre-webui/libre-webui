@@ -761,6 +761,7 @@
         "namePlaceholder": "např. muj-asistent",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM Jsi užitečný asistent.",
+        "see": "Viz",
         "docs": "Dokumentace Modelfile",
         "docsLink": "pro referenci syntaxe",
         "creating": "Vytváření...",

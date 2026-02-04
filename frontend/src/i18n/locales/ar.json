@@ -761,6 +761,7 @@
         "namePlaceholder": "مثل my-assistant",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM You are a helpful assistant.",
+        "see": "راجع",
         "docs": "توثيق Modelfile",
         "docsLink": "لمرجع الصيغة",
         "creating": "جاري الإنشاء...",

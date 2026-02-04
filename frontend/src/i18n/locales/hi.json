@@ -761,6 +761,7 @@
         "namePlaceholder": "जैसे, my-assistant",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM You are a helpful assistant.",
+        "see": "देखें",
         "docs": "Modelfile डॉक्स",
         "docsLink": "सिंटैक्स संदर्भ के लिए",
         "creating": "बनाया जा रहा है...",

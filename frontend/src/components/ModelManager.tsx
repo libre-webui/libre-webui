@@ -2328,7 +2328,7 @@ export const ModelManager: React.FC = () => {
                     )}
                   />
                   <p className='mt-1 text-xs text-gray-500 ophelia:text-[#737373]'>
-                    See{' '}
+                    {t('modelManager.modals.create.see')}{' '}
                     <a
                       href='https://github.com/ollama/ollama/blob/main/docs/modelfile.md'
                       target='_blank'

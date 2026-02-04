@@ -761,6 +761,7 @@
         "namePlaceholder": "напр., my-assistant",
         "modelfile": "Modelfile",
         "modelfilePlaceholder": "FROM llama3.2\nSYSTEM You are a helpful assistant.",
+        "see": "См.",
         "docs": "Документация Modelfile",
         "docsLink": "для справки по синтаксису",
         "creating": "Создание...",
