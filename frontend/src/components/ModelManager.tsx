@@ -826,10 +826,10 @@ export const ModelManager: React.FC = () => {
                   <span className='text-sm font-medium text-gray-800 dark:text-dark-700 ophelia:text-[#e5e5e5]'>
                     {pullProgress.status === 'starting'
                       ? t('modelManager.progress.starting')
-                      : pullProgress.status === 'pulling'
-                        ? t('modelManager.progress.pulling')
-                        : pullProgress.status === 'verifying sha256'
-                          ? t('modelManager.progress.verifying')
+                      : pullProgress.status.startsWith('pulling')
+                        ? `${t('modelManager.progress.pullingLayer')} ${pullProgress.status.replace('pulling ', '')}`
+                        : pullProgress.status.startsWith('verifying sha256')
+                          ? t('modelManager.progress.verifyingDigest')
                           : pullProgress.status === 'writing manifest'
                             ? t('modelManager.progress.writing')
                             : pullProgress.status ===

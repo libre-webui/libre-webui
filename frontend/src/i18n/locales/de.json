@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Wird initialisiert...",
       "pulling": "Modell wird heruntergeladen...",
+      "pullingLayer": "Herunterladen",
       "verifying": "Integrität wird überprüft...",
+      "verifyingDigest": "sha256-Digest wird überprüft",
       "writing": "Manifest wird geschrieben...",
       "cleaning": "Wird aufgeräumt..."
     },

@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Initierar...",
       "pulling": "Laddar ner modell...",
+      "pullingLayer": "laddar ner",
       "verifying": "Verifierar integritet...",
+      "verifyingDigest": "verifierar sha256-digest",
       "writing": "Skriver manifest...",
       "cleaning": "Städar upp..."
     },

@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Initialiseren...",
       "pulling": "Model downloaden...",
+      "pullingLayer": "downloaden",
       "verifying": "Integriteit verifiëren...",
+      "verifyingDigest": "sha256-digest verifiëren",
       "writing": "Manifest schrijven...",
       "cleaning": "Opruimen..."
     },

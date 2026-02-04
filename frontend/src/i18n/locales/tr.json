@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Başlatılıyor...",
       "pulling": "Model indiriliyor...",
+      "pullingLayer": "indiriliyor",
       "verifying": "Bütünlük doğrulanıyor...",
+      "verifyingDigest": "sha256 özeti doğrulanıyor",
       "writing": "Manifest yazılıyor...",
       "cleaning": "Temizleniyor..."
     },

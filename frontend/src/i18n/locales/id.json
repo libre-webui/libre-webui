@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Menginisialisasi...",
       "pulling": "Mengunduh model...",
+      "pullingLayer": "mengunduh",
       "verifying": "Memverifikasi integritas...",
+      "verifyingDigest": "memverifikasi digest sha256",
       "writing": "Menulis manifest...",
       "cleaning": "Membersihkan..."
     },

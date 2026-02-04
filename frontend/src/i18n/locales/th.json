@@ -692,7 +692,9 @@
     "progress": {
       "starting": "กำลังเริ่มต้น...",
       "pulling": "กำลังดาวน์โหลดโมเดล...",
+      "pullingLayer": "กำลังดาวน์โหลด",
       "verifying": "กำลังตรวจสอบความถูกต้อง...",
+      "verifyingDigest": "กำลังตรวจสอบ sha256 digest",
       "writing": "กำลังเขียน manifest...",
       "cleaning": "กำลังล้างข้อมูล..."
     },

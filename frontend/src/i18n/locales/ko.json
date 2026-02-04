@@ -692,7 +692,9 @@
     "progress": {
       "starting": "초기화 중...",
       "pulling": "모델 다운로드 중...",
+      "pullingLayer": "다운로드 중",
       "verifying": "무결성 확인 중...",
+      "verifyingDigest": "sha256 다이제스트 확인 중",
       "writing": "매니페스트 작성 중...",
       "cleaning": "정리 중..."
     },

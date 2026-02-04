@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Inicializace...",
       "pulling": "Stahování modelu...",
+      "pullingLayer": "stahování",
       "verifying": "Ověřování integrity...",
+      "verifyingDigest": "ověřování sha256 digestu",
       "writing": "Zápis manifestu...",
       "cleaning": "Čištění..."
     },

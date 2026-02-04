@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Initialiserer...",
       "pulling": "Downloader model...",
+      "pullingLayer": "downloader",
       "verifying": "Verificerer integritet...",
+      "verifyingDigest": "verificerer sha256-digest",
       "writing": "Skriver manifest...",
       "cleaning": "Rydder op..."
     },
