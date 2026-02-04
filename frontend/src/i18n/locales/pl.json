@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Tryb demo",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Obraz tła",
+    "uploadBackgroundImage": "Prześlij obraz tła",
+    "dragAndDrop": "Przeciągnij i upuść obraz lub kliknij, aby przeglądać",
+    "chooseImage": "Wybierz obraz",
+    "uploading": "Przesyłanie...",
+    "enterImageUrl": "Lub wprowadź URL obrazu",
+    "supportedFormats": "Obsługuje: JPG, PNG, GIF, WebP (maks. 5MB). Szerokie obrazy poziome działają najlepiej.",
+    "customBackground": "Niestandardowy obraz tła",
+    "clickToChange": "Kliknij, aby zmienić lub usunąć",
+    "removed": "Tło usunięte",
+    "uploaded": "Tło przesłane pomyślnie",
+    "invalidFile": "Wybierz prawidłowy plik obrazu",
+    "fileTooLarge": "Rozmiar obrazu tła musi być mniejszy niż 5MB",
+    "readFailed": "Nie udało się odczytać pliku obrazu",
+    "uploadFailed": "Nie udało się przesłać obrazu tła"
   }
 }

@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Demo Mode",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Background Image",
+    "uploadBackgroundImage": "Upload background image",
+    "dragAndDrop": "Drag and drop an image or click to browse",
+    "chooseImage": "Choose Image",
+    "uploading": "Uploading...",
+    "enterImageUrl": "Or enter image URL",
+    "supportedFormats": "Supports: JPG, PNG, GIF, WebP (max 5MB). Wide landscape images work best.",
+    "customBackground": "Custom background image",
+    "clickToChange": "Click to change or remove",
+    "removed": "Background removed",
+    "uploaded": "Background uploaded successfully",
+    "invalidFile": "Please select a valid image file",
+    "fileTooLarge": "Background image size must be less than 5MB",
+    "readFailed": "Failed to read image file",
+    "uploadFailed": "Failed to upload background image"
   }
 }

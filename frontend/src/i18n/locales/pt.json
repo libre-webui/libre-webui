@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Modo demo",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Imagem de fundo",
+    "uploadBackgroundImage": "Enviar imagem de fundo",
+    "dragAndDrop": "Arraste e solte uma imagem ou clique para navegar",
+    "chooseImage": "Escolher imagem",
+    "uploading": "Enviando...",
+    "enterImageUrl": "Ou insira a URL da imagem",
+    "supportedFormats": "Suporta: JPG, PNG, GIF, WebP (máx 5MB). Imagens paisagem largas funcionam melhor.",
+    "customBackground": "Imagem de fundo personalizada",
+    "clickToChange": "Clique para alterar ou remover",
+    "removed": "Fundo removido",
+    "uploaded": "Fundo enviado com sucesso",
+    "invalidFile": "Por favor selecione um arquivo de imagem válido",
+    "fileTooLarge": "O tamanho da imagem de fundo deve ser menor que 5MB",
+    "readFailed": "Falha ao ler o arquivo de imagem",
+    "uploadFailed": "Falha ao enviar a imagem de fundo"
   }
 }

@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Mode demo",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Gambar Latar Belakang",
+    "uploadBackgroundImage": "Unggah gambar latar belakang",
+    "dragAndDrop": "Seret dan lepas gambar atau klik untuk menjelajah",
+    "chooseImage": "Pilih Gambar",
+    "uploading": "Mengunggah...",
+    "enterImageUrl": "Atau masukkan URL gambar",
+    "supportedFormats": "Mendukung: JPG, PNG, GIF, WebP (maks 5MB). Gambar lanskap lebar berfungsi terbaik.",
+    "customBackground": "Gambar latar belakang kustom",
+    "clickToChange": "Klik untuk mengubah atau menghapus",
+    "removed": "Latar belakang dihapus",
+    "uploaded": "Latar belakang berhasil diunggah",
+    "invalidFile": "Silakan pilih file gambar yang valid",
+    "fileTooLarge": "Ukuran gambar latar belakang harus kurang dari 5MB",
+    "readFailed": "Gagal membaca file gambar",
+    "uploadFailed": "Gagal mengunggah gambar latar belakang"
   }
 }

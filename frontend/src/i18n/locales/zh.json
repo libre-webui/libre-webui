@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "演示模式",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "背景图片",
+    "uploadBackgroundImage": "上传背景图片",
+    "dragAndDrop": "拖放图片或点击浏览",
+    "chooseImage": "选择图片",
+    "uploading": "上传中...",
+    "enterImageUrl": "或输入图片URL",
+    "supportedFormats": "支持格式：JPG、PNG、GIF、WebP（最大5MB）。宽幅横向图片效果最佳。",
+    "customBackground": "自定义背景图片",
+    "clickToChange": "点击更改或删除",
+    "removed": "背景已删除",
+    "uploaded": "背景上传成功",
+    "invalidFile": "请选择有效的图片文件",
+    "fileTooLarge": "背景图片大小必须小于5MB",
+    "readFailed": "无法读取图片文件",
+    "uploadFailed": "无法上传背景图片"
   }
 }

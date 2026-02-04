@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Demoläge",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Bakgrundsbild",
+    "uploadBackgroundImage": "Ladda upp bakgrundsbild",
+    "dragAndDrop": "Dra och släpp en bild eller klicka för att bläddra",
+    "chooseImage": "Välj bild",
+    "uploading": "Laddar upp...",
+    "enterImageUrl": "Eller ange bild-URL",
+    "supportedFormats": "Stöder: JPG, PNG, GIF, WebP (max 5MB). Breda landskapsbilder fungerar bäst.",
+    "customBackground": "Anpassad bakgrundsbild",
+    "clickToChange": "Klicka för att ändra eller ta bort",
+    "removed": "Bakgrund borttagen",
+    "uploaded": "Bakgrund uppladdad",
+    "invalidFile": "Välj en giltig bildfil",
+    "fileTooLarge": "Bakgrundsbildens storlek måste vara mindre än 5MB",
+    "readFailed": "Kunde inte läsa bildfil",
+    "uploadFailed": "Kunde inte ladda upp bakgrundsbild"
   }
 }

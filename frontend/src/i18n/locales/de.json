@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Demomodus",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Hintergrundbild",
+    "uploadBackgroundImage": "Hintergrundbild hochladen",
+    "dragAndDrop": "Bild hierher ziehen oder klicken zum Durchsuchen",
+    "chooseImage": "Bild auswählen",
+    "uploading": "Wird hochgeladen...",
+    "enterImageUrl": "Oder Bild-URL eingeben",
+    "supportedFormats": "Unterstützt: JPG, PNG, GIF, WebP (max 5MB). Breite Querformatbilder funktionieren am besten.",
+    "customBackground": "Benutzerdefiniertes Hintergrundbild",
+    "clickToChange": "Klicken zum Ändern oder Entfernen",
+    "removed": "Hintergrund entfernt",
+    "uploaded": "Hintergrund erfolgreich hochgeladen",
+    "invalidFile": "Bitte wählen Sie eine gültige Bilddatei",
+    "fileTooLarge": "Die Hintergrundbildgröße muss weniger als 5MB betragen",
+    "readFailed": "Bilddatei konnte nicht gelesen werden",
+    "uploadFailed": "Hintergrundbild konnte nicht hochgeladen werden"
   }
 }

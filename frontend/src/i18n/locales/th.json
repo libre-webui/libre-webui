@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "โหมดสาธิต",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "รูปภาพพื้นหลัง",
+    "uploadBackgroundImage": "อัปโหลดรูปภาพพื้นหลัง",
+    "dragAndDrop": "ลากและวางรูปภาพหรือคลิกเพื่อเรียกดู",
+    "chooseImage": "เลือกรูปภาพ",
+    "uploading": "กำลังอัปโหลด...",
+    "enterImageUrl": "หรือใส่ URL รูปภาพ",
+    "supportedFormats": "รองรับ: JPG, PNG, GIF, WebP (สูงสุด 5MB) รูปภาพแนวนอนกว้างทำงานได้ดีที่สุด",
+    "customBackground": "รูปภาพพื้นหลังที่กำหนดเอง",
+    "clickToChange": "คลิกเพื่อเปลี่ยนหรือลบ",
+    "removed": "ลบพื้นหลังแล้ว",
+    "uploaded": "อัปโหลดพื้นหลังสำเร็จ",
+    "invalidFile": "กรุณาเลือกไฟล์รูปภาพที่ถูกต้อง",
+    "fileTooLarge": "ขนาดรูปภาพพื้นหลังต้องน้อยกว่า 5MB",
+    "readFailed": "ไม่สามารถอ่านไฟล์รูปภาพ",
+    "uploadFailed": "ไม่สามารถอัปโหลดรูปภาพพื้นหลัง"
   }
 }
