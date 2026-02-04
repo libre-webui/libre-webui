@@ -1250,5 +1250,18 @@
     "fileTooLarge": "背景图片大小必须小于5MB",
     "readFailed": "无法读取图片文件",
     "uploadFailed": "无法上传背景图片"
+  },
+  "modelSelector": {
+    "searchInstalled": "搜索已安装的模型...",
+    "searchOllama": "搜索Ollama库...",
+    "searchHuggingFace": "搜索HuggingFace...",
+    "selectModel": "选择模型",
+    "personas": "角色",
+    "ollamaModels": "Ollama模型",
+    "pluginModels": "插件模型",
+    "actions": "操作",
+    "installed": "已安装",
+    "use": "使用",
+    "pull": "下载"
   }
 }

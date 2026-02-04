@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Розмір фонового зображення має бути менше 5МБ",
     "readFailed": "Не вдалося прочитати файл зображення",
     "uploadFailed": "Не вдалося завантажити фонове зображення"
+  },
+  "modelSelector": {
+    "searchInstalled": "Пошук встановлених моделей...",
+    "searchOllama": "Пошук у бібліотеці Ollama...",
+    "searchHuggingFace": "Пошук на HuggingFace...",
+    "selectModel": "Вибрати модель",
+    "personas": "Персони",
+    "ollamaModels": "Моделі Ollama",
+    "pluginModels": "Моделі плагінів",
+    "actions": "Дії",
+    "installed": "Встановлено",
+    "use": "Використати",
+    "pull": "Завантажити"
   }
 }

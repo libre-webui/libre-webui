@@ -1250,5 +1250,18 @@
     "fileTooLarge": "ขนาดรูปภาพพื้นหลังต้องน้อยกว่า 5MB",
     "readFailed": "ไม่สามารถอ่านไฟล์รูปภาพ",
     "uploadFailed": "ไม่สามารถอัปโหลดรูปภาพพื้นหลัง"
+  },
+  "modelSelector": {
+    "searchInstalled": "ค้นหาโมเดลที่ติดตั้ง...",
+    "searchOllama": "ค้นหาในไลบรารี Ollama...",
+    "searchHuggingFace": "ค้นหาใน HuggingFace...",
+    "selectModel": "เลือกโมเดล",
+    "personas": "บุคลิก",
+    "ollamaModels": "โมเดล Ollama",
+    "pluginModels": "โมเดลปลั๊กอิน",
+    "actions": "การดำเนินการ",
+    "installed": "ติดตั้งแล้ว",
+    "use": "ใช้",
+    "pull": "ดาวน์โหลด"
   }
 }

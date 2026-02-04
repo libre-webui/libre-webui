@@ -1250,5 +1250,18 @@
     "fileTooLarge": "La dimensione dell'immagine di sfondo deve essere inferiore a 5MB",
     "readFailed": "Impossibile leggere il file immagine",
     "uploadFailed": "Impossibile caricare l'immagine di sfondo"
+  },
+  "modelSelector": {
+    "searchInstalled": "Cerca modelli installati...",
+    "searchOllama": "Cerca nella libreria Ollama...",
+    "searchHuggingFace": "Cerca su HuggingFace...",
+    "selectModel": "Seleziona modello",
+    "personas": "Personas",
+    "ollamaModels": "Modelli Ollama",
+    "pluginModels": "Modelli plugin",
+    "actions": "Azioni",
+    "installed": "Installato",
+    "use": "Usa",
+    "pull": "Scarica"
   }
 }

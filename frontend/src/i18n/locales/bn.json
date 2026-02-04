@@ -1250,5 +1250,18 @@
     "fileTooLarge": "পটভূমি চিত্রের আকার 5MB এর কম হতে হবে",
     "readFailed": "চিত্র ফাইল পড়তে ব্যর্থ",
     "uploadFailed": "পটভূমি চিত্র আপলোড করতে ব্যর্থ"
+  },
+  "modelSelector": {
+    "searchInstalled": "Search installed models...",
+    "searchOllama": "Search Ollama library...",
+    "searchHuggingFace": "Search HuggingFace...",
+    "selectModel": "Select Model",
+    "personas": "Personas",
+    "ollamaModels": "Ollama Models",
+    "pluginModels": "Plugin Models",
+    "actions": "Actions",
+    "installed": "Installed",
+    "use": "Use",
+    "pull": "Pull"
   }
 }

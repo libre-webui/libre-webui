@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Baggrundsbilledets størrelse skal være mindre end 5MB",
     "readFailed": "Kunne ikke læse billedfil",
     "uploadFailed": "Kunne ikke uploade baggrundsbillede"
+  },
+  "modelSelector": {
+    "searchInstalled": "Søg installerede modeller...",
+    "searchOllama": "Søg i Ollama-biblioteket...",
+    "searchHuggingFace": "Søg på HuggingFace...",
+    "selectModel": "Vælg model",
+    "personas": "Personas",
+    "ollamaModels": "Ollama-modeller",
+    "pluginModels": "Plugin-modeller",
+    "actions": "Handlinger",
+    "installed": "Installeret",
+    "use": "Brug",
+    "pull": "Download"
   }
 }

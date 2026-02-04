@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Background image size must be less than 5MB",
     "readFailed": "Failed to read image file",
     "uploadFailed": "Failed to upload background image"
+  },
+  "modelSelector": {
+    "searchInstalled": "Search installed models...",
+    "searchOllama": "Search Ollama library...",
+    "searchHuggingFace": "Search HuggingFace...",
+    "selectModel": "Select Model",
+    "personas": "Personas",
+    "ollamaModels": "Ollama Models",
+    "pluginModels": "Plugin Models",
+    "actions": "Actions",
+    "installed": "Installed",
+    "use": "Use",
+    "pull": "Pull"
   }
 }

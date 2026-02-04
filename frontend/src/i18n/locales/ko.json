@@ -1250,5 +1250,18 @@
     "fileTooLarge": "배경 이미지 크기는 5MB 미만이어야 합니다",
     "readFailed": "이미지 파일을 읽지 못했습니다",
     "uploadFailed": "배경 이미지를 업로드하지 못했습니다"
+  },
+  "modelSelector": {
+    "searchInstalled": "설치된 모델 검색...",
+    "searchOllama": "Ollama 라이브러리 검색...",
+    "searchHuggingFace": "HuggingFace 검색...",
+    "selectModel": "모델 선택",
+    "personas": "페르소나",
+    "ollamaModels": "Ollama 모델",
+    "pluginModels": "플러그인 모델",
+    "actions": "작업",
+    "installed": "설치됨",
+    "use": "사용",
+    "pull": "다운로드"
   }
 }

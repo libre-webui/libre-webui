@@ -1250,5 +1250,18 @@
     "fileTooLarge": "पृष्ठभूमि छवि का आकार 5MB से कम होना चाहिए",
     "readFailed": "छवि फ़ाइल पढ़ने में विफल",
     "uploadFailed": "पृष्ठभूमि छवि अपलोड करने में विफल"
+  },
+  "modelSelector": {
+    "searchInstalled": "स्थापित मॉडल खोजें...",
+    "searchOllama": "Ollama लाइब्रेरी में खोजें...",
+    "searchHuggingFace": "HuggingFace में खोजें...",
+    "selectModel": "मॉडल चुनें",
+    "personas": "व्यक्तित्व",
+    "ollamaModels": "Ollama मॉडल",
+    "pluginModels": "प्लगइन मॉडल",
+    "actions": "कार्य",
+    "installed": "स्थापित",
+    "use": "उपयोग करें",
+    "pull": "डाउनलोड करें"
   }
 }

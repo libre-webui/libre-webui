@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Kích thước hình nền phải nhỏ hơn 5MB",
     "readFailed": "Không thể đọc tệp hình ảnh",
     "uploadFailed": "Không thể tải lên hình nền"
+  },
+  "modelSelector": {
+    "searchInstalled": "Tìm kiếm mô hình đã cài...",
+    "searchOllama": "Tìm trong thư viện Ollama...",
+    "searchHuggingFace": "Tìm trên HuggingFace...",
+    "selectModel": "Chọn mô hình",
+    "personas": "Nhân vật",
+    "ollamaModels": "Mô hình Ollama",
+    "pluginModels": "Mô hình plugin",
+    "actions": "Hành động",
+    "installed": "Đã cài",
+    "use": "Dùng",
+    "pull": "Tải"
   }
 }

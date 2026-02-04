@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Velikost obrázku pozadí musí být menší než 5MB",
     "readFailed": "Nepodařilo se přečíst soubor obrázku",
     "uploadFailed": "Nepodařilo se nahrát obrázek pozadí"
+  },
+  "modelSelector": {
+    "searchInstalled": "Hledat nainstalované modely...",
+    "searchOllama": "Hledat v knihovně Ollama...",
+    "searchHuggingFace": "Hledat na HuggingFace...",
+    "selectModel": "Vybrat model",
+    "personas": "Persony",
+    "ollamaModels": "Modely Ollama",
+    "pluginModels": "Modely pluginů",
+    "actions": "Akce",
+    "installed": "Nainstalováno",
+    "use": "Použít",
+    "pull": "Stáhnout"
   }
 }

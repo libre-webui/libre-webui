@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Achtergrondafbeelding moet kleiner zijn dan 5MB",
     "readFailed": "Kan afbeeldingsbestand niet lezen",
     "uploadFailed": "Kan achtergrondafbeelding niet uploaden"
+  },
+  "modelSelector": {
+    "searchInstalled": "Geïnstalleerde modellen zoeken...",
+    "searchOllama": "Ollama bibliotheek doorzoeken...",
+    "searchHuggingFace": "HuggingFace doorzoeken...",
+    "selectModel": "Model selecteren",
+    "personas": "Personas",
+    "ollamaModels": "Ollama-modellen",
+    "pluginModels": "Plugin-modellen",
+    "actions": "Acties",
+    "installed": "Geïnstalleerd",
+    "use": "Gebruiken",
+    "pull": "Downloaden"
   }
 }

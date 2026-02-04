@@ -1250,5 +1250,18 @@
     "fileTooLarge": "La taille de l'image d'arrière-plan doit être inférieure à 5Mo",
     "readFailed": "Échec de la lecture du fichier image",
     "uploadFailed": "Échec du téléchargement de l'image d'arrière-plan"
+  },
+  "modelSelector": {
+    "searchInstalled": "Rechercher les modèles installés...",
+    "searchOllama": "Rechercher dans la bibliothèque Ollama...",
+    "searchHuggingFace": "Rechercher sur HuggingFace...",
+    "selectModel": "Sélectionner un modèle",
+    "personas": "Personas",
+    "ollamaModels": "Modèles Ollama",
+    "pluginModels": "Modèles de plugins",
+    "actions": "Actions",
+    "installed": "Installé",
+    "use": "Utiliser",
+    "pull": "Télécharger"
   }
 }

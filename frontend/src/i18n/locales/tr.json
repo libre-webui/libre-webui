@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Arka plan görüntü boyutu 5MB'dan küçük olmalıdır",
     "readFailed": "Görüntü dosyası okunamadı",
     "uploadFailed": "Arka plan görüntüsü yüklenemedi"
+  },
+  "modelSelector": {
+    "searchInstalled": "Yüklü modelleri ara...",
+    "searchOllama": "Ollama kütüphanesinde ara...",
+    "searchHuggingFace": "HuggingFace'ta ara...",
+    "selectModel": "Model seç",
+    "personas": "Personalar",
+    "ollamaModels": "Ollama Modelleri",
+    "pluginModels": "Eklenti Modelleri",
+    "actions": "Eylemler",
+    "installed": "Yüklü",
+    "use": "Kullan",
+    "pull": "İndir"
   }
 }

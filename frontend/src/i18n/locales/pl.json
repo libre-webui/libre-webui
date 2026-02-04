@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Rozmiar obrazu tła musi być mniejszy niż 5MB",
     "readFailed": "Nie udało się odczytać pliku obrazu",
     "uploadFailed": "Nie udało się przesłać obrazu tła"
+  },
+  "modelSelector": {
+    "searchInstalled": "Szukaj zainstalowanych modeli...",
+    "searchOllama": "Szukaj w bibliotece Ollama...",
+    "searchHuggingFace": "Szukaj w HuggingFace...",
+    "selectModel": "Wybierz model",
+    "personas": "Persony",
+    "ollamaModels": "Modele Ollama",
+    "pluginModels": "Modele wtyczek",
+    "actions": "Akcje",
+    "installed": "Zainstalowany",
+    "use": "Użyj",
+    "pull": "Pobierz"
   }
 }
