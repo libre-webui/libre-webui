@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Saiz imej latar belakang mestilah kurang daripada 5MB",
     "readFailed": "Gagal membaca fail imej",
     "uploadFailed": "Gagal memuat naik imej latar belakang"
+  },
+  "modelSelector": {
+    "searchInstalled": "Search installed models...",
+    "searchOllama": "Search Ollama library...",
+    "searchHuggingFace": "Search HuggingFace...",
+    "selectModel": "Select Model",
+    "personas": "Personas",
+    "ollamaModels": "Ollama Models",
+    "pluginModels": "Plugin Models",
+    "actions": "Actions",
+    "installed": "Installed",
+    "use": "Use",
+    "pull": "Pull"
   }
 }

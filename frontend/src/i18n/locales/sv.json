@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Bakgrundsbildens storlek måste vara mindre än 5MB",
     "readFailed": "Kunde inte läsa bildfil",
     "uploadFailed": "Kunde inte ladda upp bakgrundsbild"
+  },
+  "modelSelector": {
+    "searchInstalled": "Sök installerade modeller...",
+    "searchOllama": "Sök i Ollama-biblioteket...",
+    "searchHuggingFace": "Sök på HuggingFace...",
+    "selectModel": "Välj modell",
+    "personas": "Personas",
+    "ollamaModels": "Ollama-modeller",
+    "pluginModels": "Plugin-modeller",
+    "actions": "Åtgärder",
+    "installed": "Installerad",
+    "use": "Använd",
+    "pull": "Ladda ner"
   }
 }

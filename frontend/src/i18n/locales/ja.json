@@ -1250,5 +1250,18 @@
     "fileTooLarge": "背景画像のサイズは5MB未満にしてください",
     "readFailed": "画像ファイルの読み取りに失敗しました",
     "uploadFailed": "背景画像のアップロードに失敗しました"
+  },
+  "modelSelector": {
+    "searchInstalled": "インストール済みモデルを検索...",
+    "searchOllama": "Ollamaライブラリを検索...",
+    "searchHuggingFace": "HuggingFaceを検索...",
+    "selectModel": "モデルを選択",
+    "personas": "ペルソナ",
+    "ollamaModels": "Ollamaモデル",
+    "pluginModels": "プラグインモデル",
+    "actions": "アクション",
+    "installed": "インストール済み",
+    "use": "使用",
+    "pull": "ダウンロード"
   }
 }

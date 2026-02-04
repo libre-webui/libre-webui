@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Bakgrunnsmynd verður að vera minni en 5MB",
     "readFailed": "Ekki tókst að lesa myndaskrá",
     "uploadFailed": "Ekki tókst að hlaða upp bakgrunnsmynd"
+  },
+  "modelSelector": {
+    "searchInstalled": "Search installed models...",
+    "searchOllama": "Search Ollama library...",
+    "searchHuggingFace": "Search HuggingFace...",
+    "selectModel": "Select Model",
+    "personas": "Personas",
+    "ollamaModels": "Ollama Models",
+    "pluginModels": "Plugin Models",
+    "actions": "Actions",
+    "installed": "Installed",
+    "use": "Use",
+    "pull": "Pull"
   }
 }

@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Die Hintergrundbildgröße muss weniger als 5MB betragen",
     "readFailed": "Bilddatei konnte nicht gelesen werden",
     "uploadFailed": "Hintergrundbild konnte nicht hochgeladen werden"
+  },
+  "modelSelector": {
+    "searchInstalled": "Installierte Modelle durchsuchen...",
+    "searchOllama": "Ollama-Bibliothek durchsuchen...",
+    "searchHuggingFace": "HuggingFace durchsuchen...",
+    "selectModel": "Modell auswählen",
+    "personas": "Personas",
+    "ollamaModels": "Ollama-Modelle",
+    "pluginModels": "Plugin-Modelle",
+    "actions": "Aktionen",
+    "installed": "Installiert",
+    "use": "Verwenden",
+    "pull": "Herunterladen"
   }
 }

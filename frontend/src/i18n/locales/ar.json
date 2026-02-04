@@ -1250,5 +1250,18 @@
     "fileTooLarge": "يجب أن يكون حجم صورة الخلفية أقل من 5 ميجابايت",
     "readFailed": "فشل في قراءة ملف الصورة",
     "uploadFailed": "فشل في رفع صورة الخلفية"
+  },
+  "modelSelector": {
+    "searchInstalled": "البحث في النماذج المثبتة...",
+    "searchOllama": "البحث في مكتبة Ollama...",
+    "searchHuggingFace": "البحث في HuggingFace...",
+    "selectModel": "اختر نموذجًا",
+    "personas": "الشخصيات",
+    "ollamaModels": "نماذج Ollama",
+    "pluginModels": "نماذج الإضافات",
+    "actions": "الإجراءات",
+    "installed": "مثبت",
+    "use": "استخدام",
+    "pull": "تنزيل"
   }
 }

@@ -140,7 +140,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const groupedModels: ModelGroup[] = [
     {
       type: 'personas' as const,
-      label: 'Personas',
+      label: t('modelSelector.personas'),
       icon: (
         <User className='h-4 w-4 text-purple-600 dark:text-purple-400 ophelia:text-[#a855f7]' />
       ),
@@ -149,7 +149,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     },
     {
       type: 'ollama' as const,
-      label: 'Ollama Models',
+      label: t('modelSelector.ollamaModels'),
       icon: (
         <Bot className='h-4 w-4 text-green-600 dark:text-green-400 ophelia:text-[#a855f7]' />
       ),
@@ -161,7 +161,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     },
     {
       type: 'plugins' as const,
-      label: 'Plugin Models',
+      label: t('modelSelector.pluginModels'),
       icon: (
         <Zap className='h-4 w-4 text-green-600 dark:text-green-400 ophelia:text-[#a855f7]' />
       ),
@@ -489,11 +489,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         <div className='flex items-center gap-2 min-w-0'>
           <Bot className='h-4 w-4' />
           <span className='text-xs font-medium text-gray-400 dark:text-gray-500 truncate'>
-            Select Model
+            {t('modelSelector.selectModel')}
           </span>
         </div>
       ) : (
-        'Select Model'
+        t('modelSelector.selectModel')
       );
     }
 
@@ -594,7 +594,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           <div className='px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3] bg-gray-100 dark:bg-dark-300 ophelia:bg-[#0a0a0a]'>
             <div className='flex items-center gap-2'>
               <Plus className='h-4 w-4 text-blue-600 dark:text-blue-400' />
-              Actions
+              {t('modelSelector.actions')}
             </div>
           </div>
           <div
@@ -684,7 +684,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                         </h4>
                         {installed && (
                           <span className='px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'>
-                            Installed
+                            {t('modelSelector.installed')}
                           </span>
                         )}
                       </div>
@@ -728,7 +728,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                           onClick={() => handleModelSelect(model.name)}
                           className='px-3 py-1.5 rounded-lg text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50'
                         >
-                          Use
+                          {t('modelSelector.use')}
                         </button>
                       ) : (
                         <button
@@ -736,7 +736,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                           className='px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[#9333ea]/20 text-primary-700 dark:text-primary-400 ophelia:text-[#a855f7] hover:bg-primary-200 dark:hover:bg-primary-900/50'
                         >
                           <Download className='h-3 w-3 inline mr-1' />
-                          Pull
+                          {t('modelSelector.pull')}
                         </button>
                       )}
                     </div>
@@ -1081,7 +1081,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           compact
             ? currentModel
               ? getModelLabel(currentModel)
-              : 'Select Model'
+              : t('modelSelector.selectModel')
             : undefined
         }
       >
@@ -1126,10 +1126,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       type='text'
                       placeholder={
                         activeTab === 'installed'
-                          ? 'Search installed models...'
+                          ? t('modelSelector.searchInstalled')
                           : activeTab === 'ollama'
-                            ? 'Search Ollama library...'
-                            : 'Search HuggingFace...'
+                            ? t('modelSelector.searchOllama')
+                            : t('modelSelector.searchHuggingFace')
                       }
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
@@ -1160,7 +1160,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                     )}
                   >
                     <HardDrive className='h-4 w-4 inline mr-1.5' />
-                    Installed
+                    {t('modelSelector.installed')}
                   </button>
                   <button
                     onMouseDown={e => {

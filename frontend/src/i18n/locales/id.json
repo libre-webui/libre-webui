@@ -1250,5 +1250,18 @@
     "fileTooLarge": "Ukuran gambar latar belakang harus kurang dari 5MB",
     "readFailed": "Gagal membaca file gambar",
     "uploadFailed": "Gagal mengunggah gambar latar belakang"
+  },
+  "modelSelector": {
+    "searchInstalled": "Cari model yang terinstal...",
+    "searchOllama": "Cari di perpustakaan Ollama...",
+    "searchHuggingFace": "Cari di HuggingFace...",
+    "selectModel": "Pilih model",
+    "personas": "Persona",
+    "ollamaModels": "Model Ollama",
+    "pluginModels": "Model Plugin",
+    "actions": "Aksi",
+    "installed": "Terinstal",
+    "use": "Gunakan",
+    "pull": "Unduh"
   }
 }

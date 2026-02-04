@@ -1250,5 +1250,18 @@
     "fileTooLarge": "El tamaño de la imagen de fondo debe ser menor a 5MB",
     "readFailed": "Error al leer el archivo de imagen",
     "uploadFailed": "Error al subir la imagen de fondo"
+  },
+  "modelSelector": {
+    "searchInstalled": "Buscar modelos instalados...",
+    "searchOllama": "Buscar en la biblioteca de Ollama...",
+    "searchHuggingFace": "Buscar en HuggingFace...",
+    "selectModel": "Seleccionar modelo",
+    "personas": "Personas",
+    "ollamaModels": "Modelos Ollama",
+    "pluginModels": "Modelos de plugins",
+    "actions": "Acciones",
+    "installed": "Instalado",
+    "use": "Usar",
+    "pull": "Descargar"
   }
 }
