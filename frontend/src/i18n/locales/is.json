@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Notendastjórnun",
     "subtitle": "Stjórnaðu notendareikningum og heimildum",
+    "pageDescription": "Stjórnaðu notendareikningum, heimildum og aðgangsstýringum fyrir Libre WebUI tilvikið þitt.",
     "loading": "Hleður notendum...",
     "createUser": "Búa til notanda",
     "search": "Leita að notendum...",

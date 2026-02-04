@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Brugeradministration",
     "subtitle": "Administrer brugerkonti og tilladelser",
+    "pageDescription": "Administrer brugerkonti, tilladelser og adgangskontrol for din Libre WebUI-instans.",
     "loading": "Indlæser brugere...",
     "createUser": "Opret bruger",
     "search": "Søg brugere...",

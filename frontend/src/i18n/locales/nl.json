@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Gebruikersbeheer",
     "subtitle": "Beheer gebruikersaccounts en rechten",
+    "pageDescription": "Beheer gebruikersaccounts, rechten en toegangscontrole voor uw Libre WebUI-instantie.",
     "loading": "Gebruikers laden...",
     "createUser": "Gebruiker aanmaken",
     "search": "Gebruikers zoeken...",

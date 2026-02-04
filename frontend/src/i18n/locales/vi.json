@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Quản lý người dùng",
     "subtitle": "Quản lý tài khoản và quyền hạn người dùng",
+    "pageDescription": "Quản lý tài khoản người dùng, quyền và kiểm soát truy cập cho phiên bản Libre WebUI của bạn.",
     "loading": "Đang tải người dùng...",
     "createUser": "Tạo người dùng",
     "search": "Tìm kiếm người dùng...",

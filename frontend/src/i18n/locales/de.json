@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Benutzerverwaltung",
     "subtitle": "Benutzerkonten und Berechtigungen verwalten",
+    "pageDescription": "Verwalten Sie Benutzerkonten, Berechtigungen und Zugriffskontrollen für Ihre Libre WebUI-Instanz.",
     "loading": "Benutzer werden geladen...",
     "createUser": "Benutzer erstellen",
     "search": "Benutzer suchen...",

@@ -16,19 +16,21 @@
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { UserManager } from '@/components/UserManager';
 
 export const UserManagementPage: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <div className='h-full overflow-auto'>
       <div className='max-w-6xl mx-auto p-6'>
         <div className='mb-8'>
           <h1 className='text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2'>
-            User Management
+            {t('userManager.title')}
           </h1>
           <p className='text-gray-700 dark:text-gray-300'>
-            Manage user accounts, permissions, and access controls for your
-            Libre WebUI instance.
+            {t('userManager.pageDescription')}
           </p>
         </div>
 

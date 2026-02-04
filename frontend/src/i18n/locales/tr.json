@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Kullanıcı Yönetimi",
     "subtitle": "Kullanıcı hesaplarını ve izinlerini yönetin",
+    "pageDescription": "Libre WebUI örneğiniz için kullanıcı hesaplarını, izinleri ve erişim kontrollerini yönetin.",
     "loading": "Kullanıcılar yükleniyor...",
     "createUser": "Kullanıcı Oluştur",
     "search": "Kullanıcı ara...",

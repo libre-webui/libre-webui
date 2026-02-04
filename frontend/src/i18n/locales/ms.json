@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Pengurusan Pengguna",
     "subtitle": "Urus akaun pengguna dan kebenaran",
+    "pageDescription": "Urus akaun pengguna, kebenaran dan kawalan akses untuk contoh Libre WebUI anda.",
     "loading": "Memuatkan pengguna...",
     "createUser": "Cipta Pengguna",
     "search": "Cari pengguna...",
