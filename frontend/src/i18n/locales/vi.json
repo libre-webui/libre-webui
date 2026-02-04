@@ -578,7 +578,8 @@
         "reportIssue": "Báo cáo vấn đề",
         "reportIssueDescription": "Báo lỗi & yêu cầu tính năng",
         "gitlab": "Bản sao GitLab",
-        "gitlabDescription": "Kho GitLab tự lưu trữ"
+        "gitlabDescription": "Kho GitLab tự lưu trữ",
+        "documentationDescription": "Hướng dẫn, bài học và tham khảo API"
       },
       "version": "Phiên bản {{version}}"
     }

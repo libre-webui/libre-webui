@@ -578,7 +578,8 @@
         "reportIssue": "Rapportera problem",
         "reportIssueDescription": "Felrapporter och funktionsförfrågningar",
         "gitlab": "GitLab-spegel",
-        "gitlabDescription": "Självhostat GitLab-förråd"
+        "gitlabDescription": "Självhostat GitLab-förråd",
+        "documentationDescription": "Guider, handledningar och API-referens"
       },
       "version": "Version {{version}}"
     }

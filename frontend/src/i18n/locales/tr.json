@@ -574,11 +574,12 @@
         "websiteDescription": "Web sitemizi ziyaret edin",
         "ollama": "Ollama",
         "ollamaDescription": "Ollama hakkında daha fazla bilgi edinin",
-        "documentation": "Belgeler",
+        "documentation": "Dokümantasyon",
         "reportIssue": "Sorun Bildir",
         "reportIssueDescription": "Hata raporları ve özellik istekleri",
         "gitlab": "GitLab Aynası",
-        "gitlabDescription": "Kendi barındırılan GitLab deposu"
+        "gitlabDescription": "Kendi barındırılan GitLab deposu",
+        "documentationDescription": "Kılavuzlar, öğreticiler ve API referansı"
       },
       "version": "Sürüm {{version}}"
     }

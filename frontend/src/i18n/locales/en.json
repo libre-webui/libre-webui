@@ -578,7 +578,8 @@
         "reportIssue": "Report Issues",
         "reportIssueDescription": "Bug reports & feature requests",
         "gitlab": "GitLab Mirror",
-        "gitlabDescription": "Self-hosted GitLab repository"
+        "gitlabDescription": "Self-hosted GitLab repository",
+        "documentationDescription": "Guides, tutorials and API reference"
       },
       "version": "Version {{version}}"
     }

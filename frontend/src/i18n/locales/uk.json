@@ -578,7 +578,8 @@
         "reportIssue": "Повідомити про проблему",
         "reportIssueDescription": "Звіти про помилки та запити функцій",
         "gitlab": "Дзеркало GitLab",
-        "gitlabDescription": "Самостійно розміщений репозиторій GitLab"
+        "gitlabDescription": "Самостійно розміщений репозиторій GitLab",
+        "documentationDescription": "Посібники, навчальні матеріали та довідник API"
       },
       "version": "Версія {{version}}"
     }

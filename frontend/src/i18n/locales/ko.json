@@ -578,7 +578,8 @@
         "reportIssue": "문제 보고",
         "reportIssueDescription": "버그 보고서 및 기능 요청",
         "gitlab": "GitLab 미러",
-        "gitlabDescription": "자체 호스팅 GitLab 저장소"
+        "gitlabDescription": "자체 호스팅 GitLab 저장소",
+        "documentationDescription": "가이드, 튜토리얼 및 API 레퍼런스"
       },
       "version": "버전 {{version}}"
     }

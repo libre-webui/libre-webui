@@ -578,7 +578,8 @@
         "reportIssue": "报告问题",
         "reportIssueDescription": "错误报告和功能请求",
         "gitlab": "GitLab镜像",
-        "gitlabDescription": "自托管GitLab仓库"
+        "gitlabDescription": "自托管GitLab仓库",
+        "documentationDescription": "指南、教程和API参考"
       },
       "version": "版本 {{version}}"
     }

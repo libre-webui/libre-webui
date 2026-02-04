@@ -578,7 +578,8 @@
         "reportIssue": "Signaler des problèmes",
         "reportIssueDescription": "Rapports de bugs et demandes de fonctionnalités",
         "gitlab": "Miroir GitLab",
-        "gitlabDescription": "Dépôt GitLab auto-hébergé"
+        "gitlabDescription": "Dépôt GitLab auto-hébergé",
+        "documentationDescription": "Guides, tutoriels et référence API"
       },
       "version": "Version {{version}}"
     }

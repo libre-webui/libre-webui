@@ -578,7 +578,8 @@
         "reportIssue": "Zgłoś problem",
         "reportIssueDescription": "Raporty błędów i prośby o funkcje",
         "gitlab": "Lustro GitLab",
-        "gitlabDescription": "Samodzielnie hostowane repozytorium GitLab"
+        "gitlabDescription": "Samodzielnie hostowane repozytorium GitLab",
+        "documentationDescription": "Przewodniki, samouczki i dokumentacja API"
       },
       "version": "Wersja {{version}}"
     }
