@@ -576,7 +576,9 @@
         "ollamaDescription": "Ollama के बारे में और जानें",
         "documentation": "दस्तावेज़ीकरण",
         "reportIssue": "समस्या रिपोर्ट करें",
-        "reportIssueDescription": "बग रिपोर्ट और फीचर अनुरोध"
+        "reportIssueDescription": "बग रिपोर्ट और फीचर अनुरोध",
+        "gitlab": "GitLab मिरर",
+        "gitlabDescription": "स्व-होस्टेड GitLab रिपॉजिटरी"
       },
       "version": "संस्करण {{version}}"
     }

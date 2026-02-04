@@ -576,7 +576,9 @@
         "ollamaDescription": "Läs mer om Ollama",
         "documentation": "Dokumentation",
         "reportIssue": "Rapportera problem",
-        "reportIssueDescription": "Felrapporter och funktionsförfrågningar"
+        "reportIssueDescription": "Felrapporter och funktionsförfrågningar",
+        "gitlab": "GitLab-spegel",
+        "gitlabDescription": "Självhostat GitLab-förråd"
       },
       "version": "Version {{version}}"
     }

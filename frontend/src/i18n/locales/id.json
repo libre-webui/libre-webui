@@ -576,7 +576,9 @@
         "ollamaDescription": "Pelajari lebih lanjut tentang Ollama",
         "documentation": "Dokumentasi",
         "reportIssue": "Laporkan Masalah",
-        "reportIssueDescription": "Laporan bug & permintaan fitur"
+        "reportIssueDescription": "Laporan bug & permintaan fitur",
+        "gitlab": "Mirror GitLab",
+        "gitlabDescription": "Repositori GitLab yang di-hosting sendiri"
       },
       "version": "Versi {{version}}"
     }

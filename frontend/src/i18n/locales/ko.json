@@ -576,7 +576,9 @@
         "ollamaDescription": "Ollama에 대해 자세히 알아보기",
         "documentation": "문서",
         "reportIssue": "문제 보고",
-        "reportIssueDescription": "버그 보고서 및 기능 요청"
+        "reportIssueDescription": "버그 보고서 및 기능 요청",
+        "gitlab": "GitLab 미러",
+        "gitlabDescription": "자체 호스팅 GitLab 저장소"
       },
       "version": "버전 {{version}}"
     }

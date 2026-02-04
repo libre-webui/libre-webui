@@ -576,7 +576,9 @@
         "ollamaDescription": "Zjistěte více o Ollama",
         "documentation": "Dokumentace",
         "reportIssue": "Nahlásit problém",
-        "reportIssueDescription": "Hlášení chyb a požadavky na funkce"
+        "reportIssueDescription": "Hlášení chyb a požadavky na funkce",
+        "gitlab": "GitLab zrcadlo",
+        "gitlabDescription": "Vlastní hostovaný GitLab repozitář"
       },
       "version": "Verze {{version}}"
     }

@@ -576,7 +576,9 @@
         "ollamaDescription": "เรียนรู้เพิ่มเติมเกี่ยวกับ Ollama",
         "documentation": "เอกสาร",
         "reportIssue": "รายงานปัญหา",
-        "reportIssueDescription": "รายงานบั๊กและคำขอฟีเจอร์"
+        "reportIssueDescription": "รายงานบั๊กและคำขอฟีเจอร์",
+        "gitlab": "มิเรอร์ GitLab",
+        "gitlabDescription": "คลัง GitLab โฮสต์เอง"
       },
       "version": "เวอร์ชัน {{version}}"
     }

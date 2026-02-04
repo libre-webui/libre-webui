@@ -576,7 +576,9 @@
         "ollamaDescription": "Learn more about Ollama",
         "documentation": "Documentation",
         "reportIssue": "Report Issues",
-        "reportIssueDescription": "Bug reports & feature requests"
+        "reportIssueDescription": "Bug reports & feature requests",
+        "gitlab": "GitLab Mirror",
+        "gitlabDescription": "Self-hosted GitLab repository"
       },
       "version": "Version {{version}}"
     }

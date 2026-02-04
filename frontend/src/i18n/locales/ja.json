@@ -576,7 +576,9 @@
         "ollamaDescription": "Ollamaについて詳しく",
         "documentation": "ドキュメント",
         "reportIssue": "問題を報告",
-        "reportIssueDescription": "バグ報告・機能リクエスト"
+        "reportIssueDescription": "バグ報告・機能リクエスト",
+        "gitlab": "GitLabミラー",
+        "gitlabDescription": "セルフホストGitLabリポジトリ"
       },
       "version": "バージョン {{version}}"
     }

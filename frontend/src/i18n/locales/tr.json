@@ -576,7 +576,9 @@
         "ollamaDescription": "Ollama hakkında daha fazla bilgi edinin",
         "documentation": "Belgeler",
         "reportIssue": "Sorun Bildir",
-        "reportIssueDescription": "Hata raporları ve özellik istekleri"
+        "reportIssueDescription": "Hata raporları ve özellik istekleri",
+        "gitlab": "GitLab Aynası",
+        "gitlabDescription": "Kendi barındırılan GitLab deposu"
       },
       "version": "Sürüm {{version}}"
     }

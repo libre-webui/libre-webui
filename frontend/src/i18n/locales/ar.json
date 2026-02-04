@@ -576,7 +576,9 @@
         "ollamaDescription": "معرفة المزيد عن Ollama",
         "documentation": "التوثيق",
         "reportIssue": "الإبلاغ عن المشاكل",
-        "reportIssueDescription": "تقارير الأخطاء وطلبات الميزات"
+        "reportIssueDescription": "تقارير الأخطاء وطلبات الميزات",
+        "gitlab": "مرآة GitLab",
+        "gitlabDescription": "مستودع GitLab مستضاف ذاتياً"
       },
       "version": "الإصدار {{version}}"
     }
