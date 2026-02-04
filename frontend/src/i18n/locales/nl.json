@@ -578,7 +578,8 @@
         "reportIssue": "Problemen melden",
         "reportIssueDescription": "Bugmeldingen & functieverzoeken",
         "gitlab": "GitLab-spiegel",
-        "gitlabDescription": "Zelf-gehoste GitLab-repository"
+        "gitlabDescription": "Zelf-gehoste GitLab-repository",
+        "documentationDescription": "Handleidingen, tutorials en API-referentie"
       },
       "version": "Versie {{version}}"
     }

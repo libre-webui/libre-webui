@@ -578,7 +578,8 @@
         "reportIssue": "Relatar Problemas",
         "reportIssueDescription": "Reportar bugs e solicitar recursos",
         "gitlab": "Espelho GitLab",
-        "gitlabDescription": "Repositório GitLab auto-hospedado"
+        "gitlabDescription": "Repositório GitLab auto-hospedado",
+        "documentationDescription": "Guias, tutoriais e referência da API"
       },
       "version": "Versão {{version}}"
     }

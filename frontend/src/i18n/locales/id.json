@@ -578,7 +578,8 @@
         "reportIssue": "Laporkan Masalah",
         "reportIssueDescription": "Laporan bug & permintaan fitur",
         "gitlab": "Mirror GitLab",
-        "gitlabDescription": "Repositori GitLab yang di-hosting sendiri"
+        "gitlabDescription": "Repositori GitLab yang di-hosting sendiri",
+        "documentationDescription": "Panduan, tutorial, dan referensi API"
       },
       "version": "Versi {{version}}"
     }

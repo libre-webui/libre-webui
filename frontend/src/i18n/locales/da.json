@@ -578,7 +578,8 @@
         "reportIssue": "Rapporter problemer",
         "reportIssueDescription": "Fejlrapporter og funktionsønsker",
         "gitlab": "GitLab-spejl",
-        "gitlabDescription": "Selvhostet GitLab-repository"
+        "gitlabDescription": "Selvhostet GitLab-repository",
+        "documentationDescription": "Vejledninger, tutorials og API-reference"
       },
       "version": "Version {{version}}"
     }

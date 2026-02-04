@@ -578,7 +578,8 @@
         "reportIssue": "الإبلاغ عن المشاكل",
         "reportIssueDescription": "تقارير الأخطاء وطلبات الميزات",
         "gitlab": "مرآة GitLab",
-        "gitlabDescription": "مستودع GitLab مستضاف ذاتياً"
+        "gitlabDescription": "مستودع GitLab مستضاف ذاتياً",
+        "documentationDescription": "أدلة ودروس ومرجع API"
       },
       "version": "الإصدار {{version}}"
     }

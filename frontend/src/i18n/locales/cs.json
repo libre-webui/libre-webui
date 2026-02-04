@@ -578,7 +578,8 @@
         "reportIssue": "Nahlásit problém",
         "reportIssueDescription": "Hlášení chyb a požadavky na funkce",
         "gitlab": "GitLab zrcadlo",
-        "gitlabDescription": "Vlastní hostovaný GitLab repozitář"
+        "gitlabDescription": "Vlastní hostovaný GitLab repozitář",
+        "documentationDescription": "Průvodci, tutoriály a reference API"
       },
       "version": "Verze {{version}}"
     }

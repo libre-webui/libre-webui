@@ -574,11 +574,12 @@
         "websiteDescription": "Lawati laman web kami",
         "ollama": "Ollama",
         "ollamaDescription": "Ketahui lebih lanjut tentang Ollama",
-        "documentation": "Dokumentasi",
+        "documentation": "Documentation",
         "reportIssue": "Laporkan Isu",
         "reportIssueDescription": "Laporan pepijat & permintaan ciri",
         "gitlab": "GitLab Mirror",
-        "gitlabDescription": "Self-hosted GitLab repository"
+        "gitlabDescription": "Self-hosted GitLab repository",
+        "documentationDescription": "Guides, tutorials and API reference"
       },
       "version": "Versi {{version}}"
     }

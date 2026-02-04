@@ -578,7 +578,8 @@
         "reportIssue": "問題を報告",
         "reportIssueDescription": "バグ報告・機能リクエスト",
         "gitlab": "GitLabミラー",
-        "gitlabDescription": "セルフホストGitLabリポジトリ"
+        "gitlabDescription": "セルフホストGitLabリポジトリ",
+        "documentationDescription": "ガイド、チュートリアル、APIリファレンス"
       },
       "version": "バージョン {{version}}"
     }

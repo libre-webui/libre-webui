@@ -574,11 +574,12 @@
         "websiteDescription": "আমাদের ওয়েবসাইট দেখুন",
         "ollama": "Ollama",
         "ollamaDescription": "Ollama সম্পর্কে আরও জানুন",
-        "documentation": "ডকুমেন্টেশন",
+        "documentation": "Documentation",
         "reportIssue": "সমস্যা রিপোর্ট করুন",
         "reportIssueDescription": "বাগ রিপোর্ট এবং ফিচার অনুরোধ",
         "gitlab": "GitLab Mirror",
-        "gitlabDescription": "Self-hosted GitLab repository"
+        "gitlabDescription": "Self-hosted GitLab repository",
+        "documentationDescription": "Guides, tutorials and API reference"
       },
       "version": "সংস্করণ {{version}}"
     }

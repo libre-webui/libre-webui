@@ -574,11 +574,12 @@
         "websiteDescription": "Heimsæktu vefsíðuna okkar",
         "ollama": "Ollama",
         "ollamaDescription": "Frekari upplýsingar um Ollama",
-        "documentation": "Skjölun",
+        "documentation": "Documentation",
         "reportIssue": "Tilkynna vandamál",
         "reportIssueDescription": "Villutilkynningar og eiginleikabeiðnir",
         "gitlab": "GitLab Mirror",
-        "gitlabDescription": "Self-hosted GitLab repository"
+        "gitlabDescription": "Self-hosted GitLab repository",
+        "documentationDescription": "Guides, tutorials and API reference"
       },
       "version": "Útgáfa {{version}}"
     }

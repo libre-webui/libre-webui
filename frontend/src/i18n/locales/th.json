@@ -578,7 +578,8 @@
         "reportIssue": "รายงานปัญหา",
         "reportIssueDescription": "รายงานบั๊กและคำขอฟีเจอร์",
         "gitlab": "มิเรอร์ GitLab",
-        "gitlabDescription": "คลัง GitLab โฮสต์เอง"
+        "gitlabDescription": "คลัง GitLab โฮสต์เอง",
+        "documentationDescription": "คู่มือ บทช่วยสอน และข้อมูลอ้างอิง API"
       },
       "version": "เวอร์ชัน {{version}}"
     }
