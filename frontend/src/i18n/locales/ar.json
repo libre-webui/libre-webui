@@ -692,7 +692,9 @@
     "progress": {
       "starting": "جاري التهيئة...",
       "pulling": "جاري تحميل النموذج...",
+      "pullingLayer": "تحميل",
       "verifying": "جاري التحقق من السلامة...",
+      "verifyingDigest": "التحقق من تجزئة sha256",
       "writing": "جاري كتابة البيان...",
       "cleaning": "جاري التنظيف..."
     },

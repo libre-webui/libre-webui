@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Memulakan...",
       "pulling": "Memuat turun model...",
+      "pullingLayer": "memuat turun",
       "verifying": "Mengesahkan integriti...",
+      "verifyingDigest": "mengesahkan digest sha256",
       "writing": "Menulis manifes...",
       "cleaning": "Membersihkan..."
     },

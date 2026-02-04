@@ -692,7 +692,9 @@
     "progress": {
       "starting": "初期化中...",
       "pulling": "モデルをダウンロード中...",
+      "pullingLayer": "ダウンロード中",
       "verifying": "整合性を検証中...",
+      "verifyingDigest": "sha256ダイジェストを検証中",
       "writing": "マニフェストを書き込み中...",
       "cleaning": "クリーンアップ中..."
     },

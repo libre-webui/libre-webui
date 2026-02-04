@@ -692,7 +692,9 @@
     "progress": {
       "starting": "初始化中...",
       "pulling": "下载模型中...",
+      "pullingLayer": "下载中",
       "verifying": "验证完整性...",
+      "verifyingDigest": "验证 sha256 摘要",
       "writing": "写入清单...",
       "cleaning": "清理中..."
     },

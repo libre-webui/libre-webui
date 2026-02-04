@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Инициализация...",
       "pulling": "Загрузка модели...",
+      "pullingLayer": "загрузка",
       "verifying": "Проверка целостности...",
+      "verifyingDigest": "проверка sha256 дайджеста",
       "writing": "Запись манифеста...",
       "cleaning": "Очистка..."
     },

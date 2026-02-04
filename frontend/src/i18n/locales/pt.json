@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Inicializando...",
       "pulling": "Baixando modelo...",
+      "pullingLayer": "baixando",
       "verifying": "Verificando integridade...",
+      "verifyingDigest": "verificando digest sha256",
       "writing": "Escrevendo manifesto...",
       "cleaning": "Limpando..."
     },

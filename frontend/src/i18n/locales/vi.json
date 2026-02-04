@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Đang khởi tạo...",
       "pulling": "Đang tải mô hình...",
+      "pullingLayer": "đang tải",
       "verifying": "Đang xác minh tính toàn vẹn...",
+      "verifyingDigest": "đang xác minh digest sha256",
       "writing": "Đang ghi manifest...",
       "cleaning": "Đang dọn dẹp..."
     },

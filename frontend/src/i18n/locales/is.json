@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Frumstillir...",
       "pulling": "Sækir líkan...",
+      "pullingLayer": "sækir",
       "verifying": "Sannreynir heilleika...",
+      "verifyingDigest": "staðfestir sha256 digest",
       "writing": "Skrifar skrá...",
       "cleaning": "Hreinsar upp..."
     },

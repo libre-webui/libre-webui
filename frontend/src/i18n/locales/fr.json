@@ -692,7 +692,9 @@
     "progress": {
       "starting": "Initialisation...",
       "pulling": "Téléchargement du modèle...",
+      "pullingLayer": "téléchargement",
       "verifying": "Vérification de l'intégrité...",
+      "verifyingDigest": "vérification du digest sha256",
       "writing": "Écriture du manifeste...",
       "cleaning": "Nettoyage..."
     },
