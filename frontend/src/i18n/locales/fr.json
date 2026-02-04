@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Mode démo",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Image d'arrière-plan",
+    "uploadBackgroundImage": "Télécharger une image d'arrière-plan",
+    "dragAndDrop": "Glissez-déposez une image ou cliquez pour parcourir",
+    "chooseImage": "Choisir une image",
+    "uploading": "Téléchargement...",
+    "enterImageUrl": "Ou entrez l'URL de l'image",
+    "supportedFormats": "Formats supportés : JPG, PNG, GIF, WebP (max 5Mo). Les images paysage larges fonctionnent mieux.",
+    "customBackground": "Image d'arrière-plan personnalisée",
+    "clickToChange": "Cliquez pour modifier ou supprimer",
+    "removed": "Arrière-plan supprimé",
+    "uploaded": "Arrière-plan téléchargé avec succès",
+    "invalidFile": "Veuillez sélectionner un fichier image valide",
+    "fileTooLarge": "La taille de l'image d'arrière-plan doit être inférieure à 5Mo",
+    "readFailed": "Échec de la lecture du fichier image",
+    "uploadFailed": "Échec du téléchargement de l'image d'arrière-plan"
   }
 }

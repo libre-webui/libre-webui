@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "وضع تجريبي",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "صورة الخلفية",
+    "uploadBackgroundImage": "رفع صورة الخلفية",
+    "dragAndDrop": "اسحب وأفلت صورة أو انقر للتصفح",
+    "chooseImage": "اختيار صورة",
+    "uploading": "جارٍ الرفع...",
+    "enterImageUrl": "أو أدخل رابط الصورة",
+    "supportedFormats": "يدعم: JPG, PNG, GIF, WebP (الحد الأقصى 5 ميجابايت). الصور العريضة الأفقية تعمل بشكل أفضل.",
+    "customBackground": "صورة خلفية مخصصة",
+    "clickToChange": "انقر للتغيير أو الإزالة",
+    "removed": "تم إزالة الخلفية",
+    "uploaded": "تم رفع الخلفية بنجاح",
+    "invalidFile": "يرجى اختيار ملف صورة صالح",
+    "fileTooLarge": "يجب أن يكون حجم صورة الخلفية أقل من 5 ميجابايت",
+    "readFailed": "فشل في قراءة ملف الصورة",
+    "uploadFailed": "فشل في رفع صورة الخلفية"
   }
 }

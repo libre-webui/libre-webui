@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Demo modu",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Arka Plan Görüntüsü",
+    "uploadBackgroundImage": "Arka plan görüntüsü yükle",
+    "dragAndDrop": "Bir görüntü sürükleyip bırakın veya göz atmak için tıklayın",
+    "chooseImage": "Görüntü Seç",
+    "uploading": "Yükleniyor...",
+    "enterImageUrl": "Veya görüntü URL'si girin",
+    "supportedFormats": "Desteklenen: JPG, PNG, GIF, WebP (maks 5MB). Geniş yatay görüntüler en iyi çalışır.",
+    "customBackground": "Özel arka plan görüntüsü",
+    "clickToChange": "Değiştirmek veya kaldırmak için tıklayın",
+    "removed": "Arka plan kaldırıldı",
+    "uploaded": "Arka plan başarıyla yüklendi",
+    "invalidFile": "Lütfen geçerli bir görüntü dosyası seçin",
+    "fileTooLarge": "Arka plan görüntü boyutu 5MB'dan küçük olmalıdır",
+    "readFailed": "Görüntü dosyası okunamadı",
+    "uploadFailed": "Arka plan görüntüsü yüklenemedi"
   }
 }

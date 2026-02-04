@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "डेमो मोड",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "पृष्ठभूमि छवि",
+    "uploadBackgroundImage": "पृष्ठभूमि छवि अपलोड करें",
+    "dragAndDrop": "छवि खींचें और छोड़ें या ब्राउज़ करने के लिए क्लिक करें",
+    "chooseImage": "छवि चुनें",
+    "uploading": "अपलोड हो रहा है...",
+    "enterImageUrl": "या छवि URL दर्ज करें",
+    "supportedFormats": "समर्थित: JPG, PNG, GIF, WebP (अधिकतम 5MB)। चौड़ी लैंडस्केप छवियां सबसे अच्छी काम करती हैं।",
+    "customBackground": "कस्टम पृष्ठभूमि छवि",
+    "clickToChange": "बदलने या हटाने के लिए क्लिक करें",
+    "removed": "पृष्ठभूमि हटा दी गई",
+    "uploaded": "पृष्ठभूमि सफलतापूर्वक अपलोड हुई",
+    "invalidFile": "कृपया एक मान्य छवि फ़ाइल चुनें",
+    "fileTooLarge": "पृष्ठभूमि छवि का आकार 5MB से कम होना चाहिए",
+    "readFailed": "छवि फ़ाइल पढ़ने में विफल",
+    "uploadFailed": "पृष्ठभूमि छवि अपलोड करने में विफल"
   }
 }

@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "ডেমো মোড",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "পটভূমি চিত্র",
+    "uploadBackgroundImage": "পটভূমি চিত্র আপলোড করুন",
+    "dragAndDrop": "একটি চিত্র টেনে আনুন বা ব্রাউজ করতে ক্লিক করুন",
+    "chooseImage": "চিত্র বেছে নিন",
+    "uploading": "আপলোড হচ্ছে...",
+    "enterImageUrl": "অথবা চিত্রের URL প্রবেশ করুন",
+    "supportedFormats": "সমর্থিত: JPG, PNG, GIF, WebP (সর্বোচ্চ 5MB)। প্রশস্ত ল্যান্ডস্কেপ চিত্র সেরা কাজ করে।",
+    "customBackground": "কাস্টম পটভূমি চিত্র",
+    "clickToChange": "পরিবর্তন বা সরাতে ক্লিক করুন",
+    "removed": "পটভূমি সরানো হয়েছে",
+    "uploaded": "পটভূমি সফলভাবে আপলোড হয়েছে",
+    "invalidFile": "একটি বৈধ চিত্র ফাইল নির্বাচন করুন",
+    "fileTooLarge": "পটভূমি চিত্রের আকার 5MB এর কম হতে হবে",
+    "readFailed": "চিত্র ফাইল পড়তে ব্যর্থ",
+    "uploadFailed": "পটভূমি চিত্র আপলোড করতে ব্যর্থ"
   }
 }

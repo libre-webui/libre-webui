@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Demo režim",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Obrázek pozadí",
+    "uploadBackgroundImage": "Nahrát obrázek pozadí",
+    "dragAndDrop": "Přetáhněte obrázek nebo klikněte pro procházení",
+    "chooseImage": "Vybrat obrázek",
+    "uploading": "Nahrávání...",
+    "enterImageUrl": "Nebo zadejte URL obrázku",
+    "supportedFormats": "Podporuje: JPG, PNG, GIF, WebP (max 5MB). Široké obrázky na šířku fungují nejlépe.",
+    "customBackground": "Vlastní obrázek pozadí",
+    "clickToChange": "Klikněte pro změnu nebo odstranění",
+    "removed": "Pozadí odstraněno",
+    "uploaded": "Pozadí úspěšně nahráno",
+    "invalidFile": "Vyberte platný soubor obrázku",
+    "fileTooLarge": "Velikost obrázku pozadí musí být menší než 5MB",
+    "readFailed": "Nepodařilo se přečíst soubor obrázku",
+    "uploadFailed": "Nepodařilo se nahrát obrázek pozadí"
   }
 }

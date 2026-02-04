@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Chế độ demo",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Hình nền",
+    "uploadBackgroundImage": "Tải lên hình nền",
+    "dragAndDrop": "Kéo và thả hình ảnh hoặc nhấp để duyệt",
+    "chooseImage": "Chọn hình ảnh",
+    "uploading": "Đang tải lên...",
+    "enterImageUrl": "Hoặc nhập URL hình ảnh",
+    "supportedFormats": "Hỗ trợ: JPG, PNG, GIF, WebP (tối đa 5MB). Hình ảnh ngang rộng hoạt động tốt nhất.",
+    "customBackground": "Hình nền tùy chỉnh",
+    "clickToChange": "Nhấp để thay đổi hoặc xóa",
+    "removed": "Đã xóa hình nền",
+    "uploaded": "Tải lên hình nền thành công",
+    "invalidFile": "Vui lòng chọn tệp hình ảnh hợp lệ",
+    "fileTooLarge": "Kích thước hình nền phải nhỏ hơn 5MB",
+    "readFailed": "Không thể đọc tệp hình ảnh",
+    "uploadFailed": "Không thể tải lên hình nền"
   }
 }

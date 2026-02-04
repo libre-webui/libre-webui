@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Demomodus",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Achtergrondafbeelding",
+    "uploadBackgroundImage": "Achtergrondafbeelding uploaden",
+    "dragAndDrop": "Sleep een afbeelding of klik om te bladeren",
+    "chooseImage": "Afbeelding kiezen",
+    "uploading": "Uploaden...",
+    "enterImageUrl": "Of voer afbeeldings-URL in",
+    "supportedFormats": "Ondersteunt: JPG, PNG, GIF, WebP (max 5MB). Brede landschapsafbeeldingen werken het beste.",
+    "customBackground": "Aangepaste achtergrondafbeelding",
+    "clickToChange": "Klik om te wijzigen of verwijderen",
+    "removed": "Achtergrond verwijderd",
+    "uploaded": "Achtergrond succesvol geüpload",
+    "invalidFile": "Selecteer een geldig afbeeldingsbestand",
+    "fileTooLarge": "Achtergrondafbeelding moet kleiner zijn dan 5MB",
+    "readFailed": "Kan afbeeldingsbestand niet lezen",
+    "uploadFailed": "Kan achtergrondafbeelding niet uploaden"
   }
 }

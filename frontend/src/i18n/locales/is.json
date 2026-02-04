@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Kynningarhamur",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Bakgrunnsmynd",
+    "uploadBackgroundImage": "Hlaða upp bakgrunnsmynd",
+    "dragAndDrop": "Dragðu og slepptu mynd eða smelltu til að fletta",
+    "chooseImage": "Velja mynd",
+    "uploading": "Hleð upp...",
+    "enterImageUrl": "Eða sláðu inn myndslóð",
+    "supportedFormats": "Styður: JPG, PNG, GIF, WebP (hámark 5MB). Breiðar landslagsmyndir virka best.",
+    "customBackground": "Sérsniðin bakgrunnsmynd",
+    "clickToChange": "Smelltu til að breyta eða fjarlægja",
+    "removed": "Bakgrunni fjarlægður",
+    "uploaded": "Bakgrunni hlaðið upp",
+    "invalidFile": "Vinsamlegast veldu gilda myndaskrá",
+    "fileTooLarge": "Bakgrunnsmynd verður að vera minni en 5MB",
+    "readFailed": "Ekki tókst að lesa myndaskrá",
+    "uploadFailed": "Ekki tókst að hlaða upp bakgrunnsmynd"
   }
 }

@@ -1233,5 +1233,22 @@
   "demoMode": {
     "title": "Mod demo",
     "github": "GitHub"
+  },
+  "personaBackground": {
+    "label": "Imej Latar Belakang",
+    "uploadBackgroundImage": "Muat naik imej latar belakang",
+    "dragAndDrop": "Seret dan lepas imej atau klik untuk melayari",
+    "chooseImage": "Pilih Imej",
+    "uploading": "Memuat naik...",
+    "enterImageUrl": "Atau masukkan URL imej",
+    "supportedFormats": "Menyokong: JPG, PNG, GIF, WebP (maks 5MB). Imej landskap lebar berfungsi terbaik.",
+    "customBackground": "Imej latar belakang tersuai",
+    "clickToChange": "Klik untuk menukar atau membuang",
+    "removed": "Latar belakang dibuang",
+    "uploaded": "Latar belakang berjaya dimuat naik",
+    "invalidFile": "Sila pilih fail imej yang sah",
+    "fileTooLarge": "Saiz imej latar belakang mestilah kurang daripada 5MB",
+    "readFailed": "Gagal membaca fail imej",
+    "uploadFailed": "Gagal memuat naik imej latar belakang"
   }
 }

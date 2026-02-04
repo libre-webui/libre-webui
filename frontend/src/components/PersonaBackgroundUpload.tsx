@@ -16,6 +16,7 @@
  */
 
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, X, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui';
 import toast from 'react-hot-toast';
@@ -29,19 +30,20 @@ interface PersonaBackgroundUploadProps {
 export const PersonaBackgroundUpload: React.FC<
   PersonaBackgroundUploadProps
 > = ({ value, onChange, className = '' }) => {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
   const handleFileSelect = async (file: File) => {
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
+      toast.error(t('personaBackground.invalidFile'));
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
       // 5MB limit for background images
-      toast.error('Background image size must be less than 5MB');
+      toast.error(t('personaBackground.fileTooLarge'));
       return;
     }
 
@@ -52,15 +54,15 @@ export const PersonaBackgroundUpload: React.FC<
       reader.onload = e => {
         const dataUrl = e.target?.result as string;
         onChange(dataUrl);
-        toast.success('Background uploaded successfully');
+        toast.success(t('personaBackground.uploaded'));
       };
       reader.onerror = () => {
-        toast.error('Failed to read image file');
+        toast.error(t('personaBackground.readFailed'));
       };
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('Failed to upload background:', error);
-      toast.error('Failed to upload background image');
+      toast.error(t('personaBackground.uploadFailed'));
     } finally {
       setUploading(false);
     }
@@ -97,14 +99,14 @@ export const PersonaBackgroundUpload: React.FC<
 
   const handleRemoveBackground = () => {
     onChange('');
-    toast.success('Background removed');
+    toast.success(t('personaBackground.removed'));
   };
 
   return (
     <div className={`space-y-4 ${className}`}>
       <div>
         <label className='block text-sm font-medium text-gray-700 dark:text-dark-600 mb-2'>
-          Background Image
+          {t('personaBackground.label')}
         </label>
 
         {/* Background Preview and Upload Area */}
@@ -123,10 +125,10 @@ export const PersonaBackgroundUpload: React.FC<
               <div className='flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-200 rounded-lg'>
                 <div className='flex-1 min-w-0'>
                   <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
-                    Custom background image
+                    {t('personaBackground.customBackground')}
                   </p>
                   <p className='text-xs text-gray-500 dark:text-gray-400'>
-                    Click to change or remove
+                    {t('personaBackground.clickToChange')}
                   </p>
                 </div>
                 <Button
@@ -153,10 +155,10 @@ export const PersonaBackgroundUpload: React.FC<
             >
               <ImageIcon className='h-12 w-12 mx-auto text-gray-400 dark:text-gray-500 mb-4' />
               <p className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-2'>
-                Upload background image
+                {t('personaBackground.uploadBackgroundImage')}
               </p>
               <p className='text-xs text-gray-500 dark:text-gray-400 mb-4'>
-                Drag and drop an image or click to browse
+                {t('personaBackground.dragAndDrop')}
               </p>
               <Button
                 variant='outline'
@@ -165,7 +167,9 @@ export const PersonaBackgroundUpload: React.FC<
                 className='mx-auto'
               >
                 <Upload className='h-4 w-4 mr-2' />
-                {uploading ? 'Uploading...' : 'Choose Image'}
+                {uploading
+                  ? t('personaBackground.uploading')
+                  : t('personaBackground.chooseImage')}
               </Button>
             </div>
           )}
@@ -173,7 +177,7 @@ export const PersonaBackgroundUpload: React.FC<
           {/* URL Input Alternative */}
           <div>
             <label className='block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1'>
-              Or enter image URL
+              {t('personaBackground.enterImageUrl')}
             </label>
             <input
               type='url'
@@ -194,8 +198,7 @@ export const PersonaBackgroundUpload: React.FC<
         />
 
         <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
-          Supports: JPG, PNG, GIF, WebP (max 5MB). Wide landscape images work
-          best.
+          {t('personaBackground.supportedFormats')}
         </p>
       </div>
     </div>
