@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Gestión de usuarios",
     "subtitle": "Gestiona cuentas de usuario y permisos",
+    "pageDescription": "Gestiona cuentas de usuario, permisos y controles de acceso para tu instancia de Libre WebUI.",
     "loading": "Cargando usuarios...",
     "createUser": "Crear usuario",
     "search": "Buscar usuarios...",

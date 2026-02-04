@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Správa uživatelů",
     "subtitle": "Spravujte uživatelské účty a oprávnění",
+    "pageDescription": "Spravujte uživatelské účty, oprávnění a řízení přístupu pro vaši instanci Libre WebUI.",
     "loading": "Načítání uživatelů...",
     "createUser": "Vytvořit uživatele",
     "search": "Hledat uživatele...",

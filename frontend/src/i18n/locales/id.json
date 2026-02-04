@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Manajemen Pengguna",
     "subtitle": "Kelola akun dan izin pengguna",
+    "pageDescription": "Kelola akun pengguna, izin, dan kontrol akses untuk instance Libre WebUI Anda.",
     "loading": "Memuat pengguna...",
     "createUser": "Buat Pengguna",
     "search": "Cari pengguna...",

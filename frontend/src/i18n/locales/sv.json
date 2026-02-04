@@ -965,6 +965,7 @@
   "userManager": {
     "title": "Användarhantering",
     "subtitle": "Hantera användarkonton och behörigheter",
+    "pageDescription": "Hantera användarkonton, behörigheter och åtkomstkontroller för din Libre WebUI-instans.",
     "loading": "Laddar användare...",
     "createUser": "Skapa användare",
     "search": "Sök användare...",

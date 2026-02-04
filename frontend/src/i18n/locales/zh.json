@@ -965,6 +965,7 @@
   "userManager": {
     "title": "用户管理",
     "subtitle": "管理用户账户和权限",
+    "pageDescription": "管理 Libre WebUI 实例的用户账户、权限和访问控制。",
     "loading": "加载用户中...",
     "createUser": "创建用户",
     "search": "搜索用户...",

@@ -965,6 +965,7 @@
   "userManager": {
     "title": "사용자 관리",
     "subtitle": "사용자 계정 및 권한 관리",
+    "pageDescription": "Libre WebUI 인스턴스의 사용자 계정, 권한 및 액세스 제어를 관리합니다.",
     "loading": "사용자 로딩 중...",
     "createUser": "사용자 만들기",
     "search": "사용자 검색...",

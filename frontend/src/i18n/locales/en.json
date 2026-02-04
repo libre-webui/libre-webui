@@ -965,6 +965,7 @@
   "userManager": {
     "title": "User Management",
     "subtitle": "Manage user accounts and permissions",
+    "pageDescription": "Manage user accounts, permissions, and access controls for your Libre WebUI instance.",
     "loading": "Loading users...",
     "createUser": "Create User",
     "search": "Search users...",
