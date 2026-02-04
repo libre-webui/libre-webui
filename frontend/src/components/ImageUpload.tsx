@@ -16,6 +16,7 @@
  */
 
 import React, { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils';
@@ -34,6 +35,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   maxImages = 5,
   className,
 }) => {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
 
@@ -124,16 +126,16 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           <div className='flex flex-col items-center text-center'>
             <Upload className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2' />
             <p className='text-sm text-gray-700 dark:text-gray-300 mb-2'>
-              Drop images here or{' '}
+              {t('chat.mediaUpload.dropImagesHere')}{' '}
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className='text-primary-600 dark:text-primary-400 hover:underline font-medium'
               >
-                browse
+                {t('chat.mediaUpload.browse')}
               </button>
             </p>
             <p className='text-xs text-gray-500 dark:text-gray-400'>
-              Supports: JPG, PNG, GIF, WebP (max 10MB each)
+              {t('chat.mediaUpload.supportedFormats')}
             </p>
           </div>
         </div>
