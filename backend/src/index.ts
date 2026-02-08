@@ -85,6 +85,11 @@ import pluginService from './services/pluginService.js';
 import preferencesService from './services/preferencesService.js';
 import documentService from './services/documentService.js';
 import { encryptionService as _encryptionService } from './services/encryptionService.js';
+import openclawSessionService, {
+  extractTextFromMessage,
+  type ToolStreamEvent,
+  type ChatDeltaEvent,
+} from './services/openclawSessionService.js';
 import { mergeGenerationOptions } from './utils/generationUtils.js';
 import { verifyToken } from './utils/jwt.js';
 import {
@@ -746,212 +751,266 @@ wss.on('connection', (ws, req) => {
           console.log(
             `[WebSocket] Using plugin ${activePlugin.id} for model ${actualModelName}`
           );
-          try {
-            // Get user's preferred generation options
-            const userGenerationOptions =
-              preferencesService.getGenerationOptions();
 
-            // Merge user preferences with request options
-            const mergedOptions = mergeGenerationOptions(
-              userGenerationOptions,
-              options
+          // Load plugin variables early — needed for session mode check
+          const pluginVars = pluginService.getPluginVariables(activePlugin);
+
+          // ---------------------------------------------------------------
+          // OpenClaw Session Mode — route through WebSocket gateway
+          // ---------------------------------------------------------------
+          const isOpenClawSession =
+            activePlugin.id === 'openclaw-agent' &&
+            pluginVars.session_mode !== false;
+
+          if (isOpenClawSession) {
+            console.log(
+              '[WebSocket] OpenClaw session mode: routing through gateway WS'
             );
 
-            // Get messages for context
-            const contextMessages =
-              chatService.getMessagesForContext(sessionId);
+            try {
+              // Ensure the gateway WS connection is established
+              const endpoint =
+                (pluginVars.endpoint as string) ||
+                activePlugin.endpoint ||
+                'http://127.0.0.1:18789/v1/chat/completions';
+              const apiKey = pluginService.getApiKey(activePlugin) || '';
+              const ocSessionKey = (pluginVars.session_key as string) || 'main';
 
-            // For regenerations, the user message is already in context; for new messages, we need to add it
-            let messagesForPlugin = regenerate
-              ? contextMessages
-              : contextMessages.concat([userMessage!]);
-
-            // Load plugin variables and apply identity passthrough
-            const pluginVars = pluginService.getPluginVariables(activePlugin);
-            const systemPromptPrefix =
-              (pluginVars.system_prompt_prefix as string) || '';
-            const userName = (pluginVars.user_name as string) || '';
-
-            // Prepend identity system message if configured
-            if (systemPromptPrefix || userName) {
-              let identityMsg = systemPromptPrefix;
-              if (userName) {
-                identityMsg = identityMsg
-                  ? `${identityMsg}\n\nThe user's name is: ${userName}`
-                  : `The user's name is: ${userName}`;
+              if (!openclawSessionService.isConnected) {
+                openclawSessionService.connect({
+                  gatewayUrl: endpoint,
+                  token: apiKey,
+                  sessionKey: ocSessionKey,
+                });
+                // Wait a bit for connection
+                await new Promise<void>(resolve => {
+                  const maxWait = 8000;
+                  const start = Date.now();
+                  const check = () => {
+                    if (openclawSessionService.isConnected) {
+                      resolve();
+                    } else if (Date.now() - start > maxWait) {
+                      resolve(); // proceed anyway, will error on send
+                    } else {
+                      setTimeout(check, 200);
+                    }
+                  };
+                  check();
+                });
               }
-              messagesForPlugin = [
-                {
-                  id: 'system-identity',
-                  role: 'system' as const,
-                  content: identityMsg,
-                  timestamp: Date.now(),
-                },
-                ...messagesForPlugin,
-              ];
-            }
 
-            const shouldStream =
-              (pluginVars.stream as boolean | undefined) ?? false;
+              if (!openclawSessionService.isConnected) {
+                throw new Error(
+                  'Failed to connect to OpenClaw gateway WebSocket'
+                );
+              }
 
-            if (shouldStream) {
-              // Real SSE streaming from plugin
+              // Build the message to send
+              const messageText = userMessage?.content || content;
+
+              // Set up event listener for this run
               let totalContent = '';
+              let currentRunId: string | null = null;
+              let runDone = false;
               const toolCalls: Array<{
                 id: string;
                 name: string;
-                arguments: string;
+                phase: string;
+                args?: string;
+                result?: string;
               }> = [];
 
-              for await (const chunk of pluginService.executePluginStreamRequest(
-                actualModelName,
-                messagesForPlugin,
-                mergedOptions
-              )) {
-                if (chunk.type === 'content' && chunk.content) {
-                  totalContent += chunk.content;
-                  ws.send(
-                    JSON.stringify({
-                      type: 'assistant_chunk',
-                      data: {
-                        content: chunk.content,
-                        total: totalContent,
-                        done: false,
-                        messageId: assistantMessageId,
-                      },
-                    })
-                  );
-                } else if (chunk.type === 'tool_call' && chunk.toolCall) {
-                  toolCalls.push(chunk.toolCall);
-                } else if (chunk.type === 'done') {
-                  // Append tool call info to content if present
-                  if (toolCalls.length > 0) {
-                    let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
-                    for (const tc of toolCalls) {
-                      let argsFormatted = tc.arguments;
+              const cleanup = openclawSessionService.subscribe((type, data) => {
+                if (runDone) return;
+
+                if (type === 'chat') {
+                  const chatEvent = data as ChatDeltaEvent;
+                  if (
+                    currentRunId &&
+                    chatEvent.runId &&
+                    chatEvent.runId !== currentRunId
+                  )
+                    return;
+
+                  if (chatEvent.state === 'delta') {
+                    const text = extractTextFromMessage(chatEvent.message);
+                    if (
+                      typeof text === 'string' &&
+                      text.length > totalContent.length
+                    ) {
+                      // Send incremental delta
+                      const newContent = text.slice(totalContent.length);
+                      totalContent = text;
                       try {
-                        argsFormatted = JSON.stringify(
-                          JSON.parse(tc.arguments),
-                          null,
-                          2
+                        ws.send(
+                          JSON.stringify({
+                            type: 'assistant_chunk',
+                            data: {
+                              content: newContent,
+                              total: totalContent,
+                              done: false,
+                              messageId: assistantMessageId,
+                            },
+                          })
                         );
                       } catch {
-                        /* keep raw */
+                        /* ws closed */
                       }
-                      toolContent += `\n**${tc.name}** (\`${tc.id}\`)\n\`\`\`json\n${argsFormatted}\n\`\`\`\n`;
                     }
-                    totalContent += toolContent;
-                  }
-
-                  // Send final chunk
-                  ws.send(
-                    JSON.stringify({
-                      type: 'assistant_chunk',
-                      data: {
-                        content: '',
-                        total: totalContent,
-                        done: true,
-                        messageId: assistantMessageId,
-                      },
-                    })
-                  );
-                }
-              }
-
-              assistantContent = totalContent;
-            } else {
-              // Non-streaming: use original request method
-              const pluginResponse = await pluginService.executePluginRequest(
-                actualModelName,
-                messagesForPlugin,
-                mergedOptions
-              );
-
-              if (!pluginResponse?.choices?.length) {
-                throw new Error('Plugin returned empty or invalid response');
-              }
-              const choice = pluginResponse.choices[0];
-              // Handle content that may be a string or array of content blocks
-              const rawContent = choice?.message?.content;
-              if (Array.isArray(rawContent)) {
-                // Multimodal response: convert content blocks to markdown
-                const parts: string[] = [];
-                for (const block of rawContent as Array<{
-                  type: string;
-                  text?: string;
-                  image_url?: { url: string };
-                }>) {
-                  if (block.type === 'text' && block.text) {
-                    parts.push(block.text);
                   } else if (
-                    block.type === 'image_url' &&
-                    block.image_url?.url
+                    chatEvent.state === 'final' ||
+                    chatEvent.state === 'aborted' ||
+                    chatEvent.state === 'error'
                   ) {
-                    parts.push(`![image](${block.image_url.url})`);
-                  }
-                }
-                assistantContent = parts.join('\n\n');
-              } else {
-                assistantContent = (rawContent as string) || '';
-              }
+                    runDone = true;
 
-              // Render tool_calls from non-streaming response
-              const msgAny = choice?.message as Record<string, unknown>;
-              if (
-                msgAny?.tool_calls &&
-                Array.isArray(msgAny.tool_calls) &&
-                msgAny.tool_calls.length > 0
-              ) {
-                let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
-                for (const tc of msgAny.tool_calls as Array<{
-                  id?: string;
-                  function?: { name?: string; arguments?: string };
-                }>) {
-                  const name = tc.function?.name || 'unknown';
-                  const id = tc.id || '';
-                  let args = tc.function?.arguments || '';
+                    if (chatEvent.state === 'error') {
+                      const errMsg = chatEvent.errorMessage || 'Agent error';
+                      if (!totalContent) totalContent = `Error: ${errMsg}`;
+                    }
+
+                    // Append tool call summaries
+                    if (toolCalls.length > 0) {
+                      let toolContent = '\n\n---\n**🔧 Tools Used:**\n';
+                      for (const tc of toolCalls) {
+                        const statusIcon = tc.phase === 'result' ? '✅' : '⏳';
+                        toolContent += `\n${statusIcon} **${tc.name}**`;
+                        if (tc.result) {
+                          const resultStr =
+                            typeof tc.result === 'string'
+                              ? tc.result
+                              : JSON.stringify(tc.result);
+                          if (resultStr.length <= 500) {
+                            toolContent += `\n<details><summary>Result</summary>\n\n\`\`\`\n${resultStr}\n\`\`\`\n</details>\n`;
+                          } else {
+                            toolContent += `\n<details><summary>Result (${resultStr.length} chars)</summary>\n\n\`\`\`\n${resultStr.slice(0, 500)}…\n\`\`\`\n</details>\n`;
+                          }
+                        }
+                      }
+                      totalContent += toolContent;
+                    }
+
+                    // Send final chunk
+                    try {
+                      ws.send(
+                        JSON.stringify({
+                          type: 'assistant_chunk',
+                          data: {
+                            content: '',
+                            total: totalContent,
+                            done: true,
+                            messageId: assistantMessageId,
+                          },
+                        })
+                      );
+                    } catch {
+                      /* ws closed */
+                    }
+                  }
+                } else if (type === 'tool') {
+                  const toolEvent = data as ToolStreamEvent;
+                  // Track tool calls
+                  const existing = toolCalls.find(
+                    t => t.id === toolEvent.toolCallId
+                  );
+                  if (existing) {
+                    existing.phase = toolEvent.phase;
+                    if (toolEvent.result)
+                      existing.result =
+                        typeof toolEvent.result === 'string'
+                          ? toolEvent.result
+                          : JSON.stringify(toolEvent.result);
+                  } else {
+                    toolCalls.push({
+                      id: toolEvent.toolCallId,
+                      name: toolEvent.name,
+                      phase: toolEvent.phase,
+                      args: toolEvent.args
+                        ? JSON.stringify(toolEvent.args)
+                        : undefined,
+                      result: toolEvent.result
+                        ? typeof toolEvent.result === 'string'
+                          ? toolEvent.result
+                          : JSON.stringify(toolEvent.result)
+                        : undefined,
+                    });
+                  }
+
+                  // Send tool status to frontend
                   try {
-                    args = JSON.stringify(JSON.parse(args), null, 2);
+                    const toolStatusMsg =
+                      toolEvent.phase === 'start'
+                        ? `\n\n🔧 *Using tool: ${toolEvent.name}…*\n`
+                        : '';
+                    if (toolStatusMsg) {
+                      totalContent += toolStatusMsg;
+                      ws.send(
+                        JSON.stringify({
+                          type: 'assistant_chunk',
+                          data: {
+                            content: toolStatusMsg,
+                            total: totalContent,
+                            done: false,
+                            messageId: assistantMessageId,
+                          },
+                        })
+                      );
+                    }
                   } catch {
-                    /* keep raw */
+                    /* ws closed */
                   }
-                  toolContent += `\n**${name}** (\`${id}\`)\n\`\`\`json\n${args}\n\`\`\`\n`;
                 }
-                assistantContent += toolContent;
-              }
+              });
 
-              // Send the complete response as chunks to simulate streaming
-              const words = assistantContent.split(' ');
-              const BATCH_SIZE = 3;
+              // Send the message
+              const result = await openclawSessionService.sendMessage(
+                messageText,
+                ocSessionKey
+              );
+              currentRunId = result.runId;
 
-              for (let i = 0; i < words.length; i += BATCH_SIZE) {
-                const batch = words.slice(i, i + BATCH_SIZE);
-                const chunk = words.slice(0, i + batch.length).join(' ');
-                const isLast = i + BATCH_SIZE >= words.length;
+              // Wait for completion (max 5 minutes)
+              await new Promise<void>(resolve => {
+                const timeout = setTimeout(() => {
+                  runDone = true;
+                  resolve();
+                }, 300000);
 
-                ws.send(
-                  JSON.stringify({
-                    type: 'assistant_chunk',
-                    data: {
-                      content: batch.join(' ') + (isLast ? '' : ' '),
-                      total: chunk,
-                      done: isLast,
-                      messageId: assistantMessageId,
-                    },
-                  })
-                );
+                const checkDone = setInterval(() => {
+                  if (runDone) {
+                    clearInterval(checkDone);
+                    clearTimeout(timeout);
+                    resolve();
+                  }
+                }, 100);
+              });
 
-                if (!isLast) {
-                  await new Promise(resolve => setTimeout(resolve, 100));
-                }
-              }
+              // Clean up listener
+              cleanup();
+
+              // Save the assistant message
+              assistantContent = totalContent;
+            } catch (error) {
+              console.error('[WebSocket] OpenClaw session error:', error);
+              const errorMsg =
+                error instanceof Error ? error.message : String(error);
+              assistantContent = `Error: ${errorMsg}`;
+              ws.send(
+                JSON.stringify({
+                  type: 'assistant_chunk',
+                  data: {
+                    content: assistantContent,
+                    total: assistantContent,
+                    done: true,
+                    messageId: assistantMessageId,
+                  },
+                })
+              );
             }
 
-            // Save the complete assistant message (skip for private sessions)
+            // Save assistant message from session mode
             if (assistantContent && assistantMessageId) {
               if (isPrivate) {
-                // For private sessions, just send completion without saving
-                console.log('Backend: Private session - skipping message save');
                 ws.send(
                   JSON.stringify({
                     type: 'assistant_complete',
@@ -965,42 +1024,6 @@ wss.on('connection', (ws, req) => {
                   })
                 );
               } else {
-                console.log(
-                  'Backend: Saving complete assistant message with ID:',
-                  assistantMessageId,
-                  'regenerate:',
-                  !!regenerate
-                );
-
-                // Calculate branching fields if this is a regeneration
-                let branchingFields: {
-                  parentId?: string;
-                  branchIndex?: number;
-                  isActive?: boolean;
-                } = {};
-                if (regenerate && originalMessageId) {
-                  // Find the original message to get its parentId or use its ID as parent
-                  const originalMsg = session.messages.find(
-                    m => m.id === originalMessageId
-                  );
-                  const parentId = originalMsg?.parentId || originalMessageId;
-
-                  // Count existing siblings to determine branch index
-                  const siblingCount = session.messages.filter(
-                    m => m.id === parentId || m.parentId === parentId
-                  ).length;
-
-                  branchingFields = {
-                    parentId,
-                    branchIndex: siblingCount, // New branch gets next index
-                    isActive: true,
-                  };
-                  console.log(
-                    'Backend: Setting branching fields:',
-                    branchingFields
-                  );
-                }
-
                 const assistantMessage = chatService.addMessage(
                   sessionId,
                   {
@@ -1008,17 +1031,9 @@ wss.on('connection', (ws, req) => {
                     content: assistantContent,
                     model: session.model,
                     id: assistantMessageId,
-                    ...branchingFields,
                   },
                   userId
                 );
-
-                console.log(
-                  'Backend: Assistant message saved:',
-                  !!assistantMessage
-                );
-
-                // Send completion signal
                 ws.send(
                   JSON.stringify({
                     type: 'assistant_complete',
@@ -1027,27 +1042,314 @@ wss.on('connection', (ws, req) => {
                 );
               }
             }
-            return; // Exit early since we handled the request via plugin
-          } catch (pluginError: any) {
-            console.error(
-              'Plugin failed, falling back to Ollama:',
-              pluginError?.message || pluginError
-            );
-            if (pluginError?.response) {
-              console.error(
-                'Plugin HTTP response status:',
-                pluginError.response.status
+            return; // Exit early — handled via OpenClaw session
+          } else {
+            // ---------------------------------------------------------------
+            // Standard plugin path (stateless HTTP completions)
+            // ---------------------------------------------------------------
+
+            try {
+              // Get user's preferred generation options
+              const userGenerationOptions =
+                preferencesService.getGenerationOptions();
+
+              // Merge user preferences with request options
+              const mergedOptions = mergeGenerationOptions(
+                userGenerationOptions,
+                options
               );
+
+              // Get messages for context
+              const contextMessages =
+                chatService.getMessagesForContext(sessionId);
+
+              // For regenerations, the user message is already in context; for new messages, we need to add it
+              let messagesForPlugin = regenerate
+                ? contextMessages
+                : contextMessages.concat([userMessage!]);
+              const systemPromptPrefix =
+                (pluginVars.system_prompt_prefix as string) || '';
+              const userName = (pluginVars.user_name as string) || '';
+
+              // Prepend identity system message if configured
+              if (systemPromptPrefix || userName) {
+                let identityMsg = systemPromptPrefix;
+                if (userName) {
+                  identityMsg = identityMsg
+                    ? `${identityMsg}\n\nThe user's name is: ${userName}`
+                    : `The user's name is: ${userName}`;
+                }
+                messagesForPlugin = [
+                  {
+                    id: 'system-identity',
+                    role: 'system' as const,
+                    content: identityMsg,
+                    timestamp: Date.now(),
+                  },
+                  ...messagesForPlugin,
+                ];
+              }
+
+              const shouldStream =
+                (pluginVars.stream as boolean | undefined) ?? false;
+
+              if (shouldStream) {
+                // Real SSE streaming from plugin
+                let totalContent = '';
+                const toolCalls: Array<{
+                  id: string;
+                  name: string;
+                  arguments: string;
+                }> = [];
+
+                for await (const chunk of pluginService.executePluginStreamRequest(
+                  actualModelName,
+                  messagesForPlugin,
+                  mergedOptions
+                )) {
+                  if (chunk.type === 'content' && chunk.content) {
+                    totalContent += chunk.content;
+                    ws.send(
+                      JSON.stringify({
+                        type: 'assistant_chunk',
+                        data: {
+                          content: chunk.content,
+                          total: totalContent,
+                          done: false,
+                          messageId: assistantMessageId,
+                        },
+                      })
+                    );
+                  } else if (chunk.type === 'tool_call' && chunk.toolCall) {
+                    toolCalls.push(chunk.toolCall);
+                  } else if (chunk.type === 'done') {
+                    // Append tool call info to content if present
+                    if (toolCalls.length > 0) {
+                      let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
+                      for (const tc of toolCalls) {
+                        let argsFormatted = tc.arguments;
+                        try {
+                          argsFormatted = JSON.stringify(
+                            JSON.parse(tc.arguments),
+                            null,
+                            2
+                          );
+                        } catch {
+                          /* keep raw */
+                        }
+                        toolContent += `\n**${tc.name}** (\`${tc.id}\`)\n\`\`\`json\n${argsFormatted}\n\`\`\`\n`;
+                      }
+                      totalContent += toolContent;
+                    }
+
+                    // Send final chunk
+                    ws.send(
+                      JSON.stringify({
+                        type: 'assistant_chunk',
+                        data: {
+                          content: '',
+                          total: totalContent,
+                          done: true,
+                          messageId: assistantMessageId,
+                        },
+                      })
+                    );
+                  }
+                }
+
+                assistantContent = totalContent;
+              } else {
+                // Non-streaming: use original request method
+                const pluginResponse = await pluginService.executePluginRequest(
+                  actualModelName,
+                  messagesForPlugin,
+                  mergedOptions
+                );
+
+                if (!pluginResponse?.choices?.length) {
+                  throw new Error('Plugin returned empty or invalid response');
+                }
+                const choice = pluginResponse.choices[0];
+                // Handle content that may be a string or array of content blocks
+                const rawContent = choice?.message?.content;
+                if (Array.isArray(rawContent)) {
+                  // Multimodal response: convert content blocks to markdown
+                  const parts: string[] = [];
+                  for (const block of rawContent as Array<{
+                    type: string;
+                    text?: string;
+                    image_url?: { url: string };
+                  }>) {
+                    if (block.type === 'text' && block.text) {
+                      parts.push(block.text);
+                    } else if (
+                      block.type === 'image_url' &&
+                      block.image_url?.url
+                    ) {
+                      parts.push(`![image](${block.image_url.url})`);
+                    }
+                  }
+                  assistantContent = parts.join('\n\n');
+                } else {
+                  assistantContent = (rawContent as string) || '';
+                }
+
+                // Render tool_calls from non-streaming response
+                const msgAny = choice?.message as Record<string, unknown>;
+                if (
+                  msgAny?.tool_calls &&
+                  Array.isArray(msgAny.tool_calls) &&
+                  msgAny.tool_calls.length > 0
+                ) {
+                  let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
+                  for (const tc of msgAny.tool_calls as Array<{
+                    id?: string;
+                    function?: { name?: string; arguments?: string };
+                  }>) {
+                    const name = tc.function?.name || 'unknown';
+                    const id = tc.id || '';
+                    let args = tc.function?.arguments || '';
+                    try {
+                      args = JSON.stringify(JSON.parse(args), null, 2);
+                    } catch {
+                      /* keep raw */
+                    }
+                    toolContent += `\n**${name}** (\`${id}\`)\n\`\`\`json\n${args}\n\`\`\`\n`;
+                  }
+                  assistantContent += toolContent;
+                }
+
+                // Send the complete response as chunks to simulate streaming
+                const words = assistantContent.split(' ');
+                const BATCH_SIZE = 3;
+
+                for (let i = 0; i < words.length; i += BATCH_SIZE) {
+                  const batch = words.slice(i, i + BATCH_SIZE);
+                  const chunk = words.slice(0, i + batch.length).join(' ');
+                  const isLast = i + BATCH_SIZE >= words.length;
+
+                  ws.send(
+                    JSON.stringify({
+                      type: 'assistant_chunk',
+                      data: {
+                        content: batch.join(' ') + (isLast ? '' : ' '),
+                        total: chunk,
+                        done: isLast,
+                        messageId: assistantMessageId,
+                      },
+                    })
+                  );
+
+                  if (!isLast) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                  }
+                }
+              }
+
+              // Save the complete assistant message (skip for private sessions)
+              if (assistantContent && assistantMessageId) {
+                if (isPrivate) {
+                  // For private sessions, just send completion without saving
+                  console.log(
+                    'Backend: Private session - skipping message save'
+                  );
+                  ws.send(
+                    JSON.stringify({
+                      type: 'assistant_complete',
+                      data: {
+                        id: assistantMessageId,
+                        role: 'assistant',
+                        content: assistantContent,
+                        model: session.model,
+                        timestamp: Date.now(),
+                      },
+                    })
+                  );
+                } else {
+                  console.log(
+                    'Backend: Saving complete assistant message with ID:',
+                    assistantMessageId,
+                    'regenerate:',
+                    !!regenerate
+                  );
+
+                  // Calculate branching fields if this is a regeneration
+                  let branchingFields: {
+                    parentId?: string;
+                    branchIndex?: number;
+                    isActive?: boolean;
+                  } = {};
+                  if (regenerate && originalMessageId) {
+                    // Find the original message to get its parentId or use its ID as parent
+                    const originalMsg = session.messages.find(
+                      m => m.id === originalMessageId
+                    );
+                    const parentId = originalMsg?.parentId || originalMessageId;
+
+                    // Count existing siblings to determine branch index
+                    const siblingCount = session.messages.filter(
+                      m => m.id === parentId || m.parentId === parentId
+                    ).length;
+
+                    branchingFields = {
+                      parentId,
+                      branchIndex: siblingCount, // New branch gets next index
+                      isActive: true,
+                    };
+                    console.log(
+                      'Backend: Setting branching fields:',
+                      branchingFields
+                    );
+                  }
+
+                  const assistantMessage = chatService.addMessage(
+                    sessionId,
+                    {
+                      role: 'assistant',
+                      content: assistantContent,
+                      model: session.model,
+                      id: assistantMessageId,
+                      ...branchingFields,
+                    },
+                    userId
+                  );
+
+                  console.log(
+                    'Backend: Assistant message saved:',
+                    !!assistantMessage
+                  );
+
+                  // Send completion signal
+                  ws.send(
+                    JSON.stringify({
+                      type: 'assistant_complete',
+                      data: assistantMessage,
+                    })
+                  );
+                }
+              }
+              return; // Exit early since we handled the request via plugin
+            } catch (pluginError: any) {
               console.error(
-                'Plugin HTTP response data:',
-                JSON.stringify(pluginError.response.data)
+                'Plugin failed, falling back to Ollama:',
+                pluginError?.message || pluginError
               );
+              if (pluginError?.response) {
+                console.error(
+                  'Plugin HTTP response status:',
+                  pluginError.response.status
+                );
+                console.error(
+                  'Plugin HTTP response data:',
+                  JSON.stringify(pluginError.response.data)
+                );
+              }
+              if (pluginError?.cause) {
+                console.error('Plugin error cause:', pluginError.cause);
+              }
+              // Continue to Ollama fallback below
             }
-            if (pluginError?.cause) {
-              console.error('Plugin error cause:', pluginError.cause);
-            }
-            // Continue to Ollama fallback below
-          }
+          } // close else (standard plugin path)
         }
 
         console.log(
