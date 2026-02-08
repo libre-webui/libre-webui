@@ -36,6 +36,20 @@
       "label": "Enable Streaming",
       "description": "Stream responses in real-time via SSE instead of waiting for complete response.",
       "default": true
+    },
+    {
+      "name": "system_prompt_prefix",
+      "type": "string",
+      "label": "System Prompt Prefix",
+      "description": "Text prepended as a system message to every conversation (e.g. identity, instructions).",
+      "default": ""
+    },
+    {
+      "name": "user_name",
+      "type": "string",
+      "label": "User Name",
+      "description": "Your name, passed to the agent so it knows who is talking.",
+      "default": ""
     }
   ]
 }

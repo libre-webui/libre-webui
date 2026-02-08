@@ -762,12 +762,35 @@ wss.on('connection', (ws, req) => {
               chatService.getMessagesForContext(sessionId);
 
             // For regenerations, the user message is already in context; for new messages, we need to add it
-            const messagesForPlugin = regenerate
+            let messagesForPlugin = regenerate
               ? contextMessages
               : contextMessages.concat([userMessage!]);
 
-            // Check if plugin supports streaming
+            // Load plugin variables and apply identity passthrough
             const pluginVars = pluginService.getPluginVariables(activePlugin);
+            const systemPromptPrefix =
+              (pluginVars.system_prompt_prefix as string) || '';
+            const userName = (pluginVars.user_name as string) || '';
+
+            // Prepend identity system message if configured
+            if (systemPromptPrefix || userName) {
+              let identityMsg = systemPromptPrefix;
+              if (userName) {
+                identityMsg = identityMsg
+                  ? `${identityMsg}\n\nThe user's name is: ${userName}`
+                  : `The user's name is: ${userName}`;
+              }
+              messagesForPlugin = [
+                {
+                  id: 'system-identity',
+                  role: 'system' as const,
+                  content: identityMsg,
+                  timestamp: Date.now(),
+                },
+                ...messagesForPlugin,
+              ];
+            }
+
             const shouldStream =
               (pluginVars.stream as boolean | undefined) ?? false;
 
