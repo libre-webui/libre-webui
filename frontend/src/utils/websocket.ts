@@ -84,10 +84,11 @@ class WebSocketService {
         this.ws.onmessage = event => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
-            console.log('WebSocket: Received message:', message);
             const handler = this.messageHandlers.get(message.type);
             if (handler) {
               handler(message.data);
+            } else if (message.type === 'connected') {
+              console.debug('WebSocket: Server confirmed connection');
             } else {
               console.warn(
                 'WebSocket: No handler for message type:',

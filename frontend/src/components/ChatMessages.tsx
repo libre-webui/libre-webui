@@ -67,17 +67,19 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     const groups: MessageGroup[] = [];
     const processedIds = new Set<string>();
 
-    // Debug: Log messages with branching info
-    console.log(
-      '[ChatMessages] Grouping messages:',
-      messages.map(m => ({
-        id: m.id?.substring(0, 8),
-        role: m.role,
-        parentId: m.parentId?.substring(0, 8),
-        branchIndex: m.branchIndex,
-        isActive: m.isActive,
-      }))
-    );
+    // Debug: Log messages with branching info (verbose, disabled by default)
+    if (import.meta.env.DEV && import.meta.env.VITE_DEBUG_VERBOSE) {
+      console.debug(
+        '[ChatMessages] Grouping messages:',
+        messages.map(m => ({
+          id: m.id?.substring(0, 8),
+          role: m.role,
+          parentId: m.parentId?.substring(0, 8),
+          branchIndex: m.branchIndex,
+          isActive: m.isActive,
+        }))
+      );
+    }
 
     // Sort messages by their original index, then by branch index
     const sortedMessages = [...messages].sort((a, b) => {
