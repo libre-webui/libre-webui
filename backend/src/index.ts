@@ -1329,23 +1329,39 @@ wss.on('connection', (ws, req) => {
                 }
               }
               return; // Exit early since we handled the request via plugin
-            } catch (pluginError: any) {
+            } catch (pluginError: unknown) {
+              const err =
+                pluginError instanceof Error
+                  ? pluginError
+                  : new Error(String(pluginError));
+              const errWithResponse = pluginError as Record<
+                string,
+                unknown
+              > | null;
               console.error(
                 'Plugin failed, falling back to Ollama:',
-                pluginError?.message || pluginError
+                err.message
               );
-              if (pluginError?.response) {
-                console.error(
-                  'Plugin HTTP response status:',
-                  pluginError.response.status
-                );
+              if (
+                errWithResponse &&
+                typeof errWithResponse === 'object' &&
+                'response' in errWithResponse
+              ) {
+                const resp = errWithResponse.response as Record<
+                  string,
+                  unknown
+                >;
+                console.error('Plugin HTTP response status:', resp.status);
                 console.error(
                   'Plugin HTTP response data:',
-                  JSON.stringify(pluginError.response.data)
+                  JSON.stringify(resp.data)
                 );
               }
-              if (pluginError?.cause) {
-                console.error('Plugin error cause:', pluginError.cause);
+              if ('cause' in err) {
+                console.error(
+                  'Plugin error cause:',
+                  (err as { cause: unknown }).cause
+                );
               }
               // Continue to Ollama fallback below
             }
