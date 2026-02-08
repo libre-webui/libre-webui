@@ -15,6 +15,20 @@
   ],
   "variables": [
     {
+      "name": "session_mode",
+      "type": "boolean",
+      "label": "Session Mode",
+      "description": "When enabled, messages are sent through a persistent OpenClaw agent session via WebSocket. This gives the agent access to all tools (exec, web search, file ops, browser, etc.), memory, and workspace. When disabled, uses stateless HTTP completions.",
+      "default": true
+    },
+    {
+      "name": "session_key",
+      "type": "string",
+      "label": "Session Key",
+      "description": "OpenClaw session key to use. 'main' uses the default agent session.",
+      "default": "main"
+    },
+    {
       "name": "endpoint",
       "type": "string",
       "label": "OpenClaw Gateway URL",
