@@ -14,7 +14,7 @@ No telemetry. No tracking. No compromises.
 <p>
   <a href="https://github.com/libre-webui/libre-webui/releases"><img src="https://img.shields.io/badge/version-0.8.0-blue?style=flat-square" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green?style=flat-square" alt="License"></a>
-  <a href="https://github.com/libre-webui/libre-webui/actions"><img src="https://img.shields.io/github/actions/workflow/status/libre-webui/libre-webui/ci.yml?style=flat-square&label=CI" alt="CI"></a>
+  <a href="https://github.com/libre-webui/libre-webui/actions"><img src="https://img.shields.io/github/actions/workflow/status/libre-webui/libre-webui/release.yml?style=flat-square&label=Build" alt="CI"></a>
   <a href="https://huggingface.co/libre-webui"><img src="https://img.shields.io/badge/🤗_HuggingFace-models-yellow?style=flat-square" alt="HuggingFace"></a>
   <a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=flat-square&label=Stars" alt="Stars"></a>
 </p>
