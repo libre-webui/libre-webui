@@ -29,13 +29,6 @@
       "default": 0.7,
       "min": 0,
       "max": 2
-    },
-    {
-      "name": "stream",
-      "type": "boolean",
-      "label": "Stream Response",
-      "description": "Stream the response token by token. Disable if responses appear empty.",
-      "default": false
     }
   ]
 }
