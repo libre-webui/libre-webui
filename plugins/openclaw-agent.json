@@ -1,32 +1,40 @@
 {
   "id": "openclaw-agent",
-  "name": "OpenClaw Agent",
+  "name": "OpenClaw Agent (Ophelia)",
   "type": "completion",
-  "endpoint": "http://localhost:11435/v1/chat/completions",
+  "endpoint": "http://127.0.0.1:18789/v1/chat/completions",
   "auth": {
     "header": "Authorization",
     "prefix": "Bearer ",
-    "key_env": "OPENCLAW_BRIDGE_API_KEY"
+    "key_env": "OPENCLAW_API_KEY"
   },
   "model_map": [
-    "openclaw/agent",
-    "openclaw/agent-fast",
-    "openclaw/agent-reasoning"
+    "anthropic/claude-opus-4-6",
+    "anthropic/claude-sonnet-4-20250514"
   ],
   "variables": [
     {
-      "name": "bridge_url",
+      "name": "endpoint",
       "type": "string",
-      "label": "OpenClaw Bridge URL",
-      "description": "URL of the OpenClaw Libre WebUI bridge endpoint",
-      "default": "http://localhost:11435"
+      "label": "OpenClaw Gateway URL",
+      "description": "URL of your OpenClaw gateway chat completions endpoint.",
+      "default": "http://127.0.0.1:18789/v1/chat/completions"
     },
     {
-      "name": "api_key",
-      "type": "string",
-      "label": "Bridge API Key",
-      "description": "Shared secret matching the OpenClaw plugin config",
-      "sensitive": true
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Stream Response",
+      "description": "Stream the response token by token.",
+      "default": false
     }
   ]
 }

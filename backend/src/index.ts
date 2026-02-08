@@ -773,6 +773,9 @@ wss.on('connection', (ws, req) => {
             );
 
             // Get the content from plugin response
+            if (!pluginResponse?.choices?.length) {
+              throw new Error('Plugin returned empty or invalid response');
+            }
             assistantContent =
               pluginResponse.choices[0]?.message?.content || '';
 
@@ -884,11 +887,24 @@ wss.on('connection', (ws, req) => {
               }
             }
             return; // Exit early since we handled the request via plugin
-          } catch (pluginError) {
+          } catch (pluginError: any) {
             console.error(
               'Plugin failed, falling back to Ollama:',
-              pluginError
+              pluginError?.message || pluginError
             );
+            if (pluginError?.response) {
+              console.error(
+                'Plugin HTTP response status:',
+                pluginError.response.status
+              );
+              console.error(
+                'Plugin HTTP response data:',
+                JSON.stringify(pluginError.response.data)
+              );
+            }
+            if (pluginError?.cause) {
+              console.error('Plugin error cause:', pluginError.cause);
+            }
             // Continue to Ollama fallback below
           }
         }
