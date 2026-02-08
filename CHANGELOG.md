@@ -15,6 +15,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.8.1] - 2026-02-08
+
+### What's New
+
+This release focuses on stability and security improvements with enhanced documentation. Key updates include security patches for the plugin service, reduced console noise for better debugging, and a completely revamped README for easier onboarding.
+
+### 🔧 Improvements
+
+- Revamped README documentation for better clarity and user experience
+- Expanded OpenClaw integration documentation with comprehensive setup guides
+- Reduced excessive console logging in chat components and WebSocket connections for cleaner debug output
+- Improved TypeScript error handling by replacing explicit `any` types with `unknown` in catch clauses
+
+### 🐛 Bug Fixes
+
+- Patched CodeQL security vulnerabilities in the plugin service
+- Prevented duplicate i18next initialization that could cause localization conflicts
+
 ## [0.8.0] - 2026-02-08
 
 ### What's New
