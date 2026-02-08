@@ -149,9 +149,9 @@ export const MessageContent: React.FC<MessageContentProps> = ({
           },
           p({ children, ...props }) {
             return (
-              <p className='mb-4 last:mb-0 leading-relaxed' {...props}>
+              <div className='mb-4 last:mb-0 leading-relaxed' {...props}>
                 {children}
-              </p>
+              </div>
             );
           },
           ul({ children, ...props }) {
