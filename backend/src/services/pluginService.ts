@@ -531,6 +531,15 @@ class PluginService {
 
     headers[activePlugin.auth.header] = authValue;
 
+    // OpenClaw session routing — send through the main agent session for full tool access
+    if (activePlugin.id === 'openclaw-agent') {
+      const sessionKey = (pluginVars.session_key as string) || 'main';
+      const sessionMode = pluginVars.session_mode as boolean | undefined;
+      if (sessionMode !== false) {
+        headers['x-openclaw-session-key'] = sessionKey;
+      }
+    }
+
     // Prepare request payload based on plugin type
     let payload: Record<string, unknown>;
 
@@ -854,6 +863,15 @@ class PluginService {
       ? `${activePlugin.auth.prefix}${apiKey}`
       : apiKey;
     headers[activePlugin.auth.header] = authValue;
+
+    // OpenClaw session routing — send through the main agent session for full tool access
+    if (activePlugin.id === 'openclaw-agent') {
+      const sessionKey = (pluginVars.session_key as string) || 'main';
+      const sessionMode = pluginVars.session_mode as boolean | undefined;
+      if (sessionMode !== false) {
+        headers['x-openclaw-session-key'] = sessionKey;
+      }
+    }
 
     // Build OpenAI-compatible payload with stream=true
     const openaiMessages = messages.map(msg => {

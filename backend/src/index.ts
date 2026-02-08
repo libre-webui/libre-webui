@@ -758,9 +758,9 @@ wss.on('connection', (ws, req) => {
           // ---------------------------------------------------------------
           // OpenClaw Session Mode — route through WebSocket gateway
           // ---------------------------------------------------------------
-          const isOpenClawSession =
-            activePlugin.id === 'openclaw-agent' &&
-            pluginVars.session_mode !== false;
+          // OpenClaw session routing now handled via x-openclaw-session-key HTTP header
+          // in pluginService — no WebSocket needed
+          const isOpenClawSession = false; // Disabled: WS approach replaced by HTTP header
 
           if (isOpenClawSession) {
             console.log(
