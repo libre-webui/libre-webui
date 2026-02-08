@@ -15,6 +15,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.8.0] - 2026-02-08
+
+### What's New
+
+This release introduces OpenClaw agent integration, bringing advanced AI agent capabilities to Libre WebUI through a comprehensive plugin system. Enhanced plugin infrastructure now supports real-time streaming, image content handling, and automatic model discovery, while expanded internationalization covers 19 languages.
+
+### ✨ New Features
+
+- **OpenClaw Agent Integration**: Complete plugin system for AI agent workflows with session routing and WebSocket support
+- **Enhanced Plugin System**: Real-time Server-Sent Events (SSE) streaming for plugin responses
+- **Image Content Support**: Plugins can now handle and render image content in responses
+- **Automatic Model Discovery**: Models are automatically detected from plugin API endpoints
+- **Structured Tool Calls**: Tool call responses are now rendered as structured content in assistant messages
+- **Identity Passthrough**: User identity can be passed through plugins via system prompt prefix and username
+- **Documentation Links**: Added GitLab mirror and documentation links in settings
+
+### 🔧 Improvements
+
+- **Internationalization**: Comprehensive translation coverage for ModelSelector, ImageUpload, avatar components, and User Management across 19 languages
+- **Model State Validation**: Enhanced selectedModel validation after loading to prevent stale state issues
+- **Generic Plugin Support**: OpenClaw plugin now supports all users instead of being user-specific
+- **Provider/Model Format**: Improved OpenClaw plugin integration with standardized provider/model format
+
+### 🐛 Bug Fixes
+
+- Fixed OpenClaw session routing to use HTTP session-key header instead of WebSocket
+- Removed conflicting stream option from OpenClaw plugin
+- Corrected avatar translation key paths
+- Fixed model pull progress status message translations
+
 ## [0.7.1] - 2026-02-03
 
 ### What's New
