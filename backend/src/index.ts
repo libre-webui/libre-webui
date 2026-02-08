@@ -761,48 +761,119 @@ wss.on('connection', (ws, req) => {
             const contextMessages =
               chatService.getMessagesForContext(sessionId);
 
-            // Use plugin for generation (non-streaming for now)
             // For regenerations, the user message is already in context; for new messages, we need to add it
             const messagesForPlugin = regenerate
               ? contextMessages
               : contextMessages.concat([userMessage!]);
-            const pluginResponse = await pluginService.executePluginRequest(
-              actualModelName,
-              messagesForPlugin,
-              mergedOptions
-            );
 
-            // Get the content from plugin response
-            if (!pluginResponse?.choices?.length) {
-              throw new Error('Plugin returned empty or invalid response');
-            }
-            assistantContent =
-              pluginResponse.choices[0]?.message?.content || '';
+            // Check if plugin supports streaming
+            const pluginVars = pluginService.getPluginVariables(activePlugin);
+            const shouldStream =
+              (pluginVars.stream as boolean | undefined) ?? false;
 
-            // Send the complete response as chunks to simulate streaming
-            const words = assistantContent.split(' ');
-            const BATCH_SIZE = 3; // Send 3 words at a time to reduce message frequency
+            if (shouldStream) {
+              // Real SSE streaming from plugin
+              let totalContent = '';
+              const toolCalls: Array<{
+                id: string;
+                name: string;
+                arguments: string;
+              }> = [];
 
-            for (let i = 0; i < words.length; i += BATCH_SIZE) {
-              const batch = words.slice(i, i + BATCH_SIZE);
-              const chunk = words.slice(0, i + batch.length).join(' ');
-              const isLast = i + BATCH_SIZE >= words.length;
+              for await (const chunk of pluginService.executePluginStreamRequest(
+                actualModelName,
+                messagesForPlugin,
+                mergedOptions
+              )) {
+                if (chunk.type === 'content' && chunk.content) {
+                  totalContent += chunk.content;
+                  ws.send(
+                    JSON.stringify({
+                      type: 'assistant_chunk',
+                      data: {
+                        content: chunk.content,
+                        total: totalContent,
+                        done: false,
+                        messageId: assistantMessageId,
+                      },
+                    })
+                  );
+                } else if (chunk.type === 'tool_call' && chunk.toolCall) {
+                  toolCalls.push(chunk.toolCall);
+                } else if (chunk.type === 'done') {
+                  // Append tool call info to content if present
+                  if (toolCalls.length > 0) {
+                    let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
+                    for (const tc of toolCalls) {
+                      let argsFormatted = tc.arguments;
+                      try {
+                        argsFormatted = JSON.stringify(
+                          JSON.parse(tc.arguments),
+                          null,
+                          2
+                        );
+                      } catch {
+                        /* keep raw */
+                      }
+                      toolContent += `\n**${tc.name}** (\`${tc.id}\`)\n\`\`\`json\n${argsFormatted}\n\`\`\`\n`;
+                    }
+                    totalContent += toolContent;
+                  }
 
-              ws.send(
-                JSON.stringify({
-                  type: 'assistant_chunk',
-                  data: {
-                    content: batch.join(' ') + (isLast ? '' : ' '),
-                    total: chunk,
-                    done: isLast,
-                    messageId: assistantMessageId,
-                  },
-                })
+                  // Send final chunk
+                  ws.send(
+                    JSON.stringify({
+                      type: 'assistant_chunk',
+                      data: {
+                        content: '',
+                        total: totalContent,
+                        done: true,
+                        messageId: assistantMessageId,
+                      },
+                    })
+                  );
+                }
+              }
+
+              assistantContent = totalContent;
+            } else {
+              // Non-streaming: use original request method
+              const pluginResponse = await pluginService.executePluginRequest(
+                actualModelName,
+                messagesForPlugin,
+                mergedOptions
               );
 
-              // Small delay to simulate streaming but with better batching
-              if (!isLast) {
-                await new Promise(resolve => setTimeout(resolve, 100));
+              if (!pluginResponse?.choices?.length) {
+                throw new Error('Plugin returned empty or invalid response');
+              }
+              assistantContent =
+                pluginResponse.choices[0]?.message?.content || '';
+
+              // Send the complete response as chunks to simulate streaming
+              const words = assistantContent.split(' ');
+              const BATCH_SIZE = 3;
+
+              for (let i = 0; i < words.length; i += BATCH_SIZE) {
+                const batch = words.slice(i, i + BATCH_SIZE);
+                const chunk = words.slice(0, i + batch.length).join(' ');
+                const isLast = i + BATCH_SIZE >= words.length;
+
+                ws.send(
+                  JSON.stringify({
+                    type: 'assistant_chunk',
+                    data: {
+                      content: batch.join(' ') + (isLast ? '' : ' '),
+                      total: chunk,
+                      done: isLast,
+                      messageId: assistantMessageId,
+                    },
+                  })
+                );
+
+                if (!isLast) {
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                }
               }
             }
 

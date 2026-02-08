@@ -704,6 +704,227 @@ class PluginService {
     }
   }
 
+  /**
+   * Execute a streaming chat request through the active plugin.
+   * Returns an async generator that yields SSE delta content strings.
+   * Also collects tool_calls from the stream.
+   */
+  async *executePluginStreamRequest(
+    model: string,
+    messages: ChatMessage[],
+    options: GenerationOptions = {}
+  ): AsyncGenerator<
+    {
+      type: 'content' | 'tool_call' | 'done';
+      content?: string;
+      toolCall?: {
+        id: string;
+        name: string;
+        arguments: string;
+      };
+    },
+    void,
+    unknown
+  > {
+    // Validate model parameter
+    if (!model || typeof model !== 'string') {
+      throw new Error('Invalid model parameter: must be a non-empty string');
+    }
+    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
+    if (!modelPattern.test(model) || model.includes('..')) {
+      throw new Error(`Invalid model parameter: ${model}`);
+    }
+
+    const activePlugin = this.getActivePluginForModel(model);
+    if (!activePlugin) {
+      throw new Error(`No active plugin found for model: ${model}`);
+    }
+    if (!activePlugin.model_map.includes(model)) {
+      throw new Error(
+        `Model ${model} is not supported by plugin ${activePlugin.id}`
+      );
+    }
+
+    const apiKey = this.getApiKey(activePlugin);
+    if (!apiKey) {
+      throw new Error(
+        `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
+      );
+    }
+
+    const pluginVars = this.getPluginVariables(activePlugin);
+    const endpointOverride = pluginVars.endpoint as string | undefined;
+    const effectiveEndpoint =
+      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
+      activePlugin.endpoint;
+
+    const temperature =
+      options.temperature ??
+      (pluginVars.temperature as number | undefined) ??
+      0.7;
+    const maxTokens =
+      options.num_predict === -1
+        ? undefined
+        : (options.num_predict ??
+          (pluginVars.max_tokens as number | undefined) ??
+          undefined);
+    const topP =
+      options.top_p ?? (pluginVars.top_p as number | undefined) ?? undefined;
+    const frequencyPenalty =
+      (pluginVars.frequency_penalty as number | undefined) ?? undefined;
+    const presencePenalty =
+      (pluginVars.presence_penalty as number | undefined) ?? undefined;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    const authValue = activePlugin.auth.prefix
+      ? `${activePlugin.auth.prefix}${apiKey}`
+      : apiKey;
+    headers[activePlugin.auth.header] = authValue;
+
+    // Build OpenAI-compatible payload with stream=true
+    const openaiMessages = messages.map(msg => {
+      if (msg.images && msg.images.length > 0) {
+        const content: Array<
+          | { type: 'text'; text: string }
+          | { type: 'image_url'; image_url: { url: string } }
+        > = [];
+        for (const image of msg.images) {
+          const imageUrl = image.startsWith('data:')
+            ? image
+            : `data:image/jpeg;base64,${image}`;
+          content.push({ type: 'image_url', image_url: { url: imageUrl } });
+        }
+        if (msg.content) {
+          content.push({ type: 'text', text: msg.content });
+        }
+        return { role: msg.role, content };
+      }
+      return { role: msg.role, content: msg.content };
+    });
+
+    const payload = {
+      model,
+      messages: openaiMessages,
+      temperature,
+      max_tokens: maxTokens,
+      top_p: topP,
+      frequency_penalty: frequencyPenalty,
+      presence_penalty: presencePenalty,
+      stop: options.stop,
+      stream: true,
+    };
+
+    const sanitizedModel = encodeURIComponent(model);
+    const processedEndpoint = effectiveEndpoint.replace(
+      '{model}',
+      sanitizedModel
+    );
+
+    // Validate URL
+    try {
+      const url = new URL(processedEndpoint);
+      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
+        url.hostname
+      );
+      const isPrivateNetwork =
+        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
+      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
+        throw new Error(`Insecure endpoint protocol: ${url.protocol}`);
+      }
+    } catch {
+      throw new Error(`Invalid endpoint URL: ${processedEndpoint}`);
+    }
+
+    // Use native fetch for streaming
+    const response = await fetch(processedEndpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Plugin API error: ${response.status} - ${errorText.slice(0, 200)}`
+      );
+    }
+
+    if (!response.body) {
+      throw new Error('No response body for streaming');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    // Track tool_calls being built across chunks
+    const toolCallsInProgress: Map<
+      number,
+      { id: string; name: string; arguments: string }
+    > = new Map();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === 'data: [DONE]') {
+            if (trimmed === 'data: [DONE]') {
+              // Emit any completed tool calls
+              for (const tc of toolCallsInProgress.values()) {
+                yield { type: 'tool_call' as const, toolCall: tc };
+              }
+              yield { type: 'done' as const };
+            }
+            continue;
+          }
+          if (!trimmed.startsWith('data: ')) continue;
+
+          try {
+            const json = JSON.parse(trimmed.slice(6));
+            const delta = json.choices?.[0]?.delta;
+            if (!delta) continue;
+
+            // Content delta
+            if (delta.content) {
+              yield { type: 'content' as const, content: delta.content };
+            }
+
+            // Tool call deltas (OpenAI format)
+            if (delta.tool_calls) {
+              for (const tc of delta.tool_calls) {
+                const idx = tc.index ?? 0;
+                if (!toolCallsInProgress.has(idx)) {
+                  toolCallsInProgress.set(idx, {
+                    id: tc.id || '',
+                    name: tc.function?.name || '',
+                    arguments: '',
+                  });
+                }
+                const existing = toolCallsInProgress.get(idx)!;
+                if (tc.id) existing.id = tc.id;
+                if (tc.function?.name) existing.name = tc.function.name;
+                if (tc.function?.arguments)
+                  existing.arguments += tc.function.arguments;
+              }
+            }
+          } catch {
+            // Skip malformed SSE lines
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
   // Convert Anthropic response format to OpenAI format
   private convertAnthropicResponse(
     anthropicResponse: Record<string, unknown>,
