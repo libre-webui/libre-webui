@@ -174,13 +174,20 @@ class PluginService {
 
         if (models.length > 0) {
           console.log(
-            `[Plugin] Auto-discovered ${models.length} models for ${pluginId}:`,
+            '[Plugin] Auto-discovered %d models for %s:',
+            models.length,
+            pluginId,
             models
           );
 
           // Update the plugin file with discovered models
           plugin.model_map = models;
-          const filePath = path.join(this.pluginsDir, `${pluginId}.json`);
+          const safeId = pluginId.replace(/[^a-zA-Z0-9_.-]/g, '');
+          if (safeId !== pluginId) throw new Error('Invalid plugin ID');
+          const filePath = path.resolve(this.pluginsDir, `${safeId}.json`);
+          if (!filePath.startsWith(path.resolve(this.pluginsDir))) {
+            throw new Error('Path traversal detected');
+          }
           if (fs.existsSync(filePath)) {
             const pluginData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
             pluginData.model_map = models;
@@ -279,7 +286,12 @@ class PluginService {
       active: false,
     };
 
-    const filePath = path.join(this.pluginsDir, `${plugin.id}.json`);
+    const safeId = plugin.id.replace(/[^a-zA-Z0-9_.-]/g, '');
+    if (safeId !== plugin.id) throw new Error('Invalid plugin ID');
+    const filePath = path.resolve(this.pluginsDir, `${safeId}.json`);
+    if (!filePath.startsWith(path.resolve(this.pluginsDir))) {
+      throw new Error('Path traversal detected');
+    }
     fs.writeFileSync(filePath, JSON.stringify(plugin, null, 2));
 
     return plugin;
