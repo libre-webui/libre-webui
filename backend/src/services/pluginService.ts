@@ -381,8 +381,8 @@ class PluginService {
       throw new Error('Invalid model parameter: must be a non-empty string');
     }
 
-    // Sanitize model parameter - only allow alphanumeric, hyphens, underscores, colons, and dots
-    const modelPattern = /^[a-zA-Z0-9\-_:.]+$/;
+    // Sanitize model parameter - only allow alphanumeric, hyphens, underscores, colons, dots, and slashes (for provider/model format)
+    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
     if (!modelPattern.test(model)) {
       throw new Error(
         `Invalid model parameter: ${model} contains invalid characters`
@@ -390,7 +390,7 @@ class PluginService {
     }
 
     // Prevent path traversal and other malicious patterns
-    if (model.includes('..') || model.includes('//') || model.includes('\\')) {
+    if (model.includes('..') || model.includes('\\')) {
       throw new Error(
         `Invalid model parameter: ${model} contains invalid patterns`
       );
@@ -1056,7 +1056,7 @@ class PluginService {
     }
 
     // Sanitize model parameter
-    const modelPattern = /^[a-zA-Z0-9\-_:.]+$/;
+    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
     if (!modelPattern.test(model)) {
       throw new Error(
         `Invalid model parameter: ${model} contains invalid characters`
@@ -1064,7 +1064,7 @@ class PluginService {
     }
 
     // Prevent path traversal
-    if (model.includes('..') || model.includes('//') || model.includes('\\')) {
+    if (model.includes('..') || model.includes('\\')) {
       throw new Error(
         `Invalid model parameter: ${model} contains invalid patterns`
       );
@@ -1466,7 +1466,7 @@ class PluginService {
     }
 
     // Sanitize model parameter
-    const modelPattern = /^[a-zA-Z0-9\-_:.]+$/;
+    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
     if (!modelPattern.test(model)) {
       throw new Error(
         `Invalid model parameter: ${model} contains invalid characters`
