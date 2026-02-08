@@ -400,7 +400,8 @@
         "saveFailed": "Gagal menyimpan kunci API",
         "removeFailed": "Gagal membuang kunci API",
         "enterKey": "Sila masukkan kunci API"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Pilihan Penjanaan",

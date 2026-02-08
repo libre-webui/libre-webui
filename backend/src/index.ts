@@ -1363,13 +1363,26 @@ wss.on('connection', (ws, req) => {
                   (err as { cause: unknown }).cause
                 );
               }
-              // Continue to Ollama fallback below
+              // If a plugin was found but failed, don't fall through to Ollama
+              if (activePlugin) {
+                console.error(
+                  `[WebSocket] Plugin "${activePlugin.name}" failed for model ${actualModelName}, not falling back to Ollama`
+                );
+                ws.send(
+                  JSON.stringify({
+                    type: 'error',
+                    message: `Plugin request failed: ${err.message}`,
+                  })
+                );
+                return;
+              }
+              // Continue to Ollama fallback below (no plugin was matched)
             }
           } // close else (standard plugin path)
         }
 
         console.log(
-          `[WebSocket] No plugin found or plugin failed, using Ollama for model: ${actualModelName}`
+          `[WebSocket] No plugin found, using Ollama for model: ${actualModelName}`
         );
 
         // Reuse the actualModelName variable that was already resolved above

@@ -400,7 +400,8 @@
         "saveFailed": "Gagal menyimpan API key",
         "removeFailed": "Gagal menghapus API key",
         "enterKey": "Silakan masukkan API key"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Opsi Pembuatan",

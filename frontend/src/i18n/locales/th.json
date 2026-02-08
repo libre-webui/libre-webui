@@ -400,7 +400,8 @@
         "saveFailed": "ไม่สามารถบันทึก API Key",
         "removeFailed": "ไม่สามารถลบ API Key",
         "enterKey": "กรุณาป้อน API Key"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "ตัวเลือกการสร้าง",

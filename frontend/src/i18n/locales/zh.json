@@ -400,7 +400,8 @@
         "saveFailed": "保存 API 密钥失败",
         "removeFailed": "移除 API 密钥失败",
         "enterKey": "请输入 API 密钥"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "生成选项",

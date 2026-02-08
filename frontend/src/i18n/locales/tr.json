@@ -400,7 +400,8 @@
         "saveFailed": "API anahtarı kaydedilemedi",
         "removeFailed": "API anahtarı kaldırılamadı",
         "enterKey": "Lütfen bir API anahtarı girin"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Üretim Seçenekleri",

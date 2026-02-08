@@ -400,7 +400,8 @@
         "saveFailed": "Nie udało się zapisać klucza API",
         "removeFailed": "Nie udało się usunąć klucza API",
         "enterKey": "Wprowadź klucz API"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Opcje generowania",

@@ -400,7 +400,8 @@
         "saveFailed": "Kon API-sleutel niet opslaan",
         "removeFailed": "Kon API-sleutel niet verwijderen",
         "enterKey": "Voer een API-sleutel in"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Generatieopties",

@@ -400,7 +400,8 @@
         "saveFailed": "API कुंजी सहेजने में विफल",
         "removeFailed": "API कुंजी हटाने में विफल",
         "enterKey": "कृपया API कुंजी दर्ज करें"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "जनरेशन विकल्प",

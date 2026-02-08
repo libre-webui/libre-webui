@@ -400,7 +400,8 @@
         "saveFailed": "فشل حفظ مفتاح API",
         "removeFailed": "فشل إزالة مفتاح API",
         "enterKey": "يرجى إدخال مفتاح API"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "خيارات التوليد",
