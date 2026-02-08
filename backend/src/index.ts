@@ -848,7 +848,29 @@ wss.on('connection', (ws, req) => {
                 throw new Error('Plugin returned empty or invalid response');
               }
               const choice = pluginResponse.choices[0];
-              assistantContent = choice?.message?.content || '';
+              // Handle content that may be a string or array of content blocks
+              const rawContent = choice?.message?.content;
+              if (Array.isArray(rawContent)) {
+                // Multimodal response: convert content blocks to markdown
+                const parts: string[] = [];
+                for (const block of rawContent as Array<{
+                  type: string;
+                  text?: string;
+                  image_url?: { url: string };
+                }>) {
+                  if (block.type === 'text' && block.text) {
+                    parts.push(block.text);
+                  } else if (
+                    block.type === 'image_url' &&
+                    block.image_url?.url
+                  ) {
+                    parts.push(`![image](${block.image_url.url})`);
+                  }
+                }
+                assistantContent = parts.join('\n\n');
+              } else {
+                assistantContent = (rawContent as string) || '';
+              }
 
               // Render tool_calls from non-streaming response
               const msgAny = choice?.message as Record<string, unknown>;
