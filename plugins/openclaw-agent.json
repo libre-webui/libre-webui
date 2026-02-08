@@ -1,0 +1,32 @@
+{
+  "id": "openclaw-agent",
+  "name": "OpenClaw Agent",
+  "type": "completion",
+  "endpoint": "http://localhost:11435/v1/chat/completions",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "OPENCLAW_BRIDGE_API_KEY"
+  },
+  "model_map": [
+    "openclaw/agent",
+    "openclaw/agent-fast",
+    "openclaw/agent-reasoning"
+  ],
+  "variables": [
+    {
+      "name": "bridge_url",
+      "type": "string",
+      "label": "OpenClaw Bridge URL",
+      "description": "URL of the OpenClaw Libre WebUI bridge endpoint",
+      "default": "http://localhost:11435"
+    },
+    {
+      "name": "api_key",
+      "type": "string",
+      "label": "Bridge API Key",
+      "description": "Shared secret matching the OpenClaw plugin config",
+      "sensitive": true
+    }
+  ]
+}
