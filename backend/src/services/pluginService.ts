@@ -132,6 +132,74 @@ class PluginService {
     }
   }
 
+  /**
+   * Attempt to auto-discover available models from a plugin's base endpoint.
+   * Hits {baseUrl}/v1/models (OpenAI-compatible) and updates the plugin's model_map.
+   * Falls back silently to the existing model_map if the endpoint is unavailable.
+   */
+  async discoverModels(pluginId: string): Promise<string[]> {
+    const plugin = this.getPlugin(pluginId);
+    if (!plugin) return [];
+
+    // Derive base URL from endpoint (strip /v1/chat/completions etc.)
+    let baseUrl: string;
+    try {
+      const url = new URL(plugin.endpoint);
+      baseUrl = `${url.protocol}//${url.host}`;
+    } catch {
+      return plugin.model_map;
+    }
+
+    const apiKey = this.getApiKey(plugin);
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+    if (apiKey) {
+      const authValue = plugin.auth.prefix
+        ? `${plugin.auth.prefix}${apiKey}`
+        : apiKey;
+      headers[plugin.auth.header] = authValue;
+    }
+
+    try {
+      const response = await axios.get(`${baseUrl}/v1/models`, {
+        headers,
+        timeout: 5000,
+      });
+
+      if (response.data?.data && Array.isArray(response.data.data)) {
+        const models = response.data.data
+          .map((m: { id?: string }) => m.id)
+          .filter((id: unknown): id is string => typeof id === 'string');
+
+        if (models.length > 0) {
+          console.log(
+            `[Plugin] Auto-discovered ${models.length} models for ${pluginId}:`,
+            models
+          );
+
+          // Update the plugin file with discovered models
+          plugin.model_map = models;
+          const filePath = path.join(this.pluginsDir, `${pluginId}.json`);
+          if (fs.existsSync(filePath)) {
+            const pluginData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            pluginData.model_map = models;
+            pluginData.updated_at = Date.now();
+            fs.writeFileSync(filePath, JSON.stringify(pluginData, null, 2));
+          }
+
+          return models;
+        }
+      }
+    } catch (_error) {
+      console.log(
+        `[Plugin] Model discovery unavailable for ${pluginId}, using existing model_map`
+      );
+    }
+
+    return plugin.model_map;
+  }
+
   // List all installed plugins
   getAllPlugins(): Plugin[] {
     const plugins: Plugin[] = [];
@@ -281,6 +349,10 @@ class PluginService {
 
     this.activePluginIds.add(id);
     this.saveActivePlugins();
+
+    // Trigger model discovery in background (non-blocking)
+    this.discoverModels(id).catch(() => {});
+
     return true;
   }
 
