@@ -437,6 +437,28 @@ router.post(
   }
 );
 
+// Discover available models from a plugin's API
+router.post(
+  '/discover/:id',
+  pluginRateLimit,
+  async (req: Request, res: Response<ApiResponse<string[]>>): Promise<void> => {
+    try {
+      const id = req.params.id as string;
+      const models = await pluginService.discoverModels(id);
+
+      res.json({
+        success: true,
+        data: models,
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to discover models'),
+      });
+    }
+  }
+);
+
 // Deactivate a specific plugin
 router.post(
   '/deactivate/:id',
