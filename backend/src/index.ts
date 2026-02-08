@@ -847,8 +847,33 @@ wss.on('connection', (ws, req) => {
               if (!pluginResponse?.choices?.length) {
                 throw new Error('Plugin returned empty or invalid response');
               }
-              assistantContent =
-                pluginResponse.choices[0]?.message?.content || '';
+              const choice = pluginResponse.choices[0];
+              assistantContent = choice?.message?.content || '';
+
+              // Render tool_calls from non-streaming response
+              const msgAny = choice?.message as Record<string, unknown>;
+              if (
+                msgAny?.tool_calls &&
+                Array.isArray(msgAny.tool_calls) &&
+                msgAny.tool_calls.length > 0
+              ) {
+                let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
+                for (const tc of msgAny.tool_calls as Array<{
+                  id?: string;
+                  function?: { name?: string; arguments?: string };
+                }>) {
+                  const name = tc.function?.name || 'unknown';
+                  const id = tc.id || '';
+                  let args = tc.function?.arguments || '';
+                  try {
+                    args = JSON.stringify(JSON.parse(args), null, 2);
+                  } catch {
+                    /* keep raw */
+                  }
+                  toolContent += `\n**${name}** (\`${id}\`)\n\`\`\`json\n${args}\n\`\`\`\n`;
+                }
+                assistantContent += toolContent;
+              }
 
               // Send the complete response as chunks to simulate streaming
               const words = assistantContent.split(' ');
