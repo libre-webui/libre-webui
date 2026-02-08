@@ -400,7 +400,8 @@
         "saveFailed": "Error al guardar clave API",
         "removeFailed": "Error al eliminar clave API",
         "enterKey": "Por favor ingresa una clave API"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Opciones de generación",

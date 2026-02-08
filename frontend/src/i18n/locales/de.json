@@ -400,7 +400,8 @@
         "saveFailed": "API-Schlüssel konnte nicht gespeichert werden",
         "removeFailed": "API-Schlüssel konnte nicht entfernt werden",
         "enterKey": "Bitte geben Sie einen API-Schlüssel ein"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Generierungsoptionen",

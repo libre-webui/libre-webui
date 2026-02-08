@@ -400,7 +400,8 @@
         "saveFailed": "Nepodařilo se uložit API klíč",
         "removeFailed": "Nepodařilo se odstranit API klíč",
         "enterKey": "Zadejte API klíč"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Možnosti generování",

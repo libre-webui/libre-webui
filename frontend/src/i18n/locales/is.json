@@ -400,7 +400,8 @@
         "saveFailed": "Ekki tókst að vista API lykil",
         "removeFailed": "Ekki tókst að fjarlægja API lykil",
         "enterKey": "Sláðu inn API lykil"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Myndunarstillingar",

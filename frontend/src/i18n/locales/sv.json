@@ -400,7 +400,8 @@
         "saveFailed": "Kunde inte spara API-nyckel",
         "removeFailed": "Kunde inte ta bort API-nyckel",
         "enterKey": "Ange en API-nyckel"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Genereringsalternativ",

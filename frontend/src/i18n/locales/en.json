@@ -400,7 +400,8 @@
         "saveFailed": "Failed to save API key",
         "removeFailed": "Failed to remove API key",
         "enterKey": "Please enter an API key"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Generation Options",

@@ -400,7 +400,8 @@
         "saveFailed": "Impossibile salvare chiave API",
         "removeFailed": "Impossibile rimuovere chiave API",
         "enterKey": "Inserisci una chiave API"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Opzioni generazione",

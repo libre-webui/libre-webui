@@ -400,7 +400,8 @@
         "saveFailed": "Не вдалося зберегти API-ключ",
         "removeFailed": "Не вдалося видалити API-ключ",
         "enterKey": "Введіть API-ключ"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Параметри генерації",

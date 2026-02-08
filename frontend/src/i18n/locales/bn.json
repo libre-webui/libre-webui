@@ -400,7 +400,8 @@
         "saveFailed": "API কী সংরক্ষণ করতে ব্যর্থ",
         "removeFailed": "API কী সরাতে ব্যর্থ",
         "enterKey": "অনুগ্রহ করে একটি API কী লিখুন"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "জেনারেশন অপশন",

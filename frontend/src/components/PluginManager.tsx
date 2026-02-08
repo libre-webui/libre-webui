@@ -187,7 +187,7 @@ export const PluginVariablesEditor: React.FC<{
           <label className='flex items-center gap-2 cursor-pointer'>
             <input
               type='checkbox'
-              checked={Boolean(value)}
+              checked={Boolean(value ?? false)}
               onChange={e =>
                 setLocalValues(prev => ({
                   ...prev,
@@ -205,7 +205,7 @@ export const PluginVariablesEditor: React.FC<{
       case 'select':
         return (
           <select
-            value={String(value)}
+            value={String(value ?? '')}
             onChange={e =>
               setLocalValues(prev => ({ ...prev, [def.name]: e.target.value }))
             }
@@ -223,7 +223,7 @@ export const PluginVariablesEditor: React.FC<{
         return (
           <input
             type='number'
-            value={value as number}
+            value={(value as number) ?? 0}
             min={def.min}
             max={def.max}
             onChange={e =>
@@ -244,7 +244,7 @@ export const PluginVariablesEditor: React.FC<{
               value={
                 isSensitive && storedVar?.has_value && value === ''
                   ? ''
-                  : String(value)
+                  : String(value ?? '')
               }
               placeholder={
                 isSensitive && storedVar?.has_value

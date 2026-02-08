@@ -400,7 +400,8 @@
         "saveFailed": "APIキーの保存に失敗しました",
         "removeFailed": "APIキーの削除に失敗しました",
         "enterKey": "APIキーを入力してください"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "生成オプション",

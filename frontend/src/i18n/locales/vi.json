@@ -400,7 +400,8 @@
         "saveFailed": "Không thể lưu khóa API",
         "removeFailed": "Không thể xóa khóa API",
         "enterKey": "Vui lòng nhập khóa API"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Tùy chọn tạo nội dung",

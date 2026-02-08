@@ -400,7 +400,8 @@
         "saveFailed": "Échec de l'enregistrement de la clé API",
         "removeFailed": "Échec de la suppression de la clé API",
         "enterKey": "Veuillez entrer une clé API"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Options de génération",

@@ -400,7 +400,8 @@
         "saveFailed": "Kunne ikke gemme API-nøgle",
         "removeFailed": "Kunne ikke fjerne API-nøgle",
         "enterKey": "Indtast venligst en API-nøgle"
-      }
+      },
+      "variables": "Variables"
     },
     "generation": {
       "title": "Genereringsindstillinger",
