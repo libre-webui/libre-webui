@@ -29,6 +29,13 @@
       "default": 0.7,
       "min": 0,
       "max": 2
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Enable Streaming",
+      "description": "Stream responses in real-time via SSE instead of waiting for complete response.",
+      "default": true
     }
   ]
 }
