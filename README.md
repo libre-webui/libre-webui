@@ -61,6 +61,7 @@ Libre WebUI is a **self-hosted AI chat interface** that connects to [Ollama](htt
 | 🔐  | **SSO & Auth**          | GitHub, HuggingFace OAuth/OIDC, role-based access                |
 | 🌍  | **25+ Languages**       | Full i18n — Arabic to Vietnamese                                 |
 | 🖥️  | **Desktop App**         | Native app for macOS, Windows, Linux (Electron)                  |
+| 🤖  | **AI Agent Support**    | OpenClaw integration — persistent agents with memory and tools   |
 | 🏢  | **Enterprise Ready**    | GDPR, HIPAA, SOC 2 compatible • AES-256-GCM encryption           |
 
 ---
@@ -216,6 +217,41 @@ Built-in plugins: **OpenAI, Anthropic, Google Gemini, Groq, Mistral, OpenRouter,
 Plugins support **multi-capability** (chat + TTS + image gen in one config), **per-user variables**, and **encrypted credential storage**.
 
 📖 [Full plugin docs →](./docs/08-PLUGIN_ARCHITECTURE.md)
+
+---
+
+## 🤖 AI Agent Support (OpenClaw)
+
+Libre WebUI natively supports **AI agents** via the [OpenClaw](https://openclaw.ai) plugin — turning your chat interface into a full agent platform.
+
+**What agents can do:**
+
+- 🧠 **Persistent memory** — agents remember across sessions
+- 🔧 **Tool use** — file access, web search, code execution, device control
+- 📅 **Proactive actions** — scheduled tasks, reminders, heartbeat monitoring
+- 🎙️ **Voice messages** — agents generate and send audio using local TTS
+- 🖼️ **Image generation** — agents create images via ComfyUI, DALL·E, etc.
+- 💬 **Multi-channel** — same agent across Telegram, Discord, Signal, Nextcloud Talk
+- 🔌 **Plugin-powered** — configure via JSON, no code required
+
+```json
+{
+  "id": "openclaw-agent",
+  "name": "OpenClaw Agent",
+  "type": "completion",
+  "endpoint": "http://localhost:3000/v1/chat/completions",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "OPENCLAW_API_KEY"
+  },
+  "model_map": ["agent:main"]
+}
+```
+
+> **Your agent, your hardware, your data.** No cloud dependency. Run Claude, GPT, Gemini, or local models as the agent's brain — all through the same self-hosted interface.
+
+📖 [OpenClaw integration docs →](./docs/31-OPENCLAW_INTEGRATION.md)
 
 ---
 
