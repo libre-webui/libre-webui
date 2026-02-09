@@ -937,6 +937,25 @@ wss.on('connection', (ws, req) => {
                   }
 
                   // Send tool status to frontend
+                  // Send tool_status event for the activity indicator
+                  try {
+                    ws.send(
+                      JSON.stringify({
+                        type: 'tool_status',
+                        data: {
+                          toolCallId: toolEvent.toolCallId,
+                          name: toolEvent.name,
+                          phase:
+                            toolEvent.phase === 'start'
+                              ? 'running'
+                              : toolEvent.phase,
+                        },
+                      })
+                    );
+                  } catch {
+                    /* ws closed */
+                  }
+
                   try {
                     const toolStatusMsg =
                       toolEvent.phase === 'start'
@@ -1102,27 +1121,41 @@ wss.on('connection', (ws, req) => {
                   arguments: string;
                 }> = [];
 
-                // Pause detection for tool execution (detect stream gaps = tool use)
-                let lastChunkTime = Date.now();
+                // Tool activity tracking
                 let pauseTimer: ReturnType<typeof setTimeout> | null = null;
+                let currentToolId = '';
+                let currentToolName = '';
                 let toolActivitySent = false;
-                const PAUSE_THRESHOLD_MS = 2000; // 2s pause = likely tool execution
+                let toolCounter = 0;
+                const PAUSE_THRESHOLD_MS = 2000;
+
+                const sendToolStatus = (
+                  name: string,
+                  phase: string,
+                  id?: string
+                ) => {
+                  const toolCallId = id || `pause-${toolCounter}`;
+                  try {
+                    ws.send(
+                      JSON.stringify({
+                        type: 'tool_status',
+                        data: { toolCallId, name, phase },
+                      })
+                    );
+                  } catch {
+                    /* ws closed */
+                  }
+                };
 
                 const startPauseDetection = () => {
                   if (pauseTimer) clearTimeout(pauseTimer);
                   pauseTimer = setTimeout(() => {
                     if (!toolActivitySent) {
                       toolActivitySent = true;
-                      try {
-                        ws.send(
-                          JSON.stringify({
-                            type: 'tool_status',
-                            data: { name: 'working', phase: 'running' },
-                          })
-                        );
-                      } catch {
-                        /* ws closed */
-                      }
+                      toolCounter++;
+                      currentToolId = `pause-${toolCounter}`;
+                      currentToolName = 'working';
+                      sendToolStatus('working', 'running', currentToolId);
                     }
                   }, PAUSE_THRESHOLD_MS);
                 };
@@ -1134,20 +1167,10 @@ wss.on('connection', (ws, req) => {
                   mergedOptions
                 )) {
                   if (chunk.type === 'content' && chunk.content) {
-                    // Reset pause detection on content
-                    lastChunkTime = Date.now();
+                    // Content arrived — clear any active tool indicator
                     if (toolActivitySent) {
+                      sendToolStatus(currentToolName, 'done', currentToolId);
                       toolActivitySent = false;
-                      try {
-                        ws.send(
-                          JSON.stringify({
-                            type: 'tool_status',
-                            data: { name: 'working', phase: 'done' },
-                          })
-                        );
-                      } catch {
-                        /* ws closed */
-                      }
                     }
                     startPauseDetection();
 
@@ -1165,20 +1188,21 @@ wss.on('connection', (ws, req) => {
                     );
                   } else if (chunk.type === 'tool_call' && chunk.toolCall) {
                     toolCalls.push(chunk.toolCall);
+                    // Mark previous tool done, show new one with real name
+                    if (toolActivitySent) {
+                      sendToolStatus(currentToolName, 'done', currentToolId);
+                    }
+                    if (pauseTimer) clearTimeout(pauseTimer);
+                    toolActivitySent = true;
+                    currentToolId =
+                      chunk.toolCall.id || `tool-${++toolCounter}`;
+                    currentToolName = chunk.toolCall.name;
+                    sendToolStatus(currentToolName, 'running', currentToolId);
                   } else if (chunk.type === 'done') {
-                    // Clear pause detection
                     if (pauseTimer) clearTimeout(pauseTimer);
                     if (toolActivitySent) {
-                      try {
-                        ws.send(
-                          JSON.stringify({
-                            type: 'tool_status',
-                            data: { name: 'working', phase: 'done' },
-                          })
-                        );
-                      } catch {
-                        /* ws closed */
-                      }
+                      sendToolStatus(currentToolName, 'done', currentToolId);
+                      toolActivitySent = false;
                     }
                     // Append tool call info to content if present
                     if (toolCalls.length > 0) {
