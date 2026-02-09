@@ -1117,11 +1117,8 @@ wss.on('connection', (ws, req) => {
                         ws.send(
                           JSON.stringify({
                             type: 'tool_status',
-                            data: { name: 'thinking', phase: 'running' },
+                            data: { name: 'working', phase: 'running' },
                           })
-                        );
-                        console.log(
-                          '[Tool Events] Pause detected — sent tool_status: thinking'
                         );
                       } catch {
                         /* ws closed */
@@ -1145,7 +1142,7 @@ wss.on('connection', (ws, req) => {
                         ws.send(
                           JSON.stringify({
                             type: 'tool_status',
-                            data: { name: 'thinking', phase: 'done' },
+                            data: { name: 'working', phase: 'done' },
                           })
                         );
                       } catch {
@@ -1176,7 +1173,7 @@ wss.on('connection', (ws, req) => {
                         ws.send(
                           JSON.stringify({
                             type: 'tool_status',
-                            data: { name: 'thinking', phase: 'done' },
+                            data: { name: 'working', phase: 'done' },
                           })
                         );
                       } catch {

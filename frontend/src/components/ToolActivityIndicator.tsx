@@ -44,6 +44,8 @@ const TOOL_ICONS: Record<string, React.ElementType> = {
   image: Image,
   memory_search: Database,
   memory_get: Database,
+  working: Wrench,
+  thinking: Wrench,
   default: Wrench,
 };
 
@@ -65,6 +67,8 @@ const TOOL_LABELS: Record<string, string> = {
   sessions_spawn: 'Spawning agent',
   canvas: 'Rendering canvas',
   process: 'Managing process',
+  working: 'Using tools',
+  thinking: 'Thinking',
 };
 
 export const ToolActivityIndicator: React.FC<ToolActivityIndicatorProps> = ({
