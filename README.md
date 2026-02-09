@@ -174,25 +174,6 @@ Uses separate data volumes (`libre_webui_dev_data`) so your stable install stays
 
 ---
 
-## 📊 How We Compare
-
-|                            |       **Libre WebUI**        |    Open WebUI    | LobeChat |     ChatGPT     |
-| -------------------------- | :--------------------------: | :--------------: | :------: | :-------------: |
-| **Fully open source**      |        ✅ Apache 2.0         |  ⚠️ BSD-3 + CLA  |    ✅    |       ❌        |
-| **No-relicense guarantee** | ✅ [Chartered](./CHARTER.md) | ❌ CLA allows it |    ❌    |       ❌        |
-| **Zero telemetry**         |              ✅              |        ✅        |    ❌    |       ❌        |
-| **Local LLMs (Ollama)**    |              ✅              |        ✅        |    ✅    |       ❌        |
-| **Plugin system (JSON)**   |              ✅              |        ❌        |    ✅    |       ❌        |
-| **HuggingFace Hub**        |        ✅ 1M+ models         |        ❌        |    ❌    |       ❌        |
-| **Document chat (RAG)**    |              ✅              |        ✅        |    ✅    |    ✅ (paid)    |
-| **Desktop app**            |              ✅              |        ❌        |    ✅    |       ✅        |
-| **SSO / OAuth**            |              ✅              |        ✅        |    ❌    | ✅ (enterprise) |
-| **Ethical charter**        |              ✅              |        ❌        |    ❌    |       ❌        |
-| **Self-hosted**            |              ✅              |        ✅        |    ✅    |       ❌        |
-| **i18n (25+ langs)**       |              ✅              |        ✅        |    ✅    |       ✅        |
-
----
-
 ## 🔌 Plugin System
 
 Add any AI provider with a JSON file — no code changes needed:
