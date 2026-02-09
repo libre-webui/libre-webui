@@ -77,14 +77,10 @@ export const ToolActivityIndicator: React.FC<ToolActivityIndicatorProps> = ({
 }) => {
   if (tools.length === 0) return null;
 
-  // Show only active tools (not yet completed)
-  const activeTools = tools.filter(t => t.phase !== 'result');
-  // Show completed tools briefly
-  const recentlyCompleted = tools.filter(
-    t => t.phase === 'result' && Date.now() - t.startedAt < 2000
+  // Show only active tools (running/start phase)
+  const visibleTools = tools.filter(
+    t => t.phase !== 'result' && t.phase !== 'done'
   );
-
-  const visibleTools = [...activeTools, ...recentlyCompleted];
   if (visibleTools.length === 0) return null;
 
   return (
