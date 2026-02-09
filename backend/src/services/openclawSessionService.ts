@@ -291,7 +291,7 @@ class OpenClawSessionService {
       },
       role: 'operator',
       scopes: ['operator.read', 'operator.write'],
-      caps: ['tool-events'],
+      caps: [],
       auth: { token: this.gatewayToken },
       userAgent: 'libre-webui/1.0.0',
       locale: 'en-US',
