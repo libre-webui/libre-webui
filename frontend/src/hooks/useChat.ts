@@ -18,7 +18,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
-import { GenerationStatistics } from '@/types';
+import { GenerationStatistics, ToolActivity } from '@/types';
 import websocketService from '@/utils/websocket';
 import { generateId } from '@/utils';
 import { chatApi } from '@/utils/api';
@@ -30,6 +30,7 @@ export const useChat = (sessionId: string) => {
     null
   );
   const [isStreaming, setIsStreaming] = useState(false);
+  const [toolActivities, setToolActivities] = useState<ToolActivity[]>([]);
   const {
     addMessage,
     updateMessage,
@@ -57,6 +58,7 @@ export const useChat = (sessionId: string) => {
       websocketService.offMessage('user_message');
       websocketService.offMessage('assistant_chunk');
       websocketService.offMessage('assistant_complete');
+      websocketService.offMessage('tool_status');
       websocketService.offMessage('error');
     };
   }, [sessionId]);
@@ -68,6 +70,7 @@ export const useChat = (sessionId: string) => {
       websocketService.offMessage('user_message');
       websocketService.offMessage('assistant_chunk');
       websocketService.offMessage('assistant_complete');
+      websocketService.offMessage('tool_status');
       websocketService.offMessage('error');
       return;
     }
@@ -109,6 +112,37 @@ export const useChat = (sessionId: string) => {
       }
     });
 
+    websocketService.onMessage('tool_status', (data: unknown) => {
+      const toolData = data as {
+        toolCallId: string;
+        name: string;
+        phase: string;
+        args?: unknown;
+        result?: unknown;
+        partialResult?: unknown;
+      };
+
+      setToolActivities(prev => {
+        const existing = prev.find(t => t.toolCallId === toolData.toolCallId);
+        if (existing) {
+          return prev.map(t =>
+            t.toolCallId === toolData.toolCallId
+              ? { ...t, phase: toolData.phase }
+              : t
+          );
+        }
+        return [
+          ...prev,
+          {
+            toolCallId: toolData.toolCallId,
+            name: toolData.name,
+            phase: toolData.phase,
+            startedAt: Date.now(),
+          },
+        ];
+      });
+    });
+
     websocketService.onMessage('assistant_complete', (data: unknown) => {
       const completeData = data as {
         content: string;
@@ -130,6 +164,7 @@ export const useChat = (sessionId: string) => {
       setIsStreaming(false);
       setStreamingMessage('');
       setIsGenerating(false);
+      setToolActivities([]);
 
       // Use messageId from backend if provided, otherwise fall back to current streaming ID
       const messageId = completeData.messageId || streamingMessageIdRef.current;
@@ -527,5 +562,6 @@ export const useChat = (sessionId: string) => {
     isStreaming,
     streamingMessage,
     streamingMessageId,
+    toolActivities,
   };
 };

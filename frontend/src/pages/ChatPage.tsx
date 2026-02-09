@@ -80,6 +80,7 @@ export const ChatPage: React.FC = () => {
     isStreaming,
     streamingMessage,
     streamingMessageId,
+    toolActivities,
   } = useChat(currentSession?.id || '');
   const currentPersona = getCurrentPersona();
 
@@ -553,6 +554,7 @@ export const ChatPage: React.FC = () => {
           streamingMessage={streamingMessage}
           streamingMessageId={streamingMessageId}
           isStreaming={isStreaming}
+          toolActivities={toolActivities}
           onRegenerate={regenerateLastMessage}
           onSelectBranch={selectBranch}
           className='flex-1'

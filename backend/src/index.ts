@@ -1102,12 +1102,58 @@ wss.on('connection', (ws, req) => {
                   arguments: string;
                 }> = [];
 
+                // Pause detection for tool execution (detect stream gaps = tool use)
+                let lastChunkTime = Date.now();
+                let pauseTimer: ReturnType<typeof setTimeout> | null = null;
+                let toolActivitySent = false;
+                const PAUSE_THRESHOLD_MS = 2000; // 2s pause = likely tool execution
+
+                const startPauseDetection = () => {
+                  if (pauseTimer) clearTimeout(pauseTimer);
+                  pauseTimer = setTimeout(() => {
+                    if (!toolActivitySent) {
+                      toolActivitySent = true;
+                      try {
+                        ws.send(
+                          JSON.stringify({
+                            type: 'tool_status',
+                            data: { name: 'thinking', phase: 'running' },
+                          })
+                        );
+                        console.log(
+                          '[Tool Events] Pause detected — sent tool_status: thinking'
+                        );
+                      } catch {
+                        /* ws closed */
+                      }
+                    }
+                  }, PAUSE_THRESHOLD_MS);
+                };
+                startPauseDetection();
+
                 for await (const chunk of pluginService.executePluginStreamRequest(
                   actualModelName,
                   messagesForPlugin,
                   mergedOptions
                 )) {
                   if (chunk.type === 'content' && chunk.content) {
+                    // Reset pause detection on content
+                    lastChunkTime = Date.now();
+                    if (toolActivitySent) {
+                      toolActivitySent = false;
+                      try {
+                        ws.send(
+                          JSON.stringify({
+                            type: 'tool_status',
+                            data: { name: 'thinking', phase: 'done' },
+                          })
+                        );
+                      } catch {
+                        /* ws closed */
+                      }
+                    }
+                    startPauseDetection();
+
                     totalContent += chunk.content;
                     ws.send(
                       JSON.stringify({
@@ -1123,6 +1169,20 @@ wss.on('connection', (ws, req) => {
                   } else if (chunk.type === 'tool_call' && chunk.toolCall) {
                     toolCalls.push(chunk.toolCall);
                   } else if (chunk.type === 'done') {
+                    // Clear pause detection
+                    if (pauseTimer) clearTimeout(pauseTimer);
+                    if (toolActivitySent) {
+                      try {
+                        ws.send(
+                          JSON.stringify({
+                            type: 'tool_status',
+                            data: { name: 'thinking', phase: 'done' },
+                          })
+                        );
+                      } catch {
+                        /* ws closed */
+                      }
+                    }
                     // Append tool call info to content if present
                     if (toolCalls.length > 0) {
                       let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';

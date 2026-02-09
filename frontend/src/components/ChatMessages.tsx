@@ -25,7 +25,8 @@ import React, {
 import { useTranslation } from 'react-i18next';
 import { ChatMessage } from '@/components/ChatMessage';
 import { MessageBranch } from '@/components/MessageBranch';
-import { ChatMessage as ChatMessageType } from '@/types';
+import { ChatMessage as ChatMessageType, ToolActivity } from '@/types';
+import { ToolActivityIndicator } from '@/components/ToolActivityIndicator';
 import { cn } from '@/utils';
 import { ArrowDown } from 'lucide-react';
 
@@ -34,6 +35,7 @@ interface ChatMessagesProps {
   streamingMessage?: string;
   streamingMessageId?: string | null;
   isStreaming?: boolean;
+  toolActivities?: ToolActivity[];
   className?: string;
   onRegenerate?: () => void;
   onSelectBranch?: (messageId: string) => void;
@@ -51,6 +53,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   streamingMessage,
   streamingMessageId,
   isStreaming = false,
+  toolActivities = [],
   className,
   onRegenerate,
   onSelectBranch,
@@ -321,6 +324,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             />
           );
         })}
+        {isStreaming && toolActivities.length > 0 && (
+          <ToolActivityIndicator
+            tools={toolActivities}
+            className='ml-10 sm:ml-12'
+          />
+        )}
         <div ref={messagesEndRef} className='h-3 sm:h-4 md:h-6' />
       </div>
 
