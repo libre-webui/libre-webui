@@ -20,8 +20,13 @@ import rateLimit from 'express-rate-limit';
 import { githubOAuthService } from '../services/simpleGitHubOAuth.js';
 import { huggingFaceOAuthService } from '../services/simpleHuggingFaceOAuth.js';
 import { authService } from '../services/authService.js';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  authenticate,
+  requireAdmin,
+  AuthenticatedRequest,
+} from '../middleware/auth.js';
 import { encryptionService } from '../services/encryptionService.js';
+import { systemSettingsService } from '../services/systemSettingsService.js';
 
 const router = express.Router();
 
@@ -174,6 +179,45 @@ router.get('/system-info', async (req, res) => {
     });
   }
 });
+
+/**
+ * Update model pull permission (admin only)
+ */
+router.patch(
+  '/system-settings/model-pull',
+  generalAuthRateLimiter,
+  authenticate,
+  requireAdmin,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { allowUserModelPull } = req.body as {
+        allowUserModelPull?: unknown;
+      };
+
+      if (typeof allowUserModelPull !== 'boolean') {
+        res.status(400).json({
+          success: false,
+          message: 'allowUserModelPull must be a boolean',
+        });
+        return;
+      }
+
+      systemSettingsService.setAllowUserModelPull(allowUserModelPull);
+      const systemInfo = authService.getSystemInfo();
+
+      res.json({
+        success: true,
+        data: systemInfo,
+      });
+    } catch (error) {
+      console.error('Update model pull setting error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
+);
 
 /**
  * Get encryption key for first-time setup

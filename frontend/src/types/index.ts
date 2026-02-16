@@ -390,6 +390,7 @@ export interface SystemInfo {
   requiresAuth: boolean;
   hasUsers: boolean;
   userCount: number;
+  allowUserModelPull?: boolean;
   version?: string;
 }
 

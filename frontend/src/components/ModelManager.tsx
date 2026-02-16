@@ -27,6 +27,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { RunningModel } from '@/types';
 import toast from 'react-hot-toast';
+import { useAuthStore } from '@/store/authStore';
 import {
   Download,
   Trash2,
@@ -101,6 +102,9 @@ interface LibraryModel {
 
 export const ModelManager: React.FC = () => {
   const { t } = useTranslation();
+  const { user, systemInfo } = useAuthStore();
+  const canInstallModels =
+    user?.role === 'admin' || (systemInfo?.allowUserModelPull ?? true);
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [runningModels, setRunningModels] = useState<RunningModel[]>([]);
   const [libraryModels, setLibraryModels] = useState<LibraryModel[]>([]);
@@ -318,6 +322,10 @@ export const ModelManager: React.FC = () => {
   // Pull a GGUF model from HuggingFace via Ollama
   const handlePullHfGguf = useCallback(
     (ollamaCommand: string, filename: string) => {
+      if (!canInstallModels) {
+        toast.error(t('modelManager.pull.restricted'));
+        return;
+      }
       if (hfPullingModel) return;
 
       setHfPullingModel(ollamaCommand);
@@ -350,7 +358,7 @@ export const ModelManager: React.FC = () => {
         toast.error('Failed to start download');
       }
     },
-    [hfPullingModel, loadData]
+    [canInstallModels, hfPullingModel, loadData, t]
   );
 
   const handleCancelHfPull = useCallback(() => {
@@ -363,6 +371,11 @@ export const ModelManager: React.FC = () => {
   }, [cancelHfPull]);
 
   const handlePullModel = async (modelName?: string) => {
+    if (!canInstallModels) {
+      toast.error(t('modelManager.pull.restricted'));
+      return;
+    }
+
     const nameToUse = modelName || pullModelName.trim();
     if (!nameToUse) {
       toast.error(t('modelManager.pull.enterName'));
@@ -778,9 +791,12 @@ export const ModelManager: React.FC = () => {
                     'focus:outline-none focus:ring-2 focus:ring-primary-500/20 ophelia:focus:ring-[#9333ea]/20',
                     'focus:border-primary-500 ophelia:focus:border-[#9333ea]'
                   )}
-                  disabled={pulling}
+                  disabled={pulling || !canInstallModels}
                   onKeyDown={e =>
-                    e.key === 'Enter' && !pulling && handlePullModel()
+                    e.key === 'Enter' &&
+                    !pulling &&
+                    canInstallModels &&
+                    handlePullModel()
                   }
                 />
               </div>
@@ -801,7 +817,7 @@ export const ModelManager: React.FC = () => {
               ) : (
                 <Button
                   onClick={() => handlePullModel()}
-                  disabled={!pullModelName.trim()}
+                  disabled={!pullModelName.trim() || !canInstallModels}
                   className={cn(
                     'px-4 py-2.5 gap-2',
                     'ophelia:bg-[#9333ea] ophelia:hover:bg-[#7c3aed] ophelia:text-white'
@@ -865,6 +881,12 @@ export const ModelManager: React.FC = () => {
               </div>
             )}
 
+            {!canInstallModels && (
+              <p className='text-xs text-amber-700 dark:text-amber-300'>
+                {t('modelManager.pull.restricted')}
+              </p>
+            )}
+
             {/* Popular Models */}
             <div>
               <p className='text-xs font-medium text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mb-2'>
@@ -875,7 +897,7 @@ export const ModelManager: React.FC = () => {
                   <button
                     key={model.name}
                     onClick={() => setPullModelName(model.name)}
-                    disabled={pulling}
+                    disabled={pulling || !canInstallModels}
                     className={cn(
                       'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
                       'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]',
@@ -1100,7 +1122,7 @@ export const ModelManager: React.FC = () => {
                           }}
                           variant='outline'
                           size='sm'
-                          disabled={pulling}
+                          disabled={pulling || !canInstallModels}
                           className={cn(
                             'gap-1 text-xs',
                             'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
@@ -1279,6 +1301,12 @@ export const ModelManager: React.FC = () => {
               </select>
             </div>
 
+            {!canInstallModels && (
+              <p className='text-xs text-amber-700 dark:text-amber-300'>
+                {t('modelManager.pull.restricted')}
+              </p>
+            )}
+
             {/* Models Grid */}
             {loadingHfModels ? (
               <div className='flex items-center justify-center py-8'>
@@ -1455,7 +1483,9 @@ export const ModelManager: React.FC = () => {
                                             file.filename
                                           );
                                         }}
-                                        disabled={!!hfPullingModel}
+                                        disabled={
+                                          !!hfPullingModel || !canInstallModels
+                                        }
                                         className={cn(
                                           'px-3 py-1.5 rounded-lg text-xs font-medium',
                                           'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[#9333ea]/20',

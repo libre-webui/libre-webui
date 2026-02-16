@@ -48,6 +48,7 @@ import {
   HuggingFaceModel,
   GgufFileInfo,
 } from '@/utils/api';
+import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 
 interface ModelGroup {
@@ -99,6 +100,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const { user, systemInfo } = useAuthStore();
+  const canInstallModels =
+    user?.role === 'admin' || (systemInfo?.allowUserModelPull ?? true);
 
   // Ollama library state
   const [libraryModels, setLibraryModels] = useState<LibraryModel[]>([]);
@@ -279,6 +283,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   // Pull a GGUF model from HuggingFace via Ollama
   const handlePullHfGguf = useCallback(
     (ollamaCommand: string, filename: string) => {
+      if (!canInstallModels) {
+        toast.error(t('modelSelector.pullRestricted'));
+        return;
+      }
       if (pullingModel) return;
 
       setPullingModel(ollamaCommand);
@@ -311,7 +319,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         toast.error('Failed to start download');
       }
     },
-    [pullingModel, onModelsRefresh]
+    [canInstallModels, onModelsRefresh, pullingModel, t]
   );
 
   // Debounce search for both tabs
@@ -396,6 +404,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
   const handlePullModel = async (modelName: string) => {
+    if (!canInstallModels) {
+      toast.error(t('modelSelector.pullRestricted'));
+      return;
+    }
     if (pullingModel) return;
 
     setPullingModel(modelName);
@@ -650,6 +662,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
       {/* Model list */}
       <div className='flex-1 overflow-y-auto'>
+        {!canInstallModels && (
+          <div className='mx-3 mt-3 mb-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300'>
+            {t('modelSelector.pullRestricted')}
+          </div>
+        )}
         {loadingLibrary ? (
           <div className='flex items-center justify-center py-12'>
             <Loader className='h-6 w-6 animate-spin text-gray-400' />
@@ -730,7 +747,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                         >
                           {t('modelSelector.use')}
                         </button>
-                      ) : (
+                      ) : canInstallModels ? (
                         <button
                           onClick={() => handlePullModel(model.name)}
                           className='px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[#9333ea]/20 text-primary-700 dark:text-primary-400 ophelia:text-[#a855f7] hover:bg-primary-200 dark:hover:bg-primary-900/50'
@@ -738,6 +755,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                           <Download className='h-3 w-3 inline mr-1' />
                           {t('modelSelector.pull')}
                         </button>
+                      ) : (
+                        <span className='px-2 py-1 rounded text-[11px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'>
+                          {t('modelSelector.adminOnlyPull')}
+                        </span>
                       )}
                     </div>
                   </div>
@@ -835,6 +856,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
       {/* Model list */}
       <div className='flex-1 overflow-y-auto'>
+        {!canInstallModels && (
+          <div className='mx-3 mt-3 mb-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300'>
+            {t('modelSelector.pullRestricted')}
+          </div>
+        )}
         {loadingHf ? (
           <div className='flex items-center justify-center py-12'>
             <Loader className='h-6 w-6 animate-spin text-gray-400' />
@@ -981,7 +1007,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                       <X className='h-4 w-4' />
                                     </button>
                                   </div>
-                                ) : (
+                                ) : canInstallModels ? (
                                   <button
                                     onMouseDown={e => {
                                       e.preventDefault();
@@ -1003,6 +1029,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                                     <Download className='h-3 w-3 inline mr-1' />
                                     {t('models.pull')}
                                   </button>
+                                ) : (
+                                  <span className='px-2 py-1 rounded text-[11px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'>
+                                    {t('modelSelector.adminOnlyPull')}
+                                  </span>
                                 )}
                               </div>
                             );
