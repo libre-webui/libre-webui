@@ -15,6 +15,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.8.2] - 2026-02-16
+
+### What's New
+
+This release introduces intelligent tool activity indicators that show users when AI agents are actively working with tools, along with enhanced internationalization support across 25 languages. Administrators now have granular control over model installations with new permission settings.
+
+### ✨ New Features
+
+- **Tool Activity Indicators**: Real-time visual feedback showing when AI tools are running, with actual tool names displayed during execution
+- **Admin Model Control**: New toggle allowing administrators to restrict non-admin users from installing models
+- **Enhanced Internationalization**: Added comprehensive translations across 25 languages including Arabic, Japanese, Korean, and European languages
+
+### 🔧 Improvements
+
+- **Better Tool Feedback**: Improved activity labels and removed debug logging for cleaner tool execution displays
+- **Plugin Error Handling**: Enhanced error handling with proper internationalization key support and controlled input validation
+- **Documentation Updates**: Added AI agent support section and updated project badges with dynamic versioning
+
+### 🐛 Bug Fixes
+
+- **Security Patches**: Updated axios to version 1.13.5 and resolved qs denial of service vulnerability
+- **ESLint Compatibility**: Fixed ESLint 10 incompatibility issues with eslint-plugin-react and typescript-eslint
+- **Tool Indicators**: Eliminated duplicate tool activity indicators, ensuring single clean display per tool
+- **WebSocket Cleanup**: Removed unused tool-events capability from WebSocket connections
+
 ## [0.8.1] - 2026-02-08
 
 ### What's New

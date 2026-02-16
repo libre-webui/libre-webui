@@ -1,7 +1,7 @@
 {
   "name": "libre-webui-frontend",
   "private": true,
-  "version": "0.8.1",
+  "version": "0.8.2",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
@@ -57,7 +57,6 @@
     "vite": "^7.3.0"
   },
   "overrides": {
-    "brace-expansion": "2.0.2",
     "refractor": "^4.8.1",
     "react-syntax-highlighter": {
       "refractor": "^4.8.1"
