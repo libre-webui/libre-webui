@@ -353,7 +353,11 @@
       },
       "persona": "Persóna",
       "updatingModel": "Uppfæri {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} af {{total}} módel"
+      "modelsProgress": "{{current}} af {{total}} módel",
+      "modelPullAccess": "Aðgangur að uppsetningu líkana",
+      "modelPullAccessDescription": "Leyfa notendum sem eru ekki stjórnendur að sækja og setja upp ný líkön.",
+      "modelPullAccessSaved": "Heimildir fyrir uppsetningu líkana voru uppfærðar",
+      "modelPullAccessSaveFailed": "Mistókst að uppfæra heimildir fyrir uppsetningu líkana"
     },
     "systemMessage": {
       "title": "Kerfisskilaboð",
@@ -691,7 +695,8 @@
       "success": "Líkan {{name}} sótt",
       "cancelled": "Hætt var við að sækja líkan",
       "failed": "Ekki tókst að sækja líkan",
-      "enterName": "Sláðu inn nafn líkans"
+      "enterName": "Sláðu inn nafn líkans",
+      "restricted": "Uppsetning líkana er takmörkuð við stjórnendur á þessu tilviki."
     },
     "progress": {
       "starting": "Frumstillir...",
@@ -1266,6 +1271,8 @@
     "actions": "Actions",
     "installed": "Installed",
     "use": "Use",
-    "pull": "Pull"
+    "pull": "Pull",
+    "pullRestricted": "Uppsetning líkana er takmörkuð við stjórnendur á þessu tilviki.",
+    "adminOnlyPull": "Aðeins stjórnendur"
   }
 }

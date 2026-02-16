@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "Opdaterer {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} af {{total}} modeller"
+      "modelsProgress": "{{current}} af {{total}} modeller",
+      "modelPullAccess": "Adgang til modelinstallation",
+      "modelPullAccessDescription": "Tillad ikke-admin-brugere at hente og installere nye modeller.",
+      "modelPullAccessSaved": "Tilladelser til modelinstallation blev opdateret",
+      "modelPullAccessSaveFailed": "Kunne ikke opdatere tilladelser til modelinstallation"
     },
     "systemMessage": {
       "title": "Systembesked",
@@ -691,7 +695,8 @@
       "success": "Model {{name}} hentet",
       "cancelled": "Modelhentning annulleret",
       "failed": "Kunne ikke hente model",
-      "enterName": "Indtast venligst et modelnavn"
+      "enterName": "Indtast venligst et modelnavn",
+      "restricted": "Modelinstallation er begrænset til administratorer på denne instans."
     },
     "progress": {
       "starting": "Initialiserer...",
@@ -1266,6 +1271,8 @@
     "actions": "Handlinger",
     "installed": "Installeret",
     "use": "Brug",
-    "pull": "Download"
+    "pull": "Download",
+    "pullRestricted": "Modelinstallation er begrænset til administratorer på denne instans.",
+    "adminOnlyPull": "Kun administratorer"
   }
 }

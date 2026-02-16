@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "Uppdaterar {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} av {{total}} modeller"
+      "modelsProgress": "{{current}} av {{total}} modeller",
+      "modelPullAccess": "Åtkomst till modellinstallation",
+      "modelPullAccessDescription": "Tillåt icke-administratörer att hämta och installera nya modeller.",
+      "modelPullAccessSaved": "Behörigheter för modellinstallation har uppdaterats",
+      "modelPullAccessSaveFailed": "Det gick inte att uppdatera behörigheter för modellinstallation"
     },
     "systemMessage": {
       "title": "Systemmeddelande",
@@ -691,7 +695,8 @@
       "success": "Modellen {{name}} hämtades",
       "cancelled": "Modellhämtning avbruten",
       "failed": "Kunde inte hämta modell",
-      "enterName": "Ange ett modellnamn"
+      "enterName": "Ange ett modellnamn",
+      "restricted": "Modellinstallation är begränsad till administratörer på denna instans."
     },
     "progress": {
       "starting": "Initierar...",
@@ -1266,6 +1271,8 @@
     "actions": "Åtgärder",
     "installed": "Installerad",
     "use": "Använd",
-    "pull": "Ladda ner"
+    "pull": "Ladda ner",
+    "pullRestricted": "Modellinstallation är begränsad till administratörer på denna instans.",
+    "adminOnlyPull": "Endast administratörer"
   }
 }
