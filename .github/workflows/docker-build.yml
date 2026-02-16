@@ -10,6 +10,7 @@ env:
   GHCR_REGISTRY: ghcr.io
   DOCKERHUB_REGISTRY: docker.io
   IMAGE_NAME: ${{ github.repository }}
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME || 'librewebui' }}
 
 jobs:
   build:
@@ -49,10 +50,11 @@ jobs:
 
       # Login to Docker Hub
       - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.DOCKERHUB_REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Get version from package.json and append -dev suffix for dev branch
@@ -80,7 +82,7 @@ jobs:
         with:
           images: |
             ${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }}
-            ${{ env.DOCKERHUB_REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/libre-webui
+            ${{ env.DOCKERHUB_REGISTRY }}/${{ env.DOCKERHUB_USERNAME }}/libre-webui
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -101,7 +103,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=build-${{ steps.platform.outputs.name }}
           build-args: |
             APP_VERSION=${{ steps.version.outputs.version }}
-          outputs: type=image,"name=${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }},${{ env.DOCKERHUB_REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/libre-webui",push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
+          outputs: type=image,"name=${{ env.GHCR_REGISTRY }}/${{ env.IMAGE_NAME }},${{ env.DOCKERHUB_REGISTRY }}/${{ env.DOCKERHUB_USERNAME }}/libre-webui",push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
 
       # Export digest
       - name: Export digest
@@ -156,7 +158,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.DOCKERHUB_REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # Get version from package.json and append -dev suffix for dev branch
@@ -185,7 +187,7 @@ jobs:
         id: meta-dockerhub
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.DOCKERHUB_REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/libre-webui
+          images: ${{ env.DOCKERHUB_REGISTRY }}/${{ env.DOCKERHUB_USERNAME }}/libre-webui
           tags: |
             type=ref,event=branch
             type=sha
@@ -205,7 +207,7 @@ jobs:
         working-directory: ${{ runner.temp }}/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf '${{ env.DOCKERHUB_REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/libre-webui@sha256:%s ' *)
+            $(printf '${{ env.DOCKERHUB_REGISTRY }}/${{ env.DOCKERHUB_USERNAME }}/libre-webui@sha256:%s ' *)
         env:
           DOCKER_METADATA_OUTPUT_JSON: ${{ steps.meta-dockerhub.outputs.json }}
 
@@ -215,4 +217,4 @@ jobs:
 
       - name: Inspect Docker Hub image
         run: |
-          docker buildx imagetools inspect ${{ env.DOCKERHUB_REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/libre-webui:${{ steps.meta-dockerhub.outputs.version }}
+          docker buildx imagetools inspect ${{ env.DOCKERHUB_REGISTRY }}/${{ env.DOCKERHUB_USERNAME }}/libre-webui:${{ steps.meta-dockerhub.outputs.version }}
