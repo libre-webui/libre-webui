@@ -353,7 +353,11 @@
         "taskModelDescription": "Model used for generating conversation titles"
       },
       "updatingModel": "Updating {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} of {{total}} models"
+      "modelsProgress": "{{current}} of {{total}} models",
+      "modelPullAccess": "Model Install Access",
+      "modelPullAccessDescription": "Allow non-admin users to pull and install new models.",
+      "modelPullAccessSaved": "Model install permissions updated",
+      "modelPullAccessSaveFailed": "Failed to update model install permissions"
     },
     "systemMessage": {
       "title": "System Message",
@@ -691,7 +695,8 @@
       "success": "Model {{name}} pulled successfully",
       "cancelled": "Model pull cancelled",
       "failed": "Failed to pull model",
-      "enterName": "Please enter a model name"
+      "enterName": "Please enter a model name",
+      "restricted": "Model installation is restricted to administrators on this instance."
     },
     "progress": {
       "starting": "Initializing...",
@@ -1266,6 +1271,8 @@
     "actions": "Actions",
     "installed": "Installed",
     "use": "Use",
-    "pull": "Pull"
+    "pull": "Pull",
+    "pullRestricted": "Model installation is restricted to administrators on this instance.",
+    "adminOnlyPull": "Admins only"
   }
 }

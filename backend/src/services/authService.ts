@@ -21,6 +21,7 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { randomBytes } from 'crypto';
+import { systemSettingsService } from './systemSettingsService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -59,6 +60,7 @@ export interface SystemInfo {
   requiresAuth: boolean;
   hasUsers: boolean;
   userCount: number;
+  allowUserModelPull: boolean;
   version?: string;
 }
 
@@ -123,6 +125,7 @@ export class AuthService {
       requiresAuth: true, // For now, always require auth
       hasUsers: userCount > 0,
       userCount,
+      allowUserModelPull: systemSettingsService.getAllowUserModelPull(),
       version: packageVersion,
     };
   }

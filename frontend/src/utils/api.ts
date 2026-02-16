@@ -546,8 +546,16 @@ export const ollamaApi = {
       return () => clearInterval(interval);
     }
 
+    const params = new URLSearchParams({
+      model: modelName,
+    });
+    const token = localStorage.getItem('auth-token');
+    if (token) {
+      params.set('token', token);
+    }
+
     const eventSource = new EventSource(
-      `${API_BASE_URL}/ollama/pull/stream?model=${encodeURIComponent(modelName)}`
+      `${API_BASE_URL}/ollama/pull/stream?${params.toString()}`
     );
 
     eventSource.onmessage = event => {
@@ -1182,6 +1190,7 @@ export const authApi = {
           requiresAuth: true,
           hasUsers: true,
           userCount: 1,
+          allowUserModelPull: true,
           version: '0.1.0',
         },
       });
@@ -1210,6 +1219,7 @@ export const authApi = {
           requiresAuth: true,
           hasUsers: true,
           userCount: 1,
+          allowUserModelPull: true,
           version: '0.1.0',
         },
       });
@@ -1234,6 +1244,7 @@ export const authApi = {
         requiresAuth: true,
         hasUsers: true,
         userCount: 1,
+        allowUserModelPull: true,
         version: '0.1.0',
       });
     }
@@ -1292,6 +1303,24 @@ export const authApi = {
     }
 
     return api.get('/auth/encryption-key').then(res => res.data);
+  },
+
+  updateModelPullSetting: (
+    allowUserModelPull: boolean
+  ): Promise<ApiResponse<SystemInfo>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<SystemInfo>({
+        requiresAuth: true,
+        hasUsers: true,
+        userCount: 1,
+        allowUserModelPull,
+        version: '0.1.0',
+      });
+    }
+
+    return api
+      .patch('/auth/system-settings/model-pull', { allowUserModelPull })
+      .then(res => res.data);
   },
 };
 

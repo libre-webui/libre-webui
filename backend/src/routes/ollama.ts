@@ -15,11 +15,84 @@
  * limitations under the License.
  */
 
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import ollamaService from '../services/ollamaService.js';
 import { ApiResponse, OllamaModel, getErrorMessage } from '../types/index.js';
+import { AuthenticatedRequest } from '../middleware/auth.js';
+import { authService } from '../services/authService.js';
+import { systemSettingsService } from '../services/systemSettingsService.js';
 
 const router = express.Router();
+
+const getRequestToken = (req: Request): string | null => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+
+  const queryToken = req.query.token;
+  if (typeof queryToken === 'string' && queryToken.trim()) {
+    return queryToken;
+  }
+
+  return null;
+};
+
+const checkModelPullPermission = (
+  req: AuthenticatedRequest
+): { allowed: true } | { allowed: false; status: number; error: string } => {
+  // When enabled, preserve current behavior.
+  if (systemSettingsService.getAllowUserModelPull()) {
+    return { allowed: true };
+  }
+
+  const token = getRequestToken(req);
+  if (!token) {
+    return {
+      allowed: false,
+      status: 401,
+      error: 'Authentication required to install models',
+    };
+  }
+
+  const payload = authService.verifyToken(token);
+  if (!payload) {
+    return {
+      allowed: false,
+      status: 401,
+      error: 'Invalid or expired token',
+    };
+  }
+
+  req.user = payload;
+
+  if (payload.role !== 'admin') {
+    return {
+      allowed: false,
+      status: 403,
+      error: 'Only admins can install new models on this instance',
+    };
+  }
+
+  return { allowed: true };
+};
+
+const enforceModelPullPermission = (
+  req: AuthenticatedRequest,
+  res: Response<ApiResponse>,
+  next: NextFunction
+): void => {
+  const permission = checkModelPullPermission(req);
+  if (!permission.allowed) {
+    res.status(permission.status).json({
+      success: false,
+      error: permission.error,
+    });
+    return;
+  }
+
+  next();
+};
 
 // Health check
 router.get(
@@ -133,6 +206,7 @@ router.get(
 // Pull a new model (uses request body to support model names with slashes like hf.co/author/model:tag)
 router.post(
   '/models/pull',
+  enforceModelPullPermission,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const modelName = req.body.name as string;
@@ -160,10 +234,24 @@ router.post(
 
 // Pull a model with streaming progress
 // Uses query param ?model= to support model names with slashes (e.g., hf.co/author/model)
+// Optional ?token= can be provided for role checks when EventSource cannot set auth headers
 router.get(
   '/pull/stream',
   async (req: Request, res: Response): Promise<void> => {
     try {
+      const permission = checkModelPullPermission(req as AuthenticatedRequest);
+      if (!permission.allowed) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.write(
+          `data: ${JSON.stringify({ type: 'error', error: permission.error })}\n\n`
+        );
+        res.end();
+        return;
+      }
+
       const modelName = req.query.model as string;
 
       if (!modelName) {
