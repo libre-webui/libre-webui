@@ -353,7 +353,11 @@
       },
       "persona": "페르소나",
       "updatingModel": "{{name}} 업데이트 중 ({{current}}/{{total}})",
-      "modelsProgress": "{{total}}개 모델 중 {{current}}개"
+      "modelsProgress": "{{total}}개 모델 중 {{current}}개",
+      "modelPullAccess": "모델 설치 권한",
+      "modelPullAccessDescription": "관리자가 아닌 사용자가 새 모델을 pull 및 설치할 수 있도록 허용합니다.",
+      "modelPullAccessSaved": "모델 설치 권한이 업데이트되었습니다",
+      "modelPullAccessSaveFailed": "모델 설치 권한 업데이트에 실패했습니다"
     },
     "systemMessage": {
       "title": "시스템 메시지",
@@ -691,7 +695,8 @@
       "success": "모델 {{name}}이(가) 성공적으로 풀되었습니다",
       "cancelled": "모델 풀이 취소되었습니다",
       "failed": "모델 풀 실패",
-      "enterName": "모델 이름을 입력하세요"
+      "enterName": "모델 이름을 입력하세요",
+      "restricted": "이 인스턴스에서 모델 설치는 관리자만 가능합니다."
     },
     "progress": {
       "starting": "초기화 중...",
@@ -1266,6 +1271,8 @@
     "actions": "작업",
     "installed": "설치됨",
     "use": "사용",
-    "pull": "다운로드"
+    "pull": "다운로드",
+    "pullRestricted": "이 인스턴스에서 모델 설치는 관리자만 가능합니다.",
+    "adminOnlyPull": "관리자만"
   }
 }
