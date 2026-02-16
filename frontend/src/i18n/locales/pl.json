@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "Aktualizacja {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} z {{total}} modeli"
+      "modelsProgress": "{{current}} z {{total}} modeli",
+      "modelPullAccess": "Dostęp do instalacji modeli",
+      "modelPullAccessDescription": "Zezwól użytkownikom niebędącym administratorami na pobieranie i instalowanie nowych modeli.",
+      "modelPullAccessSaved": "Uprawnienia instalacji modeli zostały zaktualizowane",
+      "modelPullAccessSaveFailed": "Nie udało się zaktualizować uprawnień instalacji modeli"
     },
     "systemMessage": {
       "title": "Wiadomość systemowa",
@@ -691,7 +695,8 @@
       "success": "Model {{name}} pobrany pomyślnie",
       "cancelled": "Pobieranie modelu anulowane",
       "failed": "Nie udało się pobrać modelu",
-      "enterName": "Wprowadź nazwę modelu"
+      "enterName": "Wprowadź nazwę modelu",
+      "restricted": "Instalacja modeli w tej instancji jest ograniczona do administratorów."
     },
     "progress": {
       "starting": "Inicjalizacja...",
@@ -1266,6 +1271,8 @@
     "actions": "Akcje",
     "installed": "Zainstalowany",
     "use": "Użyj",
-    "pull": "Pobierz"
+    "pull": "Pobierz",
+    "pullRestricted": "Instalacja modeli w tej instancji jest ograniczona do administratorów.",
+    "adminOnlyPull": "Tylko administratorzy"
   }
 }

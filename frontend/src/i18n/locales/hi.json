@@ -353,7 +353,11 @@
       },
       "persona": "पर्सोना",
       "updatingModel": "{{name}} अपडेट हो रहा है ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} मॉडलों में से {{current}}"
+      "modelsProgress": "{{total}} मॉडलों में से {{current}}",
+      "modelPullAccess": "मॉडल इंस्टॉल एक्सेस",
+      "modelPullAccessDescription": "गैर-एडमिन उपयोगकर्ताओं को नए मॉडल pull और install करने की अनुमति दें।",
+      "modelPullAccessSaved": "मॉडल इंस्टॉल अनुमतियां अपडेट कर दी गई हैं",
+      "modelPullAccessSaveFailed": "मॉडल इंस्टॉल अनुमतियां अपडेट करने में विफल"
     },
     "systemMessage": {
       "title": "सिस्टम संदेश",
@@ -691,7 +695,8 @@
       "success": "मॉडल {{name}} सफलतापूर्वक पुल किया गया",
       "cancelled": "मॉडल पुल रद्द किया गया",
       "failed": "मॉडल पुल करने में विफल",
-      "enterName": "कृपया मॉडल नाम दर्ज करें"
+      "enterName": "कृपया मॉडल नाम दर्ज करें",
+      "restricted": "इस इंस्टेंस पर मॉडल इंस्टॉलेशन केवल एडमिन तक सीमित है।"
     },
     "progress": {
       "starting": "प्रारंभ हो रहा है...",
@@ -1266,6 +1271,8 @@
     "actions": "कार्य",
     "installed": "स्थापित",
     "use": "उपयोग करें",
-    "pull": "डाउनलोड करें"
+    "pull": "डाउनलोड करें",
+    "pullRestricted": "इस इंस्टेंस पर मॉडल इंस्टॉलेशन केवल एडमिन तक सीमित है।",
+    "adminOnlyPull": "केवल एडमिन"
   }
 }

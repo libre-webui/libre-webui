@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "{{name}} bijwerken ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} van {{total}} modellen"
+      "modelsProgress": "{{current}} van {{total}} modellen",
+      "modelPullAccess": "Toegang tot modelinstallatie",
+      "modelPullAccessDescription": "Sta niet-beheerders toe om nieuwe modellen op te halen en te installeren.",
+      "modelPullAccessSaved": "Machtigingen voor modelinstallatie zijn bijgewerkt",
+      "modelPullAccessSaveFailed": "Machtigingen voor modelinstallatie bijwerken mislukt"
     },
     "systemMessage": {
       "title": "Systeembericht",
@@ -691,7 +695,8 @@
       "success": "Model {{name}} succesvol opgehaald",
       "cancelled": "Model ophalen geannuleerd",
       "failed": "Kon model niet ophalen",
-      "enterName": "Voer een modelnaam in"
+      "enterName": "Voer een modelnaam in",
+      "restricted": "Modelinstallatie is op deze instantie beperkt tot beheerders."
     },
     "progress": {
       "starting": "Initialiseren...",
@@ -1266,6 +1271,8 @@
     "actions": "Acties",
     "installed": "Geïnstalleerd",
     "use": "Gebruiken",
-    "pull": "Downloaden"
+    "pull": "Downloaden",
+    "pullRestricted": "Modelinstallatie is op deze instantie beperkt tot beheerders.",
+    "adminOnlyPull": "Alleen beheerders"
   }
 }
