@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "{{name}} wird aktualisiert ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} von {{total}} Modellen"
+      "modelsProgress": "{{current}} von {{total}} Modellen",
+      "modelPullAccess": "Zugriff auf Modellinstallation",
+      "modelPullAccessDescription": "Nicht-Admin-Benutzern erlauben, neue Modelle zu laden und zu installieren.",
+      "modelPullAccessSaved": "Berechtigungen für die Modellinstallation wurden aktualisiert",
+      "modelPullAccessSaveFailed": "Berechtigungen für die Modellinstallation konnten nicht aktualisiert werden"
     },
     "systemMessage": {
       "title": "Systemnachricht",
@@ -691,7 +695,8 @@
       "success": "Modell {{name}} erfolgreich heruntergeladen",
       "cancelled": "Modell-Download abgebrochen",
       "failed": "Modell konnte nicht heruntergeladen werden",
-      "enterName": "Bitte geben Sie einen Modellnamen ein"
+      "enterName": "Bitte geben Sie einen Modellnamen ein",
+      "restricted": "Die Modellinstallation ist in dieser Instanz auf Administratoren beschränkt."
     },
     "progress": {
       "starting": "Wird initialisiert...",
@@ -1266,6 +1271,8 @@
     "actions": "Aktionen",
     "installed": "Installiert",
     "use": "Verwenden",
-    "pull": "Herunterladen"
+    "pull": "Herunterladen",
+    "pullRestricted": "Die Modellinstallation ist in dieser Instanz auf Administratoren beschränkt.",
+    "adminOnlyPull": "Nur Admins"
   }
 }

@@ -353,7 +353,11 @@
       },
       "persona": "Kişilik",
       "updatingModel": "{{name}} güncelleniyor ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} modelden {{current}}"
+      "modelsProgress": "{{total}} modelden {{current}}",
+      "modelPullAccess": "Model Kurulum Erişimi",
+      "modelPullAccessDescription": "Yönetici olmayan kullanıcıların yeni modelleri çekmesine ve kurmasına izin ver.",
+      "modelPullAccessSaved": "Model kurulum izinleri güncellendi",
+      "modelPullAccessSaveFailed": "Model kurulum izinleri güncellenemedi"
     },
     "systemMessage": {
       "title": "Sistem Mesajı",
@@ -691,7 +695,8 @@
       "success": "{{name}} modeli başarıyla çekildi",
       "cancelled": "Model çekme iptal edildi",
       "failed": "Model çekilemedi",
-      "enterName": "Lütfen bir model adı girin"
+      "enterName": "Lütfen bir model adı girin",
+      "restricted": "Bu örnekte model kurulumu yalnızca yöneticilerle sınırlandırılmıştır."
     },
     "progress": {
       "starting": "Başlatılıyor...",
@@ -1266,6 +1271,8 @@
     "actions": "Eylemler",
     "installed": "Yüklü",
     "use": "Kullan",
-    "pull": "İndir"
+    "pull": "İndir",
+    "pullRestricted": "Bu örnekte model kurulumu yalnızca yöneticilerle sınırlandırılmıştır.",
+    "adminOnlyPull": "Yalnızca yöneticiler"
   }
 }

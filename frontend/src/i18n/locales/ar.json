@@ -353,7 +353,11 @@
       },
       "persona": "شخصية",
       "updatingModel": "تحديث {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} من {{total}} نماذج"
+      "modelsProgress": "{{current}} من {{total}} نماذج",
+      "modelPullAccess": "وصول تثبيت النماذج",
+      "modelPullAccessDescription": "السماح للمستخدمين غير المسؤولين بسحب النماذج الجديدة وتثبيتها.",
+      "modelPullAccessSaved": "تم تحديث أذونات تثبيت النماذج",
+      "modelPullAccessSaveFailed": "فشل تحديث أذونات تثبيت النماذج"
     },
     "systemMessage": {
       "title": "رسالة النظام",
@@ -691,7 +695,8 @@
       "success": "تم سحب النموذج {{name}} بنجاح",
       "cancelled": "تم إلغاء سحب النموذج",
       "failed": "فشل سحب النموذج",
-      "enterName": "يرجى إدخال اسم النموذج"
+      "enterName": "يرجى إدخال اسم النموذج",
+      "restricted": "تثبيت النماذج مقصور على المسؤولين في هذا المثيل."
     },
     "progress": {
       "starting": "جاري التهيئة...",
@@ -1266,6 +1271,8 @@
     "actions": "الإجراءات",
     "installed": "مثبت",
     "use": "استخدام",
-    "pull": "تنزيل"
+    "pull": "تنزيل",
+    "pullRestricted": "تثبيت النماذج مقصور على المسؤولين في هذا المثيل.",
+    "adminOnlyPull": "للمسؤولين فقط"
   }
 }

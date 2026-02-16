@@ -284,10 +284,10 @@ class OpenClawSessionService {
       minProtocol: 3,
       maxProtocol: 3,
       client: {
-        id: 'libre-webui',
+        id: 'gateway-client',
         version: '1.0.0',
         platform: 'node',
-        mode: 'webchat',
+        mode: 'backend',
       },
       role: 'operator',
       scopes: ['operator.read', 'operator.write'],

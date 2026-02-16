@@ -937,6 +937,25 @@ wss.on('connection', (ws, req) => {
                   }
 
                   // Send tool status to frontend
+                  // Send tool_status event for the activity indicator
+                  try {
+                    ws.send(
+                      JSON.stringify({
+                        type: 'tool_status',
+                        data: {
+                          toolCallId: toolEvent.toolCallId,
+                          name: toolEvent.name,
+                          phase:
+                            toolEvent.phase === 'start'
+                              ? 'running'
+                              : toolEvent.phase,
+                        },
+                      })
+                    );
+                  } catch {
+                    /* ws closed */
+                  }
+
                   try {
                     const toolStatusMsg =
                       toolEvent.phase === 'start'
@@ -1102,12 +1121,53 @@ wss.on('connection', (ws, req) => {
                   arguments: string;
                 }> = [];
 
+                // Tool activity tracking — single indicator, reused ID
+                let pauseTimer: ReturnType<typeof setTimeout> | null = null;
+                const PAUSE_TOOL_ID = 'tool-activity';
+                let toolActivitySent = false;
+                const PAUSE_THRESHOLD_MS = 2000;
+
+                const sendToolStatus = (phase: string) => {
+                  try {
+                    ws.send(
+                      JSON.stringify({
+                        type: 'tool_status',
+                        data: {
+                          toolCallId: PAUSE_TOOL_ID,
+                          name: 'working',
+                          phase,
+                        },
+                      })
+                    );
+                  } catch {
+                    /* ws closed */
+                  }
+                };
+
+                const startPauseDetection = () => {
+                  if (pauseTimer) clearTimeout(pauseTimer);
+                  pauseTimer = setTimeout(() => {
+                    if (!toolActivitySent) {
+                      toolActivitySent = true;
+                      sendToolStatus('running');
+                    }
+                  }, PAUSE_THRESHOLD_MS);
+                };
+                startPauseDetection();
+
                 for await (const chunk of pluginService.executePluginStreamRequest(
                   actualModelName,
                   messagesForPlugin,
                   mergedOptions
                 )) {
                   if (chunk.type === 'content' && chunk.content) {
+                    // Content arrived — clear the tool indicator
+                    if (toolActivitySent) {
+                      sendToolStatus('done');
+                      toolActivitySent = false;
+                    }
+                    startPauseDetection();
+
                     totalContent += chunk.content;
                     ws.send(
                       JSON.stringify({
@@ -1122,7 +1182,29 @@ wss.on('connection', (ws, req) => {
                     );
                   } else if (chunk.type === 'tool_call' && chunk.toolCall) {
                     toolCalls.push(chunk.toolCall);
+                    if (pauseTimer) clearTimeout(pauseTimer);
+                    toolActivitySent = true;
+                    // Send with real tool name but same stable ID
+                    try {
+                      ws.send(
+                        JSON.stringify({
+                          type: 'tool_status',
+                          data: {
+                            toolCallId: PAUSE_TOOL_ID,
+                            name: chunk.toolCall.name,
+                            phase: 'running',
+                          },
+                        })
+                      );
+                    } catch {
+                      /* ws closed */
+                    }
                   } else if (chunk.type === 'done') {
+                    if (pauseTimer) clearTimeout(pauseTimer);
+                    if (toolActivitySent) {
+                      sendToolStatus('done');
+                      toolActivitySent = false;
+                    }
                     // Append tool call info to content if present
                     if (toolCalls.length > 0) {
                       let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';

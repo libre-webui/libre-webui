@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "Mengemas kini {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} daripada {{total}} model"
+      "modelsProgress": "{{current}} daripada {{total}} model",
+      "modelPullAccess": "Akses Pemasangan Model",
+      "modelPullAccessDescription": "Benarkan pengguna bukan pentadbir untuk menarik dan memasang model baharu.",
+      "modelPullAccessSaved": "Kebenaran pemasangan model telah dikemas kini",
+      "modelPullAccessSaveFailed": "Gagal mengemas kini kebenaran pemasangan model"
     },
     "systemMessage": {
       "title": "Mesej Sistem",
@@ -691,7 +695,8 @@
       "success": "Model {{name}} berjaya ditarik",
       "cancelled": "Tarikan model dibatalkan",
       "failed": "Gagal menarik model",
-      "enterName": "Sila masukkan nama model"
+      "enterName": "Sila masukkan nama model",
+      "restricted": "Pemasangan model dihadkan kepada pentadbir sahaja pada instance ini."
     },
     "progress": {
       "starting": "Memulakan...",
@@ -1266,6 +1271,8 @@
     "actions": "Actions",
     "installed": "Installed",
     "use": "Use",
-    "pull": "Pull"
+    "pull": "Pull",
+    "pullRestricted": "Pemasangan model dihadkan kepada pentadbir sahaja pada instance ini.",
+    "adminOnlyPull": "Pentadbir sahaja"
   }
 }

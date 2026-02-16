@@ -56,9 +56,11 @@ import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
+import { useAuthStore } from '@/store/authStore';
 import {
   preferencesApi,
   ollamaApi,
+  authApi,
   documentsApi,
   ttsApi,
   imageGenApi,
@@ -96,6 +98,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   } = useChatStore();
   const { theme, setTheme, preferences, setPreferences, loadPreferences } =
     useAppStore();
+  const { user, systemInfo, setSystemInfo } = useAuthStore();
   const {
     plugins,
     isLoading: pluginLoading,
@@ -116,6 +119,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [tempSystemMessage, setTempSystemMessage] = useState(systemMessage);
 
   const [updatingAllModels, setUpdatingAllModels] = useState(false);
+  const [updatingModelPullAccess, setUpdatingModelPullAccess] = useState(false);
   const [updateProgress, setUpdateProgress] = useState<{
     current: number;
     total: number;
@@ -844,6 +848,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     );
   };
 
+  const handleModelPullAccessToggle = async (allowUserModelPull: boolean) => {
+    setUpdatingModelPullAccess(true);
+    try {
+      const response = await authApi.updateModelPullSetting(allowUserModelPull);
+      if (response.success && response.data) {
+        setSystemInfo(response.data);
+        toast.success(t('settings.model.modelPullAccessSaved'));
+      } else {
+        throw new Error(response.error || 'Failed to update model access');
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error(
+        `${t('settings.model.modelPullAccessSaveFailed')}: ${errorMessage}`
+      );
+    } finally {
+      setUpdatingModelPullAccess(false);
+    }
+  };
+
   const handleGenerationOptionChange = (
     key: string,
     value: string | number | boolean | string[] | undefined
@@ -1037,6 +1062,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {t('settings.model.title')}
               </h3>
               <div className='space-y-6'>
+                {/* Admin model pull access control */}
+                {user?.role === 'admin' && (
+                  <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex flex-col pr-4'>
+                        <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                          {t('settings.model.modelPullAccess')}
+                        </span>
+                        <span className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                          {t('settings.model.modelPullAccessDescription')}
+                        </span>
+                      </div>
+                      <label className='relative inline-flex items-center cursor-pointer'>
+                        <input
+                          type='checkbox'
+                          className='sr-only peer'
+                          checked={systemInfo?.allowUserModelPull ?? true}
+                          onChange={e =>
+                            handleModelPullAccessToggle(e.target.checked)
+                          }
+                          disabled={updatingModelPullAccess}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-disabled:opacity-60 peer-disabled:cursor-not-allowed peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
                 {/* Default Model Selection */}
                 <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
