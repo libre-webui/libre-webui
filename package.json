@@ -74,7 +74,6 @@
   },
   "overrides": {
     "prismjs": "^1.30.0",
-    "brace-expansion": "2.0.2",
     "@isaacs/brace-expansion": ">=5.0.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
