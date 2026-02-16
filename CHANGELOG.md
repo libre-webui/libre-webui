@@ -15,6 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.8.3] - 2026-02-16
+
+### What's New
+
+This maintenance release focuses on improving development infrastructure and dependency management. The update resolves CI pipeline conflicts and ensures better compatibility across the development toolchain.
+
+### 🔧 Improvements
+
+- Updated development dependencies across frontend and backend components for better security and performance
+- Resolved npm peer dependency conflicts in ESLint configuration
+- Removed incompatible brace-expansion package override to prevent build issues
+
+### 🐛 Bug Fixes
+
+- Fixed CI pipeline failures caused by conflicting ESLint peer dependencies
+- Resolved npm install errors during continuous integration builds
+
 ## [0.8.2] - 2026-02-16
 
 ### What's New
