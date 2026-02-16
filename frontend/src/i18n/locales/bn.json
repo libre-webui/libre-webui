@@ -353,7 +353,11 @@
       },
       "persona": "পারসোনা",
       "updatingModel": "{{name}} আপডেট হচ্ছে ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} টি মডেলের মধ্যে {{current}} টি"
+      "modelsProgress": "{{total}} টি মডেলের মধ্যে {{current}} টি",
+      "modelPullAccess": "মডেল ইনস্টল অ্যাক্সেস",
+      "modelPullAccessDescription": "অ্যাডমিন নন এমন ব্যবহারকারীদের নতুন মডেল pull ও ইনস্টল করার অনুমতি দিন।",
+      "modelPullAccessSaved": "মডেল ইনস্টল অনুমতিগুলো আপডেট করা হয়েছে",
+      "modelPullAccessSaveFailed": "মডেল ইনস্টল অনুমতি আপডেট করতে ব্যর্থ হয়েছে"
     },
     "systemMessage": {
       "title": "সিস্টেম বার্তা",
@@ -691,7 +695,8 @@
       "success": "মডেল {{name}} সফলভাবে পুল করা হয়েছে",
       "cancelled": "মডেল পুল বাতিল করা হয়েছে",
       "failed": "মডেল পুল করতে ব্যর্থ",
-      "enterName": "অনুগ্রহ করে একটি মডেলের নাম লিখুন"
+      "enterName": "অনুগ্রহ করে একটি মডেলের নাম লিখুন",
+      "restricted": "এই ইনস্ট্যান্সে মডেল ইনস্টলেশন শুধুমাত্র অ্যাডমিনদের জন্য সীমাবদ্ধ।"
     },
     "progress": {
       "starting": "শুরু হচ্ছে...",
@@ -1266,6 +1271,8 @@
     "actions": "Actions",
     "installed": "Installed",
     "use": "Use",
-    "pull": "Pull"
+    "pull": "Pull",
+    "pullRestricted": "এই ইনস্ট্যান্সে মডেল ইনস্টলেশন শুধুমাত্র অ্যাডমিনদের জন্য সীমাবদ্ধ।",
+    "adminOnlyPull": "শুধু অ্যাডমিন"
   }
 }

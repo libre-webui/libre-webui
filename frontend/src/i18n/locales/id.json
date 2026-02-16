@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "Memperbarui {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} dari {{total}} model"
+      "modelsProgress": "{{current}} dari {{total}} model",
+      "modelPullAccess": "Akses Instalasi Model",
+      "modelPullAccessDescription": "Izinkan pengguna non-admin untuk menarik dan memasang model baru.",
+      "modelPullAccessSaved": "Izin instalasi model berhasil diperbarui",
+      "modelPullAccessSaveFailed": "Gagal memperbarui izin instalasi model"
     },
     "systemMessage": {
       "title": "Pesan Sistem",
@@ -691,7 +695,8 @@
       "success": "Model {{name}} berhasil diunduh",
       "cancelled": "Unduhan model dibatalkan",
       "failed": "Gagal mengunduh model",
-      "enterName": "Silakan masukkan nama model"
+      "enterName": "Silakan masukkan nama model",
+      "restricted": "Instalasi model dibatasi hanya untuk administrator pada instance ini."
     },
     "progress": {
       "starting": "Menginisialisasi...",
@@ -1266,6 +1271,8 @@
     "actions": "Aksi",
     "installed": "Terinstal",
     "use": "Gunakan",
-    "pull": "Unduh"
+    "pull": "Unduh",
+    "pullRestricted": "Instalasi model dibatasi hanya untuk administrator pada instance ini.",
+    "adminOnlyPull": "Hanya admin"
   }
 }

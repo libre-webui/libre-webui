@@ -15,6 +15,13 @@
  * limitations under the License.
  */
 
+export interface ToolActivity {
+  toolCallId: string;
+  name: string;
+  phase: string; // 'start' | 'update' | 'result'
+  startedAt: number;
+}
+
 export interface GenerationStatistics {
   total_duration?: number; // Total time in nanoseconds
   load_duration?: number; // Model load time in nanoseconds
@@ -147,6 +154,7 @@ export interface WebSocketMessage {
     | 'user_message'
     | 'assistant_chunk'
     | 'assistant_complete'
+    | 'tool_status'
     | 'error';
   data: unknown;
 }
@@ -382,6 +390,7 @@ export interface SystemInfo {
   requiresAuth: boolean;
   hasUsers: boolean;
   userCount: number;
+  allowUserModelPull?: boolean;
   version?: string;
 }
 

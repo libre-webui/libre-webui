@@ -353,7 +353,11 @@
       },
       "persona": "角色",
       "updatingModel": "正在更新 {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} 个模型中的第 {{current}} 个"
+      "modelsProgress": "{{total}} 个模型中的第 {{current}} 个",
+      "modelPullAccess": "模型安装权限",
+      "modelPullAccessDescription": "允许非管理员用户拉取并安装新模型。",
+      "modelPullAccessSaved": "模型安装权限已更新",
+      "modelPullAccessSaveFailed": "更新模型安装权限失败"
     },
     "systemMessage": {
       "title": "系统消息",
@@ -691,7 +695,8 @@
       "success": "模型 {{name}} 拉取成功",
       "cancelled": "模型拉取已取消",
       "failed": "拉取模型失败",
-      "enterName": "请输入模型名称"
+      "enterName": "请输入模型名称",
+      "restricted": "此实例上的模型安装仅限管理员。"
     },
     "progress": {
       "starting": "初始化中...",
@@ -1266,6 +1271,8 @@
     "actions": "操作",
     "installed": "已安装",
     "use": "使用",
-    "pull": "下载"
+    "pull": "下载",
+    "pullRestricted": "此实例上的模型安装仅限管理员。",
+    "adminOnlyPull": "仅管理员"
   }
 }

@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "Atualizando {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} de {{total}} modelos"
+      "modelsProgress": "{{current}} de {{total}} modelos",
+      "modelPullAccess": "Acesso à instalação de modelos",
+      "modelPullAccessDescription": "Permitir que usuários não administradores baixem e instalem novos modelos.",
+      "modelPullAccessSaved": "Permissões de instalação de modelos atualizadas",
+      "modelPullAccessSaveFailed": "Falha ao atualizar permissões de instalação de modelos"
     },
     "systemMessage": {
       "title": "Mensagem do Sistema",
@@ -691,7 +695,8 @@
       "success": "Modelo {{name}} baixado com sucesso",
       "cancelled": "Download do modelo cancelado",
       "failed": "Falha ao baixar modelo",
-      "enterName": "Por favor, digite o nome do modelo"
+      "enterName": "Por favor, digite o nome do modelo",
+      "restricted": "A instalação de modelos está restrita a administradores nesta instância."
     },
     "progress": {
       "starting": "Inicializando...",
@@ -1266,6 +1271,8 @@
     "actions": "Ações",
     "installed": "Instalado",
     "use": "Usar",
-    "pull": "Baixar"
+    "pull": "Baixar",
+    "pullRestricted": "A instalação de modelos está restrita a administradores nesta instância.",
+    "adminOnlyPull": "Apenas administradores"
   }
 }
