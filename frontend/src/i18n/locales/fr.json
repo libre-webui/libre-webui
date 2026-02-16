@@ -353,7 +353,11 @@
         "taskModelDescription": "Modèle utilisé pour générer les titres des conversations"
       },
       "updatingModel": "Mise à jour de {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} sur {{total}} modèles"
+      "modelsProgress": "{{current}} sur {{total}} modèles",
+      "modelPullAccess": "Accès à l'installation des modèles",
+      "modelPullAccessDescription": "Autoriser les utilisateurs non administrateurs à télécharger et installer de nouveaux modèles.",
+      "modelPullAccessSaved": "Les autorisations d'installation des modèles ont été mises à jour",
+      "modelPullAccessSaveFailed": "Échec de la mise à jour des autorisations d'installation des modèles"
     },
     "systemMessage": {
       "title": "Message système",
@@ -691,7 +695,8 @@
       "success": "Modèle {{name}} téléchargé avec succès",
       "cancelled": "Téléchargement du modèle annulé",
       "failed": "Échec du téléchargement du modèle",
-      "enterName": "Veuillez entrer un nom de modèle"
+      "enterName": "Veuillez entrer un nom de modèle",
+      "restricted": "L'installation des modèles est réservée aux administrateurs sur cette instance."
     },
     "progress": {
       "starting": "Initialisation...",
@@ -1266,6 +1271,8 @@
     "actions": "Actions",
     "installed": "Installé",
     "use": "Utiliser",
-    "pull": "Télécharger"
+    "pull": "Télécharger",
+    "pullRestricted": "L'installation des modèles est réservée aux administrateurs sur cette instance.",
+    "adminOnlyPull": "Admins uniquement"
   }
 }

@@ -353,7 +353,11 @@
       },
       "persona": "ペルソナ",
       "updatingModel": "{{name}} を更新中 ({{current}}/{{total}})",
-      "modelsProgress": "{{total}} モデル中 {{current}}"
+      "modelsProgress": "{{total}} モデル中 {{current}}",
+      "modelPullAccess": "モデルインストール権限",
+      "modelPullAccessDescription": "管理者以外のユーザーに新しいモデルの取得とインストールを許可します。",
+      "modelPullAccessSaved": "モデルインストール権限を更新しました",
+      "modelPullAccessSaveFailed": "モデルインストール権限の更新に失敗しました"
     },
     "systemMessage": {
       "title": "システムメッセージ",
@@ -691,7 +695,8 @@
       "success": "モデル{{name}}のプルに成功しました",
       "cancelled": "モデルのプルがキャンセルされました",
       "failed": "モデルのプルに失敗しました",
-      "enterName": "モデル名を入力してください"
+      "enterName": "モデル名を入力してください",
+      "restricted": "このインスタンスでは、モデルのインストールは管理者のみに制限されています。"
     },
     "progress": {
       "starting": "初期化中...",
@@ -1266,6 +1271,8 @@
     "actions": "アクション",
     "installed": "インストール済み",
     "use": "使用",
-    "pull": "ダウンロード"
+    "pull": "ダウンロード",
+    "pullRestricted": "このインスタンスでは、モデルのインストールは管理者のみに制限されています。",
+    "adminOnlyPull": "管理者のみ"
   }
 }

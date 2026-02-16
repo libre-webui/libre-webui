@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "Đang cập nhật {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} trong {{total}} mô hình"
+      "modelsProgress": "{{current}} trong {{total}} mô hình",
+      "modelPullAccess": "Quyền cài đặt mô hình",
+      "modelPullAccessDescription": "Cho phép người dùng không phải quản trị viên tải và cài đặt mô hình mới.",
+      "modelPullAccessSaved": "Đã cập nhật quyền cài đặt mô hình",
+      "modelPullAccessSaveFailed": "Không thể cập nhật quyền cài đặt mô hình"
     },
     "systemMessage": {
       "title": "Tin nhắn hệ thống",
@@ -691,7 +695,8 @@
       "success": "Đã tải mô hình {{name}} thành công",
       "cancelled": "Đã hủy tải mô hình",
       "failed": "Không thể tải mô hình",
-      "enterName": "Vui lòng nhập tên mô hình"
+      "enterName": "Vui lòng nhập tên mô hình",
+      "restricted": "Việc cài đặt mô hình trên phiên bản này chỉ dành cho quản trị viên."
     },
     "progress": {
       "starting": "Đang khởi tạo...",
@@ -1266,6 +1271,8 @@
     "actions": "Hành động",
     "installed": "Đã cài",
     "use": "Dùng",
-    "pull": "Tải"
+    "pull": "Tải",
+    "pullRestricted": "Việc cài đặt mô hình trên phiên bản này chỉ dành cho quản trị viên.",
+    "adminOnlyPull": "Chỉ quản trị viên"
   }
 }

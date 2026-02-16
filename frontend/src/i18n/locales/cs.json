@@ -353,7 +353,11 @@
       },
       "persona": "Persona",
       "updatingModel": "Aktualizace {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} z {{total}} modelů"
+      "modelsProgress": "{{current}} z {{total}} modelů",
+      "modelPullAccess": "Přístup k instalaci modelů",
+      "modelPullAccessDescription": "Povolit neadmin uživatelům stahovat a instalovat nové modely.",
+      "modelPullAccessSaved": "Oprávnění k instalaci modelů byla aktualizována",
+      "modelPullAccessSaveFailed": "Nepodařilo se aktualizovat oprávnění k instalaci modelů"
     },
     "systemMessage": {
       "title": "Systémová zpráva",
@@ -691,7 +695,8 @@
       "success": "Model {{name}} úspěšně stažen",
       "cancelled": "Stahování modelu zrušeno",
       "failed": "Nepodařilo se stáhnout model",
-      "enterName": "Zadejte název modelu"
+      "enterName": "Zadejte název modelu",
+      "restricted": "Instalace modelů je v této instanci omezena pouze na administrátory."
     },
     "progress": {
       "starting": "Inicializace...",
@@ -1266,6 +1271,8 @@
     "actions": "Akce",
     "installed": "Nainstalováno",
     "use": "Použít",
-    "pull": "Stáhnout"
+    "pull": "Stáhnout",
+    "pullRestricted": "Instalace modelů je v této instanci omezena pouze na administrátory.",
+    "adminOnlyPull": "Pouze administrátoři"
   }
 }
