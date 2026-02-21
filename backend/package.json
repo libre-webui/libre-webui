@@ -24,8 +24,6 @@
     "better-sqlite3": "^12.5.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
-    "electron-builder": "^26.8.1",
-    "eslint-plugin-react": "7.22.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
@@ -47,9 +45,9 @@
     "@types/node": "^25.0.3",
     "@types/uuid": "^11.0.0",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
-    "eslint": "10.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.51.0",
+    "@typescript-eslint/parser": "^8.34.0",
+    "eslint": "^10.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
