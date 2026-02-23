@@ -95,7 +95,7 @@
     "concurrently": "^9.2.1",
     "electron": "^40.0.0",
     "electron-builder": "^26.5.0",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.1",
     "png-to-ico": "^3.0.1",
     "prettier": "^3.7.4",
     "sharp": "^0.34.5",
