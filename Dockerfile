@@ -18,7 +18,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY .npmrc package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
 
@@ -46,7 +46,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY .npmrc package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
 
@@ -74,7 +74,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files for workspace setup
-COPY package*.json ./
+COPY .npmrc package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
 
@@ -121,7 +121,7 @@ RUN apk add --no-cache \
 WORKDIR /app
 
 # Copy package files for workspace setup
-COPY package*.json ./
+COPY .npmrc package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
 
