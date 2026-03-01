@@ -99,6 +99,21 @@ import {
 } from './types/index.js';
 
 const app = express();
+
+// Trust proxy setting for running behind reverse proxies (Nginx, Caddy, etc.)
+// Set TRUST_PROXY=1 or TRUST_PROXY=loopback or TRUST_PROXY=uniquelocal etc.
+const trustProxy = process.env.TRUST_PROXY;
+if (trustProxy) {
+  const numVal = Number(trustProxy);
+  if (!isNaN(numVal)) {
+    app.set('trust proxy', numVal);
+  } else if (trustProxy.toLowerCase() === 'true') {
+    app.set('trust proxy', true);
+  } else {
+    app.set('trust proxy', trustProxy);
+  }
+}
+
 const isProduction = process.env.NODE_ENV === 'production';
 const port = process.env.PORT || (isProduction ? 8080 : 3001);
 const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
