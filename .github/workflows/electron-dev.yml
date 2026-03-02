@@ -48,7 +48,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: libre-webui-frontend-mac-dev
           path: |
@@ -93,7 +93,7 @@ jobs:
           ELECTRON_BUILD: true
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: libre-webui-frontend-win-dev
           path: |
@@ -137,7 +137,7 @@ jobs:
           ELECTRON_BUILD: true
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: libre-webui-frontend-linux-dev
           path: |
