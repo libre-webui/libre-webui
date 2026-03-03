@@ -105,6 +105,7 @@ class ReleaseManager {
         const result = spawnSync(program, args, {
           encoding: 'utf8',
           stdio: options.silent ? 'pipe' : 'inherit',
+          shell: true,
           ...options
         });
 
