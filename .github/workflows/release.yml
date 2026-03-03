@@ -222,7 +222,7 @@ jobs:
           fi
 
       - name: Download Electron artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: electron-builds
         continue-on-error: true
