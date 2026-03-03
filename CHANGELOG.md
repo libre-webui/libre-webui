@@ -19,25 +19,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
-- add TRUST_PROXY env var for reverse proxy support
+- Added `TRUST_PROXY` environment variable for running behind reverse proxies (Nginx, Caddy, etc.) — supports numeric, boolean, and string values
+
+### 🔧 Improvements
+
+- Bumped `actions/upload-artifact` from v6 to v7 and `actions/download-artifact` from v7 to v8 across all CI workflows
+- Dockerfile now copies `.npmrc` into build stages for consistent dependency resolution
+- Added `legacy-peer-deps=true` to `.npmrc` to resolve peer dependency conflicts during install
+- Release script now works on Windows by enabling shell mode in `spawnSync`
 
 ### 🐛 Bug Fixes
 
-- release script
-- downgrade eslint to v9 for eslint-plugin-react compatibility
-- add missing @eslint/js devDependency
-- resolve high severity vulnerabilities and fix npm ci compatibility
-- resolve 3 high severity vulnerabilities (rollup, minimatch, multer)
-- resolve minimatch ReDoS vulnerability via overrides (GHSA-3ppc-4f35-3m26)
-- resolve security vulnerabilities (npm audit fix)
+- Downgraded ESLint from v10 to v9 to fix `eslint-plugin-react` incompatibility (`getFilename is not a function`)
+- Added missing `@eslint/js` devDependency
+- Resolved high-severity vulnerabilities in rollup, minimatch, and multer via dependency updates and overrides
+- Fixed minimatch ReDoS vulnerability (GHSA-3ppc-4f35-3m26)
 
-### 🔄 Other Changes
+### 📦 Dependencies
 
-- ci(deps): bump actions/download-artifact from 7 to 8
-- ci(deps): bump actions/upload-artifact from 6 to 7
-- deps(deps): bump the all-dependencies group with 3 updates
-- deps(deps): bump the all-dependencies group with 5 updates
-- Revert "fix: resolve security vulnerabilities (npm audit fix)"
+- Bumped multiple frontend and backend dependencies via Dependabot
 
 ## [0.8.3] - 2026-02-16
 
