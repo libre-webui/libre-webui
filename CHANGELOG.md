@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.8.4] - 2026-03-03
+
+### ✨ New Features
+
+- add TRUST_PROXY env var for reverse proxy support
+
+### 🐛 Bug Fixes
+
+- release script
+- downgrade eslint to v9 for eslint-plugin-react compatibility
+- add missing @eslint/js devDependency
+- resolve high severity vulnerabilities and fix npm ci compatibility
+- resolve 3 high severity vulnerabilities (rollup, minimatch, multer)
+- resolve minimatch ReDoS vulnerability via overrides (GHSA-3ppc-4f35-3m26)
+- resolve security vulnerabilities (npm audit fix)
+
+### 🔄 Other Changes
+
+- ci(deps): bump actions/download-artifact from 7 to 8
+- ci(deps): bump actions/upload-artifact from 6 to 7
+- deps(deps): bump the all-dependencies group with 3 updates
+- deps(deps): bump the all-dependencies group with 5 updates
+- Revert "fix: resolve security vulnerabilities (npm audit fix)"
+
 ## [0.8.3] - 2026-02-16
 
 ### What's New
