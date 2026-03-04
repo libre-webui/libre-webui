@@ -551,7 +551,7 @@ wss.on('connection', (ws, req) => {
           };
         } else {
           // Get session with user authentication
-          session = chatService.getSession(sessionId, userId);
+          session = await chatService.getSession(sessionId, userId);
           if (!session) {
             console.log(
               'Backend: Session not found:',
@@ -579,7 +579,7 @@ wss.on('connection', (ws, req) => {
         // Add user message with images if provided (skip for regenerations and private sessions)
         let userMessage;
         if (!regenerate && !isPrivate) {
-          userMessage = chatService.addMessage(
+          userMessage = await chatService.addMessage(
             sessionId,
             {
               role: 'user',
@@ -756,7 +756,7 @@ wss.on('connection', (ws, req) => {
           `[WebSocket] Looking for plugin for model: ${actualModelName}`
         );
         const activePlugin =
-          pluginService.getActivePluginForModel(actualModelName);
+          await pluginService.getActivePluginForModel(actualModelName);
         console.log(
           `[WebSocket] Found plugin:`,
           activePlugin ? activePlugin.id : 'none'
@@ -768,7 +768,8 @@ wss.on('connection', (ws, req) => {
           );
 
           // Load plugin variables early — needed for session mode check
-          const pluginVars = pluginService.getPluginVariables(activePlugin);
+          const pluginVars =
+            await pluginService.getPluginVariables(activePlugin);
 
           // ---------------------------------------------------------------
           // OpenClaw Session Mode — route through WebSocket gateway
@@ -788,7 +789,8 @@ wss.on('connection', (ws, req) => {
                 (pluginVars.endpoint as string) ||
                 activePlugin.endpoint ||
                 'http://127.0.0.1:18789/v1/chat/completions';
-              const apiKey = pluginService.getApiKey(activePlugin) || '';
+              const apiKey =
+                (await pluginService.getApiKey(activePlugin)) || '';
               const ocSessionKey = (pluginVars.session_key as string) || 'main';
 
               if (!openclawSessionService.isConnected) {
@@ -1085,7 +1087,7 @@ wss.on('connection', (ws, req) => {
             try {
               // Get user's preferred generation options
               const userGenerationOptions =
-                preferencesService.getGenerationOptions();
+                await preferencesService.getGenerationOptions();
 
               // Merge user preferences with request options
               const mergedOptions = mergeGenerationOptions(
@@ -1095,7 +1097,7 @@ wss.on('connection', (ws, req) => {
 
               // Get messages for context
               const contextMessages =
-                chatService.getMessagesForContext(sessionId);
+                await chatService.getMessagesForContext(sessionId);
 
               // For regenerations, the user message is already in context; for new messages, we need to add it
               let messagesForPlugin = regenerate
@@ -1487,7 +1489,8 @@ wss.on('connection', (ws, req) => {
         // The actualModelName was already resolved in the earlier code block
 
         // Get user's preferred generation options
-        const userGenerationOptions = preferencesService.getGenerationOptions();
+        const userGenerationOptions =
+          await preferencesService.getGenerationOptions();
 
         // Merge user preferences with request options
         const mergedOptions = mergeGenerationOptions(
@@ -1559,7 +1562,7 @@ wss.on('connection', (ws, req) => {
               })
             );
           },
-          () => {
+          async () => {
             // Save the complete assistant message with the provided ID (skip for private sessions)
             if (assistantContent && assistantMessageId) {
               if (isPrivate) {
@@ -1624,7 +1627,7 @@ wss.on('connection', (ws, req) => {
                   branchingFields,
                 });
 
-                const assistantMessage = chatService.addMessage(
+                const assistantMessage = await chatService.addMessage(
                   sessionId,
                   {
                     role: 'assistant',
