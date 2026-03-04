@@ -53,7 +53,7 @@ const galleryRateLimiter = rateLimit({
  */
 router.get('/models', async (_req, res) => {
   try {
-    const models = pluginService.getAvailableImageGenModels();
+    const models = await pluginService.getAvailableImageGenModels();
     res.json({
       success: true,
       data: models,
@@ -103,7 +103,7 @@ router.get('/config/:pluginId', async (req, res) => {
  */
 router.get('/plugins', async (_req, res) => {
   try {
-    const plugins = pluginService.getPluginsByCapability('image');
+    const plugins = await pluginService.getPluginsByCapability('image');
     res.json({
       success: true,
       data: plugins.map(p => ({

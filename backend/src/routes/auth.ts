@@ -81,7 +81,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
       return;
     }
 
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
 
     res.json({
       success: true,
@@ -166,7 +166,7 @@ router.get(
  */
 router.get('/system-info', async (req, res) => {
   try {
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
     res.json({
       success: true,
       data: systemInfo,
@@ -202,8 +202,8 @@ router.patch(
         return;
       }
 
-      systemSettingsService.setAllowUserModelPull(allowUserModelPull);
-      const systemInfo = authService.getSystemInfo();
+      await systemSettingsService.setAllowUserModelPull(allowUserModelPull);
+      const systemInfo = await authService.getSystemInfo();
 
       res.json({
         success: true,
@@ -225,7 +225,7 @@ router.patch(
  */
 router.get('/encryption-key', generalAuthRateLimiter, async (req, res) => {
   try {
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
 
     // Only allow access during first-time setup (when only one user exists - the newly created admin)
     if (systemInfo.userCount !== 1) {
@@ -284,7 +284,7 @@ router.post('/signup', authRateLimiter, async (req, res) => {
       return;
     }
 
-    const systemInfo = authService.getSystemInfo();
+    const systemInfo = await authService.getSystemInfo();
 
     res.json({
       success: true,

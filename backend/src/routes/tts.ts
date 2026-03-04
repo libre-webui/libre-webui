@@ -39,7 +39,7 @@ const ttsRateLimiter = rateLimit({
  */
 router.get('/models', async (_req, res) => {
   try {
-    const models = pluginService.getAvailableTTSModels();
+    const models = await pluginService.getAvailableTTSModels();
     res.json({
       success: true,
       data: models,
@@ -325,7 +325,7 @@ router.post('/generate-base64', ttsRateLimiter, async (req, res) => {
  */
 router.get('/plugins', async (_req, res) => {
   try {
-    const plugins = pluginService.getPluginsByCapability('tts');
+    const plugins = await pluginService.getPluginsByCapability('tts');
     res.json({
       success: true,
       data: plugins.map(p => ({

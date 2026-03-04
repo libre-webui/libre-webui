@@ -383,7 +383,7 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const success = pluginService.deletePlugin(id);
+      const success = await pluginService.deletePlugin(id);
 
       if (!success) {
         res.status(404).json({
