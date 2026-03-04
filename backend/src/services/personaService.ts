@@ -74,21 +74,17 @@ export class PersonaService {
       const db = getDatabase();
 
       // Retrieve the embedding_model and other advanced features from the database
-      const personaAdvancedData = db
-        .prepare(
-          `
-          SELECT embedding_model, memory_settings, mutation_settings 
-          FROM personas 
-          WHERE id = ? AND user_id = ?
-        `
-        )
-        .get(personaId, userId) as
-        | {
-            embedding_model?: string;
-            memory_settings?: string;
-            mutation_settings?: string;
-          }
-        | undefined;
+      const personaAdvancedData = await db.get<{
+        embedding_model?: string;
+        memory_settings?: string;
+        mutation_settings?: string;
+      }>(
+        `SELECT embedding_model, memory_settings, mutation_settings
+          FROM personas
+          WHERE id = ? AND user_id = ?`,
+        personaId,
+        userId
+      );
 
       if (!personaAdvancedData) {
         return {};
@@ -115,23 +111,19 @@ export class PersonaService {
       }
 
       // Check if persona has memory entries to determine if it has advanced features
-      const memoryCheck = db
-        .prepare(
-          `
-        SELECT COUNT(*) as count FROM persona_memories 
-        WHERE persona_id = ? AND user_id = ?
-      `
-        )
-        .get(personaId, userId) as { count: number } | undefined;
+      const memoryCheck = await db.get<{ count: number }>(
+        `SELECT COUNT(*) as count FROM persona_memories
+        WHERE persona_id = ? AND user_id = ?`,
+        personaId,
+        userId
+      );
 
-      const stateCheck = db
-        .prepare(
-          `
-        SELECT * FROM persona_states 
-        WHERE persona_id = ? AND user_id = ?
-      `
-        )
-        .get(personaId, userId) as Record<string, unknown> | undefined;
+      const stateCheck = await db.get<Record<string, unknown>>(
+        `SELECT * FROM persona_states
+        WHERE persona_id = ? AND user_id = ?`,
+        personaId,
+        userId
+      );
 
       // If persona has memories, state, or stored advanced settings, return advanced features
       if (

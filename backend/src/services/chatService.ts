@@ -35,9 +35,9 @@ class ChatService {
     this.loadSessions();
   }
 
-  private loadSessions() {
+  private async loadSessions() {
     try {
-      const sessionsArray = storageService.getAllSessions();
+      const sessionsArray = await storageService.getAllSessions();
       this.sessions = new Map(
         sessionsArray.map(session => [session.id, session])
       );

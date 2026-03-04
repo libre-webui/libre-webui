@@ -208,7 +208,7 @@ router.post(
           }
 
           if (imageData) {
-            const saved = galleryService.saveImage(userId, {
+            const saved = await galleryService.saveImage(userId, {
               prompt,
               model,
               imageData,
@@ -267,7 +267,7 @@ router.get(
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
 
-      const result = galleryService.getImages(userId, { limit, offset });
+      const result = await galleryService.getImages(userId, { limit, offset });
 
       res.json({
         success: true,
@@ -296,7 +296,7 @@ router.get(
       const userId = req.user?.userId || 'default';
       const imageId = req.params.imageId as string;
 
-      const image = galleryService.getImage(imageId, userId);
+      const image = await galleryService.getImage(imageId, userId);
 
       if (!image) {
         res.status(404).json({
@@ -333,7 +333,7 @@ router.delete(
       const userId = req.user?.userId || 'default';
       const imageId = req.params.imageId as string;
 
-      const deleted = galleryService.deleteImage(imageId, userId);
+      const deleted = await galleryService.deleteImage(imageId, userId);
 
       if (!deleted) {
         res.status(404).json({

@@ -16,6 +16,7 @@
  */
 
 import { getDatabaseSafe } from '../db.js';
+import type { DatabaseAdapter } from '../database/types.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -57,31 +58,22 @@ export interface UserPublic {
 }
 
 export class UserModel {
-  private db = getDatabaseSafe();
-
-  /**
-   * Ensure database is available
-   */
-  private ensureDatabase() {
-    if (!this.db) {
-      throw new Error('Database not available');
-    }
-    return this.db;
+  private getDb(): DatabaseAdapter | null {
+    return getDatabaseSafe();
   }
 
-  /**
-   * Get all users (excluding the default system user)
-   */
-  getAllUsers(): UserPublic[] {
-    const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      SELECT id, username, email, role, avatar, created_at, updated_at
-      FROM users
-      WHERE id != 'default'
-      ORDER BY created_at DESC
-    `);
+  private ensureDatabase(): DatabaseAdapter {
+    const db = this.getDb();
+    if (!db) throw new Error('Database not available');
+    return db;
+  }
 
-    const users = stmt.all() as Omit<User, 'password_hash'>[];
+  async getAllUsers(): Promise<UserPublic[]> {
+    const db = this.ensureDatabase();
+    const users = await db.all<Omit<User, 'password_hash'>>(
+      `SELECT id, username, email, role, avatar, created_at, updated_at
+       FROM users WHERE id != 'default' ORDER BY created_at DESC`
+    );
     return users.map(user => ({
       id: user.id,
       username: user.username,
@@ -93,20 +85,14 @@ export class UserModel {
     }));
   }
 
-  /**
-   * Get user by ID
-   */
-  getUserById(id: string): UserPublic | null {
+  async getUserById(id: string): Promise<UserPublic | null> {
     const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      SELECT id, username, email, role, avatar, created_at, updated_at
-      FROM users
-      WHERE id = ?
-    `);
-
-    const user = stmt.get(id) as Omit<User, 'password_hash'> | undefined;
+    const user = await db.get<Omit<User, 'password_hash'>>(
+      `SELECT id, username, email, role, avatar, created_at, updated_at
+       FROM users WHERE id = ?`,
+      id
+    );
     if (!user) return null;
-
     return {
       id: user.id,
       username: user.username,
@@ -118,38 +104,28 @@ export class UserModel {
     };
   }
 
-  /**
-   * Get user by username
-   */
-  getUserByUsername(username: string): User | null {
+  async getUserByUsername(username: string): Promise<User | null> {
     const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      SELECT *
-      FROM users
-      WHERE username = ?
-    `);
-
-    return stmt.get(username) as User | null;
+    return (
+      (await db.get<User>(
+        'SELECT * FROM users WHERE username = ?',
+        username
+      )) ?? null
+    );
   }
 
-  /**
-   * Create a new user
-   */
   async createUser(userData: UserCreateData): Promise<UserPublic> {
     const id = uuidv4();
     const now = Date.now();
     const passwordHash = await bcrypt.hash(userData.password, 12);
-
     const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      INSERT INTO users (id, username, email, password_hash, role, avatar, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
 
-    stmt.run(
+    await db.run(
+      `INSERT INTO users (id, username, email, password_hash, role, avatar, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       id,
       userData.username,
-      userData.email || null, // Store NULL instead of empty string
+      userData.email || null,
       passwordHash,
       userData.role,
       userData.avatar || null,
@@ -168,14 +144,11 @@ export class UserModel {
     };
   }
 
-  /**
-   * Update a user
-   */
   async updateUser(
     id: string,
     userData: UserUpdateData
   ): Promise<UserPublic | null> {
-    const existingUser = this.getUserById(id);
+    const existingUser = await this.getUserById(id);
     if (!existingUser) return null;
 
     const now = Date.now();
@@ -186,106 +159,71 @@ export class UserModel {
       updates.push('username = ?');
       values.push(userData.username);
     }
-
     if (userData.email !== undefined) {
       updates.push('email = ?');
       values.push(userData.email);
     }
-
     if (userData.password !== undefined) {
-      const passwordHash = await bcrypt.hash(userData.password, 12);
       updates.push('password_hash = ?');
-      values.push(passwordHash);
+      values.push(await bcrypt.hash(userData.password, 12));
     }
-
     if (userData.role !== undefined) {
       updates.push('role = ?');
       values.push(userData.role);
     }
-
     if (userData.avatar !== undefined) {
       updates.push('avatar = ?');
       values.push(userData.avatar);
     }
-
-    if (updates.length === 0) {
-      return existingUser;
-    }
+    if (updates.length === 0) return existingUser;
 
     updates.push('updated_at = ?');
     values.push(now);
     values.push(id);
 
     const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      UPDATE users
-      SET ${updates.join(', ')}
-      WHERE id = ?
-    `);
-
-    stmt.run(...values);
-
+    await db.run(
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      ...values
+    );
     return this.getUserById(id);
   }
 
-  /**
-   * Delete a user
-   */
-  deleteUser(id: string): boolean {
+  async deleteUser(id: string): Promise<boolean> {
     const db = this.ensureDatabase();
-    const stmt = db.prepare('DELETE FROM users WHERE id = ?');
-    const result = stmt.run(id);
+    const result = await db.run('DELETE FROM users WHERE id = ?', id);
     return result.changes > 0;
   }
 
-  /**
-   * Verify user password
-   */
   async verifyPassword(
     username: string,
     password: string
   ): Promise<User | null> {
-    const user = this.getUserByUsername(username);
+    const user = await this.getUserByUsername(username);
     if (!user) return null;
-
-    const isValid = await bcrypt.compare(password, user.password_hash);
-    return isValid ? user : null;
+    return (await bcrypt.compare(password, user.password_hash)) ? user : null;
   }
 
-  /**
-   * Check if username exists
-   */
-  usernameExists(username: string): boolean {
+  async usernameExists(username: string): Promise<boolean> {
     const db = this.ensureDatabase();
-    const stmt = db.prepare('SELECT 1 FROM users WHERE username = ?');
-    return !!stmt.get(username);
+    return !!(await db.get('SELECT 1 FROM users WHERE username = ?', username));
   }
 
-  /**
-   * Check if email exists
-   */
-  emailExists(email: string): boolean {
+  async emailExists(email: string): Promise<boolean> {
     const db = this.ensureDatabase();
-    const stmt = db.prepare('SELECT 1 FROM users WHERE email = ?');
-    return !!stmt.get(email);
+    return !!(await db.get('SELECT 1 FROM users WHERE email = ?', email));
   }
 
-  /**
-   * Get user count (excluding the default system user)
-   */
-  getUserCount(): number {
+  async getUserCount(): Promise<number> {
     const db = this.ensureDatabase();
-    const stmt = db.prepare(
-      'SELECT COUNT(*) as count FROM users WHERE id != ?'
+    const r = await db.get<{ count: number }>(
+      'SELECT COUNT(*) as count FROM users WHERE id != ?',
+      'default'
     );
-    const result = stmt.get('default') as { count: number };
-    return result.count;
+    return r?.count ?? 0;
   }
 
-  /**
-   * Get real user count (excluding default system user) - alias for getUserCount
-   */
-  getRealUserCount(): number {
+  async getRealUserCount(): Promise<number> {
     return this.getUserCount();
   }
 }

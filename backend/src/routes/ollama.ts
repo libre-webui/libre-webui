@@ -38,11 +38,12 @@ const getRequestToken = (req: Request): string | null => {
   return null;
 };
 
-const checkModelPullPermission = (
+const checkModelPullPermission = async (
   req: AuthenticatedRequest
-): { allowed: true } | { allowed: false; status: number; error: string } => {
-  // When enabled, preserve current behavior.
-  if (systemSettingsService.getAllowUserModelPull()) {
+): Promise<
+  { allowed: true } | { allowed: false; status: number; error: string }
+> => {
+  if (await systemSettingsService.getAllowUserModelPull()) {
     return { allowed: true };
   }
 
@@ -77,12 +78,12 @@ const checkModelPullPermission = (
   return { allowed: true };
 };
 
-const enforceModelPullPermission = (
+const enforceModelPullPermission = async (
   req: AuthenticatedRequest,
   res: Response<ApiResponse>,
   next: NextFunction
-): void => {
-  const permission = checkModelPullPermission(req);
+): Promise<void> => {
+  const permission = await checkModelPullPermission(req);
   if (!permission.allowed) {
     res.status(permission.status).json({
       success: false,
@@ -239,7 +240,9 @@ router.get(
   '/pull/stream',
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const permission = checkModelPullPermission(req as AuthenticatedRequest);
+      const permission = await checkModelPullPermission(
+        req as AuthenticatedRequest
+      );
       if (!permission.allowed) {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');

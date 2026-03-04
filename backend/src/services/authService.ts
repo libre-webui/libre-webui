@@ -118,14 +118,14 @@ export class AuthService {
   /**
    * Get system information
    */
-  getSystemInfo(): SystemInfo {
-    const userCount = userModel.getUserCount();
+  async getSystemInfo(): Promise<SystemInfo> {
+    const userCount = await userModel.getUserCount();
 
     return {
       requiresAuth: true, // For now, always require auth
       hasUsers: userCount > 0,
       userCount,
-      allowUserModelPull: systemSettingsService.getAllowUserModelPull(),
+      allowUserModelPull: await systemSettingsService.getAllowUserModelPull(),
       version: packageVersion,
     };
   }
@@ -137,14 +137,14 @@ export class AuthService {
     const payload = this.verifyToken(token);
     if (!payload) return null;
 
-    return userModel.getUserById(payload.userId);
+    return await userModel.getUserById(payload.userId);
   }
 
   /**
    * Get user by username
    */
   async getUserByUsername(username: string): Promise<UserPublic | null> {
-    const user = userModel.getUserByUsername(username);
+    const user = await userModel.getUserByUsername(username);
     if (!user) return null;
 
     return {
@@ -167,7 +167,7 @@ export class AuthService {
     email?: string
   ): Promise<{ user: UserPublic; token: string } | null> {
     try {
-      const userCount = userModel.getUserCount();
+      const userCount = await userModel.getUserCount();
 
       // Only the very first real user (excluding the default system user) becomes admin
       const isFirstRealUser = userCount === 0;

@@ -48,7 +48,7 @@ router.get(
   requireAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const users = userModel.getAllUsers();
+      const users = await userModel.getAllUsers();
       res.json({
         success: true,
         data: users,
@@ -94,7 +94,7 @@ router.post(
       }
 
       // Check if username exists
-      if (userModel.usernameExists(username)) {
+      if (await userModel.usernameExists(username)) {
         res.status(400).json({
           success: false,
           message: 'Username already exists',
@@ -103,7 +103,7 @@ router.post(
       }
 
       // Check if email exists
-      if (userModel.emailExists(email)) {
+      if (await userModel.emailExists(email)) {
         res.status(400).json({
           success: false,
           message: 'Email already exists',
@@ -202,8 +202,8 @@ router.patch(
       }
 
       // Check if username exists (and is not the current user)
-      if (username && userModel.usernameExists(username)) {
-        const existingUser = userModel.getUserById(id);
+      if (username && (await userModel.usernameExists(username))) {
+        const existingUser = await userModel.getUserById(id);
         if (!existingUser || existingUser.username !== username) {
           res.status(400).json({
             success: false,
@@ -214,8 +214,8 @@ router.patch(
       }
 
       // Check if email exists (and is not the current user)
-      if (email && userModel.emailExists(email)) {
-        const existingUser = userModel.getUserById(id);
+      if (email && (await userModel.emailExists(email))) {
+        const existingUser = await userModel.getUserById(id);
         if (!existingUser || existingUser.email !== email) {
           res.status(400).json({
             success: false,
@@ -276,7 +276,7 @@ router.delete(
         return;
       }
 
-      const deleted = userModel.deleteUser(id);
+      const deleted = await userModel.deleteUser(id);
       if (!deleted) {
         res.status(404).json({
           success: false,
