@@ -524,21 +524,32 @@ Rules:
     console.log('🔀 Creating pull request from dev → main...');
     let prUrl = '';
     try {
-      prUrl = execSync(
-        `gh pr create --base main --head dev --title "chore(release): v${nextVersion}" --body "${prBody.replace(/"/g, '\\"')}"`,
+      const prResult = spawnSync(
+        'gh',
+        ['pr', 'create', '--base', 'main', '--head', 'dev', '--title', `chore(release): v${nextVersion}`, '--body', prBody],
         { encoding: 'utf8', stdio: 'pipe' }
-      ).trim();
+      );
+      if (prResult.status !== 0) {
+        const err = new Error(prResult.stderr || `Exit code ${prResult.status}`);
+        err.message = prResult.stderr || '';
+        throw err;
+      }
+      prUrl = (prResult.stdout || '').trim();
       console.log(`  ✅ Pull request created: ${prUrl}`);
     } catch (error) {
       // PR might already exist
       if (error.message && error.message.includes('already exists')) {
         console.log('  ℹ️  A PR from dev → main already exists. Updating it...');
         try {
-          prUrl = execSync('gh pr view dev --json url -q .url', {
-            encoding: 'utf8',
-            stdio: 'pipe',
-          }).trim();
-          console.log(`  ✅ Existing PR: ${prUrl}`);
+          const viewResult = spawnSync(
+            'gh',
+            ['pr', 'view', 'dev', '--json', 'url', '-q', '.url'],
+            { encoding: 'utf8', stdio: 'pipe' }
+          );
+          if (viewResult.status === 0) {
+            prUrl = (viewResult.stdout || '').trim();
+            console.log(`  ✅ Existing PR: ${prUrl}`);
+          }
         } catch {
           console.error('  ❌ Could not find existing PR');
         }
@@ -552,13 +563,14 @@ Rules:
     // Enable auto-merge
     if (prUrl) {
       console.log('🤖 Enabling auto-merge...');
-      try {
-        execSync(`gh pr merge dev --auto --merge`, {
-          encoding: 'utf8',
-          stdio: 'pipe',
-        });
+      const mergeResult = spawnSync(
+        'gh',
+        ['pr', 'merge', 'dev', '--auto', '--merge'],
+        { encoding: 'utf8', stdio: 'pipe' }
+      );
+      if (mergeResult.status === 0) {
         console.log('  ✅ Auto-merge enabled (will merge when all checks pass)');
-      } catch (error) {
+      } else {
         console.log('  ⚠️  Could not enable auto-merge (may need to be enabled in repo settings)');
         console.log('  You can merge manually after checks pass.');
       }

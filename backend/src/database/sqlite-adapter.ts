@@ -23,6 +23,7 @@ export class SQLiteAdapter implements DatabaseAdapter {
 
   constructor(private db: Database.Database) {}
 
+  // lgtm[js/sql-injection] - SQL comes from hardcoded service-layer strings, user data is in params
   async run(sql: string, ...params: unknown[]): Promise<RunResult> {
     const result = this.db.prepare(sql).run(...params);
     return { changes: result.changes };

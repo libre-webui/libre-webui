@@ -34,6 +34,7 @@ export class PgAdapter implements DatabaseAdapter {
 
   constructor(private pool: PgPool) {}
 
+  // lgtm[js/sql-injection] - SQL comes from hardcoded service-layer strings, user data is in params
   async run(sql: string, ...params: unknown[]): Promise<RunResult> {
     const result = await this.pool.query(convertPlaceholders(sql), params);
     return { changes: result.rowCount ?? 0 };
