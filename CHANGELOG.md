@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.9.0] - 2026-03-05
+
+### What's New
+
+This release introduces PostgreSQL database support with automatic migration from SQLite, bringing enhanced scalability and AES-256 encryption for sensitive data. The update also addresses critical security vulnerabilities and improves system reliability through better async operation handling.
+
+### ✨ New Features
+
+- **PostgreSQL database support** with automatic migration from existing SQLite databases
+- **AES-256 encryption** for sensitive data stored in the database
+- **Automated release workflow** that creates pull requests from dev to main with CI validation
+
+### 🔧 Improvements
+
+- Enhanced database operations with standardized upsert queries replacing SQLite-specific syntax
+- Wrapped database migrations in transactions for improved reliability
+- Updated release script with better CI integration and gating mechanisms
+
+### 🐛 Bug Fixes
+
+- **Security**: Updated multer to version 2.1.1 to address CVE-2026-3520
+- Fixed missing `await` keywords in async service calls across route handlers and core services
+- Resolved async operation handling in chat and index services
+
 ## [0.8.4] - 2026-03-03
 
 ### ✨ New Features
