@@ -48,7 +48,6 @@ function findSQLiteDatabase(): string | null {
 
   if (!fs.existsSync(dbPath)) return null;
 
-  // Check file isn't empty
   const stats = fs.statSync(dbPath);
   if (stats.size < 1024) return null;
 
@@ -66,13 +65,13 @@ async function alreadyMigrated(pg: DatabaseAdapter): Promise<boolean> {
     );
     return !!row;
   } catch {
-    // _migrations table might not exist yet
     return false;
   }
 }
 
 /**
  * Auto-migrate data from an existing SQLite database into PostgreSQL.
+ * Runs inside a transaction — either all data migrates or none does.
  * Only runs once — marks completion in the _migrations table.
  */
 export async function migrateFromSQLite(pg: DatabaseAdapter): Promise<void> {
@@ -90,60 +89,67 @@ export async function migrateFromSQLite(pg: DatabaseAdapter): Promise<void> {
   });
 
   try {
-    let totalRows = 0;
+    await pg.transaction(async tx => {
+      let totalRows = 0;
 
-    for (const table of TABLES_IN_ORDER) {
-      // Check table exists in SQLite
-      const tableExists = sqlite
-        .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name=?`)
-        .get(table) as { name: string } | undefined;
-      if (!tableExists) continue;
+      for (const table of TABLES_IN_ORDER) {
+        const tableExists = sqlite
+          .prepare(
+            `SELECT name FROM sqlite_master WHERE type='table' AND name=?`
+          )
+          .get(table) as { name: string } | undefined;
+        if (!tableExists) continue;
 
-      const rows = sqlite.prepare(`SELECT * FROM ${table}`).all() as Record<
-        string,
-        unknown
-      >[];
-      if (rows.length === 0) continue;
+        const rows = sqlite.prepare(`SELECT * FROM ${table}`).all() as Record<
+          string,
+          unknown
+        >[];
+        if (rows.length === 0) continue;
 
-      // Check if PG table already has data (skip if so)
-      const pgCount = await pg.get<{ count: string }>(
-        `SELECT COUNT(*) as count FROM ${table}`
-      );
-      if (pgCount && Number(pgCount.count) > 0) {
-        console.log(
-          `  Skipping ${table}: already has ${pgCount.count} rows in PostgreSQL`
+        const pgCount = await tx.get<{ count: string }>(
+          `SELECT COUNT(*) as count FROM ${table}`
         );
-        continue;
+        if (pgCount && Number(pgCount.count) > 0) {
+          console.log(
+            `  Skipping ${table}: already has ${pgCount.count} rows in PostgreSQL`
+          );
+          continue;
+        }
+
+        const columns = Object.keys(rows[0]);
+        const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
+        const insertSQL = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`;
+
+        for (const row of rows) {
+          const values = columns.map(col => {
+            const val = row[col];
+            if (val instanceof Uint8Array || Buffer.isBuffer(val)) {
+              return Buffer.from(val);
+            }
+            return val;
+          });
+          await tx.run(insertSQL, ...values);
+        }
+
+        totalRows += rows.length;
+        console.log(`  Migrated ${table}: ${rows.length} rows`);
       }
 
-      const columns = Object.keys(rows[0]);
-      const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
-      const insertSQL = `INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`;
+      // Mark migration as done inside the same transaction
+      await tx.exec(
+        `INSERT INTO _migrations (name) VALUES ('${MIGRATION_MARKER}')`
+      );
 
-      for (const row of rows) {
-        const values = columns.map(col => {
-          const val = row[col];
-          // Convert SQLite Buffer/Uint8Array to Node Buffer for BYTEA columns
-          if (val instanceof Uint8Array || Buffer.isBuffer(val)) {
-            return Buffer.from(val);
-          }
-          return val;
-        });
-        await pg.run(insertSQL, ...values);
-      }
-
-      totalRows += rows.length;
-      console.log(`  Migrated ${table}: ${rows.length} rows`);
-    }
-
-    // Mark migration as done
-    await pg.exec(
-      `INSERT INTO _migrations (name) VALUES ('${MIGRATION_MARKER}')`
+      console.log(
+        `SQLite to PostgreSQL migration complete: ${totalRows} total rows migrated`
+      );
+    });
+  } catch (error) {
+    console.error(
+      'SQLite to PostgreSQL migration failed — no data was written. Error:',
+      error
     );
-
-    console.log(
-      `SQLite to PostgreSQL migration complete: ${totalRows} total rows migrated`
-    );
+    throw error;
   } finally {
     sqlite.close();
   }
