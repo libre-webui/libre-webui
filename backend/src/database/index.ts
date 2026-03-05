@@ -433,6 +433,10 @@ async function createPostgresAdapter(
 
   await runPostgresMigrations(adapter);
 
+  // Auto-migrate from SQLite if an existing database is found
+  const { migrateFromSQLite } = await import('./sqlite-to-pg.js');
+  await migrateFromSQLite(adapter);
+
   console.log('PostgreSQL database connected');
   return adapter;
 }
