@@ -45,9 +45,35 @@ export async function initializeDatabase(): Promise<void> {
     console.log('✅ Database initialized with application-level encryption');
   } catch (error) {
     initFailed = true;
-    console.error('Error initializing database:', error);
-    console.log('Storage mode: JSON');
-    throw error;
+    console.error('\n❌ DATABASE INITIALIZATION FAILED\n');
+    console.error('Error:', (error as Error).message);
+
+    // Check for common better-sqlite3 issues
+    const errMsg = String(error);
+    if (
+      errMsg.includes('better-sqlite3') ||
+      errMsg.includes('MODULE_NOT_FOUND') ||
+      errMsg.includes('was compiled against a different Node.js version')
+    ) {
+      console.error(
+        '\n🔧 This is likely a native module issue with better-sqlite3.'
+      );
+      console.error('   Fix: Run "npm rebuild better-sqlite3" and restart.\n');
+    } else if (errMsg.includes('EACCES') || errMsg.includes('EPERM')) {
+      console.error('\n🔧 Permission error accessing the database file.');
+      console.error('   Fix: Check file permissions on the data/ directory.\n');
+    } else {
+      console.error('\n🔧 Check your database configuration.');
+      console.error(
+        '   For SQLite: ensure better-sqlite3 is installed correctly.'
+      );
+      console.error('   For PostgreSQL: set DATABASE_URL in your .env file.\n');
+    }
+
+    console.error(
+      '⚠️  The application cannot start without a working database.\n'
+    );
+    process.exit(1);
   }
 }
 
