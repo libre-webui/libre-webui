@@ -1700,55 +1700,68 @@ wss.on('connection', (ws, req) => {
   );
 });
 
-// Start server
-server.listen({ port, host: '0.0.0.0' }, () => {
-  const url = `http://localhost:${port}`;
-  console.log(`\n🚀 Libre WebUI v${pkg.version}`);
-  console.log(`   ${url}\n`);
+// Initialize database before starting server
+import { initializeDatabase } from './db.js';
 
-  // Open browser in production mode
-  if (process.env.SERVE_FRONTEND === 'true') {
-    import('child_process').then(({ exec }) => {
-      const cmd =
-        process.platform === 'darwin'
-          ? 'open'
-          : process.platform === 'win32'
-            ? 'start'
-            : 'xdg-open';
-      exec(`${cmd} ${url}`);
-    });
+(async () => {
+  try {
+    await initializeDatabase();
+  } catch (error) {
+    // initializeDatabase() already logs the error and exits
+    // This catch is just a safety net
+    process.exit(1);
   }
 
-  // Check OAuth providers configuration on startup
-  const githubOAuth = new GitHubOAuthService();
-  const hfOAuth = new HuggingFaceOAuthService();
+  // Start server
+  server.listen({ port, host: '0.0.0.0' }, () => {
+    const url = `http://localhost:${port}`;
+    console.log(`\n🚀 Libre WebUI v${pkg.version}`);
+    console.log(`   ${url}\n`);
 
-  const githubConfigured = githubOAuth.isConfigured();
-  const hfConfigured = hfOAuth.isConfigured();
-
-  if (githubConfigured || hfConfigured) {
-    console.log('🔐 SSO Configuration:');
-    if (githubConfigured) {
-      console.log('  ✅ GitHub OAuth configured and ready');
+    // Open browser in production mode
+    if (process.env.SERVE_FRONTEND === 'true') {
+      import('child_process').then(({ exec }) => {
+        const cmd =
+          process.platform === 'darwin'
+            ? 'open'
+            : process.platform === 'win32'
+              ? 'start'
+              : 'xdg-open';
+        exec(`${cmd} ${url}`);
+      });
     }
-    if (hfConfigured) {
-      console.log('  ✅ Hugging Face OAuth configured and ready');
-    }
-  } else {
-    console.log('ℹ️  No SSO providers configured (optional)');
-  }
 
-  // Check Ollama connection on startup
-  ollamaService.isHealthy().then(isHealthy => {
-    if (isHealthy) {
-      console.log('✅ Ollama service is connected and ready');
+    // Check OAuth providers configuration on startup
+    const githubOAuth = new GitHubOAuthService();
+    const hfOAuth = new HuggingFaceOAuthService();
+
+    const githubConfigured = githubOAuth.isConfigured();
+    const hfConfigured = hfOAuth.isConfigured();
+
+    if (githubConfigured || hfConfigured) {
+      console.log('🔐 SSO Configuration:');
+      if (githubConfigured) {
+        console.log('  ✅ GitHub OAuth configured and ready');
+      }
+      if (hfConfigured) {
+        console.log('  ✅ Hugging Face OAuth configured and ready');
+      }
     } else {
-      console.log(
-        "⚠️  Ollama service is not available - make sure it's running on http://localhost:11434"
-      );
+      console.log('ℹ️  No SSO providers configured (optional)');
     }
+
+    // Check Ollama connection on startup
+    ollamaService.isHealthy().then(isHealthy => {
+      if (isHealthy) {
+        console.log('✅ Ollama service is connected and ready');
+      } else {
+        console.log(
+          "⚠️  Ollama service is not available - make sure it's running on http://localhost:11434"
+        );
+      }
+    });
   });
-});
+})();
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
