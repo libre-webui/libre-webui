@@ -155,8 +155,14 @@ export class MutationEngineService {
   async savePersonaState(state: PersonaState): Promise<void> {
     const db = this.ensureDatabase();
     await db.run(
-      `INSERT OR REPLACE INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
-      VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT (persona_id) DO UPDATE SET
+        user_id = EXCLUDED.user_id,
+        runtime_state = EXCLUDED.runtime_state,
+        mutation_log = EXCLUDED.mutation_log,
+        last_updated = EXCLUDED.last_updated,
+        version = EXCLUDED.version`,
       state.persona_id,
       state.user_id,
       JSON.stringify(state.runtime_state),
