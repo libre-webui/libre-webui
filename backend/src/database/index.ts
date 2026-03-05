@@ -20,7 +20,7 @@ import fs from 'fs';
 import type pg from 'pg';
 import { DatabaseAdapter } from './types.js';
 
-export { DatabaseAdapter, RunResult } from './types.js';
+export type { DatabaseAdapter, RunResult } from './types.js';
 
 /**
  * Create and return a fully-initialised DatabaseAdapter.
