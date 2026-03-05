@@ -5,11 +5,6 @@ const fs = require('fs');
 const path = require('path');
 const semver = require('semver');
 
-/**
- * Release script for Libre WebUI
- * Uses Claude Sonnet to generate intelligent release summaries
- */
-
 class ReleaseManager {
   constructor() {
     this.packageJsonPaths = [
@@ -21,9 +16,6 @@ class ReleaseManager {
     this.backendEnvPath = path.join(__dirname, '..', 'backend', '.env');
   }
 
-  /**
-   * Load Anthropic API key from backend .env
-   */
   loadAnthropicApiKey() {
     try {
       if (fs.existsSync(this.backendEnvPath)) {
@@ -39,16 +31,11 @@ class ReleaseManager {
     return null;
   }
 
-  /**
-   * Execute shell command with validation
-   */
   exec(command, options = {}) {
-    // Validate command is a string and not empty
     if (typeof command !== 'string' || !command.trim()) {
       throw new Error('Invalid command: must be a non-empty string');
     }
 
-    // For specific safe commands that need shell features, use execSync with validation
     const shellCommands = [
       'git diff --exit-code',
       'git diff --cached --exit-code',
@@ -58,19 +45,27 @@ class ReleaseManager {
       'npm run build',
       'git add .',
       'git commit',
-      'git tag'
+      'git tag',
+      'git push',
+      'git rev-parse',
+      'git branch',
+      'gh pr create',
+      'gh pr merge',
     ];
 
     const needsShell = shellCommands.some(cmd => command.includes(cmd));
 
     if (needsShell) {
-      // Validate command starts with known safe patterns
       const safePatterns = [
         /^git\s+/,
         /^npm\s+run\s+/,
         /^git\s+log\s+[\w\-\.]+\.\.HEAD\s+--oneline$/,
         /^git\s+commit\s+-m\s+"/,
-        /^git\s+tag\s+-a\s+v[\d\.]+\s+-m\s+"/
+        /^git\s+tag\s+-a\s+v[\d\.]+\s+-m\s+"/,
+        /^git\s+push\s+/,
+        /^git\s+rev-parse\s+/,
+        /^git\s+branch\s+/,
+        /^gh\s+pr\s+/,
       ];
 
       const isSafe = safePatterns.some(pattern => pattern.test(command));
@@ -79,24 +74,24 @@ class ReleaseManager {
       }
 
       try {
-        const result = execSync(command, { 
-          encoding: 'utf8', 
+        const result = execSync(command, {
+          encoding: 'utf8',
           stdio: options.silent ? 'pipe' : 'inherit',
-          ...options 
+          ...options,
         });
         return result ? result.trim() : '';
       } catch (error) {
+        if (options.allowFailure) return '';
         console.error(`Error executing shell command: ${command}`);
         console.error(error.message);
-        throw error; // Re-throw to allow caller to handle
+        throw error;
       }
     } else {
-      // Use spawn for better security
       const parts = command.trim().split(/\s+/);
       const program = parts[0];
       const args = parts.slice(1);
 
-      const allowedPrograms = ['git', 'npm'];
+      const allowedPrograms = ['git', 'npm', 'gh'];
       if (!allowedPrograms.includes(program)) {
         throw new Error(`Program not allowed: ${program}`);
       }
@@ -106,38 +101,31 @@ class ReleaseManager {
           encoding: 'utf8',
           stdio: options.silent ? 'pipe' : 'inherit',
           shell: true,
-          ...options
+          ...options,
         });
 
-        if (result.error) {
-          throw result.error;
-        }
-
+        if (result.error) throw result.error;
         if (result.status !== 0) {
-          const errorMessage = result.stderr ? result.stderr.trim() : `Command failed with exit code ${result.status}`;
+          const errorMessage = result.stderr
+            ? result.stderr.trim()
+            : `Command failed with exit code ${result.status}`;
           throw new Error(errorMessage);
         }
-
         return result.stdout ? result.stdout.trim() : '';
       } catch (error) {
+        if (options.allowFailure) return '';
         console.error(`Error executing command: ${command}`);
         console.error(error.message);
-        throw error; // Re-throw to allow caller to handle
+        throw error;
       }
     }
   }
 
-  /**
-   * Get current version from package.json
-   */
   getCurrentVersion() {
     const packageJson = JSON.parse(fs.readFileSync(this.packageJsonPaths[0], 'utf8'));
     return packageJson.version;
   }
 
-  /**
-   * Update version in all package.json files
-   */
   updatePackageVersion(newVersion) {
     this.packageJsonPaths.forEach(packageJsonPath => {
       if (fs.existsSync(packageJsonPath)) {
@@ -149,9 +137,6 @@ class ReleaseManager {
     });
   }
 
-  /**
-   * Get commits since last tag
-   */
   getCommitsSinceLastTag() {
     try {
       const lastTag = this.exec('git describe --tags --abbrev=0', { silent: true });
@@ -159,24 +144,23 @@ class ReleaseManager {
         .split('\n')
         .filter(line => line.trim())
         .filter(line => {
-          return !line.includes('chore(release):') &&
-                 !line.includes('Merge branch') &&
-                 !line.includes('chore: run fmt') &&
-                 !line.includes('Update README.md') &&
-                 !line.includes('docs: add unreleased section');
+          return (
+            !line.includes('chore(release):') &&
+            !line.includes('Merge branch') &&
+            !line.includes('chore: run fmt') &&
+            !line.includes('Update README.md') &&
+            !line.includes('docs: add unreleased section')
+          );
         });
       return { commits, lastTag };
     } catch {
       return {
         commits: this.exec('git log --oneline -50', { silent: true }).split('\n').filter(line => line.trim()),
-        lastTag: null
+        lastTag: null,
       };
     }
   }
 
-  /**
-   * Get code diff stats since last tag
-   */
   getCodeChanges(lastTag) {
     try {
       const range = lastTag ? `${lastTag}..HEAD` : 'HEAD~10..HEAD';
@@ -188,9 +172,6 @@ class ReleaseManager {
     }
   }
 
-  /**
-   * Parse conventional commits
-   */
   parseCommits(commits) {
     const features = [];
     const fixes = [];
@@ -200,12 +181,11 @@ class ReleaseManager {
 
     commits.forEach(commit => {
       const message = commit.replace(/^[a-f0-9]+\s+/, '');
-      
-      // Skip certain types of commits that shouldn't be in changelog
+
       if (message.match(/^(chore\(release\)|Merge pull request|Merge branch)/)) {
         return;
       }
-      
+
       if (message.match(/^feat(\(.+\))?:/)) {
         features.push(message.replace(/^feat(\(.+\))?:\s*/, ''));
       } else if (message.match(/^fix(\(.+\))?:/)) {
@@ -215,13 +195,11 @@ class ReleaseManager {
       } else if (message.match(/^docs(\(.+\))?:/)) {
         docs.push(message.replace(/^docs(\(.+\))?:\s*/, ''));
       } else if (message.match(/^chore(\(.+\))?:/)) {
-        // Only include meaningful chore commits
         const cleanMessage = message.replace(/^chore(\(.+\))?:\s*/, '');
         if (!cleanMessage.match(/^(run fmt|bump|update dependencies|release)/)) {
           improvements.push(cleanMessage);
         }
       } else {
-        // For non-conventional commits, try to categorize by keywords
         if (message.match(/^(add|implement|introduce)/i)) {
           features.push(message);
         } else if (message.match(/^(fix|resolve|patch)/i)) {
@@ -237,18 +215,13 @@ class ReleaseManager {
     return { features, fixes, improvements, docs, other };
   }
 
-  /**
-   * Generate changelog content for new version
-   */
   generateChangelogSection(version, parsedCommits, aiSummary = null) {
     const date = new Date().toISOString().split('T')[0];
 
-    // If we have an AI summary, use it directly
     if (aiSummary) {
       return `## [${version}] - ${date}\n\n${aiSummary}\n\n`;
     }
 
-    // Fallback to standard changelog generation
     let section = `## [${version}] - ${date}\n\n`;
 
     if (parsedCommits.features.length > 0) {
@@ -294,9 +267,6 @@ class ReleaseManager {
     return section;
   }
 
-  /**
-   * Update changelog with new version
-   */
   updateChangelog(version, parsedCommits, aiSummary = null) {
     const changelogContent = fs.readFileSync(this.changelogPath, 'utf8');
     const newSection = this.generateChangelogSection(version, parsedCommits, aiSummary);
@@ -322,20 +292,13 @@ class ReleaseManager {
     fs.writeFileSync(this.changelogPath, updatedChangelog);
   }
 
-  /**
-   * Determine next version based on commits
-   */
   determineNextVersion(currentVersion, commits, releaseType = null) {
     if (releaseType) {
       return semver.inc(currentVersion, releaseType);
     }
 
-    const hasBreaking = commits.some(commit =>
-      commit.includes('BREAKING CHANGE') || commit.includes('!')
-    );
-    const hasFeatures = commits.some(commit =>
-      commit.match(/^[a-f0-9]+\s+feat(\(.+\))?:/)
-    );
+    const hasBreaking = commits.some(commit => commit.includes('BREAKING CHANGE') || commit.includes('!'));
+    const hasFeatures = commits.some(commit => commit.match(/^[a-f0-9]+\s+feat(\(.+\))?:/));
 
     if (hasBreaking) {
       return semver.inc(currentVersion, 'major');
@@ -346,10 +309,7 @@ class ReleaseManager {
     }
   }
 
-  /**
-   * Generate AI release summary using Claude Sonnet
-   */
-  async generateAIReleaseSummary(commits, codeChanges, version) {
+  async generateAIReleaseSummary(commits, codeChanges) {
     const apiKey = this.loadAnthropicApiKey();
 
     if (!apiKey) {
@@ -432,11 +392,19 @@ Rules:
     return null;
   }
 
-  /**
-   * Create a new release
-   */
+  ensureOnDevBranch() {
+    const currentBranch = this.exec('git rev-parse --abbrev-ref HEAD', { silent: true });
+    if (currentBranch !== 'dev') {
+      console.error(`❌ Must be on 'dev' branch to create a release. Currently on '${currentBranch}'.`);
+      process.exit(1);
+    }
+  }
+
   async createRelease(releaseType = null) {
     console.log('🚀 Starting Libre WebUI release process...\n');
+
+    // Ensure we're on dev
+    this.ensureOnDevBranch();
 
     // Check if working directory is clean
     try {
@@ -472,7 +440,7 @@ Rules:
     const codeChanges = this.getCodeChanges(lastTag);
 
     // Generate AI-powered release summary
-    const aiSummary = await this.generateAIReleaseSummary(commits, codeChanges, nextVersion);
+    const aiSummary = await this.generateAIReleaseSummary(commits, codeChanges);
     if (aiSummary) {
       console.log('\n🤖 AI Release Summary:');
       console.log('─'.repeat(60));
@@ -492,7 +460,7 @@ Rules:
     console.log('📝 Updating CHANGELOG.md...');
     this.updateChangelog(nextVersion, parsedCommits, aiSummary);
 
-    // Run any pre-release scripts (linting, building, etc.)
+    // Run pre-release checks
     console.log('🔍 Running pre-release checks...');
     try {
       this.exec('npm run lint');
@@ -501,7 +469,7 @@ Rules:
       console.error('  ❌ Linting failed:', error.message);
       process.exit(1);
     }
-    
+
     try {
       this.exec('npm run build');
       console.log('  ✅ Build completed');
@@ -520,8 +488,8 @@ Rules:
       process.exit(1);
     }
 
-    // Commit changes
-    console.log('📝 Committing release changes...');
+    // Commit release changes on dev
+    console.log('📝 Committing release changes on dev...');
     try {
       this.exec('git add .');
       console.log('  ✅ Files staged');
@@ -538,36 +506,115 @@ Rules:
       process.exit(1);
     }
 
-    // Create git tag
-    console.log('🏷️  Creating git tag...');
+    // Push dev branch to origin
+    console.log('📤 Pushing dev branch to origin...');
     try {
-      this.exec(`git tag -a v${nextVersion} -m "Release v${nextVersion}"`);
-      console.log(`  ✅ Tag v${nextVersion} created successfully`);
+      this.exec('git push origin dev');
+      console.log('  ✅ Dev branch pushed');
     } catch (error) {
-      console.error(`  ❌ Failed to create tag v${nextVersion}:`, error.message);
+      console.error('  ❌ Failed to push dev branch:', error.message);
+      console.error('  Please push manually: git push origin dev');
       process.exit(1);
     }
 
-    console.log(`\n✅ Release v${nextVersion} created successfully!`);
-    
-    // Verify the tag was created
+    // Build PR body
+    const prBody = this.buildPRBody(nextVersion, parsedCommits, aiSummary);
+
+    // Create PR from dev to main
+    console.log('🔀 Creating pull request from dev → main...');
+    let prUrl = '';
     try {
-      const tagExists = this.exec(`git tag -l v${nextVersion}`, { silent: true });
-      if (tagExists.trim() === `v${nextVersion}`) {
-        console.log(`  ✅ Tag v${nextVersion} verified`);
-      } else {
-        console.error(`  ❌ Tag verification failed - tag v${nextVersion} not found`);
+      const prResult = spawnSync(
+        'gh',
+        ['pr', 'create', '--base', 'main', '--head', 'dev', '--title', `chore(release): v${nextVersion}`, '--body', prBody],
+        { encoding: 'utf8', stdio: 'pipe' }
+      );
+      if (prResult.status !== 0) {
+        const err = new Error(prResult.stderr || `Exit code ${prResult.status}`);
+        err.message = prResult.stderr || '';
+        throw err;
       }
+      prUrl = (prResult.stdout || '').trim();
+      console.log(`  ✅ Pull request created: ${prUrl}`);
     } catch (error) {
-      console.error(`  ❌ Tag verification failed:`, error.message);
+      // PR might already exist
+      if (error.message && error.message.includes('already exists')) {
+        console.log('  ℹ️  A PR from dev → main already exists. Updating it...');
+        try {
+          const viewResult = spawnSync(
+            'gh',
+            ['pr', 'view', 'dev', '--json', 'url', '-q', '.url'],
+            { encoding: 'utf8', stdio: 'pipe' }
+          );
+          if (viewResult.status === 0) {
+            prUrl = (viewResult.stdout || '').trim();
+            console.log(`  ✅ Existing PR: ${prUrl}`);
+          }
+        } catch {
+          console.error('  ❌ Could not find existing PR');
+        }
+      } else {
+        console.error('  ❌ Failed to create PR:', error.message);
+        console.log('  Create it manually:');
+        console.log(`     gh pr create --base main --head dev --title "chore(release): v${nextVersion}"`);
+      }
     }
-    
+
+    // Enable auto-merge
+    if (prUrl) {
+      console.log('🤖 Enabling auto-merge...');
+      const mergeResult = spawnSync(
+        'gh',
+        ['pr', 'merge', 'dev', '--auto', '--merge'],
+        { encoding: 'utf8', stdio: 'pipe' }
+      );
+      if (mergeResult.status === 0) {
+        console.log('  ✅ Auto-merge enabled (will merge when all checks pass)');
+      } else {
+        console.log('  ⚠️  Could not enable auto-merge (may need to be enabled in repo settings)');
+        console.log('  You can merge manually after checks pass.');
+      }
+    }
+
+    console.log(`\n✅ Release v${nextVersion} PR created!`);
     console.log('\n📋 Next steps:');
-    console.log('  1. Review the changes:');
-    console.log(`     git show v${nextVersion}`);
-    console.log('  2. Push to remote:');
-    console.log('     git push origin main && git push origin --tags');
-    console.log('  3. GitHub release with Electron builds will be created automatically');
+    console.log('  1. Wait for all CI checks to pass on the PR');
+    console.log('  2. Review and merge the PR (or auto-merge will handle it)');
+    console.log('  3. After merge, tag the release on main:');
+    console.log('     git checkout main && git pull');
+    console.log(`     git tag -a v${nextVersion} -m "Release v${nextVersion}"`);
+    console.log('     git push origin --tags');
+    console.log('  4. The tag push will trigger the Release workflow (Electron builds + GitHub release)');
+  }
+
+  buildPRBody(version, parsedCommits, aiSummary) {
+    let body = `## Release v${version}\n\n`;
+
+    if (aiSummary) {
+      body += aiSummary + '\n\n';
+    } else {
+      if (parsedCommits.features.length > 0) {
+        body += '### New Features\n';
+        parsedCommits.features.forEach(f => (body += `- ${f}\n`));
+        body += '\n';
+      }
+      if (parsedCommits.fixes.length > 0) {
+        body += '### Bug Fixes\n';
+        parsedCommits.fixes.forEach(f => (body += `- ${f}\n`));
+        body += '\n';
+      }
+      if (parsedCommits.improvements.length > 0) {
+        body += '### Improvements\n';
+        parsedCommits.improvements.forEach(f => (body += `- ${f}\n`));
+        body += '\n';
+      }
+    }
+
+    body += '---\n';
+    body += 'This PR will be auto-merged once all checks pass.\n';
+    body += 'After merge, tag the release on main to trigger the full release workflow.';
+
+    return body;
   }
 }
 

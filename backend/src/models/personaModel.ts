@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import Database from 'better-sqlite3';
-import { getDatabase } from '../db.js';
+import { getDatabaseSafe } from '../db.js';
+import type { DatabaseAdapter } from '../database/types.js';
 import {
   Persona,
   CreatePersonaRequest,
@@ -41,35 +41,33 @@ interface PersonaRow {
 }
 
 export class PersonaModel {
-  private db: Database.Database | null = null;
-
-  constructor() {
-    this.initializeDatabase();
+  private getDb(): DatabaseAdapter | null {
+    return getDatabaseSafe();
   }
 
-  private initializeDatabase(): void {
-    try {
-      this.db = getDatabase();
-    } catch (_error) {
-      console.warn(
-        'PersonaModel: Database not available, running without SQLite features'
-      );
-      this.db = null;
-    }
-  }
-
-  private ensureDatabase(): Database.Database {
-    if (!this.db) {
+  private ensureDatabase(): DatabaseAdapter {
+    const db = this.getDb();
+    if (!db)
       throw new Error('Database not available - SQLite features disabled');
-    }
-    return this.db;
+    return db;
   }
 
-  /**
-   * Get all personas for a user
-   */
+  private rowToPersona(row: PersonaRow): Persona {
+    return {
+      ...row,
+      parameters: JSON.parse(row.parameters),
+      memory_settings: row.memory_settings
+        ? JSON.parse(row.memory_settings)
+        : undefined,
+      mutation_settings: row.mutation_settings
+        ? JSON.parse(row.mutation_settings)
+        : undefined,
+    };
+  }
+
   async getPersonas(userId: string = 'default'): Promise<Persona[]> {
-    if (!this.db) {
+    const db = this.getDb();
+    if (!db) {
       console.warn(
         'PersonaModel: Database not available, returning empty personas list'
       );
@@ -77,73 +75,39 @@ export class PersonaModel {
     }
 
     try {
-      const stmt = this.db.prepare(`
-        SELECT id, user_id, name, description, model, parameters, avatar, background, 
-               embedding_model, memory_settings, mutation_settings, created_at, updated_at
-        FROM personas 
-        WHERE user_id = ?
-        ORDER BY updated_at DESC
-      `);
-
-      const rows = stmt.all(userId) as PersonaRow[];
-
-      return rows.map(row => ({
-        ...row,
-        parameters: JSON.parse(row.parameters),
-        memory_settings: row.memory_settings
-          ? JSON.parse(row.memory_settings)
-          : undefined,
-        mutation_settings: row.mutation_settings
-          ? JSON.parse(row.mutation_settings)
-          : undefined,
-      }));
+      const rows = await db.all<PersonaRow>(
+        `SELECT id, user_id, name, description, model, parameters, avatar, background,
+                embedding_model, memory_settings, mutation_settings, created_at, updated_at
+         FROM personas WHERE user_id = ? ORDER BY updated_at DESC`,
+        userId
+      );
+      return rows.map(row => this.rowToPersona(row));
     } catch (error) {
       console.error('Error fetching personas:', error);
       throw new Error('Failed to fetch personas');
     }
   }
 
-  /**
-   * Get a specific persona by ID
-   */
   async getPersonaById(
     id: string,
     userId: string = 'default'
   ): Promise<Persona | null> {
     try {
       const db = this.ensureDatabase();
-      const stmt = db.prepare(`
-        SELECT id, user_id, name, description, model, parameters, avatar, background, 
-               embedding_model, memory_settings, mutation_settings, created_at, updated_at
-        FROM personas 
-        WHERE id = ? AND user_id = ?
-      `);
-
-      const row = stmt.get(id, userId) as PersonaRow | undefined;
-
-      if (!row) {
-        return null;
-      }
-
-      return {
-        ...row,
-        parameters: JSON.parse(row.parameters),
-        memory_settings: row.memory_settings
-          ? JSON.parse(row.memory_settings)
-          : undefined,
-        mutation_settings: row.mutation_settings
-          ? JSON.parse(row.mutation_settings)
-          : undefined,
-      };
+      const row = await db.get<PersonaRow>(
+        `SELECT id, user_id, name, description, model, parameters, avatar, background,
+                embedding_model, memory_settings, mutation_settings, created_at, updated_at
+         FROM personas WHERE id = ? AND user_id = ?`,
+        id,
+        userId
+      );
+      return row ? this.rowToPersona(row) : null;
     } catch (error) {
       console.error('Error fetching persona:', error);
       throw new Error('Failed to fetch persona');
     }
   }
 
-  /**
-   * Create a new persona
-   */
   async createPersona(
     data: CreatePersonaRequest,
     userId: string = 'default'
@@ -153,13 +117,10 @@ export class PersonaModel {
       const id = uuidv4();
       const now = Date.now();
 
-      const stmt = db.prepare(`
-        INSERT INTO personas (id, user_id, name, description, model, parameters, avatar, background, 
-                              embedding_model, memory_settings, mutation_settings, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      stmt.run(
+      await db.run(
+        `INSERT INTO personas (id, user_id, name, description, model, parameters, avatar, background,
+                               embedding_model, memory_settings, mutation_settings, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         id,
         userId,
         data.name,
@@ -176,10 +137,7 @@ export class PersonaModel {
       );
 
       const created = await this.getPersonaById(id, userId);
-      if (!created) {
-        throw new Error('Failed to create persona');
-      }
-
+      if (!created) throw new Error('Failed to create persona');
       return created;
     } catch (error) {
       console.error('Error creating persona:', error);
@@ -187,9 +145,6 @@ export class PersonaModel {
     }
   }
 
-  /**
-   * Update an existing persona
-   */
   async updatePersona(
     id: string,
     data: UpdatePersonaRequest,
@@ -197,9 +152,7 @@ export class PersonaModel {
   ): Promise<Persona | null> {
     try {
       const existing = await this.getPersonaById(id, userId);
-      if (!existing) {
-        return null;
-      }
+      if (!existing) return null;
 
       const now = Date.now();
       const updates: string[] = [];
@@ -209,50 +162,40 @@ export class PersonaModel {
         updates.push('name = ?');
         values.push(data.name);
       }
-
       if (data.description !== undefined) {
         updates.push('description = ?');
         values.push(data.description);
       }
-
       if (data.model !== undefined) {
         updates.push('model = ?');
         values.push(data.model);
       }
-
       if (data.parameters !== undefined) {
         updates.push('parameters = ?');
         values.push(JSON.stringify(data.parameters));
       }
-
       if (data.avatar !== undefined) {
         updates.push('avatar = ?');
         values.push(data.avatar);
       }
-
       if (data.background !== undefined) {
         updates.push('background = ?');
         values.push(data.background);
       }
-
       if (data.embedding_model !== undefined) {
         updates.push('embedding_model = ?');
         values.push(data.embedding_model);
       }
-
       if (data.memory_settings !== undefined) {
         updates.push('memory_settings = ?');
         values.push(JSON.stringify(data.memory_settings));
       }
-
       if (data.mutation_settings !== undefined) {
         updates.push('mutation_settings = ?');
         values.push(JSON.stringify(data.mutation_settings));
       }
 
-      if (updates.length === 0) {
-        return existing;
-      }
+      if (updates.length === 0) return existing;
 
       updates.push('updated_at = ?');
       values.push(now);
@@ -260,14 +203,10 @@ export class PersonaModel {
       values.push(userId);
 
       const db = this.ensureDatabase();
-      const stmt = db.prepare(`
-        UPDATE personas 
-        SET ${updates.join(', ')}
-        WHERE id = ? AND user_id = ?
-      `);
-
-      stmt.run(...values);
-
+      await db.run(
+        `UPDATE personas SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`,
+        ...values
+      );
       return await this.getPersonaById(id, userId);
     } catch (error) {
       console.error('Error updating persona:', error);
@@ -275,21 +214,17 @@ export class PersonaModel {
     }
   }
 
-  /**
-   * Delete a persona
-   */
   async deletePersona(
     id: string,
     userId: string = 'default'
   ): Promise<boolean> {
     try {
       const db = this.ensureDatabase();
-      const stmt = db.prepare(`
-        DELETE FROM personas 
-        WHERE id = ? AND user_id = ?
-      `);
-
-      const result = stmt.run(id, userId);
+      const result = await db.run(
+        'DELETE FROM personas WHERE id = ? AND user_id = ?',
+        id,
+        userId
+      );
       return result.changes > 0;
     } catch (error) {
       console.error('Error deleting persona:', error);
@@ -297,58 +232,34 @@ export class PersonaModel {
     }
   }
 
-  /**
-   * Get persona by name (for duplicate checking)
-   */
   async getPersonaByName(
     name: string,
     userId: string = 'default'
   ): Promise<Persona | null> {
     try {
       const db = this.ensureDatabase();
-      const stmt = db.prepare(`
-        SELECT id, user_id, name, description, model, parameters, avatar, background, 
-               embedding_model, memory_settings, mutation_settings, created_at, updated_at
-        FROM personas 
-        WHERE name = ? AND user_id = ?
-      `);
-
-      const row = stmt.get(name, userId) as PersonaRow | undefined;
-
-      if (!row) {
-        return null;
-      }
-
-      return {
-        ...row,
-        parameters: JSON.parse(row.parameters),
-        memory_settings: row.memory_settings
-          ? JSON.parse(row.memory_settings)
-          : undefined,
-        mutation_settings: row.mutation_settings
-          ? JSON.parse(row.mutation_settings)
-          : undefined,
-      };
+      const row = await db.get<PersonaRow>(
+        `SELECT id, user_id, name, description, model, parameters, avatar, background,
+                embedding_model, memory_settings, mutation_settings, created_at, updated_at
+         FROM personas WHERE name = ? AND user_id = ?`,
+        name,
+        userId
+      );
+      return row ? this.rowToPersona(row) : null;
     } catch (error) {
       console.error('Error fetching persona by name:', error);
       throw new Error('Failed to fetch persona by name');
     }
   }
 
-  /**
-   * Get personas count for a user
-   */
   async getPersonasCount(userId: string = 'default'): Promise<number> {
     try {
       const db = this.ensureDatabase();
-      const stmt = db.prepare(`
-        SELECT COUNT(*) as count 
-        FROM personas 
-        WHERE user_id = ?
-      `);
-
-      const result = stmt.get(userId) as { count: number };
-      return result.count;
+      const result = await db.get<{ count: number }>(
+        'SELECT COUNT(*) as count FROM personas WHERE user_id = ?',
+        userId
+      );
+      return result?.count ?? 0;
     } catch (error) {
       console.error('Error counting personas:', error);
       throw new Error('Failed to count personas');

@@ -23,79 +23,57 @@ export interface PluginCredential {
   id: string;
   user_id: string;
   plugin_id: string;
-  api_key: string; // Decrypted API key (not stored in DB)
-  created_at: number;
-  updated_at: number;
-}
-
-interface _PluginCredentialRow {
-  id: string;
-  user_id: string;
-  plugin_id: string;
-  api_key: string; // Encrypted API key from DB
+  api_key: string;
   created_at: number;
   updated_at: number;
 }
 
 class PluginCredentialsService {
-  /**
-   * Get API key for a specific plugin and user
-   * Returns null if not found, with optional fallback to environment variable
-   */
-  getApiKey(pluginId: string, keyEnv: string, userId?: string): string | null {
+  async getApiKey(
+    pluginId: string,
+    keyEnv: string,
+    userId?: string
+  ): Promise<string | null> {
     const effectiveUserId = userId || 'default';
     const db = getDatabaseSafe();
 
     if (db) {
       try {
-        const row = db
-          .prepare(
-            'SELECT api_key FROM plugin_credentials WHERE plugin_id = ? AND user_id = ?'
-          )
-          .get(pluginId, effectiveUserId) as { api_key: string } | undefined;
-
+        const row = await db.get<{ api_key: string }>(
+          'SELECT api_key FROM plugin_credentials WHERE plugin_id = ? AND user_id = ?',
+          pluginId,
+          effectiveUserId
+        );
         if (row?.api_key) {
-          // Decrypt the API key
           const decryptedKey = encryptionService.decrypt(row.api_key);
-          if (decryptedKey) {
-            return decryptedKey;
-          }
+          if (decryptedKey) return decryptedKey;
         }
       } catch (error) {
         console.error('Failed to get API key for plugin %s:', pluginId, error);
       }
     }
 
-    // Fallback to environment variable
     return process.env[keyEnv] || null;
   }
 
-  /**
-   * Get all credentials for a user (API keys are masked for security)
-   */
-  getCredentials(userId?: string): Array<{
-    plugin_id: string;
-    has_api_key: boolean;
-    updated_at: number;
-  }> {
+  async getCredentials(
+    userId?: string
+  ): Promise<
+    Array<{ plugin_id: string; has_api_key: boolean; updated_at: number }>
+  > {
     const effectiveUserId = userId || 'default';
     const db = getDatabaseSafe();
-
-    if (!db) {
-      return [];
-    }
+    if (!db) return [];
 
     try {
-      const rows = db
-        .prepare(
-          'SELECT plugin_id, api_key, updated_at FROM plugin_credentials WHERE user_id = ?'
-        )
-        .all(effectiveUserId) as Array<{
+      const rows = await db.all<{
         plugin_id: string;
         api_key: string;
         updated_at: number;
-      }>;
-
+      }>(
+        'SELECT plugin_id, api_key, updated_at FROM plugin_credentials WHERE user_id = ?',
+        effectiveUserId
+      );
       return rows.map(row => ({
         plugin_id: row.plugin_id,
         has_api_key: Boolean(row.api_key),
@@ -107,13 +85,13 @@ class PluginCredentialsService {
     }
   }
 
-  /**
-   * Set or update API key for a plugin
-   */
-  setApiKey(pluginId: string, apiKey: string, userId?: string): boolean {
+  async setApiKey(
+    pluginId: string,
+    apiKey: string,
+    userId?: string
+  ): Promise<boolean> {
     const effectiveUserId = userId || 'default';
     const db = getDatabaseSafe();
-
     if (!db) {
       console.error('Database not available for storing plugin credentials');
       return false;
@@ -123,24 +101,29 @@ class PluginCredentialsService {
       const now = Date.now();
       const encryptedKey = encryptionService.encrypt(apiKey);
 
-      // Check if credential already exists
-      const existing = db
-        .prepare(
-          'SELECT id FROM plugin_credentials WHERE plugin_id = ? AND user_id = ?'
-        )
-        .get(pluginId, effectiveUserId) as { id: string } | undefined;
+      const existing = await db.get<{ id: string }>(
+        'SELECT id FROM plugin_credentials WHERE plugin_id = ? AND user_id = ?',
+        pluginId,
+        effectiveUserId
+      );
 
       if (existing) {
-        // Update existing credential
-        db.prepare(
-          'UPDATE plugin_credentials SET api_key = ?, updated_at = ? WHERE id = ?'
-        ).run(encryptedKey, now, existing.id);
+        await db.run(
+          'UPDATE plugin_credentials SET api_key = ?, updated_at = ? WHERE id = ?',
+          encryptedKey,
+          now,
+          existing.id
+        );
       } else {
-        // Insert new credential
-        const id = uuidv4();
-        db.prepare(
-          'INSERT INTO plugin_credentials (id, user_id, plugin_id, api_key, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-        ).run(id, effectiveUserId, pluginId, encryptedKey, now, now);
+        await db.run(
+          'INSERT INTO plugin_credentials (id, user_id, plugin_id, api_key, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+          uuidv4(),
+          effectiveUserId,
+          pluginId,
+          encryptedKey,
+          now,
+          now
+        );
       }
 
       console.log(
@@ -153,24 +136,17 @@ class PluginCredentialsService {
     }
   }
 
-  /**
-   * Delete API key for a plugin
-   */
-  deleteApiKey(pluginId: string, userId?: string): boolean {
+  async deleteApiKey(pluginId: string, userId?: string): Promise<boolean> {
     const effectiveUserId = userId || 'default';
     const db = getDatabaseSafe();
-
-    if (!db) {
-      return false;
-    }
+    if (!db) return false;
 
     try {
-      const result = db
-        .prepare(
-          'DELETE FROM plugin_credentials WHERE plugin_id = ? AND user_id = ?'
-        )
-        .run(pluginId, effectiveUserId);
-
+      const result = await db.run(
+        'DELETE FROM plugin_credentials WHERE plugin_id = ? AND user_id = ?',
+        pluginId,
+        effectiveUserId
+      );
       if (result.changes > 0) {
         console.log(
           `API key deleted for plugin ${pluginId} (user: ${effectiveUserId})`
@@ -184,27 +160,19 @@ class PluginCredentialsService {
     }
   }
 
-  /**
-   * Check if a user has an API key set for a plugin
-   */
-  hasApiKey(pluginId: string, keyEnv: string, userId?: string): boolean {
-    return this.getApiKey(pluginId, keyEnv, userId) !== null;
+  async hasApiKey(
+    pluginId: string,
+    keyEnv: string,
+    userId?: string
+  ): Promise<boolean> {
+    return (await this.getApiKey(pluginId, keyEnv, userId)) !== null;
   }
 
-  /**
-   * Delete all credentials for a user (used when user account is deleted)
-   */
-  deleteAllUserCredentials(userId: string): boolean {
+  async deleteAllUserCredentials(userId: string): Promise<boolean> {
     const db = getDatabaseSafe();
-
-    if (!db) {
-      return false;
-    }
-
+    if (!db) return false;
     try {
-      db.prepare('DELETE FROM plugin_credentials WHERE user_id = ?').run(
-        userId
-      );
+      await db.run('DELETE FROM plugin_credentials WHERE user_id = ?', userId);
       console.log(`All plugin credentials deleted for user ${userId}`);
       return true;
     } catch (error) {
@@ -216,18 +184,12 @@ class PluginCredentialsService {
     }
   }
 
-  /**
-   * Delete all credentials for a plugin (used when plugin is deleted)
-   */
-  deleteAllPluginCredentials(pluginId: string): boolean {
+  async deleteAllPluginCredentials(pluginId: string): Promise<boolean> {
     const db = getDatabaseSafe();
-
-    if (!db) {
-      return false;
-    }
-
+    if (!db) return false;
     try {
-      db.prepare('DELETE FROM plugin_credentials WHERE plugin_id = ?').run(
+      await db.run(
+        'DELETE FROM plugin_credentials WHERE plugin_id = ?',
         pluginId
       );
       console.log(`All credentials deleted for plugin ${pluginId}`);

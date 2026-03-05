@@ -98,12 +98,9 @@ export class MutationEngineService {
     };
 
     const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      INSERT INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `);
-
-    stmt.run(
+    await db.run(
+      `INSERT INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
+      VALUES (?, ?, ?, ?, ?, ?)`,
       personaId,
       userId,
       JSON.stringify(state.runtime_state),
@@ -123,22 +120,20 @@ export class MutationEngineService {
     userId: string
   ): Promise<PersonaState | null> {
     const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      SELECT persona_id, user_id, runtime_state, mutation_log, last_updated, version
+    const row = await db.get<{
+      persona_id: string;
+      user_id: string;
+      runtime_state: string;
+      mutation_log: string;
+      last_updated: number;
+      version: number;
+    }>(
+      `SELECT persona_id, user_id, runtime_state, mutation_log, last_updated, version
       FROM persona_states
-      WHERE persona_id = ? AND user_id = ?
-    `);
-
-    const row = stmt.get(personaId, userId) as
-      | {
-          persona_id: string;
-          user_id: string;
-          runtime_state: string;
-          mutation_log: string;
-          last_updated: number;
-          version: number;
-        }
-      | undefined;
+      WHERE persona_id = ? AND user_id = ?`,
+      personaId,
+      userId
+    );
 
     if (!row) {
       return null;
@@ -159,12 +154,15 @@ export class MutationEngineService {
    */
   async savePersonaState(state: PersonaState): Promise<void> {
     const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      INSERT OR REPLACE INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
+    await db.run(
+      `INSERT INTO persona_states (persona_id, user_id, runtime_state, mutation_log, last_updated, version)
       VALUES (?, ?, ?, ?, ?, ?)
-    `);
-
-    stmt.run(
+      ON CONFLICT (persona_id) DO UPDATE SET
+        user_id = EXCLUDED.user_id,
+        runtime_state = EXCLUDED.runtime_state,
+        mutation_log = EXCLUDED.mutation_log,
+        last_updated = EXCLUDED.last_updated,
+        version = EXCLUDED.version`,
       state.persona_id,
       state.user_id,
       JSON.stringify(state.runtime_state),
@@ -599,12 +597,12 @@ export class MutationEngineService {
    */
   async resetPersonaState(personaId: string, userId: string): Promise<void> {
     const db = this.ensureDatabase();
-    const stmt = db.prepare(`
-      DELETE FROM persona_states
-      WHERE persona_id = ? AND user_id = ?
-    `);
-
-    stmt.run(personaId, userId);
+    await db.run(
+      `DELETE FROM persona_states
+      WHERE persona_id = ? AND user_id = ?`,
+      personaId,
+      userId
+    );
   }
 }
 

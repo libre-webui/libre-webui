@@ -87,12 +87,12 @@ class PreferencesService {
     // Don't automatically create preferences - let them be created per user when needed
   }
 
-  private ensurePreferencesExist(userId?: string) {
+  private async ensurePreferencesExist(userId?: string) {
     try {
-      const preferences = storageService.getPreferences(userId);
+      const preferences = await storageService.getPreferences(userId);
       if (!preferences) {
         // Create default preferences for this user if none exist
-        storageService.savePreferences(this.defaultPreferences, userId);
+        await storageService.savePreferences(this.defaultPreferences, userId);
         console.log(
           `Created default preferences for user: ${userId || 'default'}`
         );
@@ -102,12 +102,12 @@ class PreferencesService {
     }
   }
 
-  getPreferences(userId?: string): UserPreferences {
+  async getPreferences(userId?: string): Promise<UserPreferences> {
     try {
       // Ensure preferences exist for this user
-      this.ensurePreferencesExist(userId);
+      await this.ensurePreferencesExist(userId);
 
-      const preferences = storageService.getPreferences(userId);
+      const preferences = await storageService.getPreferences(userId);
       if (preferences) {
         // Merge with defaults to ensure all fields exist
         return this.mergeWithDefaults(preferences);
@@ -142,11 +142,11 @@ class PreferencesService {
     };
   }
 
-  updatePreferences(
+  async updatePreferences(
     updates: Partial<UserPreferences>,
     userId?: string
-  ): UserPreferences {
-    const currentPreferences = this.getPreferences(userId);
+  ): Promise<UserPreferences> {
+    const currentPreferences = await this.getPreferences(userId);
     const updatedPreferences: UserPreferences = {
       ...currentPreferences,
       ...updates,
@@ -172,7 +172,7 @@ class PreferencesService {
     };
 
     try {
-      storageService.savePreferences(updatedPreferences, userId);
+      await storageService.savePreferences(updatedPreferences, userId);
       return updatedPreferences;
     } catch (error) {
       console.error('Failed to update preferences:', error);
@@ -180,38 +180,44 @@ class PreferencesService {
     }
   }
 
-  setDefaultModel(model: string, userId?: string): UserPreferences {
+  async setDefaultModel(
+    model: string,
+    userId?: string
+  ): Promise<UserPreferences> {
     return this.updatePreferences({ defaultModel: model }, userId);
   }
 
-  setTheme(
+  async setTheme(
     theme: 'light' | 'dark' | 'ophelia',
     userId?: string
-  ): UserPreferences {
+  ): Promise<UserPreferences> {
     return this.updatePreferences({ theme: { mode: theme } }, userId);
   }
 
-  setSystemMessage(systemMessage: string, userId?: string): UserPreferences {
+  async setSystemMessage(
+    systemMessage: string,
+    userId?: string
+  ): Promise<UserPreferences> {
     return this.updatePreferences({ systemMessage }, userId);
   }
 
-  getSystemMessage(userId?: string): string {
-    return this.getPreferences(userId).systemMessage;
+  async getSystemMessage(userId?: string): Promise<string> {
+    return (await this.getPreferences(userId)).systemMessage;
   }
 
-  getDefaultModel(userId?: string): string {
-    return this.getPreferences(userId).defaultModel;
+  async getDefaultModel(userId?: string): Promise<string> {
+    return (await this.getPreferences(userId)).defaultModel;
   }
 
-  getGenerationOptions(userId?: string): GenerationOptions {
-    return this.getPreferences(userId).generationOptions;
+  async getGenerationOptions(userId?: string): Promise<GenerationOptions> {
+    return (await this.getPreferences(userId)).generationOptions;
   }
 
-  updateGenerationOptions(
+  async updateGenerationOptions(
     options: Partial<GenerationOptions>,
     userId?: string
-  ): UserPreferences {
-    const currentPreferences = this.getPreferences(userId);
+  ): Promise<UserPreferences> {
+    const currentPreferences = await this.getPreferences(userId);
     return this.updatePreferences(
       {
         generationOptions: {
@@ -223,14 +229,14 @@ class PreferencesService {
     );
   }
 
-  setGenerationOptions(
+  async setGenerationOptions(
     options: GenerationOptions,
     userId?: string
-  ): UserPreferences {
+  ): Promise<UserPreferences> {
     return this.updatePreferences({ generationOptions: options }, userId);
   }
 
-  resetGenerationOptions(userId?: string): UserPreferences {
+  async resetGenerationOptions(userId?: string): Promise<UserPreferences> {
     return this.updatePreferences(
       {
         generationOptions: this.defaultPreferences.generationOptions,
@@ -239,15 +245,15 @@ class PreferencesService {
     );
   }
 
-  getEmbeddingSettings(userId?: string): EmbeddingSettings {
-    return this.getPreferences(userId).embeddingSettings;
+  async getEmbeddingSettings(userId?: string): Promise<EmbeddingSettings> {
+    return (await this.getPreferences(userId)).embeddingSettings;
   }
 
-  updateEmbeddingSettings(
+  async updateEmbeddingSettings(
     settings: Partial<EmbeddingSettings>,
     userId?: string
-  ): UserPreferences {
-    const currentPreferences = this.getPreferences(userId);
+  ): Promise<UserPreferences> {
+    const currentPreferences = await this.getPreferences(userId);
     return this.updatePreferences(
       {
         embeddingSettings: {
@@ -259,14 +265,14 @@ class PreferencesService {
     );
   }
 
-  setEmbeddingSettings(
+  async setEmbeddingSettings(
     settings: EmbeddingSettings,
     userId?: string
-  ): UserPreferences {
+  ): Promise<UserPreferences> {
     return this.updatePreferences({ embeddingSettings: settings }, userId);
   }
 
-  resetEmbeddingSettings(userId?: string): UserPreferences {
+  async resetEmbeddingSettings(userId?: string): Promise<UserPreferences> {
     return this.updatePreferences(
       {
         embeddingSettings: this.defaultPreferences.embeddingSettings,
@@ -275,9 +281,9 @@ class PreferencesService {
     );
   }
 
-  resetToDefaults(userId?: string): UserPreferences {
+  async resetToDefaults(userId?: string): Promise<UserPreferences> {
     try {
-      storageService.savePreferences(this.defaultPreferences, userId);
+      await storageService.savePreferences(this.defaultPreferences, userId);
       return this.defaultPreferences;
     } catch (error) {
       console.error('Failed to reset preferences to defaults:', error);
@@ -285,11 +291,11 @@ class PreferencesService {
     }
   }
 
-  importData(
+  async importData(
     data: ExportData,
     mergeStrategy: 'merge' | 'replace' = 'merge',
     userId?: string
-  ): UserPreferences {
+  ): Promise<UserPreferences> {
     try {
       // Validate that the data has preferences
       if (!data || !data.preferences) {
@@ -305,7 +311,7 @@ class PreferencesService {
         );
       } else {
         // Merge with existing preferences
-        const currentPreferences = this.getPreferences(userId);
+        const currentPreferences = await this.getPreferences(userId);
         updatedPreferences = {
           ...currentPreferences,
           ...data.preferences,
@@ -321,7 +327,7 @@ class PreferencesService {
       }
 
       // Save the updated preferences
-      storageService.savePreferences(updatedPreferences, userId);
+      await storageService.savePreferences(updatedPreferences, userId);
       return updatedPreferences;
     } catch (error) {
       console.error('Failed to import preferences data:', error);

@@ -207,10 +207,10 @@ router.post('/search', async (req, res) => {
 });
 
 // Delete document
-router.delete('/:documentId', (req, res) => {
+router.delete('/:documentId', async (req, res) => {
   try {
     const { documentId } = req.params;
-    const deleted = documentService.deleteDocument(documentId);
+    const deleted = await documentService.deleteDocument(documentId);
 
     if (!deleted) {
       res.status(404).json({

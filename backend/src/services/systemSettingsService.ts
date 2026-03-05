@@ -21,22 +21,18 @@ const ALLOW_USER_MODEL_PULL_KEY = 'allow_user_model_pull';
 const DEFAULT_ALLOW_USER_MODEL_PULL = true;
 
 export class SystemSettingsService {
-  /**
-   * Whether non-admin users can install/pull models.
-   */
-  getAllowUserModelPull(): boolean {
+  async getAllowUserModelPull(): Promise<boolean> {
     const db = getDatabaseSafe();
-    if (!db) {
-      return DEFAULT_ALLOW_USER_MODEL_PULL;
-    }
+    if (!db) return DEFAULT_ALLOW_USER_MODEL_PULL;
 
     try {
-      const row = db
-        .prepare('SELECT value FROM system_settings WHERE key = ?')
-        .get(ALLOW_USER_MODEL_PULL_KEY) as { value: string } | undefined;
+      const row = await db.get<{ value: string }>(
+        'SELECT value FROM system_settings WHERE key = ?',
+        ALLOW_USER_MODEL_PULL_KEY
+      );
 
       if (!row) {
-        this.setAllowUserModelPull(DEFAULT_ALLOW_USER_MODEL_PULL);
+        await this.setAllowUserModelPull(DEFAULT_ALLOW_USER_MODEL_PULL);
         return DEFAULT_ALLOW_USER_MODEL_PULL;
       }
 
@@ -50,26 +46,22 @@ export class SystemSettingsService {
     }
   }
 
-  /**
-   * Update whether non-admin users can install/pull models.
-   */
-  setAllowUserModelPull(allow: boolean): void {
+  async setAllowUserModelPull(allow: boolean): Promise<void> {
     const db = getDatabaseSafe();
-    if (!db) {
-      return;
-    }
+    if (!db) return;
 
     try {
       const now = Date.now();
-      db.prepare(
-        `
-          INSERT INTO system_settings (key, value, updated_at)
-          VALUES (?, ?, ?)
-          ON CONFLICT(key) DO UPDATE SET
-            value = excluded.value,
-            updated_at = excluded.updated_at
-        `
-      ).run(ALLOW_USER_MODEL_PULL_KEY, allow ? 'true' : 'false', now);
+      await db.run(
+        `INSERT INTO system_settings (key, value, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(key) DO UPDATE SET
+           value = excluded.value,
+           updated_at = excluded.updated_at`,
+        ALLOW_USER_MODEL_PULL_KEY,
+        allow ? 'true' : 'false',
+        now
+      );
     } catch (error) {
       console.error(
         'Failed to update system setting allow_user_model_pull:',

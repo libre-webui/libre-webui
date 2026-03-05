@@ -206,7 +206,7 @@ export class GitHubOAuthService {
       let githubUsername = `gh_${profile.login || profile.id}`;
 
       // Check if user already exists
-      const existingUser = userModel.getUserByUsername(githubUsername);
+      const existingUser = await userModel.getUserByUsername(githubUsername);
 
       if (existingUser) {
         console.log('Found existing GitHub user:', existingUser.username);
@@ -225,7 +225,7 @@ export class GitHubOAuthService {
       // Ensure the username is unique
       let uniqueUsername = githubUsername;
       let counter = 1;
-      while (userModel.usernameExists(uniqueUsername)) {
+      while (await userModel.usernameExists(uniqueUsername)) {
         uniqueUsername = `${githubUsername}_${counter}`;
         counter++;
       }

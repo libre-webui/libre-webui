@@ -39,10 +39,10 @@ interface GetImagesResult {
 }
 
 class GalleryService {
-  /**
-   * Save a generated image to the gallery
-   */
-  saveImage(userId: string, params: SaveImageParams): GeneratedImage | null {
+  async saveImage(
+    userId: string,
+    params: SaveImageParams
+  ): Promise<GeneratedImage | null> {
     const db = getDatabaseSafe();
     if (!db) {
       console.error('Database not available for saving image');
@@ -52,17 +52,12 @@ class GalleryService {
     try {
       const id = uuidv4();
       const createdAt = Date.now();
-
-      // Encrypt the image data and prompt before storing
       const encryptedImageData = encryptionService.encrypt(params.imageData);
       const encryptedPrompt = encryptionService.encrypt(params.prompt);
 
-      db.prepare(
-        `
-        INSERT INTO generated_images (id, user_id, prompt, model, image_data, size, quality, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `
-      ).run(
+      await db.run(
+        `INSERT INTO generated_images (id, user_id, prompt, model, image_data, size, quality, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         id,
         userId,
         encryptedPrompt,
@@ -89,38 +84,23 @@ class GalleryService {
     }
   }
 
-  /**
-   * Get user's images with pagination
-   */
-  getImages(userId: string, params: GetImagesParams = {}): GetImagesResult {
+  async getImages(
+    userId: string,
+    params: GetImagesParams = {}
+  ): Promise<GetImagesResult> {
     const db = getDatabaseSafe();
-    if (!db) {
-      return { images: [], total: 0 };
-    }
+    if (!db) return { images: [], total: 0 };
 
     try {
       const limit = params.limit || 20;
       const offset = params.offset || 0;
 
-      // Get total count
-      const countResult = db
-        .prepare(
-          'SELECT COUNT(*) as total FROM generated_images WHERE user_id = ?'
-        )
-        .get(userId) as { total: number };
+      const countResult = await db.get<{ total: number }>(
+        'SELECT COUNT(*) as total FROM generated_images WHERE user_id = ?',
+        userId
+      );
 
-      // Get paginated images
-      const rows = db
-        .prepare(
-          `
-          SELECT id, user_id, prompt, model, image_data, size, quality, created_at
-          FROM generated_images
-          WHERE user_id = ?
-          ORDER BY created_at DESC
-          LIMIT ? OFFSET ?
-          `
-        )
-        .all(userId, limit, offset) as Array<{
+      const rows = await db.all<{
         id: string;
         user_id: string;
         prompt: string;
@@ -129,7 +109,13 @@ class GalleryService {
         size: string | null;
         quality: string | null;
         created_at: number;
-      }>;
+      }>(
+        `SELECT id, user_id, prompt, model, image_data, size, quality, created_at
+         FROM generated_images WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+        userId,
+        limit,
+        offset
+      );
 
       const images: GeneratedImage[] = rows.map(row => ({
         id: row.id,
@@ -142,50 +128,37 @@ class GalleryService {
         createdAt: row.created_at,
       }));
 
-      return {
-        images,
-        total: countResult.total,
-      };
+      return { images, total: countResult?.total ?? 0 };
     } catch (error) {
       console.error('Error getting images from gallery:', error);
       return { images: [], total: 0 };
     }
   }
 
-  /**
-   * Get a single image by ID
-   */
-  getImage(imageId: string, userId: string): GeneratedImage | null {
+  async getImage(
+    imageId: string,
+    userId: string
+  ): Promise<GeneratedImage | null> {
     const db = getDatabaseSafe();
-    if (!db) {
-      return null;
-    }
+    if (!db) return null;
 
     try {
-      const row = db
-        .prepare(
-          `
-          SELECT id, user_id, prompt, model, image_data, size, quality, created_at
-          FROM generated_images
-          WHERE id = ? AND user_id = ?
-          `
-        )
-        .get(imageId, userId) as
-        | {
-            id: string;
-            user_id: string;
-            prompt: string;
-            model: string;
-            image_data: string;
-            size: string | null;
-            quality: string | null;
-            created_at: number;
-          }
-        | undefined;
-
-      if (!row) {
-        return null;
-      }
+      const row = await db.get<{
+        id: string;
+        user_id: string;
+        prompt: string;
+        model: string;
+        image_data: string;
+        size: string | null;
+        quality: string | null;
+        created_at: number;
+      }>(
+        `SELECT id, user_id, prompt, model, image_data, size, quality, created_at
+         FROM generated_images WHERE id = ? AND user_id = ?`,
+        imageId,
+        userId
+      );
+      if (!row) return null;
 
       return {
         id: row.id,
@@ -203,21 +176,15 @@ class GalleryService {
     }
   }
 
-  /**
-   * Delete an image from the gallery
-   */
-  deleteImage(imageId: string, userId: string): boolean {
+  async deleteImage(imageId: string, userId: string): Promise<boolean> {
     const db = getDatabaseSafe();
-    if (!db) {
-      return false;
-    }
-
+    if (!db) return false;
     try {
-      // Verify ownership before deleting
-      const result = db
-        .prepare('DELETE FROM generated_images WHERE id = ? AND user_id = ?')
-        .run(imageId, userId);
-
+      const result = await db.run(
+        'DELETE FROM generated_images WHERE id = ? AND user_id = ?',
+        imageId,
+        userId
+      );
       return result.changes > 0;
     } catch (error) {
       console.error('Error deleting image from gallery:', error);
@@ -225,17 +192,11 @@ class GalleryService {
     }
   }
 
-  /**
-   * Delete all images for a user
-   */
-  deleteAllImages(userId: string): boolean {
+  async deleteAllImages(userId: string): Promise<boolean> {
     const db = getDatabaseSafe();
-    if (!db) {
-      return false;
-    }
-
+    if (!db) return false;
     try {
-      db.prepare('DELETE FROM generated_images WHERE user_id = ?').run(userId);
+      await db.run('DELETE FROM generated_images WHERE user_id = ?', userId);
       return true;
     } catch (error) {
       console.error('Error deleting all images from gallery:', error);

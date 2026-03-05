@@ -156,8 +156,8 @@ Uses separate data volumes (`libre_webui_dev_data`) so your stable install stays
 ┌─────────────────────────────────────────────┐
 │              Libre WebUI                    │
 ├──────────────────┬──────────────────────────┤
-│   React + TS     │   Express + SQLite       │
-│   Frontend       │   Backend                │
+│   React + TS     │   Express + PostgreSQL   │
+│   Frontend       │   Backend (SQLite opt.)  │
 │   (Vite)         │   (AES-256 encryption)   │
 ├──────────────────┴──────────────────────────┤
 │              Plugin Layer                   │
@@ -168,7 +168,7 @@ Uses separate data volumes (`libre_webui_dev_data`) so your stable install stays
 ```
 
 - **Frontend:** React 18 + TypeScript, Vite, responsive with keyboard shortcuts
-- **Backend:** Express 5, SQLite with AES-256-GCM encryption, WebSocket streaming
+- **Backend:** Express 5, PostgreSQL (or SQLite) with AES-256-GCM encryption, WebSocket streaming
 - **Plugins:** JSON config files — add any provider without touching code
 - **Desktop:** Electron with native macOS/Windows/Linux builds
 

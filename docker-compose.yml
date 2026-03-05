@@ -21,7 +21,9 @@ services:
       - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300000}
       - OLLAMA_LONG_OPERATION_TIMEOUT=${OLLAMA_LONG_OPERATION_TIMEOUT:-900000}
       - VITE_API_TIMEOUT=${VITE_API_TIMEOUT:-300000}
-      # Database path - points to the volume mount
+      # PostgreSQL connection (comment out DATABASE_URL to fall back to SQLite)
+      - DATABASE_URL=postgresql://libre:libre@postgres:5432/libre_webui
+      # Data directory for SQLite fallback and file uploads
       - DATA_DIR=/app/backend/data
       # GitHub OAuth2 SSO Configuration
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
@@ -36,7 +38,29 @@ services:
       - libre_webui_data:/app/backend/data
       - libre_webui_temp:/app/backend/temp
     depends_on:
-      - ollama
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - libre-webui-network
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: libre
+      POSTGRES_PASSWORD: libre
+      POSTGRES_DB: libre_webui
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U libre -d libre_webui']
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
     networks:
       - libre-webui-network
@@ -63,6 +87,7 @@ volumes:
   libre_webui_data:
   libre_webui_temp:
   ollama_data:
+  postgres_data:
 
 networks:
   libre-webui-network:

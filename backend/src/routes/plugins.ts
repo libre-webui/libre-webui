@@ -383,7 +383,7 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const success = pluginService.deletePlugin(id);
+      const success = await pluginService.deletePlugin(id);
 
       if (!success) {
         res.status(404).json({
@@ -556,7 +556,7 @@ router.get(
     try {
       // Get userId from auth context (defaults to 'default' for single-user mode)
       const userId = (req as Request & { userId?: string }).userId || 'default';
-      const credentials = pluginCredentialsService.getCredentials(userId);
+      const credentials = await pluginCredentialsService.getCredentials(userId);
 
       res.json({
         success: true,
@@ -600,7 +600,11 @@ router.post(
 
       // Get userId from auth context
       const userId = (req as Request & { userId?: string }).userId || 'default';
-      const success = pluginCredentialsService.setApiKey(id, api_key, userId);
+      const success = await pluginCredentialsService.setApiKey(
+        id,
+        api_key,
+        userId
+      );
 
       if (success) {
         res.json({
@@ -642,7 +646,7 @@ router.delete(
 
       // Get userId from auth context
       const userId = (req as Request & { userId?: string }).userId || 'default';
-      const success = pluginCredentialsService.deleteApiKey(id, userId);
+      const success = await pluginCredentialsService.deleteApiKey(id, userId);
 
       res.json({
         success: true,
@@ -676,7 +680,7 @@ router.get(
 
       // Get userId from auth context
       const userId = (req as Request & { userId?: string }).userId || 'default';
-      const hasKey = pluginCredentialsService.hasApiKey(
+      const hasKey = await pluginCredentialsService.hasApiKey(
         id,
         plugin.auth.key_env,
         userId
@@ -721,7 +725,7 @@ router.get(
       }
 
       const userId = (req as Request & { userId?: string }).userId || 'default';
-      const variables = pluginVariablesService.getVariables(
+      const variables = await pluginVariablesService.getVariables(
         id,
         plugin.variables,
         userId,
@@ -839,7 +843,7 @@ router.put(
       }
 
       const userId = (req as Request & { userId?: string }).userId || 'default';
-      const success = pluginVariablesService.setVariables(
+      const success = await pluginVariablesService.setVariables(
         id,
         validated,
         plugin.variables,
@@ -877,7 +881,10 @@ router.delete(
       }
 
       const userId = (req as Request & { userId?: string }).userId || 'default';
-      const success = pluginVariablesService.deletePluginVariables(id, userId);
+      const success = await pluginVariablesService.deletePluginVariables(
+        id,
+        userId
+      );
 
       res.json({ success: true, data: success });
     } catch (error: unknown) {

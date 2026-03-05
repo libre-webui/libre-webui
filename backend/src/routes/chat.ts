@@ -103,7 +103,7 @@ router.get(
   ): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
-      const sessions = chatService.getAllSessions(userId);
+      const sessions = await chatService.getAllSessions(userId);
       res.json({
         success: true,
         data: sessions,
@@ -175,7 +175,7 @@ router.get(
     try {
       const sessionId = req.params.sessionId as string;
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
 
       if (!session) {
         res.status(404).json({
@@ -250,7 +250,7 @@ router.put(
       const updates = req.body;
       const userId = req.user?.userId || 'default';
 
-      const updatedMessage = chatService.updateMessage(
+      const updatedMessage = await chatService.updateMessage(
         sessionId,
         messageId,
         updates,
@@ -288,7 +288,7 @@ router.delete(
     try {
       const sessionId = req.params.sessionId as string;
       const userId = req.user?.userId || 'default';
-      const deleted = chatService.deleteSession(sessionId, userId);
+      const deleted = await chatService.deleteSession(sessionId, userId);
 
       if (!deleted) {
         res.status(404).json({
@@ -320,7 +320,7 @@ router.delete(
   ): Promise<void> => {
     try {
       const userId = req.user?.userId || 'default';
-      chatService.clearAllSessions(userId);
+      await chatService.clearAllSessions(userId);
       res.json({
         success: true,
         message: 'All chat sessions cleared successfully',
@@ -354,7 +354,7 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -363,7 +363,7 @@ router.post(
         return;
       }
 
-      const message = chatService.addMessage(
+      const message = await chatService.addMessage(
         sessionId,
         {
           role,
@@ -415,7 +415,7 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -425,7 +425,7 @@ router.post(
       }
 
       // Add user message to session
-      const userMessage = chatService.addMessage(
+      const userMessage = await chatService.addMessage(
         sessionId,
         {
           role: 'user',
@@ -445,7 +445,7 @@ router.post(
       // Check if document search is available and enabled
       let documentContext = '';
       try {
-        const preferences = preferencesService.getPreferences();
+        const preferences = await preferencesService.getPreferences();
         if (preferences.embeddingSettings?.enabled) {
           console.log(
             `[DEBUG] Embeddings enabled, searching documents for: "${message}"`
@@ -540,7 +540,8 @@ router.post(
       let assistantContent: string;
 
       // Get user's preferred generation options
-      const userGenerationOptions = preferencesService.getGenerationOptions();
+      const userGenerationOptions =
+        await preferencesService.getGenerationOptions();
 
       // Merge user preferences with request options (request options take precedence)
       const mergedOptions = mergeGenerationOptions(
@@ -568,7 +569,7 @@ router.post(
       // Check if there's an active plugin for this model
       console.log(`[DEBUG] Looking for plugin for model: ${actualModelName}`);
       const activePlugin =
-        pluginService.getActivePluginForModel(actualModelName);
+        await pluginService.getActivePluginForModel(actualModelName);
       console.log(
         `[DEBUG] Found plugin:`,
         activePlugin ? activePlugin.id : 'none'
@@ -617,7 +618,7 @@ router.post(
 
       // Add assistant response to session with statistics
       const statistics = extractStatistics(response);
-      const assistantMessage = chatService.addMessage(
+      const assistantMessage = await chatService.addMessage(
         sessionId,
         {
           role: 'assistant',
@@ -666,7 +667,7 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -682,7 +683,7 @@ router.post(
       res.setHeader('Access-Control-Allow-Origin', '*');
 
       // Add user message to session
-      const userMessage = chatService.addMessage(
+      const userMessage = await chatService.addMessage(
         sessionId,
         {
           role: 'user',
@@ -738,7 +739,8 @@ router.post(
       });
 
       // Get user's preferred generation options
-      const userGenerationOptions = preferencesService.getGenerationOptions();
+      const userGenerationOptions =
+        await preferencesService.getGenerationOptions();
 
       // Merge user preferences with request options (request options take precedence)
       const mergedOptions = mergeGenerationOptions(
@@ -788,10 +790,10 @@ router.post(
           );
           res.end();
         },
-        () => {
+        async () => {
           // Add complete assistant response to session
           if (fullResponse) {
-            chatService.addMessage(
+            await chatService.addMessage(
               sessionId,
               {
                 role: 'assistant',
@@ -843,7 +845,7 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
       if (!session) {
         res.status(404).json({
           success: false,
@@ -949,7 +951,7 @@ router.post(
         return;
       }
 
-      const updatedMessage = chatService.switchMessageBranch(
+      const updatedMessage = await chatService.switchMessageBranch(
         sessionId,
         messageId,
         branchIndex,
@@ -965,7 +967,7 @@ router.post(
       }
 
       // Return the updated session
-      const session = chatService.getSession(sessionId, userId);
+      const session = await chatService.getSession(sessionId, userId);
       res.json({
         success: true,
         data: session,
@@ -994,7 +996,7 @@ router.get(
       const messageId = req.params.messageId as string;
       const userId = req.user?.userId || 'default';
 
-      const branches = chatService.getMessageBranches(
+      const branches = await chatService.getMessageBranches(
         sessionId,
         messageId,
         userId
@@ -1037,7 +1039,7 @@ router.post(
         return;
       }
 
-      const newBranch = chatService.createMessageBranch(
+      const newBranch = await chatService.createMessageBranch(
         sessionId,
         messageId,
         messageData,

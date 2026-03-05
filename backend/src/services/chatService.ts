@@ -35,9 +35,9 @@ class ChatService {
     this.loadSessions();
   }
 
-  private loadSessions() {
+  private async loadSessions() {
     try {
-      const sessionsArray = storageService.getAllSessions();
+      const sessionsArray = await storageService.getAllSessions();
       this.sessions = new Map(
         sessionsArray.map(session => [session.id, session])
       );
@@ -125,7 +125,8 @@ class ChatService {
 
     // If no persona system prompt, fall back to global preferences
     if (!systemMessage) {
-      const globalSystemMessage = preferencesService.getSystemMessage(userId);
+      const globalSystemMessage =
+        await preferencesService.getSystemMessage(userId);
       if (globalSystemMessage && globalSystemMessage.trim()) {
         systemMessage = globalSystemMessage.trim();
         systemMessageSource = 'preferences';
@@ -154,15 +155,15 @@ class ChatService {
     console.log(`📝 Session stored in cache: ${sessionId}`);
 
     // Save to storage with user ID
-    storageService.saveSession(session, userId);
+    await storageService.saveSession(session, userId);
     console.log(`💾 Session saved to storage: ${sessionId} for user ${userId}`);
     return session;
   }
 
-  getSession(
+  async getSession(
     sessionId: string,
     userId: string = 'default'
-  ): ChatSession | undefined {
+  ): Promise<ChatSession | undefined> {
     console.log(
       `🔍 ChatService.getSession: sessionId=${sessionId}, userId=${userId}`
     );
@@ -173,7 +174,7 @@ class ChatService {
 
     // If not in cache, try to load from storage (with user verification)
     if (!session) {
-      session = storageService.getSession(sessionId, userId);
+      session = await storageService.getSession(sessionId, userId);
       console.log(`💾 Session in storage: ${session ? 'YES' : 'NO'}`);
       if (session) {
         this.sessions.set(sessionId, session);
@@ -181,7 +182,10 @@ class ChatService {
     } else {
       // If found in cache, we should still verify it belongs to this user
       // by checking the storage service (which has the user verification logic)
-      const verifiedSession = storageService.getSession(sessionId, userId);
+      const verifiedSession = await storageService.getSession(
+        sessionId,
+        userId
+      );
       console.log(
         `✅ Session verification: ${verifiedSession ? 'PASSED' : 'FAILED'}`
       );
@@ -199,9 +203,9 @@ class ChatService {
     return session;
   }
 
-  getAllSessions(userId: string = 'default'): ChatSession[] {
+  async getAllSessions(userId: string = 'default'): Promise<ChatSession[]> {
     // Load fresh data from storage to ensure we have the latest
-    const sessionsArray = storageService.getAllSessions(userId);
+    const sessionsArray = await storageService.getAllSessions(userId);
 
     // Update memory cache with user-specific sessions
     // Note: We don't clear the entire cache since other users might be using it
@@ -218,7 +222,7 @@ class ChatService {
     userId: string = 'default'
   ): Promise<ChatSession | undefined> {
     // First verify the session belongs to the user
-    const session = this.getSession(sessionId, userId);
+    const session = await this.getSession(sessionId, userId);
     if (!session) return undefined;
 
     const updatedSession = {
@@ -252,26 +256,26 @@ class ChatService {
       } else {
         // If switching away from a persona to a regular model, clear personaId and use default system message
         updatedSession.personaId = undefined;
-        this.updateSystemMessageToDefault(updatedSession, userId);
+        await this.updateSystemMessageToDefault(updatedSession, userId);
       }
     }
 
     this.sessions.set(sessionId, updatedSession);
-    storageService.saveSession(updatedSession, userId);
+    await storageService.saveSession(updatedSession, userId);
     return updatedSession;
   }
 
-  addMessage(
+  async addMessage(
     sessionId: string,
     message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string },
     userId: string = 'default'
-  ): ChatMessage | undefined {
+  ): Promise<ChatMessage | undefined> {
     console.log(
       `[addMessage] Called with sessionId=${sessionId}, role=${message.role}, id=${message.id}, userId=${userId}`
     );
 
     // First verify the session belongs to the user
-    const session = this.getSession(sessionId, userId);
+    const session = await this.getSession(sessionId, userId);
     if (!session) {
       console.log(`[addMessage] Session not found: ${sessionId}`);
       return undefined;
@@ -369,21 +373,21 @@ class ChatService {
     }
 
     this.sessions.set(sessionId, session);
-    storageService.saveSession(session, userId);
+    await storageService.saveSession(session, userId);
     console.log(
       `[addMessage] Message saved successfully: ${newMessage.id}, session now has ${session.messages.length} messages`
     );
     return newMessage;
   }
 
-  updateMessage(
+  async updateMessage(
     sessionId: string,
     messageId: string,
     updates: Partial<ChatMessage>,
     userId: string = 'default'
-  ): ChatMessage | undefined {
+  ): Promise<ChatMessage | undefined> {
     // First verify the session belongs to the user
-    const session = this.getSession(sessionId, userId);
+    const session = await this.getSession(sessionId, userId);
     if (!session) {
       console.error('Session not found or access denied:', sessionId, userId);
       return undefined;
@@ -410,27 +414,30 @@ class ChatService {
 
     // Save updated session
     this.sessions.set(sessionId, session);
-    storageService.saveSession(session, userId);
+    await storageService.saveSession(session, userId);
 
     console.log(`✅ Updated message ${messageId} in session ${sessionId}`);
     return updatedMessage;
   }
 
-  deleteSession(sessionId: string, userId: string = 'default'): boolean {
+  async deleteSession(
+    sessionId: string,
+    userId: string = 'default'
+  ): Promise<boolean> {
     // First verify the session belongs to the user
-    const session = this.getSession(sessionId, userId);
+    const session = await this.getSession(sessionId, userId);
     if (!session) return false;
 
-    const deleted = storageService.deleteSession(sessionId, userId);
+    const deleted = await storageService.deleteSession(sessionId, userId);
     if (deleted) {
       this.sessions.delete(sessionId);
     }
     return deleted;
   }
 
-  clearAllSessions(userId: string = 'default'): void {
+  async clearAllSessions(userId: string = 'default'): Promise<void> {
     // Get all sessions for the user first
-    const userSessions = this.getAllSessions(userId);
+    const userSessions = await this.getAllSessions(userId);
 
     // Remove them from memory cache
     userSessions.forEach(session => {
@@ -438,9 +445,9 @@ class ChatService {
     });
 
     // Clear them from storage
-    userSessions.forEach(session => {
-      storageService.deleteSession(session.id, userId);
-    });
+    for (const session of userSessions) {
+      await storageService.deleteSession(session.id, userId);
+    }
   }
 
   private generateTitle(content: string): string {
@@ -532,11 +539,12 @@ class ChatService {
     }
   }
 
-  private updateSystemMessageToDefault(
+  private async updateSystemMessageToDefault(
     session: ChatSession,
     userId: string
-  ): void {
-    const defaultSystemMessage = preferencesService.getSystemMessage(userId);
+  ): Promise<void> {
+    const defaultSystemMessage =
+      await preferencesService.getSystemMessage(userId);
     console.log(
       `[DEBUG] updateSystemMessageToDefault: Using default system message: "${defaultSystemMessage.substring(0, 100)}..."`
     );
@@ -786,7 +794,7 @@ Guidelines:
 
       // Save the updated session
       this.sessions.set(session.id, session);
-      storageService.saveSession(session, userId);
+      await storageService.saveSession(session, userId);
 
       console.log(
         `[ADVANCED] Updated system message with ${coreMemories.length} core + ${contextualMemories.length} contextual memories`
@@ -865,13 +873,13 @@ Guidelines:
    * Create a new branch for a message (used for regeneration)
    * This marks the original message as inactive and creates a new active variant
    */
-  createMessageBranch(
+  async createMessageBranch(
     sessionId: string,
     originalMessageId: string,
     newMessage: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string },
     userId: string = 'default'
-  ): ChatMessage | undefined {
-    const session = this.getSession(sessionId, userId);
+  ): Promise<ChatMessage | undefined> {
+    const session = await this.getSession(sessionId, userId);
     if (!session) return undefined;
 
     const originalMessage = session.messages.find(
@@ -913,7 +921,7 @@ Guidelines:
     session.updatedAt = Date.now();
 
     this.sessions.set(sessionId, session);
-    storageService.saveSession(session, userId);
+    await storageService.saveSession(session, userId);
 
     return newBranchMessage;
   }
@@ -921,13 +929,13 @@ Guidelines:
   /**
    * Switch to a different branch of a message
    */
-  switchMessageBranch(
+  async switchMessageBranch(
     sessionId: string,
     messageId: string,
     targetBranchIndex: number,
     userId: string = 'default'
-  ): ChatMessage | undefined {
-    const session = this.getSession(sessionId, userId);
+  ): Promise<ChatMessage | undefined> {
+    const session = await this.getSession(sessionId, userId);
     if (!session) return undefined;
 
     // Find the target message directly by ID
@@ -950,7 +958,7 @@ Guidelines:
 
     session.updatedAt = Date.now();
     this.sessions.set(sessionId, session);
-    storageService.saveSession(session, userId);
+    await storageService.saveSession(session, userId);
 
     return targetMessage;
   }
@@ -958,12 +966,12 @@ Guidelines:
   /**
    * Get all branches for a message
    */
-  getMessageBranches(
+  async getMessageBranches(
     sessionId: string,
     messageId: string,
     userId: string = 'default'
-  ): ChatMessage[] {
-    const session = this.getSession(sessionId, userId);
+  ): Promise<ChatMessage[]> {
+    const session = await this.getSession(sessionId, userId);
     if (!session) return [];
 
     const message = session.messages.find(msg => msg.id === messageId);

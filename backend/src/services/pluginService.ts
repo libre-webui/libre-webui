@@ -81,8 +81,8 @@ class PluginService {
    * @param userId Optional user ID for per-user credentials
    * @returns The API key or null if not found
    */
-  getApiKey(plugin: Plugin, userId?: string): string | null {
-    return pluginCredentialsService.getApiKey(
+  async getApiKey(plugin: Plugin, userId?: string): Promise<string | null> {
+    return await pluginCredentialsService.getApiKey(
       plugin.id,
       plugin.auth.key_env,
       userId
@@ -92,14 +92,14 @@ class PluginService {
   /**
    * Get resolved variable values for a plugin (decrypted, typed).
    */
-  getPluginVariables(
+  async getPluginVariables(
     plugin: Plugin,
     userId?: string
-  ): Record<string, string | number | boolean> {
+  ): Promise<Record<string, string | number | boolean>> {
     if (!plugin.variables || plugin.variables.length === 0) {
       return {};
     }
-    return pluginVariablesService.getResolvedVariables(
+    return await pluginVariablesService.getResolvedVariables(
       plugin.id,
       plugin.variables,
       userId
@@ -150,7 +150,7 @@ class PluginService {
       return plugin.model_map;
     }
 
-    const apiKey = this.getApiKey(plugin);
+    const apiKey = await this.getApiKey(plugin);
     const headers: Record<string, string> = {
       Accept: 'application/json',
     };
@@ -298,7 +298,7 @@ class PluginService {
   }
 
   // Delete a plugin
-  deletePlugin(id: string): boolean {
+  async deletePlugin(id: string): Promise<boolean> {
     console.log('[Plugin Delete] Attempting to delete plugin:', id);
     console.log('[Plugin Delete] Plugins directory:', this.pluginsDir);
 
@@ -342,7 +342,7 @@ class PluginService {
       }
 
       // Clean up stored variables
-      pluginVariablesService.deletePluginVariables(id);
+      await pluginVariablesService.deletePluginVariables(id);
 
       return true;
     } catch (error) {
@@ -381,7 +381,7 @@ class PluginService {
   }
 
   // Get the active plugin for a specific model
-  getActivePluginForModel(model: string): Plugin | null {
+  async getActivePluginForModel(model: string): Promise<Plugin | null> {
     console.log(`[DEBUG] Looking for plugin for model: ${model}`);
 
     // Get all available plugins (not just active ones)
@@ -401,7 +401,7 @@ class PluginService {
         console.log(`[DEBUG] Found plugin ${plugin.id} for model ${model}`);
 
         // Check if we have the required API key (from DB or env)
-        const apiKey = this.getApiKey(plugin);
+        const apiKey = await this.getApiKey(plugin);
         if (!apiKey) {
           console.log(
             `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
@@ -480,7 +480,7 @@ class PluginService {
       );
     }
 
-    const activePlugin = this.getActivePluginForModel(model);
+    const activePlugin = await this.getActivePluginForModel(model);
 
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
@@ -498,7 +498,7 @@ class PluginService {
     }
 
     // Get API key from database (per-user) or environment variable (fallback)
-    const apiKey = this.getApiKey(activePlugin);
+    const apiKey = await this.getApiKey(activePlugin);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
@@ -506,7 +506,7 @@ class PluginService {
     }
 
     // Load plugin variables (valves) - these serve as defaults that options can override
-    const pluginVars = this.getPluginVariables(activePlugin);
+    const pluginVars = await this.getPluginVariables(activePlugin);
 
     // Allow endpoint override via plugin variables
     const endpointOverride = pluginVars.endpoint as string | undefined;
@@ -828,7 +828,7 @@ class PluginService {
       throw new Error(`Invalid model parameter: ${model}`);
     }
 
-    const activePlugin = this.getActivePluginForModel(model);
+    const activePlugin = await this.getActivePluginForModel(model);
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
@@ -838,14 +838,14 @@ class PluginService {
       );
     }
 
-    const apiKey = this.getApiKey(activePlugin);
+    const apiKey = await this.getApiKey(activePlugin);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
       );
     }
 
-    const pluginVars = this.getPluginVariables(activePlugin);
+    const pluginVars = await this.getPluginVariables(activePlugin);
     const endpointOverride = pluginVars.endpoint as string | undefined;
     const effectiveEndpoint =
       (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
@@ -1247,7 +1247,7 @@ class PluginService {
   // ============================================
 
   // Get plugin that supports TTS for a specific model
-  getPluginForTTS(model: string): Plugin | null {
+  async getPluginForTTS(model: string): Promise<Plugin | null> {
     console.log(`[DEBUG] Looking for TTS plugin for model: ${model}`);
 
     const allPlugins = this.getAllPlugins();
@@ -1267,7 +1267,7 @@ class PluginService {
               ?.no_auth_required === true;
 
           // Check if we have the required API key (from DB or env)
-          const apiKey = this.getApiKey(plugin);
+          const apiKey = await this.getApiKey(plugin);
           if (!apiKey && !noAuthRequired) {
             console.log(
               `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
@@ -1293,7 +1293,7 @@ class PluginService {
               | undefined
           )?.no_auth_required === true;
 
-        const apiKey = this.getApiKey(plugin);
+        const apiKey = await this.getApiKey(plugin);
         if (!apiKey && !noAuthRequired) {
           console.log(
             `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
@@ -1310,11 +1310,13 @@ class PluginService {
   }
 
   // Get all available TTS models from all plugins
-  getAvailableTTSModels(): {
-    model: string;
-    plugin: string;
-    config?: TTSConfig;
-  }[] {
+  async getAvailableTTSModels(): Promise<
+    {
+      model: string;
+      plugin: string;
+      config?: TTSConfig;
+    }[]
+  > {
     const models: { model: string; plugin: string; config?: TTSConfig }[] = [];
     const allPlugins = this.getAllPlugins();
 
@@ -1327,7 +1329,7 @@ class PluginService {
           (ttsCapability.config as Record<string, unknown> | undefined)
             ?.no_auth_required === true;
         // Check if API key is available (from DB or env)
-        const apiKey = this.getApiKey(plugin);
+        const apiKey = await this.getApiKey(plugin);
         if (apiKey || noAuthRequired) {
           for (const model of ttsCapability.model_map) {
             models.push({
@@ -1348,7 +1350,7 @@ class PluginService {
               | Record<string, unknown>
               | undefined
           )?.no_auth_required === true;
-        const apiKey = this.getApiKey(plugin);
+        const apiKey = await this.getApiKey(plugin);
         if (apiKey || noAuthRequired) {
           for (const model of plugin.model_map) {
             models.push({
@@ -1393,7 +1395,7 @@ class PluginService {
       );
     }
 
-    const plugin = this.getPluginForTTS(model);
+    const plugin = await this.getPluginForTTS(model);
     if (!plugin) {
       throw new Error(`No TTS plugin found for model: ${model}`);
     }
@@ -1415,7 +1417,7 @@ class PluginService {
       true;
 
     // Get API key from database (per-user) or environment variable (fallback)
-    const apiKey = this.getApiKey(plugin);
+    const apiKey = await this.getApiKey(plugin);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
@@ -1436,7 +1438,7 @@ class PluginService {
     }
 
     // Load plugin variables for TTS defaults
-    const ttsVars = this.getPluginVariables(plugin);
+    const ttsVars = await this.getPluginVariables(plugin);
 
     // Allow endpoint override via plugin variables
     if (ttsVars.endpoint && typeof ttsVars.endpoint === 'string') {
@@ -1725,11 +1727,13 @@ class PluginService {
   }
 
   // Get all available image generation models from all plugins
-  getAvailableImageGenModels(): {
-    model: string;
-    plugin: string;
-    config?: ImageGenConfig;
-  }[] {
+  async getAvailableImageGenModels(): Promise<
+    {
+      model: string;
+      plugin: string;
+      config?: ImageGenConfig;
+    }[]
+  > {
     const models: { model: string; plugin: string; config?: ImageGenConfig }[] =
       [];
     const allPlugins = this.getAllPlugins();
@@ -1742,7 +1746,7 @@ class PluginService {
         const noAuthRequired =
           (imageCapability.config as Record<string, unknown> | undefined)
             ?.no_auth_required === true;
-        const apiKey = this.getApiKey(plugin);
+        const apiKey = await this.getApiKey(plugin);
         if (apiKey || noAuthRequired) {
           for (const model of imageCapability.model_map) {
             models.push({
@@ -1756,7 +1760,7 @@ class PluginService {
 
       // Check primary type for image-only plugins
       if (plugin.type === 'image') {
-        const apiKey = this.getApiKey(plugin);
+        const apiKey = await this.getApiKey(plugin);
         if (apiKey) {
           for (const model of plugin.model_map) {
             models.push({
@@ -1818,7 +1822,7 @@ class PluginService {
     }
 
     // Allow endpoint override via plugin variables
-    const imageVars = this.getPluginVariables(plugin);
+    const imageVars = await this.getPluginVariables(plugin);
     if (imageVars.endpoint && typeof imageVars.endpoint === 'string') {
       const validated = this.validateEndpointUrl(imageVars.endpoint);
       if (validated) endpoint = validated;
@@ -1829,7 +1833,7 @@ class PluginService {
     const noAuthRequired =
       (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
       true;
-    const apiKey = this.getApiKey(plugin);
+    const apiKey = await this.getApiKey(plugin);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
@@ -1901,7 +1905,7 @@ class PluginService {
       return this.executeComfyUIRequest(baseUrl, prompt, {
         ...options,
         model,
-        pluginVars: this.getPluginVariables(plugin),
+        pluginVars: await this.getPluginVariables(plugin),
       });
     }
 
@@ -2241,7 +2245,7 @@ class PluginService {
   }
 
   // Get all plugins that support a specific capability type
-  getPluginsByCapability(capabilityType: PluginType): Plugin[] {
+  async getPluginsByCapability(capabilityType: PluginType): Promise<Plugin[]> {
     const allPlugins = this.getAllPlugins();
     const result: Plugin[] = [];
 
@@ -2256,7 +2260,7 @@ class PluginService {
               | Record<string, unknown>
               | undefined
           )?.no_auth_required === true;
-        const apiKey = this.getApiKey(plugin);
+        const apiKey = await this.getApiKey(plugin);
         if (apiKey || noAuthRequired) {
           result.push(plugin);
         }
@@ -2302,7 +2306,7 @@ class PluginService {
         }
 
         if (hasCapability) {
-          const apiKey = this.getApiKey(plugin);
+          const apiKey = await this.getApiKey(plugin);
           if (apiKey || noAuthRequired) {
             result.push(plugin);
           }

@@ -62,7 +62,7 @@ router.get(
         return;
       }
 
-      const preferences = preferencesService.getPreferences(userId);
+      const preferences = await preferencesService.getPreferences(userId);
       res.json({
         success: true,
         data: preferences,
@@ -94,7 +94,7 @@ router.put(
       }
 
       const updates = req.body;
-      const updatedPreferences = preferencesService.updatePreferences(
+      const updatedPreferences = await preferencesService.updatePreferences(
         updates,
         userId
       );
@@ -139,7 +139,7 @@ router.put(
         return;
       }
 
-      const updatedPreferences = preferencesService.setDefaultModel(
+      const updatedPreferences = await preferencesService.setDefaultModel(
         model,
         userId
       );
@@ -184,7 +184,7 @@ router.put(
         return;
       }
 
-      const updatedPreferences = preferencesService.setSystemMessage(
+      const updatedPreferences = await preferencesService.setSystemMessage(
         message,
         userId
       );
@@ -229,7 +229,7 @@ router.put(
         return;
       }
 
-      const updatedPreferences = preferencesService.setGenerationOptions(
+      const updatedPreferences = await preferencesService.setGenerationOptions(
         options,
         userId
       );
@@ -265,7 +265,7 @@ router.post(
       }
 
       const updatedPreferences =
-        preferencesService.resetGenerationOptions(userId);
+        await preferencesService.resetGenerationOptions(userId);
 
       res.json({
         success: true,
@@ -307,7 +307,7 @@ router.put(
         return;
       }
 
-      const updatedPreferences = preferencesService.setEmbeddingSettings(
+      const updatedPreferences = await preferencesService.setEmbeddingSettings(
         settings,
         userId
       );
@@ -343,7 +343,7 @@ router.post(
       }
 
       const updatedPreferences =
-        preferencesService.resetEmbeddingSettings(userId);
+        await preferencesService.resetEmbeddingSettings(userId);
 
       res.json({
         success: true,
@@ -393,7 +393,7 @@ router.post(
         return;
       }
 
-      const updatedPreferences = preferencesService.importData(
+      const updatedPreferences = await preferencesService.importData(
         data,
         mergeStrategy || 'merge',
         userId

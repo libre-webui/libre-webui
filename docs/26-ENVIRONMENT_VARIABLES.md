@@ -60,9 +60,15 @@ OLLAMA_LONG_OPERATION_TIMEOUT=1800000
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATA_DIR` | `./backend/data` | Directory for SQLite database and uploads |
+| `DATABASE_URL` | - | PostgreSQL connection string. If set, uses PostgreSQL instead of SQLite. Example: `postgresql://user:pass@host:5432/dbname` |
+| `DB_HOST` | - | PostgreSQL host (alternative to `DATABASE_URL`) |
+| `DB_PORT` | `5432` | PostgreSQL port |
+| `DB_NAME` | - | PostgreSQL database name |
+| `DB_USER` | - | PostgreSQL username |
+| `DB_PASSWORD` | - | PostgreSQL password |
+| `DATA_DIR` | `./backend/data` | Directory for SQLite database, uploads, and encryption keys |
 
-In Docker, this is typically set to `/app/backend/data`.
+In Docker, `DATA_DIR` is typically set to `/app/backend/data`.
 
 ### OAuth2 - GitHub
 
@@ -144,6 +150,8 @@ services:
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-}
       - OLLAMA_TIMEOUT=${OLLAMA_TIMEOUT:-300000}
       - OLLAMA_LONG_OPERATION_TIMEOUT=${OLLAMA_LONG_OPERATION_TIMEOUT:-900000}
+      # PostgreSQL (comment out to fall back to SQLite)
+      - DATABASE_URL=postgresql://libre:libre@postgres:5432/libre_webui
       - DATA_DIR=/app/backend/data
       # OAuth (optional)
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
@@ -238,7 +246,10 @@ ANTHROPIC_API_KEY=sk-ant-...
 NODE_ENV=production
 PORT=8080
 JWT_SECRET=<generated-64-char-hex>
-ENCRYPTION_KEY=<generated-32-char-hex>
+ENCRYPTION_KEY=<generated-64-char-hex>
+
+# Database (PostgreSQL recommended for production)
+DATABASE_URL=postgresql://user:password@localhost:5432/libre_webui
 
 # Ollama
 OLLAMA_BASE_URL=http://localhost:11434

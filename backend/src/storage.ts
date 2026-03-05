@@ -20,15 +20,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt';
-import getDatabase, { isDatabaseInitialized } from './db.js';
+import { getDatabaseSafe, isDatabaseInitialized } from './db.js';
+import type { DatabaseAdapter } from './database/types.js';
 import { ChatSession, DocumentChunk, UserPreferences } from './types/index.js';
 import { encryptionService } from './services/encryptionService.js';
 
-// Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Extended Document interface for SQLite storage
 export interface Document {
   id: string;
   filename: string;
@@ -42,7 +41,6 @@ export interface Document {
   metadata?: Record<string, unknown>;
 }
 
-// Database row interfaces
 interface SessionRow {
   id: string;
   user_id: string;
@@ -64,10 +62,9 @@ interface MessageRow {
   images?: string;
   statistics?: string;
   artifacts?: string;
-  // Branching support
   parent_id?: string;
   branch_index?: number;
-  is_active?: number; // SQLite uses 0/1 for boolean
+  is_active?: number;
 }
 
 interface DocumentRow {
@@ -108,7 +105,7 @@ export interface User {
 }
 
 class StorageService {
-  private useSQLite = false;
+  private useDatabase = false;
   private sessionsFile = path.join(__dirname, '..', 'sessions.json');
   private preferencesFile = path.join(__dirname, '..', 'preferences.json');
   private documentsFile = path.join(__dirname, '..', 'documents.json');
@@ -119,9 +116,17 @@ class StorageService {
   );
 
   constructor() {
-    // Check if SQLite should be used
-    this.useSQLite = isDatabaseInitialized();
-    console.log(`Storage mode: ${this.useSQLite ? 'SQLite' : 'JSON'}`);
+    this.useDatabase = isDatabaseInitialized();
+    console.log(`Storage mode: ${this.useDatabase ? 'Database' : 'JSON'}`);
+  }
+
+  /** Re-check database availability (called after async init). */
+  refreshDatabaseStatus(): void {
+    this.useDatabase = isDatabaseInitialized();
+  }
+
+  private getDb(): DatabaseAdapter | null {
+    return getDatabaseSafe();
   }
 
   // =================================
@@ -148,19 +153,15 @@ class StorageService {
       updated_at: now,
     };
 
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare(`
-        INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      // Encrypt sensitive user data
+    const db = this.getDb();
+    if (db) {
       const encryptedEmail = user.email
         ? encryptionService.encrypt(user.email)
         : null;
 
-      stmt.run(
+      await db.run(
+        `INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
         user.id,
         user.username,
         encryptedEmail,
@@ -174,33 +175,31 @@ class StorageService {
     return user;
   }
 
-  getUser(userId: string): User | undefined {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
-      const user = stmt.get(userId) as User | undefined;
-
+  async getUser(userId: string): Promise<User | undefined> {
+    const db = this.getDb();
+    if (db) {
+      const user = await db.get<User>(
+        'SELECT * FROM users WHERE id = ?',
+        userId
+      );
       if (user && user.email) {
-        // Decrypt email
         user.email = encryptionService.decrypt(user.email);
       }
-
       return user;
     }
     return undefined;
   }
 
-  getUserByUsername(username: string): User | undefined {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
-      const user = stmt.get(username) as User | undefined;
-
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const db = this.getDb();
+    if (db) {
+      const user = await db.get<User>(
+        'SELECT * FROM users WHERE username = ?',
+        username
+      );
       if (user && user.email) {
-        // Decrypt email
         user.email = encryptionService.decrypt(user.email);
       }
-
       return user;
     }
     return undefined;
@@ -210,48 +209,41 @@ class StorageService {
   // SESSION MANAGEMENT
   // =================================
 
-  getAllSessions(userId = 'default'): ChatSession[] {
-    if (this.useSQLite) {
-      const db = getDatabase();
+  async getAllSessions(userId = 'default'): Promise<ChatSession[]> {
+    const db = this.getDb();
+    if (db) {
+      const sessions = await db.all<SessionRow>(
+        'SELECT * FROM sessions WHERE user_id = ? ORDER BY updated_at DESC',
+        userId
+      );
 
-      // Get sessions
-      const sessionsStmt = db.prepare(`
-        SELECT * FROM sessions WHERE user_id = ? ORDER BY updated_at DESC
-      `);
-      const sessions = sessionsStmt.all(userId) as SessionRow[];
+      const result: ChatSession[] = [];
+      for (const session of sessions) {
+        const messages = await db.all<MessageRow>(
+          `SELECT * FROM session_messages
+           WHERE session_id = ?
+           ORDER BY message_index ASC, branch_index ASC`,
+          session.id
+        );
 
-      // Get ALL messages for each session (including branches for side-by-side display)
-      const messagesStmt = db.prepare(`
-        SELECT * FROM session_messages
-        WHERE session_id = ?
-        ORDER BY message_index ASC, branch_index ASC
-      `);
-
-      // Get sibling counts for branching (count all variants for each parent)
-      const siblingCountStmt = db.prepare(`
-        SELECT parent_id, COUNT(*) as count FROM session_messages
-        WHERE session_id = ? AND parent_id IS NOT NULL
-        GROUP BY parent_id
-      `);
-
-      return sessions.map(session => {
-        const messages = messagesStmt.all(session.id) as MessageRow[];
-        const siblingCounts = siblingCountStmt.all(session.id) as {
+        const siblingCounts = await db.all<{
           parent_id: string;
           count: number;
-        }[];
+        }>(
+          `SELECT parent_id, COUNT(*) as count FROM session_messages
+           WHERE session_id = ? AND parent_id IS NOT NULL
+           GROUP BY parent_id`,
+          session.id
+        );
 
-        // Create a map for quick lookup of sibling counts
         const siblingCountMap = new Map<string, number>();
         for (const sc of siblingCounts) {
-          // Add 1 to include the original message in the count
           siblingCountMap.set(sc.parent_id, sc.count + 1);
         }
 
-        // Decrypt session data
         const decryptedTitle = encryptionService.decrypt(session.title);
 
-        return {
+        result.push({
           id: session.id,
           title: decryptedTitle,
           model: session.model,
@@ -259,7 +251,6 @@ class StorageService {
           createdAt: session.created_at,
           updatedAt: session.updated_at,
           messages: messages.map(msg => {
-            // Decrypt message data
             const decryptedContent = encryptionService.decrypt(msg.content);
             const decryptedImages = msg.images
               ? JSON.parse(encryptionService.decrypt(msg.images))
@@ -271,8 +262,6 @@ class StorageService {
               ? JSON.parse(encryptionService.decrypt(msg.artifacts))
               : undefined;
 
-            // Calculate sibling count: if this message has variants, count them
-            // A message has siblings if it's a parent (has variants) or is a variant itself
             const parentId = msg.parent_id || msg.id;
             const siblingCount = siblingCountMap.get(parentId) || 1;
 
@@ -291,63 +280,58 @@ class StorageService {
               siblingCount: siblingCount > 1 ? siblingCount : undefined,
             };
           }),
-        };
-      });
-    } else {
-      // Fallback to JSON
-      try {
-        if (fs.existsSync(this.sessionsFile)) {
-          const data = fs.readFileSync(this.sessionsFile, 'utf8');
-          return JSON.parse(data) as ChatSession[];
-        }
-      } catch (error) {
-        console.error('Failed to load sessions from JSON:', error);
+        });
       }
+      return result;
     }
 
+    // Fallback to JSON
+    try {
+      if (fs.existsSync(this.sessionsFile)) {
+        const data = fs.readFileSync(this.sessionsFile, 'utf8');
+        return JSON.parse(data) as ChatSession[];
+      }
+    } catch (error) {
+      console.error('Failed to load sessions from JSON:', error);
+    }
     return [];
   }
 
-  getSession(sessionId: string, userId = 'default'): ChatSession | undefined {
-    if (this.useSQLite) {
-      const db = getDatabase();
-
-      // Get session
-      const sessionStmt = db.prepare(`
-        SELECT * FROM sessions WHERE id = ? AND user_id = ?
-      `);
-      const session = sessionStmt.get(sessionId, userId) as
-        | SessionRow
-        | undefined;
-
+  async getSession(
+    sessionId: string,
+    userId = 'default'
+  ): Promise<ChatSession | undefined> {
+    const db = this.getDb();
+    if (db) {
+      const session = await db.get<SessionRow>(
+        'SELECT * FROM sessions WHERE id = ? AND user_id = ?',
+        sessionId,
+        userId
+      );
       if (!session) return undefined;
 
-      // Get ALL messages (including branches for side-by-side display)
-      const messagesStmt = db.prepare(`
-        SELECT * FROM session_messages
-        WHERE session_id = ?
-        ORDER BY message_index ASC, branch_index ASC
-      `);
-      const messages = messagesStmt.all(sessionId) as MessageRow[];
+      const messages = await db.all<MessageRow>(
+        `SELECT * FROM session_messages
+         WHERE session_id = ?
+         ORDER BY message_index ASC, branch_index ASC`,
+        sessionId
+      );
 
-      // Get sibling counts for branching
-      const siblingCountStmt = db.prepare(`
-        SELECT parent_id, COUNT(*) as count FROM session_messages
-        WHERE session_id = ? AND parent_id IS NOT NULL
-        GROUP BY parent_id
-      `);
-      const siblingCounts = siblingCountStmt.all(sessionId) as {
+      const siblingCounts = await db.all<{
         parent_id: string;
         count: number;
-      }[];
+      }>(
+        `SELECT parent_id, COUNT(*) as count FROM session_messages
+         WHERE session_id = ? AND parent_id IS NOT NULL
+         GROUP BY parent_id`,
+        sessionId
+      );
 
-      // Create a map for quick lookup of sibling counts
       const siblingCountMap = new Map<string, number>();
       for (const sc of siblingCounts) {
         siblingCountMap.set(sc.parent_id, sc.count + 1);
       }
 
-      // Decrypt session data
       const decryptedTitle = encryptionService.decrypt(session.title);
 
       return {
@@ -357,7 +341,6 @@ class StorageService {
         createdAt: session.created_at,
         updatedAt: session.updated_at,
         messages: messages.map(msg => {
-          // Decrypt message data
           const decryptedContent = encryptionService.decrypt(msg.content);
           const decryptedImages = msg.images
             ? JSON.parse(encryptionService.decrypt(msg.images))
@@ -388,29 +371,28 @@ class StorageService {
           };
         }),
       };
-    } else {
-      // Fallback to JSON
-      const sessions = this.getAllSessions();
-      return sessions.find(s => s.id === sessionId);
     }
+
+    const sessions = await this.getAllSessions();
+    return sessions.find(s => s.id === sessionId);
   }
 
-  saveSession(session: ChatSession, userId = 'default'): void {
-    if (this.useSQLite) {
-      const db = getDatabase();
-
-      // Use transaction for consistency
-      const transaction = db.transaction((session: ChatSession) => {
-        // Insert or update session
-        const sessionStmt = db.prepare(`
-          INSERT OR REPLACE INTO sessions (id, user_id, title, model, persona_id, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        // Encrypt sensitive session data
+  async saveSession(session: ChatSession, userId = 'default'): Promise<void> {
+    const db = this.getDb();
+    if (db) {
+      await db.transaction(async tx => {
         const encryptedTitle = encryptionService.encrypt(session.title);
 
-        sessionStmt.run(
+        await tx.run(
+          `INSERT INTO sessions (id, user_id, title, model, persona_id, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT (id) DO UPDATE SET
+             user_id = excluded.user_id,
+             title = excluded.title,
+             model = excluded.model,
+             persona_id = excluded.persona_id,
+             created_at = excluded.created_at,
+             updated_at = excluded.updated_at`,
           session.id,
           userId,
           encryptedTitle,
@@ -420,21 +402,14 @@ class StorageService {
           session.updatedAt
         );
 
-        // Delete existing messages
-        const deleteMessagesStmt = db.prepare(
-          'DELETE FROM session_messages WHERE session_id = ?'
+        await tx.run(
+          'DELETE FROM session_messages WHERE session_id = ?',
+          session.id
         );
-        deleteMessagesStmt.run(session.id);
 
-        // Insert messages
         if (session.messages && session.messages.length > 0) {
-          const insertMessageStmt = db.prepare(`
-            INSERT INTO session_messages (id, session_id, role, content, timestamp, message_index, model, images, statistics, artifacts, parent_id, branch_index, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `);
-
-          session.messages.forEach((message, index) => {
-            // Encrypt sensitive data before storing
+          for (let index = 0; index < session.messages.length; index++) {
+            const message = session.messages[index];
             const encryptedContent = encryptionService.encrypt(message.content);
             const encryptedImages = message.images
               ? encryptionService.encrypt(JSON.stringify(message.images))
@@ -445,11 +420,12 @@ class StorageService {
             const encryptedArtifacts = message.artifacts
               ? encryptionService.encrypt(JSON.stringify(message.artifacts))
               : null;
-
-            // Use the message's own ID if it has one, otherwise generate a new one
             const messageId = message.id || uuidv4();
 
-            insertMessageStmt.run(
+            await tx.run(
+              `INSERT INTO session_messages
+               (id, session_id, role, content, timestamp, message_index, model, images, statistics, artifacts, parent_id, branch_index, is_active)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
               messageId,
               session.id,
               message.role,
@@ -464,23 +440,18 @@ class StorageService {
               message.branchIndex ?? 0,
               message.isActive !== false ? 1 : 0
             );
-          });
+          }
         }
       });
-
-      transaction(session);
     } else {
-      // Fallback to JSON
       try {
-        const sessions = this.getAllSessions();
+        const sessions = await this.getAllSessions();
         const existingIndex = sessions.findIndex(s => s.id === session.id);
-
         if (existingIndex >= 0) {
           sessions[existingIndex] = session;
         } else {
           sessions.push(session);
         }
-
         fs.writeFileSync(this.sessionsFile, JSON.stringify(sessions, null, 2));
       } catch (error) {
         console.error('Failed to save session to JSON:', error);
@@ -488,52 +459,51 @@ class StorageService {
     }
   }
 
-  deleteSession(sessionId: string, userId = 'default'): boolean {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare(
-        'DELETE FROM sessions WHERE id = ? AND user_id = ?'
+  async deleteSession(sessionId: string, userId = 'default'): Promise<boolean> {
+    const db = this.getDb();
+    if (db) {
+      const result = await db.run(
+        'DELETE FROM sessions WHERE id = ? AND user_id = ?',
+        sessionId,
+        userId
       );
-      const result = stmt.run(sessionId, userId);
       return result.changes > 0;
-    } else {
-      // Fallback to JSON
-      try {
-        const sessions = this.getAllSessions();
-        const filteredSessions = sessions.filter(s => s.id !== sessionId);
-
-        if (filteredSessions.length !== sessions.length) {
-          fs.writeFileSync(
-            this.sessionsFile,
-            JSON.stringify(filteredSessions, null, 2)
-          );
-          return true;
-        }
-      } catch (error) {
-        console.error('Failed to delete session from JSON:', error);
-      }
     }
 
+    try {
+      const sessions = await this.getAllSessions();
+      const filteredSessions = sessions.filter(s => s.id !== sessionId);
+      if (filteredSessions.length !== sessions.length) {
+        fs.writeFileSync(
+          this.sessionsFile,
+          JSON.stringify(filteredSessions, null, 2)
+        );
+        return true;
+      }
+    } catch (error) {
+      console.error('Failed to delete session from JSON:', error);
+    }
     return false;
   }
 
-  clearAllSessions(userId = 'default'): number {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare('DELETE FROM sessions WHERE user_id = ?');
-      const result = stmt.run(userId);
+  async clearAllSessions(userId = 'default'): Promise<number> {
+    const db = this.getDb();
+    if (db) {
+      const result = await db.run(
+        'DELETE FROM sessions WHERE user_id = ?',
+        userId
+      );
       return result.changes;
-    } else {
-      // Fallback to JSON
-      try {
-        const currentSessions = this.getAllSessions();
-        const deletedCount = currentSessions.length;
-        fs.writeFileSync(this.sessionsFile, JSON.stringify([], null, 2));
-        return deletedCount;
-      } catch (error) {
-        console.error('Failed to clear all sessions from JSON:', error);
-        return 0;
-      }
+    }
+
+    try {
+      const currentSessions = await this.getAllSessions();
+      const deletedCount = currentSessions.length;
+      fs.writeFileSync(this.sessionsFile, JSON.stringify([], null, 2));
+      return deletedCount;
+    } catch (error) {
+      console.error('Failed to clear all sessions from JSON:', error);
+      return 0;
     }
   }
 
@@ -541,10 +511,6 @@ class StorageService {
   // PREFERENCES MANAGEMENT
   // =================================
 
-  /**
-   * Safely decrypt and parse a preference value with proper error handling
-   * Returns null for corrupted data (which will be cleaned up)
-   */
   private safeDecryptPreference(
     key: string,
     value: string,
@@ -555,54 +521,50 @@ class StorageService {
       try {
         return JSON.parse(decryptedValue);
       } catch {
-        // Corrupted - will be cleaned up
         return null;
       }
     } catch {
-      // Try as unencrypted legacy data
       try {
         return JSON.parse(value);
       } catch {
-        // Corrupted - will be cleaned up
         return null;
       }
     }
   }
 
-  /**
-   * Delete a corrupted preference from the database
-   */
-  private deleteCorruptedPreference(userId: string, key: string): void {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      db.prepare(
-        'DELETE FROM user_preferences WHERE user_id = ? AND key = ?'
-      ).run(userId, key);
+  private async deleteCorruptedPreference(
+    userId: string,
+    key: string
+  ): Promise<void> {
+    const db = this.getDb();
+    if (db) {
+      await db.run(
+        'DELETE FROM user_preferences WHERE user_id = ? AND key = ?',
+        userId,
+        key
+      );
       console.log(`Cleaned up corrupted preference: ${key}`);
     }
   }
 
-  getPreferences(userId?: string): UserPreferences | null {
-    if (this.useSQLite) {
-      const db = getDatabase();
-
-      // If no userId provided, get the first user (single-user mode)
+  async getPreferences(userId?: string): Promise<UserPreferences | null> {
+    const db = this.getDb();
+    if (db) {
       if (!userId) {
-        const firstUser = db.prepare('SELECT id FROM users LIMIT 1').get() as
-          | { id: string }
-          | undefined;
+        const firstUser = await db.get<{ id: string }>(
+          'SELECT id FROM users LIMIT 1'
+        );
         if (firstUser) {
           userId = firstUser.id;
         } else {
-          return null; // No users found, return null
+          return null;
         }
       }
 
-      const stmt = db.prepare(
-        'SELECT key, value FROM user_preferences WHERE user_id = ?'
+      const rows = await db.all<{ key: string; value: string }>(
+        'SELECT key, value FROM user_preferences WHERE user_id = ?',
+        userId
       );
-      const rows = stmt.all(userId) as { key: string; value: string }[];
-
       if (rows.length === 0) return null;
 
       const preferences: Record<string, unknown> = {};
@@ -617,41 +579,40 @@ class StorageService {
         }
       });
 
-      // Clean up corrupted preferences
       if (corruptedKeys.length > 0 && userId) {
-        corruptedKeys.forEach(key =>
-          this.deleteCorruptedPreference(userId!, key)
-        );
+        for (const key of corruptedKeys) {
+          await this.deleteCorruptedPreference(userId, key);
+        }
       }
 
       return Object.keys(preferences).length > 0
         ? (preferences as unknown as UserPreferences)
         : null;
-    } else {
-      // Fallback to JSON
-      try {
-        if (fs.existsSync(this.preferencesFile)) {
-          const data = fs.readFileSync(this.preferencesFile, 'utf8');
-          return JSON.parse(data) as UserPreferences;
-        }
-      } catch (error) {
-        console.error('Failed to load preferences from JSON:', error);
-      }
     }
 
+    try {
+      if (fs.existsSync(this.preferencesFile)) {
+        const data = fs.readFileSync(this.preferencesFile, 'utf8');
+        return JSON.parse(data) as UserPreferences;
+      }
+    } catch (error) {
+      console.error('Failed to load preferences from JSON:', error);
+    }
     return null;
   }
 
-  savePreferences(preferences: UserPreferences, userId?: string): void {
-    if (this.useSQLite) {
-      const db = getDatabase();
+  async savePreferences(
+    preferences: UserPreferences,
+    userId?: string
+  ): Promise<void> {
+    const db = this.getDb();
+    if (db) {
       const now = Date.now();
 
-      // If no userId provided, get the first user (single-user mode)
       if (!userId) {
-        const firstUser = db.prepare('SELECT id FROM users LIMIT 1').get() as
-          | { id: string }
-          | undefined;
+        const firstUser = await db.get<{ id: string }>(
+          'SELECT id FROM users LIMIT 1'
+        );
         if (firstUser) {
           userId = firstUser.id;
         } else {
@@ -659,37 +620,30 @@ class StorageService {
         }
       }
 
-      const transaction = db.transaction((preferences: UserPreferences) => {
-        // Delete existing preferences for this user
-        const deleteStmt = db.prepare(
-          'DELETE FROM user_preferences WHERE user_id = ?'
+      const finalUserId = userId;
+      await db.transaction(async tx => {
+        await tx.run(
+          'DELETE FROM user_preferences WHERE user_id = ?',
+          finalUserId
         );
-        deleteStmt.run(userId);
-
-        // Insert new preferences
-        const insertStmt = db.prepare(`
-          INSERT INTO user_preferences (id, user_id, key, value, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?)
-        `);
-
-        Object.entries(preferences).forEach(([key, value]) => {
-          // Skip undefined values - they would cause NOT NULL constraint errors
-          if (value === undefined) {
-            return;
-          }
-
-          // Encrypt the preference value before storing
+        for (const [key, value] of Object.entries(preferences)) {
+          if (value === undefined) continue;
           const encryptedValue = encryptionService.encrypt(
             JSON.stringify(value)
           );
-
-          insertStmt.run(uuidv4(), userId, key, encryptedValue, now, now);
-        });
+          await tx.run(
+            `INSERT INTO user_preferences (id, user_id, key, value, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+            uuidv4(),
+            finalUserId,
+            key,
+            encryptedValue,
+            now,
+            now
+          );
+        }
       });
-
-      transaction(preferences);
     } else {
-      // Fallback to JSON
       try {
         fs.writeFileSync(
           this.preferencesFile,
@@ -705,139 +659,114 @@ class StorageService {
   // DOCUMENT MANAGEMENT
   // =================================
 
-  getAllDocuments(userId = 'default'): Document[] {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare(`
-        SELECT * FROM documents WHERE user_id = ? ORDER BY uploaded_at DESC
-      `);
-      const rows = stmt.all(userId) as DocumentRow[];
-
-      return rows.map(row => {
-        // Decrypt document data
-        const decryptedTitle = row.title
-          ? encryptionService.decrypt(row.title)
-          : undefined;
-        const decryptedContent = row.content
-          ? encryptionService.decrypt(row.content)
-          : undefined;
-        const decryptedMetadata = row.metadata
-          ? JSON.parse(encryptionService.decrypt(row.metadata))
-          : undefined;
-
-        return {
-          id: row.id,
-          filename: row.filename,
-          title: decryptedTitle,
-          content: decryptedContent,
-          fileType: row.file_type as 'pdf' | 'txt' | undefined,
-          size: row.size,
-          sessionId: row.session_id,
-          uploadedAt: row.uploaded_at,
-          createdAt: row.created_at,
-          metadata: decryptedMetadata,
-        };
-      });
-    } else {
-      // Fallback to JSON
-      try {
-        if (fs.existsSync(this.documentsFile)) {
-          const data = fs.readFileSync(this.documentsFile, 'utf8');
-          return JSON.parse(data) as Document[];
-        }
-      } catch (error) {
-        console.error('Failed to load documents from JSON:', error);
-      }
-    }
-
-    return [];
-  }
-
-  getDocument(documentId: string, userId = 'default'): Document | undefined {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare(
-        'SELECT * FROM documents WHERE id = ? AND user_id = ?'
+  async getAllDocuments(userId = 'default'): Promise<Document[]> {
+    const db = this.getDb();
+    if (db) {
+      const rows = await db.all<DocumentRow>(
+        'SELECT * FROM documents WHERE user_id = ? ORDER BY uploaded_at DESC',
+        userId
       );
-      const row = stmt.get(documentId, userId) as DocumentRow | undefined;
-
-      if (!row) return undefined;
-
-      // Decrypt document data
-      const decryptedTitle = row.title
-        ? encryptionService.decrypt(row.title)
-        : undefined;
-      const decryptedContent = row.content
-        ? encryptionService.decrypt(row.content)
-        : undefined;
-      const decryptedMetadata = row.metadata
-        ? JSON.parse(encryptionService.decrypt(row.metadata))
-        : undefined;
-
-      return {
+      return rows.map(row => ({
         id: row.id,
         filename: row.filename,
-        title: decryptedTitle,
-        content: decryptedContent,
+        title: row.title ? encryptionService.decrypt(row.title) : undefined,
+        content: row.content
+          ? encryptionService.decrypt(row.content)
+          : undefined,
         fileType: row.file_type as 'pdf' | 'txt' | undefined,
         size: row.size,
         sessionId: row.session_id,
         uploadedAt: row.uploaded_at,
         createdAt: row.created_at,
-        metadata: decryptedMetadata,
-      };
-    } else {
-      // Fallback to JSON
-      const documents = this.getAllDocuments();
-      return documents.find(d => d.id === documentId);
+        metadata: row.metadata
+          ? JSON.parse(encryptionService.decrypt(row.metadata))
+          : undefined,
+      }));
     }
+
+    try {
+      if (fs.existsSync(this.documentsFile)) {
+        const data = fs.readFileSync(this.documentsFile, 'utf8');
+        return JSON.parse(data) as Document[];
+      }
+    } catch (error) {
+      console.error('Failed to load documents from JSON:', error);
+    }
+    return [];
   }
 
-  saveDocument(document: Document, userId = 'default'): void {
-    if (this.useSQLite) {
-      const db = getDatabase();
+  async getDocument(
+    documentId: string,
+    userId = 'default'
+  ): Promise<Document | undefined> {
+    const db = this.getDb();
+    if (db) {
+      const row = await db.get<DocumentRow>(
+        'SELECT * FROM documents WHERE id = ? AND user_id = ?',
+        documentId,
+        userId
+      );
+      if (!row) return undefined;
+      return {
+        id: row.id,
+        filename: row.filename,
+        title: row.title ? encryptionService.decrypt(row.title) : undefined,
+        content: row.content
+          ? encryptionService.decrypt(row.content)
+          : undefined,
+        fileType: row.file_type as 'pdf' | 'txt' | undefined,
+        size: row.size,
+        sessionId: row.session_id,
+        uploadedAt: row.uploaded_at,
+        createdAt: row.created_at,
+        metadata: row.metadata
+          ? JSON.parse(encryptionService.decrypt(row.metadata))
+          : undefined,
+      };
+    }
+
+    const documents = await this.getAllDocuments();
+    return documents.find(d => d.id === documentId);
+  }
+
+  async saveDocument(document: Document, userId = 'default'): Promise<void> {
+    const db = this.getDb();
+    if (db) {
       const now = Date.now();
-
-      const stmt = db.prepare(`
-        INSERT OR REPLACE INTO documents 
-        (id, user_id, filename, title, content, metadata, uploaded_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-
-      // Encrypt sensitive document data
-      const encryptedTitle = document.title
-        ? encryptionService.encrypt(document.title)
-        : null;
-      const encryptedContent = document.content
-        ? encryptionService.encrypt(document.content)
-        : null;
-      const encryptedMetadata = document.metadata
-        ? encryptionService.encrypt(JSON.stringify(document.metadata))
-        : null;
-
-      stmt.run(
+      await db.run(
+        `INSERT INTO documents
+         (id, user_id, filename, title, content, metadata, uploaded_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT (id) DO UPDATE SET
+           user_id = excluded.user_id,
+           filename = excluded.filename,
+           title = excluded.title,
+           content = excluded.content,
+           metadata = excluded.metadata,
+           uploaded_at = excluded.uploaded_at,
+           created_at = excluded.created_at,
+           updated_at = excluded.updated_at`,
         document.id,
         userId,
         document.filename,
-        encryptedTitle,
-        encryptedContent,
-        encryptedMetadata,
+        document.title ? encryptionService.encrypt(document.title) : null,
+        document.content ? encryptionService.encrypt(document.content) : null,
+        document.metadata
+          ? encryptionService.encrypt(JSON.stringify(document.metadata))
+          : null,
         document.uploadedAt,
         document.createdAt || now,
         now
       );
     } else {
-      // Fallback to JSON
       try {
-        const documents = this.getAllDocuments();
+        const documents = await this.getAllDocuments();
         const existingIndex = documents.findIndex(d => d.id === document.id);
-
         if (existingIndex >= 0) {
           documents[existingIndex] = document;
         } else {
           documents.push(document);
         }
-
         fs.writeFileSync(
           this.documentsFile,
           JSON.stringify(documents, null, 2)
@@ -848,32 +777,30 @@ class StorageService {
     }
   }
 
-  deleteDocument(documentId: string, userId = 'default'): boolean {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare(
-        'DELETE FROM documents WHERE id = ? AND user_id = ?'
+  async deleteDocument(
+    documentId: string,
+    userId = 'default'
+  ): Promise<boolean> {
+    const db = this.getDb();
+    if (db) {
+      const result = await db.run(
+        'DELETE FROM documents WHERE id = ? AND user_id = ?',
+        documentId,
+        userId
       );
-      const result = stmt.run(documentId, userId);
       return result.changes > 0;
-    } else {
-      // Fallback to JSON
-      try {
-        const documents = this.getAllDocuments();
-        const filteredDocuments = documents.filter(d => d.id !== documentId);
-
-        if (filteredDocuments.length !== documents.length) {
-          fs.writeFileSync(
-            this.documentsFile,
-            JSON.stringify(filteredDocuments, null, 2)
-          );
-          return true;
-        }
-      } catch (error) {
-        console.error('Failed to delete document from JSON:', error);
-      }
     }
 
+    try {
+      const documents = await this.getAllDocuments();
+      const filtered = documents.filter(d => d.id !== documentId);
+      if (filtered.length !== documents.length) {
+        fs.writeFileSync(this.documentsFile, JSON.stringify(filtered, null, 2));
+        return true;
+      }
+    } catch (error) {
+      console.error('Failed to delete document from JSON:', error);
+    }
     return false;
   }
 
@@ -881,104 +808,78 @@ class StorageService {
   // DOCUMENT CHUNKS MANAGEMENT
   // =================================
 
-  getDocumentChunks(documentId: string): DocumentChunk[] {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare(`
-        SELECT * FROM document_chunks WHERE document_id = ? ORDER BY chunk_index ASC
-      `);
-      const rows = stmt.all(documentId) as DocumentChunkRow[];
-
-      return rows.map(row => {
-        // Decrypt document chunk data
-        const decryptedContent = encryptionService.decrypt(row.content);
-        const decryptedEmbedding = row.embedding
+  async getDocumentChunks(documentId: string): Promise<DocumentChunk[]> {
+    const db = this.getDb();
+    if (db) {
+      const rows = await db.all<DocumentChunkRow>(
+        'SELECT * FROM document_chunks WHERE document_id = ? ORDER BY chunk_index ASC',
+        documentId
+      );
+      return rows.map(row => ({
+        id: row.id,
+        documentId: row.document_id,
+        content: encryptionService.decrypt(row.content),
+        embedding: row.embedding
           ? JSON.parse(encryptionService.decrypt(row.embedding))
-          : undefined;
-        const decryptedMetadata = row.metadata
+          : undefined,
+        chunkIndex: row.chunk_index,
+        startChar: row.start_char,
+        endChar: row.end_char,
+        metadata: row.metadata
           ? JSON.parse(encryptionService.decrypt(row.metadata))
-          : undefined;
-
-        return {
-          id: row.id,
-          documentId: row.document_id,
-          content: decryptedContent,
-          embedding: decryptedEmbedding,
-          chunkIndex: row.chunk_index,
-          startChar: row.start_char,
-          endChar: row.end_char,
-          metadata: decryptedMetadata,
-        };
-      });
-    } else {
-      // Fallback to JSON
-      try {
-        if (fs.existsSync(this.documentChunksFile)) {
-          const data = fs.readFileSync(this.documentChunksFile, 'utf8');
-          const chunksData = JSON.parse(data);
-          return chunksData[documentId] || [];
-        }
-      } catch (error) {
-        console.error('Failed to load document chunks from JSON:', error);
-      }
+          : undefined,
+      }));
     }
 
+    try {
+      if (fs.existsSync(this.documentChunksFile)) {
+        const data = fs.readFileSync(this.documentChunksFile, 'utf8');
+        const chunksData = JSON.parse(data);
+        return chunksData[documentId] || [];
+      }
+    } catch (error) {
+      console.error('Failed to load document chunks from JSON:', error);
+    }
     return [];
   }
 
-  saveDocumentChunks(documentId: string, chunks: DocumentChunk[]): void {
-    if (this.useSQLite) {
-      const db = getDatabase();
+  async saveDocumentChunks(
+    documentId: string,
+    chunks: DocumentChunk[]
+  ): Promise<void> {
+    const db = this.getDb();
+    if (db) {
       const now = Date.now();
-
-      const transaction = db.transaction(
-        (documentId: string, chunks: DocumentChunk[]) => {
-          // Delete existing chunks
-          const deleteStmt = db.prepare(
-            'DELETE FROM document_chunks WHERE document_id = ?'
+      await db.transaction(async tx => {
+        await tx.run(
+          'DELETE FROM document_chunks WHERE document_id = ?',
+          documentId
+        );
+        for (const chunk of chunks) {
+          await tx.run(
+            `INSERT INTO document_chunks
+             (id, document_id, chunk_index, content, start_char, end_char, embedding, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            chunk.id,
+            documentId,
+            chunk.chunkIndex,
+            encryptionService.encrypt(chunk.content),
+            chunk.startChar || null,
+            chunk.endChar || null,
+            chunk.embedding
+              ? encryptionService.encrypt(JSON.stringify(chunk.embedding))
+              : null,
+            now
           );
-          deleteStmt.run(documentId);
-
-          // Insert new chunks
-          if (chunks.length > 0) {
-            const insertStmt = db.prepare(`
-            INSERT INTO document_chunks 
-            (id, document_id, chunk_index, content, start_char, end_char, embedding, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-          `);
-
-            chunks.forEach(chunk => {
-              // Encrypt chunk data
-              const encryptedContent = encryptionService.encrypt(chunk.content);
-              const encryptedEmbedding = chunk.embedding
-                ? encryptionService.encrypt(JSON.stringify(chunk.embedding))
-                : null;
-
-              insertStmt.run(
-                chunk.id,
-                documentId,
-                chunk.chunkIndex,
-                encryptedContent,
-                chunk.startChar || null,
-                chunk.endChar || null,
-                encryptedEmbedding,
-                now
-              );
-            });
-          }
         }
-      );
-
-      transaction(documentId, chunks);
+      });
     } else {
-      // Fallback to JSON
       try {
         let chunksData: Record<string, DocumentChunk[]> = {};
         if (fs.existsSync(this.documentChunksFile)) {
           const data = fs.readFileSync(this.documentChunksFile, 'utf8');
           chunksData = JSON.parse(data);
         }
-
         chunksData[documentId] = chunks;
         fs.writeFileSync(
           this.documentChunksFile,
@@ -990,39 +891,35 @@ class StorageService {
     }
   }
 
-  deleteDocumentChunks(documentId: string): boolean {
-    if (this.useSQLite) {
-      const db = getDatabase();
-      const stmt = db.prepare(
-        'DELETE FROM document_chunks WHERE document_id = ?'
+  async deleteDocumentChunks(documentId: string): Promise<boolean> {
+    const db = this.getDb();
+    if (db) {
+      const result = await db.run(
+        'DELETE FROM document_chunks WHERE document_id = ?',
+        documentId
       );
-      const result = stmt.run(documentId);
       return result.changes > 0;
-    } else {
-      // Fallback to JSON
-      try {
-        if (fs.existsSync(this.documentChunksFile)) {
-          const data = fs.readFileSync(this.documentChunksFile, 'utf8');
-          const chunksData = JSON.parse(data);
-
-          if (chunksData[documentId]) {
-            delete chunksData[documentId];
-            fs.writeFileSync(
-              this.documentChunksFile,
-              JSON.stringify(chunksData, null, 2)
-            );
-            return true;
-          }
-        }
-      } catch (error) {
-        console.error('Failed to delete document chunks from JSON:', error);
-      }
     }
 
+    try {
+      if (fs.existsSync(this.documentChunksFile)) {
+        const data = fs.readFileSync(this.documentChunksFile, 'utf8');
+        const chunksData = JSON.parse(data);
+        if (chunksData[documentId]) {
+          delete chunksData[documentId];
+          fs.writeFileSync(
+            this.documentChunksFile,
+            JSON.stringify(chunksData, null, 2)
+          );
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete document chunks from JSON:', error);
+    }
     return false;
   }
 }
 
-// Export singleton instance
 const storageService = new StorageService();
 export default storageService;

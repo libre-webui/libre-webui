@@ -65,9 +65,9 @@ class DocumentService {
     this.loadChunks();
   }
 
-  private loadDocuments() {
+  private async loadDocuments() {
     try {
-      const documentsArray = storageService.getAllDocuments();
+      const documentsArray = await storageService.getAllDocuments();
       this.documents = new Map(documentsArray.map(doc => [doc.id, doc]));
       console.log(`Loaded ${documentsArray.length} documents from storage`);
     } catch (error) {
@@ -75,12 +75,12 @@ class DocumentService {
     }
   }
 
-  private loadChunks() {
+  private async loadChunks() {
     try {
       // Load chunks for all documents
       const documentsArray = Array.from(this.documents.values());
       for (const doc of documentsArray) {
-        const chunks = storageService.getDocumentChunks(doc.id);
+        const chunks = await storageService.getDocumentChunks(doc.id);
         if (chunks.length > 0) {
           this.chunks.set(doc.id, chunks);
         }
@@ -159,7 +159,7 @@ class DocumentService {
       };
 
       // Process the document into chunks
-      const chunks = this.chunkDocument(document);
+      const chunks = await this.chunkDocument(document);
 
       // Generate embeddings for chunks if enabled
       const chunksWithEmbeddings =
@@ -169,8 +169,8 @@ class DocumentService {
       this.documents.set(documentId, document);
       this.chunks.set(documentId, chunksWithEmbeddings);
 
-      storageService.saveDocument(document);
-      storageService.saveDocumentChunks(documentId, chunksWithEmbeddings);
+      await storageService.saveDocument(document);
+      await storageService.saveDocumentChunks(documentId, chunksWithEmbeddings);
 
       console.log(
         `Processed ${fileType.toUpperCase()} document: ${fileName} (${chunksWithEmbeddings.length} chunks)`
@@ -184,9 +184,9 @@ class DocumentService {
     }
   }
 
-  private chunkDocument(document: Document): DocumentChunk[] {
+  private async chunkDocument(document: Document): Promise<DocumentChunk[]> {
     const chunks: DocumentChunk[] = [];
-    const preferences = preferencesService.getPreferences();
+    const preferences = await preferencesService.getPreferences();
     const chunkSize = preferences.embeddingSettings?.chunkSize || 1000; // characters per chunk
     const overlap = preferences.embeddingSettings?.chunkOverlap || 200; // character overlap between chunks
 
@@ -269,7 +269,7 @@ class DocumentService {
     text: string
   ): Promise<number[] | null> {
     try {
-      const preferences = preferencesService.getPreferences();
+      const preferences = await preferencesService.getPreferences();
       if (!preferences.embeddingSettings.enabled) {
         return null;
       }
@@ -289,7 +289,7 @@ class DocumentService {
   private async generateEmbeddingsForChunks(
     chunks: DocumentChunk[]
   ): Promise<DocumentChunk[]> {
-    const preferences = preferencesService.getPreferences();
+    const preferences = await preferencesService.getPreferences();
     if (!preferences.embeddingSettings.enabled) {
       return chunks;
     }
@@ -313,7 +313,7 @@ class DocumentService {
 
   // Method to regenerate embeddings for all existing documents
   async regenerateAllEmbeddings(): Promise<void> {
-    const preferences = preferencesService.getPreferences();
+    const preferences = await preferencesService.getPreferences();
     if (!preferences.embeddingSettings.enabled) {
       console.log('Embeddings are disabled, skipping regeneration');
       return;
@@ -344,7 +344,7 @@ class DocumentService {
     chunksWithEmbeddings: number;
     totalChunks: number;
   }> {
-    const preferences = preferencesService.getPreferences();
+    const preferences = await preferencesService.getPreferences();
     let chunksWithEmbeddings = 0;
     let totalChunks = 0;
 
@@ -377,13 +377,13 @@ class DocumentService {
     return this.chunks.get(documentId) || [];
   }
 
-  deleteDocument(documentId: string): boolean {
+  async deleteDocument(documentId: string): Promise<boolean> {
     const deleted = this.documents.delete(documentId);
     this.chunks.delete(documentId);
 
     if (deleted) {
-      storageService.deleteDocument(documentId);
-      storageService.deleteDocumentChunks(documentId);
+      await storageService.deleteDocument(documentId);
+      await storageService.deleteDocumentChunks(documentId);
     }
 
     return deleted;
@@ -395,7 +395,7 @@ class DocumentService {
     sessionId?: string,
     limit = 5
   ): Promise<DocumentChunk[]> {
-    const preferences = preferencesService.getPreferences();
+    const preferences = await preferencesService.getPreferences();
 
     // Use semantic search if embeddings are enabled
     if (preferences.embeddingSettings.enabled) {
@@ -421,7 +421,7 @@ class DocumentService {
         return this.keywordSearchDocuments(query, sessionId, limit);
       }
 
-      const preferences = preferencesService.getPreferences();
+      const preferences = await preferencesService.getPreferences();
       const results: {
         chunk: DocumentChunk;
         similarity: number;
@@ -530,13 +530,13 @@ class DocumentService {
   }
 
   // Restore a document from import (used during data import)
-  restoreDocument(document: Document): void {
+  async restoreDocument(document: Document): Promise<void> {
     try {
       // Add to memory
       this.documents.set(document.id, document);
 
       // Save to storage
-      storageService.saveDocument(document);
+      await storageService.saveDocument(document);
 
       // If there are any chunks with this document, they'll be handled separately
       console.log(`Restored document: ${document.filename} (${document.id})`);

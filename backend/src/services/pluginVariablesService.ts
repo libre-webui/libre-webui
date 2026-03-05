@@ -36,7 +36,6 @@ export interface PluginVariableValue {
 }
 
 class PluginVariablesService {
-  // Cache resolved variables with a 5-second TTL to avoid DB reads on every request
   private resolvedCache = new Map<
     string,
     { data: Record<string, string | number | boolean>; expires: number }
@@ -50,30 +49,22 @@ class PluginVariablesService {
     if (userId) {
       this.resolvedCache.delete(this.getCacheKey(pluginId, userId));
     } else {
-      // Invalidate all entries for this plugin
       for (const key of this.resolvedCache.keys()) {
-        if (key.startsWith(`${pluginId}:`)) {
-          this.resolvedCache.delete(key);
-        }
+        if (key.startsWith(`${pluginId}:`)) this.resolvedCache.delete(key);
       }
     }
   }
 
-  /**
-   * Get all variable values for a plugin, merged with schema defaults.
-   * If forDisplay is true, sensitive values are masked.
-   */
-  getVariables(
+  async getVariables(
     pluginId: string,
     schema: PluginVariableDefinition[],
     userId?: string,
     forDisplay = false
-  ): Record<string, PluginVariableValue> {
+  ): Promise<Record<string, PluginVariableValue>> {
     const effectiveUserId = userId || 'default';
     const db = getDatabaseSafe();
     const result: Record<string, PluginVariableValue> = {};
 
-    // Initialize with defaults from schema
     for (const def of schema) {
       const isSensitive = def.sensitive ?? false;
       result[def.name] = {
@@ -87,11 +78,11 @@ class PluginVariablesService {
     if (!db) return result;
 
     try {
-      const rows = db
-        .prepare(
-          'SELECT variable_name, variable_value, is_encrypted, updated_at FROM plugin_variables WHERE plugin_id = ? AND user_id = ?'
-        )
-        .all(pluginId, effectiveUserId) as VariableRow[];
+      const rows = await db.all<VariableRow>(
+        'SELECT variable_name, variable_value, is_encrypted, updated_at FROM plugin_variables WHERE plugin_id = ? AND user_id = ?',
+        pluginId,
+        effectiveUserId
+      );
 
       for (const row of rows) {
         const def = schema.find(d => d.name === row.variable_name);
@@ -99,19 +90,14 @@ class PluginVariablesService {
 
         let value: string | number | boolean = row.variable_value;
 
-        // Decrypt if encrypted
         if (row.is_encrypted) {
           const decrypted = encryptionService.decrypt(row.variable_value);
           if (!decrypted) continue;
           value = decrypted;
         }
 
-        // Cast to correct type
-        if (def.type === 'number') {
-          value = Number(value);
-        } else if (def.type === 'boolean') {
-          value = String(value) === 'true';
-        }
+        if (def.type === 'number') value = Number(value);
+        else if (def.type === 'boolean') value = String(value) === 'true';
 
         if (forDisplay && def.sensitive) {
           result[def.name] = {
@@ -136,48 +122,35 @@ class PluginVariablesService {
     return result;
   }
 
-  /**
-   * Get resolved variable values for runtime use (decrypted, typed).
-   */
-  getResolvedVariables(
+  async getResolvedVariables(
     pluginId: string,
     schema: PluginVariableDefinition[],
     userId?: string
-  ): Record<string, string | number | boolean> {
+  ): Promise<Record<string, string | number | boolean>> {
     const effectiveUserId = userId || 'default';
     const cacheKey = this.getCacheKey(pluginId, effectiveUserId);
     const cached = this.resolvedCache.get(cacheKey);
+    if (cached && cached.expires > Date.now()) return cached.data;
 
-    if (cached && cached.expires > Date.now()) {
-      return cached.data;
-    }
-
-    const vars = this.getVariables(pluginId, schema, userId, false);
+    const vars = await this.getVariables(pluginId, schema, userId, false);
     const result: Record<string, string | number | boolean> = {};
-    for (const [key, val] of Object.entries(vars)) {
-      result[key] = val.value;
-    }
+    for (const [key, val] of Object.entries(vars)) result[key] = val.value;
 
     this.resolvedCache.set(cacheKey, {
       data: result,
-      expires: Date.now() + 5000, // 5 second TTL
+      expires: Date.now() + 5000,
     });
-
     return result;
   }
 
-  /**
-   * Set multiple variable values for a plugin.
-   */
-  setVariables(
+  async setVariables(
     pluginId: string,
     variables: Record<string, string | number | boolean>,
     schema: PluginVariableDefinition[],
     userId?: string
-  ): boolean {
+  ): Promise<boolean> {
     const effectiveUserId = userId || 'default';
     const db = getDatabaseSafe();
-
     if (!db) {
       console.error('Database not available for storing plugin variables');
       return false;
@@ -186,7 +159,7 @@ class PluginVariablesService {
     try {
       const now = Date.now();
 
-      const transaction = db.transaction(() => {
+      await db.transaction(async tx => {
         for (const [name, value] of Object.entries(variables)) {
           const def = schema.find(d => d.name === name);
           if (!def) continue;
@@ -197,22 +170,25 @@ class PluginVariablesService {
             ? encryptionService.encrypt(stringValue)
             : stringValue;
 
-          const existing = db
-            .prepare(
-              'SELECT id FROM plugin_variables WHERE plugin_id = ? AND user_id = ? AND variable_name = ?'
-            )
-            .get(pluginId, effectiveUserId, name) as { id: string } | undefined;
+          const existing = await tx.get<{ id: string }>(
+            'SELECT id FROM plugin_variables WHERE plugin_id = ? AND user_id = ? AND variable_name = ?',
+            pluginId,
+            effectiveUserId,
+            name
+          );
 
           if (existing) {
-            db.prepare(
-              'UPDATE plugin_variables SET variable_value = ?, is_encrypted = ?, updated_at = ? WHERE id = ?'
-            ).run(storedValue, isSensitive ? 1 : 0, now, existing.id);
+            await tx.run(
+              'UPDATE plugin_variables SET variable_value = ?, is_encrypted = ?, updated_at = ? WHERE id = ?',
+              storedValue,
+              isSensitive ? 1 : 0,
+              now,
+              existing.id
+            );
           } else {
-            const id = uuidv4();
-            db.prepare(
-              'INSERT INTO plugin_variables (id, user_id, plugin_id, variable_name, variable_value, is_encrypted, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-            ).run(
-              id,
+            await tx.run(
+              'INSERT INTO plugin_variables (id, user_id, plugin_id, variable_name, variable_value, is_encrypted, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+              uuidv4(),
               effectiveUserId,
               pluginId,
               name,
@@ -225,7 +201,6 @@ class PluginVariablesService {
         }
       });
 
-      transaction();
       this.invalidateCache(pluginId, effectiveUserId);
       return true;
     } catch (error) {
@@ -234,20 +209,22 @@ class PluginVariablesService {
     }
   }
 
-  /**
-   * Delete all variables for a plugin (reset to defaults).
-   */
-  deletePluginVariables(pluginId: string, userId?: string): boolean {
+  async deletePluginVariables(
+    pluginId: string,
+    userId?: string
+  ): Promise<boolean> {
     const db = getDatabaseSafe();
     if (!db) return false;
-
     try {
       if (userId) {
-        db.prepare(
-          'DELETE FROM plugin_variables WHERE plugin_id = ? AND user_id = ?'
-        ).run(pluginId, userId);
+        await db.run(
+          'DELETE FROM plugin_variables WHERE plugin_id = ? AND user_id = ?',
+          pluginId,
+          userId
+        );
       } else {
-        db.prepare('DELETE FROM plugin_variables WHERE plugin_id = ?').run(
+        await db.run(
+          'DELETE FROM plugin_variables WHERE plugin_id = ?',
           pluginId
         );
       }
@@ -263,20 +240,13 @@ class PluginVariablesService {
     }
   }
 
-  /**
-   * Delete all variables for a user (used on account deletion).
-   */
-  deleteUserVariables(userId: string): boolean {
+  async deleteUserVariables(userId: string): Promise<boolean> {
     const db = getDatabaseSafe();
     if (!db) return false;
-
     try {
-      db.prepare('DELETE FROM plugin_variables WHERE user_id = ?').run(userId);
-      // Clear all cache entries for this user
+      await db.run('DELETE FROM plugin_variables WHERE user_id = ?', userId);
       for (const key of this.resolvedCache.keys()) {
-        if (key.endsWith(`:${userId}`)) {
-          this.resolvedCache.delete(key);
-        }
+        if (key.endsWith(`:${userId}`)) this.resolvedCache.delete(key);
       }
       return true;
     } catch (error) {
