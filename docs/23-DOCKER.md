@@ -56,6 +56,8 @@ docker-compose -f docker-compose.external-ollama.yml up -d
 | `PORT` | `3001` | Backend port |
 | `SINGLE_USER_MODE` | `false` | Skip authentication |
 | `JWT_SECRET` | auto-generated | Auth secret (set for production) |
+| `DATABASE_URL` | - | PostgreSQL connection string (uses SQLite if not set) |
+| `ENCRYPTION_KEY` | auto-generated | 64-char hex key for AES-256 encryption |
 
 ### Custom Configuration
 
@@ -68,11 +70,40 @@ OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
+## Database
+
+### PostgreSQL (Default in Docker)
+
+The default `docker-compose.yml` includes a PostgreSQL container. No extra configuration needed:
+
+```bash
+docker-compose up -d
+```
+
+This starts PostgreSQL alongside the app with `DATABASE_URL=postgresql://libre:libre@postgres:5432/libre_webui`.
+
+### SQLite (Lightweight / Single-User)
+
+To use SQLite instead, remove or comment out the `DATABASE_URL` environment variable and the `postgres` service from your `docker-compose.yml`. The app will automatically fall back to SQLite, stored in the `libre_webui_data` volume.
+
+### Migrating from SQLite to PostgreSQL
+
+If you've been running on SQLite and want to switch to PostgreSQL:
+
+1. Add the `postgres` service to your `docker-compose.yml`
+2. Add `DATABASE_URL=postgresql://libre:libre@postgres:5432/libre_webui` to the environment
+3. Restart: `docker-compose up -d`
+
+The app **automatically migrates** all your existing SQLite data (users, chats, personas, settings, documents) to PostgreSQL on the first startup. This runs inside a transaction — if anything fails, nothing is written and your SQLite data stays intact.
+
+The migration only runs once. On subsequent starts it detects the migration is already done and skips it.
+
 ## Data Persistence
 
 Data is stored in Docker volumes:
 
-- `libre_webui_data` - Database and user data
+- `libre_webui_data` - SQLite database (if used), uploads, and encryption keys
+- `postgres_data` - PostgreSQL data (if using PostgreSQL)
 - `ollama_data` - Downloaded models (bundled Ollama only)
 
 ### Backup

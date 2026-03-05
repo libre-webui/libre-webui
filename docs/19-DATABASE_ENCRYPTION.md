@@ -12,7 +12,7 @@ image: /img/social/19.png
 **Enterprise-grade database encryption** for Libre WebUI with AES-256-GCM protection, Docker persistent storage, and enhanced JWT security integration.
 
 :::tip Enterprise Security
-Database encryption uses **AES-256-GCM encryption** at the application level to secure all sensitive data before storage in SQLite, ensuring **zero-trust architecture** for maximum privacy protection.
+Database encryption uses **AES-256-GCM encryption** at the application level to secure all sensitive data before storage in PostgreSQL or SQLite, ensuring **zero-trust architecture** for maximum privacy protection.
 :::
 
 ## Overview
@@ -27,7 +27,7 @@ Database encryption uses **AES-256-GCM encryption** at the application level to 
 - **🐳 Docker Ready**: Full support for containerized deployments with persistent key storage
 - **🔑 JWT Integration**: Enhanced token security with encryption key validation
 
-All critical information is encrypted before being written to the SQLite database and automatically decrypted when accessed by the application, ensuring **maximum privacy protection** for your AI interactions.
+All critical information is encrypted before being written to the database (PostgreSQL or SQLite) and automatically decrypted when accessed by the application, ensuring **maximum privacy protection** for your AI interactions.
 
 ## 🛡️ What Data is Protected by Encryption
 
