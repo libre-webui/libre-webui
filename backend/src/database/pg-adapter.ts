@@ -18,8 +18,7 @@
 import pg from 'pg';
 import { DatabaseAdapter, RunResult } from './types.js';
 
-const { Pool } = pg;
-type PgPool = InstanceType<typeof Pool>;
+type PgPool = InstanceType<typeof pg.Pool>;
 type PoolClient = pg.PoolClient;
 
 /** Convert `?` placeholders to PostgreSQL `$1, $2, ...` */
