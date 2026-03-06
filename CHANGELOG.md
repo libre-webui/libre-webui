@@ -15,6 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.8.5] - 2026-03-06
+
+### What's New
+
+This release focuses on strengthening security with critical dependency updates. We've addressed important vulnerabilities in core packages to ensure a safer experience for all users.
+
+### 🔧 Improvements
+
+- Updated multer to version 2.1.1 to address CVE-2026-3520 security vulnerability
+- Upgraded tar package to version 7.5.10 to resolve GHSA-qffp security advisory
+
 ## [0.8.4] - 2026-03-03
 
 ### ✨ New Features
