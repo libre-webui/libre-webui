@@ -87,7 +87,8 @@
         "prismjs": "^1.30.0"
       }
     },
-    "minimatch": ">=10.2.1"
+    "minimatch": ">=10.2.1",
+    "yauzl": ">=3.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
