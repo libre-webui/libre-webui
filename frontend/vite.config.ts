@@ -79,31 +79,19 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: false, // Disable sourcemaps for production
-    minify: 'esbuild',
     target: 'es2020',
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor chunks
-          'react-vendor': ['react', 'react-dom'],
-          'router-vendor': ['react-router-dom'],
-          'ui-vendor': ['lucide-react', 'react-hot-toast'],
-          'markdown-vendor': ['react-markdown', 'react-syntax-highlighter'],
-          'utils-vendor': ['axios', 'zustand', 'clsx', 'tailwind-merge'],
+        manualChunks(id) {
+          if (id.includes('node_modules/react-dom')) return 'react-vendor'
+          if (id.includes('node_modules/react/')) return 'react-vendor'
+          if (id.includes('node_modules/react-router-dom')) return 'router-vendor'
+          if (id.includes('node_modules/lucide-react') || id.includes('node_modules/react-hot-toast')) return 'ui-vendor'
+          if (id.includes('node_modules/react-markdown') || id.includes('node_modules/react-syntax-highlighter')) return 'markdown-vendor'
+          if (id.includes('node_modules/axios') || id.includes('node_modules/zustand') || id.includes('node_modules/clsx') || id.includes('node_modules/tailwind-merge')) return 'utils-vendor'
         },
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId
-          if (facadeModuleId && facadeModuleId.includes('node_modules')) {
-            return 'vendor/[name]-[hash].js'
-          }
-          return 'js/[name]-[hash].js'
-        },
-        assetFileNames: (assetInfo) => {
-          if (assetInfo.name && assetInfo.name.endsWith('.css')) {
-            return 'css/[name]-[hash][extname]'
-          }
-          return 'assets/[name]-[hash][extname]'
-        },
+        chunkFileNames: 'js/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
       },
     },
     // Performance optimizations
