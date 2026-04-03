@@ -19,21 +19,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What's New
 
-This release focuses on security and stability improvements with comprehensive dependency updates across the platform. We've upgraded critical components including Electron and enhanced our CI/CD pipeline infrastructure.
+This release is a security and maintenance update addressing multiple high and moderate severity vulnerabilities across runtime and development dependencies. ESLint tooling compatibility has been restored and CI/CD actions have been updated.
+
+### 🔒 Security
+
+- Bumped `electron` 40.0.0 → 40.8.4 — patches CVE-2026-34767, CVE-2026-34773, CVE-2026-34775, CVE-2026-34776, CVE-2026-34777, CVE-2026-34778
+- Bumped `lodash` → 4.18.1 — patches CVE-2026-4800 (high) and CVE-2026-2950 (moderate), prototype pollution via `_.unset`/`_.omit`
+- Bumped `path-to-regexp` → 8.4.2 — patches CVE-2026-4926 (high) and CVE-2026-4923 (moderate)
+- Bumped `@xmldom/xmldom` → 0.8.12 — patches CVE-2026-34601 (high)
+- Bumped `brace-expansion` → 5.0.5 — patches CVE-2026-33750 (moderate)
+- Bumped `picomatch` → 4.0.4 — patches CVE-2026-33671 and CVE-2026-33672
+- Bumped `flatted` → 3.3.3 — patches prototype pollution via `parse()`
 
 ### 🔧 Improvements
 
-- Updated Electron from 40.0.0 to 40.8.3 for better performance and security
-- Enhanced CI/CD pipeline with upgraded Docker actions (buildx v4, login v4, build-push v7)
-- Improved development tooling compatibility by downgrading ESLint to v9
-- Streamlined package dependencies, reducing bundle size significantly
-
-### 🐛 Bug Fixes
-
-- Updated path-to-regexp to 8.4.2 to address security vulnerabilities
-- Upgraded @xmldom/xmldom to 0.8.12 for improved XML parsing stability
-- Enhanced rate limiting capabilities with express-rate-limit updates
-- Resolved development dependency conflicts with lodash, flatted, and picomatch updates
+- Downgraded ESLint from v10 to v9 to restore compatibility with `eslint-plugin-react` (`contextOrFilename.getFilename is not a function`)
+- Bumped CI actions: `docker/setup-buildx-action` v3 → v4, `docker/login-action` v3 → v4, `docker/build-push-action` v6 → v7
 
 ## [0.8.5] - 2026-03-06
 
