@@ -15,6 +15,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.8.6] - 2026-04-03
+
+### What's New
+
+This release focuses on security and stability improvements with comprehensive dependency updates across the platform. We've upgraded critical components including Electron and enhanced our CI/CD pipeline infrastructure.
+
+### 🔧 Improvements
+
+- Updated Electron from 40.0.0 to 40.8.3 for better performance and security
+- Enhanced CI/CD pipeline with upgraded Docker actions (buildx v4, login v4, build-push v7)
+- Improved development tooling compatibility by downgrading ESLint to v9
+- Streamlined package dependencies, reducing bundle size significantly
+
+### 🐛 Bug Fixes
+
+- Updated path-to-regexp to 8.4.2 to address security vulnerabilities
+- Upgraded @xmldom/xmldom to 0.8.12 for improved XML parsing stability
+- Enhanced rate limiting capabilities with express-rate-limit updates
+- Resolved development dependency conflicts with lodash, flatted, and picomatch updates
+
 ## [0.8.5] - 2026-03-06
 
 ### What's New
