@@ -16,6 +16,7 @@
  */
 
 import { personaModel } from '../models/personaModel.js';
+import preferencesService from './preferencesService.js';
 import {
   Persona,
   CreatePersonaRequest,
@@ -143,7 +144,8 @@ export class PersonaService {
       ) {
         return {
           embedding_model:
-            personaAdvancedData.embedding_model || 'nomic-embed-text',
+            personaAdvancedData.embedding_model ||
+            preferencesService.getDefaultEmbeddingModel(userId),
           memory_settings: memorySettings || {
             enabled: true,
             max_memories: 1000,

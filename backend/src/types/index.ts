@@ -640,6 +640,10 @@ export interface EmbeddingModel {
   description: string;
   provider: 'ollama' | 'openai' | 'sentence-transformers' | 'huggingface';
   dimensions: number;
+  rawModel?: string;
+  isDetectedEmbedding?: boolean;
+  pluginId?: string;
+  pluginName?: string;
 }
 
 export interface PersonaMemoryEntry {

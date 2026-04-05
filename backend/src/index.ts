@@ -59,6 +59,7 @@ import usersRoutes from './routes/users.js';
 import personaRoutes from './routes/personas.js';
 import ttsRoutes from './routes/tts.js';
 import imageGenRoutes from './routes/imageGen.js';
+import embeddingsRoutes from './routes/embeddings.js';
 import huggingfaceHubRoutes from './routes/huggingfaceHub.js';
 import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
@@ -380,6 +381,7 @@ app.use(
   preferencesRoutes
 );
 app.use('/api/plugins', pluginRoutes);
+app.use('/api/embeddings', embeddingsRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
