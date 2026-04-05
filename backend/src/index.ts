@@ -418,20 +418,17 @@ if (
   const __filename = urlModule.fileURLToPath(import.meta.url);
   const __dirname = pathModule.dirname(__filename);
 
-  // Try multiple possible frontend locations (dynamic resolution)
-  const nmIndex = __dirname.split('/').lastIndexOf('node_modules');
-  const base =
-    nmIndex !== -1
-      ? __dirname
-          .split('/')
-          .slice(0, nmIndex + 1)
-          .join('/')
-      : __dirname;
+  // Find the outermost node_modules to get the package root
+  const split = __dirname.split('/');
+  const nmIdx = split.lastIndexOf('node_modules');
+  const base = nmIdx !== -1 ? split.slice(0, nmIdx + 1).join('/') : __dirname;
   const possiblePaths = [
     pathModule.join(base, 'frontend/dist'),
+    pathModule.join(base, 'dist'),
     pathModule.join(__dirname, '../../frontend/dist'),
     pathModule.join(__dirname, '../../../frontend/dist'),
     pathModule.join(process.cwd(), 'frontend/dist'),
+    pathModule.join(process.cwd(), 'dist'),
   ];
 
   let frontendPath = '';
