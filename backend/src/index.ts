@@ -42,28 +42,6 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-
-// Try to load package.json from multiple locations
-let pkg = { version: '0.0.0' };
-const dirs = __dirname.split('/');
-const nmIndex = dirs.lastIndexOf('node_modules');
-const base = nmIndex !== -1 ? dirs.slice(0, nmIndex + 1).join('/') : __dirname;
-for (const rel of [
-  '../package.json',
-  '../../package.json',
-  '../../../package.json',
-  `${base}/package.json`,
-]) {
-  try {
-    pkg = require(rel);
-    break;
-  } catch {
-    /* try next */
-  }
-}
 
 import {
   errorHandler,
@@ -97,12 +75,14 @@ import openclawSessionService, {
 } from './services/openclawSessionService.js';
 import { mergeGenerationOptions } from './utils/generationUtils.js';
 import { verifyToken } from './utils/jwt.js';
+import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
 import {
   OllamaChatRequest,
   OllamaChatMessage,
   GenerationStatistics,
 } from './types/index.js';
 
+const pkg = loadAppPackage(import.meta.url);
 const app = express();
 
 // Trust proxy setting for running behind reverse proxies (Nginx, Caddy, etc.)
@@ -412,32 +392,8 @@ if (
   process.env.SERVE_FRONTEND === 'true'
 ) {
   const pathModule = await import('path');
-  const urlModule = await import('url');
-  const fsModule = await import('fs');
 
-  const __filename = urlModule.fileURLToPath(import.meta.url);
-  const __dirname = pathModule.dirname(__filename);
-
-  // Find the outermost node_modules to get the package root
-  const split = __dirname.split('/');
-  const nmIdx = split.lastIndexOf('node_modules');
-  const base = nmIdx !== -1 ? split.slice(0, nmIdx + 1).join('/') : __dirname;
-  const possiblePaths = [
-    pathModule.join(base, 'frontend/dist'),
-    pathModule.join(base, 'dist'),
-    pathModule.join(__dirname, '../../frontend/dist'),
-    pathModule.join(__dirname, '../../../frontend/dist'),
-    pathModule.join(process.cwd(), 'frontend/dist'),
-    pathModule.join(process.cwd(), 'dist'),
-  ];
-
-  let frontendPath = '';
-  for (const p of possiblePaths) {
-    if (fsModule.existsSync(pathModule.join(p, 'index.html'))) {
-      frontendPath = p;
-      break;
-    }
-  }
+  const frontendPath = resolveFrontendDist(import.meta.url);
 
   if (frontendPath) {
     console.log(`Serving frontend from: ${frontendPath}`);
