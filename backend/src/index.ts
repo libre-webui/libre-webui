@@ -48,15 +48,20 @@ const require = createRequire(import.meta.url);
 
 // Try to load package.json from multiple locations
 let pkg = { version: '0.0.0' };
-try {
-  // Development: ../package.json (backend/package.json doesn't exist, but root does via symlink)
-  pkg = require('../package.json');
-} catch {
+const dirs = __dirname.split('/');
+const nmIndex = dirs.lastIndexOf('node_modules');
+const base = nmIndex !== -1 ? dirs.slice(0, nmIndex + 1).join('/') : __dirname;
+for (const rel of [
+  '../package.json',
+  '../../package.json',
+  '../../../package.json',
+  `${base}/package.json`,
+]) {
   try {
-    // npm install: package is at node_modules/libre-webui, package.json is at root
-    pkg = require('../../package.json');
+    pkg = require(rel);
+    break;
   } catch {
-    console.warn('Could not read version from package.json, using default');
+    /* try next */
   }
 }
 
