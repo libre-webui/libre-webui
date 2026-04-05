@@ -37,6 +37,7 @@ import {
 } from '../types/index.js';
 
 const router = express.Router();
+const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
 
 // Rate limiter for chat routes: 60 requests per minute (reasonable for chat)
 const chatRateLimiter = rateLimit({
@@ -92,6 +93,18 @@ async function resolveActualModelName(
     }
   }
   return sessionModel;
+}
+
+async function resolveTitleGenerationModel(
+  requestedModel: string,
+  session: ChatSession,
+  userId: string
+): Promise<string> {
+  if (requestedModel === AUTO_TITLE_CURRENT_MODEL) {
+    return resolveActualModelName(session.model, userId);
+  }
+
+  return requestedModel;
 }
 
 // Get all chat sessions
@@ -852,6 +865,12 @@ router.post(
         return;
       }
 
+      const actualModelName = await resolveTitleGenerationModel(
+        model,
+        session,
+        userId
+      );
+
       // Generate title using a simple prompt
       const titlePrompt = `Generate a very short, concise title (3-6 words max) for a chat that starts with this message. Only respond with the title, nothing else. No quotes, no punctuation at the end. Do not use any markdown formatting.
 
@@ -860,19 +879,43 @@ Message: "${message.substring(0, 500)}"
 Title:`;
 
       try {
-        const response = await ollamaService.generateResponse({
-          model: model,
-          prompt: titlePrompt,
-          stream: false,
-          options: {
-            temperature: 0.3,
-            num_predict: 20,
-            stop: ['\n', '.', '!', '?'],
-          },
-        });
+        let titleResponse = '';
+        const activePlugin =
+          pluginService.getActivePluginForModel(actualModelName);
+
+        if (activePlugin) {
+          const pluginResponse = await pluginService.executePluginRequest(
+            actualModelName,
+            [
+              {
+                id: `title-${sessionId}`,
+                role: 'user',
+                content: titlePrompt,
+                timestamp: Date.now(),
+              },
+            ],
+            {
+              temperature: 0.3,
+              num_predict: 20,
+            }
+          );
+          titleResponse = pluginResponse.choices[0]?.message?.content || '';
+        } else {
+          const response = await ollamaService.generateResponse({
+            model: actualModelName,
+            prompt: titlePrompt,
+            stream: false,
+            options: {
+              temperature: 0.3,
+              num_predict: 20,
+              stop: ['\n', '.', '!', '?'],
+            },
+          });
+          titleResponse = response.response;
+        }
 
         // Clean up the generated title
-        let title = response.response
+        let title = titleResponse
           .trim()
           .replace(/^["']|["']$/g, '') // Remove quotes
           .replace(/[.!?]+$/, '') // Remove trailing punctuation
