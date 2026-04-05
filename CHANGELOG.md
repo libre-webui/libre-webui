@@ -15,6 +15,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.8.7] - 2026-04-05
+
+### What's New
+
+This release enhances embedding model flexibility by allowing users to choose embedding models across different providers, while also strengthening the packaging system for npx installations. Security improvements include an Electron upgrade that patches known vulnerabilities.
+
+### ✨ New Features
+
+- Users can now select embedding models from multiple providers instead of being limited to a single provider
+- Added comprehensive embedding service with cross-provider model support
+
+### 🔧 Improvements
+
+- Enhanced package path resolution system for more reliable npx installations
+- Streamlined Homebrew publishing workflow with release-driven automation
+- Improved PersonaForm component interface and user experience
+- Enhanced SettingsModal with better embedding provider selection options
+
+### 🐛 Bug Fixes
+
+- Fixed package.json path resolution issues in npx installations
+- Resolved packaged path resolution problems that affected npx deployments
+- Updated to Electron 40.8.5 to patch security vulnerabilities (CVEs)
+- Fixed active title model selection functionality
+
 ## [0.8.6] - 2026-04-03
 
 ### What's New
