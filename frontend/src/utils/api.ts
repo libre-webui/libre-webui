@@ -43,6 +43,7 @@ import {
   CreatePersonaRequest,
   UpdatePersonaRequest,
   PersonaExport,
+  EmbeddingModel,
   GeneratedImage,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
@@ -1169,6 +1170,25 @@ export const documentsApi = {
     }
 
     return api.post('/documents/embeddings/regenerate').then(res => res.data);
+  },
+};
+
+export const embeddingApi = {
+  getModels: (): Promise<ApiResponse<EmbeddingModel[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse([
+        {
+          id: 'nomic-embed-text',
+          name: 'nomic-embed-text',
+          description: 'Ollama - Default embedding model',
+          provider: 'ollama',
+          dimensions: 0,
+          isDetectedEmbedding: true,
+        },
+      ]);
+    }
+
+    return api.get('/embeddings/models').then(res => res.data);
   },
 };
 

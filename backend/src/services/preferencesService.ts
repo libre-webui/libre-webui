@@ -207,6 +207,13 @@ class PreferencesService {
     return this.getPreferences(userId).generationOptions;
   }
 
+  getDefaultEmbeddingModel(userId?: string): string {
+    return (
+      this.getPreferences(userId).embeddingSettings?.model ||
+      this.defaultPreferences.embeddingSettings.model
+    );
+  }
+
   updateGenerationOptions(
     options: Partial<GenerationOptions>,
     userId?: string

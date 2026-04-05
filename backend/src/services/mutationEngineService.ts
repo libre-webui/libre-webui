@@ -17,6 +17,7 @@
 
 import { getDatabaseSafe } from '../db.js';
 import { memoryService } from './memoryService.js';
+import preferencesService from './preferencesService.js';
 import {
   PersonaState,
   MutationEngineResult,
@@ -352,7 +353,7 @@ export class MutationEngineService {
         newMemory.user_id,
         newMemory.persona_id,
         newMemory.content,
-        'nomic-embed-text', // Default embedding model
+        preferencesService.getDefaultEmbeddingModel(newMemory.user_id),
         newMemory.context,
         newMemory.importance_score
       );

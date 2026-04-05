@@ -16,9 +16,10 @@
  */
 
 import express, { NextFunction, Request, Response } from 'express';
+import embeddingService from '../services/embeddingService.js';
 import ollamaService from '../services/ollamaService.js';
 import { ApiResponse, OllamaModel, getErrorMessage } from '../types/index.js';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { AuthenticatedRequest, optionalAuth } from '../middleware/auth.js';
 import { authService } from '../services/authService.js';
 import { systemSettingsService } from '../services/systemSettingsService.js';
 
@@ -409,9 +410,16 @@ router.post(
 // Generate embeddings
 router.post(
   '/embed',
-  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+  optionalAuth,
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> => {
     try {
-      const data = await ollamaService.generateEmbeddings(req.body);
+      const data = await embeddingService.generateEmbeddings(
+        req.body,
+        req.user?.userId
+      );
       res.json({ success: true, data });
     } catch (error: unknown) {
       res.status(500).json({
@@ -615,10 +623,25 @@ router.post(
 // Legacy embeddings endpoint (deprecated)
 router.post(
   '/embeddings',
-  async (req: Request, res: Response<ApiResponse>): Promise<void> => {
+  optionalAuth,
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse>
+  ): Promise<void> => {
     try {
-      const data = await ollamaService.generateLegacyEmbeddings(req.body);
-      res.json({ success: true, data });
+      const data = await embeddingService.generateEmbeddings(
+        {
+          model: req.body.model,
+          input: req.body.prompt,
+          options: req.body.options,
+          keep_alive: req.body.keep_alive,
+        },
+        req.user?.userId
+      );
+      res.json({
+        success: true,
+        data: { embedding: data.embeddings[0] || [] },
+      });
     } catch (error: unknown) {
       res.status(500).json({
         success: false,
