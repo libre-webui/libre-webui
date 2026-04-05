@@ -70,6 +70,7 @@ data.sqlite
 
 # Output of 'npm pack'
 *.tgz
+homebrew/generated/
 
 # Yarn Integrity file
 .yarn-integrity

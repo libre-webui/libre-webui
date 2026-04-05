@@ -76,6 +76,7 @@ import toast from 'react-hot-toast';
 
 // Get version from Vite env (includes -dev suffix on dev branch)
 const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.0';
+const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -116,6 +117,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     installPlugin,
   } = usePluginStore();
   const { t } = useTranslation();
+
+  const currentTaskModel = preferences.titleSettings?.taskModel || '';
+  const autoTitleTaskModelOptions = [
+    {
+      value: '',
+      label: t('settings.model.autoTitle.selectTaskModel'),
+    },
+    {
+      value: AUTO_TITLE_CURRENT_MODEL,
+      label: 'Use current running model',
+    },
+    ...models.map(model => ({
+      value: model.name,
+      label: model.name,
+    })),
+    ...(![
+      '',
+      AUTO_TITLE_CURRENT_MODEL,
+      ...models.map(model => model.name),
+    ].includes(currentTaskModel) && currentTaskModel
+      ? [
+          {
+            value: currentTaskModel,
+            label: `${currentTaskModel} (current)`,
+          },
+        ]
+      : []),
+  ];
 
   const [activeTab, setActiveTab] = useState('appearance');
   const [tempSystemMessage, setTempSystemMessage] = useState(systemMessage);
@@ -1301,7 +1330,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           {t('settings.model.autoTitle.taskModel')}
                         </label>
                         <Select
-                          value={preferences.titleSettings?.taskModel || ''}
+                          value={currentTaskModel}
                           onChange={e => {
                             const taskModel = e.target.value;
                             const newTitleSettings = {
@@ -1315,18 +1344,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                               titleSettings: newTitleSettings,
                             });
                           }}
-                          options={[
-                            {
-                              value: '',
-                              label: t(
-                                'settings.model.autoTitle.selectTaskModel'
-                              ),
-                            },
-                            ...models.map(model => ({
-                              value: model.name,
-                              label: model.name,
-                            })),
-                          ]}
+                          options={autoTitleTaskModelOptions}
                         />
                         <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
                           {t('settings.model.autoTitle.taskModelDescription')}
