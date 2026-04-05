@@ -19,26 +19,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What's New
 
-This release enhances embedding model flexibility by allowing users to choose embedding models across different providers, while also strengthening the packaging system for npx installations. Security improvements include an Electron upgrade that patches known vulnerabilities.
+0.8.7 is a cleanup release focused on the rough edges we hit right after 0.8.6. The main work here was making packaged `npx` installs behave reliably, removing hardcoded embedding defaults so people can use the models they actually configured, and tightening a few release-time paths that were easy to ship stale data through.
 
 ### ✨ New Features
 
-- Users can now select embedding models from multiple providers instead of being limited to a single provider
-- Added comprehensive embedding service with cross-provider model support
+- Users can now choose real embedding-capable models from Ollama and OpenAI-compatible providers instead of being stuck with a hardcoded default
+- Auto title generation can now follow the current running chat model when you do not want to maintain a separate task model just for titles
 
 ### 🔧 Improvements
 
-- Enhanced package path resolution system for more reliable npx installations
-- Streamlined Homebrew publishing workflow with release-driven automation
-- Improved PersonaForm component interface and user experience
-- Enhanced SettingsModal with better embedding provider selection options
+- Added packaged release smoke tests that build the real npm tarball, boot the packaged backend, and verify both asset lookup and provider-backed embedding flows
+- Reworked Homebrew publishing so the tap files are rendered from release templates using the actual release version and computed hashes
+- Upgraded Electron to 40.8.5 for the desktop build to pick up upstream security fixes
 
 ### 🐛 Bug Fixes
 
-- Fixed package.json path resolution issues in npx installations
-- Resolved packaged path resolution problems that affected npx deployments
-- Updated to Electron 40.8.5 to patch security vulnerabilities (CVEs)
-- Fixed active title model selection functionality
+- Fixed `npx libre-webui` path resolution so packaged installs can reliably find the app `package.json`, backend metadata, and frontend build output
+- Fixed embedding model discovery so it uses the logged-in user's configured provider credentials and endpoint layout instead of assuming one hardcoded path
+- Fixed title generation for plugin-backed and persona-backed chats by resolving the effective active model before generating titles
 
 ## [0.8.6] - 2026-04-03
 
