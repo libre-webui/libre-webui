@@ -48,8 +48,16 @@ const sourceSha = ensureHexSha(getArg('--source-sha'), 'source sha');
 const dmgSha = getArg('--dmg-sha');
 const outputDir = path.resolve(repoRoot, getArg('--output-dir') ?? 'homebrew/generated');
 
-const formulaTemplatePath = path.join(repoRoot, 'homebrew', 'libre-webui.rb.template');
-const caskTemplatePath = path.join(repoRoot, 'homebrew', 'libre-webui-cask.rb.template');
+const formulaTemplatePath = path.join(
+  repoRoot,
+  'homebrew',
+  'libre-webui-formula.template'
+);
+const caskTemplatePath = path.join(
+  repoRoot,
+  'homebrew',
+  'libre-webui-cask.template'
+);
 
 const formulaOutputPath = path.join(outputDir, 'Formula', 'libre-webui.rb');
 const caskOutputPath = path.join(outputDir, 'Casks', 'libre-webui.rb');
