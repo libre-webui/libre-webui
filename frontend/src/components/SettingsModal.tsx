@@ -57,11 +57,13 @@ import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAuthStore } from '@/store/authStore';
+import { EmbeddingModel } from '@/types';
 import {
   preferencesApi,
   ollamaApi,
   authApi,
   documentsApi,
+  embeddingApi,
   ttsApi,
   imageGenApi,
   pluginApi,
@@ -166,6 +168,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     chunksWithEmbeddings: number;
     totalChunks: number;
   } | null>(null);
+  const [availableEmbeddingModels, setAvailableEmbeddingModels] = useState<
+    EmbeddingModel[]
+  >([]);
   const [regeneratingEmbeddings, setRegeneratingEmbeddings] = useState(false);
 
   // TTS settings state
@@ -224,6 +229,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   // Load data when modal opens
   useEffect(() => {
     if (isOpen) {
+      loadEmbeddingModels();
       loadEmbeddingStatus();
       loadTTSData();
       setTempSystemMessage(systemMessage);
@@ -264,6 +270,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, systemMessage]);
+
+  useEffect(() => {
+    if (!isOpen || availableEmbeddingModels.length === 0) {
+      return;
+    }
+
+    setEmbeddingSettings(prev => {
+      const matchingModel = availableEmbeddingModels.find(
+        model => model.id === prev.model || model.rawModel === prev.model
+      );
+
+      if (!matchingModel || matchingModel.id === prev.model) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        model: matchingModel.id,
+      };
+    });
+  }, [availableEmbeddingModels, isOpen]);
 
   const loadPluginCredentials = async () => {
     try {
@@ -321,6 +348,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       toast.error('Failed to remove API key');
     } finally {
       setSavingApiKey(null);
+    }
+  };
+
+  const loadEmbeddingModels = async () => {
+    try {
+      const response = await embeddingApi.getModels();
+      if (response.success && response.data) {
+        setAvailableEmbeddingModels(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load embedding models:', error);
     }
   };
 
@@ -919,6 +957,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       [key]: value,
     }));
   };
+
+  const embeddingModelOptions = [
+    ...availableEmbeddingModels.map(model => ({
+      value: model.id,
+      label: `${model.name} (${model.pluginName || model.provider})`,
+    })),
+    ...(!availableEmbeddingModels.find(
+      model =>
+        model.id === embeddingSettings.model ||
+        model.rawModel === embeddingSettings.model
+    ) && embeddingSettings.model
+      ? [
+          {
+            value: embeddingSettings.model,
+            label: `${embeddingSettings.model} (current)`,
+          },
+        ]
+      : []),
+  ];
 
   const handleSaveEmbeddingSettings = async () => {
     try {
@@ -1974,17 +2031,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         onChange={e =>
                           handleEmbeddingSettingsChange('model', e.target.value)
                         }
-                        options={[
-                          {
-                            value: 'nomic-embed-text',
-                            label: 'nomic-embed-text',
-                          },
-                          { value: 'all-minilm', label: 'all-minilm' },
-                          {
-                            value: 'sentence-transformers',
-                            label: 'sentence-transformers',
-                          },
-                        ]}
+                        options={embeddingModelOptions}
                       />
                       <p className='text-xs text-gray-500 mt-1'>
                         {t('settings.documents.embeddings.modelDescription')}
@@ -3433,16 +3480,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         onChange={e =>
                           handleEmbeddingSettingsChange('model', e.target.value)
                         }
-                        options={[
-                          {
-                            value: 'nomic-embed-text',
-                            label: 'Nomic Embed Text',
-                          },
-                          {
-                            value: 'openai-embedding',
-                            label: 'OpenAI Embedding',
-                          },
-                        ]}
+                        options={embeddingModelOptions}
                         disabled={!embeddingSettings.enabled}
                       />
                     </div>

@@ -16,7 +16,7 @@
  */
 
 import { getDatabaseSafe } from '../db.js';
-import ollamaService from './ollamaService.js';
+import embeddingService from './embeddingService.js';
 import {
   PersonaMemoryEntry,
   MemorySearchResult,
@@ -352,15 +352,17 @@ export class MemoryService {
    */
   private async generateEmbedding(
     text: string,
-    model: string
+    model: string,
+    userId?: string
   ): Promise<number[] | null> {
     try {
-      // For now, use Ollama for embedding generation
-      // TODO: Add support for other providers (OpenAI, Sentence Transformers, etc.)
-      const response = await ollamaService.generateEmbeddings({
-        model,
-        input: text,
-      });
+      const response = await embeddingService.generateEmbeddings(
+        {
+          model,
+          input: text,
+        },
+        userId
+      );
 
       return response.embeddings[0] || null;
     } catch (error) {
@@ -413,7 +415,11 @@ export class MemoryService {
     }
 
     // Generate embedding
-    const embedding = await this.generateEmbedding(content, embeddingModel);
+    const embedding = await this.generateEmbedding(
+      content,
+      embeddingModel,
+      userId
+    );
 
     const db = this.ensureDatabase();
     const stmt = db.prepare(`
@@ -469,7 +475,8 @@ export class MemoryService {
   ): Promise<MemorySearchResult[]> {
     const queryEmbedding = await this.generateEmbedding(
       content,
-      embeddingModel
+      embeddingModel,
+      userId
     );
     if (!queryEmbedding) return [];
 
@@ -578,7 +585,11 @@ export class MemoryService {
     memoryTypes?: MemoryType[] // Optional filter by memory types
   ): Promise<MemorySearchResult[]> {
     // Generate embedding for query
-    const queryEmbedding = await this.generateEmbedding(query, embeddingModel);
+    const queryEmbedding = await this.generateEmbedding(
+      query,
+      embeddingModel,
+      userId
+    );
     if (!queryEmbedding) {
       return [];
     }
@@ -1001,7 +1012,8 @@ export class MemoryService {
           // Generate new embedding for consolidated content
           const newEmbedding = await this.generateEmbedding(
             consolidatedContent,
-            embeddingModel
+            embeddingModel,
+            userId
           );
 
           // Store consolidated memory

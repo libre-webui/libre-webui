@@ -24,7 +24,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
-import { personaApi, ollamaApi } from '@/utils/api';
+import { personaApi, ollamaApi, embeddingApi } from '@/utils/api';
 import {
   Persona,
   CreatePersonaRequest,
@@ -51,6 +51,7 @@ import {
 import toast from 'react-hot-toast';
 import { AvatarUpload } from '@/components/AvatarUpload';
 import { PersonaBackgroundUpload } from '@/components/PersonaBackgroundUpload';
+import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
 
 interface PersonaFormProps {
@@ -216,23 +217,6 @@ const DEFAULT_FORM_DATA: ExtendedFormData = {
   },
 };
 
-// Embedding model patterns for detection - expanded to catch more embedding models
-const EMBEDDING_PATTERNS = [
-  'embed', // Catches most embedding models (mxbai-embed, nomic-embed, snowflake-arctic-embed, etc.)
-  'e5', // Microsoft E5 models
-  'bge', // BGE models
-  'gte', // GTE models
-  'minilm', // MiniLM models
-  'multilingual',
-  'sentence',
-  'universal',
-  'instructor', // Instructor embedding models
-  'jina', // Jina embedding models
-  'paraphrase', // Paraphrase models
-  'mpnet', // MPNet models
-  'contriever', // Contriever models
-];
-
 // Memory status interface
 interface MemoryStatus {
   status: 'active' | 'wiped' | 'backed_up';
@@ -246,6 +230,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const { preferences } = useAppStore();
   const { t } = useTranslation();
   const [formData, setFormData] = useState<ExtendedFormData>(DEFAULT_FORM_DATA);
   const [availableModels, setAvailableModels] = useState<OllamaModel[]>([]);
@@ -298,66 +283,27 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     []
   );
 
-  // Extract embedding models from Ollama models
-  // Shows detected embedding models first, then all other models as alternatives
-  const extractEmbeddingModels = useCallback(
-    (models: OllamaModel[]): EmbeddingModel[] => {
-      // First, find models that match embedding patterns
-      const detectedEmbedding = models
-        .filter(model =>
-          EMBEDDING_PATTERNS.some(pattern =>
-            model.name.toLowerCase().includes(pattern.toLowerCase())
-          )
-        )
-        .map(model => ({
-          id: model.name,
-          name: model.name,
-          description: `${model.details?.parameter_size || 'Unknown size'} - ${model.details?.family || 'Ollama model'}`,
-          provider: 'ollama' as const,
-          dimensions: 768,
-          isDetectedEmbedding: true,
-        }));
+  const normalizeEmbeddingModels = useCallback((models: EmbeddingModel[]) => {
+    const unique = models.reduce((acc: EmbeddingModel[], model) => {
+      if (!acc.find(existing => existing.id === model.id)) {
+        acc.push(model);
+      }
+      return acc;
+    }, []);
 
-      // Then add all other models as potential alternatives (some embedding models might not match patterns)
-      const otherModels = models
-        .filter(
-          model =>
-            !EMBEDDING_PATTERNS.some(pattern =>
-              model.name.toLowerCase().includes(pattern.toLowerCase())
-            )
-        )
-        .map(model => ({
-          id: model.name,
-          name: model.name,
-          description: `${model.details?.parameter_size || 'Unknown size'} - ${model.details?.family || 'Other model'}`,
-          provider: 'ollama' as const,
-          dimensions: 768,
-          isDetectedEmbedding: false,
-        }));
-
-      // Combine: detected embedding models first, then others
-      const allModels = [...detectedEmbedding, ...otherModels];
-
-      // Remove duplicates
-      const unique = allModels.reduce((acc: EmbeddingModel[], model) => {
-        if (!acc.find(m => m.id === model.id)) acc.push(model);
-        return acc;
-      }, []);
-
-      return unique.length > 0
-        ? unique
-        : [
-            {
-              id: 'nomic-embed-text',
-              name: 'nomic-embed-text',
-              description: 'Default embedding model (install if needed)',
-              provider: 'ollama' as const,
-              dimensions: 768,
-            },
-          ];
-    },
-    []
-  );
+    return unique.length > 0
+      ? unique
+      : [
+          {
+            id: 'nomic-embed-text',
+            name: 'nomic-embed-text',
+            description: 'Ollama - Default embedding model',
+            provider: 'ollama' as const,
+            dimensions: 0,
+            isDetectedEmbedding: true,
+          },
+        ];
+  }, []);
 
   // Load memory status for existing persona
   const loadMemoryStatus = useCallback(async () => {
@@ -409,75 +355,89 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
       setLoading(true);
       try {
         // Load models and default parameters in parallel
-        const [modelsResponse, defaultsResponse] = await Promise.all([
-          ollamaApi.getModels(),
-          !persona ? personaApi.getDefaultParameters() : Promise.resolve(null),
-        ]);
+        const [modelsResponse, embeddingModelsResponse, defaultsResponse] =
+          await Promise.all([
+            ollamaApi.getModels(),
+            embeddingApi.getModels(),
+            !persona
+              ? personaApi.getDefaultParameters()
+              : Promise.resolve(null),
+          ]);
 
         if (modelsResponse.success && modelsResponse.data) {
           setAvailableModels(modelsResponse.data);
-          const embModels = extractEmbeddingModels(modelsResponse.data);
-          setEmbeddingModels(embModels);
+        }
 
-          // Set initial form data
-          if (persona) {
-            // Editing existing persona
-            setFormData({
-              name: persona.name,
-              description: persona.description || '',
-              model: persona.model,
-              parameters: persona.parameters,
-              avatar: persona.avatar || '',
-              background: persona.background || '',
-              embedding_model:
-                persona.embedding_model || embModels[0]?.id || '',
-              memory_settings:
-                persona.memory_settings || DEFAULT_FORM_DATA.memory_settings,
-              mutation_settings:
-                persona.mutation_settings ||
-                DEFAULT_FORM_DATA.mutation_settings,
-            });
+        const embModels = normalizeEmbeddingModels(
+          embeddingModelsResponse.success && embeddingModelsResponse.data
+            ? embeddingModelsResponse.data
+            : []
+        );
+        setEmbeddingModels(embModels);
+        const preferredEmbeddingModelId =
+          embModels.find(
+            model =>
+              model.id === preferences.embeddingSettings?.model ||
+              model.rawModel === preferences.embeddingSettings?.model
+          )?.id ||
+          embModels[0]?.id ||
+          '';
+        const selectedEmbeddingModelId =
+          embModels.find(
+            model =>
+              model.id === persona?.embedding_model ||
+              model.rawModel === persona?.embedding_model
+          )?.id ||
+          persona?.embedding_model ||
+          embModels[0]?.id ||
+          '';
 
-            // Handle missing embedding model in available list
-            if (
-              persona.embedding_model &&
-              !embModels.find(m => m.id === persona.embedding_model)
-            ) {
-              const baseModelName = persona.embedding_model.split(':')[0];
-              const taggedMatch = embModels.find(
-                m =>
-                  m.id.startsWith(baseModelName + ':') || m.id === baseModelName
-              );
-              if (taggedMatch) {
-                setFormData(prev => ({
-                  ...prev,
-                  embedding_model: taggedMatch.id,
-                }));
-              } else {
-                setEmbeddingModels(prev => [
-                  ...prev,
-                  {
-                    id: persona.embedding_model!,
-                    name: persona.embedding_model!,
-                    description:
-                      'Previously selected model (not currently installed)',
-                    provider: 'ollama' as const,
-                    dimensions: 768,
-                  },
-                ]);
-              }
-            }
-          } else {
-            // Creating new persona - apply defaults
-            const defaults = defaultsResponse?.success
-              ? defaultsResponse.data
-              : {};
-            setFormData(prev => ({
-              ...prev,
-              parameters: { ...prev.parameters, ...defaults },
-              embedding_model: embModels[0]?.id || '',
-            }));
+        if (persona) {
+          setFormData({
+            name: persona.name,
+            description: persona.description || '',
+            model: persona.model,
+            parameters: persona.parameters,
+            avatar: persona.avatar || '',
+            background: persona.background || '',
+            embedding_model: selectedEmbeddingModelId,
+            memory_settings:
+              persona.memory_settings || DEFAULT_FORM_DATA.memory_settings,
+            mutation_settings:
+              persona.mutation_settings || DEFAULT_FORM_DATA.mutation_settings,
+          });
+
+          if (
+            persona.embedding_model &&
+            !embModels.find(
+              model =>
+                model.id === persona.embedding_model ||
+                model.rawModel === persona.embedding_model
+            )
+          ) {
+            setEmbeddingModels(prev =>
+              normalizeEmbeddingModels([
+                ...prev,
+                {
+                  id: persona.embedding_model!,
+                  name: persona.embedding_model!,
+                  description:
+                    'Previously selected model (not currently available)',
+                  provider: 'openai' as const,
+                  dimensions: 0,
+                },
+              ])
+            );
           }
+        } else {
+          const defaults = defaultsResponse?.success
+            ? defaultsResponse.data
+            : {};
+          setFormData(prev => ({
+            ...prev,
+            parameters: { ...prev.parameters, ...defaults },
+            embedding_model: preferredEmbeddingModelId,
+          }));
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -487,7 +447,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
     };
 
     initialize();
-  }, [persona, extractEmbeddingModels]);
+  }, [persona, normalizeEmbeddingModels, preferences.embeddingSettings?.model]);
 
   // Load memory status when editing existing persona
   useEffect(() => {

@@ -621,7 +621,9 @@ class ChatService {
       );
 
       // Get advanced settings
-      const embeddingModel = persona.embedding_model || 'nomic-embed-text';
+      const embeddingModel =
+        persona.embedding_model ||
+        preferencesService.getDefaultEmbeddingModel(userId);
 
       console.log(`[ADVANCED] Using embedding model: ${embeddingModel}`);
       console.log(`[ADVANCED] Advanced features enabled`);
@@ -843,7 +845,9 @@ Guidelines:
       );
 
       // Get advanced settings
-      const embeddingModel = persona.embedding_model || 'nomic-embed-text';
+      const embeddingModel =
+        persona.embedding_model ||
+        preferencesService.getDefaultEmbeddingModel(userId);
 
       // Store the assistant response as a memory for future context
       await memoryService.storeMemory(
