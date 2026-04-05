@@ -18,6 +18,7 @@
 import { Router, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { personaService } from '../services/personaService.js';
+import preferencesService from '../services/preferencesService.js';
 import { ApiResponse, getErrorMessage } from '../types/index.js';
 
 const router = Router();
@@ -498,7 +499,9 @@ router.post(
         return;
       }
 
-      const embeddingModel = persona.embedding_model || 'nomic-embed-text';
+      const embeddingModel =
+        persona.embedding_model ||
+        preferencesService.getDefaultEmbeddingModel(userId);
 
       const { memoryService } = await import('../services/memoryService.js');
       const result = await memoryService.consolidateMemories(

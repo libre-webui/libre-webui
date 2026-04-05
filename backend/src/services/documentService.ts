@@ -19,7 +19,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DocumentChunk } from '../types/index.js';
 import { Document } from '../storage.js';
 import storageService from '../storage.js';
-import ollamaService from './ollamaService.js';
+import embeddingService from './embeddingService.js';
 import preferencesService from './preferencesService.js';
 
 // Utility functions for vector operations
@@ -274,7 +274,7 @@ class DocumentService {
         return null;
       }
 
-      const response = await ollamaService.generateEmbeddings({
+      const response = await embeddingService.generateEmbeddings({
         model: preferences.embeddingSettings.model,
         input: text,
       });

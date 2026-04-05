@@ -20,6 +20,8 @@ import path from 'path';
 import sanitize from 'sanitize-filename';
 import axios from 'axios';
 import {
+  EmbeddingModel,
+  OllamaEmbeddingsResponse,
   Plugin,
   PluginStatus,
   PluginResponse,
@@ -106,6 +108,16 @@ class PluginService {
     );
   }
 
+  private getEmbeddingCapability(plugin: Plugin):
+    | {
+        endpoint: string;
+        model_map: string[];
+        config?: Record<string, unknown>;
+      }
+    | undefined {
+    return plugin.capabilities?.embedding;
+  }
+
   /**
    * Validate an endpoint URL for safety (SSRF protection).
    * Returns the URL string if valid, or null if invalid.
@@ -137,20 +149,17 @@ class PluginService {
    * Hits {baseUrl}/v1/models (OpenAI-compatible) and updates the plugin's model_map.
    * Falls back silently to the existing model_map if the endpoint is unavailable.
    */
-  async discoverModels(pluginId: string): Promise<string[]> {
+  async discoverModels(pluginId: string, userId?: string): Promise<string[]> {
     const plugin = this.getPlugin(pluginId);
     if (!plugin) return [];
 
-    // Derive base URL from endpoint (strip /v1/chat/completions etc.)
-    let baseUrl: string;
-    try {
-      const url = new URL(plugin.endpoint);
-      baseUrl = `${url.protocol}//${url.host}`;
-    } catch {
-      return plugin.model_map;
-    }
+    const pluginVars = this.getPluginVariables(plugin, userId);
+    const endpointOverride = pluginVars.endpoint as string | undefined;
+    const effectiveEndpoint =
+      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
+      plugin.endpoint;
 
-    const apiKey = this.getApiKey(plugin);
+    const apiKey = this.getApiKey(plugin, userId);
     const headers: Record<string, string> = {
       Accept: 'application/json',
     };
@@ -162,10 +171,13 @@ class PluginService {
     }
 
     try {
-      const response = await axios.get(`${baseUrl}/v1/models`, {
-        headers,
-        timeout: 5000,
-      });
+      const response = await axios.get(
+        this.getModelsEndpoint(effectiveEndpoint),
+        {
+          headers,
+          timeout: 5000,
+        }
+      );
 
       if (response.data?.data && Array.isArray(response.data.data)) {
         const models = response.data.data
@@ -1307,6 +1319,247 @@ class PluginService {
 
     console.log(`[DEBUG] No TTS plugin found for model: ${model}`);
     return null;
+  }
+
+  getPluginForEmbedding(
+    model: string,
+    pluginId?: string,
+    userId?: string
+  ): Plugin | null {
+    const allPlugins = this.getAllPlugins();
+
+    for (const plugin of allPlugins) {
+      if (pluginId && plugin.id !== pluginId) {
+        continue;
+      }
+
+      const embeddingCapability = this.getEmbeddingCapability(plugin);
+      const supportsEmbedding =
+        embeddingCapability?.model_map.includes(model) ||
+        ((plugin.type === 'embedding' ||
+          plugin.type === 'completion' ||
+          plugin.type === 'chat') &&
+          plugin.model_map.includes(model));
+
+      if (!supportsEmbedding) {
+        continue;
+      }
+
+      const noAuthRequired =
+        (embeddingCapability?.config as Record<string, unknown> | undefined)
+          ?.no_auth_required === true;
+      const apiKey = this.getApiKey(plugin, userId);
+      if (apiKey || noAuthRequired) {
+        return plugin;
+      }
+    }
+
+    return null;
+  }
+
+  getAvailableEmbeddingModels(userId?: string): Array<{
+    model: string;
+    plugin: string;
+    pluginName: string;
+    provider: EmbeddingModel['provider'];
+    description?: string;
+    fromEmbeddingCapability?: boolean;
+  }> {
+    const models: Array<{
+      model: string;
+      plugin: string;
+      pluginName: string;
+      provider: EmbeddingModel['provider'];
+      description?: string;
+      fromEmbeddingCapability?: boolean;
+    }> = [];
+    const allPlugins = this.getAllPlugins();
+
+    for (const plugin of allPlugins) {
+      const embeddingCapability = this.getEmbeddingCapability(plugin);
+      const noAuthRequired =
+        (embeddingCapability?.config as Record<string, unknown> | undefined)
+          ?.no_auth_required === true;
+      const apiKey = this.getApiKey(plugin, userId);
+      if (!apiKey && !noAuthRequired) {
+        continue;
+      }
+
+      const provider: EmbeddingModel['provider'] =
+        plugin.id === 'huggingface' ? 'huggingface' : 'openai';
+      const modelMap =
+        embeddingCapability?.model_map ||
+        ((plugin.type === 'embedding' ||
+          plugin.type === 'completion' ||
+          plugin.type === 'chat') &&
+        Array.isArray(plugin.model_map)
+          ? plugin.model_map
+          : []);
+
+      for (const model of modelMap) {
+        models.push({
+          model,
+          plugin: plugin.id,
+          pluginName: plugin.name,
+          provider,
+          description: embeddingCapability
+            ? 'Embedding provider'
+            : 'OpenAI-compatible provider',
+          fromEmbeddingCapability: Boolean(embeddingCapability),
+        });
+      }
+    }
+
+    return models;
+  }
+
+  async executeEmbeddingRequest(
+    model: string,
+    input: string | string[],
+    pluginId?: string,
+    userId?: string
+  ): Promise<OllamaEmbeddingsResponse> {
+    if (!model || typeof model !== 'string') {
+      throw new Error('Invalid model parameter: must be a non-empty string');
+    }
+
+    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
+    if (
+      !modelPattern.test(model) ||
+      model.includes('..') ||
+      model.includes('\\')
+    ) {
+      throw new Error(`Invalid model parameter: ${model}`);
+    }
+
+    const plugin = this.getPluginForEmbedding(model, pluginId, userId);
+    if (!plugin) {
+      throw new Error(`No embedding plugin found for model: ${model}`);
+    }
+
+    const embeddingCapability = this.getEmbeddingCapability(plugin);
+    const noAuthRequired =
+      (embeddingCapability?.config as Record<string, unknown> | undefined)
+        ?.no_auth_required === true;
+    const apiKey = this.getApiKey(plugin, userId);
+    if (!apiKey && !noAuthRequired) {
+      throw new Error(
+        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
+      );
+    }
+
+    const pluginVars = this.getPluginVariables(plugin, userId);
+    const endpointOverride = pluginVars.endpoint as string | undefined;
+    const effectiveEndpoint =
+      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
+      embeddingCapability?.endpoint ||
+      plugin.endpoint;
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (apiKey && plugin.auth.header) {
+      const authValue = plugin.auth.prefix
+        ? `${plugin.auth.prefix}${apiKey}`
+        : apiKey;
+      headers[plugin.auth.header] = authValue;
+    }
+
+    const response = await axios.post(
+      this.getEmbeddingEndpoint(effectiveEndpoint),
+      {
+        model,
+        input,
+      },
+      {
+        headers,
+        timeout: 60000,
+      }
+    );
+
+    if (Array.isArray(response.data?.embeddings)) {
+      return {
+        embeddings: response.data.embeddings,
+      };
+    }
+
+    if (Array.isArray(response.data?.data)) {
+      return {
+        embeddings: response.data.data
+          .map((entry: { embedding?: number[] }) => entry.embedding)
+          .filter((embedding: unknown): embedding is number[] =>
+            Array.isArray(embedding)
+          ),
+      };
+    }
+
+    throw new Error('Embedding provider returned an unexpected response');
+  }
+
+  private getEmbeddingEndpoint(endpoint: string): string {
+    const url = new URL(endpoint);
+    url.search = '';
+
+    if (url.pathname.endsWith('/embeddings')) {
+      return url.toString();
+    }
+
+    if (url.pathname.endsWith('/chat/completions')) {
+      url.pathname = `${url.pathname.slice(0, -'/chat/completions'.length)}/embeddings`;
+      return url.toString();
+    }
+
+    if (url.pathname.endsWith('/completions')) {
+      url.pathname = `${url.pathname.slice(0, -'/completions'.length)}/embeddings`;
+      return url.toString();
+    }
+
+    if (url.pathname.endsWith('/models')) {
+      url.pathname = `${url.pathname.slice(0, -'/models'.length)}/embeddings`;
+      return url.toString();
+    }
+
+    const basePath =
+      url.pathname === '/'
+        ? ''
+        : url.pathname.endsWith('/')
+          ? url.pathname.slice(0, -1)
+          : url.pathname;
+    url.pathname = `${basePath}/embeddings`;
+    return url.toString();
+  }
+
+  private getModelsEndpoint(endpoint: string): string {
+    const url = new URL(endpoint);
+    url.search = '';
+
+    if (url.pathname.endsWith('/models')) {
+      return url.toString();
+    }
+
+    if (url.pathname.endsWith('/chat/completions')) {
+      url.pathname = `${url.pathname.slice(0, -'/chat/completions'.length)}/models`;
+      return url.toString();
+    }
+
+    if (url.pathname.endsWith('/completions')) {
+      url.pathname = `${url.pathname.slice(0, -'/completions'.length)}/models`;
+      return url.toString();
+    }
+
+    if (url.pathname.endsWith('/embeddings')) {
+      url.pathname = `${url.pathname.slice(0, -'/embeddings'.length)}/models`;
+      return url.toString();
+    }
+
+    const basePath =
+      url.pathname === '/'
+        ? ''
+        : url.pathname.endsWith('/')
+          ? url.pathname.slice(0, -1)
+          : url.pathname;
+    url.pathname = `${basePath}/models`;
+    return url.toString();
   }
 
   // Get all available TTS models from all plugins
