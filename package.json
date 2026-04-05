@@ -8,6 +8,7 @@
   },
   "files": [
     "bin",
+    "backend/package.json",
     "backend/dist",
     "frontend/dist",
     "plugins/*.json",
@@ -26,6 +27,7 @@
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
+    "test:package": "npm run build && node --test scripts/test-package-layout.mjs",
     "start": "cd backend && npm start",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "format": "node scripts/add-headers.js && prettier --write \"frontend/src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"backend/src/**/*.{ts,js,json,md}\" \"*.{json,md,yml,yaml}\" \".github/**/*.{yml,yaml}\"",
