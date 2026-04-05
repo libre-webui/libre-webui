@@ -16,6 +16,7 @@
  */
 
 import express, { Response } from 'express';
+import rateLimit from 'express-rate-limit';
 import {
   ApiResponse,
   EmbeddingModel,
@@ -25,6 +26,20 @@ import embeddingService from '../services/embeddingService.js';
 import { AuthenticatedRequest, optionalAuth } from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Rate limiter for embeddings routes: 60 requests per minute
+const embeddingsRateLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 60, // limit each IP to 60 requests per minute
+  message: {
+    success: false,
+    message: 'Too many embedding requests, please slow down',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.use(embeddingsRateLimiter);
 router.use(optionalAuth);
 
 router.get(
