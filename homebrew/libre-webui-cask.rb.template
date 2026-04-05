@@ -1,5 +1,5 @@
 # Libre WebUI Cask Formula
-# Desktop application for Libre WebUI
+# Generated from the release template in the main repo.
 #
 # Installation:
 #   brew tap libre-webui/tap
@@ -9,8 +9,8 @@
 #   brew install --cask libre-webui/tap/libre-webui
 
 cask "libre-webui" do
-  version "0.3.2"
-  sha256 "c9023ab5970ce47d96208769b6cf455b20c3deb7580ca9bd4a9006fb62809f52"
+  version "{{VERSION}}"
+  sha256 "{{DMG_SHA256}}"
 
   url "https://github.com/libre-webui/libre-webui/releases/download/v#{version}/Libre.WebUI-#{version}-mac-arm64.dmg"
 
