@@ -17,7 +17,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Github, Loader2 } from 'lucide-react';
+import { GitBranch, Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '../utils/config';
 
 /**
@@ -98,7 +98,7 @@ export const GitHubAuthButton: React.FC = () => {
         </div>
       ) : (
         <div className='flex items-center'>
-          <Github size={16} className='mr-2' />
+          <GitBranch size={16} className='mr-2' />
           {t('auth.oauth.continueWith', { provider: t('auth.oauth.github') })}
         </div>
       )}
