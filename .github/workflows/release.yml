@@ -233,7 +233,7 @@ jobs:
           find electron-builds -type f 2>/dev/null || echo "No artifacts found"
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
