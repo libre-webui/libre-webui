@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Github, Loader2, User, LogOut } from 'lucide-react';
+import { GitBranch, Loader2, User, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
@@ -215,7 +215,7 @@ export const GitHubAuth: React.FC = () => {
             onClick={handleGitHubLogin}
             className='w-full inline-flex items-center justify-center px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-md transition-colors duration-200'
           >
-            <Github className='w-5 h-5 mr-3' />
+            <GitBranch className='w-5 h-5 mr-3' />
             {t('auth.signInWithGitHub')}
           </button>
 
