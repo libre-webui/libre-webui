@@ -42,7 +42,7 @@
     "@types/express": "^5.0.6",
     "@types/express-rate-limit": "^6.0.2",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^25.5.2",
+    "@types/node": "^25.6.0",
     "@types/uuid": "^11.0.0",
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
