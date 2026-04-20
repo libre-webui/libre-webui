@@ -32,7 +32,7 @@
     "multer": "^2.0.1",
     "pdfjs-dist": "^5.4.530",
     "sanitize-filename": "^1.6.3",
-    "uuid": "^13.0.0",
+    "uuid": "^14.0.0",
     "ws": "^8.14.2"
   },
   "devDependencies": {
@@ -49,6 +49,6 @@
     "@typescript-eslint/parser": "^8.34.0",
     "eslint": "^10.0.0",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   }
 }
