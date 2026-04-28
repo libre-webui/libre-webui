@@ -5,10 +5,10 @@ colors:
   primary: '#FFFFFF'
   secondary: '#9CA3AF'
   tertiary: '#7C3AED'
-  neutral: '#111827'
-  neutral-secondary: '#1F2937'
-  neutral-tertiary: '#374151'
-  neutral-surface: '#1A1530'
+  neutral: '#0A0A0A'
+  neutral-secondary: '#171717'
+  neutral-tertiary: '#262626'
+  neutral-surface: '#1F1F1F'
   accent: '#A78BFA'
   success: '#34D399'
   warning: '#FBBF24'
@@ -147,10 +147,10 @@ The palette is anchored in cool neutrals with a single accent family.
 - **Secondary (#9CA3AF):** Muted text for metadata, timestamps, sidebar labels, placeholder text, and secondary information. Never used for primary content — this is the "quiet" voice of the interface.
 - **Tertiary (#7C3AED — Violet 600):** The signature Libre color. Used exclusively for interactive elements that demand attention: primary buttons, active toggles, the send button, selected nav items. Restrained usage is critical — if tertiary appears on more than 5% of the visible surface, something is wrong.
 - **Accent (#A78BFA — Violet 400):** Hover state for tertiary elements and secondary highlights. Lighter to provide clear interactive feedback without introducing a new hue.
-- **Neutral (#111827 — Gray 900):** Sidebar and deepest background layer. The darkest surface in the hierarchy.
-- **Neutral-secondary (#1F2937 — Gray 800):** Chat area background. One step lighter than the sidebar to create depth without a hard border.
-- **Neutral-tertiary (#374151 — Gray 700):** Cards, input fields, user message bubbles, and elevated surfaces. The lightest of the three neutral tiers.
-- **Neutral-surface (#1A1530):** A violet-tinted dark for panels that need subtle differentiation from pure gray. Used for settings panels, popovers, and contextual overlays.
+- **Neutral (#0A0A0A):** Sidebar and deepest background layer. Near-black, warm-neutral with no blue cast — the dark mode hero feels grounded and high-contrast against violet accents.
+- **Neutral-secondary (#171717):** Chat area background. One step lighter than the sidebar to create depth without a hard border.
+- **Neutral-tertiary (#262626):** Cards, input fields, user message bubbles, and elevated surfaces. The lightest of the three neutral tiers.
+- **Neutral-surface (#1F1F1F):** A subtly distinct dark for panels that need to separate from the chat area without a hard border. Used for settings panels, popovers, and contextual overlays.
 - **Success (#34D399):** Confirmation states, connection indicators, successful operations. Green but not neon — it should feel calm, not celebratory.
 - **Warning (#FBBF24):** Rate limits, approaching quotas, non-critical alerts. Amber, not orange.
 - **Error (#F87171):** Failed requests, validation errors, disconnection states. Red but not aggressive — this is a tool, not an alarm.

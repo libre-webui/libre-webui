@@ -40,16 +40,16 @@ export default {
           900: '#111827',
           950: '#0b1020',
         },
-        // Dark surface ladder for layered backgrounds.
+        // Dark surface ladder for layered backgrounds — near-black warm neutrals.
         // Higher numeric keys = lighter text (inverted scale, kept for backwards compat).
         dark: {
-          25: '#1a1530',   // neutral-surface (panels, popovers)
-          50: '#111827',   // neutral (sidebar)
-          100: '#111827',  // neutral
-          200: '#1f2937',  // neutral-secondary (chat area)
-          300: '#374151',  // neutral-tertiary (cards, inputs, user bubbles)
-          400: '#4b5563',  // dim border / subtle divider
-          500: '#6b7280',  // muted text
+          25: '#1f1f1f',   // neutral-surface (panels, popovers)
+          50: '#0a0a0a',   // neutral (sidebar — deepest)
+          100: '#0a0a0a',  // neutral
+          200: '#171717',  // neutral-secondary (chat area)
+          300: '#262626',  // neutral-tertiary (cards, inputs, user bubbles)
+          400: '#3a3a3a',  // dim border / subtle divider
+          500: '#525252',  // muted text
           600: '#9ca3af',  // secondary text
           700: '#d1d5db',  // body text in dark mode
           800: '#e5e7eb',  // emphasized text
