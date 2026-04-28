@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -105,13 +106,9 @@ export const ModelManager: React.FC = () => {
   const { user, systemInfo } = useAuthStore();
   const canInstallModels =
     user?.role === 'admin' || (systemInfo?.allowUserModelPull ?? true);
-  const [models, setModels] = useState<ModelInfo[]>([]);
-  const [runningModels, setRunningModels] = useState<RunningModel[]>([]);
-  const [libraryModels, setLibraryModels] = useState<LibraryModel[]>([]);
-  const [loadingLibrary, setLoadingLibrary] = useState(false);
+  const queryClient = useQueryClient();
   const [libraryFilter, setLibraryFilter] = useState<string>('all');
   const [librarySearch, setLibrarySearch] = useState('');
-  const [loading, setLoading] = useState(false);
   const [pullModelName, setPullModelName] = useState('');
   const [pulling, setPulling] = useState(false);
   const [pullProgress, setPullProgress] = useState<{
@@ -150,13 +147,7 @@ export const ModelManager: React.FC = () => {
   );
   const [generatingEmbeddings, setGeneratingEmbeddings] = useState(false);
 
-  // System info
-  const [ollamaVersion, setOllamaVersion] = useState<string | null>(null);
-  const [isHealthy, setIsHealthy] = useState<boolean | null>(null);
-
   // HuggingFace Hub state
-  const [hfModels, setHfModels] = useState<HuggingFaceModel[]>([]);
-  const [loadingHfModels, setLoadingHfModels] = useState(false);
   const [hfSearch, setHfSearch] = useState('');
   const [hfDebouncedSearch, setHfDebouncedSearch] = useState('');
   const [hfTask, setHfTask] = useState<string>('text-generation');
@@ -192,10 +183,14 @@ export const ModelManager: React.FC = () => {
     });
   };
 
-  // Load models and running models
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
+  // Models, running models, version, and health — combined query
+  const {
+    data: ollamaState,
+    isLoading: loading,
+    refetch: refetchOllamaState,
+  } = useQuery({
+    queryKey: ['ollama-state'],
+    queryFn: async () => {
       const [modelsResponse, runningResponse, versionResponse, healthResponse] =
         await Promise.all([
           ollamaApi.getModels(),
@@ -203,52 +198,42 @@ export const ModelManager: React.FC = () => {
           ollamaApi.getVersion(),
           ollamaApi.checkHealth(),
         ]);
+      return {
+        models: modelsResponse.success ? modelsResponse.data || [] : [],
+        runningModels: runningResponse.success
+          ? Array.isArray(runningResponse.data)
+            ? runningResponse.data
+            : []
+          : [],
+        ollamaVersion:
+          versionResponse.success && versionResponse.data
+            ? versionResponse.data.version
+            : null,
+        isHealthy: healthResponse.success,
+      };
+    },
+  });
 
-      if (modelsResponse.success) {
-        setModels(modelsResponse.data || []);
-      }
+  const models: ModelInfo[] = ollamaState?.models ?? [];
+  const runningModels: RunningModel[] = ollamaState?.runningModels ?? [];
+  const ollamaVersion = ollamaState?.ollamaVersion ?? null;
+  const isHealthy = ollamaState?.isHealthy ?? null;
 
-      if (runningResponse.success) {
-        setRunningModels(
-          Array.isArray(runningResponse.data) ? runningResponse.data : []
-        );
-      }
+  const loadData = useCallback(async () => {
+    await refetchOllamaState();
+  }, [refetchOllamaState]);
 
-      if (versionResponse.success && versionResponse.data) {
-        setOllamaVersion(versionResponse.data.version);
-      }
-
-      setIsHealthy(healthResponse.success);
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      toast.error(t('modelManager.pull.failed') + ': ' + errorMessage);
-      setIsHealthy(false);
-    } finally {
-      setLoading(false);
-    }
-  }, [t]);
-
-  // Load library models
-  const loadLibraryModels = async () => {
-    setLoadingLibrary(true);
-    try {
+  // Library models
+  const { data: libraryModels = [], isLoading: loadingLibrary } = useQuery({
+    queryKey: ['ollama-library'],
+    queryFn: async (): Promise<LibraryModel[]> => {
       const response = await ollamaApi.getLibraryModels();
-      if (response.success && response.data) {
-        setLibraryModels(response.data);
-      }
-    } catch (error: unknown) {
-      console.error('Failed to load library models:', error);
-    } finally {
-      setLoadingLibrary(false);
-    }
-  };
+      return response.success && response.data ? response.data : [];
+    },
+  });
 
-  useEffect(() => {
-    loadData();
-    loadLibraryModels();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const loadLibraryModels = () =>
+    queryClient.invalidateQueries({ queryKey: ['ollama-library'] });
 
   // HuggingFace search debounce
   useEffect(() => {
@@ -258,33 +243,26 @@ export const ModelManager: React.FC = () => {
     return () => clearTimeout(timer);
   }, [hfSearch]);
 
-  // Load HuggingFace models
-  const loadHfModels = async () => {
-    setLoadingHfModels(true);
-    try {
+  // HuggingFace models query
+  const hfEnabled = expandedSections.has('huggingface');
+  const { data: hfModels = [], isLoading: loadingHfModels } = useQuery({
+    queryKey: ['hf-models', hfTask, hfDebouncedSearch, hfSort],
+    queryFn: async (): Promise<HuggingFaceModel[]> => {
       const response = await huggingfaceHubApi.getModels({
         task: hfTask,
         search: hfDebouncedSearch || undefined,
         sort: hfSort as 'downloads' | 'likes' | 'lastModified',
         limit: 30,
       });
-      if (response.success && response.data) {
-        setHfModels(response.data);
-      }
-    } catch (error: unknown) {
-      console.error('Failed to load HuggingFace models:', error);
-    } finally {
-      setLoadingHfModels(false);
-    }
-  };
+      return response.success && response.data ? response.data : [];
+    },
+    enabled: hfEnabled,
+  });
 
-  // Load HF models when section is expanded or filters change
-  useEffect(() => {
-    if (expandedSections.has('huggingface')) {
-      loadHfModels();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expandedSections, hfTask, hfDebouncedSearch, hfSort]);
+  const loadHfModels = () =>
+    queryClient.invalidateQueries({
+      queryKey: ['hf-models', hfTask, hfDebouncedSearch, hfSort],
+    });
 
   // Load GGUF files for a HuggingFace model
   const loadGgufFiles = useCallback(async (modelId: string) => {
@@ -1917,11 +1895,11 @@ export const ModelManager: React.FC = () => {
                   try {
                     const response = await ollamaApi.checkHealth();
                     if (response.success) {
-                      setIsHealthy(true);
+                      await refetchOllamaState();
                       toast.success(t('modelManager.advanced.healthy'));
                     }
                   } catch {
-                    setIsHealthy(false);
+                    await refetchOllamaState();
                     toast.error(t('modelManager.systemStatus.offline'));
                   }
                 }}

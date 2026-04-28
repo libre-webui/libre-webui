@@ -52,13 +52,6 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Initialize avatar value when user changes
-  useEffect(() => {
-    if (user?.avatar) {
-      setAvatarValue(user.avatar);
-    }
-  }, [user?.avatar]);
-
   // Calculate dropdown position
   useEffect(() => {
     if (isOpen && buttonRef.current) {
@@ -114,6 +107,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
   };
 
   const handleAvatarClick = () => {
+    setAvatarValue(user?.avatar || '');
     setShowAvatarModal(true);
     setIsOpen(false);
   };

@@ -16,6 +16,7 @@
  */
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -105,14 +106,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     user?.role === 'admin' || (systemInfo?.allowUserModelPull ?? true);
 
   // Ollama library state
-  const [libraryModels, setLibraryModels] = useState<LibraryModel[]>([]);
-  const [loadingLibrary, setLoadingLibrary] = useState(false);
   const [libraryCategory, setLibraryCategory] = useState('all');
   const [libraryDebouncedSearch, setLibraryDebouncedSearch] = useState('');
 
   // HuggingFace state
-  const [hfModels, setHfModels] = useState<HuggingFaceModel[]>([]);
-  const [loadingHf, setLoadingHf] = useState(false);
   const [hfTask, setHfTask] = useState('text-generation');
   const [hfSort, setHfSort] = useState('downloads');
   const [hfDebouncedSearch, setHfDebouncedSearch] = useState('');
@@ -185,6 +182,54 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     }))
     .filter(group => group.models.length > 0);
 
+  // Find current model info
+  const currentModel = models.find(
+    m =>
+      m.name === selectedModel ||
+      (selectedModel.startsWith('persona:') && m.name === selectedModel)
+  );
+
+  // Ollama library query
+  const {
+    data: libraryModels = [],
+    isLoading: loadingLibrary,
+    refetch: loadLibrary,
+  } = useQuery({
+    queryKey: ['ollama-library-selector', libraryDebouncedSearch],
+    queryFn: async (): Promise<LibraryModel[]> => {
+      const response = await ollamaApi.getLibraryModels({
+        search: libraryDebouncedSearch || undefined,
+        sort: 'popular',
+      });
+      return response.success && response.data ? response.data : [];
+    },
+    enabled: isOpen && activeTab === 'ollama',
+  });
+
+  // HuggingFace models query
+  const {
+    data: hfModels = [],
+    isLoading: loadingHf,
+    refetch: loadHfModels,
+  } = useQuery({
+    queryKey: [
+      'hf-models-selector',
+      hfTask,
+      hfDebouncedSearch,
+      hfSort,
+    ] as const,
+    queryFn: async (): Promise<HuggingFaceModel[]> => {
+      const response = await huggingfaceHubApi.getModels({
+        task: hfTask,
+        search: hfDebouncedSearch || undefined,
+        sort: hfSort as 'downloads' | 'likes' | 'lastModified',
+        limit: 30,
+      });
+      return response.success && response.data ? response.data : [];
+    },
+    enabled: isOpen && activeTab === 'huggingface',
+  });
+
   // Filter library models
   const filteredLibraryModels = libraryModels.filter(model => {
     const matchesSearch =
@@ -195,51 +240,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       libraryCategory === 'all' || model.category === libraryCategory;
     return matchesSearch && matchesCategory;
   });
-
-  // Find current model info
-  const currentModel = models.find(
-    m =>
-      m.name === selectedModel ||
-      (selectedModel.startsWith('persona:') && m.name === selectedModel)
-  );
-
-  // Load Ollama library
-  const loadLibrary = useCallback(async () => {
-    setLoadingLibrary(true);
-    try {
-      const response = await ollamaApi.getLibraryModels({
-        search: libraryDebouncedSearch || undefined,
-        sort: 'popular',
-      });
-      if (response.success && response.data) {
-        setLibraryModels(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load library:', error);
-    } finally {
-      setLoadingLibrary(false);
-    }
-  }, [libraryDebouncedSearch]);
-
-  // Load HuggingFace models
-  const loadHfModels = useCallback(async () => {
-    setLoadingHf(true);
-    try {
-      const response = await huggingfaceHubApi.getModels({
-        task: hfTask,
-        search: hfDebouncedSearch || undefined,
-        sort: hfSort as 'downloads' | 'likes' | 'lastModified',
-        limit: 30,
-      });
-      if (response.success && response.data) {
-        setHfModels(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load HuggingFace models:', error);
-    } finally {
-      setLoadingHf(false);
-    }
-  }, [hfTask, hfDebouncedSearch, hfSort]);
 
   // Load GGUF files for a HuggingFace model
   const loadGgufFiles = useCallback(async (modelId: string) => {
@@ -327,19 +327,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     }, 300);
     return () => clearTimeout(timer);
   }, [searchTerm, activeTab]);
-
-  // Load data when tab changes or search changes
-  useEffect(() => {
-    if (isOpen && activeTab === 'ollama') {
-      loadLibrary();
-    }
-  }, [isOpen, activeTab, libraryDebouncedSearch, loadLibrary]);
-
-  useEffect(() => {
-    if (isOpen && activeTab === 'huggingface') {
-      loadHfModels();
-    }
-  }, [isOpen, activeTab, hfTask, hfDebouncedSearch, hfSort, loadHfModels]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -785,7 +772,6 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           onMouseDown={e => {
             e.preventDefault();
             e.stopPropagation();
-            setLibraryModels([]);
             loadLibrary();
           }}
           className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'

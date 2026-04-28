@@ -65,29 +65,33 @@ export const PluginVariablesEditor: React.FC<{
     fetchPluginVariables(plugin.id);
   }, [fetchPluginVariables, plugin.id]);
 
-  // Initialize local values from store once available
+  // Initialize local values from store once available — adjust state during render
   const storedVarsJson = JSON.stringify(storedVars);
-  useEffect(() => {
+  const [prevStoredVarsJson, setPrevStoredVarsJson] = useState<string | null>(
+    null
+  );
+  if (prevStoredVarsJson !== storedVarsJson) {
     const vars = JSON.parse(storedVarsJson) as Record<
       string,
       PluginVariableValue
     >;
-    if (Object.keys(vars).length === 0 && initialized) return;
-    const values: Record<string, string | number | boolean> = {};
-    for (const def of schema) {
-      const stored = vars[def.name];
-      if (stored?.has_value && !stored.is_sensitive) {
-        values[def.name] = stored.value;
-      } else {
-        values[def.name] =
-          def.default ??
-          (def.type === 'boolean' ? false : def.type === 'number' ? 0 : '');
+    if (!(Object.keys(vars).length === 0 && initialized)) {
+      const values: Record<string, string | number | boolean> = {};
+      for (const def of schema) {
+        const stored = vars[def.name];
+        if (stored?.has_value && !stored.is_sensitive) {
+          values[def.name] = stored.value;
+        } else {
+          values[def.name] =
+            def.default ??
+            (def.type === 'boolean' ? false : def.type === 'number' ? 0 : '');
+        }
       }
+      setLocalValues(values);
+      setInitialized(true);
     }
-    setLocalValues(values);
-    setInitialized(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storedVarsJson, schema]);
+    setPrevStoredVarsJson(storedVarsJson);
+  }
 
   const handleSave = async () => {
     // Validate fields before saving

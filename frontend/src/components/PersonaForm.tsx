@@ -22,6 +22,7 @@ import React, {
   useCallback,
   useMemo,
 } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { personaApi, ollamaApi, embeddingApi } from '@/utils/api';
@@ -242,8 +243,6 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
   const [activeTab, setActiveTab] = useState<
     'basic' | 'parameters' | 'memory' | 'advanced'
   >('basic');
-  const [memoryStatus, setMemoryStatus] = useState<MemoryStatus | null>(null);
-  const [loadingMemoryStatus, setLoadingMemoryStatus] = useState(false);
   const [wipingMemories, setWipingMemories] = useState(false);
   const hasLoadedRef = useRef(false);
 
@@ -305,21 +304,27 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
         ];
   }, []);
 
-  // Load memory status for existing persona
-  const loadMemoryStatus = useCallback(async () => {
-    if (!persona?.id) return;
-    setLoadingMemoryStatus(true);
-    try {
-      const response = await personaApi.getMemoryStatus(persona.id);
-      if (response.success && response.data) {
-        setMemoryStatus(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load memory status:', error);
-    } finally {
-      setLoadingMemoryStatus(false);
-    }
-  }, [persona?.id]);
+  // Load memory status for existing persona via TanStack Query
+  const personaId = persona?.id;
+  const memoryEnabled = !!formData.memory_settings?.enabled;
+  const queryClient = useQueryClient();
+
+  const { data: memoryStatus = null, isLoading: loadingMemoryStatus } =
+    useQuery({
+      queryKey: ['persona-memory-status', personaId],
+      queryFn: async (): Promise<MemoryStatus | null> => {
+        if (!personaId) return null;
+        const response = await personaApi.getMemoryStatus(personaId);
+        if (response.success && response.data) return response.data;
+        return null;
+      },
+      enabled: !!personaId && memoryEnabled,
+    });
+
+  const reloadMemoryStatus = () =>
+    queryClient.invalidateQueries({
+      queryKey: ['persona-memory-status', personaId],
+    });
 
   // Wipe all memories for persona
   const handleWipeMemories = async () => {
@@ -335,7 +340,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
             count: response.data?.deleted_count || 0,
           })
         );
-        await loadMemoryStatus();
+        await reloadMemoryStatus();
       } else {
         toast.error(t('personaForm.error.saveFailed'));
       }
@@ -448,13 +453,6 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
 
     initialize();
   }, [persona, normalizeEmbeddingModels, preferences.embeddingSettings?.model]);
-
-  // Load memory status when editing existing persona
-  useEffect(() => {
-    if (persona?.id && formData.memory_settings?.enabled) {
-      loadMemoryStatus();
-    }
-  }, [persona?.id, formData.memory_settings?.enabled, loadMemoryStatus]);
 
   const handleSubmit = async (closeAfter: boolean) => {
     setSubmitting(true);

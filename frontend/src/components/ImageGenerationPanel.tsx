@@ -111,8 +111,10 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
     }
   }, [isOpen]);
 
-  // Update config when plugin changes
-  useEffect(() => {
+  // Update config when plugin changes — adjust state during render rather than effect
+  const [prevSelectedPlugin, setPrevSelectedPlugin] = useState(selectedPlugin);
+  if (selectedPlugin !== prevSelectedPlugin) {
+    setPrevSelectedPlugin(selectedPlugin);
     const plugin = plugins.find(p => p.id === selectedPlugin);
     if (plugin) {
       if (plugin.models.length > 0 && !plugin.models.includes(selectedModel)) {
@@ -134,7 +136,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
       }
       setMaxPromptLength(plugin.config?.max_prompt_length ?? null);
     }
-  }, [selectedPlugin, plugins, selectedModel, size, quality]);
+  }
 
   const handleGenerate = async () => {
     if (!selectedModel || !prompt.trim()) {

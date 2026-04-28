@@ -133,13 +133,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [isOpen, sidebarCompact, toggleSidebarCompact]);
 
-  // Initialize avatar value when user changes
-  useEffect(() => {
-    if (user?.avatar) {
-      setAvatarValue(user.avatar);
-    }
-  }, [user?.avatar]);
-
   const handleSaveAvatar = async () => {
     setIsSavingAvatar(true);
     try {
@@ -898,6 +891,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <div className='py-1'>
                         <button
                           onClick={() => {
+                            setAvatarValue(user?.avatar || '');
                             setShowAvatarModal(true);
                             setUserMenuOpen(false);
                           }}

@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Persona, MemoryStatus } from '@/types';
@@ -62,7 +63,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
   compact = false,
 }) => {
   const { t } = useTranslation();
-  const [memoryStatus, setMemoryStatus] = useState<MemoryStatus | null>(null);
+  const queryClient = useQueryClient();
   const [showMenu, setShowMenu] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -70,22 +71,20 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
     persona.memory_settings?.enabled || persona.mutation_settings?.enabled
   );
 
-  const loadMemoryStatus = useCallback(async () => {
-    if (!hasAdvancedFeatures) return;
-
-    try {
+  const { data: memoryStatus = null } = useQuery({
+    queryKey: ['persona-memory-status', persona.id],
+    queryFn: async (): Promise<MemoryStatus | null> => {
       const response = await personaApi.getMemoryStatus(persona.id);
-      if (response.success && response.data) {
-        setMemoryStatus(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load memory status:', error);
-    }
-  }, [persona.id, hasAdvancedFeatures]);
+      if (response.success && response.data) return response.data;
+      return null;
+    },
+    enabled: hasAdvancedFeatures,
+  });
 
-  useEffect(() => {
-    loadMemoryStatus();
-  }, [loadMemoryStatus]);
+  const reloadMemoryStatus = () =>
+    queryClient.invalidateQueries({
+      queryKey: ['persona-memory-status', persona.id],
+    });
 
   const handleWipeMemories = async () => {
     if (!confirm(t('personaCard.wipeConfirm'))) {
@@ -101,7 +100,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             count: response.data?.deleted_count || 0,
           })
         );
-        await loadMemoryStatus();
+        await reloadMemoryStatus();
       } else {
         toast.error(t('personaCard.failed', { action: 'wipe memories' }));
       }

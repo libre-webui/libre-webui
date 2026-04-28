@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
@@ -35,8 +36,7 @@ import { Plus, Edit, Trash2, User as UserIcon, Shield } from 'lucide-react';
 
 export const UserManager: React.FC = () => {
   const { t } = useTranslation();
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<UserCreateRequest>({
@@ -48,33 +48,26 @@ export const UserManager: React.FC = () => {
 
   const { user: currentUser } = useAuthStore();
 
-  // Load users on component mount
-  useEffect(() => {
-    loadUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
+  const { data: users = [], isLoading: loading } = useQuery({
+    queryKey: ['users'],
+    queryFn: async (): Promise<User[]> => {
       const response = await usersApi.getUsers();
-      if (response.success && response.data) {
-        setUsers(response.data);
+      if (!response.success || !response.data) {
+        throw new Error(t('errors.generic'));
       }
-    } catch (error) {
-      console.error('Error loading users:', error);
-      toast.error(t('errors.generic'));
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data;
+    },
+  });
+
+  const invalidateUsers = () =>
+    queryClient.invalidateQueries({ queryKey: ['users'] });
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await usersApi.createUser(formData);
       if (response.success && response.data) {
-        setUsers([...users, response.data]);
+        await invalidateUsers();
         setFormData({ username: '', email: '', password: '', role: 'user' });
         setShowCreateForm(false);
         toast.success(t('userManager.form.createSuccess'));
@@ -114,9 +107,7 @@ export const UserManager: React.FC = () => {
 
       const response = await usersApi.updateUser(editingUser.id, updateData);
       if (response.success && response.data) {
-        setUsers(
-          users.map(u => (u.id === editingUser.id ? response.data! : u))
-        );
+        await invalidateUsers();
         setEditingUser(null);
         setFormData({ username: '', email: '', password: '', role: 'user' });
         toast.success(t('userManager.form.updateSuccess'));
@@ -146,7 +137,7 @@ export const UserManager: React.FC = () => {
     try {
       const response = await usersApi.deleteUser(userId);
       if (response.success) {
-        setUsers(users.filter(u => u.id !== userId));
+        await invalidateUsers();
         toast.success(t('userManager.deleteSuccess'));
       }
     } catch (error: unknown) {

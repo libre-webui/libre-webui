@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { personaApi } from '@/utils/api';
@@ -27,39 +28,30 @@ import PersonaImportExport from './PersonaImportExport';
 
 export const PersonaManager: React.FC = () => {
   const { t } = useTranslation();
-  const [personas, setPersonas] = useState<Persona[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
   const [showImportExport, setShowImportExport] = useState(false);
 
-  // Load personas
-  const loadPersonas = async () => {
-    setLoading(true);
-    try {
+  const {
+    data: personas = [],
+    isLoading: loading,
+    refetch: refetchPersonas,
+  } = useQuery({
+    queryKey: ['personas'],
+    queryFn: async (): Promise<Persona[]> => {
       const response = await personaApi.getPersonas();
-      if (response.success) {
-        setPersonas(response.data || []);
-      } else {
-        toast.error(
-          t('personaManager.failed', { action: 'load' }) + ': ' + response.error
-        );
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to load personas');
       }
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      toast.error(
-        t('personaManager.failed', { action: 'load' }) + ': ' + errorMessage
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data || [];
+    },
+  });
 
-  useEffect(() => {
-    loadPersonas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const reloadPersonas = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['personas'] });
+    await refetchPersonas();
+  };
 
   const handleCreatePersona = () => {
     setEditingPersona(null);
@@ -82,7 +74,7 @@ export const PersonaManager: React.FC = () => {
         toast.success(
           t('personaManager.deleteSuccess', { name: persona.name })
         );
-        await loadPersonas();
+        await reloadPersonas();
       } else {
         toast.error(
           t('personaManager.failed', { action: 'delete' }) +
@@ -117,7 +109,7 @@ export const PersonaManager: React.FC = () => {
   const handleFormSubmit = async () => {
     setShowCreateForm(false);
     setEditingPersona(null);
-    await loadPersonas();
+    await reloadPersonas();
   };
 
   const handleFormCancel = () => {
@@ -149,7 +141,7 @@ export const PersonaManager: React.FC = () => {
     return (
       <PersonaImportExport
         personas={personas}
-        onImport={loadPersonas}
+        onImport={reloadPersonas}
         onClose={() => setShowImportExport(false)}
       />
     );
