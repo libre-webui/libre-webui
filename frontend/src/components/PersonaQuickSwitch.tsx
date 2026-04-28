@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Persona } from '@/types';
 import {
   Users,
@@ -28,7 +29,6 @@ import {
 } from 'lucide-react';
 import { personaApi } from '@/utils/api';
 import { cn } from '@/utils';
-import toast from 'react-hot-toast';
 
 interface PersonaQuickSwitchProps {
   currentPersonaId?: string;
@@ -47,30 +47,17 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
   onClose,
   className,
 }) => {
-  const [personas, setPersonas] = useState<Persona[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      loadPersonas();
-    }
-  }, [isOpen]);
-
-  const loadPersonas = async () => {
-    setIsLoading(true);
-    try {
+  const { data: personas = [], isLoading } = useQuery({
+    queryKey: ['personas'],
+    queryFn: async (): Promise<Persona[]> => {
       const response = await personaApi.getPersonas();
-      if (response.success && response.data) {
-        setPersonas(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load personas:', error);
-      toast.error('Failed to load personas');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      if (response.success && response.data) return response.data;
+      throw new Error('Failed to load personas');
+    },
+    enabled: isOpen,
+  });
 
   const filteredPersonas = personas.filter(
     persona =>

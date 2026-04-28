@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   X,
   Moon,
@@ -169,9 +170,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [pluginApiKeys, setPluginApiKeys] = useState<Record<string, string>>(
     {}
   );
-  const [pluginHasKeys, setPluginHasKeys] = useState<Record<string, boolean>>(
-    {}
-  );
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
   const [savingApiKey, setSavingApiKey] = useState<string | null>(null);
 
@@ -190,15 +188,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       similarityThreshold: 0.7,
     }
   );
-  const [embeddingStatus, setEmbeddingStatus] = useState<{
-    available: boolean;
-    model: string;
-    chunksWithEmbeddings: number;
-    totalChunks: number;
-  } | null>(null);
-  const [availableEmbeddingModels, setAvailableEmbeddingModels] = useState<
-    EmbeddingModel[]
-  >([]);
   const [regeneratingEmbeddings, setRegeneratingEmbeddings] = useState(false);
 
   // TTS settings state
@@ -213,12 +202,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       streamSentences: false,
     }
   );
-  const [ttsModels, setTtsModels] = useState<TTSModel[]>([]);
-  const [ttsPlugins, setTtsPlugins] = useState<TTSPlugin[]>([]);
-  const [ttsVoices, setTtsVoices] = useState<string[]>([]);
-  const [loadingTTS, setLoadingTTS] = useState(false);
   const [testingTTS, setTestingTTS] = useState(false);
-  const [testAudio, setTestAudio] = useState<HTMLAudioElement | null>(null);
+  const testAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Image Generation settings state
   const [imageGenSettings, setImageGenSettings] = useState(
@@ -231,12 +216,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       pluginId: '',
     }
   );
-  const [imageGenModels, setImageGenModels] = useState<ImageGenModel[]>([]);
-  const [imageGenPlugins, setImageGenPlugins] = useState<ImageGenPlugin[]>([]);
+  // Image Generation derived option lists (set when model changes via handler)
   const [imageGenSizes, setImageGenSizes] = useState<string[]>([]);
   const [imageGenQualities, setImageGenQualities] = useState<string[]>([]);
   const [imageGenStyles, setImageGenStyles] = useState<string[]>([]);
-  const [loadingImageGen, setLoadingImageGen] = useState(false);
 
   // Import data state
   const [importing, setImporting] = useState(false);
@@ -253,87 +236,220 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     null
   );
   const importFileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
 
-  // Load data when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      loadEmbeddingModels();
-      loadEmbeddingStatus();
-      loadTTSData();
-      setTempSystemMessage(systemMessage);
-      setTempGenerationOptions(preferences.generationOptions || {});
-      setEmbeddingSettings(
-        preferences.embeddingSettings || {
-          enabled: false,
-          model: 'nomic-embed-text',
-          chunkSize: 1000,
-          chunkOverlap: 200,
-          similarityThreshold: 0.7,
-        }
-      );
-      setTtsSettings(
-        preferences.ttsSettings || {
-          enabled: false,
-          autoPlay: false,
-          model: '',
-          voice: '',
-          speed: 1.0,
-          pluginId: '',
-        }
-      );
-      setImageGenSettings(
-        preferences.imageGenSettings || {
-          enabled: false,
-          model: '',
-          size: '1024x1024',
-          quality: 'standard',
-          style: 'vivid',
-          pluginId: '',
-        }
-      );
-      loadImageGenData();
-      loadPlugins(); // Load plugins when modal opens
-      loadPluginCredentials(); // Load plugin API key status
-      loadModels(); // Ensure models are up to date when modal opens
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, systemMessage]);
-
-  useEffect(() => {
-    if (!isOpen || availableEmbeddingModels.length === 0) {
-      return;
-    }
-
-    setEmbeddingSettings(prev => {
-      const matchingModel = availableEmbeddingModels.find(
-        model => model.id === prev.model || model.rawModel === prev.model
-      );
-
-      if (!matchingModel || matchingModel.id === prev.model) {
-        return prev;
-      }
-
-      return {
-        ...prev,
-        model: matchingModel.id,
-      };
-    });
-  }, [availableEmbeddingModels, isOpen]);
-
-  const loadPluginCredentials = async () => {
-    try {
+  // Plugin credentials query
+  const { data: pluginHasKeys = {} } = useQuery({
+    queryKey: ['plugin-credentials'],
+    queryFn: async (): Promise<Record<string, boolean>> => {
       const response = await pluginApi.getCredentials();
-      if (response.success && response.data) {
-        const hasKeysMap: Record<string, boolean> = {};
-        for (const cred of response.data) {
-          hasKeysMap[cred.plugin_id] = cred.has_api_key;
-        }
-        setPluginHasKeys(hasKeysMap);
+      if (!response.success || !response.data) return {};
+      const map: Record<string, boolean> = {};
+      for (const cred of response.data) {
+        map[cred.plugin_id] = cred.has_api_key;
       }
-    } catch (_error) {
-      console.error('Failed to load plugin credentials:', _error);
+      return map;
+    },
+    enabled: isOpen,
+  });
+
+  // Embedding models query
+  const { data: availableEmbeddingModels = [] } = useQuery({
+    queryKey: ['embedding-models'],
+    queryFn: async (): Promise<EmbeddingModel[]> => {
+      const response = await embeddingApi.getModels();
+      return response.success && response.data ? response.data : [];
+    },
+    enabled: isOpen,
+  });
+
+  // Embedding status query
+  const { data: embeddingStatus = null } = useQuery({
+    queryKey: ['embedding-status'],
+    queryFn: async () => {
+      const response = await documentsApi.getEmbeddingStatus();
+      return response.success && response.data ? response.data : null;
+    },
+    enabled: isOpen,
+  });
+
+  // TTS data query
+  const { data: ttsData, isLoading: loadingTTS } = useQuery({
+    queryKey: ['tts-data'],
+    queryFn: async () => {
+      const [modelsResponse, pluginsResponse] = await Promise.all([
+        ttsApi.getModels(),
+        ttsApi.getPlugins(),
+      ]);
+      return {
+        models:
+          modelsResponse.success && modelsResponse.data
+            ? modelsResponse.data
+            : [],
+        plugins:
+          pluginsResponse.success && pluginsResponse.data
+            ? pluginsResponse.data
+            : [],
+      };
+    },
+    enabled: isOpen,
+  });
+  const ttsModels: TTSModel[] = useMemo(() => ttsData?.models ?? [], [ttsData]);
+  const ttsPlugins: TTSPlugin[] = ttsData?.plugins ?? [];
+
+  // TTS voices derived from currently selected model
+  const ttsVoices = useMemo(() => {
+    if (!ttsSettings.model) return [];
+    const currentModel = ttsModels.find(m => m.model === ttsSettings.model);
+    return currentModel?.config?.voices ?? [];
+  }, [ttsModels, ttsSettings.model]);
+
+  // Image Gen data query
+  const { data: imageGenData, isLoading: loadingImageGen } = useQuery({
+    queryKey: ['image-gen-data'],
+    queryFn: async () => {
+      const [modelsResponse, pluginsResponse] = await Promise.all([
+        imageGenApi.getModels(),
+        imageGenApi.getPlugins(),
+      ]);
+      return {
+        models:
+          modelsResponse.success && modelsResponse.data
+            ? modelsResponse.data
+            : [],
+        plugins:
+          pluginsResponse.success && pluginsResponse.data
+            ? pluginsResponse.data
+            : [],
+      };
+    },
+    enabled: isOpen,
+  });
+  const imageGenModels: ImageGenModel[] = imageGenData?.models ?? [];
+  const imageGenPlugins: ImageGenPlugin[] = imageGenData?.plugins ?? [];
+
+  // Once TTS/ImageGen models load, default an empty selection to the first available — store-during-render
+  const [prevTtsModels, setPrevTtsModels] = useState<TTSModel[]>([]);
+  if (ttsModels !== prevTtsModels) {
+    setPrevTtsModels(ttsModels);
+    if (!ttsSettings.model && ttsModels.length > 0) {
+      const firstModel = ttsModels[0];
+      setTtsSettings(prev => ({
+        ...prev,
+        model: firstModel.model,
+        pluginId: firstModel.plugin,
+        voice: firstModel.config?.default_voice || '',
+      }));
     }
-  };
+  }
+
+  const [prevImageGenModels, setPrevImageGenModels] = useState<ImageGenModel[]>(
+    []
+  );
+  if (imageGenModels !== prevImageGenModels) {
+    setPrevImageGenModels(imageGenModels);
+    if (!imageGenSettings.model && imageGenModels.length > 0) {
+      const firstModel = imageGenModels[0];
+      setImageGenSettings(prev => ({
+        ...prev,
+        model: firstModel.model,
+        pluginId: firstModel.plugin,
+        size: firstModel.config?.default_size || '1024x1024',
+        quality: firstModel.config?.default_quality || 'standard',
+        style: firstModel.config?.default_style || 'vivid',
+      }));
+      if (firstModel.config?.sizes) setImageGenSizes(firstModel.config.sizes);
+      if (firstModel.config?.qualities)
+        setImageGenQualities(firstModel.config.qualities);
+      if (firstModel.config?.styles)
+        setImageGenStyles(firstModel.config.styles);
+    } else if (imageGenSettings.model && imageGenModels.length > 0) {
+      const currentModel = imageGenModels.find(
+        m => m.model === imageGenSettings.model
+      );
+      if (currentModel?.config) {
+        if (currentModel.config.sizes)
+          setImageGenSizes(currentModel.config.sizes);
+        if (currentModel.config.qualities)
+          setImageGenQualities(currentModel.config.qualities);
+        if (currentModel.config.styles)
+          setImageGenStyles(currentModel.config.styles);
+      }
+    }
+  }
+
+  // Initialize modal-local form state from preferences when modal opens — store-during-render
+  const [prevModalIsOpen, setPrevModalIsOpen] = useState(false);
+  const [prevSystemMessage, setPrevSystemMessage] = useState(systemMessage);
+  if (isOpen && (!prevModalIsOpen || prevSystemMessage !== systemMessage)) {
+    setPrevModalIsOpen(true);
+    setPrevSystemMessage(systemMessage);
+    setTempSystemMessage(systemMessage);
+    setTempGenerationOptions(preferences.generationOptions || {});
+    setEmbeddingSettings(
+      preferences.embeddingSettings || {
+        enabled: false,
+        model: 'nomic-embed-text',
+        chunkSize: 1000,
+        chunkOverlap: 200,
+        similarityThreshold: 0.7,
+      }
+    );
+    setTtsSettings(
+      preferences.ttsSettings || {
+        enabled: false,
+        autoPlay: false,
+        model: '',
+        voice: '',
+        speed: 1.0,
+        pluginId: '',
+      }
+    );
+    setImageGenSettings(
+      preferences.imageGenSettings || {
+        enabled: false,
+        model: '',
+        size: '1024x1024',
+        quality: 'standard',
+        style: 'vivid',
+        pluginId: '',
+      }
+    );
+  }
+  if (!isOpen && prevModalIsOpen) {
+    setPrevModalIsOpen(false);
+  }
+
+  // Trigger plugin/models store loads when modal opens — store actions are external systems
+  const [prevPluginsLoadIsOpen, setPrevPluginsLoadIsOpen] = useState(false);
+  if (isOpen && !prevPluginsLoadIsOpen) {
+    setPrevPluginsLoadIsOpen(true);
+    loadPlugins();
+    loadModels();
+  }
+  if (!isOpen && prevPluginsLoadIsOpen) {
+    setPrevPluginsLoadIsOpen(false);
+  }
+
+  // Reconcile embedding model id with the loaded model list — store-during-render
+  const [prevEmbeddingModels, setPrevEmbeddingModels] = useState(
+    availableEmbeddingModels
+  );
+  if (
+    isOpen &&
+    availableEmbeddingModels.length > 0 &&
+    prevEmbeddingModels !== availableEmbeddingModels
+  ) {
+    setPrevEmbeddingModels(availableEmbeddingModels);
+    const matchingModel = availableEmbeddingModels.find(
+      model =>
+        model.id === embeddingSettings.model ||
+        model.rawModel === embeddingSettings.model
+    );
+    if (matchingModel && matchingModel.id !== embeddingSettings.model) {
+      setEmbeddingSettings(prev => ({ ...prev, model: matchingModel.id }));
+    }
+  }
 
   const handleSaveApiKey = async (pluginId: string) => {
     const apiKey = pluginApiKeys[pluginId];
@@ -347,7 +463,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       const response = await pluginApi.setApiKey(pluginId, apiKey.trim());
       if (response.success) {
         toast.success('API key saved successfully');
-        setPluginHasKeys(prev => ({ ...prev, [pluginId]: true }));
+        await queryClient.invalidateQueries({
+          queryKey: ['plugin-credentials'],
+        });
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
         setShowApiKey(prev => ({ ...prev, [pluginId]: false }));
         setExpandedPluginId(null);
@@ -367,7 +485,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       const response = await pluginApi.deleteApiKey(pluginId);
       if (response.success) {
         toast.success('API key removed');
-        setPluginHasKeys(prev => ({ ...prev, [pluginId]: false }));
+        await queryClient.invalidateQueries({
+          queryKey: ['plugin-credentials'],
+        });
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
       } else {
         toast.error(response.error || 'Failed to remove API key');
@@ -376,72 +496,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       toast.error('Failed to remove API key');
     } finally {
       setSavingApiKey(null);
-    }
-  };
-
-  const loadEmbeddingModels = async () => {
-    try {
-      const response = await embeddingApi.getModels();
-      if (response.success && response.data) {
-        setAvailableEmbeddingModels(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load embedding models:', error);
-    }
-  };
-
-  const loadEmbeddingStatus = async () => {
-    try {
-      const response = await documentsApi.getEmbeddingStatus();
-      if (response.success && response.data) {
-        setEmbeddingStatus(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to load embedding status:', error);
-    }
-  };
-
-  const loadTTSData = async () => {
-    setLoadingTTS(true);
-    try {
-      const [modelsResponse, pluginsResponse] = await Promise.all([
-        ttsApi.getModels(),
-        ttsApi.getPlugins(),
-      ]);
-
-      if (modelsResponse.success && modelsResponse.data) {
-        setTtsModels(modelsResponse.data);
-        // Set default model if not set
-        if (!ttsSettings.model && modelsResponse.data.length > 0) {
-          const firstModel = modelsResponse.data[0];
-          setTtsSettings(prev => ({
-            ...prev,
-            model: firstModel.model,
-            pluginId: firstModel.plugin,
-            voice: firstModel.config?.default_voice || '',
-          }));
-          // Also load voices for this plugin
-          if (firstModel.config?.voices) {
-            setTtsVoices(firstModel.config.voices);
-          }
-        } else if (ttsSettings.model) {
-          // Load voices for the currently selected model
-          const currentModel = modelsResponse.data.find(
-            m => m.model === ttsSettings.model
-          );
-          if (currentModel?.config?.voices) {
-            setTtsVoices(currentModel.config.voices);
-          }
-        }
-      }
-
-      if (pluginsResponse.success && pluginsResponse.data) {
-        setTtsPlugins(pluginsResponse.data);
-      }
-    } catch (error) {
-      console.error('Failed to load TTS data:', error);
-    } finally {
-      setLoadingTTS(false);
     }
   };
 
@@ -454,71 +508,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         pluginId: selectedModel.plugin,
         voice: selectedModel.config?.default_voice || prev.voice,
       }));
-      // Update available voices
-      if (selectedModel.config?.voices) {
-        setTtsVoices(selectedModel.config.voices);
-      }
-    }
-  };
-
-  // Image Generation data loading
-  const loadImageGenData = async () => {
-    setLoadingImageGen(true);
-    try {
-      const [modelsResponse, pluginsResponse] = await Promise.all([
-        imageGenApi.getModels(),
-        imageGenApi.getPlugins(),
-      ]);
-
-      if (modelsResponse.success && modelsResponse.data) {
-        setImageGenModels(modelsResponse.data);
-        // Set default model if not set
-        if (!imageGenSettings.model && modelsResponse.data.length > 0) {
-          const firstModel = modelsResponse.data[0];
-          setImageGenSettings(prev => ({
-            ...prev,
-            model: firstModel.model,
-            pluginId: firstModel.plugin,
-            size: firstModel.config?.default_size || '1024x1024',
-            quality: firstModel.config?.default_quality || 'standard',
-            style: firstModel.config?.default_style || 'vivid',
-          }));
-          // Also load options for this plugin
-          if (firstModel.config?.sizes) {
-            setImageGenSizes(firstModel.config.sizes);
-          }
-          if (firstModel.config?.qualities) {
-            setImageGenQualities(firstModel.config.qualities);
-          }
-          if (firstModel.config?.styles) {
-            setImageGenStyles(firstModel.config.styles);
-          }
-        } else if (imageGenSettings.model) {
-          // Load options for the currently selected model
-          const currentModel = modelsResponse.data.find(
-            m => m.model === imageGenSettings.model
-          );
-          if (currentModel?.config) {
-            if (currentModel.config.sizes) {
-              setImageGenSizes(currentModel.config.sizes);
-            }
-            if (currentModel.config.qualities) {
-              setImageGenQualities(currentModel.config.qualities);
-            }
-            if (currentModel.config.styles) {
-              setImageGenStyles(currentModel.config.styles);
-            }
-          }
-        }
-      }
-
-      if (pluginsResponse.success && pluginsResponse.data) {
-        setImageGenPlugins(pluginsResponse.data);
-      }
-    } catch (error) {
-      console.error('Failed to load image generation data:', error);
-    } finally {
-      setLoadingImageGen(false);
     }
   };
 
@@ -575,10 +564,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleTestTTS = async () => {
     if (testingTTS) {
       // Stop current test
-      if (testAudio) {
-        testAudio.pause();
-        testAudio.currentTime = 0;
-        setTestAudio(null);
+      const audio = testAudioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        testAudioRef.current = null;
       }
       setTestingTTS(false);
       return;
@@ -597,17 +587,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       if (response.success && response.data?.audio) {
         const audioUrl = `data:${response.data.mimeType};base64,${response.data.audio}`;
         const audio = new Audio(audioUrl);
-        setTestAudio(audio);
+        testAudioRef.current = audio;
 
         audio.onended = () => {
           setTestingTTS(false);
-          setTestAudio(null);
+          testAudioRef.current = null;
         };
 
         audio.onerror = () => {
           toast.error('Failed to play audio');
           setTestingTTS(false);
-          setTestAudio(null);
+          testAudioRef.current = null;
         };
 
         await audio.play();
@@ -678,7 +668,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       const response = await documentsApi.regenerateEmbeddings();
       if (response.success) {
         toast.success('Embeddings regenerated successfully');
-        await loadEmbeddingStatus(); // Reload status
+        await queryClient.invalidateQueries({ queryKey: ['embedding-status'] });
       }
     } catch (error: unknown) {
       const errorMessage =

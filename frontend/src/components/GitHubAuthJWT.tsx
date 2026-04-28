@@ -5,7 +5,8 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { GitBranch, Loader2, User, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
@@ -40,96 +41,49 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
  */
 export const GitHubAuth: React.FC = () => {
   const { t } = useTranslation();
-  const [user, setUser] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Get JWT token from localStorage
-   */
-  const getToken = (): string | null => {
-    return localStorage.getItem('jwt_token');
-  };
+  const getToken = (): string | null => localStorage.getItem('jwt_token');
+  const _setToken = (token: string) => localStorage.setItem('jwt_token', token);
+  const removeToken = () => localStorage.removeItem('jwt_token');
 
-  /**
-   * Store JWT token in localStorage
-   */
-  const _setToken = (token: string) => {
-    localStorage.setItem('jwt_token', token);
-  };
-
-  /**
-   * Remove JWT token from localStorage
-   */
-  const removeToken = () => {
-    localStorage.removeItem('jwt_token');
-  };
-
-  /**
-   * Check authentication status on component mount
-   */
-  useEffect(() => {
-    checkAuthStatus();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /**
-   * Check if user is currently authenticated using JWT
-   */
-  const checkAuthStatus = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: user = null, isLoading: loading } = useQuery({
+    queryKey: ['github-auth-me'],
+    queryFn: async (): Promise<UserData | null> => {
       const token = getToken();
-
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      const response = await axios.get<AuthResponse>(
-        `${BACKEND_URL}/api/auth/me`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      if (!token) return null;
+      try {
+        const response = await axios.get<AuthResponse>(
+          `${BACKEND_URL}/api/auth/me`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (response.data.success && response.data.data) {
+          return response.data.data;
         }
-      );
-
-      if (response.data.success && response.data.data) {
-        setUser(response.data.data);
-        setError(null);
-      } else {
-        setUser(null);
-        removeToken(); // Remove invalid token
+        removeToken();
+        return null;
+      } catch (e: unknown) {
+        console.log(
+          'Not authenticated:',
+          e instanceof Error ? e.message : 'Unknown error'
+        );
+        removeToken();
+        return null;
       }
-    } catch (error: unknown) {
-      console.log(
-        'Not authenticated:',
-        error instanceof Error ? error.message : 'Unknown error'
-      );
-      setUser(null);
-      removeToken(); // Remove invalid token
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    staleTime: 60_000,
+  });
 
-  /**
-   * Initiate GitHub OAuth login
-   */
   const handleGitHubLogin = () => {
     setError(null);
-    // Redirect to backend GitHub OAuth route
     window.location.href = `${BACKEND_URL}/api/auth/oauth/github`;
   };
 
-  /**
-   * Handle user logout
-   */
   const handleLogout = () => {
     removeToken();
-    setUser(null);
     setError(null);
+    queryClient.setQueryData(['github-auth-me'], null);
   };
 
   /**

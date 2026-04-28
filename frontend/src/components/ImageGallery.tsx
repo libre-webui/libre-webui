@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Trash2, Download, Loader2, ImageOff } from 'lucide-react';
 import { cn } from '@/utils';
@@ -32,10 +33,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
   onImageCountChange,
 }) => {
   const { t } = useTranslation();
-  const [images, setImages] = useState<GeneratedImage[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const queryClient = useQueryClient();
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(
     null
   );
@@ -43,43 +41,39 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
 
   const LIMIT = 20;
 
-  const loadImages = useCallback(
-    async (offset = 0, append = false) => {
-      try {
-        if (offset === 0) {
-          setIsLoading(true);
-        } else {
-          setIsLoadingMore(true);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } =
+    useInfiniteQuery({
+      queryKey: ['image-gallery'],
+      queryFn: async ({ pageParam }) => {
+        const response = await imageGenApi.getGallery({
+          limit: LIMIT,
+          offset: pageParam,
+        });
+        if (!response.success || !response.data) {
+          throw new Error(t('imageGallery.loadFailed'));
         }
+        return response.data;
+      },
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, allPages) => {
+        const loaded = allPages.reduce((sum, p) => sum + p.images.length, 0);
+        return loaded < lastPage.total ? loaded : undefined;
+      },
+    });
 
-        const response = await imageGenApi.getGallery({ limit: LIMIT, offset });
-
-        if (response.success && response.data) {
-          if (append) {
-            setImages(prev => [...prev, ...response.data!.images]);
-          } else {
-            setImages(response.data.images);
-          }
-          setTotal(response.data.total);
-          onImageCountChange?.(response.data.total);
-        }
-      } catch (error) {
-        console.error('Failed to load gallery:', error);
-        toast.error(t('imageGallery.loadFailed'));
-      } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
-      }
-    },
-    [onImageCountChange, t]
+  const images: GeneratedImage[] = useMemo(
+    () => data?.pages.flatMap(p => p.images) ?? [],
+    [data]
   );
+  const total = data?.pages[0]?.total ?? 0;
+  const isLoadingMore = isFetchingNextPage;
 
   useEffect(() => {
-    loadImages();
-  }, [loadImages]);
+    onImageCountChange?.(total);
+  }, [total, onImageCountChange]);
 
   const handleLoadMore = () => {
-    loadImages(images.length, true);
+    fetchNextPage();
   };
 
   const handleDelete = async (imageId: string, e: React.MouseEvent) => {
@@ -91,9 +85,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
     try {
       const response = await imageGenApi.deleteGalleryImage(imageId);
       if (response.success) {
-        setImages(prev => prev.filter(img => img.id !== imageId));
-        setTotal(prev => prev - 1);
-        onImageCountChange?.(total - 1);
+        await queryClient.invalidateQueries({ queryKey: ['image-gallery'] });
         toast.success(t('imageGallery.deleteSuccess'));
 
         // Close lightbox if deleting the currently viewed image
@@ -240,7 +232,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
       </div>
 
       {/* Load More Button */}
-      {images.length < total && (
+      {hasNextPage && (
         <div className='flex justify-center mt-8'>
           <button
             onClick={handleLoadMore}

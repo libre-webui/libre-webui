@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage as ChatMessageType } from '@/types';
@@ -69,10 +69,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const [editedContent, setEditedContent] = useState(message.content);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [parsedContent, setParsedContent] = useState(message.content);
   const [isSystemMessageExpanded, setIsSystemMessageExpanded] = useState(false);
-  const [artifacts, setArtifacts] = useState(message.artifacts || []);
-  const [thinkingContent, setThinkingContent] = useState<string | null>(null);
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
   const [isAutoPlaying, setIsAutoPlaying] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -90,49 +87,42 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     }
   };
 
-  // Parse thinking content and artifacts from message content on mount or when content changes
-  useEffect(() => {
-    if (!isUser && !isSystem && message.content) {
-      // First, parse thinking content
-      const thinkingParsed = parseThinkingContent(message.content);
-      setThinkingContent(thinkingParsed.thinking);
-
-      const contentAfterThinking = thinkingParsed.content;
-
-      // Use existing artifacts from the message if available
-      if (message.artifacts && message.artifacts.length > 0) {
-        setParsedContent(contentAfterThinking);
-        setArtifacts(message.artifacts);
-      } else if (!isStreaming) {
-        // Only parse when not streaming to avoid duplicates
-        const parsed = parseArtifacts(contentAfterThinking);
-        setParsedContent(parsed.content);
-        setArtifacts(parsed.artifacts);
-      } else {
-        // During streaming, just show the content without parsing
-        setParsedContent(contentAfterThinking);
-        setArtifacts([]);
-      }
+  // Derive thinking content, parsed content, and artifacts from message content
+  const { thinkingContent, parsedContent, artifacts } = useMemo(() => {
+    if (isUser || isSystem || !message.content) {
+      return {
+        thinkingContent: null as string | null,
+        parsedContent: message.content,
+        artifacts: message.artifacts || [],
+      };
     }
+
+    const thinkingParsed = parseThinkingContent(message.content);
+    const contentAfterThinking = thinkingParsed.content;
+
+    if (message.artifacts && message.artifacts.length > 0) {
+      return {
+        thinkingContent: thinkingParsed.thinking,
+        parsedContent: contentAfterThinking,
+        artifacts: message.artifacts,
+      };
+    }
+
+    if (!isStreaming) {
+      const parsed = parseArtifacts(contentAfterThinking);
+      return {
+        thinkingContent: thinkingParsed.thinking,
+        parsedContent: parsed.content,
+        artifacts: parsed.artifacts,
+      };
+    }
+
+    return {
+      thinkingContent: thinkingParsed.thinking,
+      parsedContent: contentAfterThinking,
+      artifacts: [],
+    };
   }, [message.content, message.artifacts, isUser, isSystem, isStreaming]);
-
-  // Parse artifacts when streaming completes
-  useEffect(() => {
-    if (!isUser && !isSystem && message.content && !isStreaming) {
-      // Parse thinking content first
-      const thinkingParsed = parseThinkingContent(message.content);
-      setThinkingContent(thinkingParsed.thinking);
-
-      const contentAfterThinking = thinkingParsed.content;
-
-      // Parse artifacts when streaming finishes
-      if (!message.artifacts || message.artifacts.length === 0) {
-        const parsed = parseArtifacts(contentAfterThinking);
-        setParsedContent(parsed.content);
-        setArtifacts(parsed.artifacts);
-      }
-    }
-  }, [isStreaming, message.content, message.artifacts, isUser, isSystem]);
 
   // Auto-play TTS when streaming completes (if enabled)
   useEffect(() => {

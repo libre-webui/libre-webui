@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   huggingfaceHubApi,
@@ -75,9 +76,6 @@ export const HuggingFaceModelBrowser: React.FC<
   const { user, systemInfo } = useAuthStore();
   const canInstallModels =
     user?.role === 'admin' || (systemInfo?.allowUserModelPull ?? true);
-  const [models, setModels] = useState<HuggingFaceModel[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [task, setTask] = useState<TaskOption>('text-generation');
   const [sort, setSort] = useState<SortOption>('downloads');
@@ -106,35 +104,31 @@ export const HuggingFaceModelBrowser: React.FC<
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const fetchModels = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
+  const {
+    data: models = [],
+    isLoading,
+    error: queryError,
+    refetch: fetchModels,
+  } = useQuery({
+    queryKey: ['hf-models', task, debouncedSearch, sort],
+    queryFn: async (): Promise<HuggingFaceModel[]> => {
       const response = await huggingfaceHubApi.getModels({
         task,
         search: debouncedSearch || undefined,
         sort,
         limit: 50,
       });
+      if (response.success && response.data) return response.data;
+      throw new Error(response.error || 'Failed to fetch models');
+    },
+    enabled: isOpen,
+  });
 
-      if (response.success && response.data) {
-        setModels(response.data);
-      } else {
-        setError(response.error || 'Failed to fetch models');
-      }
-    } catch (_err) {
-      setError('Failed to connect to HuggingFace Hub');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [task, debouncedSearch, sort]);
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchModels();
-    }
-  }, [isOpen, fetchModels]);
+  const error = queryError
+    ? queryError instanceof Error
+      ? queryError.message
+      : 'Failed to connect to HuggingFace Hub'
+    : null;
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -346,7 +340,7 @@ export const HuggingFaceModelBrowser: React.FC<
           ) : error ? (
             <div className='flex flex-col items-center justify-center py-12'>
               <p className='text-red-500 dark:text-red-400 mb-4'>{error}</p>
-              <Button onClick={fetchModels} variant='outline' size='sm'>
+              <Button onClick={() => fetchModels()} variant='outline' size='sm'>
                 {t('common.retry')}
               </Button>
             </div>
@@ -588,7 +582,7 @@ export const HuggingFaceModelBrowser: React.FC<
               </a>
             </p>
             <div className='flex items-center gap-2'>
-              <Button onClick={fetchModels} variant='outline' size='sm'>
+              <Button onClick={() => fetchModels()} variant='outline' size='sm'>
                 <TrendingUp className='w-4 h-4 mr-1' />
                 {t('huggingface.refresh')}
               </Button>
