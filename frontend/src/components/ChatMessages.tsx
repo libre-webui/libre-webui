@@ -341,12 +341,12 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
             'absolute bottom-4 left-1/2 -translate-x-1/2 z-10',
             'flex items-center justify-center gap-1.5',
             'px-3 py-2 rounded-full',
-            'bg-white/95 dark:bg-dark-100/95 ophelia:bg-[#0a0a0a]/95',
-            'border border-gray-200/50 dark:border-dark-300/50 ophelia:border-[#262626]/60',
+            'bg-white/95 dark:bg-dark-100/95',
+            'border border-gray-200/50 dark:border-dark-300/50',
             'shadow-lg backdrop-blur-sm',
-            'text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3]',
-            'hover:bg-gray-50 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a]',
-            'hover:text-gray-900 dark:hover:text-dark-800 ophelia:hover:text-[#fafafa]',
+            'text-gray-600 dark:text-dark-600',
+            'hover:bg-gray-50 dark:hover:bg-dark-200',
+            'hover:text-gray-900 dark:hover:text-dark-800',
             'transition-all duration-200',
             'hover:shadow-xl hover:scale-105 active:scale-95'
           )}

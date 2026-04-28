@@ -67,7 +67,7 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
   return (
     <div className={cn('relative py-1', className)}>
       {/* Branch indicator - minimal */}
-      <div className='flex items-center gap-1.5 px-4 pb-2 text-[10px] text-gray-400 dark:text-gray-500 ophelia:text-[#525252]'>
+      <div className='flex items-center gap-1.5 px-4 pb-2 text-[10px] text-gray-400 dark:text-gray-500'>
         <GitBranch className='h-3 w-3' />
         <span>{messages.length} variants</span>
       </div>
@@ -90,8 +90,8 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
                 'relative rounded-lg overflow-hidden transition-all duration-200',
                 'border shadow-sm',
                 isActive || isThisMessageStreaming
-                  ? 'border-primary-300 dark:border-primary-600 ophelia:border-[#7c3aed] shadow-primary-100 dark:shadow-primary-900/20 ophelia:shadow-[#9333ea]/10'
-                  : 'border-gray-200 dark:border-dark-300 ophelia:border-[#262626] hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#3f3f46]',
+                  ? 'border-primary-300 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20'
+                  : 'border-gray-200 dark:border-dark-300 hover:border-gray-300 dark:hover:border-dark-400',
                 !isActive &&
                   !isThisMessageStreaming &&
                   'cursor-pointer hover:shadow-md'
@@ -107,8 +107,8 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
                 className={cn(
                   'flex items-center justify-between px-2.5 py-1 text-[11px]',
                   isActive || isThisMessageStreaming
-                    ? 'bg-primary-50/80 dark:bg-primary-900/20 ophelia:bg-[#9333ea]/10 text-primary-600 dark:text-primary-400 ophelia:text-[#c084fc]'
-                    : 'bg-gray-50/80 dark:bg-dark-100/80 ophelia:bg-[#121212]/80 text-gray-500 dark:text-gray-500 ophelia:text-[#737373]'
+                    ? 'bg-primary-50/80 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                    : 'bg-gray-50/80 dark:bg-dark-100/80 text-gray-500 dark:text-gray-500'
                 )}
               >
                 <div className='flex items-center gap-1.5'>
@@ -130,7 +130,7 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
               {/* Message content */}
               <div
                 className={cn(
-                  'bg-white dark:bg-dark-50 ophelia:bg-[#0a0a0a]',
+                  'bg-white dark:bg-dark-50',
                   !isActive && !isThisMessageStreaming && 'opacity-80'
                 )}
               >

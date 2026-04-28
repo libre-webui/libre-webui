@@ -179,10 +179,10 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         className={cn(
           'group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200',
           'border border-transparent',
-          'hover:bg-gray-50 dark:hover:bg-dark-100 ophelia:hover:bg-[#1a1a1a]',
+          'hover:bg-gray-50 dark:hover:bg-dark-100',
           isSelected && [
-            'bg-primary-50 dark:bg-primary-900/20 ophelia:bg-[#9333ea]/10',
-            'border-primary-200 dark:border-primary-700 ophelia:border-[#7c3aed]',
+            'bg-primary-50 dark:bg-primary-900/20',
+            'border-primary-200 dark:border-primary-700',
           ]
         )}
         onClick={() => onSelect?.(persona)}
@@ -192,7 +192,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
           <img
             src={getAvatarSrc()}
             alt={persona.name}
-            className='w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-dark-100 ophelia:ring-[#0a0a0a]'
+            className='w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-dark-100'
           />
           {hasAdvancedFeatures && (
             <div className='absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gradient-to-br from-purple-500 to-primary-500 rounded-full flex items-center justify-center'>
@@ -204,14 +204,14 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         {/* Info */}
         <div className='flex-1 min-w-0'>
           <div className='flex items-center gap-1.5'>
-            <h4 className='font-medium text-sm text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] truncate'>
+            <h4 className='font-medium text-sm text-gray-900 dark:text-gray-100 truncate'>
               {persona.name}
             </h4>
             {persona.is_favorite && (
               <Star className='h-3 w-3 text-amber-500 fill-amber-500 flex-shrink-0' />
             )}
           </div>
-          <p className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3] truncate'>
+          <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
             {persona.model}
           </p>
         </div>
@@ -219,7 +219,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         {/* Quick action */}
         {isSelected && (
           <div className='flex-shrink-0'>
-            <div className='w-6 h-6 rounded-full bg-primary-500 dark:bg-primary-600 ophelia:bg-[#9333ea] flex items-center justify-center'>
+            <div className='w-6 h-6 rounded-full bg-primary-500 dark:bg-primary-600 flex items-center justify-center'>
               <Play className='h-3 w-3 text-white ml-0.5' />
             </div>
           </div>
@@ -233,13 +233,13 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
     <div
       className={cn(
         'group relative rounded-2xl overflow-hidden transition-all duration-300',
-        'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-        'border border-gray-200/60 dark:border-dark-300/60 ophelia:border-[#262626]',
-        'hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#3f3f46]',
+        'bg-white dark:bg-dark-100',
+        'border border-gray-200/60 dark:border-dark-300/60',
+        'hover:border-gray-300 dark:hover:border-dark-400',
         'shadow-sm hover:shadow-lg dark:shadow-none',
         isSelected && [
-          'ring-2 ring-primary-500 dark:ring-primary-400 ophelia:ring-[#9333ea]',
-          'border-primary-300 dark:border-primary-600 ophelia:border-[#7c3aed]',
+          'ring-2 ring-primary-500 dark:ring-primary-400',
+          'border-primary-300 dark:border-primary-600',
         ]
       )}
     >
@@ -251,7 +251,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             style={{ backgroundImage: `url(${persona.background})` }}
           />
         ) : (
-          <div className='absolute inset-0 bg-gradient-to-br from-primary-400 via-primary-500 to-purple-600 dark:from-primary-600 dark:via-primary-700 dark:to-purple-800 ophelia:from-[#9333ea] ophelia:via-[#7c3aed] ophelia:to-[#6d28d9]' />
+          <div className='absolute inset-0 bg-gradient-to-br from-primary-400 via-primary-500 to-purple-600 dark:from-primary-600 dark:via-primary-700 dark:to-purple-800' />
         )}
         <div className='absolute inset-0 bg-black/10 dark:bg-black/20' />
 
@@ -295,7 +295,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
           <img
             src={getAvatarSrc()}
             alt={persona.name}
-            className='w-16 h-16 rounded-xl object-cover ring-4 ring-white dark:ring-dark-100 ophelia:ring-[#0a0a0a] shadow-lg'
+            className='w-16 h-16 rounded-xl object-cover ring-4 ring-white dark:ring-dark-100 shadow-lg'
           />
           {hasAdvancedFeatures && (
             <div className='absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-purple-500 to-primary-500 rounded-lg flex items-center justify-center shadow-sm'>
@@ -309,10 +309,10 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       <div className='px-4 pt-3 pb-4'>
         {/* Name & Model */}
         <div className='mb-3'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] leading-tight'>
+          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 leading-tight'>
             {persona.name}
           </h3>
-          <p className='text-sm text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3] flex items-center gap-1.5 mt-0.5'>
+          <p className='text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5 mt-0.5'>
             <Settings2 className='h-3.5 w-3.5' />
             {persona.model}
           </p>
@@ -320,21 +320,21 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
 
         {/* Description */}
         {persona.description && (
-          <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] line-clamp-2 mb-3'>
+          <p className='text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-3'>
             {persona.description}
           </p>
         )}
 
         {/* System prompt preview */}
         {persona.parameters.system_prompt && (
-          <div className='mb-3 p-2.5 rounded-lg bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212] border border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a]'>
+          <div className='mb-3 p-2.5 rounded-lg bg-gray-50 dark:bg-dark-50 border border-gray-100 dark:border-dark-200'>
             <div className='flex items-center gap-1.5 mb-1'>
-              <MessageSquare className='h-3 w-3 text-gray-400 dark:text-gray-500 ophelia:text-[#737373]' />
-              <span className='text-[10px] uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500 ophelia:text-[#737373]'>
+              <MessageSquare className='h-3 w-3 text-gray-400 dark:text-gray-500' />
+              <span className='text-[10px] uppercase tracking-wider font-medium text-gray-400 dark:text-gray-500'>
                 {t('personaCard.systemPrompt')}
               </span>
             </div>
-            <p className='text-xs text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] line-clamp-2 italic'>
+            <p className='text-xs text-gray-600 dark:text-gray-400 line-clamp-2 italic'>
               &ldquo;{persona.parameters.system_prompt}&rdquo;
             </p>
           </div>
@@ -342,29 +342,29 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
 
         {/* Parameters */}
         <div className='flex flex-wrap gap-1.5 mb-3'>
-          <span className='inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a] text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+          <span className='inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400'>
             <Zap className='h-3 w-3' />
             {persona.parameters.temperature?.toFixed(1) || '0.7'}
           </span>
-          <span className='inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a] text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+          <span className='inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400'>
             Top-P {persona.parameters.top_p?.toFixed(1) || '0.9'}
           </span>
-          <span className='inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a] text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+          <span className='inline-flex items-center px-2 py-1 rounded-md text-[11px] font-medium bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400'>
             {(persona.parameters.context_window || 4096).toLocaleString()} ctx
           </span>
         </div>
 
         {/* Memory Status */}
         {hasAdvancedFeatures && memoryStatus && (
-          <div className='mb-3 p-2.5 rounded-lg bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 ophelia:from-[#9333ea]/10 ophelia:to-[#6d28d9]/10 border border-primary-100 dark:border-primary-800/30 ophelia:border-[#7c3aed]/20'>
+          <div className='mb-3 p-2.5 rounded-lg bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 border border-primary-100 dark:border-primary-800/30'>
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-2'>
-                <Database className='h-4 w-4 text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]' />
+                <Database className='h-4 w-4 text-primary-600 dark:text-primary-400' />
                 <div>
-                  <span className='text-xs font-medium text-primary-700 dark:text-primary-300 ophelia:text-[#c084fc]'>
+                  <span className='text-xs font-medium text-primary-700 dark:text-primary-300'>
                     {memoryStatus.memory_count} {t('personaCard.memories')}
                   </span>
-                  <span className='text-[10px] text-primary-600/70 dark:text-primary-400/70 ophelia:text-[#a855f7]/70 ml-2'>
+                  <span className='text-[10px] text-primary-600/70 dark:text-primary-400/70 ml-2'>
                     {formatMemorySize(memoryStatus.size_mb)}
                   </span>
                 </div>
@@ -386,13 +386,13 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         )}
 
         {/* Actions */}
-        <div className='flex items-center justify-between pt-3 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a]'>
+        <div className='flex items-center justify-between pt-3 border-t border-gray-100 dark:border-dark-200'>
           {/* Use button */}
           {onSelect && (
             <Button
               onClick={() => onSelect(persona)}
               size='sm'
-              className='bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-500 ophelia:bg-[#9333ea] ophelia:hover:bg-[#a855f7] text-white px-4'
+              className='bg-primary-500 hover:bg-primary-600 dark:bg-primary-600 dark:hover:bg-primary-500 text-white px-4'
             >
               <Play className='h-3.5 w-3.5 mr-1.5' />
               {t('personaCard.use')}
@@ -403,14 +403,14 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
           <div className='flex items-center gap-1 ml-auto'>
             <button
               onClick={() => onEdit(persona)}
-              className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ophelia:text-[#737373] ophelia:hover:text-[#e5e5e5] hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a] transition-colors'
+              className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
               title={t('personaCard.editTooltip')}
             >
               <Edit className='h-4 w-4' />
             </button>
             <button
               onClick={() => onDownload(persona)}
-              className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ophelia:text-[#737373] ophelia:hover:text-[#e5e5e5] hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a] transition-colors'
+              className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
               title={t('personaCard.downloadTooltip')}
             >
               <Download className='h-4 w-4' />
@@ -420,7 +420,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
             <div className='relative'>
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ophelia:text-[#737373] ophelia:hover:text-[#e5e5e5] hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a] transition-colors'
+                className='p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
               >
                 <MoreHorizontal className='h-4 w-4' />
               </button>
@@ -431,13 +431,13 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                     className='fixed inset-0 z-10'
                     onClick={() => setShowMenu(false)}
                   />
-                  <div className='absolute right-0 bottom-full mb-1 w-44 py-1 bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a] rounded-xl shadow-lg border border-gray-200 dark:border-dark-300 ophelia:border-[#262626] z-20'>
+                  <div className='absolute right-0 bottom-full mb-1 w-44 py-1 bg-white dark:bg-dark-100 rounded-xl shadow-lg border border-gray-200 dark:border-dark-300 z-20'>
                     {hasAdvancedFeatures && (
                       <>
                         <button
                           onClick={handleBackupPersona}
                           disabled={isLoading}
-                          className='w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5] hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#1a1a1a] disabled:opacity-50'
+                          className='w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-50 disabled:opacity-50'
                         >
                           <Archive className='h-4 w-4' />
                           {t('personaCard.backup')}
@@ -445,7 +445,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                         <button
                           onClick={handleExportDNA}
                           disabled={isLoading}
-                          className='w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5] hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#1a1a1a] disabled:opacity-50'
+                          className='w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-50 disabled:opacity-50'
                         >
                           <FileDown className='h-4 w-4' />
                           {t('personaCard.exportDNA')}
@@ -460,7 +460,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
                             {t('personaCard.wipeMemories')}
                           </button>
                         )}
-                        <div className='my-1 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a]' />
+                        <div className='my-1 border-t border-gray-100 dark:border-dark-200' />
                       </>
                     )}
                     <button

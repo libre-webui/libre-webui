@@ -20,7 +20,6 @@ import {
   X,
   Moon,
   Sun,
-  Circle,
   Bot,
   Database,
   Palette,
@@ -761,7 +760,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleThemeChange = (mode: 'light' | 'dark' | 'ophelia') => {
+  const handleThemeChange = (mode: 'light' | 'dark') => {
     const newTheme = { mode };
     setTheme(newTheme);
     handleUpdatePreferences({ theme: newTheme });
@@ -1065,13 +1064,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 {t('settings.appearance.title')}
               </h3>
             </div>
-            <div className='grid grid-cols-3 gap-3'>
+            <div className='grid grid-cols-2 gap-3'>
               <button
                 onClick={() => handleThemeChange('light')}
                 className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                   theme.mode === 'light'
                     ? 'bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow-md focus:ring-primary-500'
-                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400 ophelia:border-[#262626] ophelia:text-[#e5e5e5] ophelia:bg-[#0a0a0a] ophelia:hover:bg-[#121212]'
+                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400'
                 }`}
               >
                 <Sun className='h-4 w-4' />
@@ -1082,22 +1081,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                   theme.mode === 'dark'
                     ? 'bg-dark-300 text-dark-800 border border-dark-400 shadow-sm hover:bg-dark-400 focus:ring-dark-500'
-                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400 ophelia:border-[#262626] ophelia:text-[#e5e5e5] ophelia:bg-[#0a0a0a] ophelia:hover:bg-[#121212]'
+                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400'
                 }`}
               >
                 <Moon className='h-4 w-4' />
                 {t('settings.appearance.theme.dark')}
-              </button>
-              <button
-                onClick={() => handleThemeChange('ophelia')}
-                className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  theme.mode === 'ophelia'
-                    ? 'bg-purple-600 text-white shadow-sm hover:bg-purple-700 hover:shadow-md focus:ring-purple-500 border border-purple-500'
-                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400'
-                }`}
-              >
-                <Circle className='h-4 w-4' />
-                {t('settings.appearance.theme.amoled')}
               </button>
             </div>
 
@@ -3642,7 +3630,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       {/* Modal */}
       <div className='fixed inset-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 z-50 w-full lg:max-w-4xl lg:mx-4 h-full lg:h-[85vh] p-0 lg:p-4'>
-        <div className='bg-white dark:bg-dark-25 ophelia:bg-[#0a0a0a] rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-200 ophelia:!border-[#9333ea]/70 animate-scale-in flex flex-col h-full overscroll-behavior-contain'>
+        <div className='bg-white dark:bg-dark-25 rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-200 animate-scale-in flex flex-col h-full overscroll-behavior-contain'>
           {/* Header */}
           <div className='flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-dark-200 sticky top-0 z-10 rounded-t-2xl'>
             <h2 className='text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100'>
@@ -3670,22 +3658,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               <nav className='space-y-1'>
                 {tabs.map(tab => {
                   const Icon = tab.icon;
-                  const isOphelia = theme.mode === 'ophelia';
                   const isActive = activeTab === tab.id;
 
-                  // Build className based on theme
                   let buttonClass =
                     'w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2.5 sm:py-2.5 text-left rounded-lg transition-colors duration-200 touch-manipulation border';
 
-                  if (isOphelia) {
-                    buttonClass += isActive
-                      ? ' bg-purple-600 text-white border-purple-600'
-                      : ' border-transparent text-neutral-500 hover:bg-neutral-800';
-                  } else {
-                    buttonClass += isActive
-                      ? ' bg-gray-100 dark:bg-dark-100 text-gray-900 dark:text-white border-gray-200 dark:border-dark-300'
-                      : ' border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200';
-                  }
+                  buttonClass += isActive
+                    ? ' bg-gray-100 dark:bg-dark-100 text-gray-900 dark:text-white border-gray-200 dark:border-dark-300'
+                    : ' border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200';
 
                   return (
                     <button

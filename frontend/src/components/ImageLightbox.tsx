@@ -117,17 +117,17 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
         <div
           className={cn(
             'w-full lg:w-80 flex-shrink-0',
-            'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
+            'bg-white dark:bg-dark-100',
             'rounded-xl p-4 lg:p-5',
             'overflow-y-auto max-h-[25vh] lg:max-h-[90vh]'
           )}
         >
           {/* Prompt */}
           <div className='mb-4'>
-            <h3 className='text-sm font-medium text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mb-1'>
+            <h3 className='text-sm font-medium text-gray-500 dark:text-gray-400 mb-1'>
               {t('gallery.prompt')}
             </h3>
-            <p className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] text-sm leading-relaxed'>
+            <p className='text-gray-900 dark:text-gray-100 text-sm leading-relaxed'>
               {image.prompt}
             </p>
           </div>
@@ -135,22 +135,22 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
           {/* Metadata */}
           <div className='space-y-3 mb-4'>
             <div className='flex items-center gap-2 text-sm'>
-              <Cpu className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
-              <span className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+              <Cpu className='h-4 w-4 text-gray-400 dark:text-gray-500' />
+              <span className='text-gray-500 dark:text-gray-400'>
                 {t('gallery.model')}:
               </span>
-              <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+              <span className='text-gray-900 dark:text-gray-100'>
                 {image.model}
               </span>
             </div>
 
             {image.size && (
               <div className='flex items-center gap-2 text-sm'>
-                <Maximize2 className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
-                <span className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+                <Maximize2 className='h-4 w-4 text-gray-400 dark:text-gray-500' />
+                <span className='text-gray-500 dark:text-gray-400'>
                   {t('gallery.size')}:
                 </span>
-                <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                <span className='text-gray-900 dark:text-gray-100'>
                   {image.size}
                 </span>
               </div>
@@ -158,37 +158,37 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
 
             {image.quality && (
               <div className='flex items-center gap-2 text-sm'>
-                <span className='w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-500 ophelia:text-[#525252] text-xs font-bold'>
+                <span className='w-4 h-4 flex items-center justify-center text-gray-400 dark:text-gray-500 text-xs font-bold'>
                   Q
                 </span>
-                <span className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+                <span className='text-gray-500 dark:text-gray-400'>
                   {t('gallery.quality')}:
                 </span>
-                <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] capitalize'>
+                <span className='text-gray-900 dark:text-gray-100 capitalize'>
                   {image.quality}
                 </span>
               </div>
             )}
 
             <div className='flex items-center gap-2 text-sm'>
-              <Clock className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
-              <span className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+              <Clock className='h-4 w-4 text-gray-400 dark:text-gray-500' />
+              <span className='text-gray-500 dark:text-gray-400'>
                 {t('gallery.created')}:
               </span>
-              <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+              <span className='text-gray-900 dark:text-gray-100'>
                 {formatDate(image.createdAt)}
               </span>
             </div>
           </div>
 
           {/* Actions */}
-          <div className='flex gap-2 pt-4 border-t border-gray-200 dark:border-dark-300 ophelia:border-[#262626]'>
+          <div className='flex gap-2 pt-4 border-t border-gray-200 dark:border-dark-300'>
             <button
               onClick={handleDownload}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg',
-                'bg-primary-600 dark:bg-primary-600 ophelia:bg-[#9333ea]',
-                'hover:bg-primary-700 dark:hover:bg-primary-500 ophelia:hover:bg-[#a855f7]',
+                'bg-primary-600 dark:bg-primary-600',
+                'hover:bg-primary-700 dark:hover:bg-primary-500',
                 'text-white font-medium text-sm',
                 'transition-colors'
               )}
@@ -202,10 +202,10 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
                 onClick={() => onDelete(image.id)}
                 className={cn(
                   'p-2.5 rounded-lg',
-                  'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]',
-                  'hover:bg-red-100 dark:hover:bg-red-900/30 ophelia:hover:bg-red-900/30',
-                  'text-gray-600 dark:text-gray-300 ophelia:text-[#a3a3a3]',
-                  'hover:text-red-600 dark:hover:text-red-400 ophelia:hover:text-red-400',
+                  'bg-gray-100 dark:bg-dark-200',
+                  'hover:bg-red-100 dark:hover:bg-red-900/30',
+                  'text-gray-600 dark:text-gray-300',
+                  'hover:text-red-600 dark:hover:text-red-400',
                   'transition-colors'
                 )}
                 title='Delete image'

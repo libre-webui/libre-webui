@@ -40,15 +40,15 @@ export const GalleryPage: React.FC = () => {
         {/* Header */}
         <div className='text-center max-w-md mx-auto mb-8'>
           <h2
-            className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] mb-3'
+            className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 mb-3'
             style={{ fontWeight: 300, letterSpacing: '0.01em' }}
           >
             {t('sidebar.navigation.imagine')}
           </h2>
-          <p className='text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3] leading-relaxed'>
+          <p className='text-gray-600 dark:text-dark-600 leading-relaxed'>
             {t('gallery.subtitle')}
             {imageCount !== null && imageCount > 0 && (
-              <span className='text-gray-400 dark:text-gray-500 ophelia:text-[#737373]'>
+              <span className='text-gray-400 dark:text-gray-500'>
                 {' '}
                 · {t('gallery.imageCount', { count: imageCount })}
               </span>
@@ -60,8 +60,8 @@ export const GalleryPage: React.FC = () => {
             onClick={() => setShowImageGen(true)}
             className={cn(
               'mt-4 px-6 py-2.5 rounded-xl font-medium',
-              'bg-primary-600 dark:bg-primary-600 ophelia:bg-[#9333ea]',
-              'hover:bg-primary-700 dark:hover:bg-primary-500 ophelia:hover:bg-[#a855f7]',
+              'bg-primary-600 dark:bg-primary-600',
+              'hover:bg-primary-700 dark:hover:bg-primary-500',
               'text-white',
               'transition-colors'
             )}

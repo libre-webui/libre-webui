@@ -33,7 +33,7 @@ export const Logo: React.FC<LogoProps> = ({ className, size = 'md' }) => {
   return (
     <span
       className={cn(
-        'libre-brand text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
+        'libre-brand text-gray-900 dark:text-gray-100',
         sizeClasses[size],
         className
       )}

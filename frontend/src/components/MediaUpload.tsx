@@ -174,10 +174,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
       <div
         className={cn(
           'border-2 border-dashed rounded-xl p-6 transition-all duration-200 cursor-pointer',
-          'border-gray-300 dark:border-gray-600 ophelia:border-[#3f3f46]',
-          'hover:border-primary-400 dark:hover:border-primary-500 ophelia:hover:border-[#9333ea]',
+          'border-gray-300 dark:border-gray-600',
+          'hover:border-primary-400 dark:hover:border-primary-500',
           dragActive &&
-            'border-primary-500 dark:border-primary-400 ophelia:border-[#a855f7] bg-primary-50/50 dark:bg-primary-900/10 ophelia:bg-[#9333ea]/10',
+            'border-primary-500 dark:border-primary-400 bg-primary-50/50 dark:bg-primary-900/10',
           disabled && 'opacity-50 cursor-not-allowed'
         )}
         onDragOver={handleDragOver}
@@ -201,17 +201,17 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
 
         <div className='flex flex-col items-center text-center'>
           {isUploadingDoc ? (
-            <Loader2 className='h-8 w-8 text-gray-400 dark:text-gray-500 ophelia:text-[#737373] mb-2 animate-spin' />
+            <Loader2 className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2 animate-spin' />
           ) : (
-            <Upload className='h-8 w-8 text-gray-400 dark:text-gray-500 ophelia:text-[#737373] mb-2' />
+            <Upload className='h-8 w-8 text-gray-400 dark:text-gray-500 mb-2' />
           )}
-          <p className='text-sm text-gray-700 dark:text-gray-300 ophelia:text-[#d4d4d4]'>
+          <p className='text-sm text-gray-700 dark:text-gray-300'>
             {t('chat.mediaUpload.dropImagesHere')}{' '}
-            <span className='text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7] font-medium'>
+            <span className='text-primary-600 dark:text-primary-400 font-medium'>
               {t('chat.mediaUpload.browse')}
             </span>
           </p>
-          <p className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mt-1'>
+          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
             {t('chat.mediaUpload.supportedFormats')}
           </p>
         </div>
@@ -224,7 +224,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
           {images.map((image, index) => (
             <div
               key={`img-${index}`}
-              className='relative group w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 ophelia:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 ophelia:border-[#262626]'
+              className='relative group w-16 h-16 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
             >
               <img
                 src={image}
@@ -247,7 +247,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
           {uploadedDocuments.map(doc => (
             <div
               key={doc.id}
-              className='relative group flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 ophelia:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 ophelia:border-[#262626]'
+              className='relative group flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
             >
               {doc.fileType === 'pdf' ? (
                 <FileText className='w-4 h-4 text-red-500 flex-shrink-0' />
@@ -255,10 +255,10 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                 <File className='w-4 h-4 text-blue-500 flex-shrink-0' />
               )}
               <div className='min-w-0'>
-                <p className='text-xs font-medium text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] truncate max-w-[100px]'>
+                <p className='text-xs font-medium text-gray-900 dark:text-gray-100 truncate max-w-[100px]'>
                   {doc.filename}
                 </p>
-                <p className='text-[10px] text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+                <p className='text-[10px] text-gray-500 dark:text-gray-400'>
                   {formatFileSize(doc.size)}
                 </p>
               </div>
@@ -267,7 +267,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
                   e.stopPropagation();
                   handleRemoveDocument(doc.id);
                 }}
-                className='p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 ophelia:hover:bg-[#262626] text-gray-500 hover:text-red-500 transition-colors'
+                className='p-0.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 hover:text-red-500 transition-colors'
               >
                 <X className='h-3 w-3' />
               </button>

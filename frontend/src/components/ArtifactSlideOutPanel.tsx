@@ -288,16 +288,16 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     try {
       return (
         <div
-          className='w-full h-full flex items-center justify-center bg-gray-50 dark:bg-dark-100 ophelia:bg-[#0a0a0a] rounded-lg overflow-auto p-4'
+          className='w-full h-full flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg overflow-auto p-4'
           dangerouslySetInnerHTML={{ __html: artifact.content }}
         />
       );
     } catch (_err) {
       return (
-        <div className='w-full h-full flex items-center justify-center bg-gray-50 dark:bg-dark-100 ophelia:bg-[#0a0a0a] rounded-lg'>
+        <div className='w-full h-full flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg'>
           <div className='text-center'>
             <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
-            <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+            <p className='text-sm text-gray-600 dark:text-gray-400'>
               {t('artifacts.invalidSvg')}
             </p>
           </div>
@@ -329,7 +329,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       <div className='h-full overflow-auto'>
         <OptimizedSyntaxHighlighter
           language={getLanguage()}
-          isDark={theme.mode === 'dark' || theme.mode === 'ophelia'}
+          isDark={theme.mode === 'dark'}
           className='!m-0 !rounded-lg !h-full'
         >
           {artifact.content}
@@ -347,7 +347,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         <div className='h-full overflow-auto'>
           <OptimizedSyntaxHighlighter
             language='json'
-            isDark={theme.mode === 'dark' || theme.mode === 'ophelia'}
+            isDark={theme.mode === 'dark'}
             className='!m-0 !rounded-lg !h-full'
           >
             {formattedJson}
@@ -356,10 +356,10 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       );
     } catch (_err) {
       return (
-        <div className='w-full h-full flex items-center justify-center bg-gray-50 dark:bg-dark-100 ophelia:bg-[#0a0a0a] rounded-lg'>
+        <div className='w-full h-full flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg'>
           <div className='text-center'>
             <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
-            <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+            <p className='text-sm text-gray-600 dark:text-gray-400'>
               {t('artifacts.invalidJson')}
             </p>
           </div>
@@ -404,7 +404,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       {/* Backdrop */}
       <div
         className={cn(
-          'fixed inset-0 bg-black/30 dark:bg-black/50 ophelia:bg-black/60 z-40 transition-opacity duration-300',
+          'fixed inset-0 bg-black/30 dark:bg-black/50 z-40 transition-opacity duration-300',
           artifactPanelOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         )}
       />
@@ -415,8 +415,8 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         style={{ width: effectiveWidth }}
         className={cn(
           'fixed top-0 right-0 h-full z-50',
-          'bg-white dark:bg-dark-25 ophelia:bg-[#050505]',
-          'shadow-2xl border-l border-gray-200 dark:border-dark-200 ophelia:border-[#1a1a1a]',
+          'bg-white dark:bg-dark-25',
+          'shadow-2xl border-l border-gray-200 dark:border-dark-200',
           'flex flex-col',
           'transform transition-transform duration-300 ease-out',
           artifactPanelOpen ? 'translate-x-0' : 'translate-x-full'
@@ -437,7 +437,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             <div
               className={cn(
                 'w-1 h-16 rounded-full transition-all duration-200',
-                'bg-gray-300 dark:bg-dark-300 ophelia:bg-[#262626]',
+                'bg-gray-300 dark:bg-dark-300',
                 'group-hover:bg-primary-500 group-hover:h-24',
                 isResizing && 'bg-primary-500 h-24'
               )}
@@ -446,7 +446,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             <div
               className={cn(
                 'absolute left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity',
-                'text-gray-400 dark:text-dark-500 ophelia:text-[#525252]',
+                'text-gray-400 dark:text-dark-500',
                 isResizing && 'opacity-100'
               )}
             >
@@ -456,15 +456,15 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         )}
 
         {/* Header */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-200 ophelia:border-[#1a1a1a]'>
+        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-200'>
           <div className='flex items-center gap-3 min-w-0 flex-1'>
-            <div className='text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] flex-shrink-0'>
+            <div className='text-gray-600 dark:text-gray-400 flex-shrink-0'>
               {getIcon()}
             </div>
-            <h2 className='font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] truncate'>
+            <h2 className='font-semibold text-gray-900 dark:text-gray-100 truncate'>
               {artifact.title}
             </h2>
-            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 ophelia:bg-[rgba(147,51,234,0.2)] text-primary-700 dark:text-primary-300 ophelia:text-[#c084fc] px-2 py-1 rounded-full font-medium flex-shrink-0'>
+            <span className='text-xs bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 px-2 py-1 rounded-full font-medium flex-shrink-0'>
               {artifact.type.toUpperCase()}
             </span>
           </div>
@@ -473,7 +473,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             variant='ghost'
             size='sm'
             onClick={closeArtifactPanel}
-            className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212] flex-shrink-0'
+            className='h-8 w-8 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 flex-shrink-0'
             title={t('artifacts.closePanelEsc')}
           >
             <X className='h-5 w-5' />
@@ -481,7 +481,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         </div>
 
         {/* Toolbar */}
-        <div className='flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] bg-gray-50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a]'>
+        <div className='flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-100/50'>
           <div className='flex items-center gap-1'>
             {shouldShowViewToggle() && (
               <>
@@ -514,7 +514,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               variant='ghost'
               size='sm'
               onClick={() => copyToClipboard(artifact.content)}
-              className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
+              className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
               title={t('artifacts.copyContent')}
             >
               {copied ? (
@@ -534,7 +534,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               variant='ghost'
               size='sm'
               onClick={downloadArtifact}
-              className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
+              className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
               title={t('artifacts.download')}
             >
               <Download className='h-3.5 w-3.5 mr-1.5' />
@@ -552,7 +552,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                     newWindow.document.close();
                   }
                 }}
-                className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#121212]'
+                className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
                 title={t('artifacts.openInNewWindow')}
               >
                 <ExternalLink className='h-3.5 w-3.5 mr-1.5' />
@@ -564,8 +564,8 @@ export const ArtifactSlideOutPanel: React.FC = () => {
 
         {/* Description */}
         {artifact.description && (
-          <div className='px-4 py-3 border-b border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a]'>
-            <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+          <div className='px-4 py-3 border-b border-gray-100 dark:border-dark-200'>
+            <p className='text-sm text-gray-600 dark:text-gray-400'>
               {artifact.description}
             </p>
           </div>
@@ -575,14 +575,14 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         <div className='flex-1 p-4 overflow-hidden'>{renderContent()}</div>
 
         {/* Footer */}
-        <div className='px-4 py-2 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] bg-gray-50 dark:bg-dark-100/50 ophelia:bg-[#0a0a0a]'>
+        <div className='px-4 py-2 border-t border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-100/50'>
           <div className='flex items-center justify-between'>
-            <div className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+            <div className='text-xs text-gray-500 dark:text-gray-400'>
               {t('artifacts.created')}:{' '}
               {new Date(artifact.createdAt).toLocaleString()}
             </div>
             {!isMobile && (
-              <div className='text-xs text-gray-400 dark:text-dark-500 ophelia:text-[#525252]'>
+              <div className='text-xs text-gray-400 dark:text-dark-500'>
                 {t('artifacts.dragEdgeToResize')}
               </div>
             )}

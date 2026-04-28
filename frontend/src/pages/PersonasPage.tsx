@@ -28,12 +28,12 @@ export const PersonasPage: React.FC = () => {
         {/* Header - matching ChatPage welcome screen style */}
         <div className='text-center max-w-md mx-auto mb-8'>
           <h2
-            className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] mb-3'
+            className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 mb-3'
             style={{ fontWeight: 300, letterSpacing: '0.01em' }}
           >
             {t('personaManager.title')}
           </h2>
-          <p className='text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3] leading-relaxed'>
+          <p className='text-gray-600 dark:text-dark-600 leading-relaxed'>
             {t('personaManager.subtitle')}
           </p>
         </div>

@@ -141,11 +141,11 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
   if (images.length === 0) {
     return (
       <div className='flex flex-col items-center justify-center py-20 text-center'>
-        <ImageOff className='h-16 w-16 text-gray-300 dark:text-gray-600 ophelia:text-[#404040] mb-4' />
-        <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa] mb-2'>
+        <ImageOff className='h-16 w-16 text-gray-300 dark:text-gray-600 mb-4' />
+        <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
           {t('imageGallery.noImages')}
         </h3>
-        <p className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373] max-w-sm'>
+        <p className='text-gray-500 dark:text-gray-400 max-w-sm'>
           {t('imageGallery.noImagesHint')}
         </p>
       </div>
@@ -167,11 +167,11 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
             className={cn(
               'break-inside-avoid group relative cursor-pointer',
               'rounded-xl overflow-hidden',
-              'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#121212]',
-              'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-              'hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#404040]',
+              'bg-gray-100 dark:bg-dark-200',
+              'border border-gray-200 dark:border-dark-300',
+              'hover:border-gray-300 dark:hover:border-dark-400',
               'transition-all duration-200',
-              'hover:shadow-lg dark:hover:shadow-dark-400/20 ophelia:hover:shadow-[#9333ea]/10'
+              'hover:shadow-lg dark:hover:shadow-dark-400/20'
             )}
             onClick={() => setSelectedImage(image)}
           >
@@ -247,10 +247,10 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
             disabled={isLoadingMore}
             className={cn(
               'px-6 py-2.5 rounded-xl font-medium',
-              'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]',
-              'hover:bg-gray-200 dark:hover:bg-dark-300 ophelia:hover:bg-[#262626]',
-              'text-gray-700 dark:text-gray-200 ophelia:text-[#fafafa]',
-              'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
+              'bg-gray-100 dark:bg-dark-200',
+              'hover:bg-gray-200 dark:hover:bg-dark-300',
+              'text-gray-700 dark:text-gray-200',
+              'border border-gray-200 dark:border-dark-300',
               'transition-colors',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
