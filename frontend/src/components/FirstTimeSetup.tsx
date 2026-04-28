@@ -153,7 +153,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
           <div className='flex flex-col items-center'>
             <Logo />
             <span
-              className='libre-brand text-xl text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
+              className='libre-brand text-xl text-gray-900 dark:text-gray-100'
               style={{ fontWeight: 300, letterSpacing: '0.01em' }}
             >
               WebUI
@@ -239,7 +239,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
           <div className='flex flex-col items-center'>
             <Logo />
             <span
-              className='libre-brand text-xl text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
+              className='libre-brand text-xl text-gray-900 dark:text-gray-100'
               style={{ fontWeight: 300, letterSpacing: '0.01em' }}
             >
               WebUI
@@ -347,7 +347,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
         <div className='flex flex-col items-center'>
           <Logo />
           <span
-            className='libre-brand text-xl text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
+            className='libre-brand text-xl text-gray-900 dark:text-gray-100'
             style={{ fontWeight: 300, letterSpacing: '0.01em' }}
           >
             WebUI

@@ -230,7 +230,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       <div className='max-w-5xl mx-auto px-3 sm:px-4 md:px-6 w-full pointer-events-auto'>
         {/* Advanced Features Panel */}
         {showAdvanced && (
-          <div className='mb-2 p-3 rounded-2xl bg-white/95 dark:bg-dark-100/95 ophelia:bg-[#0a0a0a]/95 backdrop-blur-md border border-gray-200/50 dark:border-dark-300/50 ophelia:border-[#262626]/50 shadow-lg'>
+          <div className='mb-2 p-3 rounded-2xl bg-white/95 dark:bg-dark-100/95 backdrop-blur-md border border-gray-200/50 dark:border-dark-300/50 shadow-lg'>
             <MediaUpload
               images={images}
               onImagesChange={setImages}
@@ -249,10 +249,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <div
               className={cn(
                 'flex items-center gap-2 p-2 sm:p-3 rounded-2xl sm:rounded-3xl border transition-all duration-300 ease-out shadow-lg',
-                'bg-white/95 dark:bg-dark-100/95 ophelia:bg-[#0a0a0a]/95 backdrop-blur-md',
-                'border-gray-200/50 dark:border-dark-300/50 ophelia:border-[#262626]/60',
-                'hover:border-gray-300/70 dark:hover:border-dark-400/70 ophelia:hover:border-[#3f3f46]/80',
-                'focus-within:border-primary-400/70 dark:focus-within:border-primary-500/70 ophelia:focus-within:border-[#9333ea]/70',
+                'bg-white/95 dark:bg-dark-100/95 backdrop-blur-md',
+                'border-gray-200/50 dark:border-dark-300/50',
+                'hover:border-gray-300/70 dark:hover:border-dark-400/70',
+                'focus-within:border-primary-400/70 dark:focus-within:border-primary-500/70',
                 'focus-within:shadow-xl'
               )}
             >
@@ -264,13 +264,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 className={cn(
                   'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
-                  'hover:bg-gray-100 dark:hover:bg-dark-200/80 ophelia:hover:bg-[#1a1a1a]',
+                  'hover:bg-gray-100 dark:hover:bg-dark-200/80',
                   'transition-all duration-200 touch-manipulation',
                   'hover:scale-105 active:scale-95',
                   hasAdvancedFeatures &&
-                    'text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]',
-                  showAdvanced &&
-                    'bg-gray-100 dark:bg-dark-200/80 ophelia:bg-[#1a1a1a]'
+                    'text-primary-600 dark:text-primary-400',
+                  showAdvanced && 'bg-gray-100 dark:bg-dark-200/80'
                 )}
                 title={t('chat.input.attachments')}
                 style={{
@@ -283,7 +282,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 {hasAdvancedFeatures ? (
                   <div className='relative flex items-center justify-center'>
                     <Paperclip className='h-4 w-4' />
-                    <div className='absolute -top-0.5 -right-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 ophelia:bg-[#a855f7] rounded-full ring-2 ring-white dark:ring-dark-50 ophelia:ring-[#0a0a0a]' />
+                    <div className='absolute -top-0.5 -right-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
                   </div>
                 ) : showAdvanced ? (
                   <Minus className='h-4 w-4' />
@@ -331,7 +330,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       }
                       onModelChange={handleModelOrPersonaChange}
                       currentPersona={currentPersona}
-                      className='min-w-[160px] max-w-[240px] border-0 bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 rounded-xl text-sm hover:bg-gray-200/80 dark:hover:bg-dark-200/60 ophelia:hover:bg-[#262626]/80 transition-colors duration-200'
+                      className='min-w-[160px] max-w-[240px] border-0 bg-gray-100/80 dark:bg-dark-100/80 rounded-xl text-sm hover:bg-gray-200/80 dark:hover:bg-dark-200/60 transition-colors duration-200'
                       compact
                       showImageGen={hasImageGenPlugins}
                     />
@@ -347,9 +346,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     onClick={handleStopGeneration}
                     className={cn(
                       'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'bg-red-50 dark:bg-red-900/20 ophelia:bg-red-900/30',
-                      'text-red-500 dark:text-red-400 ophelia:text-red-400',
-                      'hover:bg-red-100 dark:hover:bg-red-900/30 ophelia:hover:bg-red-900/40',
+                      'bg-red-50 dark:bg-red-900/20',
+                      'text-red-500 dark:text-red-400',
+                      'hover:bg-red-100 dark:hover:bg-red-900/30',
                       'transition-all duration-200 touch-manipulation',
                       'hover:scale-105 active:scale-95'
                     )}
@@ -365,14 +364,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     disabled={!message.trim() || disabled}
                     className={cn(
                       'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'text-gray-400 dark:text-dark-500 ophelia:text-[#525252]',
+                      'text-gray-400 dark:text-dark-500',
                       'disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed',
                       'transition-all duration-200 touch-manipulation',
                       message.trim() &&
                         !disabled && [
-                          'bg-primary-500 dark:bg-primary-600 ophelia:bg-[#9333ea]',
-                          'text-white dark:text-white ophelia:text-white',
-                          'hover:bg-primary-600 dark:hover:bg-primary-500 ophelia:hover:bg-[#a855f7]',
+                          'bg-primary-500 dark:bg-primary-600',
+                          'text-white dark:text-white',
+                          'hover:bg-primary-600 dark:hover:bg-primary-500',
                           'shadow-md hover:shadow-lg',
                           'hover:scale-105 active:scale-95',
                         ]
@@ -398,7 +397,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 }
                 onModelChange={handleModelOrPersonaChange}
                 currentPersona={currentPersona}
-                className='w-full rounded-xl bg-gray-100/80 dark:bg-dark-100/80 ophelia:bg-[#1a1a1a]/80 border-0 transition-colors duration-200'
+                className='w-full rounded-xl bg-gray-100/80 dark:bg-dark-100/80 border-0 transition-colors duration-200'
                 compact
                 showImageGen={hasImageGenPlugins}
               />

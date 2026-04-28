@@ -11,109 +11,89 @@ export default {
         'xs': '475px',
       },
       colors: {
-        // OpenAI-inspired primary colors (soft blue/teal)
+        // Indigo accent — the signature Libre color (DESIGN.md tertiary)
         primary: {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
-          700: '#0f766e',
-          800: '#115e59',
-          900: '#134e4a',
-          950: '#042f2e',
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#312e81',
+          950: '#1e1b4b',
         },
-        // More refined grays matching OpenAI's palette
+        // Cool neutrals — DESIGN.md neutral hierarchy
         gray: {
           25: '#fcfcfd',
           50: '#f9fafb',
-          100: '#f2f4f7',
-          200: '#eaecf0',
-          300: '#d0d5dd',
-          400: '#98a2b3',
-          500: '#667085',
-          600: '#475467',
-          700: '#344054',
-          800: '#1d2939',
-          900: '#101828',
-          950: '#0c111d',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937',
+          900: '#111827',
+          950: '#0b1020',
         },
-        // Dark theme specific colors (OpenAI-style)
+        // Dark surface ladder for layered backgrounds.
+        // Higher numeric keys = lighter text (inverted scale, kept for backwards compat).
         dark: {
-          25: '#1a1a1a',
-          50: '#171717',
-          100: '#0d0d0d',
-          200: '#262626',
-          300: '#404040',
-          400: '#525252',
-          500: '#737373',
-          600: '#a3a3a3',
-          700: '#d4d4d4',
-          800: '#e5e5e5',
-          900: '#f5f5f5',
-          950: '#fafafa',
+          25: '#171e2e',   // neutral-surface (panels, popovers)
+          50: '#111827',   // neutral (sidebar)
+          100: '#111827',  // neutral
+          200: '#1f2937',  // neutral-secondary (chat area)
+          300: '#374151',  // neutral-tertiary (cards, inputs, user bubbles)
+          400: '#4b5563',  // dim border / subtle divider
+          500: '#6b7280',  // muted text
+          600: '#9ca3af',  // secondary text
+          700: '#d1d5db',  // body text in dark mode
+          800: '#e5e7eb',  // emphasized text
+          900: '#f3f4f6',  // strong text
+          950: '#ffffff',  // primary text on dark
         },
-        // Accent color for highlights
+        // Lighter indigo — hover state for tertiary elements (DESIGN.md accent)
         accent: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          950: '#082f49',
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#312e81',
+          950: '#1e1b4b',
         },
-        // Ophelia theme - Purple with AMOLED black
-        ophelia: {
-          // Purple accent colors
-          primary: {
-            50: '#faf5ff',
-            100: '#f3e8ff',
-            200: '#e9d5ff',
-            300: '#d8b4fe',
-            400: '#c084fc',
-            500: '#a855f7',
-            600: '#9333ea',
-            700: '#7c3aed',
-            800: '#6b21a8',
-            900: '#581c87',
-            950: '#3b0764',
-          },
-          // AMOLED black backgrounds
-          bg: {
-            50: '#000000',   // Pure black base
-            100: '#050505',  // Slightly lighter
-            200: '#0a0a0a',  // Card backgrounds
-            300: '#121212',  // Elevated surfaces
-            400: '#1a1a1a',  // Borders
-            500: '#262626',  // Muted elements
-          },
-          // Text colors for AMOLED
-          text: {
-            900: '#fafafa',  // Primary text
-            800: '#e5e5e5',  // Secondary text
-            700: '#a3a3a3',  // Muted text
-            600: '#737373',  // Disabled text
-          },
-        },
-        // Success, warning, error colors
+        // DESIGN.md status colors
         success: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          500: '#22c55e',
-          600: '#16a34a',
+          50: '#ecfdf5',
+          100: '#d1fae5',
+          200: '#a7f3d0',
+          300: '#6ee7b7',
+          400: '#34d399',
+          500: '#34d399',
+          600: '#10b981',
+          700: '#059669',
+          800: '#047857',
+          900: '#064e3b',
         },
         warning: {
           50: '#fffbeb',
           100: '#fef3c7',
-          500: '#f59e0b',
+          200: '#fde68a',
+          300: '#fcd34d',
+          400: '#fbbf24',
+          500: '#fbbf24',
           600: '#d97706',
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
         },
         error: {
           50: '#fef2f2',
@@ -121,21 +101,33 @@ export default {
           200: '#fecaca',
           300: '#fca5a5',
           400: '#f87171',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#b91c1c',
-          800: '#991b1b',
+          500: '#f87171',
+          600: '#ef4444',
+          700: '#dc2626',
+          800: '#b91c1c',
           900: '#7f1d1d',
-        }
+        },
+        info: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#60a5fa',
+          600: '#3b82f6',
+          700: '#2563eb',
+          800: '#1d4ed8',
+          900: '#1e3a8a',
+        },
       },
       fontFamily: {
         sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
-        mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'source-code-pro', 'monospace'],
+        mono: ['JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'source-code-pro', 'monospace'],
       },
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1rem' }],
-        'sm': ['0.875rem', { lineHeight: '1.25rem' }],
-        'base': ['1rem', { lineHeight: '1.5rem' }],
+        'sm': ['0.8125rem', { lineHeight: '1.25rem' }],
+        'base': ['0.9375rem', { lineHeight: '1.625' }],
         'lg': ['1.125rem', { lineHeight: '1.75rem' }],
         'xl': ['1.25rem', { lineHeight: '1.75rem' }],
         '2xl': ['1.5rem', { lineHeight: '2rem' }],
@@ -151,8 +143,8 @@ export default {
         '3xl': '1.5rem',
       },
       boxShadow: {
-        'glow': '0 0 20px -12px rgba(20, 184, 166, 0.25)',
-        'glow-lg': '0 0 25px -5px rgba(20, 184, 166, 0.3)',
+        'glow': '0 0 20px -12px rgba(79, 70, 229, 0.25)',
+        'glow-lg': '0 0 25px -5px rgba(79, 70, 229, 0.3)',
         'subtle': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
         'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
         'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -188,8 +180,8 @@ export default {
           '50%': { opacity: '0.8' },
         },
         glow: {
-          '0%': { boxShadow: '0 0 20px -12px rgba(20, 184, 166, 0.25)' },
-          '100%': { boxShadow: '0 0 25px -5px rgba(20, 184, 166, 0.4)' },
+          '0%': { boxShadow: '0 0 20px -12px rgba(79, 70, 229, 0.25)' },
+          '100%': { boxShadow: '0 0 25px -5px rgba(79, 70, 229, 0.4)' },
         },
         bounceSubtle: {
           '0%, 100%': { transform: 'translateY(0)' },
@@ -201,10 +193,5 @@ export default {
       },
     },
   },
-  plugins: [
-    // Add ophelia variant for the Ophelia theme
-    function({ addVariant }) {
-      addVariant('ophelia', '.ophelia &');
-    },
-  ],
+  plugins: [],
 }

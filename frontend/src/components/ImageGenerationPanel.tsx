@@ -229,24 +229,24 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
       {/* Panel */}
       <div
         className={cn(
-          'relative bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-          'border border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]',
+          'relative bg-white dark:bg-dark-100',
+          'border border-gray-200 dark:border-dark-300',
           'rounded-2xl shadow-2xl',
           'w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col'
         )}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'>
+        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-300'>
           <div className='flex items-center gap-2'>
-            <ImageIcon className='h-5 w-5 text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]' />
-            <h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+            <ImageIcon className='h-5 w-5 text-primary-600 dark:text-primary-400' />
+            <h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
               {t('imageGeneration.title')}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a] transition-colors'
+            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
           >
             <X className='h-5 w-5 text-gray-500 dark:text-gray-400' />
           </button>
@@ -256,8 +256,8 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         <div className='flex-1 overflow-y-auto p-4 space-y-4'>
           {plugins.length === 0 ? (
             <div className='text-center py-8'>
-              <ImageIcon className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600 ophelia:text-[#525252]' />
-              <p className='text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+              <ImageIcon className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600' />
+              <p className='text-gray-500 dark:text-gray-400'>
                 {t('imageGeneration.noModels')}
               </p>
               <p className='text-sm text-gray-400 dark:text-gray-500 mt-1'>
@@ -269,7 +269,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
               {/* Plugin & Model Selection */}
               <div className='grid grid-cols-2 gap-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('settings.plugins.title')}
                   </label>
                   <select
@@ -277,9 +277,9 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     onChange={e => setSelectedPlugin(e.target.value)}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-gray-50 dark:bg-dark-200 ophelia:bg-[#121212]',
-                      'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
+                      'bg-gray-50 dark:bg-dark-200',
+                      'border border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                     )}
                   >
@@ -292,7 +292,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('imageGeneration.model')}
                   </label>
                   <select
@@ -300,9 +300,9 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     onChange={e => setSelectedModel(e.target.value)}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-gray-50 dark:bg-dark-200 ophelia:bg-[#121212]',
-                      'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
+                      'bg-gray-50 dark:bg-dark-200',
+                      'border border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                     )}
                   >
@@ -318,7 +318,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
               {/* Size & Quality */}
               <div className='grid grid-cols-2 gap-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('imageGeneration.size')}
                   </label>
                   <select
@@ -326,9 +326,9 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     onChange={e => setSize(e.target.value)}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-gray-50 dark:bg-dark-200 ophelia:bg-[#121212]',
-                      'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
+                      'bg-gray-50 dark:bg-dark-200',
+                      'border border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                     )}
                   >
@@ -341,7 +341,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('imageGeneration.quality')}
                   </label>
                   <select
@@ -349,9 +349,9 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     onChange={e => setQuality(e.target.value)}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-gray-50 dark:bg-dark-200 ophelia:bg-[#121212]',
-                      'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
+                      'bg-gray-50 dark:bg-dark-200',
+                      'border border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                     )}
                   >
@@ -366,7 +366,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
               {/* Prompt */}
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                   {t('imageGeneration.prompt')}
                 </label>
                 <textarea
@@ -376,14 +376,14 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                   rows={5}
                   className={cn(
                     'w-full px-3 py-2 rounded-lg text-sm resize-none',
-                    'bg-gray-50 dark:bg-dark-200 ophelia:bg-[#121212]',
-                    'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                    'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
-                    'placeholder-gray-500 dark:placeholder-gray-400 ophelia:placeholder-[#737373]',
+                    'bg-gray-50 dark:bg-dark-200',
+                    'border border-gray-200 dark:border-dark-300',
+                    'text-gray-900 dark:text-gray-100',
+                    'placeholder-gray-500 dark:placeholder-gray-400',
                     'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
                     maxPromptLength &&
                       prompt.length > maxPromptLength &&
-                      'border-red-500 dark:border-red-500 ophelia:border-red-500'
+                      'border-red-500 dark:border-red-500'
                   )}
                 />
                 {maxPromptLength && (
@@ -392,7 +392,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                       'text-xs mt-1 text-right',
                       prompt.length > maxPromptLength
                         ? 'text-red-500'
-                        : 'text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'
+                        : 'text-gray-500 dark:text-gray-400'
                     )}
                   >
                     {prompt.length.toLocaleString()} /{' '}
@@ -403,7 +403,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
               {/* Generated Image Preview */}
               {generatedImage && (
-                <div className='relative rounded-xl overflow-hidden border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]'>
+                <div className='relative rounded-xl overflow-hidden border border-gray-200 dark:border-dark-300'>
                   <img
                     src={generatedImage}
                     alt='Generated'
@@ -413,14 +413,14 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     onClick={handleDownload}
                     className={cn(
                       'absolute bottom-3 right-3 p-2 rounded-lg',
-                      'bg-white/90 dark:bg-dark-100/90 ophelia:bg-[#0a0a0a]/90',
-                      'hover:bg-white dark:hover:bg-dark-100 ophelia:hover:bg-[#0a0a0a]',
-                      'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
+                      'bg-white/90 dark:bg-dark-100/90',
+                      'hover:bg-white dark:hover:bg-dark-100',
+                      'border border-gray-200 dark:border-dark-300',
                       'transition-colors'
                     )}
                     title={t('imageGallery.download')}
                   >
-                    <Download className='h-5 w-5 text-gray-700 dark:text-gray-200 ophelia:text-[#fafafa]' />
+                    <Download className='h-5 w-5 text-gray-700 dark:text-gray-200' />
                   </button>
                 </div>
               )}
@@ -430,14 +430,14 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
         {/* Footer */}
         {plugins.length > 0 && (
-          <div className='p-4 border-t border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'>
+          <div className='p-4 border-t border-gray-200 dark:border-dark-300'>
             <Button
               onClick={handleGenerate}
               disabled={isGenerating || !prompt.trim() || !selectedModel}
               className={cn(
                 'w-full py-2.5 rounded-xl font-medium',
-                'bg-primary-600 dark:bg-primary-600 ophelia:bg-[#9333ea]',
-                'hover:bg-primary-700 dark:hover:bg-primary-500 ophelia:hover:bg-[#a855f7]',
+                'bg-primary-600 dark:bg-primary-600',
+                'hover:bg-primary-700 dark:hover:bg-primary-500',
                 'text-white',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
                 'transition-colors'

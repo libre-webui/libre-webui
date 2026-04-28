@@ -160,7 +160,7 @@ export interface WebSocketMessage {
 }
 
 export interface Theme {
-  mode: 'light' | 'dark' | 'ophelia';
+  mode: 'light' | 'dark';
 }
 
 export interface TTSSettings {

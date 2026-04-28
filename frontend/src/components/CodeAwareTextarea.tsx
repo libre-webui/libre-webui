@@ -84,7 +84,7 @@ export const CodeAwareTextarea = React.forwardRef<
             'w-full resize-none transition-all duration-200',
             isInCodeBlock && [
               'font-mono text-[13px]',
-              'bg-gray-50 dark:bg-dark-100/50 ophelia:bg-[#0f0f0f]',
+              'bg-gray-50 dark:bg-dark-100/50',
               'rounded-lg',
             ],
             className
@@ -98,9 +98,9 @@ export const CodeAwareTextarea = React.forwardRef<
             <div
               className={cn(
                 'flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium',
-                'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]',
-                'text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3]',
-                'border border-gray-200/50 dark:border-dark-300/50 ophelia:border-[#262626]/50',
+                'bg-gray-100 dark:bg-dark-200',
+                'text-gray-500 dark:text-gray-400',
+                'border border-gray-200/50 dark:border-dark-300/50',
                 isInCodeBlock && 'animate-pulse'
               )}
             >

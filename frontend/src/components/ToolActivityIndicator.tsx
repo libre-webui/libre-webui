@@ -96,8 +96,8 @@ export const ToolActivityIndicator: React.FC<ToolActivityIndicatorProps> = ({
             className={cn(
               'flex items-center gap-2 text-sm transition-all duration-300',
               isComplete
-                ? 'text-green-600 dark:text-green-400 ophelia:text-[#22c55e] opacity-60'
-                : 'text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3]'
+                ? 'text-green-600 dark:text-green-400 opacity-60'
+                : 'text-gray-500 dark:text-gray-400'
             )}
           >
             <div

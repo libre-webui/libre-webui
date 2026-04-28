@@ -104,25 +104,25 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
       <div
         className={cn(
           'fixed z-[9999] w-80 max-h-[70vh] flex flex-col',
-          'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
+          'bg-white dark:bg-dark-100',
           'rounded-2xl shadow-2xl',
-          'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
+          'border border-gray-200 dark:border-dark-300',
           'overflow-hidden',
           className
         )}
       >
         {/* Header */}
-        <div className='flex-shrink-0 px-4 py-3 border-b border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a]'>
+        <div className='flex-shrink-0 px-4 py-3 border-b border-gray-100 dark:border-dark-200'>
           <div className='flex items-center justify-between mb-3'>
             <div className='flex items-center gap-2'>
-              <Users className='h-5 w-5 text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]' />
-              <h3 className='font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+              <Users className='h-5 w-5 text-primary-600 dark:text-primary-400' />
+              <h3 className='font-semibold text-gray-900 dark:text-gray-100'>
                 Switch Persona
               </h3>
             </div>
             <button
               onClick={onClose}
-              className='p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ophelia:hover:text-[#e5e5e5] hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a] transition-colors'
+              className='p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
             >
               <X className='h-4 w-4' />
             </button>
@@ -138,11 +138,11 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
               placeholder='Search personas...'
               className={cn(
                 'w-full pl-9 pr-3 py-2 text-sm rounded-lg',
-                'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
-                'placeholder:text-gray-400 dark:placeholder:text-gray-500 ophelia:placeholder:text-[#737373]',
-                'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400 ophelia:focus:border-[#9333ea]'
+                'bg-gray-50 dark:bg-dark-50',
+                'border border-gray-200 dark:border-dark-300',
+                'text-gray-900 dark:text-gray-100',
+                'placeholder:text-gray-400 dark:placeholder:text-gray-500',
+                'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:focus:border-primary-400'
               )}
             />
           </div>
@@ -150,9 +150,9 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
 
         {/* Current persona */}
         {currentPersonaId && onClearPersona && (
-          <div className='flex-shrink-0 px-4 py-2 bg-primary-50 dark:bg-primary-900/20 ophelia:bg-[#9333ea]/10 border-b border-primary-100 dark:border-primary-800/30 ophelia:border-[#7c3aed]/20'>
+          <div className='flex-shrink-0 px-4 py-2 bg-primary-50 dark:bg-primary-900/20 border-b border-primary-100 dark:border-primary-800/30'>
             <div className='flex items-center justify-between'>
-              <span className='text-xs text-primary-700 dark:text-primary-300 ophelia:text-[#c084fc]'>
+              <span className='text-xs text-primary-700 dark:text-primary-300'>
                 Active persona
               </span>
               <button
@@ -160,7 +160,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                   onClearPersona();
                   onClose();
                 }}
-                className='text-xs text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7] hover:underline'
+                className='text-xs text-primary-600 dark:text-primary-400 hover:underline'
               >
                 Clear
               </button>
@@ -175,7 +175,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
               <div className='animate-spin h-6 w-6 border-2 border-primary-500 border-t-transparent rounded-full' />
             </div>
           ) : sortedPersonas.length === 0 ? (
-            <div className='text-center py-8 text-gray-500 dark:text-gray-400 ophelia:text-[#737373]'>
+            <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
               <Users className='h-8 w-8 mx-auto mb-2 opacity-50' />
               <p className='text-sm'>
                 {searchQuery ? 'No personas found' : 'No personas yet'}
@@ -202,11 +202,11 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                       'text-left',
                       isActive
                         ? [
-                            'bg-primary-50 dark:bg-primary-900/30 ophelia:bg-[#9333ea]/15',
-                            'border border-primary-200 dark:border-primary-700/50 ophelia:border-[#7c3aed]/30',
+                            'bg-primary-50 dark:bg-primary-900/30',
+                            'border border-primary-200 dark:border-primary-700/50',
                           ]
                         : [
-                            'hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#121212]',
+                            'hover:bg-gray-50 dark:hover:bg-dark-50',
                             'border border-transparent',
                           ]
                     )}
@@ -232,8 +232,8 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                           className={cn(
                             'font-medium text-sm truncate',
                             isActive
-                              ? 'text-primary-700 dark:text-primary-300 ophelia:text-[#c084fc]'
-                              : 'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
+                              ? 'text-primary-700 dark:text-primary-300'
+                              : 'text-gray-900 dark:text-gray-100'
                           )}
                         >
                           {persona.name}
@@ -242,7 +242,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                           <Star className='h-3 w-3 text-amber-500 fill-amber-500 flex-shrink-0' />
                         )}
                       </div>
-                      <div className='flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+                      <div className='flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400'>
                         <Settings2 className='h-3 w-3' />
                         <span className='truncate'>{persona.model}</span>
                       </div>
@@ -253,8 +253,8 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                       className={cn(
                         'h-4 w-4 flex-shrink-0',
                         isActive
-                          ? 'text-primary-500 dark:text-primary-400 ophelia:text-[#a855f7]'
-                          : 'text-gray-300 dark:text-gray-600 ophelia:text-[#525252]'
+                          ? 'text-primary-500 dark:text-primary-400'
+                          : 'text-gray-300 dark:text-gray-600'
                       )}
                     />
                   </button>
@@ -265,8 +265,8 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
         </div>
 
         {/* Footer */}
-        <div className='flex-shrink-0 px-4 py-3 border-t border-gray-100 dark:border-dark-200 ophelia:border-[#1a1a1a] bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]'>
-          <p className='text-[11px] text-gray-500 dark:text-gray-400 ophelia:text-[#737373] text-center'>
+        <div className='flex-shrink-0 px-4 py-3 border-t border-gray-100 dark:border-dark-200 bg-gray-50 dark:bg-dark-50'>
+          <p className='text-[11px] text-gray-500 dark:text-gray-400 text-center'>
             {personas.length} persona{personas.length !== 1 ? 's' : ''}{' '}
             available
           </p>

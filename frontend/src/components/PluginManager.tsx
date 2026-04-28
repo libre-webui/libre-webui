@@ -175,10 +175,10 @@ export const PluginVariablesEditor: React.FC<{
 
     const inputClasses = cn(
       'w-full px-3 py-2 rounded-lg border text-sm',
-      'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-      'border-gray-300 dark:border-dark-300 ophelia:border-[#262626]',
-      'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
-      'focus:outline-none focus:ring-2 focus:ring-blue-500/20 ophelia:focus:ring-[#a855f7]/20'
+      'bg-white dark:bg-dark-100',
+      'border-gray-300 dark:border-dark-300',
+      'text-gray-900 dark:text-dark-700',
+      'focus:outline-none focus:ring-2 focus:ring-blue-500/20'
     );
 
     switch (def.type) {
@@ -194,9 +194,9 @@ export const PluginVariablesEditor: React.FC<{
                   [def.name]: e.target.checked,
                 }))
               }
-              className='rounded border-gray-300 dark:border-gray-600 text-blue-600 ophelia:text-[#a855f7] focus:ring-blue-500 ophelia:focus:ring-[#a855f7]'
+              className='rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500'
             />
-            <span className='text-sm text-gray-700 dark:text-gray-300 ophelia:text-[#d4d4d4]'>
+            <span className='text-sm text-gray-700 dark:text-gray-300'>
               {def.label}
             </span>
           </label>
@@ -281,18 +281,18 @@ export const PluginVariablesEditor: React.FC<{
   };
 
   return (
-    <div className='mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 ophelia:border-[#1a1a1a]'>
+    <div className='mt-3 pt-3 border-t border-gray-200 dark:border-gray-700'>
       <div className='space-y-3'>
         {schema.map(def => (
           <div key={def.name}>
             {def.type !== 'boolean' && (
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#d4d4d4] mb-1'>
+              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                 {def.label}
                 {def.required && <span className='text-red-500 ml-1'>*</span>}
               </label>
             )}
             {def.description && def.type !== 'boolean' && (
-              <p className='text-xs text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mb-1'>
+              <p className='text-xs text-gray-500 dark:text-gray-400 mb-1'>
                 {def.description}
               </p>
             )}
@@ -412,12 +412,12 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-      <div className='bg-white dark:bg-gray-800 ophelia:bg-[#050505] rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
+      <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
         {/* Header */}
-        <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700 ophelia:border-[#1a1a1a]'>
+        <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex items-center space-x-3'>
-            <Settings className='w-6 h-6 text-blue-600 ophelia:text-[#a855f7]' />
-            <h2 className='text-xl font-semibold text-gray-900 dark:text-white ophelia:text-[#fafafa]'>
+            <Settings className='w-6 h-6 text-blue-600' />
+            <h2 className='text-xl font-semibold text-gray-900 dark:text-white'>
               {t('pluginManager.title')}
             </h2>
           </div>
@@ -459,11 +459,9 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
         {/* Error Message */}
         {error && (
-          <div className='p-4 bg-red-50 dark:bg-red-900/20 ophelia:bg-[rgba(239,68,68,0.1)] border-b border-red-200 dark:border-red-800 ophelia:border-[rgba(239,68,68,0.3)]'>
+          <div className='p-4 bg-red-50 dark:bg-red-900/20 border-b border-red-200 dark:border-red-800'>
             <div className='flex items-center justify-between'>
-              <p className='text-red-800 dark:text-red-200 ophelia:text-[#fca5a5]'>
-                {error}
-              </p>
+              <p className='text-red-800 dark:text-red-200'>{error}</p>
               <Button
                 variant='ghost'
                 size='sm'
@@ -478,14 +476,14 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
         {/* Upload Form */}
         {showUploadForm && (
-          <div className='p-4 bg-gray-50 dark:bg-gray-900/50 ophelia:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-700 ophelia:border-[#1a1a1a]'>
+          <div className='p-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700'>
             <div className='flex items-center space-x-4'>
               <input
                 ref={fileInputRef}
                 type='file'
                 accept='.json,.zip'
                 onChange={handleFileUpload}
-                className='flex-1 p-2 border border-gray-300 dark:border-gray-600 ophelia:border-[#262626] rounded-md bg-white dark:bg-gray-700 ophelia:bg-[#121212] text-gray-900 dark:text-white ophelia:text-[#fafafa]'
+                className='flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
                 disabled={isUploading}
               />
               <Button
@@ -498,7 +496,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
               </Button>
             </div>
             {isUploading && (
-              <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] mt-2'>
+              <p className='text-sm text-gray-600 dark:text-gray-400 mt-2'>
                 {t('pluginManager.uploading')}
               </p>
             )}
@@ -507,13 +505,13 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
         {/* JSON Form */}
         {showJsonForm && (
-          <div className='p-4 bg-gray-50 dark:bg-gray-900/50 ophelia:bg-[#0a0a0a] border-b border-gray-200 dark:border-gray-700 ophelia:border-[#1a1a1a]'>
+          <div className='p-4 bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700'>
             <div className='space-y-3'>
               <textarea
                 value={jsonInput}
                 onChange={e => setJsonInput(e.target.value)}
                 placeholder={t('pluginManager.pasteJson')}
-                className='w-full h-32 p-3 border border-gray-300 dark:border-gray-600 ophelia:border-[#262626] rounded-md bg-white dark:bg-gray-700 ophelia:bg-[#121212] text-gray-900 dark:text-white ophelia:text-[#fafafa] font-mono text-sm'
+                className='w-full h-32 p-3 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono text-sm'
                 disabled={isLoading}
               />
               <div className='flex items-center justify-end space-x-2'>
@@ -545,32 +543,32 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
         <div className='flex-1 overflow-y-auto'>
           {isLoading ? (
             <div className='flex items-center justify-center p-8'>
-              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 ophelia:border-[#a855f7]'></div>
-              <span className='ml-2 text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>
+              <span className='ml-2 text-gray-600 dark:text-gray-400'>
                 {t('pluginManager.loading')}
               </span>
             </div>
           ) : plugins.length === 0 ? (
             <div className='text-center p-8'>
-              <Settings className='w-12 h-12 mx-auto mb-4 text-gray-400 ophelia:text-[#737373]' />
-              <h3 className='text-lg font-medium text-gray-900 dark:text-white ophelia:text-[#fafafa] mb-2'>
+              <Settings className='w-12 h-12 mx-auto mb-4 text-gray-400' />
+              <h3 className='text-lg font-medium text-gray-900 dark:text-white mb-2'>
                 {t('pluginManager.noPlugins')}
               </h3>
-              <p className='text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+              <p className='text-gray-600 dark:text-gray-400'>
                 {t('pluginManager.noPluginsDescription')}
               </p>
             </div>
           ) : (
-            <div className='divide-y divide-gray-200 dark:divide-gray-700 ophelia:divide-[#1a1a1a]'>
+            <div className='divide-y divide-gray-200 dark:divide-gray-700'>
               {plugins.map(plugin => (
                 <div
                   key={plugin.id}
-                  className='p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 ophelia:hover:bg-[#0a0a0a] transition-colors'
+                  className='p-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors'
                 >
                   <div className='flex items-center justify-between'>
                     <div className='flex-1'>
                       <div className='flex items-center space-x-3 mb-2'>
-                        <h3 className='font-medium text-gray-900 dark:text-white ophelia:text-[#fafafa]'>
+                        <h3 className='font-medium text-gray-900 dark:text-white'>
                           {plugin.name}
                         </h3>
                         {plugin.active && (
@@ -579,21 +577,21 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                             {t('pluginManager.active')}
                           </span>
                         )}
-                        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 ophelia:bg-[#1a1a1a] ophelia:text-[#a3a3a3]'>
+                        <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'>
                           {plugin.type}
                         </span>
                       </div>
-                      <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#737373] mb-2'>
+                      <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
                         {t('pluginManager.id')}: {plugin.id}
                       </p>
-                      <p className='text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#737373] mb-2'>
+                      <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
                         {t('pluginManager.endpoint')}: {plugin.endpoint}
                       </p>
                       <div className='flex flex-wrap gap-1'>
                         {plugin.model_map.map(model => (
                           <span
                             key={model}
-                            className='inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 ophelia:bg-[rgba(147,51,234,0.2)] ophelia:text-[#c084fc]'
+                            className='inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                           >
                             {model}
                           </span>
@@ -613,7 +611,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                             }
                             className={cn(
                               'flex items-center gap-1.5 text-xs font-medium',
-                              'text-blue-600 dark:text-blue-400 ophelia:text-[#a855f7]',
+                              'text-blue-600 dark:text-blue-400',
                               'hover:underline'
                             )}
                           >
@@ -673,14 +671,14 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
         {/* Active Plugin Status - Keep green for active status as requested */}
         {activePlugin && (
-          <div className='p-4 bg-green-50 dark:bg-green-900/20 ophelia:bg-[rgba(34,197,94,0.1)] border-t border-green-200 dark:border-green-800 ophelia:border-[rgba(34,197,94,0.3)]'>
+          <div className='p-4 bg-green-50 dark:bg-green-900/20 border-t border-green-200 dark:border-green-800'>
             <div className='flex items-center space-x-3'>
               <Check className='w-5 h-5 text-green-600 dark:text-green-400' />
               <div>
-                <p className='text-sm font-medium text-green-800 dark:text-green-200 ophelia:text-[#86efac]'>
+                <p className='text-sm font-medium text-green-800 dark:text-green-200'>
                   {t('pluginManager.activePlugin')}: {activePlugin.name}
                 </p>
-                <p className='text-xs text-green-600 dark:text-green-400 ophelia:text-[#4ade80]'>
+                <p className='text-xs text-green-600 dark:text-green-400'>
                   {t('pluginManager.activePluginDescription')}
                 </p>
               </div>

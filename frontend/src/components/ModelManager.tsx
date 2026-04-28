@@ -642,7 +642,7 @@ export const ModelManager: React.FC = () => {
   if (loading) {
     return (
       <div className='flex items-center justify-center p-8'>
-        <div className='flex items-center gap-3 text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3]'>
+        <div className='flex items-center gap-3 text-gray-600 dark:text-dark-600'>
           <RefreshCw className='h-5 w-5 animate-spin' />
           {t('modelManager.loading')}
         </div>
@@ -656,8 +656,8 @@ export const ModelManager: React.FC = () => {
       <div
         className={cn(
           'rounded-xl p-4 border',
-          'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-          'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+          'bg-white dark:bg-dark-100',
+          'border-gray-200 dark:border-dark-300'
         )}
       >
         <div className='flex flex-wrap items-center justify-between gap-4'>
@@ -667,12 +667,10 @@ export const ModelManager: React.FC = () => {
               <div
                 className={cn(
                   'w-2.5 h-2.5 rounded-full',
-                  isHealthy
-                    ? 'bg-green-500 ophelia:bg-[#4ade80]'
-                    : 'bg-red-500 ophelia:bg-[#f87171]'
+                  isHealthy ? 'bg-green-500' : 'bg-red-500'
                 )}
               />
-              <span className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5]'>
+              <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                 {isHealthy
                   ? t('modelManager.systemStatus.online')
                   : t('modelManager.systemStatus.offline')}
@@ -681,14 +679,14 @@ export const ModelManager: React.FC = () => {
 
             {/* Version */}
             {ollamaVersion && (
-              <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+              <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
                 <Server className='h-4 w-4' />
                 <span>v{ollamaVersion}</span>
               </div>
             )}
 
             {/* Model Count */}
-            <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+            <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
               <HardDrive className='h-4 w-4' />
               <span>
                 {models.length}{' '}
@@ -699,14 +697,14 @@ export const ModelManager: React.FC = () => {
             </div>
 
             {/* Total Size */}
-            <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'>
+            <div className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400'>
               <Layers className='h-4 w-4' />
               <span>{formatSize(getTotalModelSize())}</span>
             </div>
 
             {/* Running Models */}
             {runningModels.length > 0 && (
-              <div className='flex items-center gap-2 text-sm text-green-600 dark:text-green-400 ophelia:text-[#4ade80]'>
+              <div className='flex items-center gap-2 text-sm text-green-600 dark:text-green-400'>
                 <Activity className='h-4 w-4' />
                 <span>
                   {runningModels.length}{' '}
@@ -723,11 +721,7 @@ export const ModelManager: React.FC = () => {
               onClick={loadData}
               variant='outline'
               size='sm'
-              className={cn(
-                'gap-1.5',
-                'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
-              )}
+              className={cn('gap-1.5', '', '')}
             >
               <RefreshCw className='h-3.5 w-3.5' />
               {t('common.refresh')}
@@ -740,15 +734,15 @@ export const ModelManager: React.FC = () => {
       <div
         className={cn(
           'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-          'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+          'bg-white dark:bg-dark-100',
+          'border-gray-200 dark:border-dark-300'
         )}
       >
         <button
           onClick={() => toggleSection('pull')}
           className={cn(
             'w-full flex items-center justify-between p-4',
-            'hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#121212]',
+            'hover:bg-gray-50 dark:hover:bg-dark-50',
             'transition-colors'
           )}
         >
@@ -756,19 +750,19 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'p-2 rounded-lg',
-                'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[#9333ea]/20'
+                'bg-primary-100 dark:bg-primary-900/30'
               )}
             >
-              <Download className='h-5 w-5 text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]' />
+              <Download className='h-5 w-5 text-primary-600 dark:text-primary-400' />
             </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
               {t('modelManager.sections.pull')}
             </h3>
           </div>
           {expandedSections.has('pull') ? (
-            <ChevronUp className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronUp className='h-5 w-5 text-gray-500' />
           ) : (
-            <ChevronDown className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronDown className='h-5 w-5 text-gray-500' />
           )}
         </button>
 
@@ -776,7 +770,7 @@ export const ModelManager: React.FC = () => {
           <div className='p-4 pt-0 space-y-4'>
             <div className='flex gap-2'>
               <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500' />
                 <input
                   type='text'
                   value={pullModelName}
@@ -784,12 +778,12 @@ export const ModelManager: React.FC = () => {
                   placeholder={t('modelManager.pull.placeholder')}
                   className={cn(
                     'w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm',
-                    'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                    'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                    'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
-                    'placeholder-gray-500 dark:placeholder-gray-400 ophelia:placeholder-[#525252]',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20 ophelia:focus:ring-[#9333ea]/20',
-                    'focus:border-primary-500 ophelia:focus:border-[#9333ea]'
+                    'bg-gray-50 dark:bg-dark-50',
+                    'border-gray-200 dark:border-dark-300',
+                    'text-gray-900 dark:text-dark-700',
+                    'placeholder-gray-500 dark:placeholder-gray-400',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                    'focus:border-primary-500'
                   )}
                   disabled={pulling || !canInstallModels}
                   onKeyDown={e =>
@@ -807,8 +801,8 @@ export const ModelManager: React.FC = () => {
                   className={cn(
                     'px-4 py-2.5 gap-2',
                     'text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300',
-                    'ophelia:text-[#f87171] ophelia:hover:text-[#fca5a5]',
-                    'ophelia:border-[#262626] ophelia:hover:bg-[#1a1a1a]'
+                    '',
+                    ''
                   )}
                 >
                   <X className='h-4 w-4' />
@@ -818,10 +812,7 @@ export const ModelManager: React.FC = () => {
                 <Button
                   onClick={() => handlePullModel()}
                   disabled={!pullModelName.trim() || !canInstallModels}
-                  className={cn(
-                    'px-4 py-2.5 gap-2',
-                    'ophelia:bg-[#9333ea] ophelia:hover:bg-[#7c3aed] ophelia:text-white'
-                  )}
+                  className={cn('px-4 py-2.5 gap-2', '')}
                 >
                   <Download className='h-4 w-4' />
                   {t('modelManager.pull.button')}
@@ -834,12 +825,12 @@ export const ModelManager: React.FC = () => {
               <div
                 className={cn(
                   'p-4 rounded-lg border',
-                  'bg-gray-50 dark:bg-dark-200 ophelia:bg-[#121212]',
-                  'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]'
+                  'bg-gray-50 dark:bg-dark-200',
+                  'border-gray-200 dark:border-dark-300'
                 )}
               >
                 <div className='flex items-center justify-between mb-2'>
-                  <span className='text-sm font-medium text-gray-800 dark:text-dark-700 ophelia:text-[#e5e5e5]'>
+                  <span className='text-sm font-medium text-gray-800 dark:text-dark-700'>
                     {pullProgress.status === 'starting'
                       ? t('modelManager.progress.starting')
                       : pullProgress.status.startsWith('pulling')
@@ -854,18 +845,18 @@ export const ModelManager: React.FC = () => {
                               : pullProgress.status}
                   </span>
                   {pullProgress.percent !== undefined && (
-                    <span className='text-sm font-mono text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3]'>
+                    <span className='text-sm font-mono text-gray-600 dark:text-dark-600'>
                       {pullProgress.percent}%
                     </span>
                   )}
                 </div>
 
                 {pullProgress.percent !== undefined && (
-                  <div className='w-full bg-gray-200 dark:bg-dark-400 ophelia:bg-[#262626] rounded-full h-2 overflow-hidden'>
+                  <div className='w-full bg-gray-200 dark:bg-dark-400 rounded-full h-2 overflow-hidden'>
                     <div
                       className={cn(
                         'h-2 rounded-full transition-all duration-300',
-                        'bg-primary-500 dark:bg-primary-400 ophelia:bg-[#9333ea]'
+                        'bg-primary-500 dark:bg-primary-400'
                       )}
                       style={{ width: `${pullProgress.percent}%` }}
                     />
@@ -873,7 +864,7 @@ export const ModelManager: React.FC = () => {
                 )}
 
                 {pullProgress.total && pullProgress.completed && (
-                  <div className='mt-2 text-xs text-gray-600 dark:text-dark-600 ophelia:text-[#737373]'>
+                  <div className='mt-2 text-xs text-gray-600 dark:text-dark-600'>
                     {formatSize(pullProgress.completed)} /{' '}
                     {formatSize(pullProgress.total)}
                   </div>
@@ -889,7 +880,7 @@ export const ModelManager: React.FC = () => {
 
             {/* Popular Models */}
             <div>
-              <p className='text-xs font-medium text-gray-500 dark:text-gray-400 ophelia:text-[#737373] mb-2'>
+              <p className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-2'>
                 {t('modelManager.pull.popular')}
               </p>
               <div className='flex flex-wrap gap-2'>
@@ -900,15 +891,15 @@ export const ModelManager: React.FC = () => {
                     disabled={pulling || !canInstallModels}
                     className={cn(
                       'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-                      'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]',
-                      'text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3]',
-                      'hover:bg-gray-200 dark:hover:bg-dark-300 ophelia:hover:bg-[#262626]',
-                      'border border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
+                      'bg-gray-100 dark:bg-dark-200',
+                      'text-gray-700 dark:text-gray-300',
+                      'hover:bg-gray-200 dark:hover:bg-dark-300',
+                      'border border-gray-200 dark:border-dark-300',
                       'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                   >
                     {model.name}
-                    <span className='ml-1 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]'>
+                    <span className='ml-1 text-gray-400 dark:text-gray-500'>
                       {model.size}
                     </span>
                   </button>
@@ -923,7 +914,7 @@ export const ModelManager: React.FC = () => {
               rel='noopener noreferrer'
               className={cn(
                 'inline-flex items-center gap-1.5 text-xs',
-                'text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]',
+                'text-primary-600 dark:text-primary-400',
                 'hover:underline'
               )}
             >
@@ -938,15 +929,15 @@ export const ModelManager: React.FC = () => {
       <div
         className={cn(
           'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-          'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+          'bg-white dark:bg-dark-100',
+          'border-gray-200 dark:border-dark-300'
         )}
       >
         <button
           onClick={() => toggleSection('library')}
           className={cn(
             'w-full flex items-center justify-between p-4',
-            'hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#121212]',
+            'hover:bg-gray-50 dark:hover:bg-dark-50',
             'transition-colors'
           )}
         >
@@ -954,28 +945,28 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'p-2 rounded-lg',
-                'bg-cyan-100 dark:bg-cyan-900/30 ophelia:bg-[#06b6d4]/20'
+                'bg-cyan-100 dark:bg-cyan-900/30'
               )}
             >
-              <Cloud className='h-5 w-5 text-cyan-600 dark:text-cyan-400 ophelia:text-[#22d3ee]' />
+              <Cloud className='h-5 w-5 text-cyan-600 dark:text-cyan-400' />
             </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
               {t('modelManager.sections.library')}
             </h3>
             <span
               className={cn(
                 'px-2 py-0.5 rounded-full text-xs font-medium',
-                'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]',
-                'text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'
+                'bg-gray-100 dark:bg-dark-200',
+                'text-gray-600 dark:text-gray-400'
               )}
             >
               {libraryModels.length} {t('modelManager.library.available')}
             </span>
           </div>
           {expandedSections.has('library') ? (
-            <ChevronUp className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronUp className='h-5 w-5 text-gray-500' />
           ) : (
-            <ChevronDown className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronDown className='h-5 w-5 text-gray-500' />
           )}
         </button>
 
@@ -984,7 +975,7 @@ export const ModelManager: React.FC = () => {
             {/* Search and Filter */}
             <div className='flex flex-col sm:flex-row gap-3'>
               <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500' />
                 <input
                   type='text'
                   value={librarySearch}
@@ -992,19 +983,19 @@ export const ModelManager: React.FC = () => {
                   placeholder={t('modelManager.library.search')}
                   className={cn(
                     'w-full pl-10 pr-4 py-2 rounded-lg border text-sm',
-                    'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                    'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                    'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
-                    'placeholder-gray-500 dark:placeholder-gray-400 ophelia:placeholder-[#525252]',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20 ophelia:focus:ring-[#9333ea]/20',
-                    'focus:border-primary-500 ophelia:focus:border-[#9333ea]'
+                    'bg-gray-50 dark:bg-dark-50',
+                    'border-gray-200 dark:border-dark-300',
+                    'text-gray-900 dark:text-dark-700',
+                    'placeholder-gray-500 dark:placeholder-gray-400',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                    'focus:border-primary-500'
                   )}
                 />
               </div>
 
               {/* Category Filter */}
               <div className='flex items-center gap-2'>
-                <Filter className='h-4 w-4 text-gray-400 ophelia:text-[#525252]' />
+                <Filter className='h-4 w-4 text-gray-400' />
                 <div className='flex flex-wrap gap-1'>
                   {libraryCategories.map(category => (
                     <button
@@ -1013,8 +1004,8 @@ export const ModelManager: React.FC = () => {
                       className={cn(
                         'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
                         libraryFilter === category
-                          ? 'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[#9333ea]/20 text-primary-700 dark:text-primary-400 ophelia:text-[#a855f7]'
-                          : 'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a] text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3] hover:bg-gray-200 dark:hover:bg-dark-300 ophelia:hover:bg-[#262626]'
+                          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                          : 'bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300'
                       )}
                     >
                       {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -1027,10 +1018,10 @@ export const ModelManager: React.FC = () => {
             {/* Models Grid */}
             {loadingLibrary ? (
               <div className='flex items-center justify-center py-8'>
-                <RefreshCw className='h-5 w-5 animate-spin text-gray-400 ophelia:text-[#737373]' />
+                <RefreshCw className='h-5 w-5 animate-spin text-gray-400' />
               </div>
             ) : filteredLibraryModels.length === 0 ? (
-              <div className='text-center py-8 text-gray-500 ophelia:text-[#737373]'>
+              <div className='text-center py-8 text-gray-500'>
                 {t('modelManager.library.noResults')}
               </div>
             ) : (
@@ -1042,23 +1033,23 @@ export const ModelManager: React.FC = () => {
                       key={model.name}
                       className={cn(
                         'p-4 rounded-lg border transition-all',
-                        'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
+                        'bg-gray-50 dark:bg-dark-50',
                         installed
-                          ? 'border-green-200 dark:border-green-800/50 ophelia:border-[#22c55e]/30'
-                          : 'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]',
-                        'hover:shadow-md hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#262626]'
+                          ? 'border-green-200 dark:border-green-800/50'
+                          : 'border-gray-200 dark:border-dark-300',
+                        'hover:shadow-md hover:border-gray-300 dark:hover:border-dark-400'
                       )}
                     >
                       <div className='flex items-start justify-between gap-2 mb-2'>
-                        <h4 className='font-medium text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+                        <h4 className='font-medium text-gray-900 dark:text-dark-800'>
                           {model.name}
                         </h4>
                         {installed && (
                           <span
                             className={cn(
                               'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs',
-                              'bg-green-100 dark:bg-green-900/30 ophelia:bg-[#22c55e]/20',
-                              'text-green-700 dark:text-green-400 ophelia:text-[#4ade80]'
+                              'bg-green-100 dark:bg-green-900/30',
+                              'text-green-700 dark:text-green-400'
                             )}
                           >
                             <Check className='h-3 w-3' />
@@ -1067,7 +1058,7 @@ export const ModelManager: React.FC = () => {
                         )}
                       </div>
 
-                      <p className='text-xs text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3] mb-3 line-clamp-2'>
+                      <p className='text-xs text-gray-600 dark:text-dark-600 mb-3 line-clamp-2'>
                         {model.description}
                       </p>
 
@@ -1077,15 +1068,15 @@ export const ModelManager: React.FC = () => {
                             key={size}
                             className={cn(
                               'px-1.5 py-0.5 rounded text-xs',
-                              'bg-gray-200 dark:bg-dark-300 ophelia:bg-[#262626]',
-                              'text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'
+                              'bg-gray-200 dark:bg-dark-300',
+                              'text-gray-600 dark:text-gray-400'
                             )}
                           >
                             {size}
                           </span>
                         ))}
                         {model.sizes.length > 4 && (
-                          <span className='text-xs text-gray-400 ophelia:text-[#737373]'>
+                          <span className='text-xs text-gray-400'>
                             {t('modelManager.library.more', {
                               count: model.sizes.length - 4,
                             })}
@@ -1094,7 +1085,7 @@ export const ModelManager: React.FC = () => {
                       </div>
 
                       <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-2 text-xs text-gray-500 ophelia:text-[#737373]'>
+                        <div className='flex items-center gap-2 text-xs text-gray-500'>
                           {model.pulls && (
                             <span className='flex items-center gap-1'>
                               <Download className='h-3 w-3' />
@@ -1104,7 +1095,7 @@ export const ModelManager: React.FC = () => {
                           <span
                             className={cn(
                               'px-1.5 py-0.5 rounded capitalize',
-                              'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]'
+                              'bg-gray-100 dark:bg-dark-200'
                             )}
                           >
                             {model.category}
@@ -1123,11 +1114,7 @@ export const ModelManager: React.FC = () => {
                           variant='outline'
                           size='sm'
                           disabled={pulling || !canInstallModels}
-                          className={cn(
-                            'gap-1 text-xs',
-                            'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                            'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
-                          )}
+                          className={cn('gap-1 text-xs', '', '')}
                         >
                           <Download className='h-3 w-3' />
                           {t('modelManager.pull.button')}
@@ -1146,11 +1133,7 @@ export const ModelManager: React.FC = () => {
                 variant='outline'
                 size='sm'
                 disabled={loadingLibrary}
-                className={cn(
-                  'gap-1.5',
-                  'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                  'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
-                )}
+                className={cn('gap-1.5', '', '')}
               >
                 <RefreshCw
                   className={cn(
@@ -1169,15 +1152,15 @@ export const ModelManager: React.FC = () => {
       <div
         className={cn(
           'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-          'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+          'bg-white dark:bg-dark-100',
+          'border-gray-200 dark:border-dark-300'
         )}
       >
         <button
           onClick={() => toggleSection('huggingface')}
           className={cn(
             'w-full flex items-center justify-between p-4',
-            'hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#121212]',
+            'hover:bg-gray-50 dark:hover:bg-dark-50',
             'transition-colors'
           )}
         >
@@ -1185,20 +1168,20 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'p-2 rounded-lg',
-                'bg-yellow-100 dark:bg-yellow-900/30 ophelia:bg-[#eab308]/20'
+                'bg-yellow-100 dark:bg-yellow-900/30'
               )}
             >
-              <Zap className='h-5 w-5 text-yellow-600 dark:text-yellow-400 ophelia:text-[#facc15]' />
+              <Zap className='h-5 w-5 text-yellow-600 dark:text-yellow-400' />
             </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
               {t('modelManager.sections.huggingface', 'HuggingFace Hub')}
             </h3>
             {hfModels.length > 0 && (
               <span
                 className={cn(
                   'px-2 py-0.5 rounded-full text-xs font-medium',
-                  'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]',
-                  'text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'
+                  'bg-gray-100 dark:bg-dark-200',
+                  'text-gray-600 dark:text-gray-400'
                 )}
               >
                 {hfModels.length}{' '}
@@ -1207,9 +1190,9 @@ export const ModelManager: React.FC = () => {
             )}
           </div>
           {expandedSections.has('huggingface') ? (
-            <ChevronUp className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronUp className='h-5 w-5 text-gray-500' />
           ) : (
-            <ChevronDown className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronDown className='h-5 w-5 text-gray-500' />
           )}
         </button>
 
@@ -1218,7 +1201,7 @@ export const ModelManager: React.FC = () => {
             {/* Search and Filters */}
             <div className='flex flex-col sm:flex-row gap-3'>
               <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
+                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500' />
                 <input
                   type='text'
                   value={hfSearch}
@@ -1229,12 +1212,12 @@ export const ModelManager: React.FC = () => {
                   )}
                   className={cn(
                     'w-full pl-10 pr-4 py-2 rounded-lg border text-sm',
-                    'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                    'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                    'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
-                    'placeholder-gray-500 dark:placeholder-gray-400 ophelia:placeholder-[#525252]',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20 ophelia:focus:ring-[#9333ea]/20',
-                    'focus:border-primary-500 ophelia:focus:border-[#9333ea]'
+                    'bg-gray-50 dark:bg-dark-50',
+                    'border-gray-200 dark:border-dark-300',
+                    'text-gray-900 dark:text-dark-700',
+                    'placeholder-gray-500 dark:placeholder-gray-400',
+                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
+                    'focus:border-primary-500'
                   )}
                 />
               </div>
@@ -1245,9 +1228,9 @@ export const ModelManager: React.FC = () => {
                 onChange={e => setHfTask(e.target.value)}
                 className={cn(
                   'px-3 py-2 rounded-lg border text-sm min-w-[160px]',
-                  'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                  'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                  'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
+                  'bg-gray-50 dark:bg-dark-50',
+                  'border-gray-200 dark:border-dark-300',
+                  'text-gray-900 dark:text-dark-700',
                   'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                 )}
               >
@@ -1277,9 +1260,9 @@ export const ModelManager: React.FC = () => {
                 onChange={e => setHfSort(e.target.value)}
                 className={cn(
                   'px-3 py-2 rounded-lg border text-sm min-w-[140px]',
-                  'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                  'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                  'text-gray-900 dark:text-dark-700 ophelia:text-[#fafafa]',
+                  'bg-gray-50 dark:bg-dark-50',
+                  'border-gray-200 dark:border-dark-300',
+                  'text-gray-900 dark:text-dark-700',
                   'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                 )}
               >
@@ -1310,10 +1293,10 @@ export const ModelManager: React.FC = () => {
             {/* Models Grid */}
             {loadingHfModels ? (
               <div className='flex items-center justify-center py-8'>
-                <Loader className='h-5 w-5 animate-spin text-gray-400 ophelia:text-[#737373]' />
+                <Loader className='h-5 w-5 animate-spin text-gray-400' />
               </div>
             ) : hfModels.length === 0 ? (
-              <div className='text-center py-8 text-gray-500 ophelia:text-[#737373]'>
+              <div className='text-center py-8 text-gray-500'>
                 {t(
                   'modelManager.huggingface.noResults',
                   'No models found. Try adjusting your search or filters.'
@@ -1331,9 +1314,9 @@ export const ModelManager: React.FC = () => {
                       key={model.id}
                       className={cn(
                         'rounded-lg border transition-all overflow-hidden',
-                        'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                        'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]',
-                        'hover:shadow-md hover:border-gray-300 dark:hover:border-dark-400 ophelia:hover:border-[#262626]'
+                        'bg-gray-50 dark:bg-dark-50',
+                        'border-gray-200 dark:border-dark-300',
+                        'hover:shadow-md hover:border-gray-300 dark:hover:border-dark-400'
                       )}
                     >
                       <div
@@ -1343,22 +1326,22 @@ export const ModelManager: React.FC = () => {
                         <div className='flex items-start justify-between gap-2 mb-2'>
                           <div className='flex-1 min-w-0'>
                             <div className='flex items-center gap-2'>
-                              <h4 className='font-medium text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa] truncate'>
+                              <h4 className='font-medium text-gray-900 dark:text-dark-800 truncate'>
                                 {model.id}
                               </h4>
                               {model.gated && (
                                 <span
                                   className={cn(
                                     'px-1.5 py-0.5 rounded text-xs',
-                                    'bg-yellow-100 dark:bg-yellow-900/30 ophelia:bg-[#eab308]/20',
-                                    'text-yellow-700 dark:text-yellow-400 ophelia:text-[#facc15]'
+                                    'bg-yellow-100 dark:bg-yellow-900/30',
+                                    'text-yellow-700 dark:text-yellow-400'
                                   )}
                                 >
                                   {t('modelManager.huggingface.gated', 'Gated')}
                                 </span>
                               )}
                             </div>
-                            <p className='text-xs text-gray-500 dark:text-dark-600 ophelia:text-[#737373] mt-0.5'>
+                            <p className='text-xs text-gray-500 dark:text-dark-600 mt-0.5'>
                               {t('modelManager.huggingface.by', 'by')}{' '}
                               {model.author}
                             </p>
@@ -1369,13 +1352,13 @@ export const ModelManager: React.FC = () => {
                               target='_blank'
                               rel='noopener noreferrer'
                               onClick={e => e.stopPropagation()}
-                              className='p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-300 ophelia:hover:bg-[#262626] transition-colors'
+                              className='p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors'
                               title={t(
                                 'modelManager.huggingface.viewOnHF',
                                 'View on HuggingFace'
                               )}
                             >
-                              <ExternalLink className='h-4 w-4 text-gray-400 dark:text-gray-500 ophelia:text-[#525252]' />
+                              <ExternalLink className='h-4 w-4 text-gray-400 dark:text-gray-500' />
                             </a>
                             <ChevronDown
                               className={cn(
@@ -1386,7 +1369,7 @@ export const ModelManager: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className='flex items-center gap-3 text-xs text-gray-500 dark:text-dark-600 ophelia:text-[#737373]'>
+                        <div className='flex items-center gap-3 text-xs text-gray-500 dark:text-dark-600'>
                           <span className='flex items-center gap-1'>
                             <Download className='h-3.5 w-3.5' />
                             {model.downloads >= 1000000
@@ -1405,7 +1388,7 @@ export const ModelManager: React.FC = () => {
                             <span
                               className={cn(
                                 'px-1.5 py-0.5 rounded',
-                                'bg-gray-200 dark:bg-dark-300 ophelia:bg-[#262626]'
+                                'bg-gray-200 dark:bg-dark-300'
                               )}
                             >
                               {model.pipeline_tag}
@@ -1416,7 +1399,7 @@ export const ModelManager: React.FC = () => {
 
                       {/* Expanded GGUF files section */}
                       {isExpanded && (
-                        <div className='px-4 pb-4 pt-1 border-t border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a] bg-white dark:bg-dark-100 ophelia:bg-[#0d0d0d]'>
+                        <div className='px-4 pb-4 pt-1 border-t border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100'>
                           {isLoadingGguf ? (
                             <div className='flex items-center justify-center py-4'>
                               <Loader className='h-4 w-4 animate-spin text-gray-400' />
@@ -1430,7 +1413,7 @@ export const ModelManager: React.FC = () => {
                             </div>
                           ) : (
                             <div className='space-y-2'>
-                              <div className='text-xs font-medium text-gray-600 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
+                              <div className='text-xs font-medium text-gray-600 dark:text-gray-300 mb-2'>
                                 {t('modelManager.huggingface.ggufFilesCount', {
                                   count: ggufFiles.length,
                                 })}
@@ -1442,16 +1425,16 @@ export const ModelManager: React.FC = () => {
                                 return (
                                   <div
                                     key={file.filename}
-                                    className='flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-dark-50 ophelia:bg-[#0a0a0a] border border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                                    className='flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-dark-50 border border-gray-200 dark:border-dark-300'
                                   >
                                     <div className='flex-1 min-w-0'>
-                                      <div className='text-xs font-medium text-gray-800 dark:text-gray-200 ophelia:text-[#e5e5e5] truncate'>
+                                      <div className='text-xs font-medium text-gray-800 dark:text-gray-200 truncate'>
                                         {file.filename}
                                       </div>
                                       <div className='flex items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
                                         <span>{file.sizeFormatted}</span>
                                         {file.quantization && (
-                                          <span className='px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 ophelia:bg-[#9333ea]/20 text-purple-700 dark:text-purple-400 ophelia:text-[#a855f7]'>
+                                          <span className='px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'>
                                             {file.quantization}
                                           </span>
                                         )}
@@ -1488,8 +1471,8 @@ export const ModelManager: React.FC = () => {
                                         }
                                         className={cn(
                                           'px-3 py-1.5 rounded-lg text-xs font-medium',
-                                          'bg-primary-100 dark:bg-primary-900/30 ophelia:bg-[#9333ea]/20',
-                                          'text-primary-700 dark:text-primary-400 ophelia:text-[#a855f7]',
+                                          'bg-primary-100 dark:bg-primary-900/30',
+                                          'text-primary-700 dark:text-primary-400',
                                           'hover:bg-primary-200 dark:hover:bg-primary-900/50',
                                           'disabled:opacity-50 disabled:cursor-not-allowed'
                                         )}
@@ -1533,7 +1516,7 @@ export const ModelManager: React.FC = () => {
                 rel='noopener noreferrer'
                 className={cn(
                   'inline-flex items-center gap-1.5 text-xs',
-                  'text-primary-600 dark:text-primary-400 ophelia:text-[#a855f7]',
+                  'text-primary-600 dark:text-primary-400',
                   'hover:underline'
                 )}
               >
@@ -1548,11 +1531,7 @@ export const ModelManager: React.FC = () => {
                 variant='outline'
                 size='sm'
                 disabled={loadingHfModels}
-                className={cn(
-                  'gap-1.5',
-                  'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                  'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
-                )}
+                className={cn('gap-1.5', '', '')}
               >
                 <RefreshCw
                   className={cn(
@@ -1572,27 +1551,27 @@ export const ModelManager: React.FC = () => {
         <div
           className={cn(
             'rounded-xl p-4 border',
-            'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-            'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+            'bg-white dark:bg-dark-100',
+            'border-gray-200 dark:border-dark-300'
           )}
         >
           <div className='flex items-center gap-3 mb-4'>
             <div
               className={cn(
                 'p-2 rounded-lg',
-                'bg-green-100 dark:bg-green-900/30 ophelia:bg-[#22c55e]/20'
+                'bg-green-100 dark:bg-green-900/30'
               )}
             >
-              <Activity className='h-5 w-5 text-green-600 dark:text-green-400 ophelia:text-[#4ade80]' />
+              <Activity className='h-5 w-5 text-green-600 dark:text-green-400' />
             </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
               {t('modelManager.sections.running')}
             </h3>
             <span
               className={cn(
                 'ml-auto px-2 py-0.5 rounded-full text-xs font-medium',
-                'bg-green-100 dark:bg-green-900/30 ophelia:bg-[#22c55e]/20',
-                'text-green-700 dark:text-green-400 ophelia:text-[#4ade80]'
+                'bg-green-100 dark:bg-green-900/30',
+                'text-green-700 dark:text-green-400'
               )}
             >
               {runningModels.length} {t('modelManager.systemStatus.running')}
@@ -1604,22 +1583,22 @@ export const ModelManager: React.FC = () => {
                 key={model.name}
                 className={cn(
                   'flex items-center justify-between p-4 rounded-lg border',
-                  'bg-green-50 dark:bg-green-900/10 ophelia:bg-[#22c55e]/5',
-                  'border-green-200 dark:border-green-800/50 ophelia:border-[#22c55e]/20'
+                  'bg-green-50 dark:bg-green-900/10',
+                  'border-green-200 dark:border-green-800/50'
                 )}
               >
                 <div className='flex items-center gap-3'>
                   <div
                     className={cn(
                       'w-2 h-2 rounded-full animate-pulse',
-                      'bg-green-500 ophelia:bg-[#4ade80]'
+                      'bg-green-500'
                     )}
                   />
                   <div>
-                    <div className='font-medium text-green-800 dark:text-green-400 ophelia:text-[#4ade80]'>
+                    <div className='font-medium text-green-800 dark:text-green-400'>
                       {model.name}
                     </div>
-                    <div className='flex items-center gap-3 text-sm text-green-600 dark:text-green-500 ophelia:text-[#22c55e]/80'>
+                    <div className='flex items-center gap-3 text-sm text-green-600 dark:text-green-500'>
                       <span className='flex items-center gap-1'>
                         <MemoryStick className='h-3 w-3' />
                         {t('modelManager.systemStatus.vram')}:{' '}
@@ -1637,8 +1616,8 @@ export const ModelManager: React.FC = () => {
                 <div
                   className={cn(
                     'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
-                    'bg-green-100 dark:bg-green-900/30 ophelia:bg-[#22c55e]/10',
-                    'text-green-700 dark:text-green-400 ophelia:text-[#4ade80]'
+                    'bg-green-100 dark:bg-green-900/30',
+                    'text-green-700 dark:text-green-400'
                   )}
                 >
                   <Zap className='h-3 w-3' />
@@ -1654,15 +1633,15 @@ export const ModelManager: React.FC = () => {
       <div
         className={cn(
           'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-          'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+          'bg-white dark:bg-dark-100',
+          'border-gray-200 dark:border-dark-300'
         )}
       >
         <button
           onClick={() => toggleSection('local')}
           className={cn(
             'w-full flex items-center justify-between p-4',
-            'hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#121212]',
+            'hover:bg-gray-50 dark:hover:bg-dark-50',
             'transition-colors'
           )}
         >
@@ -1670,28 +1649,28 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'p-2 rounded-lg',
-                'bg-blue-100 dark:bg-blue-900/30 ophelia:bg-[#a855f7]/20'
+                'bg-blue-100 dark:bg-blue-900/30'
               )}
             >
-              <HardDrive className='h-5 w-5 text-blue-600 dark:text-blue-400 ophelia:text-[#a855f7]' />
+              <HardDrive className='h-5 w-5 text-blue-600 dark:text-blue-400' />
             </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
               {t('modelManager.sections.local')}
             </h3>
             <span
               className={cn(
                 'px-2 py-0.5 rounded-full text-xs font-medium',
-                'bg-gray-100 dark:bg-dark-200 ophelia:bg-[#1a1a1a]',
-                'text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'
+                'bg-gray-100 dark:bg-dark-200',
+                'text-gray-600 dark:text-gray-400'
               )}
             >
               {models.length} {t('modelManager.local.installed')}
             </span>
           </div>
           {expandedSections.has('local') ? (
-            <ChevronUp className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronUp className='h-5 w-5 text-gray-500' />
           ) : (
-            <ChevronDown className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronDown className='h-5 w-5 text-gray-500' />
           )}
         </button>
 
@@ -1701,14 +1680,14 @@ export const ModelManager: React.FC = () => {
               <div
                 className={cn(
                   'text-center py-12 rounded-lg border-2 border-dashed',
-                  'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]'
+                  'border-gray-200 dark:border-dark-300'
                 )}
               >
-                <HardDrive className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600 ophelia:text-[#525252]' />
-                <p className='text-gray-600 dark:text-dark-600 ophelia:text-[#737373] mb-2'>
+                <HardDrive className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600' />
+                <p className='text-gray-600 dark:text-dark-600 mb-2'>
                   {t('modelManager.local.noModels')}
                 </p>
-                <p className='text-sm text-gray-500 dark:text-gray-500 ophelia:text-[#525252]'>
+                <p className='text-sm text-gray-500 dark:text-gray-500'>
                   {t('modelManager.local.pullToStart')}
                 </p>
               </div>
@@ -1719,32 +1698,32 @@ export const ModelManager: React.FC = () => {
                     key={model.name}
                     className={cn(
                       'p-4 rounded-lg border transition-colors',
-                      'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                      'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]',
-                      'hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a]'
+                      'bg-gray-50 dark:bg-dark-50',
+                      'border-gray-200 dark:border-dark-300',
+                      'hover:bg-gray-100 dark:hover:bg-dark-200'
                     )}
                   >
                     <div className='flex items-start justify-between gap-4'>
                       <div className='flex-1 min-w-0'>
                         <div className='flex items-center gap-2 flex-wrap'>
-                          <h4 className='font-medium text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+                          <h4 className='font-medium text-gray-900 dark:text-dark-800'>
                             {model.name}
                           </h4>
                           {isModelRunning(model.name) && (
                             <span
                               className={cn(
                                 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
-                                'bg-green-100 dark:bg-green-900/30 ophelia:bg-[#22c55e]/20',
-                                'text-green-700 dark:text-green-400 ophelia:text-[#4ade80]'
+                                'bg-green-100 dark:bg-green-900/30',
+                                'text-green-700 dark:text-green-400'
                               )}
                             >
-                              <span className='w-1.5 h-1.5 rounded-full bg-green-500 ophelia:bg-[#4ade80] animate-pulse' />
+                              <span className='w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse' />
                               {t('modelManager.local.running')}
                             </span>
                           )}
                         </div>
 
-                        <div className='flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-dark-600 ophelia:text-[#a3a3a3] mt-2'>
+                        <div className='flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-dark-600 mt-2'>
                           <span className='flex items-center gap-1'>
                             <HardDrive className='h-3.5 w-3.5' />
                             {formatSize(model.size)}
@@ -1759,21 +1738,21 @@ export const ModelManager: React.FC = () => {
                             <span
                               className={cn(
                                 'px-1.5 py-0.5 rounded text-xs',
-                                'bg-gray-200 dark:bg-dark-300 ophelia:bg-[#262626]',
-                                'text-gray-600 dark:text-gray-400 ophelia:text-[#a3a3a3]'
+                                'bg-gray-200 dark:bg-dark-300',
+                                'text-gray-600 dark:text-gray-400'
                               )}
                             >
                               {model.details.quantization_level}
                             </span>
                           )}
                           {model.details?.family && (
-                            <span className='text-gray-500 dark:text-gray-500 ophelia:text-[#737373]'>
+                            <span className='text-gray-500 dark:text-gray-500'>
                               {model.details.family}
                             </span>
                           )}
                         </div>
 
-                        <div className='flex items-center gap-3 text-xs text-gray-400 dark:text-dark-500 ophelia:text-[#525252] mt-2'>
+                        <div className='flex items-center gap-3 text-xs text-gray-400 dark:text-dark-500 mt-2'>
                           <span className='flex items-center gap-1'>
                             <Clock className='h-3 w-3' />
                             {new Date(model.modified_at).toLocaleDateString()}
@@ -1793,11 +1772,7 @@ export const ModelManager: React.FC = () => {
                           onClick={() => handleShowModel(model.name)}
                           variant='outline'
                           size='sm'
-                          className={cn(
-                            'gap-1.5',
-                            'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                            'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
-                          )}
+                          className={cn('gap-1.5', '', '')}
                         >
                           <Info className='h-3.5 w-3.5' />
                           {t('modelManager.local.info')}
@@ -1809,11 +1784,7 @@ export const ModelManager: React.FC = () => {
                           }}
                           variant='outline'
                           size='sm'
-                          className={cn(
-                            'gap-1.5',
-                            'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                            'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
-                          )}
+                          className={cn('gap-1.5', '', '')}
                         >
                           <Copy className='h-3.5 w-3.5' />
                           {t('modelManager.local.copy')}
@@ -1825,8 +1796,8 @@ export const ModelManager: React.FC = () => {
                           className={cn(
                             'gap-1.5',
                             'text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300',
-                            'ophelia:text-[#f87171] ophelia:hover:text-[#fca5a5]',
-                            'ophelia:border-[#262626] ophelia:hover:bg-[#1a1a1a]'
+                            '',
+                            ''
                           )}
                         >
                           <Trash2 className='h-3.5 w-3.5' />
@@ -1846,15 +1817,15 @@ export const ModelManager: React.FC = () => {
       <div
         className={cn(
           'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-          'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+          'bg-white dark:bg-dark-100',
+          'border-gray-200 dark:border-dark-300'
         )}
       >
         <button
           onClick={() => toggleSection('advanced')}
           className={cn(
             'w-full flex items-center justify-between p-4',
-            'hover:bg-gray-50 dark:hover:bg-dark-50 ophelia:hover:bg-[#121212]',
+            'hover:bg-gray-50 dark:hover:bg-dark-50',
             'transition-colors'
           )}
         >
@@ -1862,19 +1833,19 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'p-2 rounded-lg',
-                'bg-amber-100 dark:bg-amber-900/30 ophelia:bg-[#f59e0b]/20'
+                'bg-amber-100 dark:bg-amber-900/30'
               )}
             >
-              <Settings className='h-5 w-5 text-amber-600 dark:text-amber-400 ophelia:text-[#fbbf24]' />
+              <Settings className='h-5 w-5 text-amber-600 dark:text-amber-400' />
             </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800 ophelia:text-[#fafafa]'>
+            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
               {t('modelManager.sections.advanced')}
             </h3>
           </div>
           {expandedSections.has('advanced') ? (
-            <ChevronUp className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronUp className='h-5 w-5 text-gray-500' />
           ) : (
-            <ChevronDown className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+            <ChevronDown className='h-5 w-5 text-gray-500' />
           )}
         </button>
 
@@ -1886,11 +1857,11 @@ export const ModelManager: React.FC = () => {
                 variant='outline'
                 className={cn(
                   'w-full gap-2 justify-start h-auto py-3 px-4',
-                  'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                  'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
+                  '',
+                  ''
                 )}
               >
-                <FileCode className='h-5 w-5 text-purple-500 ophelia:text-[#a855f7]' />
+                <FileCode className='h-5 w-5 text-purple-500' />
                 <div className='text-left'>
                   <div className='font-medium'>
                     {t('modelManager.advanced.createModel')}
@@ -1906,11 +1877,11 @@ export const ModelManager: React.FC = () => {
                 variant='outline'
                 className={cn(
                   'w-full gap-2 justify-start h-auto py-3 px-4',
-                  'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                  'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
+                  '',
+                  ''
                 )}
               >
-                <Copy className='h-5 w-5 text-blue-500 ophelia:text-[#60a5fa]' />
+                <Copy className='h-5 w-5 text-blue-500' />
                 <div className='text-left'>
                   <div className='font-medium'>
                     {t('modelManager.advanced.copyModel')}
@@ -1926,11 +1897,11 @@ export const ModelManager: React.FC = () => {
                 variant='outline'
                 className={cn(
                   'w-full gap-2 justify-start h-auto py-3 px-4',
-                  'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                  'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
+                  '',
+                  ''
                 )}
               >
-                <TestTube className='h-5 w-5 text-green-500 ophelia:text-[#4ade80]' />
+                <TestTube className='h-5 w-5 text-green-500' />
                 <div className='text-left'>
                   <div className='font-medium'>
                     {t('modelManager.advanced.testEmbeddings')}
@@ -1957,11 +1928,11 @@ export const ModelManager: React.FC = () => {
                 variant='outline'
                 className={cn(
                   'w-full gap-2 justify-start h-auto py-3 px-4',
-                  'ophelia:border-[#262626] ophelia:text-[#a3a3a3]',
-                  'ophelia:hover:bg-[#1a1a1a] ophelia:hover:text-[#fafafa]'
+                  '',
+                  ''
                 )}
               >
-                <Gauge className='h-5 w-5 text-rose-500 ophelia:text-[#fb7185]' />
+                <Gauge className='h-5 w-5 text-rose-500' />
                 <div className='text-left'>
                   <div className='font-medium'>
                     {t('modelManager.advanced.healthCheck')}
@@ -1987,63 +1958,63 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-xl border shadow-2xl',
-                'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-                'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                'bg-white dark:bg-dark-100',
+                'border-gray-200 dark:border-dark-300'
               )}
             >
               <div
                 className={cn(
                   'flex items-center justify-between p-4 border-b',
-                  'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                  'border-gray-200 dark:border-dark-300'
                 )}
               >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                   {t('modelManager.modals.details.title')}: {selectedModelName}
                 </h3>
                 <button
                   onClick={() => setShowDetailsModal(false)}
-                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a]'
+                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
                 >
-                  <X className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+                  <X className='h-5 w-5 text-gray-500' />
                 </button>
               </div>
 
               <div className='overflow-y-auto max-h-[calc(85vh-60px)] p-4 space-y-4'>
                 {loadingDetails ? (
                   <div className='flex items-center justify-center py-8'>
-                    <RefreshCw className='h-6 w-6 animate-spin text-gray-400 ophelia:text-[#737373]' />
+                    <RefreshCw className='h-6 w-6 animate-spin text-gray-400' />
                   </div>
                 ) : selectedModelDetails ? (
                   <>
                     {/* Model Info */}
                     {selectedModelDetails.details && (
                       <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
+                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                           {t('modelManager.modals.details.info')}
                         </h4>
                         <div
                           className={cn(
                             'p-3 rounded-lg text-sm',
-                            'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]'
+                            'bg-gray-50 dark:bg-dark-50'
                           )}
                         >
                           <div className='grid grid-cols-2 gap-2'>
                             {selectedModelDetails.details.family && (
                               <div>
-                                <span className='text-gray-500 ophelia:text-[#737373]'>
+                                <span className='text-gray-500'>
                                   {t('modelManager.modals.details.family')}:
                                 </span>{' '}
-                                <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                                <span className='text-gray-900 dark:text-gray-100'>
                                   {selectedModelDetails.details.family}
                                 </span>
                               </div>
                             )}
                             {selectedModelDetails.details.parameter_size && (
                               <div>
-                                <span className='text-gray-500 ophelia:text-[#737373]'>
+                                <span className='text-gray-500'>
                                   {t('modelManager.modals.details.parameters')}:
                                 </span>{' '}
-                                <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                                <span className='text-gray-900 dark:text-gray-100'>
                                   {selectedModelDetails.details.parameter_size}
                                 </span>
                               </div>
@@ -2051,13 +2022,13 @@ export const ModelManager: React.FC = () => {
                             {selectedModelDetails.details
                               .quantization_level && (
                               <div>
-                                <span className='text-gray-500 ophelia:text-[#737373]'>
+                                <span className='text-gray-500'>
                                   {t(
                                     'modelManager.modals.details.quantization'
                                   )}
                                   :
                                 </span>{' '}
-                                <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                                <span className='text-gray-900 dark:text-gray-100'>
                                   {
                                     selectedModelDetails.details
                                       .quantization_level
@@ -2067,10 +2038,10 @@ export const ModelManager: React.FC = () => {
                             )}
                             {selectedModelDetails.details.format && (
                               <div>
-                                <span className='text-gray-500 ophelia:text-[#737373]'>
+                                <span className='text-gray-500'>
                                   {t('modelManager.modals.details.format')}:
                                 </span>{' '}
-                                <span className='text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                                <span className='text-gray-900 dark:text-gray-100'>
                                   {selectedModelDetails.details.format}
                                 </span>
                               </div>
@@ -2083,14 +2054,14 @@ export const ModelManager: React.FC = () => {
                     {/* System Prompt */}
                     {selectedModelDetails.system && (
                       <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
+                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                           {t('modelManager.modals.details.systemPrompt')}
                         </h4>
                         <pre
                           className={cn(
                             'p-3 rounded-lg text-xs overflow-x-auto',
-                            'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                            'text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5]'
+                            'bg-gray-50 dark:bg-dark-50',
+                            'text-gray-700 dark:text-gray-300'
                           )}
                         >
                           {selectedModelDetails.system}
@@ -2101,14 +2072,14 @@ export const ModelManager: React.FC = () => {
                     {/* Template */}
                     {selectedModelDetails.template && (
                       <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
+                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                           {t('modelManager.modals.details.template')}
                         </h4>
                         <pre
                           className={cn(
                             'p-3 rounded-lg text-xs overflow-x-auto max-h-40',
-                            'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                            'text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5]'
+                            'bg-gray-50 dark:bg-dark-50',
+                            'text-gray-700 dark:text-gray-300'
                           )}
                         >
                           {selectedModelDetails.template}
@@ -2119,14 +2090,14 @@ export const ModelManager: React.FC = () => {
                     {/* Parameters */}
                     {selectedModelDetails.parameters && (
                       <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
+                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                           {t('modelManager.modals.details.parameters')}
                         </h4>
                         <pre
                           className={cn(
                             'p-3 rounded-lg text-xs overflow-x-auto',
-                            'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                            'text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5]'
+                            'bg-gray-50 dark:bg-dark-50',
+                            'text-gray-700 dark:text-gray-300'
                           )}
                         >
                           {selectedModelDetails.parameters}
@@ -2137,14 +2108,14 @@ export const ModelManager: React.FC = () => {
                     {/* License */}
                     {selectedModelDetails.license && (
                       <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
+                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                           {t('modelManager.modals.details.license')}
                         </h4>
                         <pre
                           className={cn(
                             'p-3 rounded-lg text-xs overflow-x-auto max-h-32',
-                            'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                            'text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5]'
+                            'bg-gray-50 dark:bg-dark-50',
+                            'text-gray-700 dark:text-gray-300'
                           )}
                         >
                           {selectedModelDetails.license}
@@ -2155,14 +2126,14 @@ export const ModelManager: React.FC = () => {
                     {/* Modelfile */}
                     {selectedModelDetails.modelfile && (
                       <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-2'>
+                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                           {t('modelManager.modals.details.modelfile')}
                         </h4>
                         <pre
                           className={cn(
                             'p-3 rounded-lg text-xs overflow-x-auto max-h-60',
-                            'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                            'text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5]'
+                            'bg-gray-50 dark:bg-dark-50',
+                            'text-gray-700 dark:text-gray-300'
                           )}
                         >
                           {selectedModelDetails.modelfile}
@@ -2171,7 +2142,7 @@ export const ModelManager: React.FC = () => {
                     )}
                   </>
                 ) : (
-                  <p className='text-center text-gray-500 ophelia:text-[#737373]'>
+                  <p className='text-center text-gray-500'>
                     {t('modelManager.modals.details.noDetails')}
                   </p>
                 )}
@@ -2192,30 +2163,30 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'relative w-full max-w-md rounded-xl border shadow-2xl',
-                'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-                'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                'bg-white dark:bg-dark-100',
+                'border-gray-200 dark:border-dark-300'
               )}
             >
               <div
                 className={cn(
                   'flex items-center justify-between p-4 border-b',
-                  'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                  'border-gray-200 dark:border-dark-300'
                 )}
               >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                   {t('modelManager.modals.copy.title')}
                 </h3>
                 <button
                   onClick={() => setShowCopyModal(false)}
-                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a]'
+                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
                 >
-                  <X className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+                  <X className='h-5 w-5 text-gray-500' />
                 </button>
               </div>
 
               <div className='p-4 space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('modelManager.modals.copy.source')}
                   </label>
                   <select
@@ -2223,9 +2194,9 @@ export const ModelManager: React.FC = () => {
                     onChange={e => setCopySource(e.target.value)}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                      'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
+                      'bg-gray-50 dark:bg-dark-50',
+                      'border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100'
                     )}
                   >
                     <option value=''>
@@ -2240,7 +2211,7 @@ export const ModelManager: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('modelManager.modals.copy.newName')}
                   </label>
                   <input
@@ -2250,10 +2221,10 @@ export const ModelManager: React.FC = () => {
                     placeholder={t('modelManager.modals.copy.placeholder')}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                      'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
-                      'placeholder-gray-500 ophelia:placeholder-[#525252]'
+                      'bg-gray-50 dark:bg-dark-50',
+                      'border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100',
+                      'placeholder-gray-500'
                     )}
                   />
                 </div>
@@ -2263,10 +2234,7 @@ export const ModelManager: React.FC = () => {
                   disabled={
                     !copySource.trim() || !copyDestination.trim() || copying
                   }
-                  className={cn(
-                    'w-full gap-2',
-                    'ophelia:bg-[#9333ea] ophelia:hover:bg-[#7c3aed] ophelia:text-white'
-                  )}
+                  className={cn('w-full gap-2', '')}
                 >
                   {copying ? (
                     <RefreshCw className='h-4 w-4 animate-spin' />
@@ -2294,30 +2262,30 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'relative w-full max-w-lg rounded-xl border shadow-2xl',
-                'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-                'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                'bg-white dark:bg-dark-100',
+                'border-gray-200 dark:border-dark-300'
               )}
             >
               <div
                 className={cn(
                   'flex items-center justify-between p-4 border-b',
-                  'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                  'border-gray-200 dark:border-dark-300'
                 )}
               >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                   {t('modelManager.modals.create.title')}
                 </h3>
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a]'
+                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
                 >
-                  <X className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+                  <X className='h-5 w-5 text-gray-500' />
                 </button>
               </div>
 
               <div className='p-4 space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('modelManager.modals.create.name')}
                   </label>
                   <input
@@ -2329,16 +2297,16 @@ export const ModelManager: React.FC = () => {
                     )}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                      'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
-                      'placeholder-gray-500 ophelia:placeholder-[#525252]'
+                      'bg-gray-50 dark:bg-dark-50',
+                      'border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100',
+                      'placeholder-gray-500'
                     )}
                   />
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('modelManager.modals.create.modelfile')}
                   </label>
                   <textarea
@@ -2350,20 +2318,20 @@ export const ModelManager: React.FC = () => {
                     rows={8}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm font-mono',
-                      'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                      'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
-                      'placeholder-gray-500 ophelia:placeholder-[#525252]',
+                      'bg-gray-50 dark:bg-dark-50',
+                      'border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100',
+                      'placeholder-gray-500',
                       'resize-none'
                     )}
                   />
-                  <p className='mt-1 text-xs text-gray-500 ophelia:text-[#737373]'>
+                  <p className='mt-1 text-xs text-gray-500'>
                     {t('modelManager.modals.create.see')}{' '}
                     <a
                       href='https://github.com/ollama/ollama/blob/main/docs/modelfile.md'
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='text-primary-600 ophelia:text-[#a855f7] hover:underline'
+                      className='text-primary-600 hover:underline'
                     >
                       {t('modelManager.modals.create.docs')}
                     </a>{' '}
@@ -2378,10 +2346,7 @@ export const ModelManager: React.FC = () => {
                     !createModelfile.trim() ||
                     creating
                   }
-                  className={cn(
-                    'w-full gap-2',
-                    'ophelia:bg-[#9333ea] ophelia:hover:bg-[#7c3aed] ophelia:text-white'
-                  )}
+                  className={cn('w-full gap-2', '')}
                 >
                   {creating ? (
                     <RefreshCw className='h-4 w-4 animate-spin' />
@@ -2409,30 +2374,30 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'relative w-full max-w-lg rounded-xl border shadow-2xl',
-                'bg-white dark:bg-dark-100 ophelia:bg-[#0a0a0a]',
-                'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                'bg-white dark:bg-dark-100',
+                'border-gray-200 dark:border-dark-300'
               )}
             >
               <div
                 className={cn(
                   'flex items-center justify-between p-4 border-b',
-                  'border-gray-200 dark:border-dark-300 ophelia:border-[#1a1a1a]'
+                  'border-gray-200 dark:border-dark-300'
                 )}
               >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'>
+                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                   {t('modelManager.modals.embeddings.title')}
                 </h3>
                 <button
                   onClick={() => setShowEmbeddingsModal(false)}
-                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 ophelia:hover:bg-[#1a1a1a]'
+                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
                 >
-                  <X className='h-5 w-5 text-gray-500 ophelia:text-[#737373]' />
+                  <X className='h-5 w-5 text-gray-500' />
                 </button>
               </div>
 
               <div className='p-4 space-y-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('modelManager.modals.embeddings.model')}
                   </label>
                   <select
@@ -2440,9 +2405,9 @@ export const ModelManager: React.FC = () => {
                     onChange={e => setEmbeddingsModel(e.target.value)}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                      'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]'
+                      'bg-gray-50 dark:bg-dark-50',
+                      'border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100'
                     )}
                   >
                     <option value=''>
@@ -2454,13 +2419,13 @@ export const ModelManager: React.FC = () => {
                       </option>
                     ))}
                   </select>
-                  <p className='mt-1 text-xs text-gray-500 ophelia:text-[#737373]'>
+                  <p className='mt-1 text-xs text-gray-500'>
                     {t('modelManager.modals.embeddings.recommended')}
                   </p>
                 </div>
 
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('modelManager.modals.embeddings.input')}
                   </label>
                   <textarea
@@ -2472,10 +2437,10 @@ export const ModelManager: React.FC = () => {
                     rows={3}
                     className={cn(
                       'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                      'border-gray-200 dark:border-dark-300 ophelia:border-[#262626]',
-                      'text-gray-900 dark:text-gray-100 ophelia:text-[#fafafa]',
-                      'placeholder-gray-500 ophelia:placeholder-[#525252]',
+                      'bg-gray-50 dark:bg-dark-50',
+                      'border-gray-200 dark:border-dark-300',
+                      'text-gray-900 dark:text-gray-100',
+                      'placeholder-gray-500',
                       'resize-none'
                     )}
                   />
@@ -2488,10 +2453,7 @@ export const ModelManager: React.FC = () => {
                     !embeddingsInput.trim() ||
                     generatingEmbeddings
                   }
-                  className={cn(
-                    'w-full gap-2',
-                    'ophelia:bg-[#9333ea] ophelia:hover:bg-[#7c3aed] ophelia:text-white'
-                  )}
+                  className={cn('w-full gap-2', '')}
                 >
                   {generatingEmbeddings ? (
                     <RefreshCw className='h-4 w-4 animate-spin' />
@@ -2505,7 +2467,7 @@ export const ModelManager: React.FC = () => {
 
                 {embeddingsResult && (
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 ophelia:text-[#a3a3a3] mb-1'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                       {t('modelManager.modals.embeddings.result', {
                         count: embeddingsResult.length,
                       })}
@@ -2513,8 +2475,8 @@ export const ModelManager: React.FC = () => {
                     <pre
                       className={cn(
                         'p-3 rounded-lg text-xs overflow-x-auto max-h-32',
-                        'bg-gray-50 dark:bg-dark-50 ophelia:bg-[#121212]',
-                        'text-gray-700 dark:text-gray-300 ophelia:text-[#e5e5e5]'
+                        'bg-gray-50 dark:bg-dark-50',
+                        'text-gray-700 dark:text-gray-300'
                       )}
                     >
                       [{embeddingsResult.slice(0, 10).join(', ')}
