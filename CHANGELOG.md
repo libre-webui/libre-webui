@@ -15,6 +15,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.9.0] - 2026-04-28
+
+### What's New
+
+This release introduces a major visual refresh with a new indigo-based design system and improved dark mode. Under the hood, we've migrated to TanStack Query for better data management and enhanced embedding model functionality.
+
+### ✨ New Features
+
+- New indigo design system with violet accent colors and polished range sliders
+- Enhanced dark mode with deeper, near-black neutral tones
+- Cross-provider embedding model selection - choose models from any supported provider
+
+### 🔧 Improvements
+
+- Migrated data loading to TanStack Query for better performance and caching
+- Rate limiting added to embedding model discovery to prevent API overload
+- Improved path resolution for npx installations
+- Enhanced homebrew packaging with release-driven updates
+
+### 🐛 Bug Fixes
+
+- Fixed build compatibility issues with development dependencies
+- Resolved dynamic base path resolution for npx installs
+- Fixed node_modules path detection for packaged installations
+- Corrected CodeQL scanning to ignore homebrew templates
+
 ## [0.8.7] - 2026-04-05
 
 ### What's New
