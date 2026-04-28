@@ -19,27 +19,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### What's New
 
-This release introduces a major visual refresh with a new indigo-based design system and improved dark mode. Under the hood, we've migrated to TanStack Query for better data management and enhanced embedding model functionality.
+A visual refresh paired with a data-layer rewrite. The UI gets a new indigo design system, violet accents, and a deeper dark mode for OLED-friendly contrast. Under the hood, every component that used to fetch its own data via `useEffect` + `useState` now goes through TanStack Query — components share a cache, refetch on invalidation instead of re-mount, and the React Compiler-era `set-state-in-effect` lint rule passes cleanly across the codebase.
 
 ### ✨ New Features
 
-- New indigo design system with violet accent colors and polished range sliders
-- Enhanced dark mode with deeper, near-black neutral tones
-- Cross-provider embedding model selection - choose models from any supported provider
+- New indigo-based design system with violet accents and refined range sliders
+- Deeper, near-black dark-mode neutrals for less glare on OLED panels
 
 ### 🔧 Improvements
 
-- Migrated data loading to TanStack Query for better performance and caching
-- Rate limiting added to embedding model discovery to prevent API overload
-- Improved path resolution for npx installations
-- Enhanced homebrew packaging with release-driven updates
+- Migrated all server-state loading to TanStack Query across personas, users, models (Ollama + HuggingFace), image gallery, settings, and auth — gives shared caching, request deduplication, and consistent loading/error handling
+- Image gallery's "load more" now uses `useInfiniteQuery` with cursor-based pagination instead of manual offset bookkeeping
+- Mutations (create / update / delete in Persona and User managers) now invalidate queries instead of locally splicing arrays, so concurrent edits from another tab stay in sync
+- Embedding model discovery rate-limits requests so providers don't get hammered when the embedding picker is opened repeatedly
+- Retired the legacy `ophelia` theme in favor of the unified indigo system
 
 ### 🐛 Bug Fixes
 
-- Fixed build compatibility issues with development dependencies
-- Resolved dynamic base path resolution for npx installs
-- Fixed node_modules path detection for packaged installations
-- Corrected CodeQL scanning to ignore homebrew templates
+- Restored the build after a Dependabot batch broke compatibility with dev dependencies
+- Stopped CodeQL from scanning Homebrew formula templates as Ruby, eliminating spurious analysis failures
+
+### 📦 Dependencies
+
+- Added `@tanstack/react-query` (~14 KB gzipped) for the data-layer migration
+- Multiple Dependabot-driven bumps across production and dev dependency groups
 
 ## [0.8.7] - 2026-04-05
 
