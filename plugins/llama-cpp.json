@@ -1,0 +1,76 @@
+{
+  "id": "llama-cpp",
+  "name": "llama.cpp",
+  "type": "completion",
+  "endpoint": "http://localhost:8080/v1/chat/completions",
+  "auth": {
+    "header": "",
+    "prefix": "",
+    "key_env": ""
+  },
+  "model_map": [
+    "qwen3-35b-a3b",
+    "custom"
+  ],
+  "variables": [
+    {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "llama.cpp server endpoint URL. Default: http://localhost:8080/v1/chat/completions",
+      "default": "http://localhost:8080/v1/chat/completions"
+    },
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Lower values are more focused, higher values more creative.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "label": "Max Tokens",
+      "description": "Maximum number of tokens to generate in the response.",
+      "default": 4096,
+      "min": 1,
+      "max": 128000
+    },
+    {
+      "name": "top_p",
+      "type": "number",
+      "label": "Top P",
+      "description": "Nucleus sampling. Lower values make output more focused.",
+      "default": 1,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "frequency_penalty",
+      "type": "number",
+      "label": "Frequency Penalty",
+      "description": "Reduces repetition of frequent tokens.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "presence_penalty",
+      "type": "number",
+      "label": "Presence Penalty",
+      "description": "Encourages the model to talk about new topics.",
+      "default": 0,
+      "min": -2,
+      "max": 2
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Stream Response",
+      "description": "Stream the response token by token.",
+      "default": true
+    }
+  ]
+}
