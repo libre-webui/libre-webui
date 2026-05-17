@@ -9,8 +9,7 @@
     "key_env": ""
   },
   "model_map": [
-    "qwen3-35b-a3b",
-    "custom"
+    "qwen3-35b-a3b"
   ],
   "variables": [
     {
@@ -24,8 +23,8 @@
       "name": "temperature",
       "type": "number",
       "label": "Temperature",
-      "description": "Controls randomness. Lower values are more focused, higher values more creative.",
-      "default": 0.7,
+      "description": "Controls randomness. Qwen3 thinking-mode recommended: 0.6.",
+      "default": 0.6,
       "min": 0,
       "max": 2
     },
@@ -34,16 +33,34 @@
       "type": "number",
       "label": "Max Tokens",
       "description": "Maximum number of tokens to generate in the response.",
-      "default": 4096,
+      "default": 32768,
       "min": 1,
-      "max": 128000
+      "max": 131072
     },
     {
       "name": "top_p",
       "type": "number",
       "label": "Top P",
-      "description": "Nucleus sampling. Lower values make output more focused.",
-      "default": 1,
+      "description": "Nucleus sampling. Qwen3 thinking-mode recommended: 0.95.",
+      "default": 0.95,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "top_k",
+      "type": "number",
+      "label": "Top K",
+      "description": "Top-K sampling. Qwen3 recommended: 20.",
+      "default": 20,
+      "min": 0,
+      "max": 100
+    },
+    {
+      "name": "min_p",
+      "type": "number",
+      "label": "Min P",
+      "description": "Minimum probability threshold. Qwen3 recommended: 0.",
+      "default": 0,
       "min": 0,
       "max": 1
     },
