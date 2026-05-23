@@ -29,6 +29,9 @@ updates:
       # ABI tables catch up upstream (PR #138 was killed by this gap).
       - dependency-name: 'electron'
         update-types: ['version-update:semver-major']
+      # ESLint 10 is not compatible with eslint-plugin-react 7.x yet.
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: 'github-actions'
     directory: '/'
