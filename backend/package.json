@@ -36,6 +36,7 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/bcrypt": "^6.0.0",
     "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.19",
@@ -47,7 +48,7 @@
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.34.0",
-    "eslint": "^10.0.0",
+    "eslint": "^9.39.4",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
