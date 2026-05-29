@@ -232,6 +232,17 @@ export const ModelManager: React.FC = () => {
     },
   });
 
+  // Cloud models live in a dedicated ollama.com listing; fetch them separately
+  // so the category chips stay stable while the Cloud filter is active.
+  const { data: cloudModels = [], isLoading: loadingCloud } = useQuery({
+    queryKey: ['ollama-library', 'cloud'],
+    queryFn: async (): Promise<LibraryModel[]> => {
+      const response = await ollamaApi.getLibraryModels({ category: 'cloud' });
+      return response.success && response.data ? response.data : [];
+    },
+    enabled: libraryFilter === 'cloud',
+  });
+
   const loadLibraryModels = () =>
     queryClient.invalidateQueries({ queryKey: ['ollama-library'] });
 
@@ -571,10 +582,14 @@ export const ModelManager: React.FC = () => {
     );
   };
 
-  // Filter library models
-  const filteredLibraryModels = libraryModels.filter(model => {
+  // Filter library models (cloud filter pulls from the dedicated cloud listing)
+  const sourceLibraryModels =
+    libraryFilter === 'cloud' ? cloudModels : libraryModels;
+  const filteredLibraryModels = sourceLibraryModels.filter(model => {
     const matchesFilter =
-      libraryFilter === 'all' || model.category === libraryFilter;
+      libraryFilter === 'all' ||
+      libraryFilter === 'cloud' ||
+      model.category === libraryFilter;
     const matchesSearch =
       !librarySearch ||
       model.name.toLowerCase().includes(librarySearch.toLowerCase()) ||
@@ -582,10 +597,10 @@ export const ModelManager: React.FC = () => {
     return matchesFilter && matchesSearch;
   });
 
-  // Get unique categories from library models
+  // Category chips: derived from the popular list, plus a stable Cloud entry
   const libraryCategories = [
     'all',
-    ...new Set(libraryModels.map(m => m.category)),
+    ...new Set([...libraryModels.map(m => m.category), 'cloud']),
   ];
 
   // Popular model suggestions - use live data from library, fallback to hardcoded
@@ -994,7 +1009,7 @@ export const ModelManager: React.FC = () => {
             </div>
 
             {/* Models Grid */}
-            {loadingLibrary ? (
+            {loadingLibrary || loadingCloud ? (
               <div className='flex items-center justify-center py-8'>
                 <RefreshCw className='h-5 w-5 animate-spin text-gray-400' />
               </div>
@@ -1073,7 +1088,9 @@ export const ModelManager: React.FC = () => {
                           <span
                             className={cn(
                               'px-1.5 py-0.5 rounded capitalize',
-                              'bg-gray-100 dark:bg-dark-200'
+                              model.category === 'cloud'
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                                : 'bg-gray-100 dark:bg-dark-200'
                             )}
                           >
                             {model.category}
