@@ -70,25 +70,19 @@ async function resolveActualModelName(
       // Try to get persona for the current user first, then fallback to 'default'
       let persona = await personaService.getPersonaById(personaId, userId);
       if (!persona && userId !== 'default') {
-        console.log(
-          `[DEBUG] Persona not found for user ${userId}, trying default user`
-        );
         persona = await personaService.getPersonaById(personaId, 'default');
       }
 
       if (persona && persona.model) {
-        console.log(
-          `[DEBUG] Resolved persona ${personaId} to model: ${persona.model}`
-        );
         return persona.model;
       } else {
         console.warn(
-          `[DEBUG] Persona ${personaId} not found, falling back to session model`
+          `Persona ${personaId} not found, falling back to session model`
         );
         return sessionModel;
       }
     } catch (error) {
-      console.error(`[DEBUG] Error resolving persona model:`, error);
+      console.error(`Error resolving persona model:`, error);
       return sessionModel;
     }
   }
@@ -154,9 +148,6 @@ router.post(
       let extractedPersonaId = personaId;
       if (model.startsWith('persona:') && !extractedPersonaId) {
         extractedPersonaId = model.replace('persona:', '');
-        console.log(
-          `[DEBUG] Extracted personaId from model: ${extractedPersonaId}`
-        );
       }
 
       const session = await chatService.createSession(
@@ -460,15 +451,9 @@ router.post(
       try {
         const preferences = preferencesService.getPreferences();
         if (preferences.embeddingSettings?.enabled) {
-          console.log(
-            `[DEBUG] Embeddings enabled, searching documents for: "${message}"`
-          );
           const relevantDocuments = await documentService.searchDocuments(
             message,
             sessionId
-          );
-          console.log(
-            `[DEBUG] Found ${relevantDocuments.length} relevant document chunks`
           );
 
           if (relevantDocuments.length > 0) {
@@ -491,19 +476,10 @@ router.post(
                 })
                 .join('\n---\n') +
               '\n--- END DOCUMENTS ---\n\n';
-            console.log(
-              `[DEBUG] Added ${documentContext.length} characters of document context`
-            );
-          } else {
-            console.log(
-              `[DEBUG] No relevant documents found for query: "${message}"`
-            );
           }
-        } else {
-          console.log(`[DEBUG] Embeddings disabled, skipping document search`);
         }
       } catch (error) {
-        console.error('[DEBUG] Error during document search:', error);
+        console.error('Error during document search:', error);
         // Continue without document context if search fails
       }
 
@@ -529,12 +505,9 @@ router.post(
               role: 'system',
               content: persona.parameters.system_prompt,
             });
-            console.log(
-              `[DEBUG] Replaced system messages with persona instructions for: ${persona.name}`
-            );
           }
         } catch (error) {
-          console.error('[DEBUG] Error loading persona:', error);
+          console.error('Error loading persona:', error);
           // Continue without persona if loading fails
         }
       }
@@ -566,9 +539,6 @@ router.post(
         session.model,
         userId
       );
-      console.log(
-        `[DEBUG] Resolved model from "${session.model}" to "${actualModelName}"`
-      );
 
       // Prepare common chat request for Ollama (used in both fallback and direct cases)
       const chatRequest = {
@@ -579,18 +549,10 @@ router.post(
       };
 
       // Check if there's an active plugin for this model
-      console.log(`[DEBUG] Looking for plugin for model: ${actualModelName}`);
       const activePlugin =
         pluginService.getActivePluginForModel(actualModelName);
-      console.log(
-        `[DEBUG] Found plugin:`,
-        activePlugin ? activePlugin.id : 'none'
-      );
 
       if (activePlugin) {
-        console.log(
-          `[DEBUG] Using plugin ${activePlugin.id} for model ${actualModelName}`
-        );
         try {
           // Use plugin for generation
           const pluginResponse = await pluginService.executePluginRequest(
@@ -620,9 +582,6 @@ router.post(
           assistantContent = response.message.content;
         }
       } else {
-        console.log(
-          `[DEBUG] No plugin found, using Ollama for model: ${actualModelName}`
-        );
         // Use Ollama directly
         response = await ollamaService.generateChatResponse(chatRequest);
         assistantContent = response.message.content;
@@ -734,12 +693,9 @@ router.post(
               role: 'system',
               content: persona.parameters.system_prompt,
             });
-            console.log(
-              `[DEBUG] Replaced system messages with persona instructions for streaming: ${persona.name}`
-            );
           }
         } catch (error) {
-          console.error('[DEBUG] Error loading persona for streaming:', error);
+          console.error('Error loading persona for streaming:', error);
           // Continue without persona if loading fails
         }
       }
@@ -763,9 +719,6 @@ router.post(
       const actualModelName = await resolveActualModelName(
         session.model,
         userId
-      );
-      console.log(
-        `[DEBUG] Streaming - Resolved model from "${session.model}" to "${actualModelName}"`
       );
 
       const chatRequest = {
