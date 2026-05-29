@@ -135,6 +135,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     'code',
     'vision',
     'embedding',
+    'cloud',
   ];
 
   // Group models by type
@@ -195,11 +196,18 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     isLoading: loadingLibrary,
     refetch: loadLibrary,
   } = useQuery({
-    queryKey: ['ollama-library-selector', libraryDebouncedSearch],
+    queryKey: [
+      'ollama-library-selector',
+      libraryDebouncedSearch,
+      libraryCategory,
+    ],
     queryFn: async (): Promise<LibraryModel[]> => {
       const response = await ollamaApi.getLibraryModels({
         search: libraryDebouncedSearch || undefined,
         sort: 'popular',
+        // Cloud models live in a dedicated ollama.com listing, so fetch them
+        // server-side rather than filtering the popular list client-side.
+        category: libraryCategory === 'cloud' ? 'cloud' : undefined,
       });
       return response.success && response.data ? response.data : [];
     },
@@ -679,6 +687,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                         {installed && (
                           <span className='px-1.5 py-0.5 rounded text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'>
                             {t('modelSelector.installed')}
+                          </span>
+                        )}
+                        {(model.category === 'cloud' ||
+                          model.tags?.includes('cloud')) && (
+                          <span className='px-1.5 py-0.5 rounded text-xs bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 flex items-center gap-1'>
+                            <Cloud className='h-3 w-3' />
+                            Cloud
                           </span>
                         )}
                       </div>
