@@ -325,8 +325,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     },
     enabled: isOpen,
   });
-  const imageGenModels: ImageGenModel[] = imageGenData?.models ?? [];
-  const imageGenPlugins: ImageGenPlugin[] = imageGenData?.plugins ?? [];
+  const imageGenModels: ImageGenModel[] = useMemo(
+    () => imageGenData?.models ?? [],
+    [imageGenData]
+  );
+  const imageGenPlugins: ImageGenPlugin[] = useMemo(
+    () => imageGenData?.plugins ?? [],
+    [imageGenData]
+  );
 
   // Once TTS/ImageGen models load, default an empty selection to the first available — store-during-render
   const [prevTtsModels, setPrevTtsModels] = useState<TTSModel[]>([]);
