@@ -21,24 +21,44 @@ import { cn } from '@/utils';
 interface LogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  /** Render the "WebUI" suffix after "Libre". Defaults to true. */
+  wordmark?: boolean;
 }
 
-export const Logo: React.FC<LogoProps> = ({ className, size = 'md' }) => {
-  const sizeClasses = {
-    sm: 'text-xl',
-    md: 'text-3xl',
-    lg: 'text-5xl',
-  };
+// Single source of truth for the "Libre WebUI" wordmark so it reads identically
+// everywhere it appears. "Libre" maps to the DESIGN.md heading scale (md = h1),
+// with "WebUI" one tier smaller and lighter for a consistent lockup.
+const LIBRE_SIZE: Record<NonNullable<LogoProps['size']>, string> = {
+  sm: 'text-xl',
+  md: 'text-3xl',
+  lg: 'text-5xl',
+};
 
+const WEBUI_SIZE: Record<NonNullable<LogoProps['size']>, string> = {
+  sm: 'text-sm',
+  md: 'text-xl',
+  lg: 'text-3xl',
+};
+
+export const Logo: React.FC<LogoProps> = ({
+  className,
+  size = 'md',
+  wordmark = true,
+}) => {
   return (
     <span
-      className={cn(
-        'libre-brand text-gray-900 dark:text-gray-100',
-        sizeClasses[size],
-        className
-      )}
+      className={cn('libre-brand', LIBRE_SIZE[size], className)}
+      style={{ fontWeight: 400, letterSpacing: '0.01em' }}
     >
       Libre
+      {wordmark && (
+        <span
+          className={cn('ml-1.5', WEBUI_SIZE[size])}
+          style={{ fontWeight: 300 }}
+        >
+          WebUI
+        </span>
+      )}
     </span>
   );
 };

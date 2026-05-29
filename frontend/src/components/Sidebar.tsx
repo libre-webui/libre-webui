@@ -39,6 +39,7 @@ import {
 import { Button, Input } from '@/components/ui';
 import { SettingsModal } from '@/components/SettingsModal';
 import { AvatarUpload } from '@/components/AvatarUpload';
+import { Logo } from '@/components/Logo';
 import { useChatStore } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
@@ -300,9 +301,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               {!sidebarCompact ? (
                 <>
-                  <span className='libre-brand text-xl text-gray-900 dark:text-dark-800'>
-                    Libre <span className='text-sm'>WebUI</span>
-                  </span>
+                  <Logo
+                    size='sm'
+                    className='text-gray-900 dark:text-dark-800'
+                  />
                   <div className='flex items-center gap-1'>
                     <Button
                       variant='ghost'
@@ -317,9 +319,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </>
               ) : (
                 <div className='flex flex-col items-center gap-1.5'>
-                  <span className='libre-brand text-xl text-gray-900 dark:text-dark-800'>
-                    Libre
-                  </span>
+                  <Logo
+                    size='sm'
+                    wordmark={false}
+                    className='text-gray-900 dark:text-dark-800'
+                  />
                   <Button
                     variant='ghost'
                     size='sm'
