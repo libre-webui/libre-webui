@@ -28,6 +28,36 @@ import {
   getErrorMessage,
 } from '../types/index.js';
 
+/**
+ * Ollama "cloud" models (tagged ":cloud" or "-cloud", e.g. "deepseek-v4-pro:cloud")
+ * are hosted and proxy through ollama.com.
+ */
+function isCloudModel(model: string | undefined): boolean {
+  if (!model || !model.includes(':')) return false;
+  const tag = model.slice(model.lastIndexOf(':') + 1);
+  return tag === 'cloud' || tag.endsWith('-cloud');
+}
+
+/**
+ * Strip options that hosted cloud models reject. The cloud backend maps
+ * num_predict -> max_tokens, which must be positive; locally num_predict: -1
+ * means "unlimited", so for cloud we omit it and let the host apply its default.
+ * Returns the options unchanged for local models.
+ */
+function sanitizeOptionsForModel(
+  model: string,
+  options: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (!options || !isCloudModel(model)) return options;
+  const numPredict = options.num_predict;
+  if (typeof numPredict === 'number' && numPredict <= 0) {
+    const sanitized = { ...options };
+    delete sanitized.num_predict;
+    return sanitized;
+  }
+  return options;
+}
+
 class OllamaService {
   private client: AxiosInstance;
   private longOperationClient: AxiosInstance;
@@ -121,6 +151,10 @@ class OllamaService {
       // Use long operation client for generation as it may need to load model on first use
       const response = await this.longOperationClient.post('/api/generate', {
         ...request,
+        options: sanitizeOptionsForModel(
+          request.model,
+          request.options as Record<string, unknown> | undefined
+        ),
         stream: false, // For non-streaming responses
       });
       return response.data;
@@ -142,6 +176,10 @@ class OllamaService {
         '/api/generate',
         {
           ...request,
+          options: sanitizeOptionsForModel(
+            request.model,
+            request.options as Record<string, unknown> | undefined
+          ),
           stream: true,
         },
         {
@@ -410,6 +448,7 @@ class OllamaService {
       // Use long operation client for chat generation as it may need to load model on first use
       const response = await this.longOperationClient.post('/api/chat', {
         ...request,
+        options: sanitizeOptionsForModel(request.model, request.options),
         stream: false,
       });
       return response.data;
@@ -433,6 +472,7 @@ class OllamaService {
         '/api/chat',
         {
           ...request,
+          options: sanitizeOptionsForModel(request.model, request.options),
           stream: true,
         },
         {

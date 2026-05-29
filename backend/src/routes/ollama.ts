@@ -940,6 +940,16 @@ router.get(
         }
       }
 
+      // ollama.com's cloud listing isn't categorized by the HTML scraper, so
+      // tag these models explicitly when the cloud category was requested.
+      if (category === 'cloud') {
+        remoteModels = remoteModels.map(m => ({
+          ...m,
+          category: 'cloud',
+          tags: Array.from(new Set([...(m.tags ?? []), 'cloud'])),
+        }));
+      }
+
       res.json({
         success: true,
         data: remoteModels,
