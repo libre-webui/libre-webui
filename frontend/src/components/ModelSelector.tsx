@@ -676,8 +676,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   )}
                 >
                   <div className='flex items-start gap-3'>
-                    <div className='p-2 rounded-lg bg-cyan-100 dark:bg-cyan-900/30 flex-shrink-0'>
-                      <Cloud className='h-4 w-4 text-cyan-600 dark:text-cyan-400' />
+                    <div className='p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex-shrink-0'>
+                      <Cloud className='h-4 w-4 text-blue-600 dark:text-blue-400' />
                     </div>
                     <div className='flex-1 min-w-0'>
                       <div className='flex items-center gap-2'>

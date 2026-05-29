@@ -923,10 +923,10 @@ export const ModelManager: React.FC = () => {
             <div
               className={cn(
                 'p-2 rounded-lg',
-                'bg-cyan-100 dark:bg-cyan-900/30'
+                'bg-blue-100 dark:bg-blue-900/30'
               )}
             >
-              <Cloud className='h-5 w-5 text-cyan-600 dark:text-cyan-400' />
+              <Cloud className='h-5 w-5 text-blue-600 dark:text-blue-400' />
             </div>
             <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
               {t('modelManager.sections.library')}
