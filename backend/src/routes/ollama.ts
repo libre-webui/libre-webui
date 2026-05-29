@@ -942,9 +942,13 @@ router.get(
 
       // ollama.com's cloud listing isn't categorized by the HTML scraper, so
       // tag these models explicitly when the cloud category was requested.
+      // Cloud models must be pulled/run as "<name>:cloud" (the listing returns
+      // bare names), so suffix them unless they already carry an explicit tag —
+      // otherwise the Pull button would try to fetch a nonexistent base model.
       if (category === 'cloud') {
         remoteModels = remoteModels.map(m => ({
           ...m,
+          name: m.name.includes(':') ? m.name : `${m.name}:cloud`,
           category: 'cloud',
           tags: Array.from(new Set([...(m.tags ?? []), 'cloud'])),
         }));
