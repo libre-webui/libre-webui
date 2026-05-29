@@ -334,13 +334,7 @@ const App: React.FC = () => {
       <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
         <div className='sm:mx-auto sm:w-full sm:max-w-md'>
           <div className='flex flex-col items-center'>
-            <Logo />
-            <span
-              className='libre-brand text-xl text-gray-900 dark:text-gray-100'
-              style={{ fontWeight: 300, letterSpacing: '0.01em' }}
-            >
-              WebUI
-            </span>
+            <Logo className='text-gray-900 dark:text-gray-100' />
           </div>
         </div>
 
@@ -356,12 +350,9 @@ const App: React.FC = () => {
     return (
       <div className='min-h-screen bg-dark-50 flex items-center justify-center p-4'>
         <div className='text-center'>
-          <h1
-            className='libre-brand text-5xl text-white mb-8'
-            style={{ fontWeight: 400, letterSpacing: '0.02em' }}
-          >
-            Libre
-          </h1>
+          <div className='mb-8'>
+            <Logo className='text-white' />
+          </div>
           <div className='flex justify-center mb-4'>
             <div className='w-8 h-8 border-3 border-gray-700 border-t-primary-500 rounded-full animate-spin'></div>
           </div>

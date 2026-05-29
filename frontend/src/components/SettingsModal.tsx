@@ -50,6 +50,7 @@ import {
 } from 'lucide-react';
 import { Button, Select, Textarea } from '@/components/ui';
 import { BackgroundUpload } from '@/components/BackgroundUpload';
+import { Logo } from '@/components/Logo';
 import { PluginVariablesEditor } from '@/components/PluginManager';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
@@ -2852,19 +2853,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         return (
           <div className='space-y-6'>
             <div>
-              <h3
-                className='libre-brand text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100 mb-4'
-                style={{ fontWeight: 300, letterSpacing: '0.01em' }}
-              >
-                Libre <span className='text-lg'>WebUI</span>
-              </h3>
+              <div className='mb-4'>
+                <Logo className='text-gray-900 dark:text-gray-100' />
+              </div>
               <div className='text-sm text-gray-700 dark:text-gray-300 mb-6'>
                 <span>{t('settings.about.title')}</span>
               </div>
               <div className='bg-gray-50 dark:bg-dark-100 rounded-lg p-6 border border-gray-200 dark:border-dark-300'>
                 <div className='space-y-4 text-sm text-gray-700 dark:text-gray-300'>
                   <div className='flex items-start gap-3'>
-                    <div className='w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0'></div>
+                    <div className='w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0'></div>
                     <div>
                       <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
                         {t('settings.about.features.privacy.title')}
@@ -2886,7 +2884,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </div>
 
                   <div className='flex items-start gap-3'>
-                    <div className='w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0'></div>
+                    <div className='w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0'></div>
                     <div>
                       <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
                         {t('settings.about.features.localInference.title')}
