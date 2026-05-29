@@ -691,7 +691,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                         )}
                         {(model.category === 'cloud' ||
                           model.tags?.includes('cloud')) && (
-                          <span className='px-1.5 py-0.5 rounded text-xs bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 flex items-center gap-1'>
+                          <span className='px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 flex items-center gap-1'>
                             <Cloud className='h-3 w-3' />
                             Cloud
                           </span>
