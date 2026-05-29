@@ -60,13 +60,6 @@ class ChatService {
   ): Promise<ChatSession> {
     const sessionId = uuidv4();
     const now = Date.now();
-    console.log(
-      `🚀 ChatService.createSession: sessionId=%s, userId=%s, model=%s, personaId=%s`,
-      sessionId,
-      userId,
-      model,
-      personaId
-    );
 
     const session: ChatSession = {
       id: sessionId,
@@ -80,21 +73,11 @@ class ChatService {
 
     // Add system message - prioritize persona system prompt over global preferences
     let systemMessage = '';
-    let systemMessageSource = 'none';
-
-    console.log(
-      `[DEBUG] createSession model: "${model}", starts with persona: ${model.startsWith('persona:')}`
-    );
 
     // If model is a persona, try to get the persona's system prompt
     if (model.startsWith('persona:')) {
       try {
         const personaIdFromModel = model.replace('persona:', '');
-        console.log(
-          `[DEBUG] Extracting persona ID: "%s" for user: "%s"`,
-          personaIdFromModel,
-          userId
-        );
         const { personaService } = await import('./personaService.js');
 
         // Get persona for the current user only (no fallback to maintain privacy)
@@ -102,24 +85,12 @@ class ChatService {
           personaIdFromModel,
           userId
         );
-        console.log(
-          `[DEBUG] Persona lookup for user ${userId}:`,
-          persona ? `Found: ${persona.name}` : 'Not found'
-        );
 
         if (persona && persona.parameters?.system_prompt) {
           systemMessage = persona.parameters.system_prompt.trim();
-          systemMessageSource = `persona:${persona.name}`;
-          console.log(
-            `[DEBUG] Using persona system prompt from ${persona.name}: "${systemMessage.substring(0, 100)}..."`
-          );
-        } else {
-          console.log(
-            `[DEBUG] No system prompt found in persona or persona not found`
-          );
         }
       } catch (error) {
-        console.error(`❌ Error getting persona system prompt:`, error);
+        console.error(`Error getting persona system prompt:`, error);
       }
     }
 
@@ -128,18 +99,11 @@ class ChatService {
       const globalSystemMessage = preferencesService.getSystemMessage(userId);
       if (globalSystemMessage && globalSystemMessage.trim()) {
         systemMessage = globalSystemMessage.trim();
-        systemMessageSource = 'preferences';
-        console.log(
-          `[DEBUG] Using global system message: "${systemMessage.substring(0, 100)}..."`
-        );
       }
     }
 
     // Add the system message if we have one
     if (systemMessage) {
-      console.log(
-        `✅ Adding system message to session: ${sessionId} (source: ${systemMessageSource})`
-      );
       const systemMsg: ChatMessage = {
         id: uuidv4(),
         role: 'system',
@@ -151,11 +115,9 @@ class ChatService {
     }
 
     this.sessions.set(sessionId, session);
-    console.log(`📝 Session stored in cache: ${sessionId}`);
 
     // Save to storage with user ID
     storageService.saveSession(session, userId);
-    console.log(`💾 Session saved to storage: ${sessionId} for user ${userId}`);
     return session;
   }
 
@@ -163,18 +125,12 @@ class ChatService {
     sessionId: string,
     userId: string = 'default'
   ): ChatSession | undefined {
-    console.log(
-      `🔍 ChatService.getSession: sessionId=${sessionId}, userId=${userId}`
-    );
-
     // First try to get from memory cache
     let session = this.sessions.get(sessionId);
-    console.log(`📝 Session in cache: ${session ? 'YES' : 'NO'}`);
 
     // If not in cache, try to load from storage (with user verification)
     if (!session) {
       session = storageService.getSession(sessionId, userId);
-      console.log(`💾 Session in storage: ${session ? 'YES' : 'NO'}`);
       if (session) {
         this.sessions.set(sessionId, session);
       }
@@ -182,20 +138,13 @@ class ChatService {
       // If found in cache, we should still verify it belongs to this user
       // by checking the storage service (which has the user verification logic)
       const verifiedSession = storageService.getSession(sessionId, userId);
-      console.log(
-        `✅ Session verification: ${verifiedSession ? 'PASSED' : 'FAILED'}`
-      );
       if (!verifiedSession) {
         // Session doesn't belong to this user, remove from cache and return undefined
-        console.log(
-          `❌ Removing session ${sessionId} from cache - verification failed`
-        );
         this.sessions.delete(sessionId);
         return undefined;
       }
     }
 
-    console.log(`🎯 Returning session: ${session ? session.id : 'undefined'}`);
     return session;
   }
 
@@ -229,16 +178,8 @@ class ChatService {
 
     // If the model is being updated and it's a persona, update the system message and personaId
     if (updates.model && updates.model !== session.model) {
-      console.log(
-        `[DEBUG] updateSession: Model changed from "${session.model}" to "${updates.model}"`
-      );
-
       if (updates.model.startsWith('persona:')) {
         const personaId = updates.model.replace('persona:', '');
-        console.log(
-          `[DEBUG] updateSession: Extracting persona ID: %s`,
-          personaId
-        );
 
         // Update personaId
         updatedSession.personaId = personaId;
@@ -266,29 +207,17 @@ class ChatService {
     message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string },
     userId: string = 'default'
   ): ChatMessage | undefined {
-    console.log(
-      `[addMessage] Called with sessionId=${sessionId}, role=${message.role}, id=${message.id}, userId=${userId}`
-    );
-
     // First verify the session belongs to the user
     const session = this.getSession(sessionId, userId);
     if (!session) {
-      console.log(`[addMessage] Session not found: ${sessionId}`);
       return undefined;
     }
-
-    console.log(
-      `[addMessage] Session found with ${session.messages.length} messages`
-    );
 
     const messageId = message.id || uuidv4();
 
     // Check if message with this ID already exists to prevent duplicates
     const existingMessage = session.messages.find(msg => msg.id === messageId);
     if (existingMessage) {
-      console.log(
-        `[addMessage] Message with ID already exists, skipping duplicate: ${messageId}, existing content length: ${existingMessage.content.length}`
-      );
       return existingMessage;
     }
 
@@ -321,17 +250,8 @@ class ChatService {
     session.updatedAt = Date.now();
 
     // Process advanced persona features if applicable
-    console.log(
-      `[DEBUG] addMessage: Checking advanced processing - personaId: ${session.personaId}, messageRole: ${message.role}, content length: ${message.content.length}`
-    );
     if (session.personaId) {
-      console.log(
-        `[DEBUG] addMessage: PersonaId exists, processing message role: ${message.role}`
-      );
       if (message.role === 'user') {
-        console.log(
-          `[DEBUG] addMessage: Starting advanced user interaction processing for persona ${session.personaId}`
-        );
         this.processAdvancedPersonaInteraction(
           session.personaId,
           userId,
@@ -341,9 +261,6 @@ class ChatService {
           console.error('Advanced persona processing error:', error)
         );
       } else if (message.role === 'assistant') {
-        console.log(
-          `[DEBUG] addMessage: Starting advanced assistant response processing for persona ${session.personaId}`
-        );
         this.processAdvancedPersonaResponse(
           session.personaId,
           userId,
@@ -352,10 +269,6 @@ class ChatService {
           console.error('Advanced persona response processing error:', error)
         );
       }
-    } else {
-      console.log(
-        `[DEBUG] addMessage: No personaId found, skipping advanced processing`
-      );
     }
 
     // Auto-generate title from first user message
@@ -370,9 +283,6 @@ class ChatService {
 
     this.sessions.set(sessionId, session);
     storageService.saveSession(session, userId);
-    console.log(
-      `[addMessage] Message saved successfully: ${newMessage.id}, session now has ${session.messages.length} messages`
-    );
     return newMessage;
   }
 
@@ -412,7 +322,6 @@ class ChatService {
     this.sessions.set(sessionId, session);
     storageService.saveSession(session, userId);
 
-    console.log(`✅ Updated message ${messageId} in session ${sessionId}`);
     return updatedMessage;
   }
 
@@ -474,16 +383,6 @@ class ChatService {
     // Return system messages first, then conversation messages
     const contextMessages = [...systemMessages, ...recentConversation];
 
-    // Debug: Log the system messages being sent
-    if (systemMessages.length > 0) {
-      console.log(`🎯 [DEBUG] Context for session ${sessionId}:`);
-      systemMessages.forEach((msg, index) => {
-        console.log(
-          `  System message ${index + 1}: "${msg.content.substring(0, 100)}${msg.content.length > 100 ? '...' : ''}"`
-        );
-      });
-    }
-
     return contextMessages;
   }
 
@@ -493,37 +392,21 @@ class ChatService {
     userId: string
   ): Promise<void> {
     try {
-      console.log(
-        `[DEBUG] updateSystemMessageForPersona: Starting for persona %s, user %s`,
-        personaId,
-        userId
-      );
-
       // Get persona for the current user only (no fallback to maintain privacy)
       const persona = await personaService.getPersonaById(personaId, userId);
 
       if (persona && persona.parameters?.system_prompt) {
         const newSystemMessage = persona.parameters.system_prompt.trim();
-        console.log(
-          `[DEBUG] updateSystemMessageForPersona: Found persona system prompt: "${newSystemMessage.substring(0, 100)}..."`
-        );
 
         // Update or replace the system message
         this.replaceSystemMessage(session, newSystemMessage);
-        console.log(
-          `[DEBUG] updateSystemMessageForPersona: Successfully updated system message for session ${session.id}`
-        );
       } else {
-        console.log(
-          `[DEBUG] updateSystemMessageForPersona: No system prompt found for persona %s, using default`,
-          personaId
-        );
         // Fallback to default system message
         this.updateSystemMessageToDefault(session, userId);
       }
     } catch (error) {
       console.error(
-        `[ERROR] updateSystemMessageForPersona: Error getting persona %s:`,
+        `updateSystemMessageForPersona: Error getting persona %s:`,
         personaId,
         error
       );
@@ -537,9 +420,6 @@ class ChatService {
     userId: string
   ): void {
     const defaultSystemMessage = preferencesService.getSystemMessage(userId);
-    console.log(
-      `[DEBUG] updateSystemMessageToDefault: Using default system message: "${defaultSystemMessage.substring(0, 100)}..."`
-    );
     this.replaceSystemMessage(session, defaultSystemMessage);
   }
 
@@ -559,9 +439,6 @@ class ChatService {
         content: newSystemMessage,
         timestamp: Date.now(),
       };
-      console.log(
-        `[DEBUG] replaceSystemMessage: Updated existing system message`
-      );
     } else {
       // Add new system message at the beginning
       const systemMessage: ChatMessage = {
@@ -571,7 +448,6 @@ class ChatService {
         timestamp: Date.now(),
       };
       session.messages.unshift(systemMessage);
-      console.log(`[DEBUG] replaceSystemMessage: Added new system message`);
     }
   }
 
@@ -585,19 +461,10 @@ class ChatService {
     session: ChatSession
   ): Promise<void> {
     try {
-      console.log(
-        `[ADVANCED-DEBUG] processAdvancedPersonaInteraction called - personaId: ${personaId}, userId: ${userId}`
-      );
-
       // Check if persona has advanced features enabled for current user only (no fallback to maintain privacy)
       const persona = await personaService.getPersonaById(personaId, userId);
-      console.log(
-        `[ADVANCED-DEBUG] Persona lookup for user ${userId}:`,
-        persona ? `Found: ${persona.name}` : 'Not found'
-      );
 
       if (!persona) {
-        console.log(`[ADVANCED-DEBUG] No persona found for user, exiting`);
         return;
       }
 
@@ -605,31 +472,16 @@ class ChatService {
       const hasAdvancedFeatures =
         persona.embedding_model || persona.memory_settings;
 
-      console.log(`[ADVANCED-DEBUG] Advanced features check:`, {
-        embedding_model: persona.embedding_model,
-        memory_settings: persona.memory_settings,
-        hasAdvancedFeatures,
-      });
-
       if (!hasAdvancedFeatures) {
-        console.log(`[ADVANCED-DEBUG] No advanced features, exiting`);
         return;
       }
-
-      console.log(
-        `[ADVANCED] Processing interaction for persona ${persona.name} (${personaId})`
-      );
 
       // Get advanced settings
       const embeddingModel =
         persona.embedding_model ||
         preferencesService.getDefaultEmbeddingModel(userId);
 
-      console.log(`[ADVANCED] Using embedding model: ${embeddingModel}`);
-      console.log(`[ADVANCED] Advanced features enabled`);
-
       // 1. Store the user message as a memory
-      console.log(`[ADVANCED] Storing user message as memory...`);
       await memoryService.storeMemory(
         userId,
         personaId,
@@ -638,10 +490,8 @@ class ChatService {
         undefined, // context
         0.7 // importance score
       );
-      console.log(`[ADVANCED] ✅ User message stored successfully`);
 
       // 2. Search for relevant memories
-      console.log(`[ADVANCED] Searching for relevant memories...`);
       const relevantMemories = await memoryService.searchMemories(
         userId,
         personaId,
@@ -650,19 +500,6 @@ class ChatService {
         5, // topK
         0.3 // similarity threshold
       );
-
-      console.log(
-        `[ADVANCED] Found ${relevantMemories.length} relevant memories`
-      );
-      if (relevantMemories.length > 0) {
-        console.log(
-          `[ADVANCED] Memory details:`,
-          relevantMemories.map(m => ({
-            content: m.entry.content.substring(0, 100) + '...',
-            similarity: (m.similarity_score * 100).toFixed(1) + '%',
-          }))
-        );
-      }
 
       // 3. Process potential mutations based on the interaction
       if (relevantMemories.length > 0) {
@@ -684,7 +521,7 @@ class ChatService {
         );
       }
     } catch (error) {
-      console.error(`[ADVANCED] Error processing persona interaction:`, error);
+      console.error(`Error processing persona interaction:`, error);
     }
   }
 
@@ -789,15 +626,8 @@ Guidelines:
       // Save the updated session
       this.sessions.set(session.id, session);
       storageService.saveSession(session, userId);
-
-      console.log(
-        `[ADVANCED] Updated system message with ${coreMemories.length} core + ${contextualMemories.length} contextual memories`
-      );
     } catch (error) {
-      console.error(
-        `[ADVANCED] Error updating system message with memories:`,
-        error
-      );
+      console.error(`Error updating system message with memories:`, error);
     }
   }
 
@@ -810,39 +640,19 @@ Guidelines:
     assistantMessage: string
   ): Promise<void> {
     try {
-      console.log(
-        `[ADVANCED-DEBUG] processAdvancedPersonaResponse called - personaId: ${personaId}, userId: ${userId}`
-      );
-
       // Check if persona has advanced features enabled for current user only (no fallback to maintain privacy)
       const persona = await personaService.getPersonaById(personaId, userId);
-      console.log(
-        `[ADVANCED-DEBUG] Persona lookup for user ${userId}:`,
-        persona ? `Found: ${persona.name}` : 'Not found'
-      );
 
       if (!persona) {
-        console.log(`[ADVANCED-DEBUG] No persona found for user, exiting`);
         return;
       }
 
       const hasAdvancedFeatures =
         persona.embedding_model || persona.memory_settings;
 
-      console.log(`[ADVANCED-DEBUG] Advanced detection check:`, {
-        embedding_model: persona.embedding_model,
-        memory_settings: persona.memory_settings,
-        hasAdvancedFeatures,
-      });
-
       if (!hasAdvancedFeatures) {
-        console.log(`[ADVANCED-DEBUG] Not an advanced persona, exiting`);
         return;
       }
-
-      console.log(
-        `[ADVANCED] Storing assistant response as memory for persona ${persona.name}`
-      );
 
       // Get advanced settings
       const embeddingModel =
@@ -858,10 +668,8 @@ Guidelines:
         undefined, // context
         0.6 // slightly lower importance than user messages
       );
-
-      console.log(`[ADVANCED] ✅ Assistant response stored successfully`);
     } catch (error) {
-      console.error(`[ADVANCED] Error processing persona response:`, error);
+      console.error(`Error processing persona response:`, error);
     }
   }
 

@@ -466,7 +466,12 @@ wss.on('connection', (ws, req) => {
       );
     }
   } catch (error) {
-    console.error('WebSocket auth error:', error);
+    // An expired/invalid token here is expected (e.g. a stale browser token);
+    // fall back to the default user without dumping a stack trace.
+    console.warn(
+      'WebSocket auth failed, using default user:',
+      error instanceof Error ? error.message : error
+    );
     // Continue with default user for backward compatibility
   }
 
@@ -633,13 +638,6 @@ wss.on('connection', (ws, req) => {
               role: msg.role as OllamaChatMessage['role'],
               content: msg.content,
             };
-
-            // Debug: Log what we're sending to Ollama
-            if (msg.role === 'system') {
-              console.log(
-                `🚀 [DEBUG] Sending to Ollama - System message: "${msg.content.substring(0, 150)}${msg.content.length > 150 ? '...' : ''}"`
-              );
-            }
 
             // Use enhanced content for the last user message if we have document context
             if (

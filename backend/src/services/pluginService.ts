@@ -311,36 +311,28 @@ class PluginService {
 
   // Delete a plugin
   deletePlugin(id: string): boolean {
-    console.log('[Plugin Delete] Attempting to delete plugin:', id);
-    console.log('[Plugin Delete] Plugins directory:', this.pluginsDir);
-
     // Validate the ID parameter using a strict pattern (allows dots for version numbers like 1.6b)
     const idPattern = /^[a-zA-Z0-9._-]+$/;
     if (!idPattern.test(id)) {
-      console.error('[Plugin Delete] Invalid plugin ID format:', id);
+      console.error('Invalid plugin ID format:', id);
       return false;
     }
 
     // Sanitize the ID to prevent path traversal
     const sanitizedId = sanitize(id);
     if (!sanitizedId || sanitizedId !== id) {
-      console.error('[Plugin Delete] Plugin ID failed sanitization:', id);
+      console.error('Plugin ID failed sanitization:', id);
       return false;
     }
 
     const filePath = path.resolve(this.pluginsDir, `${sanitizedId}.json`);
-    console.log('[Plugin Delete] Resolved file path:', filePath);
-    console.log('[Plugin Delete] File exists:', fs.existsSync(filePath));
 
     // Ensure the file path is within the plugins directory
     if (
       !filePath.startsWith(path.resolve(this.pluginsDir)) ||
       !fs.existsSync(filePath)
     ) {
-      console.error(
-        '[Plugin Delete] File path is invalid or does not exist:',
-        filePath
-      );
+      console.error('File path is invalid or does not exist:', filePath);
       return false;
     }
 
@@ -394,30 +386,15 @@ class PluginService {
 
   // Get the active plugin for a specific model
   getActivePluginForModel(model: string): Plugin | null {
-    console.log(`[DEBUG] Looking for plugin for model: ${model}`);
-
     // Get all available plugins (not just active ones)
     const allPlugins = this.getAllPlugins();
-    console.log(
-      `[DEBUG] Available plugins:`,
-      allPlugins.map(p => p.id)
-    );
 
     // Find the plugin that supports this model
     for (const plugin of allPlugins) {
-      console.log(
-        `[DEBUG] Checking plugin ${plugin.id} with model_map:`,
-        plugin.model_map
-      );
       if (plugin.model_map.includes(model)) {
-        console.log(`[DEBUG] Found plugin ${plugin.id} for model ${model}`);
-
         // Check if we have the required API key (from DB or env)
         const apiKey = this.getApiKey(plugin);
         if (!apiKey) {
-          console.log(
-            `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
-          );
           continue;
         }
 
@@ -425,27 +402,14 @@ class PluginService {
       }
     }
 
-    console.log(`[DEBUG] No plugin found for model: ${model}`);
     return null;
   }
 
   // Get all currently active plugins
   getActivePlugins(): Plugin[] {
     const allPlugins = this.getAllPlugins();
-    console.log(
-      'All plugins:',
-      allPlugins.map(p => ({ id: p.id, active: p.active }))
-    );
-    console.log(
-      'Active plugin IDs in memory:',
-      Array.from(this.activePluginIds)
-    );
     const activePlugins = allPlugins.filter(plugin =>
       this.activePluginIds.has(plugin.id)
-    );
-    console.log(
-      'Filtered active plugins:',
-      activePlugins.map(p => p.id)
     );
     return activePlugins;
   }
@@ -1260,8 +1224,6 @@ class PluginService {
 
   // Get plugin that supports TTS for a specific model
   getPluginForTTS(model: string): Plugin | null {
-    console.log(`[DEBUG] Looking for TTS plugin for model: ${model}`);
-
     const allPlugins = this.getAllPlugins();
 
     for (const plugin of allPlugins) {
@@ -1269,10 +1231,6 @@ class PluginService {
       if (plugin.capabilities?.tts) {
         const ttsCapability = plugin.capabilities.tts;
         if (ttsCapability.model_map.includes(model)) {
-          console.log(
-            `[DEBUG] Found TTS plugin ${plugin.id} for model ${model}`
-          );
-
           // Check if no auth is required (e.g., local TTS servers)
           const noAuthRequired =
             (ttsCapability.config as Record<string, unknown> | undefined)
@@ -1281,9 +1239,6 @@ class PluginService {
           // Check if we have the required API key (from DB or env)
           const apiKey = this.getApiKey(plugin);
           if (!apiKey && !noAuthRequired) {
-            console.log(
-              `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
-            );
             continue;
           }
 
@@ -1293,10 +1248,6 @@ class PluginService {
 
       // Also check primary type for backward compatibility with TTS-only plugins
       if (plugin.type === 'tts' && plugin.model_map.includes(model)) {
-        console.log(
-          `[DEBUG] Found TTS-type plugin ${plugin.id} for model ${model}`
-        );
-
         // Check if no auth is required
         const noAuthRequired =
           (
@@ -1307,9 +1258,6 @@ class PluginService {
 
         const apiKey = this.getApiKey(plugin);
         if (!apiKey && !noAuthRequired) {
-          console.log(
-            `[DEBUG] Plugin ${plugin.id} found but API key not set (checked DB and ${plugin.auth.key_env})`
-          );
           continue;
         }
 
@@ -1317,7 +1265,6 @@ class PluginService {
       }
     }
 
-    console.log(`[DEBUG] No TTS plugin found for model: ${model}`);
     return null;
   }
 
@@ -1815,26 +1762,6 @@ class PluginService {
       throw new Error(`Invalid endpoint URL constructed: ${processedEndpoint}`);
     }
 
-    // Debug logging for TTS request (redact sensitive headers)
-    const redactedHeaders = Object.fromEntries(
-      Object.entries(headers).map(([key, value]) => [
-        key,
-        key.toLowerCase().includes('authorization') ||
-        key.toLowerCase().includes('api-key') ||
-        key.toLowerCase().includes('apikey') ||
-        key.toLowerCase().includes('token') ||
-        key.toLowerCase().includes('secret')
-          ? '[REDACTED]'
-          : value,
-      ])
-    );
-    console.log(`[TTS Debug] Endpoint: ${processedEndpoint}`);
-    console.log(`[TTS Debug] Payload:`, JSON.stringify(payload, null, 2));
-    console.log(
-      `[TTS Debug] Headers:`,
-      JSON.stringify(redactedHeaders, null, 2)
-    );
-
     try {
       const response = await axios.post(processedEndpoint, payload, {
         headers,
@@ -1862,7 +1789,6 @@ class PluginService {
             const errorText = Buffer.from(axiosError.response.data).toString(
               'utf8'
             );
-            console.error(`[TTS Debug] Error response body:`, errorText);
             const errorJson = JSON.parse(errorText);
             errorMessage =
               errorJson.error?.message ||
@@ -1875,7 +1801,6 @@ class PluginService {
               'utf8'
             );
             if (rawText) {
-              console.error(`[TTS Debug] Raw error response:`, rawText);
               errorMessage = rawText.substring(0, 200);
             }
           }
@@ -1973,7 +1898,6 @@ class PluginService {
       }
     }
 
-    console.log(`[DEBUG] No image generation plugin found for model: ${model}`);
     return null;
   }
 

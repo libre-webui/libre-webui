@@ -764,10 +764,6 @@ export class MemoryService {
    * Get memory count for a persona
    */
   async getMemoryCount(userId: string, personaId: string): Promise<number> {
-    console.log(
-      `[MEMORY-DEBUG] getMemoryCount called - userId: ${userId}, personaId: ${personaId}`
-    );
-
     const db = this.ensureDatabase();
     const stmt = db.prepare(`
       SELECT COUNT(*) as count
@@ -776,8 +772,6 @@ export class MemoryService {
     `);
 
     const result = stmt.get(userId, personaId) as { count: number };
-    console.log(`[MEMORY-DEBUG] Query result:`, result);
-    console.log(`[MEMORY-DEBUG] Memory count: ${result.count}`);
 
     return result.count;
   }

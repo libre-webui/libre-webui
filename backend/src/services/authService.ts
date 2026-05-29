@@ -83,10 +83,17 @@ export class AuthService {
    */
   verifyToken(token: string): AuthTokenPayload | null {
     try {
-      const payload = jwt.verify(token, JWT_SECRET) as AuthTokenPayload;
-      return payload;
+      return jwt.verify(token, JWT_SECRET) as AuthTokenPayload;
     } catch (error) {
-      console.error('Token verification failed:', error);
+      // Expired/invalid tokens are an expected, routine condition (e.g. a stale
+      // token left in the browser), so return null quietly. Only surface
+      // genuinely unexpected failures, and without dumping a full stack trace.
+      if (!(error instanceof jwt.JsonWebTokenError)) {
+        console.error(
+          'Unexpected token verification error:',
+          error instanceof Error ? error.message : error
+        );
+      }
       return null;
     }
   }
