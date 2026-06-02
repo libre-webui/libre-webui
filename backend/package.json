@@ -30,7 +30,7 @@
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.0",
     "multer": "^2.0.1",
-    "pdfjs-dist": "^5.4.530",
+    "pdfjs-dist": "^6.0.227",
     "sanitize-filename": "^1.6.3",
     "uuid": "^14.0.0",
     "ws": "^8.14.2"
@@ -43,13 +43,13 @@
     "@types/express": "^5.0.6",
     "@types/express-rate-limit": "^6.0.2",
     "@types/morgan": "^1.9.10",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.9.1",
     "@types/uuid": "^11.0.0",
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.34.0",
     "eslint": "^9.39.4",
-    "tsx": "^4.22.3",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
