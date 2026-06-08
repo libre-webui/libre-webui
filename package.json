@@ -97,7 +97,7 @@
     "@typescript-eslint/parser": "^8.34.0",
     "concurrently": "^10.0.1",
     "electron": "41.7.1",
-    "electron-builder": "26.11.0",
+    "electron-builder": "26.15.2",
     "eslint": "^9.39.4",
     "png-to-ico": "^3.0.1",
     "prettier": "^3.7.4",
