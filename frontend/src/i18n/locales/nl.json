@@ -307,6 +307,11 @@
         "amoled": "Puur Zwart",
         "system": "Systeem"
       },
+      "accent": {
+        "title": "Accentkleur",
+        "custom": "Aangepaste kleur",
+        "useColor": "{{color}} als accent gebruiken"
+      },
       "chatInterface": {
         "title": "Chat-interface",
         "showUsername": "Gebruikersnaam tonen",

@@ -307,6 +307,11 @@
         "amoled": "Hitam Murni",
         "system": "Sistem"
       },
+      "accent": {
+        "title": "Warna aksen",
+        "custom": "Warna kustom",
+        "useColor": "Gunakan aksen {{color}}"
+      },
       "chatInterface": {
         "title": "Antarmuka Chat",
         "showUsername": "Tampilkan Nama Pengguna",

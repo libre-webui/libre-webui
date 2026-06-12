@@ -307,6 +307,11 @@
         "amoled": "Dyb Sort",
         "system": "System"
       },
+      "accent": {
+        "title": "Accentfarve",
+        "custom": "Brugerdefineret farve",
+        "useColor": "Brug {{color}} som accent"
+      },
       "chatInterface": {
         "title": "Chat-grænseflade",
         "showUsername": "Vis brugernavn",

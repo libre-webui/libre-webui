@@ -307,6 +307,11 @@
         "amoled": "أسود نقي",
         "system": "النظام"
       },
+      "accent": {
+        "title": "لون التمييز",
+        "custom": "لون مخصص",
+        "useColor": "استخدام {{color}} كلون تمييز"
+      },
       "chatInterface": {
         "title": "واجهة المحادثة",
         "showUsername": "إظهار اسم المستخدم",

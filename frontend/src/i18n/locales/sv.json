@@ -307,6 +307,11 @@
         "amoled": "Djupsvart",
         "system": "System"
       },
+      "accent": {
+        "title": "Accentfärg",
+        "custom": "Anpassad färg",
+        "useColor": "Använd {{color}} som accent"
+      },
       "chatInterface": {
         "title": "Chattgränssnitt",
         "showUsername": "Visa användarnamn",

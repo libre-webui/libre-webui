@@ -307,6 +307,11 @@
         "amoled": "ピュアブラック",
         "system": "システム"
       },
+      "accent": {
+        "title": "アクセントカラー",
+        "custom": "カスタムカラー",
+        "useColor": "{{color}}のアクセントを使用"
+      },
       "chatInterface": {
         "title": "チャットインターフェース",
         "showUsername": "ユーザー名を表示",
