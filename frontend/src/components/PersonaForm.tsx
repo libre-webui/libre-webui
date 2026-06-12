@@ -917,9 +917,9 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                 </div>
 
                 {/* Adaptive Learning Card */}
-                <div className='rounded-xl overflow-hidden border border-violet-200/50 dark:border-violet-700/30'>
+                <div className='rounded-xl overflow-hidden border border-primary-200/50 dark:border-primary-700/30'>
                   {/* Header */}
-                  <div className='px-5 py-4 bg-gradient-to-r from-violet-500 to-purple-500 dark:from-violet-600 dark:to-purple-600'>
+                  <div className='px-5 py-4 bg-primary-600 dark:bg-primary-600'>
                     <div className='flex items-center justify-between'>
                       <div className='flex items-center gap-3'>
                         <div className='w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center'>
@@ -951,7 +951,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                     <div className='p-5 bg-white dark:bg-dark-100 space-y-5'>
                       {/* Sensitivity Selection */}
                       <div>
-                        <label className='block text-sm font-medium text-violet-700 dark:text-violet-300 mb-3'>
+                        <label className='block text-sm font-medium text-primary-700 dark:text-primary-300 mb-3'>
                           {t('personaForm.learning.speed')}
                         </label>
                         <div className='grid grid-cols-3 gap-3'>
@@ -987,8 +987,8 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                                 'p-3 rounded-xl text-center transition-all border',
                                 formData.mutation_settings?.sensitivity ===
                                   level
-                                  ? 'bg-violet-500 border-violet-500 text-white shadow-lg shadow-violet-500/25'
-                                  : 'bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-700/30 text-violet-700 dark:text-violet-300 hover:bg-violet-100 dark:hover:bg-violet-900/30'
+                                  ? 'bg-primary-600 border-primary-600 text-white shadow-lg'
+                                  : 'bg-primary-50 dark:bg-primary-900/20 border-primary-200 dark:border-primary-700/30 text-primary-700 dark:text-primary-300 hover:bg-primary-100 dark:hover:bg-primary-900/30'
                               )}
                             >
                               <Icon className='h-5 w-5 mx-auto mb-1' />
@@ -1007,30 +1007,30 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
                             auto_adapt: checked,
                           })
                         }
-                        colorClass='text-violet-700 dark:text-violet-300'
+                        colorClass='text-primary-700 dark:text-primary-300'
                       />
 
                       {/* What it learns */}
-                      <div className='p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl'>
-                        <p className='text-xs font-medium text-violet-700 dark:text-violet-300 mb-2 flex items-center gap-1.5'>
+                      <div className='p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl'>
+                        <p className='text-xs font-medium text-primary-700 dark:text-primary-300 mb-2 flex items-center gap-1.5'>
                           <Brain className='h-3.5 w-3.5' />
                           {t('personaForm.learning.whatLearns')}
                         </p>
-                        <div className='grid grid-cols-2 gap-2 text-xs text-violet-600 dark:text-violet-400'>
+                        <div className='grid grid-cols-2 gap-2 text-xs text-primary-600 dark:text-primary-400'>
                           <div className='flex items-center gap-1.5'>
-                            <div className='w-1 h-1 rounded-full bg-violet-400' />
+                            <div className='w-1 h-1 rounded-full bg-primary-400' />
                             {t('personaForm.learning.conversationTone')}
                           </div>
                           <div className='flex items-center gap-1.5'>
-                            <div className='w-1 h-1 rounded-full bg-violet-400' />
+                            <div className='w-1 h-1 rounded-full bg-primary-400' />
                             {t('personaForm.learning.responseStyle')}
                           </div>
                           <div className='flex items-center gap-1.5'>
-                            <div className='w-1 h-1 rounded-full bg-violet-400' />
+                            <div className='w-1 h-1 rounded-full bg-primary-400' />
                             {t('personaForm.learning.userPreferences')}
                           </div>
                           <div className='flex items-center gap-1.5'>
-                            <div className='w-1 h-1 rounded-full bg-violet-400' />
+                            <div className='w-1 h-1 rounded-full bg-primary-400' />
                             {t('personaForm.learning.topicInterests')}
                           </div>
                         </div>

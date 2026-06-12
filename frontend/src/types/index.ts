@@ -161,6 +161,17 @@ export interface WebSocketMessage {
 
 export interface Theme {
   mode: 'light' | 'dark';
+  accent?:
+    | 'violet'
+    | 'blue'
+    | 'cyan'
+    | 'teal'
+    | 'emerald'
+    | 'amber'
+    | 'rose'
+    | 'slate'
+    | 'custom';
+  customAccent?: string;
 }
 
 export interface TTSSettings {

@@ -19,6 +19,12 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { UserPreferences, Theme, Artifact } from '@/types';
 import { isDemoMode, getDemoConfig } from '@/utils/demoMode';
+import {
+  applyThemeToDocument,
+  DEFAULT_ACCENT,
+  DEFAULT_CUSTOM_ACCENT,
+  normalizeTheme,
+} from '@/utils/theme';
 
 interface AppState {
   // Theme
@@ -72,18 +78,26 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       // Theme
-      theme: { mode: 'light' },
+      theme: {
+        mode: 'light',
+        accent: DEFAULT_ACCENT,
+        customAccent: DEFAULT_CUSTOM_ACCENT,
+      },
       setTheme: theme => {
-        set({ theme });
-        document.documentElement.classList.remove('dark', 'ophelia');
-        if (theme.mode === 'dark') {
-          document.documentElement.classList.add('dark');
-        }
+        const nextTheme = normalizeTheme(theme);
+        set(state => ({
+          theme: nextTheme,
+          preferences: {
+            ...state.preferences,
+            theme: nextTheme,
+          },
+        }));
+        applyThemeToDocument(nextTheme);
       },
       toggleTheme: () => {
         const currentTheme = get().theme;
         const nextMode = currentTheme.mode === 'dark' ? 'light' : 'dark';
-        get().setTheme({ mode: nextMode });
+        get().setTheme({ ...currentTheme, mode: nextMode });
       },
 
       // Sidebar
@@ -105,7 +119,11 @@ export const useAppStore = create<AppState>()(
 
       // User preferences
       preferences: {
-        theme: { mode: 'light' },
+        theme: {
+          mode: 'light',
+          accent: DEFAULT_ACCENT,
+          customAccent: DEFAULT_CUSTOM_ACCENT,
+        },
         defaultModel: '',
         systemMessage: '',
         generationOptions: {
@@ -133,10 +151,24 @@ export const useAppStore = create<AppState>()(
           opacity: 0.6,
         },
       },
-      setPreferences: newPreferences =>
+      setPreferences: newPreferences => {
+        const nextTheme = newPreferences.theme
+          ? normalizeTheme(newPreferences.theme)
+          : null;
+
         set(state => ({
-          preferences: { ...state.preferences, ...newPreferences },
-        })),
+          ...(nextTheme && { theme: nextTheme }),
+          preferences: {
+            ...state.preferences,
+            ...newPreferences,
+            ...(nextTheme && { theme: nextTheme }),
+          },
+        }));
+
+        if (nextTheme) {
+          applyThemeToDocument(nextTheme);
+        }
+      },
 
       loadPreferences: async () => {
         try {
@@ -144,11 +176,9 @@ export const useAppStore = create<AppState>()(
           const response = await preferencesApi.getPreferences();
           if (response.success && response.data) {
             const data = response.data;
-            set(state => ({
-              preferences: { ...state.preferences, ...data },
-              // Restore background image from backend preferences
-              backgroundImage: data.backgroundSettings?.imageUrl || null,
-            }));
+            get().setPreferences(data);
+            // Restore background image from backend preferences
+            set({ backgroundImage: data.backgroundSettings?.imageUrl || null });
           }
         } catch (error: unknown) {
           console.warn('Failed to load preferences from backend:', error);
@@ -264,10 +294,17 @@ export const useAppStore = create<AppState>()(
 
       // Clear user-specific state (called on logout/login to prevent data leaking between users)
       clearUserState: () => {
+        const defaultTheme = normalizeTheme({
+          mode: 'light',
+          accent: DEFAULT_ACCENT,
+          customAccent: DEFAULT_CUSTOM_ACCENT,
+        });
+
         set({
+          theme: defaultTheme,
           backgroundImage: null,
           preferences: {
-            theme: { mode: 'light' },
+            theme: defaultTheme,
             defaultModel: '',
             systemMessage: '',
             generationOptions: {
@@ -296,10 +333,16 @@ export const useAppStore = create<AppState>()(
             },
           },
         });
+        applyThemeToDocument(defaultTheme);
       },
     }),
     {
       name: 'libre-webui-app-state',
+      onRehydrateStorage: () => state => {
+        if (state) {
+          state.setTheme(normalizeTheme(state.theme));
+        }
+      },
       partialize: state => {
         // Exclude backgroundSettings from persisted preferences to avoid overwriting backend data
         const { backgroundSettings: _, ...preferencesWithoutBackground } =

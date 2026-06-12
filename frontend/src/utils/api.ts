@@ -129,6 +129,87 @@ const getDemoSessions = (): ChatSession[] => {
 
 const DEMO_SESSIONS: ChatSession[] = getDemoSessions();
 
+const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
+  theme: { mode: 'dark', accent: 'violet', customAccent: '#7c3aed' },
+  defaultModel: 'llama3.2:3b',
+  systemMessage: 'You are a helpful assistant.',
+  generationOptions: {
+    temperature: 0.7,
+    top_p: 0.9,
+    top_k: 40,
+    num_predict: 1024,
+  },
+  embeddingSettings: {
+    enabled: false,
+    model: 'nomic-embed-text',
+    chunkSize: 1000,
+    chunkOverlap: 200,
+    similarityThreshold: 0.7,
+  },
+  showUsername: false,
+  backgroundSettings: {
+    enabled: false,
+    imageUrl: '',
+    blurAmount: 10,
+    opacity: 0.6,
+  },
+};
+
+let DEMO_PREFERENCES: UserPreferences = {
+  ...DEFAULT_DEMO_PREFERENCES,
+  theme: { ...DEFAULT_DEMO_PREFERENCES.theme },
+  generationOptions: { ...DEFAULT_DEMO_PREFERENCES.generationOptions },
+  embeddingSettings: { ...DEFAULT_DEMO_PREFERENCES.embeddingSettings },
+  backgroundSettings: { ...DEFAULT_DEMO_PREFERENCES.backgroundSettings! },
+};
+
+type DemoPreferenceUpdates = Partial<
+  Omit<
+    UserPreferences,
+    'theme' | 'generationOptions' | 'embeddingSettings' | 'backgroundSettings'
+  >
+> & {
+  theme?: Partial<UserPreferences['theme']>;
+  generationOptions?: Partial<UserPreferences['generationOptions']>;
+  embeddingSettings?: Partial<UserPreferences['embeddingSettings']>;
+  backgroundSettings?: Partial<
+    NonNullable<UserPreferences['backgroundSettings']>
+  >;
+};
+
+const updateDemoPreferences = (
+  updates: DemoPreferenceUpdates
+): UserPreferences => {
+  const currentBackgroundSettings =
+    DEMO_PREFERENCES.backgroundSettings ||
+    DEFAULT_DEMO_PREFERENCES.backgroundSettings!;
+
+  DEMO_PREFERENCES = {
+    ...DEMO_PREFERENCES,
+    ...updates,
+    theme: {
+      ...DEMO_PREFERENCES.theme,
+      ...updates.theme,
+    },
+    generationOptions: {
+      ...DEMO_PREFERENCES.generationOptions,
+      ...updates.generationOptions,
+    },
+    embeddingSettings: {
+      ...DEMO_PREFERENCES.embeddingSettings,
+      ...updates.embeddingSettings,
+    },
+    backgroundSettings: updates.backgroundSettings
+      ? {
+          ...currentBackgroundSettings,
+          ...updates.backgroundSettings,
+        }
+      : DEMO_PREFERENCES.backgroundSettings,
+  };
+
+  return DEMO_PREFERENCES;
+};
+
 // Get timeout from environment variable, default to 5 minutes for large models
 const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT
   ? parseInt(import.meta.env.VITE_API_TIMEOUT)
@@ -1011,43 +1092,111 @@ export const pluginApi = {
 };
 
 export const preferencesApi = {
-  getPreferences: (): Promise<ApiResponse<UserPreferences>> =>
-    api.get('/preferences').then(res => res.data),
+  getPreferences: (): Promise<ApiResponse<UserPreferences>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(DEMO_PREFERENCES);
+    }
+
+    return api.get('/preferences').then(res => res.data);
+  },
 
   updatePreferences: (
     updates: Partial<UserPreferences>
-  ): Promise<ApiResponse<UserPreferences>> =>
-    api.put('/preferences', updates).then(res => res.data),
+  ): Promise<ApiResponse<UserPreferences>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(updateDemoPreferences(updates));
+    }
 
-  setDefaultModel: (model: string): Promise<ApiResponse<UserPreferences>> =>
-    api.put('/preferences/default-model', { model }).then(res => res.data),
+    return api.put('/preferences', updates).then(res => res.data);
+  },
 
-  setSystemMessage: (message: string): Promise<ApiResponse<UserPreferences>> =>
-    api.put('/preferences/system-message', { message }).then(res => res.data),
+  setDefaultModel: (model: string): Promise<ApiResponse<UserPreferences>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(updateDemoPreferences({ defaultModel: model }));
+    }
+
+    return api
+      .put('/preferences/default-model', { model })
+      .then(res => res.data);
+  },
+
+  setSystemMessage: (
+    message: string
+  ): Promise<ApiResponse<UserPreferences>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(
+        updateDemoPreferences({ systemMessage: message })
+      );
+    }
+
+    return api
+      .put('/preferences/system-message', { message })
+      .then(res => res.data);
+  },
 
   setGenerationOptions: (
     options: Partial<UserPreferences['generationOptions']>
-  ): Promise<ApiResponse<UserPreferences>> =>
-    api.put('/preferences/generation-options', options).then(res => res.data),
+  ): Promise<ApiResponse<UserPreferences>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(
+        updateDemoPreferences({ generationOptions: options })
+      );
+    }
 
-  resetGenerationOptions: (): Promise<ApiResponse<UserPreferences>> =>
-    api.post('/preferences/generation-options/reset').then(res => res.data),
+    return api
+      .put('/preferences/generation-options', options)
+      .then(res => res.data);
+  },
+
+  resetGenerationOptions: (): Promise<ApiResponse<UserPreferences>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(
+        updateDemoPreferences({
+          generationOptions: DEFAULT_DEMO_PREFERENCES.generationOptions,
+        })
+      );
+    }
+
+    return api
+      .post('/preferences/generation-options/reset')
+      .then(res => res.data);
+  },
 
   // Embedding settings
   setEmbeddingSettings: (
     settings: UserPreferences['embeddingSettings']
-  ): Promise<ApiResponse<UserPreferences>> =>
-    api.put('/preferences/embedding-settings', settings).then(res => res.data),
+  ): Promise<ApiResponse<UserPreferences>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(
+        updateDemoPreferences({ embeddingSettings: settings })
+      );
+    }
 
-  resetEmbeddingSettings: (): Promise<ApiResponse<UserPreferences>> =>
-    api.post('/preferences/embedding-settings/reset').then(res => res.data), // Data import/export
+    return api
+      .put('/preferences/embedding-settings', settings)
+      .then(res => res.data);
+  },
+
+  resetEmbeddingSettings: (): Promise<ApiResponse<UserPreferences>> => {
+    if (isDemoMode()) {
+      return createDemoResponse(
+        updateDemoPreferences({
+          embeddingSettings: DEFAULT_DEMO_PREFERENCES.embeddingSettings,
+        })
+      );
+    }
+
+    return api
+      .post('/preferences/embedding-settings/reset')
+      .then(res => res.data);
+  }, // Data import/export
   importData: (
     data: Record<string, unknown>,
     mergeStrategy: 'replace' | 'merge' = 'replace'
   ): Promise<ApiResponse<UserPreferences>> => {
     if (isDemoMode()) {
       return createDemoResponse<UserPreferences>({
-        theme: { mode: 'dark' },
+        theme: { mode: 'dark', accent: 'violet', customAccent: '#7c3aed' },
         defaultModel: 'llama3.2',
         systemMessage: 'You are a helpful assistant.',
         generationOptions: {},

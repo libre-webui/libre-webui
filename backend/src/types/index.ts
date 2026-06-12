@@ -134,7 +134,20 @@ export interface TitleSettings {
 
 export interface UserPreferences {
   defaultModel: string;
-  theme: { mode: 'light' | 'dark' | 'ophelia' };
+  theme: {
+    mode: 'light' | 'dark' | 'ophelia';
+    accent?:
+      | 'violet'
+      | 'blue'
+      | 'cyan'
+      | 'teal'
+      | 'emerald'
+      | 'amber'
+      | 'rose'
+      | 'slate'
+      | 'custom';
+    customAccent?: string;
+  };
   systemMessage: string;
   generationOptions: GenerationOptions;
   // Embedding settings for semantic search
