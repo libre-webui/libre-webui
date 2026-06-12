@@ -307,6 +307,11 @@
         "amoled": "퓨어 블랙",
         "system": "시스템"
       },
+      "accent": {
+        "title": "강조 색상",
+        "custom": "사용자 지정 색상",
+        "useColor": "{{color}} 강조 색상 사용"
+      },
       "chatInterface": {
         "title": "채팅 인터페이스",
         "showUsername": "사용자 이름 표시",

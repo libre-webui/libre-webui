@@ -307,6 +307,11 @@
         "amoled": "शुद्ध काला",
         "system": "सिस्टम"
       },
+      "accent": {
+        "title": "एक्सेंट रंग",
+        "custom": "कस्टम रंग",
+        "useColor": "{{color}} एक्सेंट का उपयोग करें"
+      },
       "chatInterface": {
         "title": "चैट इंटरफ़ेस",
         "showUsername": "उपयोगकर्ता नाम दिखाएं",

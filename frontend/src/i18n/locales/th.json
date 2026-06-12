@@ -307,6 +307,11 @@
         "amoled": "ดำสนิท",
         "system": "ระบบ"
       },
+      "accent": {
+        "title": "สีเน้น",
+        "custom": "สีที่กำหนดเอง",
+        "useColor": "ใช้ {{color}} เป็นสีเน้น"
+      },
       "chatInterface": {
         "title": "อินเทอร์เฟซแชท",
         "showUsername": "แสดงชื่อผู้ใช้",

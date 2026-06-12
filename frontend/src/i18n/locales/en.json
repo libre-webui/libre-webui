@@ -307,6 +307,11 @@
         "amoled": "Pure Black",
         "system": "System"
       },
+      "accent": {
+        "title": "Accent color",
+        "custom": "Custom color",
+        "useColor": "Use {{color}} accent"
+      },
       "chatInterface": {
         "title": "Chat Interface",
         "showUsername": "Show Username",

@@ -35,7 +35,7 @@ interface ExportData {
 class PreferencesService {
   private defaultPreferences: UserPreferences = {
     defaultModel: '',
-    theme: { mode: 'light' },
+    theme: { mode: 'light', accent: 'violet', customAccent: '#7c3aed' },
     systemMessage: 'You are a helpful assistant.',
     generationOptions: {
       // Core parameters
@@ -123,6 +123,10 @@ class PreferencesService {
     return {
       ...this.defaultPreferences,
       ...preferences,
+      theme: {
+        ...this.defaultPreferences.theme,
+        ...preferences.theme,
+      },
       generationOptions: {
         ...this.defaultPreferences.generationOptions,
         ...preferences.generationOptions,
@@ -150,6 +154,10 @@ class PreferencesService {
     const updatedPreferences: UserPreferences = {
       ...currentPreferences,
       ...updates,
+      theme: {
+        ...currentPreferences.theme,
+        ...updates.theme,
+      },
       generationOptions: {
         ...currentPreferences.generationOptions,
         ...updates.generationOptions,

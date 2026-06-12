@@ -15,6 +15,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.10.0] - 2026-06-12
+
+### What's New
+
+0.10.0 expands model-provider workflows, theme customization, and release maintenance. The release adds a bundled llama.cpp provider profile, first-class Ollama Cloud browsing, a full custom accent system, quieter authentication/plugin logging, and dependency updates needed for the current Electron and frontend stack.
+
+### ✨ New Features
+
+- Added a bundled `llama.cpp` completion provider profile for `qwen3-35b-a3b`, including configurable endpoint, sampling, token, penalty, and streaming defaults
+- Added an Ollama Cloud category in the Models library and model selector, backed by Ollama's dedicated cloud listing
+- Added custom accent selection in Appearance with violet, blue, cyan, teal, emerald, amber, rose, slate, and custom color options
+- Added runtime-generated accent shade scales so custom accents can drive buttons, links, focus rings, sliders, progress bars, selected states, and glow shadows
+
+### 🔧 Improvements
+
+- Reworked Tailwind theme tokens to use CSS variables for `primary` and `accent`, with generated custom palettes meeting white-text contrast targets
+- Refined light and dark neutral palettes to reduce glare while preserving contrast across app backgrounds, panels, inputs, and message surfaces
+- Persisted accent preferences through frontend state, backend preferences, import/export defaults, local rehydration, logout cleanup, and demo mode
+- Added accent translation keys across all supported locales and verified locale key parity against English
+- Expanded demo-mode preference APIs so Appearance, generation, embedding, system-message, and default-model settings can be exercised without a backend connection
+- Standardized the Libre WebUI wordmark through a shared `Logo` component across loading, login, setup, sidebar, and settings surfaces
+- Replaced fixed violet styling in persona adaptive-learning controls with active-accent tokens
+- Recolored Ollama library and Cloud badges from cyan to the design-system info-blue treatment
+- Reduced noisy debug logging across optional auth, chat, document search, plugin lookup, plugin deletion, TTS, image generation, and WebSocket auth paths
+- Returned package version in auth system info for UI/version display
+- Updated Dependabot targeting to `main` and ignored incompatible Electron and ESLint major bumps until their upstream compatibility gaps are resolved
+
+### 🐛 Bug Fixes
+
+- Fixed a critical app-wide `Too many re-renders` crash in `SettingsModal` by memoizing image-generation model/plugin arrays
+- Fixed Ollama Cloud model pulls by tagging cloud library results with `:cloud` before install/run actions
+- Fixed Ollama Cloud generation failures by stripping unsupported non-positive `num_predict` values before cloud requests
+- Fixed cloud model pull functionality
+- Fixed auto-title generation for persona/current-model workflows by resolving the real running model before sending title prompts
+- Quietly handles expired or invalid JWTs in auth and WebSocket flows without dumping routine stack traces
+- Kept the lint toolchain on ESLint 9 for compatibility with the current React plugin stack
+
+### 📚 Documentation
+
+- Expanded `DESIGN.md` with custom accent presets, generated shade-scale behavior, token usage rules, light/dark neutral guidance, and contrast requirements
+
+### 📦 Dependencies
+
+- Bumped package versions to `0.10.0`
+- Updated Electron to `41.7.1` and Electron Builder to `26.15.2`
+- Bumped frontend/backend dependencies including React Query, i18next, KaTeX, lucide-react, React Router, Vite, pdfjs-dist, TypeScript tooling, Tailwind Merge, Zustand, Express, Multer, Better SQLite3, and related lockfile entries
+- Remediated npm security advisories through dependency and lockfile updates, including `qs`, `tmp`, `ip-address`, `brace-expansion`, `ws`, and related transitive packages
+
 ## [0.9.0] - 2026-04-28
 
 ### What's New

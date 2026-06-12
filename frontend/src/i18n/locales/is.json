@@ -307,6 +307,11 @@
         "amoled": "Hreinn Svartur",
         "system": "Kerfis"
       },
+      "accent": {
+        "title": "Áherslulitur",
+        "custom": "Sérsniðinn litur",
+        "useColor": "Nota {{color}} sem áherslulit"
+      },
       "chatInterface": {
         "title": "Spjallviðmót",
         "showUsername": "Sýna notandanafn",

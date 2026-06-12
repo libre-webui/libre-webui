@@ -307,6 +307,11 @@
         "amoled": "Saf Siyah",
         "system": "Sistem"
       },
+      "accent": {
+        "title": "Vurgu rengi",
+        "custom": "Özel renk",
+        "useColor": "{{color}} vurgusunu kullan"
+      },
       "chatInterface": {
         "title": "Sohbet Arayüzü",
         "showUsername": "Kullanıcı Adını Göster",

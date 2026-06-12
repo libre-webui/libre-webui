@@ -307,6 +307,11 @@
         "amoled": "Reines Schwarz",
         "system": "System"
       },
+      "accent": {
+        "title": "Akzentfarbe",
+        "custom": "Benutzerdefinierte Farbe",
+        "useColor": "{{color}} als Akzent verwenden"
+      },
       "chatInterface": {
         "title": "Chat-Oberfläche",
         "showUsername": "Benutzername anzeigen",

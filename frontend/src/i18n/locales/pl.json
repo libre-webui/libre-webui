@@ -307,6 +307,11 @@
         "amoled": "Czysta Czerń",
         "system": "Systemowy"
       },
+      "accent": {
+        "title": "Kolor akcentu",
+        "custom": "Kolor niestandardowy",
+        "useColor": "Użyj {{color}} jako akcentu"
+      },
       "chatInterface": {
         "title": "Interfejs czatu",
         "showUsername": "Pokaż nazwę użytkownika",

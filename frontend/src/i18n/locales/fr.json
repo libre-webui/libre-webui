@@ -307,6 +307,11 @@
         "amoled": "Noir Pur",
         "system": "Système"
       },
+      "accent": {
+        "title": "Couleur d'accent",
+        "custom": "Couleur personnalisée",
+        "useColor": "Utiliser {{color}} comme couleur d'accent"
+      },
       "chatInterface": {
         "title": "Interface de chat",
         "showUsername": "Afficher le nom d'utilisateur",

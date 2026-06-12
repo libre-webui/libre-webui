@@ -58,7 +58,13 @@ import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAuthStore } from '@/store/authStore';
-import { EmbeddingModel } from '@/types';
+import { EmbeddingModel, Theme } from '@/types';
+import {
+  ACCENT_OPTIONS,
+  DEFAULT_CUSTOM_ACCENT,
+  getThemeAccentColor,
+  normalizeTheme,
+} from '@/utils/theme';
 import {
   preferencesApi,
   ollamaApi,
@@ -757,8 +763,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
+  const activeAccent = theme.accent || 'violet';
+  const customAccentValue = theme.customAccent || DEFAULT_CUSTOM_ACCENT;
+  const accentPreviewColor = getThemeAccentColor(theme);
+
   const handleThemeChange = (mode: 'light' | 'dark') => {
-    const newTheme = { mode };
+    const currentTheme = useAppStore.getState().theme;
+    const newTheme = normalizeTheme({ ...currentTheme, mode });
+    setTheme(newTheme);
+    handleUpdatePreferences({ theme: newTheme });
+  };
+
+  const handleAccentChange = (accent: NonNullable<Theme['accent']>) => {
+    const currentTheme = useAppStore.getState().theme;
+    const newTheme = normalizeTheme({ ...currentTheme, accent });
+    setTheme(newTheme);
+    handleUpdatePreferences({ theme: newTheme });
+  };
+
+  const handleCustomAccentChange = (customAccent: string) => {
+    const currentTheme = useAppStore.getState().theme;
+    const newTheme = normalizeTheme({
+      ...currentTheme,
+      accent: 'custom',
+      customAccent,
+    });
     setTheme(newTheme);
     handleUpdatePreferences({ theme: newTheme });
   };
@@ -1077,13 +1106,91 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 onClick={() => handleThemeChange('dark')}
                 className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
                   theme.mode === 'dark'
-                    ? 'bg-dark-300 text-dark-800 border border-dark-400 shadow-sm hover:bg-dark-400 focus:ring-dark-500'
+                    ? 'bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow-md focus:ring-primary-500'
                     : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400'
                 }`}
               >
                 <Moon className='h-4 w-4' />
                 {t('settings.appearance.theme.dark')}
               </button>
+            </div>
+
+            <div className='border-t border-gray-200 dark:border-dark-300 pt-6'>
+              <div className='flex items-center justify-between gap-4 mb-3'>
+                <div>
+                  <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+                    {t('settings.appearance.accent.title', {
+                      defaultValue: 'Accent color',
+                    })}
+                  </h4>
+                </div>
+                <div
+                  className='h-9 w-9 rounded-full border border-gray-200 dark:border-dark-400 shadow-inner flex-shrink-0'
+                  style={{ backgroundColor: accentPreviewColor }}
+                  aria-hidden='true'
+                />
+              </div>
+
+              <div className='grid grid-cols-5 xs:grid-cols-6 sm:grid-cols-9 gap-2'>
+                {ACCENT_OPTIONS.map(option => {
+                  const isSelected = activeAccent === option.id;
+
+                  return (
+                    <button
+                      key={option.id}
+                      type='button'
+                      onClick={() => handleAccentChange(option.id)}
+                      className={`relative h-10 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-50 ${
+                        isSelected
+                          ? 'border-gray-900 dark:border-white shadow-md scale-105'
+                          : 'border-gray-200 dark:border-dark-400 hover:scale-105 hover:shadow-sm'
+                      }`}
+                      style={{ backgroundColor: option.color }}
+                      aria-label={t('settings.appearance.accent.useColor', {
+                        defaultValue: `Use ${option.label} accent`,
+                        color: option.label,
+                      })}
+                      title={option.label}
+                    >
+                      {isSelected && (
+                        <Check className='absolute inset-0 m-auto h-4 w-4 text-white drop-shadow' />
+                      )}
+                    </button>
+                  );
+                })}
+
+                <label
+                  className={`relative h-10 rounded-xl border transition-all duration-200 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-dark-50 overflow-hidden cursor-pointer ${
+                    activeAccent === 'custom'
+                      ? 'border-gray-900 dark:border-white shadow-md scale-105'
+                      : 'border-gray-200 dark:border-dark-400 hover:scale-105 hover:shadow-sm'
+                  }`}
+                  title={t('settings.appearance.accent.custom', {
+                    defaultValue: 'Custom color',
+                  })}
+                  aria-label={t('settings.appearance.accent.custom', {
+                    defaultValue: 'Custom color',
+                  })}
+                >
+                  <input
+                    type='color'
+                    value={customAccentValue}
+                    onInput={event =>
+                      handleCustomAccentChange(event.currentTarget.value)
+                    }
+                    onChange={event =>
+                      handleCustomAccentChange(event.target.value)
+                    }
+                    className='absolute inset-0 h-full w-full cursor-pointer opacity-0'
+                  />
+                  <span
+                    className='absolute inset-0'
+                    style={{ backgroundColor: customAccentValue }}
+                    aria-hidden='true'
+                  />
+                  <Palette className='absolute inset-0 m-auto h-4 w-4 text-white drop-shadow' />
+                </label>
+              </div>
             </div>
 
             <div>

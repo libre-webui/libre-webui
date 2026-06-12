@@ -307,6 +307,11 @@
         "amoled": "Čistě Černá",
         "system": "Systémový"
       },
+      "accent": {
+        "title": "Barva zvýraznění",
+        "custom": "Vlastní barva",
+        "useColor": "Použít barvu zvýraznění {{color}}"
+      },
       "chatInterface": {
         "title": "Rozhraní chatu",
         "showUsername": "Zobrazit uživatelské jméno",

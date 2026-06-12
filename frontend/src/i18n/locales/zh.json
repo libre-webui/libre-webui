@@ -307,6 +307,11 @@
         "amoled": "纯黑",
         "system": "跟随系统"
       },
+      "accent": {
+        "title": "强调色",
+        "custom": "自定义颜色",
+        "useColor": "使用 {{color}} 强调色"
+      },
       "chatInterface": {
         "title": "聊天界面",
         "showUsername": "显示用户名",

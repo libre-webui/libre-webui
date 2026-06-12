@@ -6,14 +6,28 @@ colors:
   secondary: '#9CA3AF'
   tertiary: '#7C3AED'
   neutral: '#0A0A0A'
-  neutral-secondary: '#171717'
-  neutral-tertiary: '#262626'
-  neutral-surface: '#1F1F1F'
+  neutral-secondary: '#111113'
+  neutral-tertiary: '#27272A'
+  neutral-surface: '#202023'
   accent: '#A78BFA'
   success: '#34D399'
   warning: '#FBBF24'
   error: '#F87171'
   info: '#60A5FA'
+accent-presets:
+  default: violet
+  options:
+    violet: '#7C3AED'
+    blue: '#2563EB'
+    cyan: '#0E7490'
+    teal: '#0F766E'
+    emerald: '#15803D'
+    amber: '#B45309'
+    rose: '#E11D48'
+    slate: '#475569'
+  custom:
+    enabled: true
+    minimumButtonContrast: 4.5
 typography:
   h1:
     fontFamily: Inter, system-ui, -apple-system, sans-serif
@@ -127,36 +141,42 @@ light:
     primary: '#111827'
     secondary: '#6B7280'
     tertiary: '#7C3AED'
-    neutral: '#F9FAFB'
+    neutral: '#F8FAFC'
     neutral-secondary: '#FFFFFF'
-    neutral-tertiary: '#F3F4F6'
-    neutral-surface: '#E5E7EB'
+    neutral-tertiary: '#F1F5F9'
+    neutral-surface: '#E2E8F0'
 ---
 
 ## Overview
 
-Libre WebUI is a privacy-first AI chat interface. The design language draws from the established conventions of modern AI chat UIs — the sidebar-plus-chat layout — while introducing a subtle violet accent that distinguishes the Libre identity. The overall feeling is focused, professional, and unobtrusive: a tool that stays out of the way and lets the conversation be the product.
+Libre WebUI is a privacy-first AI chat interface. The design language draws from the established conventions of modern AI chat UIs — the sidebar-plus-chat layout — while introducing a subtle violet default accent that distinguishes the Libre identity. The overall feeling is focused, professional, and unobtrusive: a tool that stays out of the way and lets the conversation be the product.
 
 Dark mode is the default and primary experience. Light mode exists for accessibility and preference, not as an afterthought but not as the hero either.
 
 ## Colors
 
-The palette is anchored in cool neutrals with a single accent family.
+The palette is anchored in cool neutrals with one active accent family at a time. Violet is the default, but users can choose another preset or a custom accent in Appearance.
 
 - **Primary (#FFFFFF in dark, #111827 in light):** Core text color. High contrast against the background in both modes. All body text, headings, and primary UI labels use this.
 - **Secondary (#9CA3AF):** Muted text for metadata, timestamps, sidebar labels, placeholder text, and secondary information. Never used for primary content — this is the "quiet" voice of the interface.
-- **Tertiary (#7C3AED — Violet 600):** The signature Libre color. Used exclusively for interactive elements that demand attention: primary buttons, active toggles, the send button, selected nav items. Restrained usage is critical — if tertiary appears on more than 5% of the visible surface, something is wrong.
-- **Accent (#A78BFA — Violet 400):** Hover state for tertiary elements and secondary highlights. Lighter to provide clear interactive feedback without introducing a new hue.
-- **Neutral (#0A0A0A):** Sidebar and deepest background layer. Near-black, warm-neutral with no blue cast — the dark mode hero feels grounded and high-contrast against violet accents.
-- **Neutral-secondary (#171717):** Chat area background. One step lighter than the sidebar to create depth without a hard border.
-- **Neutral-tertiary (#262626):** Cards, input fields, user message bubbles, and elevated surfaces. The lightest of the three neutral tiers.
-- **Neutral-surface (#1F1F1F):** A subtly distinct dark for panels that need to separate from the chat area without a hard border. Used for settings panels, popovers, and contextual overlays.
+- **Tertiary (#7C3AED default):** The active accent color. Used exclusively for interactive elements that demand attention: primary buttons, active toggles, the send button, selected nav items. Restrained usage is critical — if tertiary appears on more than 5% of the visible surface, something is wrong.
+- **Accent (#A78BFA default):** Hover state for tertiary elements and secondary highlights. It is derived from the active accent family so interaction feedback remains consistent when users customize color.
+- **Neutral (#0A0A0A):** Sidebar and deepest background layer. Near-black, warm-neutral with no blue cast, used only where the interface needs a strong anchor.
+- **Neutral-secondary (#111113):** Main dark app background. Lifted slightly above pure black to reduce eye strain while preserving the dark identity.
+- **Neutral-tertiary (#27272A):** Cards, input fields, user message bubbles, and elevated surfaces. The lightest of the main dark surface tiers.
+- **Neutral-surface (#202023):** A subtly distinct dark for panels that need to separate from the chat area without a hard border. Used for settings panels, popovers, and contextual overlays.
 - **Success (#34D399):** Confirmation states, connection indicators, successful operations. Green but not neon — it should feel calm, not celebratory.
 - **Warning (#FBBF24):** Rate limits, approaching quotas, non-critical alerts. Amber, not orange.
 - **Error (#F87171):** Failed requests, validation errors, disconnection states. Red but not aggressive — this is a tool, not an alarm.
-- **Info (#60A5FA):** Informational banners, tooltip accents, documentation links. Cool blue that complements the violet accent.
+- **Info (#60A5FA):** Informational banners, tooltip accents, documentation links. Cool blue that stays distinct from the active accent.
 
 Status colors always pair with dark text on the colored fill to keep contrast comfortably above WCAG AA.
+
+## Accent Customization
+
+Accent selection is a user preference, not a theme fork. Changing the accent updates the primary and accent token scales used by buttons, focus rings, links, sliders, progress bars, and selected states. The neutral palette, typography, spacing, and component hierarchy do not change.
+
+Preset accents are violet, blue, cyan, teal, emerald, amber, rose, and slate. Custom accents generate a full shade scale from the selected color, and button shades are darkened as needed so white button text remains at least 4.5:1 contrast. Avoid using multiple accent families in the same viewport. Status colors remain semantic and should not inherit the custom accent.
 
 ## Typography
 
@@ -190,7 +210,7 @@ Centered with a width of 48rem. User messages get a subtle neutral-tertiary back
 
 ### Input Bar
 
-The message input is the most important interactive element. It uses neutral-tertiary fill with rounded-xl corners, creating a pill-like shape. The send button is tertiary (violet) and sits inside the input container, aligned right. Placeholder text uses the secondary color.
+The message input is the most important interactive element. It uses neutral-tertiary fill with rounded-xl corners, creating a pill-like shape. The send button uses the active accent and sits inside the input container, aligned right. Placeholder text uses the secondary color.
 
 ### Code Blocks
 
@@ -198,11 +218,11 @@ Use GitHub's dark palette (#0D1117 background) regardless of the app's light/dar
 
 ### Buttons
 
-Primary buttons are violet with white text — used for actions that move the user forward (send, confirm, save). Ghost buttons sit on a neutral-tertiary fill with primary text — used for everything else (settings toggles, sidebar actions, context menus).
+Primary buttons use the active accent with white text — used for actions that move the user forward (send, confirm, save). Ghost buttons sit on a neutral-tertiary fill with primary text — used for everything else (settings toggles, sidebar actions, context menus).
 
 ### Links
 
-Inline links use the accent violet on a transparent background. Body-md typography keeps them in line with surrounding prose; underline appears on hover.
+Inline links use the active accent on a transparent background. Body-md typography keeps them in line with surrounding prose; underline appears on hover.
 
 ### Metadata
 
@@ -218,7 +238,7 @@ Settings drawers, command palettes, and contextual overlays use the neutral-surf
 
 ## Accessibility
 
-All text meets WCAG AA contrast requirements at minimum. Primary text on neutral backgrounds exceeds 7:1 contrast ratio. White text on the violet-600 primary button passes AA at body sizes. Interactive elements have visible focus indicators using the accent color with a 2px offset ring. No information is conveyed through color alone — status indicators pair color with iconography or text labels.
+All text meets WCAG AA contrast requirements at minimum. Primary text on neutral backgrounds exceeds 7:1 contrast ratio. White text on primary action buttons passes AA at body sizes for all preset accents and generated custom accents. Interactive elements have visible focus indicators using the active accent color with a 2px offset ring. No information is conveyed through color alone — status indicators pair color with iconography or text labels.
 
 ## Motion
 
@@ -226,6 +246,6 @@ Transitions are 150ms ease-out for interactive states (hover, focus, active). Si
 
 ## Brand Identity
 
-Libre WebUI's identity is the absence of excess. No gradients. No illustrations. No mascot. The violet accent is the brand — everything else is infrastructure. The word "Libre" means free, and the design should feel free: uncluttered, unburdened, focused entirely on the conversation between human and machine.
+Libre WebUI's identity is the absence of excess. No gradients. No illustrations. No mascot. Violet is the default brand accent, and custom accents are a personalization layer over the same restrained system. The word "Libre" means free, and the design should feel free: uncluttered, unburdened, focused entirely on the conversation between human and machine.
 
 The Kroonen AI wordmark may appear in the sidebar footer or settings page. It uses primary text color at body-sm size. It does not compete with the interface.
