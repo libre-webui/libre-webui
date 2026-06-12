@@ -15,6 +15,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.10.0] - 2026-06-12
+
+### What's New
+
+This release introduces llama.cpp provider plugin support with Qwen3-35B-A3B integration. Major improvements include enhanced cloud model management, UI theme refinements, and critical stability fixes for the settings modal.
+
+### ✨ New Features
+
+- Added llama.cpp provider plugin with Qwen3-35B-A3B model support
+- Cloud filter in Models tab library browser and model selector for easier model discovery
+
+### 🔧 Improvements
+
+- Enhanced themes and accent color system with updated translations
+- Consistent logo sizing across the application
+- Recolored Ollama library icons from cyan to design-system compliant info-blue
+- Aligned Cloud badges with design system styling
+- Reduced noisy debug logging across backend services
+- Updated Electron builder to version 26.11.0 for better Electron 42 ABI support
+
+### 🐛 Bug Fixes
+
+- Fixed critical app-wide crash caused by 'Too many re-renders' error in SettingsModal
+- Resolved 400 errors when working with Ollama cloud models
+- Fixed cloud model pull functionality
+
 ## [0.9.0] - 2026-04-28
 
 ### What's New
