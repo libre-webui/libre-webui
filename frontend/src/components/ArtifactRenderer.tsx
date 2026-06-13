@@ -34,6 +34,11 @@ import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
 import { useAppStore } from '@/store/appStore';
 import { Artifact } from '@/types';
+import {
+  buildHtmlArtifactDocument,
+  HTML_ARTIFACT_ALLOW,
+  HTML_ARTIFACT_SANDBOX,
+} from '@/utils/artifactHtml';
 import { cn } from '@/utils';
 
 interface ArtifactRendererProps {
@@ -62,7 +67,11 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   };
 
   const downloadArtifact = () => {
-    const blob = new Blob([artifact.content], {
+    const content =
+      artifact.type === 'html'
+        ? buildHtmlArtifactDocument(artifact.content, artifact.title)
+        : artifact.content;
+    const blob = new Blob([content], {
       type: getContentType(artifact.type),
     });
     const url = URL.createObjectURL(blob);
@@ -125,37 +134,14 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
   };
 
   const renderHtml = () => {
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <base target="_blank">
-          <title>${artifact.title}</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              margin: 0;
-              padding: 16px;
-              background: white;
-              color: #333;
-            }
-            * { box-sizing: border-box; }
-          </style>
-        </head>
-        <body>
-          ${artifact.content}
-        </body>
-      </html>
-    `;
-
     return (
       <iframe
         ref={iframeRef}
-        srcDoc={htmlContent}
+        srcDoc={buildHtmlArtifactDocument(artifact.content, artifact.title)}
         className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg'
-        sandbox='allow-scripts allow-same-origin'
+        sandbox={HTML_ARTIFACT_SANDBOX}
+        allow={HTML_ARTIFACT_ALLOW}
+        allowFullScreen
         title={artifact.title}
       />
     );
@@ -467,7 +453,9 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
             onClick={() => {
               const newWindow = window.open('', '_blank');
               if (newWindow) {
-                newWindow.document.write(artifact.content);
+                newWindow.document.write(
+                  buildHtmlArtifactDocument(artifact.content, artifact.title)
+                );
                 newWindow.document.close();
               }
             }}

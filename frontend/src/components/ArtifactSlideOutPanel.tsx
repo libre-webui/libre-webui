@@ -35,6 +35,11 @@ import {
 import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
 import { useAppStore } from '@/store/appStore';
+import {
+  buildHtmlArtifactDocument,
+  HTML_ARTIFACT_ALLOW,
+  HTML_ARTIFACT_SANDBOX,
+} from '@/utils/artifactHtml';
 import { cn } from '@/utils';
 
 // Min/max panel widths
@@ -59,6 +64,9 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   const prevArtifactIdRef = useRef<string | null>(null);
   const resizeStartXRef = useRef(0);
   const resizeStartWidthRef = useRef(0);
+  const resizePointerIdRef = useRef<number | null>(null);
+  const resizeFrameRef = useRef<number | null>(null);
+  const pendingWidthRef = useRef(panelWidth);
 
   // Reset view mode when artifact changes (using ref pattern to avoid effect setState)
   const currentArtifactId = artifactPanelArtifact?.id ?? null;
@@ -69,55 +77,99 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     }
   }
 
+  const schedulePanelWidth = useCallback((width: number) => {
+    pendingWidthRef.current = width;
+
+    if (resizeFrameRef.current !== null) {
+      return;
+    }
+
+    resizeFrameRef.current = window.requestAnimationFrame(() => {
+      resizeFrameRef.current = null;
+      setPanelWidth(pendingWidthRef.current);
+    });
+  }, []);
+
+  const handleResizeEnd = useCallback(() => {
+    resizePointerIdRef.current = null;
+    setIsResizing(false);
+
+    if (resizeFrameRef.current !== null) {
+      window.cancelAnimationFrame(resizeFrameRef.current);
+      resizeFrameRef.current = null;
+      setPanelWidth(pendingWidthRef.current);
+    }
+  }, []);
+
   // Handle resize
   const handleResizeStart = useCallback(
-    (e: React.MouseEvent | React.TouchEvent) => {
+    (e: React.PointerEvent<HTMLDivElement>) => {
       e.preventDefault();
-      setIsResizing(true);
+      e.stopPropagation();
+
+      resizePointerIdRef.current = e.pointerId;
       resizeStartWidthRef.current = panelWidth;
-      resizeStartXRef.current =
-        'touches' in e ? e.touches[0].clientX : e.clientX;
+      resizeStartXRef.current = e.clientX;
+      pendingWidthRef.current = panelWidth;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setIsResizing(true);
     },
     [panelWidth]
   );
 
   const handleResizeMove = useCallback(
-    (e: MouseEvent | TouchEvent) => {
+    (e: PointerEvent) => {
       if (!isResizing) return;
+      if (
+        resizePointerIdRef.current !== null &&
+        e.pointerId !== resizePointerIdRef.current
+      ) {
+        return;
+      }
 
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const deltaX = resizeStartXRef.current - clientX;
+      e.preventDefault();
+      const deltaX = resizeStartXRef.current - e.clientX;
       const maxWidth = window.innerWidth * MAX_PANEL_WIDTH_RATIO;
       const newWidth = Math.min(
         maxWidth,
         Math.max(MIN_PANEL_WIDTH, resizeStartWidthRef.current + deltaX)
       );
-      setPanelWidth(newWidth);
+      schedulePanelWidth(newWidth);
     },
-    [isResizing]
+    [isResizing, schedulePanelWidth]
   );
-
-  const handleResizeEnd = useCallback(() => {
-    setIsResizing(false);
-  }, []);
 
   // Resize event listeners
   useEffect(() => {
-    if (isResizing) {
-      window.addEventListener('mousemove', handleResizeMove);
-      window.addEventListener('mouseup', handleResizeEnd);
-      window.addEventListener('touchmove', handleResizeMove);
-      window.addEventListener('touchend', handleResizeEnd);
-      // Prevent text selection during resize
-      document.body.style.userSelect = 'none';
-      document.body.style.cursor = 'col-resize';
+    if (!isResizing) {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      return undefined;
     }
 
+    const handlePointerEnd = (e: PointerEvent) => {
+      if (
+        resizePointerIdRef.current === null ||
+        e.pointerId === resizePointerIdRef.current
+      ) {
+        handleResizeEnd();
+      }
+    };
+
+    window.addEventListener('pointermove', handleResizeMove, {
+      passive: false,
+    });
+    window.addEventListener('pointerup', handlePointerEnd);
+    window.addEventListener('pointercancel', handlePointerEnd);
+    window.addEventListener('blur', handleResizeEnd);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+
     return () => {
-      window.removeEventListener('mousemove', handleResizeMove);
-      window.removeEventListener('mouseup', handleResizeEnd);
-      window.removeEventListener('touchmove', handleResizeMove);
-      window.removeEventListener('touchend', handleResizeEnd);
+      window.removeEventListener('pointermove', handleResizeMove);
+      window.removeEventListener('pointerup', handlePointerEnd);
+      window.removeEventListener('pointercancel', handlePointerEnd);
+      window.removeEventListener('blur', handleResizeEnd);
       document.body.style.userSelect = '';
       document.body.style.cursor = '';
     };
@@ -185,7 +237,11 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   };
 
   const downloadArtifact = () => {
-    const blob = new Blob([artifact.content], {
+    const content =
+      artifact.type === 'html'
+        ? buildHtmlArtifactDocument(artifact.content, artifact.title)
+        : artifact.content;
+    const blob = new Blob([content], {
       type: getContentType(artifact.type),
     });
     const url = URL.createObjectURL(blob);
@@ -248,37 +304,17 @@ export const ArtifactSlideOutPanel: React.FC = () => {
   };
 
   const renderHtml = () => {
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <base target="_blank">
-          <title>${artifact.title}</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              margin: 0;
-              padding: 16px;
-              background: white;
-              color: #333;
-            }
-            * { box-sizing: border-box; }
-          </style>
-        </head>
-        <body>
-          ${artifact.content}
-        </body>
-      </html>
-    `;
-
     return (
       <iframe
         ref={iframeRef}
-        srcDoc={htmlContent}
-        className='w-full h-full border-0 rounded-lg bg-white'
-        sandbox='allow-scripts allow-same-origin'
+        srcDoc={buildHtmlArtifactDocument(artifact.content, artifact.title)}
+        className={cn(
+          'w-full h-full border-0 rounded-lg bg-white',
+          isResizing && 'pointer-events-none'
+        )}
+        sandbox={HTML_ARTIFACT_SANDBOX}
+        allow={HTML_ARTIFACT_ALLOW}
+        allowFullScreen
         title={artifact.title}
       />
     );
@@ -409,6 +445,13 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         )}
       />
 
+      {isResizing && (
+        <div
+          className='fixed inset-0 z-[55] cursor-col-resize select-none'
+          aria-hidden='true'
+        />
+      )}
+
       {/* Panel */}
       <div
         ref={panelRef}
@@ -425,12 +468,11 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         {/* Resize Handle - only show on non-mobile */}
         {!isMobile && (
           <div
-            onMouseDown={handleResizeStart}
-            onTouchStart={handleResizeStart}
+            onPointerDown={handleResizeStart}
             className={cn(
-              'absolute left-0 top-0 bottom-0 w-4 -ml-2 cursor-col-resize z-10',
+              'absolute left-0 top-0 bottom-0 w-4 -ml-2 cursor-col-resize z-[56]',
               'flex items-center justify-center',
-              'group'
+              'touch-none select-none group'
             )}
           >
             {/* Visual handle */}
@@ -548,7 +590,12 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 onClick={() => {
                   const newWindow = window.open('', '_blank');
                   if (newWindow) {
-                    newWindow.document.write(artifact.content);
+                    newWindow.document.write(
+                      buildHtmlArtifactDocument(
+                        artifact.content,
+                        artifact.title
+                      )
+                    );
                     newWindow.document.close();
                   }
                 }}
