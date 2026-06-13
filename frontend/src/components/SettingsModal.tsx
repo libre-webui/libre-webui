@@ -61,6 +61,7 @@ import { useAuthStore } from '@/store/authStore';
 import { EmbeddingModel, Theme } from '@/types';
 import {
   ACCENT_OPTIONS,
+  DEFAULT_ACCENT,
   DEFAULT_CUSTOM_ACCENT,
   getThemeAccentColor,
   normalizeTheme,
@@ -763,7 +764,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const activeAccent = theme.accent || 'violet';
+  const activeAccent = theme.accent || DEFAULT_ACCENT;
   const customAccentValue = theme.customAccent || DEFAULT_CUSTOM_ACCENT;
   const accentPreviewColor = getThemeAccentColor(theme);
 

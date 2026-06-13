@@ -17,8 +17,8 @@
 
 import { Theme } from '@/types';
 
-export const DEFAULT_ACCENT = 'violet';
-export const DEFAULT_CUSTOM_ACCENT = '#7c3aed';
+export const DEFAULT_ACCENT = 'blue';
+export const DEFAULT_CUSTOM_ACCENT = '#2563eb';
 
 export const ACCENT_OPTIONS = [
   { id: 'violet', label: 'Violet', color: '#7c3aed' },

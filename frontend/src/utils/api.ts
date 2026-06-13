@@ -130,7 +130,7 @@ const getDemoSessions = (): ChatSession[] => {
 const DEMO_SESSIONS: ChatSession[] = getDemoSessions();
 
 const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
-  theme: { mode: 'dark', accent: 'violet', customAccent: '#7c3aed' },
+  theme: { mode: 'dark', accent: 'blue', customAccent: '#2563eb' },
   defaultModel: 'llama3.2:3b',
   systemMessage: 'You are a helpful assistant.',
   generationOptions: {
@@ -1211,7 +1211,7 @@ export const preferencesApi = {
   ): Promise<ApiResponse<UserPreferences>> => {
     if (isDemoMode()) {
       return createDemoResponse<UserPreferences>({
-        theme: { mode: 'dark', accent: 'violet', customAccent: '#7c3aed' },
+        theme: { mode: 'dark', accent: 'blue', customAccent: '#2563eb' },
         defaultModel: 'llama3.2',
         systemMessage: 'You are a helpful assistant.',
         generationOptions: {},

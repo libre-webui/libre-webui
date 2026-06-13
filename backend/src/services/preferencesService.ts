@@ -35,7 +35,7 @@ interface ExportData {
 class PreferencesService {
   private defaultPreferences: UserPreferences = {
     defaultModel: '',
-    theme: { mode: 'light', accent: 'violet', customAccent: '#7c3aed' },
+    theme: { mode: 'light', accent: 'blue', customAccent: '#2563eb' },
     systemMessage: 'You are a helpful assistant.',
     generationOptions: {
       // Core parameters
