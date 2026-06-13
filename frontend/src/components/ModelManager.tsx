@@ -101,6 +101,27 @@ interface LibraryModel {
   tags?: string[];
 }
 
+const hasCloudPullTag = (modelName: string): boolean => {
+  const tag = modelName.split(':').pop()?.toLowerCase();
+  return tag === 'cloud' || tag?.endsWith('-cloud') === true;
+};
+
+const normalizeCloudPullName = (modelName: string): string => {
+  const trimmedName = modelName.trim();
+  if (!trimmedName || hasCloudPullTag(trimmedName)) {
+    return trimmedName;
+  }
+
+  const tagSeparator = trimmedName.lastIndexOf(':');
+  if (tagSeparator === -1) {
+    return `${trimmedName}:cloud`;
+  }
+
+  const baseName = trimmedName.slice(0, tagSeparator);
+  const tag = trimmedName.slice(tagSeparator + 1);
+  return `${baseName}:${tag}-cloud`;
+};
+
 export const ModelManager: React.FC = () => {
   const { t } = useTranslation();
   const { user, systemInfo } = useAuthStore();
@@ -359,13 +380,22 @@ export const ModelManager: React.FC = () => {
     }
   }, [cancelHfPull]);
 
-  const handlePullModel = async (modelName?: string) => {
+  const handlePullModel = async (
+    modelName?: string,
+    modelCategory?: string
+  ) => {
     if (!canInstallModels) {
       toast.error(t('modelManager.pull.restricted'));
       return;
     }
 
-    const nameToUse = modelName || pullModelName.trim();
+    const rawName = modelName || pullModelName.trim();
+    const shouldUseCloudName =
+      modelCategory === 'cloud' || (!modelName && libraryFilter === 'cloud');
+    const nameToUse = shouldUseCloudName
+      ? normalizeCloudPullName(rawName)
+      : rawName;
+
     if (!nameToUse) {
       toast.error(t('modelManager.pull.enterName'));
       return;
@@ -373,7 +403,7 @@ export const ModelManager: React.FC = () => {
 
     // If called with a model name from library, update the input field too
     if (modelName) {
-      setPullModelName(modelName);
+      setPullModelName(nameToUse);
     }
 
     setPulling(true);
@@ -1020,7 +1050,12 @@ export const ModelManager: React.FC = () => {
             ) : (
               <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
                 {filteredLibraryModels.map(model => {
-                  const installed = isModelInstalled(model.name);
+                  const pullName =
+                    model.category === 'cloud'
+                      ? normalizeCloudPullName(model.name)
+                      : model.name;
+                  const installed =
+                    isModelInstalled(model.name) || isModelInstalled(pullName);
                   return (
                     <div
                       key={model.name}
@@ -1104,7 +1139,7 @@ export const ModelManager: React.FC = () => {
                               toggleSection('pull');
                             }
                             // Start the pull immediately
-                            handlePullModel(model.name);
+                            handlePullModel(model.name, model.category);
                           }}
                           variant='outline'
                           size='sm'

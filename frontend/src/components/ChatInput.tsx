@@ -414,7 +414,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 className='libre-brand underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
                 style={{ fontSize: '1.1em', lineHeight: 1 }}
               >
-                Libre <span style={{ fontSize: '0.85em' }}>WebUI</span>
+                Libre <span>WebUI</span>
               </a>{' '}
               <span
                 className='text-xs text-gray-400 dark:text-gray-500'

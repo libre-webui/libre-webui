@@ -24,19 +24,30 @@ import { authApi } from '@/utils/api';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { HuggingFaceAuthButton } from '@/components/HuggingFaceAuthButton';
+import { isDemoMode } from '@/utils/demoMode';
 
 interface LoginFormProps {
   onLogin?: () => void;
   onShowSignup?: () => void;
 }
 
+const DEMO_CREDENTIALS = {
+  username: 'demo',
+  password: 'demo',
+};
+
 export const LoginForm: React.FC<LoginFormProps> = ({
   onLogin,
   onShowSignup,
 }) => {
   const { t } = useTranslation();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const isDemo = isDemoMode();
+  const [username, setUsername] = useState(
+    isDemo ? DEMO_CREDENTIALS.username : ''
+  );
+  const [password, setPassword] = useState(
+    isDemo ? DEMO_CREDENTIALS.password : ''
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -45,7 +56,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!username.trim() || !password.trim()) {
+    const loginUsername = isDemo ? DEMO_CREDENTIALS.username : username.trim();
+    const loginPassword = isDemo ? DEMO_CREDENTIALS.password : password.trim();
+
+    if (!loginUsername || !loginPassword) {
       toast.error(t('auth.login.enterBoth'));
       return;
     }
@@ -56,7 +70,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       // Clear any existing auth data before login
       localStorage.removeItem('auth-token');
 
-      const response = await authApi.login({ username, password });
+      const response = await authApi.login({
+        username: loginUsername,
+        password: loginPassword,
+      });
 
       if (response.success && response.data) {
         login(
@@ -113,10 +130,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             value={username}
             onChange={e => setUsername(e.target.value)}
             onKeyDown={handleKeyDown}
-            className='w-full px-3 py-2 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
+            className='w-full px-3 py-2 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed dark:disabled:bg-dark-300 dark:disabled:text-dark-500 transition-colors duration-200'
             placeholder={t('auth.login.usernamePlaceholder')}
             required
-            disabled={isLoading}
+            disabled={isLoading || isDemo}
           />
         </div>
 
@@ -134,16 +151,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='w-full px-3 py-2 pr-10 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
+              className='w-full px-3 py-2 pr-10 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed dark:disabled:bg-dark-300 dark:disabled:text-dark-500 transition-colors duration-200'
               placeholder={t('auth.login.passwordPlaceholder')}
               required
-              disabled={isLoading}
+              disabled={isLoading || isDemo}
             />
             <button
               type='button'
               onClick={() => setShowPassword(!showPassword)}
-              className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
-              disabled={isLoading}
+              className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:text-dark-500 dark:hover:text-dark-700'
+              disabled={isLoading || isDemo}
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -169,36 +186,40 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         </button>
       </form>
 
-      {/* OAuth Section */}
-      <div className='mt-6'>
-        <div className='relative'>
-          <div className='absolute inset-0 flex items-center'>
-            <div className='w-full border-t border-gray-300 dark:border-dark-300' />
-          </div>
-          <div className='relative flex justify-center text-sm'>
-            <span className='px-2 bg-white dark:bg-dark-25 text-gray-500 dark:text-dark-500'>
-              {t('common.or')}
-            </span>
-          </div>
-        </div>
+      {!isDemo && (
+        <>
+          {/* OAuth Section */}
+          <div className='mt-6'>
+            <div className='relative'>
+              <div className='absolute inset-0 flex items-center'>
+                <div className='w-full border-t border-gray-300 dark:border-dark-300' />
+              </div>
+              <div className='relative flex justify-center text-sm'>
+                <span className='px-2 bg-white dark:bg-dark-25 text-gray-500 dark:text-dark-500'>
+                  {t('common.or')}
+                </span>
+              </div>
+            </div>
 
-        <div className='mt-6 space-y-3'>
-          <GitHubAuthButton />
-          <HuggingFaceAuthButton />
-        </div>
-      </div>
+            <div className='mt-6 space-y-3'>
+              <GitHubAuthButton />
+              <HuggingFaceAuthButton />
+            </div>
+          </div>
 
-      <div className='mt-6 text-center'>
-        <p className='text-sm text-gray-600 dark:text-dark-500'>
-          {t('auth.login.noAccount')}{' '}
-          <button
-            onClick={() => onShowSignup?.()}
-            className='text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors duration-200'
-          >
-            {t('auth.login.signUpHere')}
-          </button>
-        </p>
-      </div>
+          <div className='mt-6 text-center'>
+            <p className='text-sm text-gray-600 dark:text-dark-500'>
+              {t('auth.login.noAccount')}{' '}
+              <button
+                onClick={() => onShowSignup?.()}
+                className='text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors duration-200'
+              >
+                {t('auth.login.signUpHere')}
+              </button>
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 };

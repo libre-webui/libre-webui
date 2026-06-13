@@ -368,8 +368,10 @@ export const HuggingFaceAuth: React.FC<HuggingFaceAuthProps> = ({
 
       {/* Error Display */}
       {error && (
-        <div className='p-3 bg-red-50 border border-red-200 rounded-lg'>
-          <p className='text-sm text-red-700'>{error}</p>
+        <div className='p-3 bg-primary-50/80 dark:bg-primary-950/25 border border-primary-200 dark:border-primary-800/50 rounded-lg'>
+          <p className='text-sm text-primary-800 dark:text-primary-200'>
+            {error}
+          </p>
         </div>
       )}
     </div>

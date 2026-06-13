@@ -87,9 +87,9 @@ import { FirstTimeSetup } from '@/components/FirstTimeSetup';
 const PageLoader = () => {
   const { t } = useTranslation();
   return (
-    <div className='flex items-center justify-center h-full min-h-screen'>
+    <div className='flex h-full min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-100'>
       <div className='flex flex-col items-center gap-3'>
-        <div className='w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
+        <div className='h-8 w-8 rounded-full border-4 border-gray-200 border-t-primary-500 animate-spin dark:border-dark-300 dark:border-t-primary-400'></div>
         <div className='text-gray-600 dark:text-dark-600'>
           {t('common.loading')}
         </div>
@@ -97,6 +97,19 @@ const PageLoader = () => {
     </div>
   );
 };
+
+const SidebarLayoutSpacer: React.FC<{ isOpen: boolean; compact: boolean }> = ({
+  isOpen,
+  compact,
+}) => (
+  <div
+    aria-hidden='true'
+    className={cn(
+      'hidden lg:block flex-shrink-0 transition-[width] duration-300 ease-in-out',
+      isOpen ? (compact ? 'w-18' : 'w-80') : 'w-0'
+    )}
+  />
+);
 
 // Conditional keyboard shortcuts indicator - only shows on chat pages and desktop
 const ConditionalKeyboardShortcutsIndicator: React.FC<{
@@ -348,15 +361,15 @@ const App: React.FC = () => {
   // Show loading screen while waiting for backend
   if (!systemInfo) {
     return (
-      <div className='min-h-screen bg-dark-50 flex items-center justify-center p-4'>
+      <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex items-center justify-center p-4'>
         <div className='text-center'>
           <div className='mb-8'>
-            <Logo className='text-white' />
+            <Logo className='text-gray-900 dark:text-white' />
           </div>
           <div className='flex justify-center mb-4'>
-            <div className='w-8 h-8 border-3 border-gray-700 border-t-primary-500 rounded-full animate-spin'></div>
+            <div className='w-8 h-8 border-4 border-gray-300 dark:border-dark-300 border-t-primary-500 dark:border-t-primary-400 rounded-full animate-spin'></div>
           </div>
-          <p className='text-gray-500 text-sm'>
+          <p className='text-gray-600 dark:text-dark-600 text-sm'>
             {retryCount > 0
               ? `Connecting to backend... (${retryCount}/15)`
               : 'Starting up...'}
@@ -408,20 +421,17 @@ const App: React.FC = () => {
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
             />
+            <SidebarLayoutSpacer
+              isOpen={sidebarOpen}
+              compact={sidebarCompact}
+            />
             <div
               className={cn(
-                'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
-                'w-full',
-                // Desktop behavior: use margin-left to resize content area
-                sidebarOpen
-                  ? sidebarCompact
-                    ? 'lg:ml-16'
-                    : 'lg:ml-80'
-                  : 'lg:ml-0',
+                'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-300 ease-in-out relative z-10',
                 // Mobile behavior:
                 // - Compact sidebar: push content right to avoid overlap
                 // - Expanded sidebar: overlay (no transform)
-                sidebarOpen && sidebarCompact ? 'max-lg:ml-16' : 'max-lg:ml-0',
+                sidebarOpen && sidebarCompact ? 'max-lg:ml-18' : 'max-lg:ml-0',
                 hasActiveBackground()
                   ? 'bg-white/30 dark:bg-dark-50/30'
                   : 'bg-white dark:bg-dark-50'
@@ -475,21 +485,18 @@ const App: React.FC = () => {
                       isOpen={sidebarOpen}
                       onClose={() => setSidebarOpen(false)}
                     />
+                    <SidebarLayoutSpacer
+                      isOpen={sidebarOpen}
+                      compact={sidebarCompact}
+                    />
                     <div
                       className={cn(
-                        'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
-                        'w-full',
-                        // Desktop behavior: use margin-left to resize content area
-                        sidebarOpen
-                          ? sidebarCompact
-                            ? 'lg:ml-16'
-                            : 'lg:ml-80'
-                          : 'lg:ml-0',
+                        'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-300 ease-in-out relative z-10',
                         // Mobile behavior:
                         // - Compact sidebar: push content right to avoid overlap
                         // - Expanded sidebar: overlay (no transform)
                         sidebarOpen && sidebarCompact
-                          ? 'max-lg:ml-16'
+                          ? 'max-lg:ml-18'
                           : 'max-lg:ml-0',
                         hasActiveBackground()
                           ? 'bg-white/30 dark:bg-dark-50/30'
@@ -585,13 +592,13 @@ const App: React.FC = () => {
             },
             success: {
               iconTheme: {
-                primary: '#16a34a',
+                primary: 'rgb(var(--color-primary-600))',
                 secondary: '#ffffff',
               },
             },
             error: {
               iconTheme: {
-                primary: '#ef4444',
+                primary: 'rgb(var(--color-primary-600))',
                 secondary: '#ffffff',
               },
             },

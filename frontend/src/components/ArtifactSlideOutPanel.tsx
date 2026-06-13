@@ -332,8 +332,8 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       return (
         <div className='w-full h-full flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg'>
           <div className='text-center'>
-            <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
+            <AlertTriangle className='h-8 w-8 text-primary-500 mx-auto mb-2' />
+            <p className='text-sm text-gray-600 dark:text-dark-600'>
               {t('artifacts.invalidSvg')}
             </p>
           </div>
@@ -394,8 +394,8 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       return (
         <div className='w-full h-full flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg'>
           <div className='text-center'>
-            <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
+            <AlertTriangle className='h-8 w-8 text-primary-500 mx-auto mb-2' />
+            <p className='text-sm text-gray-600 dark:text-dark-600'>
               {t('artifacts.invalidJson')}
             </p>
           </div>

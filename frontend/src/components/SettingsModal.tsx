@@ -2328,16 +2328,16 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
               {/* Error Message */}
               {pluginError && (
-                <div className='p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg mb-4'>
+                <div className='p-4 bg-primary-50/80 dark:bg-primary-950/25 border border-primary-200 dark:border-primary-800/50 rounded-lg mb-4'>
                   <div className='flex items-center justify-between'>
-                    <p className='text-red-800 dark:text-red-200'>
+                    <p className='text-primary-800 dark:text-primary-200'>
                       {pluginError}
                     </p>
                     <Button
                       variant='ghost'
                       size='sm'
                       onClick={clearPluginError}
-                      className='text-red-600 hover:text-red-800'
+                      className='text-primary-700 hover:text-primary-900 dark:text-primary-300 dark:hover:text-primary-100'
                     >
                       <X className='h-4 w-4' />
                     </Button>

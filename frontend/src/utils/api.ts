@@ -906,7 +906,7 @@ export const ollamaApi = {
     >
   > => {
     if (isDemoMode()) {
-      return createDemoResponse([
+      const demoLibraryModels = [
         {
           name: 'llama3.2',
           description: "Meta's latest Llama model",
@@ -923,7 +923,22 @@ export const ollamaApi = {
           pulls: '200M+',
           tags: ['reasoning'],
         },
-      ]);
+      ];
+
+      if (params?.category === 'cloud') {
+        return createDemoResponse([
+          {
+            name: 'gpt-oss:cloud',
+            description: 'Demo cloud model using Ollama cloud naming',
+            category: 'cloud',
+            sizes: ['cloud'],
+            pulls: 'Cloud',
+            tags: ['cloud'],
+          },
+        ]);
+      }
+
+      return createDemoResponse(demoLibraryModels);
     }
     const queryParams = new URLSearchParams();
     if (params?.search) queryParams.set('search', params.search);

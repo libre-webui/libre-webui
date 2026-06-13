@@ -270,10 +270,12 @@ export const GitHubAuth: React.FC = () => {
    */
   if (loading) {
     return (
-      <div className='flex items-center justify-center min-h-screen bg-gray-50'>
+      <div className='flex items-center justify-center min-h-screen bg-gray-50 dark:bg-dark-50'>
         <div className='text-center'>
-          <Loader2 className='mx-auto h-8 w-8 animate-spin text-blue-600' />
-          <p className='mt-2 text-gray-600'>{t('auth.checkingAuth')}</p>
+          <Loader2 className='mx-auto h-8 w-8 animate-spin text-primary-600 dark:text-primary-400' />
+          <p className='mt-2 text-gray-600 dark:text-dark-600'>
+            {t('auth.checkingAuth')}
+          </p>
         </div>
       </div>
     );
@@ -284,8 +286,8 @@ export const GitHubAuth: React.FC = () => {
    */
   if (user) {
     return (
-      <div className='min-h-screen bg-gray-50 p-8'>
-        <div className='max-w-md mx-auto bg-white rounded-lg shadow-md p-6'>
+      <div className='min-h-screen bg-gray-50 dark:bg-dark-50 p-8'>
+        <div className='max-w-md mx-auto bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-dark-300 shadow-card p-6'>
           <div className='text-center'>
             <h1 className='text-2xl font-bold text-gray-900 mb-6'>
               {t('auth.welcome')}
@@ -335,8 +337,10 @@ export const GitHubAuth: React.FC = () => {
             </button>
 
             {error && (
-              <div className='mt-4 p-3 bg-red-50 border border-red-200 rounded-md'>
-                <p className='text-red-800 text-sm'>{error}</p>
+              <div className='mt-4 p-3 bg-primary-50/80 dark:bg-primary-950/25 border border-primary-200 dark:border-primary-800/50 rounded-lg'>
+                <p className='text-primary-800 dark:text-primary-200 text-sm'>
+                  {error}
+                </p>
               </div>
             )}
           </div>
@@ -349,11 +353,11 @@ export const GitHubAuth: React.FC = () => {
    * Login view for unauthenticated users
    */
   return (
-    <div className='flex items-center justify-center min-h-screen bg-gray-50'>
-      <div className='max-w-md w-full mx-auto bg-white rounded-lg shadow-md p-8'>
+    <div className='flex items-center justify-center min-h-screen bg-gray-50 dark:bg-dark-50'>
+      <div className='max-w-md w-full mx-auto bg-white dark:bg-dark-100 rounded-xl border border-gray-200 dark:border-dark-300 shadow-card p-8'>
         <div className='text-center'>
           <h1 className='text-3xl font-bold text-gray-900 mb-2'>
-            Libre <span className='text-xl'>WebUI</span>
+            Libre <span>WebUI</span>
           </h1>
           <p className='text-gray-600 mb-8'>{t('auth.signInDescription')}</p>
 
@@ -366,8 +370,10 @@ export const GitHubAuth: React.FC = () => {
           </button>
 
           {error && (
-            <div className='mt-4 p-3 bg-red-50 border border-red-200 rounded-md'>
-              <p className='text-red-800 text-sm'>{error}</p>
+            <div className='mt-4 p-3 bg-primary-50/80 dark:bg-primary-950/25 border border-primary-200 dark:border-primary-800/50 rounded-lg'>
+              <p className='text-primary-800 dark:text-primary-200 text-sm'>
+                {error}
+              </p>
             </div>
           )}
         </div>

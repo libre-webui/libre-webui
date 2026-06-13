@@ -11,8 +11,8 @@
     system-ui,
     -apple-system,
     sans-serif !important;
-  font-weight: 600 !important;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 :root {

@@ -235,7 +235,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
           </div>
           <h2
             className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
-            style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+            style={{ fontWeight: 300, letterSpacing: 0 }}
           >
             {t('setup.encryptionKey.title')}
           </h2>
@@ -337,7 +337,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
         </div>
         <h2
           className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
-          style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+          style={{ fontWeight: 300, letterSpacing: 0 }}
         >
           {t('setup.admin.title')}
         </h2>
