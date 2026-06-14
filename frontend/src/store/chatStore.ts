@@ -259,13 +259,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatApi.updateSession(sessionId, { title });
 
       if (response.success && response.data) {
+        const updatedTitle = response.data.title;
+        const updatedAt = response.data.updatedAt ?? Date.now();
+
         set(state => ({
           sessions: state.sessions.map(s =>
-            s.id === sessionId ? response.data! : s
+            s.id === sessionId ? { ...s, title: updatedTitle, updatedAt } : s
           ),
           currentSession:
             state.currentSession?.id === sessionId
-              ? response.data!
+              ? {
+                  ...state.currentSession,
+                  title: updatedTitle,
+                  updatedAt,
+                }
               : state.currentSession,
         }));
         toast.success('Chat title updated');

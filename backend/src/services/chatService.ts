@@ -271,16 +271,6 @@ class ChatService {
       }
     }
 
-    // Auto-generate title from first user message
-    const userMessages = session.messages.filter(msg => msg.role === 'user');
-    if (
-      userMessages.length === 1 &&
-      message.role === 'user' &&
-      session.title === 'New Chat'
-    ) {
-      session.title = this.generateTitle(message.content);
-    }
-
     this.sessions.set(sessionId, session);
     storageService.saveSession(session, userId);
     return newMessage;
@@ -350,18 +340,6 @@ class ChatService {
     userSessions.forEach(session => {
       storageService.deleteSession(session.id, userId);
     });
-  }
-
-  private generateTitle(content: string): string {
-    // Generate a concise title from the first message
-    const words = content.trim().split(/\s+/).slice(0, 6);
-    let title = words.join(' ');
-
-    if (title.length > 50) {
-      title = title.substring(0, 47) + '...';
-    }
-
-    return title || 'New Chat';
   }
 
   getMessagesForContext(sessionId: string, maxMessages = 10): ChatMessage[] {

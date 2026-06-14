@@ -22,7 +22,13 @@ import { GenerationStatistics, ToolActivity } from '@/types';
 import websocketService from '@/utils/websocket';
 import { generateId } from '@/utils';
 import { chatApi } from '@/utils/api';
+import { isDemoMode } from '@/utils/demoMode';
 import toast from 'react-hot-toast';
+
+const DEFAULT_SESSION_TITLES = new Set(['New Chat', 'New Demo Session']);
+
+const isDefaultSessionTitle = (title?: string) =>
+  !title || DEFAULT_SESSION_TITLES.has(title);
 
 export const useChat = (sessionId: string) => {
   const [streamingMessage, setStreamingMessage] = useState<string>('');
@@ -43,6 +49,8 @@ export const useChat = (sessionId: string) => {
 
   // Track the first user message for auto-title generation
   const firstUserMessageRef = useRef<string | null>(null);
+  const shouldGenerateTitleRef = useRef(false);
+  const titleGenerationSessionRef = useRef<string | null>(null);
 
   // Buffer for streaming content to reduce state updates
   const streamingContentRef = useRef<string>('');
@@ -50,6 +58,62 @@ export const useChat = (sessionId: string) => {
   // Store update batching with debounced timer approach
   const lastStoreUpdate = useRef<number>(0);
   const storeUpdateTimer = useRef<NodeJS.Timeout>();
+
+  const clearQueuedTitleGeneration = useCallback(() => {
+    firstUserMessageRef.current = null;
+    shouldGenerateTitleRef.current = false;
+    titleGenerationSessionRef.current = null;
+  }, []);
+
+  const maybeGenerateTitle = useCallback(
+    (targetSessionId: string) => {
+      const currentPrefs = useAppStore.getState().preferences;
+      const titleSettings = currentPrefs.titleSettings;
+      const firstMessage = firstUserMessageRef.current;
+      const shouldGenerateTitle =
+        shouldGenerateTitleRef.current &&
+        titleGenerationSessionRef.current === targetSessionId;
+
+      console.log('Auto-title check:', {
+        firstMessage,
+        autoTitle: titleSettings?.autoTitle,
+        taskModel: titleSettings?.taskModel,
+        shouldGenerateTitle,
+      });
+
+      if (
+        firstMessage &&
+        shouldGenerateTitle &&
+        titleSettings?.autoTitle &&
+        titleSettings?.taskModel
+      ) {
+        console.log('Triggering auto-title generation...');
+        setGeneratingTitleForSession(targetSessionId);
+
+        chatApi
+          .generateTitle(targetSessionId, titleSettings.taskModel, firstMessage)
+          .then(response => {
+            console.log('Title generation response:', response);
+            if (response.success && response.data?.title) {
+              updateSessionTitle(targetSessionId, response.data.title);
+            }
+          })
+          .catch(error => {
+            console.error('Failed to generate title:', error);
+          })
+          .finally(() => {
+            setGeneratingTitleForSession(null);
+          });
+      }
+
+      clearQueuedTitleGeneration();
+    },
+    [
+      clearQueuedTitleGeneration,
+      setGeneratingTitleForSession,
+      updateSessionTitle,
+    ]
+  );
 
   // Clean up handlers when component unmounts or sessionId changes
   useEffect(() => {
@@ -183,49 +247,7 @@ export const useChat = (sessionId: string) => {
         );
       }
 
-      // Auto-title generation: Check if this is the first message and auto-title is enabled
-      // Get fresh values from stores to avoid stale closure issues
-      const currentPrefs = useAppStore.getState().preferences;
-      const titleSettings = currentPrefs.titleSettings;
-      const currentSess = useChatStore.getState().currentSession;
-      const firstMessage = firstUserMessageRef.current;
-
-      console.log('Auto-title check:', {
-        firstMessage,
-        autoTitle: titleSettings?.autoTitle,
-        taskModel: titleSettings?.taskModel,
-        sessionTitle: currentSess?.title,
-      });
-
-      if (
-        firstMessage &&
-        titleSettings?.autoTitle &&
-        titleSettings?.taskModel &&
-        currentSess?.title === 'New Chat'
-      ) {
-        console.log('Triggering auto-title generation...');
-        // Set generating state for animation
-        setGeneratingTitleForSession(sessionId);
-
-        // Generate title asynchronously (don't block the UI)
-        chatApi
-          .generateTitle(sessionId, titleSettings.taskModel, firstMessage)
-          .then(response => {
-            console.log('Title generation response:', response);
-            if (response.success && response.data?.title) {
-              updateSessionTitle(sessionId, response.data.title);
-            }
-          })
-          .catch(error => {
-            console.error('Failed to generate title:', error);
-          })
-          .finally(() => {
-            // Clear generating state
-            setGeneratingTitleForSession(null);
-          });
-        // Clear the first message ref after triggering title generation
-        firstUserMessageRef.current = null;
-      }
+      maybeGenerateTitle(sessionId);
 
       streamingMessageIdRef.current = null;
       streamingContentRef.current = '';
@@ -258,6 +280,7 @@ export const useChat = (sessionId: string) => {
       }
 
       toast.error(errorData.error);
+      clearQueuedTitleGeneration();
     });
 
     // Reset streaming state when switching sessions
@@ -280,8 +303,8 @@ export const useChat = (sessionId: string) => {
     updateMessage,
     updateMessageWithStatistics,
     setIsGenerating,
-    updateSessionTitle,
-    setGeneratingTitleForSession,
+    maybeGenerateTitle,
+    clearQueuedTitleGeneration,
   ]);
 
   const sendMessage = useCallback(
@@ -312,12 +335,19 @@ export const useChat = (sessionId: string) => {
         const hasExistingUserMessages = session?.messages?.some(
           m => m.role === 'user'
         );
-        if (
+        const shouldTrackFirstMessage =
           !isPrivateSession &&
           !hasExistingUserMessages &&
-          session?.title === 'New Chat'
-        ) {
+          isDefaultSessionTitle(session?.title);
+
+        if (shouldTrackFirstMessage) {
           firstUserMessageRef.current = content.trim();
+          shouldGenerateTitleRef.current = true;
+          titleGenerationSessionRef.current = sessionId;
+        } else {
+          firstUserMessageRef.current = null;
+          shouldGenerateTitleRef.current = false;
+          titleGenerationSessionRef.current = null;
         }
 
         // Add user message immediately
@@ -337,6 +367,22 @@ export const useChat = (sessionId: string) => {
           content: '',
           id: assistantMessageId,
         });
+
+        if (isDemoMode()) {
+          const demoResponse = `Demo response for: ${content.trim()}`;
+
+          window.setTimeout(() => {
+            updateMessage(sessionId, assistantMessageId, demoResponse);
+            setIsStreaming(false);
+            setStreamingMessage('');
+            setStreamingMessageId(null);
+            setIsGenerating(false);
+            maybeGenerateTitle(sessionId);
+            streamingMessageIdRef.current = null;
+            streamingContentRef.current = '';
+          }, 500);
+          return;
+        }
 
         // Connect WebSocket if not connected
         if (!websocketService.isConnected) {
@@ -379,7 +425,14 @@ export const useChat = (sessionId: string) => {
         toast.error('Failed to send message');
       }
     },
-    [sessionId, addMessage, setIsGenerating, preferences.generationOptions]
+    [
+      sessionId,
+      addMessage,
+      updateMessage,
+      setIsGenerating,
+      maybeGenerateTitle,
+      preferences.generationOptions,
+    ]
   );
 
   const stopGeneration = useCallback(() => {

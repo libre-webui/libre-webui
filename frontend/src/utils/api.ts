@@ -146,6 +146,10 @@ const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
     chunkOverlap: 200,
     similarityThreshold: 0.7,
   },
+  titleSettings: {
+    autoTitle: false,
+    taskModel: '',
+  },
   showUsername: false,
   backgroundSettings: {
     enabled: false,
@@ -160,6 +164,7 @@ let DEMO_PREFERENCES: UserPreferences = {
   theme: { ...DEFAULT_DEMO_PREFERENCES.theme },
   generationOptions: { ...DEFAULT_DEMO_PREFERENCES.generationOptions },
   embeddingSettings: { ...DEFAULT_DEMO_PREFERENCES.embeddingSettings },
+  titleSettings: { ...DEFAULT_DEMO_PREFERENCES.titleSettings! },
   backgroundSettings: { ...DEFAULT_DEMO_PREFERENCES.backgroundSettings! },
 };
 
@@ -199,6 +204,13 @@ const updateDemoPreferences = (
       ...DEMO_PREFERENCES.embeddingSettings,
       ...updates.embeddingSettings,
     },
+    titleSettings: updates.titleSettings
+      ? {
+          ...(DEMO_PREFERENCES.titleSettings ||
+            DEFAULT_DEMO_PREFERENCES.titleSettings!),
+          ...updates.titleSettings,
+        }
+      : DEMO_PREFERENCES.titleSettings,
     backgroundSettings: updates.backgroundSettings
       ? {
           ...currentBackgroundSettings,
@@ -291,7 +303,7 @@ export const chatApi = {
     if (import.meta.env.VITE_DEMO_MODE === 'true') {
       const newSession: ChatSession = {
         id: `demo-session-${Date.now()}`,
-        title: title || 'New Demo Session',
+        title: title || 'New Chat',
         model,
         messages: [],
         createdAt: Date.now(),
@@ -325,13 +337,15 @@ export const chatApi = {
     updates: Partial<ChatSession>
   ): Promise<ApiResponse<ChatSession>> => {
     if (isDemoMode()) {
-      const session = DEMO_SESSIONS.find(s => s.id === sessionId);
+      const sessionIndex = DEMO_SESSIONS.findIndex(s => s.id === sessionId);
+      const session = DEMO_SESSIONS[sessionIndex];
       if (session) {
         const updatedSession = {
           ...session,
           ...updates,
           updatedAt: Date.now(),
         };
+        DEMO_SESSIONS[sessionIndex] = updatedSession;
         return createDemoResponse(updatedSession);
       }
       return Promise.resolve({
