@@ -137,7 +137,7 @@ const corsConfig = {
         process.env.DOCKER_ENV === 'true';
       const isNetworkOrigin =
         origin &&
-        /^https?:\/\/(?:192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(
+        /^https?:\/\/(?:192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|127\.|localhost)/.test(
           origin
         );
 
