@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -34,6 +34,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import { TurnstileWidget } from '@/components/TurnstileWidget';
 
 interface FirstTimeSetupProps {
   onComplete?: () => void;
@@ -55,7 +56,19 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
   const [encryptionKey, setEncryptionKey] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
   const [keyAcknowledged, setKeyAcknowledged] = useState(false);
-  const { login } = useAuthStore();
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const { login, systemInfo } = useAuthStore();
+  const turnstileSiteKey = systemInfo?.turnstile?.siteKey;
+  const isTurnstileEnabled = Boolean(
+    systemInfo?.turnstile?.enabled && turnstileSiteKey
+  );
+  const handleTurnstileTokenChange = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+  const createAdminDisabled = useMemo(
+    () => isLoading || (isTurnstileEnabled && !turnstileToken),
+    [isLoading, isTurnstileEnabled, turnstileToken]
+  );
 
   // Fetch encryption key when entering that step
   useEffect(() => {
@@ -86,6 +99,11 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
       return;
     }
 
+    if (isTurnstileEnabled && !turnstileToken) {
+      toast.error(t('auth.signup.tryAgain'));
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -93,6 +111,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
         username,
         password,
         email: '',
+        turnstileToken,
       });
 
       if (response.success && response.data) {
@@ -111,6 +130,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
       console.error('Admin creation error:', error);
       toast.error(t('setup.admin.failed'));
     } finally {
+      setTurnstileToken('');
       setIsLoading(false);
     }
   };
@@ -439,6 +459,15 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               </div>
             </div>
 
+            {isTurnstileEnabled && turnstileSiteKey && (
+              <TurnstileWidget
+                siteKey={turnstileSiteKey}
+                disabled={isLoading}
+                errorMessage={t('auth.signup.tryAgain')}
+                onTokenChange={handleTurnstileTokenChange}
+              />
+            )}
+
             <div className='flex space-x-3'>
               <button
                 type='button'
@@ -450,7 +479,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               </button>
               <button
                 type='submit'
-                disabled={isLoading}
+                disabled={createAdminDisabled}
                 className='flex-1 flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
               >
                 {isLoading ? (

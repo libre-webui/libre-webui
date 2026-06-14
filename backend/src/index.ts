@@ -102,6 +102,9 @@ if (trustProxy) {
 
 const isProduction = process.env.NODE_ENV === 'production';
 const port = process.env.PORT || (isProduction ? 8080 : 3001);
+const hasTurnstile =
+  Boolean(process.env.TURNSTILE_SITE_KEY?.trim()) &&
+  Boolean(process.env.TURNSTILE_SECRET_KEY?.trim());
 const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
   'http://localhost:5173',
   'http://localhost:3000',
@@ -152,7 +155,9 @@ app.use(
   helmet({
     // COEP - disable in Docker/development to avoid proxy issues
     crossOriginEmbedderPolicy:
-      process.env.NODE_ENV === 'production' && !process.env.DOCKER_ENV
+      process.env.NODE_ENV === 'production' &&
+      !process.env.DOCKER_ENV &&
+      !hasTurnstile
         ? true
         : false,
 
@@ -162,6 +167,7 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: [
           "'self'",
+          'https://challenges.cloudflare.com',
           ...(process.env.NODE_ENV === 'production'
             ? [] // Strict in production
             : ["'unsafe-inline'", "'unsafe-eval'"]), // Allow for dev tools
@@ -195,6 +201,7 @@ app.use(
         fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
         mediaSrc: ["'self'", 'data:', 'blob:'],
         objectSrc: ["'none'"],
+        frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
         frameAncestors: ["'self'"],
         formAction: ["'self'"],
         upgradeInsecureRequests:

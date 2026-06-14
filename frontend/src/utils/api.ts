@@ -1401,6 +1401,7 @@ export const authApi = {
     username: string;
     password: string;
     email?: string;
+    turnstileToken?: string;
   }): Promise<ApiResponse<LoginResponse>> => {
     if (isDemoMode()) {
       return createDemoResponse<LoginResponse>({
@@ -1419,6 +1420,7 @@ export const authApi = {
           userCount: 1,
           allowUserModelPull: true,
           version: '0.1.0',
+          turnstile: { enabled: false },
         },
       });
     }
@@ -1444,6 +1446,7 @@ export const authApi = {
         userCount: 1,
         allowUserModelPull: true,
         version: '0.1.0',
+        turnstile: { enabled: false },
       });
     }
 
@@ -1513,6 +1516,7 @@ export const authApi = {
         userCount: 1,
         allowUserModelPull,
         version: '0.1.0',
+        turnstile: { enabled: false },
       });
     }
 

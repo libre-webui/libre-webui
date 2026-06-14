@@ -22,6 +22,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { randomBytes } from 'crypto';
 import { systemSettingsService } from './systemSettingsService.js';
+import { turnstileService, TurnstilePublicConfig } from './turnstileService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -62,6 +63,7 @@ export interface SystemInfo {
   userCount: number;
   allowUserModelPull: boolean;
   version?: string;
+  turnstile: TurnstilePublicConfig;
 }
 
 export class AuthService {
@@ -134,6 +136,7 @@ export class AuthService {
       userCount,
       allowUserModelPull: systemSettingsService.getAllowUserModelPull(),
       version: packageVersion,
+      turnstile: turnstileService.getPublicConfig(),
     };
   }
 

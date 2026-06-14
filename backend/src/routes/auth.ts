@@ -27,11 +27,26 @@ import {
 } from '../middleware/auth.js';
 import { encryptionService } from '../services/encryptionService.js';
 import { systemSettingsService } from '../services/systemSettingsService.js';
+import { turnstileService } from '../services/turnstileService.js';
 
 const router = express.Router();
 
 // Fallback frontend URL for OAuth redirects
 const FALLBACK_FRONTEND_URL = 'http://localhost:5173';
+
+const getClientIp = (req: express.Request): string | undefined => {
+  const cfConnectingIp = req.headers['cf-connecting-ip'];
+  if (typeof cfConnectingIp === 'string' && cfConnectingIp.trim()) {
+    return cfConnectingIp.trim();
+  }
+
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
+    return forwardedFor.split(',')[0]?.trim();
+  }
+
+  return req.ip || undefined;
+};
 
 // Rate limiter for authentication routes: 5 login attempts per 15 minutes
 const authRateLimiter = rateLimit({
@@ -255,7 +270,7 @@ router.get('/encryption-key', generalAuthRateLimiter, async (req, res) => {
  */
 router.post('/signup', authRateLimiter, async (req, res) => {
   try {
-    const { username, password, email } = req.body;
+    const { username, password, email, turnstileToken } = req.body;
 
     if (!username || !password) {
       res.status(400).json({
@@ -271,6 +286,19 @@ router.post('/signup', authRateLimiter, async (req, res) => {
       res.status(409).json({
         success: false,
         message: 'Username already exists',
+      });
+      return;
+    }
+
+    const turnstileValid = await turnstileService.verify(
+      turnstileToken,
+      getClientIp(req)
+    );
+
+    if (!turnstileValid) {
+      res.status(400).json({
+        success: false,
+        message: 'Verification failed. Please try again.',
       });
       return;
     }

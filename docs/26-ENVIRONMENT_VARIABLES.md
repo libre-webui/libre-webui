@@ -41,6 +41,8 @@ Complete reference for all environment variables used in Libre WebUI.
 | `ENCRYPTION_KEY` | auto-generated | 64-character hex key for encrypting data at rest. Auto-generated if not set. |
 | `SESSION_SECRET` | auto-generated | Session encryption secret |
 | `SINGLE_USER_MODE` | `false` | When `true`, disables multi-user authentication |
+| `TURNSTILE_SITE_KEY` | - | Optional Cloudflare Turnstile site key. When paired with `TURNSTILE_SECRET_KEY`, account creation shows a Turnstile challenge. |
+| `TURNSTILE_SECRET_KEY` | - | Optional Cloudflare Turnstile secret key used by the backend to verify signup tokens. |
 
 ### Ollama Integration
 
