@@ -96,12 +96,12 @@
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.34.0",
     "concurrently": "^10.0.1",
-    "electron": "41.7.1",
-    "electron-builder": "26.15.2",
+    "electron": "41.7.2",
+    "electron-builder": "26.15.3",
     "eslint": "^9.39.4",
     "png-to-ico": "^3.0.1",
     "prettier": "^3.7.4",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.1",
     "wait-on": "^9.0.3"
   },
   "keywords": [
