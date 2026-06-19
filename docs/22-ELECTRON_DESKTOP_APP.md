@@ -1,9 +1,19 @@
 ---
 sidebar_position: 1
-title: "Electron Desktop App"
-description: "Build and run Libre WebUI as a native desktop application for macOS. Complete guide for building, packaging, and distributing the Electron app."
+title: 'Electron Desktop App'
+description: 'Build and run Libre WebUI as a native desktop application for macOS. Complete guide for building, packaging, and distributing the Electron app.'
 slug: /ELECTRON_DESKTOP_APP
-keywords: [libre webui electron, desktop app, macos app, native app, electron build, dmg installer, libre webui desktop, offline ai chat]
+keywords:
+  [
+    libre webui electron,
+    desktop app,
+    macos app,
+    native app,
+    electron build,
+    dmg installer,
+    libre webui desktop,
+    offline ai chat,
+  ]
 image: /img/social/22.png
 ---
 
@@ -47,6 +57,7 @@ npm run electron:dev
 ```
 
 This will:
+
 - Start the Vite development server on port 5173
 - Wait for the frontend to be ready
 - Launch Electron pointing to the dev server
@@ -61,6 +72,7 @@ npm run electron:build
 ```
 
 The built app will be available at:
+
 - **DMG**: `dist-electron/Libre WebUI-{version}-mac-arm64.dmg`
 - **ZIP**: `dist-electron/Libre WebUI-{version}-mac-arm64.zip`
 
@@ -90,12 +102,12 @@ The built app will be available at:
 
 ### Key Files
 
-| File | Description |
-|------|-------------|
-| `electron/main.js` | Main Electron process |
-| `electron/preload.js` | Preload script for security |
+| File                   | Description                  |
+| ---------------------- | ---------------------------- |
+| `electron/main.js`     | Main Electron process        |
+| `electron/preload.js`  | Preload script for security  |
 | `electron/splash.html` | Splash screen during startup |
-| `electron-builder.yml` | Build configuration |
+| `electron-builder.yml` | Build configuration          |
 
 ## ⚙️ Configuration
 
@@ -112,7 +124,7 @@ mac:
   target:
     - target: dmg
       arch:
-        - arm64  # Apple Silicon
+        - arm64 # Apple Silicon
     - target: zip
       arch:
         - arm64
@@ -122,11 +134,11 @@ mac:
 
 ### Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run electron:dev` | Development mode with hot reload |
-| `npm run electron:build` | Build production DMG for macOS |
-| `npm run electron:pack` | Build without creating installer |
+| Script                   | Description                      |
+| ------------------------ | -------------------------------- |
+| `npm run electron:dev`   | Development mode with hot reload |
+| `npm run electron:build` | Build production DMG for macOS   |
+| `npm run electron:pack`  | Build without creating installer |
 
 ## 🎨 macOS Integration
 
@@ -148,6 +160,7 @@ The app uses a custom title bar style (`hiddenInset`) for a native macOS look:
 ### Menu Bar
 
 Full native menu bar with:
+
 - App menu (About, Preferences, Quit)
 - Edit menu (Undo, Redo, Cut, Copy, Paste)
 - View menu (Reload, DevTools, Zoom)
@@ -161,11 +174,13 @@ Full native menu bar with:
 **1. App shows "Connecting to backend..." forever**
 
 The backend needs to be running separately. Start it with:
+
 ```bash
 npm run dev:backend
 ```
 
 Or run the full development environment:
+
 ```bash
 npm run dev
 ```
@@ -185,6 +200,7 @@ The app uses HashRouter instead of BrowserRouter for file:// protocol compatibil
 ### Build Errors
 
 **SQLite/SQLCipher compilation errors:**
+
 ```bash
 # Clear npm cache and rebuild
 rm -rf node_modules
@@ -193,9 +209,11 @@ npm run electron:build
 ```
 
 **Code signing warnings:**
+
 ```
 skipped macOS application code signing
 ```
+
 This is normal for development builds. For distribution, you'll need an Apple Developer certificate.
 
 ## 📦 Distribution
@@ -228,6 +246,7 @@ publish:
 ```
 
 To publish a release:
+
 ```bash
 # Build and publish
 npm run electron:build -- --publish always
@@ -279,6 +298,7 @@ mainWindow.webContents.setWindowOpenHandler(({ url }) => {
 ### Bundle Contents
 
 The built app includes:
+
 - Electron framework (~200MB)
 - Built frontend (~2MB)
 - Plugin configurations (~50KB)

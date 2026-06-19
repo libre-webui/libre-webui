@@ -1,9 +1,18 @@
 ---
 sidebar_position: 17
-title: "Development Branch Guide"
-description: "Use the experimental dev branch to test latest features and help improve Libre WebUI. Learn how to report bugs and contribute."
+title: 'Development Branch Guide'
+description: 'Use the experimental dev branch to test latest features and help improve Libre WebUI. Learn how to report bugs and contribute.'
 slug: /DEV_BRANCH
-keywords: [development, dev branch, experimental, testing, bug reports, contributing, latest features]
+keywords:
+  [
+    development,
+    dev branch,
+    experimental,
+    testing,
+    bug reports,
+    contributing,
+    latest features,
+  ]
 image: /img/social/17.png
 ---
 
@@ -29,6 +38,7 @@ The development branch (`dev`) is where new features are tested before being mer
 ### Docker Setup (Recommended)
 
 **With External Ollama:**
+
 ```bash
 # Clone the repository
 git clone https://github.com/libre-webui/libre-webui.git
@@ -42,6 +52,7 @@ docker-compose -f docker-compose.external-ollama.yml up -d
 ```
 
 **Simple Docker:**
+
 ```bash
 # Use the dev branch image
 docker run -d -p 3000:8080 -v libre-webui:/app/backend/data --name libre-webui-dev --restart always ghcr.io/libre-webui/libre-webui:dev
@@ -97,6 +108,7 @@ Your bug reports are incredibly valuable! Here's how to report issues effectivel
 
 ```markdown
 **Environment:**
+
 - Branch: dev
 - Version: [git commit hash or date]
 - OS: [Windows/macOS/Linux]
@@ -107,6 +119,7 @@ Your bug reports are incredibly valuable! Here's how to report issues effectivel
 Clear description of what went wrong
 
 **Steps to Reproduce:**
+
 1. Go to...
 2. Click on...
 3. See error...
@@ -180,6 +193,7 @@ See our [Contributing Guidelines](https://github.com/libre-webui/libre-webui/blo
 ### When to Use Stable
 
 Switch back to the stable `main` branch if you:
+
 - Need reliability for important work
 - Experience too many bugs
 - Want a tested, stable experience

@@ -1,63 +1,63 @@
 ---
 SPDX-License-Identifier: MIT
-path: "/tutorials/deploy-libre-webui-ollama-docker-gpu"
-slug: "deploy-libre-webui-ollama-docker-gpu"
-date: "2026-01-30"
-title: "Deploy a Private AI Chat Interface with Libre WebUI and Ollama on a GPU Server"
-short_description: "Set up Libre WebUI with Ollama in Docker on a Hetzner GPU server to run open-source LLMs privately with CUDA acceleration."
-tags: ["Docker", "AI", "GPU", "Ollama", "Ubuntu"]
-author: "Robin Kroonen"
-author_link: "https://github.com/rob-x-ai"
-author_img: "https://avatars.githubusercontent.com/u/rob-x-ai"
-author_description: "Founder of KROONEN AI, Inc. and creator of Libre WebUI, making AI accessible to everyone, Free and Open Source advocate"
-language: "en"
-available_languages: ["en"]
-header_img: "header-gpu-ai"
-cta: "gpu"
+path: '/tutorials/deploy-libre-webui-ollama-docker-gpu'
+slug: 'deploy-libre-webui-ollama-docker-gpu'
+date: '2026-01-30'
+title: 'Deploy a Private AI Chat Interface with Libre WebUI and Ollama on a GPU Server'
+short_description: 'Set up Libre WebUI with Ollama in Docker on a Hetzner GPU server to run open-source LLMs privately with CUDA acceleration.'
+tags: ['Docker', 'AI', 'GPU', 'Ollama', 'Ubuntu']
+author: 'Robin Kroonen'
+author_link: 'https://github.com/rob-x-ai'
+author_img: 'https://avatars.githubusercontent.com/u/rob-x-ai'
+author_description: 'Founder of KROONEN AI, Inc. and creator of Libre WebUI, making AI accessible to everyone, Free and Open Source advocate'
+language: 'en'
+available_languages: ['en']
+header_img: 'header-gpu-ai'
+cta: 'gpu'
 ---
 
 ## Introduction
 
 Large language models (LLMs) like Llama, Mistral, and Gemma are incredibly powerful, but using them through commercial APIs means sending your data to third parties. By self-hosting, you keep full control over your data while getting fast, private AI chat.
 
-[Libre WebUI](https://github.com/libre-webui/libre-webui) is an open-source AI chat interface licensed under **Apache 2.0** with zero telemetry, zero tracking, and no CLA. All stored data (chat history, documents, credentials) is encrypted at rest with AES-256-GCM. It works with Ollama for local models and 100+ cloud providers, and includes document chat (RAG), interactive artifacts, custom personas, and multi-user access control.
+[Libre WebUI](https://github.com/libre-webui/libre-webui) is an open-source AI chat interface licensed under **Apache 2.0** with zero telemetry, zero tracking, and no CLA. It works with Ollama for local models and provider plugins for hosted models, and includes document chat (RAG), interactive artifacts, custom personas, multi-user access control, and application-level encryption for sensitive stored values.
 
 > **Note:** Libre WebUI was started after Open WebUI adopted a BSD-3 license with a CLA and took on venture capital. Libre WebUI is a separate project rewritten around privacy and encryption, maintained under Apache 2.0.
 
-In this tutorial, you will deploy Libre WebUI alongside [Ollama](https://ollama.com) on a Hetzner GPU dedicated server. By the end, you'll have a fully functional, GPU-accelerated AI chat application accessible from your browser - with all data staying on EU infrastructure.
+In this tutorial, you will deploy Libre WebUI alongside [Ollama](https://ollama.com) on a Hetzner GPU dedicated server. By the end, you'll have a GPU-accelerated AI chat application accessible from your browser, with local model inference running on your own server.
 
 **What you'll set up:**
 
-* Ollama running LLMs with CUDA GPU acceleration
-* Libre WebUI providing a clean chat interface in your browser
-* Everything containerized with Docker for easy management
-* Optional: HTTPS with a reverse proxy for secure remote access
+- Ollama running LLMs with CUDA GPU acceleration
+- Libre WebUI providing a clean chat interface in your browser
+- Everything containerized with Docker for easy management
+- Optional: HTTPS with a reverse proxy for secure remote access
 
 **Choosing a Hetzner GPU server**
 
 Hetzner offers two GPU dedicated server lines, both located in their German data centers (Falkenstein / Nuremberg) and powered by 100% green electricity:
 
-| Server | GPU | VRAM | RAM | CPU | Use case |
-|--------|-----|------|-----|-----|----------|
-| **GEX44** | NVIDIA RTX 4000 SFF Ada | 20 GB GDDR6 | 64 GB DDR4 | Intel i5-13500 | Running 7B-14B parameter models comfortably |
-| **GEX131** | NVIDIA RTX PRO 6000 Blackwell Max-Q | 96 GB GDDR7 | 256 GB DDR5 ECC | Intel Xeon Gold 5412U | Running 70B+ parameter models, fine-tuning |
+| Server     | GPU                                 | VRAM        | RAM             | CPU                   | Use case                                    |
+| ---------- | ----------------------------------- | ----------- | --------------- | --------------------- | ------------------------------------------- |
+| **GEX44**  | NVIDIA RTX 4000 SFF Ada             | 20 GB GDDR6 | 64 GB DDR4      | Intel i5-13500        | Running 7B-14B parameter models comfortably |
+| **GEX131** | NVIDIA RTX PRO 6000 Blackwell Max-Q | 96 GB GDDR7 | 256 GB DDR5 ECC | Intel Xeon Gold 5412U | Running 70B+ parameter models, fine-tuning  |
 
 This tutorial uses the **GEX44** as the baseline - it is the most affordable option and has enough VRAM to run popular models like Gemma 3 12B, Phi 4 14B, and Mistral Small 24B. If you need to run larger models (e.g., Llama 3.3 70B), choose the GEX131 with its 96 GB of VRAM.
 
 **Prerequisites**
 
-* A Hetzner GPU Dedicated Server ([GEX44](https://www.hetzner.com/dedicated-rootserver/matrix-gpu/) or GEX131)
-* Ubuntu 24.04 installed via the [Hetzner Robot panel](https://robot.hetzner.com)
-* An [SSH key](https://community.hetzner.com/tutorials/howto-ssh-key) added to your server
-* A domain name pointed at your server (optional, for HTTPS access)
-* Basic familiarity with the Linux command line
+- A Hetzner GPU Dedicated Server ([GEX44](https://www.hetzner.com/dedicated-rootserver/matrix-gpu/) or GEX131)
+- Ubuntu 24.04 installed via the [Hetzner Robot panel](https://robot.hetzner.com)
+- An [SSH key](https://community.hetzner.com/tutorials/howto-ssh-key) added to your server
+- A domain name pointed at your server (optional, for HTTPS access)
+- Basic familiarity with the Linux command line
 
 **Example terminology**
 
-* Username: `holu`
-* Hostname: `<your_host>`
-* Domain: `<example.com>`
-* Server IP: `<10.0.0.1>`
+- Username: `holu`
+- Hostname: `<your_host>`
+- Domain: `<example.com>`
+- Server IP: `<10.0.0.1>`
 
 ## Step 1 - Connect to Your Server and Create a User
 
@@ -237,7 +237,7 @@ services:
     image: librewebui/libre-webui:latest
     container_name: libre-webui
     ports:
-      - "8080:3001"
+      - '8080:3001'
     environment:
       - NODE_ENV=production
       - DOCKER_ENV=true
@@ -257,7 +257,7 @@ services:
     image: ollama/ollama:latest
     container_name: ollama
     ports:
-      - "11434:11434"
+      - '11434:11434'
     volumes:
       - ollama_data:/root/.ollama
     deploy:
@@ -277,12 +277,12 @@ volumes:
 
 Here is what each key section does:
 
-* **`ports: "8080:3001"`** - Maps port 8080 on the host to port 3001 inside the Libre WebUI container. You will access the UI at `http://<10.0.0.1>:8080`.
-* **`OLLAMA_BASE_URL=http://ollama:11434`** - Tells Libre WebUI where to find Ollama. Docker Compose creates an internal network where containers can reach each other by service name (`ollama`).
-* **`CORS_ORIGIN`** - Must match the URL you use to access the UI in your browser. Update this if you add a domain name later.
-* **`JWT_SECRET` and `ENCRYPTION_KEY`** - Used for session tokens and AES-256-GCM data encryption. If left empty, Libre WebUI generates secure random values on first start and stores them in the data volume.
-* **`deploy.resources.reservations.devices`** - This is the GPU passthrough configuration. It tells Docker to reserve all available NVIDIA GPUs (`count: all`) and expose them to the Ollama container with CUDA capabilities.
-* **`volumes`** - Named Docker volumes persist data across container restarts and upgrades. `libre_webui_data` stores the encrypted SQLite database, `libre_webui_temp` stores temporary file uploads, and `ollama_data` stores downloaded model weights.
+- **`ports: "8080:3001"`** - Maps port 8080 on the host to port 3001 inside the Libre WebUI container. You will access the UI at `http://<10.0.0.1>:8080`.
+- **`OLLAMA_BASE_URL=http://ollama:11434`** - Tells Libre WebUI where to find Ollama. Docker Compose creates an internal network where containers can reach each other by service name (`ollama`).
+- **`CORS_ORIGIN`** - Must match the URL you use to access the UI in your browser. Update this if you add a domain name later.
+- **`JWT_SECRET` and `ENCRYPTION_KEY`** - Used for session tokens and AES-256-GCM data encryption. If left empty, Libre WebUI generates secure random values on first start and stores them in the data volume.
+- **`deploy.resources.reservations.devices`** - This is the GPU passthrough configuration. It tells Docker to reserve all available NVIDIA GPUs (`count: all`) and expose them to the Ollama container with CUDA capabilities.
+- **`volumes`** - Named Docker volumes persist data across container restarts and upgrades. `libre_webui_data` stores the encrypted SQLite database, `libre_webui_temp` stores temporary file uploads, and `ollama_data` stores downloaded model weights.
 
 Save the file (`Ctrl+O`, then `Enter`, then `Ctrl+X` in nano) and start both services in detached mode:
 
@@ -307,7 +307,7 @@ docker compose logs ollama
 
 Ollama does not include any models by default - you need to download them. Models are stored in the `ollama_data` volume and persist across container restarts.
 
-Pull Gemma 3 12B, Google's latest open model with vision capabilities, making it an excellent starting point for the GEX44's 20 GB of VRAM:
+Pull Gemma 3 12B as a strong starting point for the GEX44's 20 GB of VRAM:
 
 ```bash
 docker exec ollama ollama pull gemma3:12b
@@ -328,18 +328,18 @@ You can pull additional models at any time. Here are some recommended models for
 **GEX44 (20 GB VRAM) - these all fit comfortably in GPU memory:**
 
 ```bash
-docker exec ollama ollama pull gemma3:12b         # 7.6 GB - Google's latest open model with vision
-docker exec ollama ollama pull phi4:14b           # 8.4 GB - Microsoft's state-of-the-art small model
-docker exec ollama ollama pull mistral-small:24b  # 14 GB  - Mistral's latest mid-size model (32K context)
-docker exec ollama ollama pull qwen2.5-coder:14b  # 8.9 GB - code generation specialist
+docker exec ollama ollama pull gemma3:12b         # General multimodal model
+docker exec ollama ollama pull phi4:14b           # Compact reasoning-oriented model
+docker exec ollama ollama pull mistral-small:24b  # Mid-size general model
+docker exec ollama ollama pull qwen3:14b          # Strong multilingual and coding-capable model
 ```
 
 **GEX131 (96 GB VRAM) - large models that require significantly more memory:**
 
 ```bash
-docker exec ollama ollama pull llama3.3:70b       # 40 GB - Meta's flagship (matches 405B quality)
-docker exec ollama ollama pull qwen3:72b          # 41 GB - top-tier multilingual reasoning
-docker exec ollama ollama pull deepseek-r1:70b    # 40 GB - advanced chain-of-thought reasoning
+docker exec ollama ollama pull llama3.3:70b       # Large general model
+docker exec ollama ollama pull qwen3:72b          # Large multilingual model
+docker exec ollama ollama pull deepseek-r1:70b    # Large reasoning model
 ```
 
 All pulled models appear in the Libre WebUI model selector automatically. Ollama loads and unloads models from VRAM on demand, so you can have many models downloaded even if they don't all fit in memory at once.
@@ -350,7 +350,7 @@ Browse the full list of available models at [ollama.com/library](https://ollama.
 
 **Running models larger than your VRAM:** You are not limited to models that fit entirely in GPU memory. When a model exceeds the available VRAM, Ollama automatically splits the model layers between the GPU and system RAM. The layers that fit in VRAM run on the GPU at full speed, while the remaining layers are offloaded to RAM and processed on the CPU. This means you can run a 14 GB model like `mistral-small:24b` on the GEX44's 20 GB VRAM entirely on the GPU, but you could also run a 40 GB model like `llama3.3:70b` by offloading the extra layers to the GEX44's 64 GB of system RAM. Performance will be slower compared to fully GPU-accelerated inference, but still significantly faster than CPU-only. The GEX131 with its 256 GB of DDR5 RAM is particularly well-suited for running oversized models with partial GPU offloading.
 
-**Pulling models from Hugging Face:** Libre WebUI also includes a built-in integration with [Hugging Face Hub](https://huggingface.co), giving you access to over 1 million models. You can pull GGUF-format models (the quantized format used by Ollama and llama.cpp) directly from Hugging Face through the Libre WebUI settings panel, without using the command line. This is useful for finding specialized or community fine-tuned models that are not listed in the Ollama library.
+**Pulling models from Hugging Face:** Libre WebUI includes a Hugging Face Hub integration for discovering compatible models, including GGUF-format models that can be pulled through Ollama. This is useful for specialized or community fine-tuned models that are not listed in the Ollama library.
 
 ## Step 6 - Set Up HTTPS with Caddy (Optional)
 
@@ -439,23 +439,23 @@ docker compose logs ollama | grep -i cuda
 
 ## Conclusion
 
-You now have a private, GPU-accelerated AI chat interface running on your Hetzner server. Libre WebUI gives you a polished chat experience with AES-256-GCM encrypted storage, while Ollama handles running the models locally with full CUDA acceleration. Your conversations never leave your server.
+You now have a private, GPU-accelerated AI chat interface running on your Hetzner server. Libre WebUI gives you a polished chat experience, while Ollama handles running the models locally with CUDA acceleration. When you use only local models and self-hosted storage, prompts and responses stay on your server.
 
-Because Hetzner's data centers are located in Germany and Finland, this setup is inherently GDPR-compliant - your AI infrastructure runs entirely within the EU, with no data sent to third-party cloud providers. This makes it suitable for organizations handling sensitive data across industries like healthcare, legal, and finance, regardless of where their users are located.
+Because Hetzner's data centers are located in Germany and Finland, this setup can help with EU data residency requirements. Compliance still depends on your organization’s policies, access controls, backups, logging, provider choices, and legal review.
 
 **What you accomplished:**
 
-* Installed NVIDIA drivers and the NVIDIA Container Toolkit
-* Deployed Ollama with GPU passthrough via Docker
-* Deployed Libre WebUI connected to Ollama with encrypted data storage
-* Optionally secured everything with HTTPS via Caddy
+- Installed NVIDIA drivers and the NVIDIA Container Toolkit
+- Deployed Ollama with GPU passthrough via Docker
+- Deployed Libre WebUI connected to Ollama with persistent application storage
+- Optionally secured everything with HTTPS via Caddy
 
 **Next steps:**
 
-* Explore [Libre WebUI's features](https://github.com/libre-webui/libre-webui) - document chat (RAG), personas, artifacts, and more
-* Try larger models - upgrade to the GEX131 (96 GB VRAM) to run `llama3.3:70b` and beyond
-* Connect cloud providers (OpenAI, Anthropic, Mistral AI) alongside Ollama for a unified interface
-* For GDPR-compliant managed AI infrastructure on Hetzner, [Kroonen AI](https://kroonen.ai) partners with Hetzner to deliver turnkey deployments for organizations worldwide - including custom model fine-tuning, SLA-backed support, and air-gapped installations
+- Explore [Libre WebUI's features](https://github.com/libre-webui/libre-webui) - document chat (RAG), personas, artifacts, and more
+- Try larger models - upgrade to the GEX131 (96 GB VRAM) to run `llama3.3:70b` and beyond
+- Connect cloud providers (OpenAI, Anthropic, Mistral AI) alongside Ollama for a unified interface
+- For managed AI infrastructure on Hetzner, [Kroonen AI](https://kroonen.ai) can help with turnkey deployments, custom model work, SLA-backed support, and private-network or air-gapped installations
 
 ##### License: MIT
 

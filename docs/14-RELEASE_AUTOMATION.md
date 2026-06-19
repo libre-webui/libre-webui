@@ -1,9 +1,17 @@
 ---
 sidebar_position: 2
-title: "Release Automation"
-description: "Automated release system with conventional commits, changelog generation, and deployment workflows."
+title: 'Release Automation'
+description: 'Automated release system with conventional commits, changelog generation, and deployment workflows.'
 slug: /RELEASE_AUTOMATION
-keywords: [release automation, conventional commits, changelog, deployment, ci cd, versioning]
+keywords:
+  [
+    release automation,
+    conventional commits,
+    changelog,
+    deployment,
+    ci cd,
+    versioning,
+  ]
 image: /img/social/14.png
 ---
 
@@ -22,6 +30,7 @@ npm run setup:release
 ```
 
 This will:
+
 - Install required dependencies
 - Configure git commit message template
 - Set up git hooks for commit validation
@@ -148,10 +157,12 @@ The project includes automated GitHub Actions workflows:
 ### Release Workflow
 
 Triggered by:
+
 - Pushing a version tag (`v*`)
 - Manual workflow dispatch
 
 Features:
+
 - Automatically creates GitHub releases
 - Generates release notes from changelog
 - Builds Docker images
@@ -226,6 +237,7 @@ Before creating a release:
 ### Common Issues
 
 **"Working directory is not clean"**
+
 ```bash
 # Commit or stash your changes
 git add .
@@ -235,10 +247,12 @@ git stash
 ```
 
 **"No commits since last release"**
+
 - Make sure you have new commits since the last tag
 - Check with: `git log $(git describe --tags --abbrev=0)..HEAD --oneline`
 
 **"Invalid commit message format"**
+
 - Use conventional commit format
 - Check the git hook error message for guidance
 - Example: `feat: add new feature description`
@@ -295,6 +309,7 @@ git push origin main && git push origin --tags
 ```
 
 This will:
+
 - Bump version from 0.1.0 to 0.1.1
 - Update CHANGELOG.md with new features, fixes, and documentation
 - Create a git tag v0.1.1

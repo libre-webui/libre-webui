@@ -1,110 +1,98 @@
 ---
 sidebar_position: 2
-title: "Quick Start"
-description: "Get Libre WebUI running in 60 seconds with Ollama"
+title: 'Quick Start'
+description: 'Get Libre WebUI running with Ollama or provider plugins'
 slug: /QUICK_START
-keywords: [libre webui, quick start, installation, setup, ollama, hardware requirements]
+keywords:
+  [libre webui, quick start, installation, setup, ollama, hardware requirements]
 ---
 
 # Quick Start
 
 ## Requirements
 
-Before you begin, make sure you have:
+| Requirement | Minimum  | Recommended                         |
+| ----------- | -------- | ----------------------------------- |
+| Node.js     | 18+      | 20+                                 |
+| RAM         | 8 GB     | 16 GB+                              |
+| Disk        | 5 GB     | 20 GB+ for models                   |
+| GPU         | Optional | 8 GB+ VRAM for fast local inference |
 
-| Requirement | Minimum | Recommended |
-|-------------|---------|-------------|
-| **RAM** | 8GB | 16GB+ |
-| **GPU VRAM** | None (CPU works) | 8GB+ for speed |
-| **Disk Space** | 5GB | 20GB+ for models |
-| **Node.js** | v18+ | v20+ |
+Libre WebUI works with CPU-only Ollama, but smaller models are a better fit on CPU. For cloud provider plugins, you only need the relevant API key.
 
-:::tip No GPU? No Problem
-Libre WebUI works with CPU-only inference. Expect 5-15 tokens/second with smaller models (3-7B). For faster performance, see [Hardware Requirements](./HARDWARE_REQUIREMENTS).
-:::
-
-## Install
+## Start Libre WebUI
 
 ```bash
 npx libre-webui
 ```
 
-Opens at [http://localhost:8080](http://localhost:8080).
-
-**Prerequisite:** [Ollama](https://ollama.ai) must be installed and running.
+Open [http://localhost:8080](http://localhost:8080). On a fresh install, create the first account; that account becomes the administrator.
 
 ## Install Ollama
 
-**macOS / Linux:**
+Install [Ollama](https://ollama.com), then pull a small general model:
+
 ```bash
-curl -fsSL https://ollama.ai/install.sh | sh
-ollama pull llama3.1:8b
+ollama pull gemma3:4b
 ```
 
-**Windows:**
-Download from [ollama.ai](https://ollama.ai), then:
+Other good first models are `qwen3:8b`, `deepseek-r1:8b`, and `mistral`. Use the Model Manager in Libre WebUI to browse installed models, search the live Ollama Library, and pull models without leaving the app.
+
+:::tip Embeddings for documents
+For semantic document search, also install an embedding model:
+
 ```bash
-ollama pull llama3.1:8b
+ollama pull nomic-embed-text
 ```
 
-:::info Model Size
-`llama3.1:8b` downloads ~5GB and needs ~5GB VRAM (GPU) or ~8GB RAM (CPU). For smaller systems, try `llama3.2:3b` (~2GB).
 :::
 
-## Alternative: Docker
+## Add Cloud Providers
 
-Everything included (Libre WebUI + Ollama):
+Cloud providers are optional. Add keys to `backend/.env`, restart the backend, then enable the provider in Settings:
+
+```env
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+GROQ_API_KEY=gsk_...
+GEMINI_API_KEY=...
+OPENROUTER_API_KEY=sk-or-...
+```
+
+Provider model lists are refreshed by the app when supported. You do not need to keep the docs open to find the latest model names.
+
+## Docker
 
 ```bash
 git clone https://github.com/libre-webui/libre-webui
 cd libre-webui
-docker-compose up -d
+docker compose up -d
 ```
 
-With NVIDIA GPU:
-```bash
-docker-compose -f docker-compose.gpu.yml up -d
-```
-
-If you already have Ollama running:
-```bash
-docker-compose -f docker-compose.external-ollama.yml up -d
-```
-
-## Alternative: Kubernetes
+If Ollama is already running on the host or another machine:
 
 ```bash
-helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui
+docker compose -f docker-compose.external-ollama.yml up -d
 ```
 
-See [Kubernetes docs](./KUBERNETES) for configuration options.
-
-## Add Cloud Providers
-
-Optional: connect OpenAI, Anthropic, and other providers.
-
-Add to `backend/.env`:
-```env
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-```
-
-Enable in Settings → Plugins.
+For NVIDIA GPU acceleration, use the GPU compose file provided by the repository.
 
 ## Keyboard Shortcuts
 
-| Shortcut | Action |
-|----------|--------|
-| `Cmd/Ctrl + K` | New chat |
-| `Cmd/Ctrl + B` | Toggle sidebar |
-| `Cmd/Ctrl + ,` | Settings |
-| `Cmd/Ctrl + D` | Toggle dark mode |
-| `?` | Show all shortcuts |
+| Shortcut        | Action             |
+| --------------- | ------------------ |
+| `Cmd/Ctrl + K`  | New chat           |
+| `Cmd/Ctrl + B`  | Toggle sidebar     |
+| `Cmd/Ctrl + ,`  | Settings           |
+| `Cmd/Ctrl + D`  | Toggle theme       |
+| `?`             | Keyboard shortcuts |
+| `Enter`         | Send message       |
+| `Shift + Enter` | New line           |
 
 ## Next Steps
 
-- [Hardware Requirements](./HARDWARE_REQUIREMENTS) - GPU and memory guide
-- [Working with Models](./WORKING_WITH_MODELS) - Model selection and optimization
-- [Plugins](./PLUGIN_ARCHITECTURE) - Cloud providers (OpenAI, Anthropic, etc.)
-- [Docker](./DOCKER) - Docker Compose options
-- [Kubernetes](./KUBERNETES) - Helm chart configuration
+- [Working with Models](./WORKING_WITH_MODELS)
+- [Hardware Requirements](./HARDWARE_REQUIREMENTS)
+- [Document Chat](./RAG_FEATURE)
+- [Artifacts](./ARTIFACTS_FEATURE)
+- [Docker](./DOCKER)

@@ -1,107 +1,109 @@
 ---
 sidebar_position: 1
-title: "Documentation"
-description: "Libre WebUI documentation - self-hosted, privacy-first AI chat interface"
+title: 'Documentation'
+description: 'Libre WebUI documentation - self-hosted, privacy-first AI chat interface'
 slug: /
-keywords: [libre webui, ollama, local ai, privacy ai, self-hosted ai, chatgpt alternative]
+keywords:
+  [
+    libre webui,
+    ollama,
+    local ai,
+    privacy ai,
+    self-hosted ai,
+    chatgpt alternative,
+  ]
 ---
 
 # Libre WebUI Documentation
 
-Self-hosted AI chat that works with Ollama, OpenAI, Anthropic, and 9+ providers.
+Libre WebUI is a self-hosted AI workspace for chat, local Ollama models, cloud provider plugins, personas, document search, and interactive artifacts. It is designed for people who want a polished WebUI without giving up control of their data or model stack.
 
 ## Quick Start
-
-The fastest way to get started:
 
 ```bash
 npx libre-webui
 ```
 
-Opens at `http://localhost:8080`. That's it.
-
-**Requirements:** [Ollama](https://ollama.ai) for local AI, or API keys for cloud providers.
+Libre WebUI opens at `http://localhost:8080`. Install [Ollama](https://ollama.com) first if you want local models, or add provider API keys for cloud models.
 
 ## Installation Options
 
-| Method | Command | Best For |
-|--------|---------|----------|
-| **npx** | `npx libre-webui` | Quick start, testing |
-| **Docker** | `docker-compose up -d` | Production, includes Ollama |
-| **Docker (external Ollama)** | `docker-compose -f docker-compose.external-ollama.yml up -d` | When Ollama is already running |
-| **Kubernetes** | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Enterprise, scaling |
-| **From source** | `npm install && npm run dev` | Development |
+| Method                      | Command                                                                 | Best for                |
+| --------------------------- | ----------------------------------------------------------------------- | ----------------------- |
+| npx                         | `npx libre-webui`                                                       | Fast local setup        |
+| Docker                      | `docker compose up -d`                                                  | Persistent self-hosting |
+| Docker with external Ollama | `docker compose -f docker-compose.external-ollama.yml up -d`            | Existing Ollama servers |
+| Kubernetes                  | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployment      |
+| Source                      | `npm install && npm run dev`                                            | Development             |
 
 ## Core Features
 
-- **Real-time streaming chat** with dark/light themes
-- **Document Chat (RAG)** - Upload PDFs and chat with your docs
-- **Custom Personas** - AI personalities with memory
-- **Interactive Artifacts** - Live HTML, SVG, code preview
-- **Text-to-Speech** - Multiple voices and providers
+- Streaming chat with local and plugin-backed models
+- Model Manager for installed Ollama models, live Ollama Library search, and Ollama Cloud models
+- Document Chat for PDF and plain-text files, with keyword search or embeddings
+- Personas with model settings, prompts, import/export, memory, and mutation state
+- Interactive artifacts for HTML, SVG, JSON, code, and bundled multi-file outputs
+- Authentication with local accounts, optional GitHub/Hugging Face OAuth, and optional Cloudflare Turnstile on signup
+- Light/dark themes with custom accent colors
 
 ## AI Providers
 
-**Local:**
-- Ollama (full integration)
+Local inference is handled through Ollama. Cloud providers are added through plugins and include OpenAI-compatible APIs plus first-party entries for OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, Hugging Face, and other compatible services.
 
-**Cloud (via plugins):**
-- OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, HuggingFace, and more
+The provider model lists are refreshed by the application where supported, so the UI can keep up with new model releases without hardcoding every model in the docs.
 
 ## Documentation
 
 ### Getting Started
-- [Quick Start](./QUICK_START) - Install and run in 60 seconds
-- [Hardware Requirements](./HARDWARE_REQUIREMENTS) - GPU, RAM, and CPU guide
-- [Working with Models](./WORKING_WITH_MODELS) - Model selection and optimization
-- [Keyboard Shortcuts](./KEYBOARD_SHORTCUTS) - Productivity tips
+
+- [Quick Start](./QUICK_START)
+- [Hardware Requirements](./HARDWARE_REQUIREMENTS)
+- [Working with Models](./WORKING_WITH_MODELS)
+- [Keyboard Shortcuts](./KEYBOARD_SHORTCUTS)
+- [Troubleshooting](./TROUBLESHOOTING)
 
 ### Deployment
-- [Docker](./DOCKER) - Docker and Docker Compose
-- [Kubernetes](./KUBERNETES) - Helm chart deployment
-- [Desktop App](./ELECTRON_DESKTOP_APP) - Native macOS app
+
+- [Docker](./DOCKER)
+- [Docker with External Ollama](./DOCKER_EXTERNAL_OLLAMA)
+- [Kubernetes](./KUBERNETES)
+- [Desktop App](./ELECTRON_DESKTOP_APP)
 
 ### Features
-- [Plugin Architecture](./PLUGIN_ARCHITECTURE) - External AI providers
-- [HuggingFace Hub](./HUGGINGFACE_HUB) - 1M+ models: chat, TTS, image gen, embeddings, STT
-- [Document Chat (RAG)](./RAG_FEATURE) - Upload and chat with documents
-- [Artifacts](./ARTIFACTS_FEATURE) - Interactive content
-- [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK) - Custom AI personalities
-- [Qwen3-TTS](./QWEN3_TTS) - Local text-to-speech with voice cloning
-- [Kyutai TTS](./KYUTAI_TTS) - CPU and GPU text-to-speech with voice cloning
+
+- [Plugin Architecture](./PLUGIN_ARCHITECTURE)
+- [Hugging Face Hub](./HUGGINGFACE_HUB)
+- [Document Chat](./RAG_FEATURE)
+- [Artifacts](./ARTIFACTS_FEATURE)
+- [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK)
+- [Qwen3-TTS](./QWEN3_TTS)
+- [Kyutai TTS](./KYUTAI_TTS)
 
 ### Administration
-- [Authentication](./AUTHENTICATION) - User management and SSO
-- [Single Sign-On](./SSO) - GitHub, Hugging Face OAuth
-- [Environment Variables](./ENVIRONMENT_VARIABLES) - Complete configuration reference
 
-### Troubleshooting
-- [Troubleshooting Guide](./TROUBLESHOOTING) - Common issues and fixes
-- [Pro Tips](./PRO_TIPS) - Advanced workflows and features
+- [Authentication](./AUTHENTICATION)
+- [Single Sign-On](./SINGLE_SIGN_ON)
+- [Environment Variables](./ENVIRONMENT_VARIABLES)
+- [Database Encryption](./DATABASE_ENCRYPTION)
 
-## Configuration
+## Basic Configuration
 
-Edit `backend/.env`:
+Create or edit `backend/.env`:
 
 ```env
-# Local AI
 OLLAMA_BASE_URL=http://localhost:11434
+JWT_SECRET=replace-with-a-long-random-secret
 
-# Cloud providers (optional)
+# Optional provider keys
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
+
+# Optional signup protection
+TURNSTILE_SITE_KEY=...
+TURNSTILE_SECRET_KEY=...
 ```
 
-## Enterprise
-
-[Kroonen AI](https://kroonen.ai) provides professional services:
-
-- On-premise & cloud deployment
-- SSO integration (Okta, Azure AD, SAML)
-- Custom development
-- SLA-backed support
-
-Contact: enterprise@kroonen.ai
+The first local account created in a fresh install becomes the administrator.
 
 ## Links
 
