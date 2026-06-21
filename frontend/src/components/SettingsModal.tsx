@@ -19,17 +19,10 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   X,
-  Moon,
-  Sun,
   Bot,
   Database,
   Palette,
-  MessageSquare,
   Info,
-  GitBranch,
-  GitMerge,
-  ExternalLink,
-  BookOpen,
   Puzzle,
   Upload,
   Download,
@@ -49,23 +42,18 @@ import {
   ImageIcon,
 } from 'lucide-react';
 import { Button, Select, Textarea } from '@/components/ui';
-import { BackgroundUpload } from '@/components/BackgroundUpload';
-import { Logo } from '@/components/Logo';
 import { PluginVariablesEditor } from '@/components/PluginManager';
-import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { SettingsAboutTab } from '@/components/settings/SettingsAboutTab';
+import { SettingsAppearanceTab } from '@/components/settings/SettingsAppearanceTab';
+import { SettingsDataTab } from '@/components/settings/SettingsDataTab';
+import { useSettingsDataImport } from '@/components/settings/useSettingsDataImport';
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAuthStore } from '@/store/authStore';
 import { EmbeddingModel, Theme } from '@/types';
-import {
-  ACCENT_OPTIONS,
-  DEFAULT_ACCENT,
-  DEFAULT_CUSTOM_ACCENT,
-  getThemeAccentColor,
-  normalizeTheme,
-} from '@/utils/theme';
+import { normalizeTheme } from '@/utils/theme';
 import {
   preferencesApi,
   ollamaApi,
@@ -228,21 +216,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     preferences.imageGenSettings || DEFAULT_IMAGE_GEN_SETTINGS
   );
 
-  // Import data state
-  const [importing, setImporting] = useState(false);
-  const [showImportOptions, setShowImportOptions] = useState(false);
-  const [mergeStrategy, setMergeStrategy] = useState<
-    'skip' | 'overwrite' | 'merge'
-  >('skip');
-  const [importResult, setImportResult] = useState<{
-    preferences: { imported: boolean; error: string | null };
-    sessions: { imported: number; skipped: number; errors: string[] };
-    documents: { imported: number; skipped: number; errors: string[] };
-  } | null>(null);
-  const [selectedImportFile, setSelectedImportFile] = useState<File | null>(
-    null
-  );
-  const importFileInputRef = useRef<HTMLInputElement>(null);
+  const {
+    importing,
+    showImportOptions,
+    mergeStrategy,
+    setMergeStrategy,
+    importResult,
+    setImportResult,
+    importFileInputRef,
+    handleExportData,
+    handleImportFileSelect,
+    handleConfirmImport,
+    handleCancelImport,
+  } = useSettingsDataImport({
+    preferences,
+    sessions,
+    loadPreferences,
+    loadSessions,
+  });
   const queryClient = useQueryClient();
 
   // Plugin credentials query
@@ -727,10 +718,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   if (!isOpen) return null;
 
-  const activeAccent = theme.accent || DEFAULT_ACCENT;
-  const customAccentValue = theme.customAccent || DEFAULT_CUSTOM_ACCENT;
-  const accentPreviewColor = getThemeAccentColor(theme);
-
   const handleThemeChange = (mode: 'light' | 'dark') => {
     const currentTheme = useAppStore.getState().theme;
     const newTheme = normalizeTheme({ ...currentTheme, mode });
@@ -754,6 +741,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     });
     setTheme(newTheme);
     handleUpdatePreferences({ theme: newTheme });
+  };
+
+  const handleShowUsernameChange = (showUsername: boolean) => {
+    setPreferences({ showUsername });
+    preferencesApi.updatePreferences({ showUsername }).catch(error => {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to update settings: ' + errorMessage);
+    });
   };
 
   const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -783,102 +779,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     ) {
       await clearAllSessions();
       toast.success('All chat sessions deleted');
-    }
-  };
-
-  const handleExportData = () => {
-    const data = {
-      format: 'libre-webui-export',
-      version: '1.0',
-      preferences,
-      sessions,
-      documents: [], // Documents are handled by the backend
-      exportedAt: new Date().toISOString(),
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `libre-webui-export-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast.success('Data exported successfully');
-  };
-
-  const handleImportFileSelect = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedImportFile(file);
-      setShowImportOptions(true);
-      setImportResult(null);
-    }
-  };
-
-  const handleConfirmImport = async () => {
-    if (!selectedImportFile) return;
-
-    setImporting(true);
-    try {
-      const fileContent = await selectedImportFile.text();
-      const importData = JSON.parse(fileContent);
-
-      // Validate the data format
-      if (!importData.format || importData.format !== 'libre-webui-export') {
-        throw new Error(
-          'Invalid export format. Please use a valid Libre WebUI export file.'
-        );
-      }
-
-      const result = await preferencesApi.importData(
-        importData,
-        // Map frontend merge strategies to backend API:
-        // 'skip' -> 'merge' (merge with existing, keeps existing values)
-        // 'overwrite' -> 'replace' (completely replace existing data)
-        // 'merge' -> 'merge' (merge with existing, new values take precedence)
-        mergeStrategy === 'overwrite' ? 'replace' : 'merge'
-      );
-
-      if (result.success && result.data) {
-        setImportResult({
-          preferences: { imported: true, error: null },
-          sessions: { imported: 0, skipped: 0, errors: [] },
-          documents: { imported: 0, skipped: 0, errors: [] },
-        });
-        toast.success('Data imported successfully');
-
-        // Refresh data in store
-        await loadPreferences();
-        await loadSessions();
-      } else {
-        throw new Error(result.error || 'Import failed');
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Import failed');
-      setImportResult(null);
-    } finally {
-      setImporting(false);
-      setShowImportOptions(false);
-      setSelectedImportFile(null);
-      if (importFileInputRef.current) {
-        importFileInputRef.current.value = '';
-      }
-    }
-  };
-
-  const handleCancelImport = () => {
-    setShowImportOptions(false);
-    setSelectedImportFile(null);
-    setImportResult(null);
-    if (importFileInputRef.current) {
-      importFileInputRef.current.value = '';
     }
   };
 
@@ -1046,155 +946,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     switch (activeTab) {
       case 'appearance':
         return (
-          <div className='space-y-6'>
-            {/* Language Switcher */}
-            <LanguageSwitcher />
-
-            <div className='border-t border-gray-200 dark:border-dark-300 pt-6'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                {t('settings.appearance.title')}
-              </h3>
-            </div>
-            <div className='grid grid-cols-2 gap-3'>
-              <button
-                onClick={() => handleThemeChange('light')}
-                className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  theme.mode === 'light'
-                    ? 'bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow-md focus:ring-primary-500'
-                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400'
-                }`}
-              >
-                <Sun className='h-4 w-4' />
-                {t('settings.appearance.theme.light')}
-              </button>
-              <button
-                onClick={() => handleThemeChange('dark')}
-                className={`flex items-center justify-center gap-2 h-12 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                  theme.mode === 'dark'
-                    ? 'bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow-md focus:ring-primary-500'
-                    : 'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-25 dark:hover:bg-dark-200 dark:hover:border-dark-400'
-                }`}
-              >
-                <Moon className='h-4 w-4' />
-                {t('settings.appearance.theme.dark')}
-              </button>
-            </div>
-
-            <div className='border-t border-gray-200 dark:border-dark-300 pt-6'>
-              <div className='flex items-center justify-between gap-4 mb-3'>
-                <div>
-                  <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-                    {t('settings.appearance.accent.title', {
-                      defaultValue: 'Accent color',
-                    })}
-                  </h4>
-                </div>
-                <div
-                  className='h-9 w-9 rounded-full border border-gray-200 dark:border-dark-400 shadow-inner flex-shrink-0'
-                  style={{ backgroundColor: accentPreviewColor }}
-                  aria-hidden='true'
-                />
-              </div>
-
-              <div className='grid grid-cols-5 xs:grid-cols-6 sm:grid-cols-9 gap-2'>
-                {ACCENT_OPTIONS.map(option => {
-                  const isSelected = activeAccent === option.id;
-
-                  return (
-                    <button
-                      key={option.id}
-                      type='button'
-                      onClick={() => handleAccentChange(option.id)}
-                      className={`relative h-10 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-50 ${
-                        isSelected
-                          ? 'border-gray-900 dark:border-white shadow-md scale-105'
-                          : 'border-gray-200 dark:border-dark-400 hover:scale-105 hover:shadow-sm'
-                      }`}
-                      style={{ backgroundColor: option.color }}
-                      aria-label={t('settings.appearance.accent.useColor', {
-                        defaultValue: `Use ${option.label} accent`,
-                        color: option.label,
-                      })}
-                      title={option.label}
-                    >
-                      {isSelected && (
-                        <Check className='absolute inset-0 m-auto h-4 w-4 text-white drop-shadow' />
-                      )}
-                    </button>
-                  );
-                })}
-
-                <label
-                  className={`relative h-10 rounded-xl border transition-all duration-200 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-500 focus-within:ring-offset-2 dark:focus-within:ring-offset-dark-50 overflow-hidden cursor-pointer ${
-                    activeAccent === 'custom'
-                      ? 'border-gray-900 dark:border-white shadow-md scale-105'
-                      : 'border-gray-200 dark:border-dark-400 hover:scale-105 hover:shadow-sm'
-                  }`}
-                  title={t('settings.appearance.accent.custom', {
-                    defaultValue: 'Custom color',
-                  })}
-                  aria-label={t('settings.appearance.accent.custom', {
-                    defaultValue: 'Custom color',
-                  })}
-                >
-                  <input
-                    type='color'
-                    value={customAccentValue}
-                    onInput={event =>
-                      handleCustomAccentChange(event.currentTarget.value)
-                    }
-                    onChange={event =>
-                      handleCustomAccentChange(event.target.value)
-                    }
-                    className='absolute inset-0 h-full w-full cursor-pointer opacity-0'
-                  />
-                  <span
-                    className='absolute inset-0'
-                    style={{ backgroundColor: customAccentValue }}
-                    aria-hidden='true'
-                  />
-                  <Palette className='absolute inset-0 m-auto h-4 w-4 text-white drop-shadow' />
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <h4 className='text-md font-medium text-gray-900 dark:text-gray-100 mb-3'>
-                {t('settings.appearance.chatInterface.title')}
-              </h4>
-              <div className='space-y-3'>
-                <div className='flex items-center justify-between'>
-                  <div className='flex flex-col'>
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                      {t('settings.appearance.chatInterface.showUsername')}
-                    </span>
-                    <span className='text-xs text-gray-500 dark:text-gray-400'>
-                      {t(
-                        'settings.appearance.chatInterface.showUsernameDescription'
-                      )}
-                    </span>
-                  </div>
-                  <label className='relative inline-flex items-center cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      className='sr-only peer'
-                      checked={preferences.showUsername}
-                      onChange={e => {
-                        // Only send the specific field being updated to avoid overwriting other settings
-                        const showUsername = e.target.checked;
-                        setPreferences({ showUsername });
-                        preferencesApi.updatePreferences({ showUsername });
-                      }}
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Background Upload Section */}
-            <BackgroundUpload />
-          </div>
+          <SettingsAppearanceTab
+            theme={theme}
+            preferences={preferences}
+            onThemeChange={handleThemeChange}
+            onAccentChange={handleAccentChange}
+            onCustomAccentChange={handleCustomAccentChange}
+            onShowUsernameChange={handleShowUsernameChange}
+          />
         );
 
       case 'models':
@@ -2712,416 +2471,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       case 'data':
         return (
-          <div className='space-y-6'>
-            <div>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-                {t('settings.data.title')}
-              </h3>
-              <div className='space-y-4'>
-                <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-                  <div className='flex flex-col'>
-                    <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      {t('settings.data.export')}
-                    </h4>
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
-                      {t('settings.data.exportDescription')}
-                    </p>
-                    <Button
-                      onClick={handleExportData}
-                      variant='outline'
-                      size='sm'
-                      className='w-full'
-                    >
-                      {t('settings.data.exportAll')}
-                    </Button>
-                  </div>
-
-                  <div className='flex flex-col'>
-                    <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      {t('settings.data.import')}
-                    </h4>
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
-                      {t('settings.data.importDescription')}
-                    </p>
-                    <input
-                      ref={importFileInputRef}
-                      type='file'
-                      accept='.json'
-                      onChange={handleImportFileSelect}
-                      className='hidden'
-                    />
-                    <Button
-                      onClick={() => importFileInputRef.current?.click()}
-                      variant='outline'
-                      size='sm'
-                      className='w-full'
-                      disabled={importing}
-                    >
-                      {importing
-                        ? t('settings.data.importing')
-                        : t('settings.data.importData')}
-                    </Button>
-                  </div>
-
-                  <div className='flex flex-col'>
-                    <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                      {t('settings.data.clearSessions')}
-                    </h4>
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3 flex-1'>
-                      {t('settings.data.clearSessionsDescription')}
-                    </p>
-                    <Button
-                      onClick={handleClearAllHistory}
-                      variant='outline'
-                      size='sm'
-                      className='w-full text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border-red-200 hover:border-red-300 dark:border-red-800 dark:hover:border-red-700'
-                      disabled={sessions.length === 0 || loading}
-                    >
-                      {loading
-                        ? t('settings.data.clearing')
-                        : t('settings.data.clearAll', {
-                            count: sessions.length,
-                          })}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Import Options Modal */}
-                {showImportOptions && (
-                  <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
-                    <h5 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-3'>
-                      {t('settings.data.importOptions')}
-                    </h5>
-                    <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
-                      {t('settings.data.importOptionsDescription')}
-                    </p>
-                    <div className='space-y-2 mb-4'>
-                      <label className='flex items-center'>
-                        <input
-                          type='radio'
-                          name='mergeStrategy'
-                          value='skip'
-                          checked={mergeStrategy === 'skip'}
-                          onChange={e =>
-                            setMergeStrategy(
-                              e.target.value as 'skip' | 'overwrite' | 'merge'
-                            )
-                          }
-                          className='mr-2'
-                        />
-                        <span className='text-sm text-gray-700 dark:text-gray-300'>
-                          {t('settings.data.skipDuplicates')}
-                        </span>
-                      </label>
-                      <label className='flex items-center'>
-                        <input
-                          type='radio'
-                          name='mergeStrategy'
-                          value='overwrite'
-                          checked={mergeStrategy === 'overwrite'}
-                          onChange={e =>
-                            setMergeStrategy(
-                              e.target.value as 'skip' | 'overwrite' | 'merge'
-                            )
-                          }
-                          className='mr-2'
-                        />
-                        <span className='text-sm text-gray-700 dark:text-gray-300'>
-                          {t('settings.data.overwrite')}
-                        </span>
-                      </label>
-                    </div>
-                    <div className='flex gap-2'>
-                      <Button
-                        onClick={handleConfirmImport}
-                        size='sm'
-                        disabled={importing}
-                      >
-                        {importing
-                          ? t('settings.data.importing')
-                          : t('settings.data.import')}
-                      </Button>
-                      <Button
-                        onClick={handleCancelImport}
-                        variant='outline'
-                        size='sm'
-                      >
-                        {t('common.cancel')}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Import Results */}
-                {importResult && (
-                  <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
-                    <h5 className='text-sm font-medium text-gray-900 dark:text-gray-100 mb-2'>
-                      {t('settings.data.importResults')}
-                    </h5>
-                    <div className='text-xs text-gray-700 dark:text-gray-300 space-y-1'>
-                      <div>
-                        {t('settings.data.preferences')}:{' '}
-                        {importResult.preferences.imported
-                          ? t('settings.data.imported')
-                          : t('settings.data.failed')}
-                      </div>
-                      <div>
-                        {t('settings.data.sessions')}:{' '}
-                        {importResult.sessions.imported}{' '}
-                        {t('settings.data.importedLabel')},
-                        {importResult.sessions.skipped}{' '}
-                        {t('settings.data.skipped')}
-                      </div>
-                      <div>
-                        {t('settings.data.documents')}:{' '}
-                        {importResult.documents.imported}{' '}
-                        {t('settings.data.importedLabel')},{' '}
-                        {importResult.documents.skipped}{' '}
-                        {t('settings.data.skipped')}
-                      </div>
-                      {(importResult.sessions.errors.length > 0 ||
-                        importResult.documents.errors.length > 0) && (
-                        <div className='mt-2'>
-                          <p className='font-medium'>
-                            {t('settings.data.errors')}:
-                          </p>
-                          {importResult.sessions.errors.map(
-                            (error: string, idx: number) => (
-                              <p
-                                key={idx}
-                                className='text-red-600 dark:text-red-400'
-                              >
-                                • {error}
-                              </p>
-                            )
-                          )}
-                          {importResult.documents.errors.map(
-                            (error: string, idx: number) => (
-                              <p
-                                key={idx}
-                                className='text-red-600 dark:text-red-400'
-                              >
-                                • {error}
-                              </p>
-                            )
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      onClick={() => setImportResult(null)}
-                      variant='outline'
-                      size='sm'
-                      className='mt-2'
-                    >
-                      {t('common.close')}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          <SettingsDataTab
+            sessionCount={sessions.length}
+            loading={loading}
+            importing={importing}
+            showImportOptions={showImportOptions}
+            mergeStrategy={mergeStrategy}
+            importResult={importResult}
+            importFileInputRef={importFileInputRef}
+            onExportData={handleExportData}
+            onImportFileSelect={handleImportFileSelect}
+            onClearAllHistory={handleClearAllHistory}
+            onMergeStrategyChange={setMergeStrategy}
+            onConfirmImport={handleConfirmImport}
+            onCancelImport={handleCancelImport}
+            onDismissImportResult={() => setImportResult(null)}
+          />
         );
 
       case 'about':
-        return (
-          <div className='space-y-6'>
-            <div>
-              <div className='mb-4'>
-                <Logo className='text-gray-900 dark:text-gray-100' />
-              </div>
-              <div className='text-sm text-gray-700 dark:text-gray-300 mb-6'>
-                <span>{t('settings.about.title')}</span>
-              </div>
-              <div className='bg-gray-50 dark:bg-dark-100 rounded-lg p-6 border border-gray-200 dark:border-dark-300'>
-                <div className='space-y-4 text-sm text-gray-700 dark:text-gray-300'>
-                  <div className='flex items-start gap-3'>
-                    <div className='w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0'></div>
-                    <div>
-                      <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
-                        {t('settings.about.features.privacy.title')}
-                      </p>
-                      <p>{t('settings.about.features.privacy.description')}</p>
-                    </div>
-                  </div>
-
-                  <div className='flex items-start gap-3'>
-                    <div className='w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0'></div>
-                    <div>
-                      <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
-                        {t('settings.about.features.openSource.title')}
-                      </p>
-                      <p>
-                        {t('settings.about.features.openSource.description')}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className='flex items-start gap-3'>
-                    <div className='w-2 h-2 bg-primary-500 rounded-full mt-2 flex-shrink-0'></div>
-                    <div>
-                      <p className='font-semibold text-gray-900 dark:text-gray-100 mb-1'>
-                        {t('settings.about.features.localInference.title')}
-                      </p>
-                      <p>
-                        {t(
-                          'settings.about.features.localInference.description'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Links Section */}
-              <div className='mt-6 space-y-4'>
-                <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-                  {t('settings.about.links.title')}
-                </h4>
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-                  <a
-                    href='https://github.com/libre-webui/libre-webui'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group'
-                  >
-                    <GitBranch className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
-                    <div>
-                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        {t('settings.about.links.github')}
-                      </p>
-                      <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {t('settings.about.links.githubDescription')}
-                      </p>
-                    </div>
-                    <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
-                  </a>
-
-                  <a
-                    href='https://git.kroonen.ai/libre-webui/libre-webui'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group'
-                  >
-                    <GitMerge className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
-                    <div>
-                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        {t('settings.about.links.gitlab')}
-                      </p>
-                      <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {t('settings.about.links.gitlabDescription')}
-                      </p>
-                    </div>
-                    <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
-                  </a>
-
-                  <a
-                    href='https://librewebui.org'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group'
-                  >
-                    <ExternalLink className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
-                    <div>
-                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        {t('settings.about.links.website')}
-                      </p>
-                      <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {t('settings.about.links.websiteDescription')}
-                      </p>
-                    </div>
-                    <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
-                  </a>
-
-                  <a
-                    href='https://docs.librewebui.org'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group'
-                  >
-                    <BookOpen className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
-                    <div>
-                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        {t('settings.about.links.documentation')}
-                      </p>
-                      <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {t('settings.about.links.documentationDescription')}
-                      </p>
-                    </div>
-                    <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
-                  </a>
-
-                  <a
-                    href='https://ollama.ai'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group'
-                  >
-                    <Bot className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
-                    <div>
-                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        {t('settings.about.links.ollama')}
-                      </p>
-                      <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {t('settings.about.links.ollamaDescription')}
-                      </p>
-                    </div>
-                    <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
-                  </a>
-
-                  <a
-                    href='https://github.com/libre-webui/libre-webui/issues'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='flex items-center gap-3 p-3 bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-200 hover:border-gray-300 dark:hover:border-dark-400 transition-all duration-200 group'
-                  >
-                    <MessageSquare className='h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200' />
-                    <div>
-                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
-                        {t('settings.about.links.reportIssue')}
-                      </p>
-                      <p className='text-xs text-gray-500 dark:text-gray-400'>
-                        {t('settings.about.links.reportIssueDescription')}
-                      </p>
-                    </div>
-                    <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
-                  </a>
-                </div>
-              </div>
-
-              {/* Version Info */}
-              <div className='mt-6 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-lg'>
-                <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400'>
-                  {appVersion.includes('-dev') ? (
-                    <span>
-                      {t('settings.about.version', { version: appVersion })}
-                    </span>
-                  ) : (
-                    <a
-                      href={`https://github.com/libre-webui/libre-webui/releases/tag/v${appVersion}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
-                    >
-                      {t('settings.about.version', { version: appVersion })}
-                    </a>
-                  )}
-                  <span>
-                    {t('settings.about.openSourceBy', { company: '' })}
-                    <a
-                      href='https://kroonen.ai'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors'
-                    >
-                      Kroonen AI
-                    </a>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
+        return <SettingsAboutTab appVersion={appVersion} />;
 
       case 'generation':
         return (
