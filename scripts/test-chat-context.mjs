@@ -13,6 +13,9 @@ const distRoot = path.join(repoRoot, 'backend', 'dist');
 const chatContext = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'chatContext.js')).href
 );
+const pluginResponse = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'pluginResponse.js')).href
+);
 
 function withEnv(overrides, run) {
   const previous = {};
@@ -96,6 +99,45 @@ test('withSystemPrompt replaces stale system messages with the persona prompt', 
     { role: 'system', content: 'persona system' },
     { role: 'user', content: 'hello' },
   ]);
+});
+
+test('extractPluginAssistantContent converts multimodal blocks and tool calls', () => {
+  const result = pluginResponse.extractPluginAssistantContent({
+    id: 'response-1',
+    object: 'chat.completion',
+    created: Date.now(),
+    model: 'plugin-model',
+    choices: [
+      {
+        index: 0,
+        message: {
+          role: 'assistant',
+          content: [
+            { type: 'text', text: 'Here is the image' },
+            {
+              type: 'image_url',
+              image_url: { url: 'https://example.test/image.png' },
+            },
+          ],
+          tool_calls: [
+            {
+              id: 'call-1',
+              function: {
+                name: 'render',
+                arguments: '{"ok":true}',
+              },
+            },
+          ],
+        },
+        finish_reason: 'stop',
+      },
+    ],
+  });
+
+  assert.equal(
+    result,
+    'Here is the image\n\n![image](https://example.test/image.png)\n\n---\n**🔧 Tool Calls:**\n\n**render** (`call-1`)\n```json\n{\n  "ok": true\n}\n```\n'
+  );
 });
 
 test('plugin model routing requires an active plugin and the current user credentials', async () => {

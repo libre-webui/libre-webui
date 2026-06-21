@@ -35,7 +35,6 @@ import {
   ApiResponse,
   ChatSession,
   ChatMessage,
-  OllamaChatResponse,
   getErrorMessage,
 } from '../types/index.js';
 
@@ -490,68 +489,33 @@ router.post(
             )
           : session.messages;
 
-      let response: OllamaChatResponse;
-      let assistantContent: string;
+      const target = await chatGenerationService.prepareGenerationTarget(
+        session.model,
+        userId,
+        options
+      );
+      const generationResult = await chatGenerationService.executeNonStreaming({
+        target,
+        ollamaMessages,
+        pluginMessages,
+        userId,
+        pluginFallbackPolicy: 'allow',
+      });
 
-      const { actualModelName, mergedOptions, activePlugin } =
-        await chatGenerationService.prepareGenerationTarget(
-          session.model,
-          userId,
-          options
+      if (generationResult.pluginError) {
+        console.error(
+          'Plugin failed, falling back to Ollama:',
+          generationResult.pluginError
         );
-
-      // Prepare common chat request for Ollama (used in both fallback and direct cases)
-      const chatRequest = {
-        model: actualModelName,
-        messages: ollamaMessages,
-        stream: false,
-        options: mergedOptions as Record<string, unknown>,
-      };
-
-      // Check if there's an active plugin for this model
-      if (activePlugin) {
-        try {
-          // Use plugin for generation
-          const pluginResponse = await pluginService.executePluginRequest(
-            actualModelName,
-            pluginMessages,
-            mergedOptions,
-            userId
-          );
-
-          // Convert plugin response to our format
-          assistantContent = pluginResponse.choices[0]?.message?.content || '';
-
-          // Create a mock response in Ollama format
-          response = {
-            model: actualModelName,
-            created_at: new Date().toISOString(),
-            message: {
-              role: 'assistant',
-              content: assistantContent,
-            },
-            done: true,
-          } as OllamaChatResponse;
-        } catch (pluginError) {
-          console.error('Plugin failed, falling back to Ollama:', pluginError);
-
-          // Fallback to Ollama
-          response = await ollamaService.generateChatResponse(chatRequest);
-          assistantContent = response.message.content;
-        }
-      } else {
-        // Use Ollama directly
-        response = await ollamaService.generateChatResponse(chatRequest);
-        assistantContent = response.message.content;
       }
 
       // Add assistant response to session with statistics
-      const statistics = extractStatistics(response);
+      const statistics = extractStatistics(generationResult.response);
       const assistantMessage = chatService.addMessage(
         sessionId,
         {
           role: 'assistant',
-          content: assistantContent,
+          content: generationResult.assistantContent,
           model: session.model,
           statistics,
         },
@@ -795,7 +759,8 @@ Title:`;
             titleOptions,
             userId
           );
-          titleResponse = pluginResponse.choices[0]?.message?.content || '';
+          titleResponse =
+            chatGenerationService.extractPluginAssistantContent(pluginResponse);
         } else {
           const response = await ollamaService.generateResponse({
             model: actualModelName,

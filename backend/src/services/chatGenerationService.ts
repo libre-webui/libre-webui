@@ -16,10 +16,20 @@
  */
 
 import { mergeGenerationOptions } from '../utils/generationUtils.js';
+import { extractPluginAssistantContent } from '../utils/pluginResponse.js';
+import ollamaService from './ollamaService.js';
 import { personaService } from './personaService.js';
 import pluginService from './pluginService.js';
 import preferencesService from './preferencesService.js';
-import type { ChatSession, GenerationOptions, Plugin } from '../types/index.js';
+import type {
+  ChatMessage,
+  ChatSession,
+  GenerationOptions,
+  OllamaChatMessage,
+  OllamaChatResponse,
+  Plugin,
+  PluginResponse,
+} from '../types/index.js';
 
 export const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
 
@@ -28,6 +38,23 @@ export interface GenerationTarget {
   mergedOptions: GenerationOptions;
   activePlugin: Plugin | null;
   pluginVariables: Record<string, string | number | boolean>;
+}
+
+export type PluginFallbackPolicy = 'allow' | 'disabled';
+
+export interface NonStreamingExecutionOptions {
+  target: GenerationTarget;
+  ollamaMessages: OllamaChatMessage[];
+  pluginMessages: ChatMessage[];
+  userId: string;
+  pluginFallbackPolicy?: PluginFallbackPolicy;
+}
+
+export interface NonStreamingExecutionResult {
+  response: OllamaChatResponse;
+  assistantContent: string;
+  source: 'plugin' | 'ollama';
+  pluginError?: Error;
 }
 
 class ChatGenerationService {
@@ -103,6 +130,84 @@ class ChatGenerationService {
       mergedOptions,
       activePlugin,
       pluginVariables,
+    };
+  }
+
+  extractPluginAssistantContent(response: PluginResponse): string {
+    return extractPluginAssistantContent(response);
+  }
+
+  createPluginChatResponse(
+    model: string,
+    assistantContent: string
+  ): OllamaChatResponse {
+    return {
+      model,
+      created_at: new Date().toISOString(),
+      message: {
+        role: 'assistant',
+        content: assistantContent,
+      },
+      done: true,
+    } as OllamaChatResponse;
+  }
+
+  async executeNonStreaming({
+    target,
+    ollamaMessages,
+    pluginMessages,
+    userId,
+    pluginFallbackPolicy = 'disabled',
+  }: NonStreamingExecutionOptions): Promise<NonStreamingExecutionResult> {
+    const chatRequest = {
+      model: target.actualModelName,
+      messages: ollamaMessages,
+      stream: false,
+      options: target.mergedOptions as Record<string, unknown>,
+    };
+
+    if (target.activePlugin) {
+      try {
+        const pluginResponse = await pluginService.executePluginRequest(
+          target.actualModelName,
+          pluginMessages,
+          target.mergedOptions,
+          userId
+        );
+        const assistantContent =
+          this.extractPluginAssistantContent(pluginResponse);
+
+        return {
+          response: this.createPluginChatResponse(
+            target.actualModelName,
+            assistantContent
+          ),
+          assistantContent,
+          source: 'plugin',
+        };
+      } catch (error) {
+        const pluginError =
+          error instanceof Error ? error : new Error(String(error));
+
+        if (pluginFallbackPolicy === 'disabled') {
+          throw pluginError;
+        }
+
+        const response = await ollamaService.generateChatResponse(chatRequest);
+        return {
+          response,
+          assistantContent: response.message.content,
+          source: 'ollama',
+          pluginError,
+        };
+      }
+    }
+
+    const response = await ollamaService.generateChatResponse(chatRequest);
+    return {
+      response,
+      assistantContent: response.message.content,
+      source: 'ollama',
     };
   }
 }

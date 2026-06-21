@@ -653,16 +653,18 @@ wss.on('connection', (ws, req) => {
 
         console.log('Backend: Using assistantMessageId:', assistantMessageId);
 
+        const generationTarget =
+          await chatGenerationService.prepareGenerationTarget(
+            session.model,
+            userId,
+            options
+          );
         const {
           actualModelName,
           mergedOptions,
           activePlugin,
           pluginVariables: pluginVars,
-        } = await chatGenerationService.prepareGenerationTarget(
-          session.model,
-          userId,
-          options
-        );
+        } = generationTarget;
 
         // Check if there's an active plugin for this model
         console.log(
@@ -1171,66 +1173,16 @@ wss.on('connection', (ws, req) => {
 
                 assistantContent = totalContent;
               } else {
-                // Non-streaming: use original request method
-                const pluginResponse = await pluginService.executePluginRequest(
-                  actualModelName,
-                  messagesForPlugin,
-                  mergedOptions,
-                  userId
-                );
+                const generationResult =
+                  await chatGenerationService.executeNonStreaming({
+                    target: generationTarget,
+                    ollamaMessages,
+                    pluginMessages: messagesForPlugin,
+                    userId,
+                    pluginFallbackPolicy: 'disabled',
+                  });
 
-                if (!pluginResponse?.choices?.length) {
-                  throw new Error('Plugin returned empty or invalid response');
-                }
-                const choice = pluginResponse.choices[0];
-                // Handle content that may be a string or array of content blocks
-                const rawContent = choice?.message?.content;
-                if (Array.isArray(rawContent)) {
-                  // Multimodal response: convert content blocks to markdown
-                  const parts: string[] = [];
-                  for (const block of rawContent as Array<{
-                    type: string;
-                    text?: string;
-                    image_url?: { url: string };
-                  }>) {
-                    if (block.type === 'text' && block.text) {
-                      parts.push(block.text);
-                    } else if (
-                      block.type === 'image_url' &&
-                      block.image_url?.url
-                    ) {
-                      parts.push(`![image](${block.image_url.url})`);
-                    }
-                  }
-                  assistantContent = parts.join('\n\n');
-                } else {
-                  assistantContent = (rawContent as string) || '';
-                }
-
-                // Render tool_calls from non-streaming response
-                const msgAny = choice?.message as Record<string, unknown>;
-                if (
-                  msgAny?.tool_calls &&
-                  Array.isArray(msgAny.tool_calls) &&
-                  msgAny.tool_calls.length > 0
-                ) {
-                  let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
-                  for (const tc of msgAny.tool_calls as Array<{
-                    id?: string;
-                    function?: { name?: string; arguments?: string };
-                  }>) {
-                    const name = tc.function?.name || 'unknown';
-                    const id = tc.id || '';
-                    let args = tc.function?.arguments || '';
-                    try {
-                      args = JSON.stringify(JSON.parse(args), null, 2);
-                    } catch {
-                      /* keep raw */
-                    }
-                    toolContent += `\n**${name}** (\`${id}\`)\n\`\`\`json\n${args}\n\`\`\`\n`;
-                  }
-                  assistantContent += toolContent;
-                }
+                assistantContent = generationResult.assistantContent;
 
                 // Send the complete response as chunks to simulate streaming
                 const words = assistantContent.split(' ');
