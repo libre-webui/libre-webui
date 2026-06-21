@@ -16,6 +16,9 @@ const chatContext = await import(
 const pluginResponse = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'pluginResponse.js')).href
 );
+const assistantBranching = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'assistantBranching.js')).href
+);
 
 function withEnv(overrides, run) {
   const previous = {};
@@ -137,6 +140,45 @@ test('extractPluginAssistantContent converts multimodal blocks and tool calls', 
   assert.equal(
     result,
     'Here is the image\n\n![image](https://example.test/image.png)\n\n---\n**🔧 Tool Calls:**\n\n**render** (`call-1`)\n```json\n{\n  "ok": true\n}\n```\n'
+  );
+});
+
+test('assistant completion branch fields target the original parent group', () => {
+  const session = {
+    id: 'session-1',
+    title: 'Branch test',
+    model: 'test-model',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    messages: [
+      {
+        id: 'root-answer',
+        role: 'assistant',
+        content: 'first',
+        timestamp: Date.now(),
+      },
+      {
+        id: 'existing-variant',
+        role: 'assistant',
+        content: 'variant',
+        timestamp: Date.now(),
+        parentId: 'root-answer',
+        branchIndex: 1,
+      },
+    ],
+  };
+
+  assert.deepEqual(
+    assistantBranching.buildAssistantBranchingFields(
+      session,
+      true,
+      'existing-variant'
+    ),
+    {
+      parentId: 'root-answer',
+      branchIndex: 2,
+      isActive: true,
+    }
   );
 });
 

@@ -74,6 +74,7 @@ import openclawSessionService, {
   type ChatDeltaEvent,
 } from './services/openclawSessionService.js';
 import chatGenerationService from './services/chatGenerationService.js';
+import assistantCompletionService from './services/assistantCompletionService.js';
 import {
   replaceLatestUserMessageContent,
   toChatMessages,
@@ -85,6 +86,7 @@ import {
   OllamaChatRequest,
   GenerationStatistics,
   ChatMessage,
+  ChatSession,
 } from './types/index.js';
 
 const pkg = loadAppPackage(import.meta.url);
@@ -521,18 +523,16 @@ wss.on('connection', (ws, req) => {
         );
 
         // For private sessions, skip database operations
-        let session;
+        let session: ChatSession | undefined;
         if (isPrivate) {
           // Create a temporary in-memory session object for private mode
           session = {
             id: sessionId,
-            model: privateModel,
+            model: privateModel || 'private',
             messages: [],
             title: 'Private Chat',
             createdAt: Date.now(),
             updatedAt: Date.now(),
-            userId: userId,
-            isPrivate: true,
           };
         } else {
           // Get session with user authentication
@@ -955,34 +955,31 @@ wss.on('connection', (ws, req) => {
 
             // Save assistant message from session mode
             if (assistantContent && assistantMessageId) {
+              const completion =
+                assistantCompletionService.completeAssistantMessage({
+                  sessionId,
+                  session,
+                  content: assistantContent,
+                  model: session.model,
+                  messageId: assistantMessageId,
+                  userId,
+                  isPrivate,
+                  regenerate,
+                  originalMessageId,
+                });
+
               if (isPrivate) {
                 ws.send(
                   JSON.stringify({
                     type: 'assistant_complete',
-                    data: {
-                      id: assistantMessageId,
-                      role: 'assistant',
-                      content: assistantContent,
-                      model: session.model,
-                      timestamp: Date.now(),
-                    },
+                    data: completion.privateMessage,
                   })
                 );
               } else {
-                const assistantMessage = chatService.addMessage(
-                  sessionId,
-                  {
-                    role: 'assistant',
-                    content: assistantContent,
-                    model: session.model,
-                    id: assistantMessageId,
-                  },
-                  userId
-                );
                 ws.send(
                   JSON.stringify({
                     type: 'assistant_complete',
-                    data: assistantMessage,
+                    data: completion.assistantMessage,
                   })
                 );
               }
@@ -1213,6 +1210,19 @@ wss.on('connection', (ws, req) => {
 
               // Save the complete assistant message (skip for private sessions)
               if (assistantContent && assistantMessageId) {
+                const completion =
+                  assistantCompletionService.completeAssistantMessage({
+                    sessionId,
+                    session,
+                    content: assistantContent,
+                    model: session.model,
+                    messageId: assistantMessageId,
+                    userId,
+                    isPrivate,
+                    regenerate,
+                    originalMessageId,
+                  });
+
                 if (isPrivate) {
                   // For private sessions, just send completion without saving
                   console.log(
@@ -1221,13 +1231,7 @@ wss.on('connection', (ws, req) => {
                   ws.send(
                     JSON.stringify({
                       type: 'assistant_complete',
-                      data: {
-                        id: assistantMessageId,
-                        role: 'assistant',
-                        content: assistantContent,
-                        model: session.model,
-                        timestamp: Date.now(),
-                      },
+                      data: completion.privateMessage,
                     })
                   );
                 } else {
@@ -1238,57 +1242,23 @@ wss.on('connection', (ws, req) => {
                     !!regenerate
                   );
 
-                  // Calculate branching fields if this is a regeneration
-                  let branchingFields: {
-                    parentId?: string;
-                    branchIndex?: number;
-                    isActive?: boolean;
-                  } = {};
-                  if (regenerate && originalMessageId) {
-                    // Find the original message to get its parentId or use its ID as parent
-                    const originalMsg = session.messages.find(
-                      m => m.id === originalMessageId
-                    );
-                    const parentId = originalMsg?.parentId || originalMessageId;
-
-                    // Count existing siblings to determine branch index
-                    const siblingCount = session.messages.filter(
-                      m => m.id === parentId || m.parentId === parentId
-                    ).length;
-
-                    branchingFields = {
-                      parentId,
-                      branchIndex: siblingCount, // New branch gets next index
-                      isActive: true,
-                    };
+                  if (Object.keys(completion.branchingFields).length > 0) {
                     console.log(
                       'Backend: Setting branching fields:',
-                      branchingFields
+                      completion.branchingFields
                     );
                   }
 
-                  const assistantMessage = chatService.addMessage(
-                    sessionId,
-                    {
-                      role: 'assistant',
-                      content: assistantContent,
-                      model: session.model,
-                      id: assistantMessageId,
-                      ...branchingFields,
-                    },
-                    userId
-                  );
-
                   console.log(
                     'Backend: Assistant message saved:',
-                    !!assistantMessage
+                    !!completion.assistantMessage
                   );
 
                   // Send completion signal
                   ws.send(
                     JSON.stringify({
                       type: 'assistant_complete',
-                      data: assistantMessage,
+                      data: completion.assistantMessage,
                     })
                   );
                 }
@@ -1421,6 +1391,20 @@ wss.on('connection', (ws, req) => {
           () => {
             // Save the complete assistant message with the provided ID (skip for private sessions)
             if (assistantContent && assistantMessageId) {
+              const completion =
+                assistantCompletionService.completeAssistantMessage({
+                  sessionId,
+                  session,
+                  content: assistantContent,
+                  model: session.model,
+                  messageId: assistantMessageId,
+                  userId,
+                  isPrivate,
+                  regenerate,
+                  originalMessageId,
+                  statistics: finalStatistics,
+                });
+
               if (isPrivate) {
                 // For private sessions, just send completion without saving
                 console.log(
@@ -1430,9 +1414,7 @@ wss.on('connection', (ws, req) => {
                   JSON.stringify({
                     type: 'assistant_complete',
                     data: {
-                      content: assistantContent,
-                      role: 'assistant',
-                      timestamp: Date.now(),
+                      ...completion.privateMessage,
                       messageId: assistantMessageId,
                       statistics: finalStatistics,
                     },
@@ -1446,32 +1428,10 @@ wss.on('connection', (ws, req) => {
                   !!regenerate
                 );
 
-                // Calculate branching fields if this is a regeneration
-                let branchingFields: {
-                  parentId?: string;
-                  branchIndex?: number;
-                  isActive?: boolean;
-                } = {};
-                if (regenerate && originalMessageId) {
-                  // Find the original message to get its parentId or use its ID as parent
-                  const originalMsg = session.messages.find(
-                    m => m.id === originalMessageId
-                  );
-                  const parentId = originalMsg?.parentId || originalMessageId;
-
-                  // Count existing siblings to determine branch index
-                  const siblingCount = session.messages.filter(
-                    m => m.id === parentId || m.parentId === parentId
-                  ).length;
-
-                  branchingFields = {
-                    parentId,
-                    branchIndex: siblingCount, // New branch gets next index
-                    isActive: true,
-                  };
+                if (Object.keys(completion.branchingFields).length > 0) {
                   console.log(
                     'Backend: Setting branching fields:',
-                    branchingFields
+                    completion.branchingFields
                   );
                 }
 
@@ -1479,30 +1439,19 @@ wss.on('connection', (ws, req) => {
                   sessionId,
                   messageId: assistantMessageId,
                   contentLength: assistantContent.length,
-                  hasBranchingFields: Object.keys(branchingFields).length > 0,
-                  branchingFields,
+                  hasBranchingFields:
+                    Object.keys(completion.branchingFields).length > 0,
+                  branchingFields: completion.branchingFields,
                 });
-
-                const assistantMessage = chatService.addMessage(
-                  sessionId,
-                  {
-                    role: 'assistant',
-                    content: assistantContent,
-                    model: session.model,
-                    id: assistantMessageId,
-                    statistics: finalStatistics,
-                    ...branchingFields,
-                  },
-                  userId
-                );
 
                 console.log(
                   'Backend: Assistant message saved:',
-                  !!assistantMessage,
-                  assistantMessage
+                  !!completion.assistantMessage,
+                  completion.assistantMessage
                     ? {
-                        id: assistantMessage.id,
-                        contentLength: assistantMessage.content.length,
+                        id: completion.assistantMessage.id,
+                        contentLength:
+                          completion.assistantMessage.content.length,
                       }
                     : 'FAILED TO SAVE'
                 );
@@ -1517,7 +1466,7 @@ wss.on('connection', (ws, req) => {
                       timestamp: Date.now(),
                       messageId: assistantMessageId,
                       statistics: finalStatistics,
-                      ...branchingFields,
+                      ...completion.branchingFields,
                     },
                   })
                 );
