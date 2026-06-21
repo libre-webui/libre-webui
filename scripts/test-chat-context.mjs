@@ -40,6 +40,10 @@ const pluginStreamAdapter = await import(
 const ollamaStreaming = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'ollamaStreaming.js')).href
 );
+const titleGeneration = await import(
+  pathToFileURL(path.join(distRoot, 'services', 'titleGenerationService.js'))
+    .href
+);
 
 function withEnv(overrides, run) {
   const previous = {};
@@ -64,6 +68,116 @@ function withEnv(overrides, run) {
         }
       }
     });
+}
+
+function createTitleGenerationHarness(overrides = {}) {
+  const session = {
+    id: 'session-1',
+    title: 'New Chat',
+    model: 'persona:researcher',
+    createdAt: 1,
+    updatedAt: 2,
+    messages: [],
+  };
+  const updates = [];
+  const calls = {
+    resolveActualModelName: [],
+    prepareGenerationTarget: [],
+    executePluginRequest: [],
+    generateResponse: [],
+  };
+
+  const chatService = {
+    getSession: overrides.getSession || (() => session),
+    async updateSession(sessionId, update, userId) {
+      updates.push({ sessionId, update, userId });
+      return {
+        ...session,
+        ...update,
+        updatedAt: 3,
+      };
+    },
+  };
+
+  const chatGenerationService = {
+    async resolveActualModelName(sessionModel, userId) {
+      calls.resolveActualModelName.push({ sessionModel, userId });
+      return overrides.actualModelName || 'resolved-current-model';
+    },
+    async prepareGenerationTarget(model, userId, options) {
+      calls.prepareGenerationTarget.push({ model, userId, options });
+      return {
+        actualModelName: model,
+        mergedOptions: options,
+        activePlugin: overrides.activePlugin || null,
+        pluginVariables: {},
+      };
+    },
+    extractPluginAssistantContent(response) {
+      if (overrides.extractPluginAssistantContent) {
+        return overrides.extractPluginAssistantContent(response);
+      }
+      return response.choices[0].message.content;
+    },
+  };
+
+  const pluginService = {
+    async executePluginRequest(model, messages, options, userId) {
+      calls.executePluginRequest.push({ model, messages, options, userId });
+      if (overrides.pluginError) {
+        throw overrides.pluginError;
+      }
+      return (
+        overrides.pluginResponse || {
+          id: 'plugin-title',
+          object: 'chat.completion',
+          created: 1,
+          model,
+          choices: [
+            {
+              index: 0,
+              message: {
+                role: 'assistant',
+                content: '"Plugin Roadmap!"',
+              },
+              finish_reason: 'stop',
+            },
+          ],
+        }
+      );
+    },
+  };
+
+  const ollamaService = {
+    async generateResponse(request) {
+      calls.generateResponse.push(request);
+      if (overrides.ollamaError) {
+        throw overrides.ollamaError;
+      }
+      return {
+        model: request.model,
+        created_at: '2026-06-21T00:00:00Z',
+        response: overrides.ollamaResponse || '"Ollama Roadmap."',
+        done: true,
+      };
+    },
+  };
+
+  const service = new titleGeneration.TitleGenerationService({
+    chatService,
+    chatGenerationService,
+    pluginService,
+    ollamaService,
+    now: () => 123,
+    logger: { error() {} },
+  });
+
+  return {
+    service,
+    session,
+    updates,
+    calls,
+  };
 }
 
 test('replaceLatestUserMessageContent updates the latest user message without appending', () => {
@@ -733,4 +847,128 @@ test('streamOllamaChatResponse sends errors without completing', async () => {
   assert.deepEqual(sent, [
     { type: 'error', data: { error: 'model unavailable' } },
   ]);
+});
+
+test('title generation resolves the current running model sentinel', async () => {
+  const { service, session, calls } = createTitleGenerationHarness({
+    actualModelName: 'qwen3:latest',
+  });
+
+  const currentModel = await service.resolveTitleGenerationModel(
+    titleGeneration.AUTO_TITLE_CURRENT_MODEL,
+    session,
+    'alice'
+  );
+  const explicitModel = await service.resolveTitleGenerationModel(
+    'llama3.3:latest',
+    session,
+    'alice'
+  );
+
+  assert.equal(currentModel, 'qwen3:latest');
+  assert.equal(explicitModel, 'llama3.3:latest');
+  assert.deepEqual(calls.resolveActualModelName, [
+    {
+      sessionModel: 'persona:researcher',
+      userId: 'alice',
+    },
+  ]);
+});
+
+test('title generation uses plugin providers and stores sanitized titles', async () => {
+  const { service, updates, calls } = createTitleGenerationHarness({
+    activePlugin: { id: 'plugin-title-provider' },
+  });
+
+  const result = await service.generateTitleForSession({
+    sessionId: 'session-1',
+    requestedModel: 'plugin-model',
+    message: 'Plan a secure product roadmap with milestones',
+    userId: 'alice',
+  });
+
+  assert.equal(result.title, 'Plugin Roadmap');
+  assert.equal(result.model, 'plugin-model');
+  assert.equal(result.source, 'plugin');
+  assert.equal(calls.generateResponse.length, 0);
+  assert.equal(calls.executePluginRequest.length, 1);
+  assert.equal(calls.executePluginRequest[0].model, 'plugin-model');
+  assert.equal(calls.executePluginRequest[0].messages[0].id, 'title-session-1');
+  assert.match(
+    calls.executePluginRequest[0].messages[0].content,
+    /Plan a secure product roadmap/
+  );
+  assert.deepEqual(updates[0], {
+    sessionId: 'session-1',
+    update: { title: 'Plugin Roadmap' },
+    userId: 'alice',
+  });
+});
+
+test('title generation falls back to Ollama when no plugin is active', async () => {
+  const { service, updates, calls } = createTitleGenerationHarness({
+    ollamaResponse: "'Ollama Planning?'",
+  });
+
+  const result = await service.generateTitleForSession({
+    sessionId: 'session-1',
+    requestedModel: 'llama3.3:latest',
+    message: 'Explain how to harden a Linux server',
+    userId: 'alice',
+  });
+
+  assert.equal(result.title, 'Ollama Planning');
+  assert.equal(result.source, 'ollama');
+  assert.equal(calls.executePluginRequest.length, 0);
+  assert.equal(calls.generateResponse.length, 1);
+  assert.equal(calls.generateResponse[0].model, 'llama3.3:latest');
+  assert.deepEqual(calls.generateResponse[0].options.stop, [
+    '\n',
+    '.',
+    '!',
+    '?',
+  ]);
+  assert.equal(calls.generateResponse[0].options.temperature, 0.3);
+  assert.equal(calls.generateResponse[0].options.num_predict, 20);
+  assert.deepEqual(updates[0].update, { title: 'Ollama Planning' });
+});
+
+test('title generation falls back to the message when providers fail', async () => {
+  const { service, updates } = createTitleGenerationHarness({
+    ollamaError: new Error('offline'),
+  });
+
+  const result = await service.generateTitleForSession({
+    sessionId: 'session-1',
+    requestedModel: 'llama3.3:latest',
+    message: 'This message is long enough to become a fallback title',
+    userId: 'alice',
+  });
+
+  assert.equal(result.source, 'fallback');
+  assert.equal(result.title, 'This message is long enough to...');
+  assert.deepEqual(updates[0].update, {
+    title: 'This message is long enough to...',
+  });
+});
+
+test('sanitizeGeneratedTitle strips wrapper characters and rejects unusable titles', () => {
+  assert.equal(
+    titleGeneration.sanitizeGeneratedTitle(
+      '  `"Mars Transfer Simulator!!!"`  ',
+      'fallback message'
+    ),
+    'Mars Transfer Simulator'
+  );
+  assert.equal(
+    titleGeneration.sanitizeGeneratedTitle(
+      'This generated title is far too long for the sidebar and should never be used directly',
+      'Use this user message as the title instead'
+    ),
+    'Use this user message as the t...'
+  );
+  assert.equal(
+    titleGeneration.sanitizeGeneratedTitle('', 'short prompt'),
+    'short prompt'
+  );
 });

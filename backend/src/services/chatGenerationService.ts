@@ -23,15 +23,12 @@ import pluginService from './pluginService.js';
 import preferencesService from './preferencesService.js';
 import type {
   ChatMessage,
-  ChatSession,
   GenerationOptions,
   OllamaChatMessage,
   OllamaChatResponse,
   Plugin,
   PluginResponse,
 } from '../types/index.js';
-
-export const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
 
 export interface GenerationTarget {
   actualModelName: string;
@@ -86,18 +83,6 @@ class ChatGenerationService {
       console.error('Error resolving persona model:', error);
       return sessionModel;
     }
-  }
-
-  async resolveTitleGenerationModel(
-    requestedModel: string,
-    session: ChatSession,
-    userId: string
-  ): Promise<string> {
-    if (requestedModel === AUTO_TITLE_CURRENT_MODEL) {
-      return this.resolveActualModelName(session.model, userId);
-    }
-
-    return requestedModel;
   }
 
   mergeOptions(options: GenerationOptions = {}): GenerationOptions {

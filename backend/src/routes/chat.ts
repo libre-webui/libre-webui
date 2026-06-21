@@ -26,6 +26,7 @@ import { personaService } from '../services/personaService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import { extractStatistics } from '../utils/generationUtils.js';
 import chatGenerationService from '../services/chatGenerationService.js';
+import { TitleGenerationService } from '../services/titleGenerationService.js';
 import {
   replaceLatestUserMessageContent,
   toOllamaMessages,
@@ -39,6 +40,12 @@ import {
 } from '../types/index.js';
 
 const router = express.Router();
+const titleGenerationService = new TitleGenerationService({
+  chatService,
+  chatGenerationService,
+  pluginService,
+  ollamaService,
+});
 
 // Rate limiter for chat routes: 60 requests per minute (reasonable for chat)
 const chatRateLimiter = rateLimit({
@@ -710,8 +717,14 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
-      if (!session) {
+      const titleResult = await titleGenerationService.generateTitleForSession({
+        sessionId,
+        requestedModel: model,
+        message,
+        userId,
+      });
+
+      if (!titleResult) {
         res.status(404).json({
           success: false,
           error: 'Session not found',
@@ -719,109 +732,10 @@ router.post(
         return;
       }
 
-      const actualModelName =
-        await chatGenerationService.resolveTitleGenerationModel(
-          model,
-          session,
-          userId
-        );
-
-      // Generate title using a simple prompt
-      const titlePrompt = `Generate a very short, concise title (3-6 words max) for a chat that starts with this message. Only respond with the title, nothing else. No quotes, no punctuation at the end. Do not use any markdown formatting.
-
-Message: "${message.substring(0, 500)}"
-
-Title:`;
-
-      try {
-        let titleResponse = '';
-        const { activePlugin, mergedOptions: titleOptions } =
-          await chatGenerationService.prepareGenerationTarget(
-            actualModelName,
-            userId,
-            {
-              temperature: 0.3,
-              num_predict: 20,
-            }
-          );
-
-        if (activePlugin) {
-          const pluginResponse = await pluginService.executePluginRequest(
-            actualModelName,
-            [
-              {
-                id: `title-${sessionId}`,
-                role: 'user',
-                content: titlePrompt,
-                timestamp: Date.now(),
-              },
-            ],
-            titleOptions,
-            userId
-          );
-          titleResponse =
-            chatGenerationService.extractPluginAssistantContent(pluginResponse);
-        } else {
-          const response = await ollamaService.generateResponse({
-            model: actualModelName,
-            prompt: titlePrompt,
-            stream: false,
-            options: {
-              ...titleOptions,
-              temperature: 0.3,
-              num_predict: 20,
-              stop: ['\n', '.', '!', '?'],
-            },
-          });
-          titleResponse = response.response;
-        }
-
-        // Clean up the generated title
-        let title = titleResponse
-          .trim()
-          .replace(/^["']|["']$/g, '') // Remove quotes
-          .replace(/[.!?]+$/, '') // Remove trailing punctuation
-          .trim();
-
-        // Fallback if title is empty or too long
-        if (!title || title.length > 50) {
-          title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
-        }
-
-        // Update the session with the new title
-        const updatedSession = await chatService.updateSession(
-          sessionId,
-          { title },
-          userId
-        );
-
-        if (!updatedSession) {
-          res.status(500).json({
-            success: false,
-            error: 'Failed to update session title',
-          });
-          return;
-        }
-
-        res.json({
-          success: true,
-          data: { title },
-        });
-      } catch (ollamaError) {
-        console.error('Error generating title with Ollama:', ollamaError);
-        // Fallback to using the first part of the message as title
-        const fallbackTitle =
-          message.substring(0, 30) + (message.length > 30 ? '...' : '');
-        await chatService.updateSession(
-          sessionId,
-          { title: fallbackTitle },
-          userId
-        );
-        res.json({
-          success: true,
-          data: { title: fallbackTitle },
-        });
-      }
+      res.json({
+        success: true,
+        data: { title: titleResult.title },
+      });
     } catch (error: unknown) {
       res.status(500).json({
         success: false,
