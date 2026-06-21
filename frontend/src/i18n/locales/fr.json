@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Fermer le panneau (Échap)",
     "copyButton": "Copier",
     "open": "Ouvrir",
-    "dragEdgeToResize": "Faites glisser le bord pour redimensionner"
+    "dragEdgeToResize": "Faites glisser le bord pour redimensionner",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Importer et exporter des personas",

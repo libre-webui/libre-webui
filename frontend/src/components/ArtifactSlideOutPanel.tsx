@@ -306,10 +306,41 @@ export const ArtifactSlideOutPanel: React.FC = () => {
     }
   };
 
+  const renderHtmlFallback = () => (
+    <div
+      data-testid='artifact-html-fallback'
+      className='w-full h-full flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-200 p-4'
+    >
+      <div className='max-w-sm text-center'>
+        <AlertTriangle className='h-8 w-8 text-primary-500 mx-auto mb-3' />
+        <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+          {t('artifacts.previewUnavailable')}
+        </p>
+        <p className='mt-1 text-sm text-gray-600 dark:text-gray-400'>
+          {t('artifacts.previewUnavailableDescription')}
+        </p>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => setViewMode('code')}
+          className='mt-4'
+        >
+          <Code2 className='h-3.5 w-3.5 mr-1.5' />
+          {t('artifacts.code')}
+        </Button>
+      </div>
+    </div>
+  );
+
   const renderHtml = () => {
+    if (!artifact.content.trim()) {
+      return renderHtmlFallback();
+    }
+
     return (
       <iframe
         ref={iframeRef}
+        data-testid='artifact-html-preview'
         srcDoc={buildHtmlArtifactDocument(artifact.content, artifact.title)}
         className={cn(
           'w-full h-full border-0 rounded-lg bg-white',

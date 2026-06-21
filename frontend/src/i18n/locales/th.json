@@ -1147,7 +1147,9 @@
     "closePanelEsc": "ปิดแผง (Esc)",
     "copyButton": "คัดลอก",
     "open": "เปิด",
-    "dragEdgeToResize": "ลากขอบเพื่อปรับขนาด"
+    "dragEdgeToResize": "ลากขอบเพื่อปรับขนาด",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "นำเข้าและส่งออกเพอร์โซน่า",

@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Cerrar panel (Esc)",
     "copyButton": "Copiar",
     "open": "Abrir",
-    "dragEdgeToResize": "Arrastra el borde para redimensionar"
+    "dragEdgeToResize": "Arrastra el borde para redimensionar",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Importar y exportar personas",

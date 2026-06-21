@@ -61,6 +61,26 @@ type MockMessage = {
   content: string;
   timestamp: number;
   model?: string;
+  artifacts?: MockArtifact[];
+};
+
+type MockArtifact = {
+  id: string;
+  type:
+    | 'html'
+    | 'react'
+    | 'svg'
+    | 'mermaid'
+    | 'chart'
+    | 'code'
+    | 'text'
+    | 'json';
+  title: string;
+  content: string;
+  language?: string;
+  description?: string;
+  createdAt: number;
+  updatedAt: number;
 };
 
 type MockSession = {

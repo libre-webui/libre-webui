@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Stäng panel (Esc)",
     "copyButton": "Kopiera",
     "open": "Öppna",
-    "dragEdgeToResize": "Dra i kanten för att ändra storlek"
+    "dragEdgeToResize": "Dra i kanten för att ändra storlek",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Importera och exportera personas",

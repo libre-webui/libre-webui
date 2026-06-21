@@ -1147,7 +1147,9 @@
     "closePanelEsc": "إغلاق اللوحة (Esc)",
     "copyButton": "نسخ",
     "open": "فتح",
-    "dragEdgeToResize": "اسحب الحافة لتغيير الحجم"
+    "dragEdgeToResize": "اسحب الحافة لتغيير الحجم",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "استيراد وتصدير الشخصيات",

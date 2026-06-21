@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Đóng bảng điều khiển (Esc)",
     "copyButton": "Sao chép",
     "open": "Mở",
-    "dragEdgeToResize": "Kéo cạnh để thay đổi kích thước"
+    "dragEdgeToResize": "Kéo cạnh để thay đổi kích thước",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Nhập & Xuất Personas",

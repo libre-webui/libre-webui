@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Paneel sluiten (Esc)",
     "copyButton": "Kopiëren",
     "open": "Openen",
-    "dragEdgeToResize": "Sleep rand om grootte aan te passen"
+    "dragEdgeToResize": "Sleep rand om grootte aan te passen",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Personas importeren & exporteren",

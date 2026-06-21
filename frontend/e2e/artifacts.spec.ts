@@ -58,6 +58,53 @@ draw();
 \`\`\`
 `;
 
+const generatedFilenameQualifiedArtifact = `
+This app uses nested paths in fence metadata:
+
+\`\`\`html filename="src/index.html"
+<!doctype html>
+<html>
+  <head>
+    <title>Filename Bundle</title>
+    <link rel="stylesheet" href="./styles/app.css">
+  </head>
+  <body>
+    <main id="app">Loading bundle...</main>
+    <script src="./game.js"></script>
+  </body>
+</html>
+\`\`\`
+
+\`\`\`css filename="src/styles/app.css"
+:root { --bundle-accent: #38bdf8; }
+body { margin: 0; background: #020617; color: var(--bundle-accent); }
+\`\`\`
+
+\`\`\`javascript filename="src/game.js"
+document.getElementById('app').textContent = 'Bundle ready';
+document.body.dataset.bundleReady = 'true';
+\`\`\`
+`;
+
+const generatedBareHtmlDocument = `
+Here is the complete page:
+
+<!doctype html>
+<html>
+  <head>
+    <title>Bare HTML Artifact</title>
+  </head>
+  <body>
+    <button id="launch">Launch</button>
+    <script>
+      document.getElementById('launch').textContent = 'Bare HTML ready';
+    </script>
+  </body>
+</html>
+
+It should run as a preview.
+`;
+
 test('chat detects multi-file HTML artifacts and renders them in the slide-out panel', async ({
   page,
 }) => {
@@ -107,6 +154,163 @@ test('chat detects multi-file HTML artifacts and renders them in the slide-out p
 
   const frame = page.frameLocator('iframe[title="Mini Canvas Game"]').first();
   await expect(frame.locator('#game')).toBeVisible();
+
+  const iframe = panel.locator('iframe[title="Mini Canvas Game"]').first();
+  await expect(iframe).toHaveAttribute('sandbox', /allow-scripts/);
+  await expect(iframe).toHaveAttribute('sandbox', /allow-pointer-lock/);
+  await expect(iframe).toHaveAttribute('allow', /clipboard-write/);
+  await expect(iframe).toHaveAttribute('allow', /fullscreen/);
+});
+
+test('chat detects filename-qualified HTML bundles and removes local file references', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      {
+        id: 'filename-bundle-session',
+        title: 'Filename bundle',
+        model: 'llama3.2:3b',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: [
+          {
+            id: 'user-1',
+            role: 'user',
+            content: 'Generate an app with nested filenames',
+            timestamp: Date.now() - 1_000,
+          },
+          {
+            id: 'assistant-1',
+            role: 'assistant',
+            model: 'llama3.2:3b',
+            content: generatedFilenameQualifiedArtifact,
+            timestamp: Date.now(),
+          },
+        ],
+      },
+    ],
+  });
+
+  await page.goto('/c/filename-bundle-session');
+
+  await expect(
+    page.getByRole('heading', { name: 'Filename Bundle' }).first()
+  ).toBeVisible();
+
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page.frameLocator('iframe[title="Filename Bundle"]').first();
+  await expect(frame.locator('#app')).toHaveText('Bundle ready');
+  await expect(frame.locator('body')).toHaveAttribute(
+    'data-bundle-ready',
+    'true'
+  );
+  await expect
+    .poll(() =>
+      frame.locator('body').evaluate(body => getComputedStyle(body).color)
+    )
+    .toBe('rgb(56, 189, 248)');
+  await expect(frame.locator('link[href$="app.css"]')).toHaveCount(0);
+  await expect(frame.locator('script[src$="game.js"]')).toHaveCount(0);
+});
+
+test('chat extracts standalone full HTML documents that are not fenced', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      {
+        id: 'bare-html-session',
+        title: 'Bare HTML',
+        model: 'llama3.2:3b',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: [
+          {
+            id: 'user-1',
+            role: 'user',
+            content: 'Return one full HTML page',
+            timestamp: Date.now() - 1_000,
+          },
+          {
+            id: 'assistant-1',
+            role: 'assistant',
+            model: 'llama3.2:3b',
+            content: generatedBareHtmlDocument,
+            timestamp: Date.now(),
+          },
+        ],
+      },
+    ],
+  });
+
+  await page.goto('/c/bare-html-session');
+
+  await expect(
+    page.getByRole('heading', { name: 'Bare HTML Artifact' }).first()
+  ).toBeVisible();
+
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const frame = page.frameLocator('iframe[title="Bare HTML Artifact"]').first();
+  await expect(frame.locator('#launch')).toHaveText('Bare HTML ready');
+});
+
+test('html artifacts show a themed fallback when no preview content is available', async ({
+  page,
+}) => {
+  const now = Date.now();
+
+  await mockLibreWebUiApi(page, {
+    sessions: [
+      {
+        id: 'empty-artifact-session',
+        title: 'Empty artifact',
+        model: 'llama3.2:3b',
+        createdAt: now,
+        updatedAt: now,
+        messages: [
+          {
+            id: 'assistant-1',
+            role: 'assistant',
+            content: '',
+            timestamp: now,
+            artifacts: [
+              {
+                id: 'empty-html-artifact',
+                type: 'html',
+                title: 'Empty HTML Artifact',
+                content: '   ',
+                createdAt: now,
+                updatedAt: now,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  await page.goto('/c/empty-artifact-session');
+
+  await expect(
+    page.getByRole('heading', { name: 'Empty HTML Artifact' }).first()
+  ).toBeVisible();
+  await expect(page.getByTestId('artifact-html-fallback')).toContainText(
+    'Preview unavailable'
+  );
+
+  await page.locator('button[title="Open in panel"]:visible').first().click();
+
+  const panel = page.getByTestId('artifact-slide-out-panel');
+  await expect(panel).toBeVisible();
+  await expect(panel.getByTestId('artifact-html-fallback')).toContainText(
+    'Switch to code view'
+  );
+
+  await panel.getByRole('button', { name: 'Code' }).first().click();
+  await expect(panel.getByTestId('artifact-html-fallback')).toHaveCount(0);
 });
 
 test('artifact panel resize releases pointer state after mouse up', async ({

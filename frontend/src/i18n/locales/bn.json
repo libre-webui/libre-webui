@@ -1147,7 +1147,9 @@
     "closePanelEsc": "প্যানেল বন্ধ করুন (Esc)",
     "copyButton": "কপি",
     "open": "খুলুন",
-    "dragEdgeToResize": "সাইজ পরিবর্তন করতে প্রান্ত টানুন"
+    "dragEdgeToResize": "সাইজ পরিবর্তন করতে প্রান্ত টানুন",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "পার্সোনা ইম্পোর্ট এবং এক্সপোর্ট",

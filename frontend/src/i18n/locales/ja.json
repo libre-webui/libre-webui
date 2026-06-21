@@ -1147,7 +1147,9 @@
     "closePanelEsc": "パネルを閉じる（Esc）",
     "copyButton": "コピー",
     "open": "開く",
-    "dragEdgeToResize": "端をドラッグしてサイズ変更"
+    "dragEdgeToResize": "端をドラッグしてサイズ変更",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "ペルソナのインポート＆エクスポート",
