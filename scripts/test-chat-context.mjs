@@ -37,6 +37,9 @@ const pluginValidation = await import(
 const pluginStreamAdapter = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'pluginStreamAdapter.js')).href
 );
+const ollamaStreaming = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'ollamaStreaming.js')).href
+);
 
 function withEnv(overrides, run) {
   const previous = {};
@@ -619,5 +622,97 @@ test('streamOpenAICompatibleResponse parses content and tool call deltas', async
       },
     },
     { type: 'done' },
+  ]);
+});
+
+test('streamOllamaChatResponse streams chunks, extracts stats, and completes once', async () => {
+  const sent = [];
+  const ws = {
+    send(payload) {
+      sent.push(JSON.parse(payload));
+    },
+  };
+  let completeCallbackCalls = 0;
+  const streamSource = {
+    async generateChatStreamResponse(_request, onChunk, onError, onComplete) {
+      onChunk({
+        model: 'llama-test',
+        created_at: '2026-06-21T00:00:00Z',
+        message: { role: 'assistant', content: 'Hel' },
+        done: false,
+      });
+      onChunk({
+        model: 'llama-test',
+        created_at: '2026-06-21T00:00:01Z',
+        message: { role: 'assistant', content: 'lo' },
+        done: true,
+        total_duration: 100,
+        eval_count: 10,
+        eval_duration: 2_000_000_000,
+      });
+      completeCallbackCalls += 2;
+      onComplete();
+      onComplete();
+      onError(new Error('late error'));
+    },
+  };
+
+  const result = await ollamaStreaming.streamOllamaChatResponse({
+    ws,
+    request: {
+      model: 'llama-test',
+      messages: [{ role: 'user', content: 'hello' }],
+      stream: true,
+    },
+    streamSource,
+    messageId: 'assistant-1',
+  });
+
+  assert.equal(result.completed, true);
+  assert.equal(result.content, 'Hello');
+  assert.equal(result.statistics.model, 'llama-test');
+  assert.equal(result.statistics.total_duration, 100);
+  assert.equal(result.statistics.tokens_per_second, 5);
+  assert.equal(completeCallbackCalls, 2);
+  assert.deepEqual(
+    sent.map(message => message.type),
+    ['assistant_chunk', 'assistant_chunk']
+  );
+  assert.deepEqual(sent[1].data, {
+    content: 'lo',
+    total: 'Hello',
+    done: true,
+    messageId: 'assistant-1',
+  });
+});
+
+test('streamOllamaChatResponse sends errors without completing', async () => {
+  const sent = [];
+  const ws = {
+    send(payload) {
+      sent.push(JSON.parse(payload));
+    },
+  };
+  const streamSource = {
+    async generateChatStreamResponse(_request, _onChunk, onError) {
+      onError(new Error('model unavailable'));
+    },
+  };
+
+  const result = await ollamaStreaming.streamOllamaChatResponse({
+    ws,
+    request: {
+      model: 'llama-test',
+      messages: [{ role: 'user', content: 'hello' }],
+      stream: true,
+    },
+    streamSource,
+  });
+
+  assert.equal(result.completed, false);
+  assert.equal(result.content, '');
+  assert.equal(result.error.message, 'model unavailable');
+  assert.deepEqual(sent, [
+    { type: 'error', data: { error: 'model unavailable' } },
   ]);
 });

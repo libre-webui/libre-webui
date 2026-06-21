@@ -30,6 +30,7 @@ import openclawSessionService, {
 import chatGenerationService from './services/chatGenerationService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
 import { toOllamaMessages } from './utils/chatContext.js';
+import { streamOllamaChatResponse } from './utils/ollamaStreaming.js';
 import { preparePluginChatContext } from './utils/pluginChatContext.js';
 import { streamPluginResponse } from './utils/pluginStreaming.js';
 import {
@@ -42,11 +43,7 @@ import {
   streamAssistantFakeChunks,
 } from './utils/websocketMessages.js';
 import { verifyToken } from './utils/jwt.js';
-import {
-  OllamaChatRequest,
-  GenerationStatistics,
-  ChatSession,
-} from './types/index.js';
+import { OllamaChatRequest, ChatSession } from './types/index.js';
 
 export function registerWebSocketServer(server: Server): void {
   // WebSocket server for real-time chat streaming
@@ -225,7 +222,6 @@ export function registerWebSocketServer(server: Server): void {
           });
 
           let assistantContent = '';
-          let finalStatistics: GenerationStatistics | undefined = undefined;
 
           console.log('Backend: Using assistantMessageId:', assistantMessageId);
 
@@ -698,123 +694,91 @@ export function registerWebSocketServer(server: Server): void {
             chatRequest.format = format;
           }
 
-          // Stream response from Ollama using chat completion
-          await ollamaService.generateChatStreamResponse(
-            chatRequest,
-            chunk => {
-              if (chunk.message?.content) {
-                assistantContent += chunk.message.content;
+          const ollamaStream = await streamOllamaChatResponse({
+            ws,
+            request: chatRequest,
+            streamSource: ollamaService,
+            messageId: assistantMessageId,
+          });
 
-                // Send streaming chunk with the provided message ID
-                sendAssistantChunk(ws, {
-                  content: chunk.message.content,
-                  total: assistantContent,
-                  done: chunk.done,
-                  messageId: assistantMessageId,
-                });
+          assistantContent = ollamaStream.content;
+
+          if (!ollamaStream.completed) {
+            return;
+          }
+
+          // Save the complete assistant message with the provided ID (skip for private sessions)
+          if (assistantContent && assistantMessageId) {
+            const completion =
+              assistantCompletionService.completeAssistantMessage({
+                sessionId,
+                session,
+                content: assistantContent,
+                model: session.model,
+                messageId: assistantMessageId,
+                userId,
+                isPrivate,
+                regenerate,
+                originalMessageId,
+                statistics: ollamaStream.statistics,
+              });
+
+            if (isPrivate) {
+              // For private sessions, just send completion without saving
+              console.log(
+                'Backend: Private session - skipping Ollama message save'
+              );
+              sendAssistantComplete(ws, {
+                ...completion.privateMessage,
+                messageId: assistantMessageId,
+                statistics: ollamaStream.statistics,
+              });
+            } else {
+              console.log(
+                'Backend: Saving complete assistant message with ID:',
+                assistantMessageId,
+                'regenerate:',
+                !!regenerate
+              );
+
+              if (Object.keys(completion.branchingFields).length > 0) {
+                console.log(
+                  'Backend: Setting branching fields:',
+                  completion.branchingFields
+                );
               }
 
-              // Capture final statistics when streaming is done
-              if (chunk.done) {
-                finalStatistics = {
-                  total_duration: chunk.total_duration,
-                  load_duration: chunk.load_duration,
-                  prompt_eval_count: chunk.prompt_eval_count,
-                  prompt_eval_duration: chunk.prompt_eval_duration,
-                  eval_count: chunk.eval_count,
-                  eval_duration: chunk.eval_duration,
-                  created_at: chunk.created_at,
-                  model: chunk.model,
-                };
+              console.log('Backend: About to save assistant message:', {
+                sessionId,
+                messageId: assistantMessageId,
+                contentLength: assistantContent.length,
+                hasBranchingFields:
+                  Object.keys(completion.branchingFields).length > 0,
+                branchingFields: completion.branchingFields,
+              });
 
-                // Calculate tokens per second if we have the necessary data
-                if (chunk.eval_count && chunk.eval_duration) {
-                  finalStatistics.tokens_per_second =
-                    Math.round(
-                      (chunk.eval_count / (chunk.eval_duration / 1e9)) * 100
-                    ) / 100;
-                }
-              }
-            },
-            error => {
-              sendError(ws, { error: error.message });
-            },
-            () => {
-              // Save the complete assistant message with the provided ID (skip for private sessions)
-              if (assistantContent && assistantMessageId) {
-                const completion =
-                  assistantCompletionService.completeAssistantMessage({
-                    sessionId,
-                    session,
-                    content: assistantContent,
-                    model: session.model,
-                    messageId: assistantMessageId,
-                    userId,
-                    isPrivate,
-                    regenerate,
-                    originalMessageId,
-                    statistics: finalStatistics,
-                  });
+              console.log(
+                'Backend: Assistant message saved:',
+                !!completion.assistantMessage,
+                completion.assistantMessage
+                  ? {
+                      id: completion.assistantMessage.id,
+                      contentLength: completion.assistantMessage.content.length,
+                    }
+                  : 'FAILED TO SAVE'
+              );
 
-                if (isPrivate) {
-                  // For private sessions, just send completion without saving
-                  console.log(
-                    'Backend: Private session - skipping Ollama message save'
-                  );
-                  sendAssistantComplete(ws, {
-                    ...completion.privateMessage,
-                    messageId: assistantMessageId,
-                    statistics: finalStatistics,
-                  });
-                } else {
-                  console.log(
-                    'Backend: Saving complete assistant message with ID:',
-                    assistantMessageId,
-                    'regenerate:',
-                    !!regenerate
-                  );
-
-                  if (Object.keys(completion.branchingFields).length > 0) {
-                    console.log(
-                      'Backend: Setting branching fields:',
-                      completion.branchingFields
-                    );
-                  }
-
-                  console.log('Backend: About to save assistant message:', {
-                    sessionId,
-                    messageId: assistantMessageId,
-                    contentLength: assistantContent.length,
-                    hasBranchingFields:
-                      Object.keys(completion.branchingFields).length > 0,
-                    branchingFields: completion.branchingFields,
-                  });
-
-                  console.log(
-                    'Backend: Assistant message saved:',
-                    !!completion.assistantMessage,
-                    completion.assistantMessage
-                      ? {
-                          id: completion.assistantMessage.id,
-                          contentLength:
-                            completion.assistantMessage.content.length,
-                        }
-                      : 'FAILED TO SAVE'
-                  );
-
-                  // Send completion signal with statistics
-                  sendAssistantComplete(ws, {
-                    content: assistantContent,
-                    role: 'assistant',
-                    timestamp: Date.now(),
-                    messageId: assistantMessageId,
-                    statistics: finalStatistics,
-                    ...completion.branchingFields,
-                  });
-                }
-              }
+              // Send completion signal with statistics
+              sendAssistantComplete(ws, {
+                content: assistantContent,
+                role: 'assistant',
+                timestamp: Date.now(),
+                messageId: assistantMessageId,
+                statistics: ollamaStream.statistics,
+                ...completion.branchingFields,
+              });
             }
-          );
+          }
         }
       } catch (error: unknown) {
         console.error('WebSocket error:', error);
