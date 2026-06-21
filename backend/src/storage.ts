@@ -24,91 +24,24 @@ import getDatabase, { isDatabaseInitialized } from './db.js';
 import { ChatSession, DocumentChunk, UserPreferences } from './types/index.js';
 import { encryptionService } from './services/encryptionService.js';
 import { createLogger } from './utils/logger.js';
+import {
+  mapDocumentChunkRow,
+  mapDocumentRow,
+  mapSessionRow,
+  type Document,
+  type DocumentChunkRow,
+  type DocumentRow,
+  type MessageRow,
+  type SessionRow,
+  type User,
+} from './storageMappers.js';
 
 const logger = createLogger('storage');
+export type { Document, User } from './storageMappers.js';
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Extended Document interface for SQLite storage
-export interface Document {
-  id: string;
-  filename: string;
-  title?: string;
-  content?: string;
-  fileType?: 'pdf' | 'txt';
-  size?: number;
-  sessionId?: string;
-  uploadedAt: number;
-  createdAt?: number;
-  metadata?: Record<string, unknown>;
-}
-
-// Database row interfaces
-interface SessionRow {
-  id: string;
-  user_id: string;
-  title: string;
-  model: string;
-  persona_id?: string;
-  created_at: number;
-  updated_at: number;
-}
-
-interface MessageRow {
-  id: string;
-  session_id: string;
-  role: string;
-  content: string;
-  timestamp: number;
-  message_index: number;
-  model?: string;
-  images?: string;
-  statistics?: string;
-  artifacts?: string;
-  // Branching support
-  parent_id?: string;
-  branch_index?: number;
-  is_active?: number; // SQLite uses 0/1 for boolean
-}
-
-interface DocumentRow {
-  id: string;
-  user_id: string;
-  filename: string;
-  title?: string;
-  content?: string;
-  file_type?: string;
-  size?: number;
-  session_id?: string;
-  uploaded_at: number;
-  created_at?: number;
-  metadata?: string;
-}
-
-interface DocumentChunkRow {
-  id: string;
-  document_id: string;
-  user_id: string;
-  content: string;
-  embedding?: string;
-  chunk_index: number;
-  start_char: number;
-  end_char: number;
-  metadata?: string;
-}
-
-export interface User {
-  id: string;
-  username: string;
-  email?: string;
-  password_hash: string;
-  role: string;
-  avatar?: string | null;
-  created_at: number;
-  updated_at: number;
-}
 
 class StorageService {
   private useSQLite = false;
@@ -243,58 +176,7 @@ class StorageService {
           parent_id: string;
           count: number;
         }[];
-
-        // Create a map for quick lookup of sibling counts
-        const siblingCountMap = new Map<string, number>();
-        for (const sc of siblingCounts) {
-          // Add 1 to include the original message in the count
-          siblingCountMap.set(sc.parent_id, sc.count + 1);
-        }
-
-        // Decrypt session data
-        const decryptedTitle = encryptionService.decrypt(session.title);
-
-        return {
-          id: session.id,
-          title: decryptedTitle,
-          model: session.model,
-          personaId: session.persona_id || undefined,
-          createdAt: session.created_at,
-          updatedAt: session.updated_at,
-          messages: messages.map(msg => {
-            // Decrypt message data
-            const decryptedContent = encryptionService.decrypt(msg.content);
-            const decryptedImages = msg.images
-              ? JSON.parse(encryptionService.decrypt(msg.images))
-              : undefined;
-            const decryptedStatistics = msg.statistics
-              ? JSON.parse(encryptionService.decrypt(msg.statistics))
-              : undefined;
-            const decryptedArtifacts = msg.artifacts
-              ? JSON.parse(encryptionService.decrypt(msg.artifacts))
-              : undefined;
-
-            // Calculate sibling count: if this message has variants, count them
-            // A message has siblings if it's a parent (has variants) or is a variant itself
-            const parentId = msg.parent_id || msg.id;
-            const siblingCount = siblingCountMap.get(parentId) || 1;
-
-            return {
-              id: msg.id,
-              role: msg.role as 'user' | 'assistant' | 'system',
-              content: decryptedContent,
-              timestamp: msg.timestamp,
-              model: msg.model,
-              images: decryptedImages,
-              statistics: decryptedStatistics,
-              artifacts: decryptedArtifacts,
-              parentId: msg.parent_id,
-              branchIndex: msg.branch_index ?? 0,
-              isActive: msg.is_active !== 0,
-              siblingCount: siblingCount > 1 ? siblingCount : undefined,
-            };
-          }),
-        };
+        return mapSessionRow(session, messages, siblingCounts);
       });
     } else {
       // Fallback to JSON
@@ -344,53 +226,7 @@ class StorageService {
         count: number;
       }[];
 
-      // Create a map for quick lookup of sibling counts
-      const siblingCountMap = new Map<string, number>();
-      for (const sc of siblingCounts) {
-        siblingCountMap.set(sc.parent_id, sc.count + 1);
-      }
-
-      // Decrypt session data
-      const decryptedTitle = encryptionService.decrypt(session.title);
-
-      return {
-        id: session.id,
-        title: decryptedTitle,
-        model: session.model,
-        createdAt: session.created_at,
-        updatedAt: session.updated_at,
-        messages: messages.map(msg => {
-          // Decrypt message data
-          const decryptedContent = encryptionService.decrypt(msg.content);
-          const decryptedImages = msg.images
-            ? JSON.parse(encryptionService.decrypt(msg.images))
-            : undefined;
-          const decryptedStatistics = msg.statistics
-            ? JSON.parse(encryptionService.decrypt(msg.statistics))
-            : undefined;
-          const decryptedArtifacts = msg.artifacts
-            ? JSON.parse(encryptionService.decrypt(msg.artifacts))
-            : undefined;
-
-          const parentId = msg.parent_id || msg.id;
-          const siblingCount = siblingCountMap.get(parentId) || 1;
-
-          return {
-            id: msg.id,
-            role: msg.role as 'user' | 'assistant' | 'system',
-            content: decryptedContent,
-            timestamp: msg.timestamp,
-            model: msg.model,
-            images: decryptedImages,
-            statistics: decryptedStatistics,
-            artifacts: decryptedArtifacts,
-            parentId: msg.parent_id,
-            branchIndex: msg.branch_index ?? 0,
-            isActive: msg.is_active !== 0,
-            siblingCount: siblingCount > 1 ? siblingCount : undefined,
-          };
-        }),
-      };
+      return mapSessionRow(session, messages, siblingCounts);
     } else {
       // Fallback to JSON
       const sessions = this.getAllSessions();
@@ -716,31 +552,7 @@ class StorageService {
       `);
       const rows = stmt.all(userId) as DocumentRow[];
 
-      return rows.map(row => {
-        // Decrypt document data
-        const decryptedTitle = row.title
-          ? encryptionService.decrypt(row.title)
-          : undefined;
-        const decryptedContent = row.content
-          ? encryptionService.decrypt(row.content)
-          : undefined;
-        const decryptedMetadata = row.metadata
-          ? JSON.parse(encryptionService.decrypt(row.metadata))
-          : undefined;
-
-        return {
-          id: row.id,
-          filename: row.filename,
-          title: decryptedTitle,
-          content: decryptedContent,
-          fileType: row.file_type as 'pdf' | 'txt' | undefined,
-          size: row.size,
-          sessionId: row.session_id,
-          uploadedAt: row.uploaded_at,
-          createdAt: row.created_at,
-          metadata: decryptedMetadata,
-        };
-      });
+      return rows.map(mapDocumentRow);
     } else {
       // Fallback to JSON
       try {
@@ -766,29 +578,7 @@ class StorageService {
 
       if (!row) return undefined;
 
-      // Decrypt document data
-      const decryptedTitle = row.title
-        ? encryptionService.decrypt(row.title)
-        : undefined;
-      const decryptedContent = row.content
-        ? encryptionService.decrypt(row.content)
-        : undefined;
-      const decryptedMetadata = row.metadata
-        ? JSON.parse(encryptionService.decrypt(row.metadata))
-        : undefined;
-
-      return {
-        id: row.id,
-        filename: row.filename,
-        title: decryptedTitle,
-        content: decryptedContent,
-        fileType: row.file_type as 'pdf' | 'txt' | undefined,
-        size: row.size,
-        sessionId: row.session_id,
-        uploadedAt: row.uploaded_at,
-        createdAt: row.created_at,
-        metadata: decryptedMetadata,
-      };
+      return mapDocumentRow(row);
     } else {
       // Fallback to JSON
       const documents = this.getAllDocuments();
@@ -892,27 +682,7 @@ class StorageService {
       `);
       const rows = stmt.all(documentId) as DocumentChunkRow[];
 
-      return rows.map(row => {
-        // Decrypt document chunk data
-        const decryptedContent = encryptionService.decrypt(row.content);
-        const decryptedEmbedding = row.embedding
-          ? JSON.parse(encryptionService.decrypt(row.embedding))
-          : undefined;
-        const decryptedMetadata = row.metadata
-          ? JSON.parse(encryptionService.decrypt(row.metadata))
-          : undefined;
-
-        return {
-          id: row.id,
-          documentId: row.document_id,
-          content: decryptedContent,
-          embedding: decryptedEmbedding,
-          chunkIndex: row.chunk_index,
-          startChar: row.start_char,
-          endChar: row.end_char,
-          metadata: decryptedMetadata,
-        };
-      });
+      return rows.map(mapDocumentChunkRow);
     } else {
       // Fallback to JSON
       try {
