@@ -22,11 +22,6 @@ import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
 import documentService from './services/documentService.js';
-import openclawSessionService, {
-  extractTextFromMessage,
-  type ToolStreamEvent,
-  type ChatDeltaEvent,
-} from './services/openclawSessionService.js';
 import chatGenerationService from './services/chatGenerationService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
 import { toOllamaMessages } from './utils/chatContext.js';
@@ -34,11 +29,9 @@ import { streamOllamaChatResponse } from './utils/ollamaStreaming.js';
 import { preparePluginChatContext } from './utils/pluginChatContext.js';
 import { streamPluginResponse } from './utils/pluginStreaming.js';
 import {
-  sendAssistantChunk,
   sendAssistantComplete,
   sendConnected,
   sendError,
-  sendToolStatus,
   sendUserMessage,
   streamAssistantFakeChunks,
 } from './utils/websocketMessages.js';
@@ -253,259 +246,56 @@ export function registerWebSocketServer(server: Server): void {
             );
 
             // ---------------------------------------------------------------
-            // OpenClaw Session Mode — route through WebSocket gateway
+            // Standard plugin path (stateless HTTP completions)
             // ---------------------------------------------------------------
-            // OpenClaw session routing now handled via x-openclaw-session-key HTTP header
-            // in pluginService — no WebSocket needed
-            const isOpenClawSession = false; // Disabled: WS approach replaced by HTTP header
 
-            if (isOpenClawSession) {
-              console.log(
-                '[WebSocket] OpenClaw session mode: routing through gateway WS'
-              );
-
-              try {
-                // Ensure the gateway WS connection is established
-                const endpoint =
-                  (pluginVars.endpoint as string) ||
-                  activePlugin.endpoint ||
-                  'http://127.0.0.1:18789/v1/chat/completions';
-                const apiKey =
-                  pluginService.getApiKey(activePlugin, userId) || '';
-                const ocSessionKey =
-                  (pluginVars.session_key as string) || 'main';
-
-                if (!openclawSessionService.isConnected) {
-                  openclawSessionService.connect({
-                    gatewayUrl: endpoint,
-                    token: apiKey,
-                    sessionKey: ocSessionKey,
-                  });
-                  // Wait a bit for connection
-                  await new Promise<void>(resolve => {
-                    const maxWait = 8000;
-                    const start = Date.now();
-                    const check = () => {
-                      if (openclawSessionService.isConnected) {
-                        resolve();
-                      } else if (Date.now() - start > maxWait) {
-                        resolve(); // proceed anyway, will error on send
-                      } else {
-                        setTimeout(check, 200);
-                      }
-                    };
-                    check();
-                  });
-                }
-
-                if (!openclawSessionService.isConnected) {
-                  throw new Error(
-                    'Failed to connect to OpenClaw gateway WebSocket'
-                  );
-                }
-
-                // Build the message to send
-                const messageText = userMessage?.content || content;
-
-                // Set up event listener for this run
-                let totalContent = '';
-                let currentRunId: string | null = null;
-                let runDone = false;
-                const toolCalls: Array<{
-                  id: string;
-                  name: string;
-                  phase: string;
-                  args?: string;
-                  result?: string;
-                }> = [];
-
-                const cleanup = openclawSessionService.subscribe(
-                  (type, data) => {
-                    if (runDone) return;
-
-                    if (type === 'chat') {
-                      const chatEvent = data as ChatDeltaEvent;
-                      if (
-                        currentRunId &&
-                        chatEvent.runId &&
-                        chatEvent.runId !== currentRunId
-                      )
-                        return;
-
-                      if (chatEvent.state === 'delta') {
-                        const text = extractTextFromMessage(chatEvent.message);
-                        if (
-                          typeof text === 'string' &&
-                          text.length > totalContent.length
-                        ) {
-                          // Send incremental delta
-                          const newContent = text.slice(totalContent.length);
-                          totalContent = text;
-                          sendAssistantChunk(
-                            ws,
-                            {
-                              content: newContent,
-                              total: totalContent,
-                              done: false,
-                              messageId: assistantMessageId,
-                            },
-                            { ignoreClosedSocket: true }
-                          );
-                        }
-                      } else if (
-                        chatEvent.state === 'final' ||
-                        chatEvent.state === 'aborted' ||
-                        chatEvent.state === 'error'
-                      ) {
-                        runDone = true;
-
-                        if (chatEvent.state === 'error') {
-                          const errMsg =
-                            chatEvent.errorMessage || 'Agent error';
-                          if (!totalContent) totalContent = `Error: ${errMsg}`;
-                        }
-
-                        // Append tool call summaries
-                        if (toolCalls.length > 0) {
-                          let toolContent = '\n\n---\n**🔧 Tools Used:**\n';
-                          for (const tc of toolCalls) {
-                            const statusIcon =
-                              tc.phase === 'result' ? '✅' : '⏳';
-                            toolContent += `\n${statusIcon} **${tc.name}**`;
-                            if (tc.result) {
-                              const resultStr =
-                                typeof tc.result === 'string'
-                                  ? tc.result
-                                  : JSON.stringify(tc.result);
-                              if (resultStr.length <= 500) {
-                                toolContent += `\n<details><summary>Result</summary>\n\n\`\`\`\n${resultStr}\n\`\`\`\n</details>\n`;
-                              } else {
-                                toolContent += `\n<details><summary>Result (${resultStr.length} chars)</summary>\n\n\`\`\`\n${resultStr.slice(0, 500)}…\n\`\`\`\n</details>\n`;
-                              }
-                            }
-                          }
-                          totalContent += toolContent;
-                        }
-
-                        // Send final chunk
-                        sendAssistantChunk(
-                          ws,
-                          {
-                            content: '',
-                            total: totalContent,
-                            done: true,
-                            messageId: assistantMessageId,
-                          },
-                          { ignoreClosedSocket: true }
-                        );
-                      }
-                    } else if (type === 'tool') {
-                      const toolEvent = data as ToolStreamEvent;
-                      // Track tool calls
-                      const existing = toolCalls.find(
-                        t => t.id === toolEvent.toolCallId
-                      );
-                      if (existing) {
-                        existing.phase = toolEvent.phase;
-                        if (toolEvent.result)
-                          existing.result =
-                            typeof toolEvent.result === 'string'
-                              ? toolEvent.result
-                              : JSON.stringify(toolEvent.result);
-                      } else {
-                        toolCalls.push({
-                          id: toolEvent.toolCallId,
-                          name: toolEvent.name,
-                          phase: toolEvent.phase,
-                          args: toolEvent.args
-                            ? JSON.stringify(toolEvent.args)
-                            : undefined,
-                          result: toolEvent.result
-                            ? typeof toolEvent.result === 'string'
-                              ? toolEvent.result
-                              : JSON.stringify(toolEvent.result)
-                            : undefined,
-                        });
-                      }
-
-                      // Send tool status to frontend
-                      // Send tool_status event for the activity indicator
-                      sendToolStatus(
-                        ws,
-                        {
-                          toolCallId: toolEvent.toolCallId,
-                          name: toolEvent.name,
-                          phase:
-                            toolEvent.phase === 'start'
-                              ? 'running'
-                              : toolEvent.phase,
-                        },
-                        { ignoreClosedSocket: true }
-                      );
-
-                      const toolStatusMsg =
-                        toolEvent.phase === 'start'
-                          ? `\n\n🔧 *Using tool: ${toolEvent.name}…*\n`
-                          : '';
-                      if (toolStatusMsg) {
-                        totalContent += toolStatusMsg;
-                        sendAssistantChunk(
-                          ws,
-                          {
-                            content: toolStatusMsg,
-                            total: totalContent,
-                            done: false,
-                            messageId: assistantMessageId,
-                          },
-                          { ignoreClosedSocket: true }
-                        );
-                      }
-                    }
-                  }
-                );
-
-                // Send the message
-                const result = await openclawSessionService.sendMessage(
-                  messageText,
-                  ocSessionKey
-                );
-                currentRunId = result.runId;
-
-                // Wait for completion (max 5 minutes)
-                await new Promise<void>(resolve => {
-                  const timeout = setTimeout(() => {
-                    runDone = true;
-                    resolve();
-                  }, 300000);
-
-                  const checkDone = setInterval(() => {
-                    if (runDone) {
-                      clearInterval(checkDone);
-                      clearTimeout(timeout);
-                      resolve();
-                    }
-                  }, 100);
+            try {
+              const { messages: messagesForPlugin, shouldStream } =
+                preparePluginChatContext({
+                  isPrivate,
+                  persistedMessages: isPrivate
+                    ? []
+                    : chatService.getMessagesForContext(sessionId),
+                  messageHistory: (messageHistory || []) as ContextMessage[],
+                  regenerate,
+                  content,
+                  images: images || undefined,
+                  hasRelevantContext: relevantContext.length > 0,
+                  enhancedContent,
+                  pluginVariables: pluginVars,
                 });
 
-                // Clean up listener
-                cleanup();
-
-                // Save the assistant message
-                assistantContent = totalContent;
-              } catch (error) {
-                console.error('[WebSocket] OpenClaw session error:', error);
-                const errorMsg =
-                  error instanceof Error ? error.message : String(error);
-                assistantContent = `Error: ${errorMsg}`;
-                sendAssistantChunk(ws, {
-                  content: assistantContent,
-                  total: assistantContent,
-                  done: true,
+              if (shouldStream) {
+                assistantContent = await streamPluginResponse({
+                  ws,
+                  chunks: pluginService.executePluginStreamRequest(
+                    actualModelName,
+                    messagesForPlugin,
+                    mergedOptions,
+                    userId
+                  ),
                   messageId: assistantMessageId,
                 });
+              } else {
+                const generationResult =
+                  await chatGenerationService.executeNonStreaming({
+                    target: generationTarget,
+                    ollamaMessages,
+                    pluginMessages: messagesForPlugin,
+                    userId,
+                    pluginFallbackPolicy: 'disabled',
+                  });
+
+                assistantContent = generationResult.assistantContent;
+
+                await streamAssistantFakeChunks(
+                  ws,
+                  assistantContent,
+                  assistantMessageId
+                );
               }
 
-              // Save assistant message from session mode
+              // Save the complete assistant message (skip for private sessions)
               if (assistantContent && assistantMessageId) {
                 const completion =
                   assistantCompletionService.completeAssistantMessage({
@@ -521,156 +311,82 @@ export function registerWebSocketServer(server: Server): void {
                   });
 
                 if (isPrivate) {
+                  // For private sessions, just send completion without saving
+                  console.log(
+                    'Backend: Private session - skipping message save'
+                  );
                   sendAssistantComplete(ws, completion.privateMessage);
                 } else {
+                  console.log(
+                    'Backend: Saving complete assistant message with ID:',
+                    assistantMessageId,
+                    'regenerate:',
+                    !!regenerate
+                  );
+
+                  if (Object.keys(completion.branchingFields).length > 0) {
+                    console.log(
+                      'Backend: Setting branching fields:',
+                      completion.branchingFields
+                    );
+                  }
+
+                  console.log(
+                    'Backend: Assistant message saved:',
+                    !!completion.assistantMessage
+                  );
+
+                  // Send completion signal
                   sendAssistantComplete(ws, completion.assistantMessage);
                 }
               }
-              return; // Exit early — handled via OpenClaw session
-            } else {
-              // ---------------------------------------------------------------
-              // Standard plugin path (stateless HTTP completions)
-              // ---------------------------------------------------------------
-
-              try {
-                const { messages: messagesForPlugin, shouldStream } =
-                  preparePluginChatContext({
-                    isPrivate,
-                    persistedMessages: isPrivate
-                      ? []
-                      : chatService.getMessagesForContext(sessionId),
-                    messageHistory: (messageHistory || []) as ContextMessage[],
-                    regenerate,
-                    content,
-                    images: images || undefined,
-                    hasRelevantContext: relevantContext.length > 0,
-                    enhancedContent,
-                    pluginVariables: pluginVars,
-                  });
-
-                if (shouldStream) {
-                  assistantContent = await streamPluginResponse({
-                    ws,
-                    chunks: pluginService.executePluginStreamRequest(
-                      actualModelName,
-                      messagesForPlugin,
-                      mergedOptions,
-                      userId
-                    ),
-                    messageId: assistantMessageId,
-                  });
-                } else {
-                  const generationResult =
-                    await chatGenerationService.executeNonStreaming({
-                      target: generationTarget,
-                      ollamaMessages,
-                      pluginMessages: messagesForPlugin,
-                      userId,
-                      pluginFallbackPolicy: 'disabled',
-                    });
-
-                  assistantContent = generationResult.assistantContent;
-
-                  await streamAssistantFakeChunks(
-                    ws,
-                    assistantContent,
-                    assistantMessageId
-                  );
-                }
-
-                // Save the complete assistant message (skip for private sessions)
-                if (assistantContent && assistantMessageId) {
-                  const completion =
-                    assistantCompletionService.completeAssistantMessage({
-                      sessionId,
-                      session,
-                      content: assistantContent,
-                      model: session.model,
-                      messageId: assistantMessageId,
-                      userId,
-                      isPrivate,
-                      regenerate,
-                      originalMessageId,
-                    });
-
-                  if (isPrivate) {
-                    // For private sessions, just send completion without saving
-                    console.log(
-                      'Backend: Private session - skipping message save'
-                    );
-                    sendAssistantComplete(ws, completion.privateMessage);
-                  } else {
-                    console.log(
-                      'Backend: Saving complete assistant message with ID:',
-                      assistantMessageId,
-                      'regenerate:',
-                      !!regenerate
-                    );
-
-                    if (Object.keys(completion.branchingFields).length > 0) {
-                      console.log(
-                        'Backend: Setting branching fields:',
-                        completion.branchingFields
-                      );
-                    }
-
-                    console.log(
-                      'Backend: Assistant message saved:',
-                      !!completion.assistantMessage
-                    );
-
-                    // Send completion signal
-                    sendAssistantComplete(ws, completion.assistantMessage);
-                  }
-                }
-                return; // Exit early since we handled the request via plugin
-              } catch (pluginError: unknown) {
-                const err =
-                  pluginError instanceof Error
-                    ? pluginError
-                    : new Error(String(pluginError));
-                const errWithResponse = pluginError as Record<
+              return; // Exit early since we handled the request via plugin
+            } catch (pluginError: unknown) {
+              const err =
+                pluginError instanceof Error
+                  ? pluginError
+                  : new Error(String(pluginError));
+              const errWithResponse = pluginError as Record<
+                string,
+                unknown
+              > | null;
+              console.error(
+                'Plugin failed, falling back to Ollama:',
+                err.message
+              );
+              if (
+                errWithResponse &&
+                typeof errWithResponse === 'object' &&
+                'response' in errWithResponse
+              ) {
+                const resp = errWithResponse.response as Record<
                   string,
                   unknown
-                > | null;
+                >;
+                console.error('Plugin HTTP response status:', resp.status);
                 console.error(
-                  'Plugin failed, falling back to Ollama:',
-                  err.message
+                  'Plugin HTTP response data:',
+                  JSON.stringify(resp.data)
                 );
-                if (
-                  errWithResponse &&
-                  typeof errWithResponse === 'object' &&
-                  'response' in errWithResponse
-                ) {
-                  const resp = errWithResponse.response as Record<
-                    string,
-                    unknown
-                  >;
-                  console.error('Plugin HTTP response status:', resp.status);
-                  console.error(
-                    'Plugin HTTP response data:',
-                    JSON.stringify(resp.data)
-                  );
-                }
-                if ('cause' in err) {
-                  console.error(
-                    'Plugin error cause:',
-                    (err as { cause: unknown }).cause
-                  );
-                }
-                // If a plugin was found but failed, don't fall through to Ollama
-                if (activePlugin) {
-                  console.error(
-                    `[WebSocket] Plugin "${activePlugin.name}" failed for model ${actualModelName}, not falling back to Ollama`
-                  );
-                  sendError(ws, {
-                    error: `Plugin request failed: ${err.message}`,
-                  });
-                  return;
-                }
-                // Continue to Ollama fallback below (no plugin was matched)
               }
-            } // close else (standard plugin path)
+              if ('cause' in err) {
+                console.error(
+                  'Plugin error cause:',
+                  (err as { cause: unknown }).cause
+                );
+              }
+              // If a plugin was found but failed, don't fall through to Ollama
+              if (activePlugin) {
+                console.error(
+                  `[WebSocket] Plugin "${activePlugin.name}" failed for model ${actualModelName}, not falling back to Ollama`
+                );
+                sendError(ws, {
+                  error: `Plugin request failed: ${err.message}`,
+                });
+                return;
+              }
+              // Continue to Ollama fallback below (no plugin was matched)
+            }
           }
 
           console.log(
