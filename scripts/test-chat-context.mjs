@@ -19,6 +19,9 @@ const pluginResponse = await import(
 const assistantBranching = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'assistantBranching.js')).href
 );
+const websocketMessages = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'websocketMessages.js')).href
+);
 
 function withEnv(overrides, run) {
   const previous = {};
@@ -180,6 +183,28 @@ test('assistant completion branch fields target the original parent group', () =
       isActive: true,
     }
   );
+});
+
+test('buildAssistantFakeStreamChunks batches non-streaming output like chat streaming', () => {
+  const chunks = websocketMessages.buildAssistantFakeStreamChunks(
+    'alpha beta gamma delta',
+    'assistant-1'
+  );
+
+  assert.deepEqual(chunks, [
+    {
+      content: 'alpha beta gamma ',
+      total: 'alpha beta gamma',
+      done: false,
+      messageId: 'assistant-1',
+    },
+    {
+      content: 'delta',
+      total: 'alpha beta gamma delta',
+      done: true,
+      messageId: 'assistant-1',
+    },
+  ]);
 });
 
 test('plugin model routing requires an active plugin and the current user credentials', async () => {

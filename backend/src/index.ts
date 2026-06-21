@@ -80,6 +80,15 @@ import {
   toChatMessages,
   toOllamaMessages,
 } from './utils/chatContext.js';
+import {
+  sendAssistantChunk,
+  sendAssistantComplete,
+  sendConnected,
+  sendError,
+  sendToolStatus,
+  sendUserMessage,
+  streamAssistantFakeChunks,
+} from './utils/websocketMessages.js';
 import { verifyToken } from './utils/jwt.js';
 import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
 import {
@@ -544,19 +553,14 @@ wss.on('connection', (ws, req) => {
               'for user:',
               userId
             );
-            ws.send(
-              JSON.stringify({
-                type: 'error',
-                data: {
-                  error: 'Session not found',
-                  code: 'SESSION_NOT_FOUND',
-                  message:
-                    'The requested session does not exist or does not belong to the current user. Please create a new session.',
-                  sessionId: sessionId,
-                  userId: userId,
-                },
-              })
-            );
+            sendError(ws, {
+              error: 'Session not found',
+              code: 'SESSION_NOT_FOUND',
+              message:
+                'The requested session does not exist or does not belong to the current user. Please create a new session.',
+              sessionId: sessionId,
+              userId: userId,
+            });
             return;
           }
         }
@@ -575,36 +579,21 @@ wss.on('connection', (ws, req) => {
           );
 
           if (!userMessage) {
-            ws.send(
-              JSON.stringify({
-                type: 'error',
-                data: { error: 'Failed to add user message' },
-              })
-            );
+            sendError(ws, { error: 'Failed to add user message' });
             return;
           }
 
           // Send user message confirmation
-          ws.send(
-            JSON.stringify({
-              type: 'user_message',
-              data: userMessage,
-            })
-          );
+          sendUserMessage(ws, userMessage);
         } else if (!regenerate && isPrivate) {
           // For private sessions, just send a confirmation without saving
-          ws.send(
-            JSON.stringify({
-              type: 'user_message',
-              data: {
-                id: `private-msg-${Date.now()}`,
-                role: 'user',
-                content,
-                images: images || undefined,
-                timestamp: Date.now(),
-              },
-            })
-          );
+          sendUserMessage(ws, {
+            id: `private-msg-${Date.now()}`,
+            role: 'user',
+            content,
+            images: images || undefined,
+            timestamp: Date.now(),
+          });
         }
 
         // RAG: Get relevant document context for the user's query
@@ -767,21 +756,16 @@ wss.on('connection', (ws, req) => {
                       // Send incremental delta
                       const newContent = text.slice(totalContent.length);
                       totalContent = text;
-                      try {
-                        ws.send(
-                          JSON.stringify({
-                            type: 'assistant_chunk',
-                            data: {
-                              content: newContent,
-                              total: totalContent,
-                              done: false,
-                              messageId: assistantMessageId,
-                            },
-                          })
-                        );
-                      } catch {
-                        /* ws closed */
-                      }
+                      sendAssistantChunk(
+                        ws,
+                        {
+                          content: newContent,
+                          total: totalContent,
+                          done: false,
+                          messageId: assistantMessageId,
+                        },
+                        { ignoreClosedSocket: true }
+                      );
                     }
                   } else if (
                     chatEvent.state === 'final' ||
@@ -817,21 +801,16 @@ wss.on('connection', (ws, req) => {
                     }
 
                     // Send final chunk
-                    try {
-                      ws.send(
-                        JSON.stringify({
-                          type: 'assistant_chunk',
-                          data: {
-                            content: '',
-                            total: totalContent,
-                            done: true,
-                            messageId: assistantMessageId,
-                          },
-                        })
-                      );
-                    } catch {
-                      /* ws closed */
-                    }
+                    sendAssistantChunk(
+                      ws,
+                      {
+                        content: '',
+                        total: totalContent,
+                        done: true,
+                        messageId: assistantMessageId,
+                      },
+                      { ignoreClosedSocket: true }
+                    );
                   }
                 } else if (type === 'tool') {
                   const toolEvent = data as ToolStreamEvent;
@@ -864,45 +843,35 @@ wss.on('connection', (ws, req) => {
 
                   // Send tool status to frontend
                   // Send tool_status event for the activity indicator
-                  try {
-                    ws.send(
-                      JSON.stringify({
-                        type: 'tool_status',
-                        data: {
-                          toolCallId: toolEvent.toolCallId,
-                          name: toolEvent.name,
-                          phase:
-                            toolEvent.phase === 'start'
-                              ? 'running'
-                              : toolEvent.phase,
-                        },
-                      })
-                    );
-                  } catch {
-                    /* ws closed */
-                  }
+                  sendToolStatus(
+                    ws,
+                    {
+                      toolCallId: toolEvent.toolCallId,
+                      name: toolEvent.name,
+                      phase:
+                        toolEvent.phase === 'start'
+                          ? 'running'
+                          : toolEvent.phase,
+                    },
+                    { ignoreClosedSocket: true }
+                  );
 
-                  try {
-                    const toolStatusMsg =
-                      toolEvent.phase === 'start'
-                        ? `\n\n🔧 *Using tool: ${toolEvent.name}…*\n`
-                        : '';
-                    if (toolStatusMsg) {
-                      totalContent += toolStatusMsg;
-                      ws.send(
-                        JSON.stringify({
-                          type: 'assistant_chunk',
-                          data: {
-                            content: toolStatusMsg,
-                            total: totalContent,
-                            done: false,
-                            messageId: assistantMessageId,
-                          },
-                        })
-                      );
-                    }
-                  } catch {
-                    /* ws closed */
+                  const toolStatusMsg =
+                    toolEvent.phase === 'start'
+                      ? `\n\n🔧 *Using tool: ${toolEvent.name}…*\n`
+                      : '';
+                  if (toolStatusMsg) {
+                    totalContent += toolStatusMsg;
+                    sendAssistantChunk(
+                      ws,
+                      {
+                        content: toolStatusMsg,
+                        total: totalContent,
+                        done: false,
+                        messageId: assistantMessageId,
+                      },
+                      { ignoreClosedSocket: true }
+                    );
                   }
                 }
               });
@@ -940,17 +909,12 @@ wss.on('connection', (ws, req) => {
               const errorMsg =
                 error instanceof Error ? error.message : String(error);
               assistantContent = `Error: ${errorMsg}`;
-              ws.send(
-                JSON.stringify({
-                  type: 'assistant_chunk',
-                  data: {
-                    content: assistantContent,
-                    total: assistantContent,
-                    done: true,
-                    messageId: assistantMessageId,
-                  },
-                })
-              );
+              sendAssistantChunk(ws, {
+                content: assistantContent,
+                total: assistantContent,
+                done: true,
+                messageId: assistantMessageId,
+              });
             }
 
             // Save assistant message from session mode
@@ -969,19 +933,9 @@ wss.on('connection', (ws, req) => {
                 });
 
               if (isPrivate) {
-                ws.send(
-                  JSON.stringify({
-                    type: 'assistant_complete',
-                    data: completion.privateMessage,
-                  })
-                );
+                sendAssistantComplete(ws, completion.privateMessage);
               } else {
-                ws.send(
-                  JSON.stringify({
-                    type: 'assistant_complete',
-                    data: completion.assistantMessage,
-                  })
-                );
+                sendAssistantComplete(ws, completion.assistantMessage);
               }
             }
             return; // Exit early — handled via OpenClaw session
@@ -1055,21 +1009,16 @@ wss.on('connection', (ws, req) => {
                 let toolActivitySent = false;
                 const PAUSE_THRESHOLD_MS = 2000;
 
-                const sendToolStatus = (phase: string) => {
-                  try {
-                    ws.send(
-                      JSON.stringify({
-                        type: 'tool_status',
-                        data: {
-                          toolCallId: PAUSE_TOOL_ID,
-                          name: 'working',
-                          phase,
-                        },
-                      })
-                    );
-                  } catch {
-                    /* ws closed */
-                  }
+                const sendPauseToolStatus = (phase: string) => {
+                  sendToolStatus(
+                    ws,
+                    {
+                      toolCallId: PAUSE_TOOL_ID,
+                      name: 'working',
+                      phase,
+                    },
+                    { ignoreClosedSocket: true }
+                  );
                 };
 
                 const startPauseDetection = () => {
@@ -1077,7 +1026,7 @@ wss.on('connection', (ws, req) => {
                   pauseTimer = setTimeout(() => {
                     if (!toolActivitySent) {
                       toolActivitySent = true;
-                      sendToolStatus('running');
+                      sendPauseToolStatus('running');
                     }
                   }, PAUSE_THRESHOLD_MS);
                 };
@@ -1092,46 +1041,36 @@ wss.on('connection', (ws, req) => {
                   if (chunk.type === 'content' && chunk.content) {
                     // Content arrived — clear the tool indicator
                     if (toolActivitySent) {
-                      sendToolStatus('done');
+                      sendPauseToolStatus('done');
                       toolActivitySent = false;
                     }
                     startPauseDetection();
 
                     totalContent += chunk.content;
-                    ws.send(
-                      JSON.stringify({
-                        type: 'assistant_chunk',
-                        data: {
-                          content: chunk.content,
-                          total: totalContent,
-                          done: false,
-                          messageId: assistantMessageId,
-                        },
-                      })
-                    );
+                    sendAssistantChunk(ws, {
+                      content: chunk.content,
+                      total: totalContent,
+                      done: false,
+                      messageId: assistantMessageId,
+                    });
                   } else if (chunk.type === 'tool_call' && chunk.toolCall) {
                     toolCalls.push(chunk.toolCall);
                     if (pauseTimer) clearTimeout(pauseTimer);
                     toolActivitySent = true;
                     // Send with real tool name but same stable ID
-                    try {
-                      ws.send(
-                        JSON.stringify({
-                          type: 'tool_status',
-                          data: {
-                            toolCallId: PAUSE_TOOL_ID,
-                            name: chunk.toolCall.name,
-                            phase: 'running',
-                          },
-                        })
-                      );
-                    } catch {
-                      /* ws closed */
-                    }
+                    sendToolStatus(
+                      ws,
+                      {
+                        toolCallId: PAUSE_TOOL_ID,
+                        name: chunk.toolCall.name,
+                        phase: 'running',
+                      },
+                      { ignoreClosedSocket: true }
+                    );
                   } else if (chunk.type === 'done') {
                     if (pauseTimer) clearTimeout(pauseTimer);
                     if (toolActivitySent) {
-                      sendToolStatus('done');
+                      sendPauseToolStatus('done');
                       toolActivitySent = false;
                     }
                     // Append tool call info to content if present
@@ -1154,17 +1093,12 @@ wss.on('connection', (ws, req) => {
                     }
 
                     // Send final chunk
-                    ws.send(
-                      JSON.stringify({
-                        type: 'assistant_chunk',
-                        data: {
-                          content: '',
-                          total: totalContent,
-                          done: true,
-                          messageId: assistantMessageId,
-                        },
-                      })
-                    );
+                    sendAssistantChunk(ws, {
+                      content: '',
+                      total: totalContent,
+                      done: true,
+                      messageId: assistantMessageId,
+                    });
                   }
                 }
 
@@ -1181,31 +1115,11 @@ wss.on('connection', (ws, req) => {
 
                 assistantContent = generationResult.assistantContent;
 
-                // Send the complete response as chunks to simulate streaming
-                const words = assistantContent.split(' ');
-                const BATCH_SIZE = 3;
-
-                for (let i = 0; i < words.length; i += BATCH_SIZE) {
-                  const batch = words.slice(i, i + BATCH_SIZE);
-                  const chunk = words.slice(0, i + batch.length).join(' ');
-                  const isLast = i + BATCH_SIZE >= words.length;
-
-                  ws.send(
-                    JSON.stringify({
-                      type: 'assistant_chunk',
-                      data: {
-                        content: batch.join(' ') + (isLast ? '' : ' '),
-                        total: chunk,
-                        done: isLast,
-                        messageId: assistantMessageId,
-                      },
-                    })
-                  );
-
-                  if (!isLast) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                  }
-                }
+                await streamAssistantFakeChunks(
+                  ws,
+                  assistantContent,
+                  assistantMessageId
+                );
               }
 
               // Save the complete assistant message (skip for private sessions)
@@ -1228,12 +1142,7 @@ wss.on('connection', (ws, req) => {
                   console.log(
                     'Backend: Private session - skipping message save'
                   );
-                  ws.send(
-                    JSON.stringify({
-                      type: 'assistant_complete',
-                      data: completion.privateMessage,
-                    })
-                  );
+                  sendAssistantComplete(ws, completion.privateMessage);
                 } else {
                   console.log(
                     'Backend: Saving complete assistant message with ID:',
@@ -1255,12 +1164,7 @@ wss.on('connection', (ws, req) => {
                   );
 
                   // Send completion signal
-                  ws.send(
-                    JSON.stringify({
-                      type: 'assistant_complete',
-                      data: completion.assistantMessage,
-                    })
-                  );
+                  sendAssistantComplete(ws, completion.assistantMessage);
                 }
               }
               return; // Exit early since we handled the request via plugin
@@ -1303,12 +1207,9 @@ wss.on('connection', (ws, req) => {
                 console.error(
                   `[WebSocket] Plugin "${activePlugin.name}" failed for model ${actualModelName}, not falling back to Ollama`
                 );
-                ws.send(
-                  JSON.stringify({
-                    type: 'error',
-                    message: `Plugin request failed: ${err.message}`,
-                  })
-                );
+                sendError(ws, {
+                  error: `Plugin request failed: ${err.message}`,
+                });
                 return;
               }
               // Continue to Ollama fallback below (no plugin was matched)
@@ -1345,17 +1246,12 @@ wss.on('connection', (ws, req) => {
               assistantContent += chunk.message.content;
 
               // Send streaming chunk with the provided message ID
-              ws.send(
-                JSON.stringify({
-                  type: 'assistant_chunk',
-                  data: {
-                    content: chunk.message.content,
-                    total: assistantContent,
-                    done: chunk.done,
-                    messageId: assistantMessageId,
-                  },
-                })
-              );
+              sendAssistantChunk(ws, {
+                content: chunk.message.content,
+                total: assistantContent,
+                done: chunk.done,
+                messageId: assistantMessageId,
+              });
             }
 
             // Capture final statistics when streaming is done
@@ -1381,12 +1277,7 @@ wss.on('connection', (ws, req) => {
             }
           },
           error => {
-            ws.send(
-              JSON.stringify({
-                type: 'error',
-                data: { error: error.message },
-              })
-            );
+            sendError(ws, { error: error.message });
           },
           () => {
             // Save the complete assistant message with the provided ID (skip for private sessions)
@@ -1410,16 +1301,11 @@ wss.on('connection', (ws, req) => {
                 console.log(
                   'Backend: Private session - skipping Ollama message save'
                 );
-                ws.send(
-                  JSON.stringify({
-                    type: 'assistant_complete',
-                    data: {
-                      ...completion.privateMessage,
-                      messageId: assistantMessageId,
-                      statistics: finalStatistics,
-                    },
-                  })
-                );
+                sendAssistantComplete(ws, {
+                  ...completion.privateMessage,
+                  messageId: assistantMessageId,
+                  statistics: finalStatistics,
+                });
               } else {
                 console.log(
                   'Backend: Saving complete assistant message with ID:',
@@ -1457,19 +1343,14 @@ wss.on('connection', (ws, req) => {
                 );
 
                 // Send completion signal with statistics
-                ws.send(
-                  JSON.stringify({
-                    type: 'assistant_complete',
-                    data: {
-                      content: assistantContent,
-                      role: 'assistant',
-                      timestamp: Date.now(),
-                      messageId: assistantMessageId,
-                      statistics: finalStatistics,
-                      ...completion.branchingFields,
-                    },
-                  })
-                );
+                sendAssistantComplete(ws, {
+                  content: assistantContent,
+                  role: 'assistant',
+                  timestamp: Date.now(),
+                  messageId: assistantMessageId,
+                  statistics: finalStatistics,
+                  ...completion.branchingFields,
+                });
               }
             }
           }
@@ -1479,12 +1360,7 @@ wss.on('connection', (ws, req) => {
       console.error('WebSocket error:', error);
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      ws.send(
-        JSON.stringify({
-          type: 'error',
-          data: { error: errorMessage },
-        })
-      );
+      sendError(ws, { error: errorMessage });
     }
   });
 
@@ -1497,12 +1373,7 @@ wss.on('connection', (ws, req) => {
   });
 
   // Send initial connection confirmation
-  ws.send(
-    JSON.stringify({
-      type: 'connected',
-      data: { message: 'Connected to Libre WebUI' },
-    })
-  );
+  sendConnected(ws);
 });
 
 // Start server
