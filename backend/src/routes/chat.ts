@@ -29,6 +29,11 @@ import {
   extractStatistics,
 } from '../utils/generationUtils.js';
 import {
+  replaceLatestUserMessageContent,
+  toOllamaMessages,
+  withSystemPrompt,
+} from '../utils/chatContext.js';
+import {
   ApiResponse,
   ChatSession,
   ChatMessage,
@@ -484,10 +489,7 @@ router.post(
       }
 
       // Convert chat messages to Ollama format and handle persona system prompts
-      let ollamaMessages = session.messages.map((msg: ChatMessage) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+      let ollamaMessages = toOllamaMessages(session.messages);
 
       // Inject persona instructions if session has a persona
       if (session.personaId) {
@@ -497,14 +499,10 @@ router.post(
             userId
           );
           if (persona && persona.parameters.system_prompt) {
-            // Remove any existing system messages and replace with persona's system prompt
-            ollamaMessages = ollamaMessages.filter(
-              msg => msg.role !== 'system'
+            ollamaMessages = withSystemPrompt(
+              ollamaMessages,
+              persona.parameters.system_prompt
             );
-            ollamaMessages.unshift({
-              role: 'system',
-              content: persona.parameters.system_prompt,
-            });
           }
         } catch (error) {
           console.error('Error loading persona:', error);
@@ -525,25 +523,17 @@ router.post(
       })();
 
       if (documentContext && lastUserMessageIndex >= 0) {
-        ollamaMessages[lastUserMessageIndex] = {
-          ...ollamaMessages[lastUserMessageIndex],
-          content: userMessageContent,
-        };
+        ollamaMessages = replaceLatestUserMessageContent(
+          ollamaMessages,
+          userMessageContent
+        );
       }
 
-      const lastPluginUserMessageIndex = (() => {
-        for (let i = session.messages.length - 1; i >= 0; i -= 1) {
-          if (session.messages[i]?.role === 'user') return i;
-        }
-        return -1;
-      })();
-
       const pluginMessages =
-        documentContext && lastPluginUserMessageIndex >= 0
-          ? session.messages.map((msg, index) =>
-              index === lastPluginUserMessageIndex
-                ? { ...msg, content: userMessageContent }
-                : msg
+        documentContext && lastUserMessageIndex >= 0
+          ? replaceLatestUserMessageContent(
+              session.messages,
+              userMessageContent
             )
           : session.messages;
 
@@ -700,10 +690,7 @@ router.post(
       }
 
       // Convert chat messages to Ollama format and handle persona system prompts
-      let ollamaMessages = session.messages.map((msg: ChatMessage) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+      let ollamaMessages = toOllamaMessages(session.messages);
 
       // Inject persona instructions if session has a persona
       if (session.personaId) {
@@ -713,14 +700,10 @@ router.post(
             userId
           );
           if (persona && persona.parameters.system_prompt) {
-            // Remove any existing system messages and replace with persona's system prompt
-            ollamaMessages = ollamaMessages.filter(
-              msg => msg.role !== 'system'
+            ollamaMessages = withSystemPrompt(
+              ollamaMessages,
+              persona.parameters.system_prompt
             );
-            ollamaMessages.unshift({
-              role: 'system',
-              content: persona.parameters.system_prompt,
-            });
           }
         } catch (error) {
           console.error('Error loading persona for streaming:', error);

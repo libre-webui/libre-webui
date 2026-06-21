@@ -75,11 +75,15 @@ import openclawSessionService, {
   type ChatDeltaEvent,
 } from './services/openclawSessionService.js';
 import { mergeGenerationOptions } from './utils/generationUtils.js';
+import {
+  replaceLatestUserMessageContent,
+  toChatMessages,
+  toOllamaMessages,
+} from './utils/chatContext.js';
 import { verifyToken } from './utils/jwt.js';
 import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
 import {
   OllamaChatRequest,
-  OllamaChatMessage,
   GenerationStatistics,
   ChatMessage,
 } from './types/index.js';
@@ -639,40 +643,11 @@ wss.on('connection', (ws, req) => {
             ])
           : chatService.getMessagesForContext(sessionId);
 
-        // Convert our messages to Ollama format
-        const ollamaMessages: OllamaChatMessage[] = contextMessages.map(
-          (msg, index) => {
-            const ollamaMessage: OllamaChatMessage = {
-              role: msg.role as OllamaChatMessage['role'],
-              content: msg.content,
-            };
-
-            // Use enhanced content for the last user message if we have document context
-            if (
-              msg.role === 'user' &&
-              index === contextMessages.length - 1 &&
-              relevantContext.length > 0
-            ) {
-              ollamaMessage.content = enhancedContent;
-            }
-
-            // Process images: strip data URL prefix if present
-            if (msg.images && msg.images.length > 0) {
-              ollamaMessage.images = msg.images.map((img: string) => {
-                // Strip data URL prefix if present (e.g., "data:image/png;base64,")
-                if (typeof img === 'string' && img.includes(',')) {
-                  const base64Index = img.indexOf(',');
-                  if (base64Index !== -1) {
-                    return img.substring(base64Index + 1);
-                  }
-                }
-                return img;
-              });
-            }
-
-            return ollamaMessage;
-          }
-        );
+        // Convert our messages to Ollama format.
+        const ollamaMessages = toOllamaMessages(contextMessages, {
+          latestUserContent:
+            relevantContext.length > 0 ? enhancedContent : undefined,
+        });
 
         let assistantContent = '';
         let finalStatistics: GenerationStatistics | undefined = undefined;
@@ -1072,8 +1047,8 @@ wss.on('connection', (ws, req) => {
               );
 
               let messagesForPlugin: ChatMessage[] = isPrivate
-                ? ((messageHistory || []) as ContextMessage[])
-                    .concat(
+                ? toChatMessages(
+                    ((messageHistory || []) as ContextMessage[]).concat(
                       regenerate
                         ? []
                         : [
@@ -1083,25 +1058,16 @@ wss.on('connection', (ws, req) => {
                               images: images || undefined,
                             },
                           ]
-                    )
-                    .map((msg, index) => ({
-                      id: `private-context-${index}`,
-                      role: msg.role,
-                      content: msg.content,
-                      images: msg.images,
-                      timestamp: Date.now(),
-                    }))
+                    ),
+                    'private-context'
+                  )
                 : chatService.getMessagesForContext(sessionId);
 
               if (relevantContext.length > 0) {
-                for (let i = messagesForPlugin.length - 1; i >= 0; i -= 1) {
-                  if (messagesForPlugin[i]?.role === 'user') {
-                    messagesForPlugin = messagesForPlugin.map((msg, index) =>
-                      index === i ? { ...msg, content: enhancedContent } : msg
-                    );
-                    break;
-                  }
-                }
+                messagesForPlugin = replaceLatestUserMessageContent(
+                  messagesForPlugin,
+                  enhancedContent
+                );
               }
               const systemPromptPrefix =
                 (pluginVars.system_prompt_prefix as string) || '';
