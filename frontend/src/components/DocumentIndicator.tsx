@@ -19,6 +19,9 @@ import React, { useEffect, useState } from 'react';
 import { BookOpen } from 'lucide-react';
 import { documentsApi } from '@/utils/api';
 import { DocumentSummary } from '@/types';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:document-indicator');
 
 interface DocumentIndicatorProps {
   sessionId?: string;
@@ -41,7 +44,7 @@ export const DocumentIndicator: React.FC<DocumentIndicatorProps> = ({
           setDocuments(response.data);
         }
       } catch (error) {
-        console.error('Failed to load documents:', error);
+        logger.error('Failed to load documents:', error);
       }
     };
 

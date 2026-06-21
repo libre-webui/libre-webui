@@ -30,6 +30,9 @@ import { personaApi, chatApi, imageGenApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 import { Persona } from '@/types';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:chat-input');
 
 interface ChatInputProps {
   onSendMessage: (
@@ -119,7 +122,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           if (response.success && response.data) {
             setCurrentPersona(response.data);
           } else {
-            console.warn(
+            logger.warn(
               `Persona ${currentSession.personaId} not found, clearing reference`
             );
             setCurrentPersona(null);
@@ -131,7 +134,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             });
           }
         } catch (error) {
-          console.error('Failed to load current persona:', error);
+          logger.error('Failed to load current persona:', error);
           setCurrentPersona(null);
           // Clear the personaId from the session to prevent repeated requests
           if (currentSession) {
@@ -218,7 +221,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }
       }
     } catch (error) {
-      console.error('Failed to update session:', error);
+      logger.error('Failed to update session:', error);
       toast.error('Failed to update session');
     }
   };

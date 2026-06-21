@@ -60,6 +60,9 @@ import {
   Loader,
 } from 'lucide-react';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:model-manager');
 
 interface ModelInfo {
   name: string;
@@ -308,7 +311,7 @@ export const ModelManager: React.FC = () => {
         setHfGgufFiles(prev => ({ ...prev, [modelId]: response.data! }));
       }
     } catch (error) {
-      console.error('Failed to load GGUF files:', error);
+      logger.error('Failed to load GGUF files:', error);
     } finally {
       setLoadingGguf(null);
     }

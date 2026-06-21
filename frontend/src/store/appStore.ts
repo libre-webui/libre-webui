@@ -25,6 +25,9 @@ import {
   DEFAULT_CUSTOM_ACCENT,
   normalizeTheme,
 } from '@/utils/theme';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('store:app-store');
 
 interface AppState {
   // Theme
@@ -181,7 +184,7 @@ export const useAppStore = create<AppState>()(
             set({ backgroundImage: data.backgroundSettings?.imageUrl || null });
           }
         } catch (error: unknown) {
-          console.warn('Failed to load preferences from backend:', error);
+          logger.warn('Failed to load preferences from backend:', error);
         }
       },
 
@@ -233,7 +236,7 @@ export const useAppStore = create<AppState>()(
               backgroundSettings: updatedPreferences.backgroundSettings,
             });
           } catch (error) {
-            console.warn(
+            logger.warn(
               'Failed to save background settings to backend:',
               error
             );
@@ -262,7 +265,7 @@ export const useAppStore = create<AppState>()(
             reader.readAsDataURL(file);
           });
         } catch (error) {
-          console.error('Failed to upload background image:', error);
+          logger.error('Failed to upload background image:', error);
           throw error;
         }
       },
@@ -288,7 +291,7 @@ export const useAppStore = create<AppState>()(
             backgroundSettings: updatedBackgroundSettings,
           });
         } catch (error) {
-          console.warn('Failed to save background removal to backend:', error);
+          logger.warn('Failed to save background removal to backend:', error);
         }
       },
 

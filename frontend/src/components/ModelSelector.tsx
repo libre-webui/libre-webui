@@ -51,6 +51,9 @@ import {
 } from '@/utils/api';
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:model-selector');
 
 interface ModelGroup {
   type: 'personas' | 'ollama' | 'plugins';
@@ -261,7 +264,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         setHfGgufFiles(prev => ({ ...prev, [modelId]: response.data! }));
       }
     } catch (error) {
-      console.error('Failed to load GGUF files:', error);
+      logger.error('Failed to load GGUF files:', error);
     } finally {
       setLoadingGguf(null);
     }
@@ -382,7 +385,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       }
     } catch (error) {
       // Don't block model selection if unload fails - just log it
-      console.warn('Failed to unload models before switch:', error);
+      logger.warn('Failed to unload models before switch:', error);
     }
 
     const syntheticEvent = {

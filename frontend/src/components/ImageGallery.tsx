@@ -24,6 +24,9 @@ import { imageGenApi } from '@/utils/api';
 import { GeneratedImage } from '@/types';
 import { toast } from 'react-hot-toast';
 import ImageLightbox from './ImageLightbox';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:image-gallery');
 
 interface ImageGalleryProps {
   onImageCountChange?: (count: number) => void;
@@ -96,7 +99,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
         toast.error(t('imageGallery.deleteFailed'));
       }
     } catch (error) {
-      console.error('Failed to delete image:', error);
+      logger.error('Failed to delete image:', error);
       toast.error(t('imageGallery.deleteFailed'));
     } finally {
       setDeletingId(null);

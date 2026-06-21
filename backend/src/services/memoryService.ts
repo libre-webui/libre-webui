@@ -23,6 +23,9 @@ import {
   EmbeddingModel,
 } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('memory');
 
 // Memory types for categorization
 export type MemoryType =
@@ -99,7 +102,7 @@ export class MemoryService {
 
   private initializeTables(): void {
     if (!this.db) {
-      console.warn(
+      logger.warn(
         'MemoryService: Database not available, skipping table initialization'
       );
       return;
@@ -140,7 +143,7 @@ export class MemoryService {
       `);
     } catch (error) {
       // Indexes may already exist, ignore
-      console.warn('[MemoryService] Index creation:', error);
+      logger.warn('[MemoryService] Index creation:', error);
     }
   }
 
@@ -172,7 +175,7 @@ export class MemoryService {
           this.db.exec(
             `ALTER TABLE persona_memories ADD COLUMN ${column} ${this.getColumnType(column)} DEFAULT ${defaults[column]}`
           );
-          console.log(
+          logger.debug(
             `[MemoryService] Added column ${column} to persona_memories`
           );
         } catch {
@@ -180,7 +183,7 @@ export class MemoryService {
         }
       }
     } catch (error) {
-      console.warn('[MemoryService] Migration check:', error);
+      logger.warn('[MemoryService] Migration check:', error);
     }
   }
 
@@ -366,7 +369,7 @@ export class MemoryService {
 
       return response.embeddings[0] || null;
     } catch (error) {
-      console.error('Failed to generate embedding:', error);
+      logger.error('Failed to generate embedding:', error);
       return null;
     }
   }
@@ -407,7 +410,7 @@ export class MemoryService {
     // If very similar memory exists, reinforce it instead of creating new
     if (existingSimilar.length > 0) {
       const mostSimilar = existingSimilar[0];
-      console.log(
+      logger.debug(
         `[MEMORY] Found similar memory (${(mostSimilar.similarity_score * 100).toFixed(1)}% similar), reinforcing instead of creating new`
       );
       await this.reinforceMemory(mostSimilar.entry.id);
@@ -444,7 +447,7 @@ export class MemoryService {
       1.0 // decay_factor
     );
 
-    console.log(
+    logger.debug(
       `[MEMORY] Stored: type=${classifiedType}, importance=${calculatedImportance.toFixed(2)}, id=${id}, content="${content.substring(0, 50)}..."`
     );
 
@@ -713,7 +716,7 @@ export class MemoryService {
       `);
       stmt.run(Date.now(), memoryId);
     } catch (error) {
-      console.warn('[MemoryService] Failed to update memory access:', error);
+      logger.warn('[MemoryService] Failed to update memory access:', error);
     }
   }
 
@@ -800,7 +803,7 @@ export class MemoryService {
         size_mb: Math.round(sizeMb * 100) / 100, // Round to 2 decimal places
       };
     } catch (error) {
-      console.error('Error getting memory status:', error);
+      logger.error('Error getting memory status:', error);
       throw new Error('Failed to get memory status');
     }
   }
@@ -861,7 +864,7 @@ export class MemoryService {
         );
         imported++;
       } catch (error) {
-        console.error('Failed to import memory:', error);
+        logger.error('Failed to import memory:', error);
         // Continue with next memory
       }
     }
@@ -1059,11 +1062,11 @@ export class MemoryService {
         deleted = toDelete.length;
       }
 
-      console.log(
+      logger.debug(
         `[MEMORY] Consolidation complete: ${consolidated} groups merged, ${deleted} memories deleted`
       );
     } catch (error) {
-      console.error('[MEMORY] Consolidation error:', error);
+      logger.error('[MEMORY] Consolidation error:', error);
     }
 
     return { consolidated, deleted };
@@ -1193,7 +1196,7 @@ export class MemoryService {
       }
     }
 
-    console.log(`[MEMORY] Applied decay to ${updated} memories`);
+    logger.debug(`[MEMORY] Applied decay to ${updated} memories`);
     return updated;
   }
 

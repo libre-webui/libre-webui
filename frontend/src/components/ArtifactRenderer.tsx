@@ -40,6 +40,9 @@ import {
   HTML_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:artifact-renderer');
 
 interface ArtifactRendererProps {
   artifact: Artifact;
@@ -62,7 +65,7 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (_err) {
-      console.error('Failed to copy:', _err);
+      logger.error('Failed to copy:', _err);
     }
   };
 

@@ -16,6 +16,9 @@
  */
 
 import type { Plugin } from '../types/index.js';
+import { createLogger } from './logger.js';
+
+const logger = createLogger('utils:plugin-validation');
 
 const MODEL_PATTERN = /^[a-zA-Z0-9\-_:./]+$/;
 const PRIVATE_NETWORK_PATTERN =
@@ -54,7 +57,7 @@ export function validatePluginEndpointOverride(
 ): string | null {
   try {
     if (!isSafePluginEndpoint(endpoint)) {
-      console.warn(
+      logger.warn(
         `Rejected insecure endpoint override: ${endpoint} (only HTTPS or localhost/private IPs allowed)`
       );
       return null;
@@ -62,7 +65,7 @@ export function validatePluginEndpointOverride(
 
     return endpoint;
   } catch {
-    console.warn(`Rejected invalid endpoint override URL: ${endpoint}`);
+    logger.warn(`Rejected invalid endpoint override URL: ${endpoint}`);
     return null;
   }
 }

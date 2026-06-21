@@ -32,6 +32,9 @@ import {
   X,
 } from 'lucide-react';
 import { AvatarUpload } from '@/components/AvatarUpload';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:user-menu');
 
 interface UserMenuProps {
   onSettingsClick?: () => void;
@@ -87,7 +90,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
       navigate('/login');
       toast.success(t('userMenu.loggedOut'));
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       // Still logout locally even if API call fails
       logout();
       navigate('/login');
@@ -124,7 +127,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
         toast.error(response.message || t('userMenu.failedUpdateAvatar'));
       }
     } catch (error) {
-      console.error('Failed to update avatar:', error);
+      logger.error('Failed to update avatar:', error);
       toast.error(t('userMenu.failedUpdatePicture'));
     } finally {
       setIsSavingAvatar(false);

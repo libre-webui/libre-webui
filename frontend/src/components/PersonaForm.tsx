@@ -54,6 +54,9 @@ import { AvatarUpload } from '@/components/AvatarUpload';
 import { PersonaBackgroundUpload } from '@/components/PersonaBackgroundUpload';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:persona-form');
 
 interface PersonaFormProps {
   persona: Persona | null;
@@ -445,7 +448,7 @@ const PersonaForm: React.FC<PersonaFormProps> = ({
           }));
         }
       } catch (error) {
-        console.error('Error loading data:', error);
+        logger.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }

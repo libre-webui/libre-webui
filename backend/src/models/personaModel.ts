@@ -23,6 +23,9 @@ import {
   UpdatePersonaRequest,
 } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('models:persona-model');
 
 interface PersonaRow {
   id: string;
@@ -51,7 +54,7 @@ export class PersonaModel {
     try {
       this.db = getDatabase();
     } catch (_error) {
-      console.warn(
+      logger.warn(
         'PersonaModel: Database not available, running without SQLite features'
       );
       this.db = null;
@@ -70,7 +73,7 @@ export class PersonaModel {
    */
   async getPersonas(userId: string = 'default'): Promise<Persona[]> {
     if (!this.db) {
-      console.warn(
+      logger.warn(
         'PersonaModel: Database not available, returning empty personas list'
       );
       return [];
@@ -98,7 +101,7 @@ export class PersonaModel {
           : undefined,
       }));
     } catch (error) {
-      console.error('Error fetching personas:', error);
+      logger.error('Error fetching personas:', error);
       throw new Error('Failed to fetch personas');
     }
   }
@@ -136,7 +139,7 @@ export class PersonaModel {
           : undefined,
       };
     } catch (error) {
-      console.error('Error fetching persona:', error);
+      logger.error('Error fetching persona:', error);
       throw new Error('Failed to fetch persona');
     }
   }
@@ -182,7 +185,7 @@ export class PersonaModel {
 
       return created;
     } catch (error) {
-      console.error('Error creating persona:', error);
+      logger.error('Error creating persona:', error);
       throw new Error('Failed to create persona');
     }
   }
@@ -270,7 +273,7 @@ export class PersonaModel {
 
       return await this.getPersonaById(id, userId);
     } catch (error) {
-      console.error('Error updating persona:', error);
+      logger.error('Error updating persona:', error);
       throw new Error('Failed to update persona');
     }
   }
@@ -292,7 +295,7 @@ export class PersonaModel {
       const result = stmt.run(id, userId);
       return result.changes > 0;
     } catch (error) {
-      console.error('Error deleting persona:', error);
+      logger.error('Error deleting persona:', error);
       throw new Error('Failed to delete persona');
     }
   }
@@ -330,7 +333,7 @@ export class PersonaModel {
           : undefined,
       };
     } catch (error) {
-      console.error('Error fetching persona by name:', error);
+      logger.error('Error fetching persona by name:', error);
       throw new Error('Failed to fetch persona by name');
     }
   }
@@ -350,7 +353,7 @@ export class PersonaModel {
       const result = stmt.get(userId) as { count: number };
       return result.count;
     } catch (error) {
-      console.error('Error counting personas:', error);
+      logger.error('Error counting personas:', error);
       throw new Error('Failed to count personas');
     }
   }

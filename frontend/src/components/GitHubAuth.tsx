@@ -9,6 +9,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { GitBranch, Loader2, User, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:git-hub-auth');
 
 /**
  * User data structure (matching backend UserPublic interface)
@@ -213,7 +216,7 @@ export const GitHubAuth: React.FC = () => {
       setOAuthProfile(null);
       setError(null);
     } catch (error: unknown) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       // Even if server logout fails, clear local state
       removeToken();
       setUser(null);

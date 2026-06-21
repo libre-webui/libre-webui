@@ -31,6 +31,9 @@ import { useAuthStore } from '@/store/authStore';
 import { useChat } from '@/hooks/useChat';
 import { imageGenApi } from '@/utils/api';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('pages:chat-page');
 
 // Get personalized greeting and time-appropriate suffix based on time of day
 const getGreeting = (
@@ -148,7 +151,7 @@ export const ChatPage: React.FC = () => {
           setCurrentSession(foundSession);
         } else if (!foundSession) {
           // Session not found for this user, redirect to most recent session or root
-          console.warn(
+          logger.warn(
             `Session ${sessionId} not found for current user, redirecting...`
           );
           if (sessions.length > 0) {
@@ -199,7 +202,7 @@ export const ChatPage: React.FC = () => {
             sendMessage(pendingMessage.content, pendingMessage.images);
           }, 100);
         } catch (e) {
-          console.error('Failed to parse pending message:', e);
+          logger.error('Failed to parse pending message:', e);
         }
       }
     }

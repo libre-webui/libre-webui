@@ -17,6 +17,9 @@
 
 import { WebSocketMessage } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('websocket');
 
 class WebSocketService {
   private ws: WebSocket | null = null;
@@ -49,16 +52,16 @@ class WebSocketService {
     }
 
     this.url = `${wsUrl}/ws`;
-    console.log('WebSocket URL constructed:', this.url);
+    logger.debug('WebSocket URL constructed:', this.url);
   }
 
   connect(): Promise<void> {
     if (isDemoMode()) {
-      console.log('Demo mode active: skipping WebSocket connection.');
+      logger.debug('Demo mode active: skipping WebSocket connection.');
       return Promise.resolve();
     }
 
-    console.log('WebSocket: Attempting to connect to:', this.url);
+    logger.debug('WebSocket: Attempting to connect to:', this.url);
 
     return new Promise((resolve, reject) => {
       try {
@@ -68,7 +71,7 @@ class WebSocketService {
           ? `${this.url}?token=${encodeURIComponent(token)}`
           : this.url;
 
-        console.log(
+        logger.debug(
           'WebSocket: Connecting to:',
           wsUrlWithAuth.replace(/token=[^&]+/, 'token=***')
         );
@@ -76,7 +79,7 @@ class WebSocketService {
         this.ws = new WebSocket(wsUrlWithAuth);
 
         this.ws.onopen = () => {
-          console.log('WebSocket connected successfully');
+          logger.debug('WebSocket connected successfully');
           this.reconnectAttempts = 0;
           resolve();
         };
@@ -88,26 +91,26 @@ class WebSocketService {
             if (handler) {
               handler(message.data);
             } else if (message.type === 'connected') {
-              console.debug('WebSocket: Server confirmed connection');
+              logger.debug('WebSocket: Server confirmed connection');
             } else {
-              console.warn(
+              logger.warn(
                 'WebSocket: No handler for message type:',
                 message.type
               );
             }
           } catch (_error) {
-            console.error('Failed to parse WebSocket message:', _error);
+            logger.error('Failed to parse WebSocket message:', _error);
           }
         };
 
         this.ws.onclose = () => {
-          console.log('WebSocket disconnected');
+          logger.debug('WebSocket disconnected');
           this.ws = null;
           this.attemptReconnect();
         };
 
         this.ws.onerror = error => {
-          console.error('WebSocket error:', error);
+          logger.error('WebSocket error:', error);
           reject(error);
         };
       } catch (_error) {
@@ -125,10 +128,10 @@ class WebSocketService {
 
   send(message: WebSocketMessage | Record<string, unknown>) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log('WebSocket: Sending message:', message);
+      logger.debug('WebSocket: Sending message:', message);
       this.ws.send(JSON.stringify(message));
     } else {
-      console.warn(
+      logger.warn(
         'WebSocket is not connected. ReadyState:',
         this.ws?.readyState
       );
@@ -147,12 +150,12 @@ class WebSocketService {
 
   private attemptReconnect() {
     if (isDemoMode()) {
-      console.log('Demo mode active: skipping WebSocket reconnection.');
+      logger.debug('Demo mode active: skipping WebSocket reconnection.');
       return;
     }
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(
+      logger.debug(
         `Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
       );
 
@@ -162,7 +165,7 @@ class WebSocketService {
         });
       }, this.reconnectDelay * this.reconnectAttempts);
     } else {
-      console.error('Max reconnection attempts reached');
+      logger.error('Max reconnection attempts reached');
     }
   }
 

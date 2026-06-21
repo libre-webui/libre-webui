@@ -19,6 +19,9 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GitBranch, Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '../utils/config';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:git-hub-auth-button');
 
 /**
  * GitHub OAuth Button Component
@@ -48,14 +51,14 @@ export const GitHubAuthButton: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setIsConfigured(data.configured || false);
-          console.log('GitHub OAuth configured:', data.configured);
+          logger.debug('GitHub OAuth configured:', data.configured);
         } else {
-          console.log('GitHub OAuth status check failed');
+          logger.debug('GitHub OAuth status check failed');
           setIsConfigured(false);
         }
       } catch (error) {
         // GitHub OAuth not configured, hide the button
-        console.log('GitHub OAuth not configured:', error);
+        logger.debug('GitHub OAuth not configured:', error);
         setIsConfigured(false);
       }
     };

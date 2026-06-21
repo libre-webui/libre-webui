@@ -20,6 +20,9 @@ import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
 import galleryService from '../services/galleryService.js';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('routes:image-gen');
 
 const router = express.Router();
 
@@ -59,7 +62,7 @@ router.get('/models', async (_req, res) => {
       data: models,
     });
   } catch (error) {
-    console.error('Failed to get image generation models:', error);
+    logger.error('Failed to get image generation models:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get image generation models',
@@ -89,7 +92,7 @@ router.get('/config/:pluginId', async (req, res) => {
       data: config,
     });
   } catch (error) {
-    console.error('Failed to get image generation config:', error);
+    logger.error('Failed to get image generation config:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get image generation config',
@@ -116,7 +119,7 @@ router.get('/plugins', async (_req, res) => {
       })),
     });
   } catch (error) {
-    console.error('Failed to get image generation plugins:', error);
+    logger.error('Failed to get image generation plugins:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get image generation plugins',
@@ -230,7 +233,7 @@ router.post(
         },
       });
     } catch (error) {
-      console.error('Image generation failed:', error);
+      logger.error('Image generation failed:', error);
 
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
@@ -274,7 +277,7 @@ router.get(
         data: result,
       });
     } catch (error) {
-      console.error('Failed to get gallery images:', error);
+      logger.error('Failed to get gallery images:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to get gallery images',
@@ -311,7 +314,7 @@ router.get(
         data: image,
       });
     } catch (error) {
-      console.error('Failed to get gallery image:', error);
+      logger.error('Failed to get gallery image:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to get gallery image',
@@ -348,7 +351,7 @@ router.delete(
         message: 'Image deleted successfully',
       });
     } catch (error) {
-      console.error('Failed to delete gallery image:', error);
+      logger.error('Failed to delete gallery image:', error);
       res.status(500).json({
         success: false,
         message: 'Failed to delete gallery image',

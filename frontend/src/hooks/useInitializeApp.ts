@@ -23,6 +23,9 @@ import { ollamaApi } from '@/utils/api';
 import { UserService } from '@/services/userService';
 import toast from 'react-hot-toast';
 import { isDemoMode } from '@/utils/demoMode';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('initialize');
 
 export const useInitializeApp = () => {
   const initialized = useRef(false);
@@ -41,9 +44,7 @@ export const useInitializeApp = () => {
 
     const initialize = async () => {
       try {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('🚀 Initializing Libre WebUI...');
-        }
+        logger.debug('Initializing Libre WebUI...');
         initialized.current = true;
 
         // Initialize authentication first
@@ -68,12 +69,10 @@ export const useInitializeApp = () => {
         await Promise.all([loadAppPreferences(), loadChatPreferences()]);
         await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log('✅ Libre WebUI initialized successfully');
-        }
+        logger.debug('Libre WebUI initialized successfully');
       } catch (_error) {
         if (!isDemoMode()) {
-          console.error('Failed to initialize app:', _error);
+          logger.error('Failed to initialize app:', _error);
           toast.error('Failed to connect to the backend service');
         } else {
           // In demo mode, proceed to load models and sessions anyway, no error log
@@ -108,22 +107,18 @@ export const useInitializeApp = () => {
 
         if (!availableModelNames.includes(currentSelected)) {
           // Selected model no longer available, use first non-embedding model
-          if (process.env.NODE_ENV === 'development') {
-            console.log(
-              '⚠️ Selected model not available, falling back to:',
-              fallback.name
-            );
-          }
+          logger.debug(
+            'Selected model not available, falling back to:',
+            fallback.name
+          );
           setSelectedModel(fallback.name);
         }
       } else {
         // No model selected, use first non-embedding model
-        if (process.env.NODE_ENV === 'development') {
-          console.log(
-            '📋 No model selected, using first available:',
-            fallback.name
-          );
-        }
+        logger.debug(
+          'No model selected, using first available:',
+          fallback.name
+        );
         setSelectedModel(fallback.name);
       }
     }
@@ -133,9 +128,7 @@ export const useInitializeApp = () => {
   useEffect(() => {
     const activePlugins = plugins.filter(plugin => plugin.active);
     if (activePlugins.length > 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🔄 Active plugins changed, reloading models...');
-      }
+      logger.debug('Active plugins changed, reloading models...');
       loadModels();
     }
   }, [plugins, loadModels]);

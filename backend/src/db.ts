@@ -18,6 +18,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import { createLogger } from './utils/logger.js';
+
+const logger = createLogger('database');
 
 // Database instance
 let db: Database.Database | null = null;
@@ -33,7 +36,7 @@ function isSQLiteAvailable(): boolean {
     testDb.close();
     return true;
   } catch (error) {
-    console.error('SQLite availability check failed:', error);
+    logger.error('SQLite availability check failed:', error);
     return false;
   }
 }
@@ -49,10 +52,10 @@ export function getDatabase(): Database.Database {
   if (!db) {
     // Check if SQLite is available first
     if (!isSQLiteAvailable()) {
-      console.error(
+      logger.error(
         'better-sqlite3 is not available or compatible with current Node.js version'
       );
-      console.log('Storage mode: JSON');
+      logger.debug('Storage mode: JSON');
       dbInitializationFailed = true;
       throw new Error('SQLite not available');
     }
@@ -81,7 +84,7 @@ export function getDatabase(): Database.Database {
       db.pragma('temp_store = MEMORY');
       db.pragma('mmap_size = 268435456'); // 256MB
 
-      console.log('✅ Database initialized with application-level encryption');
+      logger.debug('✅ Database initialized with application-level encryption');
 
       // Create tables if they don't exist
       initializeTables();
@@ -89,10 +92,10 @@ export function getDatabase(): Database.Database {
       // Run migrations
       runMigrations();
 
-      console.log(`SQLite database initialized at: ${dbPath}`);
+      logger.debug(`SQLite database initialized at: ${dbPath}`);
     } catch (error) {
-      console.error('Error initializing SQLite database:', error);
-      console.log('Storage mode: JSON');
+      logger.error('Error initializing SQLite database:', error);
+      logger.debug('Storage mode: JSON');
       dbInitializationFailed = true;
       throw new Error('SQLite database initialization failed');
     }
@@ -108,7 +111,7 @@ export function getDatabaseSafe(): Database.Database | null {
   try {
     return getDatabase();
   } catch (_error) {
-    console.warn('Database not available, continuing without SQLite');
+    logger.warn('Database not available, continuing without SQLite');
     return null;
   }
 }
@@ -141,7 +144,7 @@ function initializeTables(): void {
     const hasAvatar = tableInfo.some(col => col.name === 'avatar');
     if (!hasAvatar) {
       db.exec('ALTER TABLE users ADD COLUMN avatar TEXT');
-      console.log('Migration: Added avatar column to users table');
+      logger.debug('Migration: Added avatar column to users table');
     }
   } catch {
     // Column might already exist or table doesn't exist yet
@@ -326,7 +329,7 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
   `);
 
-  console.log('Database tables initialized successfully');
+  logger.debug('Database tables initialized successfully');
 
   // Create default user if no users exist
   createDefaultUserIfNeeded();
@@ -353,10 +356,10 @@ function createDefaultUserIfNeeded(): void {
       `
       ).run('default', 'admin', null, 'default', 'admin', now, now);
 
-      console.log('Created default user for single-user mode');
+      logger.debug('Created default user for single-user mode');
     }
   } catch (error) {
-    console.error('Failed to create default user:', error);
+    logger.error('Failed to create default user:', error);
   }
 }
 
@@ -397,7 +400,7 @@ function runMigrations(): void {
 
     for (const column of newSessionMessagesColumns) {
       if (!existingSessionMessagesColumns.includes(column.name)) {
-        console.log(`Adding column ${column.name} to session_messages table`);
+        logger.debug(`Adding column ${column.name} to session_messages table`);
         db.exec(
           `ALTER TABLE session_messages ADD COLUMN ${column.name} ${column.type}`
         );
@@ -425,11 +428,11 @@ function runMigrations(): void {
 
     // Add persona_id column to sessions table if it doesn't exist
     if (!existingSessionsColumns.includes('persona_id')) {
-      console.log('Adding persona_id column to sessions table');
+      logger.debug('Adding persona_id column to sessions table');
       db.exec('ALTER TABLE sessions ADD COLUMN persona_id TEXT');
 
       // Create index for the new column
-      console.log('Creating index for persona_id column');
+      logger.debug('Creating index for persona_id column');
       db.exec(
         'CREATE INDEX IF NOT EXISTS idx_sessions_persona_id ON sessions(persona_id)'
       );
@@ -458,14 +461,14 @@ function runMigrations(): void {
 
     for (const column of newPersonasColumns) {
       if (!existingPersonasColumns.includes(column.name)) {
-        console.log(`Adding column ${column.name} to personas table`);
+        logger.debug(`Adding column ${column.name} to personas table`);
         db.exec(
           `ALTER TABLE personas ADD COLUMN ${column.name} ${column.type}`
         );
       }
     }
   } catch (error) {
-    console.error('Error running migrations:', error);
+    logger.error('Error running migrations:', error);
   }
 }
 
@@ -476,7 +479,7 @@ export function closeDatabase(): void {
   if (db) {
     db.close();
     db = null;
-    console.log('Database connection closed');
+    logger.debug('Database connection closed');
   }
 }
 
@@ -493,7 +496,7 @@ export function isDatabaseInitialized(): boolean {
       .get();
     return !!result;
   } catch (error) {
-    console.error('Error checking database initialization:', error);
+    logger.error('Error checking database initialization:', error);
     return false;
   }
 }

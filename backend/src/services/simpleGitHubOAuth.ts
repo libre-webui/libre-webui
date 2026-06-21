@@ -18,6 +18,9 @@
 import { authService } from './authService.js';
 import { userModel, UserPublic } from '../models/userModel.js';
 import * as crypto from 'crypto';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:simple-git-hub-oauth');
 
 interface GitHubProfile {
   id: number;
@@ -79,7 +82,7 @@ export class GitHubOAuthService {
    */
   async exchangeCodeForToken(code: string): Promise<string | null> {
     if (!this.clientId || !this.clientSecret) {
-      console.error('GitHub OAuth credentials not configured');
+      logger.error('GitHub OAuth credentials not configured');
       return null;
     }
 
@@ -106,7 +109,7 @@ export class GitHubOAuthService {
       };
       return data.access_token || null;
     } catch (error) {
-      console.error('GitHub token exchange error:', error);
+      logger.error('GitHub token exchange error:', error);
       return null;
     }
   }
@@ -154,7 +157,7 @@ export class GitHubOAuthService {
 
       return profile;
     } catch (error) {
-      console.error('GitHub profile fetch error:', error);
+      logger.error('GitHub profile fetch error:', error);
       return null;
     }
   }
@@ -183,7 +186,7 @@ export class GitHubOAuthService {
 
       return { user, token: jwtToken };
     } catch (error) {
-      console.error('GitHub OAuth callback error:', error);
+      logger.error('GitHub OAuth callback error:', error);
       return null;
     }
   }
@@ -209,7 +212,7 @@ export class GitHubOAuthService {
       const existingUser = userModel.getUserByUsername(githubUsername);
 
       if (existingUser) {
-        console.log('Found existing GitHub user:', existingUser.username);
+        logger.debug('Found existing GitHub user:', existingUser.username);
         // Convert User to UserPublic format
         return {
           id: existingUser.id,
@@ -231,7 +234,7 @@ export class GitHubOAuthService {
       }
 
       // Create new user
-      console.log('Creating new GitHub user:', uniqueUsername);
+      logger.debug('Creating new GitHub user:', uniqueUsername);
 
       const newUser = await userModel.createUser({
         username: uniqueUsername,
@@ -242,10 +245,10 @@ export class GitHubOAuthService {
         role: 'user', // Default role
       });
 
-      console.log('Created new GitHub user:', newUser.username);
+      logger.debug('Created new GitHub user:', newUser.username);
       return newUser;
     } catch (error) {
-      console.error('Error creating/finding GitHub user:', error);
+      logger.error('Error creating/finding GitHub user:', error);
       return null;
     }
   }

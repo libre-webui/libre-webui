@@ -26,7 +26,10 @@ import {
 import { chatApi, ollamaApi, preferencesApi, personaApi } from '@/utils/api';
 import { pluginApi } from '@/utils/api';
 import { generateId } from '@/utils';
+import { createLogger } from '@/utils/logger';
 import toast from 'react-hot-toast';
+
+const logger = createLogger('chat-store');
 
 // Helper function to extract error message from unknown error
 const getErrorMessage = (error: unknown, fallback: string): string => {
@@ -156,7 +159,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           } else if (sessions.length > 0) {
             currentSession = sessions[0];
             if (prevState.currentSession) {
-              console.warn(
+              logger.warn(
                 'Previous currentSession not found in backend sessions:',
                 prevState.currentSession.id
               );
@@ -191,7 +194,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               ? updatedSessions[0] || null
               : state.currentSession;
 
-          console.log(
+          logger.debug(
             'Store: Updating state, sessions count:',
             updatedSessions.length
           );
@@ -203,11 +206,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
         toast.success('Chat deleted');
       } else {
-        console.error('Store: deleteSession failed:', response);
+        logger.error('Store: deleteSession failed:', response);
         toast.error('Failed to delete chat');
       }
     } catch (error: unknown) {
-      console.error('Store: deleteSession error:', error);
+      logger.error('Store: deleteSession error:', error);
       const errorMessage = getErrorMessage(error, 'Failed to delete session');
       toast.error(errorMessage);
     }
@@ -226,12 +229,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
         toast.success('All chat history cleared');
       } else {
-        console.error('Store: clearAllSessions failed:', response);
+        logger.error('Store: clearAllSessions failed:', response);
         toast.error('Failed to clear chat history');
         set({ loading: false });
       }
     } catch (error: unknown) {
-      console.error('Store: clearAllSessions error:', error);
+      logger.error('Store: clearAllSessions error:', error);
       const errorMessage = getErrorMessage(
         error,
         'Failed to clear chat history'
@@ -301,7 +304,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         !state.sessions.find(s => s.id === state.currentSession?.id))
     ) {
       toast.error('No valid chat session. Please create or select a chat.');
-      console.error(
+      logger.error(
         'addMessage blocked: currentSession is not valid',
         state.currentSession?.id
       );
@@ -312,7 +315,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       toast.error(
         'Session not found or invalid. Please select or create a valid chat session.'
       );
-      console.error(
+      logger.error(
         'addMessage blocked: sessionId not found in sessions',
         sessionId
       );
@@ -559,7 +562,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loadModels: async () => {
     try {
       set({ loading: true, error: null });
-      console.log('Loading models from API...');
+      logger.debug('Loading models from API...');
 
       // Load Ollama models
       const ollamaResponse = await ollamaApi.getModels();
@@ -568,7 +571,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       if (ollamaResponse.success && ollamaResponse.data) {
         allModels = [...ollamaResponse.data];
-        console.log('Ollama models loaded:', ollamaResponse.data.length);
+        logger.debug('Ollama models loaded:', ollamaResponse.data.length);
       }
 
       // Load plugin models
@@ -580,7 +583,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             plugin =>
               plugin.active && plugin.type !== 'tts' && plugin.type !== 'image'
           );
-          console.log(
+          logger.debug(
             '🔌 Active plugins found:',
             activePlugins.map(p => p.name)
           );
@@ -610,7 +613,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               );
 
               allModels.push(...pluginModels);
-              console.log(
+              logger.debug(
                 'Plugin models added:',
                 pluginModels.length,
                 'from',
@@ -620,9 +623,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
           }
         }
       } catch (pluginError) {
-        console.error('❌ Failed to load plugin models:', pluginError);
+        logger.error('❌ Failed to load plugin models:', pluginError);
         if (pluginError instanceof Error) {
-          console.error('❌ Plugin error details:', {
+          logger.error('❌ Plugin error details:', {
             message: pluginError.message,
             response: (
               pluginError as { response?: { data: unknown; status: number } }
@@ -679,11 +682,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
           set(state => ({ ...state, personas: personasMap }));
         }
       } catch (personaError) {
-        console.error('❌ Failed to load personas:', personaError);
+        logger.error('❌ Failed to load personas:', personaError);
         // Continue without personas
       }
 
-      console.log('Total models loaded:', allModels.length);
+      logger.debug('Total models loaded:', allModels.length);
 
       // Validate that the currently selected model still exists in the models list
       const currentState = get();
@@ -693,7 +696,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (currentSelectedModel && !modelExists && allModels.length > 0) {
         // Current model is no longer available, fallback to first available model
         const fallbackModel = allModels[0].name;
-        console.log(
+        logger.debug(
           `⚠️ Selected model "${currentSelectedModel}" no longer available, falling back to "${fallbackModel}"`
         );
         set({
@@ -708,7 +711,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ models: allModels, loading: false });
       }
     } catch (error: unknown) {
-      console.error('Error loading models:', error);
+      logger.error('Error loading models:', error);
       const errorMessage = getErrorMessage(error, 'Failed to load models');
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
@@ -725,16 +728,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         if (defaultModel) {
           set({ selectedModel: defaultModel });
-          console.log('✅ Loaded default model from backend:', defaultModel);
+          logger.debug('✅ Loaded default model from backend:', defaultModel);
         }
 
         if (systemMessage !== undefined) {
           set({ systemMessage: systemMessage });
-          console.log('✅ Loaded system message from backend');
+          logger.debug('✅ Loaded system message from backend');
         }
       }
     } catch (_error) {
-      console.warn('❌ Failed to load preferences from backend:', _error);
+      logger.warn('❌ Failed to load preferences from backend:', _error);
     }
   },
 
@@ -743,7 +746,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ selectedModel: model });
     // Save to backend preferences when model is selected
     preferencesApi.setDefaultModel(model).catch(_error => {
-      console.warn('Failed to save default model to backend:', _error);
+      logger.warn('Failed to save default model to backend:', _error);
     });
   },
 
@@ -799,12 +802,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
           loading: false,
         });
 
-        console.log('✅ Personas loaded:', personas.length);
+        logger.debug('✅ Personas loaded:', personas.length);
       }
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to load personas');
       set({ error: errorMessage, loading: false });
-      console.error('❌ Failed to load personas:', errorMessage);
+      logger.error('❌ Failed to load personas:', errorMessage);
     }
   },
 
@@ -830,7 +833,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Save to backend preferences when system message is updated
     preferencesApi.setSystemMessage(message).catch(_error => {
-      console.warn('Failed to save system message to backend:', _error);
+      logger.warn('Failed to save system message to backend:', _error);
     });
 
     // Update the system message in the current session if it exists
@@ -882,13 +885,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
             content: message,
           })
           .catch(_error => {
-            console.warn(
+            logger.warn(
               'Failed to sync system message update to backend:',
               _error
             );
           });
 
-        console.log('✅ Updated system message in current session');
+        logger.debug('✅ Updated system message in current session');
       }
     }
   },
@@ -907,12 +910,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   ...(typeof window !== 'undefined' && {
     testPluginApi: async () => {
       try {
-        console.log('🧪 Testing plugin API...');
+        logger.debug('🧪 Testing plugin API...');
         const result = await pluginApi.getAllPlugins();
-        console.log('✅ Plugin API test result:', result);
+        logger.debug('✅ Plugin API test result:', result);
         return result;
       } catch (error) {
-        console.error('❌ Plugin API test failed:', error);
+        logger.error('❌ Plugin API test failed:', error);
         return { error };
       }
     },

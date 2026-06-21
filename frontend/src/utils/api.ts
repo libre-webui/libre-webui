@@ -47,28 +47,15 @@ import {
   GeneratedImage,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
-import {
-  API_BASE_URL,
-  isVerboseDebugEnabled,
-  logConfigInfo,
-} from '@/utils/config';
+import { API_BASE_URL, logConfigInfo } from '@/utils/config';
+import { createLogger } from '@/utils/logger';
 import { getPersonaAvatarFallback } from '@/utils/personaAvatar';
 
-const debugLog = (...args: unknown[]) => {
-  if (isVerboseDebugEnabled) {
-    console.log(...args);
-  }
-};
-
-const debugError = (...args: unknown[]) => {
-  if (isVerboseDebugEnabled) {
-    console.error(...args);
-  }
-};
+const logger = createLogger('api');
 
 logConfigInfo();
-debugLog('📱 User agent:', navigator.userAgent);
-debugLog('🎭 Demo mode detected:', isDemoMode());
+logger.debug('User agent:', navigator.userAgent);
+logger.debug('Demo mode detected:', isDemoMode());
 
 // Mock response helper for demo mode
 const createDemoResponse = <T>(
@@ -272,7 +259,7 @@ api.interceptors.response.use(
   error => {
     // Handle 401 Unauthorized - session expired or invalid token
     if (error.response?.status === 401) {
-      console.warn('🔒 Session expired or unauthorized, logging out...');
+      logger.warn('Session expired or unauthorized, logging out...');
 
       // Clear auth state and redirect to login
       localStorage.removeItem('auth-token');
@@ -297,7 +284,7 @@ api.interceptors.response.use(
       return Promise.reject(new Error('Session expired'));
     }
 
-    console.error('API Error:', error);
+    logger.error('API Error:', error);
     return Promise.reject(error);
   }
 );
@@ -520,7 +507,7 @@ export const chatApi = {
                         return;
                       }
                     } catch (parseError) {
-                      console.error('Failed to parse SSE data:', parseError);
+                      logger.error('Failed to parse SSE data:', parseError);
                     }
                   }
                 }
@@ -1454,7 +1441,7 @@ export const authApi = {
   },
 
   getSystemInfo: (): Promise<ApiResponse<SystemInfo>> => {
-    debugLog('getSystemInfo called, demo mode:', isDemoMode());
+    logger.debug('getSystemInfo called, demo mode:', isDemoMode());
 
     if (isDemoMode()) {
       return createDemoResponse<SystemInfo>({
@@ -1467,9 +1454,9 @@ export const authApi = {
       });
     }
 
-    debugLog('🔍 Making API call to:', API_BASE_URL + '/auth/system-info');
-    debugLog(
-      '🌐 Full URL from:',
+    logger.debug('Making API call to:', API_BASE_URL + '/auth/system-info');
+    logger.debug(
+      'Full URL from:',
       window.location.origin,
       '-> API:',
       API_BASE_URL + '/auth/system-info'
@@ -1477,20 +1464,20 @@ export const authApi = {
     return api
       .get('/auth/system-info')
       .then(res => {
-        debugLog('✅ getSystemInfo response:', res.data);
+        logger.debug('getSystemInfo response:', res.data);
         return res.data;
       })
       .catch(error => {
-        debugError('❌ getSystemInfo error:', error);
+        logger.debug('getSystemInfo error:', error);
         if (error.response) {
-          debugError('📄 Error response data:', error.response.data);
-          debugError('🔢 Error status:', error.response.status);
-          debugError('🔧 Error headers:', error.response.headers);
+          logger.debug('Error response data:', error.response.data);
+          logger.debug('Error status:', error.response.status);
+          logger.debug('Error headers:', error.response.headers);
         }
         if (error.request) {
-          debugError('📡 Network error - no response received:', error.request);
+          logger.debug('Network error - no response received:', error.request);
         }
-        debugError('🎯 Error config:', error.config);
+        logger.debug('Error config:', error.config);
         throw error;
       });
   },
@@ -1934,7 +1921,7 @@ export const personaApi = {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (_error) {
-      console.error('Error while downloading persona:', _error);
+      logger.error('Error while downloading persona:', _error);
       throw new Error(
         `Failed to download persona: ${_error instanceof Error ? _error.message : String(_error)}`
       );

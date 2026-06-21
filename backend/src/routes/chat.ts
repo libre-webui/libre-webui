@@ -34,6 +34,9 @@ import {
   ChatMessage,
   getErrorMessage,
 } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('routes:chat');
 
 const router = express.Router();
 const titleGenerationService = new TitleGenerationService({
@@ -443,7 +446,7 @@ router.post(
           }
         }
       } catch (error) {
-        console.error('Error during document search:', error);
+        logger.error('Error during document search:', error);
         // Continue without document context if search fails
       }
 
@@ -472,7 +475,7 @@ router.post(
       });
 
       if (generationResult.pluginError) {
-        console.error(
+        logger.error(
           'Plugin failed, falling back to Ollama:',
           generationResult.pluginError
         );
@@ -732,7 +735,7 @@ router.post(
         data: session,
       });
     } catch (error) {
-      console.error('Switch branch error:', error);
+      logger.error('Switch branch error:', error);
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to switch branch'),
@@ -766,7 +769,7 @@ router.get(
         data: branches,
       });
     } catch (error) {
-      console.error('Get branches error:', error);
+      logger.error('Get branches error:', error);
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to get branches'),
@@ -818,7 +821,7 @@ router.post(
         data: newBranch,
       });
     } catch (error) {
-      console.error('Create branch error:', error);
+      logger.error('Create branch error:', error);
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to create branch'),

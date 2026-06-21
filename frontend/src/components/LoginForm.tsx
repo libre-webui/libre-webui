@@ -25,6 +25,9 @@ import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { HuggingFaceAuthButton } from '@/components/HuggingFaceAuthButton';
 import { isDemoMode } from '@/utils/demoMode';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:login-form');
 
 interface LoginFormProps {
   onLogin?: () => void;
@@ -88,7 +91,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         toast.error(response.message || t('auth.login.loginFailed'));
       }
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       toast.error(t('auth.login.checkCredentials'));
     } finally {
       setIsLoading(false);

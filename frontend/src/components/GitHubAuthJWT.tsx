@@ -10,6 +10,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { GitBranch, Loader2, User, LogOut } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:git-hub-auth-jwt');
 
 /**
  * User data structure (compatible with Libre WebUI's JWT system)
@@ -64,7 +67,7 @@ export const GitHubAuth: React.FC = () => {
         removeToken();
         return null;
       } catch (e: unknown) {
-        console.log(
+        logger.debug(
           'Not authenticated:',
           e instanceof Error ? e.message : 'Unknown error'
         );

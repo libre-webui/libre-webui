@@ -21,6 +21,9 @@ import { ollamaApi } from '@/utils/api';
 import { useChatStore } from '@/store/chatStore';
 import { RunningModel, OllamaModel } from '@/types';
 import toast from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:model-tools');
 
 export const ModelTools: React.FC = () => {
   const { selectedModel } = useChatStore();
@@ -116,7 +119,7 @@ export const ModelTools: React.FC = () => {
       });
       if (res.success) {
         toast.success('Embeddings generated (see console)');
-        console.log('Embeddings:', res.data);
+        logger.debug('Embeddings:', res.data);
       } else {
         toast.error(res.error || 'Failed');
       }

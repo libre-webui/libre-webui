@@ -8,6 +8,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Heart, Loader2, User, LogOut } from 'lucide-react';
 import axios from 'axios';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:hugging-face-auth');
 
 /**
  * User data structure (matching backend UserPublic interface)
@@ -228,7 +231,7 @@ export const HuggingFaceAuth: React.FC<HuggingFaceAuthProps> = ({
       setOAuthProfile(null);
       setError(null);
     } catch (error: unknown) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       // Even if server logout fails, clear local state
       removeToken();
       setUser(null);
@@ -249,7 +252,7 @@ export const HuggingFaceAuth: React.FC<HuggingFaceAuthProps> = ({
       );
       setConfigured(response.data.configured);
     } catch (error) {
-      console.error('Failed to check Hugging Face OAuth configuration:', error);
+      logger.error('Failed to check Hugging Face OAuth configuration:', error);
       setConfigured(false);
     }
   }, []);

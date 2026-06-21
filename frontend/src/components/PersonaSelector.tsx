@@ -25,6 +25,9 @@ import {
   getPersonaAvatarSrc,
   setPersonaAvatarFallback,
 } from '@/utils/personaAvatar';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:persona-selector');
 
 interface PersonaSelectorProps {
   selectedPersonaId?: string;
@@ -51,7 +54,7 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
           setPersonas(response.data);
         }
       } catch (error) {
-        console.error('Failed to load personas:', error);
+        logger.error('Failed to load personas:', error);
       } finally {
         setLoading(false);
       }

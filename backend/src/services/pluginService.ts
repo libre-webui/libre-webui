@@ -53,6 +53,9 @@ import {
   validatePluginEndpointOverride,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('plugins');
 
 class PluginService {
   private pluginsDir: string;
@@ -82,7 +85,7 @@ class PluginService {
           this.activePluginIds = new Set([status.activePlugin]);
         }
       } catch (error) {
-        console.error('Failed to load plugin status:', error);
+        logger.error('Failed to load plugin status:', error);
       }
     }
   }
@@ -186,7 +189,7 @@ class PluginService {
           .filter((id: unknown): id is string => typeof id === 'string');
 
         if (models.length > 0) {
-          console.log(
+          logger.debug(
             '[Plugin] Auto-discovered %d models for %s:',
             models.length,
             pluginId,
@@ -212,7 +215,7 @@ class PluginService {
         }
       }
     } catch (_error) {
-      console.log(
+      logger.debug(
         `[Plugin] Model discovery unavailable for ${pluginId}, using existing model_map`
       );
     }
@@ -240,12 +243,12 @@ class PluginService {
               plugins.push(plugin);
             }
           } catch (error) {
-            console.error(`Failed to load plugin ${file}:`, error);
+            logger.error(`Failed to load plugin ${file}:`, error);
           }
         }
       }
     } catch (error) {
-      console.error('Failed to read plugins directory:', error);
+      logger.error('Failed to read plugins directory:', error);
     }
 
     return plugins;
@@ -256,7 +259,7 @@ class PluginService {
     // Sanitize the ID to prevent path traversal
     const sanitizedId = sanitize(id);
     if (!sanitizedId || sanitizedId !== id) {
-      console.error('Invalid plugin ID provided:', id);
+      logger.error('Invalid plugin ID provided:', id);
       return null;
     }
 
@@ -279,7 +282,7 @@ class PluginService {
         return plugin;
       }
     } catch (error) {
-      console.error('Failed to load plugin %s:', sanitizedId, error);
+      logger.error('Failed to load plugin %s:', sanitizedId, error);
     }
 
     return null;
@@ -315,14 +318,14 @@ class PluginService {
     // Validate the ID parameter using a strict pattern (allows dots for version numbers like 1.6b)
     const idPattern = /^[a-zA-Z0-9._-]+$/;
     if (!idPattern.test(id)) {
-      console.error('Invalid plugin ID format:', id);
+      logger.error('Invalid plugin ID format:', id);
       return false;
     }
 
     // Sanitize the ID to prevent path traversal
     const sanitizedId = sanitize(id);
     if (!sanitizedId || sanitizedId !== id) {
-      console.error('Plugin ID failed sanitization:', id);
+      logger.error('Plugin ID failed sanitization:', id);
       return false;
     }
 
@@ -333,7 +336,7 @@ class PluginService {
       !filePath.startsWith(path.resolve(this.pluginsDir)) ||
       !fs.existsSync(filePath)
     ) {
-      console.error('File path is invalid or does not exist:', filePath);
+      logger.error('File path is invalid or does not exist:', filePath);
       return false;
     }
 
@@ -351,7 +354,7 @@ class PluginService {
 
       return true;
     } catch (error) {
-      console.error('Failed to delete plugin %s:', sanitizedId, error);
+      logger.error('Failed to delete plugin %s:', sanitizedId, error);
       return false;
     }
   }
@@ -487,7 +490,7 @@ class PluginService {
 
       return convertProviderResponse(activePlugin, response.data, model);
     } catch (error: unknown) {
-      console.error(`Plugin request failed for ${activePlugin.id}:`, error);
+      logger.error(`Plugin request failed for ${activePlugin.id}:`, error);
 
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as {
@@ -1034,13 +1037,13 @@ class PluginService {
     if (input.length > maxChars) {
       // Split text into chunks and process each, then concatenate audio
       const chunks = this.splitTextForTTS(input, maxChars);
-      console.log(
+      logger.debug(
         `[TTS] Input too long (${input.length} chars), splitting into ${chunks.length} chunks`
       );
 
       const audioBuffers: Buffer[] = [];
       for (let i = 0; i < chunks.length; i++) {
-        console.log(
+        logger.debug(
           `[TTS] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`
         );
         // Recursive call with chunk (will not re-chunk since it's under limit)
@@ -1150,7 +1153,7 @@ class PluginService {
 
       return Buffer.from(response.data);
     } catch (error: unknown) {
-      console.error(`TTS plugin request failed for ${plugin.id}:`, error);
+      logger.error(`TTS plugin request failed for ${plugin.id}:`, error);
 
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as {

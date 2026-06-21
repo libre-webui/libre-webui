@@ -19,6 +19,10 @@
  * Streaming Performance Debugger
  * Helps monitor and debug streaming performance issues
  */
+import { createLogger, isDebugLoggingEnabled } from '@/utils/logger';
+
+const logger = createLogger('streaming-debugger');
+
 export class StreamingDebugger {
   private static instance: StreamingDebugger;
   private enabled: boolean = false;
@@ -49,7 +53,7 @@ export class StreamingDebugger {
 
   public enable(): void {
     this.enabled = true;
-    console.log('🔍 Streaming debugger enabled');
+    logger.debug('Streaming debugger enabled');
   }
 
   public disable(): void {
@@ -61,7 +65,7 @@ export class StreamingDebugger {
 
     this.resetMetrics();
     this.metrics.startTime = performance.now();
-    console.log('🚀 Streaming started');
+    logger.debug('Streaming started');
   }
 
   public recordChunk(_chunkSize: number): void {
@@ -94,8 +98,8 @@ export class StreamingDebugger {
 
       if (recentAverage > 100) {
         // More than 100ms between chunks is concerning
-        console.warn(
-          `⚠️ Slow chunk processing detected: ${recentAverage.toFixed(2)}ms average`
+        logger.warn(
+          `Slow chunk processing detected: ${recentAverage.toFixed(2)}ms average`
         );
       }
     }
@@ -108,30 +112,30 @@ export class StreamingDebugger {
     const averageChunksPerSecond =
       (this.metrics.chunksReceived / totalTime) * 1000;
 
-    console.log('📊 Streaming Performance Report:');
-    console.log(`   Total chunks: ${this.metrics.chunksReceived}`);
-    console.log(`   Total time: ${totalTime.toFixed(2)}ms`);
-    console.log(`   Average chunks/sec: ${averageChunksPerSecond.toFixed(2)}`);
-    console.log(
+    logger.debug('Streaming Performance Report:');
+    logger.debug(`   Total chunks: ${this.metrics.chunksReceived}`);
+    logger.debug(`   Total time: ${totalTime.toFixed(2)}ms`);
+    logger.debug(`   Average chunks/sec: ${averageChunksPerSecond.toFixed(2)}`);
+    logger.debug(
       `   Average chunk interval: ${this.metrics.averageProcessingTime.toFixed(2)}ms`
     );
-    console.log(
+    logger.debug(
       `   Max chunk interval: ${this.metrics.maxProcessingTime.toFixed(2)}ms`
     );
 
     // Performance recommendations
     if (this.metrics.averageProcessingTime > 50) {
-      console.warn(
+      logger.warn(
         '🐌 Consider optimizing: Average chunk processing time is high'
       );
     }
     if (this.metrics.maxProcessingTime > 200) {
-      console.warn(
+      logger.warn(
         '🐌 Consider optimizing: Max chunk processing time is very high'
       );
     }
     if (averageChunksPerSecond < 10) {
-      console.warn('🐌 Consider optimizing: Chunk throughput is low');
+      logger.warn('🐌 Consider optimizing: Chunk throughput is low');
     }
   }
 
@@ -154,6 +158,6 @@ export class StreamingDebugger {
 export const streamingDebugger = StreamingDebugger.getInstance();
 
 // Enable in development mode
-if (import.meta.env.DEV) {
+if (isDebugLoggingEnabled()) {
   streamingDebugger.enable();
 }

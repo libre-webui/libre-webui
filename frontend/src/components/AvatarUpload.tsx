@@ -20,6 +20,9 @@ import { useTranslation } from 'react-i18next';
 import { Upload, X, User } from 'lucide-react';
 import { Button } from '@/components/ui';
 import toast from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:avatar-upload');
 
 interface AvatarUploadProps {
   value: string;
@@ -63,7 +66,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Failed to upload avatar:', error);
+      logger.error('Failed to upload avatar:', error);
       toast.error(t('user.avatar.uploadFailed'));
     } finally {
       setUploading(false);

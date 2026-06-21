@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:turnstile-service');
+
 export interface TurnstilePublicConfig {
   enabled: boolean;
   siteKey?: string;
@@ -85,17 +89,14 @@ export class TurnstileService {
       });
 
       if (!response.ok) {
-        console.error(
-          'Turnstile verification request failed:',
-          response.status
-        );
+        logger.error('Turnstile verification request failed:', response.status);
         return false;
       }
 
       const data = (await response.json()) as TurnstileVerifyResponse;
 
       if (!data.success) {
-        console.warn(
+        logger.warn(
           'Turnstile verification failed:',
           data['error-codes']?.join(', ') || 'unknown error'
         );
@@ -103,7 +104,7 @@ export class TurnstileService {
 
       return data.success;
     } catch (error) {
-      console.error('Turnstile verification error:', error);
+      logger.error('Turnstile verification error:', error);
       return false;
     }
   }

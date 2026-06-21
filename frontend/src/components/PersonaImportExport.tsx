@@ -25,6 +25,9 @@ import {
 } from '@/utils/personaAvatar';
 import { Persona } from '@/types';
 import toast from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:persona-import-export');
 
 interface PersonaImportExportProps {
   personas: Persona[];
@@ -129,7 +132,7 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
             successCount++;
           } catch (error) {
             failCount++;
-            console.error('Failed to import persona:', error);
+            logger.error('Failed to import persona:', error);
           }
         }
 

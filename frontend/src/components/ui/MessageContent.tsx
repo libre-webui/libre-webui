@@ -24,6 +24,9 @@ import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighligh
 import { Copy, Check } from 'lucide-react';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:ui:message-content');
 
 interface MessageContentProps {
   content: string;
@@ -74,7 +77,7 @@ export const MessageContent: React.FC<MessageContentProps> = ({
       setCopiedCode(text);
       setTimeout(() => setCopiedCode(null), 2000);
     } catch (_error) {
-      console.error('Failed to copy text:', _error);
+      logger.error('Failed to copy text:', _error);
     }
   };
 

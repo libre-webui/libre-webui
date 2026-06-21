@@ -31,6 +31,9 @@ import {
   PluginStatus,
   getErrorMessage,
 } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('routes:plugins');
 
 // Extend Request interface to include file property
 interface MulterRequest extends Request {
@@ -73,7 +76,7 @@ const safeCleanupFile = (filePath: string, tempDir: string): void => {
       fs.unlinkSync(resolvedPath);
     }
   } catch (error) {
-    console.error('Failed to cleanup file:', error);
+    logger.error('Failed to cleanup file:', error);
   }
 };
 

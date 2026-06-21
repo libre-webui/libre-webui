@@ -29,6 +29,9 @@ import { ChatMessage as ChatMessageType, ToolActivity } from '@/types';
 import { ToolActivityIndicator } from '@/components/ToolActivityIndicator';
 import { cn } from '@/utils';
 import { ArrowDown } from 'lucide-react';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:chat-messages');
 
 interface ChatMessagesProps {
   messages: ChatMessageType[];
@@ -72,7 +75,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
 
     // Debug: Log messages with branching info (verbose, disabled by default)
     if (import.meta.env.DEV && import.meta.env.VITE_DEBUG_VERBOSE) {
-      console.debug(
+      logger.debug(
         '[ChatMessages] Grouping messages:',
         messages.map(m => ({
           id: m.id?.substring(0, 8),

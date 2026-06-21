@@ -35,6 +35,9 @@ import {
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:first-time-setup');
 
 interface FirstTimeSetupProps {
   onComplete?: () => void;
@@ -127,7 +130,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
         toast.error(response.message || t('setup.admin.failed'));
       }
     } catch (error) {
-      console.error('Admin creation error:', error);
+      logger.error('Admin creation error:', error);
       toast.error(t('setup.admin.failed'));
     } finally {
       setTurnstileToken('');

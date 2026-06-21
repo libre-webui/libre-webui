@@ -41,6 +41,9 @@ import {
   HTML_ARTIFACT_SANDBOX,
 } from '@/utils/artifactHtml';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:artifact-slide-out-panel');
 
 // Min/max panel widths
 const MIN_PANEL_WIDTH = 320;
@@ -232,7 +235,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (_err) {
-      console.error('Failed to copy:', _err);
+      logger.error('Failed to copy:', _err);
     }
   };
 

@@ -23,8 +23,10 @@ import websocketService from '@/utils/websocket';
 import { generateId } from '@/utils';
 import { chatApi } from '@/utils/api';
 import { isDemoMode } from '@/utils/demoMode';
+import { createLogger } from '@/utils/logger';
 import toast from 'react-hot-toast';
 
+const logger = createLogger('use-chat');
 const DEFAULT_SESSION_TITLES = new Set(['New Chat', 'New Demo Session']);
 
 const isDefaultSessionTitle = (title?: string) =>
@@ -74,7 +76,7 @@ export const useChat = (sessionId: string) => {
         shouldGenerateTitleRef.current &&
         titleGenerationSessionRef.current === targetSessionId;
 
-      console.log('Auto-title check:', {
+      logger.debug('Auto-title check:', {
         firstMessage,
         autoTitle: titleSettings?.autoTitle,
         taskModel: titleSettings?.taskModel,
@@ -87,19 +89,19 @@ export const useChat = (sessionId: string) => {
         titleSettings?.autoTitle &&
         titleSettings?.taskModel
       ) {
-        console.log('Triggering auto-title generation...');
+        logger.debug('Triggering auto-title generation...');
         setGeneratingTitleForSession(targetSessionId);
 
         chatApi
           .generateTitle(targetSessionId, titleSettings.taskModel, firstMessage)
           .then(response => {
-            console.log('Title generation response:', response);
+            logger.debug('Title generation response:', response);
             if (response.success && response.data?.title) {
               updateSessionTitle(targetSessionId, response.data.title);
             }
           })
           .catch(error => {
-            console.error('Failed to generate title:', error);
+            logger.error('Failed to generate title:', error);
           })
           .finally(() => {
             setGeneratingTitleForSession(null);
@@ -215,7 +217,7 @@ export const useChat = (sessionId: string) => {
         messageId?: string;
         statistics?: GenerationStatistics; // Generation statistics from Ollama
       };
-      console.log(
+      logger.debug(
         'Hook: Received assistant_complete for session:',
         sessionId,
         'messageId:',
@@ -272,7 +274,7 @@ export const useChat = (sessionId: string) => {
 
       // Handle session not found error by redirecting to home
       if (errorData.code === 'SESSION_NOT_FOUND') {
-        console.warn('Session not found, redirecting to create new session...');
+        logger.warn('Session not found, redirecting to create new session...');
         toast.error('Session not found. Creating a new session...');
         // Navigate to home to create a new session
         window.location.href = '/';
@@ -416,7 +418,7 @@ export const useChat = (sessionId: string) => {
           },
         });
       } catch (error: unknown) {
-        console.error('Failed to send message:', error);
+        logger.error('Failed to send message:', error);
         setIsStreaming(false);
         setStreamingMessage('');
         setStreamingMessageId(null);
@@ -527,7 +529,7 @@ export const useChat = (sessionId: string) => {
         },
       });
     } catch (error: unknown) {
-      console.error('Failed to regenerate message:', error);
+      logger.error('Failed to regenerate message:', error);
       setIsStreaming(false);
       setStreamingMessage('');
       setIsGenerating(false);
@@ -600,7 +602,7 @@ export const useChat = (sessionId: string) => {
           toast.error(response.error || 'Failed to select branch');
         }
       } catch (error) {
-        console.error('Failed to select branch:', error);
+        logger.error('Failed to select branch:', error);
         toast.error('Failed to select branch');
       }
     },

@@ -31,6 +31,7 @@ import {
 } from './services/chatRequestService.js';
 import { streamOllamaChatResponse } from './utils/ollamaStreaming.js';
 import { streamPluginResponse } from './utils/pluginStreaming.js';
+import { createLogger } from './utils/logger.js';
 import {
   sendAssistantComplete,
   sendConnected,
@@ -45,6 +46,7 @@ const chatRequestService = new ChatRequestService({
   chatGenerationService,
   personaService,
 });
+const logger = createLogger('websocket');
 
 export function registerWebSocketServer(server: Server): void {
   // WebSocket server for real-time chat streaming
@@ -54,7 +56,7 @@ export function registerWebSocketServer(server: Server): void {
   });
 
   wss.on('connection', (ws, req) => {
-    console.log('WebSocket client connected');
+    logger.debug('WebSocket client connected');
 
     // Extract and verify auth token from query parameters
     let userId = 'default';
@@ -66,16 +68,16 @@ export function registerWebSocketServer(server: Server): void {
         // Verify JWT token using the same logic as the auth middleware
         const decoded = verifyToken(token);
         userId = decoded.userId;
-        console.log('WebSocket authenticated for user:', userId);
+        logger.debug('WebSocket authenticated for user:', userId);
       } else {
-        console.log(
+        logger.debug(
           'WebSocket connection without auth token, using default user'
         );
       }
     } catch (error) {
       // An expired/invalid token here is expected (e.g. a stale browser token);
       // fall back to the default user without dumping a stack trace.
-      console.warn(
+      logger.warn(
         'WebSocket auth failed, using default user:',
         error instanceof Error ? error.message : error
       );
@@ -101,7 +103,7 @@ export function registerWebSocketServer(server: Server): void {
             messageHistory,
           } = message.data;
 
-          console.log(
+          logger.debug(
             'Backend: Received chat_stream for session:',
             sessionId,
             'with images:',
@@ -132,7 +134,7 @@ export function registerWebSocketServer(server: Server): void {
             // Get session with user authentication
             session = chatService.getSession(sessionId, userId);
             if (!session) {
-              console.log(
+              logger.debug(
                 'Backend: Session not found:',
                 sessionId,
                 'for user:',
@@ -192,18 +194,21 @@ export function registerWebSocketServer(server: Server): void {
           );
 
           if (relevantContext.length > 0) {
-            console.log(
+            logger.debug(
               `Found ${relevantContext.length} relevant document chunks for query`
             );
 
             // Update the user message with enhanced content that includes document context
             // We'll create a new message with the enhanced content for the AI model
-            console.log('Enhanced user message with document context');
+            logger.debug('Enhanced user message with document context');
           }
 
           let assistantContent = '';
 
-          console.log('Backend: Using assistantMessageId:', assistantMessageId);
+          logger.debug(
+            'Backend: Using assistantMessageId:',
+            assistantMessageId
+          );
 
           const persistedMessages = isPrivate
             ? []
@@ -234,16 +239,16 @@ export function registerWebSocketServer(server: Server): void {
           } = preparedGeneration;
 
           // Check if there's an active plugin for this model
-          console.log(
+          logger.debug(
             `[WebSocket] Looking for plugin for model: ${actualModelName}`
           );
-          console.log(
+          logger.debug(
             `[WebSocket] Found plugin:`,
             activePlugin ? activePlugin.id : 'none'
           );
 
           if (activePlugin) {
-            console.log(
+            logger.debug(
               `[WebSocket] Using plugin ${activePlugin.id} for model ${actualModelName}`
             );
 
@@ -299,12 +304,12 @@ export function registerWebSocketServer(server: Server): void {
 
                 if (isPrivate) {
                   // For private sessions, just send completion without saving
-                  console.log(
+                  logger.debug(
                     'Backend: Private session - skipping message save'
                   );
                   sendAssistantComplete(ws, completion.privateMessage);
                 } else {
-                  console.log(
+                  logger.debug(
                     'Backend: Saving complete assistant message with ID:',
                     assistantMessageId,
                     'regenerate:',
@@ -312,13 +317,13 @@ export function registerWebSocketServer(server: Server): void {
                   );
 
                   if (Object.keys(completion.branchingFields).length > 0) {
-                    console.log(
+                    logger.debug(
                       'Backend: Setting branching fields:',
                       completion.branchingFields
                     );
                   }
 
-                  console.log(
+                  logger.debug(
                     'Backend: Assistant message saved:',
                     !!completion.assistantMessage
                   );
@@ -337,7 +342,7 @@ export function registerWebSocketServer(server: Server): void {
                 string,
                 unknown
               > | null;
-              console.error(
+              logger.error(
                 'Plugin failed, falling back to Ollama:',
                 err.message
               );
@@ -350,21 +355,21 @@ export function registerWebSocketServer(server: Server): void {
                   string,
                   unknown
                 >;
-                console.error('Plugin HTTP response status:', resp.status);
-                console.error(
+                logger.error('Plugin HTTP response status:', resp.status);
+                logger.error(
                   'Plugin HTTP response data:',
                   JSON.stringify(resp.data)
                 );
               }
               if ('cause' in err) {
-                console.error(
+                logger.error(
                   'Plugin error cause:',
                   (err as { cause: unknown }).cause
                 );
               }
               // If a plugin was found but failed, don't fall through to Ollama
               if (activePlugin) {
-                console.error(
+                logger.error(
                   `[WebSocket] Plugin "${activePlugin.name}" failed for model ${actualModelName}, not falling back to Ollama`
                 );
                 sendError(ws, {
@@ -376,7 +381,7 @@ export function registerWebSocketServer(server: Server): void {
             }
           }
 
-          console.log(
+          logger.debug(
             `[WebSocket] No plugin found, using Ollama for model: ${actualModelName}`
           );
 
@@ -428,7 +433,7 @@ export function registerWebSocketServer(server: Server): void {
 
             if (isPrivate) {
               // For private sessions, just send completion without saving
-              console.log(
+              logger.debug(
                 'Backend: Private session - skipping Ollama message save'
               );
               sendAssistantComplete(ws, {
@@ -437,7 +442,7 @@ export function registerWebSocketServer(server: Server): void {
                 statistics: ollamaStream.statistics,
               });
             } else {
-              console.log(
+              logger.debug(
                 'Backend: Saving complete assistant message with ID:',
                 assistantMessageId,
                 'regenerate:',
@@ -445,13 +450,13 @@ export function registerWebSocketServer(server: Server): void {
               );
 
               if (Object.keys(completion.branchingFields).length > 0) {
-                console.log(
+                logger.debug(
                   'Backend: Setting branching fields:',
                   completion.branchingFields
                 );
               }
 
-              console.log('Backend: About to save assistant message:', {
+              logger.debug('Backend: About to save assistant message:', {
                 sessionId,
                 messageId: assistantMessageId,
                 contentLength: assistantContent.length,
@@ -460,7 +465,7 @@ export function registerWebSocketServer(server: Server): void {
                 branchingFields: completion.branchingFields,
               });
 
-              console.log(
+              logger.debug(
                 'Backend: Assistant message saved:',
                 !!completion.assistantMessage,
                 completion.assistantMessage
@@ -484,7 +489,7 @@ export function registerWebSocketServer(server: Server): void {
           }
         }
       } catch (error: unknown) {
-        console.error('WebSocket error:', error);
+        logger.error('WebSocket error:', error);
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         sendError(ws, { error: errorMessage });
@@ -492,11 +497,11 @@ export function registerWebSocketServer(server: Server): void {
     });
 
     ws.on('close', () => {
-      console.log('WebSocket client disconnected');
+      logger.debug('WebSocket client disconnected');
     });
 
     ws.on('error', error => {
-      console.error('WebSocket error:', error);
+      logger.error('WebSocket error:', error);
     });
 
     // Send initial connection confirmation

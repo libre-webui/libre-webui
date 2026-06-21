@@ -29,6 +29,9 @@ import type {
   Plugin,
   PluginResponse,
 } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:chat-generation-service');
 
 export interface GenerationTarget {
   actualModelName: string;
@@ -75,12 +78,12 @@ class ChatGenerationService {
         return persona.model;
       }
 
-      console.warn(
+      logger.warn(
         `Persona ${personaId} not found, falling back to session model`
       );
       return sessionModel;
     } catch (error) {
-      console.error('Error resolving persona model:', error);
+      logger.error('Error resolving persona model:', error);
       return sessionModel;
     }
   }

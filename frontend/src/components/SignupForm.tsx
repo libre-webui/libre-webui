@@ -24,6 +24,9 @@ import { authApi } from '@/utils/api';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:signup-form');
 
 interface SignupFormProps {
   onSignup?: () => void;
@@ -103,7 +106,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         toast.error(response.message || t('auth.signup.signupFailed'));
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      logger.error('Signup error:', error);
       toast.error(t('auth.signup.tryAgain'));
     } finally {
       setTurnstileToken('');

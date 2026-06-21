@@ -66,9 +66,11 @@ import { HuggingFaceOAuthService } from './services/simpleHuggingFaceOAuth.js';
 import { encryptionService as _encryptionService } from './services/encryptionService.js';
 import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
 import { registerWebSocketServer } from './websocketServer.js';
+import { createLogger } from './utils/logger.js';
 
 const pkg = loadAppPackage(import.meta.url);
 const app = express();
+const logger = createLogger('server');
 
 // Trust proxy setting for running behind reverse proxies (Nginx, Caddy, etc.)
 // Set TRUST_PROXY=1 or TRUST_PROXY=loopback or TRUST_PROXY=uniquelocal etc.
@@ -389,7 +391,7 @@ if (
   const frontendPath = resolveFrontendDist(import.meta.url);
 
   if (frontendPath) {
-    console.log(`Serving frontend from: ${frontendPath}`);
+    logger.info(`Serving frontend from: ${frontendPath}`);
 
     // Rate limiter for static files
     const staticRateLimiter = rateLimit({
@@ -418,7 +420,7 @@ if (
       res.sendFile(indexPath);
     });
   } else {
-    console.warn(
+    logger.warn(
       'Frontend build not found. Run `npm run build:frontend` first.'
     );
   }
@@ -436,8 +438,8 @@ registerWebSocketServer(server);
 // Start server
 server.listen({ port, host: '0.0.0.0' }, () => {
   const url = `http://localhost:${port}`;
-  console.log(`\n🚀 Libre WebUI v${pkg.version}`);
-  console.log(`   ${url}\n`);
+  logger.info(`Libre WebUI v${pkg.version}`);
+  logger.info(url);
 
   // Open browser in production mode
   if (process.env.SERVE_FRONTEND === 'true') {
@@ -460,24 +462,24 @@ server.listen({ port, host: '0.0.0.0' }, () => {
   const hfConfigured = hfOAuth.isConfigured();
 
   if (githubConfigured || hfConfigured) {
-    console.log('🔐 SSO Configuration:');
+    logger.info('SSO configuration:');
     if (githubConfigured) {
-      console.log('  ✅ GitHub OAuth configured and ready');
+      logger.info('GitHub OAuth configured and ready');
     }
     if (hfConfigured) {
-      console.log('  ✅ Hugging Face OAuth configured and ready');
+      logger.info('Hugging Face OAuth configured and ready');
     }
   } else {
-    console.log('ℹ️  No SSO providers configured (optional)');
+    logger.info('No SSO providers configured (optional)');
   }
 
   // Check Ollama connection on startup
   ollamaService.isHealthy().then(isHealthy => {
     if (isHealthy) {
-      console.log('✅ Ollama service is connected and ready');
+      logger.info('Ollama service is connected and ready');
     } else {
-      console.log(
-        "⚠️  Ollama service is not available - make sure it's running on http://localhost:11434"
+      logger.warn(
+        "Ollama service is not available - make sure it's running on http://localhost:11434"
       );
     }
   });
@@ -485,16 +487,16 @@ server.listen({ port, host: '0.0.0.0' }, () => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
+  logger.info('SIGTERM signal received: closing HTTP server');
   server.close(() => {
-    console.log('HTTP server closed');
+    logger.info('HTTP server closed');
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
+  logger.info('SIGINT signal received: closing HTTP server');
   server.close(() => {
-    console.log('HTTP server closed');
+    logger.info('HTTP server closed');
   });
 });
 

@@ -27,6 +27,9 @@ import {
   OllamaChatResponse,
   getErrorMessage,
 } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('ollama');
 
 /**
  * Ollama "cloud" models (tagged ":cloud" or "-cloud", e.g. "deepseek-v4-pro:cloud")
@@ -100,11 +103,11 @@ class OllamaService {
         'code' in error &&
         (error as { code: string }).code === 'ECONNREFUSED'
       ) {
-        console.warn(
+        logger.warn(
           'Ollama service is not running. Please start it with: ollama serve'
         );
       } else {
-        console.error(
+        logger.error(
           'Ollama health check failed:',
           getErrorMessage(error, 'Unknown error')
         );
@@ -115,11 +118,11 @@ class OllamaService {
 
   async getModels(): Promise<OllamaModel[]> {
     try {
-      console.log('Fetching models from Ollama...');
+      logger.debug('Fetching models from Ollama...');
       const response = await this.client.get('/api/tags');
-      console.log('Ollama response:', JSON.stringify(response.data, null, 2));
+      logger.debug('Ollama response:', JSON.stringify(response.data, null, 2));
       const models = response.data.models || [];
-      console.log(`Found ${models.length} models`);
+      logger.debug(`Found ${models.length} models`);
       return models;
     } catch (error: unknown) {
       if (
@@ -128,14 +131,14 @@ class OllamaService {
         'code' in error &&
         (error as { code: string }).code === 'ECONNREFUSED'
       ) {
-        console.error(
+        logger.error(
           'Cannot connect to Ollama. Please ensure Ollama is running with: ollama serve'
         );
         throw new Error(
           'Ollama service is not running. Please start it with: ollama serve'
         );
       } else {
-        console.error(
+        logger.error(
           'Failed to fetch models:',
           getErrorMessage(error, 'Unknown error')
         );
@@ -159,7 +162,7 @@ class OllamaService {
       });
       return response.data;
     } catch (error: unknown) {
-      console.error('Failed to generate response:', error);
+      logger.error('Failed to generate response:', error);
       throw new Error(getErrorMessage(error, 'Failed to generate response'));
     }
   }
@@ -204,7 +207,7 @@ class OllamaService {
                 return;
               }
             } catch (parseError) {
-              console.error('Failed to parse chunk:', parseError);
+              logger.error('Failed to parse chunk:', parseError);
             }
           }
         }
@@ -218,7 +221,7 @@ class OllamaService {
         onComplete();
       });
     } catch (error: unknown) {
-      console.error('Failed to generate stream response:', error);
+      logger.error('Failed to generate stream response:', error);
       onError(
         new Error(getErrorMessage(error, 'Failed to generate stream response'))
       );
@@ -227,13 +230,13 @@ class OllamaService {
 
   async pullModel(modelName: string): Promise<void> {
     try {
-      console.log(`Pulling model: ${modelName}`);
+      logger.debug(`Pulling model: ${modelName}`);
       await this.longOperationClient.post('/api/pull', {
         name: modelName,
       });
-      console.log(`Successfully pulled model: ${modelName}`);
+      logger.debug(`Successfully pulled model: ${modelName}`);
     } catch (error: unknown) {
-      console.error(
+      logger.error(
         'Failed to pull model:',
         String(modelName),
         getErrorMessage(error, 'Unknown error')
@@ -255,7 +258,7 @@ class OllamaService {
     onComplete: () => void
   ): Promise<void> {
     try {
-      console.log(`Pulling model with streaming: ${modelName}`);
+      logger.debug(`Pulling model with streaming: ${modelName}`);
       const response = await this.longOperationClient.post(
         '/api/pull',
         {
@@ -302,7 +305,7 @@ class OllamaService {
                 return;
               }
             } catch (parseError) {
-              console.error('Failed to parse pull progress chunk:', parseError);
+              logger.error('Failed to parse pull progress chunk:', parseError);
             }
           }
         }
@@ -316,7 +319,7 @@ class OllamaService {
         onComplete();
       });
     } catch (error: unknown) {
-      console.error('Failed to pull model with streaming:', error);
+      logger.error('Failed to pull model with streaming:', error);
       onError(
         new Error(getErrorMessage(error, 'Failed to pull model with streaming'))
       );
@@ -329,7 +332,7 @@ class OllamaService {
         data: { name: modelName },
       });
     } catch (error: unknown) {
-      console.error('Failed to delete model:', error);
+      logger.error('Failed to delete model:', error);
       throw new Error(getErrorMessage(error, 'Failed to delete model'));
     }
   }
@@ -345,7 +348,7 @@ class OllamaService {
       });
       return response.data;
     } catch (error: unknown) {
-      console.error('Failed to show model:', error);
+      logger.error('Failed to show model:', error);
       throw new Error(getErrorMessage(error, 'Failed to show model'));
     }
   }
@@ -354,7 +357,7 @@ class OllamaService {
     try {
       await this.client.post('/api/create', payload);
     } catch (error: unknown) {
-      console.error('Failed to create model:', error);
+      logger.error('Failed to create model:', error);
       throw new Error(getErrorMessage(error, 'Failed to create model'));
     }
   }
@@ -363,7 +366,7 @@ class OllamaService {
     try {
       await this.client.post('/api/copy', { source, destination });
     } catch (error: unknown) {
-      console.error('Failed to copy model:', error);
+      logger.error('Failed to copy model:', error);
       throw new Error(getErrorMessage(error, 'Failed to copy model'));
     }
   }
@@ -372,7 +375,7 @@ class OllamaService {
     try {
       await this.client.post('/api/push', { model: modelName });
     } catch (error: unknown) {
-      console.error('Failed to push model:', error);
+      logger.error('Failed to push model:', error);
       throw new Error(getErrorMessage(error, 'Failed to push model'));
     }
   }
@@ -384,7 +387,7 @@ class OllamaService {
       const response = await this.client.post('/api/embed', payload);
       return response.data;
     } catch (error: unknown) {
-      console.error('Failed to generate embeddings:', error);
+      logger.error('Failed to generate embeddings:', error);
       throw new Error(getErrorMessage(error, 'Failed to generate embeddings'));
     }
   }
@@ -394,22 +397,22 @@ class OllamaService {
       const response = await this.client.get('/api/ps');
       return response.data;
     } catch (error: unknown) {
-      console.error('Failed to list running models:', error);
+      logger.error('Failed to list running models:', error);
       throw new Error(getErrorMessage(error, 'Failed to list running models'));
     }
   }
 
   async unloadModel(modelName: string): Promise<void> {
     try {
-      console.log(`Unloading model: ${modelName}`);
+      logger.debug(`Unloading model: ${modelName}`);
       // Sending keep_alive: 0 tells Ollama to immediately unload the model from memory
       await this.client.post('/api/generate', {
         model: modelName,
         keep_alive: 0,
       });
-      console.log(`Successfully unloaded model: ${modelName}`);
+      logger.debug(`Successfully unloaded model: ${modelName}`);
     } catch (error: unknown) {
-      console.error('Failed to unload model:', error);
+      logger.error('Failed to unload model:', error);
       throw new Error(getErrorMessage(error, 'Failed to unload model'));
     }
   }
@@ -425,7 +428,7 @@ class OllamaService {
         }
       }
     } catch (error: unknown) {
-      console.error('Failed to unload all models:', error);
+      logger.error('Failed to unload all models:', error);
       throw new Error(getErrorMessage(error, 'Failed to unload all models'));
     }
   }
@@ -435,7 +438,7 @@ class OllamaService {
       const response = await this.client.get('/api/version');
       return response.data;
     } catch (error: unknown) {
-      console.error('Failed to get version:', error);
+      logger.error('Failed to get version:', error);
       throw new Error(getErrorMessage(error, 'Failed to get Ollama version'));
     }
   }
@@ -453,7 +456,7 @@ class OllamaService {
       });
       return response.data;
     } catch (error: unknown) {
-      console.error('Failed to generate chat response:', error);
+      logger.error('Failed to generate chat response:', error);
       throw new Error(
         getErrorMessage(error, 'Failed to generate chat response')
       );
@@ -497,7 +500,7 @@ class OllamaService {
                 return;
               }
             } catch (parseError) {
-              console.error('Failed to parse chunk:', parseError);
+              logger.error('Failed to parse chunk:', parseError);
             }
           }
         }
@@ -511,7 +514,7 @@ class OllamaService {
         onComplete();
       });
     } catch (error: unknown) {
-      console.error('Failed to generate chat stream response:', error);
+      logger.error('Failed to generate chat stream response:', error);
       onError(
         new Error(
           getErrorMessage(error, 'Failed to generate chat stream response')
@@ -532,7 +535,7 @@ class OllamaService {
           return false;
         }
       }
-      console.error('Failed to check blob:', error);
+      logger.error('Failed to check blob:', error);
       throw new Error(getErrorMessage(error, 'Failed to check blob existence'));
     }
   }
@@ -549,7 +552,7 @@ class OllamaService {
         },
       });
     } catch (error: unknown) {
-      console.error('Failed to push blob:', error);
+      logger.error('Failed to push blob:', error);
       throw new Error(getErrorMessage(error, 'Failed to push blob'));
     }
   }
@@ -562,7 +565,7 @@ class OllamaService {
       const response = await this.client.post('/api/embeddings', payload);
       return response.data;
     } catch (error: unknown) {
-      console.error('Failed to generate legacy embeddings:', error);
+      logger.error('Failed to generate legacy embeddings:', error);
       throw new Error(
         getErrorMessage(error, 'Failed to generate legacy embeddings')
       );

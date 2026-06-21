@@ -23,6 +23,9 @@ import bcrypt from 'bcrypt';
 import getDatabase, { isDatabaseInitialized } from './db.js';
 import { ChatSession, DocumentChunk, UserPreferences } from './types/index.js';
 import { encryptionService } from './services/encryptionService.js';
+import { createLogger } from './utils/logger.js';
+
+const logger = createLogger('storage');
 
 // Get __dirname equivalent for ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -121,7 +124,7 @@ class StorageService {
   constructor() {
     // Check if SQLite should be used
     this.useSQLite = isDatabaseInitialized();
-    console.log(`Storage mode: ${this.useSQLite ? 'SQLite' : 'JSON'}`);
+    logger.debug(`Storage mode: ${this.useSQLite ? 'SQLite' : 'JSON'}`);
   }
 
   // =================================
@@ -301,7 +304,7 @@ class StorageService {
           return JSON.parse(data) as ChatSession[];
         }
       } catch (error) {
-        console.error('Failed to load sessions from JSON:', error);
+        logger.error('Failed to load sessions from JSON:', error);
       }
     }
 
@@ -483,7 +486,7 @@ class StorageService {
 
         fs.writeFileSync(this.sessionsFile, JSON.stringify(sessions, null, 2));
       } catch (error) {
-        console.error('Failed to save session to JSON:', error);
+        logger.error('Failed to save session to JSON:', error);
       }
     }
   }
@@ -510,7 +513,7 @@ class StorageService {
           return true;
         }
       } catch (error) {
-        console.error('Failed to delete session from JSON:', error);
+        logger.error('Failed to delete session from JSON:', error);
       }
     }
 
@@ -531,7 +534,7 @@ class StorageService {
         fs.writeFileSync(this.sessionsFile, JSON.stringify([], null, 2));
         return deletedCount;
       } catch (error) {
-        console.error('Failed to clear all sessions from JSON:', error);
+        logger.error('Failed to clear all sessions from JSON:', error);
         return 0;
       }
     }
@@ -578,7 +581,7 @@ class StorageService {
       db.prepare(
         'DELETE FROM user_preferences WHERE user_id = ? AND key = ?'
       ).run(userId, key);
-      console.log(`Cleaned up corrupted preference: ${key}`);
+      logger.debug(`Cleaned up corrupted preference: ${key}`);
     }
   }
 
@@ -635,7 +638,7 @@ class StorageService {
           return JSON.parse(data) as UserPreferences;
         }
       } catch (error) {
-        console.error('Failed to load preferences from JSON:', error);
+        logger.error('Failed to load preferences from JSON:', error);
       }
     }
 
@@ -696,7 +699,7 @@ class StorageService {
           JSON.stringify(preferences, null, 2)
         );
       } catch (error) {
-        console.error('Failed to save preferences to JSON:', error);
+        logger.error('Failed to save preferences to JSON:', error);
       }
     }
   }
@@ -746,7 +749,7 @@ class StorageService {
           return JSON.parse(data) as Document[];
         }
       } catch (error) {
-        console.error('Failed to load documents from JSON:', error);
+        logger.error('Failed to load documents from JSON:', error);
       }
     }
 
@@ -843,7 +846,7 @@ class StorageService {
           JSON.stringify(documents, null, 2)
         );
       } catch (error) {
-        console.error('Failed to save document to JSON:', error);
+        logger.error('Failed to save document to JSON:', error);
       }
     }
   }
@@ -870,7 +873,7 @@ class StorageService {
           return true;
         }
       } catch (error) {
-        console.error('Failed to delete document from JSON:', error);
+        logger.error('Failed to delete document from JSON:', error);
       }
     }
 
@@ -919,7 +922,7 @@ class StorageService {
           return chunksData[documentId] || [];
         }
       } catch (error) {
-        console.error('Failed to load document chunks from JSON:', error);
+        logger.error('Failed to load document chunks from JSON:', error);
       }
     }
 
@@ -985,7 +988,7 @@ class StorageService {
           JSON.stringify(chunksData, null, 2)
         );
       } catch (error) {
-        console.error('Failed to save document chunks to JSON:', error);
+        logger.error('Failed to save document chunks to JSON:', error);
       }
     }
   }
@@ -1015,7 +1018,7 @@ class StorageService {
           }
         }
       } catch (error) {
-        console.error('Failed to delete document chunks from JSON:', error);
+        logger.error('Failed to delete document chunks from JSON:', error);
       }
     }
 

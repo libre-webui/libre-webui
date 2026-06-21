@@ -66,8 +66,11 @@ import {
   KeyboardShortcut,
 } from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
 import websocketService from '@/utils/websocket';
 import toast from 'react-hot-toast';
+
+const logger = createLogger('app');
 
 // Lazy load pages for code splitting
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
@@ -172,11 +175,11 @@ const App: React.FC = () => {
     const processOAuthCallback = async () => {
       // Prevent multiple simultaneous executions
       if (processingRef.current) {
-        console.log('OAuth already processing, skipping...');
+        logger.debug('OAuth already processing, skipping...');
         return;
       }
 
-      console.log('Starting OAuth callback processing...');
+      logger.debug('Starting OAuth callback processing...');
       processingRef.current = true;
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -208,7 +211,7 @@ const App: React.FC = () => {
                   version: '0.1.6',
                 }
               );
-              console.log('OAuth login successful, showing toast');
+              logger.debug('OAuth login successful, showing toast');
               toast.success('GitHub login successful!');
             } else {
               toast.error('Failed to verify GitHub authentication');
@@ -217,7 +220,7 @@ const App: React.FC = () => {
             toast.error('GitHub authentication verification failed');
           }
         } catch (error) {
-          console.error('OAuth processing error:', error);
+          logger.error('OAuth processing error:', error);
           toast.error('GitHub authentication failed');
         }
 
@@ -229,7 +232,7 @@ const App: React.FC = () => {
         );
       }
 
-      console.log('OAuth processing completed');
+      logger.debug('OAuth processing completed');
       setOauthProcessed(true);
       processingRef.current = false;
     };
@@ -311,7 +314,7 @@ const App: React.FC = () => {
 
   // Initialize WebSocket connection
   React.useEffect(() => {
-    websocketService.connect().catch(console.error);
+    websocketService.connect().catch(logger.error);
 
     return () => {
       websocketService.disconnect();

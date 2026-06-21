@@ -16,6 +16,9 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:turnstile-widget');
 
 const TURNSTILE_SCRIPT_URL =
   'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
@@ -115,7 +118,7 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
         });
       })
       .catch(error => {
-        console.error('Turnstile script failed to load:', error);
+        logger.error('Turnstile script failed to load:', error);
         if (!cancelled) {
           setScriptFailed(true);
         }

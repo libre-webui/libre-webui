@@ -19,6 +19,9 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { API_BASE_URL } from '../utils/config';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:hugging-face-auth-button');
 
 /**
  * Hugging Face OAuth Button Component
@@ -48,14 +51,14 @@ export const HuggingFaceAuthButton: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setIsConfigured(data.configured || false);
-          console.log('Hugging Face OAuth configured:', data.configured);
+          logger.debug('Hugging Face OAuth configured:', data.configured);
         } else {
-          console.log('Hugging Face OAuth status check failed');
+          logger.debug('Hugging Face OAuth status check failed');
           setIsConfigured(false);
         }
       } catch (error) {
         // Hugging Face OAuth not configured, hide the button
-        console.log('Hugging Face OAuth not configured:', error);
+        logger.debug('Hugging Face OAuth not configured:', error);
         setIsConfigured(false);
       }
     };

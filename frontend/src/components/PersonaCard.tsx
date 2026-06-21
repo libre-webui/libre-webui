@@ -44,6 +44,9 @@ import {
 } from '@/utils/personaAvatar';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:persona-card');
 
 interface PersonaCardProps {
   persona: Persona;
@@ -110,7 +113,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       }
     } catch (error) {
       toast.error(t('personaCard.failed', { action: 'wipe memories' }));
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsLoading(false);
       setShowMenu(false);
@@ -132,7 +135,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       toast.success(t('personaCard.backupSuccess'));
     } catch (error) {
       toast.error(t('personaCard.failed', { action: 'backup persona' }));
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsLoading(false);
       setShowMenu(false);
@@ -154,7 +157,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       toast.success(t('personaCard.dnaSuccess'));
     } catch (error) {
       toast.error(t('personaCard.failed', { action: 'export persona DNA' }));
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsLoading(false);
       setShowMenu(false);

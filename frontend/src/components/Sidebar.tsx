@@ -47,6 +47,9 @@ import { ChatSession } from '@/types';
 import { formatTimestamp, truncateText, cn } from '@/utils';
 import { authApi, usersApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:sidebar');
 
 interface SidebarProps {
   isOpen: boolean;
@@ -146,7 +149,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         toast.error(response.message || t('user.avatar.updateFailed'));
       }
     } catch (error) {
-      console.error('Failed to update avatar:', error);
+      logger.error('Failed to update avatar:', error);
       toast.error(t('user.avatar.updateFailed'));
     } finally {
       setIsSavingAvatar(false);
@@ -179,13 +182,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ) => {
     e.stopPropagation();
     if (process.env.NODE_ENV === 'development') {
-      console.log('Delete session clicked:', sessionId);
+      logger.debug('Delete session clicked:', sessionId);
     }
 
     if (window.confirm(t('chat.session.deleteConfirm'))) {
       try {
         if (process.env.NODE_ENV === 'development') {
-          console.log('Attempting to delete session:', sessionId);
+          logger.debug('Attempting to delete session:', sessionId);
         }
 
         // Check if we're deleting the current session
@@ -193,7 +196,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         await deleteSession(sessionId);
         if (process.env.NODE_ENV === 'development') {
-          console.log('Session deleted successfully');
+          logger.debug('Session deleted successfully');
         }
 
         // If we deleted the current session, navigate to another session or root
@@ -206,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }
         }
       } catch (_error) {
-        console.error('Error deleting session:', _error);
+        logger.error('Error deleting session:', _error);
       }
     }
   };
@@ -238,7 +241,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       navigate('/login');
       toast.success(t('auth.logout.success'));
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       // Still logout locally even if API call fails
       const { logout } = useAuthStore.getState();
       logout();

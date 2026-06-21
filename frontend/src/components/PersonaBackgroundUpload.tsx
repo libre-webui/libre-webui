@@ -20,6 +20,9 @@ import { useTranslation } from 'react-i18next';
 import { Upload, X, ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui';
 import toast from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:persona-background-upload');
 
 interface PersonaBackgroundUploadProps {
   value: string;
@@ -61,7 +64,7 @@ export const PersonaBackgroundUpload: React.FC<
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Failed to upload background:', error);
+      logger.error('Failed to upload background:', error);
       toast.error(t('personaBackground.uploadFailed'));
     } finally {
       setUploading(false);

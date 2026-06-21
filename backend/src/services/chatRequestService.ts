@@ -32,6 +32,9 @@ import type {
   OllamaChatMessage,
   Persona,
 } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:chat-request-service');
 
 export interface ChatGenerationTargetService {
   prepareGenerationTarget(
@@ -188,7 +191,7 @@ export class ChatRequestService {
       );
       return persona?.parameters?.system_prompt?.trim() || undefined;
     } catch (error) {
-      console.error('Error loading persona system prompt:', error);
+      logger.error('Error loading persona system prompt:', error);
       return undefined;
     }
   }
