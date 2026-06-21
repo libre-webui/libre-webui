@@ -22,6 +22,9 @@ const assistantBranching = await import(
 const websocketMessages = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'websocketMessages.js')).href
 );
+const pluginChatContext = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'pluginChatContext.js')).href
+);
 
 function withEnv(overrides, run) {
   const previous = {};
@@ -205,6 +208,104 @@ test('buildAssistantFakeStreamChunks batches non-streaming output like chat stre
       messageId: 'assistant-1',
     },
   ]);
+});
+
+test('preparePluginChatContext adds the current private user message unless regenerating', () => {
+  const history = [
+    { role: 'user', content: 'old prompt' },
+    { role: 'assistant', content: 'old answer' },
+  ];
+
+  const normal = pluginChatContext.preparePluginChatContext({
+    isPrivate: true,
+    persistedMessages: [],
+    messageHistory: history,
+    content: 'new prompt',
+    images: ['image-1'],
+  });
+
+  assert.equal(normal.messages.length, 3);
+  assert.equal(normal.messages[2].role, 'user');
+  assert.equal(normal.messages[2].content, 'new prompt');
+  assert.deepEqual(normal.messages[2].images, ['image-1']);
+
+  const regenerated = pluginChatContext.preparePluginChatContext({
+    isPrivate: true,
+    persistedMessages: [],
+    messageHistory: history,
+    regenerate: true,
+    content: 'ignored prompt',
+  });
+
+  assert.equal(regenerated.messages.length, 2);
+  assert.equal(regenerated.messages[1].content, 'old answer');
+});
+
+test('preparePluginChatContext replaces the latest user message with RAG content', () => {
+  const result = pluginChatContext.preparePluginChatContext({
+    isPrivate: false,
+    persistedMessages: [
+      {
+        id: 'user-1',
+        role: 'user',
+        content: 'first',
+        timestamp: 1,
+      },
+      {
+        id: 'assistant-1',
+        role: 'assistant',
+        content: 'answer',
+        timestamp: 2,
+      },
+      {
+        id: 'user-2',
+        role: 'user',
+        content: 'latest',
+        timestamp: 3,
+      },
+    ],
+    content: 'latest',
+    hasRelevantContext: true,
+    enhancedContent: 'context wrapped latest',
+  });
+
+  assert.equal(result.messages.length, 3);
+  assert.equal(result.messages[0].content, 'first');
+  assert.equal(result.messages[2].content, 'context wrapped latest');
+});
+
+test('preparePluginChatContext prepends plugin identity and resolves stream flag', () => {
+  const result = pluginChatContext.preparePluginChatContext({
+    isPrivate: false,
+    persistedMessages: [
+      {
+        id: 'user-1',
+        role: 'user',
+        content: 'hello',
+        timestamp: 1,
+      },
+    ],
+    content: 'hello',
+    pluginVariables: {
+      system_prompt_prefix: 'You are Libre',
+      user_name: 'Robin',
+      stream: 'true',
+    },
+    now: () => 123,
+  });
+
+  assert.equal(result.shouldStream, true);
+  assert.deepEqual(result.messages[0], {
+    id: 'system-identity',
+    role: 'system',
+    content: "You are Libre\n\nThe user's name is: Robin",
+    timestamp: 123,
+  });
+  assert.equal(
+    pluginChatContext.resolvePluginStreamFlag('false'),
+    false,
+    'string false should not enable streaming'
+  );
 });
 
 test('plugin model routing requires an active plugin and the current user credentials', async () => {

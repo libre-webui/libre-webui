@@ -75,11 +75,8 @@ import openclawSessionService, {
 } from './services/openclawSessionService.js';
 import chatGenerationService from './services/chatGenerationService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
-import {
-  replaceLatestUserMessageContent,
-  toChatMessages,
-  toOllamaMessages,
-} from './utils/chatContext.js';
+import { toOllamaMessages } from './utils/chatContext.js';
+import { preparePluginChatContext } from './utils/pluginChatContext.js';
 import {
   sendAssistantChunk,
   sendAssistantComplete,
@@ -94,7 +91,6 @@ import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
 import {
   OllamaChatRequest,
   GenerationStatistics,
-  ChatMessage,
   ChatSession,
 } from './types/index.js';
 
@@ -945,54 +941,20 @@ wss.on('connection', (ws, req) => {
             // ---------------------------------------------------------------
 
             try {
-              let messagesForPlugin: ChatMessage[] = isPrivate
-                ? toChatMessages(
-                    ((messageHistory || []) as ContextMessage[]).concat(
-                      regenerate
-                        ? []
-                        : [
-                            {
-                              role: 'user' as const,
-                              content,
-                              images: images || undefined,
-                            },
-                          ]
-                    ),
-                    'private-context'
-                  )
-                : chatService.getMessagesForContext(sessionId);
-
-              if (relevantContext.length > 0) {
-                messagesForPlugin = replaceLatestUserMessageContent(
-                  messagesForPlugin,
-                  enhancedContent
-                );
-              }
-              const systemPromptPrefix =
-                (pluginVars.system_prompt_prefix as string) || '';
-              const userName = (pluginVars.user_name as string) || '';
-
-              // Prepend identity system message if configured
-              if (systemPromptPrefix || userName) {
-                let identityMsg = systemPromptPrefix;
-                if (userName) {
-                  identityMsg = identityMsg
-                    ? `${identityMsg}\n\nThe user's name is: ${userName}`
-                    : `The user's name is: ${userName}`;
-                }
-                messagesForPlugin = [
-                  {
-                    id: 'system-identity',
-                    role: 'system' as const,
-                    content: identityMsg,
-                    timestamp: Date.now(),
-                  },
-                  ...messagesForPlugin,
-                ];
-              }
-
-              const shouldStream =
-                (pluginVars.stream as boolean | undefined) ?? false;
+              const { messages: messagesForPlugin, shouldStream } =
+                preparePluginChatContext({
+                  isPrivate,
+                  persistedMessages: isPrivate
+                    ? []
+                    : chatService.getMessagesForContext(sessionId),
+                  messageHistory: (messageHistory || []) as ContextMessage[],
+                  regenerate,
+                  content,
+                  images: images || undefined,
+                  hasRelevantContext: relevantContext.length > 0,
+                  enhancedContent,
+                  pluginVariables: pluginVars,
+                });
 
               if (shouldStream) {
                 // Real SSE streaming from plugin
