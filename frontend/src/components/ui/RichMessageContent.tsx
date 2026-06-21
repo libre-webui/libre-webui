@@ -16,7 +16,10 @@
  */
 
 import React from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, {
+  type Components,
+  type ExtraProps,
+} from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
@@ -35,6 +38,9 @@ interface RichMessageContentProps {
   content: string;
   className?: string;
 }
+
+type MarkdownCodeProps = React.ComponentPropsWithoutRef<'code'> & ExtraProps;
+type MarkdownPreProps = React.ComponentPropsWithoutRef<'pre'> & ExtraProps;
 
 function CodeFallback({
   children,
@@ -77,6 +83,143 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     }
   };
 
+  const markdownComponents: Components = {
+    code({ className, children, node: _node, ...props }: MarkdownCodeProps) {
+      const match = /language-([^\s]+)/.exec(className || '');
+      const rawCode = String(children);
+      const codeString = rawCode.replace(/\n$/, '');
+      const language = match ? match[1] : null;
+      const isBlockCode = Boolean(language) || rawCode.includes('\n');
+
+      if (isBlockCode) {
+        return (
+          <div className='relative group my-4 overflow-hidden rounded-xl border border-gray-200 dark:border-dark-300 shadow-sm'>
+            <div className='flex items-center justify-between bg-gray-50 dark:bg-dark-100 px-4 py-3 border-b border-gray-200 dark:border-dark-300'>
+              <span className='text-xs font-semibold text-gray-700 dark:text-dark-700 uppercase tracking-wide'>
+                {language || 'text'}
+              </span>
+              <button
+                onClick={() => copyToClipboard(codeString)}
+                className='opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1'
+                title='Copy code'
+              >
+                {copiedCode === codeString ? (
+                  <Check className='h-4 w-4 text-success-600 dark:text-success-400' />
+                ) : (
+                  <Copy className='h-4 w-4 text-gray-500 dark:text-dark-600' />
+                )}
+              </button>
+            </div>
+            <div className='overflow-x-auto'>
+              <React.Suspense
+                fallback={
+                  <CodeFallback className='!m-0 !rounded-none !border-none'>
+                    {codeString}
+                  </CodeFallback>
+                }
+              >
+                <LazySyntaxHighlighter
+                  language={language || 'text'}
+                  isDark={theme.mode === 'dark'}
+                  className='!m-0 !rounded-none !border-none'
+                >
+                  {codeString}
+                </LazySyntaxHighlighter>
+              </React.Suspense>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <code
+          className={cn(
+            'px-2 py-1 rounded-md bg-gray-100 dark:bg-dark-200 text-gray-800 dark:text-dark-800',
+            'font-mono text-sm border border-gray-200 dark:border-dark-300',
+            className
+          )}
+          {...props}
+        >
+          {children}
+        </code>
+      );
+    },
+    pre({ children, node: _node, ...props }: MarkdownPreProps) {
+      return <pre {...props}>{children}</pre>;
+    },
+    p({ children, ...props }) {
+      return (
+        <div className='mb-4 last:mb-0 leading-relaxed' {...props}>
+          {children}
+        </div>
+      );
+    },
+    ul({ children, ...props }) {
+      return (
+        <ul className='list-disc list-inside mb-4 space-y-2 pl-4' {...props}>
+          {children}
+        </ul>
+      );
+    },
+    ol({ children, ...props }) {
+      return (
+        <ol className='list-decimal list-inside mb-4 space-y-2 pl-4' {...props}>
+          {children}
+        </ol>
+      );
+    },
+    li({ children, ...props }) {
+      return (
+        <li
+          className='text-gray-700 dark:text-dark-700 leading-relaxed'
+          {...props}
+        >
+          {children}
+        </li>
+      );
+    },
+    blockquote({ children, ...props }) {
+      return (
+        <blockquote
+          className='border-l-4 border-primary-400 dark:border-primary-500 bg-primary-25 dark:bg-primary-950/30 pl-4 py-3 my-4 rounded-r-lg italic text-gray-700 dark:text-dark-700'
+          {...props}
+        >
+          {children}
+        </blockquote>
+      );
+    },
+    h1({ children, ...props }) {
+      return (
+        <h1
+          className='text-2xl font-bold mb-4 mt-6 first:mt-0 text-gray-900 dark:text-dark-800 border-b border-gray-200 dark:border-dark-300 pb-2'
+          {...props}
+        >
+          {children}
+        </h1>
+      );
+    },
+    h2({ children, ...props }) {
+      return (
+        <h2
+          className='text-xl font-semibold mb-3 mt-6 first:mt-0 text-gray-900 dark:text-dark-800'
+          {...props}
+        >
+          {children}
+        </h2>
+      );
+    },
+    h3({ children, ...props }) {
+      return (
+        <h3
+          className='text-lg font-medium mb-3 mt-4 first:mt-0 text-gray-900 dark:text-dark-800'
+          {...props}
+        >
+          {children}
+        </h3>
+      );
+    },
+  };
+
   return (
     <div
       className={cn(
@@ -89,148 +232,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
-        components={{
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          code({ inline, className, children, ...props }: any) {
-            const match = /language-(\w+)/.exec(className || '');
-            const codeString = String(children).replace(/\n$/, '');
-            const language = match ? match[1] : null;
-
-            if (!inline) {
-              return (
-                <div className='relative group my-4 overflow-hidden rounded-xl border border-gray-200 dark:border-dark-300 shadow-sm'>
-                  <div className='flex items-center justify-between bg-gray-50 dark:bg-dark-100 px-4 py-3 border-b border-gray-200 dark:border-dark-300'>
-                    <span className='text-xs font-semibold text-gray-700 dark:text-dark-700 uppercase tracking-wide'>
-                      {language || 'text'}
-                    </span>
-                    <button
-                      onClick={() => copyToClipboard(codeString)}
-                      className='opacity-0 group-hover:opacity-100 transition-all duration-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1'
-                      title='Copy code'
-                    >
-                      {copiedCode === codeString ? (
-                        <Check className='h-4 w-4 text-success-600 dark:text-success-400' />
-                      ) : (
-                        <Copy className='h-4 w-4 text-gray-500 dark:text-dark-600' />
-                      )}
-                    </button>
-                  </div>
-                  <div className='overflow-x-auto'>
-                    <React.Suspense
-                      fallback={
-                        <CodeFallback className='!m-0 !rounded-none !border-none'>
-                          {codeString}
-                        </CodeFallback>
-                      }
-                    >
-                      <LazySyntaxHighlighter
-                        language={language || 'text'}
-                        isDark={theme.mode === 'dark'}
-                        className='!m-0 !rounded-none !border-none'
-                      >
-                        {codeString}
-                      </LazySyntaxHighlighter>
-                    </React.Suspense>
-                  </div>
-                </div>
-              );
-            }
-
-            return (
-              <code
-                className={cn(
-                  'px-2 py-1 rounded-md bg-gray-100 dark:bg-dark-200 text-gray-800 dark:text-dark-800',
-                  'font-mono text-sm border border-gray-200 dark:border-dark-300',
-                  className
-                )}
-                {...props}
-              >
-                {children}
-              </code>
-            );
-          },
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          pre({ children, ...props }: any) {
-            return <pre {...props}>{children}</pre>;
-          },
-          p({ children, ...props }) {
-            return (
-              <div className='mb-4 last:mb-0 leading-relaxed' {...props}>
-                {children}
-              </div>
-            );
-          },
-          ul({ children, ...props }) {
-            return (
-              <ul
-                className='list-disc list-inside mb-4 space-y-2 pl-4'
-                {...props}
-              >
-                {children}
-              </ul>
-            );
-          },
-          ol({ children, ...props }) {
-            return (
-              <ol
-                className='list-decimal list-inside mb-4 space-y-2 pl-4'
-                {...props}
-              >
-                {children}
-              </ol>
-            );
-          },
-          li({ children, ...props }) {
-            return (
-              <li
-                className='text-gray-700 dark:text-dark-700 leading-relaxed'
-                {...props}
-              >
-                {children}
-              </li>
-            );
-          },
-          blockquote({ children, ...props }) {
-            return (
-              <blockquote
-                className='border-l-4 border-primary-400 dark:border-primary-500 bg-primary-25 dark:bg-primary-950/30 pl-4 py-3 my-4 rounded-r-lg italic text-gray-700 dark:text-dark-700'
-                {...props}
-              >
-                {children}
-              </blockquote>
-            );
-          },
-          h1({ children, ...props }) {
-            return (
-              <h1
-                className='text-2xl font-bold mb-4 mt-6 first:mt-0 text-gray-900 dark:text-dark-800 border-b border-gray-200 dark:border-dark-300 pb-2'
-                {...props}
-              >
-                {children}
-              </h1>
-            );
-          },
-          h2({ children, ...props }) {
-            return (
-              <h2
-                className='text-xl font-semibold mb-3 mt-6 first:mt-0 text-gray-900 dark:text-dark-800'
-                {...props}
-              >
-                {children}
-              </h2>
-            );
-          },
-          h3({ children, ...props }) {
-            return (
-              <h3
-                className='text-lg font-medium mb-3 mt-4 first:mt-0 text-gray-900 dark:text-dark-800'
-                {...props}
-              >
-                {children}
-              </h3>
-            );
-          },
-        }}
+        components={markdownComponents}
       >
         {processedContent}
       </ReactMarkdown>
