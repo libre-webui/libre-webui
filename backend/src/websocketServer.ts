@@ -24,9 +24,12 @@ import pluginService from './services/pluginService.js';
 import documentService from './services/documentService.js';
 import chatGenerationService from './services/chatGenerationService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
-import { toOllamaMessages } from './utils/chatContext.js';
+import { personaService } from './services/personaService.js';
+import {
+  buildDocumentEnhancedContent,
+  ChatRequestService,
+} from './services/chatRequestService.js';
 import { streamOllamaChatResponse } from './utils/ollamaStreaming.js';
-import { preparePluginChatContext } from './utils/pluginChatContext.js';
 import { streamPluginResponse } from './utils/pluginStreaming.js';
 import {
   sendAssistantComplete,
@@ -37,6 +40,11 @@ import {
 } from './utils/websocketMessages.js';
 import { verifyToken } from './utils/jwt.js';
 import { OllamaChatRequest, ChatSession } from './types/index.js';
+
+const chatRequestService = new ChatRequestService({
+  chatGenerationService,
+  personaService,
+});
 
 export function registerWebSocketServer(server: Server): void {
   // WebSocket server for real-time chat streaming
@@ -178,58 +186,52 @@ export function registerWebSocketServer(server: Server): void {
             content,
             sessionId
           );
-          let enhancedContent = content;
+          const enhancedContent = buildDocumentEnhancedContent(
+            content,
+            relevantContext
+          );
 
           if (relevantContext.length > 0) {
             console.log(
               `Found ${relevantContext.length} relevant document chunks for query`
             );
 
-            // Inject document context into the user message
-            const contextString = relevantContext.join('\n\n---\n\n');
-            enhancedContent = `Context from uploaded documents:\n\n${contextString}\n\n---\n\nUser question: ${content}`;
-
             // Update the user message with enhanced content that includes document context
             // We'll create a new message with the enhanced content for the AI model
             console.log('Enhanced user message with document context');
           }
 
-          // Use the modern chat completion API instead of legacy generate API
-          // This supports multimodal input and structured outputs
-          // For private sessions, use the message history sent from frontend
-          type ContextMessage = {
-            role: 'user' | 'assistant' | 'system';
-            content: string;
-            images?: string[];
-          };
-          const contextMessages: ContextMessage[] = isPrivate
-            ? (messageHistory || []).concat([
-                { role: 'user' as const, content, images: images || undefined },
-              ])
-            : chatService.getMessagesForContext(sessionId);
-
-          // Convert our messages to Ollama format.
-          const ollamaMessages = toOllamaMessages(contextMessages, {
-            latestUserContent:
-              relevantContext.length > 0 ? enhancedContent : undefined,
-          });
-
           let assistantContent = '';
 
           console.log('Backend: Using assistantMessageId:', assistantMessageId);
 
-          const generationTarget =
-            await chatGenerationService.prepareGenerationTarget(
-              session.model,
+          const persistedMessages = isPrivate
+            ? []
+            : chatService.getMessagesForContext(sessionId);
+          const preparedGeneration =
+            await chatRequestService.prepareGenerationRequest({
+              session,
               userId,
-              options
-            );
+              options,
+              isPrivate,
+              persistedMessages,
+              messageHistory: messageHistory || [],
+              regenerate,
+              content,
+              images: images || undefined,
+              hasRelevantContext: relevantContext.length > 0,
+              enhancedContent,
+            });
+
+          const generationTarget = preparedGeneration.target;
           const {
             actualModelName,
             mergedOptions,
             activePlugin,
-            pluginVariables: pluginVars,
-          } = generationTarget;
+            ollamaMessages,
+            pluginMessages,
+            shouldStreamPlugin,
+          } = preparedGeneration;
 
           // Check if there's an active plugin for this model
           console.log(
@@ -250,27 +252,12 @@ export function registerWebSocketServer(server: Server): void {
             // ---------------------------------------------------------------
 
             try {
-              const { messages: messagesForPlugin, shouldStream } =
-                preparePluginChatContext({
-                  isPrivate,
-                  persistedMessages: isPrivate
-                    ? []
-                    : chatService.getMessagesForContext(sessionId),
-                  messageHistory: (messageHistory || []) as ContextMessage[],
-                  regenerate,
-                  content,
-                  images: images || undefined,
-                  hasRelevantContext: relevantContext.length > 0,
-                  enhancedContent,
-                  pluginVariables: pluginVars,
-                });
-
-              if (shouldStream) {
+              if (shouldStreamPlugin) {
                 assistantContent = await streamPluginResponse({
                   ws,
                   chunks: pluginService.executePluginStreamRequest(
                     actualModelName,
-                    messagesForPlugin,
+                    pluginMessages,
                     mergedOptions,
                     userId
                   ),
@@ -281,7 +268,7 @@ export function registerWebSocketServer(server: Server): void {
                   await chatGenerationService.executeNonStreaming({
                     target: generationTarget,
                     ollamaMessages,
-                    pluginMessages: messagesForPlugin,
+                    pluginMessages,
                     userId,
                     pluginFallbackPolicy: 'disabled',
                   });

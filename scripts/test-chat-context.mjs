@@ -40,6 +40,9 @@ const pluginStreamAdapter = await import(
 const ollamaStreaming = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'ollamaStreaming.js')).href
 );
+const chatRequestService = await import(
+  pathToFileURL(path.join(distRoot, 'services', 'chatRequestService.js')).href
+);
 const titleGeneration = await import(
   pathToFileURL(path.join(distRoot, 'services', 'titleGenerationService.js'))
     .href
@@ -435,6 +438,185 @@ test('preparePluginChatContext prepends plugin identity and resolves stream flag
     false,
     'string false should not enable streaming'
   );
+});
+
+test('buildDocumentEnhancedContent wraps retrieved chunks for generation only', () => {
+  assert.equal(
+    chatRequestService.buildDocumentEnhancedContent('plain question', []),
+    'plain question'
+  );
+  assert.equal(
+    chatRequestService.buildDocumentEnhancedContent('What matters?', [
+      'alpha facts',
+      'beta facts',
+    ]),
+    'Context from uploaded documents:\n\nalpha facts\n\n---\n\nbeta facts\n\n---\n\nUser question: What matters?'
+  );
+});
+
+test('prepareGenerationMessages shares RAG replacement across Ollama and plugin contexts', () => {
+  const result = chatRequestService.prepareGenerationMessages({
+    isPrivate: false,
+    persistedMessages: [
+      {
+        id: 'system-1',
+        role: 'system',
+        content: 'old system',
+        timestamp: 1,
+      },
+      {
+        id: 'user-1',
+        role: 'user',
+        content: 'first',
+        timestamp: 2,
+      },
+      {
+        id: 'assistant-1',
+        role: 'assistant',
+        content: 'answer',
+        timestamp: 3,
+      },
+      {
+        id: 'user-2',
+        role: 'user',
+        content: 'latest',
+        timestamp: 4,
+      },
+    ],
+    content: 'latest',
+    hasRelevantContext: true,
+    enhancedContent: 'context wrapped latest',
+    personaSystemPrompt: '  persona prompt  ',
+    pluginVariables: {
+      system_prompt_prefix: 'Plugin identity',
+      stream: 'true',
+    },
+    now: () => 999,
+  });
+
+  assert.equal(result.hasRelevantContext, true);
+  assert.equal(result.shouldStreamPlugin, true);
+  assert.deepEqual(result.ollamaMessages, [
+    { role: 'system', content: 'persona prompt' },
+    { role: 'user', content: 'first' },
+    { role: 'assistant', content: 'answer' },
+    { role: 'user', content: 'context wrapped latest' },
+  ]);
+  assert.equal(result.pluginMessages[0].role, 'system');
+  assert.equal(result.pluginMessages[0].content, 'Plugin identity');
+  assert.equal(result.pluginMessages[0].timestamp, 999);
+  assert.equal(
+    result.pluginMessages[result.pluginMessages.length - 1].content,
+    'context wrapped latest'
+  );
+});
+
+test('prepareGenerationMessages appends private current messages once', () => {
+  const history = [
+    { role: 'user', content: 'old prompt' },
+    { role: 'assistant', content: 'old answer' },
+  ];
+
+  const normal = chatRequestService.prepareGenerationMessages({
+    isPrivate: true,
+    persistedMessages: [],
+    messageHistory: history,
+    content: 'new prompt',
+    images: ['data:image/png;base64,abc123'],
+    hasRelevantContext: true,
+    enhancedContent: 'context wrapped new prompt',
+  });
+
+  assert.equal(normal.contextMessages.length, 3);
+  assert.equal(normal.contextMessages[2].content, 'new prompt');
+  assert.equal(normal.ollamaMessages[2].content, 'context wrapped new prompt');
+  assert.deepEqual(normal.ollamaMessages[2].images, ['abc123']);
+  assert.equal(normal.pluginMessages[2].content, 'context wrapped new prompt');
+
+  const regenerated = chatRequestService.prepareGenerationMessages({
+    isPrivate: true,
+    persistedMessages: [],
+    messageHistory: history,
+    regenerate: true,
+    content: 'ignored prompt',
+  });
+
+  assert.equal(regenerated.contextMessages.length, 2);
+  assert.equal(regenerated.contextMessages[1].content, 'old answer');
+});
+
+test('ChatRequestService prepares target, persona prompt, and shared messages', async () => {
+  const calls = {
+    prepareGenerationTarget: [],
+    getPersonaById: [],
+  };
+  const service = new chatRequestService.ChatRequestService({
+    chatGenerationService: {
+      async prepareGenerationTarget(model, userId, options) {
+        calls.prepareGenerationTarget.push({ model, userId, options });
+        return {
+          actualModelName: 'resolved-model',
+          mergedOptions: options,
+          activePlugin: null,
+          pluginVariables: {
+            stream: false,
+          },
+        };
+      },
+    },
+    personaService: {
+      async getPersonaById(id, userId) {
+        calls.getPersonaById.push({ id, userId });
+        return {
+          parameters: {
+            system_prompt: 'Persona system',
+          },
+        };
+      },
+    },
+  });
+
+  const result = await service.prepareGenerationRequest({
+    session: {
+      model: 'persona:researcher',
+      personaId: 'researcher',
+    },
+    userId: 'alice',
+    options: {
+      temperature: 0.4,
+    },
+    persistedMessages: [
+      {
+        id: 'user-1',
+        role: 'user',
+        content: 'hello',
+        timestamp: 1,
+      },
+    ],
+    content: 'hello',
+  });
+
+  assert.deepEqual(calls.prepareGenerationTarget, [
+    {
+      model: 'persona:researcher',
+      userId: 'alice',
+      options: {
+        temperature: 0.4,
+      },
+    },
+  ]);
+  assert.deepEqual(calls.getPersonaById, [
+    {
+      id: 'researcher',
+      userId: 'alice',
+    },
+  ]);
+  assert.equal(result.target.actualModelName, 'resolved-model');
+  assert.equal(result.actualModelName, 'resolved-model');
+  assert.deepEqual(result.ollamaMessages, [
+    { role: 'system', content: 'Persona system' },
+    { role: 'user', content: 'hello' },
+  ]);
 });
 
 test('streamPluginResponse emits chunks and appends formatted tool calls', async () => {

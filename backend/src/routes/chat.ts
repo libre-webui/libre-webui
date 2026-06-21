@@ -26,12 +26,8 @@ import { personaService } from '../services/personaService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import { extractStatistics } from '../utils/generationUtils.js';
 import chatGenerationService from '../services/chatGenerationService.js';
+import { ChatRequestService } from '../services/chatRequestService.js';
 import { TitleGenerationService } from '../services/titleGenerationService.js';
-import {
-  replaceLatestUserMessageContent,
-  toOllamaMessages,
-  withSystemPrompt,
-} from '../utils/chatContext.js';
 import {
   ApiResponse,
   ChatSession,
@@ -45,6 +41,10 @@ const titleGenerationService = new TitleGenerationService({
   chatGenerationService,
   pluginService,
   ollamaService,
+});
+const chatRequestService = new ChatRequestService({
+  chatGenerationService,
+  personaService,
 });
 
 // Rate limiter for chat routes: 60 requests per minute (reasonable for chat)
@@ -447,64 +447,26 @@ router.post(
         // Continue without document context if search fails
       }
 
-      // Convert chat messages to Ollama format and handle persona system prompts
-      let ollamaMessages = toOllamaMessages(session.messages);
-
-      // Inject persona instructions if session has a persona
-      if (session.personaId) {
-        try {
-          const persona = await personaService.getPersonaById(
-            session.personaId,
-            userId
-          );
-          if (persona && persona.parameters.system_prompt) {
-            ollamaMessages = withSystemPrompt(
-              ollamaMessages,
-              persona.parameters.system_prompt
-            );
-          }
-        } catch (error) {
-          console.error('Error loading persona:', error);
-          // Continue without persona if loading fails
-        }
-      }
-
       // Replace the saved user message with document context for generation only.
       const userMessageContent = documentContext
         ? `${documentContext}User question: ${message}`
         : message;
 
-      const lastUserMessageIndex = (() => {
-        for (let i = ollamaMessages.length - 1; i >= 0; i -= 1) {
-          if (ollamaMessages[i]?.role === 'user') return i;
-        }
-        return -1;
-      })();
+      const preparedGeneration =
+        await chatRequestService.prepareGenerationRequest({
+          session,
+          userId,
+          options,
+          persistedMessages: session.messages,
+          content: message,
+          hasRelevantContext: Boolean(documentContext),
+          enhancedContent: userMessageContent,
+        });
 
-      if (documentContext && lastUserMessageIndex >= 0) {
-        ollamaMessages = replaceLatestUserMessageContent(
-          ollamaMessages,
-          userMessageContent
-        );
-      }
-
-      const pluginMessages =
-        documentContext && lastUserMessageIndex >= 0
-          ? replaceLatestUserMessageContent(
-              session.messages,
-              userMessageContent
-            )
-          : session.messages;
-
-      const target = await chatGenerationService.prepareGenerationTarget(
-        session.model,
-        userId,
-        options
-      );
       const generationResult = await chatGenerationService.executeNonStreaming({
-        target,
-        ollamaMessages,
-        pluginMessages,
+        target: preparedGeneration.target,
+        ollamaMessages: preparedGeneration.ollamaMessages,
+        pluginMessages: preparedGeneration.pluginMessages,
         userId,
         pluginFallbackPolicy: 'allow',
       });
@@ -600,34 +562,14 @@ router.post(
         return;
       }
 
-      // Convert chat messages to Ollama format and handle persona system prompts
-      let ollamaMessages = toOllamaMessages(session.messages);
-
-      // Inject persona instructions if session has a persona
-      if (session.personaId) {
-        try {
-          const persona = await personaService.getPersonaById(
-            session.personaId,
-            userId
-          );
-          if (persona && persona.parameters.system_prompt) {
-            ollamaMessages = withSystemPrompt(
-              ollamaMessages,
-              persona.parameters.system_prompt
-            );
-          }
-        } catch (error) {
-          console.error('Error loading persona for streaming:', error);
-          // Continue without persona if loading fails
-        }
-      }
-
-      const { actualModelName, mergedOptions } =
-        await chatGenerationService.prepareGenerationTarget(
-          session.model,
+      const { actualModelName, mergedOptions, ollamaMessages } =
+        await chatRequestService.prepareGenerationRequest({
+          session,
           userId,
-          options
-        );
+          options,
+          persistedMessages: session.messages,
+          content: message,
+        });
 
       const chatRequest = {
         model: actualModelName,
