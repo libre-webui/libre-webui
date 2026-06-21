@@ -48,6 +48,7 @@ import {
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 import { API_BASE_URL, logConfigInfo } from '@/utils/config';
+import { getPersonaAvatarFallback } from '@/utils/personaAvatar';
 
 logConfigInfo();
 console.log('📱 User agent:', navigator.userAgent);
@@ -1624,8 +1625,7 @@ export const personaApi = {
             system_prompt:
               'You are a creative and helpful assistant. Provide thoughtful and engaging responses.',
           },
-          avatar: '/images/creative-avatar.png',
-          background: '/backgrounds/creative-bg.png',
+          avatar: getPersonaAvatarFallback('Creative Assistant', 128),
           created_at: Date.now() - 86400000,
           updated_at: Date.now() - 86400000,
         },
@@ -1642,6 +1642,7 @@ export const personaApi = {
             system_prompt:
               'You are a knowledgeable research assistant. Provide detailed, informative explanations.',
           },
+          avatar: getPersonaAvatarFallback('Research Assistant', 128),
           created_at: Date.now() - 172800000,
           updated_at: Date.now() - 172800000,
         },

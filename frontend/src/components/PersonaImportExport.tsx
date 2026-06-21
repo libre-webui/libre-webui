@@ -19,6 +19,10 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { personaApi } from '@/utils/api';
+import {
+  getPersonaAvatarSrc,
+  setPersonaAvatarFallback,
+} from '@/utils/personaAvatar';
 import { Persona } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -224,12 +228,16 @@ const PersonaImportExport: React.FC<PersonaImportExportProps> = ({
                   >
                     <div className='flex items-center gap-3'>
                       <img
-                        src={
-                          persona.avatar ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.name)}&background=6366f1&color=fff&size=32`
-                        }
+                        src={getPersonaAvatarSrc(persona, 32)}
                         alt={persona.name}
                         className='w-8 h-8 rounded-full'
+                        onError={event =>
+                          setPersonaAvatarFallback(
+                            event.currentTarget,
+                            persona.name,
+                            32
+                          )
+                        }
                       />
                       <div>
                         <div className='font-medium text-gray-900 dark:text-dark-800'>

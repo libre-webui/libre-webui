@@ -29,6 +29,10 @@ import {
 } from 'lucide-react';
 import { personaApi } from '@/utils/api';
 import { cn } from '@/utils';
+import {
+  getPersonaAvatarSrc,
+  setPersonaAvatarFallback,
+} from '@/utils/personaAvatar';
 
 interface PersonaQuickSwitchProps {
   currentPersonaId?: string;
@@ -73,12 +77,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
     return a.name.localeCompare(b.name);
   });
 
-  const getAvatarSrc = (persona: Persona) => {
-    if (persona.avatar) {
-      return persona.avatar;
-    }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.name)}&background=6366f1&color=fff&size=64`;
-  };
+  const getAvatarSrc = (persona: Persona) => getPersonaAvatarSrc(persona, 64);
 
   if (!isOpen) return null;
 
@@ -204,6 +203,13 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
                         src={getAvatarSrc(persona)}
                         alt={persona.name}
                         className='w-10 h-10 rounded-lg object-cover'
+                        onError={event =>
+                          setPersonaAvatarFallback(
+                            event.currentTarget,
+                            persona.name,
+                            64
+                          )
+                        }
                       />
                       {hasAdvancedFeatures && (
                         <div className='absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gradient-to-br from-purple-500 to-primary-500 rounded-full flex items-center justify-center'>
