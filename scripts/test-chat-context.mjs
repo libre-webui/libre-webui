@@ -28,6 +28,15 @@ const pluginChatContext = await import(
 const pluginStreaming = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'pluginStreaming.js')).href
 );
+const pluginChatAdapter = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'pluginChatAdapter.js')).href
+);
+const pluginValidation = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'pluginValidation.js')).href
+);
+const pluginStreamAdapter = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'pluginStreamAdapter.js')).href
+);
 
 function withEnv(overrides, run) {
   const previous = {};
@@ -494,4 +503,121 @@ test('plugin model routing requires an active plugin and the current user creden
     process.chdir(previousCwd);
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+test('plugin validation rejects unsafe models and remote HTTP endpoints', () => {
+  assert.doesNotThrow(() =>
+    pluginValidation.validatePluginModel('kimi-k2.7-code:cloud')
+  );
+  assert.throws(
+    () => pluginValidation.validatePluginModel('../secret'),
+    /invalid patterns/
+  );
+  assert.throws(
+    () => pluginValidation.assertSafePluginEndpoint('http://example.com/v1'),
+    /Insecure endpoint protocol/
+  );
+  assert.doesNotThrow(() =>
+    pluginValidation.assertSafePluginEndpoint(
+      'http://127.0.0.1:11434/v1/chat/completions'
+    )
+  );
+});
+
+test('buildPluginChatPayload adapts Anthropic multimodal chat requests', () => {
+  const { payload, headers } = pluginChatAdapter.buildPluginChatPayload(
+    { id: 'anthropic' },
+    'claude-test',
+    [
+      { role: 'system', content: 'Be concise.' },
+      {
+        role: 'user',
+        content: 'describe',
+        images: ['data:image/png;base64,aGVsbG8='],
+      },
+    ],
+    { temperature: 0.2, num_predict: 128, stop: ['END'] },
+    { top_p: 0.8 }
+  );
+
+  assert.deepEqual(headers, { 'anthropic-version': '2023-06-01' });
+  assert.equal(payload.system, 'Be concise.');
+  assert.equal(payload.model, 'claude-test');
+  assert.equal(payload.max_tokens, 128);
+  assert.equal(payload.top_p, 0.8);
+  assert.equal(payload.stop_sequences[0], 'END');
+  assert.equal(payload.messages.length, 1);
+  assert.equal(payload.messages[0].content[0].type, 'image');
+  assert.equal(payload.messages[0].content[0].source.media_type, 'image/png');
+  assert.equal(payload.messages[0].content[0].source.data, 'aGVsbG8=');
+  assert.deepEqual(payload.messages[0].content[1], {
+    type: 'text',
+    text: 'describe',
+  });
+});
+
+test('convertProviderResponse normalizes Gemini responses', () => {
+  const response = pluginChatAdapter.convertProviderResponse(
+    { id: 'gemini' },
+    {
+      candidates: [
+        {
+          content: {
+            parts: [{ text: 'Hello ' }, { text: 'there' }],
+          },
+          finishReason: 'MAX_TOKENS',
+        },
+      ],
+      usageMetadata: {
+        promptTokenCount: 3,
+        candidatesTokenCount: 4,
+      },
+    },
+    'gemini-test'
+  );
+
+  assert.equal(response.model, 'gemini-test');
+  assert.equal(response.choices[0].message.content, 'Hello there');
+  assert.equal(response.choices[0].finish_reason, 'length');
+  assert.deepEqual(response.usage, {
+    prompt_tokens: 3,
+    completion_tokens: 4,
+    total_tokens: 7,
+  });
+});
+
+test('streamOpenAICompatibleResponse parses content and tool call deltas', async () => {
+  const body = [
+    'data: {"choices":[{"delta":{"content":"Hel"}}]}',
+    '',
+    'data: {"choices":[{"delta":{"content":"lo"}}]}',
+    '',
+    'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call-1","function":{"name":"render","arguments":"{\\"ok\\""}}]}}]}',
+    '',
+    'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":":true}"}}]}}]}',
+    '',
+    'data: [DONE]',
+    '',
+  ].join('\n');
+
+  const chunks = [];
+  for await (const chunk of pluginStreamAdapter.streamOpenAICompatibleResponse(
+    new Response(body)
+  )) {
+    chunks.push(chunk);
+  }
+
+  assert.deepEqual(chunks, [
+    { type: 'content', content: 'Hel' },
+    { type: 'content', content: 'lo' },
+    {
+      type: 'tool_call',
+      toolCall: {
+        id: 'call-1',
+        name: 'render',
+        arguments: '{"ok":true}',
+      },
+    },
+    { type: 'done' },
+  ]);
 });

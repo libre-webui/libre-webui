@@ -34,6 +34,25 @@ import {
 } from '../types/index.js';
 import pluginCredentialsService from './pluginCredentialsService.js';
 import pluginVariablesService from './pluginVariablesService.js';
+import {
+  buildPluginChatPayload,
+  convertProviderResponse,
+  resolvePluginChatParameters,
+  toOpenAICompatibleMessages,
+} from '../utils/pluginChatAdapter.js';
+import {
+  streamOpenAICompatibleResponse,
+  type PluginStreamChunk,
+} from '../utils/pluginStreamAdapter.js';
+import {
+  addOpenClawSessionHeader,
+  applyModelEndpointTemplate,
+  assertSafePluginEndpoint,
+  buildPluginAuthHeaders,
+  resolvePluginEndpoint,
+  validatePluginEndpointOverride,
+  validatePluginModel,
+} from '../utils/pluginValidation.js';
 
 class PluginService {
   private pluginsDir: string;
@@ -123,25 +142,7 @@ class PluginService {
    * Returns the URL string if valid, or null if invalid.
    */
   private validateEndpointUrl(endpoint: string): string | null {
-    try {
-      const url = new URL(endpoint);
-      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-        url.hostname
-      );
-      const isPrivateNetwork =
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
-
-      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-        console.warn(
-          `Rejected insecure endpoint override: ${endpoint} (only HTTPS or localhost/private IPs allowed)`
-        );
-        return null;
-      }
-      return endpoint;
-    } catch {
-      console.warn(`Rejected invalid endpoint override URL: ${endpoint}`);
-      return null;
-    }
+    return validatePluginEndpointOverride(endpoint);
   }
 
   /**
@@ -437,40 +438,19 @@ class PluginService {
     options: GenerationOptions = {},
     userId?: string
   ): Promise<PluginResponse> {
-    // Validate model parameter to prevent SSRF attacks
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
-
-    // Sanitize model parameter - only allow alphanumeric, hyphens, underscores, colons, dots, and slashes (for provider/model format)
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (!modelPattern.test(model)) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid characters`
-      );
-    }
-
-    // Prevent path traversal and other malicious patterns
-    if (model.includes('..') || model.includes('\\')) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid patterns`
-      );
-    }
+    validatePluginModel(model);
 
     const activePlugin = this.getActivePluginForModel(model, userId);
-
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
 
-    // Additional validation: ensure the model is in the plugin's allowed model_map
     if (!activePlugin.model_map.includes(model)) {
       throw new Error(
         `Model ${model} is not supported by plugin ${activePlugin.id}`
       );
     }
 
-    // Get API key from database (per-user) or environment variable (fallback)
     const apiKey = this.getApiKey(activePlugin, userId);
     if (!apiKey) {
       throw new Error(
@@ -478,256 +458,26 @@ class PluginService {
       );
     }
 
-    // Load plugin variables (valves) - these serve as defaults that options can override
     const pluginVars = this.getPluginVariables(activePlugin, userId);
-
-    // Allow endpoint override via plugin variables
-    const endpointOverride = pluginVars.endpoint as string | undefined;
-    const effectiveEndpoint =
-      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
-      activePlugin.endpoint;
-
-    const temperature =
-      options.temperature ??
-      (pluginVars.temperature as number | undefined) ??
-      0.7;
-    const maxTokens =
-      options.num_predict === -1
-        ? undefined
-        : (options.num_predict ??
-          (pluginVars.max_tokens as number | undefined) ??
-          undefined);
-    const topP =
-      options.top_p ?? (pluginVars.top_p as number | undefined) ?? undefined;
-    const frequencyPenalty =
-      (pluginVars.frequency_penalty as number | undefined) ?? undefined;
-    const presencePenalty =
-      (pluginVars.presence_penalty as number | undefined) ?? undefined;
-    const shouldStream = (pluginVars.stream as boolean | undefined) ?? false;
-
-    // Prepare headers
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    const authValue = activePlugin.auth.prefix
-      ? `${activePlugin.auth.prefix}${apiKey}`
-      : apiKey;
-
-    headers[activePlugin.auth.header] = authValue;
-
-    // OpenClaw session routing — send through the main agent session for full tool access
-    if (activePlugin.id === 'openclaw-agent') {
-      const sessionKey = (pluginVars.session_key as string) || 'main';
-      const sessionMode = pluginVars.session_mode as boolean | undefined;
-      if (sessionMode !== false) {
-        headers['x-openclaw-session-key'] = sessionKey;
-      }
-    }
-
-    // Prepare request payload based on plugin type
-    let payload: Record<string, unknown>;
-
-    if (activePlugin.id === 'anthropic') {
-      // Anthropic-specific payload format
-      // Separate system messages from user/assistant messages
-      const systemMessages = messages.filter(msg => msg.role === 'system');
-      const nonSystemMessages = messages.filter(msg => msg.role !== 'system');
-
-      // Convert messages to Anthropic format with image support
-      const anthropicMessages = nonSystemMessages.map(msg => {
-        // Check if message has images
-        if (msg.images && msg.images.length > 0) {
-          // Anthropic format: content is an array of content blocks
-          const contentBlocks: Array<
-            | { type: 'text'; text: string }
-            | {
-                type: 'image';
-                source: { type: 'base64'; media_type: string; data: string };
-              }
-          > = [];
-
-          // Add images first
-          for (const image of msg.images) {
-            // Extract base64 data and media type from data URL
-            let base64Data = image;
-            let mediaType = 'image/jpeg'; // Default
-
-            if (image.startsWith('data:')) {
-              const match = image.match(/^data:([^;]+);base64,(.+)$/);
-              if (match) {
-                mediaType = match[1];
-                base64Data = match[2];
-              }
-            }
-
-            contentBlocks.push({
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType,
-                data: base64Data,
-              },
-            });
-          }
-
-          // Add text content
-          if (msg.content) {
-            contentBlocks.push({
-              type: 'text',
-              text: msg.content,
-            });
-          }
-
-          return {
-            role: msg.role,
-            content: contentBlocks,
-          };
-        }
-
-        // No images - simple text content
-        return {
-          role: msg.role,
-          content: msg.content,
-        };
-      });
-
-      payload = {
-        model,
-        messages: anthropicMessages,
-        max_tokens: maxTokens ?? 1024,
-        temperature,
-        top_p: topP,
-        stop_sequences: options.stop,
-        stream: shouldStream,
-      };
-
-      // Add system message as top-level parameter if present
-      if (systemMessages.length > 0) {
-        payload.system = systemMessages.map(msg => msg.content).join('\n');
-      }
-
-      // Add required anthropic-version header
-      headers['anthropic-version'] = '2023-06-01';
-    } else if (activePlugin.id === 'gemini') {
-      // Gemini-specific payload format with image support
-      const lastMessage = messages[messages.length - 1];
-      const parts: Array<{
-        text?: string;
-        inline_data?: { mime_type: string; data: string };
-      }> = [];
-
-      // Add images if present
-      if (lastMessage?.images && lastMessage.images.length > 0) {
-        for (const image of lastMessage.images) {
-          let base64Data = image;
-          let mimeType = 'image/jpeg';
-
-          if (image.startsWith('data:')) {
-            const match = image.match(/^data:([^;]+);base64,(.+)$/);
-            if (match) {
-              mimeType = match[1];
-              base64Data = match[2];
-            }
-          }
-
-          parts.push({
-            inline_data: {
-              mime_type: mimeType,
-              data: base64Data,
-            },
-          });
-        }
-      }
-
-      // Add text content
-      if (lastMessage?.content) {
-        parts.push({ text: lastMessage.content });
-      }
-
-      payload = {
-        contents: [{ parts }],
-        generationConfig: {
-          temperature,
-          maxOutputTokens: maxTokens ?? 1024,
-          topP: topP,
-          stopSequences: options.stop,
-        },
-      };
-    } else {
-      // Default OpenAI-compatible format with image support
-      const openaiMessages = messages.map(msg => {
-        // Check if message has images (OpenAI vision format)
-        if (msg.images && msg.images.length > 0) {
-          const content: Array<
-            | { type: 'text'; text: string }
-            | { type: 'image_url'; image_url: { url: string } }
-          > = [];
-
-          // Add images
-          for (const image of msg.images) {
-            // OpenAI expects data URLs or regular URLs
-            const imageUrl = image.startsWith('data:')
-              ? image
-              : `data:image/jpeg;base64,${image}`;
-            content.push({
-              type: 'image_url',
-              image_url: { url: imageUrl },
-            });
-          }
-
-          // Add text
-          if (msg.content) {
-            content.push({ type: 'text', text: msg.content });
-          }
-
-          return { role: msg.role, content };
-        }
-
-        return { role: msg.role, content: msg.content };
-      });
-
-      payload = {
-        model,
-        messages: openaiMessages,
-        temperature,
-        max_tokens: maxTokens,
-        top_p: topP,
-        frequency_penalty: frequencyPenalty,
-        presence_penalty: presencePenalty,
-        stop: options.stop,
-        stream: shouldStream,
-      };
-    }
-
-    // Process endpoint template - replace {model} with actual model name
-    // Final validation before URL construction to prevent SSRF
-    const sanitizedModel = encodeURIComponent(model);
-    const processedEndpoint = effectiveEndpoint.replace(
-      '{model}',
-      sanitizedModel
+    const effectiveEndpoint = resolvePluginEndpoint(
+      activePlugin.endpoint,
+      pluginVars.endpoint as string | undefined
     );
-
-    // Validate the final endpoint URL
-    try {
-      const url = new URL(processedEndpoint);
-
-      // Allow HTTP for localhost and private network IPs (safe for local/LAN development)
-      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-        url.hostname
-      );
-      const isPrivateNetwork =
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
-
-      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-        throw new Error(
-          `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints. ` +
-            `(HTTP is permitted for localhost and private network IPs)`
-        );
-      }
-    } catch (_error) {
-      throw new Error(`Invalid endpoint URL constructed: ${processedEndpoint}`);
-    }
+    const headers = buildPluginAuthHeaders(activePlugin, apiKey);
+    addOpenClawSessionHeader(activePlugin, pluginVars, headers);
+    const { payload, headers: payloadHeaders } = buildPluginChatPayload(
+      activePlugin,
+      model,
+      messages,
+      options,
+      pluginVars
+    );
+    Object.assign(headers, payloadHeaders);
+    const processedEndpoint = applyModelEndpointTemplate(
+      effectiveEndpoint,
+      model
+    );
+    assertSafePluginEndpoint(processedEndpoint, 'endpoint URL constructed');
 
     try {
       const response = await axios.post(processedEndpoint, payload, {
@@ -735,15 +485,7 @@ class PluginService {
         timeout: 60000, // 60 second timeout
       });
 
-      // Handle different response formats
-      if (activePlugin.id === 'anthropic') {
-        return this.convertAnthropicResponse(response.data, model);
-      } else if (activePlugin.id === 'gemini') {
-        return this.convertGeminiResponse(response.data, model);
-      }
-
-      // Default to OpenAI format
-      return response.data as PluginResponse;
+      return convertProviderResponse(activePlugin, response.data, model);
     } catch (error: unknown) {
       console.error(`Plugin request failed for ${activePlugin.id}:`, error);
 
@@ -780,27 +522,8 @@ class PluginService {
     messages: ChatMessage[],
     options: GenerationOptions = {},
     userId?: string
-  ): AsyncGenerator<
-    {
-      type: 'content' | 'tool_call' | 'done';
-      content?: string;
-      toolCall?: {
-        id: string;
-        name: string;
-        arguments: string;
-      };
-    },
-    void,
-    unknown
-  > {
-    // Validate model parameter
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (!modelPattern.test(model) || model.includes('..')) {
-      throw new Error(`Invalid model parameter: ${model}`);
-    }
+  ): AsyncGenerator<PluginStreamChunk, void, unknown> {
+    validatePluginModel(model);
 
     const activePlugin = this.getActivePluginForModel(model, userId);
     if (!activePlugin) {
@@ -820,352 +543,39 @@ class PluginService {
     }
 
     const pluginVars = this.getPluginVariables(activePlugin, userId);
-    const endpointOverride = pluginVars.endpoint as string | undefined;
-    const effectiveEndpoint =
-      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
-      activePlugin.endpoint;
-
-    const temperature =
-      options.temperature ??
-      (pluginVars.temperature as number | undefined) ??
-      0.7;
-    const maxTokens =
-      options.num_predict === -1
-        ? undefined
-        : (options.num_predict ??
-          (pluginVars.max_tokens as number | undefined) ??
-          undefined);
-    const topP =
-      options.top_p ?? (pluginVars.top_p as number | undefined) ?? undefined;
-    const frequencyPenalty =
-      (pluginVars.frequency_penalty as number | undefined) ?? undefined;
-    const presencePenalty =
-      (pluginVars.presence_penalty as number | undefined) ?? undefined;
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    const authValue = activePlugin.auth.prefix
-      ? `${activePlugin.auth.prefix}${apiKey}`
-      : apiKey;
-    headers[activePlugin.auth.header] = authValue;
-
-    // OpenClaw session routing — send through the main agent session for full tool access
-    if (activePlugin.id === 'openclaw-agent') {
-      const sessionKey = (pluginVars.session_key as string) || 'main';
-      const sessionMode = pluginVars.session_mode as boolean | undefined;
-      if (sessionMode !== false) {
-        headers['x-openclaw-session-key'] = sessionKey;
-      }
-    }
-
-    // Build OpenAI-compatible payload with stream=true
-    const openaiMessages = messages.map(msg => {
-      if (msg.images && msg.images.length > 0) {
-        const content: Array<
-          | { type: 'text'; text: string }
-          | { type: 'image_url'; image_url: { url: string } }
-        > = [];
-        for (const image of msg.images) {
-          const imageUrl = image.startsWith('data:')
-            ? image
-            : `data:image/jpeg;base64,${image}`;
-          content.push({ type: 'image_url', image_url: { url: imageUrl } });
-        }
-        if (msg.content) {
-          content.push({ type: 'text', text: msg.content });
-        }
-        return { role: msg.role, content };
-      }
-      return { role: msg.role, content: msg.content };
-    });
+    const effectiveEndpoint = resolvePluginEndpoint(
+      activePlugin.endpoint,
+      pluginVars.endpoint as string | undefined
+    );
+    const params = resolvePluginChatParameters(options, pluginVars);
+    const headers = buildPluginAuthHeaders(activePlugin, apiKey);
+    addOpenClawSessionHeader(activePlugin, pluginVars, headers);
 
     const payload = {
       model,
-      messages: openaiMessages,
-      temperature,
-      max_tokens: maxTokens,
-      top_p: topP,
-      frequency_penalty: frequencyPenalty,
-      presence_penalty: presencePenalty,
+      messages: toOpenAICompatibleMessages(messages),
+      temperature: params.temperature,
+      max_tokens: params.maxTokens,
+      top_p: params.topP,
+      frequency_penalty: params.frequencyPenalty,
+      presence_penalty: params.presencePenalty,
       stop: options.stop,
       stream: true,
     };
 
-    const sanitizedModel = encodeURIComponent(model);
-    const processedEndpoint = effectiveEndpoint.replace(
-      '{model}',
-      sanitizedModel
+    const processedEndpoint = applyModelEndpointTemplate(
+      effectiveEndpoint,
+      model
     );
+    assertSafePluginEndpoint(processedEndpoint);
 
-    // Validate URL
-    try {
-      const url = new URL(processedEndpoint);
-      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-        url.hostname
-      );
-      const isPrivateNetwork =
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
-      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-        throw new Error(`Insecure endpoint protocol: ${url.protocol}`);
-      }
-    } catch {
-      throw new Error(`Invalid endpoint URL: ${processedEndpoint}`);
-    }
-
-    // Use native fetch for streaming
     const response = await fetch(processedEndpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Plugin API error: ${response.status} - ${errorText.slice(0, 200)}`
-      );
-    }
-
-    if (!response.body) {
-      throw new Error('No response body for streaming');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    // Track tool_calls being built across chunks
-    const toolCallsInProgress: Map<
-      number,
-      { id: string; name: string; arguments: string }
-    > = new Map();
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed === 'data: [DONE]') {
-            if (trimmed === 'data: [DONE]') {
-              // Emit any completed tool calls
-              for (const tc of toolCallsInProgress.values()) {
-                yield { type: 'tool_call' as const, toolCall: tc };
-              }
-              yield { type: 'done' as const };
-            }
-            continue;
-          }
-          if (!trimmed.startsWith('data: ')) continue;
-
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            const delta = json.choices?.[0]?.delta;
-            if (!delta) continue;
-
-            // Content delta
-            if (delta.content) {
-              yield { type: 'content' as const, content: delta.content };
-            }
-
-            // Tool call deltas (OpenAI format)
-            if (delta.tool_calls) {
-              for (const tc of delta.tool_calls) {
-                const idx = tc.index ?? 0;
-                if (!toolCallsInProgress.has(idx)) {
-                  toolCallsInProgress.set(idx, {
-                    id: tc.id || '',
-                    name: tc.function?.name || '',
-                    arguments: '',
-                  });
-                }
-                const existing = toolCallsInProgress.get(idx)!;
-                if (tc.id) existing.id = tc.id;
-                if (tc.function?.name) existing.name = tc.function.name;
-                if (tc.function?.arguments)
-                  existing.arguments += tc.function.arguments;
-              }
-            }
-          } catch {
-            // Skip malformed SSE lines
-          }
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
-  }
-
-  // Convert Anthropic response format to OpenAI format
-  private convertAnthropicResponse(
-    anthropicResponse: Record<string, unknown>,
-    model: string
-  ): PluginResponse {
-    const id =
-      typeof anthropicResponse.id === 'string'
-        ? anthropicResponse.id
-        : `chatcmpl-${Date.now()}`;
-
-    // Map Anthropic stop reasons to OpenAI format
-    const stopReasonMap: Record<string, string> = {
-      end_turn: 'stop',
-      max_tokens: 'length',
-      stop_sequence: 'stop',
-      tool_use: 'tool_calls',
-    };
-
-    const stopReason =
-      typeof anthropicResponse.stop_reason === 'string'
-        ? stopReasonMap[anthropicResponse.stop_reason] || 'stop'
-        : 'stop';
-
-    let content = '';
-    // Anthropic returns content as an array of content blocks
-    if (Array.isArray(anthropicResponse.content)) {
-      for (const block of anthropicResponse.content) {
-        if (
-          block &&
-          typeof block === 'object' &&
-          'type' in block &&
-          block.type === 'text' &&
-          'text' in block &&
-          typeof block.text === 'string'
-        ) {
-          content += block.text;
-        }
-      }
-    }
-
-    let usage;
-    if (
-      anthropicResponse.usage &&
-      typeof anthropicResponse.usage === 'object' &&
-      anthropicResponse.usage !== null
-    ) {
-      const usageObj = anthropicResponse.usage as Record<string, unknown>;
-      const inputTokens =
-        typeof usageObj.input_tokens === 'number' ? usageObj.input_tokens : 0;
-      const outputTokens =
-        typeof usageObj.output_tokens === 'number' ? usageObj.output_tokens : 0;
-
-      usage = {
-        prompt_tokens: inputTokens,
-        completion_tokens: outputTokens,
-        total_tokens: inputTokens + outputTokens,
-      };
-    }
-
-    return {
-      id,
-      object: 'chat.completion',
-      created: Math.floor(Date.now() / 1000),
-      model,
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: 'assistant',
-            content,
-          },
-          finish_reason: stopReason,
-        },
-      ],
-      usage,
-    };
-  }
-
-  // Convert Gemini response format to OpenAI format
-  private convertGeminiResponse(
-    geminiResponse: Record<string, unknown>,
-    model: string
-  ): PluginResponse {
-    const id = `chatcmpl-${Date.now()}`;
-
-    let content = '';
-    let finishReason = 'stop';
-
-    // Gemini returns candidates array
-    if (Array.isArray(geminiResponse.candidates)) {
-      const candidate = geminiResponse.candidates[0];
-      if (candidate && typeof candidate === 'object') {
-        const candidateObj = candidate as Record<string, unknown>;
-
-        // Extract content from parts
-        if (candidateObj.content && typeof candidateObj.content === 'object') {
-          const contentObj = candidateObj.content as Record<string, unknown>;
-          if (Array.isArray(contentObj.parts)) {
-            for (const part of contentObj.parts) {
-              if (
-                part &&
-                typeof part === 'object' &&
-                'text' in part &&
-                typeof part.text === 'string'
-              ) {
-                content += part.text;
-              }
-            }
-          }
-        }
-
-        // Map Gemini finish reason to OpenAI format
-        if (typeof candidateObj.finishReason === 'string') {
-          const finishReasonMap: Record<string, string> = {
-            STOP: 'stop',
-            MAX_TOKENS: 'length',
-            SAFETY: 'content_filter',
-            RECITATION: 'content_filter',
-            OTHER: 'stop',
-          };
-          finishReason = finishReasonMap[candidateObj.finishReason] || 'stop';
-        }
-      }
-    }
-
-    // Extract usage if available
-    let usage;
-    if (
-      geminiResponse.usageMetadata &&
-      typeof geminiResponse.usageMetadata === 'object'
-    ) {
-      const usageObj = geminiResponse.usageMetadata as Record<string, unknown>;
-      const promptTokens =
-        typeof usageObj.promptTokenCount === 'number'
-          ? usageObj.promptTokenCount
-          : 0;
-      const completionTokens =
-        typeof usageObj.candidatesTokenCount === 'number'
-          ? usageObj.candidatesTokenCount
-          : 0;
-
-      usage = {
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
-        total_tokens: promptTokens + completionTokens,
-      };
-    }
-
-    return {
-      id,
-      object: 'chat.completion',
-      created: Math.floor(Date.now() / 1000),
-      model,
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: 'assistant',
-            content,
-          },
-          finish_reason: finishReason,
-        },
-      ],
-      usage,
-    };
+    yield* streamOpenAICompatibleResponse(response);
   }
 
   // Validate plugin structure
@@ -1364,18 +774,7 @@ class PluginService {
     pluginId?: string,
     userId?: string
   ): Promise<OllamaEmbeddingsResponse> {
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
-
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (
-      !modelPattern.test(model) ||
-      model.includes('..') ||
-      model.includes('\\')
-    ) {
-      throw new Error(`Invalid model parameter: ${model}`);
-    }
+    validatePluginModel(model);
 
     const plugin = this.getPluginForEmbedding(model, pluginId, userId);
     if (!plugin) {
@@ -1571,25 +970,7 @@ class PluginService {
       speed?: number;
     } = {}
   ): Promise<Buffer> {
-    // Validate model parameter
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
-
-    // Sanitize model parameter
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (!modelPattern.test(model)) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid characters`
-      );
-    }
-
-    // Prevent path traversal
-    if (model.includes('..') || model.includes('\\')) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid patterns`
-      );
-    }
+    validatePluginModel(model);
 
     const plugin = this.getPluginForTTS(model);
     if (!plugin) {
@@ -1958,18 +1339,7 @@ class PluginService {
       response_format?: 'url' | 'b64_json';
     } = {}
   ): Promise<ImageGenResponse> {
-    // Validate model parameter
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
-
-    // Sanitize model parameter
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (!modelPattern.test(model)) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid characters`
-      );
-    }
+    validatePluginModel(model);
 
     // Validate prompt
     if (!prompt || typeof prompt !== 'string') {
