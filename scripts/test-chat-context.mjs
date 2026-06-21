@@ -174,9 +174,9 @@ test('plugin model routing requires an active plugin and the current user creden
               ).href
             )
           ).default;
-          const pluginService = (
+          const chatGenerationService = (
             await import(
-              `${pathToFileURL(path.join(distRoot, 'services', 'pluginService.js')).href}?pluginRouteTest=${Date.now()}`
+              `${pathToFileURL(path.join(distRoot, 'services', 'chatGenerationService.js')).href}?generationRouteTest=${Date.now()}`
             )
           ).default;
 
@@ -185,19 +185,32 @@ test('plugin model routing requires an active plugin and the current user creden
             true
           );
 
+          const aliceTarget =
+            await chatGenerationService.prepareGenerationTarget(
+              'shared-model',
+              'alice',
+              { temperature: 0.2 }
+            );
+          assert.equal(aliceTarget.actualModelName, 'shared-model');
+          assert.equal(aliceTarget.mergedOptions.temperature, 0.2);
+          assert.equal(aliceTarget.activePlugin?.id, 'active-plugin');
+
           assert.equal(
-            pluginService.getActivePluginForModel('shared-model', 'alice')?.id,
-            'active-plugin'
-          );
-          assert.equal(
-            pluginService.getActivePluginForModel('shared-model', 'bob'),
+            (
+              await chatGenerationService.prepareGenerationTarget(
+                'shared-model',
+                'bob'
+              )
+            ).activePlugin,
             null
           );
           assert.equal(
-            pluginService.getActivePluginForModel(
-              'inactive-only-model',
-              'alice'
-            ),
+            (
+              await chatGenerationService.prepareGenerationTarget(
+                'inactive-only-model',
+                'alice'
+              )
+            ).activePlugin,
             null
           );
         } finally {

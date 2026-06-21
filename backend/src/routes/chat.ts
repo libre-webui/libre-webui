@@ -24,10 +24,8 @@ import preferencesService from '../services/preferencesService.js';
 import documentService from '../services/documentService.js';
 import { personaService } from '../services/personaService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
-import {
-  mergeGenerationOptions,
-  extractStatistics,
-} from '../utils/generationUtils.js';
+import { extractStatistics } from '../utils/generationUtils.js';
+import chatGenerationService from '../services/chatGenerationService.js';
 import {
   replaceLatestUserMessageContent,
   toOllamaMessages,
@@ -42,7 +40,6 @@ import {
 } from '../types/index.js';
 
 const router = express.Router();
-const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
 
 // Rate limiter for chat routes: 60 requests per minute (reasonable for chat)
 const chatRateLimiter = rateLimit({
@@ -61,50 +58,6 @@ router.use(chatRateLimiter);
 
 // Apply authentication middleware to all chat routes
 router.use(authenticate);
-
-// Helper function to resolve the actual model name from session model
-// If the model is a persona ID (starts with "persona:"), extract the actual model name
-async function resolveActualModelName(
-  sessionModel: string,
-  userId: string = 'default'
-): Promise<string> {
-  if (sessionModel.startsWith('persona:')) {
-    try {
-      const personaId = sessionModel.replace('persona:', '');
-
-      // Try to get persona for the current user first, then fallback to 'default'
-      let persona = await personaService.getPersonaById(personaId, userId);
-      if (!persona && userId !== 'default') {
-        persona = await personaService.getPersonaById(personaId, 'default');
-      }
-
-      if (persona && persona.model) {
-        return persona.model;
-      } else {
-        console.warn(
-          `Persona ${personaId} not found, falling back to session model`
-        );
-        return sessionModel;
-      }
-    } catch (error) {
-      console.error(`Error resolving persona model:`, error);
-      return sessionModel;
-    }
-  }
-  return sessionModel;
-}
-
-async function resolveTitleGenerationModel(
-  requestedModel: string,
-  session: ChatSession,
-  userId: string
-): Promise<string> {
-  if (requestedModel === AUTO_TITLE_CURRENT_MODEL) {
-    return resolveActualModelName(session.model, userId);
-  }
-
-  return requestedModel;
-}
 
 // Get all chat sessions
 router.get(
@@ -540,20 +493,12 @@ router.post(
       let response: OllamaChatResponse;
       let assistantContent: string;
 
-      // Get user's preferred generation options
-      const userGenerationOptions = preferencesService.getGenerationOptions();
-
-      // Merge user preferences with request options (request options take precedence)
-      const mergedOptions = mergeGenerationOptions(
-        userGenerationOptions,
-        options
-      );
-
-      // Resolve the actual model name (handles persona IDs)
-      const actualModelName = await resolveActualModelName(
-        session.model,
-        userId
-      );
+      const { actualModelName, mergedOptions, activePlugin } =
+        await chatGenerationService.prepareGenerationTarget(
+          session.model,
+          userId,
+          options
+        );
 
       // Prepare common chat request for Ollama (used in both fallback and direct cases)
       const chatRequest = {
@@ -564,11 +509,6 @@ router.post(
       };
 
       // Check if there's an active plugin for this model
-      const activePlugin = pluginService.getActivePluginForModel(
-        actualModelName,
-        userId
-      );
-
       if (activePlugin) {
         try {
           // Use plugin for generation
@@ -711,20 +651,12 @@ router.post(
         }
       }
 
-      // Get user's preferred generation options
-      const userGenerationOptions = preferencesService.getGenerationOptions();
-
-      // Merge user preferences with request options (request options take precedence)
-      const mergedOptions = mergeGenerationOptions(
-        userGenerationOptions,
-        options
-      );
-
-      // Resolve the actual model name (handles persona IDs)
-      const actualModelName = await resolveActualModelName(
-        session.model,
-        userId
-      );
+      const { actualModelName, mergedOptions } =
+        await chatGenerationService.prepareGenerationTarget(
+          session.model,
+          userId,
+          options
+        );
 
       const chatRequest = {
         model: actualModelName,
@@ -823,11 +755,12 @@ router.post(
         return;
       }
 
-      const actualModelName = await resolveTitleGenerationModel(
-        model,
-        session,
-        userId
-      );
+      const actualModelName =
+        await chatGenerationService.resolveTitleGenerationModel(
+          model,
+          session,
+          userId
+        );
 
       // Generate title using a simple prompt
       const titlePrompt = `Generate a very short, concise title (3-6 words max) for a chat that starts with this message. Only respond with the title, nothing else. No quotes, no punctuation at the end. Do not use any markdown formatting.
@@ -838,10 +771,15 @@ Title:`;
 
       try {
         let titleResponse = '';
-        const activePlugin = pluginService.getActivePluginForModel(
-          actualModelName,
-          userId
-        );
+        const { activePlugin, mergedOptions: titleOptions } =
+          await chatGenerationService.prepareGenerationTarget(
+            actualModelName,
+            userId,
+            {
+              temperature: 0.3,
+              num_predict: 20,
+            }
+          );
 
         if (activePlugin) {
           const pluginResponse = await pluginService.executePluginRequest(
@@ -854,10 +792,7 @@ Title:`;
                 timestamp: Date.now(),
               },
             ],
-            {
-              temperature: 0.3,
-              num_predict: 20,
-            },
+            titleOptions,
             userId
           );
           titleResponse = pluginResponse.choices[0]?.message?.content || '';
@@ -867,6 +802,7 @@ Title:`;
             prompt: titlePrompt,
             stream: false,
             options: {
+              ...titleOptions,
               temperature: 0.3,
               num_predict: 20,
               stop: ['\n', '.', '!', '?'],

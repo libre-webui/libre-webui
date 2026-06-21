@@ -66,7 +66,6 @@ import chatService from './services/chatService.js';
 import { GitHubOAuthService } from './services/simpleGitHubOAuth.js';
 import { HuggingFaceOAuthService } from './services/simpleHuggingFaceOAuth.js';
 import pluginService from './services/pluginService.js';
-import preferencesService from './services/preferencesService.js';
 import documentService from './services/documentService.js';
 import { encryptionService as _encryptionService } from './services/encryptionService.js';
 import openclawSessionService, {
@@ -74,7 +73,7 @@ import openclawSessionService, {
   type ToolStreamEvent,
   type ChatDeltaEvent,
 } from './services/openclawSessionService.js';
-import { mergeGenerationOptions } from './utils/generationUtils.js';
+import chatGenerationService from './services/chatGenerationService.js';
 import {
   replaceLatestUserMessageContent,
   toChatMessages,
@@ -654,60 +653,20 @@ wss.on('connection', (ws, req) => {
 
         console.log('Backend: Using assistantMessageId:', assistantMessageId);
 
-        // Resolve the actual model name (handles persona IDs)
-        let actualModelName = session.model;
-        if (session.model.startsWith('persona:')) {
-          try {
-            const personaId = session.model.replace('persona:', '');
-            console.log(
-              `[WebSocket] DEBUG: Resolving persona ${personaId} for user ${userId}`
-            );
-            const { personaService } =
-              await import('./services/personaService.js');
-
-            // Try to get persona for the current user first, then fallback to 'default'
-            let persona = await personaService.getPersonaById(
-              personaId,
-              userId
-            );
-            if (!persona && userId !== 'default') {
-              console.log(
-                `[WebSocket] DEBUG: Persona not found for user ${userId}, trying default user`
-              );
-              persona = await personaService.getPersonaById(
-                personaId,
-                'default'
-              );
-            }
-
-            console.log(
-              `[WebSocket] DEBUG: Persona lookup result:`,
-              persona
-                ? `Found persona with model: ${persona.model}`
-                : 'Persona not found'
-            );
-            if (persona && persona.model) {
-              actualModelName = persona.model;
-              console.log(
-                `[WebSocket] Resolved persona ${personaId} to model: ${actualModelName}`
-              );
-            } else {
-              console.warn(
-                `[WebSocket] Persona ${personaId} not found, using original model: ${session.model}`
-              );
-            }
-          } catch (error) {
-            console.error(`[WebSocket] Error resolving persona model:`, error);
-          }
-        }
+        const {
+          actualModelName,
+          mergedOptions,
+          activePlugin,
+          pluginVariables: pluginVars,
+        } = await chatGenerationService.prepareGenerationTarget(
+          session.model,
+          userId,
+          options
+        );
 
         // Check if there's an active plugin for this model
         console.log(
           `[WebSocket] Looking for plugin for model: ${actualModelName}`
-        );
-        const activePlugin = pluginService.getActivePluginForModel(
-          actualModelName,
-          userId
         );
         console.log(
           `[WebSocket] Found plugin:`,
@@ -718,9 +677,6 @@ wss.on('connection', (ws, req) => {
           console.log(
             `[WebSocket] Using plugin ${activePlugin.id} for model ${actualModelName}`
           );
-
-          // Load plugin variables early — needed for session mode check
-          const pluginVars = pluginService.getPluginVariables(activePlugin);
 
           // ---------------------------------------------------------------
           // OpenClaw Session Mode — route through WebSocket gateway
@@ -1036,16 +992,6 @@ wss.on('connection', (ws, req) => {
             // ---------------------------------------------------------------
 
             try {
-              // Get user's preferred generation options
-              const userGenerationOptions =
-                preferencesService.getGenerationOptions();
-
-              // Merge user preferences with request options
-              const mergedOptions = mergeGenerationOptions(
-                userGenerationOptions,
-                options
-              );
-
               let messagesForPlugin: ChatMessage[] = isPrivate
                 ? toChatMessages(
                     ((messageHistory || []) as ContextMessage[]).concat(
@@ -1455,15 +1401,6 @@ wss.on('connection', (ws, req) => {
         // Reuse the actualModelName variable that was already resolved above
         // If we're here, it means either there was no plugin or plugin failed
         // The actualModelName was already resolved in the earlier code block
-
-        // Get user's preferred generation options
-        const userGenerationOptions = preferencesService.getGenerationOptions();
-
-        // Merge user preferences with request options
-        const mergedOptions = mergeGenerationOptions(
-          userGenerationOptions,
-          options
-        );
 
         // Create chat request with advanced features
         const chatRequest: OllamaChatRequest = {
