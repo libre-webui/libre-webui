@@ -43,11 +43,15 @@ export const getApiBaseUrl = (): string => {
  * API base URL constant - use this instead of duplicating the logic
  */
 export const API_BASE_URL = getApiBaseUrl();
+export const isVerboseDebugEnabled =
+  import.meta.env.DEV && import.meta.env.VITE_DEBUG_VERBOSE === 'true';
 
 /**
  * Log configuration information for debugging
  */
 export const logConfigInfo = (): void => {
+  if (!isVerboseDebugEnabled) return;
+
   console.log('🚀 API_BASE_URL configured as:', API_BASE_URL);
   console.log('🌐 Window location:', window.location);
   console.log('🔧 Environment variables:', import.meta.env);

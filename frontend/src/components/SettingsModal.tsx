@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   X,
@@ -85,6 +85,30 @@ import toast from 'react-hot-toast';
 // Get version from Vite env (includes -dev suffix on dev branch)
 const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.0';
 const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
+const DEFAULT_EMBEDDING_SETTINGS = {
+  enabled: false,
+  model: 'nomic-embed-text',
+  chunkSize: 1000,
+  chunkOverlap: 200,
+  similarityThreshold: 0.7,
+};
+const DEFAULT_TTS_SETTINGS = {
+  enabled: false,
+  autoPlay: false,
+  model: '',
+  voice: '',
+  speed: 1.0,
+  pluginId: '',
+  streamSentences: false,
+};
+const DEFAULT_IMAGE_GEN_SETTINGS = {
+  enabled: false,
+  model: '',
+  size: '1024x1024',
+  quality: 'standard',
+  style: 'vivid',
+  pluginId: '',
+};
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -188,46 +212,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   // Embedding settings state
   const [embeddingSettings, setEmbeddingSettings] = useState(
-    preferences.embeddingSettings || {
-      enabled: false,
-      model: 'nomic-embed-text',
-      chunkSize: 1000,
-      chunkOverlap: 200,
-      similarityThreshold: 0.7,
-    }
+    preferences.embeddingSettings || DEFAULT_EMBEDDING_SETTINGS
   );
   const [regeneratingEmbeddings, setRegeneratingEmbeddings] = useState(false);
 
   // TTS settings state
   const [ttsSettings, setTtsSettings] = useState(
-    preferences.ttsSettings || {
-      enabled: false,
-      autoPlay: false,
-      model: '',
-      voice: '',
-      speed: 1.0,
-      pluginId: '',
-      streamSentences: false,
-    }
+    preferences.ttsSettings || DEFAULT_TTS_SETTINGS
   );
   const [testingTTS, setTestingTTS] = useState(false);
   const testAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Image Generation settings state
   const [imageGenSettings, setImageGenSettings] = useState(
-    preferences.imageGenSettings || {
-      enabled: false,
-      model: '',
-      size: '1024x1024',
-      quality: 'standard',
-      style: 'vivid',
-      pluginId: '',
-    }
+    preferences.imageGenSettings || DEFAULT_IMAGE_GEN_SETTINGS
   );
-  // Image Generation derived option lists (set when model changes via handler)
-  const [imageGenSizes, setImageGenSizes] = useState<string[]>([]);
-  const [imageGenQualities, setImageGenQualities] = useState<string[]>([]);
-  const [imageGenStyles, setImageGenStyles] = useState<string[]>([]);
 
   // Import data state
   const [importing, setImporting] = useState(false);
@@ -270,6 +269,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     },
     enabled: isOpen,
   });
+  const effectiveEmbeddingSettings = useMemo(() => {
+    const matchingModel = availableEmbeddingModels.find(
+      model =>
+        model.id === embeddingSettings.model ||
+        model.rawModel === embeddingSettings.model
+    );
+
+    return matchingModel && matchingModel.id !== embeddingSettings.model
+      ? { ...embeddingSettings, model: matchingModel.id }
+      : embeddingSettings;
+  }, [availableEmbeddingModels, embeddingSettings]);
 
   // Embedding status query
   const { data: embeddingStatus = null } = useQuery({
@@ -304,13 +314,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   });
   const ttsModels: TTSModel[] = useMemo(() => ttsData?.models ?? [], [ttsData]);
   const ttsPlugins: TTSPlugin[] = ttsData?.plugins ?? [];
+  const effectiveTtsSettings = useMemo(() => {
+    if (ttsSettings.model || ttsModels.length === 0) return ttsSettings;
+
+    const firstModel = ttsModels[0];
+    return {
+      ...ttsSettings,
+      model: firstModel.model,
+      pluginId: firstModel.plugin,
+      voice: firstModel.config?.default_voice || '',
+    };
+  }, [ttsModels, ttsSettings]);
 
   // TTS voices derived from currently selected model
   const ttsVoices = useMemo(() => {
-    if (!ttsSettings.model) return [];
-    const currentModel = ttsModels.find(m => m.model === ttsSettings.model);
+    if (!effectiveTtsSettings.model) return [];
+    const currentModel = ttsModels.find(
+      m => m.model === effectiveTtsSettings.model
+    );
     return currentModel?.config?.voices ?? [];
-  }, [ttsModels, ttsSettings.model]);
+  }, [effectiveTtsSettings.model, ttsModels]);
 
   // Image Gen data query
   const { data: imageGenData, isLoading: loadingImageGen } = useQuery({
@@ -341,129 +364,79 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     () => imageGenData?.plugins ?? [],
     [imageGenData]
   );
-
-  // Once TTS/ImageGen models load, default an empty selection to the first available — store-during-render
-  const [prevTtsModels, setPrevTtsModels] = useState<TTSModel[]>([]);
-  if (ttsModels !== prevTtsModels) {
-    setPrevTtsModels(ttsModels);
-    if (!ttsSettings.model && ttsModels.length > 0) {
-      const firstModel = ttsModels[0];
-      setTtsSettings(prev => ({
-        ...prev,
-        model: firstModel.model,
-        pluginId: firstModel.plugin,
-        voice: firstModel.config?.default_voice || '',
-      }));
-    }
-  }
-
-  const [prevImageGenModels, setPrevImageGenModels] = useState<ImageGenModel[]>(
-    []
+  const selectedImageGenModel = useMemo(
+    () =>
+      imageGenModels.find(m => m.model === imageGenSettings.model) ||
+      imageGenModels[0],
+    [imageGenModels, imageGenSettings.model]
   );
-  if (imageGenModels !== prevImageGenModels) {
-    setPrevImageGenModels(imageGenModels);
-    if (!imageGenSettings.model && imageGenModels.length > 0) {
-      const firstModel = imageGenModels[0];
-      setImageGenSettings(prev => ({
-        ...prev,
-        model: firstModel.model,
-        pluginId: firstModel.plugin,
-        size: firstModel.config?.default_size || '1024x1024',
-        quality: firstModel.config?.default_quality || 'standard',
-        style: firstModel.config?.default_style || 'vivid',
-      }));
-      if (firstModel.config?.sizes) setImageGenSizes(firstModel.config.sizes);
-      if (firstModel.config?.qualities)
-        setImageGenQualities(firstModel.config.qualities);
-      if (firstModel.config?.styles)
-        setImageGenStyles(firstModel.config.styles);
-    } else if (imageGenSettings.model && imageGenModels.length > 0) {
-      const currentModel = imageGenModels.find(
-        m => m.model === imageGenSettings.model
-      );
-      if (currentModel?.config) {
-        if (currentModel.config.sizes)
-          setImageGenSizes(currentModel.config.sizes);
-        if (currentModel.config.qualities)
-          setImageGenQualities(currentModel.config.qualities);
-        if (currentModel.config.styles)
-          setImageGenStyles(currentModel.config.styles);
-      }
+  const effectiveImageGenSettings = useMemo(() => {
+    if (imageGenSettings.model || !selectedImageGenModel) {
+      return imageGenSettings;
     }
-  }
 
-  // Initialize modal-local form state from preferences when modal opens — store-during-render
-  const [prevModalIsOpen, setPrevModalIsOpen] = useState(false);
-  const [prevSystemMessage, setPrevSystemMessage] = useState(systemMessage);
-  if (isOpen && (!prevModalIsOpen || prevSystemMessage !== systemMessage)) {
-    setPrevModalIsOpen(true);
-    setPrevSystemMessage(systemMessage);
+    return {
+      ...imageGenSettings,
+      model: selectedImageGenModel.model,
+      pluginId: selectedImageGenModel.plugin,
+      size: selectedImageGenModel.config?.default_size || '1024x1024',
+      quality: selectedImageGenModel.config?.default_quality || 'standard',
+      style: selectedImageGenModel.config?.default_style || 'vivid',
+    };
+  }, [imageGenSettings, selectedImageGenModel]);
+  const imageGenSizes = selectedImageGenModel?.config?.sizes ?? [];
+  const imageGenQualities = selectedImageGenModel?.config?.qualities ?? [];
+  const imageGenStyles = selectedImageGenModel?.config?.styles ?? [];
+
+  const modalInitializedRef = useRef(false);
+  const previousSystemMessageRef = useRef(systemMessage);
+
+  useEffect(() => {
+    if (!isOpen) {
+      modalInitializedRef.current = false;
+      return;
+    }
+
+    if (
+      modalInitializedRef.current &&
+      previousSystemMessageRef.current === systemMessage
+    ) {
+      return;
+    }
+
+    modalInitializedRef.current = true;
+    previousSystemMessageRef.current = systemMessage;
     setTempSystemMessage(systemMessage);
     setTempGenerationOptions(preferences.generationOptions || {});
     setEmbeddingSettings(
-      preferences.embeddingSettings || {
-        enabled: false,
-        model: 'nomic-embed-text',
-        chunkSize: 1000,
-        chunkOverlap: 200,
-        similarityThreshold: 0.7,
-      }
+      preferences.embeddingSettings || DEFAULT_EMBEDDING_SETTINGS
     );
-    setTtsSettings(
-      preferences.ttsSettings || {
-        enabled: false,
-        autoPlay: false,
-        model: '',
-        voice: '',
-        speed: 1.0,
-        pluginId: '',
-      }
-    );
+    setTtsSettings(preferences.ttsSettings || DEFAULT_TTS_SETTINGS);
     setImageGenSettings(
-      preferences.imageGenSettings || {
-        enabled: false,
-        model: '',
-        size: '1024x1024',
-        quality: 'standard',
-        style: 'vivid',
-        pluginId: '',
-      }
+      preferences.imageGenSettings || DEFAULT_IMAGE_GEN_SETTINGS
     );
-  }
-  if (!isOpen && prevModalIsOpen) {
-    setPrevModalIsOpen(false);
-  }
+  }, [
+    isOpen,
+    preferences.embeddingSettings,
+    preferences.generationOptions,
+    preferences.imageGenSettings,
+    preferences.ttsSettings,
+    systemMessage,
+  ]);
 
-  // Trigger plugin/models store loads when modal opens — store actions are external systems
-  const [prevPluginsLoadIsOpen, setPrevPluginsLoadIsOpen] = useState(false);
-  if (isOpen && !prevPluginsLoadIsOpen) {
-    setPrevPluginsLoadIsOpen(true);
+  const loadedStoresForOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      loadedStoresForOpenRef.current = false;
+      return;
+    }
+
+    if (loadedStoresForOpenRef.current) return;
+    loadedStoresForOpenRef.current = true;
     loadPlugins();
     loadModels();
-  }
-  if (!isOpen && prevPluginsLoadIsOpen) {
-    setPrevPluginsLoadIsOpen(false);
-  }
-
-  // Reconcile embedding model id with the loaded model list — store-during-render
-  const [prevEmbeddingModels, setPrevEmbeddingModels] = useState(
-    availableEmbeddingModels
-  );
-  if (
-    isOpen &&
-    availableEmbeddingModels.length > 0 &&
-    prevEmbeddingModels !== availableEmbeddingModels
-  ) {
-    setPrevEmbeddingModels(availableEmbeddingModels);
-    const matchingModel = availableEmbeddingModels.find(
-      model =>
-        model.id === embeddingSettings.model ||
-        model.rawModel === embeddingSettings.model
-    );
-    if (matchingModel && matchingModel.id !== embeddingSettings.model) {
-      setEmbeddingSettings(prev => ({ ...prev, model: matchingModel.id }));
-    }
-  }
+  }, [isOpen, loadPlugins, loadModels]);
 
   const handleSaveApiKey = async (pluginId: string) => {
     const apiKey = pluginApiKeys[pluginId];
@@ -536,16 +509,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         quality: selectedModel.config?.default_quality || prev.quality,
         style: selectedModel.config?.default_style || prev.style,
       }));
-      // Update available options
-      if (selectedModel.config?.sizes) {
-        setImageGenSizes(selectedModel.config.sizes);
-      }
-      if (selectedModel.config?.qualities) {
-        setImageGenQualities(selectedModel.config.qualities);
-      }
-      if (selectedModel.config?.styles) {
-        setImageGenStyles(selectedModel.config.styles);
-      }
     }
   };
 
@@ -562,7 +525,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleSaveTtsSettings = async () => {
     try {
       const response = await preferencesApi.updatePreferences({
-        ttsSettings,
+        ttsSettings: effectiveTtsSettings,
       });
       if (response.success && response.data) {
         setPreferences(response.data);
@@ -591,10 +554,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setTestingTTS(true);
     try {
       const response = await ttsApi.generateBase64({
-        model: ttsSettings.model || 'tts-1',
+        model: effectiveTtsSettings.model || 'tts-1',
         input: 'Hello! This is a test of the text-to-speech system.',
-        voice: ttsSettings.voice || 'alloy',
-        speed: ttsSettings.speed || 1.0,
+        voice: effectiveTtsSettings.voice || 'alloy',
+        speed: effectiveTtsSettings.speed || 1.0,
         response_format: 'mp3',
       });
 
@@ -652,7 +615,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleSaveImageGenSettings = async () => {
     try {
       const response = await preferencesApi.updatePreferences({
-        imageGenSettings,
+        imageGenSettings: effectiveImageGenSettings,
       });
       if (response.success && response.data) {
         setPreferences(response.data);
@@ -1020,13 +983,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     })),
     ...(!availableEmbeddingModels.find(
       model =>
-        model.id === embeddingSettings.model ||
-        model.rawModel === embeddingSettings.model
-    ) && embeddingSettings.model
+        model.id === effectiveEmbeddingSettings.model ||
+        model.rawModel === effectiveEmbeddingSettings.model
+    ) && effectiveEmbeddingSettings.model
       ? [
           {
-            value: embeddingSettings.model,
-            label: `${embeddingSettings.model} (current)`,
+            value: effectiveEmbeddingSettings.model,
+            label: `${effectiveEmbeddingSettings.model} (current)`,
           },
         ]
       : []),
@@ -1034,8 +997,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const handleSaveEmbeddingSettings = async () => {
     try {
-      const response =
-        await preferencesApi.setEmbeddingSettings(embeddingSettings);
+      const response = await preferencesApi.setEmbeddingSettings(
+        effectiveEmbeddingSettings
+      );
       if (response.success && response.data) {
         setPreferences(response.data);
         toast.success('Embedding settings updated successfully');
@@ -1715,7 +1679,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           {t('settings.tts.model')}
                         </label>
                         <Select
-                          value={ttsSettings.model}
+                          value={effectiveTtsSettings.model}
                           onChange={e => handleTtsModelChange(e.target.value)}
                           disabled={!ttsSettings.enabled}
                           options={[
@@ -1740,7 +1704,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           {t('settings.tts.voice')}
                         </label>
                         <Select
-                          value={ttsSettings.voice}
+                          value={effectiveTtsSettings.voice}
                           onChange={e =>
                             handleTtsSettingChange('voice', e.target.value)
                           }
@@ -1803,7 +1767,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <Button
                         onClick={handleTestTTS}
                         variant='outline'
-                        disabled={!ttsSettings.enabled || !ttsSettings.model}
+                        disabled={
+                          !ttsSettings.enabled || !effectiveTtsSettings.model
+                        }
                         className='flex items-center gap-2'
                       >
                         {testingTTS ? (
@@ -1921,7 +1887,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           {t('settings.imageGen.model')}
                         </label>
                         <Select
-                          value={imageGenSettings.model}
+                          value={effectiveImageGenSettings.model}
                           onChange={e =>
                             handleImageGenModelChange(e.target.value)
                           }
@@ -1948,7 +1914,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           {t('settings.imageGen.size')}
                         </label>
                         <Select
-                          value={imageGenSettings.size}
+                          value={effectiveImageGenSettings.size}
                           onChange={e =>
                             handleImageGenSettingChange('size', e.target.value)
                           }
@@ -1981,7 +1947,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             {t('settings.imageGen.quality')}
                           </label>
                           <Select
-                            value={imageGenSettings.quality}
+                            value={effectiveImageGenSettings.quality}
                             onChange={e =>
                               handleImageGenSettingChange(
                                 'quality',
@@ -2009,7 +1975,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             {t('settings.imageGen.style')}
                           </label>
                           <Select
-                            value={imageGenSettings.style}
+                            value={effectiveImageGenSettings.style}
                             onChange={e =>
                               handleImageGenSettingChange(
                                 'style',
@@ -2138,7 +2104,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         {t('settings.documents.embeddings.model')}
                       </label>
                       <Select
-                        value={embeddingSettings.model}
+                        value={effectiveEmbeddingSettings.model}
                         onChange={e =>
                           handleEmbeddingSettingsChange('model', e.target.value)
                         }
@@ -3584,7 +3550,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                         {t('settings.documents.embeddings.model')}
                       </label>
                       <Select
-                        value={embeddingSettings.model}
+                        value={effectiveEmbeddingSettings.model}
                         onChange={e =>
                           handleEmbeddingSettingsChange('model', e.target.value)
                         }

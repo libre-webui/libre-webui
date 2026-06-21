@@ -47,12 +47,28 @@ import {
   GeneratedImage,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
-import { API_BASE_URL, logConfigInfo } from '@/utils/config';
+import {
+  API_BASE_URL,
+  isVerboseDebugEnabled,
+  logConfigInfo,
+} from '@/utils/config';
 import { getPersonaAvatarFallback } from '@/utils/personaAvatar';
 
+const debugLog = (...args: unknown[]) => {
+  if (isVerboseDebugEnabled) {
+    console.log(...args);
+  }
+};
+
+const debugError = (...args: unknown[]) => {
+  if (isVerboseDebugEnabled) {
+    console.error(...args);
+  }
+};
+
 logConfigInfo();
-console.log('📱 User agent:', navigator.userAgent);
-console.log('🎭 Demo mode detected:', isDemoMode());
+debugLog('📱 User agent:', navigator.userAgent);
+debugLog('🎭 Demo mode detected:', isDemoMode());
 
 // Mock response helper for demo mode
 const createDemoResponse = <T>(
@@ -1438,7 +1454,7 @@ export const authApi = {
   },
 
   getSystemInfo: (): Promise<ApiResponse<SystemInfo>> => {
-    console.log('getSystemInfo called, demo mode:', isDemoMode());
+    debugLog('getSystemInfo called, demo mode:', isDemoMode());
 
     if (isDemoMode()) {
       return createDemoResponse<SystemInfo>({
@@ -1451,8 +1467,8 @@ export const authApi = {
       });
     }
 
-    console.log('🔍 Making API call to:', API_BASE_URL + '/auth/system-info');
-    console.log(
+    debugLog('🔍 Making API call to:', API_BASE_URL + '/auth/system-info');
+    debugLog(
       '🌐 Full URL from:',
       window.location.origin,
       '-> API:',
@@ -1461,23 +1477,20 @@ export const authApi = {
     return api
       .get('/auth/system-info')
       .then(res => {
-        console.log('✅ getSystemInfo response:', res.data);
+        debugLog('✅ getSystemInfo response:', res.data);
         return res.data;
       })
       .catch(error => {
-        console.error('❌ getSystemInfo error:', error);
+        debugError('❌ getSystemInfo error:', error);
         if (error.response) {
-          console.error('📄 Error response data:', error.response.data);
-          console.error('🔢 Error status:', error.response.status);
-          console.error('🔧 Error headers:', error.response.headers);
+          debugError('📄 Error response data:', error.response.data);
+          debugError('🔢 Error status:', error.response.status);
+          debugError('🔧 Error headers:', error.response.headers);
         }
         if (error.request) {
-          console.error(
-            '📡 Network error - no response received:',
-            error.request
-          );
+          debugError('📡 Network error - no response received:', error.request);
         }
-        console.error('🎯 Error config:', error.config);
+        debugError('🎯 Error config:', error.config);
         throw error;
       });
   },

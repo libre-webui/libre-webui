@@ -385,15 +385,15 @@ class PluginService {
   }
 
   // Get the active plugin for a specific model
-  getActivePluginForModel(model: string): Plugin | null {
-    // Get all available plugins (not just active ones)
-    const allPlugins = this.getAllPlugins();
+  getActivePluginForModel(model: string, userId?: string): Plugin | null {
+    // Only route through plugins the user explicitly activated.
+    const activePlugins = this.getActivePlugins();
 
-    // Find the plugin that supports this model
-    for (const plugin of allPlugins) {
+    // Find the active plugin that supports this model
+    for (const plugin of activePlugins) {
       if (plugin.model_map.includes(model)) {
         // Check if we have the required API key (from DB or env)
-        const apiKey = this.getApiKey(plugin);
+        const apiKey = this.getApiKey(plugin, userId);
         if (!apiKey) {
           continue;
         }
@@ -434,7 +434,8 @@ class PluginService {
   async executePluginRequest(
     model: string,
     messages: ChatMessage[],
-    options: GenerationOptions = {}
+    options: GenerationOptions = {},
+    userId?: string
   ): Promise<PluginResponse> {
     // Validate model parameter to prevent SSRF attacks
     if (!model || typeof model !== 'string') {
@@ -456,7 +457,7 @@ class PluginService {
       );
     }
 
-    const activePlugin = this.getActivePluginForModel(model);
+    const activePlugin = this.getActivePluginForModel(model, userId);
 
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
@@ -469,12 +470,8 @@ class PluginService {
       );
     }
 
-    if (!activePlugin) {
-      throw new Error(`No active plugin found for model: ${model}`);
-    }
-
     // Get API key from database (per-user) or environment variable (fallback)
-    const apiKey = this.getApiKey(activePlugin);
+    const apiKey = this.getApiKey(activePlugin, userId);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
@@ -482,7 +479,7 @@ class PluginService {
     }
 
     // Load plugin variables (valves) - these serve as defaults that options can override
-    const pluginVars = this.getPluginVariables(activePlugin);
+    const pluginVars = this.getPluginVariables(activePlugin, userId);
 
     // Allow endpoint override via plugin variables
     const endpointOverride = pluginVars.endpoint as string | undefined;
@@ -781,7 +778,8 @@ class PluginService {
   async *executePluginStreamRequest(
     model: string,
     messages: ChatMessage[],
-    options: GenerationOptions = {}
+    options: GenerationOptions = {},
+    userId?: string
   ): AsyncGenerator<
     {
       type: 'content' | 'tool_call' | 'done';
@@ -804,7 +802,7 @@ class PluginService {
       throw new Error(`Invalid model parameter: ${model}`);
     }
 
-    const activePlugin = this.getActivePluginForModel(model);
+    const activePlugin = this.getActivePluginForModel(model, userId);
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
@@ -814,14 +812,14 @@ class PluginService {
       );
     }
 
-    const apiKey = this.getApiKey(activePlugin);
+    const apiKey = this.getApiKey(activePlugin, userId);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
       );
     }
 
-    const pluginVars = this.getPluginVariables(activePlugin);
+    const pluginVars = this.getPluginVariables(activePlugin, userId);
     const endpointOverride = pluginVars.endpoint as string | undefined;
     const effectiveEndpoint =
       (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||

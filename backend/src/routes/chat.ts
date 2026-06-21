@@ -512,15 +512,40 @@ router.post(
         }
       }
 
-      // Add the new user message with document context if available
+      // Replace the saved user message with document context for generation only.
       const userMessageContent = documentContext
         ? `${documentContext}User question: ${message}`
         : message;
 
-      ollamaMessages.push({
-        role: 'user',
-        content: userMessageContent,
-      });
+      const lastUserMessageIndex = (() => {
+        for (let i = ollamaMessages.length - 1; i >= 0; i -= 1) {
+          if (ollamaMessages[i]?.role === 'user') return i;
+        }
+        return -1;
+      })();
+
+      if (documentContext && lastUserMessageIndex >= 0) {
+        ollamaMessages[lastUserMessageIndex] = {
+          ...ollamaMessages[lastUserMessageIndex],
+          content: userMessageContent,
+        };
+      }
+
+      const lastPluginUserMessageIndex = (() => {
+        for (let i = session.messages.length - 1; i >= 0; i -= 1) {
+          if (session.messages[i]?.role === 'user') return i;
+        }
+        return -1;
+      })();
+
+      const pluginMessages =
+        documentContext && lastPluginUserMessageIndex >= 0
+          ? session.messages.map((msg, index) =>
+              index === lastPluginUserMessageIndex
+                ? { ...msg, content: userMessageContent }
+                : msg
+            )
+          : session.messages;
 
       let response: OllamaChatResponse;
       let assistantContent: string;
@@ -549,16 +574,19 @@ router.post(
       };
 
       // Check if there's an active plugin for this model
-      const activePlugin =
-        pluginService.getActivePluginForModel(actualModelName);
+      const activePlugin = pluginService.getActivePluginForModel(
+        actualModelName,
+        userId
+      );
 
       if (activePlugin) {
         try {
           // Use plugin for generation
           const pluginResponse = await pluginService.executePluginRequest(
             actualModelName,
-            session.messages.concat([userMessage]),
-            options
+            pluginMessages,
+            mergedOptions,
+            userId
           );
 
           // Convert plugin response to our format
@@ -700,12 +728,6 @@ router.post(
         }
       }
 
-      // Add the new user message
-      ollamaMessages.push({
-        role: 'user',
-        content: message,
-      });
-
       // Get user's preferred generation options
       const userGenerationOptions = preferencesService.getGenerationOptions();
 
@@ -833,8 +855,10 @@ Title:`;
 
       try {
         let titleResponse = '';
-        const activePlugin =
-          pluginService.getActivePluginForModel(actualModelName);
+        const activePlugin = pluginService.getActivePluginForModel(
+          actualModelName,
+          userId
+        );
 
         if (activePlugin) {
           const pluginResponse = await pluginService.executePluginRequest(
@@ -850,7 +874,8 @@ Title:`;
             {
               temperature: 0.3,
               num_predict: 20,
-            }
+            },
+            userId
           );
           titleResponse = pluginResponse.choices[0]?.message?.content || '';
         } else {

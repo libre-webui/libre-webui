@@ -81,6 +81,7 @@ import {
   OllamaChatRequest,
   OllamaChatMessage,
   GenerationStatistics,
+  ChatMessage,
 } from './types/index.js';
 
 const pkg = loadAppPackage(import.meta.url);
@@ -729,8 +730,10 @@ wss.on('connection', (ws, req) => {
         console.log(
           `[WebSocket] Looking for plugin for model: ${actualModelName}`
         );
-        const activePlugin =
-          pluginService.getActivePluginForModel(actualModelName);
+        const activePlugin = pluginService.getActivePluginForModel(
+          actualModelName,
+          userId
+        );
         console.log(
           `[WebSocket] Found plugin:`,
           activePlugin ? activePlugin.id : 'none'
@@ -762,7 +765,8 @@ wss.on('connection', (ws, req) => {
                 (pluginVars.endpoint as string) ||
                 activePlugin.endpoint ||
                 'http://127.0.0.1:18789/v1/chat/completions';
-              const apiKey = pluginService.getApiKey(activePlugin) || '';
+              const apiKey =
+                pluginService.getApiKey(activePlugin, userId) || '';
               const ocSessionKey = (pluginVars.session_key as string) || 'main';
 
               if (!openclawSessionService.isConnected) {
@@ -1067,14 +1071,38 @@ wss.on('connection', (ws, req) => {
                 options
               );
 
-              // Get messages for context
-              const contextMessages =
-                chatService.getMessagesForContext(sessionId);
+              let messagesForPlugin: ChatMessage[] = isPrivate
+                ? ((messageHistory || []) as ContextMessage[])
+                    .concat(
+                      regenerate
+                        ? []
+                        : [
+                            {
+                              role: 'user' as const,
+                              content,
+                              images: images || undefined,
+                            },
+                          ]
+                    )
+                    .map((msg, index) => ({
+                      id: `private-context-${index}`,
+                      role: msg.role,
+                      content: msg.content,
+                      images: msg.images,
+                      timestamp: Date.now(),
+                    }))
+                : chatService.getMessagesForContext(sessionId);
 
-              // For regenerations, the user message is already in context; for new messages, we need to add it
-              let messagesForPlugin = regenerate
-                ? contextMessages
-                : contextMessages.concat([userMessage!]);
+              if (relevantContext.length > 0) {
+                for (let i = messagesForPlugin.length - 1; i >= 0; i -= 1) {
+                  if (messagesForPlugin[i]?.role === 'user') {
+                    messagesForPlugin = messagesForPlugin.map((msg, index) =>
+                      index === i ? { ...msg, content: enhancedContent } : msg
+                    );
+                    break;
+                  }
+                }
+              }
               const systemPromptPrefix =
                 (pluginVars.system_prompt_prefix as string) || '';
               const userName = (pluginVars.user_name as string) || '';
@@ -1147,7 +1175,8 @@ wss.on('connection', (ws, req) => {
                 for await (const chunk of pluginService.executePluginStreamRequest(
                   actualModelName,
                   messagesForPlugin,
-                  mergedOptions
+                  mergedOptions,
+                  userId
                 )) {
                   if (chunk.type === 'content' && chunk.content) {
                     // Content arrived — clear the tool indicator
@@ -1234,7 +1263,8 @@ wss.on('connection', (ws, req) => {
                 const pluginResponse = await pluginService.executePluginRequest(
                   actualModelName,
                   messagesForPlugin,
-                  mergedOptions
+                  mergedOptions,
+                  userId
                 );
 
                 if (!pluginResponse?.choices?.length) {
