@@ -25,6 +25,9 @@ const websocketMessages = await import(
 const pluginChatContext = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'pluginChatContext.js')).href
 );
+const pluginStreaming = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'pluginStreaming.js')).href
+);
 
 function withEnv(overrides, run) {
   const previous = {};
@@ -306,6 +309,64 @@ test('preparePluginChatContext prepends plugin identity and resolves stream flag
     false,
     'string false should not enable streaming'
   );
+});
+
+test('streamPluginResponse emits chunks and appends formatted tool calls', async () => {
+  const sent = [];
+  const ws = {
+    send(payload) {
+      sent.push(JSON.parse(payload));
+    },
+  };
+
+  async function* chunks() {
+    yield { type: 'content', content: 'Hel' };
+    yield { type: 'content', content: 'lo' };
+    yield {
+      type: 'tool_call',
+      toolCall: {
+        id: 'call-1',
+        name: 'render',
+        arguments: '{"ok":true}',
+      },
+    };
+    yield { type: 'done' };
+  }
+
+  const content = await pluginStreaming.streamPluginResponse({
+    ws,
+    chunks: chunks(),
+    messageId: 'assistant-1',
+    pauseThresholdMs: 60000,
+  });
+
+  assert.equal(
+    content,
+    'Hello\n\n---\n**🔧 Tool Calls:**\n\n**render** (`call-1`)\n```json\n{\n  "ok": true\n}\n```\n'
+  );
+  assert.deepEqual(
+    sent.map(message => message.type),
+    [
+      'assistant_chunk',
+      'assistant_chunk',
+      'tool_status',
+      'tool_status',
+      'assistant_chunk',
+    ]
+  );
+  assert.deepEqual(sent[0].data, {
+    content: 'Hel',
+    total: 'Hel',
+    done: false,
+    messageId: 'assistant-1',
+  });
+  assert.deepEqual(sent[2].data, {
+    toolCallId: 'tool-activity',
+    name: 'render',
+    phase: 'running',
+  });
+  assert.equal(sent[4].data.done, true);
+  assert.equal(sent[4].data.total, content);
 });
 
 test('plugin model routing requires an active plugin and the current user credentials', async () => {

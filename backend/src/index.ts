@@ -77,6 +77,7 @@ import chatGenerationService from './services/chatGenerationService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
 import { toOllamaMessages } from './utils/chatContext.js';
 import { preparePluginChatContext } from './utils/pluginChatContext.js';
+import { streamPluginResponse } from './utils/pluginStreaming.js';
 import {
   sendAssistantChunk,
   sendAssistantComplete,
@@ -957,114 +958,16 @@ wss.on('connection', (ws, req) => {
                 });
 
               if (shouldStream) {
-                // Real SSE streaming from plugin
-                let totalContent = '';
-                const toolCalls: Array<{
-                  id: string;
-                  name: string;
-                  arguments: string;
-                }> = [];
-
-                // Tool activity tracking — single indicator, reused ID
-                let pauseTimer: ReturnType<typeof setTimeout> | null = null;
-                const PAUSE_TOOL_ID = 'tool-activity';
-                let toolActivitySent = false;
-                const PAUSE_THRESHOLD_MS = 2000;
-
-                const sendPauseToolStatus = (phase: string) => {
-                  sendToolStatus(
-                    ws,
-                    {
-                      toolCallId: PAUSE_TOOL_ID,
-                      name: 'working',
-                      phase,
-                    },
-                    { ignoreClosedSocket: true }
-                  );
-                };
-
-                const startPauseDetection = () => {
-                  if (pauseTimer) clearTimeout(pauseTimer);
-                  pauseTimer = setTimeout(() => {
-                    if (!toolActivitySent) {
-                      toolActivitySent = true;
-                      sendPauseToolStatus('running');
-                    }
-                  }, PAUSE_THRESHOLD_MS);
-                };
-                startPauseDetection();
-
-                for await (const chunk of pluginService.executePluginStreamRequest(
-                  actualModelName,
-                  messagesForPlugin,
-                  mergedOptions,
-                  userId
-                )) {
-                  if (chunk.type === 'content' && chunk.content) {
-                    // Content arrived — clear the tool indicator
-                    if (toolActivitySent) {
-                      sendPauseToolStatus('done');
-                      toolActivitySent = false;
-                    }
-                    startPauseDetection();
-
-                    totalContent += chunk.content;
-                    sendAssistantChunk(ws, {
-                      content: chunk.content,
-                      total: totalContent,
-                      done: false,
-                      messageId: assistantMessageId,
-                    });
-                  } else if (chunk.type === 'tool_call' && chunk.toolCall) {
-                    toolCalls.push(chunk.toolCall);
-                    if (pauseTimer) clearTimeout(pauseTimer);
-                    toolActivitySent = true;
-                    // Send with real tool name but same stable ID
-                    sendToolStatus(
-                      ws,
-                      {
-                        toolCallId: PAUSE_TOOL_ID,
-                        name: chunk.toolCall.name,
-                        phase: 'running',
-                      },
-                      { ignoreClosedSocket: true }
-                    );
-                  } else if (chunk.type === 'done') {
-                    if (pauseTimer) clearTimeout(pauseTimer);
-                    if (toolActivitySent) {
-                      sendPauseToolStatus('done');
-                      toolActivitySent = false;
-                    }
-                    // Append tool call info to content if present
-                    if (toolCalls.length > 0) {
-                      let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
-                      for (const tc of toolCalls) {
-                        let argsFormatted = tc.arguments;
-                        try {
-                          argsFormatted = JSON.stringify(
-                            JSON.parse(tc.arguments),
-                            null,
-                            2
-                          );
-                        } catch {
-                          /* keep raw */
-                        }
-                        toolContent += `\n**${tc.name}** (\`${tc.id}\`)\n\`\`\`json\n${argsFormatted}\n\`\`\`\n`;
-                      }
-                      totalContent += toolContent;
-                    }
-
-                    // Send final chunk
-                    sendAssistantChunk(ws, {
-                      content: '',
-                      total: totalContent,
-                      done: true,
-                      messageId: assistantMessageId,
-                    });
-                  }
-                }
-
-                assistantContent = totalContent;
+                assistantContent = await streamPluginResponse({
+                  ws,
+                  chunks: pluginService.executePluginStreamRequest(
+                    actualModelName,
+                    messagesForPlugin,
+                    mergedOptions,
+                    userId
+                  ),
+                  messageId: assistantMessageId,
+                });
               } else {
                 const generationResult =
                   await chatGenerationService.executeNonStreaming({

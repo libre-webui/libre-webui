@@ -36,7 +36,7 @@ type PluginMessageWithExtensions = {
   tool_calls?: unknown;
 };
 
-function formatToolArguments(args: string): string {
+export function formatPluginToolArguments(args: string): string {
   try {
     return JSON.stringify(JSON.parse(args), null, 2);
   } catch {
@@ -83,7 +83,7 @@ export function formatPluginToolCalls(toolCalls: unknown): string {
   for (const toolCall of toolCalls as ToolCall[]) {
     const name = toolCall.function?.name || 'unknown';
     const id = toolCall.id || '';
-    const args = formatToolArguments(toolCall.function?.arguments || '');
+    const args = formatPluginToolArguments(toolCall.function?.arguments || '');
     toolContent += `\n**${name}** (\`${id}\`)\n\`\`\`json\n${args}\n\`\`\`\n`;
   }
 
