@@ -53,14 +53,13 @@ import {
   KeyboardShortcutsModal,
   KeyboardShortcutsIndicator,
 } from '@/components/KeyboardShortcuts';
-import { SettingsModal } from '@/components/SettingsModal';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
-import { ArtifactSlideOutPanel } from '@/components/ArtifactSlideOutPanel';
 import { Logo } from '@/components/Logo';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useInitializeApp } from '@/hooks/useInitializeApp';
+import { UserService } from '@/services/userService';
 import {
   useKeyboardShortcuts,
   KeyboardShortcut,
@@ -81,6 +80,16 @@ const UserManagementPage = React.lazy(
   () => import('@/pages/UserManagementPage')
 );
 const ArtifactDemoPage = React.lazy(() => import('@/pages/ArtifactDemoPage'));
+const SettingsModal = React.lazy(() =>
+  import('@/components/SettingsModal').then(module => ({
+    default: module.SettingsModal,
+  }))
+);
+const ArtifactSlideOutPanel = React.lazy(() =>
+  import('@/components/ArtifactSlideOutPanel').then(module => ({
+    default: module.ArtifactSlideOutPanel,
+  }))
+);
 
 // Import LoginPage directly (not lazy) to avoid suspense issues during auth redirects
 import { LoginPage } from '@/pages/LoginPage';
@@ -158,6 +167,7 @@ const App: React.FC = () => {
     toggleTheme,
     backgroundImage,
     preferences,
+    artifactPanelOpen,
   } = useAppStore();
   const {
     systemInfo,
@@ -328,7 +338,6 @@ const App: React.FC = () => {
         setRetryCount(c => c + 1);
         try {
           // Re-run auth initialization to check if backend is now available
-          const { UserService } = await import('@/services/userService');
           await UserService.initializeAuth();
         } catch {
           // Will retry on next interval
@@ -562,10 +571,14 @@ const App: React.FC = () => {
         )}
 
         {/* Modals */}
-        <SettingsModal
-          isOpen={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
-        />
+        {settingsOpen && (
+          <Suspense fallback={null}>
+            <SettingsModal
+              isOpen={settingsOpen}
+              onClose={() => setSettingsOpen(false)}
+            />
+          </Suspense>
+        )}
 
         <KeyboardShortcutsModal
           isOpen={shortcutsOpen}
@@ -579,7 +592,11 @@ const App: React.FC = () => {
         />
 
         {/* Artifact slide-out panel */}
-        <ArtifactSlideOutPanel />
+        {artifactPanelOpen && (
+          <Suspense fallback={null}>
+            <ArtifactSlideOutPanel />
+          </Suspense>
+        )}
 
         <Toaster
           position='top-right'

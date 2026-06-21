@@ -37,7 +37,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { SettingsModal } from '@/components/SettingsModal';
 import { AvatarUpload } from '@/components/AvatarUpload';
 import { Logo } from '@/components/Logo';
 import { useChatStore } from '@/store/chatStore';
@@ -50,6 +49,11 @@ import { toast } from 'react-hot-toast';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('components:sidebar');
+const SettingsModal = React.lazy(() =>
+  import('@/components/SettingsModal').then(module => ({
+    default: module.SettingsModal,
+  }))
+);
 
 interface SidebarProps {
   isOpen: boolean;
@@ -961,10 +965,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
+      {settingsOpen && (
+        <React.Suspense fallback={null}>
+          <SettingsModal
+            isOpen={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+          />
+        </React.Suspense>
+      )}
 
       {/* Avatar Upload Modal */}
       {showAvatarModal &&

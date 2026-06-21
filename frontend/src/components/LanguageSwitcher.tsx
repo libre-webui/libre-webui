@@ -18,14 +18,18 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Globe } from 'lucide-react';
-import { supportedLanguages } from '@/i18n';
+import {
+  changeAppLanguage,
+  normalizeLanguageCode,
+  supportedLanguages,
+} from '@/i18n';
 
 export const LanguageSwitcher: React.FC = () => {
   const { t, i18n } = useTranslation();
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newLang = e.target.value;
-    i18n.changeLanguage(newLang);
+    void changeAppLanguage(newLang);
   };
 
   return (
@@ -40,7 +44,8 @@ export const LanguageSwitcher: React.FC = () => {
         {t('settings.appearance.language.description')}
       </p>
       <select
-        value={i18n.language}
+        data-testid='language-switcher-select'
+        value={normalizeLanguageCode(i18n.language)}
         onChange={handleLanguageChange}
         className='w-full px-3 py-2 text-sm border border-gray-200 dark:border-dark-300 rounded-lg bg-white dark:bg-dark-100 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500'
       >
