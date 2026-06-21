@@ -60,6 +60,43 @@ export const useChat = (sessionId: string) => {
   // Store update batching with debounced timer approach
   const lastStoreUpdate = useRef<number>(0);
   const storeUpdateTimer = useRef<NodeJS.Timeout>();
+  const streamingFrameRef = useRef<number | null>(null);
+  const pendingStreamingContentRef = useRef<string>('');
+
+  const cancelQueuedStreamingFrame = useCallback(() => {
+    if (streamingFrameRef.current !== null && typeof window !== 'undefined') {
+      window.cancelAnimationFrame(streamingFrameRef.current);
+    }
+    streamingFrameRef.current = null;
+  }, []);
+
+  const publishStreamingMessage = useCallback(
+    (content: string, immediate = false) => {
+      pendingStreamingContentRef.current = content;
+
+      if (immediate || typeof window === 'undefined') {
+        cancelQueuedStreamingFrame();
+        setStreamingMessage(content);
+        return;
+      }
+
+      if (streamingFrameRef.current !== null) {
+        return;
+      }
+
+      streamingFrameRef.current = window.requestAnimationFrame(() => {
+        streamingFrameRef.current = null;
+        setStreamingMessage(pendingStreamingContentRef.current);
+      });
+    },
+    [cancelQueuedStreamingFrame]
+  );
+
+  const resetVisibleStreamingMessage = useCallback(() => {
+    cancelQueuedStreamingFrame();
+    pendingStreamingContentRef.current = '';
+    setStreamingMessage('');
+  }, [cancelQueuedStreamingFrame]);
 
   const clearQueuedTitleGeneration = useCallback(() => {
     firstUserMessageRef.current = null;
@@ -161,7 +198,7 @@ export const useChat = (sessionId: string) => {
       if (messageId) {
         // Always update the content buffer and UI immediately for responsive streaming
         streamingContentRef.current = chunkData.total;
-        setStreamingMessage(chunkData.total);
+        publishStreamingMessage(chunkData.total, chunkData.done);
 
         // Debounced store updates - only update when streaming slows down or finishes
         if (storeUpdateTimer.current) {
@@ -228,7 +265,7 @@ export const useChat = (sessionId: string) => {
 
       // Clear streaming state immediately for better UX
       setIsStreaming(false);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
       setIsGenerating(false);
       setToolActivities([]);
 
@@ -268,7 +305,7 @@ export const useChat = (sessionId: string) => {
         sessionId?: string;
       };
       setIsStreaming(false);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
       setIsGenerating(false);
       streamingMessageIdRef.current = null;
 
@@ -289,7 +326,7 @@ export const useChat = (sessionId: string) => {
     // Using a function to avoid setState-in-effect linting error
     const resetStreamingState = () => {
       setIsStreaming(false);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
       streamingMessageIdRef.current = null;
     };
     resetStreamingState();
@@ -299,12 +336,16 @@ export const useChat = (sessionId: string) => {
       if (storeUpdateTimer.current) {
         clearTimeout(storeUpdateTimer.current);
       }
+      cancelQueuedStreamingFrame();
     };
   }, [
     sessionId,
     updateMessage,
     updateMessageWithStatistics,
     setIsGenerating,
+    publishStreamingMessage,
+    resetVisibleStreamingMessage,
+    cancelQueuedStreamingFrame,
     maybeGenerateTitle,
     clearQueuedTitleGeneration,
   ]);
@@ -322,7 +363,7 @@ export const useChat = (sessionId: string) => {
       try {
         setIsGenerating(true);
         setIsStreaming(true);
-        setStreamingMessage('');
+        resetVisibleStreamingMessage();
 
         // Reset batching timers for new stream
         if (storeUpdateTimer.current) {
@@ -376,7 +417,7 @@ export const useChat = (sessionId: string) => {
           window.setTimeout(() => {
             updateMessage(sessionId, assistantMessageId, demoResponse);
             setIsStreaming(false);
-            setStreamingMessage('');
+            resetVisibleStreamingMessage();
             setStreamingMessageId(null);
             setIsGenerating(false);
             maybeGenerateTitle(sessionId);
@@ -420,7 +461,7 @@ export const useChat = (sessionId: string) => {
       } catch (error: unknown) {
         logger.error('Failed to send message:', error);
         setIsStreaming(false);
-        setStreamingMessage('');
+        resetVisibleStreamingMessage();
         setStreamingMessageId(null);
         setIsGenerating(false);
         streamingMessageIdRef.current = null;
@@ -432,6 +473,7 @@ export const useChat = (sessionId: string) => {
       addMessage,
       updateMessage,
       setIsGenerating,
+      resetVisibleStreamingMessage,
       maybeGenerateTitle,
       preferences.generationOptions,
     ]
@@ -439,13 +481,13 @@ export const useChat = (sessionId: string) => {
 
   const stopGeneration = useCallback(() => {
     setIsStreaming(false);
-    setStreamingMessage('');
+    resetVisibleStreamingMessage();
     setStreamingMessageId(null);
     setIsGenerating(false);
     streamingMessageIdRef.current = null;
     // Note: WebSocket connection doesn't have a built-in stop mechanism
     // You might want to implement this on the backend
-  }, [setIsGenerating]);
+  }, [setIsGenerating, resetVisibleStreamingMessage]);
 
   // Regenerate the last assistant message (creates a new branch)
   const regenerateLastMessage = useCallback(async () => {
@@ -486,7 +528,7 @@ export const useChat = (sessionId: string) => {
     try {
       setIsGenerating(true);
       setIsStreaming(true);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
 
       // Reset batching timers for new stream
       if (storeUpdateTimer.current) {
@@ -531,12 +573,19 @@ export const useChat = (sessionId: string) => {
     } catch (error: unknown) {
       logger.error('Failed to regenerate message:', error);
       setIsStreaming(false);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
+      setStreamingMessageId(null);
       setIsGenerating(false);
       streamingMessageIdRef.current = null;
       toast.error('Failed to regenerate message');
     }
-  }, [sessionId, setIsGenerating, addMessage, preferences.generationOptions]);
+  }, [
+    sessionId,
+    setIsGenerating,
+    resetVisibleStreamingMessage,
+    addMessage,
+    preferences.generationOptions,
+  ]);
 
   // Select a specific branch by message ID (for side-by-side UI)
   const selectBranch = useCallback(

@@ -17,13 +17,18 @@
 
 import React from 'react';
 import { cn } from '@/utils';
-import { shouldUseRichMarkdown } from './messageContentUtils';
+import {
+  shouldUseRichMarkdown,
+  shouldUseStreamingCodeRenderer,
+} from './messageContentUtils';
+import { StreamingMessageContent } from './StreamingMessageContent';
 
 const RichMessageContent = React.lazy(() => import('./RichMessageContent'));
 
 interface MessageContentProps {
   content: string;
   className?: string;
+  isStreaming?: boolean;
 }
 
 function PlainMessageContent({
@@ -48,7 +53,12 @@ function PlainMessageContent({
 export const MessageContent: React.FC<MessageContentProps> = ({
   content,
   className,
+  isStreaming = false,
 }) => {
+  if (isStreaming && shouldUseStreamingCodeRenderer(content)) {
+    return <StreamingMessageContent content={content} className={className} />;
+  }
+
   if (!shouldUseRichMarkdown(content)) {
     return <PlainMessageContent content={content} className={className} />;
   }

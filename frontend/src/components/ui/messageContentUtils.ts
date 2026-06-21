@@ -34,8 +34,78 @@ const richMarkdownPatterns = [
   /(^|[^$])\$[^$\n]+\$/,
 ];
 
+export interface StreamingMarkdownTextSegment {
+  type: 'text';
+  content: string;
+}
+
+export interface StreamingMarkdownCodeSegment {
+  type: 'code';
+  content: string;
+  language: string | null;
+  complete: boolean;
+}
+
+export type StreamingMarkdownSegment =
+  | StreamingMarkdownTextSegment
+  | StreamingMarkdownCodeSegment;
+
 export function shouldUseRichMarkdown(content: string): boolean {
   return richMarkdownPatterns.some(pattern => pattern.test(content));
+}
+
+export function shouldUseStreamingCodeRenderer(content: string): boolean {
+  return content.includes('```');
+}
+
+export function getStreamingMarkdownSegments(
+  content: string
+): StreamingMarkdownSegment[] {
+  const segments: StreamingMarkdownSegment[] = [];
+  const openingFencePattern = /^```([^\n\r]*)\r?\n?/gm;
+  let cursor = 0;
+  let openingFence: RegExpExecArray | null;
+
+  while ((openingFence = openingFencePattern.exec(content))) {
+    const textBeforeFence = content.slice(cursor, openingFence.index);
+    if (textBeforeFence) {
+      segments.push({ type: 'text', content: textBeforeFence });
+    }
+
+    const language = openingFence[1].trim().split(/\s+/)[0] || null;
+    const codeStart = openingFencePattern.lastIndex;
+    const closingFencePattern = /^```\s*(?:\r?\n|$)/gm;
+    closingFencePattern.lastIndex = codeStart;
+    const closingFence = closingFencePattern.exec(content);
+
+    if (!closingFence) {
+      segments.push({
+        type: 'code',
+        language,
+        content: content.slice(codeStart),
+        complete: false,
+      });
+      cursor = content.length;
+      break;
+    }
+
+    segments.push({
+      type: 'code',
+      language,
+      content: content.slice(codeStart, closingFence.index),
+      complete: true,
+    });
+
+    cursor = closingFencePattern.lastIndex;
+    openingFencePattern.lastIndex = cursor;
+  }
+
+  const textAfterLastFence = content.slice(cursor);
+  if (textAfterLastFence || segments.length === 0) {
+    segments.push({ type: 'text', content: textAfterLastFence });
+  }
+
+  return segments;
 }
 
 export function preprocessLaTeX(content: string): string {

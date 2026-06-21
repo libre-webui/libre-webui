@@ -516,8 +516,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     )}
                   </div>
                 )}
-                <MessageContent content={parsedContent} />
-                {isStreaming && (
+                <MessageContent
+                  content={parsedContent}
+                  isStreaming={isStreaming}
+                />
+                {isStreaming && !parsedContent.includes('```') && (
                   <div className='inline-block w-2 h-5 bg-primary-500 animate-pulse ml-1 rounded-sm' />
                 )}
               </div>
