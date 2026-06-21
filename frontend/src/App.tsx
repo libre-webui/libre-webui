@@ -90,10 +90,14 @@ const ArtifactSlideOutPanel = React.lazy(() =>
     default: module.ArtifactSlideOutPanel,
   }))
 );
+const FirstTimeSetup = React.lazy(() =>
+  import('@/components/FirstTimeSetup').then(module => ({
+    default: module.FirstTimeSetup,
+  }))
+);
 
 // Import LoginPage directly (not lazy) to avoid suspense issues during auth redirects
 import { LoginPage } from '@/pages/LoginPage';
-import { FirstTimeSetup } from '@/components/FirstTimeSetup';
 
 // Loading component
 const PageLoader = () => {
@@ -395,11 +399,13 @@ const App: React.FC = () => {
   if (inFirstTimeSetup && !setupComplete) {
     return (
       <ErrorBoundary>
-        <FirstTimeSetup
-          onComplete={() => {
-            setSetupComplete(true);
-          }}
-        />
+        <Suspense fallback={<PageLoader />}>
+          <FirstTimeSetup
+            onComplete={() => {
+              setSetupComplete(true);
+            }}
+          />
+        </Suspense>
       </ErrorBoundary>
     );
   }
