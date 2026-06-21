@@ -29,6 +29,8 @@
     "build:backend": "cd backend && npm run build",
     "test:package": "npm run build && node --test scripts/test-chat-context.mjs && node --test scripts/test-package-layout.mjs",
     "test:e2e": "npm run e2e --workspace=frontend",
+    "security:audit": "npm audit --audit-level=moderate",
+    "release:check": "npm run format:check && npm run lint && npm run security:audit && npm run test:package && npm run npm:publish:dry-run",
     "start": "cd backend && npm start",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "format": "node scripts/add-headers.js && prettier --write \"frontend/src/**/*.{ts,tsx,js,jsx,json,css,md}\" \"frontend/e2e/**/*.{ts,tsx,js,jsx,json,md}\" \"frontend/playwright.config.ts\" \"backend/src/**/*.{ts,js,json,md}\" \"*.{json,md,yml,yaml}\" \".github/**/*.{yml,yaml}\"",
@@ -62,6 +64,7 @@
     "electron:pack": "electron-builder --dir",
     "generate-icons": "node scripts/generate-icons.js",
     "prepublishOnly": "npm run build",
+    "npm:publish:dry-run": "npm publish --dry-run --access public",
     "npm:publish": "npm publish --access public"
   },
   "repository": {
