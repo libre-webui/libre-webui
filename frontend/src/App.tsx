@@ -429,6 +429,7 @@ const App: React.FC = () => {
               compact={sidebarCompact}
             />
             <div
+              data-testid='app-shell-content'
               className={cn(
                 'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-300 ease-in-out relative z-10',
                 // Mobile behavior:
@@ -493,6 +494,7 @@ const App: React.FC = () => {
                       compact={sidebarCompact}
                     />
                     <div
+                      data-testid='app-shell-content'
                       className={cn(
                         'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-300 ease-in-out relative z-10',
                         // Mobile behavior:

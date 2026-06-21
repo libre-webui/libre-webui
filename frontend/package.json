@@ -8,10 +8,11 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "e2e": "playwright test",
     "type-check": "tsc --noEmit",
-    "lint": "eslint src/ --ext .ts,.tsx,.js,.jsx --max-warnings 100",
-    "lint:fix": "eslint src/ --ext .ts,.tsx,.js,.jsx --fix",
-    "lint:strict": "eslint src/ --ext .ts,.tsx,.js,.jsx --max-warnings 0"
+    "lint": "eslint src/ e2e/ playwright.config.ts --ext .ts,.tsx,.js,.jsx --max-warnings 100",
+    "lint:fix": "eslint src/ e2e/ playwright.config.ts --ext .ts,.tsx,.js,.jsx --fix",
+    "lint:strict": "eslint src/ e2e/ playwright.config.ts --ext .ts,.tsx,.js,.jsx --max-warnings 0"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.0",
@@ -41,6 +42,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.61.0",
     "@types/node": "^25.9.2",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",

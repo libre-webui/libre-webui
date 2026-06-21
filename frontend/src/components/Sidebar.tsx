@@ -257,6 +257,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Sidebar */}
       <div
         ref={sidebarRef}
+        data-testid='sidebar'
         className={cn(
           'fixed inset-y-0 left-0 z-50 border-r border-gray-200 dark:border-dark-200 transform transition-all duration-300 ease-in-out shadow-xl',
           // Dynamic width based on compact mode and responsive design

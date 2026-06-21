@@ -62,6 +62,10 @@ data.sqlite
 # TypeScript
 *.tsbuildinfo
 
+# Playwright
+test-results/
+playwright-report/
+
 # Optional npm cache directory
 .npm
 

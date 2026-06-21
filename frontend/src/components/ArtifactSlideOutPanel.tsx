@@ -458,6 +458,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       {/* Panel */}
       <div
         ref={panelRef}
+        data-testid='artifact-slide-out-panel'
         style={{ width: effectiveWidth }}
         className={cn(
           'fixed top-0 right-0 h-full z-50',
@@ -472,6 +473,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         {!isMobile && (
           <div
             onPointerDown={handleResizeStart}
+            data-testid='artifact-resize-handle'
             className={cn(
               'absolute left-0 top-0 bottom-0 w-4 -ml-2 cursor-col-resize z-[56]',
               'flex items-center justify-center',

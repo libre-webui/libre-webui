@@ -1062,6 +1062,7 @@ export const ModelManager: React.FC = () => {
                   return (
                     <div
                       key={model.name}
+                      data-testid={`library-model-card-${model.name}`}
                       className={cn(
                         'p-4 rounded-lg border transition-all',
                         'bg-gray-50 dark:bg-dark-50',
@@ -1136,6 +1137,7 @@ export const ModelManager: React.FC = () => {
                         </div>
 
                         <Button
+                          data-testid={`library-model-pull-${model.name}`}
                           onClick={() => {
                             // Open the pull section so user can see progress
                             if (!expandedSections.has('pull')) {
