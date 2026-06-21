@@ -16,11 +16,24 @@
  */
 
 import React from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import {
-  oneDark,
-  oneLight,
-} from 'react-syntax-highlighter/dist/esm/styles/prism';
+import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/prism-light';
+import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash';
+import c from 'react-syntax-highlighter/dist/esm/languages/prism/c';
+import cpp from 'react-syntax-highlighter/dist/esm/languages/prism/cpp';
+import css from 'react-syntax-highlighter/dist/esm/languages/prism/css';
+import diff from 'react-syntax-highlighter/dist/esm/languages/prism/diff';
+import java from 'react-syntax-highlighter/dist/esm/languages/prism/java';
+import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
+import json from 'react-syntax-highlighter/dist/esm/languages/prism/json';
+import jsx from 'react-syntax-highlighter/dist/esm/languages/prism/jsx';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown';
+import markup from 'react-syntax-highlighter/dist/esm/languages/prism/markup';
+import python from 'react-syntax-highlighter/dist/esm/languages/prism/python';
+import shellSession from 'react-syntax-highlighter/dist/esm/languages/prism/shell-session';
+import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
+import oneDark from 'react-syntax-highlighter/dist/esm/styles/prism/one-dark';
+import oneLight from 'react-syntax-highlighter/dist/esm/styles/prism/one-light';
 
 interface OptimizedSyntaxHighlighterProps {
   children: string;
@@ -35,25 +48,40 @@ const languageMap: Record<string, string> = {
   py: 'python',
   sh: 'bash',
   shell: 'bash',
-  c: 'cpp',
+  zsh: 'bash',
+  terminal: 'shell-session',
+  console: 'shell-session',
+  html: 'markup',
+  xml: 'markup',
+  svg: 'markup',
   'c++': 'cpp',
 };
 
-// Only support essential languages to reduce bundle size
-const supportedLanguages = [
-  'javascript',
-  'typescript',
-  'python',
-  'java',
-  'cpp',
-  'bash',
-  'json',
-  'markdown',
-  'css',
-  'html',
-  'jsx', // Added for React components
-  'xml', // Added for SVG
-];
+const registeredLanguages = {
+  bash,
+  c,
+  cpp,
+  css,
+  diff,
+  java,
+  javascript,
+  json,
+  jsx,
+  markdown,
+  markup,
+  python,
+  'shell-session': shellSession,
+  tsx,
+  typescript,
+};
+
+Object.entries(registeredLanguages).forEach(([language, grammar]) => {
+  SyntaxHighlighter.registerLanguage(language, grammar);
+});
+
+SyntaxHighlighter.alias('markup', ['html', 'xml', 'svg']);
+
+const supportedLanguages = new Set(Object.keys(registeredLanguages));
 
 export const OptimizedSyntaxHighlighter: React.FC<
   OptimizedSyntaxHighlighterProps
@@ -61,7 +89,7 @@ export const OptimizedSyntaxHighlighter: React.FC<
   const normalizedLanguage =
     languageMap[language.toLowerCase()] || language.toLowerCase();
 
-  if (!supportedLanguages.includes(normalizedLanguage)) {
+  if (!supportedLanguages.has(normalizedLanguage)) {
     return (
       <pre
         className={`bg-gray-100 dark:bg-dark-200 p-3 rounded-lg overflow-x-auto text-sm font-mono ${className}`}
