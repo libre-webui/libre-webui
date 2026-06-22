@@ -101,13 +101,72 @@ function sanitizeHtmlText(text: string): string {
     return tempDiv.textContent || tempDiv.innerText || '';
   }
 
-  return text
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+  return stripHtmlTagsFromText(decodeBasicHtmlEntities(text));
+}
+
+function decodeBasicHtmlEntities(text: string): string {
+  const decoded = text.replace(
+    /&(lt|gt|quot|apos|#39);/gi,
+    (_match, entity: string) => {
+      switch (entity.toLowerCase()) {
+        case 'lt':
+          return '<';
+        case 'gt':
+          return '>';
+        case 'quot':
+          return '"';
+        case 'apos':
+        case '#39':
+          return "'";
+        default:
+          return '';
+      }
+    }
+  );
+
+  return decoded.replace(/&amp;/gi, '&');
+}
+
+function stripHtmlTagsFromText(text: string): string {
+  let result = '';
+  let insideTag = false;
+  let tagQuote: '"' | "'" | null = null;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+
+    if (insideTag) {
+      if (tagQuote) {
+        if (char === tagQuote) {
+          tagQuote = null;
+        }
+        continue;
+      }
+
+      if (char === '"' || char === "'") {
+        tagQuote = char;
+        continue;
+      }
+
+      if (char === '>') {
+        insideTag = false;
+      }
+
+      continue;
+    }
+
+    if (char === '<') {
+      const nextChar = text[index + 1];
+      if (nextChar && /[!/A-Za-z?]/.test(nextChar)) {
+        insideTag = true;
+        continue;
+      }
+    }
+
+    result += char;
+  }
+
+  return result;
 }
 
 /**

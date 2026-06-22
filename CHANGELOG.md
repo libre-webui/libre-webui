@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
+- Hardened artifact title text extraction to avoid unsafe HTML double-unescaping and incomplete tag sanitization paths flagged by CodeQL.
+
 ### 📚 Documentation
 
 ## [0.11.0] - 2026-06-22
