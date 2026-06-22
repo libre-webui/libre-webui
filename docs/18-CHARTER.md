@@ -1,7 +1,7 @@
 ---
 sidebar_position: 18
-title: "Community Charter"
-description: "The foundational principles, governance model, and ethical guidelines for Libre WebUI"
+title: 'Community Charter'
+description: 'The foundational principles, governance model, and ethical guidelines for Libre WebUI'
 slug: /CHARTER
 keywords: [charter, governance, community, ethics, open source, privacy]
 ---
@@ -64,23 +64,23 @@ Kroonen AI offers **commercial support and services** for organizations deployin
 
 ### Available Services
 
-| Service                    | Description                                                                               |
-| -------------------------- | ----------------------------------------------------------------------------------------- |
-| **Custom Deployment**      | On-premise installation, Kubernetes/Docker configuration, and infrastructure optimization |
-| **SLA-Backed Support**     | Guaranteed response times, dedicated support channels, and priority issue resolution      |
-| **Custom Development**     | Feature development, API integrations, white-labeling, and custom model integrations      |
-| **Training & Onboarding**  | Team workshops, documentation customization, and admin training                           |
-| **Security & Compliance**  | Security audits, penetration testing, and compliance documentation (GDPR, HIPAA, SOC 2)   |
-| **Air-Gapped Deployments** | Fully offline installations for high-security environments                                |
+| Service                    | Description                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Custom Deployment**      | On-premise installation, Kubernetes/Docker configuration, and infrastructure optimization              |
+| **SLA-Backed Support**     | Guaranteed response times, dedicated support channels, and priority issue resolution                   |
+| **Custom Development**     | Feature development, API integrations, white-labeling, and custom model integrations                   |
+| **Training & Onboarding**  | Team workshops, documentation customization, and admin training                                        |
+| **Security & Compliance**  | Security reviews, penetration testing support, and deployment documentation for regulated environments |
+| **Air-Gapped Deployments** | Fully offline installations for high-security environments                                             |
 
-### Compliance-Ready Architecture
+### Regulated Deployments
 
-Libre WebUI's local-first, zero-telemetry design is inherently suited for regulated industries:
+Libre WebUI's local-first, zero-telemetry design can help organizations build deployments for regulated environments, but compliance depends on the full deployment, policies, controls, and audit process:
 
-- **GDPR**: No personal data leaves your infrastructure
-- **HIPAA**: Zero external data transmission; suitable for PHI workflows with proper deployment
-- **SOC 2**: Auditable, self-hosted architecture with full access control
-- **FedRAMP/IL environments**: Air-gapped deployment options available
+- Data can stay inside your infrastructure when using local models and self-hosted storage.
+- Remote providers are optional and should be reviewed under your own data-processing requirements.
+- Air-gapped and private-network deployments are supported by the self-hosted architecture.
+- Enterprise services can help document controls and prepare security evidence, but Libre WebUI itself is not a certification.
 
 ### Contact
 

@@ -21,6 +21,9 @@ import { Volume2, VolumeX, Loader2, Square } from 'lucide-react';
 import { ttsApi, TTSModel } from '@/utils/api';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:ttsbutton');
 
 // Module-level cache for TTS models to avoid repeated API calls
 let cachedModels: TTSModel[] | null = null;
@@ -236,7 +239,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
 
           if (!audioData) {
             // Skip this sentence if generation failed
-            console.warn(
+            logger.warn(
               `Failed to generate audio for sentence ${i + 1}, skipping`
             );
             continue;
@@ -264,7 +267,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
             });
           });
         } catch (err) {
-          console.error(`Error playing sentence ${i + 1}:`, err);
+          logger.error(`Error playing sentence ${i + 1}:`, err);
           // Continue to next sentence
         }
       }
@@ -350,7 +353,7 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
       const errorMessage =
         err instanceof Error ? err.message : t('ttsButton.generateFailed');
       setError(errorMessage);
-      console.error('TTS error:', err);
+      logger.error('TTS error:', err);
       setIsPlaying(false);
       setIsLoading(false);
     }

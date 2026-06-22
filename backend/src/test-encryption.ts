@@ -16,70 +16,73 @@
  */
 
 import { encryptionService } from './services/encryptionService.js';
+import { createLogger } from './utils/logger.js';
+
+const logger = createLogger('encryption-test');
 
 try {
-  console.log('🔐 Testing Database Encryption Service');
-  console.log('=====================================');
+  logger.info('Testing Database Encryption Service');
+  logger.info('=====================================');
 
   // Test basic encryption/decryption
   const testData = 'Hello, this is sensitive data!';
-  console.log('Original:', testData);
+  logger.info('Original:', testData);
 
   const encrypted = encryptionService.encrypt(testData);
-  console.log('Encrypted:', encrypted);
+  logger.info('Encrypted:', encrypted);
 
   const decrypted = encryptionService.decrypt(encrypted);
-  console.log('Decrypted:', decrypted);
+  logger.info('Decrypted:', decrypted);
 
-  console.log(
-    '✅ Basic encryption test:',
+  logger.info(
+    'Basic encryption test:',
     testData === decrypted ? 'PASSED' : 'FAILED'
   );
 
   // Test object encryption
   const testObject = {
     message: 'Secret message',
-    artifacts: [{ type: 'code', content: 'console.log("secret");' }],
+    artifacts: [{ type: 'code', content: 'logger.debug("secret");' }],
     images: [
       'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
     ],
     statistics: { tokens: 150, duration: 1200 },
   };
 
-  console.log('\n📦 Testing Object Encryption');
-  console.log('Original object:', JSON.stringify(testObject, null, 2));
+  logger.info('Testing object encryption');
+  logger.info('Original object:', JSON.stringify(testObject, null, 2));
 
   const encryptedObject = encryptionService.encryptObject(testObject);
-  console.log('Encrypted object:', encryptedObject);
+  logger.info('Encrypted object:', encryptedObject);
 
   const decryptedObject = encryptionService.decryptObject(encryptedObject);
-  console.log('Decrypted object:', JSON.stringify(decryptedObject, null, 2));
+  logger.info('Decrypted object:', JSON.stringify(decryptedObject, null, 2));
 
-  console.log(
-    '✅ Object encryption test:',
+  logger.info(
+    'Object encryption test:',
     JSON.stringify(testObject) === JSON.stringify(decryptedObject)
       ? 'PASSED'
       : 'FAILED'
   );
 
   // Test empty/null values
-  console.log('\n🔍 Testing Edge Cases');
+  logger.info('Testing edge cases');
   try {
     const nullTest = encryptionService.encrypt('');
     const nullDecrypted = encryptionService.decrypt(nullTest);
-    console.log(
-      '✅ Empty string test:',
+    logger.info(
+      'Empty string test:',
       nullDecrypted === '' ? 'PASSED' : 'FAILED'
     );
   } catch (error) {
-    console.log('❌ Empty string test: FAILED -', (error as Error).message);
+    logger.error('Empty string test failed:', (error as Error).message);
   }
 
-  console.log('\n🎉 Encryption service is ready for production!');
-  console.log(
+  logger.info('Encryption service is ready for production');
+  logger.info(
     'All sensitive data will be encrypted before storage in the database.'
   );
 } catch (error) {
-  console.error('❌ Error running encryption tests:', error);
+  logger.error('Error running encryption tests:', error);
   process.exit(1);
 }

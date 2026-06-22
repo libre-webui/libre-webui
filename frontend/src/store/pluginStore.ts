@@ -18,6 +18,9 @@
 import { create } from 'zustand';
 import { Plugin, PluginStatus } from '@/types';
 import { pluginApi, PluginVariableValue } from '@/utils/api';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('store:plugin-store');
 
 interface PluginState {
   // Plugin data
@@ -216,7 +219,7 @@ export const usePluginStore = create<PluginState>((set, get) => ({
         set({ pluginStatus: response.data });
       }
     } catch (error) {
-      console.error('Failed to load plugin status:', error);
+      logger.error('Failed to load plugin status:', error);
     }
   },
 
@@ -257,7 +260,7 @@ export const usePluginStore = create<PluginState>((set, get) => ({
         }));
       }
     } catch (error) {
-      console.error('Failed to fetch plugin variables:', error);
+      logger.error('Failed to fetch plugin variables:', error);
     }
   },
 
@@ -273,7 +276,7 @@ export const usePluginStore = create<PluginState>((set, get) => ({
       }
       return false;
     } catch (error) {
-      console.error('Failed to update plugin variables:', error);
+      logger.error('Failed to update plugin variables:', error);
       return false;
     }
   },
@@ -289,7 +292,7 @@ export const usePluginStore = create<PluginState>((set, get) => ({
         });
       }
     } catch (error) {
-      console.error('Failed to reset plugin variables:', error);
+      logger.error('Failed to reset plugin variables:', error);
     }
   },
 

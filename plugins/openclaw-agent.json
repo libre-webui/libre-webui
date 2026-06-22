@@ -18,7 +18,7 @@
       "name": "session_mode",
       "type": "boolean",
       "label": "Session Mode",
-      "description": "When enabled, messages are sent through a persistent OpenClaw agent session via WebSocket. This gives the agent access to all tools (exec, web search, file ops, browser, etc.), memory, and workspace. When disabled, uses stateless HTTP completions.",
+      "description": "When enabled, requests include an OpenClaw session key so the gateway can route messages through a persistent agent session. When disabled, requests use stateless HTTP completions.",
       "default": true
     },
     {

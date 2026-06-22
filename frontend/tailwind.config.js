@@ -18,7 +18,7 @@ export default {
         xs: '475px',
       },
       colors: {
-        // Runtime accent scale — defaults to violet and can be changed in Appearance.
+        // Runtime accent scale — defaults to blue and can be changed in Appearance.
         primary: variableAccent('primary'),
         accent: variableAccent('accent'),
         // Cool neutrals — DESIGN.md neutral hierarchy.

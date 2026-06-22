@@ -21,6 +21,9 @@ import {
   GenerationOptions,
   EmbeddingSettings,
 } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:preferences-service');
 
 // Export data format interface
 interface ExportData {
@@ -35,7 +38,7 @@ interface ExportData {
 class PreferencesService {
   private defaultPreferences: UserPreferences = {
     defaultModel: '',
-    theme: { mode: 'light', accent: 'violet', customAccent: '#7c3aed' },
+    theme: { mode: 'light', accent: 'blue', customAccent: '#2563eb' },
     systemMessage: 'You are a helpful assistant.',
     generationOptions: {
       // Core parameters
@@ -93,12 +96,12 @@ class PreferencesService {
       if (!preferences) {
         // Create default preferences for this user if none exist
         storageService.savePreferences(this.defaultPreferences, userId);
-        console.log(
+        logger.debug(
           `Created default preferences for user: ${userId || 'default'}`
         );
       }
     } catch (error) {
-      console.error('Failed to ensure preferences exist:', error);
+      logger.error('Failed to ensure preferences exist:', error);
     }
   }
 
@@ -113,7 +116,7 @@ class PreferencesService {
         return this.mergeWithDefaults(preferences);
       }
     } catch (error) {
-      console.error('Failed to get preferences:', error);
+      logger.error('Failed to get preferences:', error);
     }
 
     return this.defaultPreferences;
@@ -183,7 +186,7 @@ class PreferencesService {
       storageService.savePreferences(updatedPreferences, userId);
       return updatedPreferences;
     } catch (error) {
-      console.error('Failed to update preferences:', error);
+      logger.error('Failed to update preferences:', error);
       throw error;
     }
   }
@@ -295,7 +298,7 @@ class PreferencesService {
       storageService.savePreferences(this.defaultPreferences, userId);
       return this.defaultPreferences;
     } catch (error) {
-      console.error('Failed to reset preferences to defaults:', error);
+      logger.error('Failed to reset preferences to defaults:', error);
       throw error;
     }
   }
@@ -339,7 +342,7 @@ class PreferencesService {
       storageService.savePreferences(updatedPreferences, userId);
       return updatedPreferences;
     } catch (error) {
-      console.error('Failed to import preferences data:', error);
+      logger.error('Failed to import preferences data:', error);
       throw error;
     }
   }

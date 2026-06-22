@@ -17,6 +17,9 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { authService, AuthTokenPayload } from '../services/authService.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('middleware:auth');
 
 // Extend Request interface to include user
 export interface AuthenticatedRequest extends Request {
@@ -55,7 +58,7 @@ export const authenticate = async (
     req.user = payload;
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
+    logger.error('Authentication error:', error);
     res.status(401).json({
       success: false,
       message: 'Authentication failed',
@@ -101,7 +104,7 @@ export const optionalAuth = async (
       }
     }
   } catch (error) {
-    console.error('Optional auth error:', error);
+    logger.error('Optional auth error:', error);
   }
 
   next();

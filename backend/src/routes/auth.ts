@@ -27,11 +27,28 @@ import {
 } from '../middleware/auth.js';
 import { encryptionService } from '../services/encryptionService.js';
 import { systemSettingsService } from '../services/systemSettingsService.js';
+import { turnstileService } from '../services/turnstileService.js';
+import { createLogger } from '../utils/logger.js';
 
 const router = express.Router();
+const logger = createLogger('auth-routes');
 
 // Fallback frontend URL for OAuth redirects
 const FALLBACK_FRONTEND_URL = 'http://localhost:5173';
+
+const getClientIp = (req: express.Request): string | undefined => {
+  const cfConnectingIp = req.headers['cf-connecting-ip'];
+  if (typeof cfConnectingIp === 'string' && cfConnectingIp.trim()) {
+    return cfConnectingIp.trim();
+  }
+
+  const forwardedFor = req.headers['x-forwarded-for'];
+  if (typeof forwardedFor === 'string' && forwardedFor.trim()) {
+    return forwardedFor.split(',')[0]?.trim();
+  }
+
+  return req.ip || undefined;
+};
 
 // Rate limiter for authentication routes: 5 login attempts per 15 minutes
 const authRateLimiter = rateLimit({
@@ -92,7 +109,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -111,14 +128,14 @@ router.post(
     try {
       // In a stateless JWT system, logout is handled client-side
       // But we can log it for audit purposes
-      console.log(`User ${req.user?.username} logged out`);
+      logger.debug(`User ${req.user?.username} logged out`);
 
       res.json({
         success: true,
         message: 'Logged out successfully',
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -152,7 +169,7 @@ router.get(
         data: user,
       });
     } catch (error) {
-      console.error('Token verification error:', error);
+      logger.error('Token verification error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -172,7 +189,7 @@ router.get('/system-info', async (req, res) => {
       data: systemInfo,
     });
   } catch (error) {
-    console.error('System info error:', error);
+    logger.error('System info error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -210,7 +227,7 @@ router.patch(
         data: systemInfo,
       });
     } catch (error) {
-      console.error('Update model pull setting error:', error);
+      logger.error('Update model pull setting error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -242,7 +259,7 @@ router.get('/encryption-key', generalAuthRateLimiter, async (req, res) => {
       data: { encryptionKey },
     });
   } catch (error) {
-    console.error('Encryption key retrieval error:', error);
+    logger.error('Encryption key retrieval error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -255,7 +272,7 @@ router.get('/encryption-key', generalAuthRateLimiter, async (req, res) => {
  */
 router.post('/signup', authRateLimiter, async (req, res) => {
   try {
-    const { username, password, email } = req.body;
+    const { username, password, email, turnstileToken } = req.body;
 
     if (!username || !password) {
       res.status(400).json({
@@ -271,6 +288,19 @@ router.post('/signup', authRateLimiter, async (req, res) => {
       res.status(409).json({
         success: false,
         message: 'Username already exists',
+      });
+      return;
+    }
+
+    const turnstileValid = await turnstileService.verify(
+      turnstileToken,
+      getClientIp(req)
+    );
+
+    if (!turnstileValid) {
+      res.status(400).json({
+        success: false,
+        message: 'Verification failed. Please try again.',
       });
       return;
     }
@@ -295,7 +325,7 @@ router.post('/signup', authRateLimiter, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Signup error:', error);
+    logger.error('Signup error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -373,14 +403,14 @@ router.get(
       // Generate JWT token using existing auth service
       const token = authService.generateToken(user);
 
-      console.log('GitHub OAuth successful for user:', user.username);
+      logger.debug('GitHub OAuth successful for user:', user.username);
 
       // Redirect to frontend with token in URL
       res.redirect(
         `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?token=${token}&auth=success`
       );
     } catch (error) {
-      console.error('GitHub OAuth callback error:', error);
+      logger.error('GitHub OAuth callback error:', error);
       res.redirect(
         `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
       );
@@ -466,14 +496,14 @@ router.get(
       // Generate JWT token
       const token = authService.generateToken(user);
 
-      console.log('Hugging Face OAuth successful for user:', user.username);
+      logger.debug('Hugging Face OAuth successful for user:', user.username);
 
       // Redirect to frontend with token in URL
       res.redirect(
         `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?token=${token}&auth=success`
       );
     } catch (error) {
-      console.error('Hugging Face OAuth callback error:', error);
+      logger.error('Hugging Face OAuth callback error:', error);
       res.redirect(
         `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
       );
@@ -522,7 +552,7 @@ router.get(
         data: user,
       });
     } catch (error) {
-      console.error('Get user error:', error);
+      logger.error('Get user error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',

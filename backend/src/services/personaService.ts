@@ -23,6 +23,9 @@ import {
   UpdatePersonaRequest,
   PersonaExport,
 } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:persona-service');
 
 export class PersonaService {
   /**
@@ -325,7 +328,7 @@ export class PersonaService {
         await mutationEngineService.initializePersonaState(personaId, userId);
       }
     } catch (error) {
-      console.error('Failed to initialize advanced features:', error);
+      logger.error('Failed to initialize advanced features:', error);
       // Don't throw error - persona creation should still succeed
     }
   }

@@ -1147,7 +1147,9 @@
     "closePanelEsc": "पैनल बंद करें (Esc)",
     "copyButton": "कॉपी",
     "open": "खोलें",
-    "dragEdgeToResize": "आकार बदलने के लिए किनारा खींचें"
+    "dragEdgeToResize": "आकार बदलने के लिए किनारा खींचें",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "पर्सोना आयात और निर्यात",

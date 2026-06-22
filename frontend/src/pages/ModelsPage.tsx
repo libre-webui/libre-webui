@@ -29,7 +29,7 @@ export const ModelsPage: React.FC = () => {
         <div className='text-center max-w-md mx-auto mb-8'>
           <h2
             className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 mb-3'
-            style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+            style={{ fontWeight: 300, letterSpacing: 0 }}
           >
             {t('models.title')}
           </h2>

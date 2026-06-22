@@ -23,7 +23,10 @@ import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { ollamaApi } from '@/utils/api';
 import { isDemoMode } from '@/utils/demoMode';
+import { createLogger } from '@/utils/logger';
 import websocketService from '@/utils/websocket';
+
+const logger = createLogger('auth-store');
 
 interface AuthState {
   user: User | null;
@@ -77,17 +80,17 @@ export const useAuthStore = create<AuthState>()(
             // Get required stores
             const pluginStore = usePluginStore.getState();
 
-            console.log('🔄 Reinitializing app after login...');
+            logger.debug('Reinitializing app after login...');
 
             // Reconnect WebSocket with the new token
-            console.log('🔌 Reconnecting WebSocket with auth token...');
+            logger.debug('Reconnecting WebSocket with auth token...');
             websocketService.disconnect();
             await websocketService.connect();
 
             // Check Ollama health first
             const healthResponse = await ollamaApi.checkHealth();
             if (!healthResponse.success && !isDemoMode()) {
-              console.warn('Ollama service not available after login');
+              logger.warn('Ollama service not available after login');
             }
 
             // Load the new user's data
@@ -99,9 +102,9 @@ export const useAuthStore = create<AuthState>()(
               currentAppStore.loadPreferences(),
               pluginStore.loadPlugins(),
             ]);
-            console.log('✅ Reinitialized app after login');
+            logger.debug('Reinitialized app after login');
           } catch (error) {
-            console.error('Failed to reinitialize app after login:', error);
+            logger.error('Failed to reinitialize app after login:', error);
           }
         }, 100);
       },
@@ -111,7 +114,7 @@ export const useAuthStore = create<AuthState>()(
         localStorage.removeItem('auth-token');
 
         // Disconnect WebSocket to clear authentication
-        console.log('🔌 Disconnecting WebSocket on logout...');
+        logger.debug('Disconnecting WebSocket on logout...');
         websocketService.disconnect();
 
         // Clear chat store state when logging out

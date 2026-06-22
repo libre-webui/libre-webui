@@ -43,6 +43,117 @@ const SAMPLE_ARTIFACTS: Artifact[] = [
     updatedAt: Date.now(),
   },
   {
+    id: 'demo-html-game-1',
+    type: 'html',
+    title: 'Canvas Drift Demo',
+    description: 'A full HTML document with a canvas game loop',
+    content: `<!DOCTYPE html>
+<html>
+  <head>
+    <title>Canvas Drift Demo</title>
+    <style>
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #050506;
+        color: #f4f4f5;
+        font-family: Arial, sans-serif;
+      }
+      canvas {
+        display: block;
+        width: 100vw;
+        height: 100vh;
+        background: radial-gradient(circle at 70% 20%, #24242a, #050506 58%);
+      }
+      .hud {
+        position: fixed;
+        left: 16px;
+        top: 14px;
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hud">Use arrow keys or WASD</div>
+    <canvas id="game" width="720" height="420"></canvas>
+    <script>
+      const canvas = document.getElementById('game');
+      const ctx = canvas.getContext('2d');
+      const keys = {};
+      const ship = { x: 120, y: 210, vx: 0, vy: 0, angle: 0 };
+      const stars = Array.from({ length: 90 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.7 + 0.4
+      }));
+
+      window.addEventListener('keydown', event => {
+        keys[event.key.toLowerCase()] = true;
+      });
+      window.addEventListener('keyup', event => {
+        keys[event.key.toLowerCase()] = false;
+      });
+
+      function tick() {
+        const left = keys.arrowleft || keys.a;
+        const right = keys.arrowright || keys.d;
+        const up = keys.arrowup || keys.w;
+        const down = keys.arrowdown || keys.s;
+
+        ship.vx += (right ? 0.16 : 0) - (left ? 0.16 : 0);
+        ship.vy += (down ? 0.16 : 0) - (up ? 0.16 : 0);
+        ship.vx *= 0.985;
+        ship.vy *= 0.985;
+        ship.x = (ship.x + ship.vx + canvas.width) % canvas.width;
+        ship.y = (ship.y + ship.vy + canvas.height) % canvas.height;
+        ship.angle = Math.atan2(ship.vy, ship.vx || 0.01);
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ffffff';
+        stars.forEach(star => {
+          ctx.globalAlpha = 0.35 + star.r / 3;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.globalAlpha = 1;
+
+        ctx.save();
+        ctx.translate(ship.x, ship.y);
+        ctx.rotate(ship.angle);
+        ctx.fillStyle = '#a1a1aa';
+        ctx.strokeStyle = '#f4f4f5';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(18, 0);
+        ctx.lineTo(-14, -11);
+        ctx.lineTo(-8, 0);
+        ctx.lineTo(-14, 11);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function loop() {
+        tick();
+        draw();
+        requestAnimationFrame(loop);
+      }
+      loop();
+    </script>
+  </body>
+</html>`,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  },
+  {
     id: 'demo-svg-1',
     type: 'svg',
     title: 'Animated SVG Logo',
@@ -173,7 +284,7 @@ export const ArtifactDemo: React.FC = () => {
   };
 
   return (
-    <div className='max-w-6xl mx-auto p-6'>
+    <div className='max-w-6xl mx-auto p-6 text-gray-900 dark:text-dark-800'>
       <div className='mb-8'>
         <h1 className='text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4'>
           Artifacts Demo
@@ -195,7 +306,7 @@ export const ArtifactDemo: React.FC = () => {
             {SAMPLE_ARTIFACTS.map(artifact => (
               <div
                 key={artifact.id}
-                className='flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg'
+                className='flex items-center justify-between p-3 bg-white dark:bg-dark-200 border border-gray-200 dark:border-dark-300 rounded-lg'
               >
                 <div className='flex-1 min-w-0'>
                   <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
@@ -248,11 +359,11 @@ export const ArtifactDemo: React.FC = () => {
       </div>
 
       {/* Usage Information */}
-      <div className='mt-12 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6'>
-        <h3 className='text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3'>
+      <div className='mt-12 bg-white dark:bg-dark-25 border border-gray-200 dark:border-dark-300 rounded-lg p-6'>
+        <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-900 mb-3'>
           How Artifacts Work
         </h3>
-        <div className='text-sm text-blue-800 dark:text-blue-200 space-y-2'>
+        <div className='text-sm text-gray-700 dark:text-dark-700 space-y-2'>
           <p>
             <strong>Automatic Detection:</strong> When an AI model returns code
             blocks with specific languages (HTML, SVG, Python, etc.), they are

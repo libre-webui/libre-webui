@@ -11,8 +11,8 @@
     system-ui,
     -apple-system,
     sans-serif !important;
-  font-weight: 600 !important;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 :root {
@@ -36,17 +36,17 @@
 
   color-scheme: light;
 
-  --color-primary-50: 245 243 255;
-  --color-primary-100: 237 233 254;
-  --color-primary-200: 221 214 254;
-  --color-primary-300: 196 181 253;
-  --color-primary-400: 167 139 250;
-  --color-primary-500: 124 58 237;
-  --color-primary-600: 109 40 217;
-  --color-primary-700: 91 33 182;
-  --color-primary-800: 76 29 149;
-  --color-primary-900: 59 7 100;
-  --color-primary-950: 46 16 101;
+  --color-primary-50: 239 246 255;
+  --color-primary-100: 219 234 254;
+  --color-primary-200: 191 219 254;
+  --color-primary-300: 147 197 253;
+  --color-primary-400: 96 165 250;
+  --color-primary-500: 37 99 235;
+  --color-primary-600: 29 78 216;
+  --color-primary-700: 30 64 175;
+  --color-primary-800: 30 58 138;
+  --color-primary-900: 23 37 84;
+  --color-primary-950: 15 23 42;
   --color-accent-50: var(--color-primary-50);
   --color-accent-100: var(--color-primary-100);
   --color-accent-200: var(--color-primary-200);

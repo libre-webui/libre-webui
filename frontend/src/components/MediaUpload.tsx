@@ -22,6 +22,9 @@ import { documentsApi } from '@/utils/api';
 import { DocumentSummary } from '@/types';
 import { cn } from '@/utils';
 import toast from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:media-upload');
 
 interface MediaUploadProps {
   images: string[];
@@ -111,7 +114,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         toast.error(response.error || 'Failed to upload document');
       }
     } catch (error) {
-      console.error('Document upload error:', error);
+      logger.error('Document upload error:', error);
       toast.error('Failed to upload document');
     } finally {
       setIsUploadingDoc(false);
@@ -153,7 +156,7 @@ export const MediaUpload: React.FC<MediaUploadProps> = ({
         toast.error(response.error || 'Failed to remove document');
       }
     } catch (error) {
-      console.error('Error removing document:', error);
+      logger.error('Error removing document:', error);
       toast.error('Failed to remove document');
     }
   };

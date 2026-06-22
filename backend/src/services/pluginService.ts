@@ -34,15 +34,72 @@ import {
 } from '../types/index.js';
 import pluginCredentialsService from './pluginCredentialsService.js';
 import pluginVariablesService from './pluginVariablesService.js';
+import { PluginCapabilityRegistryService } from './pluginCapabilityRegistryService.js';
+import { PluginEmbeddingService } from './pluginEmbeddingService.js';
+import { PluginImageGenerationService } from './pluginImageGenerationService.js';
+import { PluginTTSService } from './pluginTTSService.js';
+import {
+  buildPluginChatPayload,
+  convertProviderResponse,
+  resolvePluginChatParameters,
+  toOpenAICompatibleMessages,
+} from '../utils/pluginChatAdapter.js';
+import {
+  streamOpenAICompatibleResponse,
+  type PluginStreamChunk,
+} from '../utils/pluginStreamAdapter.js';
+import {
+  addOpenClawSessionHeader,
+  applyModelEndpointTemplate,
+  assertSafePluginEndpoint,
+  buildPluginAuthHeaders,
+  resolvePluginEndpoint,
+  validatePluginEndpointOverride,
+  validatePluginModel,
+} from '../utils/pluginValidation.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('plugins');
 
 class PluginService {
   private pluginsDir: string;
   private activePluginIds: Set<string> = new Set();
+  private embeddingService: PluginEmbeddingService;
+  private ttsService: PluginTTSService;
+  private imageGenerationService: PluginImageGenerationService;
+  private capabilityRegistryService: PluginCapabilityRegistryService;
 
   constructor() {
     this.pluginsDir = path.join(process.cwd(), 'plugins');
     this.ensurePluginsDirectory();
     this.loadActivePlugins();
+    this.embeddingService = new PluginEmbeddingService({
+      getAllPlugins: () => this.getAllPlugins(),
+      getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
+      getPluginVariables: (plugin, userId) =>
+        this.getPluginVariables(plugin, userId),
+      validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
+    });
+    this.ttsService = new PluginTTSService({
+      getAllPlugins: () => this.getAllPlugins(),
+      getPlugin: id => this.getPlugin(id),
+      getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
+      getPluginVariables: (plugin, userId) =>
+        this.getPluginVariables(plugin, userId),
+      validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
+    });
+    this.imageGenerationService = new PluginImageGenerationService({
+      getAllPlugins: () => this.getAllPlugins(),
+      getPlugin: id => this.getPlugin(id),
+      getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
+      getPluginVariables: (plugin, userId) =>
+        this.getPluginVariables(plugin, userId),
+      validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
+    });
+    this.capabilityRegistryService = new PluginCapabilityRegistryService({
+      getAllPlugins: () => this.getAllPlugins(),
+      getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
+    });
   }
 
   private ensurePluginsDirectory(): void {
@@ -63,7 +120,7 @@ class PluginService {
           this.activePluginIds = new Set([status.activePlugin]);
         }
       } catch (error) {
-        console.error('Failed to load plugin status:', error);
+        logger.error('Failed to load plugin status:', error);
       }
     }
   }
@@ -108,40 +165,45 @@ class PluginService {
     );
   }
 
-  private getEmbeddingCapability(plugin: Plugin):
-    | {
-        endpoint: string;
-        model_map: string[];
-        config?: Record<string, unknown>;
-      }
-    | undefined {
-    return plugin.capabilities?.embedding;
-  }
-
   /**
    * Validate an endpoint URL for safety (SSRF protection).
    * Returns the URL string if valid, or null if invalid.
    */
   private validateEndpointUrl(endpoint: string): string | null {
-    try {
-      const url = new URL(endpoint);
-      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-        url.hostname
-      );
-      const isPrivateNetwork =
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
+    return validatePluginEndpointOverride(endpoint);
+  }
 
-      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-        console.warn(
-          `Rejected insecure endpoint override: ${endpoint} (only HTTPS or localhost/private IPs allowed)`
-        );
-        return null;
-      }
-      return endpoint;
-    } catch {
-      console.warn(`Rejected invalid endpoint override URL: ${endpoint}`);
-      return null;
+  private getModelsEndpoint(endpoint: string): string {
+    const url = new URL(endpoint);
+    url.search = '';
+
+    if (url.pathname.endsWith('/models')) {
+      return url.toString();
     }
+
+    if (url.pathname.endsWith('/chat/completions')) {
+      url.pathname = `${url.pathname.slice(0, -'/chat/completions'.length)}/models`;
+      return url.toString();
+    }
+
+    if (url.pathname.endsWith('/completions')) {
+      url.pathname = `${url.pathname.slice(0, -'/completions'.length)}/models`;
+      return url.toString();
+    }
+
+    if (url.pathname.endsWith('/embeddings')) {
+      url.pathname = `${url.pathname.slice(0, -'/embeddings'.length)}/models`;
+      return url.toString();
+    }
+
+    const basePath =
+      url.pathname === '/'
+        ? ''
+        : url.pathname.endsWith('/')
+          ? url.pathname.slice(0, -1)
+          : url.pathname;
+    url.pathname = `${basePath}/models`;
+    return url.toString();
   }
 
   /**
@@ -185,7 +247,7 @@ class PluginService {
           .filter((id: unknown): id is string => typeof id === 'string');
 
         if (models.length > 0) {
-          console.log(
+          logger.debug(
             '[Plugin] Auto-discovered %d models for %s:',
             models.length,
             pluginId,
@@ -211,7 +273,7 @@ class PluginService {
         }
       }
     } catch (_error) {
-      console.log(
+      logger.debug(
         `[Plugin] Model discovery unavailable for ${pluginId}, using existing model_map`
       );
     }
@@ -239,12 +301,12 @@ class PluginService {
               plugins.push(plugin);
             }
           } catch (error) {
-            console.error(`Failed to load plugin ${file}:`, error);
+            logger.error(`Failed to load plugin ${file}:`, error);
           }
         }
       }
     } catch (error) {
-      console.error('Failed to read plugins directory:', error);
+      logger.error('Failed to read plugins directory:', error);
     }
 
     return plugins;
@@ -255,7 +317,7 @@ class PluginService {
     // Sanitize the ID to prevent path traversal
     const sanitizedId = sanitize(id);
     if (!sanitizedId || sanitizedId !== id) {
-      console.error('Invalid plugin ID provided:', id);
+      logger.error('Invalid plugin ID provided:', id);
       return null;
     }
 
@@ -278,7 +340,7 @@ class PluginService {
         return plugin;
       }
     } catch (error) {
-      console.error('Failed to load plugin %s:', sanitizedId, error);
+      logger.error('Failed to load plugin %s:', sanitizedId, error);
     }
 
     return null;
@@ -314,14 +376,14 @@ class PluginService {
     // Validate the ID parameter using a strict pattern (allows dots for version numbers like 1.6b)
     const idPattern = /^[a-zA-Z0-9._-]+$/;
     if (!idPattern.test(id)) {
-      console.error('Invalid plugin ID format:', id);
+      logger.error('Invalid plugin ID format:', id);
       return false;
     }
 
     // Sanitize the ID to prevent path traversal
     const sanitizedId = sanitize(id);
     if (!sanitizedId || sanitizedId !== id) {
-      console.error('Plugin ID failed sanitization:', id);
+      logger.error('Plugin ID failed sanitization:', id);
       return false;
     }
 
@@ -332,7 +394,7 @@ class PluginService {
       !filePath.startsWith(path.resolve(this.pluginsDir)) ||
       !fs.existsSync(filePath)
     ) {
-      console.error('File path is invalid or does not exist:', filePath);
+      logger.error('File path is invalid or does not exist:', filePath);
       return false;
     }
 
@@ -350,7 +412,7 @@ class PluginService {
 
       return true;
     } catch (error) {
-      console.error('Failed to delete plugin %s:', sanitizedId, error);
+      logger.error('Failed to delete plugin %s:', sanitizedId, error);
       return false;
     }
   }
@@ -385,15 +447,15 @@ class PluginService {
   }
 
   // Get the active plugin for a specific model
-  getActivePluginForModel(model: string): Plugin | null {
-    // Get all available plugins (not just active ones)
-    const allPlugins = this.getAllPlugins();
+  getActivePluginForModel(model: string, userId?: string): Plugin | null {
+    // Only route through plugins the user explicitly activated.
+    const activePlugins = this.getActivePlugins();
 
-    // Find the plugin that supports this model
-    for (const plugin of allPlugins) {
+    // Find the active plugin that supports this model
+    for (const plugin of activePlugins) {
       if (plugin.model_map.includes(model)) {
         // Check if we have the required API key (from DB or env)
-        const apiKey = this.getApiKey(plugin);
+        const apiKey = this.getApiKey(plugin, userId);
         if (!apiKey) {
           continue;
         }
@@ -434,303 +496,49 @@ class PluginService {
   async executePluginRequest(
     model: string,
     messages: ChatMessage[],
-    options: GenerationOptions = {}
+    options: GenerationOptions = {},
+    userId?: string
   ): Promise<PluginResponse> {
-    // Validate model parameter to prevent SSRF attacks
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
+    validatePluginModel(model);
 
-    // Sanitize model parameter - only allow alphanumeric, hyphens, underscores, colons, dots, and slashes (for provider/model format)
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (!modelPattern.test(model)) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid characters`
-      );
-    }
-
-    // Prevent path traversal and other malicious patterns
-    if (model.includes('..') || model.includes('\\')) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid patterns`
-      );
-    }
-
-    const activePlugin = this.getActivePluginForModel(model);
-
+    const activePlugin = this.getActivePluginForModel(model, userId);
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
 
-    // Additional validation: ensure the model is in the plugin's allowed model_map
     if (!activePlugin.model_map.includes(model)) {
       throw new Error(
         `Model ${model} is not supported by plugin ${activePlugin.id}`
       );
     }
 
-    if (!activePlugin) {
-      throw new Error(`No active plugin found for model: ${model}`);
-    }
-
-    // Get API key from database (per-user) or environment variable (fallback)
-    const apiKey = this.getApiKey(activePlugin);
+    const apiKey = this.getApiKey(activePlugin, userId);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
       );
     }
 
-    // Load plugin variables (valves) - these serve as defaults that options can override
-    const pluginVars = this.getPluginVariables(activePlugin);
-
-    // Allow endpoint override via plugin variables
-    const endpointOverride = pluginVars.endpoint as string | undefined;
-    const effectiveEndpoint =
-      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
-      activePlugin.endpoint;
-
-    const temperature =
-      options.temperature ??
-      (pluginVars.temperature as number | undefined) ??
-      0.7;
-    const maxTokens =
-      options.num_predict === -1
-        ? undefined
-        : (options.num_predict ??
-          (pluginVars.max_tokens as number | undefined) ??
-          undefined);
-    const topP =
-      options.top_p ?? (pluginVars.top_p as number | undefined) ?? undefined;
-    const frequencyPenalty =
-      (pluginVars.frequency_penalty as number | undefined) ?? undefined;
-    const presencePenalty =
-      (pluginVars.presence_penalty as number | undefined) ?? undefined;
-    const shouldStream = (pluginVars.stream as boolean | undefined) ?? false;
-
-    // Prepare headers
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    const authValue = activePlugin.auth.prefix
-      ? `${activePlugin.auth.prefix}${apiKey}`
-      : apiKey;
-
-    headers[activePlugin.auth.header] = authValue;
-
-    // OpenClaw session routing — send through the main agent session for full tool access
-    if (activePlugin.id === 'openclaw-agent') {
-      const sessionKey = (pluginVars.session_key as string) || 'main';
-      const sessionMode = pluginVars.session_mode as boolean | undefined;
-      if (sessionMode !== false) {
-        headers['x-openclaw-session-key'] = sessionKey;
-      }
-    }
-
-    // Prepare request payload based on plugin type
-    let payload: Record<string, unknown>;
-
-    if (activePlugin.id === 'anthropic') {
-      // Anthropic-specific payload format
-      // Separate system messages from user/assistant messages
-      const systemMessages = messages.filter(msg => msg.role === 'system');
-      const nonSystemMessages = messages.filter(msg => msg.role !== 'system');
-
-      // Convert messages to Anthropic format with image support
-      const anthropicMessages = nonSystemMessages.map(msg => {
-        // Check if message has images
-        if (msg.images && msg.images.length > 0) {
-          // Anthropic format: content is an array of content blocks
-          const contentBlocks: Array<
-            | { type: 'text'; text: string }
-            | {
-                type: 'image';
-                source: { type: 'base64'; media_type: string; data: string };
-              }
-          > = [];
-
-          // Add images first
-          for (const image of msg.images) {
-            // Extract base64 data and media type from data URL
-            let base64Data = image;
-            let mediaType = 'image/jpeg'; // Default
-
-            if (image.startsWith('data:')) {
-              const match = image.match(/^data:([^;]+);base64,(.+)$/);
-              if (match) {
-                mediaType = match[1];
-                base64Data = match[2];
-              }
-            }
-
-            contentBlocks.push({
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType,
-                data: base64Data,
-              },
-            });
-          }
-
-          // Add text content
-          if (msg.content) {
-            contentBlocks.push({
-              type: 'text',
-              text: msg.content,
-            });
-          }
-
-          return {
-            role: msg.role,
-            content: contentBlocks,
-          };
-        }
-
-        // No images - simple text content
-        return {
-          role: msg.role,
-          content: msg.content,
-        };
-      });
-
-      payload = {
-        model,
-        messages: anthropicMessages,
-        max_tokens: maxTokens ?? 1024,
-        temperature,
-        top_p: topP,
-        stop_sequences: options.stop,
-        stream: shouldStream,
-      };
-
-      // Add system message as top-level parameter if present
-      if (systemMessages.length > 0) {
-        payload.system = systemMessages.map(msg => msg.content).join('\n');
-      }
-
-      // Add required anthropic-version header
-      headers['anthropic-version'] = '2023-06-01';
-    } else if (activePlugin.id === 'gemini') {
-      // Gemini-specific payload format with image support
-      const lastMessage = messages[messages.length - 1];
-      const parts: Array<{
-        text?: string;
-        inline_data?: { mime_type: string; data: string };
-      }> = [];
-
-      // Add images if present
-      if (lastMessage?.images && lastMessage.images.length > 0) {
-        for (const image of lastMessage.images) {
-          let base64Data = image;
-          let mimeType = 'image/jpeg';
-
-          if (image.startsWith('data:')) {
-            const match = image.match(/^data:([^;]+);base64,(.+)$/);
-            if (match) {
-              mimeType = match[1];
-              base64Data = match[2];
-            }
-          }
-
-          parts.push({
-            inline_data: {
-              mime_type: mimeType,
-              data: base64Data,
-            },
-          });
-        }
-      }
-
-      // Add text content
-      if (lastMessage?.content) {
-        parts.push({ text: lastMessage.content });
-      }
-
-      payload = {
-        contents: [{ parts }],
-        generationConfig: {
-          temperature,
-          maxOutputTokens: maxTokens ?? 1024,
-          topP: topP,
-          stopSequences: options.stop,
-        },
-      };
-    } else {
-      // Default OpenAI-compatible format with image support
-      const openaiMessages = messages.map(msg => {
-        // Check if message has images (OpenAI vision format)
-        if (msg.images && msg.images.length > 0) {
-          const content: Array<
-            | { type: 'text'; text: string }
-            | { type: 'image_url'; image_url: { url: string } }
-          > = [];
-
-          // Add images
-          for (const image of msg.images) {
-            // OpenAI expects data URLs or regular URLs
-            const imageUrl = image.startsWith('data:')
-              ? image
-              : `data:image/jpeg;base64,${image}`;
-            content.push({
-              type: 'image_url',
-              image_url: { url: imageUrl },
-            });
-          }
-
-          // Add text
-          if (msg.content) {
-            content.push({ type: 'text', text: msg.content });
-          }
-
-          return { role: msg.role, content };
-        }
-
-        return { role: msg.role, content: msg.content };
-      });
-
-      payload = {
-        model,
-        messages: openaiMessages,
-        temperature,
-        max_tokens: maxTokens,
-        top_p: topP,
-        frequency_penalty: frequencyPenalty,
-        presence_penalty: presencePenalty,
-        stop: options.stop,
-        stream: shouldStream,
-      };
-    }
-
-    // Process endpoint template - replace {model} with actual model name
-    // Final validation before URL construction to prevent SSRF
-    const sanitizedModel = encodeURIComponent(model);
-    const processedEndpoint = effectiveEndpoint.replace(
-      '{model}',
-      sanitizedModel
+    const pluginVars = this.getPluginVariables(activePlugin, userId);
+    const effectiveEndpoint = resolvePluginEndpoint(
+      activePlugin.endpoint,
+      pluginVars.endpoint as string | undefined
     );
-
-    // Validate the final endpoint URL
-    try {
-      const url = new URL(processedEndpoint);
-
-      // Allow HTTP for localhost and private network IPs (safe for local/LAN development)
-      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-        url.hostname
-      );
-      const isPrivateNetwork =
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
-
-      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-        throw new Error(
-          `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints. ` +
-            `(HTTP is permitted for localhost and private network IPs)`
-        );
-      }
-    } catch (_error) {
-      throw new Error(`Invalid endpoint URL constructed: ${processedEndpoint}`);
-    }
+    const headers = buildPluginAuthHeaders(activePlugin, apiKey);
+    addOpenClawSessionHeader(activePlugin, pluginVars, headers);
+    const { payload, headers: payloadHeaders } = buildPluginChatPayload(
+      activePlugin,
+      model,
+      messages,
+      options,
+      pluginVars
+    );
+    Object.assign(headers, payloadHeaders);
+    const processedEndpoint = applyModelEndpointTemplate(
+      effectiveEndpoint,
+      model
+    );
+    assertSafePluginEndpoint(processedEndpoint, 'endpoint URL constructed');
 
     try {
       const response = await axios.post(processedEndpoint, payload, {
@@ -738,17 +546,9 @@ class PluginService {
         timeout: 60000, // 60 second timeout
       });
 
-      // Handle different response formats
-      if (activePlugin.id === 'anthropic') {
-        return this.convertAnthropicResponse(response.data, model);
-      } else if (activePlugin.id === 'gemini') {
-        return this.convertGeminiResponse(response.data, model);
-      }
-
-      // Default to OpenAI format
-      return response.data as PluginResponse;
+      return convertProviderResponse(activePlugin, response.data, model);
     } catch (error: unknown) {
-      console.error(`Plugin request failed for ${activePlugin.id}:`, error);
+      logger.error(`Plugin request failed for ${activePlugin.id}:`, error);
 
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as {
@@ -781,30 +581,12 @@ class PluginService {
   async *executePluginStreamRequest(
     model: string,
     messages: ChatMessage[],
-    options: GenerationOptions = {}
-  ): AsyncGenerator<
-    {
-      type: 'content' | 'tool_call' | 'done';
-      content?: string;
-      toolCall?: {
-        id: string;
-        name: string;
-        arguments: string;
-      };
-    },
-    void,
-    unknown
-  > {
-    // Validate model parameter
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (!modelPattern.test(model) || model.includes('..')) {
-      throw new Error(`Invalid model parameter: ${model}`);
-    }
+    options: GenerationOptions = {},
+    userId?: string
+  ): AsyncGenerator<PluginStreamChunk, void, unknown> {
+    validatePluginModel(model);
 
-    const activePlugin = this.getActivePluginForModel(model);
+    const activePlugin = this.getActivePluginForModel(model, userId);
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
@@ -814,360 +596,47 @@ class PluginService {
       );
     }
 
-    const apiKey = this.getApiKey(activePlugin);
+    const apiKey = this.getApiKey(activePlugin, userId);
     if (!apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
       );
     }
 
-    const pluginVars = this.getPluginVariables(activePlugin);
-    const endpointOverride = pluginVars.endpoint as string | undefined;
-    const effectiveEndpoint =
-      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
-      activePlugin.endpoint;
-
-    const temperature =
-      options.temperature ??
-      (pluginVars.temperature as number | undefined) ??
-      0.7;
-    const maxTokens =
-      options.num_predict === -1
-        ? undefined
-        : (options.num_predict ??
-          (pluginVars.max_tokens as number | undefined) ??
-          undefined);
-    const topP =
-      options.top_p ?? (pluginVars.top_p as number | undefined) ?? undefined;
-    const frequencyPenalty =
-      (pluginVars.frequency_penalty as number | undefined) ?? undefined;
-    const presencePenalty =
-      (pluginVars.presence_penalty as number | undefined) ?? undefined;
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    const authValue = activePlugin.auth.prefix
-      ? `${activePlugin.auth.prefix}${apiKey}`
-      : apiKey;
-    headers[activePlugin.auth.header] = authValue;
-
-    // OpenClaw session routing — send through the main agent session for full tool access
-    if (activePlugin.id === 'openclaw-agent') {
-      const sessionKey = (pluginVars.session_key as string) || 'main';
-      const sessionMode = pluginVars.session_mode as boolean | undefined;
-      if (sessionMode !== false) {
-        headers['x-openclaw-session-key'] = sessionKey;
-      }
-    }
-
-    // Build OpenAI-compatible payload with stream=true
-    const openaiMessages = messages.map(msg => {
-      if (msg.images && msg.images.length > 0) {
-        const content: Array<
-          | { type: 'text'; text: string }
-          | { type: 'image_url'; image_url: { url: string } }
-        > = [];
-        for (const image of msg.images) {
-          const imageUrl = image.startsWith('data:')
-            ? image
-            : `data:image/jpeg;base64,${image}`;
-          content.push({ type: 'image_url', image_url: { url: imageUrl } });
-        }
-        if (msg.content) {
-          content.push({ type: 'text', text: msg.content });
-        }
-        return { role: msg.role, content };
-      }
-      return { role: msg.role, content: msg.content };
-    });
+    const pluginVars = this.getPluginVariables(activePlugin, userId);
+    const effectiveEndpoint = resolvePluginEndpoint(
+      activePlugin.endpoint,
+      pluginVars.endpoint as string | undefined
+    );
+    const params = resolvePluginChatParameters(options, pluginVars);
+    const headers = buildPluginAuthHeaders(activePlugin, apiKey);
+    addOpenClawSessionHeader(activePlugin, pluginVars, headers);
 
     const payload = {
       model,
-      messages: openaiMessages,
-      temperature,
-      max_tokens: maxTokens,
-      top_p: topP,
-      frequency_penalty: frequencyPenalty,
-      presence_penalty: presencePenalty,
+      messages: toOpenAICompatibleMessages(messages),
+      temperature: params.temperature,
+      max_tokens: params.maxTokens,
+      top_p: params.topP,
+      frequency_penalty: params.frequencyPenalty,
+      presence_penalty: params.presencePenalty,
       stop: options.stop,
       stream: true,
     };
 
-    const sanitizedModel = encodeURIComponent(model);
-    const processedEndpoint = effectiveEndpoint.replace(
-      '{model}',
-      sanitizedModel
+    const processedEndpoint = applyModelEndpointTemplate(
+      effectiveEndpoint,
+      model
     );
+    assertSafePluginEndpoint(processedEndpoint);
 
-    // Validate URL
-    try {
-      const url = new URL(processedEndpoint);
-      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-        url.hostname
-      );
-      const isPrivateNetwork =
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
-      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-        throw new Error(`Insecure endpoint protocol: ${url.protocol}`);
-      }
-    } catch {
-      throw new Error(`Invalid endpoint URL: ${processedEndpoint}`);
-    }
-
-    // Use native fetch for streaming
     const response = await fetch(processedEndpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(
-        `Plugin API error: ${response.status} - ${errorText.slice(0, 200)}`
-      );
-    }
-
-    if (!response.body) {
-      throw new Error('No response body for streaming');
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    // Track tool_calls being built across chunks
-    const toolCallsInProgress: Map<
-      number,
-      { id: string; name: string; arguments: string }
-    > = new Map();
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed || trimmed === 'data: [DONE]') {
-            if (trimmed === 'data: [DONE]') {
-              // Emit any completed tool calls
-              for (const tc of toolCallsInProgress.values()) {
-                yield { type: 'tool_call' as const, toolCall: tc };
-              }
-              yield { type: 'done' as const };
-            }
-            continue;
-          }
-          if (!trimmed.startsWith('data: ')) continue;
-
-          try {
-            const json = JSON.parse(trimmed.slice(6));
-            const delta = json.choices?.[0]?.delta;
-            if (!delta) continue;
-
-            // Content delta
-            if (delta.content) {
-              yield { type: 'content' as const, content: delta.content };
-            }
-
-            // Tool call deltas (OpenAI format)
-            if (delta.tool_calls) {
-              for (const tc of delta.tool_calls) {
-                const idx = tc.index ?? 0;
-                if (!toolCallsInProgress.has(idx)) {
-                  toolCallsInProgress.set(idx, {
-                    id: tc.id || '',
-                    name: tc.function?.name || '',
-                    arguments: '',
-                  });
-                }
-                const existing = toolCallsInProgress.get(idx)!;
-                if (tc.id) existing.id = tc.id;
-                if (tc.function?.name) existing.name = tc.function.name;
-                if (tc.function?.arguments)
-                  existing.arguments += tc.function.arguments;
-              }
-            }
-          } catch {
-            // Skip malformed SSE lines
-          }
-        }
-      }
-    } finally {
-      reader.releaseLock();
-    }
-  }
-
-  // Convert Anthropic response format to OpenAI format
-  private convertAnthropicResponse(
-    anthropicResponse: Record<string, unknown>,
-    model: string
-  ): PluginResponse {
-    const id =
-      typeof anthropicResponse.id === 'string'
-        ? anthropicResponse.id
-        : `chatcmpl-${Date.now()}`;
-
-    // Map Anthropic stop reasons to OpenAI format
-    const stopReasonMap: Record<string, string> = {
-      end_turn: 'stop',
-      max_tokens: 'length',
-      stop_sequence: 'stop',
-      tool_use: 'tool_calls',
-    };
-
-    const stopReason =
-      typeof anthropicResponse.stop_reason === 'string'
-        ? stopReasonMap[anthropicResponse.stop_reason] || 'stop'
-        : 'stop';
-
-    let content = '';
-    // Anthropic returns content as an array of content blocks
-    if (Array.isArray(anthropicResponse.content)) {
-      for (const block of anthropicResponse.content) {
-        if (
-          block &&
-          typeof block === 'object' &&
-          'type' in block &&
-          block.type === 'text' &&
-          'text' in block &&
-          typeof block.text === 'string'
-        ) {
-          content += block.text;
-        }
-      }
-    }
-
-    let usage;
-    if (
-      anthropicResponse.usage &&
-      typeof anthropicResponse.usage === 'object' &&
-      anthropicResponse.usage !== null
-    ) {
-      const usageObj = anthropicResponse.usage as Record<string, unknown>;
-      const inputTokens =
-        typeof usageObj.input_tokens === 'number' ? usageObj.input_tokens : 0;
-      const outputTokens =
-        typeof usageObj.output_tokens === 'number' ? usageObj.output_tokens : 0;
-
-      usage = {
-        prompt_tokens: inputTokens,
-        completion_tokens: outputTokens,
-        total_tokens: inputTokens + outputTokens,
-      };
-    }
-
-    return {
-      id,
-      object: 'chat.completion',
-      created: Math.floor(Date.now() / 1000),
-      model,
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: 'assistant',
-            content,
-          },
-          finish_reason: stopReason,
-        },
-      ],
-      usage,
-    };
-  }
-
-  // Convert Gemini response format to OpenAI format
-  private convertGeminiResponse(
-    geminiResponse: Record<string, unknown>,
-    model: string
-  ): PluginResponse {
-    const id = `chatcmpl-${Date.now()}`;
-
-    let content = '';
-    let finishReason = 'stop';
-
-    // Gemini returns candidates array
-    if (Array.isArray(geminiResponse.candidates)) {
-      const candidate = geminiResponse.candidates[0];
-      if (candidate && typeof candidate === 'object') {
-        const candidateObj = candidate as Record<string, unknown>;
-
-        // Extract content from parts
-        if (candidateObj.content && typeof candidateObj.content === 'object') {
-          const contentObj = candidateObj.content as Record<string, unknown>;
-          if (Array.isArray(contentObj.parts)) {
-            for (const part of contentObj.parts) {
-              if (
-                part &&
-                typeof part === 'object' &&
-                'text' in part &&
-                typeof part.text === 'string'
-              ) {
-                content += part.text;
-              }
-            }
-          }
-        }
-
-        // Map Gemini finish reason to OpenAI format
-        if (typeof candidateObj.finishReason === 'string') {
-          const finishReasonMap: Record<string, string> = {
-            STOP: 'stop',
-            MAX_TOKENS: 'length',
-            SAFETY: 'content_filter',
-            RECITATION: 'content_filter',
-            OTHER: 'stop',
-          };
-          finishReason = finishReasonMap[candidateObj.finishReason] || 'stop';
-        }
-      }
-    }
-
-    // Extract usage if available
-    let usage;
-    if (
-      geminiResponse.usageMetadata &&
-      typeof geminiResponse.usageMetadata === 'object'
-    ) {
-      const usageObj = geminiResponse.usageMetadata as Record<string, unknown>;
-      const promptTokens =
-        typeof usageObj.promptTokenCount === 'number'
-          ? usageObj.promptTokenCount
-          : 0;
-      const completionTokens =
-        typeof usageObj.candidatesTokenCount === 'number'
-          ? usageObj.candidatesTokenCount
-          : 0;
-
-      usage = {
-        prompt_tokens: promptTokens,
-        completion_tokens: completionTokens,
-        total_tokens: promptTokens + completionTokens,
-      };
-    }
-
-    return {
-      id,
-      object: 'chat.completion',
-      created: Math.floor(Date.now() / 1000),
-      model,
-      choices: [
-        {
-          index: 0,
-          message: {
-            role: 'assistant',
-            content,
-          },
-          finish_reason: finishReason,
-        },
-      ],
-      usage,
-    };
+    yield* streamOpenAICompatibleResponse(response);
   }
 
   // Validate plugin structure
@@ -1219,53 +688,11 @@ class PluginService {
   }
 
   // ============================================
-  // TTS (Text-to-Speech) Methods
+  // Capability Methods
   // ============================================
 
-  // Get plugin that supports TTS for a specific model
   getPluginForTTS(model: string): Plugin | null {
-    const allPlugins = this.getAllPlugins();
-
-    for (const plugin of allPlugins) {
-      // Check if plugin has TTS capability
-      if (plugin.capabilities?.tts) {
-        const ttsCapability = plugin.capabilities.tts;
-        if (ttsCapability.model_map.includes(model)) {
-          // Check if no auth is required (e.g., local TTS servers)
-          const noAuthRequired =
-            (ttsCapability.config as Record<string, unknown> | undefined)
-              ?.no_auth_required === true;
-
-          // Check if we have the required API key (from DB or env)
-          const apiKey = this.getApiKey(plugin);
-          if (!apiKey && !noAuthRequired) {
-            continue;
-          }
-
-          return plugin;
-        }
-      }
-
-      // Also check primary type for backward compatibility with TTS-only plugins
-      if (plugin.type === 'tts' && plugin.model_map.includes(model)) {
-        // Check if no auth is required
-        const noAuthRequired =
-          (
-            plugin.capabilities?.tts?.config as
-              | Record<string, unknown>
-              | undefined
-          )?.no_auth_required === true;
-
-        const apiKey = this.getApiKey(plugin);
-        if (!apiKey && !noAuthRequired) {
-          continue;
-        }
-
-        return plugin;
-      }
-    }
-
-    return null;
+    return this.ttsService.getPluginForTTS(model);
   }
 
   getPluginForEmbedding(
@@ -1273,35 +700,7 @@ class PluginService {
     pluginId?: string,
     userId?: string
   ): Plugin | null {
-    const allPlugins = this.getAllPlugins();
-
-    for (const plugin of allPlugins) {
-      if (pluginId && plugin.id !== pluginId) {
-        continue;
-      }
-
-      const embeddingCapability = this.getEmbeddingCapability(plugin);
-      const supportsEmbedding =
-        embeddingCapability?.model_map.includes(model) ||
-        ((plugin.type === 'embedding' ||
-          plugin.type === 'completion' ||
-          plugin.type === 'chat') &&
-          plugin.model_map.includes(model));
-
-      if (!supportsEmbedding) {
-        continue;
-      }
-
-      const noAuthRequired =
-        (embeddingCapability?.config as Record<string, unknown> | undefined)
-          ?.no_auth_required === true;
-      const apiKey = this.getApiKey(plugin, userId);
-      if (apiKey || noAuthRequired) {
-        return plugin;
-      }
-    }
-
-    return null;
+    return this.embeddingService.getPluginForEmbedding(model, pluginId, userId);
   }
 
   getAvailableEmbeddingModels(userId?: string): Array<{
@@ -1312,52 +711,7 @@ class PluginService {
     description?: string;
     fromEmbeddingCapability?: boolean;
   }> {
-    const models: Array<{
-      model: string;
-      plugin: string;
-      pluginName: string;
-      provider: EmbeddingModel['provider'];
-      description?: string;
-      fromEmbeddingCapability?: boolean;
-    }> = [];
-    const allPlugins = this.getAllPlugins();
-
-    for (const plugin of allPlugins) {
-      const embeddingCapability = this.getEmbeddingCapability(plugin);
-      const noAuthRequired =
-        (embeddingCapability?.config as Record<string, unknown> | undefined)
-          ?.no_auth_required === true;
-      const apiKey = this.getApiKey(plugin, userId);
-      if (!apiKey && !noAuthRequired) {
-        continue;
-      }
-
-      const provider: EmbeddingModel['provider'] =
-        plugin.id === 'huggingface' ? 'huggingface' : 'openai';
-      const modelMap =
-        embeddingCapability?.model_map ||
-        ((plugin.type === 'embedding' ||
-          plugin.type === 'completion' ||
-          plugin.type === 'chat') &&
-        Array.isArray(plugin.model_map)
-          ? plugin.model_map
-          : []);
-
-      for (const model of modelMap) {
-        models.push({
-          model,
-          plugin: plugin.id,
-          pluginName: plugin.name,
-          provider,
-          description: embeddingCapability
-            ? 'Embedding provider'
-            : 'OpenAI-compatible provider',
-          fromEmbeddingCapability: Boolean(embeddingCapability),
-        });
-      }
-    }
-
-    return models;
+    return this.embeddingService.getAvailableEmbeddingModels(userId);
   }
 
   async executeEmbeddingRequest(
@@ -1366,204 +720,22 @@ class PluginService {
     pluginId?: string,
     userId?: string
   ): Promise<OllamaEmbeddingsResponse> {
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
-
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (
-      !modelPattern.test(model) ||
-      model.includes('..') ||
-      model.includes('\\')
-    ) {
-      throw new Error(`Invalid model parameter: ${model}`);
-    }
-
-    const plugin = this.getPluginForEmbedding(model, pluginId, userId);
-    if (!plugin) {
-      throw new Error(`No embedding plugin found for model: ${model}`);
-    }
-
-    const embeddingCapability = this.getEmbeddingCapability(plugin);
-    const noAuthRequired =
-      (embeddingCapability?.config as Record<string, unknown> | undefined)
-        ?.no_auth_required === true;
-    const apiKey = this.getApiKey(plugin, userId);
-    if (!apiKey && !noAuthRequired) {
-      throw new Error(
-        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
-      );
-    }
-
-    const pluginVars = this.getPluginVariables(plugin, userId);
-    const endpointOverride = pluginVars.endpoint as string | undefined;
-    const effectiveEndpoint =
-      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
-      embeddingCapability?.endpoint ||
-      plugin.endpoint;
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (apiKey && plugin.auth.header) {
-      const authValue = plugin.auth.prefix
-        ? `${plugin.auth.prefix}${apiKey}`
-        : apiKey;
-      headers[plugin.auth.header] = authValue;
-    }
-
-    const response = await axios.post(
-      this.getEmbeddingEndpoint(effectiveEndpoint),
-      {
-        model,
-        input,
-      },
-      {
-        headers,
-        timeout: 60000,
-      }
+    return this.embeddingService.executeEmbeddingRequest(
+      model,
+      input,
+      pluginId,
+      userId
     );
-
-    if (Array.isArray(response.data?.embeddings)) {
-      return {
-        embeddings: response.data.embeddings,
-      };
-    }
-
-    if (Array.isArray(response.data?.data)) {
-      return {
-        embeddings: response.data.data
-          .map((entry: { embedding?: number[] }) => entry.embedding)
-          .filter((embedding: unknown): embedding is number[] =>
-            Array.isArray(embedding)
-          ),
-      };
-    }
-
-    throw new Error('Embedding provider returned an unexpected response');
   }
 
-  private getEmbeddingEndpoint(endpoint: string): string {
-    const url = new URL(endpoint);
-    url.search = '';
-
-    if (url.pathname.endsWith('/embeddings')) {
-      return url.toString();
-    }
-
-    if (url.pathname.endsWith('/chat/completions')) {
-      url.pathname = `${url.pathname.slice(0, -'/chat/completions'.length)}/embeddings`;
-      return url.toString();
-    }
-
-    if (url.pathname.endsWith('/completions')) {
-      url.pathname = `${url.pathname.slice(0, -'/completions'.length)}/embeddings`;
-      return url.toString();
-    }
-
-    if (url.pathname.endsWith('/models')) {
-      url.pathname = `${url.pathname.slice(0, -'/models'.length)}/embeddings`;
-      return url.toString();
-    }
-
-    const basePath =
-      url.pathname === '/'
-        ? ''
-        : url.pathname.endsWith('/')
-          ? url.pathname.slice(0, -1)
-          : url.pathname;
-    url.pathname = `${basePath}/embeddings`;
-    return url.toString();
-  }
-
-  private getModelsEndpoint(endpoint: string): string {
-    const url = new URL(endpoint);
-    url.search = '';
-
-    if (url.pathname.endsWith('/models')) {
-      return url.toString();
-    }
-
-    if (url.pathname.endsWith('/chat/completions')) {
-      url.pathname = `${url.pathname.slice(0, -'/chat/completions'.length)}/models`;
-      return url.toString();
-    }
-
-    if (url.pathname.endsWith('/completions')) {
-      url.pathname = `${url.pathname.slice(0, -'/completions'.length)}/models`;
-      return url.toString();
-    }
-
-    if (url.pathname.endsWith('/embeddings')) {
-      url.pathname = `${url.pathname.slice(0, -'/embeddings'.length)}/models`;
-      return url.toString();
-    }
-
-    const basePath =
-      url.pathname === '/'
-        ? ''
-        : url.pathname.endsWith('/')
-          ? url.pathname.slice(0, -1)
-          : url.pathname;
-    url.pathname = `${basePath}/models`;
-    return url.toString();
-  }
-
-  // Get all available TTS models from all plugins
   getAvailableTTSModels(): {
     model: string;
     plugin: string;
     config?: TTSConfig;
   }[] {
-    const models: { model: string; plugin: string; config?: TTSConfig }[] = [];
-    const allPlugins = this.getAllPlugins();
-
-    for (const plugin of allPlugins) {
-      // Check capabilities-based TTS
-      if (plugin.capabilities?.tts) {
-        const ttsCapability = plugin.capabilities.tts;
-        // Check if no auth is required (e.g., local TTS servers)
-        const noAuthRequired =
-          (ttsCapability.config as Record<string, unknown> | undefined)
-            ?.no_auth_required === true;
-        // Check if API key is available (from DB or env)
-        const apiKey = this.getApiKey(plugin);
-        if (apiKey || noAuthRequired) {
-          for (const model of ttsCapability.model_map) {
-            models.push({
-              model,
-              plugin: plugin.id,
-              config: ttsCapability.config,
-            });
-          }
-        }
-      }
-
-      // Check primary type for TTS-only plugins
-      if (plugin.type === 'tts') {
-        // Check if no auth is required
-        const noAuthRequired =
-          (
-            plugin.capabilities?.tts?.config as
-              | Record<string, unknown>
-              | undefined
-          )?.no_auth_required === true;
-        const apiKey = this.getApiKey(plugin);
-        if (apiKey || noAuthRequired) {
-          for (const model of plugin.model_map) {
-            models.push({
-              model,
-              plugin: plugin.id,
-            });
-          }
-        }
-      }
-    }
-
-    return models;
+    return this.ttsService.getAvailableTTSModels();
   }
 
-  // Execute a TTS request through the appropriate plugin
   async executeTTSRequest(
     model: string,
     input: string,
@@ -1573,382 +745,25 @@ class PluginService {
       speed?: number;
     } = {}
   ): Promise<Buffer> {
-    // Validate model parameter
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
-
-    // Sanitize model parameter
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (!modelPattern.test(model)) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid characters`
-      );
-    }
-
-    // Prevent path traversal
-    if (model.includes('..') || model.includes('\\')) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid patterns`
-      );
-    }
-
-    const plugin = this.getPluginForTTS(model);
-    if (!plugin) {
-      throw new Error(`No TTS plugin found for model: ${model}`);
-    }
-
-    // Determine endpoint and config
-    let endpoint: string;
-    let ttsConfig: TTSConfig | undefined;
-
-    if (plugin.capabilities?.tts) {
-      endpoint = plugin.capabilities.tts.endpoint;
-      ttsConfig = plugin.capabilities.tts.config;
-    } else {
-      endpoint = plugin.endpoint;
-    }
-
-    // Check if no auth is required (e.g., local TTS servers like Qwen3-TTS)
-    const noAuthRequired =
-      (ttsConfig as Record<string, unknown> | undefined)?.no_auth_required ===
-      true;
-
-    // Get API key from database (per-user) or environment variable (fallback)
-    const apiKey = this.getApiKey(plugin);
-    if (!apiKey && !noAuthRequired) {
-      throw new Error(
-        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
-      );
-    }
-
-    // Prepare headers
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    // Only add auth header if API key exists and auth header is configured
-    if (apiKey && plugin.auth.header) {
-      const authValue = plugin.auth.prefix
-        ? `${plugin.auth.prefix}${apiKey}`
-        : apiKey;
-      headers[plugin.auth.header] = authValue;
-    }
-
-    // Load plugin variables for TTS defaults
-    const ttsVars = this.getPluginVariables(plugin);
-
-    // Allow endpoint override via plugin variables
-    if (ttsVars.endpoint && typeof ttsVars.endpoint === 'string') {
-      const validated = this.validateEndpointUrl(ttsVars.endpoint);
-      if (validated) endpoint = validated;
-    }
-
-    // Apply defaults from config, then plugin variables, then request options
-    const voice = options.voice || ttsConfig?.default_voice || 'alloy';
-    const responseFormat =
-      options.response_format || ttsConfig?.default_format || 'mp3';
-    const speed = options.speed || (ttsVars.speed as number | undefined) || 1.0;
-
-    // Check if input needs chunking (for long texts)
-    const maxChars = ttsConfig?.max_characters || 4096;
-    if (input.length > maxChars) {
-      // Split text into chunks and process each, then concatenate audio
-      const chunks = this.splitTextForTTS(input, maxChars);
-      console.log(
-        `[TTS] Input too long (${input.length} chars), splitting into ${chunks.length} chunks`
-      );
-
-      const audioBuffers: Buffer[] = [];
-      for (let i = 0; i < chunks.length; i++) {
-        console.log(
-          `[TTS] Processing chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)`
-        );
-        // Recursive call with chunk (will not re-chunk since it's under limit)
-        const chunkAudio = await this.executeTTSRequest(
-          model,
-          chunks[i],
-          options
-        );
-        audioBuffers.push(chunkAudio);
-      }
-
-      // Concatenate all audio buffers
-      return Buffer.concat(audioBuffers);
-    }
-
-    // Prepare request payload and endpoint based on plugin type
-    let payload: Record<string, unknown>;
-    let processedEndpoint: string;
-
-    if (plugin.id === 'elevenlabs') {
-      // ElevenLabs API format
-      // ElevenLabs uses voice IDs - map voice names to IDs
-      const elevenLabsVoiceIds: Record<string, string> = {
-        rachel: '21m00Tcm4TlvDq8ikWAM',
-        domi: 'AZnzlk1XvdvUeBnXmlld',
-        bella: 'EXAVITQu4vr4xnSDxMaL',
-        antoni: 'ErXwobaYiN019PkySvjV',
-        elli: 'MF3mGyEYCl7XYWbV9V6O',
-        josh: 'TxGEqnHWrfWFTfGW9XjX',
-        arnold: 'VR6AewLTigWG4xSOukaG',
-        adam: 'pNInz6obpgDQGcFmaJgB',
-        sam: 'yoZ06aMxZJJ28mfd3POQ',
-        nicole: 'piTKgcLEGmPE4e6mEKli',
-        glinda: 'z9fAnlkpzviPz146aGWa',
-        clyde: '2EiwWnXFnvU5JabPnv8n',
-        james: 'ZQe5CZNOzWyzPSCn5a3c',
-        charlotte: 'XB0fDUnXU5powFXDhCwa',
-        lily: 'pFZP5JQG7iQjIQuC4Bku',
-        serena: 'pMsXgVXv3BLzUgSXRplE',
-      };
-
-      const voiceId =
-        elevenLabsVoiceIds[voice.toLowerCase()] ||
-        elevenLabsVoiceIds['rachel'] ||
-        '21m00Tcm4TlvDq8ikWAM';
-
-      processedEndpoint = `${endpoint}/${voiceId}`;
-
-      // Add output_format query parameter
-      const formatMap: Record<string, string> = {
-        mp3: 'mp3_44100_128',
-        pcm: 'pcm_16000',
-        ulaw: 'ulaw_8000',
-      };
-      const outputFormat = formatMap[responseFormat] || 'mp3_44100_128';
-      processedEndpoint += `?output_format=${outputFormat}`;
-
-      payload = {
-        text: input,
-        model_id: model,
-        voice_settings: {
-          stability: (ttsVars.stability as number | undefined) ?? 0.5,
-          similarity_boost:
-            (ttsVars.similarity_boost as number | undefined) ?? 0.75,
-        },
-      };
-    } else {
-      // Default OpenAI TTS format
-      payload = {
-        model,
-        input,
-        voice,
-        response_format: responseFormat,
-        speed,
-      };
-
-      // Process endpoint template
-      const sanitizedModel = encodeURIComponent(model);
-      processedEndpoint = endpoint.replace('{model}', sanitizedModel);
-    }
-
-    // Validate the final endpoint URL
-    try {
-      const url = new URL(processedEndpoint);
-      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-        url.hostname
-      );
-      const isPrivateNetwork =
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
-
-      if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-        throw new Error(
-          `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints. ` +
-            `(HTTP is permitted for localhost and private network IPs)`
-        );
-      }
-    } catch (_error) {
-      throw new Error(`Invalid endpoint URL constructed: ${processedEndpoint}`);
-    }
-
-    try {
-      const response = await axios.post(processedEndpoint, payload, {
-        headers,
-        timeout: 120000, // 2 minute timeout for TTS
-        responseType: 'arraybuffer', // TTS returns binary audio data
-      });
-
-      return Buffer.from(response.data);
-    } catch (error: unknown) {
-      console.error(`TTS plugin request failed for ${plugin.id}:`, error);
-
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as {
-          response: {
-            status: number;
-            data?: ArrayBuffer;
-            statusText: string;
-          };
-        };
-
-        // Try to parse error message from response
-        let errorMessage = axiosError.response.statusText;
-        if (axiosError.response.data) {
-          try {
-            const errorText = Buffer.from(axiosError.response.data).toString(
-              'utf8'
-            );
-            const errorJson = JSON.parse(errorText);
-            errorMessage =
-              errorJson.error?.message ||
-              errorJson.detail ||
-              errorJson.message ||
-              errorMessage;
-          } catch {
-            // If not JSON, show raw text
-            const rawText = Buffer.from(axiosError.response.data).toString(
-              'utf8'
-            );
-            if (rawText) {
-              errorMessage = rawText.substring(0, 200);
-            }
-          }
-        }
-
-        throw new Error(
-          `TTS API error: ${axiosError.response.status} - ${errorMessage}`
-        );
-      } else if (error && typeof error === 'object' && 'request' in error) {
-        throw new Error(
-          `TTS connection error: Unable to reach ${processedEndpoint}`
-        );
-      } else {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`TTS error: ${errorMessage}`);
-      }
-    }
+    return this.ttsService.executeTTSRequest(model, input, options);
   }
 
-  // Split text into chunks for TTS, trying to break at sentence boundaries
-  private splitTextForTTS(text: string, maxChars: number): string[] {
-    const chunks: string[] = [];
-    let remaining = text;
-
-    while (remaining.length > 0) {
-      if (remaining.length <= maxChars) {
-        chunks.push(remaining);
-        break;
-      }
-
-      // Try to find a good break point (sentence end) within the limit
-      let breakPoint = maxChars;
-      const searchStart = Math.max(0, maxChars - 500); // Look in last 500 chars for sentence end
-
-      // Look for sentence endings (. ! ?) followed by space or end
-      const sentenceEnders = ['. ', '! ', '? ', '.\n', '!\n', '?\n'];
-      let bestBreak = -1;
-
-      for (const ender of sentenceEnders) {
-        const lastIndex = remaining.lastIndexOf(ender, maxChars);
-        if (lastIndex > searchStart && lastIndex > bestBreak) {
-          bestBreak = lastIndex + ender.length;
-        }
-      }
-
-      if (bestBreak > searchStart) {
-        breakPoint = bestBreak;
-      } else {
-        // Fall back to breaking at whitespace
-        const lastSpace = remaining.lastIndexOf(' ', maxChars);
-        if (lastSpace > searchStart) {
-          breakPoint = lastSpace + 1;
-        }
-        // If no good break found, just break at maxChars (may split mid-word)
-      }
-
-      chunks.push(remaining.slice(0, breakPoint).trim());
-      remaining = remaining.slice(breakPoint).trim();
-    }
-
-    return chunks.filter(chunk => chunk.length > 0);
-  }
-
-  // Get TTS configuration for a specific plugin
   getTTSConfig(pluginId: string): TTSConfig | null {
-    const plugin = this.getPlugin(pluginId);
-    if (!plugin) return null;
-
-    if (plugin.capabilities?.tts?.config) {
-      return plugin.capabilities.tts.config;
-    }
-
-    return null;
+    return this.ttsService.getTTSConfig(pluginId);
   }
 
-  // ==================== Image Generation Methods ====================
-
-  // Get plugin that supports a specific image generation model
   getPluginForImageGen(model: string): Plugin | null {
-    const allPlugins = this.getAllPlugins();
-
-    for (const plugin of allPlugins) {
-      // Check capabilities-based image generation
-      if (plugin.capabilities?.image) {
-        const imageCapability = plugin.capabilities.image;
-        if (imageCapability.model_map.includes(model)) {
-          return plugin;
-        }
-      }
-
-      // Check primary type for image-only plugins
-      if (plugin.type === 'image' && plugin.model_map.includes(model)) {
-        return plugin;
-      }
-    }
-
-    return null;
+    return this.imageGenerationService.getPluginForImageGen(model);
   }
 
-  // Get all available image generation models from all plugins
   getAvailableImageGenModels(): {
     model: string;
     plugin: string;
     config?: ImageGenConfig;
   }[] {
-    const models: { model: string; plugin: string; config?: ImageGenConfig }[] =
-      [];
-    const allPlugins = this.getAllPlugins();
-
-    for (const plugin of allPlugins) {
-      // Check capabilities-based image generation
-      if (plugin.capabilities?.image) {
-        const imageCapability = plugin.capabilities.image;
-        // Check if API key is available (from DB or env) or if no auth is required
-        const noAuthRequired =
-          (imageCapability.config as Record<string, unknown> | undefined)
-            ?.no_auth_required === true;
-        const apiKey = this.getApiKey(plugin);
-        if (apiKey || noAuthRequired) {
-          for (const model of imageCapability.model_map) {
-            models.push({
-              model,
-              plugin: plugin.id,
-              config: imageCapability.config,
-            });
-          }
-        }
-      }
-
-      // Check primary type for image-only plugins
-      if (plugin.type === 'image') {
-        const apiKey = this.getApiKey(plugin);
-        if (apiKey) {
-          for (const model of plugin.model_map) {
-            models.push({
-              model,
-              plugin: plugin.id,
-            });
-          }
-        }
-      }
-    }
-
-    return models;
+    return this.imageGenerationService.getAvailableImageGenModels();
   }
 
-  // Execute an image generation request through the appropriate plugin
   async executeImageGenRequest(
     model: string,
     prompt: string,
@@ -1960,534 +775,21 @@ class PluginService {
       response_format?: 'url' | 'b64_json';
     } = {}
   ): Promise<ImageGenResponse> {
-    // Validate model parameter
-    if (!model || typeof model !== 'string') {
-      throw new Error('Invalid model parameter: must be a non-empty string');
-    }
-
-    // Sanitize model parameter
-    const modelPattern = /^[a-zA-Z0-9\-_:./]+$/;
-    if (!modelPattern.test(model)) {
-      throw new Error(
-        `Invalid model parameter: ${model} contains invalid characters`
-      );
-    }
-
-    // Validate prompt
-    if (!prompt || typeof prompt !== 'string') {
-      throw new Error('Invalid prompt: must be a non-empty string');
-    }
-
-    const plugin = this.getPluginForImageGen(model);
-    if (!plugin) {
-      throw new Error(`No image generation plugin found for model: ${model}`);
-    }
-
-    // Determine endpoint and config first (needed for auth check)
-    let endpoint: string;
-    let imageConfig: ImageGenConfig | undefined;
-
-    if (plugin.capabilities?.image) {
-      endpoint = plugin.capabilities.image.endpoint;
-      imageConfig = plugin.capabilities.image.config;
-    } else {
-      endpoint = plugin.endpoint;
-    }
-
-    // Allow endpoint override via plugin variables
-    const imageVars = this.getPluginVariables(plugin);
-    if (imageVars.endpoint && typeof imageVars.endpoint === 'string') {
-      const validated = this.validateEndpointUrl(imageVars.endpoint);
-      if (validated) endpoint = validated;
-    }
-
-    // Get API key from database (per-user) or environment variable (fallback)
-    // Some plugins (like local ComfyUI) don't require auth
-    const noAuthRequired =
-      (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
-      true;
-    const apiKey = this.getApiKey(plugin);
-    if (!apiKey && !noAuthRequired) {
-      throw new Error(
-        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
-      );
-    }
-
-    // Validate prompt length
-    if (
-      imageConfig?.max_prompt_length &&
-      prompt.length > imageConfig.max_prompt_length
-    ) {
-      throw new Error(
-        `Prompt exceeds maximum length of ${imageConfig.max_prompt_length} characters`
-      );
-    }
-
-    // Build headers
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    // Only add auth header if API key is available
-    if (apiKey) {
-      if (plugin.auth.prefix) {
-        headers[plugin.auth.header] = `${plugin.auth.prefix}${apiKey}`;
-      } else {
-        headers[plugin.auth.header] = apiKey;
-      }
-    }
-
-    // Build payload (OpenAI-compatible format)
-    const payload: Record<string, unknown> = {
+    return this.imageGenerationService.executeImageGenRequest(
       model,
       prompt,
-      size: options.size || imageConfig?.default_size || '1024x1024',
-      quality: options.quality || imageConfig?.default_quality || 'standard',
-      n: options.n || 1,
-      response_format: options.response_format || 'url',
-    };
-
-    // Add style if supported
-    if (options.style || imageConfig?.default_style) {
-      payload.style = options.style || imageConfig?.default_style;
-    }
-
-    // Validate the final endpoint URL
-    let baseUrl: URL;
-    try {
-      baseUrl = new URL(endpoint);
-      const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-        baseUrl.hostname
-      );
-      const isPrivateNetwork =
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(
-          baseUrl.hostname
-        );
-
-      if (baseUrl.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-        throw new Error(
-          `Insecure endpoint protocol: ${baseUrl.protocol}. Only HTTPS is allowed for remote endpoints.`
-        );
-      }
-    } catch (_error) {
-      throw new Error(`Invalid endpoint URL: ${endpoint}`);
-    }
-
-    // Check if this is ComfyUI (special handling required)
-    if (plugin.id === 'comfyui' || endpoint.includes('/prompt')) {
-      return this.executeComfyUIRequest(baseUrl, prompt, {
-        ...options,
-        model,
-        pluginVars: this.getPluginVariables(plugin),
-      });
-    }
-
-    try {
-      const response = await axios.post(endpoint, payload, {
-        headers,
-        timeout: 120000, // 2 minute timeout for image generation
-      });
-
-      // Handle OpenAI-style response
-      if (response.data?.data) {
-        return {
-          images: response.data.data.map(
-            (img: {
-              url?: string;
-              b64_json?: string;
-              revised_prompt?: string;
-            }) => ({
-              url: img.url,
-              b64_json: img.b64_json,
-              revised_prompt: img.revised_prompt,
-            })
-          ),
-          model,
-        };
-      }
-
-      // Handle direct response format
-      return {
-        images: Array.isArray(response.data) ? response.data : [response.data],
-        model,
-      };
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message =
-          error.response?.data?.error?.message ||
-          error.response?.data?.message ||
-          error.message;
-        throw new Error(`Image generation failed: ${message}`);
-      }
-      throw error;
-    }
+      options
+    );
   }
 
-  // Execute ComfyUI image generation request (Flux.1 workflow)
-  private async executeComfyUIRequest(
-    baseUrl: URL,
-    prompt: string,
-    options: {
-      size?: string;
-      quality?: string;
-      model?: string;
-      pluginVars?: Record<string, string | number | boolean>;
-    } = {}
-  ): Promise<ImageGenResponse> {
-    const comfyBaseUrl = `${baseUrl.protocol}//${baseUrl.host}`;
-
-    // Parse size
-    const size = options.size || '1024x1024';
-    const [width, height] = size.split('x').map(Number);
-
-    // Determine model-specific settings
-    const model = options.model || 'flux1-dev';
-
-    // Model configurations for Flux variants
-    interface FluxModelConfig {
-      unetFile: string;
-      t5File: string;
-      steps: { draft: number; standard: number; high: number; ultra: number };
-      guidance: number;
-      useCheckpointLoader: boolean;
-    }
-
-    const modelConfigs: Record<string, FluxModelConfig> = {
-      'flux1-dev': {
-        unetFile: 'flux1-dev.safetensors',
-        t5File: 't5xxl_fp16.safetensors',
-        steps: { draft: 12, standard: 20, high: 28, ultra: 40 },
-        guidance: 3.5,
-        useCheckpointLoader: false,
-      },
-      'flux1-dev-fp8': {
-        unetFile: 'flux1-dev-fp8.safetensors',
-        t5File: 't5xxl_fp8_e4m3fn_scaled.safetensors',
-        steps: { draft: 12, standard: 20, high: 28, ultra: 40 },
-        guidance: 3.5,
-        useCheckpointLoader: false,
-      },
-      'flux1-schnell': {
-        unetFile: 'flux1-schnell.safetensors',
-        t5File: 't5xxl_fp16.safetensors',
-        steps: { draft: 2, standard: 4, high: 6, ultra: 8 },
-        guidance: 0, // Schnell doesn't use guidance
-        useCheckpointLoader: false,
-      },
-    };
-
-    const config = modelConfigs[model] || modelConfigs['flux1-dev'];
-    const quality = (options.quality ||
-      'standard') as keyof typeof config.steps;
-    const pVars = options.pluginVars || {};
-    // Plugin variable overrides quality-based steps if set and non-default
-    const steps =
-      pVars.steps && (pVars.steps as number) > 0
-        ? (pVars.steps as number)
-        : config.steps[quality] || config.steps.standard;
-
-    // Create a Flux.1 workflow for ComfyUI
-    // Flux uses UNET loader + dual CLIP + VAE separately
-    const workflow: Record<string, unknown> = {
-      '6': {
-        inputs: {
-          text: prompt,
-          clip: ['11', 0],
-        },
-        class_type: 'CLIPTextEncode',
-        _meta: { title: 'CLIP Text Encode (Prompt)' },
-      },
-      '8': {
-        inputs: {
-          samples: ['13', 0],
-          vae: ['10', 0],
-        },
-        class_type: 'VAEDecode',
-        _meta: { title: 'VAE Decode' },
-      },
-      '9': {
-        inputs: {
-          filename_prefix: `LibreWebUI_${model}`,
-          images: ['8', 0],
-        },
-        class_type: 'SaveImage',
-        _meta: { title: 'Save Image' },
-      },
-      '10': {
-        inputs: {
-          vae_name: 'ae.safetensors',
-        },
-        class_type: 'VAELoader',
-        _meta: { title: 'Load VAE' },
-      },
-      '11': {
-        inputs: {
-          clip_name1: 'clip_l.safetensors',
-          clip_name2: config.t5File,
-          type: 'flux',
-        },
-        class_type: 'DualCLIPLoader',
-        _meta: { title: 'DualCLIPLoader' },
-      },
-      '12': {
-        inputs: {
-          unet_name: config.unetFile,
-          weight_dtype: 'default',
-        },
-        class_type: 'UNETLoader',
-        _meta: { title: 'Load Diffusion Model' },
-      },
-      '13': {
-        inputs: {
-          noise: ['25', 0],
-          guider: ['22', 0],
-          sampler: ['16', 0],
-          sigmas: ['17', 0],
-          latent_image: ['27', 0],
-        },
-        class_type: 'SamplerCustomAdvanced',
-        _meta: { title: 'SamplerCustomAdvanced' },
-      },
-      '16': {
-        inputs: {
-          sampler_name: 'euler',
-        },
-        class_type: 'KSamplerSelect',
-        _meta: { title: 'KSamplerSelect' },
-      },
-      '17': {
-        inputs: {
-          scheduler: 'simple',
-          steps: steps,
-          denoise: 1,
-          model: ['12', 0],
-        },
-        class_type: 'BasicScheduler',
-        _meta: { title: 'BasicScheduler' },
-      },
-      '22': {
-        inputs: {
-          model: ['12', 0],
-          conditioning: config.guidance > 0 ? ['26', 0] : ['6', 0],
-        },
-        class_type: 'BasicGuider',
-        _meta: { title: 'BasicGuider' },
-      },
-      '25': {
-        inputs: {
-          noise_seed:
-            pVars.seed && (pVars.seed as number) >= 0
-              ? (pVars.seed as number)
-              : Math.floor(Math.random() * 1000000000000000),
-        },
-        class_type: 'RandomNoise',
-        _meta: { title: 'RandomNoise' },
-      },
-      '27': {
-        inputs: {
-          width: width,
-          height: height,
-          batch_size: 1,
-        },
-        class_type: 'EmptySD3LatentImage',
-        _meta: { title: 'EmptySD3LatentImage' },
-      },
-    };
-
-    // Only add FluxGuidance node if guidance > 0 (not needed for schnell)
-    if (config.guidance > 0) {
-      workflow['26'] = {
-        inputs: {
-          guidance:
-            pVars.cfg_scale && (pVars.cfg_scale as number) > 0
-              ? (pVars.cfg_scale as number)
-              : config.guidance,
-          conditioning: ['6', 0],
-        },
-        class_type: 'FluxGuidance',
-        _meta: { title: 'FluxGuidance' },
-      };
-    }
-
-    try {
-      // Generate a unique client ID
-      const clientId = `libre-webui-${Date.now()}`;
-
-      // Submit the workflow
-      const promptResponse = await axios.post(
-        `${comfyBaseUrl}/prompt`,
-        {
-          prompt: workflow,
-          client_id: clientId,
-        },
-        {
-          headers: { 'Content-Type': 'application/json' },
-          timeout: 10000,
-        }
-      );
-
-      const promptId = promptResponse.data.prompt_id;
-      if (!promptId) {
-        throw new Error('Failed to get prompt ID from ComfyUI');
-      }
-
-      // Poll for completion
-      let completed = false;
-      let attempts = 0;
-      const maxAttempts = 120; // 2 minutes with 1 second intervals
-
-      while (!completed && attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        attempts++;
-
-        const historyResponse = await axios.get(
-          `${comfyBaseUrl}/history/${promptId}`,
-          { timeout: 5000 }
-        );
-
-        if (historyResponse.data[promptId]) {
-          const outputs = historyResponse.data[promptId].outputs;
-          if (outputs && Object.keys(outputs).length > 0) {
-            completed = true;
-
-            // Find the SaveImage output
-            for (const nodeId in outputs) {
-              const nodeOutput = outputs[nodeId];
-              if (nodeOutput.images && nodeOutput.images.length > 0) {
-                const imageInfo = nodeOutput.images[0];
-
-                // Get the image data
-                const imageUrl = `${comfyBaseUrl}/view?filename=${encodeURIComponent(
-                  imageInfo.filename
-                )}&subfolder=${encodeURIComponent(
-                  imageInfo.subfolder || ''
-                )}&type=${encodeURIComponent(imageInfo.type || 'output')}`;
-
-                // Fetch image and convert to base64
-                const imageResponse = await axios.get(imageUrl, {
-                  responseType: 'arraybuffer',
-                  timeout: 30000,
-                });
-
-                const base64Image = Buffer.from(imageResponse.data).toString(
-                  'base64'
-                );
-
-                return {
-                  images: [
-                    {
-                      b64_json: base64Image,
-                      revised_prompt: prompt,
-                    },
-                  ],
-                  model,
-                };
-              }
-            }
-          }
-        }
-      }
-
-      if (!completed) {
-        throw new Error('ComfyUI generation timed out');
-      }
-
-      throw new Error('No image output found from ComfyUI');
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const message =
-          error.response?.data?.error ||
-          error.response?.data?.message ||
-          error.message;
-        throw new Error(`ComfyUI generation failed: ${message}`);
-      }
-      throw error;
-    }
-  }
-
-  // Get image generation configuration for a specific plugin
   getImageGenConfig(pluginId: string): ImageGenConfig | null {
-    const plugin = this.getPlugin(pluginId);
-    if (!plugin) return null;
-
-    if (plugin.capabilities?.image?.config) {
-      return plugin.capabilities.image.config;
-    }
-
-    return null;
+    return this.imageGenerationService.getImageGenConfig(pluginId);
   }
 
-  // Get all plugins that support a specific capability type
   getPluginsByCapability(capabilityType: PluginType): Plugin[] {
-    const allPlugins = this.getAllPlugins();
-    const result: Plugin[] = [];
-
-    for (const plugin of allPlugins) {
-      // Check if primary type matches
-      if (plugin.type === capabilityType) {
-        // Check if no auth is required for image plugins
-        const noAuthRequired =
-          capabilityType === 'image' &&
-          (
-            plugin.capabilities?.image?.config as
-              | Record<string, unknown>
-              | undefined
-          )?.no_auth_required === true;
-        const apiKey = this.getApiKey(plugin);
-        if (apiKey || noAuthRequired) {
-          result.push(plugin);
-        }
-        continue;
-      }
-
-      // Check capabilities object based on capability type
-      if (plugin.capabilities) {
-        let hasCapability = false;
-        let noAuthRequired = false;
-
-        switch (capabilityType) {
-          case 'tts':
-            hasCapability = !!plugin.capabilities.tts;
-            // Check if no auth is required for TTS capability (e.g., local servers)
-            noAuthRequired =
-              (
-                plugin.capabilities.tts?.config as
-                  | Record<string, unknown>
-                  | undefined
-              )?.no_auth_required === true;
-            break;
-          case 'stt':
-            hasCapability = !!plugin.capabilities.stt;
-            break;
-          case 'embedding':
-            hasCapability = !!plugin.capabilities.embedding;
-            break;
-          case 'image':
-            hasCapability = !!plugin.capabilities.image;
-            // Check if no auth is required for image capability
-            noAuthRequired =
-              (
-                plugin.capabilities.image?.config as
-                  | Record<string, unknown>
-                  | undefined
-              )?.no_auth_required === true;
-            break;
-          case 'completion':
-          case 'chat':
-            hasCapability = !!plugin.capabilities.completion;
-            break;
-        }
-
-        if (hasCapability) {
-          const apiKey = this.getApiKey(plugin);
-          if (apiKey || noAuthRequired) {
-            result.push(plugin);
-          }
-        }
-      }
-    }
-
-    return result;
+    return this.capabilityRegistryService.getPluginsByCapability(
+      capabilityType
+    );
   }
 }
 

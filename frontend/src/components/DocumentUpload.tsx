@@ -21,6 +21,9 @@ import { Upload, FileText, Loader2, X, File } from 'lucide-react';
 import { documentsApi } from '@/utils/api';
 import { DocumentSummary } from '@/types';
 import toast from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:document-upload');
 
 interface DocumentUploadProps {
   sessionId?: string;
@@ -74,7 +77,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         toast.error(response.error || t('documents.uploadFailed'));
       }
     } catch (error) {
-      console.error('Document upload error:', error);
+      logger.error('Document upload error:', error);
       toast.error(t('documents.uploadFailed'));
     } finally {
       setIsUploading(false);
@@ -124,7 +127,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
         toast.error(response.error || t('documents.removeFailed'));
       }
     } catch (error) {
-      console.error('Error removing document:', error);
+      logger.error('Error removing document:', error);
       toast.error(t('documents.removeError'));
     }
   };

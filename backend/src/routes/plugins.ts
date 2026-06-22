@@ -16,7 +16,6 @@
  */
 
 import express, { Request, Response } from 'express';
-import multer, { FileFilterCallback } from 'multer';
 import path from 'path';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
@@ -31,11 +30,12 @@ import {
   PluginStatus,
   getErrorMessage,
 } from '../types/index.js';
-
-// Extend Request interface to include file property
-interface MulterRequest extends Request {
-  file?: Express.Multer.File;
-}
+import {
+  pluginUpload as upload,
+  safeCleanupFile,
+  type MulterRequest,
+} from '../utils/pluginUpload.js';
+import { validatePluginVariables } from '../utils/pluginVariableValidation.js';
 
 const router = express.Router();
 
@@ -56,46 +56,6 @@ const uploadRateLimit = rateLimit({
   message: {
     success: false,
     error: 'Too many upload requests from this IP, please try again later.',
-  },
-});
-
-// Helper function to safely clean up uploaded files
-const safeCleanupFile = (filePath: string, tempDir: string): void => {
-  try {
-    const resolvedPath = path.resolve(filePath);
-    const resolvedTempDir = path.resolve(tempDir);
-
-    // Ensure the file is within the temp directory
-    if (
-      resolvedPath.startsWith(resolvedTempDir) &&
-      fs.existsSync(resolvedPath)
-    ) {
-      fs.unlinkSync(resolvedPath);
-    }
-  } catch (error) {
-    console.error('Failed to cleanup file:', error);
-  }
-};
-
-// Configure multer for file uploads
-const upload = multer({
-  dest: 'temp/',
-  fileFilter: (
-    req: Request,
-    file: Express.Multer.File,
-    cb: FileFilterCallback
-  ) => {
-    const allowedTypes = ['.json', '.zip'];
-    const fileExt = path.extname(file.originalname).toLowerCase();
-
-    if (allowedTypes.includes(fileExt)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only .json and .zip files are allowed'));
-    }
-  },
-  limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 });
 
@@ -768,80 +728,16 @@ router.put(
         return;
       }
 
-      // Validate variable values against schema
-      const schemaMap = new Map(plugin.variables.map(v => [v.name, v]));
-      const validated: Record<string, string | number | boolean> = {};
-
-      for (const [key, value] of Object.entries(variables)) {
-        const def = schemaMap.get(key);
-        if (!def) continue; // Ignore unknown variables
-
-        // Type validation
-        if (def.type === 'number') {
-          const num = Number(value);
-          if (isNaN(num)) {
-            res.status(400).json({
-              success: false,
-              error: `Variable "${key}" must be a number`,
-            });
-            return;
-          }
-          if (def.min !== undefined && num < def.min) {
-            res.status(400).json({
-              success: false,
-              error: `Variable "${key}" must be >= ${def.min}`,
-            });
-            return;
-          }
-          if (def.max !== undefined && num > def.max) {
-            res.status(400).json({
-              success: false,
-              error: `Variable "${key}" must be <= ${def.max}`,
-            });
-            return;
-          }
-          validated[key] = num;
-        } else if (def.type === 'boolean') {
-          validated[key] = value === true || value === 'true';
-        } else if (def.type === 'select') {
-          if (def.options && !def.options.includes(String(value))) {
-            res.status(400).json({
-              success: false,
-              error: `Variable "${key}" must be one of: ${def.options.join(', ')}`,
-            });
-            return;
-          }
-          validated[key] = String(value);
-        } else {
-          // String type
-          const str = String(value);
-          if (str.length > 2048) {
-            res.status(400).json({
-              success: false,
-              error: `Variable "${key}" exceeds maximum length of 2048 characters`,
-            });
-            return;
-          }
-          // Validate URL format for endpoint variables
-          if (key === 'endpoint' && str.length > 0) {
-            try {
-              new URL(str);
-            } catch {
-              res.status(400).json({
-                success: false,
-                error: `Variable "${key}" must be a valid URL`,
-              });
-              return;
-            }
-          }
-          validated[key] = str;
-        }
+      const validation = validatePluginVariables(plugin.variables, variables);
+      if (!validation.success) {
+        res.status(400).json({ success: false, error: validation.error });
+        return;
       }
 
       const userId = (req as Request & { userId?: string }).userId || 'default';
       const success = pluginVariablesService.setVariables(
         id,
-        validated,
+        validation.variables,
         plugin.variables,
         userId
       );

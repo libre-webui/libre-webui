@@ -403,6 +403,10 @@ export interface SystemInfo {
   userCount: number;
   allowUserModelPull?: boolean;
   version?: string;
+  turnstile?: {
+    enabled: boolean;
+    siteKey?: string;
+  };
 }
 
 // Embedding system types

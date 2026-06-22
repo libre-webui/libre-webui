@@ -8,6 +8,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Heart, Loader2, User, LogOut } from 'lucide-react';
 import axios from 'axios';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:hugging-face-auth');
 
 /**
  * User data structure (matching backend UserPublic interface)
@@ -228,7 +231,7 @@ export const HuggingFaceAuth: React.FC<HuggingFaceAuthProps> = ({
       setOAuthProfile(null);
       setError(null);
     } catch (error: unknown) {
-      console.error('Logout error:', error);
+      logger.error('Logout error:', error);
       // Even if server logout fails, clear local state
       removeToken();
       setUser(null);
@@ -249,7 +252,7 @@ export const HuggingFaceAuth: React.FC<HuggingFaceAuthProps> = ({
       );
       setConfigured(response.data.configured);
     } catch (error) {
-      console.error('Failed to check Hugging Face OAuth configuration:', error);
+      logger.error('Failed to check Hugging Face OAuth configuration:', error);
       setConfigured(false);
     }
   }, []);
@@ -368,8 +371,10 @@ export const HuggingFaceAuth: React.FC<HuggingFaceAuthProps> = ({
 
       {/* Error Display */}
       {error && (
-        <div className='p-3 bg-red-50 border border-red-200 rounded-lg'>
-          <p className='text-sm text-red-700'>{error}</p>
+        <div className='p-3 bg-primary-50/80 dark:bg-primary-950/25 border border-primary-200 dark:border-primary-800/50 rounded-lg'>
+          <p className='text-sm text-primary-800 dark:text-primary-200'>
+            {error}
+          </p>
         </div>
       )}
     </div>

@@ -16,11 +16,18 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { User, Users, Brain, Sparkles } from 'lucide-react';
+import { Users, Brain, Sparkles } from 'lucide-react';
 import { Select } from '@/components/ui';
 import { personaApi } from '@/utils/api';
 import { Persona } from '@/types';
 import { cn } from '@/utils';
+import {
+  getPersonaAvatarSrc,
+  setPersonaAvatarFallback,
+} from '@/utils/personaAvatar';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:persona-selector');
 
 interface PersonaSelectorProps {
   selectedPersonaId?: string;
@@ -47,7 +54,7 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
           setPersonas(response.data);
         }
       } catch (error) {
-        console.error('Failed to load personas:', error);
+        logger.error('Failed to load personas:', error);
       } finally {
         setLoading(false);
       }
@@ -81,15 +88,18 @@ export const PersonaSelector: React.FC<PersonaSelectorProps> = ({
       <div className='flex items-center gap-1 text-gray-600 dark:text-gray-400'>
         {selectedPersona ? (
           <div className='flex items-center gap-2'>
-            {selectedPersona.avatar ? (
-              <img
-                src={selectedPersona.avatar}
-                alt={selectedPersona.name}
-                className='w-5 h-5 rounded-full object-cover'
-              />
-            ) : (
-              <User className='h-4 w-4' />
-            )}
+            <img
+              src={getPersonaAvatarSrc(selectedPersona, 64)}
+              alt={selectedPersona.name}
+              className='w-5 h-5 rounded-full object-cover'
+              onError={event =>
+                setPersonaAvatarFallback(
+                  event.currentTarget,
+                  selectedPersona.name,
+                  64
+                )
+              }
+            />
             {hasAdvancedFeatures(selectedPersona) && (
               <div
                 className='flex items-center gap-1'

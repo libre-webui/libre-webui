@@ -22,6 +22,9 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:structured-output');
 
 interface StructuredOutputProps {
   format: string | Record<string, unknown> | null;
@@ -143,7 +146,7 @@ export const StructuredOutput: React.FC<StructuredOutputProps> = ({
       setShowCustom(false);
     } catch (_error) {
       // Handle JSON parse error
-      console.error('Invalid JSON schema:', _error);
+      logger.error('Invalid JSON schema:', _error);
     }
   };
 

@@ -23,6 +23,9 @@ import {
   requireAdmin,
   AuthenticatedRequest,
 } from '../middleware/auth.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('routes:users');
 
 const router = express.Router();
 
@@ -54,7 +57,7 @@ router.get(
         data: users,
       });
     } catch (error) {
-      console.error('Get users error:', error);
+      logger.error('Get users error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -126,7 +129,7 @@ router.post(
         data: user,
       });
     } catch (error) {
-      console.error('Create user error:', error);
+      logger.error('Create user error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -170,7 +173,7 @@ router.patch(
         data: user,
       });
     } catch (error) {
-      console.error('Update avatar error:', error);
+      logger.error('Update avatar error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -246,7 +249,7 @@ router.patch(
         data: user,
       });
     } catch (error) {
-      console.error('Update user error:', error);
+      logger.error('Update user error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',
@@ -290,7 +293,7 @@ router.delete(
         message: 'User deleted successfully',
       });
     } catch (error) {
-      console.error('Delete user error:', error);
+      logger.error('Delete user error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',

@@ -23,16 +23,24 @@ import {
   EmbeddingModel,
 } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import { createLogger } from '../utils/logger.js';
+import {
+  applyMemoryDecay,
+  calculateEnhancedImportance,
+  classifyMemoryType,
+  cosineSimilarity,
+  createConsolidatedContent,
+  embeddingArrayToBuffer,
+  embeddingBufferToArray,
+  getMemoryColumnType,
+  toPersonaMemoryEntry,
+  type EnhancedMemoryRow,
+  type MemoryRow,
+  type MemoryType,
+} from './memoryUtils.js';
 
-// Memory types for categorization
-export type MemoryType =
-  | 'fact' // Factual information about the user
-  | 'preference' // User preferences and likes/dislikes
-  | 'experience' // Shared experiences or stories
-  | 'emotional' // Emotional moments or sentiments
-  | 'context' // Conversation context
-  | 'instruction' // User instructions or requests
-  | 'general'; // General conversation
+const logger = createLogger('memory');
+export type { MemoryType } from './memoryUtils.js';
 
 // Extended memory entry with additional fields
 export interface EnhancedMemoryEntry extends PersonaMemoryEntry {
@@ -99,7 +107,7 @@ export class MemoryService {
 
   private initializeTables(): void {
     if (!this.db) {
-      console.warn(
+      logger.warn(
         'MemoryService: Database not available, skipping table initialization'
       );
       return;
@@ -140,7 +148,7 @@ export class MemoryService {
       `);
     } catch (error) {
       // Indexes may already exist, ignore
-      console.warn('[MemoryService] Index creation:', error);
+      logger.warn('[MemoryService] Index creation:', error);
     }
   }
 
@@ -170,9 +178,9 @@ export class MemoryService {
       for (const column of columns) {
         try {
           this.db.exec(
-            `ALTER TABLE persona_memories ADD COLUMN ${column} ${this.getColumnType(column)} DEFAULT ${defaults[column]}`
+            `ALTER TABLE persona_memories ADD COLUMN ${column} ${getMemoryColumnType(column)} DEFAULT ${defaults[column]}`
           );
-          console.log(
+          logger.debug(
             `[MemoryService] Added column ${column} to persona_memories`
           );
         } catch {
@@ -180,84 +188,15 @@ export class MemoryService {
         }
       }
     } catch (error) {
-      console.warn('[MemoryService] Migration check:', error);
+      logger.warn('[MemoryService] Migration check:', error);
     }
-  }
-
-  /**
-   * Get SQLite column type for a given column name
-   */
-  private getColumnType(column: string): string {
-    const types: Record<string, string> = {
-      memory_type: 'TEXT',
-      access_count: 'INTEGER',
-      last_accessed: 'INTEGER',
-      decay_factor: 'REAL',
-      consolidated_from: 'TEXT',
-    };
-    return types[column] || 'TEXT';
   }
 
   /**
    * Classify memory content into a type
    */
   classifyMemoryType(content: string): MemoryType {
-    const lowerContent = content.toLowerCase();
-
-    // Check for preference indicators
-    const preferencePatterns = [
-      /i (like|love|prefer|enjoy|hate|dislike|don't like)/i,
-      /my favorite/i,
-      /i('m| am) (a fan of|into|interested in)/i,
-    ];
-    if (preferencePatterns.some(p => p.test(lowerContent))) {
-      return 'preference';
-    }
-
-    // Check for factual information about the user
-    const factPatterns = [
-      /i (am|'m) (a |an )?(\w+ )?(developer|engineer|designer|student|teacher|doctor|lawyer)/i,
-      /i (work|live|study) (at|in|for)/i,
-      /my (name|job|profession|age|location|birthday)/i,
-      /i have (a |an )?(\d+ )?(kids?|children|dogs?|cats?|pets?)/i,
-    ];
-    if (factPatterns.some(p => p.test(lowerContent))) {
-      return 'fact';
-    }
-
-    // Check for emotional content
-    const emotionalPatterns = [
-      /i('m| am) (feeling|so|really|very) (happy|sad|excited|anxious|worried|stressed|grateful)/i,
-      /thank you|thanks|appreciate/i,
-      /i('m| am) (sorry|apologize)/i,
-      /(love|hate) (this|that|it)/i,
-    ];
-    if (emotionalPatterns.some(p => p.test(lowerContent))) {
-      return 'emotional';
-    }
-
-    // Check for instructions
-    const instructionPatterns = [
-      /please (always|never|remember|don't|do not)/i,
-      /i want you to/i,
-      /can you (please )?make sure/i,
-      /when (i ask|responding|you)/i,
-    ];
-    if (instructionPatterns.some(p => p.test(lowerContent))) {
-      return 'instruction';
-    }
-
-    // Check for experiences/stories
-    const experiencePatterns = [
-      /i (went|did|saw|visited|attended|met|had)/i,
-      /yesterday|last (week|month|year)|recently/i,
-      /one time|once upon a time|i remember when/i,
-    ];
-    if (experiencePatterns.some(p => p.test(lowerContent))) {
-      return 'experience';
-    }
-
-    return 'general';
+    return classifyMemoryType(content);
   }
 
   /**
@@ -268,44 +207,7 @@ export class MemoryService {
     memoryType: MemoryType,
     _context?: string
   ): number {
-    let score = 0.5; // Base score
-
-    // Adjust based on memory type
-    const typeWeights: Record<MemoryType, number> = {
-      instruction: 0.9, // Instructions are very important
-      fact: 0.8, // Facts about user are important
-      preference: 0.75, // Preferences matter
-      emotional: 0.7, // Emotional moments are memorable
-      experience: 0.6, // Experiences are contextual
-      context: 0.4, // Context is temporary
-      general: 0.5, // Default
-    };
-    score = typeWeights[memoryType];
-
-    // Adjust based on content length (longer = potentially more detailed/important)
-    const wordCount = content.split(/\s+/).length;
-    if (wordCount > 50) score = Math.min(1.0, score + 0.1);
-    else if (wordCount < 10) score = Math.max(0.1, score - 0.1);
-
-    // Adjust based on specificity (names, numbers, dates)
-    const specificityIndicators = [
-      /\b\d{4}\b/, // Years
-      /\b\d{1,2}\/\d{1,2}\b/, // Dates
-      /\b[A-Z][a-z]+\b/, // Proper nouns
-      /\b\d+\s*(years?|months?|days?|hours?)\b/i, // Time durations
-    ];
-    const specificityCount = specificityIndicators.filter(p =>
-      p.test(content)
-    ).length;
-    score = Math.min(1.0, score + specificityCount * 0.05);
-
-    // Adjust based on question presence (questions often indicate important topics)
-    if (content.includes('?')) {
-      score = Math.min(1.0, score + 0.05);
-    }
-
-    // Clamp between 0.1 and 1.0
-    return Math.max(0.1, Math.min(1.0, score));
+    return calculateEnhancedImportance(content, memoryType);
   }
 
   /**
@@ -317,27 +219,12 @@ export class MemoryService {
     accessCount: number = 0,
     lastAccessed?: number
   ): number {
-    const now = Date.now();
-    const ageInDays = (now - timestamp) / (1000 * 60 * 60 * 24);
-    const timeSinceAccess = lastAccessed
-      ? (now - lastAccessed) / (1000 * 60 * 60 * 24)
-      : ageInDays;
-
-    // Base decay: memories lose ~10% importance per month if not accessed
-    const decayRate = 0.003; // ~10% per month
-    let decayedImportance =
-      originalImportance * Math.exp(-decayRate * timeSinceAccess);
-
-    // Boost for frequently accessed memories (reinforcement)
-    const accessBoost = Math.min(0.3, accessCount * 0.02);
-    decayedImportance = Math.min(1.0, decayedImportance + accessBoost);
-
-    // Never let importance drop below 0.1 for recent memories (< 7 days)
-    if (ageInDays < 7) {
-      decayedImportance = Math.max(0.3, decayedImportance);
-    }
-
-    return Math.max(0.1, Math.min(1.0, decayedImportance));
+    return applyMemoryDecay(
+      originalImportance,
+      timestamp,
+      accessCount,
+      lastAccessed
+    );
   }
 
   /**
@@ -366,7 +253,7 @@ export class MemoryService {
 
       return response.embeddings[0] || null;
     } catch (error) {
-      console.error('Failed to generate embedding:', error);
+      logger.error('Failed to generate embedding:', error);
       return null;
     }
   }
@@ -407,7 +294,7 @@ export class MemoryService {
     // If very similar memory exists, reinforce it instead of creating new
     if (existingSimilar.length > 0) {
       const mostSimilar = existingSimilar[0];
-      console.log(
+      logger.debug(
         `[MEMORY] Found similar memory (${(mostSimilar.similarity_score * 100).toFixed(1)}% similar), reinforcing instead of creating new`
       );
       await this.reinforceMemory(mostSimilar.entry.id);
@@ -434,7 +321,7 @@ export class MemoryService {
       userId,
       personaId,
       content,
-      embedding ? Buffer.from(new Float32Array(embedding).buffer) : null,
+      embedding ? embeddingArrayToBuffer(embedding) : null,
       timestamp,
       context || null,
       calculatedImportance,
@@ -444,7 +331,7 @@ export class MemoryService {
       1.0 // decay_factor
     );
 
-    console.log(
+    logger.debug(
       `[MEMORY] Stored: type=${classifiedType}, importance=${calculatedImportance.toFixed(2)}, id=${id}, content="${content.substring(0, 50)}..."`
     );
 
@@ -490,28 +377,14 @@ export class MemoryService {
       LIMIT 50
     `);
 
-    const memories = stmt.all(userId, personaId) as Array<{
-      id: string;
-      user_id: string;
-      persona_id: string;
-      content: string;
-      embedding: Buffer;
-      timestamp: number;
-      context: string | null;
-      importance_score: number;
-      memory_type: string | null;
-      access_count: number | null;
-      last_accessed: number | null;
-      decay_factor: number | null;
-    }>;
+    const memories = stmt.all(userId, personaId) as EnhancedMemoryRow[];
 
     const results: MemorySearchResult[] = [];
 
     for (const memory of memories) {
-      const embeddingArray = Array.from(
-        new Float32Array(memory.embedding.buffer)
-      );
-      const similarity = this.cosineSimilarity(queryEmbedding, embeddingArray);
+      if (!memory.embedding) continue;
+      const embeddingArray = embeddingBufferToArray(memory.embedding);
+      const similarity = cosineSimilarity(queryEmbedding, embeddingArray);
 
       if (similarity >= minSimilarity) {
         results.push({
@@ -549,27 +422,6 @@ export class MemoryService {
 
     const result = stmt.run(Date.now(), memoryId);
     return result.changes > 0;
-  }
-
-  /**
-   * Calculate cosine similarity between two vectors
-   */
-  private cosineSimilarity(a: number[], b: number[]): number {
-    if (a.length !== b.length) return 0;
-
-    let dotProduct = 0;
-    let normA = 0;
-    let normB = 0;
-
-    for (let i = 0; i < a.length; i++) {
-      dotProduct += a[i] * b[i];
-      normA += a[i] * a[i];
-      normB += b[i] * b[i];
-    }
-
-    if (normA === 0 || normB === 0) return 0;
-
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
   }
 
   /**
@@ -615,31 +467,17 @@ export class MemoryService {
       ? [userId, personaId, ...memoryTypes]
       : [userId, personaId];
 
-    const memories = stmt.all(...params) as Array<{
-      id: string;
-      user_id: string;
-      persona_id: string;
-      content: string;
-      embedding: Buffer;
-      timestamp: number;
-      context: string | null;
-      importance_score: number;
-      memory_type: string | null;
-      access_count: number | null;
-      last_accessed: number | null;
-      decay_factor: number | null;
-    }>;
+    const memories = stmt.all(...params) as EnhancedMemoryRow[];
 
     // Calculate enhanced relevance scores
     const results: MemorySearchResult[] = [];
 
     for (const memory of memories) {
       // Convert buffer back to float array
-      const embeddingArray = Array.from(
-        new Float32Array(memory.embedding.buffer)
-      );
+      if (!memory.embedding) continue;
+      const embeddingArray = embeddingBufferToArray(memory.embedding);
 
-      const similarity = this.cosineSimilarity(queryEmbedding, embeddingArray);
+      const similarity = cosineSimilarity(queryEmbedding, embeddingArray);
 
       if (similarity >= minSimilarity) {
         // Calculate decayed importance
@@ -713,7 +551,7 @@ export class MemoryService {
       `);
       stmt.run(Date.now(), memoryId);
     } catch (error) {
-      console.warn('[MemoryService] Failed to update memory access:', error);
+      logger.warn('[MemoryService] Failed to update memory access:', error);
     }
   }
 
@@ -735,29 +573,9 @@ export class MemoryService {
       LIMIT ? OFFSET ?
     `);
 
-    const memories = stmt.all(userId, personaId, limit, offset) as Array<{
-      id: string;
-      user_id: string;
-      persona_id: string;
-      content: string;
-      embedding: Buffer | null;
-      timestamp: number;
-      context: string | null;
-      importance_score: number;
-    }>;
+    const memories = stmt.all(userId, personaId, limit, offset) as MemoryRow[];
 
-    return memories.map(memory => ({
-      id: memory.id,
-      user_id: memory.user_id,
-      persona_id: memory.persona_id,
-      content: memory.content,
-      embedding: memory.embedding
-        ? Array.from(new Float32Array(memory.embedding.buffer))
-        : undefined,
-      timestamp: memory.timestamp,
-      context: memory.context || undefined,
-      importance_score: memory.importance_score,
-    }));
+    return memories.map(toPersonaMemoryEntry);
   }
 
   /**
@@ -800,7 +618,7 @@ export class MemoryService {
         size_mb: Math.round(sizeMb * 100) / 100, // Round to 2 decimal places
       };
     } catch (error) {
-      console.error('Error getting memory status:', error);
+      logger.error('Error getting memory status:', error);
       throw new Error('Failed to get memory status');
     }
   }
@@ -852,16 +670,14 @@ export class MemoryService {
           targetUserId, // Use target user ID
           memory.persona_id,
           memory.content,
-          memory.embedding
-            ? Buffer.from(new Float32Array(memory.embedding).buffer)
-            : null,
+          memory.embedding ? embeddingArrayToBuffer(memory.embedding) : null,
           memory.timestamp,
           memory.context || null,
           memory.importance_score || 0.5
         );
         imported++;
       } catch (error) {
-        console.error('Failed to import memory:', error);
+        logger.error('Failed to import memory:', error);
         // Continue with next memory
       }
     }
@@ -948,9 +764,7 @@ export class MemoryService {
         const memory = memories[i];
         if (processedIds.has(memory.id)) continue;
 
-        const embeddingA = Array.from(
-          new Float32Array(memory.embedding.buffer)
-        );
+        const embeddingA = embeddingBufferToArray(memory.embedding);
         const similarMemories: typeof memories = [];
 
         // Find similar memories
@@ -958,10 +772,8 @@ export class MemoryService {
           const other = memories[j];
           if (processedIds.has(other.id)) continue;
 
-          const embeddingB = Array.from(
-            new Float32Array(other.embedding.buffer)
-          );
-          const similarity = this.cosineSimilarity(embeddingA, embeddingB);
+          const embeddingB = embeddingBufferToArray(other.embedding);
+          const similarity = cosineSimilarity(embeddingA, embeddingB);
 
           if (similarity >= similarityThreshold) {
             similarMemories.push(other);
@@ -978,8 +790,7 @@ export class MemoryService {
             memory.content,
             ...similarMemories.map(m => m.content),
           ];
-          const consolidatedContent =
-            this.createConsolidatedContent(allContent);
+          const consolidatedContent = createConsolidatedContent(allContent);
 
           // Calculate combined importance (weighted average with boost)
           const allImportances = [
@@ -1028,9 +839,7 @@ export class MemoryService {
             userId,
             personaId,
             consolidatedContent,
-            newEmbedding
-              ? Buffer.from(new Float32Array(newEmbedding).buffer)
-              : null,
+            newEmbedding ? embeddingArrayToBuffer(newEmbedding) : null,
             Date.now(),
             `Consolidated from ${consolidatedFromIds.length} memories`,
             consolidatedImportance,
@@ -1059,32 +868,14 @@ export class MemoryService {
         deleted = toDelete.length;
       }
 
-      console.log(
+      logger.debug(
         `[MEMORY] Consolidation complete: ${consolidated} groups merged, ${deleted} memories deleted`
       );
     } catch (error) {
-      console.error('[MEMORY] Consolidation error:', error);
+      logger.error('[MEMORY] Consolidation error:', error);
     }
 
     return { consolidated, deleted };
-  }
-
-  /**
-   * Create consolidated content from multiple similar memories
-   */
-  private createConsolidatedContent(contents: string[]): string {
-    if (contents.length === 1) return contents[0];
-
-    // For now, use the longest content as base and note the count
-    const sorted = [...contents].sort((a, b) => b.length - a.length);
-    const base = sorted[0];
-
-    // Add a note about consolidation
-    if (contents.length === 2) {
-      return base;
-    }
-
-    return `${base} (consolidated from ${contents.length} related interactions)`;
   }
 
   /**
@@ -1193,7 +984,7 @@ export class MemoryService {
       }
     }
 
-    console.log(`[MEMORY] Applied decay to ${updated} memories`);
+    logger.debug(`[MEMORY] Applied decay to ${updated} memories`);
     return updated;
   }
 
@@ -1218,32 +1009,9 @@ export class MemoryService {
       LIMIT ?
     `);
 
-    const memories = stmt.all(userId, personaId, limit) as Array<{
-      id: string;
-      user_id: string;
-      persona_id: string;
-      content: string;
-      embedding: Buffer | null;
-      timestamp: number;
-      context: string | null;
-      importance_score: number;
-      memory_type: string | null;
-      access_count: number | null;
-      last_accessed: number | null;
-    }>;
+    const memories = stmt.all(userId, personaId, limit) as EnhancedMemoryRow[];
 
-    return memories.map(memory => ({
-      id: memory.id,
-      user_id: memory.user_id,
-      persona_id: memory.persona_id,
-      content: memory.content,
-      embedding: memory.embedding
-        ? Array.from(new Float32Array(memory.embedding.buffer))
-        : undefined,
-      timestamp: memory.timestamp,
-      context: memory.context || undefined,
-      importance_score: memory.importance_score,
-    }));
+    return memories.map(toPersonaMemoryEntry);
   }
 }
 

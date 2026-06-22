@@ -38,8 +38,15 @@ import {
   Play,
 } from 'lucide-react';
 import { personaApi } from '@/utils/api';
+import {
+  getPersonaAvatarSrc,
+  setPersonaAvatarFallback,
+} from '@/utils/personaAvatar';
 import toast from 'react-hot-toast';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:persona-card');
 
 interface PersonaCardProps {
   persona: Persona;
@@ -106,7 +113,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       }
     } catch (error) {
       toast.error(t('personaCard.failed', { action: 'wipe memories' }));
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsLoading(false);
       setShowMenu(false);
@@ -128,7 +135,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       toast.success(t('personaCard.backupSuccess'));
     } catch (error) {
       toast.error(t('personaCard.failed', { action: 'backup persona' }));
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsLoading(false);
       setShowMenu(false);
@@ -150,19 +157,20 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       toast.success(t('personaCard.dnaSuccess'));
     } catch (error) {
       toast.error(t('personaCard.failed', { action: 'export persona DNA' }));
-      console.error(error);
+      logger.error(error);
     } finally {
       setIsLoading(false);
       setShowMenu(false);
     }
   };
 
-  const getAvatarSrc = () => {
-    if (persona.avatar) {
-      return persona.avatar;
-    }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.name)}&background=6366f1&color=fff&size=128`;
-  };
+  const getAvatarSrc = (size = 128) => getPersonaAvatarSrc(persona, size);
+
+  const handleAvatarError =
+    (size = 128) =>
+    (event: React.SyntheticEvent<HTMLImageElement>) => {
+      setPersonaAvatarFallback(event.currentTarget, persona.name, size);
+    };
 
   const formatMemorySize = (sizeInMB: number): string => {
     if (sizeInMB < 1) {
@@ -189,9 +197,10 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
         {/* Avatar */}
         <div className='relative flex-shrink-0'>
           <img
-            src={getAvatarSrc()}
+            src={getAvatarSrc(64)}
             alt={persona.name}
             className='w-10 h-10 rounded-full object-cover ring-2 ring-white dark:ring-dark-100'
+            onError={handleAvatarError(64)}
           />
           {hasAdvancedFeatures && (
             <div className='absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-gradient-to-br from-purple-500 to-primary-500 rounded-full flex items-center justify-center'>
@@ -292,9 +301,10 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
       <div className='relative px-4 -mt-8'>
         <div className='relative inline-block'>
           <img
-            src={getAvatarSrc()}
+            src={getAvatarSrc(128)}
             alt={persona.name}
             className='w-16 h-16 rounded-xl object-cover ring-4 ring-white dark:ring-dark-100 shadow-lg'
+            onError={handleAvatarError(128)}
           />
           {hasAdvancedFeatures && (
             <div className='absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-purple-500 to-primary-500 rounded-lg flex items-center justify-center shadow-sm'>

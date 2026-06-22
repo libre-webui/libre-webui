@@ -19,6 +19,9 @@ import express from 'express';
 import multer from 'multer';
 import documentService from '../services/documentService.js';
 import { ApiResponse } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('routes:documents');
 
 const router = express.Router();
 
@@ -73,7 +76,7 @@ router.post('/upload', upload.single('document'), async (req, res) => {
       message: 'Document uploaded and processed successfully',
     } as ApiResponse);
   } catch (error) {
-    console.error('Document upload error:', error);
+    logger.error('Document upload error:', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -102,7 +105,7 @@ router.get('/session/:sessionId', (req, res) => {
       data: documentsWithoutContent,
     } as ApiResponse);
   } catch (error) {
-    console.error('Get documents error:', error);
+    logger.error('Get documents error:', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -130,7 +133,7 @@ router.get('/', (req, res) => {
       data: documentsWithoutContent,
     } as ApiResponse);
   } catch (error) {
-    console.error('Get all documents error:', error);
+    logger.error('Get all documents error:', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -166,7 +169,7 @@ router.get('/:documentId', (req, res) => {
       },
     } as ApiResponse);
   } catch (error) {
-    console.error('Get document error:', error);
+    logger.error('Get document error:', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -198,7 +201,7 @@ router.post('/search', async (req, res) => {
       data: chunks,
     } as ApiResponse);
   } catch (error) {
-    console.error('Document search error:', error);
+    logger.error('Document search error:', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -225,7 +228,7 @@ router.delete('/:documentId', (req, res) => {
       message: 'Document deleted successfully',
     } as ApiResponse);
   } catch (error) {
-    console.error('Delete document error:', error);
+    logger.error('Delete document error:', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -242,7 +245,7 @@ router.get('/embeddings/status', async (req, res) => {
       data: embeddingInfo,
     } as ApiResponse);
   } catch (error) {
-    console.error('Get embedding status error:', error);
+    logger.error('Get embedding status error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to get embedding status',
@@ -259,7 +262,7 @@ router.post('/embeddings/regenerate', async (req, res) => {
       message: 'Embeddings regenerated successfully',
     } as ApiResponse);
   } catch (error) {
-    console.error('Regenerate embeddings error:', error);
+    logger.error('Regenerate embeddings error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to regenerate embeddings',

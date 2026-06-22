@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Tutup panel (Esc)",
     "copyButton": "Salin",
     "open": "Buka",
-    "dragEdgeToResize": "Seret tepi untuk mengubah ukuran"
+    "dragEdgeToResize": "Seret tepi untuk mengubah ukuran",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Impor & Ekspor Persona",

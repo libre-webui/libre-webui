@@ -16,6 +16,9 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('middleware:index');
 
 export const errorHandler = (
   error: unknown,
@@ -23,7 +26,7 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ) => {
-  console.error('Error:', error);
+  logger.error('Error:', error);
 
   // Default error response
   let statusCode = 500;
@@ -76,7 +79,7 @@ export const requestLogger = (
 
   res.on('finish', () => {
     const duration = Date.now() - start;
-    console.log(
+    logger.debug(
       `${req.method} ${req.originalUrl} - ${res.statusCode} - ${duration}ms`
     );
   });

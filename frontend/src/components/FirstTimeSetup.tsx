@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
@@ -34,6 +34,10 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import { TurnstileWidget } from '@/components/TurnstileWidget';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:first-time-setup');
 
 interface FirstTimeSetupProps {
   onComplete?: () => void;
@@ -55,7 +59,19 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
   const [encryptionKey, setEncryptionKey] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
   const [keyAcknowledged, setKeyAcknowledged] = useState(false);
-  const { login } = useAuthStore();
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const { login, systemInfo } = useAuthStore();
+  const turnstileSiteKey = systemInfo?.turnstile?.siteKey;
+  const isTurnstileEnabled = Boolean(
+    systemInfo?.turnstile?.enabled && turnstileSiteKey
+  );
+  const handleTurnstileTokenChange = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+  const createAdminDisabled = useMemo(
+    () => isLoading || (isTurnstileEnabled && !turnstileToken),
+    [isLoading, isTurnstileEnabled, turnstileToken]
+  );
 
   // Fetch encryption key when entering that step
   useEffect(() => {
@@ -86,6 +102,11 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
       return;
     }
 
+    if (isTurnstileEnabled && !turnstileToken) {
+      toast.error(t('auth.signup.tryAgain'));
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -93,6 +114,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
         username,
         password,
         email: '',
+        turnstileToken,
       });
 
       if (response.success && response.data) {
@@ -108,9 +130,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
         toast.error(response.message || t('setup.admin.failed'));
       }
     } catch (error) {
-      console.error('Admin creation error:', error);
+      logger.error('Admin creation error:', error);
       toast.error(t('setup.admin.failed'));
     } finally {
+      setTurnstileToken('');
       setIsLoading(false);
     }
   };
@@ -235,7 +258,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
           </div>
           <h2
             className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
-            style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+            style={{ fontWeight: 300, letterSpacing: 0 }}
           >
             {t('setup.encryptionKey.title')}
           </h2>
@@ -337,7 +360,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
         </div>
         <h2
           className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
-          style={{ fontWeight: 300, letterSpacing: '0.01em' }}
+          style={{ fontWeight: 300, letterSpacing: 0 }}
         >
           {t('setup.admin.title')}
         </h2>
@@ -439,6 +462,15 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               </div>
             </div>
 
+            {isTurnstileEnabled && turnstileSiteKey && (
+              <TurnstileWidget
+                siteKey={turnstileSiteKey}
+                disabled={isLoading}
+                errorMessage={t('auth.signup.tryAgain')}
+                onTokenChange={handleTurnstileTokenChange}
+              />
+            )}
+
             <div className='flex space-x-3'>
               <button
                 type='button'
@@ -450,7 +482,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               </button>
               <button
                 type='submit'
-                disabled={isLoading}
+                disabled={createAdminDisabled}
                 className='flex-1 flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
               >
                 {isLoading ? (

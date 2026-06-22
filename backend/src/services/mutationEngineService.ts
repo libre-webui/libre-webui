@@ -25,6 +25,9 @@ import {
   Persona,
 } from '../types/index.js';
 import { v4 as uuidv4 } from 'uuid';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:mutation-engine-service');
 
 export class MutationEngineService {
   private db = getDatabaseSafe();
@@ -45,7 +48,7 @@ export class MutationEngineService {
 
   private initializeTables(): void {
     if (!this.db) {
-      console.warn(
+      logger.warn(
         'MutationEngineService: Database not available, skipping table initialization'
       );
       return;

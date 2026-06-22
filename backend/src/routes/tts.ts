@@ -18,6 +18,9 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('routes:tts');
 
 const router = express.Router();
 
@@ -45,7 +48,7 @@ router.get('/models', async (_req, res) => {
       data: models,
     });
   } catch (error) {
-    console.error('Failed to get TTS models:', error);
+    logger.error('Failed to get TTS models:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get TTS models',
@@ -82,7 +85,7 @@ router.get('/voices/:pluginId', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('Failed to get TTS voices:', error);
+    logger.error('Failed to get TTS voices:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get TTS voices',
@@ -174,7 +177,7 @@ router.post('/generate', ttsRateLimiter, async (req, res) => {
     // Send audio data
     res.send(audioBuffer);
   } catch (error) {
-    console.error('TTS generation failed:', error);
+    logger.error('TTS generation failed:', error);
 
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
@@ -298,7 +301,7 @@ router.post('/generate-base64', ttsRateLimiter, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('TTS generation failed:', error);
+    logger.error('TTS generation failed:', error);
 
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';
@@ -338,7 +341,7 @@ router.get('/plugins', async (_req, res) => {
       })),
     });
   } catch (error) {
-    console.error('Failed to get TTS plugins:', error);
+    logger.error('Failed to get TTS plugins:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to get TTS plugins',

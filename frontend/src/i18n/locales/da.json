@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Luk panel (Esc)",
     "copyButton": "Kopier",
     "open": "Åbn",
-    "dragEdgeToResize": "Træk kant for at ændre størrelse"
+    "dragEdgeToResize": "Træk kant for at ændre størrelse",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Import og eksport af personaer",

@@ -42,6 +42,9 @@ import {
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:chat-message');
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -83,7 +86,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy message:', err);
+      logger.error('Failed to copy message:', err);
     }
   };
 
@@ -172,7 +175,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             await audio.play();
           }
         } catch (error) {
-          console.error('Auto-play TTS failed:', error);
+          logger.error('Auto-play TTS failed:', error);
           setIsAutoPlaying(false);
         }
       };
@@ -215,9 +218,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     try {
       setSystemMessage(editedContent);
       setIsEditing(false);
-      console.log('✅ System message updated:', editedContent);
+      logger.debug('✅ System message updated:', editedContent);
     } catch (error) {
-      console.error('Failed to save system message:', error);
+      logger.error('Failed to save system message:', error);
     } finally {
       setIsSaving(false);
     }
@@ -513,8 +516,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     )}
                   </div>
                 )}
-                <MessageContent content={parsedContent} />
-                {isStreaming && (
+                <MessageContent
+                  content={parsedContent}
+                  isStreaming={isStreaming}
+                />
+                {isStreaming && !parsedContent.includes('```') && (
                   <div className='inline-block w-2 h-5 bg-primary-500 animate-pulse ml-1 rounded-sm' />
                 )}
               </div>

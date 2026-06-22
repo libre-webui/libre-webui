@@ -17,7 +17,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ollamaApi,
@@ -30,16 +29,10 @@ import { RunningModel } from '@/types';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import {
-  Download,
-  Trash2,
-  Info,
   RefreshCw,
   Activity,
   HardDrive,
-  Cpu,
   Zap,
-  Search,
-  X,
   Server,
   Copy,
   FileCode,
@@ -47,59 +40,47 @@ import {
   ChevronDown,
   ChevronUp,
   Settings,
-  Clock,
-  Hash,
   Layers,
   MemoryStick,
   Gauge,
-  ExternalLink,
-  Cloud,
-  Check,
-  Filter,
-  Heart,
-  Loader,
 } from 'lucide-react';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+import { HuggingFaceSection } from './model-manager/HuggingFaceSection';
+import { LocalModelsSection } from './model-manager/LocalModelsSection';
+import { ModelLibrarySection } from './model-manager/ModelLibrarySection';
+import { PullModelSection } from './model-manager/PullModelSection';
+import type {
+  LibraryModel,
+  ModelDetails,
+  ModelInfo,
+} from './model-manager/types';
 
-interface ModelInfo {
-  name: string;
-  size: number;
-  digest: string;
-  modified_at: string;
-  details?: {
-    format?: string;
-    family?: string;
-    parameter_size?: string;
-    quantization_level?: string;
-    families?: string[];
-    parent_model?: string;
-  };
-}
+const logger = createLogger('components:model-manager');
+const ModelManagerModals = React.lazy(
+  () => import('./model-manager/ModelManagerModals')
+);
 
-interface ModelDetails {
-  modelfile?: string;
-  parameters?: string;
-  template?: string;
-  license?: string;
-  system?: string;
-  details?: {
-    format?: string;
-    family?: string;
-    families?: string[];
-    parameter_size?: string;
-    quantization_level?: string;
-  };
-  model_info?: Record<string, unknown>;
-}
+const hasCloudPullTag = (modelName: string): boolean => {
+  const tag = modelName.split(':').pop()?.toLowerCase();
+  return tag === 'cloud' || tag?.endsWith('-cloud') === true;
+};
 
-interface LibraryModel {
-  name: string;
-  description: string;
-  category: string;
-  sizes: string[];
-  pulls?: string;
-  tags?: string[];
-}
+const normalizeCloudPullName = (modelName: string): string => {
+  const trimmedName = modelName.trim();
+  if (!trimmedName || hasCloudPullTag(trimmedName)) {
+    return trimmedName;
+  }
+
+  const tagSeparator = trimmedName.lastIndexOf(':');
+  if (tagSeparator === -1) {
+    return `${trimmedName}:cloud`;
+  }
+
+  const baseName = trimmedName.slice(0, tagSeparator);
+  const tag = trimmedName.slice(tagSeparator + 1);
+  return `${baseName}:${tag}-cloud`;
+};
 
 export const ModelManager: React.FC = () => {
   const { t } = useTranslation();
@@ -287,7 +268,7 @@ export const ModelManager: React.FC = () => {
         setHfGgufFiles(prev => ({ ...prev, [modelId]: response.data! }));
       }
     } catch (error) {
-      console.error('Failed to load GGUF files:', error);
+      logger.error('Failed to load GGUF files:', error);
     } finally {
       setLoadingGguf(null);
     }
@@ -359,13 +340,22 @@ export const ModelManager: React.FC = () => {
     }
   }, [cancelHfPull]);
 
-  const handlePullModel = async (modelName?: string) => {
+  const handlePullModel = async (
+    modelName?: string,
+    modelCategory?: string
+  ) => {
     if (!canInstallModels) {
       toast.error(t('modelManager.pull.restricted'));
       return;
     }
 
-    const nameToUse = modelName || pullModelName.trim();
+    const rawName = modelName || pullModelName.trim();
+    const shouldUseCloudName =
+      modelCategory === 'cloud' || (!modelName && libraryFilter === 'cloud');
+    const nameToUse = shouldUseCloudName
+      ? normalizeCloudPullName(rawName)
+      : rawName;
+
     if (!nameToUse) {
       toast.error(t('modelManager.pull.enterName'));
       return;
@@ -373,7 +363,7 @@ export const ModelManager: React.FC = () => {
 
     // If called with a model name from library, update the input field too
     if (modelName) {
-      setPullModelName(modelName);
+      setPullModelName(nameToUse);
     }
 
     setPulling(true);
@@ -632,6 +622,9 @@ export const ModelManager: React.FC = () => {
     ];
   }, [libraryModels]);
 
+  const hasOpenModelManagerModal =
+    showDetailsModal || showCopyModal || showCreateModal || showEmbeddingsModal;
+
   if (loading) {
     return (
       <div className='flex items-center justify-center p-8'>
@@ -723,823 +716,63 @@ export const ModelManager: React.FC = () => {
         </div>
       </div>
 
-      {/* Pull Model Section */}
-      <div
-        className={cn(
-          'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100',
-          'border-gray-200 dark:border-dark-300'
-        )}
-      >
-        <button
-          onClick={() => toggleSection('pull')}
-          className={cn(
-            'w-full flex items-center justify-between p-4',
-            'hover:bg-gray-50 dark:hover:bg-dark-50',
-            'transition-colors'
-          )}
-        >
-          <div className='flex items-center gap-3'>
-            <div
-              className={cn(
-                'p-2 rounded-lg',
-                'bg-primary-100 dark:bg-primary-900/30'
-              )}
-            >
-              <Download className='h-5 w-5 text-primary-600 dark:text-primary-400' />
-            </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
-              {t('modelManager.sections.pull')}
-            </h3>
-          </div>
-          {expandedSections.has('pull') ? (
-            <ChevronUp className='h-5 w-5 text-gray-500' />
-          ) : (
-            <ChevronDown className='h-5 w-5 text-gray-500' />
-          )}
-        </button>
+      <PullModelSection
+        expanded={expandedSections.has('pull')}
+        modelName={pullModelName}
+        setModelName={setPullModelName}
+        pulling={pulling}
+        progress={pullProgress}
+        canInstallModels={canInstallModels}
+        popularModels={popularModels}
+        onToggle={() => toggleSection('pull')}
+        onPull={() => handlePullModel()}
+        onCancelPull={handleCancelPull}
+        formatSize={formatSize}
+      />
 
-        {expandedSections.has('pull') && (
-          <div className='p-4 pt-0 space-y-4'>
-            <div className='flex gap-2'>
-              <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500' />
-                <input
-                  type='text'
-                  value={pullModelName}
-                  onChange={e => setPullModelName(e.target.value)}
-                  placeholder={t('modelManager.pull.placeholder')}
-                  className={cn(
-                    'w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm',
-                    'bg-gray-50 dark:bg-dark-50',
-                    'border-gray-200 dark:border-dark-300',
-                    'text-gray-900 dark:text-dark-700',
-                    'placeholder-gray-500 dark:placeholder-gray-400',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
-                    'focus:border-primary-500'
-                  )}
-                  disabled={pulling || !canInstallModels}
-                  onKeyDown={e =>
-                    e.key === 'Enter' &&
-                    !pulling &&
-                    canInstallModels &&
-                    handlePullModel()
-                  }
-                />
-              </div>
-              {pulling ? (
-                <Button
-                  onClick={handleCancelPull}
-                  variant='outline'
-                  className={cn(
-                    'px-4 py-2.5 gap-2',
-                    'text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300',
-                    '',
-                    ''
-                  )}
-                >
-                  <X className='h-4 w-4' />
-                  {t('modelManager.pull.cancel')}
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => handlePullModel()}
-                  disabled={!pullModelName.trim() || !canInstallModels}
-                  className={cn('px-4 py-2.5 gap-2', '')}
-                >
-                  <Download className='h-4 w-4' />
-                  {t('modelManager.pull.button')}
-                </Button>
-              )}
-            </div>
+      <ModelLibrarySection
+        expanded={expandedSections.has('library')}
+        models={filteredLibraryModels}
+        totalAvailable={libraryModels.length}
+        categories={libraryCategories}
+        filter={libraryFilter}
+        search={librarySearch}
+        loading={loadingLibrary || loadingCloud}
+        pulling={pulling}
+        canInstallModels={canInstallModels}
+        pullSectionExpanded={expandedSections.has('pull')}
+        setFilter={setLibraryFilter}
+        setSearch={setLibrarySearch}
+        isModelInstalled={isModelInstalled}
+        normalizeCloudPullName={normalizeCloudPullName}
+        onToggle={() => toggleSection('library')}
+        onTogglePullSection={() => toggleSection('pull')}
+        onPullModel={handlePullModel}
+        onRefresh={loadLibraryModels}
+      />
 
-            {/* Progress Bar */}
-            {pulling && pullProgress && (
-              <div
-                className={cn(
-                  'p-4 rounded-lg border',
-                  'bg-gray-50 dark:bg-dark-200',
-                  'border-gray-200 dark:border-dark-300'
-                )}
-              >
-                <div className='flex items-center justify-between mb-2'>
-                  <span className='text-sm font-medium text-gray-800 dark:text-dark-700'>
-                    {pullProgress.status === 'starting'
-                      ? t('modelManager.progress.starting')
-                      : pullProgress.status.startsWith('pulling')
-                        ? `${t('modelManager.progress.pullingLayer')} ${pullProgress.status.replace('pulling ', '')}`
-                        : pullProgress.status.startsWith('verifying sha256')
-                          ? t('modelManager.progress.verifyingDigest')
-                          : pullProgress.status === 'writing manifest'
-                            ? t('modelManager.progress.writing')
-                            : pullProgress.status ===
-                                'removing any unused layers'
-                              ? t('modelManager.progress.cleaning')
-                              : pullProgress.status}
-                  </span>
-                  {pullProgress.percent !== undefined && (
-                    <span className='text-sm font-mono text-gray-600 dark:text-dark-600'>
-                      {pullProgress.percent}%
-                    </span>
-                  )}
-                </div>
-
-                {pullProgress.percent !== undefined && (
-                  <div className='w-full bg-gray-200 dark:bg-dark-400 rounded-full h-2 overflow-hidden'>
-                    <div
-                      className={cn(
-                        'h-2 rounded-full transition-all duration-300',
-                        'bg-primary-500 dark:bg-primary-400'
-                      )}
-                      style={{ width: `${pullProgress.percent}%` }}
-                    />
-                  </div>
-                )}
-
-                {pullProgress.total && pullProgress.completed && (
-                  <div className='mt-2 text-xs text-gray-600 dark:text-dark-600'>
-                    {formatSize(pullProgress.completed)} /{' '}
-                    {formatSize(pullProgress.total)}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {!canInstallModels && (
-              <p className='text-xs text-amber-700 dark:text-amber-300'>
-                {t('modelManager.pull.restricted')}
-              </p>
-            )}
-
-            {/* Popular Models */}
-            <div>
-              <p className='text-xs font-medium text-gray-500 dark:text-gray-400 mb-2'>
-                {t('modelManager.pull.popular')}
-              </p>
-              <div className='flex flex-wrap gap-2'>
-                {popularModels.map(model => (
-                  <button
-                    key={model.name}
-                    onClick={() => setPullModelName(model.name)}
-                    disabled={pulling || !canInstallModels}
-                    className={cn(
-                      'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-                      'bg-gray-100 dark:bg-dark-200',
-                      'text-gray-700 dark:text-gray-300',
-                      'hover:bg-gray-200 dark:hover:bg-dark-300',
-                      'border border-gray-200 dark:border-dark-300',
-                      'disabled:opacity-50 disabled:cursor-not-allowed'
-                    )}
-                  >
-                    {model.name}
-                    <span className='ml-1 text-gray-400 dark:text-gray-500'>
-                      {model.size}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Help Link */}
-            <a
-              href='https://ollama.com/library'
-              target='_blank'
-              rel='noopener noreferrer'
-              className={cn(
-                'inline-flex items-center gap-1.5 text-xs',
-                'text-primary-600 dark:text-primary-400',
-                'hover:underline'
-              )}
-            >
-              <ExternalLink className='h-3 w-3' />
-              {t('modelManager.pull.browseAll')}
-            </a>
-          </div>
-        )}
-      </div>
-
-      {/* Browse Library Section */}
-      <div
-        className={cn(
-          'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100',
-          'border-gray-200 dark:border-dark-300'
-        )}
-      >
-        <button
-          onClick={() => toggleSection('library')}
-          className={cn(
-            'w-full flex items-center justify-between p-4',
-            'hover:bg-gray-50 dark:hover:bg-dark-50',
-            'transition-colors'
-          )}
-        >
-          <div className='flex items-center gap-3'>
-            <div
-              className={cn(
-                'p-2 rounded-lg',
-                'bg-blue-100 dark:bg-blue-900/30'
-              )}
-            >
-              <Cloud className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-            </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
-              {t('modelManager.sections.library')}
-            </h3>
-            <span
-              className={cn(
-                'px-2 py-0.5 rounded-full text-xs font-medium',
-                'bg-gray-100 dark:bg-dark-200',
-                'text-gray-600 dark:text-gray-400'
-              )}
-            >
-              {libraryModels.length} {t('modelManager.library.available')}
-            </span>
-          </div>
-          {expandedSections.has('library') ? (
-            <ChevronUp className='h-5 w-5 text-gray-500' />
-          ) : (
-            <ChevronDown className='h-5 w-5 text-gray-500' />
-          )}
-        </button>
-
-        {expandedSections.has('library') && (
-          <div className='p-4 pt-0 space-y-4'>
-            {/* Search and Filter */}
-            <div className='flex flex-col sm:flex-row gap-3'>
-              <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500' />
-                <input
-                  type='text'
-                  value={librarySearch}
-                  onChange={e => setLibrarySearch(e.target.value)}
-                  placeholder={t('modelManager.library.search')}
-                  className={cn(
-                    'w-full pl-10 pr-4 py-2 rounded-lg border text-sm',
-                    'bg-gray-50 dark:bg-dark-50',
-                    'border-gray-200 dark:border-dark-300',
-                    'text-gray-900 dark:text-dark-700',
-                    'placeholder-gray-500 dark:placeholder-gray-400',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
-                    'focus:border-primary-500'
-                  )}
-                />
-              </div>
-
-              {/* Category Filter */}
-              <div className='flex items-center gap-2'>
-                <Filter className='h-4 w-4 text-gray-400' />
-                <div className='flex flex-wrap gap-1'>
-                  {libraryCategories.map(category => (
-                    <button
-                      key={category}
-                      onClick={() => setLibraryFilter(category)}
-                      className={cn(
-                        'px-2.5 py-1 rounded-full text-xs font-medium transition-colors',
-                        libraryFilter === category
-                          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                          : 'bg-gray-100 dark:bg-dark-200 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-300'
-                      )}
-                    >
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Models Grid */}
-            {loadingLibrary || loadingCloud ? (
-              <div className='flex items-center justify-center py-8'>
-                <RefreshCw className='h-5 w-5 animate-spin text-gray-400' />
-              </div>
-            ) : filteredLibraryModels.length === 0 ? (
-              <div className='text-center py-8 text-gray-500'>
-                {t('modelManager.library.noResults')}
-              </div>
-            ) : (
-              <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3'>
-                {filteredLibraryModels.map(model => {
-                  const installed = isModelInstalled(model.name);
-                  return (
-                    <div
-                      key={model.name}
-                      className={cn(
-                        'p-4 rounded-lg border transition-all',
-                        'bg-gray-50 dark:bg-dark-50',
-                        installed
-                          ? 'border-green-200 dark:border-green-800/50'
-                          : 'border-gray-200 dark:border-dark-300',
-                        'hover:shadow-md hover:border-gray-300 dark:hover:border-dark-400'
-                      )}
-                    >
-                      <div className='flex items-start justify-between gap-2 mb-2'>
-                        <h4 className='font-medium text-gray-900 dark:text-dark-800'>
-                          {model.name}
-                        </h4>
-                        {installed && (
-                          <span
-                            className={cn(
-                              'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs',
-                              'bg-green-100 dark:bg-green-900/30',
-                              'text-green-700 dark:text-green-400'
-                            )}
-                          >
-                            <Check className='h-3 w-3' />
-                            {t('modelManager.library.installed')}
-                          </span>
-                        )}
-                      </div>
-
-                      <p className='text-xs text-gray-600 dark:text-dark-600 mb-3 line-clamp-2'>
-                        {model.description}
-                      </p>
-
-                      <div className='flex flex-wrap gap-1.5 mb-3'>
-                        {model.sizes.slice(0, 4).map(size => (
-                          <span
-                            key={size}
-                            className={cn(
-                              'px-1.5 py-0.5 rounded text-xs',
-                              'bg-gray-200 dark:bg-dark-300',
-                              'text-gray-600 dark:text-gray-400'
-                            )}
-                          >
-                            {size}
-                          </span>
-                        ))}
-                        {model.sizes.length > 4 && (
-                          <span className='text-xs text-gray-400'>
-                            {t('modelManager.library.more', {
-                              count: model.sizes.length - 4,
-                            })}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-2 text-xs text-gray-500'>
-                          {model.pulls && (
-                            <span className='flex items-center gap-1'>
-                              <Download className='h-3 w-3' />
-                              {model.pulls}
-                            </span>
-                          )}
-                          <span
-                            className={cn(
-                              'px-1.5 py-0.5 rounded capitalize',
-                              model.category === 'cloud'
-                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                                : 'bg-gray-100 dark:bg-dark-200'
-                            )}
-                          >
-                            {model.category}
-                          </span>
-                        </div>
-
-                        <Button
-                          onClick={() => {
-                            // Open the pull section so user can see progress
-                            if (!expandedSections.has('pull')) {
-                              toggleSection('pull');
-                            }
-                            // Start the pull immediately
-                            handlePullModel(model.name);
-                          }}
-                          variant='outline'
-                          size='sm'
-                          disabled={pulling || !canInstallModels}
-                          className={cn('gap-1 text-xs', '', '')}
-                        >
-                          <Download className='h-3 w-3' />
-                          {t('modelManager.pull.button')}
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Refresh Button */}
-            <div className='flex justify-center'>
-              <Button
-                onClick={loadLibraryModels}
-                variant='outline'
-                size='sm'
-                disabled={loadingLibrary}
-                className={cn('gap-1.5', '', '')}
-              >
-                <RefreshCw
-                  className={cn(
-                    'h-3.5 w-3.5',
-                    loadingLibrary && 'animate-spin'
-                  )}
-                />
-                {t('modelManager.library.refresh')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* HuggingFace Hub Section */}
-      <div
-        className={cn(
-          'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100',
-          'border-gray-200 dark:border-dark-300'
-        )}
-      >
-        <button
-          onClick={() => toggleSection('huggingface')}
-          className={cn(
-            'w-full flex items-center justify-between p-4',
-            'hover:bg-gray-50 dark:hover:bg-dark-50',
-            'transition-colors'
-          )}
-        >
-          <div className='flex items-center gap-3'>
-            <div
-              className={cn(
-                'p-2 rounded-lg',
-                'bg-yellow-100 dark:bg-yellow-900/30'
-              )}
-            >
-              <Zap className='h-5 w-5 text-yellow-600 dark:text-yellow-400' />
-            </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
-              {t('modelManager.sections.huggingface', 'HuggingFace Hub')}
-            </h3>
-            {hfModels.length > 0 && (
-              <span
-                className={cn(
-                  'px-2 py-0.5 rounded-full text-xs font-medium',
-                  'bg-gray-100 dark:bg-dark-200',
-                  'text-gray-600 dark:text-gray-400'
-                )}
-              >
-                {hfModels.length}{' '}
-                {t('modelManager.library.available', 'available')}
-              </span>
-            )}
-          </div>
-          {expandedSections.has('huggingface') ? (
-            <ChevronUp className='h-5 w-5 text-gray-500' />
-          ) : (
-            <ChevronDown className='h-5 w-5 text-gray-500' />
-          )}
-        </button>
-
-        {expandedSections.has('huggingface') && (
-          <div className='p-4 pt-0 space-y-4'>
-            {/* Search and Filters */}
-            <div className='flex flex-col sm:flex-row gap-3'>
-              <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500' />
-                <input
-                  type='text'
-                  value={hfSearch}
-                  onChange={e => setHfSearch(e.target.value)}
-                  placeholder={t(
-                    'modelManager.huggingface.search',
-                    'Search HuggingFace models...'
-                  )}
-                  className={cn(
-                    'w-full pl-10 pr-4 py-2 rounded-lg border text-sm',
-                    'bg-gray-50 dark:bg-dark-50',
-                    'border-gray-200 dark:border-dark-300',
-                    'text-gray-900 dark:text-dark-700',
-                    'placeholder-gray-500 dark:placeholder-gray-400',
-                    'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
-                    'focus:border-primary-500'
-                  )}
-                />
-              </div>
-
-              {/* Task Filter */}
-              <select
-                value={hfTask}
-                onChange={e => setHfTask(e.target.value)}
-                className={cn(
-                  'px-3 py-2 rounded-lg border text-sm min-w-[160px]',
-                  'bg-gray-50 dark:bg-dark-50',
-                  'border-gray-200 dark:border-dark-300',
-                  'text-gray-900 dark:text-dark-700',
-                  'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
-                )}
-              >
-                <option value='text-generation'>
-                  {t(
-                    'modelManager.huggingface.tasks.textGen',
-                    'Text Generation'
-                  )}
-                </option>
-                <option value='text-to-speech'>
-                  {t('modelManager.huggingface.tasks.tts', 'Text to Speech')}
-                </option>
-                <option value='text-to-image'>
-                  {t('modelManager.huggingface.tasks.image', 'Text to Image')}
-                </option>
-                <option value='automatic-speech-recognition'>
-                  {t(
-                    'modelManager.huggingface.tasks.stt',
-                    'Speech Recognition'
-                  )}
-                </option>
-              </select>
-
-              {/* Sort */}
-              <select
-                value={hfSort}
-                onChange={e => setHfSort(e.target.value)}
-                className={cn(
-                  'px-3 py-2 rounded-lg border text-sm min-w-[140px]',
-                  'bg-gray-50 dark:bg-dark-50',
-                  'border-gray-200 dark:border-dark-300',
-                  'text-gray-900 dark:text-dark-700',
-                  'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
-                )}
-              >
-                <option value='downloads'>
-                  {t(
-                    'modelManager.huggingface.sort.downloads',
-                    'Most Downloads'
-                  )}
-                </option>
-                <option value='likes'>
-                  {t('modelManager.huggingface.sort.likes', 'Most Liked')}
-                </option>
-                <option value='lastModified'>
-                  {t(
-                    'modelManager.huggingface.sort.recent',
-                    'Recently Updated'
-                  )}
-                </option>
-              </select>
-            </div>
-
-            {!canInstallModels && (
-              <p className='text-xs text-amber-700 dark:text-amber-300'>
-                {t('modelManager.pull.restricted')}
-              </p>
-            )}
-
-            {/* Models Grid */}
-            {loadingHfModels ? (
-              <div className='flex items-center justify-center py-8'>
-                <Loader className='h-5 w-5 animate-spin text-gray-400' />
-              </div>
-            ) : hfModels.length === 0 ? (
-              <div className='text-center py-8 text-gray-500'>
-                {t(
-                  'modelManager.huggingface.noResults',
-                  'No models found. Try adjusting your search or filters.'
-                )}
-              </div>
-            ) : (
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-                {hfModels.map(model => {
-                  const isExpanded = expandedHfModel === model.id;
-                  const isLoadingGguf = loadingGguf === model.id;
-                  const ggufFiles = hfGgufFiles[model.id] || [];
-
-                  return (
-                    <div
-                      key={model.id}
-                      className={cn(
-                        'rounded-lg border transition-all overflow-hidden',
-                        'bg-gray-50 dark:bg-dark-50',
-                        'border-gray-200 dark:border-dark-300',
-                        'hover:shadow-md hover:border-gray-300 dark:hover:border-dark-400'
-                      )}
-                    >
-                      <div
-                        className='p-4 cursor-pointer'
-                        onClick={() => handleToggleHfModel(model.id)}
-                      >
-                        <div className='flex items-start justify-between gap-2 mb-2'>
-                          <div className='flex-1 min-w-0'>
-                            <div className='flex items-center gap-2'>
-                              <h4 className='font-medium text-gray-900 dark:text-dark-800 truncate'>
-                                {model.id}
-                              </h4>
-                              {model.gated && (
-                                <span
-                                  className={cn(
-                                    'px-1.5 py-0.5 rounded text-xs',
-                                    'bg-yellow-100 dark:bg-yellow-900/30',
-                                    'text-yellow-700 dark:text-yellow-400'
-                                  )}
-                                >
-                                  {t('modelManager.huggingface.gated', 'Gated')}
-                                </span>
-                              )}
-                            </div>
-                            <p className='text-xs text-gray-500 dark:text-dark-600 mt-0.5'>
-                              {t('modelManager.huggingface.by', 'by')}{' '}
-                              {model.author}
-                            </p>
-                          </div>
-                          <div className='flex items-center gap-2 flex-shrink-0'>
-                            <a
-                              href={`https://huggingface.co/${model.id}`}
-                              target='_blank'
-                              rel='noopener noreferrer'
-                              onClick={e => e.stopPropagation()}
-                              className='p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-dark-300 transition-colors'
-                              title={t(
-                                'modelManager.huggingface.viewOnHF',
-                                'View on HuggingFace'
-                              )}
-                            >
-                              <ExternalLink className='h-4 w-4 text-gray-400 dark:text-gray-500' />
-                            </a>
-                            <ChevronDown
-                              className={cn(
-                                'h-4 w-4 text-gray-400 transition-transform',
-                                isExpanded && 'rotate-180'
-                              )}
-                            />
-                          </div>
-                        </div>
-
-                        <div className='flex items-center gap-3 text-xs text-gray-500 dark:text-dark-600'>
-                          <span className='flex items-center gap-1'>
-                            <Download className='h-3.5 w-3.5' />
-                            {model.downloads >= 1000000
-                              ? `${(model.downloads / 1000000).toFixed(1)}M`
-                              : model.downloads >= 1000
-                                ? `${(model.downloads / 1000).toFixed(1)}K`
-                                : model.downloads}
-                          </span>
-                          <span className='flex items-center gap-1'>
-                            <Heart className='h-3.5 w-3.5' />
-                            {model.likes >= 1000
-                              ? `${(model.likes / 1000).toFixed(1)}K`
-                              : model.likes}
-                          </span>
-                          {model.pipeline_tag && (
-                            <span
-                              className={cn(
-                                'px-1.5 py-0.5 rounded',
-                                'bg-gray-200 dark:bg-dark-300'
-                              )}
-                            >
-                              {model.pipeline_tag}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Expanded GGUF files section */}
-                      {isExpanded && (
-                        <div className='px-4 pb-4 pt-1 border-t border-gray-200 dark:border-dark-300 bg-white dark:bg-dark-100'>
-                          {isLoadingGguf ? (
-                            <div className='flex items-center justify-center py-4'>
-                              <Loader className='h-4 w-4 animate-spin text-gray-400' />
-                              <span className='ml-2 text-xs text-gray-500'>
-                                {t('modelManager.huggingface.checkingGguf')}
-                              </span>
-                            </div>
-                          ) : ggufFiles.length === 0 ? (
-                            <div className='py-4 text-center text-xs text-gray-500 dark:text-gray-400'>
-                              {t('modelManager.huggingface.noGgufAvailable')}
-                            </div>
-                          ) : (
-                            <div className='space-y-2'>
-                              <div className='text-xs font-medium text-gray-600 dark:text-gray-300 mb-2'>
-                                {t('modelManager.huggingface.ggufFilesCount', {
-                                  count: ggufFiles.length,
-                                })}
-                              </div>
-                              {ggufFiles.map(file => {
-                                const isPullingThis =
-                                  hfPullingModel === file.ollamaCommand;
-
-                                return (
-                                  <div
-                                    key={file.filename}
-                                    className='flex items-center gap-2 p-2 rounded-lg bg-gray-50 dark:bg-dark-50 border border-gray-200 dark:border-dark-300'
-                                  >
-                                    <div className='flex-1 min-w-0'>
-                                      <div className='text-xs font-medium text-gray-800 dark:text-gray-200 truncate'>
-                                        {file.filename}
-                                      </div>
-                                      <div className='flex items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
-                                        <span>{file.sizeFormatted}</span>
-                                        {file.quantization && (
-                                          <span className='px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'>
-                                            {file.quantization}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                    {isPullingThis ? (
-                                      <div className='flex items-center gap-2'>
-                                        <div className='text-xs text-gray-500 w-12 text-right'>
-                                          {hfPullProgress?.percent !== undefined
-                                            ? `${hfPullProgress.percent}%`
-                                            : '...'}
-                                        </div>
-                                        <button
-                                          onClick={e => {
-                                            e.stopPropagation();
-                                            handleCancelHfPull();
-                                          }}
-                                          className='p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                                        >
-                                          <X className='h-4 w-4' />
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <button
-                                        onClick={e => {
-                                          e.stopPropagation();
-                                          handlePullHfGguf(
-                                            file.ollamaCommand,
-                                            file.filename
-                                          );
-                                        }}
-                                        disabled={
-                                          !!hfPullingModel || !canInstallModels
-                                        }
-                                        className={cn(
-                                          'px-3 py-1.5 rounded-lg text-xs font-medium',
-                                          'bg-primary-100 dark:bg-primary-900/30',
-                                          'text-primary-700 dark:text-primary-400',
-                                          'hover:bg-primary-200 dark:hover:bg-primary-900/50',
-                                          'disabled:opacity-50 disabled:cursor-not-allowed'
-                                        )}
-                                      >
-                                        <Download className='h-3 w-3 inline mr-1' />
-                                        {t('models.pull')}
-                                      </button>
-                                    )}
-                                  </div>
-                                );
-                              })}
-
-                              {/* Pull progress bar */}
-                              {hfPullingModel?.startsWith('hf.co/') &&
-                                hfPullingModel.includes(model.id) &&
-                                hfPullProgress?.percent !== undefined && (
-                                  <div className='w-full bg-gray-200 dark:bg-dark-300 rounded-full h-1.5 overflow-hidden mt-2'>
-                                    <div
-                                      className='h-1.5 rounded-full bg-primary-500 transition-all duration-300'
-                                      style={{
-                                        width: `${hfPullProgress.percent}%`,
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Footer */}
-            <div className='flex items-center justify-between pt-2'>
-              <a
-                href='https://huggingface.co/models'
-                target='_blank'
-                rel='noopener noreferrer'
-                className={cn(
-                  'inline-flex items-center gap-1.5 text-xs',
-                  'text-primary-600 dark:text-primary-400',
-                  'hover:underline'
-                )}
-              >
-                <ExternalLink className='h-3 w-3' />
-                {t(
-                  'modelManager.huggingface.browseAll',
-                  'Browse all on HuggingFace'
-                )}
-              </a>
-              <Button
-                onClick={loadHfModels}
-                variant='outline'
-                size='sm'
-                disabled={loadingHfModels}
-                className={cn('gap-1.5', '', '')}
-              >
-                <RefreshCw
-                  className={cn(
-                    'h-3.5 w-3.5',
-                    loadingHfModels && 'animate-spin'
-                  )}
-                />
-                {t('modelManager.library.refresh', 'Refresh')}
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+      <HuggingFaceSection
+        expanded={expandedSections.has('huggingface')}
+        models={hfModels}
+        search={hfSearch}
+        task={hfTask}
+        sort={hfSort}
+        loadingModels={loadingHfModels}
+        canInstallModels={canInstallModels}
+        expandedModelId={expandedHfModel}
+        loadingGgufModelId={loadingGguf}
+        ggufFiles={hfGgufFiles}
+        pullingModel={hfPullingModel}
+        pullProgress={hfPullProgress}
+        setSearch={setHfSearch}
+        setTask={setHfTask}
+        setSort={setHfSort}
+        onToggle={() => toggleSection('huggingface')}
+        onToggleModel={handleToggleHfModel}
+        onPullGguf={handlePullHfGguf}
+        onCancelPull={handleCancelHfPull}
+        onRefresh={loadHfModels}
+      />
 
       {/* Running Models Section */}
       {Array.isArray(runningModels) && runningModels.length > 0 && (
@@ -1624,189 +857,19 @@ export const ModelManager: React.FC = () => {
         </div>
       )}
 
-      {/* Local Models Section */}
-      <div
-        className={cn(
-          'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100',
-          'border-gray-200 dark:border-dark-300'
-        )}
-      >
-        <button
-          onClick={() => toggleSection('local')}
-          className={cn(
-            'w-full flex items-center justify-between p-4',
-            'hover:bg-gray-50 dark:hover:bg-dark-50',
-            'transition-colors'
-          )}
-        >
-          <div className='flex items-center gap-3'>
-            <div
-              className={cn(
-                'p-2 rounded-lg',
-                'bg-blue-100 dark:bg-blue-900/30'
-              )}
-            >
-              <HardDrive className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-            </div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
-              {t('modelManager.sections.local')}
-            </h3>
-            <span
-              className={cn(
-                'px-2 py-0.5 rounded-full text-xs font-medium',
-                'bg-gray-100 dark:bg-dark-200',
-                'text-gray-600 dark:text-gray-400'
-              )}
-            >
-              {models.length} {t('modelManager.local.installed')}
-            </span>
-          </div>
-          {expandedSections.has('local') ? (
-            <ChevronUp className='h-5 w-5 text-gray-500' />
-          ) : (
-            <ChevronDown className='h-5 w-5 text-gray-500' />
-          )}
-        </button>
-
-        {expandedSections.has('local') && (
-          <div className='p-4 pt-0'>
-            {models.length === 0 ? (
-              <div
-                className={cn(
-                  'text-center py-12 rounded-lg border-2 border-dashed',
-                  'border-gray-200 dark:border-dark-300'
-                )}
-              >
-                <HardDrive className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600' />
-                <p className='text-gray-600 dark:text-dark-600 mb-2'>
-                  {t('modelManager.local.noModels')}
-                </p>
-                <p className='text-sm text-gray-500 dark:text-gray-500'>
-                  {t('modelManager.local.pullToStart')}
-                </p>
-              </div>
-            ) : (
-              <div className='space-y-3'>
-                {models.map(model => (
-                  <div
-                    key={model.name}
-                    className={cn(
-                      'p-4 rounded-lg border transition-colors',
-                      'bg-gray-50 dark:bg-dark-50',
-                      'border-gray-200 dark:border-dark-300',
-                      'hover:bg-gray-100 dark:hover:bg-dark-200'
-                    )}
-                  >
-                    <div className='flex items-start justify-between gap-4'>
-                      <div className='flex-1 min-w-0'>
-                        <div className='flex items-center gap-2 flex-wrap'>
-                          <h4 className='font-medium text-gray-900 dark:text-dark-800'>
-                            {model.name}
-                          </h4>
-                          {isModelRunning(model.name) && (
-                            <span
-                              className={cn(
-                                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
-                                'bg-green-100 dark:bg-green-900/30',
-                                'text-green-700 dark:text-green-400'
-                              )}
-                            >
-                              <span className='w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse' />
-                              {t('modelManager.local.running')}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className='flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 dark:text-dark-600 mt-2'>
-                          <span className='flex items-center gap-1'>
-                            <HardDrive className='h-3.5 w-3.5' />
-                            {formatSize(model.size)}
-                          </span>
-                          {model.details?.parameter_size && (
-                            <span className='flex items-center gap-1'>
-                              <Cpu className='h-3.5 w-3.5' />
-                              {model.details.parameter_size}
-                            </span>
-                          )}
-                          {model.details?.quantization_level && (
-                            <span
-                              className={cn(
-                                'px-1.5 py-0.5 rounded text-xs',
-                                'bg-gray-200 dark:bg-dark-300',
-                                'text-gray-600 dark:text-gray-400'
-                              )}
-                            >
-                              {model.details.quantization_level}
-                            </span>
-                          )}
-                          {model.details?.family && (
-                            <span className='text-gray-500 dark:text-gray-500'>
-                              {model.details.family}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className='flex items-center gap-3 text-xs text-gray-400 dark:text-dark-500 mt-2'>
-                          <span className='flex items-center gap-1'>
-                            <Clock className='h-3 w-3' />
-                            {new Date(model.modified_at).toLocaleDateString()}
-                          </span>
-                          <span
-                            className='flex items-center gap-1 font-mono truncate max-w-[200px]'
-                            title={model.digest}
-                          >
-                            <Hash className='h-3 w-3' />
-                            {model.digest.slice(0, 12)}...
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className='flex gap-2 flex-shrink-0'>
-                        <Button
-                          onClick={() => handleShowModel(model.name)}
-                          variant='outline'
-                          size='sm'
-                          className={cn('gap-1.5', '', '')}
-                        >
-                          <Info className='h-3.5 w-3.5' />
-                          {t('modelManager.local.info')}
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            setCopySource(model.name);
-                            setShowCopyModal(true);
-                          }}
-                          variant='outline'
-                          size='sm'
-                          className={cn('gap-1.5', '', '')}
-                        >
-                          <Copy className='h-3.5 w-3.5' />
-                          {t('modelManager.local.copy')}
-                        </Button>
-                        <Button
-                          onClick={() => handleDeleteModel(model.name)}
-                          variant='outline'
-                          size='sm'
-                          className={cn(
-                            'gap-1.5',
-                            'text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300',
-                            '',
-                            ''
-                          )}
-                        >
-                          <Trash2 className='h-3.5 w-3.5' />
-                          {t('modelManager.local.delete')}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <LocalModelsSection
+        expanded={expandedSections.has('local')}
+        models={models}
+        onToggle={() => toggleSection('local')}
+        isModelRunning={isModelRunning}
+        formatSize={formatSize}
+        onShowModel={handleShowModel}
+        onCopyModel={modelName => {
+          setCopySource(modelName);
+          setShowCopyModal(true);
+        }}
+        onDeleteModel={handleDeleteModel}
+      />
 
       {/* Advanced Actions Section */}
       <div
@@ -1942,548 +1005,43 @@ export const ModelManager: React.FC = () => {
         )}
       </div>
 
-      {/* Model Details Modal */}
-      {showDetailsModal &&
-        createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
-            <div
-              className='absolute inset-0 bg-black/50 backdrop-blur-sm'
-              onClick={() => setShowDetailsModal(false)}
-            />
-            <div
-              className={cn(
-                'relative w-full max-w-2xl max-h-[85vh] overflow-hidden rounded-xl border shadow-2xl',
-                'bg-white dark:bg-dark-100',
-                'border-gray-200 dark:border-dark-300'
-              )}
-            >
-              <div
-                className={cn(
-                  'flex items-center justify-between p-4 border-b',
-                  'border-gray-200 dark:border-dark-300'
-                )}
-              >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                  {t('modelManager.modals.details.title')}: {selectedModelName}
-                </h3>
-                <button
-                  onClick={() => setShowDetailsModal(false)}
-                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
-                >
-                  <X className='h-5 w-5 text-gray-500' />
-                </button>
-              </div>
-
-              <div className='overflow-y-auto max-h-[calc(85vh-60px)] p-4 space-y-4'>
-                {loadingDetails ? (
-                  <div className='flex items-center justify-center py-8'>
-                    <RefreshCw className='h-6 w-6 animate-spin text-gray-400' />
-                  </div>
-                ) : selectedModelDetails ? (
-                  <>
-                    {/* Model Info */}
-                    {selectedModelDetails.details && (
-                      <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          {t('modelManager.modals.details.info')}
-                        </h4>
-                        <div
-                          className={cn(
-                            'p-3 rounded-lg text-sm',
-                            'bg-gray-50 dark:bg-dark-50'
-                          )}
-                        >
-                          <div className='grid grid-cols-2 gap-2'>
-                            {selectedModelDetails.details.family && (
-                              <div>
-                                <span className='text-gray-500'>
-                                  {t('modelManager.modals.details.family')}:
-                                </span>{' '}
-                                <span className='text-gray-900 dark:text-gray-100'>
-                                  {selectedModelDetails.details.family}
-                                </span>
-                              </div>
-                            )}
-                            {selectedModelDetails.details.parameter_size && (
-                              <div>
-                                <span className='text-gray-500'>
-                                  {t('modelManager.modals.details.parameters')}:
-                                </span>{' '}
-                                <span className='text-gray-900 dark:text-gray-100'>
-                                  {selectedModelDetails.details.parameter_size}
-                                </span>
-                              </div>
-                            )}
-                            {selectedModelDetails.details
-                              .quantization_level && (
-                              <div>
-                                <span className='text-gray-500'>
-                                  {t(
-                                    'modelManager.modals.details.quantization'
-                                  )}
-                                  :
-                                </span>{' '}
-                                <span className='text-gray-900 dark:text-gray-100'>
-                                  {
-                                    selectedModelDetails.details
-                                      .quantization_level
-                                  }
-                                </span>
-                              </div>
-                            )}
-                            {selectedModelDetails.details.format && (
-                              <div>
-                                <span className='text-gray-500'>
-                                  {t('modelManager.modals.details.format')}:
-                                </span>{' '}
-                                <span className='text-gray-900 dark:text-gray-100'>
-                                  {selectedModelDetails.details.format}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* System Prompt */}
-                    {selectedModelDetails.system && (
-                      <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          {t('modelManager.modals.details.systemPrompt')}
-                        </h4>
-                        <pre
-                          className={cn(
-                            'p-3 rounded-lg text-xs overflow-x-auto',
-                            'bg-gray-50 dark:bg-dark-50',
-                            'text-gray-700 dark:text-gray-300'
-                          )}
-                        >
-                          {selectedModelDetails.system}
-                        </pre>
-                      </div>
-                    )}
-
-                    {/* Template */}
-                    {selectedModelDetails.template && (
-                      <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          {t('modelManager.modals.details.template')}
-                        </h4>
-                        <pre
-                          className={cn(
-                            'p-3 rounded-lg text-xs overflow-x-auto max-h-40',
-                            'bg-gray-50 dark:bg-dark-50',
-                            'text-gray-700 dark:text-gray-300'
-                          )}
-                        >
-                          {selectedModelDetails.template}
-                        </pre>
-                      </div>
-                    )}
-
-                    {/* Parameters */}
-                    {selectedModelDetails.parameters && (
-                      <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          {t('modelManager.modals.details.parameters')}
-                        </h4>
-                        <pre
-                          className={cn(
-                            'p-3 rounded-lg text-xs overflow-x-auto',
-                            'bg-gray-50 dark:bg-dark-50',
-                            'text-gray-700 dark:text-gray-300'
-                          )}
-                        >
-                          {selectedModelDetails.parameters}
-                        </pre>
-                      </div>
-                    )}
-
-                    {/* License */}
-                    {selectedModelDetails.license && (
-                      <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          {t('modelManager.modals.details.license')}
-                        </h4>
-                        <pre
-                          className={cn(
-                            'p-3 rounded-lg text-xs overflow-x-auto max-h-32',
-                            'bg-gray-50 dark:bg-dark-50',
-                            'text-gray-700 dark:text-gray-300'
-                          )}
-                        >
-                          {selectedModelDetails.license}
-                        </pre>
-                      </div>
-                    )}
-
-                    {/* Modelfile */}
-                    {selectedModelDetails.modelfile && (
-                      <div>
-                        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                          {t('modelManager.modals.details.modelfile')}
-                        </h4>
-                        <pre
-                          className={cn(
-                            'p-3 rounded-lg text-xs overflow-x-auto max-h-60',
-                            'bg-gray-50 dark:bg-dark-50',
-                            'text-gray-700 dark:text-gray-300'
-                          )}
-                        >
-                          {selectedModelDetails.modelfile}
-                        </pre>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p className='text-center text-gray-500'>
-                    {t('modelManager.modals.details.noDetails')}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {/* Copy Model Modal */}
-      {showCopyModal &&
-        createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
-            <div
-              className='absolute inset-0 bg-black/50 backdrop-blur-sm'
-              onClick={() => setShowCopyModal(false)}
-            />
-            <div
-              className={cn(
-                'relative w-full max-w-md rounded-xl border shadow-2xl',
-                'bg-white dark:bg-dark-100',
-                'border-gray-200 dark:border-dark-300'
-              )}
-            >
-              <div
-                className={cn(
-                  'flex items-center justify-between p-4 border-b',
-                  'border-gray-200 dark:border-dark-300'
-                )}
-              >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                  {t('modelManager.modals.copy.title')}
-                </h3>
-                <button
-                  onClick={() => setShowCopyModal(false)}
-                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
-                >
-                  <X className='h-5 w-5 text-gray-500' />
-                </button>
-              </div>
-
-              <div className='p-4 space-y-4'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t('modelManager.modals.copy.source')}
-                  </label>
-                  <select
-                    value={copySource}
-                    onChange={e => setCopySource(e.target.value)}
-                    className={cn(
-                      'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50',
-                      'border-gray-200 dark:border-dark-300',
-                      'text-gray-900 dark:text-gray-100'
-                    )}
-                  >
-                    <option value=''>
-                      {t('modelManager.modals.copy.selectModel')}
-                    </option>
-                    {models.map(model => (
-                      <option key={model.name} value={model.name}>
-                        {model.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t('modelManager.modals.copy.newName')}
-                  </label>
-                  <input
-                    type='text'
-                    value={copyDestination}
-                    onChange={e => setCopyDestination(e.target.value)}
-                    placeholder={t('modelManager.modals.copy.placeholder')}
-                    className={cn(
-                      'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50',
-                      'border-gray-200 dark:border-dark-300',
-                      'text-gray-900 dark:text-gray-100',
-                      'placeholder-gray-500'
-                    )}
-                  />
-                </div>
-
-                <Button
-                  onClick={handleCopyModel}
-                  disabled={
-                    !copySource.trim() || !copyDestination.trim() || copying
-                  }
-                  className={cn('w-full gap-2', '')}
-                >
-                  {copying ? (
-                    <RefreshCw className='h-4 w-4 animate-spin' />
-                  ) : (
-                    <Copy className='h-4 w-4' />
-                  )}
-                  {copying
-                    ? t('modelManager.modals.copy.copying')
-                    : t('modelManager.modals.copy.button')}
-                </Button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {/* Create Model Modal */}
-      {showCreateModal &&
-        createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
-            <div
-              className='absolute inset-0 bg-black/50 backdrop-blur-sm'
-              onClick={() => setShowCreateModal(false)}
-            />
-            <div
-              className={cn(
-                'relative w-full max-w-lg rounded-xl border shadow-2xl',
-                'bg-white dark:bg-dark-100',
-                'border-gray-200 dark:border-dark-300'
-              )}
-            >
-              <div
-                className={cn(
-                  'flex items-center justify-between p-4 border-b',
-                  'border-gray-200 dark:border-dark-300'
-                )}
-              >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                  {t('modelManager.modals.create.title')}
-                </h3>
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
-                >
-                  <X className='h-5 w-5 text-gray-500' />
-                </button>
-              </div>
-
-              <div className='p-4 space-y-4'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t('modelManager.modals.create.name')}
-                  </label>
-                  <input
-                    type='text'
-                    value={createModelName}
-                    onChange={e => setCreateModelName(e.target.value)}
-                    placeholder={t(
-                      'modelManager.modals.create.namePlaceholder'
-                    )}
-                    className={cn(
-                      'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50',
-                      'border-gray-200 dark:border-dark-300',
-                      'text-gray-900 dark:text-gray-100',
-                      'placeholder-gray-500'
-                    )}
-                  />
-                </div>
-
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t('modelManager.modals.create.modelfile')}
-                  </label>
-                  <textarea
-                    value={createModelfile}
-                    onChange={e => setCreateModelfile(e.target.value)}
-                    placeholder={t(
-                      'modelManager.modals.create.modelfilePlaceholder'
-                    )}
-                    rows={8}
-                    className={cn(
-                      'w-full px-3 py-2 rounded-lg border text-sm font-mono',
-                      'bg-gray-50 dark:bg-dark-50',
-                      'border-gray-200 dark:border-dark-300',
-                      'text-gray-900 dark:text-gray-100',
-                      'placeholder-gray-500',
-                      'resize-none'
-                    )}
-                  />
-                  <p className='mt-1 text-xs text-gray-500'>
-                    {t('modelManager.modals.create.see')}{' '}
-                    <a
-                      href='https://github.com/ollama/ollama/blob/main/docs/modelfile.md'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='text-primary-600 hover:underline'
-                    >
-                      {t('modelManager.modals.create.docs')}
-                    </a>{' '}
-                    {t('modelManager.modals.create.docsLink')}
-                  </p>
-                </div>
-
-                <Button
-                  onClick={handleCreateModel}
-                  disabled={
-                    !createModelName.trim() ||
-                    !createModelfile.trim() ||
-                    creating
-                  }
-                  className={cn('w-full gap-2', '')}
-                >
-                  {creating ? (
-                    <RefreshCw className='h-4 w-4 animate-spin' />
-                  ) : (
-                    <FileCode className='h-4 w-4' />
-                  )}
-                  {creating
-                    ? t('modelManager.modals.create.creating')
-                    : t('modelManager.modals.create.button')}
-                </Button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {/* Embeddings Test Modal */}
-      {showEmbeddingsModal &&
-        createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-4'>
-            <div
-              className='absolute inset-0 bg-black/50 backdrop-blur-sm'
-              onClick={() => setShowEmbeddingsModal(false)}
-            />
-            <div
-              className={cn(
-                'relative w-full max-w-lg rounded-xl border shadow-2xl',
-                'bg-white dark:bg-dark-100',
-                'border-gray-200 dark:border-dark-300'
-              )}
-            >
-              <div
-                className={cn(
-                  'flex items-center justify-between p-4 border-b',
-                  'border-gray-200 dark:border-dark-300'
-                )}
-              >
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                  {t('modelManager.modals.embeddings.title')}
-                </h3>
-                <button
-                  onClick={() => setShowEmbeddingsModal(false)}
-                  className='p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200'
-                >
-                  <X className='h-5 w-5 text-gray-500' />
-                </button>
-              </div>
-
-              <div className='p-4 space-y-4'>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t('modelManager.modals.embeddings.model')}
-                  </label>
-                  <select
-                    value={embeddingsModel}
-                    onChange={e => setEmbeddingsModel(e.target.value)}
-                    className={cn(
-                      'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50',
-                      'border-gray-200 dark:border-dark-300',
-                      'text-gray-900 dark:text-gray-100'
-                    )}
-                  >
-                    <option value=''>
-                      {t('modelManager.modals.embeddings.selectModel')}
-                    </option>
-                    {models.map(model => (
-                      <option key={model.name} value={model.name}>
-                        {model.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className='mt-1 text-xs text-gray-500'>
-                    {t('modelManager.modals.embeddings.recommended')}
-                  </p>
-                </div>
-
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t('modelManager.modals.embeddings.input')}
-                  </label>
-                  <textarea
-                    value={embeddingsInput}
-                    onChange={e => setEmbeddingsInput(e.target.value)}
-                    placeholder={t(
-                      'modelManager.modals.embeddings.placeholder'
-                    )}
-                    rows={3}
-                    className={cn(
-                      'w-full px-3 py-2 rounded-lg border text-sm',
-                      'bg-gray-50 dark:bg-dark-50',
-                      'border-gray-200 dark:border-dark-300',
-                      'text-gray-900 dark:text-gray-100',
-                      'placeholder-gray-500',
-                      'resize-none'
-                    )}
-                  />
-                </div>
-
-                <Button
-                  onClick={handleGenerateEmbeddings}
-                  disabled={
-                    !embeddingsModel.trim() ||
-                    !embeddingsInput.trim() ||
-                    generatingEmbeddings
-                  }
-                  className={cn('w-full gap-2', '')}
-                >
-                  {generatingEmbeddings ? (
-                    <RefreshCw className='h-4 w-4 animate-spin' />
-                  ) : (
-                    <TestTube className='h-4 w-4' />
-                  )}
-                  {generatingEmbeddings
-                    ? t('modelManager.modals.embeddings.generating')
-                    : t('modelManager.modals.embeddings.button')}
-                </Button>
-
-                {embeddingsResult && (
-                  <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                      {t('modelManager.modals.embeddings.result', {
-                        count: embeddingsResult.length,
-                      })}
-                    </label>
-                    <pre
-                      className={cn(
-                        'p-3 rounded-lg text-xs overflow-x-auto max-h-32',
-                        'bg-gray-50 dark:bg-dark-50',
-                        'text-gray-700 dark:text-gray-300'
-                      )}
-                    >
-                      [{embeddingsResult.slice(0, 10).join(', ')}
-                      {embeddingsResult.length > 10 && ', ...'} ]
-                    </pre>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {hasOpenModelManagerModal && (
+        <React.Suspense fallback={null}>
+          <ModelManagerModals
+            models={models}
+            showDetailsModal={showDetailsModal}
+            setShowDetailsModal={setShowDetailsModal}
+            selectedModelName={selectedModelName}
+            selectedModelDetails={selectedModelDetails}
+            loadingDetails={loadingDetails}
+            showCopyModal={showCopyModal}
+            setShowCopyModal={setShowCopyModal}
+            copySource={copySource}
+            setCopySource={setCopySource}
+            copyDestination={copyDestination}
+            setCopyDestination={setCopyDestination}
+            copying={copying}
+            handleCopyModel={handleCopyModel}
+            showCreateModal={showCreateModal}
+            setShowCreateModal={setShowCreateModal}
+            createModelName={createModelName}
+            setCreateModelName={setCreateModelName}
+            createModelfile={createModelfile}
+            setCreateModelfile={setCreateModelfile}
+            creating={creating}
+            handleCreateModel={handleCreateModel}
+            showEmbeddingsModal={showEmbeddingsModal}
+            setShowEmbeddingsModal={setShowEmbeddingsModal}
+            embeddingsModel={embeddingsModel}
+            setEmbeddingsModel={setEmbeddingsModel}
+            embeddingsInput={embeddingsInput}
+            setEmbeddingsInput={setEmbeddingsInput}
+            embeddingsResult={embeddingsResult}
+            generatingEmbeddings={generatingEmbeddings}
+            handleGenerateEmbeddings={handleGenerateEmbeddings}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 };

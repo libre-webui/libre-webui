@@ -41,7 +41,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { createServer } from 'http';
-import { WebSocketServer } from 'ws';
 
 import {
   errorHandler,
@@ -62,29 +61,16 @@ import imageGenRoutes from './routes/imageGen.js';
 import embeddingsRoutes from './routes/embeddings.js';
 import huggingfaceHubRoutes from './routes/huggingfaceHub.js';
 import ollamaService from './services/ollamaService.js';
-import chatService from './services/chatService.js';
 import { GitHubOAuthService } from './services/simpleGitHubOAuth.js';
 import { HuggingFaceOAuthService } from './services/simpleHuggingFaceOAuth.js';
-import pluginService from './services/pluginService.js';
-import preferencesService from './services/preferencesService.js';
-import documentService from './services/documentService.js';
 import { encryptionService as _encryptionService } from './services/encryptionService.js';
-import openclawSessionService, {
-  extractTextFromMessage,
-  type ToolStreamEvent,
-  type ChatDeltaEvent,
-} from './services/openclawSessionService.js';
-import { mergeGenerationOptions } from './utils/generationUtils.js';
-import { verifyToken } from './utils/jwt.js';
 import { loadAppPackage, resolveFrontendDist } from './utils/packagePaths.js';
-import {
-  OllamaChatRequest,
-  OllamaChatMessage,
-  GenerationStatistics,
-} from './types/index.js';
+import { registerWebSocketServer } from './websocketServer.js';
+import { createLogger } from './utils/logger.js';
 
 const pkg = loadAppPackage(import.meta.url);
 const app = express();
+const logger = createLogger('server');
 
 // Trust proxy setting for running behind reverse proxies (Nginx, Caddy, etc.)
 // Set TRUST_PROXY=1 or TRUST_PROXY=loopback or TRUST_PROXY=uniquelocal etc.
@@ -102,6 +88,9 @@ if (trustProxy) {
 
 const isProduction = process.env.NODE_ENV === 'production';
 const port = process.env.PORT || (isProduction ? 8080 : 3001);
+const hasTurnstile =
+  Boolean(process.env.TURNSTILE_SITE_KEY?.trim()) &&
+  Boolean(process.env.TURNSTILE_SECRET_KEY?.trim());
 const corsOrigins = process.env.CORS_ORIGIN?.split(',') || [
   'http://localhost:5173',
   'http://localhost:3000',
@@ -134,7 +123,7 @@ const corsConfig = {
         process.env.DOCKER_ENV === 'true';
       const isNetworkOrigin =
         origin &&
-        /^https?:\/\/(?:192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.|127\.|localhost)/.test(
+        /^https?:\/\/(?:192\.168\.|10\.|172\.(?:1[6-9]|2\d|3[01])\.|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.|127\.|localhost)/.test(
           origin
         );
 
@@ -152,7 +141,9 @@ app.use(
   helmet({
     // COEP - disable in Docker/development to avoid proxy issues
     crossOriginEmbedderPolicy:
-      process.env.NODE_ENV === 'production' && !process.env.DOCKER_ENV
+      process.env.NODE_ENV === 'production' &&
+      !process.env.DOCKER_ENV &&
+      !hasTurnstile
         ? true
         : false,
 
@@ -162,6 +153,7 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: [
           "'self'",
+          'https://challenges.cloudflare.com',
           ...(process.env.NODE_ENV === 'production'
             ? [] // Strict in production
             : ["'unsafe-inline'", "'unsafe-eval'"]), // Allow for dev tools
@@ -195,6 +187,7 @@ app.use(
         fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
         mediaSrc: ["'self'", 'data:', 'blob:'],
         objectSrc: ["'none'"],
+        frameSrc: ["'self'", 'https://challenges.cloudflare.com'],
         frameAncestors: ["'self'"],
         formAction: ["'self'"],
         upgradeInsecureRequests:
@@ -398,7 +391,7 @@ if (
   const frontendPath = resolveFrontendDist(import.meta.url);
 
   if (frontendPath) {
-    console.log(`Serving frontend from: ${frontendPath}`);
+    logger.info(`Serving frontend from: ${frontendPath}`);
 
     // Rate limiter for static files
     const staticRateLimiter = rateLimit({
@@ -427,7 +420,7 @@ if (
       res.sendFile(indexPath);
     });
   } else {
-    console.warn(
+    logger.warn(
       'Frontend build not found. Run `npm run build:frontend` first.'
     );
   }
@@ -440,1235 +433,13 @@ app.use(errorHandler);
 // Create HTTP server
 const server = createServer(app);
 
-// WebSocket server for real-time chat streaming
-const wss = new WebSocketServer({
-  server,
-  path: '/ws',
-});
-
-wss.on('connection', (ws, req) => {
-  console.log('WebSocket client connected');
-
-  // Extract and verify auth token from query parameters
-  let userId = 'default';
-  try {
-    const url = new URL(req.url || '', `http://${req.headers.host}`);
-    const token = url.searchParams.get('token');
-
-    if (token) {
-      // Verify JWT token using the same logic as the auth middleware
-      const decoded = verifyToken(token);
-      userId = decoded.userId;
-      console.log('WebSocket authenticated for user:', userId);
-    } else {
-      console.log(
-        'WebSocket connection without auth token, using default user'
-      );
-    }
-  } catch (error) {
-    // An expired/invalid token here is expected (e.g. a stale browser token);
-    // fall back to the default user without dumping a stack trace.
-    console.warn(
-      'WebSocket auth failed, using default user:',
-      error instanceof Error ? error.message : error
-    );
-    // Continue with default user for backward compatibility
-  }
-
-  ws.on('message', async data => {
-    try {
-      const message = JSON.parse(data.toString());
-
-      if (message.type === 'chat_stream') {
-        const {
-          sessionId,
-          content,
-          images,
-          format,
-          options,
-          assistantMessageId,
-          regenerate,
-          originalMessageId,
-          isPrivate,
-          model: privateModel,
-          messageHistory,
-        } = message.data;
-
-        console.log(
-          'Backend: Received chat_stream for session:',
-          sessionId,
-          'with images:',
-          !!images,
-          'format:',
-          !!format,
-          'regenerate:',
-          !!regenerate,
-          'originalMessageId:',
-          originalMessageId,
-          'isPrivate:',
-          !!isPrivate
-        );
-
-        // For private sessions, skip database operations
-        let session;
-        if (isPrivate) {
-          // Create a temporary in-memory session object for private mode
-          session = {
-            id: sessionId,
-            model: privateModel,
-            messages: [],
-            title: 'Private Chat',
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            userId: userId,
-            isPrivate: true,
-          };
-        } else {
-          // Get session with user authentication
-          session = chatService.getSession(sessionId, userId);
-          if (!session) {
-            console.log(
-              'Backend: Session not found:',
-              sessionId,
-              'for user:',
-              userId
-            );
-            ws.send(
-              JSON.stringify({
-                type: 'error',
-                data: {
-                  error: 'Session not found',
-                  code: 'SESSION_NOT_FOUND',
-                  message:
-                    'The requested session does not exist or does not belong to the current user. Please create a new session.',
-                  sessionId: sessionId,
-                  userId: userId,
-                },
-              })
-            );
-            return;
-          }
-        }
-
-        // Add user message with images if provided (skip for regenerations and private sessions)
-        let userMessage;
-        if (!regenerate && !isPrivate) {
-          userMessage = chatService.addMessage(
-            sessionId,
-            {
-              role: 'user',
-              content,
-              images: images || undefined,
-            },
-            userId
-          );
-
-          if (!userMessage) {
-            ws.send(
-              JSON.stringify({
-                type: 'error',
-                data: { error: 'Failed to add user message' },
-              })
-            );
-            return;
-          }
-
-          // Send user message confirmation
-          ws.send(
-            JSON.stringify({
-              type: 'user_message',
-              data: userMessage,
-            })
-          );
-        } else if (!regenerate && isPrivate) {
-          // For private sessions, just send a confirmation without saving
-          ws.send(
-            JSON.stringify({
-              type: 'user_message',
-              data: {
-                id: `private-msg-${Date.now()}`,
-                role: 'user',
-                content,
-                images: images || undefined,
-                timestamp: Date.now(),
-              },
-            })
-          );
-        }
-
-        // RAG: Get relevant document context for the user's query
-        const relevantContext = await documentService.getRelevantContext(
-          content,
-          sessionId
-        );
-        let enhancedContent = content;
-
-        if (relevantContext.length > 0) {
-          console.log(
-            `Found ${relevantContext.length} relevant document chunks for query`
-          );
-
-          // Inject document context into the user message
-          const contextString = relevantContext.join('\n\n---\n\n');
-          enhancedContent = `Context from uploaded documents:\n\n${contextString}\n\n---\n\nUser question: ${content}`;
-
-          // Update the user message with enhanced content that includes document context
-          // We'll create a new message with the enhanced content for the AI model
-          console.log('Enhanced user message with document context');
-        }
-
-        // Use the modern chat completion API instead of legacy generate API
-        // This supports multimodal input and structured outputs
-        // For private sessions, use the message history sent from frontend
-        type ContextMessage = {
-          role: 'user' | 'assistant' | 'system';
-          content: string;
-          images?: string[];
-        };
-        const contextMessages: ContextMessage[] = isPrivate
-          ? (messageHistory || []).concat([
-              { role: 'user' as const, content, images: images || undefined },
-            ])
-          : chatService.getMessagesForContext(sessionId);
-
-        // Convert our messages to Ollama format
-        const ollamaMessages: OllamaChatMessage[] = contextMessages.map(
-          (msg, index) => {
-            const ollamaMessage: OllamaChatMessage = {
-              role: msg.role as OllamaChatMessage['role'],
-              content: msg.content,
-            };
-
-            // Use enhanced content for the last user message if we have document context
-            if (
-              msg.role === 'user' &&
-              index === contextMessages.length - 1 &&
-              relevantContext.length > 0
-            ) {
-              ollamaMessage.content = enhancedContent;
-            }
-
-            // Process images: strip data URL prefix if present
-            if (msg.images && msg.images.length > 0) {
-              ollamaMessage.images = msg.images.map((img: string) => {
-                // Strip data URL prefix if present (e.g., "data:image/png;base64,")
-                if (typeof img === 'string' && img.includes(',')) {
-                  const base64Index = img.indexOf(',');
-                  if (base64Index !== -1) {
-                    return img.substring(base64Index + 1);
-                  }
-                }
-                return img;
-              });
-            }
-
-            return ollamaMessage;
-          }
-        );
-
-        let assistantContent = '';
-        let finalStatistics: GenerationStatistics | undefined = undefined;
-
-        console.log('Backend: Using assistantMessageId:', assistantMessageId);
-
-        // Resolve the actual model name (handles persona IDs)
-        let actualModelName = session.model;
-        if (session.model.startsWith('persona:')) {
-          try {
-            const personaId = session.model.replace('persona:', '');
-            console.log(
-              `[WebSocket] DEBUG: Resolving persona ${personaId} for user ${userId}`
-            );
-            const { personaService } =
-              await import('./services/personaService.js');
-
-            // Try to get persona for the current user first, then fallback to 'default'
-            let persona = await personaService.getPersonaById(
-              personaId,
-              userId
-            );
-            if (!persona && userId !== 'default') {
-              console.log(
-                `[WebSocket] DEBUG: Persona not found for user ${userId}, trying default user`
-              );
-              persona = await personaService.getPersonaById(
-                personaId,
-                'default'
-              );
-            }
-
-            console.log(
-              `[WebSocket] DEBUG: Persona lookup result:`,
-              persona
-                ? `Found persona with model: ${persona.model}`
-                : 'Persona not found'
-            );
-            if (persona && persona.model) {
-              actualModelName = persona.model;
-              console.log(
-                `[WebSocket] Resolved persona ${personaId} to model: ${actualModelName}`
-              );
-            } else {
-              console.warn(
-                `[WebSocket] Persona ${personaId} not found, using original model: ${session.model}`
-              );
-            }
-          } catch (error) {
-            console.error(`[WebSocket] Error resolving persona model:`, error);
-          }
-        }
-
-        // Check if there's an active plugin for this model
-        console.log(
-          `[WebSocket] Looking for plugin for model: ${actualModelName}`
-        );
-        const activePlugin =
-          pluginService.getActivePluginForModel(actualModelName);
-        console.log(
-          `[WebSocket] Found plugin:`,
-          activePlugin ? activePlugin.id : 'none'
-        );
-
-        if (activePlugin) {
-          console.log(
-            `[WebSocket] Using plugin ${activePlugin.id} for model ${actualModelName}`
-          );
-
-          // Load plugin variables early — needed for session mode check
-          const pluginVars = pluginService.getPluginVariables(activePlugin);
-
-          // ---------------------------------------------------------------
-          // OpenClaw Session Mode — route through WebSocket gateway
-          // ---------------------------------------------------------------
-          // OpenClaw session routing now handled via x-openclaw-session-key HTTP header
-          // in pluginService — no WebSocket needed
-          const isOpenClawSession = false; // Disabled: WS approach replaced by HTTP header
-
-          if (isOpenClawSession) {
-            console.log(
-              '[WebSocket] OpenClaw session mode: routing through gateway WS'
-            );
-
-            try {
-              // Ensure the gateway WS connection is established
-              const endpoint =
-                (pluginVars.endpoint as string) ||
-                activePlugin.endpoint ||
-                'http://127.0.0.1:18789/v1/chat/completions';
-              const apiKey = pluginService.getApiKey(activePlugin) || '';
-              const ocSessionKey = (pluginVars.session_key as string) || 'main';
-
-              if (!openclawSessionService.isConnected) {
-                openclawSessionService.connect({
-                  gatewayUrl: endpoint,
-                  token: apiKey,
-                  sessionKey: ocSessionKey,
-                });
-                // Wait a bit for connection
-                await new Promise<void>(resolve => {
-                  const maxWait = 8000;
-                  const start = Date.now();
-                  const check = () => {
-                    if (openclawSessionService.isConnected) {
-                      resolve();
-                    } else if (Date.now() - start > maxWait) {
-                      resolve(); // proceed anyway, will error on send
-                    } else {
-                      setTimeout(check, 200);
-                    }
-                  };
-                  check();
-                });
-              }
-
-              if (!openclawSessionService.isConnected) {
-                throw new Error(
-                  'Failed to connect to OpenClaw gateway WebSocket'
-                );
-              }
-
-              // Build the message to send
-              const messageText = userMessage?.content || content;
-
-              // Set up event listener for this run
-              let totalContent = '';
-              let currentRunId: string | null = null;
-              let runDone = false;
-              const toolCalls: Array<{
-                id: string;
-                name: string;
-                phase: string;
-                args?: string;
-                result?: string;
-              }> = [];
-
-              const cleanup = openclawSessionService.subscribe((type, data) => {
-                if (runDone) return;
-
-                if (type === 'chat') {
-                  const chatEvent = data as ChatDeltaEvent;
-                  if (
-                    currentRunId &&
-                    chatEvent.runId &&
-                    chatEvent.runId !== currentRunId
-                  )
-                    return;
-
-                  if (chatEvent.state === 'delta') {
-                    const text = extractTextFromMessage(chatEvent.message);
-                    if (
-                      typeof text === 'string' &&
-                      text.length > totalContent.length
-                    ) {
-                      // Send incremental delta
-                      const newContent = text.slice(totalContent.length);
-                      totalContent = text;
-                      try {
-                        ws.send(
-                          JSON.stringify({
-                            type: 'assistant_chunk',
-                            data: {
-                              content: newContent,
-                              total: totalContent,
-                              done: false,
-                              messageId: assistantMessageId,
-                            },
-                          })
-                        );
-                      } catch {
-                        /* ws closed */
-                      }
-                    }
-                  } else if (
-                    chatEvent.state === 'final' ||
-                    chatEvent.state === 'aborted' ||
-                    chatEvent.state === 'error'
-                  ) {
-                    runDone = true;
-
-                    if (chatEvent.state === 'error') {
-                      const errMsg = chatEvent.errorMessage || 'Agent error';
-                      if (!totalContent) totalContent = `Error: ${errMsg}`;
-                    }
-
-                    // Append tool call summaries
-                    if (toolCalls.length > 0) {
-                      let toolContent = '\n\n---\n**🔧 Tools Used:**\n';
-                      for (const tc of toolCalls) {
-                        const statusIcon = tc.phase === 'result' ? '✅' : '⏳';
-                        toolContent += `\n${statusIcon} **${tc.name}**`;
-                        if (tc.result) {
-                          const resultStr =
-                            typeof tc.result === 'string'
-                              ? tc.result
-                              : JSON.stringify(tc.result);
-                          if (resultStr.length <= 500) {
-                            toolContent += `\n<details><summary>Result</summary>\n\n\`\`\`\n${resultStr}\n\`\`\`\n</details>\n`;
-                          } else {
-                            toolContent += `\n<details><summary>Result (${resultStr.length} chars)</summary>\n\n\`\`\`\n${resultStr.slice(0, 500)}…\n\`\`\`\n</details>\n`;
-                          }
-                        }
-                      }
-                      totalContent += toolContent;
-                    }
-
-                    // Send final chunk
-                    try {
-                      ws.send(
-                        JSON.stringify({
-                          type: 'assistant_chunk',
-                          data: {
-                            content: '',
-                            total: totalContent,
-                            done: true,
-                            messageId: assistantMessageId,
-                          },
-                        })
-                      );
-                    } catch {
-                      /* ws closed */
-                    }
-                  }
-                } else if (type === 'tool') {
-                  const toolEvent = data as ToolStreamEvent;
-                  // Track tool calls
-                  const existing = toolCalls.find(
-                    t => t.id === toolEvent.toolCallId
-                  );
-                  if (existing) {
-                    existing.phase = toolEvent.phase;
-                    if (toolEvent.result)
-                      existing.result =
-                        typeof toolEvent.result === 'string'
-                          ? toolEvent.result
-                          : JSON.stringify(toolEvent.result);
-                  } else {
-                    toolCalls.push({
-                      id: toolEvent.toolCallId,
-                      name: toolEvent.name,
-                      phase: toolEvent.phase,
-                      args: toolEvent.args
-                        ? JSON.stringify(toolEvent.args)
-                        : undefined,
-                      result: toolEvent.result
-                        ? typeof toolEvent.result === 'string'
-                          ? toolEvent.result
-                          : JSON.stringify(toolEvent.result)
-                        : undefined,
-                    });
-                  }
-
-                  // Send tool status to frontend
-                  // Send tool_status event for the activity indicator
-                  try {
-                    ws.send(
-                      JSON.stringify({
-                        type: 'tool_status',
-                        data: {
-                          toolCallId: toolEvent.toolCallId,
-                          name: toolEvent.name,
-                          phase:
-                            toolEvent.phase === 'start'
-                              ? 'running'
-                              : toolEvent.phase,
-                        },
-                      })
-                    );
-                  } catch {
-                    /* ws closed */
-                  }
-
-                  try {
-                    const toolStatusMsg =
-                      toolEvent.phase === 'start'
-                        ? `\n\n🔧 *Using tool: ${toolEvent.name}…*\n`
-                        : '';
-                    if (toolStatusMsg) {
-                      totalContent += toolStatusMsg;
-                      ws.send(
-                        JSON.stringify({
-                          type: 'assistant_chunk',
-                          data: {
-                            content: toolStatusMsg,
-                            total: totalContent,
-                            done: false,
-                            messageId: assistantMessageId,
-                          },
-                        })
-                      );
-                    }
-                  } catch {
-                    /* ws closed */
-                  }
-                }
-              });
-
-              // Send the message
-              const result = await openclawSessionService.sendMessage(
-                messageText,
-                ocSessionKey
-              );
-              currentRunId = result.runId;
-
-              // Wait for completion (max 5 minutes)
-              await new Promise<void>(resolve => {
-                const timeout = setTimeout(() => {
-                  runDone = true;
-                  resolve();
-                }, 300000);
-
-                const checkDone = setInterval(() => {
-                  if (runDone) {
-                    clearInterval(checkDone);
-                    clearTimeout(timeout);
-                    resolve();
-                  }
-                }, 100);
-              });
-
-              // Clean up listener
-              cleanup();
-
-              // Save the assistant message
-              assistantContent = totalContent;
-            } catch (error) {
-              console.error('[WebSocket] OpenClaw session error:', error);
-              const errorMsg =
-                error instanceof Error ? error.message : String(error);
-              assistantContent = `Error: ${errorMsg}`;
-              ws.send(
-                JSON.stringify({
-                  type: 'assistant_chunk',
-                  data: {
-                    content: assistantContent,
-                    total: assistantContent,
-                    done: true,
-                    messageId: assistantMessageId,
-                  },
-                })
-              );
-            }
-
-            // Save assistant message from session mode
-            if (assistantContent && assistantMessageId) {
-              if (isPrivate) {
-                ws.send(
-                  JSON.stringify({
-                    type: 'assistant_complete',
-                    data: {
-                      id: assistantMessageId,
-                      role: 'assistant',
-                      content: assistantContent,
-                      model: session.model,
-                      timestamp: Date.now(),
-                    },
-                  })
-                );
-              } else {
-                const assistantMessage = chatService.addMessage(
-                  sessionId,
-                  {
-                    role: 'assistant',
-                    content: assistantContent,
-                    model: session.model,
-                    id: assistantMessageId,
-                  },
-                  userId
-                );
-                ws.send(
-                  JSON.stringify({
-                    type: 'assistant_complete',
-                    data: assistantMessage,
-                  })
-                );
-              }
-            }
-            return; // Exit early — handled via OpenClaw session
-          } else {
-            // ---------------------------------------------------------------
-            // Standard plugin path (stateless HTTP completions)
-            // ---------------------------------------------------------------
-
-            try {
-              // Get user's preferred generation options
-              const userGenerationOptions =
-                preferencesService.getGenerationOptions();
-
-              // Merge user preferences with request options
-              const mergedOptions = mergeGenerationOptions(
-                userGenerationOptions,
-                options
-              );
-
-              // Get messages for context
-              const contextMessages =
-                chatService.getMessagesForContext(sessionId);
-
-              // For regenerations, the user message is already in context; for new messages, we need to add it
-              let messagesForPlugin = regenerate
-                ? contextMessages
-                : contextMessages.concat([userMessage!]);
-              const systemPromptPrefix =
-                (pluginVars.system_prompt_prefix as string) || '';
-              const userName = (pluginVars.user_name as string) || '';
-
-              // Prepend identity system message if configured
-              if (systemPromptPrefix || userName) {
-                let identityMsg = systemPromptPrefix;
-                if (userName) {
-                  identityMsg = identityMsg
-                    ? `${identityMsg}\n\nThe user's name is: ${userName}`
-                    : `The user's name is: ${userName}`;
-                }
-                messagesForPlugin = [
-                  {
-                    id: 'system-identity',
-                    role: 'system' as const,
-                    content: identityMsg,
-                    timestamp: Date.now(),
-                  },
-                  ...messagesForPlugin,
-                ];
-              }
-
-              const shouldStream =
-                (pluginVars.stream as boolean | undefined) ?? false;
-
-              if (shouldStream) {
-                // Real SSE streaming from plugin
-                let totalContent = '';
-                const toolCalls: Array<{
-                  id: string;
-                  name: string;
-                  arguments: string;
-                }> = [];
-
-                // Tool activity tracking — single indicator, reused ID
-                let pauseTimer: ReturnType<typeof setTimeout> | null = null;
-                const PAUSE_TOOL_ID = 'tool-activity';
-                let toolActivitySent = false;
-                const PAUSE_THRESHOLD_MS = 2000;
-
-                const sendToolStatus = (phase: string) => {
-                  try {
-                    ws.send(
-                      JSON.stringify({
-                        type: 'tool_status',
-                        data: {
-                          toolCallId: PAUSE_TOOL_ID,
-                          name: 'working',
-                          phase,
-                        },
-                      })
-                    );
-                  } catch {
-                    /* ws closed */
-                  }
-                };
-
-                const startPauseDetection = () => {
-                  if (pauseTimer) clearTimeout(pauseTimer);
-                  pauseTimer = setTimeout(() => {
-                    if (!toolActivitySent) {
-                      toolActivitySent = true;
-                      sendToolStatus('running');
-                    }
-                  }, PAUSE_THRESHOLD_MS);
-                };
-                startPauseDetection();
-
-                for await (const chunk of pluginService.executePluginStreamRequest(
-                  actualModelName,
-                  messagesForPlugin,
-                  mergedOptions
-                )) {
-                  if (chunk.type === 'content' && chunk.content) {
-                    // Content arrived — clear the tool indicator
-                    if (toolActivitySent) {
-                      sendToolStatus('done');
-                      toolActivitySent = false;
-                    }
-                    startPauseDetection();
-
-                    totalContent += chunk.content;
-                    ws.send(
-                      JSON.stringify({
-                        type: 'assistant_chunk',
-                        data: {
-                          content: chunk.content,
-                          total: totalContent,
-                          done: false,
-                          messageId: assistantMessageId,
-                        },
-                      })
-                    );
-                  } else if (chunk.type === 'tool_call' && chunk.toolCall) {
-                    toolCalls.push(chunk.toolCall);
-                    if (pauseTimer) clearTimeout(pauseTimer);
-                    toolActivitySent = true;
-                    // Send with real tool name but same stable ID
-                    try {
-                      ws.send(
-                        JSON.stringify({
-                          type: 'tool_status',
-                          data: {
-                            toolCallId: PAUSE_TOOL_ID,
-                            name: chunk.toolCall.name,
-                            phase: 'running',
-                          },
-                        })
-                      );
-                    } catch {
-                      /* ws closed */
-                    }
-                  } else if (chunk.type === 'done') {
-                    if (pauseTimer) clearTimeout(pauseTimer);
-                    if (toolActivitySent) {
-                      sendToolStatus('done');
-                      toolActivitySent = false;
-                    }
-                    // Append tool call info to content if present
-                    if (toolCalls.length > 0) {
-                      let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
-                      for (const tc of toolCalls) {
-                        let argsFormatted = tc.arguments;
-                        try {
-                          argsFormatted = JSON.stringify(
-                            JSON.parse(tc.arguments),
-                            null,
-                            2
-                          );
-                        } catch {
-                          /* keep raw */
-                        }
-                        toolContent += `\n**${tc.name}** (\`${tc.id}\`)\n\`\`\`json\n${argsFormatted}\n\`\`\`\n`;
-                      }
-                      totalContent += toolContent;
-                    }
-
-                    // Send final chunk
-                    ws.send(
-                      JSON.stringify({
-                        type: 'assistant_chunk',
-                        data: {
-                          content: '',
-                          total: totalContent,
-                          done: true,
-                          messageId: assistantMessageId,
-                        },
-                      })
-                    );
-                  }
-                }
-
-                assistantContent = totalContent;
-              } else {
-                // Non-streaming: use original request method
-                const pluginResponse = await pluginService.executePluginRequest(
-                  actualModelName,
-                  messagesForPlugin,
-                  mergedOptions
-                );
-
-                if (!pluginResponse?.choices?.length) {
-                  throw new Error('Plugin returned empty or invalid response');
-                }
-                const choice = pluginResponse.choices[0];
-                // Handle content that may be a string or array of content blocks
-                const rawContent = choice?.message?.content;
-                if (Array.isArray(rawContent)) {
-                  // Multimodal response: convert content blocks to markdown
-                  const parts: string[] = [];
-                  for (const block of rawContent as Array<{
-                    type: string;
-                    text?: string;
-                    image_url?: { url: string };
-                  }>) {
-                    if (block.type === 'text' && block.text) {
-                      parts.push(block.text);
-                    } else if (
-                      block.type === 'image_url' &&
-                      block.image_url?.url
-                    ) {
-                      parts.push(`![image](${block.image_url.url})`);
-                    }
-                  }
-                  assistantContent = parts.join('\n\n');
-                } else {
-                  assistantContent = (rawContent as string) || '';
-                }
-
-                // Render tool_calls from non-streaming response
-                const msgAny = choice?.message as Record<string, unknown>;
-                if (
-                  msgAny?.tool_calls &&
-                  Array.isArray(msgAny.tool_calls) &&
-                  msgAny.tool_calls.length > 0
-                ) {
-                  let toolContent = '\n\n---\n**🔧 Tool Calls:**\n';
-                  for (const tc of msgAny.tool_calls as Array<{
-                    id?: string;
-                    function?: { name?: string; arguments?: string };
-                  }>) {
-                    const name = tc.function?.name || 'unknown';
-                    const id = tc.id || '';
-                    let args = tc.function?.arguments || '';
-                    try {
-                      args = JSON.stringify(JSON.parse(args), null, 2);
-                    } catch {
-                      /* keep raw */
-                    }
-                    toolContent += `\n**${name}** (\`${id}\`)\n\`\`\`json\n${args}\n\`\`\`\n`;
-                  }
-                  assistantContent += toolContent;
-                }
-
-                // Send the complete response as chunks to simulate streaming
-                const words = assistantContent.split(' ');
-                const BATCH_SIZE = 3;
-
-                for (let i = 0; i < words.length; i += BATCH_SIZE) {
-                  const batch = words.slice(i, i + BATCH_SIZE);
-                  const chunk = words.slice(0, i + batch.length).join(' ');
-                  const isLast = i + BATCH_SIZE >= words.length;
-
-                  ws.send(
-                    JSON.stringify({
-                      type: 'assistant_chunk',
-                      data: {
-                        content: batch.join(' ') + (isLast ? '' : ' '),
-                        total: chunk,
-                        done: isLast,
-                        messageId: assistantMessageId,
-                      },
-                    })
-                  );
-
-                  if (!isLast) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                  }
-                }
-              }
-
-              // Save the complete assistant message (skip for private sessions)
-              if (assistantContent && assistantMessageId) {
-                if (isPrivate) {
-                  // For private sessions, just send completion without saving
-                  console.log(
-                    'Backend: Private session - skipping message save'
-                  );
-                  ws.send(
-                    JSON.stringify({
-                      type: 'assistant_complete',
-                      data: {
-                        id: assistantMessageId,
-                        role: 'assistant',
-                        content: assistantContent,
-                        model: session.model,
-                        timestamp: Date.now(),
-                      },
-                    })
-                  );
-                } else {
-                  console.log(
-                    'Backend: Saving complete assistant message with ID:',
-                    assistantMessageId,
-                    'regenerate:',
-                    !!regenerate
-                  );
-
-                  // Calculate branching fields if this is a regeneration
-                  let branchingFields: {
-                    parentId?: string;
-                    branchIndex?: number;
-                    isActive?: boolean;
-                  } = {};
-                  if (regenerate && originalMessageId) {
-                    // Find the original message to get its parentId or use its ID as parent
-                    const originalMsg = session.messages.find(
-                      m => m.id === originalMessageId
-                    );
-                    const parentId = originalMsg?.parentId || originalMessageId;
-
-                    // Count existing siblings to determine branch index
-                    const siblingCount = session.messages.filter(
-                      m => m.id === parentId || m.parentId === parentId
-                    ).length;
-
-                    branchingFields = {
-                      parentId,
-                      branchIndex: siblingCount, // New branch gets next index
-                      isActive: true,
-                    };
-                    console.log(
-                      'Backend: Setting branching fields:',
-                      branchingFields
-                    );
-                  }
-
-                  const assistantMessage = chatService.addMessage(
-                    sessionId,
-                    {
-                      role: 'assistant',
-                      content: assistantContent,
-                      model: session.model,
-                      id: assistantMessageId,
-                      ...branchingFields,
-                    },
-                    userId
-                  );
-
-                  console.log(
-                    'Backend: Assistant message saved:',
-                    !!assistantMessage
-                  );
-
-                  // Send completion signal
-                  ws.send(
-                    JSON.stringify({
-                      type: 'assistant_complete',
-                      data: assistantMessage,
-                    })
-                  );
-                }
-              }
-              return; // Exit early since we handled the request via plugin
-            } catch (pluginError: unknown) {
-              const err =
-                pluginError instanceof Error
-                  ? pluginError
-                  : new Error(String(pluginError));
-              const errWithResponse = pluginError as Record<
-                string,
-                unknown
-              > | null;
-              console.error(
-                'Plugin failed, falling back to Ollama:',
-                err.message
-              );
-              if (
-                errWithResponse &&
-                typeof errWithResponse === 'object' &&
-                'response' in errWithResponse
-              ) {
-                const resp = errWithResponse.response as Record<
-                  string,
-                  unknown
-                >;
-                console.error('Plugin HTTP response status:', resp.status);
-                console.error(
-                  'Plugin HTTP response data:',
-                  JSON.stringify(resp.data)
-                );
-              }
-              if ('cause' in err) {
-                console.error(
-                  'Plugin error cause:',
-                  (err as { cause: unknown }).cause
-                );
-              }
-              // If a plugin was found but failed, don't fall through to Ollama
-              if (activePlugin) {
-                console.error(
-                  `[WebSocket] Plugin "${activePlugin.name}" failed for model ${actualModelName}, not falling back to Ollama`
-                );
-                ws.send(
-                  JSON.stringify({
-                    type: 'error',
-                    message: `Plugin request failed: ${err.message}`,
-                  })
-                );
-                return;
-              }
-              // Continue to Ollama fallback below (no plugin was matched)
-            }
-          } // close else (standard plugin path)
-        }
-
-        console.log(
-          `[WebSocket] No plugin found, using Ollama for model: ${actualModelName}`
-        );
-
-        // Reuse the actualModelName variable that was already resolved above
-        // If we're here, it means either there was no plugin or plugin failed
-        // The actualModelName was already resolved in the earlier code block
-
-        // Get user's preferred generation options
-        const userGenerationOptions = preferencesService.getGenerationOptions();
-
-        // Merge user preferences with request options
-        const mergedOptions = mergeGenerationOptions(
-          userGenerationOptions,
-          options
-        );
-
-        // Create chat request with advanced features
-        const chatRequest: OllamaChatRequest = {
-          model: actualModelName,
-          messages: ollamaMessages,
-          stream: true,
-          options: mergedOptions as Record<string, unknown>,
-        };
-
-        // Add structured output format if specified
-        if (format) {
-          chatRequest.format = format;
-        }
-
-        // Stream response from Ollama using chat completion
-        await ollamaService.generateChatStreamResponse(
-          chatRequest,
-          chunk => {
-            if (chunk.message?.content) {
-              assistantContent += chunk.message.content;
-
-              // Send streaming chunk with the provided message ID
-              ws.send(
-                JSON.stringify({
-                  type: 'assistant_chunk',
-                  data: {
-                    content: chunk.message.content,
-                    total: assistantContent,
-                    done: chunk.done,
-                    messageId: assistantMessageId,
-                  },
-                })
-              );
-            }
-
-            // Capture final statistics when streaming is done
-            if (chunk.done) {
-              finalStatistics = {
-                total_duration: chunk.total_duration,
-                load_duration: chunk.load_duration,
-                prompt_eval_count: chunk.prompt_eval_count,
-                prompt_eval_duration: chunk.prompt_eval_duration,
-                eval_count: chunk.eval_count,
-                eval_duration: chunk.eval_duration,
-                created_at: chunk.created_at,
-                model: chunk.model,
-              };
-
-              // Calculate tokens per second if we have the necessary data
-              if (chunk.eval_count && chunk.eval_duration) {
-                finalStatistics.tokens_per_second =
-                  Math.round(
-                    (chunk.eval_count / (chunk.eval_duration / 1e9)) * 100
-                  ) / 100;
-              }
-            }
-          },
-          error => {
-            ws.send(
-              JSON.stringify({
-                type: 'error',
-                data: { error: error.message },
-              })
-            );
-          },
-          () => {
-            // Save the complete assistant message with the provided ID (skip for private sessions)
-            if (assistantContent && assistantMessageId) {
-              if (isPrivate) {
-                // For private sessions, just send completion without saving
-                console.log(
-                  'Backend: Private session - skipping Ollama message save'
-                );
-                ws.send(
-                  JSON.stringify({
-                    type: 'assistant_complete',
-                    data: {
-                      content: assistantContent,
-                      role: 'assistant',
-                      timestamp: Date.now(),
-                      messageId: assistantMessageId,
-                      statistics: finalStatistics,
-                    },
-                  })
-                );
-              } else {
-                console.log(
-                  'Backend: Saving complete assistant message with ID:',
-                  assistantMessageId,
-                  'regenerate:',
-                  !!regenerate
-                );
-
-                // Calculate branching fields if this is a regeneration
-                let branchingFields: {
-                  parentId?: string;
-                  branchIndex?: number;
-                  isActive?: boolean;
-                } = {};
-                if (regenerate && originalMessageId) {
-                  // Find the original message to get its parentId or use its ID as parent
-                  const originalMsg = session.messages.find(
-                    m => m.id === originalMessageId
-                  );
-                  const parentId = originalMsg?.parentId || originalMessageId;
-
-                  // Count existing siblings to determine branch index
-                  const siblingCount = session.messages.filter(
-                    m => m.id === parentId || m.parentId === parentId
-                  ).length;
-
-                  branchingFields = {
-                    parentId,
-                    branchIndex: siblingCount, // New branch gets next index
-                    isActive: true,
-                  };
-                  console.log(
-                    'Backend: Setting branching fields:',
-                    branchingFields
-                  );
-                }
-
-                console.log('Backend: About to save assistant message:', {
-                  sessionId,
-                  messageId: assistantMessageId,
-                  contentLength: assistantContent.length,
-                  hasBranchingFields: Object.keys(branchingFields).length > 0,
-                  branchingFields,
-                });
-
-                const assistantMessage = chatService.addMessage(
-                  sessionId,
-                  {
-                    role: 'assistant',
-                    content: assistantContent,
-                    model: session.model,
-                    id: assistantMessageId,
-                    statistics: finalStatistics,
-                    ...branchingFields,
-                  },
-                  userId
-                );
-
-                console.log(
-                  'Backend: Assistant message saved:',
-                  !!assistantMessage,
-                  assistantMessage
-                    ? {
-                        id: assistantMessage.id,
-                        contentLength: assistantMessage.content.length,
-                      }
-                    : 'FAILED TO SAVE'
-                );
-
-                // Send completion signal with statistics
-                ws.send(
-                  JSON.stringify({
-                    type: 'assistant_complete',
-                    data: {
-                      content: assistantContent,
-                      role: 'assistant',
-                      timestamp: Date.now(),
-                      messageId: assistantMessageId,
-                      statistics: finalStatistics,
-                      ...branchingFields,
-                    },
-                  })
-                );
-              }
-            }
-          }
-        );
-      }
-    } catch (error: unknown) {
-      console.error('WebSocket error:', error);
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      ws.send(
-        JSON.stringify({
-          type: 'error',
-          data: { error: errorMessage },
-        })
-      );
-    }
-  });
-
-  ws.on('close', () => {
-    console.log('WebSocket client disconnected');
-  });
-
-  ws.on('error', error => {
-    console.error('WebSocket error:', error);
-  });
-
-  // Send initial connection confirmation
-  ws.send(
-    JSON.stringify({
-      type: 'connected',
-      data: { message: 'Connected to Libre WebUI' },
-    })
-  );
-});
+registerWebSocketServer(server);
 
 // Start server
 server.listen({ port, host: '0.0.0.0' }, () => {
   const url = `http://localhost:${port}`;
-  console.log(`\n🚀 Libre WebUI v${pkg.version}`);
-  console.log(`   ${url}\n`);
+  logger.info(`Libre WebUI v${pkg.version}`);
+  logger.info(url);
 
   // Open browser in production mode
   if (process.env.SERVE_FRONTEND === 'true') {
@@ -1691,24 +462,24 @@ server.listen({ port, host: '0.0.0.0' }, () => {
   const hfConfigured = hfOAuth.isConfigured();
 
   if (githubConfigured || hfConfigured) {
-    console.log('🔐 SSO Configuration:');
+    logger.info('SSO configuration:');
     if (githubConfigured) {
-      console.log('  ✅ GitHub OAuth configured and ready');
+      logger.info('GitHub OAuth configured and ready');
     }
     if (hfConfigured) {
-      console.log('  ✅ Hugging Face OAuth configured and ready');
+      logger.info('Hugging Face OAuth configured and ready');
     }
   } else {
-    console.log('ℹ️  No SSO providers configured (optional)');
+    logger.info('No SSO providers configured (optional)');
   }
 
   // Check Ollama connection on startup
   ollamaService.isHealthy().then(isHealthy => {
     if (isHealthy) {
-      console.log('✅ Ollama service is connected and ready');
+      logger.info('Ollama service is connected and ready');
     } else {
-      console.log(
-        "⚠️  Ollama service is not available - make sure it's running on http://localhost:11434"
+      logger.warn(
+        "Ollama service is not available - make sure it's running on http://localhost:11434"
       );
     }
   });
@@ -1716,16 +487,16 @@ server.listen({ port, host: '0.0.0.0' }, () => {
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
+  logger.info('SIGTERM signal received: closing HTTP server');
   server.close(() => {
-    console.log('HTTP server closed');
+    logger.info('HTTP server closed');
   });
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT signal received: closing HTTP server');
+  logger.info('SIGINT signal received: closing HTTP server');
   server.close(() => {
-    console.log('HTTP server closed');
+    logger.info('HTTP server closed');
   });
 });
 

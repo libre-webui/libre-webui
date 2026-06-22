@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
@@ -23,6 +23,10 @@ import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
+import { TurnstileWidget } from '@/components/TurnstileWidget';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:signup-form');
 
 interface SignupFormProps {
   onSignup?: () => void;
@@ -41,8 +45,20 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, systemInfo } = useAuthStore();
+  const turnstileSiteKey = systemInfo?.turnstile?.siteKey;
+  const isTurnstileEnabled = Boolean(
+    systemInfo?.turnstile?.enabled && turnstileSiteKey
+  );
+  const handleTurnstileTokenChange = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+  const submitDisabled = useMemo(
+    () => isLoading || (isTurnstileEnabled && !turnstileToken),
+    [isLoading, isTurnstileEnabled, turnstileToken]
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -62,10 +78,20 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       return;
     }
 
+    if (isTurnstileEnabled && !turnstileToken) {
+      toast.error(t('auth.signup.tryAgain'));
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const response = await authApi.signup({ username, password, email });
+      const response = await authApi.signup({
+        username,
+        password,
+        email,
+        turnstileToken,
+      });
 
       if (response.success && response.data) {
         login(
@@ -80,9 +106,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         toast.error(response.message || t('auth.signup.signupFailed'));
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      logger.error('Signup error:', error);
       toast.error(t('auth.signup.tryAgain'));
     } finally {
+      setTurnstileToken('');
       setIsLoading(false);
     }
   };
@@ -208,9 +235,18 @@ export const SignupForm: React.FC<SignupFormProps> = ({
           </div>
         </div>
 
+        {isTurnstileEnabled && turnstileSiteKey && (
+          <TurnstileWidget
+            siteKey={turnstileSiteKey}
+            disabled={isLoading}
+            errorMessage={t('auth.signup.tryAgain')}
+            onTokenChange={handleTurnstileTokenChange}
+          />
+        )}
+
         <button
           type='submit'
-          disabled={isLoading}
+          disabled={submitDisabled}
           className='w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
         >
           {isLoading ? (

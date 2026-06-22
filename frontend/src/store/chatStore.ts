@@ -25,22 +25,23 @@ import {
 } from '@/types';
 import { chatApi, ollamaApi, preferencesApi, personaApi } from '@/utils/api';
 import { pluginApi } from '@/utils/api';
-import { generateId } from '@/utils';
+import { createLogger } from '@/utils/logger';
 import toast from 'react-hot-toast';
+import {
+  appendMessageToChatState,
+  buildPersonaModels,
+  buildPersonasById,
+  buildPluginModels,
+  createChatMessage,
+  getErrorMessage,
+  hasSession,
+  hasValidCurrentSession,
+  isPrivateSession,
+  updateMessageContentInChatState,
+  updateMessageStatisticsInChatState,
+} from '@/store/chatStoreHelpers';
 
-// Helper function to extract error message from unknown error
-const getErrorMessage = (error: unknown, fallback: string): string => {
-  if (error && typeof error === 'object' && 'response' in error) {
-    const response = error as { response?: { data?: { error?: string } } };
-    if (response.response?.data?.error) {
-      return response.response.data.error;
-    }
-  }
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return fallback;
-};
+const logger = createLogger('chat-store');
 
 interface ChatState {
   // Sessions
@@ -156,7 +157,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           } else if (sessions.length > 0) {
             currentSession = sessions[0];
             if (prevState.currentSession) {
-              console.warn(
+              logger.warn(
                 'Previous currentSession not found in backend sessions:',
                 prevState.currentSession.id
               );
@@ -191,7 +192,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
               ? updatedSessions[0] || null
               : state.currentSession;
 
-          console.log(
+          logger.debug(
             'Store: Updating state, sessions count:',
             updatedSessions.length
           );
@@ -203,11 +204,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
         toast.success('Chat deleted');
       } else {
-        console.error('Store: deleteSession failed:', response);
+        logger.error('Store: deleteSession failed:', response);
         toast.error('Failed to delete chat');
       }
     } catch (error: unknown) {
-      console.error('Store: deleteSession error:', error);
+      logger.error('Store: deleteSession error:', error);
       const errorMessage = getErrorMessage(error, 'Failed to delete session');
       toast.error(errorMessage);
     }
@@ -226,12 +227,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
         });
         toast.success('All chat history cleared');
       } else {
-        console.error('Store: clearAllSessions failed:', response);
+        logger.error('Store: clearAllSessions failed:', response);
         toast.error('Failed to clear chat history');
         set({ loading: false });
       }
     } catch (error: unknown) {
-      console.error('Store: clearAllSessions error:', error);
+      logger.error('Store: clearAllSessions error:', error);
       const errorMessage = getErrorMessage(
         error,
         'Failed to clear chat history'
@@ -259,13 +260,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await chatApi.updateSession(sessionId, { title });
 
       if (response.success && response.data) {
+        const updatedTitle = response.data.title;
+        const updatedAt = response.data.updatedAt ?? Date.now();
+
         set(state => ({
           sessions: state.sessions.map(s =>
-            s.id === sessionId ? response.data! : s
+            s.id === sessionId ? { ...s, title: updatedTitle, updatedAt } : s
           ),
           currentSession:
             state.currentSession?.id === sessionId
-              ? response.data!
+              ? {
+                  ...state.currentSession,
+                  title: updatedTitle,
+                  updatedAt,
+                }
               : state.currentSession,
         }));
         toast.success('Chat title updated');
@@ -282,207 +290,36 @@ export const useChatStore = create<ChatState>((set, get) => ({
     message: Omit<ChatMessage, 'id' | 'timestamp'> & { id?: string }
   ) => {
     const state = get();
+    const isPrivate = isPrivateSession(state, sessionId);
 
-    // Allow private sessions (they're not in the sessions array)
-    const isPrivateSession =
-      state.currentSession?.isPrivate && state.currentSession?.id === sessionId;
-
-    // Block if currentSession is not valid (unless it's a private session)
-    if (
-      !state.currentSession ||
-      (!isPrivateSession &&
-        !state.sessions.find(s => s.id === state.currentSession?.id))
-    ) {
+    if (!hasValidCurrentSession(state, sessionId)) {
       toast.error('No valid chat session. Please create or select a chat.');
-      console.error(
+      logger.error(
         'addMessage blocked: currentSession is not valid',
         state.currentSession?.id
       );
       return;
     }
-    // Block if sessionId is not in the current sessions list (unless it's a private session)
-    if (!isPrivateSession && !state.sessions.find(s => s.id === sessionId)) {
+
+    if (!isPrivate && !hasSession(state, sessionId)) {
       toast.error(
         'Session not found or invalid. Please select or create a valid chat session.'
       );
-      console.error(
+      logger.error(
         'addMessage blocked: sessionId not found in sessions',
         sessionId
       );
       return;
     }
-    const newMessage: ChatMessage = {
-      ...message,
-      id: message.id || generateId(),
-      timestamp: Date.now(),
-    };
 
-    set(state => {
-      // Handle private sessions - only update currentSession, not the sessions array
-      if (
-        state.currentSession?.isPrivate &&
-        state.currentSession?.id === sessionId
-      ) {
-        // Prevent adding duplicate messages
-        const existingMessage = state.currentSession.messages.find(
-          m => m.id === newMessage.id
-        );
-        if (existingMessage) {
-          return state;
-        }
-
-        return {
-          ...state,
-          currentSession: {
-            ...state.currentSession,
-            messages: [...state.currentSession.messages, newMessage],
-            updatedAt: Date.now(),
-          },
-        };
-      }
-
-      // Prevent adding duplicate messages
-      const session = state.sessions.find(s => s.id === sessionId);
-      if (session) {
-        const existingMessage = session.messages.find(
-          m => m.id === newMessage.id
-        );
-        if (existingMessage) {
-          return state;
-        }
-      }
-
-      const updatedSessions = state.sessions.map(session => {
-        if (session.id === sessionId) {
-          let updatedMessages = [...session.messages];
-
-          // If this is a branch message (has parentId), update sibling messages
-          if (newMessage.parentId) {
-            const parentId = newMessage.parentId;
-
-            // Mark all sibling messages (including the parent) as inactive
-            updatedMessages = updatedMessages.map(msg => {
-              // Check if this message is a sibling (same parent or is the parent itself)
-              const isSibling =
-                msg.id === parentId || msg.parentId === parentId;
-              if (isSibling) {
-                return {
-                  ...msg,
-                  isActive: false,
-                  // Ensure the parent has branchIndex 0 if it doesn't have one
-                  branchIndex: msg.branchIndex ?? 0,
-                  // Update siblingCount for all siblings
-                  siblingCount: (newMessage.branchIndex || 0) + 1,
-                };
-              }
-              return msg;
-            });
-          }
-
-          // Add the new message
-          updatedMessages.push(newMessage);
-
-          return {
-            ...session,
-            messages: updatedMessages,
-            updatedAt: Date.now(),
-          };
-        }
-        return session;
-      });
-
-      return {
-        sessions: updatedSessions,
-        currentSession:
-          state.currentSession?.id === sessionId
-            ? (() => {
-                const updatedSession =
-                  updatedSessions.find(s => s.id === sessionId) ||
-                  state.currentSession;
-                return updatedSession;
-              })()
-            : state.currentSession,
-      };
-    });
+    const newMessage = createChatMessage(message);
+    set(state => appendMessageToChatState(state, sessionId, newMessage));
   },
 
   updateMessage: (sessionId: string, messageId: string, content: string) => {
-    set(state => {
-      // Only update if this is for the current session
-      if (state.currentSession?.id !== sessionId) {
-        return state;
-      }
-
-      // Handle private sessions
-      if (state.currentSession?.isPrivate) {
-        const targetMessage = state.currentSession.messages.find(
-          m => m.id === messageId
-        );
-        if (!targetMessage || targetMessage.content === content) {
-          return state;
-        }
-
-        const updatedMessages = state.currentSession.messages.map(msg => {
-          if (msg.id === messageId) {
-            return { ...msg, content };
-          }
-          return msg;
-        });
-
-        return {
-          ...state,
-          currentSession: {
-            ...state.currentSession,
-            messages: updatedMessages,
-            updatedAt: Date.now(),
-          },
-        };
-      }
-
-      // Find the session directly instead of mapping all sessions
-      const targetSession = state.sessions.find(s => s.id === sessionId);
-      if (!targetSession) {
-        return state;
-      }
-
-      // Find the message directly instead of mapping all messages
-      const targetMessage = targetSession.messages.find(
-        m => m.id === messageId
-      );
-      if (!targetMessage || targetMessage.content === content) {
-        return state; // No changes needed
-      }
-
-      // Create optimized update - only update the specific session and message
-      const updatedSessions = state.sessions.map(session => {
-        if (session.id === sessionId) {
-          const updatedMessages = session.messages.map(msg => {
-            if (msg.id === messageId) {
-              return { ...msg, content };
-            }
-            return msg;
-          });
-
-          return {
-            ...session,
-            messages: updatedMessages,
-            updatedAt: Date.now(),
-          };
-        }
-        return session;
-      });
-
-      const newCurrentSession =
-        state.currentSession?.id === sessionId
-          ? updatedSessions.find(s => s.id === sessionId) ||
-            state.currentSession
-          : state.currentSession;
-
-      return {
-        sessions: updatedSessions,
-        currentSession: newCurrentSession,
-      };
-    });
+    set(state =>
+      updateMessageContentInChatState(state, sessionId, messageId, content)
+    );
   },
 
   updateMessageWithStatistics: (
@@ -491,60 +328,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     content: string,
     statistics?: GenerationStatistics
   ) => {
-    set(state => {
-      // Only update if this is for the current session
-      if (state.currentSession?.id !== sessionId) {
-        return state;
-      }
-
-      // Handle private sessions
-      if (state.currentSession?.isPrivate) {
-        const updatedMessages = state.currentSession.messages.map(msg => {
-          if (msg.id === messageId) {
-            return { ...msg, content, statistics };
-          }
-          return msg;
-        });
-
-        return {
-          ...state,
-          currentSession: {
-            ...state.currentSession,
-            messages: updatedMessages,
-            updatedAt: Date.now(),
-          },
-        };
-      }
-
-      const updatedSessions = state.sessions.map(session => {
-        if (session.id === sessionId) {
-          const updatedMessages = session.messages.map(msg => {
-            if (msg.id === messageId) {
-              return { ...msg, content, statistics };
-            }
-            return msg;
-          });
-
-          return {
-            ...session,
-            messages: updatedMessages,
-            updatedAt: Date.now(),
-          };
-        }
-        return session;
-      });
-
-      const newCurrentSession =
-        state.currentSession && state.currentSession.id === sessionId
-          ? updatedSessions.find(s => s.id === sessionId) ||
-            state.currentSession
-          : state.currentSession;
-
-      return {
-        sessions: updatedSessions,
-        currentSession: newCurrentSession,
-      };
-    });
+    set(state =>
+      updateMessageStatisticsInChatState(
+        state,
+        sessionId,
+        messageId,
+        content,
+        statistics
+      )
+    );
   },
 
   // Models
@@ -552,7 +344,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   loadModels: async () => {
     try {
       set({ loading: true, error: null });
-      console.log('Loading models from API...');
+      logger.debug('Loading models from API...');
 
       // Load Ollama models
       const ollamaResponse = await ollamaApi.getModels();
@@ -561,61 +353,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
       if (ollamaResponse.success && ollamaResponse.data) {
         allModels = [...ollamaResponse.data];
-        console.log('Ollama models loaded:', ollamaResponse.data.length);
+        logger.debug('Ollama models loaded:', ollamaResponse.data.length);
       }
 
       // Load plugin models
       try {
         const pluginsResponse = await pluginApi.getAllPlugins();
         if (pluginsResponse.success && pluginsResponse.data) {
-          // Find ALL active plugins and add their models (excluding TTS and image generation plugins)
           const activePlugins = pluginsResponse.data.filter(
             plugin =>
               plugin.active && plugin.type !== 'tts' && plugin.type !== 'image'
           );
-          console.log(
+          logger.debug(
             '🔌 Active plugins found:',
             activePlugins.map(p => p.name)
           );
 
-          for (const activePlugin of activePlugins) {
-            if (activePlugin.model_map) {
-              const pluginModels: OllamaModel[] = activePlugin.model_map.map(
-                modelName => ({
-                  name: modelName,
-                  model: modelName,
-                  size: 0, // Plugin models don't have size info
-                  digest: '',
-                  details: {
-                    parent_model: '',
-                    format: '',
-                    family: '',
-                    families: [],
-                    parameter_size: '',
-                    quantization_level: '',
-                  },
-                  modified_at: new Date().toISOString(),
-                  expires_at: new Date().toISOString(),
-                  size_vram: 0,
-                  isPlugin: true,
-                  pluginName: activePlugin.name,
-                })
-              );
-
-              allModels.push(...pluginModels);
-              console.log(
-                'Plugin models added:',
-                pluginModels.length,
-                'from',
-                activePlugin.name
-              );
-            }
-          }
+          const pluginModels = buildPluginModels(activePlugins);
+          allModels.push(...pluginModels);
+          logger.debug('Plugin models added:', pluginModels.length);
         }
       } catch (pluginError) {
-        console.error('❌ Failed to load plugin models:', pluginError);
+        logger.error('❌ Failed to load plugin models:', pluginError);
         if (pluginError instanceof Error) {
-          console.error('❌ Plugin error details:', {
+          logger.error('❌ Plugin error details:', {
             message: pluginError.message,
             response: (
               pluginError as { response?: { data: unknown; status: number } }
@@ -634,49 +395,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const { personaApi } = await import('@/utils/api');
         const personasResponse = await personaApi.getPersonas();
         if (personasResponse.success && personasResponse.data) {
-          // Store personas in the personas object for easy lookup
-          const personasMap = personasResponse.data.reduce(
-            (acc: { [key: string]: Persona }, persona: Persona) => {
-              acc[persona.id] = persona;
-              return acc;
-            },
-            {}
-          );
-
-          const personaModels: OllamaModel[] = personasResponse.data.map(
-            persona => ({
-              name: `persona:${persona.id}`,
-              model: persona.model,
-              size: 0,
-              digest: '',
-              details: {
-                parent_model: persona.model,
-                format: 'persona',
-                family: 'persona',
-                families: ['persona'],
-                parameter_size: '',
-                quantization_level: '',
-              },
-              modified_at: new Date(persona.updated_at).toISOString(),
-              expires_at: new Date().toISOString(),
-              size_vram: 0,
-              isPersona: true,
-              personaName: persona.name,
-              personaDescription: persona.description,
-            })
-          );
+          const personasMap = buildPersonasById(personasResponse.data);
+          const personaModels = buildPersonaModels(personasResponse.data);
 
           allModels.push(...personaModels);
 
-          // Update personas store
           set(state => ({ ...state, personas: personasMap }));
         }
       } catch (personaError) {
-        console.error('❌ Failed to load personas:', personaError);
+        logger.error('❌ Failed to load personas:', personaError);
         // Continue without personas
       }
 
-      console.log('Total models loaded:', allModels.length);
+      logger.debug('Total models loaded:', allModels.length);
 
       // Validate that the currently selected model still exists in the models list
       const currentState = get();
@@ -686,7 +417,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       if (currentSelectedModel && !modelExists && allModels.length > 0) {
         // Current model is no longer available, fallback to first available model
         const fallbackModel = allModels[0].name;
-        console.log(
+        logger.debug(
           `⚠️ Selected model "${currentSelectedModel}" no longer available, falling back to "${fallbackModel}"`
         );
         set({
@@ -701,7 +432,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ models: allModels, loading: false });
       }
     } catch (error: unknown) {
-      console.error('Error loading models:', error);
+      logger.error('Error loading models:', error);
       const errorMessage = getErrorMessage(error, 'Failed to load models');
       set({ error: errorMessage, loading: false });
       toast.error(errorMessage);
@@ -718,16 +449,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         if (defaultModel) {
           set({ selectedModel: defaultModel });
-          console.log('✅ Loaded default model from backend:', defaultModel);
+          logger.debug('✅ Loaded default model from backend:', defaultModel);
         }
 
         if (systemMessage !== undefined) {
           set({ systemMessage: systemMessage });
-          console.log('✅ Loaded system message from backend');
+          logger.debug('✅ Loaded system message from backend');
         }
       }
     } catch (_error) {
-      console.warn('❌ Failed to load preferences from backend:', _error);
+      logger.warn('❌ Failed to load preferences from backend:', _error);
     }
   },
 
@@ -736,7 +467,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ selectedModel: model });
     // Save to backend preferences when model is selected
     preferencesApi.setDefaultModel(model).catch(_error => {
-      console.warn('Failed to save default model to backend:', _error);
+      logger.warn('Failed to save default model to backend:', _error);
     });
   },
 
@@ -782,22 +513,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const personas = response.data;
 
         set({
-          personas: personas.reduce(
-            (acc: { [key: string]: Persona }, persona: Persona) => {
-              acc[persona.id] = persona;
-              return acc;
-            },
-            {}
-          ),
+          personas: buildPersonasById(personas),
           loading: false,
         });
 
-        console.log('✅ Personas loaded:', personas.length);
+        logger.debug('✅ Personas loaded:', personas.length);
       }
     } catch (error: unknown) {
       const errorMessage = getErrorMessage(error, 'Failed to load personas');
       set({ error: errorMessage, loading: false });
-      console.error('❌ Failed to load personas:', errorMessage);
+      logger.error('❌ Failed to load personas:', errorMessage);
     }
   },
 
@@ -823,7 +548,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     // Save to backend preferences when system message is updated
     preferencesApi.setSystemMessage(message).catch(_error => {
-      console.warn('Failed to save system message to backend:', _error);
+      logger.warn('Failed to save system message to backend:', _error);
     });
 
     // Update the system message in the current session if it exists
@@ -875,13 +600,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
             content: message,
           })
           .catch(_error => {
-            console.warn(
+            logger.warn(
               'Failed to sync system message update to backend:',
               _error
             );
           });
 
-        console.log('✅ Updated system message in current session');
+        logger.debug('✅ Updated system message in current session');
       }
     }
   },
@@ -900,12 +625,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
   ...(typeof window !== 'undefined' && {
     testPluginApi: async () => {
       try {
-        console.log('🧪 Testing plugin API...');
+        logger.debug('🧪 Testing plugin API...');
         const result = await pluginApi.getAllPlugins();
-        console.log('✅ Plugin API test result:', result);
+        logger.debug('✅ Plugin API test result:', result);
         return result;
       } catch (error) {
-        console.error('❌ Plugin API test failed:', error);
+        logger.error('❌ Plugin API test failed:', error);
         return { error };
       }
     },

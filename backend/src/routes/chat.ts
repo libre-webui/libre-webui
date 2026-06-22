@@ -20,24 +20,34 @@ import rateLimit from 'express-rate-limit';
 import chatService from '../services/chatService.js';
 import ollamaService from '../services/ollamaService.js';
 import pluginService from '../services/pluginService.js';
-import preferencesService from '../services/preferencesService.js';
-import documentService from '../services/documentService.js';
 import { personaService } from '../services/personaService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
-import {
-  mergeGenerationOptions,
-  extractStatistics,
-} from '../utils/generationUtils.js';
+import { extractStatistics } from '../utils/generationUtils.js';
+import chatGenerationService from '../services/chatGenerationService.js';
+import { ChatRequestService } from '../services/chatRequestService.js';
+import { TitleGenerationService } from '../services/titleGenerationService.js';
 import {
   ApiResponse,
   ChatSession,
   ChatMessage,
-  OllamaChatResponse,
   getErrorMessage,
 } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+import { buildChatDocumentContext } from '../utils/chatDocumentContext.js';
+
+const logger = createLogger('routes:chat');
 
 const router = express.Router();
-const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
+const titleGenerationService = new TitleGenerationService({
+  chatService,
+  chatGenerationService,
+  pluginService,
+  ollamaService,
+});
+const chatRequestService = new ChatRequestService({
+  chatGenerationService,
+  personaService,
+});
 
 // Rate limiter for chat routes: 60 requests per minute (reasonable for chat)
 const chatRateLimiter = rateLimit({
@@ -56,50 +66,6 @@ router.use(chatRateLimiter);
 
 // Apply authentication middleware to all chat routes
 router.use(authenticate);
-
-// Helper function to resolve the actual model name from session model
-// If the model is a persona ID (starts with "persona:"), extract the actual model name
-async function resolveActualModelName(
-  sessionModel: string,
-  userId: string = 'default'
-): Promise<string> {
-  if (sessionModel.startsWith('persona:')) {
-    try {
-      const personaId = sessionModel.replace('persona:', '');
-
-      // Try to get persona for the current user first, then fallback to 'default'
-      let persona = await personaService.getPersonaById(personaId, userId);
-      if (!persona && userId !== 'default') {
-        persona = await personaService.getPersonaById(personaId, 'default');
-      }
-
-      if (persona && persona.model) {
-        return persona.model;
-      } else {
-        console.warn(
-          `Persona ${personaId} not found, falling back to session model`
-        );
-        return sessionModel;
-      }
-    } catch (error) {
-      console.error(`Error resolving persona model:`, error);
-      return sessionModel;
-    }
-  }
-  return sessionModel;
-}
-
-async function resolveTitleGenerationModel(
-  requestedModel: string,
-  session: ChatSession,
-  userId: string
-): Promise<string> {
-  if (requestedModel === AUTO_TITLE_CURRENT_MODEL) {
-    return resolveActualModelName(session.model, userId);
-  }
-
-  return requestedModel;
-}
 
 // Get all chat sessions
 router.get(
@@ -446,154 +412,49 @@ router.post(
         return;
       }
 
-      // Check if document search is available and enabled
-      let documentContext = '';
+      let documentContext = {
+        enhancedContent: message,
+        hasRelevantContext: false,
+      };
       try {
-        const preferences = preferencesService.getPreferences();
-        if (preferences.embeddingSettings?.enabled) {
-          const relevantDocuments = await documentService.searchDocuments(
-            message,
-            sessionId
-          );
-
-          if (relevantDocuments.length > 0) {
-            // Get document info for each chunk
-            const documentsMap = new Map();
-            for (const chunk of relevantDocuments) {
-              if (!documentsMap.has(chunk.documentId)) {
-                const doc = documentService.getDocument(chunk.documentId);
-                documentsMap.set(chunk.documentId, doc);
-              }
-            }
-
-            documentContext =
-              '\n\n--- RELEVANT DOCUMENTS ---\n' +
-              relevantDocuments
-                .map((chunk, index) => {
-                  const doc = documentsMap.get(chunk.documentId);
-                  const docTitle = doc ? doc.filename : 'Unknown Document';
-                  return `Document ${index + 1}: ${docTitle} (chunk ${chunk.chunkIndex + 1})\n${chunk.content}\n`;
-                })
-                .join('\n---\n') +
-              '\n--- END DOCUMENTS ---\n\n';
-          }
-        }
+        documentContext = await buildChatDocumentContext(message, sessionId);
       } catch (error) {
-        console.error('Error during document search:', error);
-        // Continue without document context if search fails
+        logger.error('Error during document search:', error);
       }
 
-      // Convert chat messages to Ollama format and handle persona system prompts
-      let ollamaMessages = session.messages.map((msg: ChatMessage) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
+      const preparedGeneration =
+        await chatRequestService.prepareGenerationRequest({
+          session,
+          userId,
+          options,
+          persistedMessages: session.messages,
+          content: message,
+          hasRelevantContext: documentContext.hasRelevantContext,
+          enhancedContent: documentContext.enhancedContent,
+        });
 
-      // Inject persona instructions if session has a persona
-      if (session.personaId) {
-        try {
-          const persona = await personaService.getPersonaById(
-            session.personaId,
-            userId
-          );
-          if (persona && persona.parameters.system_prompt) {
-            // Remove any existing system messages and replace with persona's system prompt
-            ollamaMessages = ollamaMessages.filter(
-              msg => msg.role !== 'system'
-            );
-            ollamaMessages.unshift({
-              role: 'system',
-              content: persona.parameters.system_prompt,
-            });
-          }
-        } catch (error) {
-          console.error('Error loading persona:', error);
-          // Continue without persona if loading fails
-        }
-      }
-
-      // Add the new user message with document context if available
-      const userMessageContent = documentContext
-        ? `${documentContext}User question: ${message}`
-        : message;
-
-      ollamaMessages.push({
-        role: 'user',
-        content: userMessageContent,
+      const generationResult = await chatGenerationService.executeNonStreaming({
+        target: preparedGeneration.target,
+        ollamaMessages: preparedGeneration.ollamaMessages,
+        pluginMessages: preparedGeneration.pluginMessages,
+        userId,
+        pluginFallbackPolicy: 'allow',
       });
 
-      let response: OllamaChatResponse;
-      let assistantContent: string;
-
-      // Get user's preferred generation options
-      const userGenerationOptions = preferencesService.getGenerationOptions();
-
-      // Merge user preferences with request options (request options take precedence)
-      const mergedOptions = mergeGenerationOptions(
-        userGenerationOptions,
-        options
-      );
-
-      // Resolve the actual model name (handles persona IDs)
-      const actualModelName = await resolveActualModelName(
-        session.model,
-        userId
-      );
-
-      // Prepare common chat request for Ollama (used in both fallback and direct cases)
-      const chatRequest = {
-        model: actualModelName,
-        messages: ollamaMessages,
-        stream: false,
-        options: mergedOptions as Record<string, unknown>,
-      };
-
-      // Check if there's an active plugin for this model
-      const activePlugin =
-        pluginService.getActivePluginForModel(actualModelName);
-
-      if (activePlugin) {
-        try {
-          // Use plugin for generation
-          const pluginResponse = await pluginService.executePluginRequest(
-            actualModelName,
-            session.messages.concat([userMessage]),
-            options
-          );
-
-          // Convert plugin response to our format
-          assistantContent = pluginResponse.choices[0]?.message?.content || '';
-
-          // Create a mock response in Ollama format
-          response = {
-            model: actualModelName,
-            created_at: new Date().toISOString(),
-            message: {
-              role: 'assistant',
-              content: assistantContent,
-            },
-            done: true,
-          } as OllamaChatResponse;
-        } catch (pluginError) {
-          console.error('Plugin failed, falling back to Ollama:', pluginError);
-
-          // Fallback to Ollama
-          response = await ollamaService.generateChatResponse(chatRequest);
-          assistantContent = response.message.content;
-        }
-      } else {
-        // Use Ollama directly
-        response = await ollamaService.generateChatResponse(chatRequest);
-        assistantContent = response.message.content;
+      if (generationResult.pluginError) {
+        logger.error(
+          'Plugin failed, falling back to Ollama:',
+          generationResult.pluginError
+        );
       }
 
       // Add assistant response to session with statistics
-      const statistics = extractStatistics(response);
+      const statistics = extractStatistics(generationResult.response);
       const assistantMessage = chatService.addMessage(
         sessionId,
         {
           role: 'assistant',
-          content: assistantContent,
+          content: generationResult.assistantContent,
           model: session.model,
           statistics,
         },
@@ -671,55 +532,14 @@ router.post(
         return;
       }
 
-      // Convert chat messages to Ollama format and handle persona system prompts
-      let ollamaMessages = session.messages.map((msg: ChatMessage) => ({
-        role: msg.role,
-        content: msg.content,
-      }));
-
-      // Inject persona instructions if session has a persona
-      if (session.personaId) {
-        try {
-          const persona = await personaService.getPersonaById(
-            session.personaId,
-            userId
-          );
-          if (persona && persona.parameters.system_prompt) {
-            // Remove any existing system messages and replace with persona's system prompt
-            ollamaMessages = ollamaMessages.filter(
-              msg => msg.role !== 'system'
-            );
-            ollamaMessages.unshift({
-              role: 'system',
-              content: persona.parameters.system_prompt,
-            });
-          }
-        } catch (error) {
-          console.error('Error loading persona for streaming:', error);
-          // Continue without persona if loading fails
-        }
-      }
-
-      // Add the new user message
-      ollamaMessages.push({
-        role: 'user',
-        content: message,
-      });
-
-      // Get user's preferred generation options
-      const userGenerationOptions = preferencesService.getGenerationOptions();
-
-      // Merge user preferences with request options (request options take precedence)
-      const mergedOptions = mergeGenerationOptions(
-        userGenerationOptions,
-        options
-      );
-
-      // Resolve the actual model name (handles persona IDs)
-      const actualModelName = await resolveActualModelName(
-        session.model,
-        userId
-      );
+      const { actualModelName, mergedOptions, ollamaMessages } =
+        await chatRequestService.prepareGenerationRequest({
+          session,
+          userId,
+          options,
+          persistedMessages: session.messages,
+          content: message,
+        });
 
       const chatRequest = {
         model: actualModelName,
@@ -809,8 +629,14 @@ router.post(
       }
 
       const userId = req.user?.userId || 'default';
-      const session = chatService.getSession(sessionId, userId);
-      if (!session) {
+      const titleResult = await titleGenerationService.generateTitleForSession({
+        sessionId,
+        requestedModel: model,
+        message,
+        userId,
+      });
+
+      if (!titleResult) {
         res.status(404).json({
           success: false,
           error: 'Session not found',
@@ -818,101 +644,10 @@ router.post(
         return;
       }
 
-      const actualModelName = await resolveTitleGenerationModel(
-        model,
-        session,
-        userId
-      );
-
-      // Generate title using a simple prompt
-      const titlePrompt = `Generate a very short, concise title (3-6 words max) for a chat that starts with this message. Only respond with the title, nothing else. No quotes, no punctuation at the end. Do not use any markdown formatting.
-
-Message: "${message.substring(0, 500)}"
-
-Title:`;
-
-      try {
-        let titleResponse = '';
-        const activePlugin =
-          pluginService.getActivePluginForModel(actualModelName);
-
-        if (activePlugin) {
-          const pluginResponse = await pluginService.executePluginRequest(
-            actualModelName,
-            [
-              {
-                id: `title-${sessionId}`,
-                role: 'user',
-                content: titlePrompt,
-                timestamp: Date.now(),
-              },
-            ],
-            {
-              temperature: 0.3,
-              num_predict: 20,
-            }
-          );
-          titleResponse = pluginResponse.choices[0]?.message?.content || '';
-        } else {
-          const response = await ollamaService.generateResponse({
-            model: actualModelName,
-            prompt: titlePrompt,
-            stream: false,
-            options: {
-              temperature: 0.3,
-              num_predict: 20,
-              stop: ['\n', '.', '!', '?'],
-            },
-          });
-          titleResponse = response.response;
-        }
-
-        // Clean up the generated title
-        let title = titleResponse
-          .trim()
-          .replace(/^["']|["']$/g, '') // Remove quotes
-          .replace(/[.!?]+$/, '') // Remove trailing punctuation
-          .trim();
-
-        // Fallback if title is empty or too long
-        if (!title || title.length > 50) {
-          title = message.substring(0, 30) + (message.length > 30 ? '...' : '');
-        }
-
-        // Update the session with the new title
-        const updatedSession = await chatService.updateSession(
-          sessionId,
-          { title },
-          userId
-        );
-
-        if (!updatedSession) {
-          res.status(500).json({
-            success: false,
-            error: 'Failed to update session title',
-          });
-          return;
-        }
-
-        res.json({
-          success: true,
-          data: { title },
-        });
-      } catch (ollamaError) {
-        console.error('Error generating title with Ollama:', ollamaError);
-        // Fallback to using the first part of the message as title
-        const fallbackTitle =
-          message.substring(0, 30) + (message.length > 30 ? '...' : '');
-        await chatService.updateSession(
-          sessionId,
-          { title: fallbackTitle },
-          userId
-        );
-        res.json({
-          success: true,
-          data: { title: fallbackTitle },
-        });
-      }
+      res.json({
+        success: true,
+        data: { title: titleResult.title },
+      });
     } catch (error: unknown) {
       res.status(500).json({
         success: false,
@@ -967,7 +702,7 @@ router.post(
         data: session,
       });
     } catch (error) {
-      console.error('Switch branch error:', error);
+      logger.error('Switch branch error:', error);
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to switch branch'),
@@ -1001,7 +736,7 @@ router.get(
         data: branches,
       });
     } catch (error) {
-      console.error('Get branches error:', error);
+      logger.error('Get branches error:', error);
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to get branches'),
@@ -1053,7 +788,7 @@ router.post(
         data: newBranch,
       });
     } catch (error) {
-      console.error('Create branch error:', error);
+      logger.error('Create branch error:', error);
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to create branch'),

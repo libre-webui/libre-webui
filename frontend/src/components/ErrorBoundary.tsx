@@ -17,6 +17,10 @@
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
+import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:error-boundary');
 
 interface Props {
   children: ReactNode;
@@ -28,47 +32,48 @@ interface State {
   error?: Error;
 }
 
-// Default error UI component with translations - defined inline to colocate with ErrorBoundary
+// The app-level fallback should feel like Libre WebUI, not the browser's default
+// crash card. Keep this local so ErrorBoundary remains self-contained.
 const DefaultErrorFallback: React.FC<{ error?: Error }> = ({ error }) => {
   const { t } = useTranslation();
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4'>
-      <div className='max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6'>
-        <div className='text-center'>
-          <div className='text-red-500 mb-4'>
-            <svg
-              className='mx-auto h-12 w-12'
-              fill='none'
-              viewBox='0 0 24 24'
-              stroke='currentColor'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z'
-              />
-            </svg>
+    <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex items-center justify-center p-4 text-gray-900 dark:text-dark-800'>
+      <div className='w-full max-w-md rounded-2xl border border-gray-200 dark:border-dark-300 bg-white/95 dark:bg-dark-100/95 shadow-card backdrop-blur-sm'>
+        <div className='p-6 text-center'>
+          <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-100 text-primary-700 dark:bg-primary-900/35 dark:text-primary-300 ring-1 ring-primary-200 dark:ring-primary-800/60'>
+            <AlertTriangle className='h-6 w-6' />
           </div>
-          <h1 className='text-xl font-bold text-gray-900 dark:text-white mb-2'>
+          <h1 className='mb-2 text-xl font-semibold text-gray-950 dark:text-dark-950'>
             {t('errorBoundary.title')}
           </h1>
-          <p className='text-gray-600 dark:text-gray-400 mb-4'>
+          <p className='mb-5 text-sm leading-6 text-gray-600 dark:text-dark-600'>
             {t('errorBoundary.description')}
           </p>
-          <button
-            onClick={() => window.location.reload()}
-            className='bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors'
-          >
-            {t('errorBoundary.tryAgain')}
-          </button>
+          <div className='flex flex-col gap-2 sm:flex-row sm:justify-center'>
+            <button
+              onClick={() => window.location.reload()}
+              className='inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-100'
+            >
+              <RefreshCw className='h-4 w-4' />
+              {t('errorBoundary.tryAgain')}
+            </button>
+            <button
+              onClick={() => {
+                window.location.assign('/');
+              }}
+              className='inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-700 dark:hover:bg-dark-200 dark:focus:ring-offset-dark-100'
+            >
+              <Home className='h-4 w-4' />
+              {t('common.home', 'Home')}
+            </button>
+          </div>
           {process.env.NODE_ENV === 'development' && error && (
-            <details className='mt-4 text-left'>
-              <summary className='cursor-pointer text-sm text-gray-500 dark:text-gray-400'>
+            <details className='mt-5 text-left'>
+              <summary className='cursor-pointer text-sm text-gray-500 transition-colors hover:text-primary-600 dark:text-dark-500 dark:hover:text-primary-300'>
                 {t('errorBoundary.errorDetails')}
               </summary>
-              <pre className='mt-2 text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded overflow-auto'>
+              <pre className='mt-2 max-h-60 overflow-auto rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-dark-300 dark:bg-dark-200 dark:text-dark-700'>
                 {error.stack}
               </pre>
             </details>
@@ -90,7 +95,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    logger.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   render() {

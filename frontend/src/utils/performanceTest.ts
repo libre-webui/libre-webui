@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import { createLogger, isDebugLoggingEnabled } from '@/utils/logger';
+
+const logger = createLogger('performance-test');
+
 declare global {
   interface Window {
     testStreamingPerformance: () => void;
@@ -22,34 +26,36 @@ declare global {
 }
 
 export const setupPerformanceTests = () => {
-  if (typeof window !== 'undefined') {
-    window.testStreamingPerformance = () => {
-      console.log('🧪 Starting streaming performance test...');
-
-      // Simulate rapid message updates like streaming
-      const testMessage =
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ';
-      let content = '';
-      const iterations = 1000;
-
-      console.time('Streaming Performance Test');
-
-      for (let i = 0; i < iterations; i++) {
-        content += testMessage.slice(0, Math.random() * testMessage.length);
-
-        // Simulate what happens during streaming
-        const event = new CustomEvent('streaming-test-update', {
-          detail: { content, iteration: i },
-        });
-        document.dispatchEvent(event);
-      }
-
-      console.timeEnd('Streaming Performance Test');
-      console.log(`✅ Test completed: ${iterations} updates processed`);
-    };
-
-    console.log(
-      '🔧 Performance test available: window.testStreamingPerformance()'
-    );
+  if (typeof window === 'undefined' || !isDebugLoggingEnabled()) {
+    return;
   }
+
+  window.testStreamingPerformance = () => {
+    logger.debug('Starting streaming performance test...');
+
+    // Simulate rapid message updates like streaming
+    const testMessage =
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ';
+    let content = '';
+    const iterations = 1000;
+    const startedAt = performance.now();
+
+    for (let i = 0; i < iterations; i++) {
+      content += testMessage.slice(0, Math.random() * testMessage.length);
+
+      // Simulate what happens during streaming
+      const event = new CustomEvent('streaming-test-update', {
+        detail: { content, iteration: i },
+      });
+      document.dispatchEvent(event);
+    }
+
+    logger.debug(
+      `Streaming performance test completed: ${iterations} updates processed in ${(
+        performance.now() - startedAt
+      ).toFixed(2)}ms`
+    );
+  };
+
+  logger.debug('Performance test available: window.testStreamingPerformance()');
 };

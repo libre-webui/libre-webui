@@ -22,6 +22,9 @@ import { Button } from '@/components/ui';
 import { useAppStore } from '@/store/appStore';
 import { preferencesApi } from '@/utils/api';
 import toast from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:background-upload');
 
 interface BackgroundUploadProps {
   className?: string;
@@ -67,7 +70,7 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
       await uploadBackgroundImage(file);
       toast.success('Background image uploaded successfully');
     } catch (error) {
-      console.error('Failed to upload background:', error);
+      logger.error('Failed to upload background:', error);
       toast.error('Failed to upload background image');
     } finally {
       setUploading(false);
@@ -128,7 +131,7 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
           backgroundSettings: updatedBackgroundSettings,
         });
       } catch (error) {
-        console.error('Failed to update preferences:', error);
+        logger.error('Failed to update preferences:', error);
       }
     }
   };
@@ -153,7 +156,7 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
           backgroundSettings: updatedBackgroundSettings,
         });
       } catch (error) {
-        console.error('Failed to update preferences:', error);
+        logger.error('Failed to update preferences:', error);
       }
     }
   };
@@ -178,7 +181,7 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
           backgroundSettings: updatedBackgroundSettings,
         });
       } catch (error) {
-        console.error('Failed to update preferences:', error);
+        logger.error('Failed to update preferences:', error);
       }
     }
   };

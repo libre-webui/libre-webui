@@ -22,6 +22,9 @@ import {
 } from '../types/index.js';
 import ollamaService from './ollamaService.js';
 import pluginService from './pluginService.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:embedding-service');
 
 const EMBEDDING_PATTERNS = [
   'embed',
@@ -105,7 +108,7 @@ class EmbeddingService {
         });
       }
     } catch (error) {
-      console.warn('Failed to load Ollama embedding models:', error);
+      logger.warn('Failed to load Ollama embedding models:', error);
     }
 
     const plugins = pluginService

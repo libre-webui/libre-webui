@@ -1147,7 +1147,9 @@
     "closePanelEsc": "패널 닫기 (Esc)",
     "copyButton": "복사",
     "open": "열기",
-    "dragEdgeToResize": "가장자리를 끌어 크기 조절"
+    "dragEdgeToResize": "가장자리를 끌어 크기 조절",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "페르소나 가져오기 및 내보내기",

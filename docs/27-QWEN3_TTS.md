@@ -1,9 +1,18 @@
 ---
 sidebar_position: 27
-title: "Qwen3-TTS Integration"
-description: "Run Qwen3-TTS locally for high-quality, multilingual text-to-speech"
+title: 'Qwen3-TTS Integration'
+description: 'Run Qwen3-TTS locally for high-quality, multilingual text-to-speech'
 slug: /QWEN3_TTS
-keywords: [qwen3-tts, tts, text-to-speech, local tts, voice synthesis, voice cloning, alibaba qwen]
+keywords:
+  [
+    qwen3-tts,
+    tts,
+    text-to-speech,
+    local tts,
+    voice synthesis,
+    voice cloning,
+    alibaba qwen,
+  ]
 ---
 
 # Qwen3-TTS Integration
@@ -24,20 +33,20 @@ The included server wraps Qwen3-TTS in an OpenAI-compatible API, allowing Libre 
 
 ## Requirements
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| **Python** | 3.12+ | 3.12 (not 3.14) |
+| Component    | Minimum           | Recommended        |
+| ------------ | ----------------- | ------------------ |
+| **Python**   | 3.12+             | 3.12 (not 3.14)    |
 | **GPU VRAM** | 4GB (0.6B models) | 8GB+ (1.7B models) |
-| **RAM** | 8GB | 16GB+ |
-| **Disk** | 5GB | 10GB |
+| **RAM**      | 8GB               | 16GB+              |
+| **Disk**     | 5GB               | 10GB               |
 
 ### Platform Support
 
-| Platform | Backend | Notes |
-|----------|---------|-------|
-| **NVIDIA GPU** | CUDA | Best performance, bfloat16 support |
-| **Apple Silicon** | MPS | Use 0.6B models for memory efficiency |
-| **CPU** | PyTorch | Slower, use 0.6B models |
+| Platform          | Backend | Notes                                 |
+| ----------------- | ------- | ------------------------------------- |
+| **NVIDIA GPU**    | CUDA    | Best performance, bfloat16 support    |
+| **Apple Silicon** | MPS     | Use 0.6B models for memory efficiency |
+| **CPU**           | PyTorch | Slower, use 0.6B models               |
 
 :::tip Apple Silicon Users
 Use the `customvoice-0.6b` model variant on Mac to avoid memory pressure. The 1.7B models may cause system instability on machines with 16GB unified memory.
@@ -89,42 +98,42 @@ curl http://localhost:8100/v1/audio/speech \
 
 ## Available Models
 
-| Model | Size | Use Case |
-|-------|------|----------|
+| Model              | Size   | Use Case                                  |
+| ------------------ | ------ | ----------------------------------------- |
 | `customvoice-1.7b` | ~3.5GB | Pre-built voices with instruction control |
-| `customvoice-0.6b` | ~1.5GB | Lightweight variant for limited VRAM |
-| `voicedesign-1.7b` | ~3.5GB | Create voices from text descriptions |
-| `base-1.7b` | ~3.5GB | Voice cloning from 3-second samples |
-| `base-0.6b` | ~1.5GB | Lightweight voice cloning |
+| `customvoice-0.6b` | ~1.5GB | Lightweight variant for limited VRAM      |
+| `voicedesign-1.7b` | ~3.5GB | Create voices from text descriptions      |
+| `base-1.7b`        | ~3.5GB | Voice cloning from 3-second samples       |
+| `base-0.6b`        | ~1.5GB | Lightweight voice cloning                 |
 
 ## Voices
 
 ### Pre-Built Voices (CustomVoice Models)
 
-| Voice | Language | Description |
-|-------|----------|-------------|
-| **Ryan** | English | Male, clear and natural |
-| **Aiden** | English | Male, warm tone |
-| **Vivian** | Chinese | Female, professional |
-| **Serena** | Chinese | Female, friendly |
-| **Uncle_Fu** | Chinese | Male, mature |
-| **Dylan** | Chinese | Male, Beijing dialect |
-| **Eric** | Chinese | Male, Sichuan dialect |
-| **Ono_Anna** | Japanese | Female |
-| **Sohee** | Korean | Female |
+| Voice        | Language | Description             |
+| ------------ | -------- | ----------------------- |
+| **Ryan**     | English  | Male, clear and natural |
+| **Aiden**    | English  | Male, warm tone         |
+| **Vivian**   | Chinese  | Female, professional    |
+| **Serena**   | Chinese  | Female, friendly        |
+| **Uncle_Fu** | Chinese  | Male, mature            |
+| **Dylan**    | Chinese  | Male, Beijing dialect   |
+| **Eric**     | Chinese  | Male, Sichuan dialect   |
+| **Ono_Anna** | Japanese | Female                  |
+| **Sohee**    | Korean   | Female                  |
 
 ### OpenAI Voice Aliases
 
 For compatibility with OpenAI TTS clients, the server maps OpenAI voice names:
 
-| OpenAI Voice | Maps To |
-|--------------|---------|
-| `alloy` | Ryan |
-| `echo` | Aiden |
-| `fable` | Vivian |
-| `onyx` | Uncle_Fu |
-| `nova` | Serena |
-| `shimmer` | Ono_Anna |
+| OpenAI Voice | Maps To  |
+| ------------ | -------- |
+| `alloy`      | Ryan     |
+| `echo`       | Aiden    |
+| `fable`      | Vivian   |
+| `onyx`       | Uncle_Fu |
+| `nova`       | Serena   |
+| `shimmer`    | Ono_Anna |
 
 ## API Reference
 
@@ -143,14 +152,14 @@ For compatibility with OpenAI TTS clients, the server maps OpenAI voice names:
 }
 ```
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `model` | string | `qwen3-tts` | Model identifier |
-| `input` | string | required | Text to synthesize (max 10,000 chars) |
-| `voice` | string | `ryan` | Voice name (see table above) |
-| `response_format` | string | `wav` | Audio format (only `wav` supported) |
-| `instruct` | string | `""` | Emotion/prosody instruction |
-| `language` | string | auto-detect | Override language detection |
+| Parameter         | Type   | Default     | Description                           |
+| ----------------- | ------ | ----------- | ------------------------------------- |
+| `model`           | string | `qwen3-tts` | Model identifier                      |
+| `input`           | string | required    | Text to synthesize (max 10,000 chars) |
+| `voice`           | string | `ryan`      | Voice name (see table above)          |
+| `response_format` | string | `wav`       | Audio format (only `wav` supported)   |
+| `instruct`        | string | `""`        | Emotion/prosody instruction           |
+| `language`        | string | auto-detect | Override language detection           |
 
 **Response:** Audio file (`audio/wav`)
 
@@ -187,11 +196,11 @@ curl -X POST http://localhost:8100/v1/audio/voice-clone \
   --output cloned.wav
 ```
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `input` | string | Text to synthesize |
-| `reference_audio` | file | 3+ second audio sample |
-| `reference_text` | string | Transcript of reference audio |
+| Parameter         | Type   | Description                   |
+| ----------------- | ------ | ----------------------------- |
+| `input`           | string | Text to synthesize            |
+| `reference_audio` | file   | 3+ second audio sample        |
+| `reference_text`  | string | Transcript of reference audio |
 
 :::note
 Requires the `base-1.7b` or `base-0.6b` model to be loaded.
@@ -216,7 +225,7 @@ Requires the `base-1.7b` or `base-0.6b` model to be loaded.
 **Endpoint:** `GET /health`
 
 ```json
-{"status": "healthy", "model_loaded": true}
+{ "status": "healthy", "model_loaded": true }
 ```
 
 ## Server Configuration
@@ -225,10 +234,10 @@ Requires the `base-1.7b` or `base-0.6b` model to be loaded.
 python server.py [OPTIONS]
 ```
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--host` | `0.0.0.0` | Host to bind to |
-| `--port` | `8100` | Port to bind to |
+| Option    | Default            | Description           |
+| --------- | ------------------ | --------------------- |
+| `--host`  | `0.0.0.0`          | Host to bind to       |
+| `--port`  | `8100`             | Port to bind to       |
 | `--model` | `customvoice-1.7b` | Model variant to load |
 
 ### Network Access
@@ -373,7 +382,17 @@ The included plugin (`plugins/qwen-tts.json`):
         "qwen3-tts-clone"
       ],
       "config": {
-        "voices": ["Ryan", "Aiden", "Vivian", "Serena", "Uncle_Fu", "Dylan", "Eric", "Ono_Anna", "Sohee"],
+        "voices": [
+          "Ryan",
+          "Aiden",
+          "Vivian",
+          "Serena",
+          "Uncle_Fu",
+          "Dylan",
+          "Eric",
+          "Ono_Anna",
+          "Sohee"
+        ],
         "default_voice": "Ryan",
         "formats": ["wav"],
         "default_format": "wav",

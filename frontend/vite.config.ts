@@ -1,6 +1,6 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
 import dotenv from 'dotenv';
 import { readFileSync, existsSync } from 'fs';
 import { execSync } from 'child_process';
@@ -25,12 +25,12 @@ const getVersion = () => {
     if (existsSync(gitDir)) {
       const branch = execSync('git rev-parse --abbrev-ref HEAD', {
         cwd: path.resolve(__dirname, '..'),
-        encoding: 'utf-8'
+        encoding: 'utf-8',
       }).trim();
       if (branch === 'dev') {
         const commitHash = execSync('git rev-parse --short HEAD', {
           cwd: path.resolve(__dirname, '..'),
-          encoding: 'utf-8'
+          encoding: 'utf-8',
         }).trim();
         return `${packageJson.version}-dev (${commitHash})`;
       }
@@ -64,7 +64,7 @@ export default defineConfig({
   },
   server: {
     host: false, // Allow --host flag to override
-    port: 5173,  // Default port, can be overridden by --port flag
+    port: 5173, // Default port, can be overridden by --port flag
     proxy: {
       '/api': {
         target: API_BASE_URL,
@@ -83,12 +83,53 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/react-dom')) return 'react-vendor'
-          if (id.includes('node_modules/react/')) return 'react-vendor'
-          if (id.includes('node_modules/react-router-dom')) return 'router-vendor'
-          if (id.includes('node_modules/lucide-react') || id.includes('node_modules/react-hot-toast')) return 'ui-vendor'
-          if (id.includes('node_modules/react-markdown') || id.includes('node_modules/react-syntax-highlighter')) return 'markdown-vendor'
-          if (id.includes('node_modules/axios') || id.includes('node_modules/zustand') || id.includes('node_modules/clsx') || id.includes('node_modules/tailwind-merge')) return 'utils-vendor'
+          if (id.includes('node_modules/react-dom')) return 'react-vendor';
+          if (id.includes('node_modules/react/')) return 'react-vendor';
+          if (id.includes('node_modules/react-router-dom'))
+            return 'router-vendor';
+          if (
+            id.includes('node_modules/lucide-react') ||
+            id.includes('node_modules/react-hot-toast')
+          )
+            return 'ui-vendor';
+          if (
+            id.includes('node_modules/react-syntax-highlighter') ||
+            id.includes('node_modules/refractor') ||
+            id.includes('node_modules/prismjs')
+          )
+            return 'syntax-highlight';
+          if (
+            id.includes('node_modules/remark-math') ||
+            id.includes('node_modules/rehype-katex') ||
+            id.includes('node_modules/katex') ||
+            id.includes('node_modules/micromark-extension-math') ||
+            id.includes('node_modules/mdast-util-math')
+          )
+            return 'markdown-math';
+          if (
+            id.includes('node_modules/react-markdown') ||
+            id.includes('node_modules/remark-') ||
+            id.includes('node_modules/rehype-') ||
+            id.includes('node_modules/unified') ||
+            id.includes('node_modules/micromark') ||
+            id.includes('node_modules/mdast-util-') ||
+            id.includes('node_modules/hast-util-') ||
+            id.includes('node_modules/unist-util-') ||
+            id.includes('node_modules/vfile') ||
+            id.includes('node_modules/property-information') ||
+            id.includes('node_modules/space-separated-tokens') ||
+            id.includes('node_modules/comma-separated-tokens') ||
+            id.includes('node_modules/html-url-attributes') ||
+            id.includes('node_modules/devlop')
+          )
+            return 'markdown-core';
+          if (
+            id.includes('node_modules/axios') ||
+            id.includes('node_modules/zustand') ||
+            id.includes('node_modules/clsx') ||
+            id.includes('node_modules/tailwind-merge')
+          )
+            return 'utils-vendor';
         },
         chunkFileNames: 'js/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash][extname]',
@@ -100,8 +141,8 @@ export default defineConfig({
   // Dependency optimization
   optimizeDeps: {
     include: [
-      'react', 
-      'react-dom', 
+      'react',
+      'react-dom',
       'react-router-dom',
       'zustand',
       'axios',
@@ -109,7 +150,6 @@ export default defineConfig({
       'lucide-react',
       'clsx',
       'tailwind-merge',
-      'react-syntax-highlighter' // Include this since we use it in OptimizedSyntaxHighlighter
     ],
   },
-})
+});

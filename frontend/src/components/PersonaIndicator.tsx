@@ -28,6 +28,10 @@ import {
   Zap,
 } from 'lucide-react';
 import { cn } from '@/utils';
+import {
+  getPersonaAvatarSrc,
+  setPersonaAvatarFallback,
+} from '@/utils/personaAvatar';
 
 interface PersonaIndicatorProps {
   persona: Persona;
@@ -59,11 +63,10 @@ export const PersonaIndicator: React.FC<PersonaIndicatorProps> = ({
     persona.memory_settings?.enabled || persona.mutation_settings?.enabled
   );
 
-  const getAvatarSrc = () => {
-    if (persona.avatar) {
-      return persona.avatar;
-    }
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(persona.name)}&background=6366f1&color=fff&size=64`;
+  const getAvatarSrc = () => getPersonaAvatarSrc(persona, 64);
+
+  const handleAvatarError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    setPersonaAvatarFallback(event.currentTarget, persona.name, 64);
   };
 
   return (
@@ -84,6 +87,7 @@ export const PersonaIndicator: React.FC<PersonaIndicatorProps> = ({
           src={getAvatarSrc()}
           alt={persona.name}
           className='w-5 h-5 rounded-full object-cover'
+          onError={handleAvatarError}
         />
         <span className='text-sm font-medium max-w-[120px] truncate'>
           {persona.name}
@@ -160,6 +164,7 @@ export const PersonaIndicator: React.FC<PersonaIndicatorProps> = ({
                     src={getAvatarSrc()}
                     alt={persona.name}
                     className='w-12 h-12 rounded-lg object-cover ring-3 ring-white dark:ring-dark-100 shadow-md'
+                    onError={handleAvatarError}
                   />
                 </div>
 

@@ -21,6 +21,9 @@ import { Document } from '../storage.js';
 import storageService from '../storage.js';
 import embeddingService from './embeddingService.js';
 import preferencesService from './preferencesService.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('documents');
 
 // Utility functions for vector operations
 const cosineSimilarity = (a: number[], b: number[]): number => {
@@ -47,9 +50,9 @@ const getPdfjsLib = async () => {
       // Use the legacy build for Node.js compatibility
       const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
       pdfjsLib = pdfjs;
-      console.log('Successfully loaded pdfjs-dist legacy build');
+      logger.debug('Successfully loaded pdfjs-dist legacy build');
     } catch (error) {
-      console.error('Failed to load pdfjs-dist legacy:', error);
+      logger.error('Failed to load pdfjs-dist legacy:', error);
       throw new Error('PDF parsing is not available');
     }
   }
@@ -69,9 +72,9 @@ class DocumentService {
     try {
       const documentsArray = storageService.getAllDocuments();
       this.documents = new Map(documentsArray.map(doc => [doc.id, doc]));
-      console.log(`Loaded ${documentsArray.length} documents from storage`);
+      logger.debug(`Loaded ${documentsArray.length} documents from storage`);
     } catch (error) {
-      console.error('Failed to load documents:', error);
+      logger.error('Failed to load documents:', error);
     }
   }
 
@@ -85,11 +88,11 @@ class DocumentService {
           this.chunks.set(doc.id, chunks);
         }
       }
-      console.log(
+      logger.debug(
         `Loaded chunks for ${this.chunks.size} documents from storage`
       );
     } catch (error) {
-      console.error('Failed to load document chunks:', error);
+      logger.error('Failed to load document chunks:', error);
     }
   }
 
@@ -136,7 +139,7 @@ class DocumentService {
           content = textContent.trim();
           fileType = 'pdf';
         } catch (pdfError) {
-          console.error('PDF parsing error:', pdfError);
+          logger.error('PDF parsing error:', pdfError);
           throw new Error(
             `Failed to parse PDF: ${pdfError instanceof Error ? pdfError.message : 'Unknown PDF error'}`
           );
@@ -172,12 +175,12 @@ class DocumentService {
       storageService.saveDocument(document);
       storageService.saveDocumentChunks(documentId, chunksWithEmbeddings);
 
-      console.log(
+      logger.debug(
         `Processed ${fileType.toUpperCase()} document: ${fileName} (${chunksWithEmbeddings.length} chunks)`
       );
       return document;
     } catch (error) {
-      console.error('Error processing document:', error);
+      logger.error('Error processing document:', error);
       throw new Error(
         `Failed to process document: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -281,7 +284,7 @@ class DocumentService {
 
       return response.embeddings[0] || null;
     } catch (error) {
-      console.error('Failed to generate embedding:', error);
+      logger.error('Failed to generate embedding:', error);
       return null;
     }
   }
@@ -294,7 +297,7 @@ class DocumentService {
       return chunks;
     }
 
-    console.log(`Generating embeddings for ${chunks.length} chunks...`);
+    logger.debug(`Generating embeddings for ${chunks.length} chunks...`);
     const chunksWithEmbeddings: DocumentChunk[] = [];
 
     for (const chunk of chunks) {
@@ -305,7 +308,7 @@ class DocumentService {
       });
     }
 
-    console.log(
+    logger.debug(
       `Generated embeddings for ${chunksWithEmbeddings.filter(c => c.embedding).length} chunks`
     );
     return chunksWithEmbeddings;
@@ -315,11 +318,11 @@ class DocumentService {
   async regenerateAllEmbeddings(): Promise<void> {
     const preferences = preferencesService.getPreferences();
     if (!preferences.embeddingSettings.enabled) {
-      console.log('Embeddings are disabled, skipping regeneration');
+      logger.debug('Embeddings are disabled, skipping regeneration');
       return;
     }
 
-    console.log('Starting to regenerate embeddings for all documents...');
+    logger.debug('Starting to regenerate embeddings for all documents...');
     let processedChunks = 0;
     let totalChunks = 0;
 
@@ -332,7 +335,7 @@ class DocumentService {
     }
 
     this.saveChunks();
-    console.log(
+    logger.debug(
       `Regenerated embeddings for ${processedChunks}/${totalChunks} chunks`
     );
   }
@@ -415,7 +418,7 @@ class DocumentService {
       // Generate embedding for the query
       const queryEmbedding = await this.generateEmbeddingForText(query);
       if (!queryEmbedding) {
-        console.warn(
+        logger.warn(
           'Failed to generate query embedding, falling back to keyword search'
         );
         return this.keywordSearchDocuments(query, sessionId, limit);
@@ -456,7 +459,7 @@ class DocumentService {
           filename: result.document.filename, // Add filename for context
         })) as DocumentChunk[];
     } catch (error) {
-      console.error(
+      logger.error(
         'Semantic search failed, falling back to keyword search:',
         error
       );
@@ -539,9 +542,9 @@ class DocumentService {
       storageService.saveDocument(document);
 
       // If there are any chunks with this document, they'll be handled separately
-      console.log(`Restored document: ${document.filename} (${document.id})`);
+      logger.debug(`Restored document: ${document.filename} (${document.id})`);
     } catch (error) {
-      console.error('Error restoring document:', error);
+      logger.error('Error restoring document:', error);
       throw new Error(
         `Failed to restore document: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

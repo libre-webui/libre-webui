@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Закрити панель (Esc)",
     "copyButton": "Копіювати",
     "open": "Відкрити",
-    "dragEdgeToResize": "Перетягніть край для зміни розміру"
+    "dragEdgeToResize": "Перетягніть край для зміни розміру",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Імпорт та експорт персон",

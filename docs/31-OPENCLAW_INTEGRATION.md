@@ -1,7 +1,7 @@
 ---
 sidebar_position: 31
-title: "OpenClaw Integration"
-description: "Connect Libre WebUI to OpenClaw for agent-powered AI chat with tools, memory, and session persistence"
+title: 'OpenClaw Integration'
+description: 'Connect Libre WebUI to OpenClaw for agent-powered AI chat with tools, memory, and session persistence'
 slug: /OPENCLAW_INTEGRATION
 keywords: [openclaw, agent, integration, tools, websocket, session, plugin]
 ---
@@ -170,25 +170,25 @@ Models are auto-discovered from the gateway's `/v1/models` endpoint when the plu
 
 ## Available Models
 
-| Model | Description | Best For |
-|-------|-------------|----------|
-| `anthropic/claude-opus-4-6` | Opus-class (deep reasoning) | Complex analysis, code architecture |
-| `anthropic/claude-sonnet-4-20250514` | Sonnet-class (balanced) | General use, coding, writing |
-| `anthropic/claude-haiku-3-5-20241022` | Haiku-class (fast) | Quick tasks, summaries |
+| Model                                 | Description                 | Best For                            |
+| ------------------------------------- | --------------------------- | ----------------------------------- |
+| `anthropic/claude-opus-4-6`           | Opus-class (deep reasoning) | Complex analysis, code architecture |
+| `anthropic/claude-sonnet-4-20250514`  | Sonnet-class (balanced)     | General use, coding, writing        |
+| `anthropic/claude-haiku-3-5-20241022` | Haiku-class (fast)          | Quick tasks, summaries              |
 
 ## Plugin Variables
 
 All variables are configurable per-user via **Settings → Plugins → OpenClaw Agent → Configure** (the gear icon). Values are stored encrypted in SQLite and cached with a 5-second TTL.
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `session_mode` | boolean | `true` | Enable persistent agent session with full tool access |
-| `session_key` | string | `"main"` | Agent session identifier (e.g. `main`, `work`, `research`) |
-| `endpoint` | string | `http://127.0.0.1:18789/v1/chat/completions` | Gateway endpoint URL override |
-| `temperature` | number | `0.7` | Sampling temperature (0–2) |
-| `stream` | boolean | `true` | Enable SSE streaming |
-| `system_prompt_prefix` | string | `""` | System message prepended to every conversation |
-| `user_name` | string | `""` | User's name, passed to the agent for personalization |
+| Variable               | Type    | Default                                      | Description                                                |
+| ---------------------- | ------- | -------------------------------------------- | ---------------------------------------------------------- |
+| `session_mode`         | boolean | `true`                                       | Enable persistent agent session with full tool access      |
+| `session_key`          | string  | `"main"`                                     | Agent session identifier (e.g. `main`, `work`, `research`) |
+| `endpoint`             | string  | `http://127.0.0.1:18789/v1/chat/completions` | Gateway endpoint URL override                              |
+| `temperature`          | number  | `0.7`                                        | Sampling temperature (0–2)                                 |
+| `stream`               | boolean | `true`                                       | Enable SSE streaming                                       |
+| `system_prompt_prefix` | string  | `""`                                         | System message prepended to every conversation             |
+| `user_name`            | string  | `""`                                         | User's name, passed to the agent for personalization       |
 
 ## WebSocket Session Protocol
 
@@ -245,12 +245,12 @@ The gateway sends a `connect.challenge` event with a nonce on WebSocket open. Th
 
 ### Available Methods
 
-| Method | Description | Parameters |
-|--------|-------------|------------|
-| `connect` | Authenticate and establish session | `auth`, `client`, `scopes`, `role` |
-| `chat.send` | Send a message to the agent | `sessionKey`, `message`, `deliver`, `idempotencyKey` |
-| `chat.abort` | Abort the current agent run | `sessionKey`, `runId` (optional) |
-| `chat.history` | Fetch conversation history | `sessionKey`, `limit` |
+| Method         | Description                        | Parameters                                           |
+| -------------- | ---------------------------------- | ---------------------------------------------------- |
+| `connect`      | Authenticate and establish session | `auth`, `client`, `scopes`, `role`                   |
+| `chat.send`    | Send a message to the agent        | `sessionKey`, `message`, `deliver`, `idempotencyKey` |
+| `chat.abort`   | Abort the current agent run        | `sessionKey`, `runId` (optional)                     |
+| `chat.history` | Fetch conversation history         | `sessionKey`, `limit`                                |
 
 ### Reconnection
 
@@ -263,11 +263,11 @@ The service automatically reconnects on disconnect with exponential backoff:
 
 ### Event Types
 
-| Event | Description |
-|-------|-------------|
-| `connect.challenge` | Gateway authentication challenge |
-| `chat` | Chat delta/final/aborted/error states |
-| `agent` | Agent runtime events (tool streaming) |
+| Event               | Description                           |
+| ------------------- | ------------------------------------- |
+| `connect.challenge` | Gateway authentication challenge      |
+| `chat`              | Chat delta/final/aborted/error states |
+| `agent`             | Agent runtime events (tool streaming) |
 
 ## Tool Streaming
 
@@ -275,11 +275,11 @@ When the agent invokes tools (exec, web search, file ops, browser, etc.), real-t
 
 ```typescript
 export interface ToolStreamEvent {
-  toolCallId: string;  // Unique ID for this tool invocation
-  name: string;        // Tool name (e.g. "exec", "web_search", "Read")
-  phase: string;       // "start" | "update" | "result"
-  args?: unknown;      // Tool input arguments (on start)
-  result?: unknown;    // Final result (on result phase)
+  toolCallId: string; // Unique ID for this tool invocation
+  name: string; // Tool name (e.g. "exec", "web_search", "Read")
+  phase: string; // "start" | "update" | "result"
+  args?: unknown; // Tool input arguments (on start)
+  result?: unknown; // Final result (on result phase)
   partialResult?: unknown; // Incremental output (on update phase)
 }
 ```
@@ -312,10 +312,10 @@ Chat responses stream as `ChatDeltaEvent` objects:
 
 ```typescript
 export interface ChatDeltaEvent {
-  runId: string;         // Current run identifier
-  sessionKey: string;    // Session the response belongs to
-  state: "delta" | "final" | "aborted" | "error";
-  message?: unknown;     // Message content (text blocks)
+  runId: string; // Current run identifier
+  sessionKey: string; // Session the response belongs to
+  state: 'delta' | 'final' | 'aborted' | 'error';
+  message?: unknown; // Message content (text blocks)
   errorMessage?: string; // Error details (on error state)
 }
 ```
@@ -359,6 +359,7 @@ API keys are stored in two places (checked in order):
 2. **Environment** — `OPENCLAW_API_KEY` env var (fallback)
 
 Manage via:
+
 - `POST /api/plugins/:id/credentials` — Set API key
 - `DELETE /api/plugins/:id/credentials` — Remove API key
 - `GET /api/plugins/:id/credentials/check` — Check if key exists (no reveal)
@@ -372,6 +373,7 @@ Plugin variables are stored in the `plugin_variables` table with per-user scopin
 - **SSRF protection** — endpoint overrides are validated to allow only HTTPS, localhost, or private network IPs
 
 Manage via:
+
 - `GET /api/plugins/:id/variables` — Get values (sensitive values masked)
 - `PUT /api/plugins/:id/variables` — Set values (validated against schema)
 - `DELETE /api/plugins/:id/variables` — Reset to defaults
@@ -391,25 +393,30 @@ When the plugin is activated, `pluginService.discoverModels()` calls `GET {baseU
 ## Troubleshooting
 
 **Plugin not appearing in model list:**
+
 - Verify the gateway is running: `openclaw gateway status`
 - Check connectivity: `curl http://127.0.0.1:18789/v1/models`
 - Ensure `plugins/openclaw-agent.json` exists and is valid JSON
 
 **Authentication errors:**
+
 - Check that `OPENCLAW_API_KEY` is set in `backend/.env`, or configured in Settings
 - Verify the key is valid: `curl -H "Authorization: Bearer $OPENCLAW_API_KEY" http://127.0.0.1:18789/v1/models`
 
 **No tool access / stateless responses:**
+
 - Verify `session_mode` is `true` in plugin variables (Settings → Plugins → OpenClaw Agent → Configure)
 - Check the `session_key` value (default: `main`)
 - Look at gateway logs for session routing
 
 **WebSocket not connecting:**
+
 - Check gateway logs for WebSocket upgrade errors
 - The service derives the WS URL from the HTTP endpoint (`http:` → `ws:`, strips `/v1/chat/completions`)
 - Reconnection is automatic with backoff; check backend logs for `[OpenClawSession]` messages
 
 **Streaming not working:**
+
 - Ensure `stream` variable is `true` in plugin settings
 - The backend uses `fetch()` with `ReadableStream` for SSE parsing
 - Check for proxy/reverse-proxy buffering issues

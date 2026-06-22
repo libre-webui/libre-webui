@@ -33,6 +33,9 @@ import {
   CardTitle,
 } from '@/components/ui';
 import { Plus, Edit, Trash2, User as UserIcon, Shield } from 'lucide-react';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:user-manager');
 
 export const UserManager: React.FC = () => {
   const { t } = useTranslation();
@@ -73,7 +76,7 @@ export const UserManager: React.FC = () => {
         toast.success(t('userManager.form.createSuccess'));
       }
     } catch (error: unknown) {
-      console.error('Error creating user:', error);
+      logger.error('Error creating user:', error);
       let errorMessage = t('userManager.form.createFailed');
 
       if (error instanceof Error && 'response' in error) {
@@ -113,7 +116,7 @@ export const UserManager: React.FC = () => {
         toast.success(t('userManager.form.updateSuccess'));
       }
     } catch (error: unknown) {
-      console.error('Error updating user:', error);
+      logger.error('Error updating user:', error);
       let errorMessage = t('userManager.form.updateFailed');
 
       if (error instanceof Error && 'response' in error) {
@@ -141,7 +144,7 @@ export const UserManager: React.FC = () => {
         toast.success(t('userManager.deleteSuccess'));
       }
     } catch (error: unknown) {
-      console.error('Error deleting user:', error);
+      logger.error('Error deleting user:', error);
       let errorMessage = t('userManager.deleteFailed');
 
       if (error instanceof Error && 'response' in error) {

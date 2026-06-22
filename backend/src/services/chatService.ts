@@ -27,6 +27,9 @@ import preferencesService from './preferencesService.js';
 import { personaService } from './personaService.js';
 import { memoryService } from './memoryService.js';
 import { mutationEngineService } from './mutationEngineService.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('chat-service');
 
 class ChatService {
   private sessions: Map<string, ChatSession> = new Map();
@@ -41,9 +44,9 @@ class ChatService {
       this.sessions = new Map(
         sessionsArray.map(session => [session.id, session])
       );
-      console.log(`Loaded ${sessionsArray.length} sessions from storage`);
+      logger.debug(`Loaded ${sessionsArray.length} sessions from storage`);
     } catch (error) {
-      console.error('Failed to load sessions:', error);
+      logger.error('Failed to load sessions:', error);
     }
   }
 
@@ -90,7 +93,7 @@ class ChatService {
           systemMessage = persona.parameters.system_prompt.trim();
         }
       } catch (error) {
-        console.error(`Error getting persona system prompt:`, error);
+        logger.error(`Error getting persona system prompt:`, error);
       }
     }
 
@@ -258,7 +261,7 @@ class ChatService {
           message.content,
           session
         ).catch((error: unknown) =>
-          console.error('Advanced persona processing error:', error)
+          logger.error('Advanced persona processing error:', error)
         );
       } else if (message.role === 'assistant') {
         this.processAdvancedPersonaResponse(
@@ -266,19 +269,9 @@ class ChatService {
           userId,
           message.content
         ).catch((error: unknown) =>
-          console.error('Advanced persona response processing error:', error)
+          logger.error('Advanced persona response processing error:', error)
         );
       }
-    }
-
-    // Auto-generate title from first user message
-    const userMessages = session.messages.filter(msg => msg.role === 'user');
-    if (
-      userMessages.length === 1 &&
-      message.role === 'user' &&
-      session.title === 'New Chat'
-    ) {
-      session.title = this.generateTitle(message.content);
     }
 
     this.sessions.set(sessionId, session);
@@ -295,7 +288,7 @@ class ChatService {
     // First verify the session belongs to the user
     const session = this.getSession(sessionId, userId);
     if (!session) {
-      console.error('Session not found or access denied:', sessionId, userId);
+      logger.error('Session not found or access denied:', sessionId, userId);
       return undefined;
     }
 
@@ -304,7 +297,7 @@ class ChatService {
       msg => msg.id === messageId
     );
     if (messageIndex === -1) {
-      console.error('Message not found:', messageId);
+      logger.error('Message not found:', messageId);
       return undefined;
     }
 
@@ -352,18 +345,6 @@ class ChatService {
     });
   }
 
-  private generateTitle(content: string): string {
-    // Generate a concise title from the first message
-    const words = content.trim().split(/\s+/).slice(0, 6);
-    let title = words.join(' ');
-
-    if (title.length > 50) {
-      title = title.substring(0, 47) + '...';
-    }
-
-    return title || 'New Chat';
-  }
-
   getMessagesForContext(sessionId: string, maxMessages = 10): ChatMessage[] {
     const session = this.sessions.get(sessionId);
     if (!session) return [];
@@ -405,7 +386,7 @@ class ChatService {
         this.updateSystemMessageToDefault(session, userId);
       }
     } catch (error) {
-      console.error(
+      logger.error(
         `updateSystemMessageForPersona: Error getting persona %s:`,
         personaId,
         error
@@ -521,7 +502,7 @@ class ChatService {
         );
       }
     } catch (error) {
-      console.error(`Error processing persona interaction:`, error);
+      logger.error(`Error processing persona interaction:`, error);
     }
   }
 
@@ -627,7 +608,7 @@ Guidelines:
       this.sessions.set(session.id, session);
       storageService.saveSession(session, userId);
     } catch (error) {
-      console.error(`Error updating system message with memories:`, error);
+      logger.error(`Error updating system message with memories:`, error);
     }
   }
 
@@ -669,7 +650,7 @@ Guidelines:
         0.6 // slightly lower importance than user messages
       );
     } catch (error) {
-      console.error(`Error processing persona response:`, error);
+      logger.error(`Error processing persona response:`, error);
     }
   }
 

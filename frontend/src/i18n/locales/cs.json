@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Zavřít panel (Esc)",
     "copyButton": "Kopírovat",
     "open": "Otevřít",
-    "dragEdgeToResize": "Přetáhněte okraj pro změnu velikosti"
+    "dragEdgeToResize": "Přetáhněte okraj pro změnu velikosti",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Import a export person",

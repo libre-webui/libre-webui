@@ -1147,7 +1147,9 @@
     "closePanelEsc": "Close panel (Esc)",
     "copyButton": "Copy",
     "open": "Open",
-    "dragEdgeToResize": "Drag edge to resize"
+    "dragEdgeToResize": "Drag edge to resize",
+    "previewUnavailable": "Preview unavailable",
+    "previewUnavailableDescription": "This artifact does not contain renderable preview content. Switch to code view to inspect the source."
   },
   "personaImportExport": {
     "title": "Import & Export Personas",

@@ -16,6 +16,9 @@
  */
 
 import { getDatabaseSafe } from '../db.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:system-settings-service');
 
 const ALLOW_USER_MODEL_PULL_KEY = 'allow_user_model_pull';
 const DEFAULT_ALLOW_USER_MODEL_PULL = true;
@@ -42,7 +45,7 @@ export class SystemSettingsService {
 
       return row.value === 'true';
     } catch (error) {
-      console.error(
+      logger.error(
         'Failed to read system setting allow_user_model_pull:',
         error
       );
@@ -71,7 +74,7 @@ export class SystemSettingsService {
         `
       ).run(ALLOW_USER_MODEL_PULL_KEY, allow ? 'true' : 'false', now);
     } catch (error) {
-      console.error(
+      logger.error(
         'Failed to update system setting allow_user_model_pull:',
         error
       );

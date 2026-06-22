@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
-title: "Copyright & License"
-description: "Copyright header management, license information, and legal guidelines for Libre WebUI"
+title: 'Copyright & License'
+description: 'Copyright header management, license information, and legal guidelines for Libre WebUI'
 slug: /COPYRIGHT
 keywords: [copyright, license, legal, apache, headers, attribution]
 image: /img/social/07.png
@@ -45,6 +45,7 @@ npm run format
 ```
 
 This command:
+
 1. Runs the header addition script
 2. Formats all files with Prettier
 
@@ -59,6 +60,7 @@ npm run add-headers
 ### Smart Header Detection
 
 The script will:
+
 - ✅ Add headers to files that don't have them
 - ✅ Skip files that already have copyright headers
 - ✅ Ignore configuration files, build outputs, and dependencies
@@ -67,6 +69,7 @@ The script will:
 ### Ignored Files/Directories
 
 The following are automatically ignored:
+
 - `node_modules/`
 - `dist/`
 - `build/`

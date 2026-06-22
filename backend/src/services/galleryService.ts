@@ -19,6 +19,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabaseSafe } from '../db.js';
 import { GeneratedImage } from '../types/index.js';
 import { encryptionService } from './encryptionService.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:gallery-service');
 
 interface SaveImageParams {
   prompt: string;
@@ -45,7 +48,7 @@ class GalleryService {
   saveImage(userId: string, params: SaveImageParams): GeneratedImage | null {
     const db = getDatabaseSafe();
     if (!db) {
-      console.error('Database not available for saving image');
+      logger.error('Database not available for saving image');
       return null;
     }
 
@@ -84,7 +87,7 @@ class GalleryService {
         createdAt,
       };
     } catch (error) {
-      console.error('Error saving image to gallery:', error);
+      logger.error('Error saving image to gallery:', error);
       return null;
     }
   }
@@ -147,7 +150,7 @@ class GalleryService {
         total: countResult.total,
       };
     } catch (error) {
-      console.error('Error getting images from gallery:', error);
+      logger.error('Error getting images from gallery:', error);
       return { images: [], total: 0 };
     }
   }
@@ -198,7 +201,7 @@ class GalleryService {
         createdAt: row.created_at,
       };
     } catch (error) {
-      console.error('Error getting image from gallery:', error);
+      logger.error('Error getting image from gallery:', error);
       return null;
     }
   }
@@ -220,7 +223,7 @@ class GalleryService {
 
       return result.changes > 0;
     } catch (error) {
-      console.error('Error deleting image from gallery:', error);
+      logger.error('Error deleting image from gallery:', error);
       return false;
     }
   }
@@ -238,7 +241,7 @@ class GalleryService {
       db.prepare('DELETE FROM generated_images WHERE user_id = ?').run(userId);
       return true;
     } catch (error) {
-      console.error('Error deleting all images from gallery:', error);
+      logger.error('Error deleting all images from gallery:', error);
       return false;
     }
   }

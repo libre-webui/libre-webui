@@ -1,41 +1,34 @@
 ---
 sidebar_position: 24
-title: "Kubernetes"
-description: "Deploy Libre WebUI on Kubernetes with Helm"
+title: 'Kubernetes'
+description: 'Deploy Libre WebUI on Kubernetes with Helm.'
 slug: /KUBERNETES
 keywords: [libre webui kubernetes, helm chart, k8s deployment]
 ---
 
-# Kubernetes Deployment
+# Kubernetes
 
-Deploy Libre WebUI on Kubernetes using Helm.
+Libre WebUI ships a Helm chart under `helm/libre-webui`.
 
-## Quick Start
+## Install
 
 ```bash
 helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui
 ```
 
-This deploys:
-- Libre WebUI
-- Bundled Ollama instance
-- PersistentVolumeClaims for data
+The default chart deploys Libre WebUI with persistent storage and a bundled Ollama service.
 
-## Access the Application
-
-After installation, follow the NOTES output. For ClusterIP (default):
+## Access Locally
 
 ```bash
 kubectl port-forward svc/libre-webui 8080:8080
 ```
 
-Then open `http://localhost:8080`
+Open [http://localhost:8080](http://localhost:8080).
 
-## Configuration
+## External Ollama
 
-### External Ollama
-
-Connect to an existing Ollama instance instead of bundled:
+Use an existing Ollama endpoint:
 
 ```bash
 helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
@@ -44,133 +37,40 @@ helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
   --set ollama.external.url=http://my-ollama:11434
 ```
 
-### NVIDIA GPU Support
+## Secrets
 
-Enable GPU acceleration for Ollama:
-
-```bash
-helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
-  --set ollama.bundled.gpu.enabled=true
-```
-
-### Ingress
-
-Expose via Ingress:
+Set a stable JWT secret and encryption key for production. Use Kubernetes Secrets rather than plaintext values files.
 
 ```bash
-helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
-  --set ingress.enabled=true \
-  --set ingress.hosts[0].host=chat.example.com
+kubectl create secret generic libre-webui-secrets \
+  --from-literal=JWT_SECRET="$(openssl rand -hex 64)" \
+  --from-literal=ENCRYPTION_KEY="$(openssl rand -hex 32)"
 ```
 
-With TLS:
+Add provider API keys the same way when you want deployment-wide plugin credentials.
 
-```bash
-helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
-  --set ingress.enabled=true \
-  --set ingress.hosts[0].host=chat.example.com \
-  --set ingress.tls[0].secretName=chat-tls \
-  --set ingress.tls[0].hosts[0]=chat.example.com
+## Persistence
+
+Keep the Libre WebUI data PVC and Ollama model PVC on persistent storage. Back up the Libre WebUI data volume and the encryption key together.
+
+## Ingress
+
+For public access, configure ingress with HTTPS and set backend origins:
+
+```env
+BASE_URL=https://your-domain.example
+CORS_ORIGIN=https://your-domain.example
 ```
 
-### API Keys
+OAuth callback URLs must match the public domain.
 
-Set cloud provider API keys:
+## Resource Planning
 
-```bash
-helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
-  --set secrets.openaiApiKey=sk-... \
-  --set secrets.anthropicApiKey=sk-ant-...
-```
+For local Ollama inside the cluster, schedule the Ollama pod on nodes with enough memory and GPU capacity for the models you plan to run. If your cluster already has a dedicated Ollama or inference service, external Ollama is usually simpler.
 
-Or create a secret manually:
+## Related Docs
 
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: libre-webui-secrets
-type: Opaque
-stringData:
-  OPENAI_API_KEY: sk-...
-  ANTHROPIC_API_KEY: sk-ant-...
-```
-
-### Autoscaling
-
-Enable HorizontalPodAutoscaler:
-
-```bash
-helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
-  --set autoscaling.enabled=true \
-  --set autoscaling.minReplicas=2 \
-  --set autoscaling.maxReplicas=10
-```
-
-## Values Reference
-
-Key configuration options:
-
-| Value | Default | Description |
-|-------|---------|-------------|
-| `replicaCount` | `1` | Number of replicas |
-| `image.repository` | `librewebui/libre-webui` | Image repository |
-| `image.tag` | `latest` | Image tag |
-| `service.type` | `ClusterIP` | Service type |
-| `service.port` | `8080` | Service port |
-| `ingress.enabled` | `false` | Enable Ingress |
-| `ollama.bundled.enabled` | `true` | Deploy bundled Ollama |
-| `ollama.bundled.gpu.enabled` | `false` | Enable GPU for Ollama |
-| `ollama.external.enabled` | `false` | Use external Ollama |
-| `ollama.external.url` | `""` | External Ollama URL |
-| `persistence.enabled` | `true` | Enable persistence |
-| `persistence.size` | `5Gi` | PVC size |
-| `autoscaling.enabled` | `false` | Enable HPA |
-
-See [values.yaml](https://github.com/libre-webui/libre-webui/blob/main/helm/libre-webui/values.yaml) for all options.
-
-## Upgrading
-
-```bash
-helm upgrade libre-webui oci://ghcr.io/libre-webui/charts/libre-webui
-```
-
-## Uninstalling
-
-```bash
-helm uninstall libre-webui
-```
-
-Note: PersistentVolumeClaims are not deleted by default. Remove manually if needed:
-
-```bash
-kubectl delete pvc -l app.kubernetes.io/instance=libre-webui
-```
-
-## Pulling Models
-
-After deployment, pull models into the bundled Ollama:
-
-```bash
-kubectl exec -it deployment/libre-webui-ollama -- ollama pull llama3.2
-```
-
-## Troubleshooting
-
-### Check pod status
-
-```bash
-kubectl get pods -l app.kubernetes.io/name=libre-webui
-```
-
-### View logs
-
-```bash
-kubectl logs -l app.kubernetes.io/name=libre-webui -f
-```
-
-### Check Ollama connection
-
-```bash
-kubectl exec -it deployment/libre-webui -- wget -qO- http://libre-webui-ollama:11434/api/version
-```
+- [Docker](./DOCKER)
+- [Hardware Requirements](./HARDWARE_REQUIREMENTS)
+- [Environment Variables](./ENVIRONMENT_VARIABLES)
+- [Authentication](./AUTHENTICATION)

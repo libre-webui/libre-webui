@@ -4,18 +4,18 @@ version: '1.0.0'
 colors:
   primary: '#FFFFFF'
   secondary: '#9CA3AF'
-  tertiary: '#7C3AED'
+  tertiary: '#2563EB'
   neutral: '#0A0A0A'
   neutral-secondary: '#111113'
   neutral-tertiary: '#27272A'
   neutral-surface: '#202023'
-  accent: '#A78BFA'
+  accent: '#60A5FA'
   success: '#34D399'
   warning: '#FBBF24'
   error: '#F87171'
   info: '#60A5FA'
 accent-presets:
-  default: violet
+  default: blue
   options:
     violet: '#7C3AED'
     blue: '#2563EB'
@@ -140,7 +140,7 @@ light:
   colors:
     primary: '#111827'
     secondary: '#6B7280'
-    tertiary: '#7C3AED'
+    tertiary: '#2563EB'
     neutral: '#F8FAFC'
     neutral-secondary: '#FFFFFF'
     neutral-tertiary: '#F1F5F9'
@@ -149,18 +149,18 @@ light:
 
 ## Overview
 
-Libre WebUI is a privacy-first AI chat interface. The design language draws from the established conventions of modern AI chat UIs — the sidebar-plus-chat layout — while introducing a subtle violet default accent that distinguishes the Libre identity. The overall feeling is focused, professional, and unobtrusive: a tool that stays out of the way and lets the conversation be the product.
+Libre WebUI is a privacy-first AI chat interface. The design language draws from the established conventions of modern AI chat UIs — the sidebar-plus-chat layout — while introducing a clear blue default accent that matches the product UI. The overall feeling is focused, professional, and unobtrusive: a tool that stays out of the way and lets the conversation be the product.
 
 Dark mode is the default and primary experience. Light mode exists for accessibility and preference, not as an afterthought but not as the hero either.
 
 ## Colors
 
-The palette is anchored in cool neutrals with one active accent family at a time. Violet is the default, but users can choose another preset or a custom accent in Appearance.
+The palette is anchored in cool neutrals with one active accent family at a time. Blue is the default, but users can choose another preset or a custom accent in Appearance.
 
 - **Primary (#FFFFFF in dark, #111827 in light):** Core text color. High contrast against the background in both modes. All body text, headings, and primary UI labels use this.
 - **Secondary (#9CA3AF):** Muted text for metadata, timestamps, sidebar labels, placeholder text, and secondary information. Never used for primary content — this is the "quiet" voice of the interface.
-- **Tertiary (#7C3AED default):** The active accent color. Used exclusively for interactive elements that demand attention: primary buttons, active toggles, the send button, selected nav items. Restrained usage is critical — if tertiary appears on more than 5% of the visible surface, something is wrong.
-- **Accent (#A78BFA default):** Hover state for tertiary elements and secondary highlights. It is derived from the active accent family so interaction feedback remains consistent when users customize color.
+- **Tertiary (#2563EB default):** The active accent color. Used exclusively for interactive elements that demand attention: primary buttons, active toggles, the send button, selected nav items. Restrained usage is critical — if tertiary appears on more than 5% of the visible surface, something is wrong.
+- **Accent (#60A5FA default):** Hover state for tertiary elements and secondary highlights. It is derived from the active accent family so interaction feedback remains consistent when users customize color.
 - **Neutral (#0A0A0A):** Sidebar and deepest background layer. Near-black, warm-neutral with no blue cast, used only where the interface needs a strong anchor.
 - **Neutral-secondary (#111113):** Main dark app background. Lifted slightly above pure black to reduce eye strain while preserving the dark identity.
 - **Neutral-tertiary (#27272A):** Cards, input fields, user message bubbles, and elevated surfaces. The lightest of the main dark surface tiers.
@@ -246,6 +246,6 @@ Transitions are 150ms ease-out for interactive states (hover, focus, active). Si
 
 ## Brand Identity
 
-Libre WebUI's identity is the absence of excess. No gradients. No illustrations. No mascot. Violet is the default brand accent, and custom accents are a personalization layer over the same restrained system. The word "Libre" means free, and the design should feel free: uncluttered, unburdened, focused entirely on the conversation between human and machine.
+Libre WebUI's identity is the absence of excess. No gradients. No illustrations. No mascot. Blue is the default brand accent, and custom accents are a personalization layer over the same restrained system. The word "Libre" means free, and the design should feel free: uncluttered, unburdened, focused entirely on the conversation between human and machine.
 
 The Kroonen AI wordmark may appear in the sidebar footer or settings page. It uses primary text color at body-sm size. It does not compete with the interface.

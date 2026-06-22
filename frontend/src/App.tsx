@@ -53,21 +53,23 @@ import {
   KeyboardShortcutsModal,
   KeyboardShortcutsIndicator,
 } from '@/components/KeyboardShortcuts';
-import { SettingsModal } from '@/components/SettingsModal';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
-import { ArtifactSlideOutPanel } from '@/components/ArtifactSlideOutPanel';
 import { Logo } from '@/components/Logo';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
 import { useInitializeApp } from '@/hooks/useInitializeApp';
+import { UserService } from '@/services/userService';
 import {
   useKeyboardShortcuts,
   KeyboardShortcut,
 } from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
 import websocketService from '@/utils/websocket';
 import toast from 'react-hot-toast';
+
+const logger = createLogger('app');
 
 // Lazy load pages for code splitting
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
@@ -78,18 +80,32 @@ const UserManagementPage = React.lazy(
   () => import('@/pages/UserManagementPage')
 );
 const ArtifactDemoPage = React.lazy(() => import('@/pages/ArtifactDemoPage'));
+const SettingsModal = React.lazy(() =>
+  import('@/components/SettingsModal').then(module => ({
+    default: module.SettingsModal,
+  }))
+);
+const ArtifactSlideOutPanel = React.lazy(() =>
+  import('@/components/ArtifactSlideOutPanel').then(module => ({
+    default: module.ArtifactSlideOutPanel,
+  }))
+);
+const FirstTimeSetup = React.lazy(() =>
+  import('@/components/FirstTimeSetup').then(module => ({
+    default: module.FirstTimeSetup,
+  }))
+);
 
 // Import LoginPage directly (not lazy) to avoid suspense issues during auth redirects
 import { LoginPage } from '@/pages/LoginPage';
-import { FirstTimeSetup } from '@/components/FirstTimeSetup';
 
 // Loading component
 const PageLoader = () => {
   const { t } = useTranslation();
   return (
-    <div className='flex items-center justify-center h-full min-h-screen'>
+    <div className='flex h-full min-h-screen items-center justify-center bg-gray-50 dark:bg-dark-100'>
       <div className='flex flex-col items-center gap-3'>
-        <div className='w-8 h-8 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
+        <div className='h-8 w-8 rounded-full border-4 border-gray-200 border-t-primary-500 animate-spin dark:border-dark-300 dark:border-t-primary-400'></div>
         <div className='text-gray-600 dark:text-dark-600'>
           {t('common.loading')}
         </div>
@@ -97,6 +113,19 @@ const PageLoader = () => {
     </div>
   );
 };
+
+const SidebarLayoutSpacer: React.FC<{ isOpen: boolean; compact: boolean }> = ({
+  isOpen,
+  compact,
+}) => (
+  <div
+    aria-hidden='true'
+    className={cn(
+      'hidden lg:block flex-shrink-0 transition-[width] duration-300 ease-in-out',
+      isOpen ? (compact ? 'w-18' : 'w-80') : 'w-0'
+    )}
+  />
+);
 
 // Conditional keyboard shortcuts indicator - only shows on chat pages and desktop
 const ConditionalKeyboardShortcutsIndicator: React.FC<{
@@ -142,6 +171,7 @@ const App: React.FC = () => {
     toggleTheme,
     backgroundImage,
     preferences,
+    artifactPanelOpen,
   } = useAppStore();
   const {
     systemInfo,
@@ -159,11 +189,11 @@ const App: React.FC = () => {
     const processOAuthCallback = async () => {
       // Prevent multiple simultaneous executions
       if (processingRef.current) {
-        console.log('OAuth already processing, skipping...');
+        logger.debug('OAuth already processing, skipping...');
         return;
       }
 
-      console.log('Starting OAuth callback processing...');
+      logger.debug('Starting OAuth callback processing...');
       processingRef.current = true;
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -195,7 +225,7 @@ const App: React.FC = () => {
                   version: '0.1.6',
                 }
               );
-              console.log('OAuth login successful, showing toast');
+              logger.debug('OAuth login successful, showing toast');
               toast.success('GitHub login successful!');
             } else {
               toast.error('Failed to verify GitHub authentication');
@@ -204,7 +234,7 @@ const App: React.FC = () => {
             toast.error('GitHub authentication verification failed');
           }
         } catch (error) {
-          console.error('OAuth processing error:', error);
+          logger.error('OAuth processing error:', error);
           toast.error('GitHub authentication failed');
         }
 
@@ -216,7 +246,7 @@ const App: React.FC = () => {
         );
       }
 
-      console.log('OAuth processing completed');
+      logger.debug('OAuth processing completed');
       setOauthProcessed(true);
       processingRef.current = false;
     };
@@ -298,7 +328,7 @@ const App: React.FC = () => {
 
   // Initialize WebSocket connection
   React.useEffect(() => {
-    websocketService.connect().catch(console.error);
+    websocketService.connect().catch(logger.error);
 
     return () => {
       websocketService.disconnect();
@@ -312,7 +342,6 @@ const App: React.FC = () => {
         setRetryCount(c => c + 1);
         try {
           // Re-run auth initialization to check if backend is now available
-          const { UserService } = await import('@/services/userService');
           await UserService.initializeAuth();
         } catch {
           // Will retry on next interval
@@ -348,15 +377,15 @@ const App: React.FC = () => {
   // Show loading screen while waiting for backend
   if (!systemInfo) {
     return (
-      <div className='min-h-screen bg-dark-50 flex items-center justify-center p-4'>
+      <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex items-center justify-center p-4'>
         <div className='text-center'>
           <div className='mb-8'>
-            <Logo className='text-white' />
+            <Logo className='text-gray-900 dark:text-white' />
           </div>
           <div className='flex justify-center mb-4'>
-            <div className='w-8 h-8 border-3 border-gray-700 border-t-primary-500 rounded-full animate-spin'></div>
+            <div className='w-8 h-8 border-4 border-gray-300 dark:border-dark-300 border-t-primary-500 dark:border-t-primary-400 rounded-full animate-spin'></div>
           </div>
-          <p className='text-gray-500 text-sm'>
+          <p className='text-gray-600 dark:text-dark-600 text-sm'>
             {retryCount > 0
               ? `Connecting to backend... (${retryCount}/15)`
               : 'Starting up...'}
@@ -370,11 +399,13 @@ const App: React.FC = () => {
   if (inFirstTimeSetup && !setupComplete) {
     return (
       <ErrorBoundary>
-        <FirstTimeSetup
-          onComplete={() => {
-            setSetupComplete(true);
-          }}
-        />
+        <Suspense fallback={<PageLoader />}>
+          <FirstTimeSetup
+            onComplete={() => {
+              setSetupComplete(true);
+            }}
+          />
+        </Suspense>
       </ErrorBoundary>
     );
   }
@@ -408,20 +439,18 @@ const App: React.FC = () => {
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
             />
+            <SidebarLayoutSpacer
+              isOpen={sidebarOpen}
+              compact={sidebarCompact}
+            />
             <div
+              data-testid='app-shell-content'
               className={cn(
-                'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
-                'w-full',
-                // Desktop behavior: use margin-left to resize content area
-                sidebarOpen
-                  ? sidebarCompact
-                    ? 'lg:ml-16'
-                    : 'lg:ml-80'
-                  : 'lg:ml-0',
+                'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-300 ease-in-out relative z-10',
                 // Mobile behavior:
                 // - Compact sidebar: push content right to avoid overlap
                 // - Expanded sidebar: overlay (no transform)
-                sidebarOpen && sidebarCompact ? 'max-lg:ml-16' : 'max-lg:ml-0',
+                sidebarOpen && sidebarCompact ? 'max-lg:ml-18' : 'max-lg:ml-0',
                 hasActiveBackground()
                   ? 'bg-white/30 dark:bg-dark-50/30'
                   : 'bg-white dark:bg-dark-50'
@@ -475,21 +504,19 @@ const App: React.FC = () => {
                       isOpen={sidebarOpen}
                       onClose={() => setSidebarOpen(false)}
                     />
+                    <SidebarLayoutSpacer
+                      isOpen={sidebarOpen}
+                      compact={sidebarCompact}
+                    />
                     <div
+                      data-testid='app-shell-content'
                       className={cn(
-                        'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out relative z-10',
-                        'w-full',
-                        // Desktop behavior: use margin-left to resize content area
-                        sidebarOpen
-                          ? sidebarCompact
-                            ? 'lg:ml-16'
-                            : 'lg:ml-80'
-                          : 'lg:ml-0',
+                        'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-300 ease-in-out relative z-10',
                         // Mobile behavior:
                         // - Compact sidebar: push content right to avoid overlap
                         // - Expanded sidebar: overlay (no transform)
                         sidebarOpen && sidebarCompact
-                          ? 'max-lg:ml-16'
+                          ? 'max-lg:ml-18'
                           : 'max-lg:ml-0',
                         hasActiveBackground()
                           ? 'bg-white/30 dark:bg-dark-50/30'
@@ -550,10 +577,14 @@ const App: React.FC = () => {
         )}
 
         {/* Modals */}
-        <SettingsModal
-          isOpen={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
-        />
+        {settingsOpen && (
+          <Suspense fallback={null}>
+            <SettingsModal
+              isOpen={settingsOpen}
+              onClose={() => setSettingsOpen(false)}
+            />
+          </Suspense>
+        )}
 
         <KeyboardShortcutsModal
           isOpen={shortcutsOpen}
@@ -567,7 +598,11 @@ const App: React.FC = () => {
         />
 
         {/* Artifact slide-out panel */}
-        <ArtifactSlideOutPanel />
+        {artifactPanelOpen && (
+          <Suspense fallback={null}>
+            <ArtifactSlideOutPanel />
+          </Suspense>
+        )}
 
         <Toaster
           position='top-right'
@@ -585,13 +620,13 @@ const App: React.FC = () => {
             },
             success: {
               iconTheme: {
-                primary: '#16a34a',
+                primary: 'rgb(var(--color-primary-600))',
                 secondary: '#ffffff',
               },
             },
             error: {
               iconTheme: {
-                primary: '#ef4444',
+                primary: 'rgb(var(--color-primary-600))',
                 secondary: '#ffffff',
               },
             },

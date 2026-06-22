@@ -19,6 +19,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabaseSafe } from '../db.js';
 import { encryptionService } from './encryptionService.js';
 import { PluginVariableDefinition } from '../types/index.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:plugin-variables-service');
 
 interface VariableRow {
   id: string;
@@ -130,7 +133,7 @@ class PluginVariablesService {
         }
       }
     } catch (error) {
-      console.error('Failed to get variables for plugin %s:', pluginId, error);
+      logger.error('Failed to get variables for plugin %s:', pluginId, error);
     }
 
     return result;
@@ -179,7 +182,7 @@ class PluginVariablesService {
     const db = getDatabaseSafe();
 
     if (!db) {
-      console.error('Database not available for storing plugin variables');
+      logger.error('Database not available for storing plugin variables');
       return false;
     }
 
@@ -229,7 +232,7 @@ class PluginVariablesService {
       this.invalidateCache(pluginId, effectiveUserId);
       return true;
     } catch (error) {
-      console.error('Failed to set variables for plugin %s:', pluginId, error);
+      logger.error('Failed to set variables for plugin %s:', pluginId, error);
       return false;
     }
   }
@@ -254,7 +257,7 @@ class PluginVariablesService {
       this.invalidateCache(pluginId, userId);
       return true;
     } catch (error) {
-      console.error(
+      logger.error(
         'Failed to delete variables for plugin %s:',
         pluginId,
         error
@@ -280,10 +283,7 @@ class PluginVariablesService {
       }
       return true;
     } catch (error) {
-      console.error(
-        `Failed to delete all variables for user ${userId}:`,
-        error
-      );
+      logger.error(`Failed to delete all variables for user ${userId}:`, error);
       return false;
     }
   }

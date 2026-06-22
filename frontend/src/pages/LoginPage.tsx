@@ -26,17 +26,16 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, requiresAuth } = useAuthStore();
   const [isSignupMode, setIsSignupMode] = useState(false);
+  const authRequired = requiresAuth();
 
   useEffect(() => {
-    // If already authenticated, redirect to home
-    if (isAuthenticated) {
+    // If already authenticated or auth is disabled, redirect to home.
+    if (isAuthenticated || !authRequired) {
       navigate('/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [authRequired, isAuthenticated, navigate]);
 
-  // If system doesn't require auth, redirect to home
-  if (!requiresAuth()) {
-    navigate('/');
+  if (isAuthenticated || !authRequired) {
     return null;
   }
 

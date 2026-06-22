@@ -18,6 +18,11 @@
 /**
  * Get the API base URL using consistent logic across the application
  */
+
+import { createLogger, isDebugLoggingEnabled } from '@/utils/logger';
+
+const logger = createLogger('config');
+
 export const getApiBaseUrl = (): string => {
   // Check for explicit env var first
   if (import.meta.env.VITE_API_BASE_URL) {
@@ -43,12 +48,15 @@ export const getApiBaseUrl = (): string => {
  * API base URL constant - use this instead of duplicating the logic
  */
 export const API_BASE_URL = getApiBaseUrl();
+export const isVerboseDebugEnabled = isDebugLoggingEnabled();
 
 /**
  * Log configuration information for debugging
  */
 export const logConfigInfo = (): void => {
-  console.log('🚀 API_BASE_URL configured as:', API_BASE_URL);
-  console.log('🌐 Window location:', window.location);
-  console.log('🔧 Environment variables:', import.meta.env);
+  if (!isVerboseDebugEnabled) return;
+
+  logger.debug('API_BASE_URL configured as:', API_BASE_URL);
+  logger.debug('Window location:', window.location);
+  logger.debug('Environment variables:', import.meta.env);
 };

@@ -1,0 +1,93 @@
+/*
+ * Libre WebUI
+ * Copyright (C) 2025 Kroonen AI, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import axios from 'axios';
+import type { ApiResponse } from '@/types';
+import { isDemoMode } from '@/utils/demoMode';
+import { API_BASE_URL, logConfigInfo } from '@/utils/config';
+import { createLogger } from '@/utils/logger';
+
+export const logger = createLogger('api');
+
+logConfigInfo();
+logger.debug('User agent:', navigator.userAgent);
+logger.debug('Demo mode detected:', isDemoMode());
+
+export const createDemoResponse = <T>(
+  data: T,
+  success = true
+): Promise<ApiResponse<T>> => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve({
+        success,
+        data,
+        error: success ? undefined : 'Demo mode: Backend not available',
+      });
+    }, 500);
+  });
+};
+
+const API_TIMEOUT = import.meta.env.VITE_API_TIMEOUT
+  ? parseInt(import.meta.env.VITE_API_TIMEOUT)
+  : 300000;
+
+export const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: API_TIMEOUT,
+});
+
+api.interceptors.request.use(
+  config => {
+    const token = localStorage.getItem('auth-token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  error => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      logger.warn('Session expired or unauthorized, logging out...');
+      localStorage.removeItem('auth-token');
+
+      import('@/store/authStore').then(({ useAuthStore }) => {
+        const authStore = useAuthStore.getState();
+        authStore.logout();
+      });
+
+      const isElectron = window.location.protocol === 'file:';
+      const currentPath = isElectron
+        ? window.location.hash
+        : window.location.pathname;
+      if (!currentPath.includes('/login')) {
+        window.location.href = isElectron ? '#/login' : '/login';
+      }
+
+      return Promise.reject(new Error('Session expired'));
+    }
+
+    logger.error('API Error:', error);
+    return Promise.reject(error);
+  }
+);
+
+export default api;

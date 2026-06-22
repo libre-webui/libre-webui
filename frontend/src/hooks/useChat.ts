@@ -22,7 +22,15 @@ import { GenerationStatistics, ToolActivity } from '@/types';
 import websocketService from '@/utils/websocket';
 import { generateId } from '@/utils';
 import { chatApi } from '@/utils/api';
+import { isDemoMode } from '@/utils/demoMode';
+import { createLogger } from '@/utils/logger';
 import toast from 'react-hot-toast';
+
+const logger = createLogger('use-chat');
+const DEFAULT_SESSION_TITLES = new Set(['New Chat', 'New Demo Session']);
+
+const isDefaultSessionTitle = (title?: string) =>
+  !title || DEFAULT_SESSION_TITLES.has(title);
 
 export const useChat = (sessionId: string) => {
   const [streamingMessage, setStreamingMessage] = useState<string>('');
@@ -43,6 +51,8 @@ export const useChat = (sessionId: string) => {
 
   // Track the first user message for auto-title generation
   const firstUserMessageRef = useRef<string | null>(null);
+  const shouldGenerateTitleRef = useRef(false);
+  const titleGenerationSessionRef = useRef<string | null>(null);
 
   // Buffer for streaming content to reduce state updates
   const streamingContentRef = useRef<string>('');
@@ -50,6 +60,99 @@ export const useChat = (sessionId: string) => {
   // Store update batching with debounced timer approach
   const lastStoreUpdate = useRef<number>(0);
   const storeUpdateTimer = useRef<NodeJS.Timeout>();
+  const streamingFrameRef = useRef<number | null>(null);
+  const pendingStreamingContentRef = useRef<string>('');
+
+  const cancelQueuedStreamingFrame = useCallback(() => {
+    if (streamingFrameRef.current !== null && typeof window !== 'undefined') {
+      window.cancelAnimationFrame(streamingFrameRef.current);
+    }
+    streamingFrameRef.current = null;
+  }, []);
+
+  const publishStreamingMessage = useCallback(
+    (content: string, immediate = false) => {
+      pendingStreamingContentRef.current = content;
+
+      if (immediate || typeof window === 'undefined') {
+        cancelQueuedStreamingFrame();
+        setStreamingMessage(content);
+        return;
+      }
+
+      if (streamingFrameRef.current !== null) {
+        return;
+      }
+
+      streamingFrameRef.current = window.requestAnimationFrame(() => {
+        streamingFrameRef.current = null;
+        setStreamingMessage(pendingStreamingContentRef.current);
+      });
+    },
+    [cancelQueuedStreamingFrame]
+  );
+
+  const resetVisibleStreamingMessage = useCallback(() => {
+    cancelQueuedStreamingFrame();
+    pendingStreamingContentRef.current = '';
+    setStreamingMessage('');
+  }, [cancelQueuedStreamingFrame]);
+
+  const clearQueuedTitleGeneration = useCallback(() => {
+    firstUserMessageRef.current = null;
+    shouldGenerateTitleRef.current = false;
+    titleGenerationSessionRef.current = null;
+  }, []);
+
+  const maybeGenerateTitle = useCallback(
+    (targetSessionId: string) => {
+      const currentPrefs = useAppStore.getState().preferences;
+      const titleSettings = currentPrefs.titleSettings;
+      const firstMessage = firstUserMessageRef.current;
+      const shouldGenerateTitle =
+        shouldGenerateTitleRef.current &&
+        titleGenerationSessionRef.current === targetSessionId;
+
+      logger.debug('Auto-title check:', {
+        firstMessage,
+        autoTitle: titleSettings?.autoTitle,
+        taskModel: titleSettings?.taskModel,
+        shouldGenerateTitle,
+      });
+
+      if (
+        firstMessage &&
+        shouldGenerateTitle &&
+        titleSettings?.autoTitle &&
+        titleSettings?.taskModel
+      ) {
+        logger.debug('Triggering auto-title generation...');
+        setGeneratingTitleForSession(targetSessionId);
+
+        chatApi
+          .generateTitle(targetSessionId, titleSettings.taskModel, firstMessage)
+          .then(response => {
+            logger.debug('Title generation response:', response);
+            if (response.success && response.data?.title) {
+              updateSessionTitle(targetSessionId, response.data.title);
+            }
+          })
+          .catch(error => {
+            logger.error('Failed to generate title:', error);
+          })
+          .finally(() => {
+            setGeneratingTitleForSession(null);
+          });
+      }
+
+      clearQueuedTitleGeneration();
+    },
+    [
+      clearQueuedTitleGeneration,
+      setGeneratingTitleForSession,
+      updateSessionTitle,
+    ]
+  );
 
   // Clean up handlers when component unmounts or sessionId changes
   useEffect(() => {
@@ -95,7 +198,7 @@ export const useChat = (sessionId: string) => {
       if (messageId) {
         // Always update the content buffer and UI immediately for responsive streaming
         streamingContentRef.current = chunkData.total;
-        setStreamingMessage(chunkData.total);
+        publishStreamingMessage(chunkData.total, chunkData.done);
 
         // Debounced store updates - only update when streaming slows down or finishes
         if (storeUpdateTimer.current) {
@@ -151,7 +254,7 @@ export const useChat = (sessionId: string) => {
         messageId?: string;
         statistics?: GenerationStatistics; // Generation statistics from Ollama
       };
-      console.log(
+      logger.debug(
         'Hook: Received assistant_complete for session:',
         sessionId,
         'messageId:',
@@ -162,7 +265,7 @@ export const useChat = (sessionId: string) => {
 
       // Clear streaming state immediately for better UX
       setIsStreaming(false);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
       setIsGenerating(false);
       setToolActivities([]);
 
@@ -183,49 +286,7 @@ export const useChat = (sessionId: string) => {
         );
       }
 
-      // Auto-title generation: Check if this is the first message and auto-title is enabled
-      // Get fresh values from stores to avoid stale closure issues
-      const currentPrefs = useAppStore.getState().preferences;
-      const titleSettings = currentPrefs.titleSettings;
-      const currentSess = useChatStore.getState().currentSession;
-      const firstMessage = firstUserMessageRef.current;
-
-      console.log('Auto-title check:', {
-        firstMessage,
-        autoTitle: titleSettings?.autoTitle,
-        taskModel: titleSettings?.taskModel,
-        sessionTitle: currentSess?.title,
-      });
-
-      if (
-        firstMessage &&
-        titleSettings?.autoTitle &&
-        titleSettings?.taskModel &&
-        currentSess?.title === 'New Chat'
-      ) {
-        console.log('Triggering auto-title generation...');
-        // Set generating state for animation
-        setGeneratingTitleForSession(sessionId);
-
-        // Generate title asynchronously (don't block the UI)
-        chatApi
-          .generateTitle(sessionId, titleSettings.taskModel, firstMessage)
-          .then(response => {
-            console.log('Title generation response:', response);
-            if (response.success && response.data?.title) {
-              updateSessionTitle(sessionId, response.data.title);
-            }
-          })
-          .catch(error => {
-            console.error('Failed to generate title:', error);
-          })
-          .finally(() => {
-            // Clear generating state
-            setGeneratingTitleForSession(null);
-          });
-        // Clear the first message ref after triggering title generation
-        firstUserMessageRef.current = null;
-      }
+      maybeGenerateTitle(sessionId);
 
       streamingMessageIdRef.current = null;
       streamingContentRef.current = '';
@@ -244,13 +305,13 @@ export const useChat = (sessionId: string) => {
         sessionId?: string;
       };
       setIsStreaming(false);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
       setIsGenerating(false);
       streamingMessageIdRef.current = null;
 
       // Handle session not found error by redirecting to home
       if (errorData.code === 'SESSION_NOT_FOUND') {
-        console.warn('Session not found, redirecting to create new session...');
+        logger.warn('Session not found, redirecting to create new session...');
         toast.error('Session not found. Creating a new session...');
         // Navigate to home to create a new session
         window.location.href = '/';
@@ -258,13 +319,14 @@ export const useChat = (sessionId: string) => {
       }
 
       toast.error(errorData.error);
+      clearQueuedTitleGeneration();
     });
 
     // Reset streaming state when switching sessions
     // Using a function to avoid setState-in-effect linting error
     const resetStreamingState = () => {
       setIsStreaming(false);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
       streamingMessageIdRef.current = null;
     };
     resetStreamingState();
@@ -274,14 +336,18 @@ export const useChat = (sessionId: string) => {
       if (storeUpdateTimer.current) {
         clearTimeout(storeUpdateTimer.current);
       }
+      cancelQueuedStreamingFrame();
     };
   }, [
     sessionId,
     updateMessage,
     updateMessageWithStatistics,
     setIsGenerating,
-    updateSessionTitle,
-    setGeneratingTitleForSession,
+    publishStreamingMessage,
+    resetVisibleStreamingMessage,
+    cancelQueuedStreamingFrame,
+    maybeGenerateTitle,
+    clearQueuedTitleGeneration,
   ]);
 
   const sendMessage = useCallback(
@@ -297,7 +363,7 @@ export const useChat = (sessionId: string) => {
       try {
         setIsGenerating(true);
         setIsStreaming(true);
-        setStreamingMessage('');
+        resetVisibleStreamingMessage();
 
         // Reset batching timers for new stream
         if (storeUpdateTimer.current) {
@@ -312,12 +378,19 @@ export const useChat = (sessionId: string) => {
         const hasExistingUserMessages = session?.messages?.some(
           m => m.role === 'user'
         );
-        if (
+        const shouldTrackFirstMessage =
           !isPrivateSession &&
           !hasExistingUserMessages &&
-          session?.title === 'New Chat'
-        ) {
+          isDefaultSessionTitle(session?.title);
+
+        if (shouldTrackFirstMessage) {
           firstUserMessageRef.current = content.trim();
+          shouldGenerateTitleRef.current = true;
+          titleGenerationSessionRef.current = sessionId;
+        } else {
+          firstUserMessageRef.current = null;
+          shouldGenerateTitleRef.current = false;
+          titleGenerationSessionRef.current = null;
         }
 
         // Add user message immediately
@@ -337,6 +410,22 @@ export const useChat = (sessionId: string) => {
           content: '',
           id: assistantMessageId,
         });
+
+        if (isDemoMode()) {
+          const demoResponse = `Demo response for: ${content.trim()}`;
+
+          window.setTimeout(() => {
+            updateMessage(sessionId, assistantMessageId, demoResponse);
+            setIsStreaming(false);
+            resetVisibleStreamingMessage();
+            setStreamingMessageId(null);
+            setIsGenerating(false);
+            maybeGenerateTitle(sessionId);
+            streamingMessageIdRef.current = null;
+            streamingContentRef.current = '';
+          }, 500);
+          return;
+        }
 
         // Connect WebSocket if not connected
         if (!websocketService.isConnected) {
@@ -370,27 +459,35 @@ export const useChat = (sessionId: string) => {
           },
         });
       } catch (error: unknown) {
-        console.error('Failed to send message:', error);
+        logger.error('Failed to send message:', error);
         setIsStreaming(false);
-        setStreamingMessage('');
+        resetVisibleStreamingMessage();
         setStreamingMessageId(null);
         setIsGenerating(false);
         streamingMessageIdRef.current = null;
         toast.error('Failed to send message');
       }
     },
-    [sessionId, addMessage, setIsGenerating, preferences.generationOptions]
+    [
+      sessionId,
+      addMessage,
+      updateMessage,
+      setIsGenerating,
+      resetVisibleStreamingMessage,
+      maybeGenerateTitle,
+      preferences.generationOptions,
+    ]
   );
 
   const stopGeneration = useCallback(() => {
     setIsStreaming(false);
-    setStreamingMessage('');
+    resetVisibleStreamingMessage();
     setStreamingMessageId(null);
     setIsGenerating(false);
     streamingMessageIdRef.current = null;
     // Note: WebSocket connection doesn't have a built-in stop mechanism
     // You might want to implement this on the backend
-  }, [setIsGenerating]);
+  }, [setIsGenerating, resetVisibleStreamingMessage]);
 
   // Regenerate the last assistant message (creates a new branch)
   const regenerateLastMessage = useCallback(async () => {
@@ -431,7 +528,7 @@ export const useChat = (sessionId: string) => {
     try {
       setIsGenerating(true);
       setIsStreaming(true);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
 
       // Reset batching timers for new stream
       if (storeUpdateTimer.current) {
@@ -474,14 +571,21 @@ export const useChat = (sessionId: string) => {
         },
       });
     } catch (error: unknown) {
-      console.error('Failed to regenerate message:', error);
+      logger.error('Failed to regenerate message:', error);
       setIsStreaming(false);
-      setStreamingMessage('');
+      resetVisibleStreamingMessage();
+      setStreamingMessageId(null);
       setIsGenerating(false);
       streamingMessageIdRef.current = null;
       toast.error('Failed to regenerate message');
     }
-  }, [sessionId, setIsGenerating, addMessage, preferences.generationOptions]);
+  }, [
+    sessionId,
+    setIsGenerating,
+    resetVisibleStreamingMessage,
+    addMessage,
+    preferences.generationOptions,
+  ]);
 
   // Select a specific branch by message ID (for side-by-side UI)
   const selectBranch = useCallback(
@@ -547,7 +651,7 @@ export const useChat = (sessionId: string) => {
           toast.error(response.error || 'Failed to select branch');
         }
       } catch (error) {
-        console.error('Failed to select branch:', error);
+        logger.error('Failed to select branch:', error);
         toast.error('Failed to select branch');
       }
     },

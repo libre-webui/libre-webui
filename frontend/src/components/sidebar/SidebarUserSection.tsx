@@ -1,0 +1,228 @@
+/*
+ * Libre WebUI
+ * Copyright (C) 2025 Kroonen AI, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at:
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { RefObject } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import {
+  Camera,
+  ChevronRight,
+  LogOut,
+  Settings,
+  Shield,
+  User as UserIcon,
+} from 'lucide-react';
+import type { User } from '@/types';
+import { cn } from '@/utils';
+
+interface SidebarUserSectionProps {
+  requiresAuth?: boolean;
+  user: User | null;
+  isAdmin: boolean;
+  sidebarCompact: boolean;
+  userMenuOpen: boolean;
+  userMenuRef: RefObject<HTMLDivElement>;
+  onToggleUserMenu: () => void;
+  onOpenSettings: () => void;
+  onOpenAvatar: (avatar: string) => void;
+  onLogout: () => void;
+  onMobileNavigate: () => void;
+  onCloseUserMenu: () => void;
+}
+
+function UserAvatar({ user, size }: { user: User; size: 'sm' | 'md' }) {
+  const dimension = size === 'sm' ? 'w-7 h-7' : 'w-8 h-8';
+  const textSize = size === 'sm' ? 'text-xs' : 'text-sm';
+
+  return user.avatar ? (
+    <img
+      src={user.avatar}
+      alt={user.username}
+      className={`${dimension} rounded-full object-cover`}
+      title={`${user.username} (${user.role})`}
+    />
+  ) : (
+    <div
+      className={`${dimension} bg-primary-500 rounded-full flex items-center justify-center`}
+      title={`${user.username} (${user.role})`}
+    >
+      <span className={`text-white ${textSize} font-medium`}>
+        {user.username.charAt(0).toUpperCase()}
+      </span>
+    </div>
+  );
+}
+
+export function SidebarUserSection({
+  requiresAuth,
+  user,
+  isAdmin,
+  sidebarCompact,
+  userMenuOpen,
+  userMenuRef,
+  onToggleUserMenu,
+  onOpenSettings,
+  onOpenAvatar,
+  onLogout,
+  onMobileNavigate,
+  onCloseUserMenu,
+}: SidebarUserSectionProps) {
+  const { t } = useTranslation();
+
+  if (!requiresAuth || !user) return null;
+
+  return (
+    <div
+      className={cn(
+        'border-t border-gray-200/60 dark:border-dark-200/60',
+        sidebarCompact ? 'p-1.5' : 'p-2.5'
+      )}
+    >
+      {sidebarCompact ? (
+        <div className='flex flex-col items-center space-y-1.5'>
+          <UserAvatar user={user} size='sm' />
+
+          <button
+            onClick={onOpenSettings}
+            className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
+            title={t('sidebar.navigation.settings')}
+          >
+            <Settings className='h-4 w-4' />
+          </button>
+
+          {isAdmin && (
+            <Link
+              to='/users'
+              onClick={onMobileNavigate}
+              className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
+              title={t('sidebar.navigation.userManagement')}
+            >
+              <UserIcon className='h-4 w-4' />
+            </Link>
+          )}
+
+          <button
+            onClick={onLogout}
+            className='w-9 h-9 flex items-center justify-center rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 touch-manipulation transition-all duration-200'
+            title={t('sidebar.navigation.signOut')}
+          >
+            <LogOut className='h-4 w-4' />
+          </button>
+        </div>
+      ) : (
+        <div className='relative' ref={userMenuRef}>
+          <button
+            onClick={onToggleUserMenu}
+            className='w-full p-2.5 rounded-xl bg-white/50 dark:bg-dark-200/50 border border-gray-200/30 dark:border-dark-300/30 hover:bg-white/70 dark:hover:bg-dark-200/70 transition-all duration-200 text-left touch-manipulation'
+          >
+            <div className='flex items-center gap-2.5'>
+              <UserAvatar user={user} size='sm' />
+              <div className='flex-1 min-w-0'>
+                <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                  {user.username}
+                </p>
+                <div className='flex items-center mt-0.5'>
+                  {user.role === 'admin' && (
+                    <Shield size={10} className='text-primary-500 mr-1' />
+                  )}
+                  <span className='text-xs text-gray-500 dark:text-gray-400 capitalize'>
+                    {user.role}
+                  </span>
+                </div>
+              </div>
+              <ChevronRight
+                className={cn(
+                  'h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform duration-200',
+                  userMenuOpen && 'rotate-90'
+                )}
+              />
+            </div>
+          </button>
+
+          {userMenuOpen && (
+            <div className='absolute bottom-full left-0 right-0 mb-2 py-2 bg-white dark:bg-dark-100 rounded-xl shadow-lg border border-gray-200/50 dark:border-dark-200/50 backdrop-blur-sm z-50'>
+              <div className='px-3 py-2 border-b border-gray-100 dark:border-dark-200/50'>
+                <div className='flex items-center gap-2.5'>
+                  <UserAvatar user={user} size='md' />
+                  <div className='flex-1 min-w-0'>
+                    <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                      {user.username}
+                    </p>
+                    <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                      {user.email || t('user.profile.noEmail')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className='py-1'>
+                <button
+                  onClick={() => {
+                    onOpenAvatar(user.avatar || '');
+                    onCloseUserMenu();
+                  }}
+                  className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
+                >
+                  <Camera className='h-4 w-4 shrink-0' />
+                  {t('user.menu.changePicture')}
+                </button>
+
+                <button
+                  onClick={() => {
+                    onOpenSettings();
+                    onCloseUserMenu();
+                  }}
+                  className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
+                >
+                  <Settings className='h-4 w-4 shrink-0' />
+                  {t('user.menu.settings')}
+                </button>
+
+                {isAdmin && (
+                  <Link
+                    to='/users'
+                    onClick={() => {
+                      onCloseUserMenu();
+                      onMobileNavigate();
+                    }}
+                    className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200'
+                  >
+                    <UserIcon className='h-4 w-4 shrink-0' />
+                    {t('user.menu.userManagement')}
+                  </Link>
+                )}
+
+                <div className='border-t border-gray-100 dark:border-dark-200/50 my-1'></div>
+
+                <button
+                  onClick={() => {
+                    onLogout();
+                    onCloseUserMenu();
+                  }}
+                  className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200 text-left'
+                >
+                  <LogOut className='h-4 w-4 shrink-0' />
+                  {t('user.menu.logout')}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -19,58 +19,10 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-import ar from './locales/ar.json';
-import bn from './locales/bn.json';
-import cs from './locales/cs.json';
-import da from './locales/da.json';
-import de from './locales/de.json';
 import en from './locales/en.json';
-import es from './locales/es.json';
-import fr from './locales/fr.json';
-import hi from './locales/hi.json';
-import id from './locales/id.json';
-import is from './locales/is.json';
-import it from './locales/it.json';
-import ja from './locales/ja.json';
-import ko from './locales/ko.json';
-import ms from './locales/ms.json';
-import nl from './locales/nl.json';
-import pl from './locales/pl.json';
-import pt from './locales/pt.json';
-import ru from './locales/ru.json';
-import sv from './locales/sv.json';
-import th from './locales/th.json';
-import tr from './locales/tr.json';
-import uk from './locales/uk.json';
-import vi from './locales/vi.json';
-import zh from './locales/zh.json';
 
 export const resources = {
-  ar: { translation: ar },
-  bn: { translation: bn },
-  cs: { translation: cs },
-  da: { translation: da },
-  de: { translation: de },
   en: { translation: en },
-  es: { translation: es },
-  fr: { translation: fr },
-  hi: { translation: hi },
-  id: { translation: id },
-  is: { translation: is },
-  it: { translation: it },
-  ja: { translation: ja },
-  ko: { translation: ko },
-  ms: { translation: ms },
-  nl: { translation: nl },
-  pl: { translation: pl },
-  pt: { translation: pt },
-  ru: { translation: ru },
-  sv: { translation: sv },
-  th: { translation: th },
-  tr: { translation: tr },
-  uk: { translation: uk },
-  vi: { translation: vi },
-  zh: { translation: zh },
 } as const;
 
 export const supportedLanguages = [
@@ -109,18 +61,88 @@ export const supportedLanguages = [
 // RTL languages list
 export const rtlLanguages = ['ar', 'he', 'fa', 'ur'] as const;
 
+type SupportedLanguageCode = (typeof supportedLanguages)[number]['code'];
+type LocaleMessages = typeof en;
+
+const languageCodes = supportedLanguages.map(language => language.code);
+const localeLoaders: Record<
+  SupportedLanguageCode,
+  () => Promise<LocaleMessages>
+> = {
+  en: () => Promise.resolve(en),
+  ar: () => import('./locales/ar.json').then(module => module.default),
+  bn: () => import('./locales/bn.json').then(module => module.default),
+  cs: () => import('./locales/cs.json').then(module => module.default),
+  da: () => import('./locales/da.json').then(module => module.default),
+  de: () => import('./locales/de.json').then(module => module.default),
+  es: () => import('./locales/es.json').then(module => module.default),
+  fr: () => import('./locales/fr.json').then(module => module.default),
+  hi: () => import('./locales/hi.json').then(module => module.default),
+  id: () => import('./locales/id.json').then(module => module.default),
+  is: () => import('./locales/is.json').then(module => module.default),
+  it: () => import('./locales/it.json').then(module => module.default),
+  ja: () => import('./locales/ja.json').then(module => module.default),
+  ko: () => import('./locales/ko.json').then(module => module.default),
+  ms: () => import('./locales/ms.json').then(module => module.default),
+  nl: () => import('./locales/nl.json').then(module => module.default),
+  pl: () => import('./locales/pl.json').then(module => module.default),
+  pt: () => import('./locales/pt.json').then(module => module.default),
+  ru: () => import('./locales/ru.json').then(module => module.default),
+  sv: () => import('./locales/sv.json').then(module => module.default),
+  th: () => import('./locales/th.json').then(module => module.default),
+  tr: () => import('./locales/tr.json').then(module => module.default),
+  uk: () => import('./locales/uk.json').then(module => module.default),
+  vi: () => import('./locales/vi.json').then(module => module.default),
+  zh: () => import('./locales/zh.json').then(module => module.default),
+};
+
+export const normalizeLanguageCode = (
+  langCode?: string | null
+): SupportedLanguageCode => {
+  const normalized = langCode?.toLowerCase().split('-')[0];
+  return languageCodes.includes(normalized as SupportedLanguageCode)
+    ? (normalized as SupportedLanguageCode)
+    : 'en';
+};
+
 // Helper function to check if a language is RTL
 export const isRTL = (langCode: string): boolean => {
-  return rtlLanguages.includes(langCode as (typeof rtlLanguages)[number]);
+  return rtlLanguages.includes(
+    normalizeLanguageCode(langCode) as (typeof rtlLanguages)[number]
+  );
+};
+
+export const loadLanguageResource = async (
+  langCode: string
+): Promise<SupportedLanguageCode> => {
+  const language = normalizeLanguageCode(langCode);
+
+  if (!i18n.hasResourceBundle(language, 'translation')) {
+    const translation = await localeLoaders[language]();
+    i18n.addResourceBundle(language, 'translation', translation, true, true);
+  }
+
+  return language;
+};
+
+export const changeAppLanguage = async (
+  langCode: string
+): Promise<SupportedLanguageCode> => {
+  const language = await loadLanguageResource(langCode);
+  await i18n.changeLanguage(language);
+  return language;
 };
 
 if (!i18n.isInitialized) {
-  i18n
+  void i18n
     .use(LanguageDetector)
     .use(initReactI18next)
     .init({
       resources,
       fallbackLng: 'en',
+      supportedLngs: languageCodes,
+      nonExplicitSupportedLngs: true,
+      load: 'languageOnly',
       debug: process.env.NODE_ENV === 'development',
       interpolation: {
         escapeValue: false,
@@ -130,6 +152,20 @@ if (!i18n.isInitialized) {
         caches: ['localStorage'],
         lookupLocalStorage: 'i18nextLng',
       },
+    })
+    .then(() => {
+      const language = normalizeLanguageCode(
+        i18n.language || i18n.resolvedLanguage
+      );
+      if (language === 'en') {
+        return;
+      }
+
+      void loadLanguageResource(language).then(() => {
+        if (normalizeLanguageCode(i18n.language) === language) {
+          void i18n.changeLanguage(language);
+        }
+      });
     });
 }
 

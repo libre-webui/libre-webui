@@ -17,6 +17,9 @@
 
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('user-service');
 
 export class UserService {
   /**
@@ -27,18 +30,18 @@ export class UserService {
 
     try {
       setLoading(true);
-      console.log('🔐 Starting auth initialization...');
+      logger.debug('Starting auth initialization...');
 
       // First, get system info
-      console.log('📡 Fetching system info...');
+      logger.debug('Fetching system info...');
       const systemInfoResponse = await authApi.getSystemInfo();
-      console.log('📡 System info response:', systemInfoResponse);
+      logger.debug('System info response:', systemInfoResponse);
 
       if (systemInfoResponse.success && systemInfoResponse.data) {
-        console.log('✅ Setting system info:', systemInfoResponse.data);
+        logger.debug('Setting system info:', systemInfoResponse.data);
         setSystemInfo(systemInfoResponse.data);
       } else {
-        console.error('❌ System info response failed:', systemInfoResponse);
+        logger.error('System info response failed:', systemInfoResponse);
       }
 
       // Check if there's a stored token
@@ -62,13 +65,13 @@ export class UserService {
           // Restore original headers
           axios.defaults.headers.common = originalHeaders;
         } catch (error) {
-          console.error('Token verification failed:', error);
+          logger.error('Token verification failed:', error);
           // Clear invalid token
           localStorage.removeItem('auth-token');
         }
       }
     } catch (error) {
-      console.error('Auth initialization error:', error);
+      logger.error('Auth initialization error:', error);
     } finally {
       setLoading(false);
     }

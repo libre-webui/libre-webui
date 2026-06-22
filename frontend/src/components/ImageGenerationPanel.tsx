@@ -23,6 +23,9 @@ import { Button } from '@/components/ui';
 import { cn } from '@/utils';
 import { imageGenApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:image-generation-panel');
 
 interface ImageGenPlugin {
   id: string;
@@ -102,7 +105,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
           }
         }
       } catch (error) {
-        console.error('Failed to load image generation plugins:', error);
+        logger.error('Failed to load image generation plugins:', error);
       }
     };
 
@@ -196,7 +199,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         toast.error(t('imageGeneration.failed'));
       }
     } catch (error) {
-      console.error('Image generation failed:', error);
+      logger.error('Image generation failed:', error);
       const message =
         error instanceof Error ? error.message : t('imageGeneration.failed');
       toast.error(message);

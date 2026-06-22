@@ -16,37 +16,28 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
-import {
-  Plus,
-  MessageSquare,
-  Trash2,
-  Edit3,
-  Check,
-  X,
-  Settings,
-  Database,
-  User,
-  LogOut,
-  Shield,
-  ChevronLeft,
-  ChevronRight,
-  Camera,
-  Sparkles,
-} from 'lucide-react';
-import { Button, Input } from '@/components/ui';
-import { SettingsModal } from '@/components/SettingsModal';
-import { AvatarUpload } from '@/components/AvatarUpload';
-import { Logo } from '@/components/Logo';
 import { useChatStore } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
-import { ChatSession } from '@/types';
-import { formatTimestamp, truncateText, cn } from '@/utils';
+import type { ChatSession } from '@/types';
+import { cn } from '@/utils';
 import { authApi, usersApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
+import { createLogger } from '@/utils/logger';
+import { AvatarModal } from '@/components/sidebar/AvatarModal';
+import { SidebarHeader } from '@/components/sidebar/SidebarHeader';
+import { SidebarNavigation } from '@/components/sidebar/SidebarNavigation';
+import { SidebarSessions } from '@/components/sidebar/SidebarSessions';
+import { SidebarUserSection } from '@/components/sidebar/SidebarUserSection';
+
+const logger = createLogger('components:sidebar');
+const SettingsModal = React.lazy(() =>
+  import('@/components/SettingsModal').then(module => ({
+    default: module.SettingsModal,
+  }))
+);
 
 interface SidebarProps {
   isOpen: boolean;
@@ -86,14 +77,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const userMenuRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Extract current session ID from URL using useParams
   const { sessionId } = useParams<{ sessionId: string }>();
   const currentSessionIdFromUrl = sessionId || null;
-
-  // Get current session ID from store as fallback
   const currentSessionId = currentSession?.id || currentSessionIdFromUrl;
 
-  // Close user menu when clicking outside
+  const compactOnMobile = () => {
+    if (window.innerWidth < 768 && !sidebarCompact) {
+      toggleSidebarCompact();
+    }
+  };
+
+  const forceWelcomeScreen = () => {
+    const { setCurrentSession } = useChatStore.getState();
+    setCurrentSession(null);
+    sessionStorage.setItem('forceWelcomeScreen', 'true');
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -111,22 +110,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   }, [userMenuOpen]);
 
-  // Collapse sidebar on mobile when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      // Double-check window width at click time in case of orientation change
       if (
         sidebarRef.current &&
         !sidebarRef.current.contains(event.target as Node) &&
-        window.innerWidth < 768 && // Only on mobile
-        isOpen && // Only when sidebar is open
-        !sidebarCompact // Only when sidebar is expanded
+        window.innerWidth < 768 &&
+        isOpen &&
+        !sidebarCompact
       ) {
         toggleSidebarCompact();
       }
     };
 
-    // Only add event listener on mobile when sidebar is open and expanded
     if (isOpen && !sidebarCompact && window.innerWidth < 768) {
       document.addEventListener('mousedown', handleClickOutside);
       return () =>
@@ -146,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         toast.error(response.message || t('user.avatar.updateFailed'));
       }
     } catch (error) {
-      console.error('Failed to update avatar:', error);
+      logger.error('Failed to update avatar:', error);
       toast.error(t('user.avatar.updateFailed'));
     } finally {
       setIsSavingAvatar(false);
@@ -154,49 +150,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleCreateSession = () => {
-    // Clear current session and show welcome screen instead of immediately creating a session
-    const { setCurrentSession } = useChatStore.getState();
-    setCurrentSession(null);
-    // Set a flag in sessionStorage to force welcome screen
-    sessionStorage.setItem('forceWelcomeScreen', 'true');
+    forceWelcomeScreen();
     navigate('/chat', { replace: true });
-    // On mobile, compact sidebar after clicking so user can easily access other chats
-    if (window.innerWidth < 768 && !sidebarCompact) {
-      toggleSidebarCompact();
-    }
+    compactOnMobile();
+  };
+
+  const handleChatNavigation = () => {
+    forceWelcomeScreen();
+    navigate('/chat', { replace: true });
+    compactOnMobile();
   };
 
   const handleSelectSession = (session: ChatSession) => {
     navigate(`/c/${session.id}`, { replace: true });
-    // On mobile, compact sidebar after selecting session so user can easily select another
-    if (window.innerWidth < 768 && !sidebarCompact) {
-      toggleSidebarCompact();
-    }
+    compactOnMobile();
   };
+
   const handleDeleteSession = async (
     sessionId: string,
     e: React.MouseEvent
   ) => {
     e.stopPropagation();
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Delete session clicked:', sessionId);
-    }
+    logger.debug('Delete session clicked:', sessionId);
 
     if (window.confirm(t('chat.session.deleteConfirm'))) {
       try {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Attempting to delete session:', sessionId);
-        }
-
-        // Check if we're deleting the current session
+        logger.debug('Attempting to delete session:', sessionId);
         const isCurrentSession = currentSessionId === sessionId;
 
         await deleteSession(sessionId);
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Session deleted successfully');
-        }
+        logger.debug('Session deleted successfully');
 
-        // If we deleted the current session, navigate to another session or root
         if (isCurrentSession) {
           const remainingSessions = sessions.filter(s => s.id !== sessionId);
           if (remainingSessions.length > 0) {
@@ -206,7 +190,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }
         }
       } catch (_error) {
-        console.error('Error deleting session:', _error);
+        logger.error('Error deleting session:', _error);
       }
     }
   };
@@ -238,776 +222,119 @@ export const Sidebar: React.FC<SidebarProps> = ({
       navigate('/login');
       toast.success(t('auth.logout.success'));
     } catch (error) {
-      console.error('Logout error:', error);
-      // Still logout locally even if API call fails
+      logger.error('Logout error:', error);
       const { logout } = useAuthStore.getState();
       logout();
       navigate('/login');
     }
   };
 
-  // Check if running in Electron (file:// protocol)
+  const handleOpenSettings = () => {
+    setSettingsOpen(true);
+    compactOnMobile();
+  };
+
+  const handleOpenAvatar = (avatar: string) => {
+    setAvatarValue(avatar);
+    setShowAvatarModal(true);
+  };
+
   const isElectron = window.location.protocol === 'file:';
 
   return (
     <>
-      {/* Sidebar */}
       <div
         ref={sidebarRef}
+        data-testid='sidebar'
         className={cn(
           'fixed inset-y-0 left-0 z-50 border-r border-gray-200 dark:border-dark-200 transform transition-all duration-300 ease-in-out shadow-xl',
-          // Dynamic width based on compact mode and responsive design
           sidebarCompact ? 'w-18' : 'w-80 max-sm:w-64',
-          // On mobile: slide in/out from left
-          // On desktop: slide in/out from left but maintain layout flow
           isOpen ? 'translate-x-0' : '-translate-x-full',
-          // Remove shadow on desktop when integrated into layout
           'lg:shadow-none',
-          // Conditional background based on whether background image is set
           backgroundImage
             ? 'bg-gray-50/70 dark:bg-dark-25/70 backdrop-blur-sm'
             : 'bg-gray-50 dark:bg-dark-25',
-          // Better touch scrolling on mobile
           'overscroll-behavior-contain',
           className
         )}
         style={{
-          // Ensure proper touch scrolling on mobile
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {/* Draggable area for Electron macOS title bar (below traffic lights) */}
         {isElectron && (
           <div
             className='absolute top-0 left-16 right-0 h-8 z-[60]'
             style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
           />
         )}
+
         <div className='flex flex-col h-full'>
-          {/* Header */}
-          <div
-            className={cn(
-              'border-b border-gray-200/60 dark:border-dark-200/60',
-              sidebarCompact ? 'p-2' : 'p-3',
-              // Add top padding for Electron macOS traffic lights
-              isElectron && 'pt-10'
-            )}
-          >
-            <div
-              className={cn(
-                'flex items-center',
-                sidebarCompact ? 'justify-center mb-2' : 'justify-between mb-2'
-              )}
-            >
-              {!sidebarCompact ? (
-                <>
-                  <Logo
-                    size='sm'
-                    className='text-gray-900 dark:text-dark-800'
-                  />
-                  <div className='flex items-center gap-1'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={toggleSidebarCompact}
-                      className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
-                      title={t('sidebar.toggleSize')}
-                    >
-                      <ChevronLeft className='h-4 w-4' />
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className='flex flex-col items-center gap-1.5'>
-                  <Logo
-                    size='sm'
-                    wordmark={false}
-                    className='text-gray-900 dark:text-dark-800'
-                  />
-                  <Button
-                    variant='ghost'
-                    size='sm'
-                    onClick={toggleSidebarCompact}
-                    className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
-                    title={t('sidebar.expandSidebar')}
-                  >
-                    <ChevronRight className='h-4 w-4' />
-                  </Button>
-                </div>
-              )}
-            </div>
+          <SidebarHeader
+            sidebarCompact={sidebarCompact}
+            isElectron={isElectron}
+            selectedModel={selectedModel}
+            modelCount={models.length}
+            onToggleCompact={toggleSidebarCompact}
+            onCreateSession={handleCreateSession}
+          />
 
-            {!sidebarCompact && (
-              <Button
-                onClick={handleCreateSession}
-                disabled={!selectedModel || models.length === 0}
-                className='w-full bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white shadow-sm hover:shadow-md active:shadow-lg transition-all duration-200 border-0 touch-manipulation'
-                size='sm'
-                title={
-                  !selectedModel || models.length === 0
-                    ? t('chat.model.noModelsTooltip')
-                    : ''
-                }
-              >
-                <Plus className='h-4 w-4 mr-2' />
-                {t('chat.session.new')}
-              </Button>
-            )}
+          <SidebarNavigation
+            sidebarCompact={sidebarCompact}
+            activePath={location.pathname}
+            onChatClick={handleChatNavigation}
+            onMobileNavigate={compactOnMobile}
+          />
 
-            {sidebarCompact && (
-              <Button
-                onClick={handleCreateSession}
-                disabled={!selectedModel || models.length === 0}
-                className='w-full h-9 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white shadow-sm hover:shadow-md active:shadow-lg transition-all duration-200 border-0 touch-manipulation p-0'
-                title={
-                  !selectedModel || models.length === 0
-                    ? t('chat.model.noModelsTooltip')
-                    : t('chat.session.new')
-                }
-              >
-                <Plus className='h-4 w-4' />
-              </Button>
-            )}
-          </div>
+          <SidebarSessions
+            sessions={sessions}
+            personas={personas}
+            currentSessionId={currentSessionId}
+            generatingTitleForSession={generatingTitleForSession}
+            sidebarCompact={sidebarCompact}
+            editingSessionId={editingSessionId}
+            editingTitle={editingTitle}
+            onEditingTitleChange={setEditingTitle}
+            onSelectSession={handleSelectSession}
+            onStartEditing={handleStartEditing}
+            onSaveEdit={handleSaveEdit}
+            onCancelEdit={handleCancelEdit}
+            onDeleteSession={handleDeleteSession}
+          />
 
-          {/* Navigation Menu */}
-          <div className={cn('py-1.5', sidebarCompact ? 'px-1' : 'px-2.5')}>
-            <nav
-              className={cn(
-                'space-y-0.5',
-                sidebarCompact && 'flex flex-col items-center'
-              )}
-            >
-              <button
-                onClick={() => {
-                  // Clear current session and set a flag to force welcome screen
-                  const { setCurrentSession } = useChatStore.getState();
-                  setCurrentSession(null);
-                  // Set a flag in sessionStorage to force welcome screen
-                  sessionStorage.setItem('forceWelcomeScreen', 'true');
-                  navigate('/chat', { replace: true });
-                  if (window.innerWidth < 768 && !sidebarCompact) {
-                    toggleSidebarCompact();
-                  }
-                }}
-                className={cn(
-                  'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-left touch-manipulation',
-                  sidebarCompact
-                    ? 'w-11 h-11 justify-center p-0'
-                    : 'w-full px-2.5 py-2',
-                  location.pathname === '/chat' || location.pathname === '/'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
-                )}
-                title={
-                  sidebarCompact ? t('sidebar.navigation.chat') : undefined
-                }
-              >
-                <MessageSquare className='h-4 w-4 shrink-0' />
-                {!sidebarCompact && t('sidebar.navigation.chat')}
-              </button>
-
-              <Link
-                to='/models'
-                onClick={() =>
-                  window.innerWidth < 768 &&
-                  !sidebarCompact &&
-                  toggleSidebarCompact()
-                }
-                className={cn(
-                  'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation',
-                  sidebarCompact
-                    ? 'w-11 h-11 justify-center p-0'
-                    : 'w-full px-2.5 py-2',
-                  location.pathname === '/models'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
-                )}
-                title={
-                  sidebarCompact ? t('sidebar.navigation.models') : undefined
-                }
-              >
-                <Database className='h-4 w-4 shrink-0' />
-                {!sidebarCompact && t('sidebar.navigation.models')}
-              </Link>
-
-              <Link
-                to='/personas'
-                onClick={() =>
-                  window.innerWidth < 768 &&
-                  !sidebarCompact &&
-                  toggleSidebarCompact()
-                }
-                className={cn(
-                  'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation',
-                  sidebarCompact
-                    ? 'w-11 h-11 justify-center p-0'
-                    : 'w-full px-2.5 py-2',
-                  location.pathname === '/personas'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
-                )}
-                title={
-                  sidebarCompact ? t('sidebar.navigation.personas') : undefined
-                }
-              >
-                <User className='h-4 w-4 shrink-0' />
-                {!sidebarCompact && t('sidebar.navigation.personas')}
-              </Link>
-
-              <Link
-                to='/gallery'
-                onClick={() =>
-                  window.innerWidth < 768 &&
-                  !sidebarCompact &&
-                  toggleSidebarCompact()
-                }
-                className={cn(
-                  'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation',
-                  sidebarCompact
-                    ? 'w-11 h-11 justify-center p-0'
-                    : 'w-full px-2.5 py-2',
-                  location.pathname === '/gallery'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
-                )}
-                title={
-                  sidebarCompact ? t('sidebar.navigation.imagine') : undefined
-                }
-              >
-                <Sparkles className='h-4 w-4 shrink-0' />
-                {!sidebarCompact && t('sidebar.navigation.imagine')}
-              </Link>
-            </nav>
-          </div>
-
-          {/* Sessions list */}
-          <div
-            className='flex-1 overflow-y-auto scrollbar-thin border-t border-gray-200/60 dark:border-dark-200/60'
-            style={{
-              WebkitOverflowScrolling: 'touch',
-              overscrollBehavior: 'contain',
-              willChange: 'scroll-position',
-            }}
-          >
-            <div className={cn('p-2.5', sidebarCompact && 'px-1')}>
-              {!sidebarCompact && sessions.length > 0 && (
-                <div className='flex items-center justify-between mb-1.5 px-1'>
-                  <h3 className='text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide'>
-                    {t('chat.session.chats')}
-                  </h3>
-                  <span className='text-xs text-gray-500 dark:text-gray-500 font-medium'>
-                    {sessions.length}
-                  </span>
-                </div>
-              )}
-              {sessions.length === 0 ? (
-                <div
-                  className={cn(
-                    'text-center py-8',
-                    sidebarCompact ? 'px-1' : 'px-2'
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'mx-auto mb-3 bg-gray-100 dark:bg-dark-300 rounded-xl flex items-center justify-center',
-                      sidebarCompact ? 'w-8 h-8' : 'w-12 h-12'
-                    )}
-                  >
-                    <MessageSquare
-                      className={cn(
-                        'text-gray-400 dark:text-gray-500',
-                        sidebarCompact ? 'h-4 w-4' : 'h-5 w-5'
-                      )}
-                    />
-                  </div>
-                  {!sidebarCompact && (
-                    <>
-                      <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
-                        {t('chat.session.noChats')}
-                      </p>
-                      <p className='text-xs mt-1 text-gray-500 dark:text-gray-500'>
-                        {t('chat.session.createFirst')}
-                      </p>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div
-                  className={cn('space-y-0.5', sidebarCompact && 'space-y-1')}
-                >
-                  {sessions.map(session => {
-                    const isActive = currentSessionId === session.id;
-
-                    return (
-                      <div
-                        key={session.id}
-                        className={cn(
-                          'group relative cursor-pointer transition-all duration-200 touch-manipulation',
-                          sidebarCompact
-                            ? 'rounded-lg p-2 flex items-center justify-center'
-                            : 'rounded-lg px-2.5 py-2',
-                          isActive
-                            ? 'bg-gray-100 dark:bg-dark-200'
-                            : 'hover:bg-gray-50 dark:hover:bg-dark-200/50'
-                        )}
-                        onClick={() => handleSelectSession(session)}
-                        title={
-                          sidebarCompact
-                            ? `${session.title} - ${session.model}`
-                            : undefined
-                        }
-                      >
-                        {sidebarCompact ? (
-                          // Compact mode: Show only avatar/indicator
-                          <div className='flex items-center justify-center w-full h-8'>
-                            <div
-                              className={cn(
-                                'w-3 h-3 rounded-full',
-                                generatingTitleForSession === session.id
-                                  ? 'bg-primary-400 animate-pulse'
-                                  : isActive
-                                    ? 'bg-primary-500'
-                                    : 'bg-gray-300 dark:bg-gray-600'
-                              )}
-                            />
-                          </div>
-                        ) : editingSessionId === session.id ? (
-                          // Editing mode (only in expanded view)
-                          <div
-                            className='flex items-center gap-2'
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <Input
-                              value={editingTitle}
-                              onChange={e => setEditingTitle(e.target.value)}
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                  handleSaveEdit(session.id);
-                                } else if (e.key === 'Escape') {
-                                  handleCancelEdit();
-                                }
-                              }}
-                              className='text-sm h-8'
-                              autoFocus
-                            />
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              onClick={() => handleSaveEdit(session.id)}
-                              className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300 active:bg-gray-200 dark:active:bg-dark-400 touch-manipulation'
-                            >
-                              <Check className='h-3 w-3' />
-                            </Button>
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              onClick={handleCancelEdit}
-                              className='h-8 w-8 p-0 shrink-0 hover:bg-gray-100 dark:hover:bg-dark-300 active:bg-gray-200 dark:active:bg-dark-400 touch-manipulation'
-                            >
-                              <X className='h-3 w-3' />
-                            </Button>
-                          </div>
-                        ) : (
-                          // Expanded mode: Show full session details
-                          <div className='flex items-center justify-between w-full'>
-                            <div className='flex-1 min-w-0 mr-2'>
-                              <h3
-                                className={cn(
-                                  'text-sm font-medium truncate leading-tight',
-                                  isActive
-                                    ? 'text-gray-900 dark:text-gray-100'
-                                    : 'text-gray-900 dark:text-gray-100'
-                                )}
-                              >
-                                {generatingTitleForSession === session.id ? (
-                                  <span className='inline-flex items-center gap-1'>
-                                    <span className='animate-pulse'>
-                                      {t('chat.session.generatingTitle')}
-                                    </span>
-                                    <span className='inline-flex'>
-                                      <span
-                                        className='animate-bounce'
-                                        style={{ animationDelay: '0ms' }}
-                                      >
-                                        .
-                                      </span>
-                                      <span
-                                        className='animate-bounce'
-                                        style={{ animationDelay: '150ms' }}
-                                      >
-                                        .
-                                      </span>
-                                      <span
-                                        className='animate-bounce'
-                                        style={{ animationDelay: '300ms' }}
-                                      >
-                                        .
-                                      </span>
-                                    </span>
-                                  </span>
-                                ) : (
-                                  truncateText(session.title, 32)
-                                )}
-                              </h3>
-                              <div className='flex items-center gap-1.5 mt-0.5'>
-                                <span
-                                  className={cn(
-                                    'text-xs',
-                                    isActive
-                                      ? 'text-gray-600 dark:text-gray-400'
-                                      : 'text-gray-500 dark:text-gray-500'
-                                  )}
-                                >
-                                  {formatTimestamp(session.updatedAt)}
-                                </span>
-                                <span className='text-gray-400 dark:text-gray-600'>
-                                  •
-                                </span>
-                                {session.personaId ? (
-                                  (() => {
-                                    const persona = personas[session.personaId];
-                                    return persona ? (
-                                      <span
-                                        className={cn(
-                                          'flex items-center gap-1 text-xs font-medium',
-                                          isActive
-                                            ? 'text-primary-600 dark:text-primary-400'
-                                            : 'text-primary-500 dark:text-primary-500'
-                                        )}
-                                        title={
-                                          persona.description || persona.name
-                                        }
-                                      >
-                                        {persona.avatar &&
-                                          !persona.avatar.startsWith(
-                                            'data:'
-                                          ) && (
-                                            <span className='text-[10px]'>
-                                              {persona.avatar}
-                                            </span>
-                                          )}
-                                        <span className='truncate max-w-[100px]'>
-                                          {persona.name}
-                                        </span>
-                                      </span>
-                                    ) : (
-                                      <span
-                                        className={cn(
-                                          'text-xs font-medium italic',
-                                          isActive
-                                            ? 'text-gray-500 dark:text-gray-500'
-                                            : 'text-gray-400 dark:text-gray-600'
-                                        )}
-                                      >
-                                        Persona
-                                      </span>
-                                    );
-                                  })()
-                                ) : (
-                                  <span
-                                    className={cn(
-                                      'text-xs font-medium truncate max-w-[120px]',
-                                      isActive
-                                        ? 'text-gray-700 dark:text-gray-300'
-                                        : 'text-gray-600 dark:text-gray-400'
-                                    )}
-                                    title={session.model}
-                                  >
-                                    {session.model}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className='flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 shrink-0'>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={e => handleStartEditing(session, e)}
-                                className='h-7 w-7 sm:h-6 sm:w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 rounded-md touch-manipulation'
-                                title={t('chat.session.renameChat')}
-                              >
-                                <Edit3 className='h-3 w-3' />
-                              </Button>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={e =>
-                                  handleDeleteSession(session.id, e)
-                                }
-                                className='h-7 w-7 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 rounded-md touch-manipulation'
-                                title={t('chat.session.deleteChat')}
-                              >
-                                <Trash2 className='h-3 w-3' />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* User Account Section - only show if user is authenticated */}
-          {systemInfo?.requiresAuth && user && (
-            <div
-              className={cn(
-                'border-t border-gray-200/60 dark:border-dark-200/60',
-                sidebarCompact ? 'p-1.5' : 'p-2.5'
-              )}
-            >
-              {sidebarCompact ? (
-                // Compact mode: Show only user avatar and key actions
-                <div className='flex flex-col items-center space-y-1.5'>
-                  {user.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.username}
-                      className='w-7 h-7 rounded-full object-cover'
-                      title={`${user.username} (${user.role})`}
-                    />
-                  ) : (
-                    <div
-                      className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'
-                      title={`${user.username} (${user.role})`}
-                    >
-                      <span className='text-white text-xs font-medium'>
-                        {user.username.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      setSettingsOpen(true);
-                      if (window.innerWidth < 768 && !sidebarCompact) {
-                        toggleSidebarCompact();
-                      }
-                    }}
-                    className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
-                    title={t('sidebar.navigation.settings')}
-                  >
-                    <Settings className='h-4 w-4' />
-                  </button>
-
-                  {isAdmin() && (
-                    <Link
-                      to='/users'
-                      onClick={() =>
-                        window.innerWidth < 768 &&
-                        !sidebarCompact &&
-                        toggleSidebarCompact()
-                      }
-                      className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
-                      title={t('sidebar.navigation.userManagement')}
-                    >
-                      <User className='h-4 w-4' />
-                    </Link>
-                  )}
-
-                  <button
-                    onClick={handleLogout}
-                    className='w-9 h-9 flex items-center justify-center rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 touch-manipulation transition-all duration-200'
-                    title={t('sidebar.navigation.signOut')}
-                  >
-                    <LogOut className='h-4 w-4' />
-                  </button>
-                </div>
-              ) : (
-                // Expanded mode: Show ChatGPT-style user dropdown
-                <div className='relative' ref={userMenuRef}>
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className='w-full p-2.5 rounded-xl bg-white/50 dark:bg-dark-200/50 border border-gray-200/30 dark:border-dark-300/30 hover:bg-white/70 dark:hover:bg-dark-200/70 transition-all duration-200 text-left touch-manipulation'
-                  >
-                    <div className='flex items-center gap-2.5'>
-                      {user.avatar ? (
-                        <img
-                          src={user.avatar}
-                          alt={user.username}
-                          className='w-7 h-7 rounded-full object-cover'
-                        />
-                      ) : (
-                        <div className='w-7 h-7 bg-primary-500 rounded-full flex items-center justify-center'>
-                          <span className='text-white text-xs font-medium'>
-                            {user.username.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                      <div className='flex-1 min-w-0'>
-                        <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
-                          {user.username}
-                        </p>
-                        <div className='flex items-center mt-0.5'>
-                          {user.role === 'admin' && (
-                            <Shield
-                              size={10}
-                              className='text-primary-500 mr-1'
-                            />
-                          )}
-                          <span className='text-xs text-gray-500 dark:text-gray-400 capitalize'>
-                            {user.role}
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronRight
-                        className={cn(
-                          'h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform duration-200',
-                          userMenuOpen && 'rotate-90'
-                        )}
-                      />
-                    </div>
-                  </button>
-
-                  {/* Dropdown Menu */}
-                  {userMenuOpen && (
-                    <div className='absolute bottom-full left-0 right-0 mb-2 py-2 bg-white dark:bg-dark-100 rounded-xl shadow-lg border border-gray-200/50 dark:border-dark-200/50 backdrop-blur-sm z-50'>
-                      <div className='px-3 py-2 border-b border-gray-100 dark:border-dark-200/50'>
-                        <div className='flex items-center gap-2.5'>
-                          {user.avatar ? (
-                            <img
-                              src={user.avatar}
-                              alt={user.username}
-                              className='w-8 h-8 rounded-full object-cover'
-                            />
-                          ) : (
-                            <div className='w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center'>
-                              <span className='text-white text-sm font-medium'>
-                                {user.username.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                          <div className='flex-1 min-w-0'>
-                            <p className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
-                              {user.username}
-                            </p>
-                            <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
-                              {user.email || t('user.profile.noEmail')}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className='py-1'>
-                        <button
-                          onClick={() => {
-                            setAvatarValue(user?.avatar || '');
-                            setShowAvatarModal(true);
-                            setUserMenuOpen(false);
-                          }}
-                          className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
-                        >
-                          <Camera className='h-4 w-4 shrink-0' />
-                          {t('user.menu.changePicture')}
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setSettingsOpen(true);
-                            setUserMenuOpen(false);
-                            if (window.innerWidth < 768 && !sidebarCompact) {
-                              toggleSidebarCompact();
-                            }
-                          }}
-                          className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
-                        >
-                          <Settings className='h-4 w-4 shrink-0' />
-                          {t('user.menu.settings')}
-                        </button>
-
-                        {isAdmin() && (
-                          <Link
-                            to='/users'
-                            onClick={() => {
-                              setUserMenuOpen(false);
-                              if (window.innerWidth < 768 && !sidebarCompact) {
-                                toggleSidebarCompact();
-                              }
-                            }}
-                            className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200'
-                          >
-                            <User className='h-4 w-4 shrink-0' />
-                            {t('user.menu.userManagement')}
-                          </Link>
-                        )}
-
-                        <div className='border-t border-gray-100 dark:border-dark-200/50 my-1'></div>
-
-                        <button
-                          onClick={() => {
-                            handleLogout();
-                            setUserMenuOpen(false);
-                          }}
-                          className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200 text-left'
-                        >
-                          <LogOut className='h-4 w-4 shrink-0' />
-                          {t('user.menu.logout')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          <SidebarUserSection
+            requiresAuth={systemInfo?.requiresAuth}
+            user={user}
+            isAdmin={isAdmin()}
+            sidebarCompact={sidebarCompact}
+            userMenuOpen={userMenuOpen}
+            userMenuRef={userMenuRef}
+            onToggleUserMenu={() => setUserMenuOpen(open => !open)}
+            onOpenSettings={handleOpenSettings}
+            onOpenAvatar={handleOpenAvatar}
+            onLogout={handleLogout}
+            onMobileNavigate={compactOnMobile}
+            onCloseUserMenu={() => setUserMenuOpen(false)}
+          />
         </div>
       </div>
 
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+      {settingsOpen && (
+        <React.Suspense fallback={null}>
+          <SettingsModal
+            isOpen={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+          />
+        </React.Suspense>
+      )}
+
+      <AvatarModal
+        open={showAvatarModal}
+        value={avatarValue}
+        saving={isSavingAvatar}
+        onChange={setAvatarValue}
+        onClose={() => setShowAvatarModal(false)}
+        onSave={handleSaveAvatar}
       />
-
-      {/* Avatar Upload Modal */}
-      {showAvatarModal &&
-        createPortal(
-          <div
-            className='fixed inset-0 z-[2147483647] flex items-center justify-center bg-black/50'
-            onClick={() => setShowAvatarModal(false)}
-          >
-            <div
-              className='bg-white dark:bg-dark-100 rounded-xl shadow-2xl p-6 w-full max-w-md mx-4'
-              onClick={e => e.stopPropagation()}
-            >
-              <div className='flex items-center justify-between mb-4'>
-                <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                  {t('user.avatar.title')}
-                </h3>
-                <button
-                  onClick={() => setShowAvatarModal(false)}
-                  className='p-1 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors'
-                >
-                  <X size={20} className='text-gray-500' />
-                </button>
-              </div>
-
-              <div className='space-y-4'>
-                <AvatarUpload value={avatarValue} onChange={setAvatarValue} />
-
-                <div className='flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-dark-300'>
-                  <button
-                    onClick={() => setShowAvatarModal(false)}
-                    className='px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-200 rounded-lg transition-colors'
-                  >
-                    {t('common.cancel')}
-                  </button>
-                  <button
-                    onClick={handleSaveAvatar}
-                    disabled={isSavingAvatar}
-                    className='px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors'
-                  >
-                    {isSavingAvatar ? t('common.saving') : t('common.save')}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
     </>
   );
 };

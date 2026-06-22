@@ -41,6 +41,9 @@ import {
 import toast from 'react-hot-toast';
 import { cn } from '@/utils';
 import { useAuthStore } from '@/store/authStore';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:hugging-face-model-browser');
 
 interface HuggingFaceModelBrowserProps {
   isOpen: boolean;
@@ -156,7 +159,7 @@ export const HuggingFaceModelBrowser: React.FC<
         setGgufFiles(prev => ({ ...prev, [modelId]: response.data! }));
       }
     } catch (error) {
-      console.error('Failed to load GGUF files:', error);
+      logger.error('Failed to load GGUF files:', error);
     } finally {
       setLoadingGguf(null);
     }

@@ -17,6 +17,9 @@
 
 import { userModel, UserPublic } from '../models/userModel.js';
 import * as crypto from 'crypto';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:simple-hugging-face-oauth');
 
 interface HuggingFaceProfile {
   id: string;
@@ -78,7 +81,7 @@ export class HuggingFaceOAuthService {
     });
 
     const authUrl = `https://huggingface.co/oauth/authorize?${params.toString()}`;
-    console.log('🤗 Hugging Face auth URL generated:', authUrl);
+    logger.debug('🤗 Hugging Face auth URL generated:', authUrl);
     return authUrl;
   }
 
@@ -108,7 +111,7 @@ export class HuggingFaceOAuthService {
       };
       return data.access_token || null;
     } catch (error) {
-      console.error('Hugging Face token exchange error:', error);
+      logger.error('Hugging Face token exchange error:', error);
       return null;
     }
   }
@@ -128,15 +131,15 @@ export class HuggingFaceOAuthService {
       });
 
       if (!response.ok) {
-        console.error('Failed to fetch Hugging Face profile:', response.status);
+        logger.error('Failed to fetch Hugging Face profile:', response.status);
         return null;
       }
 
       const profile = (await response.json()) as HuggingFaceProfile;
-      console.log('🤗 Hugging Face profile fetched:', profile.name);
+      logger.debug('🤗 Hugging Face profile fetched:', profile.name);
       return profile;
     } catch (error) {
-      console.error('Error fetching Hugging Face profile:', error);
+      logger.error('Error fetching Hugging Face profile:', error);
       return null;
     }
   }
@@ -161,7 +164,7 @@ export class HuggingFaceOAuthService {
       // Check if user already exists by username first (Hugging Face doesn't always provide email)
       const existingUser = userModel.getUserByUsername(`hf_${profile.name}`);
       if (existingUser) {
-        console.log(
+        logger.debug(
           'Found existing Hugging Face user by username:',
           existingUser.username
         );
@@ -178,7 +181,7 @@ export class HuggingFaceOAuthService {
       }
 
       // Create new user
-      console.log('Creating new Hugging Face user:', uniqueUsername);
+      logger.debug('Creating new Hugging Face user:', uniqueUsername);
 
       const newUser = await userModel.createUser({
         username: uniqueUsername,
@@ -189,10 +192,10 @@ export class HuggingFaceOAuthService {
         role: 'user', // Default role
       });
 
-      console.log('Created new Hugging Face user:', newUser.username);
+      logger.debug('Created new Hugging Face user:', newUser.username);
       return newUser;
     } catch (error) {
-      console.error('Error creating/finding Hugging Face user:', error);
+      logger.error('Error creating/finding Hugging Face user:', error);
       return null;
     }
   }

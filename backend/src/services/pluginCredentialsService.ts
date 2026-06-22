@@ -18,6 +18,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabaseSafe } from '../db.js';
 import { encryptionService } from './encryptionService.js';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('services:plugin-credentials-service');
 
 export interface PluginCredential {
   id: string;
@@ -62,7 +65,7 @@ class PluginCredentialsService {
           }
         }
       } catch (error) {
-        console.error('Failed to get API key for plugin %s:', pluginId, error);
+        logger.error('Failed to get API key for plugin %s:', pluginId, error);
       }
     }
 
@@ -102,7 +105,7 @@ class PluginCredentialsService {
         updated_at: row.updated_at,
       }));
     } catch (error) {
-      console.error('Failed to get plugin credentials:', error);
+      logger.error('Failed to get plugin credentials:', error);
       return [];
     }
   }
@@ -115,7 +118,7 @@ class PluginCredentialsService {
     const db = getDatabaseSafe();
 
     if (!db) {
-      console.error('Database not available for storing plugin credentials');
+      logger.error('Database not available for storing plugin credentials');
       return false;
     }
 
@@ -143,12 +146,12 @@ class PluginCredentialsService {
         ).run(id, effectiveUserId, pluginId, encryptedKey, now, now);
       }
 
-      console.log(
+      logger.debug(
         `API key ${existing ? 'updated' : 'set'} for plugin ${pluginId} (user: ${effectiveUserId})`
       );
       return true;
     } catch (error) {
-      console.error('Failed to set API key for plugin %s:', pluginId, error);
+      logger.error('Failed to set API key for plugin %s:', pluginId, error);
       return false;
     }
   }
@@ -172,14 +175,14 @@ class PluginCredentialsService {
         .run(pluginId, effectiveUserId);
 
       if (result.changes > 0) {
-        console.log(
+        logger.debug(
           `API key deleted for plugin ${pluginId} (user: ${effectiveUserId})`
         );
         return true;
       }
       return false;
     } catch (error) {
-      console.error('Failed to delete API key for plugin %s:', pluginId, error);
+      logger.error('Failed to delete API key for plugin %s:', pluginId, error);
       return false;
     }
   }
@@ -205,10 +208,10 @@ class PluginCredentialsService {
       db.prepare('DELETE FROM plugin_credentials WHERE user_id = ?').run(
         userId
       );
-      console.log(`All plugin credentials deleted for user ${userId}`);
+      logger.debug(`All plugin credentials deleted for user ${userId}`);
       return true;
     } catch (error) {
-      console.error(
+      logger.error(
         `Failed to delete all credentials for user ${userId}:`,
         error
       );
@@ -230,10 +233,10 @@ class PluginCredentialsService {
       db.prepare('DELETE FROM plugin_credentials WHERE plugin_id = ?').run(
         pluginId
       );
-      console.log(`All credentials deleted for plugin ${pluginId}`);
+      logger.debug(`All credentials deleted for plugin ${pluginId}`);
       return true;
     } catch (error) {
-      console.error(
+      logger.error(
         `Failed to delete all credentials for plugin ${pluginId}:`,
         error
       );

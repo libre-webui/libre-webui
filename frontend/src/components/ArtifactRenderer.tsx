@@ -34,7 +34,15 @@ import { Button } from '@/components/ui/Button';
 import { OptimizedSyntaxHighlighter } from '@/components/OptimizedSyntaxHighlighter';
 import { useAppStore } from '@/store/appStore';
 import { Artifact } from '@/types';
+import {
+  buildHtmlArtifactDocument,
+  HTML_ARTIFACT_ALLOW,
+  HTML_ARTIFACT_SANDBOX,
+} from '@/utils/artifactHtml';
 import { cn } from '@/utils';
+import { createLogger } from '@/utils/logger';
+
+const logger = createLogger('components:artifact-renderer');
 
 interface ArtifactRendererProps {
   artifact: Artifact;
@@ -57,12 +65,16 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (_err) {
-      console.error('Failed to copy:', _err);
+      logger.error('Failed to copy:', _err);
     }
   };
 
   const downloadArtifact = () => {
-    const blob = new Blob([artifact.content], {
+    const content =
+      artifact.type === 'html'
+        ? buildHtmlArtifactDocument(artifact.content, artifact.title)
+        : artifact.content;
+    const blob = new Blob([content], {
       type: getContentType(artifact.type),
     });
     const url = URL.createObjectURL(blob);
@@ -124,38 +136,46 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
     }
   };
 
+  const renderHtmlFallback = () => (
+    <div
+      data-testid='artifact-html-fallback'
+      className='w-full h-64 sm:h-80 lg:h-96 flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-200 p-4'
+    >
+      <div className='max-w-sm text-center'>
+        <AlertTriangle className='h-8 w-8 text-primary-500 mx-auto mb-3' />
+        <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+          {t('artifacts.previewUnavailable')}
+        </p>
+        <p className='mt-1 text-sm text-gray-600 dark:text-gray-400'>
+          {t('artifacts.previewUnavailableDescription')}
+        </p>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() => setViewMode('code')}
+          className='mt-4'
+        >
+          <Code2 className='h-3.5 w-3.5 mr-1.5' />
+          {t('artifacts.code')}
+        </Button>
+      </div>
+    </div>
+  );
+
   const renderHtml = () => {
-    const htmlContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <base target="_blank">
-          <title>${artifact.title}</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-              margin: 0;
-              padding: 16px;
-              background: white;
-              color: #333;
-            }
-            * { box-sizing: border-box; }
-          </style>
-        </head>
-        <body>
-          ${artifact.content}
-        </body>
-      </html>
-    `;
+    if (!artifact.content.trim()) {
+      return renderHtmlFallback();
+    }
 
     return (
       <iframe
         ref={iframeRef}
-        srcDoc={htmlContent}
+        data-testid='artifact-html-preview'
+        srcDoc={buildHtmlArtifactDocument(artifact.content, artifact.title)}
         className='w-full h-64 sm:h-80 lg:h-96 border-0 rounded-lg'
-        sandbox='allow-scripts allow-same-origin'
+        sandbox={HTML_ARTIFACT_SANDBOX}
+        allow={HTML_ARTIFACT_ALLOW}
+        allowFullScreen
         title={artifact.title}
       />
     );
@@ -173,8 +193,8 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       return (
         <div className='w-full h-64 sm:h-80 lg:h-96 flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-200'>
           <div className='text-center'>
-            <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
+            <AlertTriangle className='h-8 w-8 text-primary-500 mx-auto mb-2' />
+            <p className='text-sm text-gray-600 dark:text-dark-600'>
               {t('artifacts.invalidSvg')}
             </p>
           </div>
@@ -237,8 +257,8 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
       return (
         <div className='w-full h-32 flex items-center justify-center bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-200'>
           <div className='text-center'>
-            <AlertTriangle className='h-8 w-8 text-red-500 mx-auto mb-2' />
-            <p className='text-sm text-gray-600 dark:text-gray-400'>
+            <AlertTriangle className='h-8 w-8 text-primary-500 mx-auto mb-2' />
+            <p className='text-sm text-gray-600 dark:text-dark-600'>
               {t('artifacts.invalidJson')}
             </p>
           </div>
@@ -467,7 +487,9 @@ export const ArtifactRenderer: React.FC<ArtifactRendererProps> = ({
             onClick={() => {
               const newWindow = window.open('', '_blank');
               if (newWindow) {
-                newWindow.document.write(artifact.content);
+                newWindow.document.write(
+                  buildHtmlArtifactDocument(artifact.content, artifact.title)
+                );
                 newWindow.document.close();
               }
             }}

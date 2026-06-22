@@ -1,9 +1,18 @@
 ---
 sidebar_position: 28
-title: "Kyutai TTS Integration"
-description: "Run Kyutai TTS locally for high-quality text-to-speech with voice cloning"
+title: 'Kyutai TTS Integration'
+description: 'Run Kyutai TTS locally for high-quality text-to-speech with voice cloning'
 slug: /KYUTAI_TTS
-keywords: [kyutai-tts, tts, text-to-speech, local tts, voice synthesis, voice cloning, pocket-tts]
+keywords:
+  [
+    kyutai-tts,
+    tts,
+    text-to-speech,
+    local tts,
+    voice synthesis,
+    voice cloning,
+    pocket-tts,
+  ]
 ---
 
 # Kyutai TTS Integration
@@ -14,10 +23,10 @@ Run Kyutai's TTS models locally for high-quality text-to-speech. This guide cove
 
 Kyutai offers two TTS models:
 
-| Model | Parameters | Device | Best For |
-|-------|-----------|--------|----------|
-| **Pocket TTS** | 100M | CPU only | Laptops, low-resource environments |
-| **TTS 1.6B** | 1.6B | GPU/MPS/CPU | Servers, high-quality synthesis |
+| Model          | Parameters | Device      | Best For                           |
+| -------------- | ---------- | ----------- | ---------------------------------- |
+| **Pocket TTS** | 100M       | CPU only    | Laptops, low-resource environments |
+| **TTS 1.6B**   | 1.6B       | GPU/MPS/CPU | Servers, high-quality synthesis    |
 
 Both use the CALM (Continuous Audio Language Models) framework and support voice cloning from audio samples.
 
@@ -27,12 +36,12 @@ Lightweight TTS that runs in real-time on CPU. No GPU required.
 
 ### Requirements
 
-| Component | Minimum |
-|-----------|---------|
-| **Python** | 3.10 - 3.14 |
-| **PyTorch** | 2.5+ |
-| **RAM** | 4GB |
-| **Disk** | 500MB |
+| Component   | Minimum     |
+| ----------- | ----------- |
+| **Python**  | 3.10 - 3.14 |
+| **PyTorch** | 2.5+        |
+| **RAM**     | 4GB         |
+| **Disk**    | 500MB       |
 
 ### Quick Start
 
@@ -63,16 +72,16 @@ curl http://localhost:8200/v1/audio/speech \
 
 ### Voices
 
-| Voice | Description |
-|-------|-------------|
-| **Alba** | Female, clear and natural |
-| **Marius** | Male, warm tone |
-| **Javert** | Male, authoritative |
-| **Jean** | Male, gentle |
-| **Fantine** | Female, soft |
-| **Cosette** | Female, young |
-| **Eponine** | Female, expressive |
-| **Azelma** | Female, bright |
+| Voice       | Description               |
+| ----------- | ------------------------- |
+| **Alba**    | Female, clear and natural |
+| **Marius**  | Male, warm tone           |
+| **Javert**  | Male, authoritative       |
+| **Jean**    | Male, gentle              |
+| **Fantine** | Female, soft              |
+| **Cosette** | Female, young             |
+| **Eponine** | Female, expressive        |
+| **Azelma**  | Female, bright            |
 
 ### Performance
 
@@ -88,20 +97,20 @@ High-quality TTS with GPU acceleration. Automatic device selection: CUDA > MPS >
 
 ### Requirements
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| **Python** | 3.10+ | 3.12 |
-| **GPU VRAM** | 6GB | 8GB+ |
-| **RAM** | 8GB | 16GB+ |
-| **Disk** | 4GB | 8GB |
+| Component    | Minimum | Recommended |
+| ------------ | ------- | ----------- |
+| **Python**   | 3.10+   | 3.12        |
+| **GPU VRAM** | 6GB     | 8GB+        |
+| **RAM**      | 8GB     | 16GB+       |
+| **Disk**     | 4GB     | 8GB         |
 
 ### Platform Support
 
-| Platform | Backend | Notes |
-|----------|---------|-------|
-| **NVIDIA GPU** | CUDA | Best performance, bfloat16 support |
-| **Apple Silicon** | MPS | Uses float16 |
-| **CPU** | PyTorch | Slower, float32 |
+| Platform          | Backend | Notes                              |
+| ----------------- | ------- | ---------------------------------- |
+| **NVIDIA GPU**    | CUDA    | Best performance, bfloat16 support |
+| **Apple Silicon** | MPS     | Uses float16                       |
+| **CPU**           | PyTorch | Slower, float32                    |
 
 ### Quick Start
 
@@ -162,6 +171,7 @@ curl http://localhost:8201/v1/audio/speech \
 | `expresso-angry` | Angry |
 
 **VCTK (CC BY 4.0):**
+
 - `vctk-p225`, `vctk-p226`, `vctk-p227`, `vctk-p228`
 
 ---
@@ -222,14 +232,14 @@ curl http://localhost:8201/v1/audio/speech \
 }
 ```
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `model` | string | varies | `kyutai-tts` or `kyutai-tts-1.6b` |
-| `input` | string | required | Text to synthesize (max 10,000 chars) |
-| `voice` | string | `alba` | Voice name or HuggingFace path |
-| `response_format` | string | `wav` | Audio format (only `wav` supported) |
-| `stream` | boolean | `false` | Enable streaming (Pocket TTS only) |
-| `cfg_coef` | float | `2.0` | Classifier-free guidance (1.6B only) |
+| Parameter         | Type    | Default  | Description                           |
+| ----------------- | ------- | -------- | ------------------------------------- |
+| `model`           | string  | varies   | `kyutai-tts` or `kyutai-tts-1.6b`     |
+| `input`           | string  | required | Text to synthesize (max 10,000 chars) |
+| `voice`           | string  | `alba`   | Voice name or HuggingFace path        |
+| `response_format` | string  | `wav`    | Audio format (only `wav` supported)   |
+| `stream`          | boolean | `false`  | Enable streaming (Pocket TTS only)    |
+| `cfg_coef`        | float   | `2.0`    | Classifier-free guidance (1.6B only)  |
 
 **Response:** Audio file (`audio/wav`)
 
@@ -237,14 +247,14 @@ curl http://localhost:8201/v1/audio/speech \
 
 For compatibility with OpenAI TTS clients:
 
-| OpenAI Voice | Pocket TTS | TTS 1.6B |
-|--------------|------------|----------|
-| `alloy` | alba | alba |
-| `echo` | marius | vctk-p225 |
-| `fable` | cosette | expresso-happy |
-| `onyx` | javert | vctk-p226 |
-| `nova` | fantine | alba-announcer |
-| `shimmer` | eponine | alba-merchant |
+| OpenAI Voice | Pocket TTS | TTS 1.6B       |
+| ------------ | ---------- | -------------- |
+| `alloy`      | alba       | alba           |
+| `echo`       | marius     | vctk-p225      |
+| `fable`      | cosette    | expresso-happy |
+| `onyx`       | javert     | vctk-p226      |
+| `nova`       | fantine    | alba-announcer |
+| `shimmer`    | eponine    | alba-merchant  |
 
 ### List Voices
 
@@ -273,7 +283,16 @@ Plugin file: `plugins/kyutai-tts.json`
   "capabilities": {
     "tts": {
       "config": {
-        "voices": ["Alba", "Marius", "Javert", "Jean", "Fantine", "Cosette", "Eponine", "Azelma"],
+        "voices": [
+          "Alba",
+          "Marius",
+          "Javert",
+          "Jean",
+          "Fantine",
+          "Cosette",
+          "Eponine",
+          "Azelma"
+        ],
         "default_voice": "Alba",
         "supports_streaming": true,
         "no_auth_required": true
@@ -298,7 +317,17 @@ Plugin file: `plugins/kyutai-tts-1.6b.json`
   "capabilities": {
     "tts": {
       "config": {
-        "voices": ["Alba", "Alba-Casual", "Alba-Merchant", "Alba-Announcer", "Expresso-Happy", "Expresso-Sad", "Expresso-Angry", "VCTK-P225", "VCTK-P226"],
+        "voices": [
+          "Alba",
+          "Alba-Casual",
+          "Alba-Merchant",
+          "Alba-Announcer",
+          "Expresso-Happy",
+          "Expresso-Sad",
+          "Expresso-Angry",
+          "VCTK-P225",
+          "VCTK-P226"
+        ],
         "default_voice": "Alba",
         "supports_streaming": true,
         "no_auth_required": true
@@ -373,14 +402,14 @@ python server.py --device cpu
 
 ## Comparison with Qwen3-TTS
 
-| Feature | Kyutai Pocket | Kyutai 1.6B | Qwen3-TTS |
-|---------|---------------|-------------|-----------|
-| Parameters | 100M | 1.6B | 0.6B-1.7B |
-| GPU Required | No | Optional | Yes |
-| Languages | English | EN/FR | 10 languages |
-| Voice Cloning | Yes | Yes | Yes |
-| Voice Design | No | No | Yes |
-| Port | 8200 | 8201 | 8100 |
+| Feature       | Kyutai Pocket | Kyutai 1.6B | Qwen3-TTS    |
+| ------------- | ------------- | ----------- | ------------ |
+| Parameters    | 100M          | 1.6B        | 0.6B-1.7B    |
+| GPU Required  | No            | Optional    | Yes          |
+| Languages     | English       | EN/FR       | 10 languages |
+| Voice Cloning | Yes           | Yes         | Yes          |
+| Voice Design  | No            | No          | Yes          |
+| Port          | 8200          | 8201        | 8100         |
 
 Choose Kyutai for English-focused use cases with simpler setup. Choose Qwen3-TTS for multilingual support and voice design features.
 

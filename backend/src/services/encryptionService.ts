@@ -19,6 +19,9 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createLogger } from '../utils/logger.js';
+
+const logger = createLogger('encryption');
 
 // ESM __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -65,19 +68,19 @@ export class EncryptionService {
 
       // Write the key to persistent storage
       fs.writeFileSync(keyPath, encryptionKey, 'utf8');
-      console.info(
+      logger.info(
         `✅ Automatically saved ENCRYPTION_KEY to persistent storage: ${keyPath}`
       );
-      console.info('🔐 Encryption key will persist across container restarts');
+      logger.info('🔐 Encryption key will persist across container restarts');
     } catch (error) {
-      console.error(
+      logger.error(
         '❌ Failed to save ENCRYPTION_KEY to persistent storage:',
         error
       );
-      console.warn(
+      logger.warn(
         '   Please set ENCRYPTION_KEY environment variable manually:'
       );
-      console.warn(`   ENCRYPTION_KEY=${encryptionKey}`);
+      logger.warn(`   ENCRYPTION_KEY=${encryptionKey}`);
     }
   }
 
@@ -124,7 +127,7 @@ export class EncryptionService {
 
         // Check if ENCRYPTION_KEY already exists (commented or uncommented)
         if (/^ENCRYPTION_KEY=/m.test(envContent)) {
-          console.warn(
+          logger.warn(
             '⚠️  ENCRYPTION_KEY already exists in .env file, skipping auto-generation'
           );
           return;
@@ -137,7 +140,7 @@ export class EncryptionService {
             `ENCRYPTION_KEY=${encryptionKey}`
           );
           fs.writeFileSync(envPath, envContent, 'utf8');
-          console.info(
+          logger.info(
             `✅ Automatically added ENCRYPTION_KEY to .env file: ${envPath}`
           );
           return;
@@ -155,18 +158,18 @@ export class EncryptionService {
 
       // Write back to .env file
       fs.writeFileSync(envPath, envContent, 'utf8');
-      console.info(
+      logger.info(
         `✅ Automatically added ENCRYPTION_KEY to .env file: ${envPath}`
       );
     } catch (error) {
-      console.error(
+      logger.error(
         '❌ Failed to automatically add ENCRYPTION_KEY to .env file:',
         error
       );
-      console.warn(
+      logger.warn(
         '   Please manually add the following line to your .env file:'
       );
-      console.warn(`   ENCRYPTION_KEY=${encryptionKey}`);
+      logger.warn(`   ENCRYPTION_KEY=${encryptionKey}`);
     }
   }
 
@@ -182,14 +185,14 @@ export class EncryptionService {
       if (fs.existsSync(keyPath)) {
         const key = fs.readFileSync(keyPath, 'utf8').trim();
         if (key.length === 64) {
-          console.info(
+          logger.info(
             `✅ Loaded encryption key from persistent storage: ${keyPath}`
           );
           return key;
         }
       }
     } catch (error) {
-      console.warn(
+      logger.warn(
         '⚠️  Failed to load encryption key from persistent storage:',
         error
       );
@@ -227,7 +230,7 @@ export class EncryptionService {
       this.encryptionKey = crypto.randomBytes(32);
       const newKeyString = this.encryptionKey.toString('hex');
 
-      console.warn(
+      logger.warn(
         `⚠️  No ENCRYPTION_KEY found. Generated key: ${newKeyString}`
       );
 
@@ -235,13 +238,13 @@ export class EncryptionService {
       this.addKeyToStorage(newKeyString);
 
       if (process.env.DOCKER_ENV === 'true' || process.env.DATA_DIR) {
-        console.info('🔐 Generated encryption key saved to persistent storage');
-        console.info('   Key will persist across restarts');
+        logger.info('🔐 Generated encryption key saved to persistent storage');
+        logger.info('   Key will persist across restarts');
       } else {
-        console.info(
+        logger.info(
           '🔐 Generated encryption key has been automatically added to your .env file'
         );
-        console.info('   Restart the application to use the persistent key');
+        logger.info('   Restart the application to use the persistent key');
       }
     }
   }
@@ -277,7 +280,7 @@ export class EncryptionService {
         iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted
       );
     } catch (error) {
-      console.error('Encryption error:', error);
+      logger.error('Encryption error:', error);
       throw new Error('Failed to encrypt data');
     }
   }
@@ -289,7 +292,7 @@ export class EncryptionService {
     if (!encryptedData || !encryptedData.includes(':')) {
       // Data doesn't contain colons, likely unencrypted
       if (process.env.DEBUG_ENCRYPTION) {
-        console.debug(
+        logger.debug(
           'Decryption: Data appears to be unencrypted (no colons found)'
         );
       }
@@ -299,7 +302,7 @@ export class EncryptionService {
     try {
       const parts = encryptedData.split(':');
       if (parts.length !== 3) {
-        console.warn(
+        logger.warn(
           `Decryption: Invalid format (expected 3 parts, got ${parts.length}), treating as unencrypted data`
         );
         return encryptedData;
@@ -309,7 +312,7 @@ export class EncryptionService {
 
       // Validate hex format before attempting to convert
       if (!/^[a-fA-F0-9]+$/.test(ivHex) || !/^[a-fA-F0-9]+$/.test(authTagHex)) {
-        console.warn(
+        logger.warn(
           'Decryption: Invalid hex format, treating as unencrypted data'
         );
         return encryptedData;
@@ -330,8 +333,8 @@ export class EncryptionService {
 
       return decrypted;
     } catch (error) {
-      console.error('Decryption error:', error);
-      console.warn('Treating as unencrypted data for backward compatibility');
+      logger.error('Decryption error:', error);
+      logger.warn('Treating as unencrypted data for backward compatibility');
       return encryptedData; // Return original data if decryption fails
     }
   }
