@@ -28,6 +28,8 @@ import { API_BASE_URL } from '@/utils/config';
 import { isDemoMode } from '@/utils/demoMode';
 import { api, createDemoResponse, logger } from './client';
 
+const appVersion = import.meta.env.VITE_APP_VERSION || '0.0.0';
+
 // Authentication API
 export const authApi = {
   login: (credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> => {
@@ -47,7 +49,7 @@ export const authApi = {
           hasUsers: true,
           userCount: 1,
           allowUserModelPull: true,
-          version: '0.1.0',
+          version: appVersion,
         },
       });
     }
@@ -77,7 +79,7 @@ export const authApi = {
           hasUsers: true,
           userCount: 1,
           allowUserModelPull: true,
-          version: '0.1.0',
+          version: appVersion,
           turnstile: { enabled: false },
         },
       });
@@ -103,7 +105,7 @@ export const authApi = {
         hasUsers: true,
         userCount: 1,
         allowUserModelPull: true,
-        version: '0.1.0',
+        version: appVersion,
         turnstile: { enabled: false },
       });
     }
@@ -170,7 +172,7 @@ export const authApi = {
         hasUsers: true,
         userCount: 1,
         allowUserModelPull,
-        version: '0.1.0',
+        version: appVersion,
         turnstile: { enabled: false },
       });
     }
