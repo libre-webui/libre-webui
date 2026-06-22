@@ -15,6 +15,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.11.0] - 2026-06-22
+
+Libre WebUI 0.11.0 is a stabilization and architecture release. It focuses on artifact reliability, demo/auth hardening, smoother streaming, test coverage, and a large backend/frontend cleanup pass on top of the 0.10.0 theme and model-provider work.
+
+### ✨ New Features
+
+- Added optional Cloudflare Turnstile protection for public account creation, configured from backend environment variables and rendered only when enabled.
+- Added Tailscale-friendly development hosting/origin support so Libre WebUI can be reached from another device during local development.
+- Added Playwright e2e coverage for demo login, one-user mode, artifact detection/rendering, artifact resize behavior, cloud-model regression coverage, mobile sidebar behavior, and async locale loading.
+
+### 🔧 Improvements
+
+- Set blue as the default accent color and polished the remaining auth, artifact demo, badge, icon, logo, and model-flow surfaces to follow the current design system.
+- Improved artifact reliability for multi-file HTML, filename-qualified bundles, standalone full HTML documents, local file reference cleanup, and themed empty/fallback preview states.
+- Made artifact pane resizing release pointer state correctly so the pane no longer feels stuck to the mouse after resize.
+- Made code-block streaming smoother with requestAnimationFrame-coalesced updates, a lightweight streaming code renderer, lazy rich markdown rendering, and split markdown/math/highlighting chunks.
+- Reworked title generation so it honors the existing toggle, resolves the current running model correctly, supports plugin-backed title generation, falls back to Ollama, and sanitizes generated titles.
+- Split major backend chat orchestration into focused services for WebSocket handling, shared chat context, assistant completion persistence, plugin streaming, Ollama streaming, title generation, and request preparation.
+- Split plugin capabilities into smaller adapters/services for chat, streaming, embeddings, image generation, TTS, validation, uploads, variables, and provider response conversion.
+- Slimmed large frontend surfaces by extracting Settings tabs, Model Manager sections, Model Selector tabs, Persona Form tabs, Sidebar sections, API domain clients, and chat store helpers.
+- Added gated frontend/backend loggers and routed noisy development diagnostics through explicit debug controls.
+- Updated release tooling with a security preflight and kept the production build free of the previous large chunk warnings.
+
+### 🐛 Bug Fixes
+
+- Fixed toggled session title generation so titles are generated only when the option is enabled.
+- Fixed demo mode persona avatars so bundled/local demo images render correctly.
+- Fixed chat routing and settings state edge cases after the shared generation refactor.
+- Fixed dark-mode artifact demo surfaces so generated previews no longer fall back to the old default blue styling.
+- Added regression coverage around cloud model suffix handling without re-documenting the 0.10.0 cloud model feature itself.
+
+### 🔒 Security & Dependencies
+
+- Remediated npm security advisories and refreshed dependency locks after 0.10.0, including updates around `multer`, `undici`, `ws`, `ip-address`, `brace-expansion`, `tmp`, and `qs`.
+- Added `npm audit` to the release preflight path and verified the package lock reports zero vulnerabilities after the release update.
+- Updated GitHub Actions dependencies, including `actions/checkout`, and hardened the release workflow checks before publishing.
+
+### 📚 Documentation
+
+- Refreshed the README to describe the current Libre WebUI product, model/provider story, install paths, and project positioning.
+- Audited and rewrote the project docs so the model examples, setup guidance, plugin docs, auth docs, artifacts docs, environment variables, and deployment guides match the current application.
+- Updated DESIGN.md with the current blue-accent direction and UI guidance without repeating the 0.10.0 custom-accent release notes.
+
+### ⚠️ Breaking Changes
+
+- No known user-facing breaking changes. The plugin and chat internals were heavily refactored, but existing plugin configuration and normal app workflows remain compatible.
+
 ## [0.10.0] - 2026-06-12
 
 ### What's New
