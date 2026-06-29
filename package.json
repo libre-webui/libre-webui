@@ -100,7 +100,7 @@
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.34.0",
     "concurrently": "^10.0.1",
-    "electron": "41.8.0",
+    "electron": "41.9.0",
     "electron-builder": "26.15.3",
     "eslint": "^9.39.4",
     "png-to-ico": "^3.0.1",
