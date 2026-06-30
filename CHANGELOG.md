@@ -13,9 +13,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🐛 Bug Fixes
 
-- Hardened artifact title text extraction to avoid unsafe HTML double-unescaping and incomplete tag sanitization paths flagged by CodeQL.
+### 📚 Documentation
+
+## [0.12.0] - 2026-06-30
+
+Libre WebUI 0.12.0 is the agent integration release. It replaces the previous
+OpenClaw bridge with a first-class Libre Claw control surface inside Libre WebUI,
+including admin-only backend routes, a dedicated frontend page, run timelines,
+approvals, automations, usage/fallback visibility, docs, and full localization.
+
+### ✨ New Features
+
+- Added a first-class **Libre Claw** agent surface in the app, available from the
+  sidebar as **Libre Claw**, with daemon connection status, dashboard access, and
+  a dedicated `/agents` route.
+- Added admin-only backend proxy routes under `/api/libre-claw` for daemon
+  status, health, dashboard URL, model routing, fallback routing, theme updates,
+  runs, run events, permissions, usage, and automations.
+- Added Libre Claw run management from WebUI: start chat or goal-mode runs, pass
+  optional provider/model overrides, inspect durable run history, stream
+  incremental run events, and cancel active runs.
+- Added WebUI approval handling for Libre Claw tool calls, including
+  `allow_once`, `deny`, and `always_allow_tool` permission resolutions.
+- Added Libre Claw automation controls for scheduled report/Telegram routes,
+  including create, update, run now, pause, resume, and delete actions.
+- Added Libre Claw usage and fallback visibility so admins can inspect provider
+  usage records and fallback route state from the same agent page.
+- Added backend environment configuration for Libre Claw daemon connectivity via
+  `LIBRE_CLAW_BASE_URL` and `LIBRE_CLAW_TIMEOUT_MS`.
+
+### 🔧 Improvements
+
+- Reworked the run timeline UI so assistant deltas are grouped into readable
+  responses while tool calls, tool results, permission requests, usage events,
+  errors, and run lifecycle events remain inspectable.
+- Added demo-safe frontend API responses for the Libre Claw page so demo mode
+  can render the agent surface without requiring a running daemon.
+- Completed Libre Claw translations across all supported locales. English and
+  French define the source copy, and the remaining locale files now carry the
+  full Libre Claw key set instead of falling back to English.
+- Updated the README product overview with Libre Claw agent support, including
+  memory, tools, approvals, run timelines, automations, usage, and the default
+  local daemon URL.
+- Removed stale OpenClaw plugin validation hooks and the old bundled OpenClaw
+  plugin entry now that Libre Claw is the supported agent integration.
+
+### 🐛 Bug Fixes
+
+- Fixed demo-mode system info so the UI reports the current built application
+  version instead of the old hardcoded `0.1.0` value.
+- Hardened artifact title sanitization by decoding basic HTML entities and
+  stripping malformed or quoted HTML tags without eating safe plain-text title
+  content.
+
+### 🔒 Security & Dependencies
+
+- Refreshed 17 dependencies through Dependabot, including `axios`, `pdfjs-dist`,
+  `tar`, `electron`, `vite`, `i18next`, `lucide-react`,
+  `@tanstack/react-query`, `framer-motion`, `@playwright/test`,
+  TypeScript ESLint packages, `prettier`, `postcss`, and `autoprefixer`.
 
 ### 📚 Documentation
+
+- Added `docs/31-LIBRE_CLAW_INTEGRATION.md` with setup, architecture, route
+  mapping, run modes, approval behavior, automations, memory/tool notes, and
+  troubleshooting guidance.
+- Replaced the old OpenClaw integration documentation with the Libre Claw
+  integration guide.
+
+### ⚠️ Breaking Changes
+
+- The old OpenClaw integration path has been removed and replaced by Libre Claw.
+  Users who relied on the previous OpenClaw plugin/config should run the Libre
+  Claw daemon and configure Libre WebUI with `LIBRE_CLAW_BASE_URL` when the
+  daemon is not on `http://127.0.0.1:8766`.
 
 ## [0.11.0] - 2026-06-22
 
