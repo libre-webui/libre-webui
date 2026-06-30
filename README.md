@@ -62,7 +62,7 @@ Libre WebUI is a **self-hosted AI workspace** that connects to [Ollama](https://
 | 🔐  | **Auth & Signup Safety** | Local accounts, GitHub/Hugging Face OAuth, roles, and optional Turnstile  |
 | 🌍  | **25+ Languages**        | Full i18n coverage from Arabic to Vietnamese                              |
 | 🖥️  | **Desktop App**          | Electron builds for macOS, Windows, and Linux                             |
-| 🤖  | **AI Agent Support**     | OpenClaw sessions with memory, tools, and workspace access                |
+| 🤖  | **AI Agent Support**     | Libre Claw runs, approvals, tools, schedules, memory, and usage           |
 | 🏢  | **Self-Hosted Ops**      | Docker, Kubernetes, SQLite storage, encrypted credentials, and backups    |
 
 ---
@@ -215,41 +215,37 @@ Plugins support **multi-capability** (chat + TTS + image gen in one config), **p
 
 ---
 
-## 🤖 AI Agent Support (OpenClaw)
+## 🤖 AI Agent Support (Libre Claw)
 
-Libre WebUI supports **AI agents** via the [OpenClaw](https://openclaw.dev) plugin — turning your chat interface into a persistent agent session.
+Libre WebUI supports **AI agents** through
+[Libre Claw](https://github.com/kroonen-ai/libre-claw), a local agent daemon
+for durable runs, permissioned tools, memory, skills, schedules, Telegram, and
+provider routing.
 
 **What agents can do:**
 
-- 🧠 **Persistent memory** — agents remember across sessions
-- 🔧 **Tool use** — file operations, web search, browser work, and code execution
-- 🧰 **Workspace access** — route chat through the same agent workspace
-- 🔄 **Session routing** — pick a session key such as `main`, `work`, or `research`
-- 🧭 **Streaming events** — tool calls and assistant output stream back into chat
-- 🔌 **Plugin-powered** — configure via JSON, no code required
+- 🧠 **Persistent memory** — durable local memory, run archives, and project summaries
+- 🔧 **Tool use** — file operations, shell, git, browser work, HTTP, MCP, schedules, and web search
+- 🧰 **Workspace access** — run agent work in the configured local workspace
+- ✅ **Approvals** — review and approve tool calls from WebUI before side effects
+- 🧭 **Run timeline** — inspect assistant deltas, tool calls, tool results, errors, and artifacts
+- 📅 **Automations** — create, pause, resume, run, and delete Libre Claw schedules
+- 📊 **Usage** — inspect provider usage and fallback behavior
 
-```json
-{
-  "id": "openclaw-agent",
-  "name": "OpenClaw Agent",
-  "type": "completion",
-  "endpoint": "http://127.0.0.1:18789/v1/chat/completions",
-  "auth": {
-    "header": "Authorization",
-    "prefix": "Bearer ",
-    "key_env": "OPENCLAW_API_KEY"
-  },
-  "model_map": [
-    "anthropic/claude-opus-4-6",
-    "anthropic/claude-sonnet-4-20250514",
-    "anthropic/claude-haiku-3-5-20241022"
-  ]
-}
+Start Libre Claw locally:
+
+```bash
+libre-claw start
 ```
 
-> **Your agent, your workspace, your data.** Libre WebUI routes messages through the OpenClaw gateway while keeping the chat experience in the same self-hosted interface.
+Then open **Libre WebUI → Libre Claw**. The backend talks to
+`http://127.0.0.1:8766` by default, or to `LIBRE_CLAW_BASE_URL` when configured.
 
-📖 [OpenClaw integration docs →](./docs/31-OPENCLAW_INTEGRATION.md)
+> **Your agent, your workspace, your data.** Libre WebUI provides the browser
+> control surface while Libre Claw keeps the local agent runtime, safety model,
+> memory, tools, and schedules.
+
+📖 [Libre Claw integration docs →](./docs/31-LIBRE_CLAW_INTEGRATION.md)
 
 ---
 

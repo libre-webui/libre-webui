@@ -124,19 +124,3 @@ export function buildPluginAuthHeaders(
 
   return headers;
 }
-
-export function addOpenClawSessionHeader(
-  plugin: Plugin,
-  pluginVars: Record<string, string | number | boolean>,
-  headers: Record<string, string>
-): void {
-  if (plugin.id !== 'openclaw-agent') {
-    return;
-  }
-
-  const sessionKey = (pluginVars.session_key as string) || 'main';
-  const sessionMode = pluginVars.session_mode as boolean | undefined;
-  if (sessionMode !== false) {
-    headers['x-openclaw-session-key'] = sessionKey;
-  }
-}

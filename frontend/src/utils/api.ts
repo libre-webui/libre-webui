@@ -28,6 +28,16 @@ export type {
   ImageGenRequest,
   ImageGenResponse,
 } from './api/imageGenApi';
+export { libreClawApi } from './api/libreClawApi';
+export type {
+  LibreClawAutomation,
+  LibreClawEvent,
+  LibreClawPermissionResolution,
+  LibreClawRun,
+  LibreClawRunState,
+  LibreClawStartRunPayload,
+  LibreClawStatus,
+} from './api/libreClawApi';
 export { ollamaApi } from './api/modelApi';
 export { personaApi } from './api/personaApi';
 export { pluginApi } from './api/pluginApi';

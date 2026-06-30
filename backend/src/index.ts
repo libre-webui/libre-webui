@@ -60,6 +60,7 @@ import ttsRoutes from './routes/tts.js';
 import imageGenRoutes from './routes/imageGen.js';
 import embeddingsRoutes from './routes/embeddings.js';
 import huggingfaceHubRoutes from './routes/huggingfaceHub.js';
+import libreClawRoutes from './routes/libreClaw.js';
 import ollamaService from './services/ollamaService.js';
 import { GitHubOAuthService } from './services/simpleGitHubOAuth.js';
 import { HuggingFaceOAuthService } from './services/simpleHuggingFaceOAuth.js';
@@ -362,6 +363,18 @@ const imageGenRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Rate limiter for Libre Claw agent routes
+const libreClawRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // agent dashboards poll run/event state while active
+  message: {
+    success: false,
+    error: 'Too many Libre Claw requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // API routes
 app.use('/api/auth', authRateLimiter, optionalAuth, authRoutes);
 app.use('/api/users', usersRateLimiter, optionalAuth, usersRoutes);
@@ -380,6 +393,7 @@ app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);
 app.use('/api/tts', ttsRateLimiter, optionalAuth, ttsRoutes);
 app.use('/api/image-gen', imageGenRateLimiter, optionalAuth, imageGenRoutes);
 app.use('/api/huggingface-hub', huggingfaceHubRoutes);
+app.use('/api/libre-claw', libreClawRateLimiter, libreClawRoutes);
 
 // Serve frontend static files in production (for npx libre-webui)
 if (
