@@ -1285,140 +1285,140 @@
   },
   "libreClaw": {
     "title": "Libre Claw",
-    "subtitle": "Local agent runs, approvals, schedules, memory, tools, and usage.",
-    "dashboard": "Dashboard",
+    "subtitle": "Tác nhân cục bộ chạy, phê duyệt, lịch trình, bộ nhớ, công cụ và cách sử dụng.",
+    "dashboard": "Bảng điều khiển",
     "connection": {
-      "disconnectedTitle": "Libre Claw daemon is not connected",
-      "disconnectedDescription": "Start it locally with <command>libre-claw start</command> or set <env>LIBRE_CLAW_BASE_URL</env> in the backend environment."
+      "disconnectedTitle": "Daemon Libre Claw chưa được kết nối",
+      "disconnectedDescription": "Bắt đầu cục bộ với <command>libre-claw start</command> hoặc đặt <env>LIBRE_CLAW_BASE_URL</env> trong môi trường phụ trợ."
     },
     "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "activeRuns": "{{count}} active",
-      "activeRuns_plural": "{{count}} active"
+      "connected": "Đã kết nối",
+      "disconnected": "Đã ngắt kết nối",
+      "activeRuns": "{{count}} hoạt động",
+      "activeRuns_plural": "{{count}} hoạt động"
     },
     "states": {
-      "queued": "Queued",
-      "running": "Running",
-      "blocked": "Blocked",
-      "done": "Done",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
+      "queued": "Đã xếp hàng",
+      "running": "Đang chạy",
+      "blocked": "Bị chặn",
+      "done": "Xong",
+      "failed": "thất bại",
+      "cancelled": "Đã hủy"
     },
     "startRun": {
-      "title": "Start Agent Run",
-      "placeholder": "Ask Libre Claw to inspect a repo, fix a bug, run a review, schedule a report...",
-      "chatRun": "Chat run",
-      "goalMode": "Goal mode",
-      "providerOverride": "Provider override",
-      "modelOverride": "Model override",
-      "run": "Run"
+      "title": "Bắt đầu phiên chạy tác tử",
+      "placeholder": "Yêu cầu Libre Claw kiểm tra kho lưu trữ, sửa lỗi, chạy đánh giá, lên lịch báo cáo...",
+      "chatRun": "Chạy trò chuyện",
+      "goalMode": "Chế độ mục tiêu",
+      "providerOverride": "Ghi đè nhà cung cấp",
+      "modelOverride": "Ghi đè mô hình",
+      "run": "Chạy"
     },
     "modelRoute": {
-      "title": "Model Route",
-      "providerPlaceholder": "provider",
-      "modelPlaceholder": "model",
-      "persistGlobal": "Persist to Libre Claw global config",
-      "saveModel": "Save model",
-      "theme": "Libre Claw theme",
-      "saveTheme": "Save theme"
+      "title": "Tuyến đường mẫu",
+      "providerPlaceholder": "nhà cung cấp",
+      "modelPlaceholder": "người mẫu",
+      "persistGlobal": "Kiên trì với cấu hình chung Libre Claw",
+      "saveModel": "Lưu mô hình",
+      "theme": "Chủ đề Libre Claw",
+      "saveTheme": "Lưu chủ đề"
     },
     "runs": {
-      "title": "Runs",
-      "empty": "No Libre Claw runs yet."
+      "title": "Phiên chạy",
+      "empty": "Chưa có phiên chạy Libre Claw nào."
     },
     "timeline": {
-      "title": "Run Timeline",
-      "empty": "Select a run to inspect its events.",
-      "streaming": "Streaming...",
-      "assistantResponse": "Assistant response",
-      "resultOk": "ok",
-      "resultError": "error",
+      "title": "Dòng thời gian phiên chạy",
+      "empty": "Chọn một lần chạy để kiểm tra các sự kiện của nó.",
+      "streaming": "Đang truyền phát...",
+      "assistantResponse": "Phản hồi của trợ lý",
+      "resultOk": "được",
+      "resultError": "lỗi",
       "labels": {
-        "userMessage": "User message",
-        "toolCall": "Tool call",
-        "toolResult": "Tool result",
-        "approvalRequest": "Approval request",
-        "approvalResponse": "Approval response",
-        "runStarted": "Run started",
-        "runFinished": "Run finished",
-        "usage": "Usage",
-        "error": "Error"
+        "userMessage": "Tin nhắn người dùng",
+        "toolCall": "Cuộc gọi công cụ",
+        "toolResult": "Kết quả công cụ",
+        "approvalRequest": "Yêu cầu phê duyệt",
+        "approvalResponse": "Phản hồi phê duyệt",
+        "runStarted": "Phiên chạy đã bắt đầu",
+        "runFinished": "Phiên chạy đã hoàn tất",
+        "usage": "Cách sử dụng",
+        "error": "Lỗi"
       }
     },
     "approvals": {
-      "needed": "Approval needed",
-      "allowOnce": "Allow once",
-      "alwaysAllowTool": "Always allow tool",
-      "deny": "Deny",
-      "toolApprovalRequested": "Tool approval requested"
+      "needed": "Cần phê duyệt",
+      "allowOnce": "Cho phép một lần",
+      "alwaysAllowTool": "Luôn cho phép công cụ",
+      "deny": "Từ chối",
+      "toolApprovalRequested": "Đã yêu cầu phê duyệt công cụ"
     },
     "automations": {
-      "title": "Automations",
-      "namePlaceholder": "Name",
+      "title": "Tự động hóa",
+      "namePlaceholder": "Tên",
       "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automation prompt",
-      "create": "Create",
-      "empty": "No scheduled Libre Claw automations.",
-      "runNow": "Run now",
-      "pause": "Pause",
-      "resume": "Resume",
+      "promptPlaceholder": "Lời nhắc tự động hóa",
+      "create": "Tạo",
+      "empty": "Không có tự động hóa Libre Claw theo lịch trình.",
+      "runNow": "Chạy ngay",
+      "pause": "Tạm dừng",
+      "resume": "Tiếp tục",
       "routes": {
-        "report": "Report",
+        "report": "Báo cáo",
         "telegram": "Telegram"
       },
       "status": {
-        "active": "Active",
-        "paused": "Paused"
+        "active": "Đang hoạt động",
+        "paused": "Đã tạm dừng"
       }
     },
     "usageFallback": {
-      "title": "Usage And Fallback",
-      "usage": "Usage",
-      "fallbackRoute": "Fallback Route",
-      "noUsage": "No usage records yet."
+      "title": "Cách sử dụng và dự phòng",
+      "usage": "Cách sử dụng",
+      "fallbackRoute": "Tuyến đường dự phòng",
+      "noUsage": "Chưa có hồ sơ sử dụng."
     },
     "metrics": {
-      "provider": "Provider",
-      "model": "Model",
-      "input": "Input",
-      "output": "Output",
-      "cached": "Cached",
-      "reasoning": "Reasoning",
-      "cost": "Cost",
-      "tool": "Tool",
-      "resolution": "Resolution",
-      "state": "State",
-      "stopReason": "Stop reason",
-      "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} tokens"
+      "provider": "nhà cung cấp",
+      "model": "người mẫu",
+      "input": "đầu vào",
+      "output": "đầu ra",
+      "cached": "Đã lưu vào bộ nhớ đệm",
+      "reasoning": "Lý luận",
+      "cost": "Chi phí",
+      "tool": "Công cụ",
+      "resolution": "Độ phân giải",
+      "state": "Trạng thái",
+      "stopReason": "Lý do dừng",
+      "tokens": "{{formatted}} mã thông báo",
+      "tokens_plural": "{{formatted}} mã thông báo"
     },
     "fallbacks": {
-      "tool": "tool",
-      "unknown": "unknown",
-      "resolved": "resolved",
-      "unknownError": "Unknown error"
+      "tool": "công cụ",
+      "unknown": "không rõ",
+      "resolved": "đã giải quyết",
+      "unknownError": "Lỗi không xác định"
     },
     "toasts": {
-      "loadStatusFailed": "Could not load Libre Claw status",
-      "enterTask": "Enter a task for Libre Claw",
-      "runStarted": "Libre Claw run started",
-      "startRunFailed": "Could not start Libre Claw run",
-      "runCancelled": "Run cancelled",
-      "cancelRunFailed": "Could not cancel run",
-      "approved": "Approved",
-      "denied": "Denied",
-      "resolvePermissionFailed": "Could not resolve permission",
-      "providerModelRequired": "Provider and model are required",
-      "modelUpdated": "Libre Claw model updated",
-      "updateModelFailed": "Could not update model",
-      "themeUpdated": "Libre Claw theme updated",
-      "updateThemeFailed": "Could not update theme",
-      "automationRequired": "Automation name, schedule, and prompt are required",
-      "automationCreated": "Automation created",
-      "createAutomationFailed": "Could not create automation",
-      "automationUpdated": "Automation updated",
-      "updateAutomationFailed": "Could not update automation"
+      "loadStatusFailed": "Không thể tải trạng thái Libre Claw",
+      "enterTask": "Nhập nhiệm vụ cho Libre Claw",
+      "runStarted": "Phiên chạy Libre Claw đã bắt đầu",
+      "startRunFailed": "Không thể bắt đầu phiên chạy Libre Claw",
+      "runCancelled": "Phiên chạy đã bị hủy",
+      "cancelRunFailed": "Không thể hủy phiên chạy",
+      "approved": "Đã được phê duyệt",
+      "denied": "Bị từ chối",
+      "resolvePermissionFailed": "Không thể giải quyết quyền",
+      "providerModelRequired": "Nhà cung cấp và mô hình là bắt buộc",
+      "modelUpdated": "Đã cập nhật mô hình Libre Claw",
+      "updateModelFailed": "Không thể cập nhật mô hình",
+      "themeUpdated": "Đã cập nhật chủ đề Libre Claw",
+      "updateThemeFailed": "Không thể cập nhật chủ đề",
+      "automationRequired": "Bắt buộc phải có tên, lịch trình và lời nhắc tự động hóa",
+      "automationCreated": "Đã tạo tự động hóa",
+      "createAutomationFailed": "Không thể tạo tự động hóa",
+      "automationUpdated": "Đã cập nhật tự động hóa",
+      "updateAutomationFailed": "Không thể cập nhật tự động hóa"
     }
   }
 }

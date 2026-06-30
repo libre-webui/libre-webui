@@ -1285,140 +1285,140 @@
   },
   "libreClaw": {
     "title": "Libre Claw",
-    "subtitle": "Local agent runs, approvals, schedules, memory, tools, and usage.",
-    "dashboard": "Dashboard",
+    "subtitle": "स्थानीय एजेंट चलाता है, अनुमोदन, शेड्यूल, मेमोरी, उपकरण और उपयोग।",
+    "dashboard": "डैशबोर्ड",
     "connection": {
-      "disconnectedTitle": "Libre Claw daemon is not connected",
-      "disconnectedDescription": "Start it locally with <command>libre-claw start</command> or set <env>LIBRE_CLAW_BASE_URL</env> in the backend environment."
+      "disconnectedTitle": "Libre Claw डेमॉन कनेक्ट नहीं है",
+      "disconnectedDescription": "इसे स्थानीय रूप से <command>libre-claw start</command> से प्रारंभ करें या बैकएंड वातावरण में <env>LIBRE_CLAW_BASE_URL</env> सेट करें।"
     },
     "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "activeRuns": "{{count}} active",
-      "activeRuns_plural": "{{count}} active"
+      "connected": "जुड़ा हुआ",
+      "disconnected": "विच्छेदित",
+      "activeRuns": "{{count}} सक्रिय",
+      "activeRuns_plural": "{{count}} सक्रिय"
     },
     "states": {
-      "queued": "Queued",
-      "running": "Running",
-      "blocked": "Blocked",
-      "done": "Done",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
+      "queued": "कतारबद्ध",
+      "running": "चल रहा है",
+      "blocked": "अवरुद्ध",
+      "done": "हो गया",
+      "failed": "असफल",
+      "cancelled": "रद्द कर दिया गया"
     },
     "startRun": {
-      "title": "Start Agent Run",
-      "placeholder": "Ask Libre Claw to inspect a repo, fix a bug, run a review, schedule a report...",
-      "chatRun": "Chat run",
-      "goalMode": "Goal mode",
-      "providerOverride": "Provider override",
-      "modelOverride": "Model override",
-      "run": "Run"
+      "title": "एजेंट रन शुरू करें",
+      "placeholder": "Libre Claw को रेपो का निरीक्षण करने, बग ठीक करने, समीक्षा चलाने, रिपोर्ट शेड्यूल करने के लिए कहें...",
+      "chatRun": "चैट चलाएँ",
+      "goalMode": "लक्ष्य मोड",
+      "providerOverride": "प्रदाता ओवरराइड",
+      "modelOverride": "मॉडल ओवरराइड",
+      "run": "चलाएँ"
     },
     "modelRoute": {
-      "title": "Model Route",
-      "providerPlaceholder": "provider",
-      "modelPlaceholder": "model",
-      "persistGlobal": "Persist to Libre Claw global config",
-      "saveModel": "Save model",
-      "theme": "Libre Claw theme",
-      "saveTheme": "Save theme"
+      "title": "मॉडल मार्ग",
+      "providerPlaceholder": "प्रदाता",
+      "modelPlaceholder": "मॉडल",
+      "persistGlobal": "Libre Claw वैश्विक कॉन्फ़िगरेशन पर कायम रहें",
+      "saveModel": "मॉडल सहेजें",
+      "theme": "Libre Claw थीम",
+      "saveTheme": "थीम सहेजें"
     },
     "runs": {
-      "title": "Runs",
-      "empty": "No Libre Claw runs yet."
+      "title": "रन",
+      "empty": "अभी तक कोई Libre Claw रन नहीं।"
     },
     "timeline": {
-      "title": "Run Timeline",
-      "empty": "Select a run to inspect its events.",
-      "streaming": "Streaming...",
-      "assistantResponse": "Assistant response",
-      "resultOk": "ok",
-      "resultError": "error",
+      "title": "रन टाइमलाइन",
+      "empty": "किसी रन की घटनाओं का निरीक्षण करने के लिए उसका चयन करें।",
+      "streaming": "स्ट्रीमिंग...",
+      "assistantResponse": "सहायक प्रतिक्रिया",
+      "resultOk": "ठीक है",
+      "resultError": "त्रुटि",
       "labels": {
-        "userMessage": "User message",
-        "toolCall": "Tool call",
-        "toolResult": "Tool result",
-        "approvalRequest": "Approval request",
-        "approvalResponse": "Approval response",
-        "runStarted": "Run started",
-        "runFinished": "Run finished",
-        "usage": "Usage",
-        "error": "Error"
+        "userMessage": "उपयोगकर्ता संदेश",
+        "toolCall": "टूल कॉल",
+        "toolResult": "उपकरण परिणाम",
+        "approvalRequest": "अनुमोदन अनुरोध",
+        "approvalResponse": "अनुमोदन प्रतिक्रिया",
+        "runStarted": "रन शुरू हुआ",
+        "runFinished": "रन समाप्त हुआ",
+        "usage": "उपयोग",
+        "error": "त्रुटि"
       }
     },
     "approvals": {
-      "needed": "Approval needed",
-      "allowOnce": "Allow once",
-      "alwaysAllowTool": "Always allow tool",
-      "deny": "Deny",
-      "toolApprovalRequested": "Tool approval requested"
+      "needed": "अनुमोदन की आवश्यकता है",
+      "allowOnce": "एक बार अनुमति दें",
+      "alwaysAllowTool": "हमेशा उपकरण की अनुमति दें",
+      "deny": "अस्वीकार करें",
+      "toolApprovalRequested": "टूल अनुमोदन का अनुरोध किया गया"
     },
     "automations": {
-      "title": "Automations",
-      "namePlaceholder": "Name",
+      "title": "स्वचालन",
+      "namePlaceholder": "नाम",
       "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automation prompt",
-      "create": "Create",
-      "empty": "No scheduled Libre Claw automations.",
-      "runNow": "Run now",
-      "pause": "Pause",
-      "resume": "Resume",
+      "promptPlaceholder": "स्वचालन संकेत",
+      "create": "बनाएँ",
+      "empty": "कोई निर्धारित Libre Claw स्वचालन नहीं.",
+      "runNow": "अभी चलाएँ",
+      "pause": "विराम",
+      "resume": "फिर शुरू करें",
       "routes": {
-        "report": "Report",
+        "report": "रिपोर्ट करें",
         "telegram": "Telegram"
       },
       "status": {
-        "active": "Active",
-        "paused": "Paused"
+        "active": "सक्रिय",
+        "paused": "रुका हुआ"
       }
     },
     "usageFallback": {
-      "title": "Usage And Fallback",
-      "usage": "Usage",
-      "fallbackRoute": "Fallback Route",
-      "noUsage": "No usage records yet."
+      "title": "उपयोग और फ़ॉलबैक",
+      "usage": "उपयोग",
+      "fallbackRoute": "फ़ॉलबैक रूट",
+      "noUsage": "अभी तक कोई उपयोग रिकॉर्ड नहीं है."
     },
     "metrics": {
-      "provider": "Provider",
-      "model": "Model",
-      "input": "Input",
-      "output": "Output",
-      "cached": "Cached",
-      "reasoning": "Reasoning",
-      "cost": "Cost",
-      "tool": "Tool",
-      "resolution": "Resolution",
-      "state": "State",
-      "stopReason": "Stop reason",
-      "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} tokens"
+      "provider": "प्रदाता",
+      "model": "मॉडल",
+      "input": "इनपुट",
+      "output": "आउटपुट",
+      "cached": "कैश्ड",
+      "reasoning": "तर्क",
+      "cost": "लागत",
+      "tool": "औज़ार",
+      "resolution": "संकल्प",
+      "state": "स्थिति",
+      "stopReason": "रुकने का कारण",
+      "tokens": "{{formatted}} टोकन",
+      "tokens_plural": "{{formatted}} टोकन"
     },
     "fallbacks": {
-      "tool": "tool",
-      "unknown": "unknown",
-      "resolved": "resolved",
-      "unknownError": "Unknown error"
+      "tool": "औज़ार",
+      "unknown": "अज्ञात",
+      "resolved": "समाधान हो गया",
+      "unknownError": "अज्ञात त्रुटि"
     },
     "toasts": {
-      "loadStatusFailed": "Could not load Libre Claw status",
-      "enterTask": "Enter a task for Libre Claw",
-      "runStarted": "Libre Claw run started",
-      "startRunFailed": "Could not start Libre Claw run",
-      "runCancelled": "Run cancelled",
-      "cancelRunFailed": "Could not cancel run",
-      "approved": "Approved",
-      "denied": "Denied",
-      "resolvePermissionFailed": "Could not resolve permission",
-      "providerModelRequired": "Provider and model are required",
-      "modelUpdated": "Libre Claw model updated",
-      "updateModelFailed": "Could not update model",
-      "themeUpdated": "Libre Claw theme updated",
-      "updateThemeFailed": "Could not update theme",
-      "automationRequired": "Automation name, schedule, and prompt are required",
-      "automationCreated": "Automation created",
-      "createAutomationFailed": "Could not create automation",
-      "automationUpdated": "Automation updated",
-      "updateAutomationFailed": "Could not update automation"
+      "loadStatusFailed": "Libre Claw स्थिति लोड नहीं हो सकी",
+      "enterTask": "Libre Claw के लिए एक कार्य दर्ज करें",
+      "runStarted": "Libre Claw रन शुरू हुआ",
+      "startRunFailed": "Libre Claw रन शुरू नहीं हो सका",
+      "runCancelled": "रन रद्द किया गया",
+      "cancelRunFailed": "रन रद्द नहीं किया जा सका",
+      "approved": "स्वीकृत",
+      "denied": "इनकार किया",
+      "resolvePermissionFailed": "अनुमति का समाधान नहीं किया जा सका",
+      "providerModelRequired": "प्रदाता और मॉडल की आवश्यकता है",
+      "modelUpdated": "Libre Claw मॉडल अपडेट किया गया",
+      "updateModelFailed": "मॉडल अद्यतन नहीं किया जा सका",
+      "themeUpdated": "Libre Claw थीम अपडेट की गई",
+      "updateThemeFailed": "थीम अपडेट नहीं किया जा सका",
+      "automationRequired": "स्वचालन नाम, शेड्यूल और संकेत आवश्यक हैं",
+      "automationCreated": "स्वचालन बनाया गया",
+      "createAutomationFailed": "स्वचालन नहीं बनाया जा सका",
+      "automationUpdated": "स्वचालन अद्यतन किया गया",
+      "updateAutomationFailed": "स्वचालन अद्यतन नहीं किया जा सका"
     }
   }
 }

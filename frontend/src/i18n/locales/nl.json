@@ -1285,140 +1285,140 @@
   },
   "libreClaw": {
     "title": "Libre Claw",
-    "subtitle": "Local agent runs, approvals, schedules, memory, tools, and usage.",
+    "subtitle": "Lokale agentuitvoeringen, goedkeuringen, planningen, geheugen, tools en gebruik.",
     "dashboard": "Dashboard",
     "connection": {
-      "disconnectedTitle": "Libre Claw daemon is not connected",
-      "disconnectedDescription": "Start it locally with <command>libre-claw start</command> or set <env>LIBRE_CLAW_BASE_URL</env> in the backend environment."
+      "disconnectedTitle": "Libre Claw-daemon is niet verbonden",
+      "disconnectedDescription": "Start het lokaal met <command>libre-claw start</command> of stel <env>LIBRE_CLAW_BASE_URL</env> in de backend-omgeving in."
     },
     "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "activeRuns": "{{count}} active",
-      "activeRuns_plural": "{{count}} active"
+      "connected": "Verbonden",
+      "disconnected": "Verbinding verbroken",
+      "activeRuns": "{{count}} actief",
+      "activeRuns_plural": "{{count}} actief"
     },
     "states": {
-      "queued": "Queued",
-      "running": "Running",
-      "blocked": "Blocked",
-      "done": "Done",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
+      "queued": "In de wachtrij",
+      "running": "Wordt uitgevoerd",
+      "blocked": "Geblokkeerd",
+      "done": "Klaar",
+      "failed": "Mislukt",
+      "cancelled": "Geannuleerd"
     },
     "startRun": {
-      "title": "Start Agent Run",
-      "placeholder": "Ask Libre Claw to inspect a repo, fix a bug, run a review, schedule a report...",
-      "chatRun": "Chat run",
-      "goalMode": "Goal mode",
-      "providerOverride": "Provider override",
-      "modelOverride": "Model override",
-      "run": "Run"
+      "title": "Agentrun starten",
+      "placeholder": "Vraag Libre Claw om een opslagplaats te inspecteren, een bug op te lossen, een beoordeling uit te voeren, een rapport in te plannen...",
+      "chatRun": "Chat uitvoeren",
+      "goalMode": "Doelmodus",
+      "providerOverride": "Provider overschrijven",
+      "modelOverride": "Modeloverschrijving",
+      "run": "Uitvoeren"
     },
     "modelRoute": {
-      "title": "Model Route",
-      "providerPlaceholder": "provider",
+      "title": "Modelroute",
+      "providerPlaceholder": "aanbieder",
       "modelPlaceholder": "model",
-      "persistGlobal": "Persist to Libre Claw global config",
-      "saveModel": "Save model",
-      "theme": "Libre Claw theme",
-      "saveTheme": "Save theme"
+      "persistGlobal": "Ga door met Libre Claw algemene configuratie",
+      "saveModel": "Model opslaan",
+      "theme": "Libre Claw-thema",
+      "saveTheme": "Thema opslaan"
     },
     "runs": {
-      "title": "Runs",
-      "empty": "No Libre Claw runs yet."
+      "title": "Uitvoeringen",
+      "empty": "Nog geen Libre Claw-runs."
     },
     "timeline": {
-      "title": "Run Timeline",
-      "empty": "Select a run to inspect its events.",
-      "streaming": "Streaming...",
-      "assistantResponse": "Assistant response",
-      "resultOk": "ok",
-      "resultError": "error",
+      "title": "Run-tijdlijn",
+      "empty": "Selecteer een run om de gebeurtenissen ervan te inspecteren.",
+      "streaming": "Streamen...",
+      "assistantResponse": "Reactie van de assistent",
+      "resultOk": "oké",
+      "resultError": "fout",
       "labels": {
-        "userMessage": "User message",
-        "toolCall": "Tool call",
-        "toolResult": "Tool result",
-        "approvalRequest": "Approval request",
-        "approvalResponse": "Approval response",
-        "runStarted": "Run started",
-        "runFinished": "Run finished",
-        "usage": "Usage",
-        "error": "Error"
+        "userMessage": "Gebruikersbericht",
+        "toolCall": "Gereedschapsoproep",
+        "toolResult": "Gereedschap resultaat",
+        "approvalRequest": "Goedkeuringsverzoek",
+        "approvalResponse": "Goedkeuringsreactie",
+        "runStarted": "Run gestart",
+        "runFinished": "Run voltooid",
+        "usage": "Gebruik",
+        "error": "Fout"
       }
     },
     "approvals": {
-      "needed": "Approval needed",
-      "allowOnce": "Allow once",
-      "alwaysAllowTool": "Always allow tool",
-      "deny": "Deny",
-      "toolApprovalRequested": "Tool approval requested"
+      "needed": "Goedkeuring nodig",
+      "allowOnce": "Eén keer toestaan",
+      "alwaysAllowTool": "Gereedschap altijd toestaan",
+      "deny": "Weigeren",
+      "toolApprovalRequested": "Gereedschapsgoedkeuring aangevraagd"
     },
     "automations": {
-      "title": "Automations",
-      "namePlaceholder": "Name",
+      "title": "Automatiseringen",
+      "namePlaceholder": "Naam",
       "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automation prompt",
-      "create": "Create",
-      "empty": "No scheduled Libre Claw automations.",
-      "runNow": "Run now",
-      "pause": "Pause",
-      "resume": "Resume",
+      "promptPlaceholder": "Automatiseringsprompt",
+      "create": "Creëer",
+      "empty": "Geen geplande Libre Claw-automatiseringen.",
+      "runNow": "Nu uitvoeren",
+      "pause": "Pauze",
+      "resume": "Hervatten",
       "routes": {
-        "report": "Report",
+        "report": "Rapporteer",
         "telegram": "Telegram"
       },
       "status": {
-        "active": "Active",
-        "paused": "Paused"
+        "active": "Actief",
+        "paused": "Gepauzeerd"
       }
     },
     "usageFallback": {
-      "title": "Usage And Fallback",
-      "usage": "Usage",
-      "fallbackRoute": "Fallback Route",
-      "noUsage": "No usage records yet."
+      "title": "Gebruik en terugval",
+      "usage": "Gebruik",
+      "fallbackRoute": "Terugvalroute",
+      "noUsage": "Nog geen gebruiksgegevens."
     },
     "metrics": {
-      "provider": "Provider",
+      "provider": "Aanbieder",
       "model": "Model",
-      "input": "Input",
-      "output": "Output",
-      "cached": "Cached",
-      "reasoning": "Reasoning",
-      "cost": "Cost",
-      "tool": "Tool",
-      "resolution": "Resolution",
-      "state": "State",
-      "stopReason": "Stop reason",
-      "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} tokens"
+      "input": "Invoer",
+      "output": "Uitvoer",
+      "cached": "In cache opgeslagen",
+      "reasoning": "Redenering",
+      "cost": "Kosten",
+      "tool": "Gereedschap",
+      "resolution": "Resolutie",
+      "state": "Status",
+      "stopReason": "Stopreden",
+      "tokens": "{{formatted}}-token",
+      "tokens_plural": "{{formatted}}-tokens"
     },
     "fallbacks": {
-      "tool": "tool",
-      "unknown": "unknown",
-      "resolved": "resolved",
-      "unknownError": "Unknown error"
+      "tool": "gereedschap",
+      "unknown": "onbekend",
+      "resolved": "opgelost",
+      "unknownError": "Onbekende fout"
     },
     "toasts": {
-      "loadStatusFailed": "Could not load Libre Claw status",
-      "enterTask": "Enter a task for Libre Claw",
-      "runStarted": "Libre Claw run started",
-      "startRunFailed": "Could not start Libre Claw run",
-      "runCancelled": "Run cancelled",
-      "cancelRunFailed": "Could not cancel run",
-      "approved": "Approved",
-      "denied": "Denied",
-      "resolvePermissionFailed": "Could not resolve permission",
-      "providerModelRequired": "Provider and model are required",
-      "modelUpdated": "Libre Claw model updated",
-      "updateModelFailed": "Could not update model",
-      "themeUpdated": "Libre Claw theme updated",
-      "updateThemeFailed": "Could not update theme",
-      "automationRequired": "Automation name, schedule, and prompt are required",
-      "automationCreated": "Automation created",
-      "createAutomationFailed": "Could not create automation",
-      "automationUpdated": "Automation updated",
-      "updateAutomationFailed": "Could not update automation"
+      "loadStatusFailed": "Kon de Libre Claw-status niet laden",
+      "enterTask": "Voer een taak in voor Libre Claw",
+      "runStarted": "Libre Claw-run gestart",
+      "startRunFailed": "Kon Libre Claw-run niet starten",
+      "runCancelled": "Run geannuleerd",
+      "cancelRunFailed": "Kon run niet annuleren",
+      "approved": "Goedgekeurd",
+      "denied": "Geweigerd",
+      "resolvePermissionFailed": "Kan toestemming niet oplossen",
+      "providerModelRequired": "Aanbieder en model zijn vereist",
+      "modelUpdated": "Libre Claw-model bijgewerkt",
+      "updateModelFailed": "Kan het model niet updaten",
+      "themeUpdated": "Libre Claw-thema bijgewerkt",
+      "updateThemeFailed": "Kan het thema niet updaten",
+      "automationRequired": "Naam, planning en prompt van de automatisering zijn vereist",
+      "automationCreated": "Automatisering gecreëerd",
+      "createAutomationFailed": "Kan automatisering niet creëren",
+      "automationUpdated": "Automatisering bijgewerkt",
+      "updateAutomationFailed": "Kan de automatisering niet updaten"
     }
   }
 }

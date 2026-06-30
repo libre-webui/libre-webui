@@ -1285,140 +1285,140 @@
   },
   "libreClaw": {
     "title": "Libre Claw",
-    "subtitle": "Local agent runs, approvals, schedules, memory, tools, and usage.",
-    "dashboard": "Dashboard",
+    "subtitle": "ローカル エージェントの実行、承認、スケジュール、メモリ、ツール、および使用状況。",
+    "dashboard": "ダッシュボード",
     "connection": {
-      "disconnectedTitle": "Libre Claw daemon is not connected",
-      "disconnectedDescription": "Start it locally with <command>libre-claw start</command> or set <env>LIBRE_CLAW_BASE_URL</env> in the backend environment."
+      "disconnectedTitle": "Libre Claw デーモンが接続されていません",
+      "disconnectedDescription": "<command>libre-claw start</command> を使用してローカルで開始するか、バックエンド環境で <env>LIBRE_CLAW_BASE_URL</env> を設定します。"
     },
     "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "activeRuns": "{{count}} active",
-      "activeRuns_plural": "{{count}} active"
+      "connected": "接続済み",
+      "disconnected": "切断されました",
+      "activeRuns": "{{count}} アクティブ",
+      "activeRuns_plural": "{{count}} アクティブ"
     },
     "states": {
-      "queued": "Queued",
-      "running": "Running",
-      "blocked": "Blocked",
-      "done": "Done",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
+      "queued": "キューに入れられました",
+      "running": "実行中",
+      "blocked": "ブロックされました",
+      "done": "完了",
+      "failed": "失敗しました",
+      "cancelled": "キャンセルされました"
     },
     "startRun": {
-      "title": "Start Agent Run",
-      "placeholder": "Ask Libre Claw to inspect a repo, fix a bug, run a review, schedule a report...",
-      "chatRun": "Chat run",
-      "goalMode": "Goal mode",
-      "providerOverride": "Provider override",
-      "modelOverride": "Model override",
-      "run": "Run"
+      "title": "エージェント実行を開始",
+      "placeholder": "Libre Claw にリポジトリの検査、バグの修正、レビューの実行、レポートのスケジュールを依頼してください...",
+      "chatRun": "チャットラン",
+      "goalMode": "ゴールモード",
+      "providerOverride": "プロバイダーのオーバーライド",
+      "modelOverride": "モデルオーバーライド",
+      "run": "実行"
     },
     "modelRoute": {
-      "title": "Model Route",
-      "providerPlaceholder": "provider",
-      "modelPlaceholder": "model",
-      "persistGlobal": "Persist to Libre Claw global config",
-      "saveModel": "Save model",
-      "theme": "Libre Claw theme",
-      "saveTheme": "Save theme"
+      "title": "モデルルート",
+      "providerPlaceholder": "プロバイダー",
+      "modelPlaceholder": "モデル",
+      "persistGlobal": "Libre Claw グローバル構成を保持する",
+      "saveModel": "モデルの保存",
+      "theme": "Libre Claw テーマ",
+      "saveTheme": "テーマの保存"
     },
     "runs": {
-      "title": "Runs",
-      "empty": "No Libre Claw runs yet."
+      "title": "実行",
+      "empty": "Libre Claw の実行はまだありません。"
     },
     "timeline": {
-      "title": "Run Timeline",
-      "empty": "Select a run to inspect its events.",
-      "streaming": "Streaming...",
-      "assistantResponse": "Assistant response",
-      "resultOk": "ok",
-      "resultError": "error",
+      "title": "実行タイムライン",
+      "empty": "実行を選択してそのイベントを検査します。",
+      "streaming": "ストリーミング中...",
+      "assistantResponse": "アシスタントの応答",
+      "resultOk": "わかりました",
+      "resultError": "エラー",
       "labels": {
-        "userMessage": "User message",
-        "toolCall": "Tool call",
-        "toolResult": "Tool result",
-        "approvalRequest": "Approval request",
-        "approvalResponse": "Approval response",
-        "runStarted": "Run started",
-        "runFinished": "Run finished",
-        "usage": "Usage",
-        "error": "Error"
+        "userMessage": "ユーザーメッセージ",
+        "toolCall": "ツール呼び出し",
+        "toolResult": "ツールの結果",
+        "approvalRequest": "承認リクエスト",
+        "approvalResponse": "承認応答",
+        "runStarted": "実行開始",
+        "runFinished": "実行完了",
+        "usage": "使用法",
+        "error": "エラー"
       }
     },
     "approvals": {
-      "needed": "Approval needed",
-      "allowOnce": "Allow once",
-      "alwaysAllowTool": "Always allow tool",
-      "deny": "Deny",
-      "toolApprovalRequested": "Tool approval requested"
+      "needed": "承認が必要です",
+      "allowOnce": "一度許可する",
+      "alwaysAllowTool": "ツールを常に許可する",
+      "deny": "拒否",
+      "toolApprovalRequested": "ツールの承認が要求されました"
     },
     "automations": {
-      "title": "Automations",
-      "namePlaceholder": "Name",
+      "title": "自動化",
+      "namePlaceholder": "名前",
       "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automation prompt",
-      "create": "Create",
-      "empty": "No scheduled Libre Claw automations.",
-      "runNow": "Run now",
-      "pause": "Pause",
-      "resume": "Resume",
+      "promptPlaceholder": "自動化プロンプト",
+      "create": "作成",
+      "empty": "スケジュールされたLibre Claw 自動化はありません。",
+      "runNow": "今すぐ実行",
+      "pause": "一時停止",
+      "resume": "再開",
       "routes": {
-        "report": "Report",
+        "report": "レポート",
         "telegram": "Telegram"
       },
       "status": {
-        "active": "Active",
-        "paused": "Paused"
+        "active": "アクティブ",
+        "paused": "一時停止中"
       }
     },
     "usageFallback": {
-      "title": "Usage And Fallback",
-      "usage": "Usage",
-      "fallbackRoute": "Fallback Route",
-      "noUsage": "No usage records yet."
+      "title": "使用法とフォールバック",
+      "usage": "使用法",
+      "fallbackRoute": "フォールバックルート",
+      "noUsage": "まだ使用実績はありません。"
     },
     "metrics": {
-      "provider": "Provider",
-      "model": "Model",
-      "input": "Input",
-      "output": "Output",
-      "cached": "Cached",
-      "reasoning": "Reasoning",
-      "cost": "Cost",
-      "tool": "Tool",
-      "resolution": "Resolution",
-      "state": "State",
-      "stopReason": "Stop reason",
-      "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} tokens"
+      "provider": "プロバイダー",
+      "model": "モデル",
+      "input": "入力",
+      "output": "出力",
+      "cached": "キャッシュされた",
+      "reasoning": "推論",
+      "cost": "コスト",
+      "tool": "ツール",
+      "resolution": "解像度",
+      "state": "状態",
+      "stopReason": "停止理由",
+      "tokens": "{{formatted}} トークン",
+      "tokens_plural": "{{formatted}} トークン"
     },
     "fallbacks": {
-      "tool": "tool",
-      "unknown": "unknown",
-      "resolved": "resolved",
-      "unknownError": "Unknown error"
+      "tool": "ツール",
+      "unknown": "不明",
+      "resolved": "解決済み",
+      "unknownError": "不明なエラー"
     },
     "toasts": {
-      "loadStatusFailed": "Could not load Libre Claw status",
-      "enterTask": "Enter a task for Libre Claw",
-      "runStarted": "Libre Claw run started",
-      "startRunFailed": "Could not start Libre Claw run",
-      "runCancelled": "Run cancelled",
-      "cancelRunFailed": "Could not cancel run",
-      "approved": "Approved",
-      "denied": "Denied",
-      "resolvePermissionFailed": "Could not resolve permission",
-      "providerModelRequired": "Provider and model are required",
-      "modelUpdated": "Libre Claw model updated",
-      "updateModelFailed": "Could not update model",
-      "themeUpdated": "Libre Claw theme updated",
-      "updateThemeFailed": "Could not update theme",
-      "automationRequired": "Automation name, schedule, and prompt are required",
-      "automationCreated": "Automation created",
-      "createAutomationFailed": "Could not create automation",
-      "automationUpdated": "Automation updated",
-      "updateAutomationFailed": "Could not update automation"
+      "loadStatusFailed": "Libre Claw ステータスをロードできませんでした",
+      "enterTask": "Libre Claw のタスクを入力してください",
+      "runStarted": "Libre Claw の実行を開始しました",
+      "startRunFailed": "Libre Claw の実行を開始できませんでした",
+      "runCancelled": "実行をキャンセルしました",
+      "cancelRunFailed": "実行をキャンセルできませんでした",
+      "approved": "承認済み",
+      "denied": "拒否されました",
+      "resolvePermissionFailed": "権限を解決できませんでした",
+      "providerModelRequired": "プロバイダーとモデルは必須です",
+      "modelUpdated": "Libre Claw モデルが更新されました",
+      "updateModelFailed": "モデルを更新できませんでした",
+      "themeUpdated": "Libre Claw テーマを更新しました",
+      "updateThemeFailed": "テーマを更新できませんでした",
+      "automationRequired": "オートメーション名、スケジュール、プロンプトは必須です",
+      "automationCreated": "自動化が作成されました",
+      "createAutomationFailed": "オートメーションを作成できませんでした",
+      "automationUpdated": "自動化が更新されました",
+      "updateAutomationFailed": "オートメーションを更新できませんでした"
     }
   }
 }

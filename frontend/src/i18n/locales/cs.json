@@ -1285,140 +1285,140 @@
   },
   "libreClaw": {
     "title": "Libre Claw",
-    "subtitle": "Local agent runs, approvals, schedules, memory, tools, and usage.",
-    "dashboard": "Dashboard",
+    "subtitle": "Spuštění místního agenta, schvalování, plány, paměť, nástroje a využití.",
+    "dashboard": "Řídicí panel",
     "connection": {
-      "disconnectedTitle": "Libre Claw daemon is not connected",
-      "disconnectedDescription": "Start it locally with <command>libre-claw start</command> or set <env>LIBRE_CLAW_BASE_URL</env> in the backend environment."
+      "disconnectedTitle": "Démon Libre Claw není připojen",
+      "disconnectedDescription": "Spusťte jej lokálně pomocí <command>libre-claw start</command> nebo nastavte <env>LIBRE_CLAW_BASE_URL</env> v prostředí backendu."
     },
     "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "activeRuns": "{{count}} active",
-      "activeRuns_plural": "{{count}} active"
+      "connected": "Připojeno",
+      "disconnected": "Odpojeno",
+      "activeRuns": "{{count}} aktivní",
+      "activeRuns_plural": "{{count}} aktivní"
     },
     "states": {
-      "queued": "Queued",
-      "running": "Running",
-      "blocked": "Blocked",
-      "done": "Done",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
+      "queued": "Ve frontě",
+      "running": "Probíhá",
+      "blocked": "Blokováno",
+      "done": "Hotovo",
+      "failed": "Nepodařilo se",
+      "cancelled": "Zrušeno"
     },
     "startRun": {
-      "title": "Start Agent Run",
-      "placeholder": "Ask Libre Claw to inspect a repo, fix a bug, run a review, schedule a report...",
-      "chatRun": "Chat run",
-      "goalMode": "Goal mode",
-      "providerOverride": "Provider override",
-      "modelOverride": "Model override",
-      "run": "Run"
+      "title": "Spustit úlohu agenta",
+      "placeholder": "Požádejte Libre Claw o kontrolu repo, opravu chyby, spuštění kontroly, naplánování hlášení...",
+      "chatRun": "Spustit chat",
+      "goalMode": "Cílový režim",
+      "providerOverride": "Přepsání poskytovatele",
+      "modelOverride": "Přepsání modelu",
+      "run": "Spustit"
     },
     "modelRoute": {
-      "title": "Model Route",
-      "providerPlaceholder": "provider",
+      "title": "Modelová cesta",
+      "providerPlaceholder": "poskytovatel",
       "modelPlaceholder": "model",
-      "persistGlobal": "Persist to Libre Claw global config",
-      "saveModel": "Save model",
-      "theme": "Libre Claw theme",
-      "saveTheme": "Save theme"
+      "persistGlobal": "Trvejte na Libre Claw globální konfiguraci",
+      "saveModel": "Uložit model",
+      "theme": "Motiv Libre Claw",
+      "saveTheme": "Uložit motiv"
     },
     "runs": {
-      "title": "Runs",
-      "empty": "No Libre Claw runs yet."
+      "title": "Úlohy",
+      "empty": "Zatím žádné úlohy Libre Claw."
     },
     "timeline": {
-      "title": "Run Timeline",
-      "empty": "Select a run to inspect its events.",
-      "streaming": "Streaming...",
-      "assistantResponse": "Assistant response",
-      "resultOk": "ok",
-      "resultError": "error",
+      "title": "Časová osa úlohy",
+      "empty": "Vyberte běh pro kontrolu jeho událostí.",
+      "streaming": "Streamování...",
+      "assistantResponse": "Odpověď asistenta",
+      "resultOk": "dobře",
+      "resultError": "chyba",
       "labels": {
-        "userMessage": "User message",
-        "toolCall": "Tool call",
-        "toolResult": "Tool result",
-        "approvalRequest": "Approval request",
-        "approvalResponse": "Approval response",
-        "runStarted": "Run started",
-        "runFinished": "Run finished",
-        "usage": "Usage",
-        "error": "Error"
+        "userMessage": "Uživatelská zpráva",
+        "toolCall": "Volání nástroje",
+        "toolResult": "Výsledek nástroje",
+        "approvalRequest": "Žádost o schválení",
+        "approvalResponse": "Odpověď na schválení",
+        "runStarted": "Úloha spuštěna",
+        "runFinished": "Úloha dokončena",
+        "usage": "Využití",
+        "error": "Chyba"
       }
     },
     "approvals": {
-      "needed": "Approval needed",
-      "allowOnce": "Allow once",
-      "alwaysAllowTool": "Always allow tool",
-      "deny": "Deny",
-      "toolApprovalRequested": "Tool approval requested"
+      "needed": "Je potřeba schválení",
+      "allowOnce": "Povolit jednou",
+      "alwaysAllowTool": "Vždy povolte nástroj",
+      "deny": "Odmítnout",
+      "toolApprovalRequested": "Požadováno schválení nástroje"
     },
     "automations": {
-      "title": "Automations",
-      "namePlaceholder": "Name",
+      "title": "Automatizace",
+      "namePlaceholder": "Jméno",
       "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automation prompt",
-      "create": "Create",
-      "empty": "No scheduled Libre Claw automations.",
-      "runNow": "Run now",
-      "pause": "Pause",
-      "resume": "Resume",
+      "promptPlaceholder": "Výzva k automatizaci",
+      "create": "Vytvořit",
+      "empty": "Žádná naplánovaná automatizace Libre Claw.",
+      "runNow": "Spustit nyní",
+      "pause": "Pauza",
+      "resume": "Pokračovat",
       "routes": {
-        "report": "Report",
+        "report": "Zpráva",
         "telegram": "Telegram"
       },
       "status": {
-        "active": "Active",
-        "paused": "Paused"
+        "active": "Aktivní",
+        "paused": "Pozastaveno"
       }
     },
     "usageFallback": {
-      "title": "Usage And Fallback",
-      "usage": "Usage",
-      "fallbackRoute": "Fallback Route",
-      "noUsage": "No usage records yet."
+      "title": "Použití a záložní",
+      "usage": "Využití",
+      "fallbackRoute": "Záložní trasa",
+      "noUsage": "Zatím žádné záznamy o použití."
     },
     "metrics": {
-      "provider": "Provider",
+      "provider": "Poskytovatel",
       "model": "Model",
-      "input": "Input",
-      "output": "Output",
-      "cached": "Cached",
-      "reasoning": "Reasoning",
-      "cost": "Cost",
-      "tool": "Tool",
-      "resolution": "Resolution",
-      "state": "State",
-      "stopReason": "Stop reason",
+      "input": "Vstup",
+      "output": "Výstup",
+      "cached": "Uloženo do mezipaměti",
+      "reasoning": "Zdůvodnění",
+      "cost": "náklady",
+      "tool": "Nástroj",
+      "resolution": "Rozlišení",
+      "state": "Stav",
+      "stopReason": "Důvod zastavení",
       "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} tokens"
+      "tokens_plural": "{{formatted}} tokeny"
     },
     "fallbacks": {
-      "tool": "tool",
-      "unknown": "unknown",
-      "resolved": "resolved",
-      "unknownError": "Unknown error"
+      "tool": "nástroj",
+      "unknown": "neznámý",
+      "resolved": "vyřešeno",
+      "unknownError": "Neznámá chyba"
     },
     "toasts": {
-      "loadStatusFailed": "Could not load Libre Claw status",
-      "enterTask": "Enter a task for Libre Claw",
-      "runStarted": "Libre Claw run started",
-      "startRunFailed": "Could not start Libre Claw run",
-      "runCancelled": "Run cancelled",
-      "cancelRunFailed": "Could not cancel run",
-      "approved": "Approved",
-      "denied": "Denied",
-      "resolvePermissionFailed": "Could not resolve permission",
-      "providerModelRequired": "Provider and model are required",
-      "modelUpdated": "Libre Claw model updated",
-      "updateModelFailed": "Could not update model",
-      "themeUpdated": "Libre Claw theme updated",
-      "updateThemeFailed": "Could not update theme",
-      "automationRequired": "Automation name, schedule, and prompt are required",
-      "automationCreated": "Automation created",
-      "createAutomationFailed": "Could not create automation",
-      "automationUpdated": "Automation updated",
-      "updateAutomationFailed": "Could not update automation"
+      "loadStatusFailed": "Stav Libre Claw nelze načíst",
+      "enterTask": "Zadejte úkol pro Libre Claw",
+      "runStarted": "Úloha Libre Claw spuštěna",
+      "startRunFailed": "Úlohu Libre Claw se nepodařilo spustit",
+      "runCancelled": "Úloha zrušena",
+      "cancelRunFailed": "Úlohu se nepodařilo zrušit",
+      "approved": "Schváleno",
+      "denied": "Zamítnuto",
+      "resolvePermissionFailed": "Oprávnění se nepodařilo vyřešit",
+      "providerModelRequired": "Poskytovatel a model jsou vyžadovány",
+      "modelUpdated": "Model Libre Claw aktualizován",
+      "updateModelFailed": "Model nelze aktualizovat",
+      "themeUpdated": "Motiv Libre Claw aktualizován",
+      "updateThemeFailed": "Motiv nelze aktualizovat",
+      "automationRequired": "Je vyžadován název automatizace, plán a výzva",
+      "automationCreated": "Automatizace vytvořena",
+      "createAutomationFailed": "Nelze vytvořit automatizaci",
+      "automationUpdated": "Automatizace aktualizována",
+      "updateAutomationFailed": "Automatizaci nelze aktualizovat"
     }
   }
 }

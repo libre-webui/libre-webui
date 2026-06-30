@@ -1285,140 +1285,140 @@
   },
   "libreClaw": {
     "title": "Libre Claw",
-    "subtitle": "Local agent runs, approvals, schedules, memory, tools, and usage.",
-    "dashboard": "Dashboard",
+    "subtitle": "로컬 에이전트 실행, 승인, 일정, 메모리, 도구 및 사용량입니다.",
+    "dashboard": "대시보드",
     "connection": {
-      "disconnectedTitle": "Libre Claw daemon is not connected",
-      "disconnectedDescription": "Start it locally with <command>libre-claw start</command> or set <env>LIBRE_CLAW_BASE_URL</env> in the backend environment."
+      "disconnectedTitle": "Libre Claw 데몬이 연결되지 않았습니다",
+      "disconnectedDescription": "<command>libre-claw start</command>로 로컬에서 시작하거나 백엔드 환경에서 <env>LIBRE_CLAW_BASE_URL</env>을 설정하세요."
     },
     "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "activeRuns": "{{count}} active",
-      "activeRuns_plural": "{{count}} active"
+      "connected": "연결됨",
+      "disconnected": "연결이 끊김",
+      "activeRuns": "{{count}} 활성",
+      "activeRuns_plural": "{{count}} 활성"
     },
     "states": {
-      "queued": "Queued",
-      "running": "Running",
-      "blocked": "Blocked",
-      "done": "Done",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
+      "queued": "대기 중",
+      "running": "실행 중",
+      "blocked": "차단됨",
+      "done": "완료",
+      "failed": "실패",
+      "cancelled": "취소됨"
     },
     "startRun": {
-      "title": "Start Agent Run",
-      "placeholder": "Ask Libre Claw to inspect a repo, fix a bug, run a review, schedule a report...",
-      "chatRun": "Chat run",
-      "goalMode": "Goal mode",
-      "providerOverride": "Provider override",
-      "modelOverride": "Model override",
-      "run": "Run"
+      "title": "에이전트 실행 시작",
+      "placeholder": "저장소 검사, 버그 수정, 검토 실행, 보고서 예약 등을 Libre Claw에 요청하세요.",
+      "chatRun": "채팅 실행",
+      "goalMode": "목표 모드",
+      "providerOverride": "공급자 재정의",
+      "modelOverride": "모델 재정의",
+      "run": "실행"
     },
     "modelRoute": {
-      "title": "Model Route",
-      "providerPlaceholder": "provider",
-      "modelPlaceholder": "model",
-      "persistGlobal": "Persist to Libre Claw global config",
-      "saveModel": "Save model",
-      "theme": "Libre Claw theme",
-      "saveTheme": "Save theme"
+      "title": "모델 루트",
+      "providerPlaceholder": "공급자",
+      "modelPlaceholder": "모델",
+      "persistGlobal": "Libre Claw 전역 구성 유지",
+      "saveModel": "모델 저장",
+      "theme": "Libre Claw 테마",
+      "saveTheme": "테마 저장"
     },
     "runs": {
-      "title": "Runs",
-      "empty": "No Libre Claw runs yet."
+      "title": "실행",
+      "empty": "아직 Libre Claw 실행이 없습니다."
     },
     "timeline": {
-      "title": "Run Timeline",
-      "empty": "Select a run to inspect its events.",
-      "streaming": "Streaming...",
-      "assistantResponse": "Assistant response",
-      "resultOk": "ok",
-      "resultError": "error",
+      "title": "실행 타임라인",
+      "empty": "이벤트를 검사하려면 실행을 선택하세요.",
+      "streaming": "스트리밍 중...",
+      "assistantResponse": "어시스턴트 응답",
+      "resultOk": "알았어",
+      "resultError": "오류",
       "labels": {
-        "userMessage": "User message",
-        "toolCall": "Tool call",
-        "toolResult": "Tool result",
-        "approvalRequest": "Approval request",
-        "approvalResponse": "Approval response",
-        "runStarted": "Run started",
-        "runFinished": "Run finished",
-        "usage": "Usage",
-        "error": "Error"
+        "userMessage": "사용자 메시지",
+        "toolCall": "도구 호출",
+        "toolResult": "도구 결과",
+        "approvalRequest": "승인 요청",
+        "approvalResponse": "승인 응답",
+        "runStarted": "실행 시작됨",
+        "runFinished": "실행 완료됨",
+        "usage": "사용법",
+        "error": "오류"
       }
     },
     "approvals": {
-      "needed": "Approval needed",
-      "allowOnce": "Allow once",
-      "alwaysAllowTool": "Always allow tool",
-      "deny": "Deny",
-      "toolApprovalRequested": "Tool approval requested"
+      "needed": "승인 필요",
+      "allowOnce": "한 번만 허용",
+      "alwaysAllowTool": "항상 도구 허용",
+      "deny": "거부",
+      "toolApprovalRequested": "도구 승인이 요청되었습니다."
     },
     "automations": {
-      "title": "Automations",
-      "namePlaceholder": "Name",
+      "title": "자동화",
+      "namePlaceholder": "이름",
       "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automation prompt",
-      "create": "Create",
-      "empty": "No scheduled Libre Claw automations.",
-      "runNow": "Run now",
-      "pause": "Pause",
-      "resume": "Resume",
+      "promptPlaceholder": "자동화 프롬프트",
+      "create": "만들기",
+      "empty": "예정된 Libre Claw 자동화가 없습니다.",
+      "runNow": "지금 실행",
+      "pause": "일시중지",
+      "resume": "재개",
       "routes": {
-        "report": "Report",
+        "report": "신고",
         "telegram": "Telegram"
       },
       "status": {
-        "active": "Active",
-        "paused": "Paused"
+        "active": "활성",
+        "paused": "일시중지됨"
       }
     },
     "usageFallback": {
-      "title": "Usage And Fallback",
-      "usage": "Usage",
-      "fallbackRoute": "Fallback Route",
-      "noUsage": "No usage records yet."
+      "title": "사용법 및 대체",
+      "usage": "사용법",
+      "fallbackRoute": "대체 경로",
+      "noUsage": "아직 이용기록이 없습니다."
     },
     "metrics": {
-      "provider": "Provider",
-      "model": "Model",
-      "input": "Input",
-      "output": "Output",
-      "cached": "Cached",
-      "reasoning": "Reasoning",
-      "cost": "Cost",
-      "tool": "Tool",
-      "resolution": "Resolution",
-      "state": "State",
-      "stopReason": "Stop reason",
-      "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} tokens"
+      "provider": "공급자",
+      "model": "모델",
+      "input": "입력",
+      "output": "출력",
+      "cached": "캐시됨",
+      "reasoning": "추론",
+      "cost": "비용",
+      "tool": "도구",
+      "resolution": "해상도",
+      "state": "상태",
+      "stopReason": "중지 이유",
+      "tokens": "{{formatted}} 토큰",
+      "tokens_plural": "{{formatted}} 토큰"
     },
     "fallbacks": {
-      "tool": "tool",
-      "unknown": "unknown",
-      "resolved": "resolved",
-      "unknownError": "Unknown error"
+      "tool": "도구",
+      "unknown": "알 수 없음",
+      "resolved": "해결됨",
+      "unknownError": "알 수 없는 오류"
     },
     "toasts": {
-      "loadStatusFailed": "Could not load Libre Claw status",
-      "enterTask": "Enter a task for Libre Claw",
-      "runStarted": "Libre Claw run started",
-      "startRunFailed": "Could not start Libre Claw run",
-      "runCancelled": "Run cancelled",
-      "cancelRunFailed": "Could not cancel run",
-      "approved": "Approved",
-      "denied": "Denied",
-      "resolvePermissionFailed": "Could not resolve permission",
-      "providerModelRequired": "Provider and model are required",
-      "modelUpdated": "Libre Claw model updated",
-      "updateModelFailed": "Could not update model",
-      "themeUpdated": "Libre Claw theme updated",
-      "updateThemeFailed": "Could not update theme",
-      "automationRequired": "Automation name, schedule, and prompt are required",
-      "automationCreated": "Automation created",
-      "createAutomationFailed": "Could not create automation",
-      "automationUpdated": "Automation updated",
-      "updateAutomationFailed": "Could not update automation"
+      "loadStatusFailed": "Libre Claw 상태를 로드할 수 없습니다.",
+      "enterTask": "Libre Claw에 대한 작업을 입력하세요.",
+      "runStarted": "Libre Claw 실행이 시작되었습니다",
+      "startRunFailed": "Libre Claw 실행을 시작할 수 없습니다",
+      "runCancelled": "실행이 취소되었습니다",
+      "cancelRunFailed": "실행을 취소할 수 없습니다",
+      "approved": "승인됨",
+      "denied": "거부됨",
+      "resolvePermissionFailed": "권한을 확인할 수 없습니다.",
+      "providerModelRequired": "제공업체 및 모델이 필요합니다.",
+      "modelUpdated": "Libre Claw 모델이 업데이트되었습니다",
+      "updateModelFailed": "모델을 업데이트할 수 없습니다.",
+      "themeUpdated": "Libre Claw 테마가 업데이트되었습니다",
+      "updateThemeFailed": "테마를 업데이트할 수 없습니다.",
+      "automationRequired": "자동화 이름, 일정, 프롬프트가 필요합니다.",
+      "automationCreated": "자동화가 생성되었습니다.",
+      "createAutomationFailed": "자동화를 생성할 수 없습니다.",
+      "automationUpdated": "자동화 업데이트됨",
+      "updateAutomationFailed": "자동화를 업데이트할 수 없습니다."
     }
   }
 }

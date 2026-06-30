@@ -1285,140 +1285,140 @@
   },
   "libreClaw": {
     "title": "Libre Claw",
-    "subtitle": "Local agent runs, approvals, schedules, memory, tools, and usage.",
-    "dashboard": "Dashboard",
+    "subtitle": "Ejen tempatan menjalankan, kelulusan, jadual, ingatan, alatan dan penggunaan.",
+    "dashboard": "Papan pemuka",
     "connection": {
-      "disconnectedTitle": "Libre Claw daemon is not connected",
-      "disconnectedDescription": "Start it locally with <command>libre-claw start</command> or set <env>LIBRE_CLAW_BASE_URL</env> in the backend environment."
+      "disconnectedTitle": "Daemon Libre Claw tidak disambungkan",
+      "disconnectedDescription": "Mulakannya secara setempat dengan <command>libre-claw start</command> atau tetapkan <env>LIBRE_CLAW_BASE_URL</env> dalam persekitaran bahagian belakang."
     },
     "status": {
-      "connected": "Connected",
-      "disconnected": "Disconnected",
-      "activeRuns": "{{count}} active",
-      "activeRuns_plural": "{{count}} active"
+      "connected": "Bersambung",
+      "disconnected": "Terputus sambungan",
+      "activeRuns": "{{count}} aktif",
+      "activeRuns_plural": "{{count}} aktif"
     },
     "states": {
-      "queued": "Queued",
-      "running": "Running",
-      "blocked": "Blocked",
-      "done": "Done",
-      "failed": "Failed",
-      "cancelled": "Cancelled"
+      "queued": "Beratur",
+      "running": "Sedang berjalan",
+      "blocked": "Disekat",
+      "done": "Selesai",
+      "failed": "gagal",
+      "cancelled": "Dibatalkan"
     },
     "startRun": {
-      "title": "Start Agent Run",
-      "placeholder": "Ask Libre Claw to inspect a repo, fix a bug, run a review, schedule a report...",
-      "chatRun": "Chat run",
-      "goalMode": "Goal mode",
-      "providerOverride": "Provider override",
-      "modelOverride": "Model override",
-      "run": "Run"
+      "title": "Mulakan tugas ejen",
+      "placeholder": "Minta Libre Claw untuk memeriksa repo, membetulkan pepijat, menjalankan semakan, menjadualkan laporan...",
+      "chatRun": "Larian sembang",
+      "goalMode": "Mod matlamat",
+      "providerOverride": "Pembatalan pembekal",
+      "modelOverride": "Model menimpa",
+      "run": "Jalankan"
     },
     "modelRoute": {
-      "title": "Model Route",
-      "providerPlaceholder": "provider",
+      "title": "Laluan Model",
+      "providerPlaceholder": "pembekal",
       "modelPlaceholder": "model",
-      "persistGlobal": "Persist to Libre Claw global config",
-      "saveModel": "Save model",
-      "theme": "Libre Claw theme",
-      "saveTheme": "Save theme"
+      "persistGlobal": "Berterusan untuk Libre Claw konfigurasi global",
+      "saveModel": "Simpan model",
+      "theme": "Tema Libre Claw",
+      "saveTheme": "Simpan tema"
     },
     "runs": {
-      "title": "Runs",
-      "empty": "No Libre Claw runs yet."
+      "title": "Tugas",
+      "empty": "Belum ada tugas Libre Claw."
     },
     "timeline": {
-      "title": "Run Timeline",
-      "empty": "Select a run to inspect its events.",
-      "streaming": "Streaming...",
-      "assistantResponse": "Assistant response",
+      "title": "Garis masa tugas",
+      "empty": "Pilih larian untuk memeriksa acaranya.",
+      "streaming": "Menstrim...",
+      "assistantResponse": "Jawapan pembantu",
       "resultOk": "ok",
-      "resultError": "error",
+      "resultError": "kesilapan",
       "labels": {
-        "userMessage": "User message",
-        "toolCall": "Tool call",
-        "toolResult": "Tool result",
-        "approvalRequest": "Approval request",
-        "approvalResponse": "Approval response",
-        "runStarted": "Run started",
-        "runFinished": "Run finished",
-        "usage": "Usage",
-        "error": "Error"
+        "userMessage": "Mesej pengguna",
+        "toolCall": "Panggilan alat",
+        "toolResult": "Hasil alat",
+        "approvalRequest": "Permintaan kelulusan",
+        "approvalResponse": "Maklum balas kelulusan",
+        "runStarted": "Tugas dimulakan",
+        "runFinished": "Tugas selesai",
+        "usage": "Penggunaan",
+        "error": "ralat"
       }
     },
     "approvals": {
-      "needed": "Approval needed",
-      "allowOnce": "Allow once",
-      "alwaysAllowTool": "Always allow tool",
-      "deny": "Deny",
-      "toolApprovalRequested": "Tool approval requested"
+      "needed": "Kelulusan diperlukan",
+      "allowOnce": "Izinkan sekali",
+      "alwaysAllowTool": "Sentiasa benarkan alat",
+      "deny": "Tolak",
+      "toolApprovalRequested": "Kelulusan alat diminta"
     },
     "automations": {
-      "title": "Automations",
-      "namePlaceholder": "Name",
+      "title": "Automasi",
+      "namePlaceholder": "Nama",
       "schedulePlaceholder": "daily 09:00",
-      "promptPlaceholder": "Automation prompt",
-      "create": "Create",
-      "empty": "No scheduled Libre Claw automations.",
-      "runNow": "Run now",
-      "pause": "Pause",
-      "resume": "Resume",
+      "promptPlaceholder": "Gesaan automasi",
+      "create": "Buat",
+      "empty": "Tiada automasi Libre Claw yang dijadualkan.",
+      "runNow": "Jalankan sekarang",
+      "pause": "jeda",
+      "resume": "Sambung",
       "routes": {
-        "report": "Report",
+        "report": "Laporan",
         "telegram": "Telegram"
       },
       "status": {
-        "active": "Active",
-        "paused": "Paused"
+        "active": "Aktif",
+        "paused": "Dijeda"
       }
     },
     "usageFallback": {
-      "title": "Usage And Fallback",
-      "usage": "Usage",
-      "fallbackRoute": "Fallback Route",
-      "noUsage": "No usage records yet."
+      "title": "Penggunaan Dan Fallback",
+      "usage": "Penggunaan",
+      "fallbackRoute": "Laluan Fallback",
+      "noUsage": "Tiada rekod penggunaan lagi."
     },
     "metrics": {
-      "provider": "Provider",
+      "provider": "Pembekal",
       "model": "Model",
       "input": "Input",
       "output": "Output",
-      "cached": "Cached",
-      "reasoning": "Reasoning",
-      "cost": "Cost",
-      "tool": "Tool",
-      "resolution": "Resolution",
-      "state": "State",
-      "stopReason": "Stop reason",
+      "cached": "Dicache",
+      "reasoning": "Penaakulan",
+      "cost": "kos",
+      "tool": "alat",
+      "resolution": "Resolusi",
+      "state": "Status",
+      "stopReason": "Sebab berhenti",
       "tokens": "{{formatted}} token",
-      "tokens_plural": "{{formatted}} tokens"
+      "tokens_plural": "{{formatted}} token"
     },
     "fallbacks": {
-      "tool": "tool",
-      "unknown": "unknown",
-      "resolved": "resolved",
-      "unknownError": "Unknown error"
+      "tool": "alat",
+      "unknown": "tidak diketahui",
+      "resolved": "diselesaikan",
+      "unknownError": "Ralat tidak diketahui"
     },
     "toasts": {
-      "loadStatusFailed": "Could not load Libre Claw status",
-      "enterTask": "Enter a task for Libre Claw",
-      "runStarted": "Libre Claw run started",
-      "startRunFailed": "Could not start Libre Claw run",
-      "runCancelled": "Run cancelled",
-      "cancelRunFailed": "Could not cancel run",
-      "approved": "Approved",
-      "denied": "Denied",
-      "resolvePermissionFailed": "Could not resolve permission",
-      "providerModelRequired": "Provider and model are required",
-      "modelUpdated": "Libre Claw model updated",
-      "updateModelFailed": "Could not update model",
-      "themeUpdated": "Libre Claw theme updated",
-      "updateThemeFailed": "Could not update theme",
-      "automationRequired": "Automation name, schedule, and prompt are required",
-      "automationCreated": "Automation created",
-      "createAutomationFailed": "Could not create automation",
-      "automationUpdated": "Automation updated",
-      "updateAutomationFailed": "Could not update automation"
+      "loadStatusFailed": "Tidak dapat memuatkan status Libre Claw",
+      "enterTask": "Masukkan tugasan untuk Libre Claw",
+      "runStarted": "Tugas Libre Claw dimulakan",
+      "startRunFailed": "Tidak dapat memulakan tugas Libre Claw",
+      "runCancelled": "Tugas dibatalkan",
+      "cancelRunFailed": "Tidak dapat membatalkan tugas",
+      "approved": "Diluluskan",
+      "denied": "dinafikan",
+      "resolvePermissionFailed": "Tidak dapat menyelesaikan kebenaran",
+      "providerModelRequired": "Pembekal dan model diperlukan",
+      "modelUpdated": "Model Libre Claw dikemas kini",
+      "updateModelFailed": "Tidak dapat mengemas kini model",
+      "themeUpdated": "Tema Libre Claw dikemas kini",
+      "updateThemeFailed": "Tidak dapat mengemas kini tema",
+      "automationRequired": "Nama automasi, jadual dan segera diperlukan",
+      "automationCreated": "Automasi dibuat",
+      "createAutomationFailed": "Tidak dapat membuat automasi",
+      "automationUpdated": "Automasi dikemas kini",
+      "updateAutomationFailed": "Tidak dapat mengemas kini automasi"
     }
   }
 }
