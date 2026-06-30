@@ -24,9 +24,9 @@ const axios = require('axios');
  * ║                                                                  ║
  * ║         🤖 AI-powered changelog regeneration for all releases    ║
  * ║         📊 Analyzes commits between tags and generates           ║
- * ║            comprehensive release notes using local AI            ║
+ * ║            comprehensive release notes using Ollama            ║
  * ║                                                                  ║
- * ║         🔒 100% Privacy-First • 🚀 Ollama Powered              ║
+ * ║         🚀 Uses the configured Ollama model              ║
  * ╚══════════════════════════════════════════════════════════════════╝
  */
 
@@ -34,7 +34,7 @@ class ChangelogRegeneration {
   constructor() {
     this.projectRoot = path.join(__dirname, '..');
     this.ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-    this.defaultModel = process.env.CHANGELOG_AI_MODEL || 'llama3.2:3b';
+    this.defaultModel = process.env.CHANGELOG_AI_MODEL || 'glm-5.2:cloud';
     this.changelogPath = path.join(this.projectRoot, 'CHANGELOG.md');
   }
 
@@ -274,7 +274,7 @@ IMPORTANT: Do not wrap your response in code blocks (\`\`\`markdown or \`\`\`). 
 ║           AI-Powered Changelog Regeneration                      ║
 ║                                                                  ║
 ║         🤖 Regenerating all changelogs using AI analysis...     ║
-║         🔒 100% Privacy-First • 🚀 Powered by Ollama           ║
+║         🚀 Uses the configured Ollama model           ║
 ╚══════════════════════════════════════════════════════════════════╝
 `);
 
@@ -438,8 +438,8 @@ if (args.includes('--help')) {
 ║              ██    ██ ██                                         ║
 ║               ██████  ██                                         ║
 ║                                                                  ║
-║         🤖 Generate intelligent changelogs using local AI        ║
-║         🔒 100% Privacy-First • 🚀 Powered by Ollama           ║
+║         🤖 Generate intelligent changelogs using Ollama        ║
+║         🚀 Uses the configured Ollama model           ║
 ╚══════════════════════════════════════════════════════════════════╝
 `);
   console.log('Usage: node scripts/regenerate-changelog.js [command]\n');

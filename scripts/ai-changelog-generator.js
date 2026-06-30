@@ -22,10 +22,10 @@ const axios = require('axios');
  * ║              ██    ██ ██                                         ║
  * ║               ██████  ██                                         ║
  * ║                                                                  ║
- * ║         🤖 AI-powered changelog generator using local Ollama     ║
+ * ║         🤖 AI-powered changelog generator using Ollama     ║
  * ║         📝 Analyzes commits and generates intelligent summaries  ║
  * ║                                                                  ║
- * ║         🔒 100% Privacy-First • 🚀 Ollama Powered              ║
+ * ║         🚀 Uses the configured Ollama model              ║
  * ╚══════════════════════════════════════════════════════════════════╝
  */
 
@@ -33,7 +33,7 @@ class AIChangelogGenerator {
   constructor() {
     this.changelogPath = path.join(__dirname, '..', 'CHANGELOG.md');
     this.ollamaBaseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-    this.defaultModel = process.env.CHANGELOG_AI_MODEL || 'llama3.2:3b'; // Fast model for summaries
+    this.defaultModel = process.env.CHANGELOG_AI_MODEL || 'glm-5.2:cloud';
   }
 
   /**
@@ -69,7 +69,7 @@ class AIChangelogGenerator {
   }
 
   /**
-   * Generate AI summary using local Ollama
+   * Generate AI summary using the configured Ollama model
    */
   async generateAISummary(commits, changeType = 'release') {
     if (!await this.checkOllamaHealth()) {
@@ -330,7 +330,7 @@ Provide a technical perspective suitable for developers and maintainers.`
 ║               ██████  ██                                         ║
 ║                                                                  ║
 ║         🤖 Interactive AI-powered changelog generation           ║
-║         🔒 100% Privacy-First • 🚀 Powered by Ollama           ║
+║         🚀 Uses the configured Ollama model           ║
 ╚══════════════════════════════════════════════════════════════════╝
 `);
     
@@ -381,7 +381,7 @@ switch (command) {
 ║               ██████  ██                                         ║
 ║                                                                  ║
 ║         🤖 Generate intelligent changelog entries with AI        ║
-║         🔒 100% Privacy-First • 🚀 Powered by Ollama           ║
+║         🚀 Uses the configured Ollama model           ║
 ╚══════════════════════════════════════════════════════════════════╝
 `);
     console.log('Usage:');
