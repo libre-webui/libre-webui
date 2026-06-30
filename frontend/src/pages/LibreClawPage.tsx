@@ -61,13 +61,30 @@ const stateStyles: Record<string, string> = {
 };
 
 const eventTypeStyles: Record<string, string> = {
+  assistant_message: 'text-blue-600 dark:text-blue-300',
   assistant_delta: 'text-blue-600 dark:text-blue-300',
+  user_message: 'text-gray-700 dark:text-dark-700',
   permission_request: 'text-amber-600 dark:text-amber-300',
+  permission_response: 'text-emerald-600 dark:text-emerald-300',
   tool_call: 'text-purple-600 dark:text-purple-300',
   tool_result: 'text-emerald-600 dark:text-emerald-300',
+  usage: 'text-cyan-600 dark:text-cyan-300',
   error: 'text-red-600 dark:text-red-300',
   run_finished: 'text-emerald-600 dark:text-emerald-300',
 };
+
+type TimelineItemKind = 'assistant_message' | 'event';
+
+interface TimelineItem {
+  key: string;
+  kind: TimelineItemKind;
+  eventType: string;
+  label: string;
+  firstEventId: number;
+  lastEventId: number;
+  timestamp: string;
+  events: LibreClawEvent[];
+}
 
 const themeOptions = [
   ['lobster', 'Lobster'],
@@ -144,6 +161,8 @@ const LibreClawPage: React.FC = () => {
       return toolCallId && !resolved.has(toolCallId);
     });
   }, [events]);
+
+  const timelineItems = useMemo(() => buildTimelineItems(events), [events]);
 
   const loadOverview = useCallback(async () => {
     try {
@@ -699,27 +718,8 @@ const LibreClawPage: React.FC = () => {
               {events.length === 0 && (
                 <EmptyState text='Select a run to inspect its events.' />
               )}
-              {events.map(event => (
-                <article
-                  key={event.event_id}
-                  className='rounded-xl border border-gray-200 bg-white p-3 dark:border-dark-300 dark:bg-dark-50'
-                >
-                  <div className='mb-2 flex items-center justify-between gap-3'>
-                    <span
-                      className={cn(
-                        'text-xs font-semibold uppercase tracking-wide',
-                        eventTypeStyles[event.type] ||
-                          'text-gray-500 dark:text-dark-500'
-                      )}
-                    >
-                      {event.type.replace(/_/g, ' ')}
-                    </span>
-                    <span className='text-xs text-gray-400 dark:text-dark-500'>
-                      #{event.event_id} · {formatDate(event.timestamp)}
-                    </span>
-                  </div>
-                  <EventBody event={event} />
-                </article>
+              {timelineItems.map(item => (
+                <TimelineCard key={item.key} item={item} />
               ))}
             </div>
           </Panel>
@@ -940,7 +940,46 @@ const IconButton: React.FC<{
   </button>
 );
 
-const EventBody: React.FC<{ event: LibreClawEvent }> = ({ event }) => {
+const TimelineCard: React.FC<{ item: TimelineItem }> = ({ item }) => (
+  <article
+    className={cn(
+      'rounded-xl border p-3 transition-colors',
+      item.eventType === 'assistant_message'
+        ? 'border-primary-200 bg-primary-50/60 dark:border-primary-900/60 dark:bg-primary-900/10'
+        : item.eventType === 'user_message'
+          ? 'border-gray-200 bg-white dark:border-dark-300 dark:bg-dark-50'
+          : 'border-gray-200 bg-white dark:border-dark-300 dark:bg-dark-50'
+    )}
+  >
+    <div className='mb-2 flex items-center justify-between gap-3'>
+      <span
+        className={cn(
+          'text-xs font-semibold uppercase tracking-wide',
+          eventTypeStyles[item.eventType] || 'text-gray-500 dark:text-dark-500'
+        )}
+      >
+        {item.label}
+      </span>
+      <span className='shrink-0 text-xs text-gray-400 dark:text-dark-500'>
+        {formatEventRange(item)} · {formatDate(item.timestamp)}
+      </span>
+    </div>
+    <TimelineBody item={item} />
+  </article>
+);
+
+const TimelineBody: React.FC<{ item: TimelineItem }> = ({ item }) => {
+  if (item.kind === 'assistant_message') {
+    return (
+      <p className='whitespace-pre-wrap text-sm leading-6 text-gray-900 dark:text-dark-900'>
+        {joinAssistantDeltas(item.events) || 'Streaming...'}
+      </p>
+    );
+  }
+
+  const event = item.events[0];
+  if (!event) return null;
+
   if (event.type === 'assistant_delta') {
     return (
       <p className='whitespace-pre-wrap text-sm text-gray-800 dark:text-dark-800'>
@@ -982,6 +1021,40 @@ const EventBody: React.FC<{ event: LibreClawEvent }> = ({ event }) => {
     );
   }
 
+  if (event.type === 'permission_request') {
+    return (
+      <div>
+        <div className='text-sm font-medium text-gray-900 dark:text-dark-900'>
+          {String(event.data.name || 'Tool approval requested')}
+        </div>
+        <JsonBlock value={event.data.arguments || {}} />
+      </div>
+    );
+  }
+
+  if (event.type === 'permission_response') {
+    return (
+      <div className='flex flex-wrap gap-2'>
+        <MetricPill
+          label='Tool'
+          value={String(event.data.name || event.data.tool_call_id || 'tool')}
+        />
+        <MetricPill
+          label='Resolution'
+          value={String(event.data.resolution || 'resolved')}
+        />
+      </div>
+    );
+  }
+
+  if (event.type === 'usage') {
+    return <UsageSummary data={event.data} />;
+  }
+
+  if (event.type === 'run_finished') {
+    return <RunFinishedSummary data={event.data} />;
+  }
+
   if (event.type === 'error') {
     return (
       <p className='text-sm text-red-700 dark:text-red-300'>
@@ -992,6 +1065,59 @@ const EventBody: React.FC<{ event: LibreClawEvent }> = ({ event }) => {
 
   return <JsonBlock value={event.data} />;
 };
+
+const UsageSummary: React.FC<{ data: Record<string, unknown> }> = ({
+  data,
+}) => (
+  <div className='flex flex-wrap gap-2'>
+    <MetricPill label='Provider' value={String(data.provider || 'unknown')} />
+    <MetricPill label='Model' value={String(data.model || 'unknown')} />
+    <MetricPill
+      label='Input'
+      value={`${formatCount(data.input_tokens)} tokens`}
+    />
+    <MetricPill
+      label='Output'
+      value={`${formatCount(data.output_tokens)} tokens`}
+    />
+    {toFiniteNumber(data.cached_tokens) > 0 && (
+      <MetricPill
+        label='Cached'
+        value={`${formatCount(data.cached_tokens)} tokens`}
+      />
+    )}
+    {toFiniteNumber(data.reasoning_tokens) > 0 && (
+      <MetricPill
+        label='Reasoning'
+        value={`${formatCount(data.reasoning_tokens)} tokens`}
+      />
+    )}
+    <MetricPill label='Cost' value={formatCost(data.cost)} />
+  </div>
+);
+
+const RunFinishedSummary: React.FC<{ data: Record<string, unknown> }> = ({
+  data,
+}) => (
+  <div className='flex flex-wrap gap-2'>
+    <MetricPill label='State' value={String(data.state || 'done')} />
+    {data.stop_reason !== undefined && (
+      <MetricPill label='Stop reason' value={String(data.stop_reason)} />
+    )}
+  </div>
+);
+
+const MetricPill: React.FC<{ label: string; value: string }> = ({
+  label,
+  value,
+}) => (
+  <span className='inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-700 dark:border-dark-300 dark:bg-dark-100 dark:text-dark-700'>
+    <span className='font-semibold text-gray-500 dark:text-dark-500'>
+      {label}
+    </span>
+    <span>{value}</span>
+  </span>
+);
 
 const JsonBlock: React.FC<{ value: unknown }> = ({ value }) => (
   <pre className='mt-2 max-h-56 overflow-auto rounded-lg bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
@@ -1010,6 +1136,94 @@ const formatDate = (value: string): string => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleString();
+};
+
+const buildTimelineItems = (events: LibreClawEvent[]): TimelineItem[] => {
+  const items: TimelineItem[] = [];
+  let index = 0;
+
+  while (index < events.length) {
+    const event = events[index];
+    if (!event) break;
+
+    if (event.type === 'assistant_delta') {
+      const group: LibreClawEvent[] = [];
+      while (events[index]?.type === 'assistant_delta') {
+        const delta = events[index];
+        if (delta) group.push(delta);
+        index += 1;
+      }
+      const first = group[0];
+      const last = group[group.length - 1] || first;
+      if (first && last) {
+        items.push({
+          key: `assistant-${first.event_id}-${last.event_id}`,
+          kind: 'assistant_message',
+          eventType: 'assistant_message',
+          label: 'Assistant response',
+          firstEventId: first.event_id,
+          lastEventId: last.event_id,
+          timestamp: first.timestamp,
+          events: group,
+        });
+      }
+      continue;
+    }
+
+    items.push({
+      key: `${event.type}-${event.event_id}`,
+      kind: 'event',
+      eventType: event.type,
+      label: formatEventLabel(event.type),
+      firstEventId: event.event_id,
+      lastEventId: event.event_id,
+      timestamp: event.timestamp,
+      events: [event],
+    });
+    index += 1;
+  }
+
+  return items;
+};
+
+const joinAssistantDeltas = (events: LibreClawEvent[]): string =>
+  events.map(event => String(event.data.text || '')).join('');
+
+const formatEventLabel = (type: string): string => {
+  const labels: Record<string, string> = {
+    user_message: 'User message',
+    tool_call: 'Tool call',
+    tool_result: 'Tool result',
+    permission_request: 'Approval request',
+    permission_response: 'Approval response',
+    run_started: 'Run started',
+    run_finished: 'Run finished',
+    usage: 'Usage',
+    error: 'Error',
+  };
+  return labels[type] || type.replace(/_/g, ' ');
+};
+
+const formatEventRange = (item: TimelineItem): string => {
+  if (item.firstEventId === item.lastEventId) {
+    return `#${item.firstEventId}`;
+  }
+  return `#${item.firstEventId}-#${item.lastEventId}`;
+};
+
+const toFiniteNumber = (value: unknown): number => {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : 0;
+};
+
+const formatCount = (value: unknown): string =>
+  new Intl.NumberFormat().format(toFiniteNumber(value));
+
+const formatCost = (value: unknown): string => {
+  const cost = toFiniteNumber(value);
+  if (cost <= 0) return '$0.00';
+  if (cost < 0.01) return `$${cost.toFixed(6)}`;
+  return `$${cost.toFixed(4)}`;
 };
 
 export default LibreClawPage;
