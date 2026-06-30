@@ -15,7 +15,7 @@ image: /img/social/11.png
 
 # Model Updater
 
-Libre WebUI can refresh plugin model maps from provider APIs where the provider exposes a model-list endpoint. This keeps fallback model lists useful without hardcoding every provider catalog by hand.
+Libre WebUI can refresh plugin model maps from provider APIs where the provider exposes a model-list endpoint. This keeps fallback model lists useful without hardcoding every provider catalog by hand, and the updater preserves the rest of each plugin definition so endpoint, capability, and variable settings are not lost.
 
 ## When to Use It
 
@@ -36,7 +36,7 @@ From the repository root:
 ./scripts/update-all-models.sh
 ```
 
-The script detects configured API keys and skips providers that cannot be queried.
+The script loads `backend/.env`, uses provider API keys when available, and also refreshes public catalogs for providers that expose them without credentials, including OpenRouter, Hugging Face Router, and GitHub Models. Providers that require credentials fall back to a small documented model set when no key is configured.
 
 ## Provider Keys
 
@@ -48,11 +48,9 @@ export ANTHROPIC_API_KEY="..."
 export GEMINI_API_KEY="..."
 export GROQ_API_KEY="..."
 export MISTRAL_API_KEY="..."
-export OPENROUTER_API_KEY="..."
-export GITHUB_API_KEY="..."
 ```
 
-Only providers with available credentials and implemented update scripts are refreshed.
+OpenRouter, Hugging Face Router, and GitHub Models can refresh their catalog fallbacks without local credentials. Runtime use of a paid/provider-backed model can still require the corresponding user credential in Libre WebUI.
 
 ## Review Changes
 
