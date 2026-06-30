@@ -18,6 +18,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
+  Bot,
   Database,
   MessageSquare,
   Sparkles,
@@ -96,6 +97,16 @@ export function SidebarNavigation({
         >
           <Sparkles className='h-4 w-4 shrink-0' />
           {!sidebarCompact && t('sidebar.navigation.imagine')}
+        </Link>
+
+        <Link
+          to='/agents'
+          onClick={onMobileNavigate}
+          className={itemClass(activePath === '/agents')}
+          title={sidebarCompact ? t('sidebar.navigation.agents') : undefined}
+        >
+          <Bot className='h-4 w-4 shrink-0' />
+          {!sidebarCompact && t('sidebar.navigation.agents')}
         </Link>
       </nav>
     </div>

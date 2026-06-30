@@ -243,7 +243,8 @@
       "imagine": "Skapa bild",
       "settings": "Inställningar",
       "userManagement": "Användarhantering",
-      "signOut": "Logga ut"
+      "signOut": "Logga ut",
+      "agents": "Libre Claw"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -1281,5 +1282,143 @@
     "pull": "Ladda ner",
     "pullRestricted": "Modellinstallation är begränsad till administratörer på denna instans.",
     "adminOnlyPull": "Endast administratörer"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "Lokala agentkörningar, godkännanden, scheman, minne, verktyg och användning.",
+    "dashboard": "Översikt",
+    "connection": {
+      "disconnectedTitle": "Libre Claw-daemonen är inte ansluten",
+      "disconnectedDescription": "Starta den lokalt med <command>libre-claw start</command> eller ställ in <env>LIBRE_CLAW_BASE_URL</env> i backend-miljön."
+    },
+    "status": {
+      "connected": "Ansluten",
+      "disconnected": "Frånkopplad",
+      "activeRuns": "{{count}} aktiv",
+      "activeRuns_plural": "{{count}} aktiv"
+    },
+    "states": {
+      "queued": "I kö",
+      "running": "Körs",
+      "blocked": "Blockerad",
+      "done": "Klart",
+      "failed": "Misslyckades",
+      "cancelled": "Avbruten"
+    },
+    "startRun": {
+      "title": "Starta agentkörning",
+      "placeholder": "Be Libre Claw att inspektera en repo, fixa en bugg, köra en granskning, schemalägga en rapport...",
+      "chatRun": "Chattkörning",
+      "goalMode": "Målläge",
+      "providerOverride": "Åsidosättande av leverantör",
+      "modelOverride": "Modell åsidosättande",
+      "run": "Kör"
+    },
+    "modelRoute": {
+      "title": "Modellväg",
+      "providerPlaceholder": "leverantör",
+      "modelPlaceholder": "modell",
+      "persistGlobal": "Fortsätt till Libre Claw global konfiguration",
+      "saveModel": "Spara modell",
+      "theme": "Libre Claw-tema",
+      "saveTheme": "Spara tema"
+    },
+    "runs": {
+      "title": "Körningar",
+      "empty": "Inga Libre Claw-körningar ännu."
+    },
+    "timeline": {
+      "title": "Körningstidslinje",
+      "empty": "Välj en körning för att inspektera dess händelser.",
+      "streaming": "Streamar...",
+      "assistantResponse": "Assistentsvar",
+      "resultOk": "okej",
+      "resultError": "fel",
+      "labels": {
+        "userMessage": "Användarmeddelande",
+        "toolCall": "Verktygsanrop",
+        "toolResult": "Verktygsresultat",
+        "approvalRequest": "Begäran om godkännande",
+        "approvalResponse": "Godkännande svar",
+        "runStarted": "Körning startad",
+        "runFinished": "Körning avslutad",
+        "usage": "Användning",
+        "error": "Fel"
+      }
+    },
+    "approvals": {
+      "needed": "Godkännande behövs",
+      "allowOnce": "Tillåt en gång",
+      "alwaysAllowTool": "Tillåt alltid verktyg",
+      "deny": "Neka",
+      "toolApprovalRequested": "Verktygsgodkännande begärs"
+    },
+    "automations": {
+      "title": "Automatiseringar",
+      "namePlaceholder": "Namn",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "Automatiseringsprompt",
+      "create": "Skapa",
+      "empty": "Inga schemalagda Libre Claw-automatiseringar.",
+      "runNow": "Kör nu",
+      "pause": "Pausa",
+      "resume": "Återuppta",
+      "routes": {
+        "report": "Rapportera",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "Aktiv",
+        "paused": "Pausad"
+      }
+    },
+    "usageFallback": {
+      "title": "Användning och reserv",
+      "usage": "Användning",
+      "fallbackRoute": "Reservrutt",
+      "noUsage": "Inga användningsuppgifter ännu."
+    },
+    "metrics": {
+      "provider": "Leverantör",
+      "model": "Modell",
+      "input": "Ingång",
+      "output": "Utgång",
+      "cached": "Cachad",
+      "reasoning": "Resonemang",
+      "cost": "Kostnad",
+      "tool": "Verktyg",
+      "resolution": "Upplösning",
+      "state": "Status",
+      "stopReason": "Stopporsak",
+      "tokens": "{{formatted}} token",
+      "tokens_plural": "{{formatted}} polletter"
+    },
+    "fallbacks": {
+      "tool": "verktyg",
+      "unknown": "okänt",
+      "resolved": "löst",
+      "unknownError": "Okänt fel"
+    },
+    "toasts": {
+      "loadStatusFailed": "Kunde inte ladda Libre Claw status",
+      "enterTask": "Ange en uppgift för Libre Claw",
+      "runStarted": "Libre Claw-körning startad",
+      "startRunFailed": "Kunde inte starta Libre Claw-körning",
+      "runCancelled": "Körning avbruten",
+      "cancelRunFailed": "Det gick inte att avbryta körningen",
+      "approved": "Godkänd",
+      "denied": "Nekad",
+      "resolvePermissionFailed": "Det gick inte att lösa behörigheten",
+      "providerModelRequired": "Leverantör och modell krävs",
+      "modelUpdated": "Libre Claw-modellen uppdaterad",
+      "updateModelFailed": "Kunde inte uppdatera modellen",
+      "themeUpdated": "Libre Claw-tema uppdaterat",
+      "updateThemeFailed": "Det gick inte att uppdatera temat",
+      "automationRequired": "Automationsnamn, schema och uppmaning krävs",
+      "automationCreated": "Automatisering skapad",
+      "createAutomationFailed": "Det gick inte att skapa automatisering",
+      "automationUpdated": "Automatisering uppdaterad",
+      "updateAutomationFailed": "Det gick inte att uppdatera automatiseringen"
+    }
   }
 }

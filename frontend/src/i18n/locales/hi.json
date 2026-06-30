@@ -243,7 +243,8 @@
       "imagine": "कल्पना",
       "settings": "सेटिंग्स",
       "userManagement": "उपयोगकर्ता प्रबंधन",
-      "signOut": "साइन आउट"
+      "signOut": "साइन आउट",
+      "agents": "Libre Claw"
     },
     "toggleSize": "साइडबार का आकार बदलें",
     "expandSidebar": "साइडबार विस्तारित करें"
@@ -1281,5 +1282,143 @@
     "pull": "डाउनलोड करें",
     "pullRestricted": "इस इंस्टेंस पर मॉडल इंस्टॉलेशन केवल एडमिन तक सीमित है।",
     "adminOnlyPull": "केवल एडमिन"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "स्थानीय एजेंट चलाता है, अनुमोदन, शेड्यूल, मेमोरी, उपकरण और उपयोग।",
+    "dashboard": "डैशबोर्ड",
+    "connection": {
+      "disconnectedTitle": "Libre Claw डेमॉन कनेक्ट नहीं है",
+      "disconnectedDescription": "इसे स्थानीय रूप से <command>libre-claw start</command> से प्रारंभ करें या बैकएंड वातावरण में <env>LIBRE_CLAW_BASE_URL</env> सेट करें।"
+    },
+    "status": {
+      "connected": "जुड़ा हुआ",
+      "disconnected": "विच्छेदित",
+      "activeRuns": "{{count}} सक्रिय",
+      "activeRuns_plural": "{{count}} सक्रिय"
+    },
+    "states": {
+      "queued": "कतारबद्ध",
+      "running": "चल रहा है",
+      "blocked": "अवरुद्ध",
+      "done": "हो गया",
+      "failed": "असफल",
+      "cancelled": "रद्द कर दिया गया"
+    },
+    "startRun": {
+      "title": "एजेंट रन शुरू करें",
+      "placeholder": "Libre Claw को रेपो का निरीक्षण करने, बग ठीक करने, समीक्षा चलाने, रिपोर्ट शेड्यूल करने के लिए कहें...",
+      "chatRun": "चैट चलाएँ",
+      "goalMode": "लक्ष्य मोड",
+      "providerOverride": "प्रदाता ओवरराइड",
+      "modelOverride": "मॉडल ओवरराइड",
+      "run": "चलाएँ"
+    },
+    "modelRoute": {
+      "title": "मॉडल मार्ग",
+      "providerPlaceholder": "प्रदाता",
+      "modelPlaceholder": "मॉडल",
+      "persistGlobal": "Libre Claw वैश्विक कॉन्फ़िगरेशन पर कायम रहें",
+      "saveModel": "मॉडल सहेजें",
+      "theme": "Libre Claw थीम",
+      "saveTheme": "थीम सहेजें"
+    },
+    "runs": {
+      "title": "रन",
+      "empty": "अभी तक कोई Libre Claw रन नहीं।"
+    },
+    "timeline": {
+      "title": "रन टाइमलाइन",
+      "empty": "किसी रन की घटनाओं का निरीक्षण करने के लिए उसका चयन करें।",
+      "streaming": "स्ट्रीमिंग...",
+      "assistantResponse": "सहायक प्रतिक्रिया",
+      "resultOk": "ठीक है",
+      "resultError": "त्रुटि",
+      "labels": {
+        "userMessage": "उपयोगकर्ता संदेश",
+        "toolCall": "टूल कॉल",
+        "toolResult": "उपकरण परिणाम",
+        "approvalRequest": "अनुमोदन अनुरोध",
+        "approvalResponse": "अनुमोदन प्रतिक्रिया",
+        "runStarted": "रन शुरू हुआ",
+        "runFinished": "रन समाप्त हुआ",
+        "usage": "उपयोग",
+        "error": "त्रुटि"
+      }
+    },
+    "approvals": {
+      "needed": "अनुमोदन की आवश्यकता है",
+      "allowOnce": "एक बार अनुमति दें",
+      "alwaysAllowTool": "हमेशा उपकरण की अनुमति दें",
+      "deny": "अस्वीकार करें",
+      "toolApprovalRequested": "टूल अनुमोदन का अनुरोध किया गया"
+    },
+    "automations": {
+      "title": "स्वचालन",
+      "namePlaceholder": "नाम",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "स्वचालन संकेत",
+      "create": "बनाएँ",
+      "empty": "कोई निर्धारित Libre Claw स्वचालन नहीं.",
+      "runNow": "अभी चलाएँ",
+      "pause": "विराम",
+      "resume": "फिर शुरू करें",
+      "routes": {
+        "report": "रिपोर्ट करें",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "सक्रिय",
+        "paused": "रुका हुआ"
+      }
+    },
+    "usageFallback": {
+      "title": "उपयोग और फ़ॉलबैक",
+      "usage": "उपयोग",
+      "fallbackRoute": "फ़ॉलबैक रूट",
+      "noUsage": "अभी तक कोई उपयोग रिकॉर्ड नहीं है."
+    },
+    "metrics": {
+      "provider": "प्रदाता",
+      "model": "मॉडल",
+      "input": "इनपुट",
+      "output": "आउटपुट",
+      "cached": "कैश्ड",
+      "reasoning": "तर्क",
+      "cost": "लागत",
+      "tool": "औज़ार",
+      "resolution": "संकल्प",
+      "state": "स्थिति",
+      "stopReason": "रुकने का कारण",
+      "tokens": "{{formatted}} टोकन",
+      "tokens_plural": "{{formatted}} टोकन"
+    },
+    "fallbacks": {
+      "tool": "औज़ार",
+      "unknown": "अज्ञात",
+      "resolved": "समाधान हो गया",
+      "unknownError": "अज्ञात त्रुटि"
+    },
+    "toasts": {
+      "loadStatusFailed": "Libre Claw स्थिति लोड नहीं हो सकी",
+      "enterTask": "Libre Claw के लिए एक कार्य दर्ज करें",
+      "runStarted": "Libre Claw रन शुरू हुआ",
+      "startRunFailed": "Libre Claw रन शुरू नहीं हो सका",
+      "runCancelled": "रन रद्द किया गया",
+      "cancelRunFailed": "रन रद्द नहीं किया जा सका",
+      "approved": "स्वीकृत",
+      "denied": "इनकार किया",
+      "resolvePermissionFailed": "अनुमति का समाधान नहीं किया जा सका",
+      "providerModelRequired": "प्रदाता और मॉडल की आवश्यकता है",
+      "modelUpdated": "Libre Claw मॉडल अपडेट किया गया",
+      "updateModelFailed": "मॉडल अद्यतन नहीं किया जा सका",
+      "themeUpdated": "Libre Claw थीम अपडेट की गई",
+      "updateThemeFailed": "थीम अपडेट नहीं किया जा सका",
+      "automationRequired": "स्वचालन नाम, शेड्यूल और संकेत आवश्यक हैं",
+      "automationCreated": "स्वचालन बनाया गया",
+      "createAutomationFailed": "स्वचालन नहीं बनाया जा सका",
+      "automationUpdated": "स्वचालन अद्यतन किया गया",
+      "updateAutomationFailed": "स्वचालन अद्यतन नहीं किया जा सका"
+    }
   }
 }

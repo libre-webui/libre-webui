@@ -243,7 +243,8 @@
       "imagine": "创意",
       "settings": "设置",
       "userManagement": "用户管理",
-      "signOut": "退出登录"
+      "signOut": "退出登录",
+      "agents": "Libre Claw"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -1281,5 +1282,143 @@
     "pull": "下载",
     "pullRestricted": "此实例上的模型安装仅限管理员。",
     "adminOnlyPull": "仅管理员"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "本地代理运行、批准、计划、内存、工具和使用情况。",
+    "dashboard": "仪表板",
+    "connection": {
+      "disconnectedTitle": "Libre Claw 守护进程未连接",
+      "disconnectedDescription": "使用 <command>libre-claw start</command> 在本地启动它，或在后端环境中设置 <env>LIBRE_CLAW_BASE_URL</env>。"
+    },
+    "status": {
+      "connected": "已连接",
+      "disconnected": "已断开连接",
+      "activeRuns": "{{count}}活跃",
+      "activeRuns_plural": "{{count}}活跃"
+    },
+    "states": {
+      "queued": "排队",
+      "running": "正在运行",
+      "blocked": "被阻止",
+      "done": "完成",
+      "failed": "失败",
+      "cancelled": "取消"
+    },
+    "startRun": {
+      "title": "启动智能体运行",
+      "placeholder": "要求Libre Claw检查存储库、修复错误、进行审查、安排报告...",
+      "chatRun": "聊天运行",
+      "goalMode": "目标模式",
+      "providerOverride": "提供者覆盖",
+      "modelOverride": "模型覆盖",
+      "run": "运行"
+    },
+    "modelRoute": {
+      "title": "模型路线",
+      "providerPlaceholder": "提供者",
+      "modelPlaceholder": "型号",
+      "persistGlobal": "坚持Libre Claw全局配置",
+      "saveModel": "保存模型",
+      "theme": "Libre Claw 主题",
+      "saveTheme": "保存主题"
+    },
+    "runs": {
+      "title": "运行",
+      "empty": "还没有 Libre Claw 运行。"
+    },
+    "timeline": {
+      "title": "运行时间线",
+      "empty": "选择一个运行来检查其事件。",
+      "streaming": "流媒体...",
+      "assistantResponse": "助理回应",
+      "resultOk": "好的",
+      "resultError": "错误",
+      "labels": {
+        "userMessage": "用户留言",
+        "toolCall": "工具调用",
+        "toolResult": "工具结果",
+        "approvalRequest": "批准请求",
+        "approvalResponse": "批准回复",
+        "runStarted": "运行已开始",
+        "runFinished": "运行已完成",
+        "usage": "用途",
+        "error": "错误"
+      }
+    },
+    "approvals": {
+      "needed": "需要批准",
+      "allowOnce": "允许一次",
+      "alwaysAllowTool": "始终允许工具",
+      "deny": "拒绝",
+      "toolApprovalRequested": "已请求工具批准"
+    },
+    "automations": {
+      "title": "自动化",
+      "namePlaceholder": "名称",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "自动化提示",
+      "create": "创建",
+      "empty": "没有预定的Libre Claw自动化。",
+      "runNow": "立即运行",
+      "pause": "暂停",
+      "resume": "继续",
+      "routes": {
+        "report": "报告",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "活跃",
+        "paused": "已暂停"
+      }
+    },
+    "usageFallback": {
+      "title": "使用和回退",
+      "usage": "用途",
+      "fallbackRoute": "后备路线",
+      "noUsage": "还没有使用记录。"
+    },
+    "metrics": {
+      "provider": "提供者",
+      "model": "型号",
+      "input": "输入",
+      "output": "输出",
+      "cached": "缓存",
+      "reasoning": "推理",
+      "cost": "成本",
+      "tool": "工具",
+      "resolution": "分辨率",
+      "state": "状态",
+      "stopReason": "停止原因",
+      "tokens": "{{formatted}}代币",
+      "tokens_plural": "{{formatted}}代币"
+    },
+    "fallbacks": {
+      "tool": "工具",
+      "unknown": "未知",
+      "resolved": "已解决",
+      "unknownError": "未知错误"
+    },
+    "toasts": {
+      "loadStatusFailed": "无法加载Libre Claw状态",
+      "enterTask": "输入 Libre Claw 的任务",
+      "runStarted": "Libre Claw 运行已开始",
+      "startRunFailed": "无法启动 Libre Claw 运行",
+      "runCancelled": "运行已取消",
+      "cancelRunFailed": "无法取消运行",
+      "approved": "已批准",
+      "denied": "被拒绝",
+      "resolvePermissionFailed": "无法解析权限",
+      "providerModelRequired": "提供商和型号为必填项",
+      "modelUpdated": "Libre Claw 模型已更新",
+      "updateModelFailed": "无法更新模型",
+      "themeUpdated": "Libre Claw 主题已更新",
+      "updateThemeFailed": "无法更新主题",
+      "automationRequired": "自动化名称、时间表和提示是必需的",
+      "automationCreated": "创建自动化",
+      "createAutomationFailed": "无法创建自动化",
+      "automationUpdated": "自动化更新",
+      "updateAutomationFailed": "无法更新自动化"
+    }
   }
 }

@@ -823,24 +823,6 @@ test('plugin validation rejects unsafe models and remote HTTP endpoints', () => 
   );
 });
 
-test('OpenClaw session routing uses HTTP session headers', () => {
-  const headers = {};
-  pluginValidation.addOpenClawSessionHeader(
-    { id: 'openclaw-agent' },
-    { session_key: 'research' },
-    headers
-  );
-  assert.equal(headers['x-openclaw-session-key'], 'research');
-
-  const disabledHeaders = {};
-  pluginValidation.addOpenClawSessionHeader(
-    { id: 'openclaw-agent' },
-    { session_key: 'research', session_mode: false },
-    disabledHeaders
-  );
-  assert.deepEqual(disabledHeaders, {});
-});
-
 test('buildPluginChatPayload adapts Anthropic multimodal chat requests', () => {
   const { payload, headers } = pluginChatAdapter.buildPluginChatPayload(
     { id: 'anthropic' },

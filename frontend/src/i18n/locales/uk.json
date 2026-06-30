@@ -243,7 +243,8 @@
       "imagine": "Генерація",
       "settings": "Налаштування",
       "userManagement": "Керування користувачами",
-      "signOut": "Вийти"
+      "signOut": "Вийти",
+      "agents": "Libre Claw"
     },
     "toggleSize": "Змінити розмір бічної панелі",
     "expandSidebar": "Розгорнути бічну панель"
@@ -1281,5 +1282,143 @@
     "pull": "Завантажити",
     "pullRestricted": "Встановлення моделей у цьому екземплярі доступне лише адміністраторам.",
     "adminOnlyPull": "Лише адміністратори"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "Запуски локального агента, затвердження, графіки, пам’ять, інструменти та використання.",
+    "dashboard": "Панель керування",
+    "connection": {
+      "disconnectedTitle": "Демон Libre Claw не підключено",
+      "disconnectedDescription": "Запустіть його локально за допомогою <command>libre-claw start</command> або встановіть <env>LIBRE_CLAW_BASE_URL</env> у серверному середовищі."
+    },
+    "status": {
+      "connected": "Підключено",
+      "disconnected": "Відключено",
+      "activeRuns": "{{count}} активний",
+      "activeRuns_plural": "{{count}} активний"
+    },
+    "states": {
+      "queued": "У черзі",
+      "running": "Виконується",
+      "blocked": "заблоковано",
+      "done": "Готово",
+      "failed": "Не вдалося",
+      "cancelled": "Скасовано"
+    },
+    "startRun": {
+      "title": "Запустити виконання агента",
+      "placeholder": "Попросіть Libre Claw перевірити репо, виправити помилку, запустити перевірку, запланувати звіт...",
+      "chatRun": "Запуск чату",
+      "goalMode": "Режим цілі",
+      "providerOverride": "Заміна постачальника",
+      "modelOverride": "Перевизначення моделі",
+      "run": "Запустити"
+    },
+    "modelRoute": {
+      "title": "Модельний маршрут",
+      "providerPlaceholder": "провайдер",
+      "modelPlaceholder": "модель",
+      "persistGlobal": "Зберігайте Libre Claw глобальну конфігурацію",
+      "saveModel": "Зберегти модель",
+      "theme": "Тема Libre Claw",
+      "saveTheme": "Зберегти тему"
+    },
+    "runs": {
+      "title": "Запуски",
+      "empty": "Запусків Libre Claw ще немає."
+    },
+    "timeline": {
+      "title": "Хронологія виконання",
+      "empty": "Виберіть запуск, щоб перевірити його події.",
+      "streaming": "Потокове передавання...",
+      "assistantResponse": "Відповідь помічника",
+      "resultOk": "добре",
+      "resultError": "помилка",
+      "labels": {
+        "userMessage": "Повідомлення користувача",
+        "toolCall": "Виклик інструменту",
+        "toolResult": "Результат інструменту",
+        "approvalRequest": "Запит на схвалення",
+        "approvalResponse": "Відповідь схвалення",
+        "runStarted": "Запуск розпочато",
+        "runFinished": "Запуск завершено",
+        "usage": "Використання",
+        "error": "Помилка"
+      }
+    },
+    "approvals": {
+      "needed": "Потрібне схвалення",
+      "allowOnce": "Дозвольте один раз",
+      "alwaysAllowTool": "Завжди дозволяти інструмент",
+      "deny": "Відхилити",
+      "toolApprovalRequested": "Запит на схвалення інструменту"
+    },
+    "automations": {
+      "title": "Автоматизації",
+      "namePlaceholder": "Ім'я",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "Підказка автоматизації",
+      "create": "Створити",
+      "empty": "Немає запланованих автоматизацій Libre Claw.",
+      "runNow": "Запустити зараз",
+      "pause": "Пауза",
+      "resume": "Відновити",
+      "routes": {
+        "report": "звіт",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "Активний",
+        "paused": "Призупинено"
+      }
+    },
+    "usageFallback": {
+      "title": "Використання та резервний варіант",
+      "usage": "Використання",
+      "fallbackRoute": "Запасний маршрут",
+      "noUsage": "Записів про використання ще немає."
+    },
+    "metrics": {
+      "provider": "Провайдер",
+      "model": "Модель",
+      "input": "Введення",
+      "output": "Вихід",
+      "cached": "Кешовано",
+      "reasoning": "Міркування",
+      "cost": "Вартість",
+      "tool": "Інструмент",
+      "resolution": "роздільна здатність",
+      "state": "Стан",
+      "stopReason": "Причина зупинки",
+      "tokens": "{{formatted}} лексема",
+      "tokens_plural": "{{formatted}} лексеми"
+    },
+    "fallbacks": {
+      "tool": "інструмент",
+      "unknown": "невідомий",
+      "resolved": "вирішено",
+      "unknownError": "Невідома помилка"
+    },
+    "toasts": {
+      "loadStatusFailed": "Не вдалося завантажити статус Libre Claw",
+      "enterTask": "Введіть завдання до Libre Claw",
+      "runStarted": "Запуск Libre Claw розпочато",
+      "startRunFailed": "Не вдалося запустити Libre Claw",
+      "runCancelled": "Запуск скасовано",
+      "cancelRunFailed": "Не вдалося скасувати запуск",
+      "approved": "Затверджено",
+      "denied": "Відмовлено",
+      "resolvePermissionFailed": "Не вдалося вирішити дозвіл",
+      "providerModelRequired": "Необхідні постачальник і модель",
+      "modelUpdated": "Модель Libre Claw оновлено",
+      "updateModelFailed": "Не вдалося оновити модель",
+      "themeUpdated": "Тему Libre Claw оновлено",
+      "updateThemeFailed": "Не вдалося оновити тему",
+      "automationRequired": "Потрібні ім’я автоматизації, розклад і підказка",
+      "automationCreated": "Автоматика створена",
+      "createAutomationFailed": "Не вдалося створити автоматизацію",
+      "automationUpdated": "Автоматика оновлена",
+      "updateAutomationFailed": "Не вдалося оновити автоматизацію"
+    }
   }
 }

@@ -243,7 +243,8 @@
       "imagine": "Imajinasi",
       "settings": "Pengaturan",
       "userManagement": "Manajemen Pengguna",
-      "signOut": "Keluar"
+      "signOut": "Keluar",
+      "agents": "Libre Claw"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -1281,5 +1282,143 @@
     "pull": "Unduh",
     "pullRestricted": "Instalasi model dibatasi hanya untuk administrator pada instance ini.",
     "adminOnlyPull": "Hanya admin"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "Agen lokal dijalankan, persetujuan, jadwal, memori, alat, dan penggunaan.",
+    "dashboard": "Dasbor",
+    "connection": {
+      "disconnectedTitle": "Daemon Libre Claw tidak terhubung",
+      "disconnectedDescription": "Mulai secara lokal dengan <command>libre-claw start</command> atau atur <env>LIBRE_CLAW_BASE_URL</env> di lingkungan backend."
+    },
+    "status": {
+      "connected": "Terhubung",
+      "disconnected": "Terputus",
+      "activeRuns": "{{count}} aktif",
+      "activeRuns_plural": "{{count}} aktif"
+    },
+    "states": {
+      "queued": "Mengantri",
+      "running": "Sedang berjalan",
+      "blocked": "Diblokir",
+      "done": "Selesai",
+      "failed": "Gagal",
+      "cancelled": "Dibatalkan"
+    },
+    "startRun": {
+      "title": "Mulai eksekusi agen",
+      "placeholder": "Minta Libre Claw untuk memeriksa repo, memperbaiki bug, menjalankan tinjauan, menjadwalkan laporan...",
+      "chatRun": "Obrolan berjalan",
+      "goalMode": "Modus sasaran",
+      "providerOverride": "Penggantian penyedia",
+      "modelOverride": "Penggantian model",
+      "run": "Jalankan"
+    },
+    "modelRoute": {
+      "title": "Rute Model",
+      "providerPlaceholder": "penyedia",
+      "modelPlaceholder": "model",
+      "persistGlobal": "Bertahan pada Libre Claw konfigurasi global",
+      "saveModel": "Simpan modelnya",
+      "theme": "Tema Libre Claw",
+      "saveTheme": "Simpan tema"
+    },
+    "runs": {
+      "title": "Eksekusi",
+      "empty": "Belum ada eksekusi Libre Claw."
+    },
+    "timeline": {
+      "title": "Linimasa eksekusi",
+      "empty": "Pilih proses untuk memeriksa kejadiannya.",
+      "streaming": "Streaming...",
+      "assistantResponse": "Tanggapan asisten",
+      "resultOk": "oke",
+      "resultError": "kesalahan",
+      "labels": {
+        "userMessage": "Pesan pengguna",
+        "toolCall": "Panggilan alat",
+        "toolResult": "Hasil alat",
+        "approvalRequest": "Permintaan persetujuan",
+        "approvalResponse": "Tanggapan persetujuan",
+        "runStarted": "Eksekusi dimulai",
+        "runFinished": "Eksekusi selesai",
+        "usage": "Penggunaan",
+        "error": "Kesalahan"
+      }
+    },
+    "approvals": {
+      "needed": "Diperlukan persetujuan",
+      "allowOnce": "Izinkan sekali",
+      "alwaysAllowTool": "Selalu izinkan alat",
+      "deny": "Tolak",
+      "toolApprovalRequested": "Persetujuan alat diminta"
+    },
+    "automations": {
+      "title": "Otomatisasi",
+      "namePlaceholder": "Nama",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "Perintah otomatisasi",
+      "create": "Buat",
+      "empty": "Tidak ada otomatisasi Libre Claw terjadwal.",
+      "runNow": "Jalankan sekarang",
+      "pause": "Jeda",
+      "resume": "Lanjutkan",
+      "routes": {
+        "report": "Laporkan",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "Aktif",
+        "paused": "Dijeda"
+      }
+    },
+    "usageFallback": {
+      "title": "Penggunaan dan Penggantian",
+      "usage": "Penggunaan",
+      "fallbackRoute": "Rute Mundur",
+      "noUsage": "Belum ada catatan penggunaan."
+    },
+    "metrics": {
+      "provider": "Penyedia",
+      "model": "Model",
+      "input": "Masukan",
+      "output": "Keluaran",
+      "cached": "Di-cache",
+      "reasoning": "Penalaran",
+      "cost": "Biaya",
+      "tool": "Alat",
+      "resolution": "Resolusi",
+      "state": "Status",
+      "stopReason": "Alasan berhenti",
+      "tokens": "{{formatted}} tanda",
+      "tokens_plural": "{{formatted}} token"
+    },
+    "fallbacks": {
+      "tool": "alat",
+      "unknown": "tidak diketahui",
+      "resolved": "terselesaikan",
+      "unknownError": "Kesalahan tidak diketahui"
+    },
+    "toasts": {
+      "loadStatusFailed": "Tidak dapat memuat status Libre Claw",
+      "enterTask": "Masukkan tugas untuk Libre Claw",
+      "runStarted": "Eksekusi Libre Claw dimulai",
+      "startRunFailed": "Tidak dapat memulai eksekusi Libre Claw",
+      "runCancelled": "Eksekusi dibatalkan",
+      "cancelRunFailed": "Tidak dapat membatalkan eksekusi",
+      "approved": "Disetujui",
+      "denied": "Ditolak",
+      "resolvePermissionFailed": "Tidak dapat menyelesaikan izin",
+      "providerModelRequired": "Penyedia dan model diperlukan",
+      "modelUpdated": "Model Libre Claw diperbarui",
+      "updateModelFailed": "Tidak dapat memperbarui model",
+      "themeUpdated": "Tema Libre Claw diperbarui",
+      "updateThemeFailed": "Tidak dapat memperbarui tema",
+      "automationRequired": "Nama otomatisasi, jadwal, dan perintah diperlukan",
+      "automationCreated": "Otomatisasi dibuat",
+      "createAutomationFailed": "Tidak dapat membuat otomatisasi",
+      "automationUpdated": "Otomatisasi diperbarui",
+      "updateAutomationFailed": "Tidak dapat memperbarui otomatisasi"
+    }
   }
 }

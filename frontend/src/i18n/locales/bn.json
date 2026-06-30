@@ -243,7 +243,8 @@
       "imagine": "ইমাজিন",
       "settings": "সেটিংস",
       "userManagement": "ব্যবহারকারী ব্যবস্থাপনা",
-      "signOut": "সাইন আউট"
+      "signOut": "সাইন আউট",
+      "agents": "Libre Claw"
     },
     "toggleSize": "সাইডবার সাইজ টগল করুন",
     "expandSidebar": "সাইডবার প্রসারিত করুন"
@@ -1281,5 +1282,143 @@
     "pull": "Pull",
     "pullRestricted": "এই ইনস্ট্যান্সে মডেল ইনস্টলেশন শুধুমাত্র অ্যাডমিনদের জন্য সীমাবদ্ধ।",
     "adminOnlyPull": "শুধু অ্যাডমিন"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "স্থানীয় এজেন্ট রান, অনুমোদন, সময়সূচী, মেমরি, সরঞ্জাম, এবং ব্যবহার.",
+    "dashboard": "ড্যাশবোর্ড",
+    "connection": {
+      "disconnectedTitle": "Libre Claw ডেমন সংযুক্ত নয়",
+      "disconnectedDescription": "স্থানীয়ভাবে <command>libre-claw start</command> দিয়ে শুরু করুন অথবা ব্যাকএন্ড পরিবেশে <env>LIBRE_CLAW_BASE_URL</env> সেট করুন।"
+    },
+    "status": {
+      "connected": "সংযুক্ত",
+      "disconnected": "সংযোগ বিচ্ছিন্ন",
+      "activeRuns": "{{count}} সক্রিয়",
+      "activeRuns_plural": "{{count}} সক্রিয়"
+    },
+    "states": {
+      "queued": "সারিবদ্ধ",
+      "running": "চলছে",
+      "blocked": "অবরুদ্ধ",
+      "done": "সম্পন্ন",
+      "failed": "ব্যর্থ হয়েছে",
+      "cancelled": "বাতিল"
+    },
+    "startRun": {
+      "title": "এজেন্ট রান শুরু করুন",
+      "placeholder": "একটি রেপো পরিদর্শন করতে, একটি বাগ ঠিক করতে, একটি পর্যালোচনা চালাতে, একটি প্রতিবেদনের সময়সূচী করতে Libre Clawকে বলুন...",
+      "chatRun": "চ্যাট রান",
+      "goalMode": "লক্ষ্য মোড",
+      "providerOverride": "প্রদানকারী ওভাররাইড",
+      "modelOverride": "মডেল ওভাররাইড",
+      "run": "চালান"
+    },
+    "modelRoute": {
+      "title": "মডেল রুট",
+      "providerPlaceholder": "প্রদানকারী",
+      "modelPlaceholder": "মডেল",
+      "persistGlobal": "Libre Claw গ্লোবাল কনফিগারেশনে স্থির থাকুন",
+      "saveModel": "মডেল সংরক্ষণ করুন",
+      "theme": "Libre Claw থিম",
+      "saveTheme": "থিম সংরক্ষণ করুন"
+    },
+    "runs": {
+      "title": "রানসমূহ",
+      "empty": "এখনও কোনো Libre Claw রান নেই।"
+    },
+    "timeline": {
+      "title": "রানের টাইমলাইন",
+      "empty": "এর ইভেন্টগুলি পরিদর্শন করতে একটি দৌড় নির্বাচন করুন৷",
+      "streaming": "স্ট্রিমিং...",
+      "assistantResponse": "সহকারীর প্রতিক্রিয়া",
+      "resultOk": "ঠিক আছে",
+      "resultError": "ত্রুটি",
+      "labels": {
+        "userMessage": "ব্যবহারকারীর বার্তা",
+        "toolCall": "টুল কল",
+        "toolResult": "টুল ফলাফল",
+        "approvalRequest": "অনুমোদনের অনুরোধ",
+        "approvalResponse": "অনুমোদন প্রতিক্রিয়া",
+        "runStarted": "রান শুরু হয়েছে",
+        "runFinished": "রান শেষ হয়েছে",
+        "usage": "ব্যবহার",
+        "error": "ত্রুটি"
+      }
+    },
+    "approvals": {
+      "needed": "অনুমোদন প্রয়োজন",
+      "allowOnce": "একবার অনুমতি দিন",
+      "alwaysAllowTool": "সর্বদা টুল মঞ্জুরি",
+      "deny": "প্রত্যাখ্যান করুন",
+      "toolApprovalRequested": "টুল অনুমোদন অনুরোধ করা হয়েছে"
+    },
+    "automations": {
+      "title": "অটোমেশন",
+      "namePlaceholder": "নাম",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "অটোমেশন প্রম্পট",
+      "create": "তৈরি করুন",
+      "empty": "কোন নির্ধারিত Libre Claw অটোমেশন।",
+      "runNow": "এখন চালান",
+      "pause": "বিরতি",
+      "resume": "পুনরায় শুরু করুন",
+      "routes": {
+        "report": "রিপোর্ট",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "সক্রিয়",
+        "paused": "বিরতি দেওয়া হয়েছে"
+      }
+    },
+    "usageFallback": {
+      "title": "ব্যবহার এবং ফলব্যাক",
+      "usage": "ব্যবহার",
+      "fallbackRoute": "ফলব্যাক রুট",
+      "noUsage": "এখনও কোন ব্যবহার রেকর্ড."
+    },
+    "metrics": {
+      "provider": "প্রদানকারী",
+      "model": "মডেল",
+      "input": "ইনপুট",
+      "output": "আউটপুট",
+      "cached": "ক্যাশে",
+      "reasoning": "যুক্তি",
+      "cost": "খরচ",
+      "tool": "টুল",
+      "resolution": "রেজোলিউশন",
+      "state": "অবস্থা",
+      "stopReason": "বন্ধের কারণ",
+      "tokens": "{{formatted}} টোকেন",
+      "tokens_plural": "{{formatted}} টোকেন"
+    },
+    "fallbacks": {
+      "tool": "টুল",
+      "unknown": "অজানা",
+      "resolved": "সমাধান করা",
+      "unknownError": "অজানা ত্রুটি"
+    },
+    "toasts": {
+      "loadStatusFailed": "Libre Claw স্থিতি লোড করা যায়নি",
+      "enterTask": "Libre Claw এর জন্য একটি টাস্ক লিখুন",
+      "runStarted": "Libre Claw রান শুরু হয়েছে",
+      "startRunFailed": "Libre Claw রান শুরু করা যায়নি",
+      "runCancelled": "রান বাতিল হয়েছে",
+      "cancelRunFailed": "রান বাতিল করা যায়নি",
+      "approved": "অনুমোদিত",
+      "denied": "অস্বীকার করেছে",
+      "resolvePermissionFailed": "অনুমতি সমাধান করা যায়নি",
+      "providerModelRequired": "প্রদানকারী এবং মডেল প্রয়োজন",
+      "modelUpdated": "Libre Claw মডেল আপডেট করা হয়েছে",
+      "updateModelFailed": "মডেল আপডেট করা যায়নি",
+      "themeUpdated": "Libre Claw থিম আপডেট করা হয়েছে",
+      "updateThemeFailed": "থিম আপডেট করা যায়নি",
+      "automationRequired": "অটোমেশন নাম, সময়সূচী, এবং প্রম্পট প্রয়োজন",
+      "automationCreated": "অটোমেশন তৈরি করা হয়েছে",
+      "createAutomationFailed": "অটোমেশন তৈরি করা যায়নি",
+      "automationUpdated": "অটোমেশন আপডেট করা হয়েছে",
+      "updateAutomationFailed": "অটোমেশন আপডেট করা যায়নি"
+    }
   }
 }

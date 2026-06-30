@@ -243,7 +243,8 @@
       "imagine": "จินตนาการ",
       "settings": "การตั้งค่า",
       "userManagement": "จัดการผู้ใช้",
-      "signOut": "ออกจากระบบ"
+      "signOut": "ออกจากระบบ",
+      "agents": "Libre Claw"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
     "expandSidebar": "ขยายแถบด้านข้าง"
@@ -1281,5 +1282,143 @@
     "pull": "ดาวน์โหลด",
     "pullRestricted": "การติดตั้งโมเดลบนอินสแตนซ์นี้จำกัดเฉพาะผู้ดูแลระบบเท่านั้น",
     "adminOnlyPull": "ผู้ดูแลระบบเท่านั้น"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "การเรียกใช้ตัวแทนในพื้นที่ การอนุมัติ กำหนดการ หน่วยความจำ เครื่องมือ และการใช้งาน",
+    "dashboard": "แดชบอร์ด",
+    "connection": {
+      "disconnectedTitle": "daemon ของ Libre Claw ไม่ได้เชื่อมต่อ",
+      "disconnectedDescription": "เริ่มต้นในเครื่องด้วย <command>libre-claw start</command> หรือตั้งค่า <env>LIBRE_CLAW_BASE_URL</env> ในสภาพแวดล้อมแบ็กเอนด์"
+    },
+    "status": {
+      "connected": "เชื่อมต่อแล้ว",
+      "disconnected": "ตัดการเชื่อมต่อแล้ว",
+      "activeRuns": "{{count}} ใช้งานอยู่",
+      "activeRuns_plural": "{{count}} ใช้งานอยู่"
+    },
+    "states": {
+      "queued": "เข้าคิว",
+      "running": "กำลังทำงาน",
+      "blocked": "ถูกบล็อก",
+      "done": "เสร็จแล้ว",
+      "failed": "ล้มเหลว",
+      "cancelled": "ยกเลิกแล้ว"
+    },
+    "startRun": {
+      "title": "เริ่มการทำงานของเอเจนต์",
+      "placeholder": "ขอให้ Libre Claw ตรวจสอบ repo แก้ไขข้อบกพร่อง เรียกใช้การตรวจสอบ กำหนดเวลารายงาน...",
+      "chatRun": "แชทวิ่ง",
+      "goalMode": "โหมดเป้าหมาย",
+      "providerOverride": "การแทนที่ผู้ให้บริการ",
+      "modelOverride": "การแทนที่โมเดล",
+      "run": "เรียกใช้"
+    },
+    "modelRoute": {
+      "title": "เส้นทางจำลอง",
+      "providerPlaceholder": "ผู้ให้บริการ",
+      "modelPlaceholder": "โมเดล",
+      "persistGlobal": "คงอยู่ใน Libre Claw การกำหนดค่าส่วนกลาง",
+      "saveModel": "บันทึกโมเดล",
+      "theme": "ธีม Libre Claw",
+      "saveTheme": "บันทึกธีม"
+    },
+    "runs": {
+      "title": "การทำงาน",
+      "empty": "ยังไม่มีการทำงานของ Libre Claw"
+    },
+    "timeline": {
+      "title": "ไทม์ไลน์การทำงาน",
+      "empty": "เลือกการวิ่งเพื่อตรวจสอบเหตุการณ์",
+      "streaming": "กำลังสตรีม...",
+      "assistantResponse": "การตอบสนองของผู้ช่วย",
+      "resultOk": "ตกลง",
+      "resultError": "ข้อผิดพลาด",
+      "labels": {
+        "userMessage": "ข้อความของผู้ใช้",
+        "toolCall": "การเรียกเครื่องมือ",
+        "toolResult": "ผลลัพธ์ของเครื่องมือ",
+        "approvalRequest": "ขออนุมัติ",
+        "approvalResponse": "การตอบรับการอนุมัติ",
+        "runStarted": "เริ่มการทำงานแล้ว",
+        "runFinished": "การทำงานเสร็จสิ้น",
+        "usage": "การใช้งาน",
+        "error": "เกิดข้อผิดพลาด"
+      }
+    },
+    "approvals": {
+      "needed": "จำเป็นต้องได้รับการอนุมัติ",
+      "allowOnce": "อนุญาตครั้งหนึ่ง",
+      "alwaysAllowTool": "อนุญาตเครื่องมือเสมอ",
+      "deny": "ปฏิเสธ",
+      "toolApprovalRequested": "ร้องขอการอนุมัติเครื่องมือ"
+    },
+    "automations": {
+      "title": "ระบบอัตโนมัติ",
+      "namePlaceholder": "ชื่อ",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "พรอมต์อัตโนมัติ",
+      "create": "สร้าง",
+      "empty": "ไม่มีการกำหนด Libre Claw การทำงานอัตโนมัติ",
+      "runNow": "เรียกใช้ตอนนี้",
+      "pause": "หยุดชั่วคราว",
+      "resume": "ดำเนินการต่อ",
+      "routes": {
+        "report": "รายงาน",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "ใช้งานอยู่",
+        "paused": "หยุดชั่วคราว"
+      }
+    },
+    "usageFallback": {
+      "title": "การใช้งานและทางเลือก",
+      "usage": "การใช้งาน",
+      "fallbackRoute": "เส้นทางสำรอง",
+      "noUsage": "ยังไม่มีบันทึกการใช้งาน"
+    },
+    "metrics": {
+      "provider": "ผู้ให้บริการ",
+      "model": "รุ่น",
+      "input": "อินพุต",
+      "output": "เอาท์พุต",
+      "cached": "แคช",
+      "reasoning": "การใช้เหตุผล",
+      "cost": "ราคา",
+      "tool": "เครื่องมือ",
+      "resolution": "ความละเอียด",
+      "state": "สถานะ",
+      "stopReason": "เหตุผลที่หยุด",
+      "tokens": "โทเค็น {{formatted}}",
+      "tokens_plural": "โทเค็น {{formatted}}"
+    },
+    "fallbacks": {
+      "tool": "เครื่องมือ",
+      "unknown": "ไม่ทราบ",
+      "resolved": "แก้ไขแล้ว",
+      "unknownError": "ข้อผิดพลาดที่ไม่รู้จัก"
+    },
+    "toasts": {
+      "loadStatusFailed": "ไม่สามารถโหลดสถานะ Libre Claw",
+      "enterTask": "ป้อนงานสำหรับ Libre Claw",
+      "runStarted": "เริ่มการทำงานของ Libre Claw แล้ว",
+      "startRunFailed": "ไม่สามารถเริ่มการทำงานของ Libre Claw ได้",
+      "runCancelled": "ยกเลิกการทำงานแล้ว",
+      "cancelRunFailed": "ไม่สามารถยกเลิกการทำงานได้",
+      "approved": "อนุมัติแล้ว",
+      "denied": "ถูกปฏิเสธ",
+      "resolvePermissionFailed": "ไม่สามารถแก้ไขการอนุญาตได้",
+      "providerModelRequired": "ต้องระบุผู้ให้บริการและรุ่น",
+      "modelUpdated": "อัปเดตโมเดล Libre Claw แล้ว",
+      "updateModelFailed": "ไม่สามารถอัปเดตโมเดลได้",
+      "themeUpdated": "อัปเดตธีม Libre Claw แล้ว",
+      "updateThemeFailed": "ไม่สามารถอัปเดตธีมได้",
+      "automationRequired": "ต้องมีชื่อการทำงานอัตโนมัติ กำหนดการ และพร้อมท์",
+      "automationCreated": "สร้างระบบอัตโนมัติแล้ว",
+      "createAutomationFailed": "ไม่สามารถสร้างระบบอัตโนมัติได้",
+      "automationUpdated": "อัปเดตระบบอัตโนมัติแล้ว",
+      "updateAutomationFailed": "ไม่สามารถอัปเดตการทำงานอัตโนมัติได้"
+    }
   }
 }

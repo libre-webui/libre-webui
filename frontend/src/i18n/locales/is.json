@@ -243,7 +243,8 @@
       "imagine": "Myndsköpun",
       "settings": "Stillingar",
       "userManagement": "Notendastjórnun",
-      "signOut": "Skrá út"
+      "signOut": "Skrá út",
+      "agents": "Libre Claw"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -1281,5 +1282,143 @@
     "pull": "Pull",
     "pullRestricted": "Uppsetning líkana er takmörkuð við stjórnendur á þessu tilviki.",
     "adminOnlyPull": "Aðeins stjórnendur"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "Staðbundin umboðsmaður keyrir, samþykki, áætlanir, minni, verkfæri og notkun.",
+    "dashboard": "Stjórnborð",
+    "connection": {
+      "disconnectedTitle": "Libre Claw-daemoninn er ekki tengdur",
+      "disconnectedDescription": "Byrjaðu það á staðnum með <command>libre-claw start</command> eða stilltu <env>LIBRE_CLAW_BASE_URL</env> í bakendaumhverfinu."
+    },
+    "status": {
+      "connected": "Tengdur",
+      "disconnected": "Ótengdur",
+      "activeRuns": "{{count}} virkur",
+      "activeRuns_plural": "{{count}} virkur"
+    },
+    "states": {
+      "queued": "Í biðröð",
+      "running": "Í gangi",
+      "blocked": "Lokað",
+      "done": "Búið",
+      "failed": "Mistókst",
+      "cancelled": "Hætt við"
+    },
+    "startRun": {
+      "title": "Hefja keyrslu umboðsmanns",
+      "placeholder": "Biddu Libre Claw um að skoða endurhverfu, laga villu, keyra yfirferð, tímasetja skýrslu...",
+      "chatRun": "Spjallhlaup",
+      "goalMode": "Markmiðshamur",
+      "providerOverride": "Hnekkt þjónustuveitanda",
+      "modelOverride": "Hnekkt líkan",
+      "run": "Keyra"
+    },
+    "modelRoute": {
+      "title": "Fyrirmyndarleið",
+      "providerPlaceholder": "veitanda",
+      "modelPlaceholder": "fyrirmynd",
+      "persistGlobal": "Haltu áfram að Libre Claw alþjóðlegri stillingu",
+      "saveModel": "Vista líkan",
+      "theme": "Libre Claw-þema",
+      "saveTheme": "Vista þema"
+    },
+    "runs": {
+      "title": "Keyrslur",
+      "empty": "Engar Libre Claw-keyrslur enn."
+    },
+    "timeline": {
+      "title": "Tímalína keyrslu",
+      "empty": "Veldu hlaup til að skoða atburði þess.",
+      "streaming": "Straumur...",
+      "assistantResponse": "Viðbrögð aðstoðarmanns",
+      "resultOk": "allt í lagi",
+      "resultError": "villa",
+      "labels": {
+        "userMessage": "Skilaboð notenda",
+        "toolCall": "Verkfærakall",
+        "toolResult": "Verkfæraniðurstaða",
+        "approvalRequest": "Beiðni um samþykki",
+        "approvalResponse": "Samþykki svar",
+        "runStarted": "Keyrsla hafin",
+        "runFinished": "Keyrslu lokið",
+        "usage": "Notkun",
+        "error": "Villa"
+      }
+    },
+    "approvals": {
+      "needed": "Samþykki þarf",
+      "allowOnce": "Leyfðu einu sinni",
+      "alwaysAllowTool": "Leyfðu alltaf tól",
+      "deny": "Hafna",
+      "toolApprovalRequested": "Beðið um samþykki verkfæra"
+    },
+    "automations": {
+      "title": "Sjálfvirkni",
+      "namePlaceholder": "Nafn",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "Sjálfvirkni hvetja",
+      "create": "Búa til",
+      "empty": "Engar áætlaðar Libre Claw sjálfvirkni.",
+      "runNow": "Keyra núna",
+      "pause": "Gera hlé",
+      "resume": "Halda áfram",
+      "routes": {
+        "report": "Skýrsla",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "Virkur",
+        "paused": "Gert hlé"
+      }
+    },
+    "usageFallback": {
+      "title": "Notkun og fallback",
+      "usage": "Notkun",
+      "fallbackRoute": "Fallback leið",
+      "noUsage": "Engar notkunarskrár ennþá."
+    },
+    "metrics": {
+      "provider": "Veitandi",
+      "model": "Fyrirmynd",
+      "input": "Inntak",
+      "output": "Framleiðsla",
+      "cached": "Í skyndiminni",
+      "reasoning": "Rökstuðningur",
+      "cost": "Kostnaður",
+      "tool": "Verkfæri",
+      "resolution": "Upplausn",
+      "state": "Staða",
+      "stopReason": "Ástæða stöðvunar",
+      "tokens": "{{formatted}} tákn",
+      "tokens_plural": "{{formatted}} tákn"
+    },
+    "fallbacks": {
+      "tool": "verkfæri",
+      "unknown": "óþekkt",
+      "resolved": "leyst",
+      "unknownError": "Óþekkt villa"
+    },
+    "toasts": {
+      "loadStatusFailed": "Gat ekki hlaðið Libre Claw stöðu",
+      "enterTask": "Sláðu inn verkefni fyrir Libre Claw",
+      "runStarted": "Libre Claw-keyrsla hafin",
+      "startRunFailed": "Gat ekki hafið Libre Claw-keyrslu",
+      "runCancelled": "Hætt við keyrslu",
+      "cancelRunFailed": "Gat ekki hætt við keyrslu",
+      "approved": "Samþykkt",
+      "denied": "Neitað",
+      "resolvePermissionFailed": "Ekki tókst að leysa heimild",
+      "providerModelRequired": "Þjónustuaðili og líkan eru nauðsynleg",
+      "modelUpdated": "Libre Claw-líkan uppfært",
+      "updateModelFailed": "Ekki tókst að uppfæra gerð",
+      "themeUpdated": "Libre Claw-þema uppfært",
+      "updateThemeFailed": "Ekki tókst að uppfæra þema",
+      "automationRequired": "Nafn sjálfvirkni, áætlun og hvetja er krafist",
+      "automationCreated": "Sjálfvirkni búin til",
+      "createAutomationFailed": "Gat ekki búið til sjálfvirkni",
+      "automationUpdated": "Sjálfvirkni uppfærð",
+      "updateAutomationFailed": "Gat ekki uppfært sjálfvirkni"
+    }
   }
 }

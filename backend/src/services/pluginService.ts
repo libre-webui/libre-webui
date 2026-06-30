@@ -49,7 +49,6 @@ import {
   type PluginStreamChunk,
 } from '../utils/pluginStreamAdapter.js';
 import {
-  addOpenClawSessionHeader,
   applyModelEndpointTemplate,
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
@@ -525,7 +524,6 @@ class PluginService {
       pluginVars.endpoint as string | undefined
     );
     const headers = buildPluginAuthHeaders(activePlugin, apiKey);
-    addOpenClawSessionHeader(activePlugin, pluginVars, headers);
     const { payload, headers: payloadHeaders } = buildPluginChatPayload(
       activePlugin,
       model,
@@ -610,7 +608,6 @@ class PluginService {
     );
     const params = resolvePluginChatParameters(options, pluginVars);
     const headers = buildPluginAuthHeaders(activePlugin, apiKey);
-    addOpenClawSessionHeader(activePlugin, pluginVars, headers);
 
     const payload = {
       model,

@@ -76,6 +76,7 @@ const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
 const ModelsPage = React.lazy(() => import('@/pages/ModelsPage'));
 const PersonasPage = React.lazy(() => import('@/pages/PersonasPage'));
 const GalleryPage = React.lazy(() => import('@/pages/GalleryPage'));
+const LibreClawPage = React.lazy(() => import('@/pages/LibreClawPage'));
 const UserManagementPage = React.lazy(
   () => import('@/pages/UserManagementPage')
 );
@@ -551,6 +552,10 @@ const App: React.FC = () => {
                               <Route
                                 path='/gallery'
                                 element={<GalleryPage />}
+                              />
+                              <Route
+                                path='/agents'
+                                element={<LibreClawPage />}
                               />
                               <Route
                                 path='/artifacts'

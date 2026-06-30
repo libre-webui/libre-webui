@@ -243,7 +243,8 @@
       "imagine": "Forestil",
       "settings": "Indstillinger",
       "userManagement": "Brugeradministration",
-      "signOut": "Log ud"
+      "signOut": "Log ud",
+      "agents": "Libre Claw"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -1281,5 +1282,143 @@
     "pull": "Download",
     "pullRestricted": "Modelinstallation er begrænset til administratorer på denne instans.",
     "adminOnlyPull": "Kun administratorer"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "Lokale agentkørsler, godkendelser, tidsplaner, hukommelse, værktøjer og brug.",
+    "dashboard": "Dashboard",
+    "connection": {
+      "disconnectedTitle": "Libre Claw-dæmonen er ikke forbundet",
+      "disconnectedDescription": "Start det lokalt med <command>libre-claw start</command> eller indstil <env>LIBRE_CLAW_BASE_URL</env> i backend-miljøet."
+    },
+    "status": {
+      "connected": "Forbundet",
+      "disconnected": "Afbrudt",
+      "activeRuns": "{{count}} aktiv",
+      "activeRuns_plural": "{{count}} aktiv"
+    },
+    "states": {
+      "queued": "I kø",
+      "running": "Kører",
+      "blocked": "Blokeret",
+      "done": "Færdig",
+      "failed": "Mislykkedes",
+      "cancelled": "Annulleret"
+    },
+    "startRun": {
+      "title": "Start agentkørsel",
+      "placeholder": "Bed Libre Claw om at inspicere en repo, rette en fejl, køre en anmeldelse, planlægge en rapport...",
+      "chatRun": "Chat køre",
+      "goalMode": "Måltilstand",
+      "providerOverride": "Udbyder tilsidesættelse",
+      "modelOverride": "Model tilsidesættelse",
+      "run": "Kør"
+    },
+    "modelRoute": {
+      "title": "Model Rute",
+      "providerPlaceholder": "udbyder",
+      "modelPlaceholder": "model",
+      "persistGlobal": "Fortsæt til Libre Claw global konfig",
+      "saveModel": "Gem model",
+      "theme": "Libre Claw-tema",
+      "saveTheme": "Gem tema"
+    },
+    "runs": {
+      "title": "Kørsler",
+      "empty": "Ingen Libre Claw-kørsler endnu."
+    },
+    "timeline": {
+      "title": "Kørselstidslinje",
+      "empty": "Vælg en løbetur for at inspicere dens begivenheder.",
+      "streaming": "Streamer...",
+      "assistantResponse": "Assistent-svar",
+      "resultOk": "ok",
+      "resultError": "fejl",
+      "labels": {
+        "userMessage": "Bruger besked",
+        "toolCall": "Værktøjskald",
+        "toolResult": "Værktøjsresultat",
+        "approvalRequest": "Anmodning om godkendelse",
+        "approvalResponse": "Godkendelsessvar",
+        "runStarted": "Kørsel startet",
+        "runFinished": "Kørsel afsluttet",
+        "usage": "Brug",
+        "error": "Fejl"
+      }
+    },
+    "approvals": {
+      "needed": "Godkendelse nødvendig",
+      "allowOnce": "Tillad én gang",
+      "alwaysAllowTool": "Tillad altid værktøj",
+      "deny": "Afvis",
+      "toolApprovalRequested": "Værktøjsgodkendelse anmodet"
+    },
+    "automations": {
+      "title": "Automatiseringer",
+      "namePlaceholder": "Navn",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "Automatiseringsprompt",
+      "create": "Opret",
+      "empty": "Ingen planlagte Libre Claw automatiseringer.",
+      "runNow": "Kør nu",
+      "pause": "Pause",
+      "resume": "Genoptag",
+      "routes": {
+        "report": "Rapport",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "Aktiv",
+        "paused": "Pause"
+      }
+    },
+    "usageFallback": {
+      "title": "Brug og Fallback",
+      "usage": "Brug",
+      "fallbackRoute": "Reserverute",
+      "noUsage": "Ingen brugsregistreringer endnu."
+    },
+    "metrics": {
+      "provider": "Udbyder",
+      "model": "Model",
+      "input": "Input",
+      "output": "Output",
+      "cached": "Cachelagret",
+      "reasoning": "Ræsonnement",
+      "cost": "Omkostninger",
+      "tool": "Værktøj",
+      "resolution": "Opløsning",
+      "state": "Status",
+      "stopReason": "Stopårsag",
+      "tokens": "{{formatted}} token",
+      "tokens_plural": "{{formatted}} poletter"
+    },
+    "fallbacks": {
+      "tool": "værktøj",
+      "unknown": "ukendt",
+      "resolved": "løst",
+      "unknownError": "Ukendt fejl"
+    },
+    "toasts": {
+      "loadStatusFailed": "Kunne ikke indlæse Libre Claw-status",
+      "enterTask": "Indtast en opgave til Libre Claw",
+      "runStarted": "Libre Claw-kørsel startet",
+      "startRunFailed": "Kunne ikke starte Libre Claw-kørsel",
+      "runCancelled": "Kørsel annulleret",
+      "cancelRunFailed": "Kørslen kunne ikke annulleres",
+      "approved": "Godkendt",
+      "denied": "Afvist",
+      "resolvePermissionFailed": "Kunne ikke løse tilladelsen",
+      "providerModelRequired": "Udbyder og model er påkrævet",
+      "modelUpdated": "Libre Claw-model opdateret",
+      "updateModelFailed": "Modellen kunne ikke opdateres",
+      "themeUpdated": "Libre Claw-tema opdateret",
+      "updateThemeFailed": "Temaet kunne ikke opdateres",
+      "automationRequired": "Automatiseringsnavn, tidsplan og prompt er påkrævet",
+      "automationCreated": "Automatisering oprettet",
+      "createAutomationFailed": "Kunne ikke oprette automatisering",
+      "automationUpdated": "Automatisering opdateret",
+      "updateAutomationFailed": "Automatiseringen kunne ikke opdateres"
+    }
   }
 }

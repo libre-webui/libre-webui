@@ -243,7 +243,8 @@
       "imagine": "تخيّل",
       "settings": "الإعدادات",
       "userManagement": "إدارة المستخدمين",
-      "signOut": "تسجيل الخروج"
+      "signOut": "تسجيل الخروج",
+      "agents": "Libre Claw"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
     "expandSidebar": "توسيع الشريط الجانبي"
@@ -1281,5 +1282,143 @@
     "pull": "تنزيل",
     "pullRestricted": "تثبيت النماذج مقصور على المسؤولين في هذا المثيل.",
     "adminOnlyPull": "للمسؤولين فقط"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "يعمل الوكيل المحلي والموافقات والجداول الزمنية والذاكرة والأدوات والاستخدام.",
+    "dashboard": "لوحة المعلومات",
+    "connection": {
+      "disconnectedTitle": "خدمة Libre Claw غير متصلة",
+      "disconnectedDescription": "ابدأ تشغيله محليًا باستخدام <command>libre-claw start</command> أو قم بتعيين <env>LIBRE_CLAW_BASE_URL</env> في بيئة الواجهة الخلفية."
+    },
+    "status": {
+      "connected": "متصل",
+      "disconnected": "غير متصل",
+      "activeRuns": "{{count}} نشط",
+      "activeRuns_plural": "{{count}} نشط"
+    },
+    "states": {
+      "queued": "في قائمة الانتظار",
+      "running": "قيد التشغيل",
+      "blocked": "محظور",
+      "done": "تم",
+      "failed": "فشل",
+      "cancelled": "تم الإلغاء"
+    },
+    "startRun": {
+      "title": "بدء تشغيل الوكيل",
+      "placeholder": "اطلب من Libre Claw فحص الريبو، أو إصلاح الخلل، أو إجراء مراجعة، أو جدولة تقرير...",
+      "chatRun": "تشغيل الدردشة",
+      "goalMode": "وضع الهدف",
+      "providerOverride": "تجاوز الموفر",
+      "modelOverride": "تجاوز النموذج",
+      "run": "تشغيل"
+    },
+    "modelRoute": {
+      "title": "الطريق النموذجي",
+      "providerPlaceholder": "مزود",
+      "modelPlaceholder": "نموذج",
+      "persistGlobal": "استمر في Libre Claw التكوين العام",
+      "saveModel": "حفظ النموذج",
+      "theme": "سمة Libre Claw",
+      "saveTheme": "حفظ الموضوع"
+    },
+    "runs": {
+      "title": "التشغيلات",
+      "empty": "لا توجد تشغيلات Libre Claw بعد."
+    },
+    "timeline": {
+      "title": "الخط الزمني للتشغيل",
+      "empty": "حدد تشغيلًا لتفقد أحداثه.",
+      "streaming": "الجري...",
+      "assistantResponse": "رد مساعد",
+      "resultOk": "حسنا",
+      "resultError": "خطأ",
+      "labels": {
+        "userMessage": "رسالة المستخدم",
+        "toolCall": "استدعاء الأداة",
+        "toolResult": "نتيجة الأداة",
+        "approvalRequest": "طلب الموافقة",
+        "approvalResponse": "رد الموافقة",
+        "runStarted": "بدأ التشغيل",
+        "runFinished": "انتهى التشغيل",
+        "usage": "الاستخدام",
+        "error": "خطأ"
+      }
+    },
+    "approvals": {
+      "needed": "الموافقة مطلوبة",
+      "allowOnce": "السماح مرة واحدة",
+      "alwaysAllowTool": "السماح دائمًا بالأداة",
+      "deny": "رفض",
+      "toolApprovalRequested": "تم طلب الموافقة على الأداة"
+    },
+    "automations": {
+      "title": "الأتمتة",
+      "namePlaceholder": "الاسم",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "موجه الأتمتة",
+      "create": "إنشاء",
+      "empty": "لا توجد عمليات أتمتة مجدولة Libre Claw.",
+      "runNow": "تشغيل الآن",
+      "pause": "وقفة",
+      "resume": "استئناف",
+      "routes": {
+        "report": "تقرير",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "نشط",
+        "paused": "متوقف مؤقتًا"
+      }
+    },
+    "usageFallback": {
+      "title": "الاستخدام والاحتياطي",
+      "usage": "الاستخدام",
+      "fallbackRoute": "الطريق الاحتياطي",
+      "noUsage": "لا توجد سجلات استخدام حتى الآن."
+    },
+    "metrics": {
+      "provider": "مزود",
+      "model": "نموذج",
+      "input": "الإدخال",
+      "output": "الإخراج",
+      "cached": "مخبأة",
+      "reasoning": "المنطق",
+      "cost": "التكلفة",
+      "tool": "أداة",
+      "resolution": "القرار",
+      "state": "الحالة",
+      "stopReason": "سبب التوقف",
+      "tokens": "{{formatted}} رمز مميز",
+      "tokens_plural": "{{formatted}} الرموز"
+    },
+    "fallbacks": {
+      "tool": "أداة",
+      "unknown": "غير معروف",
+      "resolved": "حلها",
+      "unknownError": "خطأ غير معروف"
+    },
+    "toasts": {
+      "loadStatusFailed": "لا يمكن تحميل حالة Libre Claw",
+      "enterTask": "أدخل مهمة لـ Libre Claw",
+      "runStarted": "بدأ تشغيل Libre Claw",
+      "startRunFailed": "تعذر بدء تشغيل Libre Claw",
+      "runCancelled": "تم إلغاء التشغيل",
+      "cancelRunFailed": "تعذر إلغاء التشغيل",
+      "approved": "تمت الموافقة عليه",
+      "denied": "مرفوض",
+      "resolvePermissionFailed": "لا يمكن حل الإذن",
+      "providerModelRequired": "مطلوب الموفر والنموذج",
+      "modelUpdated": "تم تحديث نموذج Libre Claw",
+      "updateModelFailed": "لا يمكن تحديث النموذج",
+      "themeUpdated": "تم تحديث سمة Libre Claw",
+      "updateThemeFailed": "لا يمكن تحديث الموضوع",
+      "automationRequired": "مطلوب اسم الأتمتة والجدول الزمني والموجه",
+      "automationCreated": "تم إنشاء الأتمتة",
+      "createAutomationFailed": "لا يمكن إنشاء الأتمتة",
+      "automationUpdated": "تم تحديث الأتمتة",
+      "updateAutomationFailed": "لا يمكن تحديث الأتمتة"
+    }
   }
 }

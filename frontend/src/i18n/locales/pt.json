@@ -243,7 +243,8 @@
       "imagine": "Imaginar",
       "settings": "Configurações",
       "userManagement": "Gerenciamento de Usuários",
-      "signOut": "Sair"
+      "signOut": "Sair",
+      "agents": "Libre Claw"
     },
     "toggleSize": "Alternar tamanho da barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -1281,5 +1282,143 @@
     "pull": "Baixar",
     "pullRestricted": "A instalação de modelos está restrita a administradores nesta instância.",
     "adminOnlyPull": "Apenas administradores"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "Execuções, aprovações, programações, memória, ferramentas e uso do agente local.",
+    "dashboard": "Painel",
+    "connection": {
+      "disconnectedTitle": "O daemon do Libre Claw não está conectado",
+      "disconnectedDescription": "Inicie localmente com <command>libre-claw start</command> ou defina <env>LIBRE_CLAW_BASE_URL</env> no ambiente de back-end."
+    },
+    "status": {
+      "connected": "Conectado",
+      "disconnected": "Desconectado",
+      "activeRuns": "{{count}} ativo",
+      "activeRuns_plural": "{{count}} ativo"
+    },
+    "states": {
+      "queued": "Na fila",
+      "running": "Em execução",
+      "blocked": "Bloqueado",
+      "done": "Concluído",
+      "failed": "Falha",
+      "cancelled": "Cancelado"
+    },
+    "startRun": {
+      "title": "Iniciar execução do agente",
+      "placeholder": "Peça ao Libre Claw para inspecionar um repositório, corrigir um bug, executar uma revisão, agendar um relatório...",
+      "chatRun": "Execução de bate-papo",
+      "goalMode": "Modo meta",
+      "providerOverride": "Substituição do provedor",
+      "modelOverride": "Substituição de modelo",
+      "run": "Executar"
+    },
+    "modelRoute": {
+      "title": "Rota modelo",
+      "providerPlaceholder": "provedor",
+      "modelPlaceholder": "modelo",
+      "persistGlobal": "Persistir na configuração global Libre Claw",
+      "saveModel": "Salvar modelo",
+      "theme": "Tema do Libre Claw",
+      "saveTheme": "Salvar tema"
+    },
+    "runs": {
+      "title": "Execuções",
+      "empty": "Ainda não há execuções do Libre Claw."
+    },
+    "timeline": {
+      "title": "Linha do tempo da execução",
+      "empty": "Selecione uma execução para inspecionar seus eventos.",
+      "streaming": "Transmissão...",
+      "assistantResponse": "Resposta do assistente",
+      "resultOk": "ok",
+      "resultError": "erro",
+      "labels": {
+        "userMessage": "Mensagem do usuário",
+        "toolCall": "Chamada de ferramenta",
+        "toolResult": "Resultado da ferramenta",
+        "approvalRequest": "Solicitação de aprovação",
+        "approvalResponse": "Resposta de aprovação",
+        "runStarted": "Execução iniciada",
+        "runFinished": "Execução finalizada",
+        "usage": "Uso",
+        "error": "Erro"
+      }
+    },
+    "approvals": {
+      "needed": "Aprovação necessária",
+      "allowOnce": "Permitir uma vez",
+      "alwaysAllowTool": "Sempre permitir a ferramenta",
+      "deny": "Recusar",
+      "toolApprovalRequested": "Aprovação da ferramenta solicitada"
+    },
+    "automations": {
+      "title": "Automações",
+      "namePlaceholder": "Nome",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "Solicitação de automação",
+      "create": "Criar",
+      "empty": "Nenhuma automação Libre Claw programada.",
+      "runNow": "Executar agora",
+      "pause": "Pausa",
+      "resume": "Retomar",
+      "routes": {
+        "report": "Relatório",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "Ativo",
+        "paused": "Pausado"
+      }
+    },
+    "usageFallback": {
+      "title": "Uso e substituto",
+      "usage": "Uso",
+      "fallbackRoute": "Rota substituta",
+      "noUsage": "Ainda não há registros de uso."
+    },
+    "metrics": {
+      "provider": "Provedor",
+      "model": "Modelo",
+      "input": "Entrada",
+      "output": "Saída",
+      "cached": "Em cache",
+      "reasoning": "Raciocínio",
+      "cost": "Custo",
+      "tool": "Ferramenta",
+      "resolution": "Resolução",
+      "state": "Estado",
+      "stopReason": "Motivo da parada",
+      "tokens": "{{formatted}} ficha",
+      "tokens_plural": "{{formatted}} fichas"
+    },
+    "fallbacks": {
+      "tool": "ferramenta",
+      "unknown": "desconhecido",
+      "resolved": "resolvido",
+      "unknownError": "Erro desconhecido"
+    },
+    "toasts": {
+      "loadStatusFailed": "Não foi possível carregar o status Libre Claw",
+      "enterTask": "Insira uma tarefa para Libre Claw",
+      "runStarted": "Execução do Libre Claw iniciada",
+      "startRunFailed": "Não foi possível iniciar a execução do Libre Claw",
+      "runCancelled": "Execução cancelada",
+      "cancelRunFailed": "Não foi possível cancelar a execução",
+      "approved": "Aprovado",
+      "denied": "Negado",
+      "resolvePermissionFailed": "Não foi possível resolver a permissão",
+      "providerModelRequired": "Provedor e modelo são obrigatórios",
+      "modelUpdated": "Modelo do Libre Claw atualizado",
+      "updateModelFailed": "Não foi possível atualizar o modelo",
+      "themeUpdated": "Tema do Libre Claw atualizado",
+      "updateThemeFailed": "Não foi possível atualizar o tema",
+      "automationRequired": "O nome da automação, a programação e o prompt são obrigatórios",
+      "automationCreated": "Automação criada",
+      "createAutomationFailed": "Não foi possível criar a automação",
+      "automationUpdated": "Automação atualizada",
+      "updateAutomationFailed": "Não foi possível atualizar a automação"
+    }
   }
 }

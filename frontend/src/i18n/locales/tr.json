@@ -243,7 +243,8 @@
       "imagine": "Hayal Et",
       "settings": "Ayarlar",
       "userManagement": "Kullanıcı Yönetimi",
-      "signOut": "Çıkış Yap"
+      "signOut": "Çıkış Yap",
+      "agents": "Libre Claw"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -1281,5 +1282,143 @@
     "pull": "İndir",
     "pullRestricted": "Bu örnekte model kurulumu yalnızca yöneticilerle sınırlandırılmıştır.",
     "adminOnlyPull": "Yalnızca yöneticiler"
+  },
+  "libreClaw": {
+    "title": "Libre Claw",
+    "subtitle": "Yerel aracı çalıştırmaları, onaylar, programlar, bellek, araçlar ve kullanım.",
+    "dashboard": "Kontrol paneli",
+    "connection": {
+      "disconnectedTitle": "Libre Claw arka plan servisi bağlı değil",
+      "disconnectedDescription": "Yerel olarak <command>libre-claw start</command> ile başlatın veya arka uç ortamında <env>LIBRE_CLAW_BASE_URL</env>'ı ayarlayın."
+    },
+    "status": {
+      "connected": "Bağlı",
+      "disconnected": "Bağlantı kesildi",
+      "activeRuns": "{{count}} aktif",
+      "activeRuns_plural": "{{count}} aktif"
+    },
+    "states": {
+      "queued": "Sıraya alındı",
+      "running": "Çalışıyor",
+      "blocked": "Engellendi",
+      "done": "Bitti",
+      "failed": "Başarısız",
+      "cancelled": "İptal edildi"
+    },
+    "startRun": {
+      "title": "Aracı çalıştırmayı başlat",
+      "placeholder": "Libre Claw'tan bir depoyu incelemesini, bir hatayı düzeltmesini, bir inceleme çalıştırmasını, bir rapor planlamasını isteyin...",
+      "chatRun": "Sohbet çalıştırması",
+      "goalMode": "Hedef modu",
+      "providerOverride": "Sağlayıcıyı geçersiz kılma",
+      "modelOverride": "Modeli geçersiz kılma",
+      "run": "Çalıştır"
+    },
+    "modelRoute": {
+      "title": "Model Rota",
+      "providerPlaceholder": "sağlayıcı",
+      "modelPlaceholder": "modeli",
+      "persistGlobal": "Libre Claw genel yapılandırmaya devam et",
+      "saveModel": "Modeli kaydet",
+      "theme": "Libre Claw teması",
+      "saveTheme": "Temayı kaydet"
+    },
+    "runs": {
+      "title": "Çalıştırmalar",
+      "empty": "Henüz Libre Claw çalıştırması yok."
+    },
+    "timeline": {
+      "title": "Çalıştırma zaman çizelgesi",
+      "empty": "Olaylarını incelemek için bir çalıştırma seçin.",
+      "streaming": "Akış...",
+      "assistantResponse": "Asistan yanıtı",
+      "resultOk": "tamam",
+      "resultError": "hata",
+      "labels": {
+        "userMessage": "Kullanıcı mesajı",
+        "toolCall": "Araç çağrısı",
+        "toolResult": "Araç sonucu",
+        "approvalRequest": "Onay talebi",
+        "approvalResponse": "Onay yanıtı",
+        "runStarted": "Çalıştırma başladı",
+        "runFinished": "Çalıştırma tamamlandı",
+        "usage": "Kullanım",
+        "error": "Hata"
+      }
+    },
+    "approvals": {
+      "needed": "Onay gerekiyor",
+      "allowOnce": "Bir kez izin ver",
+      "alwaysAllowTool": "Araca her zaman izin ver",
+      "deny": "Reddet",
+      "toolApprovalRequested": "Araç onayı istendi"
+    },
+    "automations": {
+      "title": "Otomasyonlar",
+      "namePlaceholder": "İsim",
+      "schedulePlaceholder": "daily 09:00",
+      "promptPlaceholder": "Otomasyon istemi",
+      "create": "Oluştur",
+      "empty": "Planlanmış Libre Claw otomasyonu yok.",
+      "runNow": "Şimdi çalıştır",
+      "pause": "Duraklat",
+      "resume": "Sürdür",
+      "routes": {
+        "report": "Rapor",
+        "telegram": "Telegram"
+      },
+      "status": {
+        "active": "Aktif",
+        "paused": "Duraklatıldı"
+      }
+    },
+    "usageFallback": {
+      "title": "Kullanım ve Geri Dönüş",
+      "usage": "Kullanım",
+      "fallbackRoute": "Geri Dönüş Rotası",
+      "noUsage": "Henüz kullanım kaydı yok."
+    },
+    "metrics": {
+      "provider": "sağlayıcı",
+      "model": "Modeli",
+      "input": "Giriş",
+      "output": "Çıkış",
+      "cached": "Önbelleğe alındı",
+      "reasoning": "muhakeme",
+      "cost": "Maliyet",
+      "tool": "Araç",
+      "resolution": "Çözünürlük",
+      "state": "Durum",
+      "stopReason": "Durdurma nedeni",
+      "tokens": "{{formatted}} jetonu",
+      "tokens_plural": "{{formatted}} belirteçleri"
+    },
+    "fallbacks": {
+      "tool": "aracı",
+      "unknown": "bilinmiyor",
+      "resolved": "çözüldü",
+      "unknownError": "Bilinmeyen hata"
+    },
+    "toasts": {
+      "loadStatusFailed": "Libre Claw durumu yüklenemedi",
+      "enterTask": "Libre Claw için bir görev girin",
+      "runStarted": "Libre Claw çalıştırması başladı",
+      "startRunFailed": "Libre Claw çalıştırması başlatılamadı",
+      "runCancelled": "Çalıştırma iptal edildi",
+      "cancelRunFailed": "Çalıştırma iptal edilemedi",
+      "approved": "Onaylandı",
+      "denied": "Reddedildi",
+      "resolvePermissionFailed": "İzin çözülemedi",
+      "providerModelRequired": "Sağlayıcı ve model gerekli",
+      "modelUpdated": "Libre Claw modeli güncellendi",
+      "updateModelFailed": "Model güncellenemedi",
+      "themeUpdated": "Libre Claw teması güncellendi",
+      "updateThemeFailed": "Tema güncellenemedi",
+      "automationRequired": "Otomasyon adı, program ve istem gerekli",
+      "automationCreated": "Otomasyon oluşturuldu",
+      "createAutomationFailed": "Otomasyon oluşturulamadı",
+      "automationUpdated": "Otomasyon güncellendi",
+      "updateAutomationFailed": "Otomasyon güncellenemedi"
+    }
   }
 }
