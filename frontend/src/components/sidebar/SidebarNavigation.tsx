@@ -103,10 +103,10 @@ export function SidebarNavigation({
           to='/agents'
           onClick={onMobileNavigate}
           className={itemClass(activePath === '/agents')}
-          title={sidebarCompact ? 'Libre Claw' : undefined}
+          title={sidebarCompact ? t('sidebar.navigation.agents') : undefined}
         >
           <Bot className='h-4 w-4 shrink-0' />
-          {!sidebarCompact && 'Libre Claw'}
+          {!sidebarCompact && t('sidebar.navigation.agents')}
         </Link>
       </nav>
     </div>

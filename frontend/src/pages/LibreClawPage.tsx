@@ -17,6 +17,8 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
+import type { TFunction } from 'i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   Activity,
   Bot,
@@ -109,6 +111,7 @@ const themeOptions = [
 ] as const;
 
 const LibreClawPage: React.FC = () => {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<LibreClawStatus | null>(null);
   const [runs, setRuns] = useState<LibreClawRun[]>([]);
   const [events, setEvents] = useState<LibreClawEvent[]>([]);
@@ -162,7 +165,10 @@ const LibreClawPage: React.FC = () => {
     });
   }, [events]);
 
-  const timelineItems = useMemo(() => buildTimelineItems(events), [events]);
+  const timelineItems = useMemo(
+    () => buildTimelineItems(events, t),
+    [events, t]
+  );
 
   const loadOverview = useCallback(async () => {
     try {
@@ -207,11 +213,11 @@ const LibreClawPage: React.FC = () => {
       }
     } catch (error) {
       logger.error('Failed to load Libre Claw overview:', error);
-      toast.error('Could not load Libre Claw status');
+      toast.error(t('libreClaw.toasts.loadStatusFailed'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadEvents = useCallback(
     async (runId: string, replace = false) => {
@@ -281,7 +287,7 @@ const LibreClawPage: React.FC = () => {
 
   const startRun = async () => {
     if (!runMessage.trim()) {
-      toast.error('Enter a task for Libre Claw');
+      toast.error(t('libreClaw.toasts.enterTask'));
       return;
     }
     setStartingRun(true);
@@ -300,13 +306,13 @@ const LibreClawPage: React.FC = () => {
         ]);
         setSelectedRunId(run.run_id);
         setRunMessage('');
-        toast.success('Libre Claw run started');
+        toast.success(t('libreClaw.toasts.runStarted'));
       } else {
-        toast.error(response.error || 'Could not start Libre Claw run');
+        toast.error(response.error || t('libreClaw.toasts.startRunFailed'));
       }
     } catch (error) {
       logger.error('Failed to start Libre Claw run:', error);
-      toast.error('Could not start Libre Claw run');
+      toast.error(t('libreClaw.toasts.startRunFailed'));
     } finally {
       setStartingRun(false);
     }
@@ -316,10 +322,10 @@ const LibreClawPage: React.FC = () => {
     try {
       await libreClawApi.cancelRun(runId);
       await loadOverview();
-      toast.success('Run cancelled');
+      toast.success(t('libreClaw.toasts.runCancelled'));
     } catch (error) {
       logger.error('Failed to cancel Libre Claw run:', error);
-      toast.error('Could not cancel run');
+      toast.error(t('libreClaw.toasts.cancelRunFailed'));
     }
   };
 
@@ -338,16 +344,20 @@ const LibreClawPage: React.FC = () => {
         resolution
       );
       await loadEvents(selectedRunId, true);
-      toast.success(resolution === 'deny' ? 'Denied' : 'Approved');
+      toast.success(
+        resolution === 'deny'
+          ? t('libreClaw.toasts.denied')
+          : t('libreClaw.toasts.approved')
+      );
     } catch (error) {
       logger.error('Failed to resolve Libre Claw permission:', error);
-      toast.error('Could not resolve permission');
+      toast.error(t('libreClaw.toasts.resolvePermissionFailed'));
     }
   };
 
   const saveModel = async () => {
     if (!modelProvider.trim() || !modelName.trim()) {
-      toast.error('Provider and model are required');
+      toast.error(t('libreClaw.toasts.providerModelRequired'));
       return;
     }
     setSavingModel(true);
@@ -359,13 +369,13 @@ const LibreClawPage: React.FC = () => {
       );
       if (response.success && response.data) {
         setModelConfig(response.data);
-        toast.success('Libre Claw model updated');
+        toast.success(t('libreClaw.toasts.modelUpdated'));
       } else {
-        toast.error(response.error || 'Could not update model');
+        toast.error(response.error || t('libreClaw.toasts.updateModelFailed'));
       }
     } catch (error) {
       logger.error('Failed to update Libre Claw model:', error);
-      toast.error('Could not update model');
+      toast.error(t('libreClaw.toasts.updateModelFailed'));
     } finally {
       setSavingModel(false);
     }
@@ -376,13 +386,13 @@ const LibreClawPage: React.FC = () => {
     try {
       const response = await libreClawApi.updateTheme(clawTheme, persistTheme);
       if (response.success) {
-        toast.success('Libre Claw theme updated');
+        toast.success(t('libreClaw.toasts.themeUpdated'));
       } else {
-        toast.error(response.error || 'Could not update theme');
+        toast.error(response.error || t('libreClaw.toasts.updateThemeFailed'));
       }
     } catch (error) {
       logger.error('Failed to update Libre Claw theme:', error);
-      toast.error('Could not update theme');
+      toast.error(t('libreClaw.toasts.updateThemeFailed'));
     } finally {
       setSavingTheme(false);
     }
@@ -394,7 +404,7 @@ const LibreClawPage: React.FC = () => {
       !automationSchedule.trim() ||
       !automationPrompt.trim()
     ) {
-      toast.error('Automation name, schedule, and prompt are required');
+      toast.error(t('libreClaw.toasts.automationRequired'));
       return;
     }
     setSavingAutomation(true);
@@ -410,13 +420,15 @@ const LibreClawPage: React.FC = () => {
         setAutomationSchedule('');
         setAutomationPrompt('');
         await loadOverview();
-        toast.success('Automation created');
+        toast.success(t('libreClaw.toasts.automationCreated'));
       } else {
-        toast.error(response.error || 'Could not create automation');
+        toast.error(
+          response.error || t('libreClaw.toasts.createAutomationFailed')
+        );
       }
     } catch (error) {
       logger.error('Failed to create Libre Claw automation:', error);
-      toast.error('Could not create automation');
+      toast.error(t('libreClaw.toasts.createAutomationFailed'));
     } finally {
       setSavingAutomation(false);
     }
@@ -434,10 +446,10 @@ const LibreClawPage: React.FC = () => {
       if (action === 'delete')
         await libreClawApi.deleteAutomation(automationId);
       await loadOverview();
-      toast.success('Automation updated');
+      toast.success(t('libreClaw.toasts.automationUpdated'));
     } catch (error) {
       logger.error('Failed to update Libre Claw automation:', error);
-      toast.error('Could not update automation');
+      toast.error(t('libreClaw.toasts.updateAutomationFailed'));
     }
   };
 
@@ -452,21 +464,20 @@ const LibreClawPage: React.FC = () => {
               </div>
               <div>
                 <h1 className='text-2xl font-semibold text-gray-950 dark:text-gray-100'>
-                  Libre Claw
+                  {t('libreClaw.title')}
                 </h1>
                 <p className='text-sm text-gray-600 dark:text-dark-600'>
-                  Local agent runs, approvals, schedules, memory, tools, and
-                  usage.
+                  {t('libreClaw.subtitle')}
                 </p>
               </div>
             </div>
           </div>
 
           <div className='flex flex-wrap items-center gap-2'>
-            <StatusPill status={status} />
+            <StatusPill status={status} t={t} />
             <Button variant='secondary' size='sm' onClick={loadOverview}>
               <RefreshCw className='h-4 w-4' />
-              Refresh
+              {t('common.refresh')}
             </Button>
             <a
               href={status?.dashboardUrl || 'http://127.0.0.1:8766/dashboard'}
@@ -475,7 +486,7 @@ const LibreClawPage: React.FC = () => {
               className='inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-700 dark:hover:bg-dark-100'
             >
               <ExternalLink className='h-4 w-4' />
-              Dashboard
+              {t('libreClaw.dashboard')}
             </a>
           </div>
         </header>
@@ -486,11 +497,16 @@ const LibreClawPage: React.FC = () => {
               <Terminal className='mt-0.5 h-5 w-5 shrink-0' />
               <div>
                 <h2 className='font-semibold'>
-                  Libre Claw daemon is not connected
+                  {t('libreClaw.connection.disconnectedTitle')}
                 </h2>
                 <p className='mt-1 text-sm opacity-90'>
-                  Start it locally with <code>libre-claw start</code> or set{' '}
-                  <code>LIBRE_CLAW_BASE_URL</code> in the backend environment.
+                  <Trans
+                    i18nKey='libreClaw.connection.disconnectedDescription'
+                    components={{
+                      command: <code />,
+                      env: <code />,
+                    }}
+                  />
                 </p>
                 {status?.error && (
                   <p className='mt-2 text-xs opacity-80'>{status.error}</p>
@@ -501,12 +517,15 @@ const LibreClawPage: React.FC = () => {
         )}
 
         <section className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]'>
-          <Panel title='Start Agent Run' icon={<Play className='h-4 w-4' />}>
+          <Panel
+            title={t('libreClaw.startRun.title')}
+            icon={<Play className='h-4 w-4' />}
+          >
             <div className='space-y-3'>
               <textarea
                 value={runMessage}
                 onChange={event => setRunMessage(event.target.value)}
-                placeholder='Ask Libre Claw to inspect a repo, fix a bug, run a review, schedule a report...'
+                placeholder={t('libreClaw.startRun.placeholder')}
                 className='min-h-32 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800 dark:focus:border-primary-500 dark:focus:ring-primary-900/30'
               />
               <div className='grid gap-3 sm:grid-cols-4'>
@@ -517,42 +536,49 @@ const LibreClawPage: React.FC = () => {
                   }
                   className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                 >
-                  <option value='chat'>Chat run</option>
-                  <option value='goal'>Goal mode</option>
+                  <option value='chat'>
+                    {t('libreClaw.startRun.chatRun')}
+                  </option>
+                  <option value='goal'>
+                    {t('libreClaw.startRun.goalMode')}
+                  </option>
                 </select>
                 <input
                   value={runProvider}
                   onChange={event => setRunProvider(event.target.value)}
-                  placeholder='Provider override'
+                  placeholder={t('libreClaw.startRun.providerOverride')}
                   className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                 />
                 <input
                   value={runModel}
                   onChange={event => setRunModel(event.target.value)}
-                  placeholder='Model override'
+                  placeholder={t('libreClaw.startRun.modelOverride')}
                   className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                 />
                 <Button onClick={startRun} loading={startingRun}>
                   <Bot className='h-4 w-4' />
-                  Run
+                  {t('libreClaw.startRun.run')}
                 </Button>
               </div>
             </div>
           </Panel>
 
-          <Panel title='Model Route' icon={<GitBranch className='h-4 w-4' />}>
+          <Panel
+            title={t('libreClaw.modelRoute.title')}
+            icon={<GitBranch className='h-4 w-4' />}
+          >
             <div className='space-y-3'>
               <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-1'>
                 <input
                   value={modelProvider}
                   onChange={event => setModelProvider(event.target.value)}
-                  placeholder='provider'
+                  placeholder={t('libreClaw.modelRoute.providerPlaceholder')}
                   className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                 />
                 <input
                   value={modelName}
                   onChange={event => setModelName(event.target.value)}
-                  placeholder='model'
+                  placeholder={t('libreClaw.modelRoute.modelPlaceholder')}
                   className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                 />
               </div>
@@ -563,18 +589,18 @@ const LibreClawPage: React.FC = () => {
                   onChange={event => setPersistModel(event.target.checked)}
                   className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
                 />
-                Persist to Libre Claw global config
+                {t('libreClaw.modelRoute.persistGlobal')}
               </label>
               <Button
                 variant='secondary'
                 onClick={saveModel}
                 loading={savingModel}
               >
-                Save model
+                {t('libreClaw.modelRoute.saveModel')}
               </Button>
               <div className='border-t border-gray-100 pt-3 dark:border-dark-200'>
                 <label className='mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-dark-500'>
-                  Libre Claw theme
+                  {t('libreClaw.modelRoute.theme')}
                 </label>
                 <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-1'>
                   <select
@@ -593,7 +619,7 @@ const LibreClawPage: React.FC = () => {
                     onClick={saveTheme}
                     loading={savingTheme}
                   >
-                    Save theme
+                    {t('libreClaw.modelRoute.saveTheme')}
                   </Button>
                 </div>
                 <label className='mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-dark-600'>
@@ -603,7 +629,7 @@ const LibreClawPage: React.FC = () => {
                     onChange={event => setPersistTheme(event.target.checked)}
                     className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
                   />
-                  Persist to Libre Claw global config
+                  {t('libreClaw.modelRoute.persistGlobal')}
                 </label>
               </div>
               {modelConfig && (
@@ -616,10 +642,13 @@ const LibreClawPage: React.FC = () => {
         </section>
 
         <section className='grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]'>
-          <Panel title='Runs' icon={<Activity className='h-4 w-4' />}>
+          <Panel
+            title={t('libreClaw.runs.title')}
+            icon={<Activity className='h-4 w-4' />}
+          >
             <div className='space-y-2'>
               {runs.length === 0 && (
-                <EmptyState text='No Libre Claw runs yet.' />
+                <EmptyState text={t('libreClaw.runs.empty')} />
               )}
               {runs.map(run => (
                 <button
@@ -636,7 +665,7 @@ const LibreClawPage: React.FC = () => {
                     <span className='truncate text-sm font-medium text-gray-900 dark:text-dark-900'>
                       {run.title}
                     </span>
-                    <StateBadge state={run.state} />
+                    <StateBadge state={run.state} t={t} />
                   </div>
                   <div className='mt-1 truncate text-xs text-gray-500 dark:text-dark-500'>
                     {run.provider}:{run.model}
@@ -650,7 +679,9 @@ const LibreClawPage: React.FC = () => {
           </Panel>
 
           <Panel
-            title={selectedRun ? selectedRun.title : 'Run Timeline'}
+            title={
+              selectedRun ? selectedRun.title : t('libreClaw.timeline.title')
+            }
             icon={<Clock className='h-4 w-4' />}
             actions={
               selectedRun &&
@@ -661,7 +692,7 @@ const LibreClawPage: React.FC = () => {
                   onClick={() => cancelRun(selectedRun.run_id)}
                 >
                   <Square className='h-4 w-4' />
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               ) : null
             }
@@ -670,7 +701,7 @@ const LibreClawPage: React.FC = () => {
               <div className='mb-4 space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20'>
                 <div className='flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-200'>
                   <ShieldCheck className='h-4 w-4' />
-                  Approval needed
+                  {t('libreClaw.approvals.needed')}
                 </div>
                 {pendingPermissionEvents.map(event => (
                   <div
@@ -678,7 +709,7 @@ const LibreClawPage: React.FC = () => {
                     className='rounded-lg bg-white/70 p-3 dark:bg-dark-50/70'
                   >
                     <div className='text-sm font-medium text-gray-900 dark:text-dark-900'>
-                      {String(event.data.name || 'tool')}
+                      {String(event.data.name || t('libreClaw.fallbacks.tool'))}
                     </div>
                     <pre className='mt-2 max-h-36 overflow-auto rounded bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
                       {JSON.stringify(event.data.arguments || {}, null, 2)}
@@ -689,7 +720,7 @@ const LibreClawPage: React.FC = () => {
                         onClick={() => resolvePermission(event, 'allow_once')}
                       >
                         <Check className='h-4 w-4' />
-                        Allow once
+                        {t('libreClaw.approvals.allowOnce')}
                       </Button>
                       <Button
                         size='sm'
@@ -698,7 +729,7 @@ const LibreClawPage: React.FC = () => {
                           resolvePermission(event, 'always_allow_tool')
                         }
                       >
-                        Always allow tool
+                        {t('libreClaw.approvals.alwaysAllowTool')}
                       </Button>
                       <Button
                         size='sm'
@@ -706,7 +737,7 @@ const LibreClawPage: React.FC = () => {
                         onClick={() => resolvePermission(event, 'deny')}
                       >
                         <X className='h-4 w-4' />
-                        Deny
+                        {t('libreClaw.approvals.deny')}
                       </Button>
                     </div>
                   </div>
@@ -716,10 +747,10 @@ const LibreClawPage: React.FC = () => {
 
             <div className='space-y-3'>
               {events.length === 0 && (
-                <EmptyState text='Select a run to inspect its events.' />
+                <EmptyState text={t('libreClaw.timeline.empty')} />
               )}
               {timelineItems.map(item => (
-                <TimelineCard key={item.key} item={item} />
+                <TimelineCard key={item.key} item={item} t={t} />
               ))}
             </div>
           </Panel>
@@ -727,7 +758,7 @@ const LibreClawPage: React.FC = () => {
 
         <section className='grid gap-4 xl:grid-cols-2'>
           <Panel
-            title='Automations'
+            title={t('libreClaw.automations.title')}
             icon={<CalendarClock className='h-4 w-4' />}
           >
             <div className='space-y-4'>
@@ -735,13 +766,13 @@ const LibreClawPage: React.FC = () => {
                 <input
                   value={automationName}
                   onChange={event => setAutomationName(event.target.value)}
-                  placeholder='Name'
+                  placeholder={t('libreClaw.automations.namePlaceholder')}
                   className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                 />
                 <input
                   value={automationSchedule}
                   onChange={event => setAutomationSchedule(event.target.value)}
-                  placeholder='daily 09:00'
+                  placeholder={t('libreClaw.automations.schedulePlaceholder')}
                   className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                 />
                 <select
@@ -749,22 +780,26 @@ const LibreClawPage: React.FC = () => {
                   onChange={event => setAutomationRoute(event.target.value)}
                   className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                 >
-                  <option value='report'>Report</option>
-                  <option value='telegram'>Telegram</option>
+                  <option value='report'>
+                    {t('libreClaw.automations.routes.report')}
+                  </option>
+                  <option value='telegram'>
+                    {t('libreClaw.automations.routes.telegram')}
+                  </option>
                 </select>
                 <Button onClick={createAutomation} loading={savingAutomation}>
-                  Create
+                  {t('libreClaw.automations.create')}
                 </Button>
               </div>
               <textarea
                 value={automationPrompt}
                 onChange={event => setAutomationPrompt(event.target.value)}
-                placeholder='Automation prompt'
+                placeholder={t('libreClaw.automations.promptPlaceholder')}
                 className='min-h-24 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
               />
               <div className='space-y-2'>
                 {automations.length === 0 && (
-                  <EmptyState text='No scheduled Libre Claw automations.' />
+                  <EmptyState text={t('libreClaw.automations.empty')} />
                 )}
                 {automations.map(automation => (
                   <div
@@ -777,13 +812,25 @@ const LibreClawPage: React.FC = () => {
                           {automation.name}
                         </div>
                         <div className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
-                          {automation.schedule} · {automation.route} ·{' '}
-                          {automation.status}
+                          {automation.schedule} ·{' '}
+                          {t(
+                            `libreClaw.automations.routes.${automation.route}`,
+                            {
+                              defaultValue: automation.route,
+                            }
+                          )}{' '}
+                          ·{' '}
+                          {t(
+                            `libreClaw.automations.status.${automation.status}`,
+                            {
+                              defaultValue: automation.status,
+                            }
+                          )}
                         </div>
                       </div>
                       <div className='flex shrink-0 gap-1'>
                         <IconButton
-                          title='Run now'
+                          title={t('libreClaw.automations.runNow')}
                           onClick={() =>
                             automationAction(automation.automation_id, 'run')
                           }
@@ -792,7 +839,9 @@ const LibreClawPage: React.FC = () => {
                         </IconButton>
                         <IconButton
                           title={
-                            automation.status === 'paused' ? 'Resume' : 'Pause'
+                            automation.status === 'paused'
+                              ? t('libreClaw.automations.resume')
+                              : t('libreClaw.automations.pause')
                           }
                           onClick={() =>
                             automationAction(
@@ -810,7 +859,7 @@ const LibreClawPage: React.FC = () => {
                           )}
                         </IconButton>
                         <IconButton
-                          title='Delete'
+                          title={t('common.delete')}
                           danger
                           onClick={() =>
                             automationAction(automation.automation_id, 'delete')
@@ -827,21 +876,21 @@ const LibreClawPage: React.FC = () => {
           </Panel>
 
           <Panel
-            title='Usage And Fallback'
+            title={t('libreClaw.usageFallback.title')}
             icon={<Activity className='h-4 w-4' />}
           >
             <div className='space-y-4'>
               <div>
                 <h3 className='mb-2 text-sm font-semibold text-gray-900 dark:text-dark-900'>
-                  Usage
+                  {t('libreClaw.usageFallback.usage')}
                 </h3>
                 <pre className='max-h-52 overflow-auto rounded-xl bg-gray-100 p-3 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
-                  {usageText || 'No usage records yet.'}
+                  {usageText || t('libreClaw.usageFallback.noUsage')}
                 </pre>
               </div>
               <div>
                 <h3 className='mb-2 text-sm font-semibold text-gray-900 dark:text-dark-900'>
-                  Fallback Route
+                  {t('libreClaw.usageFallback.fallbackRoute')}
                 </h3>
                 <pre className='max-h-52 overflow-auto rounded-xl bg-gray-100 p-3 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
                   {JSON.stringify(fallbackConfig || {}, null, 2)}
@@ -861,9 +910,10 @@ const LibreClawPage: React.FC = () => {
   );
 };
 
-const StatusPill: React.FC<{ status: LibreClawStatus | null }> = ({
-  status,
-}) => {
+const StatusPill: React.FC<{
+  status: LibreClawStatus | null;
+  t: TFunction;
+}> = ({ status, t }) => {
   const connected = Boolean(status?.connected);
   return (
     <span
@@ -880,24 +930,32 @@ const StatusPill: React.FC<{ status: LibreClawStatus | null }> = ({
           connected ? 'bg-emerald-500' : 'bg-amber-500'
         )}
       />
-      {connected ? 'Connected' : 'Disconnected'}
+      {connected
+        ? t('libreClaw.status.connected')
+        : t('libreClaw.status.disconnected')}
       {status?.health?.active_runs !== undefined && (
         <span className='opacity-70'>
-          · {String(status.health.active_runs)} active
+          ·{' '}
+          {t('libreClaw.status.activeRuns', {
+            count: status.health.active_runs,
+          })}
         </span>
       )}
     </span>
   );
 };
 
-const StateBadge: React.FC<{ state: string }> = ({ state }) => (
+const StateBadge: React.FC<{ state: string; t: TFunction }> = ({
+  state,
+  t,
+}) => (
   <span
     className={cn(
       'rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide',
       stateStyles[state] || stateStyles.queued
     )}
   >
-    {state}
+    {t(`libreClaw.states.${state}`, { defaultValue: state })}
   </span>
 );
 
@@ -940,7 +998,10 @@ const IconButton: React.FC<{
   </button>
 );
 
-const TimelineCard: React.FC<{ item: TimelineItem }> = ({ item }) => (
+const TimelineCard: React.FC<{ item: TimelineItem; t: TFunction }> = ({
+  item,
+  t,
+}) => (
   <article
     className={cn(
       'rounded-xl border p-3 transition-colors',
@@ -964,15 +1025,18 @@ const TimelineCard: React.FC<{ item: TimelineItem }> = ({ item }) => (
         {formatEventRange(item)} · {formatDate(item.timestamp)}
       </span>
     </div>
-    <TimelineBody item={item} />
+    <TimelineBody item={item} t={t} />
   </article>
 );
 
-const TimelineBody: React.FC<{ item: TimelineItem }> = ({ item }) => {
+const TimelineBody: React.FC<{ item: TimelineItem; t: TFunction }> = ({
+  item,
+  t,
+}) => {
   if (item.kind === 'assistant_message') {
     return (
       <p className='whitespace-pre-wrap text-sm leading-6 text-gray-900 dark:text-dark-900'>
-        {joinAssistantDeltas(item.events) || 'Streaming...'}
+        {joinAssistantDeltas(item.events) || t('libreClaw.timeline.streaming')}
       </p>
     );
   }
@@ -1000,7 +1064,7 @@ const TimelineBody: React.FC<{ item: TimelineItem }> = ({ item }) => {
     return (
       <div>
         <div className='text-sm font-medium text-gray-900 dark:text-dark-900'>
-          {String(event.data.name || 'tool')}
+          {String(event.data.name || t('libreClaw.fallbacks.tool'))}
         </div>
         <JsonBlock value={event.data.arguments || {}} />
       </div>
@@ -1011,8 +1075,10 @@ const TimelineBody: React.FC<{ item: TimelineItem }> = ({ item }) => {
     return (
       <div>
         <div className='text-sm font-medium text-gray-900 dark:text-dark-900'>
-          {String(event.data.name || 'tool')} ·{' '}
-          {event.data.is_error ? 'error' : 'ok'}
+          {String(event.data.name || t('libreClaw.fallbacks.tool'))} ·{' '}
+          {event.data.is_error
+            ? t('libreClaw.timeline.resultError')
+            : t('libreClaw.timeline.resultOk')}
         </div>
         <pre className='mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded-lg bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
           {String(event.data.content || '')}
@@ -1025,7 +1091,9 @@ const TimelineBody: React.FC<{ item: TimelineItem }> = ({ item }) => {
     return (
       <div>
         <div className='text-sm font-medium text-gray-900 dark:text-dark-900'>
-          {String(event.data.name || 'Tool approval requested')}
+          {String(
+            event.data.name || t('libreClaw.approvals.toolApprovalRequested')
+          )}
         </div>
         <JsonBlock value={event.data.arguments || {}} />
       </div>
@@ -1036,29 +1104,35 @@ const TimelineBody: React.FC<{ item: TimelineItem }> = ({ item }) => {
     return (
       <div className='flex flex-wrap gap-2'>
         <MetricPill
-          label='Tool'
-          value={String(event.data.name || event.data.tool_call_id || 'tool')}
+          label={t('libreClaw.metrics.tool')}
+          value={String(
+            event.data.name ||
+              event.data.tool_call_id ||
+              t('libreClaw.fallbacks.tool')
+          )}
         />
         <MetricPill
-          label='Resolution'
-          value={String(event.data.resolution || 'resolved')}
+          label={t('libreClaw.metrics.resolution')}
+          value={String(
+            event.data.resolution || t('libreClaw.fallbacks.resolved')
+          )}
         />
       </div>
     );
   }
 
   if (event.type === 'usage') {
-    return <UsageSummary data={event.data} />;
+    return <UsageSummary data={event.data} t={t} />;
   }
 
   if (event.type === 'run_finished') {
-    return <RunFinishedSummary data={event.data} />;
+    return <RunFinishedSummary data={event.data} t={t} />;
   }
 
   if (event.type === 'error') {
     return (
       <p className='text-sm text-red-700 dark:text-red-300'>
-        {String(event.data.message || 'Unknown error')}
+        {String(event.data.message || t('libreClaw.fallbacks.unknownError'))}
       </p>
     );
   }
@@ -1066,43 +1140,74 @@ const TimelineBody: React.FC<{ item: TimelineItem }> = ({ item }) => {
   return <JsonBlock value={event.data} />;
 };
 
-const UsageSummary: React.FC<{ data: Record<string, unknown> }> = ({
-  data,
-}) => (
+const UsageSummary: React.FC<{
+  data: Record<string, unknown>;
+  t: TFunction;
+}> = ({ data, t }) => (
   <div className='flex flex-wrap gap-2'>
-    <MetricPill label='Provider' value={String(data.provider || 'unknown')} />
-    <MetricPill label='Model' value={String(data.model || 'unknown')} />
     <MetricPill
-      label='Input'
-      value={`${formatCount(data.input_tokens)} tokens`}
+      label={t('libreClaw.metrics.provider')}
+      value={String(data.provider || t('libreClaw.fallbacks.unknown'))}
     />
     <MetricPill
-      label='Output'
-      value={`${formatCount(data.output_tokens)} tokens`}
+      label={t('libreClaw.metrics.model')}
+      value={String(data.model || t('libreClaw.fallbacks.unknown'))}
+    />
+    <MetricPill
+      label={t('libreClaw.metrics.input')}
+      value={t('libreClaw.metrics.tokens', {
+        count: toFiniteNumber(data.input_tokens),
+        formatted: formatCount(data.input_tokens),
+      })}
+    />
+    <MetricPill
+      label={t('libreClaw.metrics.output')}
+      value={t('libreClaw.metrics.tokens', {
+        count: toFiniteNumber(data.output_tokens),
+        formatted: formatCount(data.output_tokens),
+      })}
     />
     {toFiniteNumber(data.cached_tokens) > 0 && (
       <MetricPill
-        label='Cached'
-        value={`${formatCount(data.cached_tokens)} tokens`}
+        label={t('libreClaw.metrics.cached')}
+        value={t('libreClaw.metrics.tokens', {
+          count: toFiniteNumber(data.cached_tokens),
+          formatted: formatCount(data.cached_tokens),
+        })}
       />
     )}
     {toFiniteNumber(data.reasoning_tokens) > 0 && (
       <MetricPill
-        label='Reasoning'
-        value={`${formatCount(data.reasoning_tokens)} tokens`}
+        label={t('libreClaw.metrics.reasoning')}
+        value={t('libreClaw.metrics.tokens', {
+          count: toFiniteNumber(data.reasoning_tokens),
+          formatted: formatCount(data.reasoning_tokens),
+        })}
       />
     )}
-    <MetricPill label='Cost' value={formatCost(data.cost)} />
+    <MetricPill
+      label={t('libreClaw.metrics.cost')}
+      value={formatCost(data.cost)}
+    />
   </div>
 );
 
-const RunFinishedSummary: React.FC<{ data: Record<string, unknown> }> = ({
-  data,
-}) => (
+const RunFinishedSummary: React.FC<{
+  data: Record<string, unknown>;
+  t: TFunction;
+}> = ({ data, t }) => (
   <div className='flex flex-wrap gap-2'>
-    <MetricPill label='State' value={String(data.state || 'done')} />
+    <MetricPill
+      label={t('libreClaw.metrics.state')}
+      value={t(`libreClaw.states.${String(data.state || 'done')}`, {
+        defaultValue: String(data.state || 'done'),
+      })}
+    />
     {data.stop_reason !== undefined && (
-      <MetricPill label='Stop reason' value={String(data.stop_reason)} />
+      <MetricPill
+        label={t('libreClaw.metrics.stopReason')}
+        value={String(data.stop_reason)}
+      />
     )}
   </div>
 );
@@ -1138,7 +1243,10 @@ const formatDate = (value: string): string => {
   return date.toLocaleString();
 };
 
-const buildTimelineItems = (events: LibreClawEvent[]): TimelineItem[] => {
+const buildTimelineItems = (
+  events: LibreClawEvent[],
+  t: TFunction
+): TimelineItem[] => {
   const items: TimelineItem[] = [];
   let index = 0;
 
@@ -1160,7 +1268,7 @@ const buildTimelineItems = (events: LibreClawEvent[]): TimelineItem[] => {
           key: `assistant-${first.event_id}-${last.event_id}`,
           kind: 'assistant_message',
           eventType: 'assistant_message',
-          label: 'Assistant response',
+          label: t('libreClaw.timeline.assistantResponse'),
           firstEventId: first.event_id,
           lastEventId: last.event_id,
           timestamp: first.timestamp,
@@ -1174,7 +1282,7 @@ const buildTimelineItems = (events: LibreClawEvent[]): TimelineItem[] => {
       key: `${event.type}-${event.event_id}`,
       kind: 'event',
       eventType: event.type,
-      label: formatEventLabel(event.type),
+      label: formatEventLabel(event.type, t),
       firstEventId: event.event_id,
       lastEventId: event.event_id,
       timestamp: event.timestamp,
@@ -1189,17 +1297,17 @@ const buildTimelineItems = (events: LibreClawEvent[]): TimelineItem[] => {
 const joinAssistantDeltas = (events: LibreClawEvent[]): string =>
   events.map(event => String(event.data.text || '')).join('');
 
-const formatEventLabel = (type: string): string => {
+const formatEventLabel = (type: string, t: TFunction): string => {
   const labels: Record<string, string> = {
-    user_message: 'User message',
-    tool_call: 'Tool call',
-    tool_result: 'Tool result',
-    permission_request: 'Approval request',
-    permission_response: 'Approval response',
-    run_started: 'Run started',
-    run_finished: 'Run finished',
-    usage: 'Usage',
-    error: 'Error',
+    user_message: t('libreClaw.timeline.labels.userMessage'),
+    tool_call: t('libreClaw.timeline.labels.toolCall'),
+    tool_result: t('libreClaw.timeline.labels.toolResult'),
+    permission_request: t('libreClaw.timeline.labels.approvalRequest'),
+    permission_response: t('libreClaw.timeline.labels.approvalResponse'),
+    run_started: t('libreClaw.timeline.labels.runStarted'),
+    run_finished: t('libreClaw.timeline.labels.runFinished'),
+    usage: t('libreClaw.timeline.labels.usage'),
+    error: t('libreClaw.timeline.labels.error'),
   };
   return labels[type] || type.replace(/_/g, ' ');
 };
