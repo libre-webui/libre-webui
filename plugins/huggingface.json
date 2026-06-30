@@ -9,6 +9,7 @@
     "key_env": "HUGGINGFACE_API_KEY"
   },
   "model_map": [
+    "aisingapore/Gemma-SEA-LION-v4-27B-IT",
     "aisingapore/Qwen-SEA-LION-v4-32B-IT",
     "allenai/Olmo-3-7B-Instruct",
     "alpindale/WizardLM-2-8x22B",
@@ -73,6 +74,7 @@
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
     "openai/gpt-oss-safeguard-20b",
+    "pearl-ai/Gemma-4-31B-it-pearl",
     "Qwen/Qwen2.5-72B-Instruct",
     "Qwen/Qwen2.5-7B-Instruct",
     "Qwen/Qwen2.5-Coder-32B-Instruct",

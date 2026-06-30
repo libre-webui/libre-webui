@@ -48,9 +48,7 @@ Libre WebUI opens at `http://localhost:8080`. Install [Ollama](https://ollama.co
 
 ## AI Providers
 
-Local inference is handled through Ollama. Cloud providers are added through plugins and include OpenAI-compatible APIs plus first-party entries for OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, Hugging Face, and other compatible services.
-
-The provider model lists are refreshed by the application where supported, so the UI can keep up with new model releases without hardcoding every model in the docs.
+Local inference is handled through Ollama. Cloud providers are added through plugins and include OpenAI-compatible APIs plus first-party entries for OpenAI, Anthropic, Google, Groq, Mistral, OpenRouter, Hugging Face, and other compatible services. Provider plugin files in the repository are the fallback source of truth, while live provider discovery can populate newer models when a provider exposes a compatible model-list endpoint.
 
 ## Documentation
 
