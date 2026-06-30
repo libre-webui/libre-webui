@@ -98,16 +98,17 @@ Users can also store provider credentials in the UI when per-user keys are prefe
 
 ## Maintenance Scripts
 
-| Variable             | Purpose                                  |
-| -------------------- | ---------------------------------------- |
-| `CHANGELOG_AI_MODEL` | Ollama model for AI changelog generation |
-| `ANALYSIS_AI_MODEL`  | Ollama model for development analysis    |
+| Variable                    | Purpose                                             |
+| --------------------------- | --------------------------------------------------- |
+| `CHANGELOG_AI`              | Set to `0` to disable AI-assisted changelog drafts  |
+| `CHANGELOG_AI_MODEL`        | Ollama model for release/changelog generation       |
+| `CHANGELOG_AI_TIMEOUT_MS`   | Timeout for AI changelog generation in milliseconds |
 
 Example:
 
 ```bash
-CHANGELOG_AI_MODEL=gemma3:4b npm run changelog:ai
-ANALYSIS_AI_MODEL=qwen3:8b npm run analyze
+CHANGELOG_AI_MODEL=glm-5.2:cloud npm run changelog
+CHANGELOG_AI=0 npm run release:minor
 ```
 
 ## Production Example

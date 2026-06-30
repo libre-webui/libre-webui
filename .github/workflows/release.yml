@@ -229,6 +229,16 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
+      - name: Resolve release version
+        id: release_version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${{ steps.extract_version.outputs.version }}"
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
       - name: Run tests and build
         run: npm run release:check
         env:
@@ -237,18 +247,18 @@ jobs:
       - name: Generate release notes
         id: release_notes
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            VERSION="${{ steps.extract_version.outputs.version }}"
-            CHANGELOG_SECTION=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
-            echo "notes<<EOF" >> $GITHUB_OUTPUT
-            echo "$CHANGELOG_SECTION" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          else
-            CHANGELOG=$(npm run changelog --silent)
-            echo "notes<<EOF" >> $GITHUB_OUTPUT
-            echo "$CHANGELOG" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
-          fi
+          VERSION="${{ steps.release_version.outputs.version }}"
+          CHANGELOG_SECTION=$(awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md)
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_SECTION" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Push release commit and tag (manual trigger)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          VERSION="${{ steps.release_version.outputs.version }}"
+          git push origin HEAD:main
+          git push origin "v$VERSION"
 
       - name: Download Electron artifacts
         uses: actions/download-artifact@v8
@@ -264,8 +274,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: v${{ steps.release_version.outputs.version }}
+          name: Release v${{ steps.release_version.outputs.version }}
           body: ${{ steps.release_notes.outputs.notes }}
           draft: false
           prerelease: false
@@ -281,16 +291,10 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t libre-webui:${{ steps.extract_version.outputs.version || 'latest' }} .
+          docker build -t libre-webui:${{ steps.release_version.outputs.version }} .
           docker build -t libre-webui:latest .
 
       - name: Publish to npm
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Push changes (manual trigger)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          git push origin main
-          git push origin --tags

@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 title: 'Release Automation'
-description: 'Automated release system with conventional commits, changelog generation, and deployment workflows.'
+description: 'Release Libre WebUI with evidence-based changelog generation, checks, tags, and CI publishing.'
 slug: /RELEASE_AUTOMATION
 keywords:
   [
@@ -15,323 +15,187 @@ keywords:
 image: /img/social/14.png
 ---
 
-# Release Automation Guide
+# Release Automation
 
-This guide explains how to use the automated release system for Libre WebUI, which automatically generates changelogs based on conventional commits.
+Libre WebUI releases are created from the repository root with the release
+script. The script reads real git history since the previous version tag,
+updates package versions, writes the changelog, runs release checks, commits the
+release, and creates the version tag.
 
-## Quick Start
+## One-Time Local Setup
 
-### 1. Initial Setup
-
-Run the setup script to configure your development environment:
+Install dependencies and enable the repository hooks:
 
 ```bash
-npm run setup:release
+npm install
+npm run setup-hooks
 ```
 
-This will:
+The hook setup configures:
 
-- Install required dependencies
-- Configure git commit message template
-- Set up git hooks for commit validation
-- Configure conventional commits standards
+- `.githooks/commit-msg` for Conventional Commit validation
+- `.githooks/pre-commit` for formatting checks
+- `.gitmessage` as the local commit message template
 
-### 2. Create Your First Release (v0.1.1)
+## Create a Release
+
+Run the release script from a clean worktree on the branch you intend to tag:
 
 ```bash
-# For a patch release (0.1.0 → 0.1.1)
+# Patch release
 npm run release
 
-# For a minor release (0.1.0 → 0.2.0)
+# Minor release
 npm run release:minor
 
-# For a major release (0.1.0 → 1.0.0)
+# Major release
 npm run release:major
 ```
 
-### 3. Push to GitHub
+The script automatically:
+
+1. Checks that the working tree is clean.
+2. Collects commit, file, dependency, locale, and unreleased changelog evidence.
+3. Generates the release notes from that evidence.
+4. Updates `package.json`, workspace package files, `package-lock.json`, and
+   `CHANGELOG.md`.
+5. Runs formatting, lint, build, tests, security audit, and npm dry-run checks.
+6. Commits the release and creates the annotated version tag.
+
+## Changelog Generation
+
+Preview the next changelog section without changing files:
 
 ```bash
-git push origin main && git push origin --tags
+npm run changelog
+```
+
+Update `CHANGELOG.md` manually from the generated section:
+
+```bash
+npm run changelog -- update
+```
+
+By default, changelog generation can ask a local Ollama-compatible model for a
+polished draft, then validates the result against the collected git evidence.
+If AI is unavailable or the output looks unsafe, the script falls back to a
+deterministic generator.
+
+Useful overrides:
+
+```bash
+CHANGELOG_AI=0 npm run release:minor
+CHANGELOG_AI_MODEL=glm-5.2:cloud npm run changelog
+OLLAMA_BASE_URL=http://127.0.0.1:11434 npm run release
+```
+
+## Push a Release
+
+After the release commit and tag are created, push the branch and the exact tag
+shown by the script:
+
+```bash
+git push origin main
+git push origin v0.12.0
+```
+
+Push the specific tag for the release you just created. Avoid `git push
+origin --tags` because it can publish unrelated local tags.
+
+## CI Release Path
+
+Pushing a `v*` tag runs the GitHub release workflow. The workflow:
+
+- Runs `npm run release:check`
+- Builds Electron artifacts for macOS, Windows, and Linux
+- Creates the GitHub release from the matching `CHANGELOG.md` section
+- Builds Docker images
+- Publishes the npm package with `NPM_TOKEN`
+
+The same check can be run locally before tagging:
+
+```bash
+npm run release:check
 ```
 
 ## Conventional Commits
 
-This project uses [Conventional Commits](https://www.conventionalcommits.org/) for automatic changelog generation.
+Commit messages should use Conventional Commit format:
 
-### Commit Message Format
-
-```
+```text
 <type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
 ```
 
-### Types
+Common types:
 
-- `feat`: A new feature → appears in "✨ Added" section
-- `fix`: A bug fix → appears in "🐛 Bug Fixes" section
-- `docs`: Documentation changes → appears in "📚 Documentation" section
-- `chore`: Build process or auxiliary tools → appears in "🔧 Technical Improvements" section
-- `refactor`: Code refactoring → appears in "🔧 Technical Improvements" section
-- `perf`: Performance improvements → appears in "🔧 Technical Improvements" section
-- `test`: Adding or updating tests → appears in "🔧 Technical Improvements" section
-- `style`: Code style changes → appears in "🔧 Technical Improvements" section
+- `feat`: user-facing feature
+- `fix`: bug fix
+- `docs`: documentation update
+- `refactor`: internal code restructuring
+- `perf`: performance improvement
+- `test`: test coverage
+- `chore`: maintenance, release, or build work
 
-### Examples
+Breaking changes use `!`:
 
 ```bash
-# Add a new feature
-git commit -m "feat: add automated changelog generation"
-
-# Fix a bug
-git commit -m "fix: resolve version update issue in release script"
-
-# Update documentation
-git commit -m "docs: add conventional commits guide"
-
-# Technical improvements
-git commit -m "chore: setup release automation workflow"
-
-# Breaking changes
-git commit -m "feat!: remove deprecated API endpoints"
-git commit -m "feat(api)!: change user authentication flow"
+git commit -m "feat!: remove deprecated endpoint"
+git commit -m "fix(auth)!: change token validation"
 ```
-
-### Scoped Commits
-
-You can add scope to provide more context:
-
-```bash
-git commit -m "feat(auth): add JWT token refresh functionality"
-git commit -m "fix(ui): resolve mobile navigation menu issue"
-git commit -m "docs(api): update endpoint documentation"
-```
-
-## Release Commands
-
-### Automatic Release
-
-```bash
-# Patch release (0.1.0 → 0.1.1) - for bug fixes
-npm run release
-
-# Minor release (0.1.0 → 0.2.0) - for new features
-npm run release:minor
-
-# Major release (0.1.0 → 1.0.0) - for breaking changes
-npm run release:major
-```
-
-### Manual Changelog Generation
-
-```bash
-# Preview changelog for unreleased changes
-npm run changelog
-
-# Update unreleased section in CHANGELOG.md
-npm run changelog update
-```
-
-## Release Process Details
-
-The automated release process performs the following steps:
-
-1. **Validation**: Checks that the working directory is clean
-2. **Analysis**: Gets commits since the last tag and analyzes them
-3. **Version Calculation**: Determines the next version based on commit types:
-   - Breaking changes (`!` or `BREAKING CHANGE`) → major version
-   - Features (`feat:`) → minor version
-   - Everything else → patch version
-4. **Updates**: Updates `package.json` version and `CHANGELOG.md`
-5. **Quality Checks**: Runs linting and builds the project
-6. **Git Operations**: Commits changes and creates a git tag
-7. **Instructions**: Provides next steps for pushing and creating GitHub releases
-
-## GitHub Actions
-
-The project includes automated GitHub Actions workflows:
-
-### Release Workflow
-
-Triggered by:
-
-- Pushing a version tag (`v*`)
-- Manual workflow dispatch
-
-Features:
-
-- Automatically creates GitHub releases
-- Generates release notes from changelog
-- Builds Docker images
-- Runs tests and quality checks
-
-### Manual Release via GitHub
-
-1. Go to Actions tab in your GitHub repository
-2. Select "Release" workflow
-3. Click "Run workflow"
-4. Choose release type (patch/minor/major)
-5. The workflow will create the release and push changes
-
-## Versioning Strategy
-
-This project follows [Semantic Versioning](https://semver.org/):
-
-- **MAJOR** version for incompatible API changes
-- **MINOR** version for backwards-compatible functionality additions
-- **PATCH** version for backwards-compatible bug fixes
-
-### Version Determination
-
-The release script automatically determines the next version based on commits:
-
-```javascript
-// Breaking changes → major version bump
-feat!: remove deprecated endpoints
-fix!: change authentication flow
-
-// New features → minor version bump
-feat: add new dashboard widget
-feat(ui): implement dark mode toggle
-
-// Bug fixes and other changes → patch version bump
-fix: resolve login redirect issue
-docs: update installation guide
-chore: update dependencies
-```
-
-## Best Practices
-
-### Commit Messages
-
-1. **Keep the first line under 50 characters**
-2. **Use the imperative mood** ("add feature" not "added feature")
-3. **Include scope when relevant** (`feat(auth): add 2FA support`)
-4. **Reference issues when applicable** (`fix: resolve login issue (#123)`)
-5. **Use breaking change notation** (`feat!: remove legacy API`)
-
-### Release Workflow
-
-1. **Make commits following conventional format**
-2. **Run `npm run changelog` to preview changes**
-3. **Run `npm run release` when ready**
-4. **Review the generated changelog and version**
-5. **Push changes: `git push origin main && git push origin --tags`**
-6. **Create GitHub release from the tag**
-
-### Pre-release Checklist
-
-Before creating a release:
-
-- [ ] All tests pass
-- [ ] Code is formatted and linted
-- [ ] Documentation is updated
-- [ ] Breaking changes are documented
-- [ ] Version bump is appropriate for changes
 
 ## Troubleshooting
 
-### Common Issues
+### Working Directory Is Not Clean
 
-**"Working directory is not clean"**
+Commit or stash the local changes before releasing:
 
 ```bash
-# Commit or stash your changes
+git status --short
 git add .
 git commit -m "fix: resolve pending changes"
-# or
-git stash
 ```
 
-**"No commits since last release"**
+### No Releasable Changes
 
-- Make sure you have new commits since the last tag
-- Check with: `git log $(git describe --tags --abbrev=0)..HEAD --oneline`
-
-**"Invalid commit message format"**
-
-- Use conventional commit format
-- Check the git hook error message for guidance
-- Example: `feat: add new feature description`
-
-### Manual Changelog Update
-
-If you need to manually edit the changelog:
-
-1. Edit `CHANGELOG.md` directly
-2. Follow the existing format and emoji conventions
-3. Commit changes: `git commit -m "docs: update changelog"`
-
-### Rollback a Release
-
-If you need to rollback a release:
+Check the commits since the previous tag:
 
 ```bash
-# Delete local tag
-git tag -d v0.1.1
-
-# Delete remote tag (if already pushed)
-git push origin :refs/tags/v0.1.1
-
-# Reset to previous commit
-git reset --hard HEAD~1
+git log $(git describe --tags --abbrev=0)..HEAD --oneline
 ```
 
-## Configuration Files
+### Changelog Needs Manual Editing
 
-The release system uses several configuration files:
-
-- `.conventional-changelog.json` - Changelog generation configuration
-- `.gitmessage` - Git commit message template
-- `.githooks/commit-msg` - Commit message validation hook
-- `scripts/release.js` - Main release script
-- `scripts/generate-changelog.js` - Changelog generator
-- `.github/workflows/release.yml` - GitHub Actions workflow
-
-## Examples
-
-### Creating v0.1.1 Release
+Edit `CHANGELOG.md`, then commit the correction before tagging:
 
 ```bash
-# 1. Make some commits following conventional format
-git commit -m "feat: add user profile settings"
-git commit -m "fix: resolve navigation menu bug"
-git commit -m "docs: update API documentation"
-
-# 2. Create the release
-npm run release
-
-# 3. Review and push
-git push origin main && git push origin --tags
+git add CHANGELOG.md
+git commit -m "docs: refine changelog"
 ```
 
-This will:
+### Roll Back a Local Release Commit
 
-- Bump version from 0.1.0 to 0.1.1
-- Update CHANGELOG.md with new features, fixes, and documentation
-- Create a git tag v0.1.1
-- Provide instructions for the next steps
+If the tag has not been pushed yet:
 
-## 📚 Related Documentation
+```bash
+git tag -d v0.12.0
+git reset --soft HEAD~1
+```
 
-import DocCard from '@theme/DocCard';
+If the tag was already pushed, delete the remote tag deliberately:
 
-<div className="row">
-  <div className="col col--12">
-    <DocCard
-      item={{
-        type: 'link',
-        href: './AI_DEVELOPMENT_ANALYSIS',
-        label: '🤖 AI Development Analysis',
-        description: 'Enhance releases with AI-powered changelogs and project insights'
-      }}
-    />
-  </div>
-</div>
+```bash
+git push origin :refs/tags/v0.12.0
+```
 
----
+## Maintainer Files
 
-For more information about conventional commits, visit: https://www.conventionalcommits.org/
+- `.gitmessage` - commit message template
+- `.githooks/commit-msg` - Conventional Commit validation
+- `.githooks/pre-commit` - formatting preflight
+- `scripts/release.js` - release orchestration
+- `scripts/generate-changelog.js` - changelog preview/update command
+- `scripts/lib/releaseNotes.js` - evidence collection and changelog generation
+- `.github/workflows/release.yml` - tag-driven CI release workflow
+
+For more information about Conventional Commits, visit
+https://www.conventionalcommits.org/.
