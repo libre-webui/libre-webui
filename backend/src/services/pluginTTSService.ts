@@ -59,8 +59,7 @@ export class PluginTTSService {
         const noAuthRequired =
           (
             plugin.capabilities?.tts?.config as
-              | Record<string, unknown>
-              | undefined
+              Record<string, unknown> | undefined
           )?.no_auth_required === true;
 
         const apiKey = this.deps.getApiKey(plugin);
@@ -105,8 +104,7 @@ export class PluginTTSService {
         const noAuthRequired =
           (
             plugin.capabilities?.tts?.config as
-              | Record<string, unknown>
-              | undefined
+              Record<string, unknown> | undefined
           )?.no_auth_required === true;
         const apiKey = this.deps.getApiKey(plugin);
         if (apiKey || noAuthRequired) {

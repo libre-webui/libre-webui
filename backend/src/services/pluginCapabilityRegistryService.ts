@@ -35,8 +35,7 @@ export class PluginCapabilityRegistryService {
           capabilityType === 'image' &&
           (
             plugin.capabilities?.image?.config as
-              | Record<string, unknown>
-              | undefined
+              Record<string, unknown> | undefined
           )?.no_auth_required === true;
         const apiKey = this.deps.getApiKey(plugin);
         if (apiKey || noAuthRequired) {
@@ -55,8 +54,7 @@ export class PluginCapabilityRegistryService {
             noAuthRequired =
               (
                 plugin.capabilities.tts?.config as
-                  | Record<string, unknown>
-                  | undefined
+                  Record<string, unknown> | undefined
               )?.no_auth_required === true;
             break;
           case 'stt':
@@ -70,8 +68,7 @@ export class PluginCapabilityRegistryService {
             noAuthRequired =
               (
                 plugin.capabilities.image?.config as
-                  | Record<string, unknown>
-                  | undefined
+                  Record<string, unknown> | undefined
               )?.no_auth_required === true;
             break;
           case 'completion':

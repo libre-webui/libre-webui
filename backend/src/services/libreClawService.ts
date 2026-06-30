@@ -22,12 +22,7 @@ const logger = createLogger('services:libre-claw');
 const DEFAULT_BASE_URL = 'http://127.0.0.1:8766';
 
 export type LibreClawRunState =
-  | 'queued'
-  | 'running'
-  | 'blocked'
-  | 'done'
-  | 'failed'
-  | 'cancelled';
+  'queued' | 'running' | 'blocked' | 'done' | 'failed' | 'cancelled';
 
 export interface LibreClawRun {
   run_id: string;

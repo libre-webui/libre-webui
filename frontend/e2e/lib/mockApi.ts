@@ -67,14 +67,7 @@ type MockMessage = {
 type MockArtifact = {
   id: string;
   type:
-    | 'html'
-    | 'react'
-    | 'svg'
-    | 'mermaid'
-    | 'chart'
-    | 'code'
-    | 'text'
-    | 'json';
+    'html' | 'react' | 'svg' | 'mermaid' | 'chart' | 'code' | 'text' | 'json';
   title: string;
   content: string;
   language?: string;

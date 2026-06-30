@@ -47,8 +47,7 @@ export interface StreamingMarkdownCodeSegment {
 }
 
 export type StreamingMarkdownSegment =
-  | StreamingMarkdownTextSegment
-  | StreamingMarkdownCodeSegment;
+  StreamingMarkdownTextSegment | StreamingMarkdownCodeSegment;
 
 export function shouldUseRichMarkdown(content: string): boolean {
   return richMarkdownPatterns.some(pattern => pattern.test(content));

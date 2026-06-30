@@ -37,14 +37,7 @@ export interface GenerationStatistics {
 export interface Artifact {
   id: string;
   type:
-    | 'html'
-    | 'react'
-    | 'svg'
-    | 'mermaid'
-    | 'chart'
-    | 'code'
-    | 'text'
-    | 'json';
+    'html' | 'react' | 'svg' | 'mermaid' | 'chart' | 'code' | 'text' | 'json';
   title: string;
   content: string;
   language?: string; // For code artifacts

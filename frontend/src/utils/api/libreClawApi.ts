@@ -20,12 +20,7 @@ import { isDemoMode } from '@/utils/demoMode';
 import { api, createDemoResponse } from './client';
 
 export type LibreClawRunState =
-  | 'queued'
-  | 'running'
-  | 'blocked'
-  | 'done'
-  | 'failed'
-  | 'cancelled';
+  'queued' | 'running' | 'blocked' | 'done' | 'failed' | 'cancelled';
 
 export interface LibreClawStatus {
   connected: boolean;
@@ -81,10 +76,7 @@ export interface LibreClawStartRunPayload {
 }
 
 export type LibreClawPermissionResolution =
-  | 'allow_once'
-  | 'deny'
-  | 'always_allow_tool'
-  | 'always_allow_call';
+  'allow_once' | 'deny' | 'always_allow_tool' | 'always_allow_call';
 
 const demoStatus: LibreClawStatus = {
   connected: false,

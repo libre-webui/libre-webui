@@ -30,14 +30,7 @@ export interface GenerationStatistics {
 export interface Artifact {
   id: string;
   type:
-    | 'html'
-    | 'react'
-    | 'svg'
-    | 'mermaid'
-    | 'chart'
-    | 'code'
-    | 'text'
-    | 'json';
+    'html' | 'react' | 'svg' | 'mermaid' | 'chart' | 'code' | 'text' | 'json';
   title: string;
   content: string;
   language?: string; // For code artifacts
@@ -340,12 +333,7 @@ export interface PluginAuthConfig {
 
 // Unified plugin type supporting multiple capabilities
 export type PluginType =
-  | 'completion'
-  | 'embedding'
-  | 'chat'
-  | 'tts'
-  | 'stt'
-  | 'image';
+  'completion' | 'embedding' | 'chat' | 'tts' | 'stt' | 'image';
 
 // TTS-specific configuration
 export interface TTSConfig {

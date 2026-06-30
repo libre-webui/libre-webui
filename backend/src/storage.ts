@@ -202,8 +202,7 @@ class StorageService {
         SELECT * FROM sessions WHERE id = ? AND user_id = ?
       `);
       const session = sessionStmt.get(sessionId, userId) as
-        | SessionRow
-        | undefined;
+        SessionRow | undefined;
 
       if (!session) return undefined;
 
@@ -428,8 +427,7 @@ class StorageService {
       // If no userId provided, get the first user (single-user mode)
       if (!userId) {
         const firstUser = db.prepare('SELECT id FROM users LIMIT 1').get() as
-          | { id: string }
-          | undefined;
+          { id: string } | undefined;
         if (firstUser) {
           userId = firstUser.id;
         } else {
@@ -489,8 +487,7 @@ class StorageService {
       // If no userId provided, get the first user (single-user mode)
       if (!userId) {
         const firstUser = db.prepare('SELECT id FROM users LIMIT 1').get() as
-          | { id: string }
-          | undefined;
+          { id: string } | undefined;
         if (firstUser) {
           userId = firstUser.id;
         } else {
