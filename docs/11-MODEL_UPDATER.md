@@ -15,7 +15,7 @@ image: /img/social/11.png
 
 # Model Updater
 
-Libre WebUI can refresh plugin model maps from provider APIs where the provider exposes a model-list endpoint. This keeps fallback model lists useful without hardcoding every provider catalog by hand, and the updater preserves the rest of each plugin definition so endpoint, capability, and variable settings are not lost.
+Libre WebUI can refresh plugin model maps from live provider APIs or official public provider catalogs. This keeps fallback model lists useful without hand-maintained guesses, and the updater preserves the rest of each plugin definition so endpoint, capability, and variable settings are not lost.
 
 ## When to Use It
 
@@ -36,7 +36,9 @@ From the repository root:
 ./scripts/update-all-models.sh
 ```
 
-The script loads `backend/.env`, uses provider API keys when available, and also refreshes public catalogs for providers that expose them without credentials, including OpenRouter, Hugging Face Router, and GitHub Models. Providers that require credentials fall back to a small documented model set when no key is configured.
+The script loads `backend/.env`, uses provider API keys when available, and also refreshes public catalogs for providers that expose official model data without credentials. Public sources currently include OpenAI's model docs, Groq's model docs, Gemini's model index, Mistral's model-card index, OpenRouter, Hugging Face Router, and GitHub Models.
+
+The updater must not invent model IDs. If a provider cannot be refreshed from a live API response or an official public catalog, it is skipped and the existing plugin file is left unchanged.
 
 ## Provider Keys
 
@@ -50,7 +52,7 @@ export GROQ_API_KEY="..."
 export MISTRAL_API_KEY="..."
 ```
 
-OpenRouter, Hugging Face Router, and GitHub Models can refresh their catalog fallbacks without local credentials. Runtime use of a paid/provider-backed model can still require the corresponding user credential in Libre WebUI.
+Several providers can refresh catalog fallbacks without local credentials because they publish public model indexes. Runtime use of a paid/provider-backed model can still require the corresponding user credential in Libre WebUI.
 
 ## Review Changes
 
@@ -61,7 +63,7 @@ git diff
 npm run lint
 ```
 
-Check that model IDs are valid, names are readable, and no provider-specific preview/billing-only model was added in a misleading way.
+Check that model IDs are valid, names are readable, and no provider-specific preview, media-only, embedding-only, or billing-only model was added in a misleading way.
 
 ## Documentation Rule
 

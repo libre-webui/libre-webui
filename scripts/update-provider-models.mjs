@@ -35,96 +35,6 @@ const requestedProviders = providerArg
         .filter(Boolean)
   : [];
 
-const fallbackModels = {
-  openai: [
-    'gpt-5.5',
-    'gpt-5.4',
-    'gpt-5.4-mini',
-    'gpt-5.4-nano',
-    'gpt-5.2',
-    'gpt-5.2-chat-latest',
-    'gpt-5.2-pro',
-    'gpt-5.1',
-    'gpt-5.1-chat-latest',
-    'gpt-5.1-codex',
-    'gpt-5',
-    'gpt-5-chat-latest',
-    'gpt-5-mini',
-    'gpt-5-nano',
-    'gpt-5-pro',
-    'gpt-4.1',
-    'gpt-4.1-mini',
-    'gpt-4.1-nano',
-    'gpt-4o',
-    'gpt-4o-mini',
-    'chatgpt-4o-latest',
-    'o4-mini',
-    'o4-mini-deep-research',
-    'o3',
-    'o3-mini',
-    'o1',
-    'o1-pro',
-  ],
-  anthropic: [
-    'claude-sonnet-5',
-    'claude-fable-5',
-    'claude-opus-4-8',
-    'claude-opus-4-7',
-    'claude-opus-4-6',
-    'claude-sonnet-4-6',
-    'claude-opus-4-5-20251101',
-    'claude-haiku-4-5-20251001',
-    'claude-sonnet-4-5-20250929',
-    'claude-opus-4-1-20250805',
-  ],
-  groq: [
-    'groq/compound',
-    'groq/compound-mini',
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant',
-    'meta-llama/llama-4-scout-17b-16e-instruct',
-    'openai/gpt-oss-120b',
-    'openai/gpt-oss-20b',
-    'qwen/qwen3.6-27b',
-    'qwen/qwen3-32b',
-  ],
-  gemini: [
-    'gemini-3-pro-preview',
-    'gemini-2.5-pro',
-    'gemini-2.5-flash',
-    'gemini-2.5-flash-lite',
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-flash-latest',
-    'gemini-flash-lite-latest',
-    'gemini-pro-latest',
-    'gemma-3-27b-it',
-    'gemma-3-12b-it',
-    'gemma-3-4b-it',
-    'gemma-3-1b-it',
-    'gemma-3n-e4b-it',
-    'gemma-3n-e2b-it',
-  ],
-  mistral: [
-    'mistral-medium-latest',
-    'mistral-small-latest',
-    'mistral-large-latest',
-    'codestral-latest',
-    'devstral-latest',
-    'devstral-medium-latest',
-    'devstral-small-latest',
-    'magistral-medium-latest',
-    'magistral-small-latest',
-    'ministral-14b-latest',
-    'ministral-8b-latest',
-    'ministral-3b-latest',
-    'pixtral-large-latest',
-    'pixtral-12b-latest',
-    'voxtral-small-latest',
-    'voxtral-mini-latest',
-  ],
-};
-
 const updateOrder = [
   'openai',
   'anthropic',
@@ -194,6 +104,23 @@ async function fetchJson(url, options = {}) {
   return response.json();
 }
 
+async function fetchText(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'User-Agent': 'Libre-WebUI-Model-Updater',
+      Accept: 'text/html,text/markdown,text/plain;q=0.9,*/*;q=0.8',
+      ...(options.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`${response.status} ${response.statusText}`);
+  }
+
+  return response.text();
+}
+
 function uniqueSorted(models) {
   return [
     ...new Set(models.filter(Boolean).map(model => String(model).trim())),
@@ -218,6 +145,20 @@ function chatModelFilter(model) {
   return !blocked.some(fragment => lower.includes(fragment));
 }
 
+function requireModels(provider, source, models) {
+  const cleaned = uniqueSorted(models);
+  if (!cleaned.length) {
+    throw new Error(`no chat models returned from ${source}`);
+  }
+
+  console.log(`${provider}: using ${source}`);
+  return cleaned;
+}
+
+function extractMatches(content, pattern) {
+  return [...content.matchAll(pattern)].map(match => match[1]);
+}
+
 async function updatePlugin(pluginId, updates) {
   const pluginPath = path.join(pluginsDir, `${pluginId}.json`);
   const plugin = JSON.parse(await fs.readFile(pluginPath, 'utf8'));
@@ -235,26 +176,34 @@ async function updatePlugin(pluginId, updates) {
 
 async function fromOpenAI() {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) {
-    return fallbackModels.openai;
+  if (key) {
+    const payload = await fetchJson('https://api.openai.com/v1/models', {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+
+    const models = payload.data
+      .map(model => model.id)
+      .filter(model => /^(chatgpt|gpt-|o[0-9])/.test(model))
+      .filter(chatModelFilter);
+
+    return requireModels('openai', 'OpenAI /v1/models', models);
   }
 
-  const payload = await fetchJson('https://api.openai.com/v1/models', {
-    headers: { Authorization: `Bearer ${key}` },
-  });
-
-  const models = payload.data
-    .map(model => model.id)
-    .filter(model => /^(chatgpt|gpt-|o[0-9])/.test(model))
+  const html = await fetchText('https://developers.openai.com/api/docs/models');
+  const models = extractMatches(
+    html,
+    /href="\/api\/docs\/models\/([^"#?]+)"/g
+  )
+    .filter(model => /^(gpt-|o[0-9])/.test(model))
     .filter(chatModelFilter);
 
-  return models.length ? models : fallbackModels.openai;
+  return requireModels('openai', 'OpenAI official model docs', models);
 }
 
 async function fromAnthropic() {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {
-    return fallbackModels.anthropic;
+    throw new Error('ANTHROPIC_API_KEY is not configured');
   }
 
   const payload = await fetchJson('https://api.anthropic.com/v1/models', {
@@ -265,60 +214,127 @@ async function fromAnthropic() {
   });
 
   const models = payload.data.map(model => model.id);
-  return models.length ? models : fallbackModels.anthropic;
+  return requireModels('anthropic', 'Anthropic /v1/models', models);
 }
 
 async function fromGroq() {
   const key = process.env.GROQ_API_KEY;
-  if (!key) {
-    return fallbackModels.groq;
+  const groqFilter = model => {
+    const lower = model.toLowerCase();
+    return (
+      chatModelFilter(model) &&
+      !lower.endsWith('-limits') &&
+      !lower.endsWith('-price') &&
+      !lower.includes('guard') &&
+      !lower.includes('safeguard') &&
+      !lower.includes('whisper') &&
+      !lower.includes('playai') &&
+      !lower.includes('canopylabs')
+    );
+  };
+
+  if (key) {
+    const payload = await fetchJson('https://api.groq.com/openai/v1/models', {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+
+    const models = payload.data.map(model => model.id).filter(groqFilter);
+    return requireModels('groq', 'Groq /openai/v1/models', models);
   }
 
-  const payload = await fetchJson('https://api.groq.com/openai/v1/models', {
-    headers: { Authorization: `Bearer ${key}` },
-  });
+  const html = await fetchText('https://console.groq.com/docs/models');
+  const models = extractMatches(
+    html,
+    /\b((?:groq\/compound(?:-mini)?|llama-[0-9.]+-[0-9a-z-]+|meta-llama\/llama-[0-9a-z.-]+|moonshotai\/kimi-[0-9a-z.-]+|openai\/gpt-oss-[0-9a-z-]+|qwen\/qwen[0-9a-z.-]+))\b/gi
+  )
+    .map(model => model.toLowerCase())
+    .filter(groqFilter);
 
-  const models = payload.data.map(model => model.id).filter(chatModelFilter);
-  return models.length ? models : fallbackModels.groq;
+  return requireModels('groq', 'Groq official model docs', models);
 }
 
 async function fromGemini() {
   const key = process.env.GEMINI_API_KEY;
-  if (!key) {
-    return fallbackModels.gemini;
+  const geminiChatFilter = model => {
+    const lower = model.toLowerCase();
+    return (
+      /^gemini-/.test(lower) &&
+      chatModelFilter(model) &&
+      !lower.includes('image') &&
+      !lower.includes('live') &&
+      !lower.includes('native-audio') &&
+      !lower.includes('tts') &&
+      !lower.includes('veo') &&
+      !lower.includes('imagen') &&
+      !lower.includes('lyria') &&
+      !lower.includes('embedding') &&
+      !lower.includes('robotics') &&
+      !lower.includes('deep-research') &&
+      !lower.includes('computer-use') &&
+      !lower.includes('antigravity') &&
+      !lower.includes('omni')
+    );
+  };
+
+  if (key) {
+    const payload = await fetchJson(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`
+    );
+
+    const models = payload.models
+      .filter(model =>
+        model.supportedGenerationMethods?.includes('generateContent')
+      )
+      .map(model => model.name.replace(/^models\//, ''))
+      .filter(geminiChatFilter);
+
+    return requireModels('gemini', 'Gemini model API', models);
   }
 
-  const payload = await fetchJson(
-    `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`
+  const docs = await fetchText(
+    'https://ai.google.dev/gemini-api/docs/models.md.txt'
+  );
+  const currentDocs = docs.split('## Previous models')[0] ?? docs;
+  const models = extractMatches(currentDocs, /\/models\/([a-z0-9.-]+)/g).filter(
+    geminiChatFilter
   );
 
-  const models = payload.models
-    .filter(model =>
-      model.supportedGenerationMethods?.includes('generateContent')
-    )
-    .map(model => model.name.replace(/^models\//, ''))
-    .filter(chatModelFilter);
+  const latestAliasMatches = [
+    ...docs.matchAll(/\b(gemini-[a-z-]+-latest)\b/g),
+  ].map(match => match[1]);
 
-  return models.length ? models : fallbackModels.gemini;
+  return requireModels('gemini', 'Gemini official model docs', [
+    ...models,
+    ...latestAliasMatches,
+  ]);
 }
 
 async function fromMistral() {
   const key = process.env.MISTRAL_API_KEY;
-  if (!key) {
-    return fallbackModels.mistral;
+  const mistralChatFilter = model =>
+    !/embed|moderation|ocr|transcribe|tts/i.test(model);
+
+  if (key) {
+    const payload = await fetchJson('https://api.mistral.ai/v1/models', {
+      headers: { Authorization: `Bearer ${key}` },
+    });
+
+    const models = payload.data
+      .map(model => model.id)
+      .filter(mistralChatFilter);
+
+    return requireModels('mistral', 'Mistral /v1/models', models);
   }
 
-  const payload = await fetchJson('https://api.mistral.ai/v1/models', {
-    headers: { Authorization: `Bearer ${key}` },
-  });
+  const html = await fetchText(
+    'https://docs.mistral.ai/getting-started/models/models_overview/'
+  );
+  const models = extractMatches(
+    html,
+    /href="\/models\/model-cards\/([^"?#]+)"/g
+  ).filter(mistralChatFilter);
 
-  const models = payload.data
-    .map(model => model.id)
-    .filter(
-      model => !/embed|moderation|audio|voxtral-mini-transcribe/i.test(model)
-    );
-
-  return models.length ? models : fallbackModels.mistral;
+  return requireModels('mistral', 'Mistral official model docs', models);
 }
 
 async function fromGitHubModels() {

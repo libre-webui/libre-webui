@@ -9,7 +9,6 @@
     "key_env": "HUGGINGFACE_API_KEY"
   },
   "model_map": [
-    "aisingapore/Gemma-SEA-LION-v4-27B-IT",
     "aisingapore/Qwen-SEA-LION-v4-32B-IT",
     "allenai/Olmo-3-7B-Instruct",
     "alpindale/WizardLM-2-8x22B",
@@ -74,7 +73,6 @@
     "openai/gpt-oss-120b",
     "openai/gpt-oss-20b",
     "openai/gpt-oss-safeguard-20b",
-    "pearl-ai/Gemma-4-31B-it-pearl",
     "Qwen/Qwen2.5-72B-Instruct",
     "Qwen/Qwen2.5-7B-Instruct",
     "Qwen/Qwen2.5-Coder-32B-Instruct",
@@ -152,9 +150,15 @@
         "OuteAI/OuteTTS-0.3-1B"
       ],
       "config": {
-        "voices": ["default"],
+        "voices": [
+          "default"
+        ],
         "default_voice": "default",
-        "formats": ["flac", "wav", "mp3"],
+        "formats": [
+          "flac",
+          "wav",
+          "mp3"
+        ],
         "default_format": "flac",
         "max_characters": 5000,
         "supports_streaming": false
@@ -175,9 +179,18 @@
         "segmind/SSD-1B"
       ],
       "config": {
-        "sizes": ["512x512", "768x768", "1024x1024", "1024x768", "768x1024"],
+        "sizes": [
+          "512x512",
+          "768x768",
+          "1024x1024",
+          "1024x768",
+          "768x1024"
+        ],
         "default_size": "1024x1024",
-        "qualities": ["standard", "high"],
+        "qualities": [
+          "standard",
+          "high"
+        ],
         "default_quality": "standard",
         "max_prompt_length": 2000
       }
@@ -226,7 +239,13 @@
         "Systran/faster-whisper-large-v3"
       ],
       "config": {
-        "formats": ["flac", "mp3", "wav", "webm", "ogg"],
+        "formats": [
+          "flac",
+          "mp3",
+          "wav",
+          "webm",
+          "ogg"
+        ],
         "max_duration_seconds": 300,
         "languages": [
           "en",
