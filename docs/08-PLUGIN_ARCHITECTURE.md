@@ -92,6 +92,5 @@ When adding a provider:
 
 ## Related Docs
 
-- [Model Updater](./MODEL_UPDATER)
 - [Environment Variables](./ENVIRONMENT_VARIABLES)
 - [Working with Models](./WORKING_WITH_MODELS)

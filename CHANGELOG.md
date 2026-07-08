@@ -1115,7 +1115,7 @@ This release focuses on bolstering the core infrastructure of Libre WebUI, enhan
 
 ### ✨ Added
 
-- **OpenRouter Support:** Integrated support for the OpenRouter API, allowing users to leverage a wider range of models and providers. Includes model fetching and update scripts for seamless integration.
+- **OpenRouter Support:** Integrated support for the OpenRouter API, allowing users to leverage a wider range of models and providers through the plugin system.
 - **Persistent Storage for Encryption Keys:** Added support for Docker persistent storage for encryption keys, ensuring key security and availability across container restarts.
 
 ### 🔧 Improved
@@ -1135,7 +1135,6 @@ This release focuses on bolstering the core infrastructure of Libre WebUI, enhan
   - Plugin Architecture
   - RAG (Retrieval Augmented Generation) Feature
   - SQLite Migration
-  - Model Updater
   - Authentication & Security
   - Artifacts Feature
   - Release Automation
@@ -1159,7 +1158,7 @@ This release focuses on bolstering the core infrastructure of Libre WebUI, enhan
 
 - **SQLite & OpenSSL Dependencies:** The Dockerfile now explicitly includes SQLite and OpenSSL, ensuring consistent build environments and resolving potential dependency issues.
 - **Encryption Key Storage:** Encryption keys are now designed to be stored persistently outside the container, preventing data loss on container restarts. This is achieved through volume mounting in Docker.
-- **OpenRouter Integration:** The OpenRouter integration leverages the API to dynamically fetch available models and their configurations. The update scripts facilitate keeping the model list current.
+- **OpenRouter Integration:** The OpenRouter integration connects Libre WebUI to the OpenRouter API and its provider-backed model catalog.
 - **JWT Handling:** JWTs are now generated and validated with enhanced security measures, including stronger algorithms and key rotation considerations.
 
 ### User Impact
@@ -1232,7 +1231,7 @@ This release focuses on enhancing the Persona management experience, improving s
 - **Memory & Mutation Engine Services:** Added core services for Memory and Mutation engines, paving the way for more dynamic and intelligent chatbot behavior.
 - **Gemini Plugin Support:** Added support for the Gemini plugin, including specific payload formatting and response conversion.
 - **Contributor Recognition:** Added a `CONTRIBUTORS.md` file to publicly acknowledge and thank project maintainers and community contributors.
-- **Model Updater Enhancements:** Expanded the model updater with support for new providers and models, increasing flexibility and choice.
+- **Provider Plugin Enhancements:** Expanded provider plugin support for new services and models, increasing flexibility and choice.
 
 ### 🔧 Improved
 

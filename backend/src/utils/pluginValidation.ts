@@ -20,7 +20,7 @@ import { createLogger } from './logger.js';
 
 const logger = createLogger('utils:plugin-validation');
 
-const MODEL_PATTERN = /^[a-zA-Z0-9\-_:./]+$/;
+const MODEL_PATTERN = /^[a-zA-Z0-9\-_:./~]+$/;
 const PRIVATE_NETWORK_PATTERN =
   /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/;
 

@@ -808,6 +808,9 @@ test('plugin validation rejects unsafe models and remote HTTP endpoints', () => 
   assert.doesNotThrow(() =>
     pluginValidation.validatePluginModel('kimi-k2.7-code:cloud')
   );
+  assert.doesNotThrow(() =>
+    pluginValidation.validatePluginModel('~openai/gpt-latest')
+  );
   assert.throws(
     () => pluginValidation.validatePluginModel('../secret'),
     /invalid patterns/
