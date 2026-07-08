@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
   <rect width="500" height="500" rx="96" fill="#0a0a0a"/>
   <text x="250" y="250" text-anchor="middle" dominant-baseline="central" fill="#ffffff" font-family="'Inter', -apple-system, BlinkMacSystemFont, sans-serif" font-size="72" letter-spacing="-0.72">
-    <tspan font-weight="700">Libre</tspan><tspan font-weight="400"> WebUI</tspan>
+    <tspan font-weight="700">Libre</tspan><tspan font-weight="400" dx="18">WebUI</tspan>
   </text>
 </svg>
