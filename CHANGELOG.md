@@ -15,6 +15,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.12.1] - 2026-07-08
+
+Libre WebUI 0.12.1 introduces a refreshed brand identity alongside verified provider catalog updates and significant repository maintenance. This release refreshes 14 dependencies to keep the build environment secure and modern, while streamlining internal release automation and removing obsolete scripts and documentation.
+
+### ✨ New Features
+
+- Introduced a new Libre WebUI wordmark logo featuring bold "Libre" and regular "WebUI" text in white on black, with updated favicons, logos, and the Electron application icon.
+
+### 🔧 Improvements
+
+- Updated the project screenshot to reflect the current interface.
+- Refactored and improved the release changelog generation pipeline with new shared library modules and dedicated tests.
+- Removed obsolete local helper scripts, stale maintenance shell scripts, deprecated type stubs (`@types/express-rate-limit` and `@types/uuid`), and outdated documentation to clean up the repository.
+
+### 🐛 Bug Fixes
+
+- Added explicit spacing between "Libre" and "WebUI" in the logo for better readability.
+- Refreshed verified provider plugin catalogs and provider models from verified sources across multiple providers, including Anthropic, Gemini, GitHub, Groq, Hugging Face, Mistral, OpenAI, and OpenRouter.
+
+### 🔒 Security & Dependencies
+
+- Refreshed 14 dependencies, including `@typescript-eslint/eslint-plugin`, `@typescript-eslint/parser`, `electron`, `png-to-ico`, `prettier`, `sharp`, `framer-motion`, `i18next`, `lucide-react`, `react-router-dom`, `@types/node`, `@types/multer`, `tsx`, and `vite`.
+
 ## [0.12.0] - 2026-06-30
 
 Libre WebUI 0.12.0 is the agent integration release. It replaces the previous
