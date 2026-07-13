@@ -15,6 +15,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.13.0] - 2026-07-13
+
+Libre WebUI 0.13.0 is a creator-focused interface release. It brings a quieter, warm-neutral design system to the full workspace and gives every new chat a broader range of localized starting prompts, making the blank canvas feel more considered and less repetitive.
+
+### ✨ New Features
+
+- Added 11 creator-oriented welcome prompts that rotate as users start new chats, alongside the existing personalized time-of-day greeting.
+- Persisted welcome-prompt rotation for the current session, with an in-memory fallback when browser storage is unavailable.
+
+### 🔧 Improvements
+
+- Reworked the application around a cohesive warm-neutral visual system with editorial typography, quieter surfaces, hairline separators, neutral primary actions, and restrained motion in both light and dark modes.
+- Refreshed the chat experience, including the welcome canvas, composer, messages, branch controls, model selection, sidebar, and image-generation workflow.
+- Standardized Gallery, Models, Personas, User Management, and Libre Claw with shared `PageShell` and `PageHeader` layouts, while aligning settings, authentication, onboarding, and management surfaces with the same component language.
+- Expanded the new-chat prompt library across all 25 supported locales and added end-to-end coverage for prompt rotation.
+- Removed third-party font downloads in favor of privacy-friendly system font stacks, and improved reduced-motion and mobile input behavior.
+
+### 📚 Documentation
+
+- Updated `DESIGN.md` with the warm-neutral palette, semantic surface and ink roles, editorial typography, responsive layout guidance, and motion principles used by the new interface.
+
 ## [0.12.1] - 2026-07-08
 
 Libre WebUI 0.12.1 introduces a refreshed brand identity alongside verified provider catalog updates and significant repository maintenance. This release refreshes 14 dependencies to keep the build environment secure and modern, while streamlining internal release automation and removing obsolete scripts and documentation.
