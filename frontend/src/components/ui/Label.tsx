@@ -16,6 +16,7 @@
  */
 
 import React from 'react';
+import { cn } from '@/utils';
 
 interface LabelProps {
   children: React.ReactNode;
@@ -31,7 +32,10 @@ export const Label: React.FC<LabelProps> = ({
   return (
     <label
       htmlFor={htmlFor}
-      className={`text-sm font-medium text-gray-700 dark:text-gray-300 ${className}`}
+      className={cn(
+        'text-sm font-medium tracking-[-0.005em] text-ink-muted',
+        className
+      )}
     >
       {children}
     </label>

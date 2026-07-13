@@ -57,20 +57,20 @@ export function SidebarSessions({
 
   return (
     <div
-      className='flex-1 overflow-y-auto scrollbar-thin border-t border-gray-200/60 dark:border-dark-200/60'
+      className='flex-1 overflow-y-auto scrollbar-thin border-t border-black/[0.05] dark:border-white/[0.05]'
       style={{
         WebkitOverflowScrolling: 'touch',
         overscrollBehavior: 'contain',
         willChange: 'scroll-position',
       }}
     >
-      <div className={cn('p-2.5', sidebarCompact && 'px-1')}>
+      <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
         {!sidebarCompact && sessions.length > 0 && (
-          <div className='flex items-center justify-between mb-1.5 px-1'>
-            <h3 className='text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide'>
+          <div className='flex items-center justify-between mb-2 px-1'>
+            <h3 className='text-[10px] font-semibold text-gray-500 dark:text-dark-500 uppercase tracking-[0.16em]'>
               {t('chat.session.chats')}
             </h3>
-            <span className='text-xs text-gray-500 dark:text-gray-500 font-medium'>
+            <span className='text-[10px] tabular-nums text-gray-400 dark:text-dark-500 font-medium'>
               {sessions.length}
             </span>
           </div>
@@ -81,7 +81,7 @@ export function SidebarSessions({
           >
             <div
               className={cn(
-                'mx-auto mb-3 bg-gray-100 dark:bg-dark-300 rounded-xl flex items-center justify-center',
+                'mx-auto mb-3 bg-white/70 dark:bg-dark-200 rounded-xl flex items-center justify-center ring-1 ring-black/[0.04] dark:ring-white/[0.05]',
                 sidebarCompact ? 'w-8 h-8' : 'w-12 h-12'
               )}
             >
@@ -94,10 +94,10 @@ export function SidebarSessions({
             </div>
             {!sidebarCompact && (
               <>
-                <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
+                <p className='text-sm font-medium text-gray-600 dark:text-dark-600'>
                   {t('chat.session.noChats')}
                 </p>
-                <p className='text-xs mt-1 text-gray-500 dark:text-gray-500'>
+                <p className='text-xs mt-1 text-gray-400 dark:text-dark-500'>
                   {t('chat.session.createFirst')}
                 </p>
               </>
@@ -115,13 +115,13 @@ export function SidebarSessions({
                 <div
                   key={session.id}
                   className={cn(
-                    'group relative cursor-pointer transition-all duration-200 touch-manipulation',
+                    'group relative cursor-pointer transition-colors duration-150 touch-manipulation outline-none',
                     sidebarCompact
-                      ? 'rounded-lg p-2 flex items-center justify-center'
-                      : 'rounded-lg px-2.5 py-2',
+                      ? 'rounded-xl p-1 flex items-center justify-center'
+                      : 'rounded-xl px-3 py-2.5',
                     isActive
-                      ? 'bg-gray-100 dark:bg-dark-200'
-                      : 'hover:bg-gray-50 dark:hover:bg-dark-200/50'
+                      ? 'bg-white ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05]'
+                      : 'hover:bg-white/60 dark:hover:bg-dark-200/60'
                   )}
                   onClick={() => onSelectSession(session)}
                   title={
@@ -131,17 +131,19 @@ export function SidebarSessions({
                   }
                 >
                   {sidebarCompact ? (
-                    <div className='flex items-center justify-center w-full h-8'>
+                    <div className='flex items-center justify-center w-full h-10'>
                       <div
                         className={cn(
-                          'w-3 h-3 rounded-full',
+                          'flex h-9 w-9 items-center justify-center rounded-xl text-[11px] font-semibold uppercase transition-colors',
                           generatingTitleForSession === session.id
-                            ? 'bg-primary-400 animate-pulse'
+                            ? 'bg-white text-primary-600 animate-pulse dark:bg-dark-200 dark:text-primary-400'
                             : isActive
-                              ? 'bg-primary-500'
-                              : 'bg-gray-300 dark:bg-gray-600'
+                              ? 'bg-gray-950 text-white dark:bg-white dark:text-gray-950'
+                              : 'bg-white/70 text-gray-500 ring-1 ring-black/[0.04] dark:bg-dark-200/70 dark:text-dark-600 dark:ring-white/[0.05]'
                         )}
-                      />
+                      >
+                        {session.title.trim().charAt(0) || '•'}
+                      </div>
                     </div>
                   ) : editingSessionId === session.id ? (
                     <div
@@ -181,7 +183,7 @@ export function SidebarSessions({
                   ) : (
                     <div className='flex items-center justify-between w-full'>
                       <div className='flex-1 min-w-0 mr-2'>
-                        <h3 className='text-sm font-medium truncate leading-tight text-gray-900 dark:text-gray-100'>
+                        <h3 className='text-[13px] font-medium truncate leading-tight text-gray-900 dark:text-dark-900'>
                           {generatingTitleForSession === session.id ? (
                             <span className='inline-flex items-center gap-1'>
                               <span className='animate-pulse'>
@@ -215,22 +217,22 @@ export function SidebarSessions({
                         <div className='flex items-center gap-1.5 mt-0.5'>
                           <span
                             className={cn(
-                              'text-xs',
+                              'text-[11px] tabular-nums',
                               isActive
-                                ? 'text-gray-600 dark:text-gray-400'
-                                : 'text-gray-500 dark:text-gray-500'
+                                ? 'text-gray-500 dark:text-dark-600'
+                                : 'text-gray-400 dark:text-dark-500'
                             )}
                           >
                             {formatTimestamp(session.updatedAt)}
                           </span>
-                          <span className='text-gray-400 dark:text-gray-600'>
+                          <span className='text-gray-300 dark:text-dark-400'>
                             •
                           </span>
                           {session.personaId ? (
                             persona ? (
                               <span
                                 className={cn(
-                                  'flex items-center gap-1 text-xs font-medium',
+                                  'flex items-center gap-1 text-[11px] font-medium',
                                   isActive
                                     ? 'text-primary-600 dark:text-primary-400'
                                     : 'text-primary-500 dark:text-primary-500'
@@ -250,7 +252,7 @@ export function SidebarSessions({
                             ) : (
                               <span
                                 className={cn(
-                                  'text-xs font-medium italic',
+                                  'text-[11px] font-medium italic',
                                   isActive
                                     ? 'text-gray-500 dark:text-gray-500'
                                     : 'text-gray-400 dark:text-gray-600'
@@ -262,7 +264,7 @@ export function SidebarSessions({
                           ) : (
                             <span
                               className={cn(
-                                'text-xs font-medium truncate max-w-[120px]',
+                                'text-[11px] font-medium truncate max-w-[108px]',
                                 isActive
                                   ? 'text-gray-700 dark:text-gray-300'
                                   : 'text-gray-600 dark:text-gray-400'
@@ -275,12 +277,12 @@ export function SidebarSessions({
                         </div>
                       </div>
 
-                      <div className='flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 shrink-0'>
+                      <div className='flex items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity duration-150 shrink-0'>
                         <Button
                           variant='ghost'
                           size='sm'
                           onClick={e => onStartEditing(session, e)}
-                          className='h-7 w-7 sm:h-6 sm:w-6 p-0 hover:bg-gray-200 dark:hover:bg-gray-700 active:bg-gray-300 dark:active:bg-gray-600 rounded-md touch-manipulation'
+                          className='h-7 w-7 sm:h-7 sm:w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-300 rounded-lg touch-manipulation'
                           title={t('chat.session.renameChat')}
                         >
                           <Edit3 className='h-3 w-3' />
@@ -289,7 +291,7 @@ export function SidebarSessions({
                           variant='ghost'
                           size='sm'
                           onClick={e => onDeleteSession(session.id, e)}
-                          className='h-7 w-7 sm:h-6 sm:w-6 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 rounded-md touch-manipulation'
+                          className='h-7 w-7 sm:h-7 sm:w-7 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg touch-manipulation'
                           title={t('chat.session.deleteChat')}
                         >
                           <Trash2 className='h-3 w-3' />

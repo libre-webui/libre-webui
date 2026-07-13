@@ -42,15 +42,20 @@ export function SidebarNavigation({
   const { t } = useTranslation();
   const itemClass = (active: boolean) =>
     cn(
-      'flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all duration-200 touch-manipulation',
-      sidebarCompact ? 'w-11 h-11 justify-center p-0' : 'w-full px-2.5 py-2',
+      'flex items-center gap-3 rounded-xl text-[13px] font-medium transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
+      sidebarCompact ? 'w-11 h-11 justify-center p-0' : 'w-full px-3 py-2.5',
       active
-        ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-200 shadow-sm'
-        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 hover:text-gray-900 dark:hover:text-gray-100 active:bg-gray-100 dark:active:bg-dark-200'
+        ? 'bg-white text-gray-950 ring-1 ring-black/[0.04] dark:bg-dark-200 dark:text-dark-950 dark:ring-white/[0.06]'
+        : 'text-gray-600 dark:text-dark-600 hover:bg-white/60 dark:hover:bg-dark-200/60 hover:text-gray-950 dark:hover:text-dark-950 active:bg-white dark:active:bg-dark-200'
     );
 
+  const chatActive =
+    activePath === '/chat' ||
+    activePath === '/' ||
+    activePath.startsWith('/c/');
+
   return (
-    <div className={cn('py-1.5', sidebarCompact ? 'px-1' : 'px-2.5')}>
+    <div className={cn('pb-3', sidebarCompact ? 'px-2' : 'px-3')}>
       <nav
         className={cn(
           'space-y-0.5',
@@ -59,13 +64,11 @@ export function SidebarNavigation({
       >
         <button
           onClick={onChatClick}
-          className={cn(
-            itemClass(activePath === '/chat' || activePath === '/'),
-            'text-left'
-          )}
+          className={cn(itemClass(chatActive), 'text-left')}
           title={sidebarCompact ? t('sidebar.navigation.chat') : undefined}
+          aria-current={chatActive ? 'page' : undefined}
         >
-          <MessageSquare className='h-4 w-4 shrink-0' />
+          <MessageSquare className='h-[18px] w-[18px] shrink-0' />
           {!sidebarCompact && t('sidebar.navigation.chat')}
         </button>
 
@@ -74,8 +77,9 @@ export function SidebarNavigation({
           onClick={onMobileNavigate}
           className={itemClass(activePath === '/models')}
           title={sidebarCompact ? t('sidebar.navigation.models') : undefined}
+          aria-current={activePath === '/models' ? 'page' : undefined}
         >
-          <Database className='h-4 w-4 shrink-0' />
+          <Database className='h-[18px] w-[18px] shrink-0' />
           {!sidebarCompact && t('sidebar.navigation.models')}
         </Link>
 
@@ -84,8 +88,9 @@ export function SidebarNavigation({
           onClick={onMobileNavigate}
           className={itemClass(activePath === '/personas')}
           title={sidebarCompact ? t('sidebar.navigation.personas') : undefined}
+          aria-current={activePath === '/personas' ? 'page' : undefined}
         >
-          <UserIcon className='h-4 w-4 shrink-0' />
+          <UserIcon className='h-[18px] w-[18px] shrink-0' />
           {!sidebarCompact && t('sidebar.navigation.personas')}
         </Link>
 
@@ -94,8 +99,9 @@ export function SidebarNavigation({
           onClick={onMobileNavigate}
           className={itemClass(activePath === '/gallery')}
           title={sidebarCompact ? t('sidebar.navigation.imagine') : undefined}
+          aria-current={activePath === '/gallery' ? 'page' : undefined}
         >
-          <Sparkles className='h-4 w-4 shrink-0' />
+          <Sparkles className='h-[18px] w-[18px] shrink-0' />
           {!sidebarCompact && t('sidebar.navigation.imagine')}
         </Link>
 
@@ -104,8 +110,9 @@ export function SidebarNavigation({
           onClick={onMobileNavigate}
           className={itemClass(activePath === '/agents')}
           title={sidebarCompact ? t('sidebar.navigation.agents') : undefined}
+          aria-current={activePath === '/agents' ? 'page' : undefined}
         >
-          <Bot className='h-4 w-4 shrink-0' />
+          <Bot className='h-[18px] w-[18px] shrink-0' />
           {!sidebarCompact && t('sidebar.navigation.agents')}
         </Link>
       </nav>

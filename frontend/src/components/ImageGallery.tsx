@@ -25,6 +25,7 @@ import { GeneratedImage } from '@/types';
 import { toast } from 'react-hot-toast';
 import ImageLightbox from './ImageLightbox';
 import { createLogger } from '@/utils/logger';
+import { Button } from '@/components/ui';
 
 const logger = createLogger('components:image-gallery');
 
@@ -135,8 +136,8 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
 
   if (images.length === 0) {
     return (
-      <div className='flex flex-col items-center justify-center py-20 text-center'>
-        <ImageOff className='h-16 w-16 text-gray-300 dark:text-gray-600 mb-4' />
+      <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white/30 px-6 py-20 text-center dark:border-white/15 dark:bg-white/[0.02]'>
+        <ImageOff className='mb-4 h-10 w-10 text-gray-300 dark:text-gray-600' />
         <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-2'>
           {t('imageGallery.noImages')}
         </h3>
@@ -160,15 +161,12 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
           <div
             key={image.id}
             className={cn(
-              'break-inside-avoid group relative cursor-pointer',
-              'rounded-xl overflow-hidden',
+              'group relative break-inside-avoid cursor-pointer overflow-hidden rounded-2xl',
               'bg-gray-100 dark:bg-dark-200',
-              'border border-gray-200 dark:border-dark-300',
-              'hover:border-gray-300 dark:hover:border-dark-400',
-              'transition-all duration-200',
-              'hover:shadow-lg dark:hover:shadow-dark-400/20'
+              'border border-gray-200/80 dark:border-white/10',
+              'transition-[border-color,transform] duration-200',
+              'hover:border-gray-300 dark:hover:border-white/20'
             )}
-            onClick={() => setSelectedImage(image)}
           >
             {/* Image */}
             <img
@@ -178,11 +176,18 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
               loading='lazy'
             />
 
+            <button
+              type='button'
+              className='absolute inset-0 z-[1] rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500'
+              onClick={() => setSelectedImage(image)}
+              aria-label={image.prompt}
+            />
+
             {/* Hover Overlay */}
             <div
               className={cn(
-                'absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent',
-                'opacity-0 group-hover:opacity-100 transition-opacity duration-200',
+                'pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-black/80 via-black/20 to-transparent',
+                'opacity-100 transition-opacity duration-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100',
                 'flex flex-col justify-end p-3'
               )}
             >
@@ -198,7 +203,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
                 </span>
 
                 {/* Action Buttons */}
-                <div className='flex items-center gap-1'>
+                <div className='pointer-events-auto flex items-center gap-1'>
                   <button
                     onClick={e => handleDownload(image, e)}
                     className={cn(
@@ -237,18 +242,11 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
       {/* Load More Button */}
       {hasNextPage && (
         <div className='flex justify-center mt-8'>
-          <button
+          <Button
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-            className={cn(
-              'px-6 py-2.5 rounded-xl font-medium',
-              'bg-gray-100 dark:bg-dark-200',
-              'hover:bg-gray-200 dark:hover:bg-dark-300',
-              'text-gray-700 dark:text-gray-200',
-              'border border-gray-200 dark:border-dark-300',
-              'transition-colors',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
+            variant='outline'
+            className='px-6'
           >
             {isLoadingMore ? (
               <span className='flex items-center gap-2'>
@@ -258,7 +256,7 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
             ) : (
               t('imageGallery.loadMore', { current: images.length, total })
             )}
-          </button>
+          </Button>
         </div>
       )}
 

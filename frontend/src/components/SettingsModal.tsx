@@ -129,6 +129,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     installPlugin,
   } = usePluginStore();
   const { t } = useTranslation();
+  const settingsTitleId = React.useId();
 
   const currentTaskModel = preferences.titleSettings?.taskModel || '';
   const autoTitleTaskModelOptions = [
@@ -420,6 +421,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     loadPlugins();
     loadModels();
   }, [isOpen, loadPlugins, loadModels]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   const handleSaveApiKey = async (pluginId: string) => {
     const apiKey = pluginApiKeys[pluginId];
@@ -1135,57 +1153,75 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className='fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity duration-200'
+        className='fixed inset-0 z-50 bg-black/55 backdrop-blur-sm transition-opacity duration-200'
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className='fixed inset-0 lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2 z-50 w-full lg:max-w-4xl lg:mx-4 h-full lg:h-[85vh] p-0 lg:p-4'>
-        <div className='bg-white dark:bg-dark-25 rounded-2xl shadow-2xl border border-gray-200 dark:border-dark-200 animate-scale-in flex flex-col h-full overscroll-behavior-contain'>
+      <div
+        className='fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 lg:p-6'
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby={settingsTitleId}
+        onMouseDown={event => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        <div className='flex h-full w-full flex-col overscroll-behavior-contain border border-gray-200/80 bg-white/95 shadow-2xl backdrop-blur-xl animate-scale-in dark:border-white/10 dark:bg-dark-25/95 sm:max-h-[94vh] sm:max-w-6xl sm:rounded-3xl'>
           {/* Header */}
-          <div className='flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 dark:border-dark-200 sticky top-0 z-10 rounded-t-2xl'>
-            <h2 className='text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100'>
+          <div className='sticky top-0 z-10 flex items-center justify-between border-b border-gray-200/70 px-4 py-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
+            <h2
+              id={settingsTitleId}
+              className='text-xl font-normal tracking-[-0.025em] text-gray-950 dark:text-dark-950 sm:text-2xl'
+            >
               {t('settings.title')}
             </h2>
             <Button
               variant='ghost'
               size='sm'
               onClick={onClose}
-              className='h-9 w-9 sm:h-8 sm:w-8 p-0 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
-              title='Close'
+              autoFocus
+              className='h-9 w-9 touch-manipulation p-0 hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-white/[0.06] dark:active:bg-white/10'
+              title={t('common.close', { defaultValue: 'Close' })}
             >
               <X className='h-5 w-5 sm:h-4 sm:w-4' />
             </Button>
           </div>
 
-          <div className='flex flex-1 min-h-0 overscroll-behavior-contain'>
+          <div className='flex min-h-0 flex-1 flex-col overscroll-behavior-contain sm:flex-row'>
             {/* Sidebar Tabs */}
             <div
-              className='w-40 xs:w-48 sm:w-64 border-r border-gray-100 dark:border-dark-200 p-2 xs:p-3 sm:p-4 overflow-y-auto scrollbar-thin'
+              className='w-full shrink-0 overflow-x-auto border-b border-gray-200/70 p-2 scrollbar-thin dark:border-white/[0.08] sm:w-56 sm:overflow-x-hidden sm:overflow-y-auto sm:border-b-0 sm:border-e sm:p-3 lg:w-64'
               style={{
                 WebkitOverflowScrolling: 'touch',
               }}
             >
-              <nav className='space-y-1'>
+              <nav className='flex gap-1 sm:flex-col' role='tablist'>
                 {tabs.map(tab => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.id;
 
                   let buttonClass =
-                    'w-full flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2.5 sm:py-2.5 text-left rounded-lg transition-colors duration-200 touch-manipulation border';
+                    'flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-start text-sm transition-colors duration-200 touch-manipulation sm:w-full';
 
                   buttonClass += isActive
-                    ? ' bg-gray-100 dark:bg-dark-100 text-gray-900 dark:text-white border-gray-200 dark:border-dark-300'
-                    : ' border-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200';
+                    ? ' border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-950'
+                    : ' border-transparent text-gray-600 hover:bg-gray-100/70 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-white/[0.05] dark:hover:text-dark-900';
 
                   return (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
                       className={buttonClass}
+                      role='tab'
+                      aria-selected={isActive}
+                      aria-controls='settings-tab-panel'
                     >
-                      <Icon className='h-4 w-4 flex-shrink-0' />
-                      <span className='text-xs sm:text-sm font-medium truncate'>
+                      <Icon
+                        className='h-4 w-4 flex-shrink-0'
+                        aria-hidden='true'
+                      />
+                      <span className='truncate whitespace-nowrap text-xs font-medium sm:text-sm'>
                         {tab.label}
                       </span>
                     </button>
@@ -1196,10 +1232,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Tab Content */}
             <div
-              className='flex-1 p-3 xs:p-4 sm:p-6 overflow-auto overscroll-behavior-contain'
+              className='flex-1 overflow-auto overscroll-behavior-contain p-4 sm:p-6 lg:p-8'
               style={{
                 WebkitOverflowScrolling: 'touch',
               }}
+              id='settings-tab-panel'
+              role='tabpanel'
             >
               {renderTabContent()}
             </div>

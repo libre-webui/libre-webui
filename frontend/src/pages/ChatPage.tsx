@@ -278,7 +278,16 @@ export const ChatPage: React.FC = () => {
     const hasAdvancedFeatures = welcomeImages.length > 0;
 
     return (
-      <div className='h-full flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative'>
+      <div className='relative h-full flex-1 overflow-y-auto overflow-x-hidden px-4 py-20 sm:px-8 sm:py-24'>
+        <div
+          aria-hidden='true'
+          className='pointer-events-none absolute inset-0'
+        >
+          <div className='absolute left-[12%] top-[18%] h-56 w-56 rounded-full bg-primary-500/[0.035] blur-3xl dark:bg-primary-400/[0.04]' />
+          <div className='absolute bottom-[16%] right-[10%] h-72 w-72 rounded-full bg-gray-900/[0.025] blur-3xl dark:bg-white/[0.025]' />
+          <div className='absolute left-1/2 top-0 h-16 w-px bg-gray-300/60 dark:bg-white/10' />
+        </div>
+
         {/* Private Mode Button - Top Right Corner */}
         <button
           onClick={() => {
@@ -300,22 +309,19 @@ export const ChatPage: React.FC = () => {
             setCurrentSession(privateSession);
           }}
           disabled={!selectedModel && models.length === 0}
-          className='absolute top-4 right-4 flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-300 dark:border-dark-400 bg-transparent hover:bg-gray-100 dark:hover:bg-dark-200 text-gray-500 dark:text-gray-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
+          className='absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-white/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-white hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:right-6 sm:top-6'
           title={t('chat.session.privateTooltip')}
         >
-          <Ghost className='h-4 w-4' />
-          <span className='text-sm'>{t('chat.session.private')}</span>
+          <Ghost className='h-3.5 w-3.5' />
+          <span>{t('chat.session.private')}</span>
         </button>
 
-        <div className='w-full max-w-2xl mx-auto flex flex-col items-center justify-center'>
+        <div className='relative z-[1] mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center'>
           {/* Personalized greeting based on time of day */}
-          <h1
-            className='text-2xl sm:text-3xl font-medium text-gray-800 dark:text-gray-100 mb-2 text-center'
-            style={{ fontWeight: 400 }}
-          >
+          <h1 className='mb-4 max-w-3xl text-balance text-center text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-gray-950 dark:text-dark-950'>
             {greeting}
           </h1>
-          <p className='text-base sm:text-lg text-gray-500 dark:text-gray-400 mb-8 text-center'>
+          <p className='mb-10 max-w-xl text-balance text-center text-base leading-relaxed text-gray-500 dark:text-dark-600 sm:mb-12 sm:text-lg'>
             {timeSuffix === 'today'
               ? t('chat.welcome.helpToday')
               : t('chat.welcome.helpTonight')}
@@ -325,7 +331,7 @@ export const ChatPage: React.FC = () => {
             <div className='w-full'>
               {/* Advanced Features Panel */}
               {showWelcomeAdvanced && (
-                <div className='mb-4 p-4 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-2xl'>
+                <div className='mb-3 animate-slide-up rounded-2xl border border-black/[0.07] bg-white/80 p-4 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/80'>
                   <ImageUpload
                     images={welcomeImages}
                     onImagesChange={setWelcomeImages}
@@ -338,11 +344,10 @@ export const ChatPage: React.FC = () => {
               <form onSubmit={handleWelcomeSubmit}>
                 <div
                   className={cn(
-                    'flex items-center gap-2 p-2 sm:p-3 rounded-2xl sm:rounded-3xl border transition-all duration-200',
-                    'bg-gray-50 dark:bg-dark-50 border-gray-200 dark:border-dark-300',
-                    'hover:border-gray-300 dark:hover:border-dark-400',
-                    'focus-within:border-primary-400 dark:focus-within:border-primary-500 focus-within:bg-white dark:focus-within:bg-dark-50',
-                    'shadow-sm hover:shadow-md focus-within:shadow-lg'
+                    'flex items-end gap-2 rounded-[1.6rem] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200 sm:p-3',
+                    'border-black/[0.08] bg-white/90 dark:border-white/[0.09] dark:bg-dark-200/90',
+                    'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl',
+                    'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_22px_65px_rgba(15,23,42,0.12)]'
                   )}
                 >
                   {/* Attachment button */}
@@ -352,19 +357,13 @@ export const ChatPage: React.FC = () => {
                     size='sm'
                     onClick={() => setShowWelcomeAdvanced(!showWelcomeAdvanced)}
                     className={cn(
-                      'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
-                      'hover:bg-gray-200 dark:hover:bg-dark-200 transition-colors touch-manipulation',
+                      'h-9 w-9 sm:h-10 sm:w-10 !p-0 rounded-full flex-shrink-0',
+                      'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors touch-manipulation',
                       hasAdvancedFeatures &&
                         'text-primary-600 dark:text-primary-400',
-                      showWelcomeAdvanced && 'bg-gray-200 dark:bg-dark-200'
+                      showWelcomeAdvanced && 'bg-gray-100 dark:bg-dark-300'
                     )}
                     title={t('chat.input.attachImages')}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0',
-                    }}
                   >
                     {hasAdvancedFeatures ? (
                       <div className='relative flex items-center justify-center'>
@@ -388,17 +387,8 @@ export const ChatPage: React.FC = () => {
                       }
                       onKeyDown={handleWelcomeKeyDown}
                       placeholder={t('chat.input.messagePlaceholder')}
-                      className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 text-base sm:text-sm leading-none touch-manipulation'
+                      className='!m-0 min-h-[40px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-2 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-base leading-relaxed touch-manipulation'
                       rows={1}
-                      style={{
-                        boxShadow: 'none !important',
-                        border: 'none !important',
-                        outline: 'none !important',
-                        padding: '0 !important',
-                        margin: '0 !important',
-                        lineHeight: '1.2 !important',
-                        verticalAlign: 'middle',
-                      }}
                     />
                   </div>
 
@@ -408,7 +398,7 @@ export const ChatPage: React.FC = () => {
                       models={models}
                       selectedModel={selectedModel}
                       onModelChange={handleModelChange}
-                      className='min-w-[140px] max-w-[200px] border-0 bg-gray-100 dark:bg-dark-100 rounded-xl text-sm'
+                      className='min-w-[140px] max-w-[210px]'
                       compact
                       showImageGen={hasImageGenPlugins}
                     />
@@ -421,13 +411,11 @@ export const ChatPage: React.FC = () => {
                     size='sm'
                     disabled={!welcomeMessage.trim() || !selectedModel}
                     className={cn(
-                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400',
-                      'disabled:text-gray-400 dark:disabled:text-dark-500 disabled:hover:bg-transparent',
-                      'transition-all duration-150 touch-manipulation',
-                      welcomeMessage.trim() &&
-                        selectedModel &&
-                        'hover:scale-105 active:scale-95'
+                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'bg-gray-950 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
+                      'disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-dark-300 dark:disabled:text-dark-500 disabled:hover:bg-gray-100 dark:disabled:hover:bg-dark-300',
+                      'transition-colors duration-150 touch-manipulation',
+                      welcomeMessage.trim() && selectedModel && 'shadow-sm'
                     )}
                     title={t('chat.input.sendMessage')}
                   >
@@ -442,44 +430,23 @@ export const ChatPage: React.FC = () => {
                   models={models}
                   selectedModel={selectedModel}
                   onModelChange={handleModelChange}
-                  className='w-full rounded-xl bg-gray-100 dark:bg-dark-100 border-0'
+                  className='w-full'
                   compact
                   showImageGen={hasImageGenPlugins}
                 />
               </div>
 
-              {/* Footer with Libre WebUI branding */}
-              <div className='mt-4 text-center'>
-                <a
-                  href='https://librewebui.org'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='libre-brand underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors text-gray-500 dark:text-gray-400'
-                  style={{ fontSize: '0.75rem', lineHeight: 1 }}
-                >
-                  Libre <span>WebUI</span>
-                </a>{' '}
-                <span
-                  className='text-gray-400 dark:text-gray-500'
-                  style={{ fontSize: '0.55rem' }}
-                >
-                  v{import.meta.env.VITE_APP_VERSION || '0.1.3'}
-                </span>{' '}
-                <span className='text-gray-300 dark:text-gray-600 opacity-50'>
-                  •
-                </span>{' '}
-                <span className='text-xs text-gray-400 dark:text-gray-500'>
-                  {t('chat.footer.disclaimer')}
-                </span>
-              </div>
+              <p className='mt-4 text-center text-[10px] leading-relaxed text-gray-400 dark:text-dark-500'>
+                {t('chat.footer.disclaimer')}
+              </p>
             </div>
           ) : (
-            <div className='w-full max-w-md'>
-              <div className='p-6 bg-gray-50 dark:bg-dark-100 border border-gray-200 dark:border-dark-300 rounded-xl'>
-                <p className='text-sm text-gray-700 dark:text-dark-700 mb-4'>
+            <div className='w-full max-w-lg'>
+              <div className='rounded-2xl border border-black/[0.07] bg-white/70 p-6 backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/70'>
+                <p className='mb-4 text-sm leading-relaxed text-gray-600 dark:text-dark-700'>
                   {t('chat.model.noModelsDescription')}
                 </p>
-                <code className='block text-xs bg-gray-100 dark:bg-dark-200 p-3 rounded-lg font-mono text-gray-800 dark:text-dark-600'>
+                <code className='block rounded-xl bg-gray-100 p-3 font-mono text-xs text-gray-800 dark:bg-dark-300 dark:text-dark-700'>
                   {t('chat.model.pullCommand')}
                 </code>
               </div>
@@ -492,7 +459,7 @@ export const ChatPage: React.FC = () => {
 
   return (
     <div
-      className='flex flex-col h-full relative'
+      className='relative flex h-full flex-col'
       style={
         currentPersona?.background
           ? {
@@ -506,19 +473,19 @@ export const ChatPage: React.FC = () => {
     >
       {/* Background overlay for better readability when persona background is active */}
       {currentPersona?.background && (
-        <div className='absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm' />
+        <div className='absolute inset-0 bg-gray-50/[0.88] backdrop-blur-sm dark:bg-dark-100/[0.88]' />
       )}
 
-      <div className='flex flex-col h-full relative z-10'>
+      <div className='relative z-10 flex h-full flex-col'>
         {/* Private mode indicator */}
         {currentSession?.isPrivate && (
-          <div className='flex-shrink-0 px-4 py-2 border-b border-gray-200 dark:border-dark-300 bg-gray-50/80 dark:bg-dark-100/80 backdrop-blur-sm'>
-            <div className='flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400'>
-              <Ghost className='h-4 w-4' />
-              <span className='text-sm font-medium'>
+          <div className='flex-shrink-0 border-b border-black/[0.05] bg-white/55 px-4 py-2 backdrop-blur-xl dark:border-white/[0.06] dark:bg-dark-100/55'>
+            <div className='flex items-center justify-center gap-2 text-gray-500 dark:text-dark-600'>
+              <Ghost className='h-3.5 w-3.5' />
+              <span className='text-xs font-medium'>
                 {t('chat.session.privateMode')}
               </span>
-              <span className='text-xs text-gray-500 dark:text-gray-500'>
+              <span className='hidden text-[11px] text-gray-400 dark:text-dark-500 sm:inline'>
                 — {t('chat.session.privateDescription')}
               </span>
             </div>
@@ -526,7 +493,7 @@ export const ChatPage: React.FC = () => {
         )}
         {/* Persona indicator header */}
         {currentPersona && !currentSession?.isPrivate && (
-          <div className='flex-shrink-0 px-4 py-2 border-b border-gray-100 dark:border-dark-200 bg-white/50 dark:bg-dark-100/50 backdrop-blur-sm'>
+          <div className='flex-shrink-0 border-b border-black/[0.05] bg-white/55 px-4 py-2 backdrop-blur-xl dark:border-white/[0.06] dark:bg-dark-100/55'>
             <PersonaIndicator
               persona={currentPersona}
               onClear={() => {

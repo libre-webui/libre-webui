@@ -52,15 +52,15 @@ function UserAvatar({ user, size }: { user: User; size: 'sm' | 'md' }) {
     <img
       src={user.avatar}
       alt={user.username}
-      className={`${dimension} rounded-full object-cover`}
+      className={`${dimension} rounded-full object-cover ring-1 ring-black/10 dark:ring-white/10`}
       title={`${user.username} (${user.role})`}
     />
   ) : (
     <div
-      className={`${dimension} bg-primary-500 rounded-full flex items-center justify-center`}
+      className={`${dimension} bg-gray-950 dark:bg-white rounded-full flex items-center justify-center`}
       title={`${user.username} (${user.role})`}
     >
-      <span className={`text-white ${textSize} font-medium`}>
+      <span className={`text-white dark:text-gray-950 ${textSize} font-medium`}>
         {user.username.charAt(0).toUpperCase()}
       </span>
     </div>
@@ -88,17 +88,17 @@ export function SidebarUserSection({
   return (
     <div
       className={cn(
-        'border-t border-gray-200/60 dark:border-dark-200/60',
-        sidebarCompact ? 'p-1.5' : 'p-2.5'
+        'border-t border-black/[0.05] dark:border-white/[0.05]',
+        sidebarCompact ? 'p-2' : 'p-3'
       )}
     >
       {sidebarCompact ? (
-        <div className='flex flex-col items-center space-y-1.5'>
+        <div className='flex flex-col items-center space-y-2'>
           <UserAvatar user={user} size='sm' />
 
           <button
             onClick={onOpenSettings}
-            className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
+            className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
             title={t('sidebar.navigation.settings')}
           >
             <Settings className='h-4 w-4' />
@@ -108,7 +108,7 @@ export function SidebarUserSection({
             <Link
               to='/users'
               onClick={onMobileNavigate}
-              className='w-9 h-9 flex items-center justify-center rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 active:bg-gray-100 dark:active:bg-dark-200 touch-manipulation transition-all duration-200'
+              className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
               title={t('sidebar.navigation.userManagement')}
             >
               <UserIcon className='h-4 w-4' />
@@ -117,7 +117,7 @@ export function SidebarUserSection({
 
           <button
             onClick={onLogout}
-            className='w-9 h-9 flex items-center justify-center rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 active:bg-red-100 dark:active:bg-red-900/30 touch-manipulation transition-all duration-200'
+            className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-500 dark:text-dark-500 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 touch-manipulation transition-colors duration-150'
             title={t('sidebar.navigation.signOut')}
           >
             <LogOut className='h-4 w-4' />
@@ -127,7 +127,7 @@ export function SidebarUserSection({
         <div className='relative' ref={userMenuRef}>
           <button
             onClick={onToggleUserMenu}
-            className='w-full p-2.5 rounded-xl bg-white/50 dark:bg-dark-200/50 border border-gray-200/30 dark:border-dark-300/30 hover:bg-white/70 dark:hover:bg-dark-200/70 transition-all duration-200 text-left touch-manipulation'
+            className='w-full p-2.5 rounded-xl hover:bg-white/70 dark:hover:bg-dark-200 transition-colors duration-150 text-left touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
           >
             <div className='flex items-center gap-2.5'>
               <UserAvatar user={user} size='sm' />
@@ -139,14 +139,14 @@ export function SidebarUserSection({
                   {user.role === 'admin' && (
                     <Shield size={10} className='text-primary-500 mr-1' />
                   )}
-                  <span className='text-xs text-gray-500 dark:text-gray-400 capitalize'>
+                  <span className='text-[11px] text-gray-500 dark:text-dark-500 capitalize'>
                     {user.role}
                   </span>
                 </div>
               </div>
               <ChevronRight
                 className={cn(
-                  'h-4 w-4 text-gray-400 dark:text-gray-500 transition-transform duration-200',
+                  'h-4 w-4 text-gray-400 dark:text-dark-500 transition-transform duration-150',
                   userMenuOpen && 'rotate-90'
                 )}
               />
@@ -154,7 +154,7 @@ export function SidebarUserSection({
           </button>
 
           {userMenuOpen && (
-            <div className='absolute bottom-full left-0 right-0 mb-2 py-2 bg-white dark:bg-dark-100 rounded-xl shadow-lg border border-gray-200/50 dark:border-dark-200/50 backdrop-blur-sm z-50'>
+            <div className='absolute bottom-full left-0 right-0 mb-2 py-2 bg-white/95 dark:bg-dark-25/95 rounded-2xl shadow-[0_18px_60px_rgba(15,23,42,0.16)] border border-black/[0.07] dark:border-white/[0.08] backdrop-blur-xl z-50 animate-scale-in'>
               <div className='px-3 py-2 border-b border-gray-100 dark:border-dark-200/50'>
                 <div className='flex items-center gap-2.5'>
                   <UserAvatar user={user} size='md' />
@@ -175,7 +175,7 @@ export function SidebarUserSection({
                     onOpenAvatar(user.avatar || '');
                     onCloseUserMenu();
                   }}
-                  className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
+                  className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150 text-left'
                 >
                   <Camera className='h-4 w-4 shrink-0' />
                   {t('user.menu.changePicture')}
@@ -186,7 +186,7 @@ export function SidebarUserSection({
                     onOpenSettings();
                     onCloseUserMenu();
                   }}
-                  className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200 text-left'
+                  className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150 text-left'
                 >
                   <Settings className='h-4 w-4 shrink-0' />
                   {t('user.menu.settings')}
@@ -199,7 +199,7 @@ export function SidebarUserSection({
                       onCloseUserMenu();
                       onMobileNavigate();
                     }}
-                    className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-dark-200/50 transition-colors duration-200'
+                    className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150'
                   >
                     <UserIcon className='h-4 w-4 shrink-0' />
                     {t('user.menu.userManagement')}
@@ -213,7 +213,7 @@ export function SidebarUserSection({
                     onLogout();
                     onCloseUserMenu();
                   }}
-                  className='w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200 text-left'
+                  className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-150 text-left'
                 >
                   <LogOut className='h-4 w-4 shrink-0' />
                   {t('user.menu.logout')}

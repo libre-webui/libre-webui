@@ -79,13 +79,14 @@ export function PullModelSection({
   return (
     <div
       className={cn(
-        'rounded-xl border overflow-hidden',
-        'bg-white dark:bg-dark-100',
-        'border-gray-200 dark:border-dark-300'
+        'overflow-hidden rounded-2xl border',
+        'bg-white/60 dark:bg-white/[0.03]',
+        'border-gray-200/80 dark:border-white/10'
       )}
     >
       <button
         onClick={onToggle}
+        aria-expanded={expanded}
         className={cn(
           'w-full flex items-center justify-between p-4',
           'hover:bg-gray-50 dark:hover:bg-dark-50',
@@ -93,14 +94,7 @@ export function PullModelSection({
         )}
       >
         <div className='flex items-center gap-3'>
-          <div
-            className={cn(
-              'p-2 rounded-lg',
-              'bg-primary-100 dark:bg-primary-900/30'
-            )}
-          >
-            <Download className='h-5 w-5 text-primary-600 dark:text-primary-400' />
-          </div>
+          <Download className='h-4 w-4 text-primary-600 dark:text-primary-400' />
           <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
             {t('modelManager.sections.pull')}
           </h3>
@@ -116,14 +110,14 @@ export function PullModelSection({
         <div className='p-4 pt-0 space-y-4'>
           <div className='flex gap-2'>
             <div className='relative flex-1'>
-              <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500' />
+              <Search className='absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-gray-500' />
               <input
                 type='text'
                 value={modelName}
                 onChange={event => setModelName(event.target.value)}
                 placeholder={t('modelManager.pull.placeholder')}
                 className={cn(
-                  'w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm',
+                  'w-full rounded-xl border py-2.5 pe-4 ps-10 text-sm',
                   'bg-gray-50 dark:bg-dark-50',
                   'border-gray-200 dark:border-dark-300',
                   'text-gray-900 dark:text-dark-700',

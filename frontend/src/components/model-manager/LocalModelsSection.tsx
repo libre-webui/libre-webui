@@ -57,13 +57,14 @@ export function LocalModelsSection({
   return (
     <div
       className={cn(
-        'rounded-xl border overflow-hidden',
-        'bg-white dark:bg-dark-100',
-        'border-gray-200 dark:border-dark-300'
+        'overflow-hidden rounded-2xl border',
+        'bg-white/60 dark:bg-white/[0.03]',
+        'border-gray-200/80 dark:border-white/10'
       )}
     >
       <button
         onClick={onToggle}
+        aria-expanded={expanded}
         className={cn(
           'w-full flex items-center justify-between p-4',
           'hover:bg-gray-50 dark:hover:bg-dark-50',
@@ -71,11 +72,7 @@ export function LocalModelsSection({
         )}
       >
         <div className='flex items-center gap-3'>
-          <div
-            className={cn('p-2 rounded-lg', 'bg-blue-100 dark:bg-blue-900/30')}
-          >
-            <HardDrive className='h-5 w-5 text-blue-600 dark:text-blue-400' />
-          </div>
+          <HardDrive className='h-4 w-4 text-gray-500 dark:text-dark-500' />
           <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
             {t('modelManager.sections.local')}
           </h3>

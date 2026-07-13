@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { cn } from '@/utils';
 
 interface SidebarHeaderProps {
@@ -45,48 +46,54 @@ export function SidebarHeader({
   return (
     <div
       className={cn(
-        'border-b border-gray-200/60 dark:border-dark-200/60',
-        sidebarCompact ? 'p-2' : 'p-3',
+        sidebarCompact ? 'px-2 pb-3 pt-3' : 'px-4 pb-4 pt-4',
         isElectron && 'pt-10'
       )}
     >
       <div
         className={cn(
           'flex items-center',
-          sidebarCompact ? 'justify-center mb-2' : 'justify-between mb-2'
+          sidebarCompact ? 'justify-center mb-3' : 'justify-between mb-4'
         )}
       >
         {!sidebarCompact ? (
           <>
-            <Logo size='sm' className='text-gray-900 dark:text-dark-800' />
-            <div className='flex items-center gap-1'>
+            <Logo
+              size='sm'
+              className='text-gray-950 dark:text-dark-950 tracking-[-0.035em]'
+            />
+            <div className='flex items-center gap-0.5'>
+              <ThemeToggle />
               <Button
                 variant='ghost'
                 size='sm'
                 onClick={onToggleCompact}
-                className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
+                className='h-9 w-9 p-0 rounded-xl text-gray-500 dark:text-dark-600 hover:bg-white/80 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation'
                 title={t('sidebar.toggleSize')}
+                aria-label={t('sidebar.toggleSize')}
               >
                 <ChevronLeft className='h-4 w-4' />
               </Button>
             </div>
           </>
         ) : (
-          <div className='flex flex-col items-center gap-1.5'>
+          <div className='flex flex-col items-center gap-2'>
             <Logo
               size='sm'
               wordmark={false}
-              className='text-gray-900 dark:text-dark-800'
+              className='text-gray-950 dark:text-dark-950 text-base tracking-[-0.035em]'
             />
             <Button
               variant='ghost'
               size='sm'
               onClick={onToggleCompact}
-              className='h-7 w-7 p-0 hover:bg-gray-100 dark:hover:bg-dark-200 active:bg-gray-200 dark:active:bg-dark-100 touch-manipulation'
+              className='h-9 w-9 p-0 rounded-xl text-gray-500 dark:text-dark-600 hover:bg-white/80 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation'
               title={t('sidebar.expandSidebar')}
+              aria-label={t('sidebar.expandSidebar')}
             >
               <ChevronRight className='h-4 w-4' />
             </Button>
+            <ThemeToggle />
           </div>
         )}
       </div>
@@ -95,7 +102,7 @@ export function SidebarHeader({
         <Button
           onClick={onCreateSession}
           disabled={createDisabled}
-          className='w-full bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white shadow-sm hover:shadow-md active:shadow-lg transition-all duration-200 border-0 touch-manipulation'
+          className='w-full h-10 rounded-xl bg-gray-950 hover:bg-gray-800 active:bg-gray-900 text-white dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100 dark:active:bg-gray-200 shadow-none transition-colors duration-150 border-0 touch-manipulation'
           size='sm'
           title={disabledTitle}
         >
@@ -106,8 +113,9 @@ export function SidebarHeader({
         <Button
           onClick={onCreateSession}
           disabled={createDisabled}
-          className='w-full h-9 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white shadow-sm hover:shadow-md active:shadow-lg transition-all duration-200 border-0 touch-manipulation p-0'
+          className='w-full h-10 rounded-xl bg-gray-950 hover:bg-gray-800 active:bg-gray-900 text-white dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100 dark:active:bg-gray-200 shadow-none transition-colors duration-150 border-0 touch-manipulation p-0'
           title={createDisabled ? disabledTitle : t('chat.session.new')}
+          aria-label={t('chat.session.new')}
         >
           <Plus className='h-4 w-4' />
         </Button>

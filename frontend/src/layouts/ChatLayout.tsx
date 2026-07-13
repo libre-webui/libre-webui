@@ -28,19 +28,19 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
   const { sidebarOpen, sidebarCompact, toggleSidebar } = useAppStore();
 
   return (
-    <div className='flex h-screen bg-gray-50 dark:bg-dark-100'>
+    <div className='flex h-screen bg-gray-100 dark:bg-dark-50'>
       {/* Sidebar - Let the Sidebar component handle its own positioning */}
       <Sidebar isOpen={sidebarOpen} onClose={() => toggleSidebar()} />
 
       {/* Main content - Adjust margin based on sidebar state */}
       <div
         className={cn(
-          'flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out',
+          'flex-1 flex flex-col min-w-0 transition-[margin] duration-200 ease-out',
           // Add left margin when sidebar is open (on all screen sizes for side-by-side layout)
           sidebarOpen
             ? sidebarCompact
-              ? 'ml-20'
-              : 'ml-80 max-sm:ml-64'
+              ? 'ml-18'
+              : 'ml-72 max-sm:ml-64'
             : 'ml-0'
         )}
       >

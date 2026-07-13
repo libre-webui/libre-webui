@@ -124,12 +124,12 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   };
 
   return (
-    <div className='w-full max-w-md mx-auto bg-white dark:bg-dark-25 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 p-6 border border-gray-200 dark:border-dark-200'>
-      <div className='text-center mb-6'>
-        <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
+    <div className='mx-auto w-full max-w-md rounded-3xl border border-line bg-surface-raised p-6 shadow-card sm:p-8'>
+      <div className='mb-8 text-center'>
+        <h1 className='mb-2 text-3xl font-light tracking-[-0.04em] text-ink'>
           {t('auth.signup.title')}
         </h1>
-        <p className='text-gray-600 dark:text-dark-500'>
+        <p className='text-sm leading-6 text-ink-muted'>
           {t('auth.signup.subtitle')}
         </p>
       </div>
@@ -138,7 +138,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         <div>
           <label
             htmlFor='username'
-            className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
+            className='mb-2 block text-sm font-medium text-ink'
           >
             {t('auth.signup.username')}
           </label>
@@ -148,7 +148,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             value={username}
             onChange={e => setUsername(e.target.value)}
             onKeyDown={handleKeyDown}
-            className='w-full px-3 py-2 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
+            className='h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-line-strong focus:ring-2 focus:ring-primary-500/35 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
             placeholder={t('auth.signup.usernamePlaceholder')}
             required
             disabled={isLoading}
@@ -158,10 +158,10 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         <div>
           <label
             htmlFor='email'
-            className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
+            className='mb-2 block text-sm font-medium text-ink'
           >
             {t('auth.signup.email')}{' '}
-            <span className='text-gray-400'>({t('common.optional')})</span>
+            <span className='text-ink-muted'>({t('common.optional')})</span>
           </label>
           <input
             id='email'
@@ -169,7 +169,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             value={email}
             onChange={e => setEmail(e.target.value)}
             onKeyDown={handleKeyDown}
-            className='w-full px-3 py-2 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
+            className='h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-line-strong focus:ring-2 focus:ring-primary-500/35 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
             placeholder={t('auth.signup.emailPlaceholder')}
             disabled={isLoading}
           />
@@ -178,7 +178,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         <div>
           <label
             htmlFor='password'
-            className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
+            className='mb-2 block text-sm font-medium text-ink'
           >
             {t('auth.signup.password')}
           </label>
@@ -189,7 +189,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='w-full px-3 py-2 pr-10 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
+              className='h-11 w-full rounded-xl border border-line bg-surface px-3 pe-11 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-line-strong focus:ring-2 focus:ring-primary-500/35 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
               placeholder={t('auth.signup.passwordPlaceholder')}
               required
               disabled={isLoading}
@@ -197,8 +197,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             <button
               type='button'
               onClick={() => setShowPassword(!showPassword)}
-              className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
+              className='absolute inset-y-0 end-0 flex items-center pe-3 text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50'
               disabled={isLoading}
+              aria-label={
+                showPassword ? 'Hide characters' : 'Reveal characters'
+              }
             >
               {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -208,7 +211,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         <div>
           <label
             htmlFor='confirmPassword'
-            className='block text-sm font-medium text-gray-700 dark:text-dark-700 mb-2'
+            className='mb-2 block text-sm font-medium text-ink'
           >
             {t('auth.signup.confirmPassword')}
           </label>
@@ -219,7 +222,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
               value={confirmPassword}
               onChange={e => setConfirmPassword(e.target.value)}
               onKeyDown={handleKeyDown}
-              className='w-full px-3 py-2 pr-10 border border-gray-200 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-accent-500 bg-white dark:bg-dark-200 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 transition-colors duration-200'
+              className='h-11 w-full rounded-xl border border-line bg-surface px-3 pe-11 text-sm text-ink shadow-subtle outline-none transition-[border-color,box-shadow,background-color] placeholder:text-ink-muted focus:border-line-strong focus:ring-2 focus:ring-primary-500/35 disabled:cursor-not-allowed disabled:opacity-50 motion-reduce:transition-none'
               placeholder={t('auth.signup.confirmPasswordPlaceholder')}
               required
               disabled={isLoading}
@@ -227,8 +230,13 @@ export const SignupForm: React.FC<SignupFormProps> = ({
             <button
               type='button'
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
+              className='absolute inset-y-0 end-0 flex items-center pe-3 text-ink-muted transition-colors hover:text-ink disabled:cursor-not-allowed disabled:opacity-50'
               disabled={isLoading}
+              aria-label={
+                showConfirmPassword
+                  ? 'Hide confirmation'
+                  : 'Reveal confirmation'
+              }
             >
               {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
             </button>
@@ -247,16 +255,16 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         <button
           type='submit'
           disabled={submitDisabled}
-          className='w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+          className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
         >
           {isLoading ? (
             <div className='flex items-center'>
-              <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
+              <div className='me-2 h-4 w-4 animate-spin rounded-full border-b-2 border-current'></div>
               {t('auth.signup.creatingAccount')}
             </div>
           ) : (
             <div className='flex items-center'>
-              <UserPlus size={16} className='mr-2' />
+              <UserPlus size={16} className='me-2' />
               {t('auth.signup.createAccount')}
             </div>
           )}
@@ -267,11 +275,11 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       <GitHubAuthButton />
 
       <div className='mt-6 text-center'>
-        <p className='text-sm text-gray-600 dark:text-dark-500'>
+        <p className='text-sm text-ink-muted'>
           {t('auth.signup.hasAccount')}{' '}
           <button
             onClick={onBackToLogin}
-            className='text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium transition-colors duration-200'
+            className='font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300'
           >
             {t('auth.signup.signInHere')}
           </button>

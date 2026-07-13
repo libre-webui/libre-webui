@@ -65,15 +65,15 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
 
   // Multiple messages - render side by side as branches
   return (
-    <div className={cn('relative py-1', className)}>
+    <div className={cn('relative py-2', className)}>
       {/* Branch indicator - minimal */}
-      <div className='flex items-center gap-1.5 px-4 pb-2 text-[10px] text-gray-400 dark:text-gray-500'>
+      <div className='flex items-center gap-1.5 pb-3 text-[10px] font-medium uppercase tracking-[0.12em] text-gray-400 dark:text-dark-500'>
         <GitBranch className='h-3 w-3' />
         <span>{messages.length} variants</span>
       </div>
 
       {/* Branch container */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 px-4'>
+      <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
         {messages.map((message, index) => {
           const isActive = message.isActive !== false;
           const isThisMessageStreaming =
@@ -87,28 +87,37 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
             <div
               key={message.id}
               className={cn(
-                'relative rounded-lg overflow-hidden transition-all duration-200',
-                'border shadow-sm',
+                'relative overflow-hidden rounded-2xl border bg-white/45 transition-colors duration-150 dark:bg-dark-200/35',
                 isActive || isThisMessageStreaming
-                  ? 'border-primary-300 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20'
-                  : 'border-gray-200 dark:border-dark-300 hover:border-gray-300 dark:hover:border-dark-400',
-                !isActive &&
-                  !isThisMessageStreaming &&
-                  'cursor-pointer hover:shadow-md'
+                  ? 'border-primary-500/30 ring-1 ring-primary-500/10 dark:border-primary-400/30'
+                  : 'border-black/[0.07] hover:bg-white/80 dark:border-white/[0.07] dark:hover:bg-dark-200/70',
+                !isActive && !isThisMessageStreaming && 'cursor-pointer'
               )}
+              role={!isActive && !isThisMessageStreaming ? 'button' : undefined}
+              tabIndex={!isActive && !isThisMessageStreaming ? 0 : undefined}
               onClick={() =>
                 !isActive &&
                 !isThisMessageStreaming &&
                 onSelectBranch?.(message.id)
               }
+              onKeyDown={event => {
+                if (
+                  !isActive &&
+                  !isThisMessageStreaming &&
+                  (event.key === 'Enter' || event.key === ' ')
+                ) {
+                  event.preventDefault();
+                  onSelectBranch?.(message.id);
+                }
+              }}
             >
               {/* Branch header */}
               <div
                 className={cn(
-                  'flex items-center justify-between px-2.5 py-1 text-[11px]',
+                  'flex items-center justify-between border-b px-3 py-2 text-[10px] font-medium uppercase tracking-[0.12em]',
                   isActive || isThisMessageStreaming
-                    ? 'bg-primary-50/80 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                    : 'bg-gray-50/80 dark:bg-dark-100/80 text-gray-500 dark:text-gray-500'
+                    ? 'border-primary-500/10 bg-primary-50/50 text-primary-600 dark:border-primary-400/10 dark:bg-primary-900/10 dark:text-primary-400'
+                    : 'border-black/[0.05] text-gray-400 dark:border-white/[0.05] dark:text-dark-500'
                 )}
               >
                 <div className='flex items-center gap-1.5'>
@@ -130,8 +139,7 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
               {/* Message content */}
               <div
                 className={cn(
-                  'bg-white dark:bg-dark-50',
-                  !isActive && !isThisMessageStreaming && 'opacity-80'
+                  !isActive && !isThisMessageStreaming && 'opacity-75'
                 )}
               >
                 <ChatMessage
@@ -144,7 +152,7 @@ export const MessageBranch: React.FC<MessageBranchProps> = ({
                   onRegenerate={
                     isActive && !isStreaming ? onRegenerate : undefined
                   }
-                  className='!bg-transparent !p-3 !text-sm'
+                  className='px-3 pb-3 !text-sm'
                 />
               </div>
             </div>

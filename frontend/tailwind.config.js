@@ -8,6 +8,8 @@ const variableAccent = prefix =>
     ])
   );
 
+const variableColor = name => `rgb(var(--color-${name}) / <alpha-value>)`;
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -21,6 +23,26 @@ export default {
         // Runtime accent scale — defaults to blue and can be changed in Appearance.
         primary: variableAccent('primary'),
         accent: variableAccent('accent'),
+        // Semantic roles. These are the preferred colors for all shared UI and
+        // resolve automatically in light and dark mode.
+        canvas: variableColor('canvas'),
+        surface: {
+          DEFAULT: variableColor('surface'),
+          subtle: variableColor('surface-subtle'),
+          raised: variableColor('surface-raised'),
+          overlay: variableColor('surface-overlay'),
+          inverse: variableColor('surface-inverse'),
+        },
+        ink: {
+          DEFAULT: variableColor('ink'),
+          muted: variableColor('ink-muted'),
+          subtle: variableColor('ink-subtle'),
+          inverse: variableColor('ink-inverse'),
+        },
+        line: {
+          DEFAULT: variableColor('line'),
+          strong: variableColor('line-strong'),
+        },
         // Cool neutrals — DESIGN.md neutral hierarchy.
         gray: {
           25: '#fcfcfd',
@@ -105,8 +127,11 @@ export default {
       fontFamily: {
         sans: [
           'Inter',
+          'ui-sans-serif',
           '-apple-system',
           'BlinkMacSystemFont',
+          'SF Pro Text',
+          'Segoe UI Variable',
           'Segoe UI',
           'Roboto',
           'Oxygen',
@@ -116,6 +141,7 @@ export default {
         ],
         mono: [
           'JetBrains Mono',
+          'ui-monospace',
           'Fira Code',
           'SF Mono',
           'Monaco',
@@ -144,21 +170,23 @@ export default {
         '3xl': '1.5rem',
       },
       boxShadow: {
-        glow: '0 0 20px -12px rgb(var(--color-primary-600) / 0.25)',
-        'glow-lg': '0 0 25px -5px rgb(var(--color-primary-600) / 0.3)',
-        subtle: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-        card: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+        // Legacy glow names remain as restrained compatibility aliases.
+        glow: '0 0 0 1px rgb(var(--color-primary-500) / 0.12), 0 6px 20px -14px rgb(var(--color-primary-500) / 0.18)',
+        'glow-lg':
+          '0 0 0 1px rgb(var(--color-primary-500) / 0.14), 0 12px 32px -20px rgb(var(--color-primary-500) / 0.2)',
+        subtle: '0 1px 2px 0 rgb(0 0 0 / 0.035)',
+        card: '0 1px 2px 0 rgb(0 0 0 / 0.035)',
         'card-hover':
-          '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          '0 8px 24px -18px rgb(0 0 0 / 0.22), 0 1px 2px rgb(0 0 0 / 0.04)',
+        overlay:
+          '0 24px 70px -28px rgb(0 0 0 / 0.28), 0 2px 8px rgb(0 0 0 / 0.06)',
       },
       animation: {
-        'fade-in': 'fadeIn 0.2s ease-out',
-        'slide-in': 'slideIn 0.3s ease-out',
-        'slide-up': 'slideUp 0.2s ease-out',
-        'scale-in': 'scaleIn 0.15s ease-out',
-        'pulse-subtle': 'pulseSubtle 2s infinite',
-        glow: 'glow 2s ease-in-out infinite alternate',
-        'bounce-subtle': 'bounceSubtle 1s ease-in-out infinite',
+        'fade-in': 'fadeIn 0.18s cubic-bezier(0.22, 1, 0.36, 1)',
+        'slide-in': 'slideIn 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
+        'slide-up': 'slideUp 0.18s cubic-bezier(0.22, 1, 0.36, 1)',
+        'scale-in': 'scaleIn 0.16s cubic-bezier(0.22, 1, 0.36, 1)',
+        'pulse-subtle': 'pulseSubtle 2.4s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -166,32 +194,20 @@ export default {
           '100%': { opacity: '1' },
         },
         slideIn: {
-          '0%': { transform: 'translateX(-10px)', opacity: '0' },
+          '0%': { transform: 'translateX(-6px)', opacity: '0' },
           '100%': { transform: 'translateX(0)', opacity: '1' },
         },
         slideUp: {
-          '0%': { transform: 'translateY(10px)', opacity: '0' },
+          '0%': { transform: 'translateY(6px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
         scaleIn: {
-          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '0%': { transform: 'scale(0.985)', opacity: '0' },
           '100%': { transform: 'scale(1)', opacity: '1' },
         },
         pulseSubtle: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.8' },
-        },
-        glow: {
-          '0%': {
-            boxShadow: '0 0 20px -12px rgb(var(--color-primary-600) / 0.25)',
-          },
-          '100%': {
-            boxShadow: '0 0 25px -5px rgb(var(--color-primary-600) / 0.4)',
-          },
-        },
-        bounceSubtle: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-2px)' },
         },
       },
       backdropBlur: {

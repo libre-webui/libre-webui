@@ -27,18 +27,29 @@ export const ThemeToggle: React.FC = () => {
 
   const icon =
     theme.mode === 'light' ? (
-      <Moon className='h-4 w-4 text-primary-600 dark:text-primary-400' />
+      <Moon
+        className='h-4 w-4 text-ink-muted transition-colors duration-150 group-hover:text-ink motion-reduce:transition-none'
+        strokeWidth={1.75}
+        aria-hidden='true'
+      />
     ) : (
-      <Sun className='h-4 w-4 text-primary-400' />
+      <Sun
+        className='h-4 w-4 text-ink-muted transition-colors duration-150 group-hover:text-ink motion-reduce:transition-none'
+        strokeWidth={1.75}
+        aria-hidden='true'
+      />
     );
+
+  const label = `Switch to ${nextTheme} mode`;
 
   return (
     <Button
       variant='ghost'
       size='sm'
       onClick={toggleTheme}
-      className='h-9 w-9 p-0 rounded-xl hover:bg-gray-100 dark:hover:bg-dark-200 transition-all duration-200 hover:scale-105 active:scale-95'
-      title={`Switch to ${nextTheme} mode (⌘D)`}
+      className='h-9 w-9 rounded-full p-0'
+      aria-label={label}
+      title={`${label} (⌘D)`}
     >
       {icon}
     </Button>

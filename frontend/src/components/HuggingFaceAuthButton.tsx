@@ -92,18 +92,18 @@ export const HuggingFaceAuthButton: React.FC = () => {
       type='button'
       onClick={handleHuggingFaceLogin}
       disabled={isLoading}
-      className='w-full flex items-center justify-center px-4 py-2 border border-orange-300 dark:border-orange-600 rounded-lg shadow-sm bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/30 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+      className='flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-medium text-ink shadow-subtle transition-colors hover:border-line-strong hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
     >
       {isLoading ? (
         <div className='flex items-center'>
-          <Loader2 size={16} className='animate-spin mr-2' />
+          <Loader2 size={16} className='me-2 animate-spin' />
           {t('auth.oauth.connectingTo', {
             provider: t('auth.oauth.huggingFace'),
           })}
         </div>
       ) : (
         <div className='flex items-center'>
-          <span className='mr-2 text-base'>🤗</span>
+          <span className='me-2 text-base'>🤗</span>
           {t('auth.oauth.continueWith', {
             provider: t('auth.oauth.huggingFace'),
           })}

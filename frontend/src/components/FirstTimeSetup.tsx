@@ -171,17 +171,17 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
 
   if (step === 'welcome') {
     return (
-      <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
+      <div className='min-h-screen bg-gray-50 px-4 py-16 dark:bg-dark-50 sm:px-6 lg:flex lg:flex-col lg:justify-center lg:py-20'>
         <div className='sm:mx-auto sm:w-full sm:max-w-md'>
           <div className='flex flex-col items-center'>
             <Logo className='text-gray-900 dark:text-gray-100' />
           </div>
         </div>
 
-        <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
-          <div className='w-full max-w-md mx-auto bg-white dark:bg-dark-25 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 p-6 border border-gray-200 dark:border-dark-200'>
-            <div className='text-center mb-6'>
-              <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
+        <div className='mt-10 sm:mx-auto sm:w-full sm:max-w-md'>
+          <div className='mx-auto w-full max-w-md rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] sm:p-8'>
+            <div className='mb-7 text-start'>
+              <h1 className='mb-2 text-2xl font-normal tracking-[-0.03em] text-gray-950 dark:text-dark-950'>
                 {t('setup.welcome.subtitle')}
               </h1>
               <p className='text-gray-600 dark:text-dark-500'>
@@ -190,8 +190,8 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             </div>
 
             {/* Features */}
-            <div className='space-y-4 mb-6'>
-              <div className='flex items-start space-x-3'>
+            <div className='mb-7 divide-y divide-gray-200/70 border-y border-gray-200/70 dark:divide-white/[0.08] dark:border-white/[0.08]'>
+              <div className='flex items-start gap-3 py-4'>
                 <div className='flex-shrink-0 mt-1'>
                   <Shield className='h-5 w-5 text-primary-600 dark:text-primary-400' />
                 </div>
@@ -205,7 +205,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 </div>
               </div>
 
-              <div className='flex items-start space-x-3'>
+              <div className='flex items-start gap-3 py-4'>
                 <div className='flex-shrink-0 mt-1'>
                   <Zap className='h-5 w-5 text-primary-600 dark:text-primary-400' />
                 </div>
@@ -219,7 +219,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 </div>
               </div>
 
-              <div className='flex items-start space-x-3'>
+              <div className='flex items-start gap-3 py-4'>
                 <div className='flex-shrink-0 mt-1'>
                   <Globe className='h-5 w-5 text-primary-600 dark:text-primary-400' />
                 </div>
@@ -236,11 +236,11 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
 
             <button
               onClick={() => setStep('create-admin')}
-              className='w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200'
+              className='flex min-h-11 w-full items-center justify-center rounded-xl border border-transparent bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2'
             >
               <div className='flex items-center'>
                 <span>{t('setup.welcome.createAdmin')}</span>
-                <ArrowRight size={16} className='ml-2' />
+                <ArrowRight size={16} className='ms-2 rtl:rotate-180' />
               </div>
             </button>
           </div>
@@ -251,28 +251,25 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
 
   if (step === 'encryption-key') {
     return (
-      <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
+      <div className='min-h-screen bg-gray-50 px-4 py-16 dark:bg-dark-50 sm:px-6 lg:flex lg:flex-col lg:justify-center lg:py-20'>
         <div className='sm:mx-auto sm:w-full sm:max-w-md'>
           <div className='flex flex-col items-center'>
             <Logo className='text-gray-900 dark:text-gray-100' />
           </div>
-          <h2
-            className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
-            style={{ fontWeight: 300, letterSpacing: 0 }}
-          >
+          <h2 className='mt-8 text-center text-3xl font-light tracking-[-0.035em] text-gray-950 dark:text-dark-950'>
             {t('setup.encryptionKey.title')}
           </h2>
         </div>
 
-        <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-lg'>
-          <div className='w-full max-w-lg mx-auto bg-white dark:bg-dark-25 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 p-6 border border-gray-200 dark:border-dark-200'>
-            <div className='text-center mb-6'>
+        <div className='mt-10 sm:mx-auto sm:w-full sm:max-w-lg'>
+          <div className='mx-auto w-full max-w-lg rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] sm:p-8'>
+            <div className='mb-7 text-start'>
               <div className='flex justify-center mb-4'>
-                <div className='p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full'>
+                <div className='rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/60 dark:bg-amber-900/20'>
                   <Key className='h-8 w-8 text-amber-600 dark:text-amber-400' />
                 </div>
               </div>
-              <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
+              <h1 className='mb-2 text-2xl font-normal tracking-[-0.03em] text-gray-950 dark:text-dark-950'>
                 {t('setup.encryptionKey.subtitle')}
               </h1>
               <p className='text-gray-600 dark:text-dark-500'>
@@ -281,8 +278,8 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             </div>
 
             {/* Warning Box */}
-            <div className='mb-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg'>
-              <div className='flex items-start space-x-3'>
+            <div className='mb-6 rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-800/60 dark:bg-amber-900/15'>
+              <div className='flex items-start gap-3'>
                 <AlertTriangle className='h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5' />
                 <div className='text-sm text-amber-800 dark:text-amber-200'>
                   <p className='font-medium mb-1'>
@@ -299,14 +296,14 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 {t('setup.encryptionKey.label')}
               </label>
               <div className='relative'>
-                <div className='w-full px-3 py-3 pr-12 border border-gray-300 dark:border-dark-300 rounded-lg bg-gray-50 dark:bg-dark-100 font-mono text-sm text-gray-900 dark:text-dark-800 break-all'>
+                <div className='w-full break-all rounded-xl border border-gray-200 bg-gray-50 px-3 py-3 pe-12 font-mono text-sm text-gray-900 dark:border-white/10 dark:bg-white/[0.035] dark:text-dark-800'>
                   {encryptionKey || t('setup.encryptionKey.loading')}
                 </div>
                 <button
                   type='button'
                   onClick={handleCopyKey}
                   disabled={!encryptionKey}
-                  className='absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 dark:text-dark-500 dark:hover:text-dark-700 disabled:opacity-50'
+                  className='absolute end-2 top-1/2 -translate-y-1/2 p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 dark:text-dark-500 dark:hover:text-dark-700'
                   title={t('setup.encryptionKey.copyToClipboard')}
                 >
                   {keyCopied ? (
@@ -323,7 +320,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
 
             {/* Acknowledgment Checkbox */}
             <div className='mb-6'>
-              <label className='flex items-start space-x-3 cursor-pointer'>
+              <label className='flex cursor-pointer items-start gap-3'>
                 <input
                   type='checkbox'
                   checked={keyAcknowledged}
@@ -339,11 +336,11 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             <button
               onClick={handleComplete}
               disabled={!keyAcknowledged}
-              className='w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+              className='flex min-h-11 w-full items-center justify-center rounded-xl border border-transparent bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
             >
               <div className='flex items-center'>
                 <span>{t('setup.encryptionKey.continue')}</span>
-                <ArrowRight size={16} className='ml-2' />
+                <ArrowRight size={16} className='ms-2 rtl:rotate-180' />
               </div>
             </button>
           </div>
@@ -353,23 +350,20 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
   }
 
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-dark-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8'>
+    <div className='min-h-screen bg-gray-50 px-4 py-16 dark:bg-dark-50 sm:px-6 lg:flex lg:flex-col lg:justify-center lg:py-20'>
       <div className='sm:mx-auto sm:w-full sm:max-w-md'>
         <div className='flex flex-col items-center'>
           <Logo className='text-gray-900 dark:text-gray-100' />
         </div>
-        <h2
-          className='libre-brand mt-6 text-center text-2xl sm:text-3xl font-normal text-gray-900 dark:text-gray-100'
-          style={{ fontWeight: 300, letterSpacing: 0 }}
-        >
+        <h2 className='mt-8 text-center text-3xl font-light tracking-[-0.035em] text-gray-950 dark:text-dark-950'>
           {t('setup.admin.title')}
         </h2>
       </div>
 
-      <div className='mt-8 sm:mx-auto sm:w-full sm:max-w-md'>
-        <div className='w-full max-w-md mx-auto bg-white dark:bg-dark-25 rounded-xl shadow-card hover:shadow-card-hover transition-shadow duration-200 p-6 border border-gray-200 dark:border-dark-200'>
-          <div className='text-center mb-6'>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-950 mb-2'>
+      <div className='mt-10 sm:mx-auto sm:w-full sm:max-w-md'>
+        <div className='mx-auto w-full max-w-md rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] sm:p-8'>
+          <div className='mb-7 text-start'>
+            <h1 className='mb-2 text-2xl font-normal tracking-[-0.03em] text-gray-950 dark:text-dark-950'>
               {t('setup.admin.subtitle')}
             </h1>
             <p className='text-gray-600 dark:text-dark-500'>
@@ -391,7 +385,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 value={username}
                 onChange={e => setUsername(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
+                className='w-full rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 text-gray-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-800'
                 placeholder={t('setup.admin.usernamePlaceholder')}
                 required
                 disabled={isLoading}
@@ -412,7 +406,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className='w-full px-3 py-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
+                  className='w-full rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 pe-10 text-gray-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-800'
                   placeholder={t('setup.admin.passwordPlaceholder')}
                   required
                   disabled={isLoading}
@@ -420,7 +414,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 <button
                   type='button'
                   onClick={() => setShowPassword(!showPassword)}
-                  className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
+                  className='absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
                   disabled={isLoading}
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -442,7 +436,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className='w-full px-3 py-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 transition-colors duration-200'
+                  className='w-full rounded-xl border border-gray-200 bg-white/80 px-3 py-2.5 pe-10 text-gray-900 transition-colors duration-200 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-800'
                   placeholder={t('setup.admin.confirmPlaceholder')}
                   required
                   disabled={isLoading}
@@ -450,7 +444,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
                 <button
                   type='button'
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className='absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
+                  className='absolute inset-y-0 end-0 flex items-center pe-3 text-gray-400 hover:text-gray-600 dark:text-dark-500 dark:hover:text-dark-700'
                   disabled={isLoading}
                 >
                   {showConfirmPassword ? (
@@ -471,28 +465,28 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
               />
             )}
 
-            <div className='flex space-x-3'>
+            <div className='flex gap-3'>
               <button
                 type='button'
                 onClick={() => setStep('welcome')}
                 disabled={isLoading}
-                className='flex-1 px-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-dark-700 bg-white dark:bg-dark-100 hover:bg-gray-50 dark:hover:bg-dark-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+                className='min-h-11 flex-1 rounded-xl border border-gray-200 bg-transparent px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-200 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-dark-700 dark:hover:bg-white/[0.06]'
               >
                 {t('common.back')}
               </button>
               <button
                 type='submit'
                 disabled={createAdminDisabled}
-                className='flex-1 flex items-center justify-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+                className='flex min-h-11 flex-1 items-center justify-center rounded-xl border border-transparent bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
               >
                 {isLoading ? (
                   <div className='flex items-center'>
-                    <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2'></div>
+                    <div className='me-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white'></div>
                     {t('setup.admin.creating')}
                   </div>
                 ) : (
                   <div className='flex items-center'>
-                    <UserPlus size={16} className='mr-2' />
+                    <UserPlus size={16} className='me-2' />
                     {t('setup.admin.createAdmin')}
                   </div>
                 )}

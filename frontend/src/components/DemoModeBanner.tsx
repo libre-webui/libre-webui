@@ -45,22 +45,22 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
   return (
     <div
       className={cn(
-        'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20',
-        'border-b border-amber-200 dark:border-amber-800',
-        'px-4 py-3',
+        'bg-gray-950 text-white dark:bg-white dark:text-gray-950',
+        'border-b border-black/10 dark:border-white/10',
+        'px-4 py-2',
         className
       )}
     >
-      <div className='flex items-center justify-between max-w-7xl mx-auto'>
-        <div className='flex items-center gap-3'>
+      <div className='flex items-center justify-between max-w-6xl mx-auto gap-3'>
+        <div className='flex items-center gap-2.5 min-w-0'>
           <div className='flex-shrink-0'>
-            <Info className='h-5 w-5 text-amber-600 dark:text-amber-400' />
+            <Info className='h-4 w-4 text-white/65 dark:text-gray-950/60' />
           </div>
-          <div className='flex-1 min-w-0'>
-            <p className='text-sm font-medium text-amber-800 dark:text-amber-200'>
+          <div className='flex min-w-0 items-baseline gap-2'>
+            <p className='shrink-0 text-xs font-semibold tracking-wide'>
               {t('demoMode.title')}
             </p>
-            <p className='text-xs text-amber-700 dark:text-amber-300 mt-0.5'>
+            <p className='hidden truncate text-xs text-white/60 dark:text-gray-950/60 sm:block'>
               {message}
             </p>
           </div>
@@ -71,7 +71,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
           <Button
             variant='ghost'
             size='sm'
-            className='text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 h-8 px-2'
+            className='h-8 px-2 text-white/70 hover:bg-white/10 hover:text-white dark:text-gray-950/70 dark:hover:bg-black/[0.06] dark:hover:text-gray-950'
             onClick={() =>
               window.open(
                 'https://github.com/libre-webui/libre-webui',
@@ -91,7 +91,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({
             variant='ghost'
             size='sm'
             onClick={handleDismiss}
-            className='text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 h-8 w-8 p-0'
+            className='h-8 w-8 p-0 text-white/70 hover:bg-white/10 hover:text-white dark:text-gray-950/70 dark:hover:bg-black/[0.06] dark:hover:text-gray-950'
             title='Dismiss'
           >
             <X className='h-4 w-4' />

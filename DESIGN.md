@@ -2,13 +2,13 @@
 name: Libre WebUI
 version: '1.0.0'
 colors:
-  primary: '#FFFFFF'
-  secondary: '#9CA3AF'
+  primary: '#F4F4F0'
+  secondary: '#A6A69C'
   tertiary: '#2563EB'
-  neutral: '#0A0A0A'
-  neutral-secondary: '#111113'
-  neutral-tertiary: '#27272A'
-  neutral-surface: '#202023'
+  neutral: '#0D0D0C'
+  neutral-secondary: '#121211'
+  neutral-tertiary: '#1B1B1A'
+  neutral-surface: '#171716'
   accent: '#60A5FA'
   success: '#34D399'
   warning: '#FBBF24'
@@ -30,33 +30,33 @@ accent-presets:
     minimumButtonContrast: 4.5
 typography:
   h1:
-    fontFamily: Inter, system-ui, -apple-system, sans-serif
+    fontFamily: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif
     fontSize: 1.875rem
     fontWeight: 700
   h2:
-    fontFamily: Inter, system-ui, -apple-system, sans-serif
+    fontFamily: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif
     fontSize: 1.5rem
     fontWeight: 600
   h3:
-    fontFamily: Inter, system-ui, -apple-system, sans-serif
+    fontFamily: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif
     fontSize: 1.25rem
     fontWeight: 600
   body-md:
-    fontFamily: Inter, system-ui, -apple-system, sans-serif
+    fontFamily: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif
     fontSize: 0.9375rem
     fontWeight: 400
     lineHeight: 1.625
   body-sm:
-    fontFamily: Inter, system-ui, -apple-system, sans-serif
+    fontFamily: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif
     fontSize: 0.8125rem
     fontWeight: 400
   label:
-    fontFamily: Inter, system-ui, -apple-system, sans-serif
+    fontFamily: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif
     fontSize: 0.75rem
     fontWeight: 500
-    letterSpacing: 0.05em
+    letterSpacing: -0.005em
   code:
-    fontFamily: JetBrains Mono, Fira Code, monospace
+    fontFamily: JetBrains Mono, ui-monospace, SFMono-Regular, monospace
     fontSize: 0.875rem
     fontWeight: 400
 rounded:
@@ -93,8 +93,8 @@ components:
     textColor: '{colors.primary}'
     rounded: '{rounded.xl}'
   button-primary:
-    backgroundColor: '{colors.tertiary}'
-    textColor: '{colors.primary}'
+    backgroundColor: '{colors.primary}'
+    textColor: '{colors.neutral}'
     rounded: '{rounded.md}'
   button-ghost:
     backgroundColor: '{colors.neutral-tertiary}'
@@ -138,33 +138,33 @@ components:
     rounded: '{rounded.full}'
 light:
   colors:
-    primary: '#111827'
-    secondary: '#6B7280'
+    primary: '#181816'
+    secondary: '#62625B'
     tertiary: '#2563EB'
-    neutral: '#F8FAFC'
-    neutral-secondary: '#FFFFFF'
-    neutral-tertiary: '#F1F5F9'
-    neutral-surface: '#E2E8F0'
+    neutral: '#F7F7F5'
+    neutral-secondary: '#FCFCFA'
+    neutral-tertiary: '#F1F1EE'
+    neutral-surface: '#FFFFFF'
 ---
 
 ## Overview
 
-Libre WebUI is a privacy-first AI chat interface. The design language draws from the established conventions of modern AI chat UIs — the sidebar-plus-chat layout — while introducing a clear blue default accent that matches the product UI. The overall feeling is focused, professional, and unobtrusive: a tool that stays out of the way and lets the conversation be the product.
+Libre WebUI is a privacy-first AI creation interface. Its design language is quiet futurism: precise typography, warm monochrome canvases, carefully layered surfaces, hairline separators, and motion that clarifies state. The interface should feel considered and unusually calm, leaving the conversation and the work as the most expressive material on screen.
 
-Dark mode is the default and primary experience. Light mode exists for accessibility and preference, not as an afterthought but not as the hero either.
+Light and dark modes are equal first-class experiences. Light mode uses a warm off-white canvas rather than clinical gray; dark mode uses near-black rather than blue-black. Both preserve the same hierarchy and spacing.
 
 ## Colors
 
-The palette is anchored in cool neutrals with one active accent family at a time. Blue is the default, but users can choose another preset or a custom accent in Appearance.
+The palette is anchored in warm neutrals with one active accent family at a time. Blue is the default runtime accent, but users can choose another preset or a custom accent in Appearance.
 
-- **Primary (#FFFFFF in dark, #111827 in light):** Core text color. High contrast against the background in both modes. All body text, headings, and primary UI labels use this.
-- **Secondary (#9CA3AF):** Muted text for metadata, timestamps, sidebar labels, placeholder text, and secondary information. Never used for primary content — this is the "quiet" voice of the interface.
-- **Tertiary (#2563EB default):** The active accent color. Used exclusively for interactive elements that demand attention: primary buttons, active toggles, the send button, selected nav items. Restrained usage is critical — if tertiary appears on more than 5% of the visible surface, something is wrong.
+- **Primary (#F4F4F0 in dark, #181816 in light):** Core text and neutral action color. High contrast against the background in both modes. All body text, headings, and primary UI labels use this.
+- **Secondary (#A6A69C in dark, #62625B in light):** Muted text for metadata, timestamps, sidebar labels, placeholder text, and secondary information. Never used for primary content — this is the "quiet" voice of the interface.
+- **Tertiary (#2563EB default):** The active accent color. Reserved for focus, selection, progress, and status. General primary actions are neutral: dark ink on light canvases and light ink on dark canvases. Restrained usage is critical — if tertiary appears on more than 5% of the visible surface, something is wrong.
 - **Accent (#60A5FA default):** Hover state for tertiary elements and secondary highlights. It is derived from the active accent family so interaction feedback remains consistent when users customize color.
-- **Neutral (#0A0A0A):** Sidebar and deepest background layer. Near-black, warm-neutral with no blue cast, used only where the interface needs a strong anchor.
-- **Neutral-secondary (#111113):** Main dark app background. Lifted slightly above pure black to reduce eye strain while preserving the dark identity.
-- **Neutral-tertiary (#27272A):** Cards, input fields, user message bubbles, and elevated surfaces. The lightest of the main dark surface tiers.
-- **Neutral-surface (#202023):** A subtly distinct dark for panels that need to separate from the chat area without a hard border. Used for settings panels, popovers, and contextual overlays.
+- **Neutral (#0D0D0C):** Deepest background layer. Near-black, warm-neutral with no blue cast, used where the interface needs a strong anchor.
+- **Neutral-secondary (#121211):** Main dark app background, lifted slightly above pure black to reduce eye strain.
+- **Neutral-tertiary (#1B1B1A):** Inputs, user message bubbles, and raised surfaces.
+- **Neutral-surface (#171716):** A subtly distinct dark for panels that need separation without a hard border.
 - **Success (#34D399):** Confirmation states, connection indicators, successful operations. Green but not neon — it should feel calm, not celebratory.
 - **Warning (#FBBF24):** Rate limits, approaching quotas, non-critical alerts. Amber, not orange.
 - **Error (#F87171):** Failed requests, validation errors, disconnection states. Red but not aggressive — this is a tool, not an alarm.
@@ -180,13 +180,13 @@ Preset accents are violet, blue, cyan, teal, emerald, amber, rose, and slate. Cu
 
 ## Typography
 
-Inter is the primary typeface — geometric, highly legible at small sizes, excellent language coverage for a multilingual AI interface. Falls back through system-ui to ensure zero-delay rendering.
+Inter is the preferred typeface when available locally, followed by the native system UI stack. Fonts are not fetched from third-party CDNs: this prevents layout shifts, supports offline desktop use, and respects the product's privacy posture. Native CJK and Arabic system faces remain in the fallback chain.
 
 JetBrains Mono is reserved exclusively for code: inline code spans, code blocks, terminal output, and technical identifiers like model names when displayed in monospace context. Never mix it into prose.
 
 Body text at 0.9375rem (15px) balances density with readability for long-form AI responses. Line height at 1.625 provides breathing room for paragraphs that can run long without fatiguing the eye.
 
-Headings use weight 600-700 and are always primary color — never secondary, never accent. Headings orient; they do not decorate.
+Headings use weight 300-700, with lighter weights reserved for large editorial titles and stronger weights for compact interface labels. They are always primary color — never secondary, never accent. Headings orient; they do not decorate.
 
 ## Layout
 
@@ -202,7 +202,7 @@ Rounded corners are generous but not circular. Buttons and cards use 12px. Messa
 
 ### Sidebar
 
-The sidebar is the navigation anchor — darker than the chat area to recede visually. Conversation list items use secondary text by default, primary text on hover, and a subtle neutral-tertiary background highlight on the active conversation. The model selector sits at the top. Width is fixed at 260px on desktop, collapsible on mobile.
+The sidebar is the navigation anchor — darker than the chat area to recede visually. Conversation list items use secondary text by default, primary text on hover, and a subtle neutral-tertiary background highlight on the active conversation. Width is fixed at 288px when expanded and 72px in the compact rail, with the rail remaining available on mobile.
 
 ### Chat Area
 
@@ -210,7 +210,7 @@ Centered with a width of 48rem. User messages get a subtle neutral-tertiary back
 
 ### Input Bar
 
-The message input is the most important interactive element. It uses neutral-tertiary fill with rounded-xl corners, creating a pill-like shape. The send button uses the active accent and sits inside the input container, aligned right. Placeholder text uses the secondary color.
+The message input is the most important interactive element. It uses neutral-tertiary fill with rounded-xl corners, creating a pill-like shape. The send button uses the neutral inverse treatment and sits inside the input container, aligned right. The active accent is reserved for focus and selection states. Placeholder text uses the secondary color.
 
 ### Code Blocks
 
@@ -218,7 +218,7 @@ Use GitHub's dark palette (#0D1117 background) regardless of the app's light/dar
 
 ### Buttons
 
-Primary buttons use the active accent with white text — used for actions that move the user forward (send, confirm, save). Ghost buttons sit on a neutral-tertiary fill with primary text — used for everything else (settings toggles, sidebar actions, context menus).
+Primary buttons use the neutral inverse treatment — dark ink in light mode, light ink in dark mode. The active accent appears in their focus treatment, not their resting fill. Secondary buttons use a raised surface and hairline border; ghost buttons reveal a quiet surface only on interaction.
 
 ### Links
 
@@ -242,10 +242,10 @@ All text meets WCAG AA contrast requirements at minimum. Primary text on neutral
 
 ## Motion
 
-Transitions are 150ms ease-out for interactive states (hover, focus, active). Sidebar collapse/expand is 200ms. No decorative animation. No loading spinners that spin indefinitely — use skeleton screens or progress indicators with determinate progress when possible.
+Transitions are 140–180ms with an ease-out curve for interactive states. Sidebar collapse/expand is 200ms. Motion changes opacity, color, or a few pixels of position; it does not bounce, glow, or continuously decorate. Every transition and animation must collapse under `prefers-reduced-motion`.
 
 ## Brand Identity
 
-Libre WebUI's identity is the absence of excess. No gradients. No illustrations. No mascot. Blue is the default brand accent, and custom accents are a personalization layer over the same restrained system. The word "Libre" means free, and the design should feel free: uncluttered, unburdened, focused entirely on the conversation between human and machine.
+Libre WebUI's identity is the absence of excess. No ornamental gradients, neon glow, or mascot. Expressiveness comes from user-created work, not interface chrome. Custom accents personalize focus and selection without changing the restrained neutral system. The word "Libre" means free, and the design should feel uncluttered, unburdened, and focused entirely on creation.
 
 The Kroonen AI wordmark may appear in the sidebar footer or settings page. It uses primary text color at body-sm size. It does not compete with the interface.

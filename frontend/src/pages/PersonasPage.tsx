@@ -18,29 +18,19 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { PersonaManager } from '@/components/PersonaManager';
+import { PageHeader, PageShell } from '@/components/ui';
 
 export const PersonasPage: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className='h-full overflow-auto'>
-      <div className='max-w-6xl mx-auto p-6'>
-        {/* Header - matching ChatPage welcome screen style */}
-        <div className='text-center max-w-md mx-auto mb-8'>
-          <h2
-            className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 mb-3'
-            style={{ fontWeight: 300, letterSpacing: 0 }}
-          >
-            {t('personaManager.title')}
-          </h2>
-          <p className='text-gray-600 dark:text-dark-600 leading-relaxed'>
-            {t('personaManager.subtitle')}
-          </p>
-        </div>
-
-        <PersonaManager />
-      </div>
-    </div>
+    <PageShell>
+      <PageHeader
+        title={t('personaManager.title')}
+        description={t('personaManager.subtitle')}
+      />
+      <PersonaManager />
+    </PageShell>
   );
 };
 

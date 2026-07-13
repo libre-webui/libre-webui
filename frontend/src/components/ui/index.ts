@@ -29,3 +29,4 @@ export {
   CardTitle,
 } from './Card';
 export { Switch } from './Switch';
+export { PageHeader, PageShell } from './PageShell';

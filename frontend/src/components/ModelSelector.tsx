@@ -29,6 +29,7 @@ import {
   Search,
   Sparkles,
   User,
+  X,
   Zap,
 } from 'lucide-react';
 import { cn } from '@/utils';
@@ -109,14 +110,14 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     {
       type: 'personas' as const,
       label: t('modelSelector.personas'),
-      icon: <User className='h-4 w-4 text-purple-600 dark:text-purple-400' />,
+      icon: <User className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
       models: models.filter(model => model.isPersona),
       color: 'purple',
     },
     {
       type: 'ollama' as const,
       label: t('modelSelector.ollamaModels'),
-      icon: <Bot className='h-4 w-4 text-green-600 dark:text-green-400' />,
+      icon: <Bot className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
       models: models.filter(
         model =>
           !model.isPersona && !model.isPlugin && !model.name.includes('embed')
@@ -126,7 +127,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     {
       type: 'plugins' as const,
       label: t('modelSelector.pluginModels'),
-      icon: <Zap className='h-4 w-4 text-green-600 dark:text-green-400' />,
+      icon: <Zap className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
       models: models.filter(model => model.isPlugin),
       color: 'green',
     },
@@ -292,19 +293,18 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   }, [searchTerm, activeTab]);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+    if (!isOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
         setIsOpen(false);
         setSearchTerm('');
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
@@ -394,12 +394,12 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
   const getModelIcon = (model: OllamaModel) => {
     if (model.isPersona) {
-      return <User className='h-4 w-4 text-purple-600 dark:text-purple-400' />;
+      return <User className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
     }
     if (model.isPlugin) {
-      return <Zap className='h-4 w-4 text-green-600 dark:text-green-400' />;
+      return <Zap className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
     }
-    return <Bot className='h-4 w-4 text-green-600 dark:text-green-400' />;
+    return <Bot className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
   };
 
   const getModelLabel = (model: OllamaModel) => {
@@ -465,9 +465,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         </div>
         {currentModel.isPersona && currentPersona && (
           <div className='flex items-center gap-1 ml-auto'>
-            <Brain className='h-3 w-3 text-purple-600 dark:text-purple-400' />
+            <Brain className='h-3 w-3 text-gray-500 dark:text-dark-600' />
             {currentPersona.embedding_model && (
-              <Sparkles className='h-3 w-3 text-purple-500 dark:text-purple-300' />
+              <Sparkles className='h-3 w-3 text-gray-400 dark:text-dark-500' />
             )}
           </div>
         )}
@@ -486,13 +486,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         type='button'
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
+        aria-haspopup='dialog'
+        aria-expanded={isOpen}
         className={cn(
           compact
-            ? 'h-[44px] sm:h-[52px] px-3 flex items-center justify-between text-left w-full '
-            : 'w-full flex items-center justify-between gap-2 px-3 py-2 text-left ',
-          'bg-gray-50 dark:bg-dark-200 border border-gray-200 dark:border-dark-300',
-          'rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-dark-100',
-          'focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500',
+            ? 'h-9 sm:h-10 px-2.5 flex items-center justify-between text-left w-full'
+            : 'w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left',
+          'border border-black/[0.06] bg-gray-100/70 dark:border-white/[0.06] dark:bg-dark-300/70',
+          'rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-dark-300',
+          'transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/40',
           disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
         )}
         title={
@@ -507,7 +509,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         <ChevronDown
           className={cn(
             compact ? 'h-3 w-3' : 'h-4 w-4',
-            'text-gray-400 flex-shrink-0',
+            'text-gray-400 flex-shrink-0 transition-transform duration-150',
             isOpen && 'rotate-180'
           )}
         />
@@ -515,23 +517,45 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
       {isOpen &&
         createPortal(
-          <div className='fixed inset-0 z-[999999] flex items-start sm:items-center justify-center p-2 sm:p-4'>
+          <div className='fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-6'>
             <div
-              className='absolute inset-0 bg-black/50 backdrop-blur-sm'
-              onClick={() => setIsOpen(false)}
+              className='absolute inset-0 bg-gray-950/55 backdrop-blur-md'
+              onClick={() => {
+                setIsOpen(false);
+                setSearchTerm('');
+              }}
             />
 
             <div
+              role='dialog'
+              aria-modal='true'
+              aria-label={t('modelSelector.selectModel')}
               className={cn(
-                'relative bg-white dark:bg-dark-100 border border-gray-200 dark:border-dark-300 shadow-2xl',
-                'w-full max-w-md sm:w-[480px] sm:max-w-[90vw]',
-                'mt-2 sm:mt-0 rounded-xl',
-                'h-[85vh] sm:h-[600px] flex flex-col'
+                'relative flex w-full max-w-xl flex-col overflow-hidden bg-white/[0.98] dark:bg-dark-25/[0.98]',
+                'h-[min(620px,88vh)] rounded-[1.5rem] border border-black/[0.08] dark:border-white/[0.09]',
+                'shadow-[0_30px_100px_rgba(0,0,0,0.28)] backdrop-blur-xl animate-scale-in'
               )}
               onClick={e => e.stopPropagation()}
             >
               <div className='flex-shrink-0'>
-                <div className='p-3 border-b border-gray-200 dark:border-dark-200'>
+                <div className='flex items-center justify-between px-4 pb-2 pt-4 sm:px-5 sm:pt-5'>
+                  <h2 className='text-lg font-medium tracking-[-0.025em] text-gray-950 dark:text-dark-950'>
+                    {t('modelSelector.selectModel')}
+                  </h2>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      setIsOpen(false);
+                      setSearchTerm('');
+                    }}
+                    className='flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-950 dark:text-dark-500 dark:hover:bg-dark-200 dark:hover:text-dark-950'
+                    title={t('common.close')}
+                  >
+                    <X className='h-4 w-4' />
+                  </button>
+                </div>
+
+                <div className='px-4 pb-3 sm:px-5'>
                   <div className='relative'>
                     <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
                     <input
@@ -547,61 +571,56 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                       className={cn(
-                        'w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 dark:bg-dark-200',
-                        'border border-gray-200 dark:border-dark-300 rounded-lg',
+                        'w-full rounded-xl border border-black/[0.07] bg-gray-100/70 py-2.5 pl-10 pr-4 text-sm dark:border-white/[0.07] dark:bg-dark-200/70',
                         'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
-                        'text-gray-900 dark:text-gray-100',
-                        'placeholder-gray-500'
+                        'text-gray-900 dark:text-dark-900 placeholder:text-gray-400 dark:placeholder:text-dark-500'
                       )}
                     />
                   </div>
                 </div>
 
-                <div className='flex border-b border-gray-200 dark:border-dark-300'>
+                <div className='mx-4 mb-3 flex rounded-xl bg-gray-100/70 p-1 dark:bg-dark-200/70 sm:mx-5'>
                   <button
-                    onMouseDown={e => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       setActiveTab('installed');
                     }}
                     className={cn(
-                      'flex-1 px-4 py-2.5 text-sm font-medium transition-colors',
+                      'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
                       activeTab === 'installed'
-                        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                        : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
                     )}
+                    aria-pressed={activeTab === 'installed'}
                   >
                     <HardDrive className='h-4 w-4 inline mr-1.5' />
                     {t('modelSelector.installed')}
                   </button>
                   <button
-                    onMouseDown={e => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       setActiveTab('ollama');
                     }}
                     className={cn(
-                      'flex-1 px-4 py-2.5 text-sm font-medium transition-colors',
+                      'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
                       activeTab === 'ollama'
-                        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                        : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
                     )}
+                    aria-pressed={activeTab === 'ollama'}
                   >
                     <Cloud className='h-4 w-4 inline mr-1.5' />
                     Ollama
                   </button>
                   <button
-                    onMouseDown={e => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       setActiveTab('huggingface');
                     }}
                     className={cn(
-                      'flex-1 px-4 py-2.5 text-sm font-medium transition-colors',
+                      'flex-1 rounded-lg px-2 py-2 text-xs font-medium transition-colors sm:px-4',
                       activeTab === 'huggingface'
-                        ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-500'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                        ? 'bg-white text-gray-950 shadow-sm dark:bg-dark-300 dark:text-dark-950'
+                        : 'text-gray-500 hover:text-gray-800 dark:text-dark-500 dark:hover:text-dark-800'
                     )}
+                    aria-pressed={activeTab === 'huggingface'}
                   >
                     <Zap className='h-4 w-4 inline mr-1.5' />
                     HuggingFace

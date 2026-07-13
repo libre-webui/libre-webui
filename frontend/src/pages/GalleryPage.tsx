@@ -20,8 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import ImageGallery from '@/components/ImageGallery';
 import { ImageGenerationPanel } from '@/components/ImageGenerationPanel';
-import { Button } from '@/components/ui';
-import { cn } from '@/utils';
+import { Button, PageHeader, PageShell } from '@/components/ui';
 
 export const GalleryPage: React.FC = () => {
   const { t } = useTranslation();
@@ -35,53 +34,33 @@ export const GalleryPage: React.FC = () => {
   }, []);
 
   return (
-    <div className='h-full overflow-auto'>
-      <div className='max-w-7xl mx-auto p-6'>
-        {/* Header */}
-        <div className='text-center max-w-md mx-auto mb-8'>
-          <h2
-            className='libre-brand text-4xl sm:text-5xl font-normal text-gray-900 dark:text-dark-800 mb-3'
-            style={{ fontWeight: 300, letterSpacing: 0 }}
-          >
-            {t('sidebar.navigation.imagine')}
-          </h2>
-          <p className='text-gray-600 dark:text-dark-600 leading-relaxed'>
-            {t('gallery.subtitle')}
-            {imageCount !== null && imageCount > 0 && (
-              <span className='text-gray-400 dark:text-gray-500'>
-                {' '}
-                · {t('gallery.imageCount', { count: imageCount })}
-              </span>
-            )}
-          </p>
-
-          {/* Generate Button */}
-          <Button
-            onClick={() => setShowImageGen(true)}
-            className={cn(
-              'mt-4 px-6 py-2.5 rounded-xl font-medium',
-              'bg-primary-600 dark:bg-primary-600',
-              'hover:bg-primary-700 dark:hover:bg-primary-500',
-              'text-white',
-              'transition-colors'
-            )}
-          >
-            <Plus className='h-4 w-4 mr-2' />
+    <PageShell width='wide'>
+      <PageHeader
+        title={t('sidebar.navigation.imagine')}
+        description={t('gallery.subtitle')}
+        meta={
+          imageCount !== null && imageCount > 0 ? (
+            <span className='inline-flex rounded-full border border-gray-200/80 bg-white/60 px-2.5 py-1 text-xs text-gray-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-500'>
+              {t('gallery.imageCount', { count: imageCount })}
+            </span>
+          ) : null
+        }
+        actions={
+          <Button onClick={() => setShowImageGen(true)} className='gap-2 px-5'>
+            <Plus className='h-4 w-4' aria-hidden='true' />
             {t('gallery.generate')}
           </Button>
-        </div>
+        }
+      />
 
-        {/* Gallery */}
-        <ImageGallery key={refreshKey} onImageCountChange={setImageCount} />
-      </div>
+      <ImageGallery key={refreshKey} onImageCountChange={setImageCount} />
 
-      {/* Image Generation Panel */}
       <ImageGenerationPanel
         isOpen={showImageGen}
         onClose={() => setShowImageGen(false)}
         onImageGenerated={handleImageGenerated}
       />
-    </div>
+    </PageShell>
   );
 };
 

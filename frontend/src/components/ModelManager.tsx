@@ -641,13 +641,13 @@ export const ModelManager: React.FC = () => {
       {/* System Status Bar */}
       <div
         className={cn(
-          'rounded-xl p-4 border',
-          'bg-white dark:bg-dark-100',
-          'border-gray-200 dark:border-dark-300'
+          'rounded-2xl border px-4 py-3',
+          'bg-white/60 dark:bg-white/[0.03]',
+          'border-gray-200/80 dark:border-white/10'
         )}
       >
         <div className='flex flex-wrap items-center justify-between gap-4'>
-          <div className='flex items-center gap-6'>
+          <div className='flex flex-wrap items-center gap-x-6 gap-y-2'>
             {/* Health Status */}
             <div className='flex items-center gap-2'>
               <div
@@ -778,28 +778,21 @@ export const ModelManager: React.FC = () => {
       {Array.isArray(runningModels) && runningModels.length > 0 && (
         <div
           className={cn(
-            'rounded-xl p-4 border',
-            'bg-white dark:bg-dark-100',
-            'border-gray-200 dark:border-dark-300'
+            'rounded-2xl border p-4',
+            'bg-white/60 dark:bg-white/[0.03]',
+            'border-gray-200/80 dark:border-white/10'
           )}
         >
           <div className='flex items-center gap-3 mb-4'>
-            <div
-              className={cn(
-                'p-2 rounded-lg',
-                'bg-green-100 dark:bg-green-900/30'
-              )}
-            >
-              <Activity className='h-5 w-5 text-green-600 dark:text-green-400' />
-            </div>
+            <Activity className='h-4 w-4 text-gray-500 dark:text-dark-500' />
             <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
               {t('modelManager.sections.running')}
             </h3>
             <span
               className={cn(
-                'ml-auto px-2 py-0.5 rounded-full text-xs font-medium',
-                'bg-green-100 dark:bg-green-900/30',
-                'text-green-700 dark:text-green-400'
+                'ms-auto rounded-full px-2 py-0.5 text-xs font-medium',
+                'border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/[0.04]',
+                'text-gray-600 dark:text-dark-600'
               )}
             >
               {runningModels.length} {t('modelManager.systemStatus.running')}
@@ -811,8 +804,8 @@ export const ModelManager: React.FC = () => {
                 key={model.name}
                 className={cn(
                   'flex items-center justify-between p-4 rounded-lg border',
-                  'bg-green-50 dark:bg-green-900/10',
-                  'border-green-200 dark:border-green-800/50'
+                  'bg-white/50 dark:bg-white/[0.025]',
+                  'border-gray-200/80 dark:border-white/[0.08]'
                 )}
               >
                 <div className='flex items-center gap-3'>
@@ -823,10 +816,10 @@ export const ModelManager: React.FC = () => {
                     )}
                   />
                   <div>
-                    <div className='font-medium text-green-800 dark:text-green-400'>
+                    <div className='font-medium text-gray-900 dark:text-dark-800'>
                       {model.name}
                     </div>
-                    <div className='flex items-center gap-3 text-sm text-green-600 dark:text-green-500'>
+                    <div className='flex items-center gap-3 text-sm text-gray-500 dark:text-dark-500'>
                       <span className='flex items-center gap-1'>
                         <MemoryStick className='h-3 w-3' />
                         {t('modelManager.systemStatus.vram')}:{' '}
@@ -844,8 +837,8 @@ export const ModelManager: React.FC = () => {
                 <div
                   className={cn(
                     'flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium',
-                    'bg-green-100 dark:bg-green-900/30',
-                    'text-green-700 dark:text-green-400'
+                    'border border-gray-200 bg-gray-50 dark:border-white/10 dark:bg-white/[0.04]',
+                    'text-gray-600 dark:text-dark-600'
                   )}
                 >
                   <Zap className='h-3 w-3' />
@@ -874,13 +867,14 @@ export const ModelManager: React.FC = () => {
       {/* Advanced Actions Section */}
       <div
         className={cn(
-          'rounded-xl border overflow-hidden',
-          'bg-white dark:bg-dark-100',
-          'border-gray-200 dark:border-dark-300'
+          'overflow-hidden rounded-2xl border',
+          'bg-white/60 dark:bg-white/[0.03]',
+          'border-gray-200/80 dark:border-white/10'
         )}
       >
         <button
           onClick={() => toggleSection('advanced')}
+          aria-expanded={expandedSections.has('advanced')}
           className={cn(
             'w-full flex items-center justify-between p-4',
             'hover:bg-gray-50 dark:hover:bg-dark-50',
@@ -888,14 +882,7 @@ export const ModelManager: React.FC = () => {
           )}
         >
           <div className='flex items-center gap-3'>
-            <div
-              className={cn(
-                'p-2 rounded-lg',
-                'bg-amber-100 dark:bg-amber-900/30'
-              )}
-            >
-              <Settings className='h-5 w-5 text-amber-600 dark:text-amber-400' />
-            </div>
+            <Settings className='h-4 w-4 text-gray-500 dark:text-dark-500' />
             <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
               {t('modelManager.sections.advanced')}
             </h3>
@@ -919,8 +906,8 @@ export const ModelManager: React.FC = () => {
                   ''
                 )}
               >
-                <FileCode className='h-5 w-5 text-purple-500' />
-                <div className='text-left'>
+                <FileCode className='h-5 w-5 text-gray-500 dark:text-dark-500' />
+                <div className='text-start'>
                   <div className='font-medium'>
                     {t('modelManager.advanced.createModel')}
                   </div>
@@ -939,8 +926,8 @@ export const ModelManager: React.FC = () => {
                   ''
                 )}
               >
-                <Copy className='h-5 w-5 text-blue-500' />
-                <div className='text-left'>
+                <Copy className='h-5 w-5 text-gray-500 dark:text-dark-500' />
+                <div className='text-start'>
                   <div className='font-medium'>
                     {t('modelManager.advanced.copyModel')}
                   </div>
@@ -959,8 +946,8 @@ export const ModelManager: React.FC = () => {
                   ''
                 )}
               >
-                <TestTube className='h-5 w-5 text-green-500' />
-                <div className='text-left'>
+                <TestTube className='h-5 w-5 text-gray-500 dark:text-dark-500' />
+                <div className='text-start'>
                   <div className='font-medium'>
                     {t('modelManager.advanced.testEmbeddings')}
                   </div>
@@ -990,8 +977,8 @@ export const ModelManager: React.FC = () => {
                   ''
                 )}
               >
-                <Gauge className='h-5 w-5 text-rose-500' />
-                <div className='text-left'>
+                <Gauge className='h-5 w-5 text-gray-500 dark:text-dark-500' />
+                <div className='text-start'>
                   <div className='font-medium'>
                     {t('modelManager.advanced.healthCheck')}
                   </div>

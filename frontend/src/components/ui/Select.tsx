@@ -38,11 +38,11 @@ export const Select: React.FC<SelectProps> = ({
   const selectId = id || `select-${generatedId}`;
 
   return (
-    <div className='space-y-1'>
+    <div className='space-y-1.5'>
       {label && (
         <label
           htmlFor={selectId}
-          className='block text-sm font-medium text-gray-700 dark:text-dark-700'
+          className='block text-sm font-medium tracking-[-0.005em] text-ink-muted'
         >
           {label}
         </label>
@@ -50,10 +50,10 @@ export const Select: React.FC<SelectProps> = ({
       <select
         id={selectId}
         className={cn(
-          'block w-full rounded-xl border border-gray-200 px-4 py-3 text-sm shadow-sm transition-all duration-200 bg-white text-gray-900',
-          'focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 focus:outline-none focus:shadow-md',
-          'dark:border-dark-300 dark:bg-dark-100 dark:text-dark-800',
-          'dark:focus:border-primary-400 dark:focus:ring-primary-400/20',
+          'block w-full rounded-xl border border-line bg-surface-raised px-3.5 py-2.5 text-base text-ink shadow-none',
+          'transition-[background-color,border-color,box-shadow,color] duration-150 ease-out',
+          'focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus-visible:outline-none dark:focus:border-primary-400 dark:focus:ring-primary-400/20',
+          'disabled:cursor-not-allowed disabled:bg-surface-subtle disabled:text-ink-subtle disabled:opacity-70',
           error &&
             'border-error-500 focus:border-error-500 focus:ring-error-500/20',
           className
@@ -70,10 +70,12 @@ export const Select: React.FC<SelectProps> = ({
         ))}
       </select>
       {error && (
-        <p className='text-sm text-error-600 dark:text-error-400'>{error}</p>
+        <p className='text-xs leading-relaxed text-error-600 dark:text-error-400'>
+          {error}
+        </p>
       )}
       {helper && !error && (
-        <p className='text-sm text-gray-500 dark:text-dark-600'>{helper}</p>
+        <p className='text-xs leading-relaxed text-ink-muted'>{helper}</p>
       )}
     </div>
   );

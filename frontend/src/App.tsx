@@ -122,8 +122,8 @@ const SidebarLayoutSpacer: React.FC<{ isOpen: boolean; compact: boolean }> = ({
   <div
     aria-hidden='true'
     className={cn(
-      'hidden lg:block flex-shrink-0 transition-[width] duration-300 ease-in-out',
-      isOpen ? (compact ? 'w-18' : 'w-80') : 'w-0'
+      'hidden lg:block flex-shrink-0 transition-[width] duration-200 ease-out',
+      isOpen ? (compact ? 'w-18' : 'w-72') : 'w-0'
     )}
   />
 );
@@ -428,10 +428,10 @@ const App: React.FC = () => {
           // No auth required - show full layout
           <div
             className={cn(
-              'flex h-screen text-gray-900 dark:text-dark-800 relative',
+              'flex h-screen text-gray-950 dark:text-dark-900 relative overflow-hidden',
               hasActiveBackground()
-                ? 'bg-white/40 dark:bg-dark-50/40'
-                : 'bg-white dark:bg-dark-50'
+                ? 'bg-gray-100/60 dark:bg-dark-50/60'
+                : 'bg-gray-100 dark:bg-dark-50'
             )}
           >
             <ElectronTitleBar />
@@ -447,14 +447,14 @@ const App: React.FC = () => {
             <div
               data-testid='app-shell-content'
               className={cn(
-                'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-300 ease-in-out relative z-10',
+                'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pr-2',
                 // Mobile behavior:
                 // - Compact sidebar: push content right to avoid overlap
                 // - Expanded sidebar: overlay (no transform)
                 sidebarOpen && sidebarCompact ? 'max-lg:ml-18' : 'max-lg:ml-0',
                 hasActiveBackground()
-                  ? 'bg-white/30 dark:bg-dark-50/30'
-                  : 'bg-white dark:bg-dark-50'
+                  ? 'bg-white/10 dark:bg-dark-50/10'
+                  : 'bg-transparent'
               )}
             >
               {isDemoMode && demoConfig.showBanner && (
@@ -462,9 +462,9 @@ const App: React.FC = () => {
               )}
               <main
                 className={cn(
-                  'flex-1 overflow-hidden',
+                  'flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
                   hasActiveBackground()
-                    ? 'bg-white/20 dark:bg-dark-50/20 backdrop-blur-sm'
+                    ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
                     : 'bg-gray-50 dark:bg-dark-100'
                 )}
               >
@@ -493,10 +493,10 @@ const App: React.FC = () => {
                 <ProtectedRoute>
                   <div
                     className={cn(
-                      'flex h-screen text-gray-900 dark:text-dark-800 relative',
+                      'flex h-screen text-gray-950 dark:text-dark-900 relative overflow-hidden',
                       hasActiveBackground()
-                        ? 'bg-white/40 dark:bg-dark-50/40'
-                        : 'bg-white dark:bg-dark-50'
+                        ? 'bg-gray-100/60 dark:bg-dark-50/60'
+                        : 'bg-gray-100 dark:bg-dark-50'
                     )}
                   >
                     <ElectronTitleBar />
@@ -512,7 +512,7 @@ const App: React.FC = () => {
                     <div
                       data-testid='app-shell-content'
                       className={cn(
-                        'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-300 ease-in-out relative z-10',
+                        'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pr-2',
                         // Mobile behavior:
                         // - Compact sidebar: push content right to avoid overlap
                         // - Expanded sidebar: overlay (no transform)
@@ -520,8 +520,8 @@ const App: React.FC = () => {
                           ? 'max-lg:ml-18'
                           : 'max-lg:ml-0',
                         hasActiveBackground()
-                          ? 'bg-white/30 dark:bg-dark-50/30'
-                          : 'bg-white dark:bg-dark-50'
+                          ? 'bg-white/10 dark:bg-dark-50/10'
+                          : 'bg-transparent'
                       )}
                     >
                       {isDemoMode && demoConfig.showBanner && (
@@ -529,9 +529,9 @@ const App: React.FC = () => {
                       )}
                       <main
                         className={cn(
-                          'flex-1 overflow-hidden',
+                          'flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
                           hasActiveBackground()
-                            ? 'bg-white/20 dark:bg-dark-50/20 backdrop-blur-sm'
+                            ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
                             : 'bg-gray-50 dark:bg-dark-100'
                         )}
                       >

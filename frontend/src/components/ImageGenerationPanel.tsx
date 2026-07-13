@@ -70,6 +70,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
     'high',
   ]);
   const [maxPromptLength, setMaxPromptLength] = useState<number | null>(null);
+  const titleId = React.useId();
 
   // Load available plugins on mount
   useEffect(() => {
@@ -113,6 +114,23 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
       loadPlugins();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   // Update config when plugin changes — adjust state during render rather than effect
   const [prevSelectedPlugin, setPrevSelectedPlugin] = useState(selectedPlugin);
@@ -224,41 +242,49 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
   const currentPlugin = plugins.find(p => p.id === selectedPlugin);
 
   return createPortal(
-    <div className='fixed inset-0 z-[99999] flex items-center justify-center p-4'>
+    <div
+      className='fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6'
+      role='dialog'
+      aria-modal='true'
+      aria-labelledby={titleId}
+    >
       {/* Backdrop */}
       <div
-        className='absolute inset-0 bg-black/60 backdrop-blur-sm'
+        className='absolute inset-0 bg-black/55 backdrop-blur-sm'
         onClick={onClose}
       />
 
       {/* Panel */}
       <div
         className={cn(
-          'relative bg-white dark:bg-dark-100',
-          'border border-gray-200 dark:border-dark-300',
-          'rounded-2xl shadow-2xl',
-          'w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col'
+          'relative bg-white/95 dark:bg-dark-25/95',
+          'border border-gray-200/80 dark:border-white/10',
+          'rounded-3xl shadow-2xl backdrop-blur-xl',
+          'flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden'
         )}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-dark-300'>
-          <div className='flex items-center gap-2'>
-            <ImageIcon className='h-5 w-5 text-primary-600 dark:text-primary-400' />
-            <h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+        <div className='flex items-center justify-between border-b border-gray-200/70 px-5 py-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
+          <div>
+            <h2
+              id={titleId}
+              className='text-xl font-normal tracking-[-0.025em] text-gray-950 dark:text-dark-950'
+            >
               {t('imageGeneration.title')}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className='p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-200 transition-colors'
+            className='rounded-xl p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-dark-500 dark:hover:bg-white/[0.06] dark:hover:text-dark-900'
+            title={t('common.close', { defaultValue: 'Close' })}
           >
             <X className='h-5 w-5 text-gray-500 dark:text-gray-400' />
           </button>
         </div>
 
         {/* Content */}
-        <div className='flex-1 overflow-y-auto p-4 space-y-4'>
+        <div className='flex-1 space-y-5 overflow-y-auto p-5 sm:p-6'>
           {plugins.length === 0 ? (
             <div className='text-center py-8'>
               <ImageIcon className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600' />
@@ -272,7 +298,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
           ) : (
             <>
               {/* Plugin & Model Selection */}
-              <div className='grid grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('settings.plugins.title')}
@@ -281,9 +307,9 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     value={selectedPlugin}
                     onChange={e => setSelectedPlugin(e.target.value)}
                     className={cn(
-                      'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-gray-50 dark:bg-dark-200',
-                      'border border-gray-200 dark:border-dark-300',
+                      'w-full rounded-xl px-3 py-2.5 text-sm',
+                      'bg-white/70 dark:bg-white/[0.035]',
+                      'border border-gray-200/80 dark:border-white/10',
                       'text-gray-900 dark:text-gray-100',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                     )}
@@ -304,9 +330,9 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     value={selectedModel}
                     onChange={e => setSelectedModel(e.target.value)}
                     className={cn(
-                      'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-gray-50 dark:bg-dark-200',
-                      'border border-gray-200 dark:border-dark-300',
+                      'w-full rounded-xl px-3 py-2.5 text-sm',
+                      'bg-white/70 dark:bg-white/[0.035]',
+                      'border border-gray-200/80 dark:border-white/10',
                       'text-gray-900 dark:text-gray-100',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                     )}
@@ -321,7 +347,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
               </div>
 
               {/* Size & Quality */}
-              <div className='grid grid-cols-2 gap-4'>
+              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
                     {t('imageGeneration.size')}
@@ -330,9 +356,9 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     value={size}
                     onChange={e => setSize(e.target.value)}
                     className={cn(
-                      'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-gray-50 dark:bg-dark-200',
-                      'border border-gray-200 dark:border-dark-300',
+                      'w-full rounded-xl px-3 py-2.5 text-sm',
+                      'bg-white/70 dark:bg-white/[0.035]',
+                      'border border-gray-200/80 dark:border-white/10',
                       'text-gray-900 dark:text-gray-100',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                     )}
@@ -353,9 +379,9 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     value={quality}
                     onChange={e => setQuality(e.target.value)}
                     className={cn(
-                      'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-gray-50 dark:bg-dark-200',
-                      'border border-gray-200 dark:border-dark-300',
+                      'w-full rounded-xl px-3 py-2.5 text-sm',
+                      'bg-white/70 dark:bg-white/[0.035]',
+                      'border border-gray-200/80 dark:border-white/10',
                       'text-gray-900 dark:text-gray-100',
                       'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
                     )}
@@ -380,9 +406,9 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                   placeholder={t('imageGeneration.promptPlaceholder')}
                   rows={5}
                   className={cn(
-                    'w-full px-3 py-2 rounded-lg text-sm resize-none',
-                    'bg-gray-50 dark:bg-dark-200',
-                    'border border-gray-200 dark:border-dark-300',
+                    'w-full resize-none rounded-2xl px-4 py-3 text-sm leading-6',
+                    'bg-white/70 dark:bg-white/[0.035]',
+                    'border border-gray-200/80 dark:border-white/10',
                     'text-gray-900 dark:text-gray-100',
                     'placeholder-gray-500 dark:placeholder-gray-400',
                     'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
@@ -394,7 +420,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                 {maxPromptLength && (
                   <div
                     className={cn(
-                      'text-xs mt-1 text-right',
+                      'mt-1 text-end text-xs',
                       prompt.length > maxPromptLength
                         ? 'text-red-500'
                         : 'text-gray-500 dark:text-gray-400'
@@ -408,7 +434,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
               {/* Generated Image Preview */}
               {generatedImage && (
-                <div className='relative rounded-xl overflow-hidden border border-gray-200 dark:border-dark-300'>
+                <div className='relative overflow-hidden rounded-2xl border border-gray-200/80 dark:border-white/10'>
                   <img
                     src={generatedImage}
                     alt='Generated'
@@ -417,7 +443,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                   <button
                     onClick={handleDownload}
                     className={cn(
-                      'absolute bottom-3 right-3 p-2 rounded-lg',
+                      'absolute bottom-3 end-3 rounded-lg p-2',
                       'bg-white/90 dark:bg-dark-100/90',
                       'hover:bg-white dark:hover:bg-dark-100',
                       'border border-gray-200 dark:border-dark-300',
@@ -435,7 +461,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
         {/* Footer */}
         {plugins.length > 0 && (
-          <div className='p-4 border-t border-gray-200 dark:border-dark-300'>
+          <div className='border-t border-gray-200/70 p-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
             <Button
               onClick={handleGenerate}
               disabled={isGenerating || !prompt.trim() || !selectedModel}

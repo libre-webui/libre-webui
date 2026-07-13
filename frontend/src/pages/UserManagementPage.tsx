@@ -18,25 +18,19 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserManager } from '@/components/UserManager';
+import { PageHeader, PageShell } from '@/components/ui';
 
 export const UserManagementPage: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div className='h-full overflow-auto'>
-      <div className='max-w-6xl mx-auto p-6'>
-        <div className='mb-8'>
-          <h1 className='text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2'>
-            {t('userManager.title')}
-          </h1>
-          <p className='text-gray-700 dark:text-gray-300'>
-            {t('userManager.pageDescription')}
-          </p>
-        </div>
-
-        <UserManager />
-      </div>
-    </div>
+    <PageShell>
+      <PageHeader
+        title={t('userManager.title')}
+        description={t('userManager.pageDescription')}
+      />
+      <UserManager />
+    </PageShell>
   );
 };
 

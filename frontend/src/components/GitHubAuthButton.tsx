@@ -92,16 +92,16 @@ export const GitHubAuthButton: React.FC = () => {
       type='button'
       onClick={handleGitHubLogin}
       disabled={isLoading}
-      className='w-full flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-dark-300 rounded-lg shadow-sm bg-white dark:bg-dark-100 text-gray-700 dark:text-dark-700 hover:bg-gray-50 dark:hover:bg-dark-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200'
+      className='flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface-raised px-4 text-sm font-medium text-ink shadow-subtle transition-colors hover:border-line-strong hover:bg-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
     >
       {isLoading ? (
         <div className='flex items-center'>
-          <Loader2 size={16} className='animate-spin mr-2' />
+          <Loader2 size={16} className='me-2 animate-spin' />
           {t('auth.oauth.connectingTo', { provider: t('auth.oauth.github') })}
         </div>
       ) : (
         <div className='flex items-center'>
-          <GitBranch size={16} className='mr-2' />
+          <GitBranch size={16} className='me-2' />
           {t('auth.oauth.continueWith', { provider: t('auth.oauth.github') })}
         </div>
       )}

@@ -37,7 +37,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button, PageHeader, PageShell } from '@/components/ui';
 import {
   libreClawApi,
   LibreClawAutomation,
@@ -53,7 +53,8 @@ const logger = createLogger('pages:libre-claw');
 
 const stateStyles: Record<string, string> = {
   queued: 'bg-gray-100 text-gray-700 dark:bg-dark-200 dark:text-dark-700',
-  running: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+  running:
+    'bg-primary-100 text-primary-700 dark:bg-primary-900/25 dark:text-primary-300',
   blocked:
     'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   done: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
@@ -63,14 +64,14 @@ const stateStyles: Record<string, string> = {
 };
 
 const eventTypeStyles: Record<string, string> = {
-  assistant_message: 'text-blue-600 dark:text-blue-300',
-  assistant_delta: 'text-blue-600 dark:text-blue-300',
+  assistant_message: 'text-primary-600 dark:text-primary-300',
+  assistant_delta: 'text-primary-600 dark:text-primary-300',
   user_message: 'text-gray-700 dark:text-dark-700',
   permission_request: 'text-amber-600 dark:text-amber-300',
-  permission_response: 'text-emerald-600 dark:text-emerald-300',
-  tool_call: 'text-purple-600 dark:text-purple-300',
-  tool_result: 'text-emerald-600 dark:text-emerald-300',
-  usage: 'text-cyan-600 dark:text-cyan-300',
+  permission_response: 'text-gray-600 dark:text-dark-600',
+  tool_call: 'text-gray-600 dark:text-dark-600',
+  tool_result: 'text-gray-600 dark:text-dark-600',
+  usage: 'text-gray-600 dark:text-dark-600',
   error: 'text-red-600 dark:text-red-300',
   run_finished: 'text-emerald-600 dark:text-emerald-300',
 };
@@ -454,26 +455,13 @@ const LibreClawPage: React.FC = () => {
   };
 
   return (
-    <div className='h-full overflow-y-auto bg-gray-50 dark:bg-dark-100'>
-      <div className='mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6'>
-        <header className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
-          <div>
-            <div className='flex items-center gap-3'>
-              <div className='flex h-11 w-11 items-center justify-center rounded-xl bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'>
-                <Bot className='h-5 w-5' />
-              </div>
-              <div>
-                <h1 className='text-2xl font-semibold text-gray-950 dark:text-gray-100'>
-                  {t('libreClaw.title')}
-                </h1>
-                <p className='text-sm text-gray-600 dark:text-dark-600'>
-                  {t('libreClaw.subtitle')}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className='flex flex-wrap items-center gap-2'>
+    <PageShell width='wide' contentClassName='space-y-6'>
+      <PageHeader
+        className='mb-0'
+        title={t('libreClaw.title')}
+        description={t('libreClaw.subtitle')}
+        actions={
+          <>
             <StatusPill status={status} t={t} />
             <Button variant='secondary' size='sm' onClick={loadOverview}>
               <RefreshCw className='h-4 w-4' />
@@ -483,430 +471,420 @@ const LibreClawPage: React.FC = () => {
               href={status?.dashboardUrl || 'http://127.0.0.1:8766/dashboard'}
               target='_blank'
               rel='noopener noreferrer'
-              className='inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-700 dark:hover:bg-dark-100'
+              className='inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-gray-200/80 bg-white/70 px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-white dark:border-white/10 dark:bg-white/[0.04] dark:text-dark-700 dark:hover:bg-white/[0.08]'
             >
               <ExternalLink className='h-4 w-4' />
               {t('libreClaw.dashboard')}
             </a>
-          </div>
-        </header>
+          </>
+        }
+      />
 
-        {!status?.connected && !loading && (
-          <section className='rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200'>
-            <div className='flex items-start gap-3'>
-              <Terminal className='mt-0.5 h-5 w-5 shrink-0' />
-              <div>
-                <h2 className='font-semibold'>
-                  {t('libreClaw.connection.disconnectedTitle')}
-                </h2>
-                <p className='mt-1 text-sm opacity-90'>
-                  <Trans
-                    i18nKey='libreClaw.connection.disconnectedDescription'
-                    components={{
-                      command: <code />,
-                      env: <code />,
-                    }}
-                  />
-                </p>
-                {status?.error && (
-                  <p className='mt-2 text-xs opacity-80'>{status.error}</p>
-                )}
-              </div>
+      {!status?.connected && !loading && (
+        <section className='rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200'>
+          <div className='flex items-start gap-3'>
+            <Terminal className='mt-0.5 h-5 w-5 shrink-0' />
+            <div>
+              <h2 className='font-semibold'>
+                {t('libreClaw.connection.disconnectedTitle')}
+              </h2>
+              <p className='mt-1 text-sm opacity-90'>
+                <Trans
+                  i18nKey='libreClaw.connection.disconnectedDescription'
+                  components={{
+                    command: <code />,
+                    env: <code />,
+                  }}
+                />
+              </p>
+              {status?.error && (
+                <p className='mt-2 text-xs opacity-80'>{status.error}</p>
+              )}
             </div>
-          </section>
-        )}
+          </div>
+        </section>
+      )}
 
-        <section className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]'>
-          <Panel
-            title={t('libreClaw.startRun.title')}
-            icon={<Play className='h-4 w-4' />}
-          >
-            <div className='space-y-3'>
-              <textarea
-                value={runMessage}
-                onChange={event => setRunMessage(event.target.value)}
-                placeholder={t('libreClaw.startRun.placeholder')}
-                className='min-h-32 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800 dark:focus:border-primary-500 dark:focus:ring-primary-900/30'
+      <section className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]'>
+        <Panel
+          title={t('libreClaw.startRun.title')}
+          icon={<Play className='h-4 w-4' />}
+        >
+          <div className='space-y-3'>
+            <textarea
+              value={runMessage}
+              onChange={event => setRunMessage(event.target.value)}
+              placeholder={t('libreClaw.startRun.placeholder')}
+              className='min-h-32 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800 dark:focus:border-primary-500 dark:focus:ring-primary-900/30'
+            />
+            <div className='grid gap-3 sm:grid-cols-4'>
+              <select
+                value={runKind}
+                onChange={event =>
+                  setRunKind(event.target.value as 'chat' | 'goal')
+                }
+                className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+              >
+                <option value='chat'>{t('libreClaw.startRun.chatRun')}</option>
+                <option value='goal'>{t('libreClaw.startRun.goalMode')}</option>
+              </select>
+              <input
+                value={runProvider}
+                onChange={event => setRunProvider(event.target.value)}
+                placeholder={t('libreClaw.startRun.providerOverride')}
+                className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
               />
-              <div className='grid gap-3 sm:grid-cols-4'>
+              <input
+                value={runModel}
+                onChange={event => setRunModel(event.target.value)}
+                placeholder={t('libreClaw.startRun.modelOverride')}
+                className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+              />
+              <Button onClick={startRun} loading={startingRun}>
+                <Bot className='h-4 w-4' />
+                {t('libreClaw.startRun.run')}
+              </Button>
+            </div>
+          </div>
+        </Panel>
+
+        <Panel
+          title={t('libreClaw.modelRoute.title')}
+          icon={<GitBranch className='h-4 w-4' />}
+        >
+          <div className='space-y-3'>
+            <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-1'>
+              <input
+                value={modelProvider}
+                onChange={event => setModelProvider(event.target.value)}
+                placeholder={t('libreClaw.modelRoute.providerPlaceholder')}
+                className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+              />
+              <input
+                value={modelName}
+                onChange={event => setModelName(event.target.value)}
+                placeholder={t('libreClaw.modelRoute.modelPlaceholder')}
+                className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+              />
+            </div>
+            <label className='flex items-center gap-2 text-sm text-gray-600 dark:text-dark-600'>
+              <input
+                type='checkbox'
+                checked={persistModel}
+                onChange={event => setPersistModel(event.target.checked)}
+                className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
+              />
+              {t('libreClaw.modelRoute.persistGlobal')}
+            </label>
+            <Button
+              variant='secondary'
+              onClick={saveModel}
+              loading={savingModel}
+            >
+              {t('libreClaw.modelRoute.saveModel')}
+            </Button>
+            <div className='border-t border-gray-100 pt-3 dark:border-dark-200'>
+              <label className='mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-dark-500'>
+                {t('libreClaw.modelRoute.theme')}
+              </label>
+              <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-1'>
                 <select
-                  value={runKind}
-                  onChange={event =>
-                    setRunKind(event.target.value as 'chat' | 'goal')
-                  }
+                  value={clawTheme}
+                  onChange={event => setClawTheme(event.target.value)}
                   className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
                 >
-                  <option value='chat'>
-                    {t('libreClaw.startRun.chatRun')}
-                  </option>
-                  <option value='goal'>
-                    {t('libreClaw.startRun.goalMode')}
-                  </option>
+                  {themeOptions.map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
                 </select>
-                <input
-                  value={runProvider}
-                  onChange={event => setRunProvider(event.target.value)}
-                  placeholder={t('libreClaw.startRun.providerOverride')}
-                  className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
-                />
-                <input
-                  value={runModel}
-                  onChange={event => setRunModel(event.target.value)}
-                  placeholder={t('libreClaw.startRun.modelOverride')}
-                  className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
-                />
-                <Button onClick={startRun} loading={startingRun}>
-                  <Bot className='h-4 w-4' />
-                  {t('libreClaw.startRun.run')}
+                <Button
+                  variant='secondary'
+                  onClick={saveTheme}
+                  loading={savingTheme}
+                >
+                  {t('libreClaw.modelRoute.saveTheme')}
                 </Button>
               </div>
-            </div>
-          </Panel>
-
-          <Panel
-            title={t('libreClaw.modelRoute.title')}
-            icon={<GitBranch className='h-4 w-4' />}
-          >
-            <div className='space-y-3'>
-              <div className='grid gap-2 sm:grid-cols-2 lg:grid-cols-1'>
-                <input
-                  value={modelProvider}
-                  onChange={event => setModelProvider(event.target.value)}
-                  placeholder={t('libreClaw.modelRoute.providerPlaceholder')}
-                  className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
-                />
-                <input
-                  value={modelName}
-                  onChange={event => setModelName(event.target.value)}
-                  placeholder={t('libreClaw.modelRoute.modelPlaceholder')}
-                  className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
-                />
-              </div>
-              <label className='flex items-center gap-2 text-sm text-gray-600 dark:text-dark-600'>
+              <label className='mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-dark-600'>
                 <input
                   type='checkbox'
-                  checked={persistModel}
-                  onChange={event => setPersistModel(event.target.checked)}
+                  checked={persistTheme}
+                  onChange={event => setPersistTheme(event.target.checked)}
                   className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
                 />
                 {t('libreClaw.modelRoute.persistGlobal')}
               </label>
-              <Button
-                variant='secondary'
-                onClick={saveModel}
-                loading={savingModel}
-              >
-                {t('libreClaw.modelRoute.saveModel')}
-              </Button>
-              <div className='border-t border-gray-100 pt-3 dark:border-dark-200'>
-                <label className='mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-dark-500'>
-                  {t('libreClaw.modelRoute.theme')}
-                </label>
-                <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] lg:grid-cols-1'>
-                  <select
-                    value={clawTheme}
-                    onChange={event => setClawTheme(event.target.value)}
-                    className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
-                  >
-                    {themeOptions.map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <Button
-                    variant='secondary'
-                    onClick={saveTheme}
-                    loading={savingTheme}
-                  >
-                    {t('libreClaw.modelRoute.saveTheme')}
-                  </Button>
-                </div>
-                <label className='mt-2 flex items-center gap-2 text-sm text-gray-600 dark:text-dark-600'>
-                  <input
-                    type='checkbox'
-                    checked={persistTheme}
-                    onChange={event => setPersistTheme(event.target.checked)}
-                    className='h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500'
-                  />
-                  {t('libreClaw.modelRoute.persistGlobal')}
-                </label>
-              </div>
-              {modelConfig && (
-                <pre className='max-h-32 overflow-auto rounded-lg bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
-                  {JSON.stringify(modelConfig, null, 2)}
-                </pre>
-              )}
             </div>
-          </Panel>
-        </section>
+            {modelConfig && (
+              <pre className='max-h-32 overflow-auto rounded-lg bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
+                {JSON.stringify(modelConfig, null, 2)}
+              </pre>
+            )}
+          </div>
+        </Panel>
+      </section>
 
-        <section className='grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]'>
-          <Panel
-            title={t('libreClaw.runs.title')}
-            icon={<Activity className='h-4 w-4' />}
-          >
-            <div className='space-y-2'>
-              {runs.length === 0 && (
-                <EmptyState text={t('libreClaw.runs.empty')} />
-              )}
-              {runs.map(run => (
-                <button
-                  key={run.run_id}
-                  onClick={() => setSelectedRunId(run.run_id)}
-                  className={cn(
-                    'w-full rounded-xl border p-3 text-left transition',
-                    selectedRunId === run.run_id
-                      ? 'border-primary-300 bg-primary-50 dark:border-primary-700 dark:bg-primary-900/20'
-                      : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-dark-300 dark:bg-dark-50 dark:hover:bg-dark-100'
-                  )}
+      <section className='grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]'>
+        <Panel
+          title={t('libreClaw.runs.title')}
+          icon={<Activity className='h-4 w-4' />}
+        >
+          <div className='space-y-2'>
+            {runs.length === 0 && (
+              <EmptyState text={t('libreClaw.runs.empty')} />
+            )}
+            {runs.map(run => (
+              <button
+                key={run.run_id}
+                onClick={() => setSelectedRunId(run.run_id)}
+                className={cn(
+                  'w-full rounded-xl border p-3 text-start transition',
+                  selectedRunId === run.run_id
+                    ? 'border-primary-300 bg-primary-50 dark:border-primary-700 dark:bg-primary-900/20'
+                    : 'border-gray-200 bg-white hover:bg-gray-50 dark:border-dark-300 dark:bg-dark-50 dark:hover:bg-dark-100'
+                )}
+              >
+                <div className='flex items-center justify-between gap-2'>
+                  <span className='truncate text-sm font-medium text-gray-900 dark:text-dark-900'>
+                    {run.title}
+                  </span>
+                  <StateBadge state={run.state} t={t} />
+                </div>
+                <div className='mt-1 truncate text-xs text-gray-500 dark:text-dark-500'>
+                  {run.provider}:{run.model}
+                </div>
+                <div className='mt-1 text-xs text-gray-400 dark:text-dark-500'>
+                  {formatDate(run.updated_at)}
+                </div>
+              </button>
+            ))}
+          </div>
+        </Panel>
+
+        <Panel
+          title={
+            selectedRun ? selectedRun.title : t('libreClaw.timeline.title')
+          }
+          icon={<Clock className='h-4 w-4' />}
+          actions={
+            selectedRun &&
+            ['queued', 'running', 'blocked'].includes(selectedRun.state) ? (
+              <Button
+                variant='danger'
+                size='sm'
+                onClick={() => cancelRun(selectedRun.run_id)}
+              >
+                <Square className='h-4 w-4' />
+                {t('common.cancel')}
+              </Button>
+            ) : null
+          }
+        >
+          {pendingPermissionEvents.length > 0 && (
+            <div className='mb-4 space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20'>
+              <div className='flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-200'>
+                <ShieldCheck className='h-4 w-4' />
+                {t('libreClaw.approvals.needed')}
+              </div>
+              {pendingPermissionEvents.map(event => (
+                <div
+                  key={event.event_id}
+                  className='rounded-lg bg-white/70 p-3 dark:bg-dark-50/70'
                 >
-                  <div className='flex items-center justify-between gap-2'>
-                    <span className='truncate text-sm font-medium text-gray-900 dark:text-dark-900'>
-                      {run.title}
-                    </span>
-                    <StateBadge state={run.state} t={t} />
+                  <div className='text-sm font-medium text-gray-900 dark:text-dark-900'>
+                    {String(event.data.name || t('libreClaw.fallbacks.tool'))}
                   </div>
-                  <div className='mt-1 truncate text-xs text-gray-500 dark:text-dark-500'>
-                    {run.provider}:{run.model}
+                  <pre className='mt-2 max-h-36 overflow-auto rounded bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
+                    {JSON.stringify(event.data.arguments || {}, null, 2)}
+                  </pre>
+                  <div className='mt-3 flex flex-wrap gap-2'>
+                    <Button
+                      size='sm'
+                      onClick={() => resolvePermission(event, 'allow_once')}
+                    >
+                      <Check className='h-4 w-4' />
+                      {t('libreClaw.approvals.allowOnce')}
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='secondary'
+                      onClick={() =>
+                        resolvePermission(event, 'always_allow_tool')
+                      }
+                    >
+                      {t('libreClaw.approvals.alwaysAllowTool')}
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='danger'
+                      onClick={() => resolvePermission(event, 'deny')}
+                    >
+                      <X className='h-4 w-4' />
+                      {t('libreClaw.approvals.deny')}
+                    </Button>
                   </div>
-                  <div className='mt-1 text-xs text-gray-400 dark:text-dark-500'>
-                    {formatDate(run.updated_at)}
-                  </div>
-                </button>
+                </div>
               ))}
             </div>
-          </Panel>
+          )}
 
-          <Panel
-            title={
-              selectedRun ? selectedRun.title : t('libreClaw.timeline.title')
-            }
-            icon={<Clock className='h-4 w-4' />}
-            actions={
-              selectedRun &&
-              ['queued', 'running', 'blocked'].includes(selectedRun.state) ? (
-                <Button
-                  variant='danger'
-                  size='sm'
-                  onClick={() => cancelRun(selectedRun.run_id)}
+          <div className='space-y-3'>
+            {events.length === 0 && (
+              <EmptyState text={t('libreClaw.timeline.empty')} />
+            )}
+            {timelineItems.map(item => (
+              <TimelineCard key={item.key} item={item} t={t} />
+            ))}
+          </div>
+        </Panel>
+      </section>
+
+      <section className='grid gap-4 xl:grid-cols-2'>
+        <Panel
+          title={t('libreClaw.automations.title')}
+          icon={<CalendarClock className='h-4 w-4' />}
+        >
+          <div className='space-y-4'>
+            <div className='grid gap-2 sm:grid-cols-2'>
+              <input
+                value={automationName}
+                onChange={event => setAutomationName(event.target.value)}
+                placeholder={t('libreClaw.automations.namePlaceholder')}
+                className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+              />
+              <input
+                value={automationSchedule}
+                onChange={event => setAutomationSchedule(event.target.value)}
+                placeholder={t('libreClaw.automations.schedulePlaceholder')}
+                className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+              />
+              <select
+                value={automationRoute}
+                onChange={event => setAutomationRoute(event.target.value)}
+                className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+              >
+                <option value='report'>
+                  {t('libreClaw.automations.routes.report')}
+                </option>
+                <option value='telegram'>
+                  {t('libreClaw.automations.routes.telegram')}
+                </option>
+              </select>
+              <Button onClick={createAutomation} loading={savingAutomation}>
+                {t('libreClaw.automations.create')}
+              </Button>
+            </div>
+            <textarea
+              value={automationPrompt}
+              onChange={event => setAutomationPrompt(event.target.value)}
+              placeholder={t('libreClaw.automations.promptPlaceholder')}
+              className='min-h-24 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
+            />
+            <div className='space-y-2'>
+              {automations.length === 0 && (
+                <EmptyState text={t('libreClaw.automations.empty')} />
+              )}
+              {automations.map(automation => (
+                <div
+                  key={automation.automation_id}
+                  className='rounded-xl border border-gray-200 bg-white p-3 dark:border-dark-300 dark:bg-dark-50'
                 >
-                  <Square className='h-4 w-4' />
-                  {t('common.cancel')}
-                </Button>
-              ) : null
-            }
-          >
-            {pendingPermissionEvents.length > 0 && (
-              <div className='mb-4 space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20'>
-                <div className='flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-200'>
-                  <ShieldCheck className='h-4 w-4' />
-                  {t('libreClaw.approvals.needed')}
-                </div>
-                {pendingPermissionEvents.map(event => (
-                  <div
-                    key={event.event_id}
-                    className='rounded-lg bg-white/70 p-3 dark:bg-dark-50/70'
-                  >
-                    <div className='text-sm font-medium text-gray-900 dark:text-dark-900'>
-                      {String(event.data.name || t('libreClaw.fallbacks.tool'))}
+                  <div className='flex items-start justify-between gap-3'>
+                    <div className='min-w-0'>
+                      <div className='truncate text-sm font-medium text-gray-900 dark:text-dark-900'>
+                        {automation.name}
+                      </div>
+                      <div className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
+                        {automation.schedule} ·{' '}
+                        {t(`libreClaw.automations.routes.${automation.route}`, {
+                          defaultValue: automation.route,
+                        })}{' '}
+                        ·{' '}
+                        {t(
+                          `libreClaw.automations.status.${automation.status}`,
+                          {
+                            defaultValue: automation.status,
+                          }
+                        )}
+                      </div>
                     </div>
-                    <pre className='mt-2 max-h-36 overflow-auto rounded bg-gray-100 p-2 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
-                      {JSON.stringify(event.data.arguments || {}, null, 2)}
-                    </pre>
-                    <div className='mt-3 flex flex-wrap gap-2'>
-                      <Button
-                        size='sm'
-                        onClick={() => resolvePermission(event, 'allow_once')}
-                      >
-                        <Check className='h-4 w-4' />
-                        {t('libreClaw.approvals.allowOnce')}
-                      </Button>
-                      <Button
-                        size='sm'
-                        variant='secondary'
+                    <div className='flex shrink-0 gap-1'>
+                      <IconButton
+                        title={t('libreClaw.automations.runNow')}
                         onClick={() =>
-                          resolvePermission(event, 'always_allow_tool')
+                          automationAction(automation.automation_id, 'run')
                         }
                       >
-                        {t('libreClaw.approvals.alwaysAllowTool')}
-                      </Button>
-                      <Button
-                        size='sm'
-                        variant='danger'
-                        onClick={() => resolvePermission(event, 'deny')}
+                        <Play className='h-4 w-4' />
+                      </IconButton>
+                      <IconButton
+                        title={
+                          automation.status === 'paused'
+                            ? t('libreClaw.automations.resume')
+                            : t('libreClaw.automations.pause')
+                        }
+                        onClick={() =>
+                          automationAction(
+                            automation.automation_id,
+                            automation.status === 'paused' ? 'resume' : 'pause'
+                          )
+                        }
                       >
-                        <X className='h-4 w-4' />
-                        {t('libreClaw.approvals.deny')}
-                      </Button>
+                        {automation.status === 'paused' ? (
+                          <Play className='h-4 w-4' />
+                        ) : (
+                          <Pause className='h-4 w-4' />
+                        )}
+                      </IconButton>
+                      <IconButton
+                        title={t('common.delete')}
+                        danger
+                        onClick={() =>
+                          automationAction(automation.automation_id, 'delete')
+                        }
+                      >
+                        <Trash2 className='h-4 w-4' />
+                      </IconButton>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-
-            <div className='space-y-3'>
-              {events.length === 0 && (
-                <EmptyState text={t('libreClaw.timeline.empty')} />
-              )}
-              {timelineItems.map(item => (
-                <TimelineCard key={item.key} item={item} t={t} />
+                </div>
               ))}
             </div>
-          </Panel>
-        </section>
+          </div>
+        </Panel>
 
-        <section className='grid gap-4 xl:grid-cols-2'>
-          <Panel
-            title={t('libreClaw.automations.title')}
-            icon={<CalendarClock className='h-4 w-4' />}
-          >
-            <div className='space-y-4'>
-              <div className='grid gap-2 sm:grid-cols-2'>
-                <input
-                  value={automationName}
-                  onChange={event => setAutomationName(event.target.value)}
-                  placeholder={t('libreClaw.automations.namePlaceholder')}
-                  className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
-                />
-                <input
-                  value={automationSchedule}
-                  onChange={event => setAutomationSchedule(event.target.value)}
-                  placeholder={t('libreClaw.automations.schedulePlaceholder')}
-                  className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
-                />
-                <select
-                  value={automationRoute}
-                  onChange={event => setAutomationRoute(event.target.value)}
-                  className='rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
-                >
-                  <option value='report'>
-                    {t('libreClaw.automations.routes.report')}
-                  </option>
-                  <option value='telegram'>
-                    {t('libreClaw.automations.routes.telegram')}
-                  </option>
-                </select>
-                <Button onClick={createAutomation} loading={savingAutomation}>
-                  {t('libreClaw.automations.create')}
-                </Button>
-              </div>
-              <textarea
-                value={automationPrompt}
-                onChange={event => setAutomationPrompt(event.target.value)}
-                placeholder={t('libreClaw.automations.promptPlaceholder')}
-                className='min-h-24 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm dark:border-dark-300 dark:bg-dark-50 dark:text-dark-800'
-              />
-              <div className='space-y-2'>
-                {automations.length === 0 && (
-                  <EmptyState text={t('libreClaw.automations.empty')} />
-                )}
-                {automations.map(automation => (
-                  <div
-                    key={automation.automation_id}
-                    className='rounded-xl border border-gray-200 bg-white p-3 dark:border-dark-300 dark:bg-dark-50'
-                  >
-                    <div className='flex items-start justify-between gap-3'>
-                      <div className='min-w-0'>
-                        <div className='truncate text-sm font-medium text-gray-900 dark:text-dark-900'>
-                          {automation.name}
-                        </div>
-                        <div className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
-                          {automation.schedule} ·{' '}
-                          {t(
-                            `libreClaw.automations.routes.${automation.route}`,
-                            {
-                              defaultValue: automation.route,
-                            }
-                          )}{' '}
-                          ·{' '}
-                          {t(
-                            `libreClaw.automations.status.${automation.status}`,
-                            {
-                              defaultValue: automation.status,
-                            }
-                          )}
-                        </div>
-                      </div>
-                      <div className='flex shrink-0 gap-1'>
-                        <IconButton
-                          title={t('libreClaw.automations.runNow')}
-                          onClick={() =>
-                            automationAction(automation.automation_id, 'run')
-                          }
-                        >
-                          <Play className='h-4 w-4' />
-                        </IconButton>
-                        <IconButton
-                          title={
-                            automation.status === 'paused'
-                              ? t('libreClaw.automations.resume')
-                              : t('libreClaw.automations.pause')
-                          }
-                          onClick={() =>
-                            automationAction(
-                              automation.automation_id,
-                              automation.status === 'paused'
-                                ? 'resume'
-                                : 'pause'
-                            )
-                          }
-                        >
-                          {automation.status === 'paused' ? (
-                            <Play className='h-4 w-4' />
-                          ) : (
-                            <Pause className='h-4 w-4' />
-                          )}
-                        </IconButton>
-                        <IconButton
-                          title={t('common.delete')}
-                          danger
-                          onClick={() =>
-                            automationAction(automation.automation_id, 'delete')
-                          }
-                        >
-                          <Trash2 className='h-4 w-4' />
-                        </IconButton>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+        <Panel
+          title={t('libreClaw.usageFallback.title')}
+          icon={<Activity className='h-4 w-4' />}
+        >
+          <div className='space-y-4'>
+            <div>
+              <h3 className='mb-2 text-sm font-semibold text-gray-900 dark:text-dark-900'>
+                {t('libreClaw.usageFallback.usage')}
+              </h3>
+              <pre className='max-h-52 overflow-auto rounded-xl bg-gray-100 p-3 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
+                {usageText || t('libreClaw.usageFallback.noUsage')}
+              </pre>
             </div>
-          </Panel>
-
-          <Panel
-            title={t('libreClaw.usageFallback.title')}
-            icon={<Activity className='h-4 w-4' />}
-          >
-            <div className='space-y-4'>
-              <div>
-                <h3 className='mb-2 text-sm font-semibold text-gray-900 dark:text-dark-900'>
-                  {t('libreClaw.usageFallback.usage')}
-                </h3>
-                <pre className='max-h-52 overflow-auto rounded-xl bg-gray-100 p-3 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
-                  {usageText || t('libreClaw.usageFallback.noUsage')}
-                </pre>
-              </div>
-              <div>
-                <h3 className='mb-2 text-sm font-semibold text-gray-900 dark:text-dark-900'>
-                  {t('libreClaw.usageFallback.fallbackRoute')}
-                </h3>
-                <pre className='max-h-52 overflow-auto rounded-xl bg-gray-100 p-3 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
-                  {JSON.stringify(fallbackConfig || {}, null, 2)}
-                </pre>
-              </div>
+            <div>
+              <h3 className='mb-2 text-sm font-semibold text-gray-900 dark:text-dark-900'>
+                {t('libreClaw.usageFallback.fallbackRoute')}
+              </h3>
+              <pre className='max-h-52 overflow-auto rounded-xl bg-gray-100 p-3 text-xs text-gray-700 dark:bg-dark-200 dark:text-dark-700'>
+                {JSON.stringify(fallbackConfig || {}, null, 2)}
+              </pre>
             </div>
-          </Panel>
-        </section>
-      </div>
-
+          </div>
+        </Panel>
+      </section>
       {loading && (
         <div className='fixed inset-0 z-40 flex items-center justify-center bg-white/60 backdrop-blur-sm dark:bg-dark-50/60'>
           <Loader2 className='h-7 w-7 animate-spin text-primary-600' />
         </div>
       )}
-    </div>
+    </PageShell>
   );
 };
 
@@ -965,15 +943,15 @@ const Panel: React.FC<{
   actions?: React.ReactNode;
   children: React.ReactNode;
 }> = ({ title, icon, actions, children }) => (
-  <section className='rounded-xl border border-gray-200 bg-white shadow-sm dark:border-dark-300 dark:bg-dark-25'>
-    <header className='flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-dark-200'>
+  <section className='rounded-2xl border border-gray-200/80 bg-white/60 dark:border-white/10 dark:bg-white/[0.03]'>
+    <header className='flex items-center justify-between gap-3 border-b border-gray-200/70 px-5 py-4 dark:border-white/[0.08]'>
       <div className='flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-dark-900'>
         <span className='text-primary-600 dark:text-primary-300'>{icon}</span>
         {title}
       </div>
       {actions}
     </header>
-    <div className='p-4'>{children}</div>
+    <div className='p-5'>{children}</div>
   </section>
 );
 
@@ -1008,8 +986,8 @@ const TimelineCard: React.FC<{ item: TimelineItem; t: TFunction }> = ({
       item.eventType === 'assistant_message'
         ? 'border-primary-200 bg-primary-50/60 dark:border-primary-900/60 dark:bg-primary-900/10'
         : item.eventType === 'user_message'
-          ? 'border-gray-200 bg-white dark:border-dark-300 dark:bg-dark-50'
-          : 'border-gray-200 bg-white dark:border-dark-300 dark:bg-dark-50'
+          ? 'border-gray-200/80 bg-white/50 dark:border-white/[0.08] dark:bg-white/[0.025]'
+          : 'border-gray-200/80 bg-white/50 dark:border-white/[0.08] dark:bg-white/[0.025]'
     )}
   >
     <div className='mb-2 flex items-center justify-between gap-3'>
@@ -1216,7 +1194,7 @@ const MetricPill: React.FC<{ label: string; value: string }> = ({
   label,
   value,
 }) => (
-  <span className='inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-700 dark:border-dark-300 dark:bg-dark-100 dark:text-dark-700'>
+  <span className='inline-flex items-center gap-1.5 rounded-full border border-gray-200/80 bg-white/50 px-2.5 py-1 text-xs text-gray-700 dark:border-white/10 dark:bg-white/[0.035] dark:text-dark-700'>
     <span className='font-semibold text-gray-500 dark:text-dark-500'>
       {label}
     </span>
@@ -1231,7 +1209,7 @@ const JsonBlock: React.FC<{ value: unknown }> = ({ value }) => (
 );
 
 const EmptyState: React.FC<{ text: string }> = ({ text }) => (
-  <div className='rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500 dark:border-dark-300 dark:bg-dark-50 dark:text-dark-500'>
+  <div className='rounded-xl border border-dashed border-gray-300 bg-white/30 px-4 py-8 text-center text-sm text-gray-500 dark:border-white/15 dark:bg-white/[0.02] dark:text-dark-500'>
     {text}
   </div>
 );

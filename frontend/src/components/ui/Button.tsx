@@ -35,36 +35,38 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] relative overflow-hidden';
+    'group relative inline-flex select-none items-center justify-center rounded-xl border font-medium tracking-[-0.01em] transition-[background-color,border-color,color,box-shadow,opacity] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas dark:focus-visible:ring-primary-400 disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none';
 
   const variants = {
     primary:
-      'bg-primary-600 text-white shadow-sm hover:bg-primary-700 hover:shadow-md focus:ring-primary-500 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-400',
+      'border-transparent bg-ink text-ink-inverse shadow-subtle hover:opacity-90',
     secondary:
-      'bg-gray-50 text-gray-700 border border-gray-200 shadow-sm hover:bg-gray-100 hover:border-gray-300 hover:shadow-md focus:ring-gray-500 dark:bg-dark-200 dark:text-dark-700 dark:border-dark-300 dark:hover:bg-dark-300 dark:hover:border-dark-400',
+      'border-line bg-surface-raised text-ink shadow-subtle hover:border-line-strong hover:bg-surface-subtle',
     outline:
-      'border border-gray-300 text-gray-700 bg-white shadow-sm hover:bg-gray-50 hover:border-gray-400 focus:ring-gray-500 dark:border-dark-300 dark:text-dark-700 dark:bg-dark-50 dark:hover:bg-dark-100 dark:hover:border-dark-400',
+      'border-line bg-transparent text-ink hover:border-line-strong hover:bg-surface-subtle',
     ghost:
-      'text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-500 dark:text-dark-500 dark:hover:bg-dark-200 dark:hover:text-dark-800',
+      'border-transparent bg-transparent text-ink-muted shadow-none hover:bg-surface-subtle hover:text-ink',
     danger:
-      'bg-error-500 text-white shadow-sm hover:bg-error-600 hover:shadow-md focus:ring-error-500 dark:bg-error-600 dark:hover:bg-error-700',
+      'border-transparent bg-error-600 text-white shadow-subtle hover:bg-error-700 dark:bg-error-500 dark:text-ink-inverse dark:hover:bg-error-400',
   };
 
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm gap-1.5',
-    md: 'px-4 py-2.5 text-sm gap-2',
-    lg: 'px-6 py-3 text-base gap-2.5',
+    sm: 'h-8 px-3 text-sm gap-1.5',
+    md: 'h-10 px-4 text-sm gap-2',
+    lg: 'h-11 px-5 text-base gap-2.5',
   };
 
   return (
     <button
       className={cn(baseStyles, variants[variant], sizes[size], className)}
       disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...props}
     >
       {loading && (
         <svg
           className='mr-2 h-4 w-4 animate-spin'
+          aria-hidden='true'
           fill='none'
           viewBox='0 0 24 24'
         >

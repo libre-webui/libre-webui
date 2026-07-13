@@ -230,10 +230,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className='pointer-events-none'>
       {/* Centered container matching chat messages width */}
-      <div className='max-w-5xl mx-auto px-3 sm:px-4 md:px-6 w-full pointer-events-auto'>
+      <div className='pointer-events-auto mx-auto w-full max-w-4xl px-4 sm:px-6 md:px-8'>
         {/* Advanced Features Panel */}
         {showAdvanced && (
-          <div className='mb-2 p-3 rounded-2xl bg-white/95 dark:bg-dark-100/95 backdrop-blur-md border border-gray-200/50 dark:border-dark-300/50 shadow-lg'>
+          <div className='mb-2 animate-slide-up rounded-2xl border border-black/[0.07] bg-white/90 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/90'>
             <MediaUpload
               images={images}
               onImagesChange={setImages}
@@ -246,17 +246,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         )}
 
         {/* Main Input Area - Unified Input Bar */}
-        <div className='py-2 sm:py-3'>
+        <div className='pb-3 pt-2 sm:pb-4'>
           <form onSubmit={handleSubmit}>
             {/* Unified Input Container */}
             <div
               className={cn(
-                'flex items-center gap-2 p-2 sm:p-3 rounded-2xl sm:rounded-3xl border transition-all duration-300 ease-out shadow-lg',
-                'bg-white/95 dark:bg-dark-100/95 backdrop-blur-md',
-                'border-gray-200/50 dark:border-dark-300/50',
-                'hover:border-gray-300/70 dark:hover:border-dark-400/70',
-                'focus-within:border-primary-400/70 dark:focus-within:border-primary-500/70',
-                'focus-within:shadow-xl'
+                'flex items-end gap-2 rounded-[1.55rem] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200 sm:p-3',
+                'bg-white/[0.92] dark:bg-dark-200/[0.92] backdrop-blur-xl',
+                'border-black/[0.08] dark:border-white/[0.09]',
+                'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_14px_42px_rgba(15,23,42,0.08)]',
+                'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_52px_rgba(15,23,42,0.11)]'
               )}
             >
               {/* Advanced Features Toggle - Integrated Left */}
@@ -266,21 +265,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 size='sm'
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 className={cn(
-                  'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
-                  'hover:bg-gray-100 dark:hover:bg-dark-200/80',
-                  'transition-all duration-200 touch-manipulation',
-                  'hover:scale-105 active:scale-95',
+                  'h-9 w-9 sm:h-10 sm:w-10 !p-0 rounded-full flex-shrink-0',
+                  'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
+                  'transition-colors duration-150 touch-manipulation',
                   hasAdvancedFeatures &&
                     'text-primary-600 dark:text-primary-400',
-                  showAdvanced && 'bg-gray-100 dark:bg-dark-200/80'
+                  showAdvanced && 'bg-gray-100 dark:bg-dark-300'
                 )}
                 title={t('chat.input.attachments')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: '0',
-                }}
               >
                 {hasAdvancedFeatures ? (
                   <div className='relative flex items-center justify-center'>
@@ -305,22 +297,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder={t('chat.input.placeholder')}
                   disabled={disabled}
-                  className='!border-0 !bg-transparent !shadow-none !p-0 !m-0 !rounded-none !focus:ring-0 !focus:border-0 !focus:shadow-none !focus:bg-transparent min-h-[32px] sm:min-h-[36px] max-h-[120px] resize-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400 focus:outline-none placeholder:text-gray-500 dark:placeholder:text-dark-500 text-base sm:text-sm leading-none touch-manipulation'
+                  className='!m-0 min-h-[40px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-2 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-base leading-relaxed touch-manipulation'
                   rows={1}
-                  style={{
-                    boxShadow: 'none !important',
-                    border: 'none !important',
-                    outline: 'none !important',
-                    padding: '0 !important',
-                    margin: '0 !important',
-                    lineHeight: '1.2 !important',
-                    verticalAlign: 'middle',
-                  }}
                 />
               </div>
 
               {/* Integrated Controls Row */}
-              <div className='flex items-center gap-1 sm:gap-2 flex-shrink-0'>
+              <div className='flex flex-shrink-0 items-center gap-1 sm:gap-2'>
                 {/* Model Selector - Integrated */}
                 {currentSession && models.length > 0 && (
                   <div className='hidden sm:block'>
@@ -333,7 +316,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       }
                       onModelChange={handleModelOrPersonaChange}
                       currentPersona={currentPersona}
-                      className='min-w-[160px] max-w-[240px] border-0 bg-gray-100/80 dark:bg-dark-100/80 rounded-xl text-sm hover:bg-gray-200/80 dark:hover:bg-dark-200/60 transition-colors duration-200'
+                      className='min-w-[150px] max-w-[230px]'
                       compact
                       showImageGen={hasImageGenPlugins}
                     />
@@ -348,12 +331,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     size='sm'
                     onClick={handleStopGeneration}
                     className={cn(
-                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'bg-red-50 dark:bg-red-900/20',
                       'text-red-500 dark:text-red-400',
                       'hover:bg-red-100 dark:hover:bg-red-900/30',
-                      'transition-all duration-200 touch-manipulation',
-                      'hover:scale-105 active:scale-95'
+                      'transition-colors duration-150 touch-manipulation'
                     )}
                     title={t('chat.input.stopGeneration')}
                   >
@@ -366,17 +348,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     size='sm'
                     disabled={!message.trim() || disabled}
                     className={cn(
-                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
-                      'text-gray-400 dark:text-dark-500',
-                      'disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed',
-                      'transition-all duration-200 touch-manipulation',
+                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'bg-gray-100 text-gray-400 dark:bg-dark-300 dark:text-dark-500',
+                      'disabled:cursor-not-allowed disabled:opacity-70',
+                      'transition-colors duration-150 touch-manipulation',
                       message.trim() &&
                         !disabled && [
-                          'bg-primary-500 dark:bg-primary-600',
-                          'text-white dark:text-white',
-                          'hover:bg-primary-600 dark:hover:bg-primary-500',
-                          'shadow-md hover:shadow-lg',
-                          'hover:scale-105 active:scale-95',
+                          'bg-gray-950 text-white hover:bg-gray-800',
+                          'dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
+                          'shadow-sm',
                         ]
                     )}
                     title={t('chat.input.sendMessage')}
@@ -390,7 +370,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
           {/* Mobile-only Model Selector */}
           {currentSession && models.length > 0 && (
-            <div className='sm:hidden mt-3'>
+            <div className='mt-3 sm:hidden'>
               <ModelSelector
                 models={models}
                 selectedModel={
@@ -400,40 +380,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 }
                 onModelChange={handleModelOrPersonaChange}
                 currentPersona={currentPersona}
-                className='w-full rounded-xl bg-gray-100/80 dark:bg-dark-100/80 border-0 transition-colors duration-200'
+                className='w-full'
                 compact
                 showImageGen={hasImageGenPlugins}
               />
             </div>
           )}
 
-          <div className='mt-2 flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-dark-600'>
+          <div className='mt-2 flex min-h-4 items-center justify-center gap-2 text-[10px] text-gray-400 dark:text-dark-500'>
             <DocumentIndicator sessionId={currentSession?.id} />
-            <div className='text-center'>
-              <a
-                href='https://librewebui.org'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='libre-brand underline hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
-                style={{ fontSize: '1.1em', lineHeight: 1 }}
-              >
-                Libre <span>WebUI</span>
-              </a>{' '}
-              <span
-                className='text-xs text-gray-400 dark:text-gray-500'
-                style={{ fontSize: '0.55rem' }}
-              >
-                v{import.meta.env.VITE_APP_VERSION || '0.1.3'}
-              </span>{' '}
-              <span className='text-gray-300 dark:text-gray-600 opacity-50'>
-                •
-              </span>{' '}
-              <span
-                className='text-gray-400 dark:text-gray-500'
-                style={{ fontSize: '0.55rem' }}
-              >
-                {t('chat.footer.disclaimer')}
-              </span>
+            <div className='text-center leading-relaxed'>
+              <span>{t('chat.footer.disclaimer')}</span>
               {hasAdvancedFeatures && (
                 <span className='ml-2 text-primary-600 dark:text-primary-400'>
                   •{' '}

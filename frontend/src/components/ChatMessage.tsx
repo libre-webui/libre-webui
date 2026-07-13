@@ -27,7 +27,6 @@ import { formatTimestamp, cn, parseThinkingContent } from '@/utils';
 import { parseArtifacts } from '@/utils/artifactParser';
 import { ttsApi } from '@/utils/api';
 import {
-  User,
   Settings,
   Edit3,
   Save,
@@ -243,86 +242,47 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   return (
     <div
       className={cn(
-        'flex transition-colors group my-2',
+        'group flex py-3 transition-colors sm:py-4',
         isUser ? 'justify-end' : 'justify-start',
         className
       )}
     >
       <div
         className={cn(
-          'flex gap-3 sm:gap-4',
-          isUser
-            ? 'flex-row-reverse max-w-[85%] sm:max-w-[75%]'
-            : isSystem
-              ? 'w-full'
-              : 'max-w-[85%] sm:max-w-[75%]'
+          'flex min-w-0',
+          isUser ? 'max-w-[88%] sm:max-w-[72%]' : isSystem ? 'w-full' : 'w-full'
         )}
       >
-        {/* Avatar - hidden for system messages */}
-        {!isSystem && (
-          <div
-            className={cn(
-              'flex shrink-0 items-center justify-center shadow-sm overflow-hidden mt-1',
-              isUser
-                ? 'h-8 w-8 rounded-full bg-primary-600 text-white'
-                : currentPersona?.avatar
-                  ? 'h-8 w-8 rounded-full bg-white dark:bg-dark-100'
-                  : 'h-8 px-2 rounded-full bg-white dark:bg-dark-100'
-            )}
-          >
-            {isUser ? (
-              user?.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={user.username}
-                  className='w-full h-full object-cover'
-                />
-              ) : (
-                <User className='h-4 w-4' />
-              )
-            ) : currentPersona?.avatar ? (
-              <img
-                src={currentPersona.avatar}
-                alt={currentPersona.name || 'Assistant'}
-                className='w-full h-full object-cover'
-              />
-            ) : (
-              <span className='libre-brand text-xs text-gray-700 dark:text-gray-200'>
-                Libre
-              </span>
-            )}
-          </div>
-        )}
         {/* Content */}
         <div
           className={cn(
-            'flex-1 min-w-0 rounded-2xl sm:rounded-3xl p-4 sm:p-5',
+            'min-w-0 flex-1',
             isUser
-              ? 'bg-primary-600/90 dark:bg-primary-700/90 text-white'
+              ? 'rounded-[1.35rem] rounded-br-md border border-black/[0.06] bg-gray-900 px-4 py-3 text-white shadow-sm dark:border-white/[0.07] dark:bg-dark-300'
               : isSystem
-                ? 'bg-transparent p-2 py-3'
-                : 'bg-white/95 dark:bg-dark-100/95 backdrop-blur-md shadow-sm border border-gray-200/50 dark:border-dark-300/50'
+                ? 'bg-transparent py-2'
+                : 'bg-transparent py-1'
           )}
         >
           {/* Header - hide for system messages as they have their own label */}
           {!isSystem && (
             <div
               className={cn(
-                'flex items-center gap-3 mb-2',
-                isUser && 'flex-row-reverse'
+                'mb-2 flex items-center gap-2.5',
+                isUser && 'justify-end'
               )}
             >
               <span
                 className={cn(
-                  'text-sm font-semibold',
-                  isUser ? 'text-white/90' : 'text-gray-900 dark:text-dark-800'
+                  'text-[11px] font-semibold uppercase tracking-[0.1em]',
+                  isUser ? 'text-white/70' : 'text-gray-700 dark:text-dark-700'
                 )}
               >
                 {getDisplayName()}
               </span>
               {message.model && !isUser && currentPersona?.name && (
                 <span
-                  className='text-xs text-gray-500 dark:text-dark-600 bg-gray-100 dark:bg-dark-200 px-2 py-0.5 rounded-full truncate max-w-32 sm:max-w-48'
+                  className='max-w-32 truncate rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500 dark:bg-dark-200 dark:text-dark-600 sm:max-w-48'
                   title={message.model}
                 >
                   {message.model}
@@ -330,72 +290,29 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               )}
               <span
                 className={cn(
-                  'text-xs',
-                  isUser ? 'text-white/60' : 'text-gray-400 dark:text-dark-500'
+                  'text-[10px] tabular-nums',
+                  isUser ? 'text-white/45' : 'text-gray-400 dark:text-dark-500'
                 )}
               >
                 {formatTimestamp(message.timestamp)}
               </span>
-              {/* TTS Button for assistant messages */}
-              {!isUser && !isSystem && !isStreaming && parsedContent && (
-                <TTSButton
-                  text={parsedContent}
-                  size='sm'
-                  className={cn(
-                    'transition-opacity',
-                    isAutoPlaying
-                      ? 'opacity-100 text-primary-600 dark:text-primary-400'
-                      : 'opacity-0 group-hover:opacity-100'
-                  )}
-                />
-              )}
-              {/* Copy Button for all messages */}
-              {!isSystem && !isStreaming && (
-                <button
-                  onClick={handleCopyMessage}
-                  className='p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-200 transition-opacity opacity-0 group-hover:opacity-100'
-                  title={
-                    isCopied
-                      ? t('chatMessage.copied')
-                      : t('chatMessage.copyMessage')
-                  }
-                >
-                  {isCopied ? (
-                    <Check className='h-3.5 w-3.5 text-green-500 dark:text-green-400' />
-                  ) : (
-                    <Copy className='h-3.5 w-3.5 text-gray-500 dark:text-gray-400' />
-                  )}
-                </button>
-              )}
-              {/* Regenerate Button for last assistant message */}
-              {!isUser &&
-                !isSystem &&
-                !isStreaming &&
-                isLastAssistantMessage &&
-                onRegenerate && (
-                  <button
-                    onClick={onRegenerate}
-                    className='p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-200 transition-opacity opacity-0 group-hover:opacity-100'
-                    title={t('chatMessage.regenerateResponse')}
-                  >
-                    <RefreshCw className='h-3.5 w-3.5 text-gray-500 dark:text-gray-400' />
-                  </button>
-                )}
             </div>
           )}
 
           <div
             className={cn(
-              isUser ? 'text-white' : 'text-gray-700 dark:text-dark-700'
+              isUser
+                ? 'text-[15px] text-white'
+                : 'text-[15px] leading-7 text-gray-800 dark:text-dark-800 sm:text-base'
             )}
           >
             {/* Display images if present (for user messages) */}
             {message.images && message.images.length > 0 && (
-              <div className='mb-3 grid grid-cols-2 sm:grid-cols-3 gap-2 max-w-lg'>
+              <div className='mb-3 grid max-w-lg grid-cols-2 gap-2 sm:grid-cols-3'>
                 {message.images.map((image, index) => (
                   <div
                     key={index}
-                    className='aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                    className='aspect-square overflow-hidden rounded-xl border border-white/10 bg-gray-100 dark:bg-gray-800'
                   >
                     <img
                       src={image}
@@ -413,8 +330,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 {message.content}
               </p>
             ) : isSystem ? (
-              <div className='bg-gray-50/30 dark:bg-dark-50/30 rounded-md p-2 border border-gray-100/50 dark:border-dark-200/50 relative z-0'>
-                <div className='text-xs font-medium mb-1 text-gray-500 dark:text-gray-400 flex items-center justify-between'>
+              <div className='relative z-0 rounded-2xl border border-black/[0.06] bg-white/55 p-3 dark:border-white/[0.06] dark:bg-dark-200/45'>
+                <div className='mb-2 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-dark-500'>
                   <div className='flex items-center gap-1'>
                     <Settings className='h-2.5 w-2.5 opacity-50' />
                     {t('chatMessage.system')}
@@ -425,7 +342,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                         <button
                           onClick={handleSaveSystemMessage}
                           disabled={isSaving}
-                          className='p-1 hover:bg-gray-100 dark:hover:bg-dark-200 rounded transition-colors disabled:opacity-50'
+                          className='rounded-lg p-1.5 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-dark-300'
                           title={t('chatMessage.saveChanges')}
                         >
                           <Save className='h-3 w-3 text-green-600 dark:text-green-400' />
@@ -433,7 +350,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                         <button
                           onClick={handleCancelEdit}
                           disabled={isSaving}
-                          className='p-1 hover:bg-gray-100 dark:hover:bg-dark-200 rounded transition-colors disabled:opacity-50'
+                          className='rounded-lg p-1.5 transition-colors hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-dark-300'
                           title={t('chatMessage.cancelEditing')}
                         >
                           <X className='h-3 w-3 text-red-600 dark:text-red-400' />
@@ -442,7 +359,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     ) : (
                       <button
                         onClick={handleEditSystemMessage}
-                        className='p-1 hover:bg-gray-100 dark:hover:bg-dark-200 rounded transition-colors'
+                        className='rounded-lg p-1.5 transition-colors hover:bg-gray-100 dark:hover:bg-dark-300'
                         title={t('chatMessage.editSystemMessage')}
                       >
                         <Edit3 className='h-3 w-3 text-gray-600 dark:text-gray-400' />
@@ -454,13 +371,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   <textarea
                     value={editedContent}
                     onChange={e => setEditedContent(e.target.value)}
-                    className='w-full min-h-[100px] p-3 text-sm text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-dark-50 border border-gray-200 dark:border-dark-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent'
+                    className='min-h-[100px] w-full resize-none rounded-xl border border-black/[0.08] bg-white p-3 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-white/[0.08] dark:bg-dark-100 dark:text-dark-900 dark:focus:ring-primary-400'
                     placeholder={t('chatMessage.systemMessagePlaceholder')}
                     disabled={isSaving}
                   />
                 ) : (
                   <div>
-                    <p className='whitespace-pre-wrap leading-relaxed text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='whitespace-pre-wrap text-xs leading-relaxed text-gray-500 dark:text-dark-600'>
                       {isSystemMessageExpanded
                         ? message.content
                         : truncateSystemMessage(message.content)}
@@ -470,7 +387,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                         onClick={() =>
                           setIsSystemMessageExpanded(!isSystemMessageExpanded)
                         }
-                        className='mt-1 flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+                        className='mt-2 flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-gray-900 dark:text-dark-500 dark:hover:text-dark-900'
                       >
                         {isSystemMessageExpanded ? (
                           <>
@@ -492,10 +409,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <div className='relative'>
                 {/* Collapsible Thinking/CoT Section */}
                 {thinkingContent && (
-                  <div className='mb-3'>
+                  <div className='mb-4 border-l border-gray-200 pl-3 dark:border-dark-300'>
                     <button
                       onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
-                      className='flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors'
+                      className='flex items-center gap-2 text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-dark-600 dark:hover:text-dark-900'
                     >
                       <Brain className='h-4 w-4' />
                       <span className='font-medium'>
@@ -508,8 +425,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                       )}
                     </button>
                     {isThinkingExpanded && (
-                      <div className='mt-2 p-3 bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-300'>
-                        <p className='text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap leading-relaxed'>
+                      <div className='mt-3 rounded-xl bg-gray-100/60 p-3 dark:bg-dark-200/60'>
+                        <p className='whitespace-pre-wrap text-sm leading-relaxed text-gray-600 dark:text-dark-700'>
                           {thinkingContent}
                         </p>
                       </div>
@@ -521,7 +438,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   isStreaming={isStreaming}
                 />
                 {isStreaming && !parsedContent.includes('```') && (
-                  <div className='inline-block w-2 h-5 bg-primary-500 animate-pulse ml-1 rounded-sm' />
+                  <div className='ml-1 inline-block h-5 w-1 animate-pulse rounded-full bg-primary-500' />
                 )}
               </div>
             )}
@@ -539,6 +456,59 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 <GenerationStats statistics={message.statistics} />
               </div>
             )}
+
+            {/* Persistent, quiet action row for completed messages */}
+            {!isSystem && !isStreaming && (
+              <div
+                className={cn(
+                  'mt-3 flex items-center gap-1',
+                  isUser
+                    ? 'justify-end border-t border-white/10 pt-2 text-white/65'
+                    : 'text-gray-400 dark:text-dark-500'
+                )}
+              >
+                {!isUser && parsedContent && (
+                  <TTSButton
+                    text={parsedContent}
+                    size='sm'
+                    className={cn(
+                      'transition-colors',
+                      isAutoPlaying &&
+                        'bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-400'
+                    )}
+                  />
+                )}
+                <button
+                  onClick={handleCopyMessage}
+                  className={cn(
+                    'flex h-8 w-8 items-center justify-center rounded-full transition-colors',
+                    isUser
+                      ? 'hover:bg-white/10 hover:text-white'
+                      : 'hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-dark-200 dark:hover:text-dark-800'
+                  )}
+                  title={
+                    isCopied
+                      ? t('chatMessage.copied')
+                      : t('chatMessage.copyMessage')
+                  }
+                >
+                  {isCopied ? (
+                    <Check className='h-3.5 w-3.5 text-green-400' />
+                  ) : (
+                    <Copy className='h-3.5 w-3.5' />
+                  )}
+                </button>
+                {!isUser && isLastAssistantMessage && onRegenerate && (
+                  <button
+                    onClick={onRegenerate}
+                    className='flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-gray-100 hover:text-gray-800 dark:hover:bg-dark-200 dark:hover:text-dark-800'
+                    title={t('chatMessage.regenerateResponse')}
+                  >
+                    <RefreshCw className='h-3.5 w-3.5' />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -547,11 +517,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       {lightboxImage &&
         createPortal(
           <div
-            className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm'
+            role='dialog'
+            aria-modal='true'
+            aria-label={t('chatMessage.fullSizeImage')}
+            className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/85 p-6 backdrop-blur-md'
             onClick={() => setLightboxImage(null)}
           >
             <button
-              className='absolute top-6 right-6 p-3 bg-white/20 hover:bg-white/40 rounded-full text-white transition-all shadow-lg border border-white/30'
+              className='absolute right-6 top-6 rounded-full border border-white/15 bg-white/10 p-3 text-white transition-colors hover:bg-white/20'
               onClick={e => {
                 e.stopPropagation();
                 setLightboxImage(null);
@@ -562,7 +535,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             <img
               src={lightboxImage}
               alt={t('chatMessage.fullSizeImage')}
-              className='max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl'
+              className='max-h-[90vh] max-w-[90vw] rounded-2xl object-contain shadow-2xl'
               onClick={e => e.stopPropagation()}
             />
           </div>,

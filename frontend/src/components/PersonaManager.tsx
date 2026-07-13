@@ -149,50 +149,30 @@ export const PersonaManager: React.FC = () => {
 
   return (
     <div className='space-y-6'>
-      {/* Header */}
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-2xl font-bold text-gray-900 dark:text-dark-800'>
-            {t('personaManager.title')}
-          </h1>
-          <p className='text-gray-600 dark:text-dark-600 mt-1'>
-            {t('personaManager.subtitle')}
-          </p>
+      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='text-sm text-gray-500 dark:text-dark-500'>
+          <span className='font-medium text-gray-900 dark:text-dark-800'>
+            {t('personaManager.stats.title')}
+          </span>{' '}
+          · {t('personaManager.stats.count', { count: personas.length })}
         </div>
-        <div className='flex gap-3'>
+        <div className='flex flex-wrap gap-2'>
           <Button
             onClick={() => setShowImportExport(true)}
             variant='outline'
-            className='px-4 py-2'
+            className='px-4'
           >
             {t('personaManager.importExport')}
           </Button>
-          <Button onClick={handleCreatePersona} className='px-4 py-2'>
+          <Button onClick={handleCreatePersona} className='px-4'>
             {t('personaManager.createButton')}
           </Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className='bg-white dark:bg-dark-100 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-dark-300'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-dark-800'>
-              {t('personaManager.stats.title')}
-            </h3>
-            <p className='text-gray-600 dark:text-dark-600'>
-              {t('personaManager.stats.count', { count: personas.length })}
-            </p>
-          </div>
-          <div className='text-3xl font-bold text-gray-900 dark:text-dark-800'>
-            {personas.length}
-          </div>
-        </div>
-      </div>
-
       {/* Personas Grid */}
       {personas.length === 0 ? (
-        <div className='bg-white dark:bg-dark-100 rounded-lg p-12 shadow-sm border border-gray-200 dark:border-dark-300 text-center'>
+        <div className='rounded-2xl border border-dashed border-gray-300 bg-white/40 p-12 text-center dark:border-white/15 dark:bg-white/[0.025]'>
           <div className='text-gray-400 dark:text-dark-500 mb-4'>
             <svg
               className='w-16 h-16 mx-auto'
@@ -220,7 +200,7 @@ export const PersonaManager: React.FC = () => {
           </Button>
         </div>
       ) : (
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
           {personas.map(persona => (
             <PersonaCard
               key={persona.id}

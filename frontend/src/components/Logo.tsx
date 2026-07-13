@@ -29,9 +29,9 @@ interface LogoProps {
 // everywhere it appears. "WebUI" keeps the same type size as "Libre"; the
 // lighter weight is the only distinction.
 const LIBRE_SIZE: Record<NonNullable<LogoProps['size']>, string> = {
-  sm: 'text-xl',
-  md: 'text-3xl',
-  lg: 'text-5xl',
+  sm: 'text-[1.0625rem] leading-none',
+  md: 'text-[1.625rem] leading-none',
+  lg: 'text-[2.5rem] leading-none',
 };
 
 export const Logo: React.FC<LogoProps> = ({
@@ -41,14 +41,16 @@ export const Logo: React.FC<LogoProps> = ({
 }) => {
   return (
     <span
-      className={cn('libre-brand', LIBRE_SIZE[size], className)}
-      style={{ fontWeight: 700, letterSpacing: 0 }}
+      dir='ltr'
+      className={cn(
+        'libre-brand inline-flex items-baseline whitespace-nowrap',
+        LIBRE_SIZE[size],
+        className
+      )}
     >
       Libre
       {wordmark && (
-        <span className='ml-1.5' style={{ fontWeight: 400 }}>
-          WebUI
-        </span>
+        <span className='ms-1 font-normal tracking-[-0.035em]'>WebUI</span>
       )}
     </span>
   );

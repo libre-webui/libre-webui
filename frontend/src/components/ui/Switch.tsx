@@ -16,6 +16,7 @@
  */
 
 import React from 'react';
+import { cn } from '@/utils';
 
 interface SwitchProps {
   checked: boolean;
@@ -35,29 +36,36 @@ export const Switch: React.FC<SwitchProps> = ({
       type='button'
       role='switch'
       aria-checked={checked}
+      aria-disabled={disabled || undefined}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`
-        relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-        ${
-          checked
-            ? 'bg-blue-600 dark:bg-blue-500'
-            : 'bg-gray-200 dark:bg-gray-700'
-        }
-        ${
-          disabled
-            ? 'opacity-50 cursor-not-allowed'
-            : 'cursor-pointer hover:bg-opacity-80'
-        }
-        ${className}
-      `}
+      className={cn(
+        'relative inline-flex h-6 w-11 flex-shrink-0 items-center justify-center rounded-full bg-transparent',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas dark:focus-visible:ring-primary-400',
+        disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
+        className
+      )}
     >
       <span
-        className={`
-          inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-          ${checked ? 'translate-x-6' : 'translate-x-1'}
-        `}
-      />
+        aria-hidden='true'
+        className={cn(
+          'relative inline-flex h-6 w-11 items-center rounded-full border shadow-inner',
+          'transition-[background-color,border-color] duration-150 ease-out motion-reduce:transition-none',
+          checked
+            ? 'border-primary-600/70 bg-primary-600'
+            : 'border-line-strong bg-surface-subtle'
+        )}
+      >
+        <span
+          className={cn(
+            'inline-block h-4 w-4 rounded-full bg-white shadow-subtle ring-1 ring-black/5',
+            'transform transition-transform duration-150 ease-out motion-reduce:transition-none',
+            checked
+              ? 'translate-x-6 rtl:-translate-x-6'
+              : 'translate-x-1 rtl:-translate-x-1'
+          )}
+        />
+      </span>
     </button>
   );
 };

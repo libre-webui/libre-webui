@@ -28,7 +28,7 @@ import { MessageBranch } from '@/components/MessageBranch';
 import { ChatMessage as ChatMessageType, ToolActivity } from '@/types';
 import { ToolActivityIndicator } from '@/components/ToolActivityIndicator';
 import { cn } from '@/utils';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, Sparkles } from 'lucide-react';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('components:chat-messages');
@@ -231,16 +231,18 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     return (
       <div
         className={cn(
-          'flex-1 flex items-center justify-center p-4 sm:p-8',
+          'flex-1 flex items-center justify-center p-6 sm:p-10',
           className
         )}
       >
-        <div className='text-center text-gray-500 dark:text-dark-600 max-w-md'>
-          <div className='text-5xl sm:text-7xl mb-4 sm:mb-6 opacity-60'>💬</div>
-          <h3 className='text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-gray-700 dark:text-dark-700'>
+        <div className='max-w-sm text-center text-gray-500 dark:text-dark-600'>
+          <div className='mx-auto mb-5 flex h-11 w-11 items-center justify-center rounded-2xl border border-black/[0.06] bg-white/70 text-gray-500 shadow-sm dark:border-white/[0.07] dark:bg-dark-200/70 dark:text-dark-600'>
+            <Sparkles className='h-4 w-4' />
+          </div>
+          <h3 className='mb-2 text-lg font-medium tracking-[-0.02em] text-gray-900 dark:text-dark-900 sm:text-xl'>
             {t('chatMessage.startConversation')}
           </h3>
-          <p className='text-sm leading-relaxed px-4'>
+          <p className='px-4 text-sm leading-relaxed'>
             {t('chatMessage.startConversationDescription')}
           </p>
         </div>
@@ -282,7 +284,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         } as React.CSSProperties
       }
     >
-      <div className='max-w-5xl mx-auto px-3 sm:px-4 md:px-6 w-full min-w-0'>
+      <div className='mx-auto w-full min-w-0 max-w-4xl px-4 sm:px-6 md:px-8'>
         {messageGroups.map((group, groupIndex) => {
           const isLastAssistantGroup = groupIndex === lastAssistantGroupIndex;
           // Check if any message in this group is being streamed
@@ -307,7 +309,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                 isStreaming={isThisMessageStreaming}
                 isLastAssistantMessage={isLastAssistantGroup}
                 onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
-                className={groupIndex === 0 ? 'mt-3 sm:mt-4 md:mt-6' : ''}
+                className={groupIndex === 0 ? 'mt-5 sm:mt-7' : ''}
               />
             );
           }
@@ -323,17 +325,14 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
               isLastAssistantMessage={isLastAssistantGroup}
               onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
               onSelectBranch={onSelectBranch}
-              className={groupIndex === 0 ? 'mt-3 sm:mt-4 md:mt-6' : ''}
+              className={groupIndex === 0 ? 'mt-5 sm:mt-7' : ''}
             />
           );
         })}
         {isStreaming && toolActivities.length > 0 && (
-          <ToolActivityIndicator
-            tools={toolActivities}
-            className='ml-10 sm:ml-12'
-          />
+          <ToolActivityIndicator tools={toolActivities} className='px-0' />
         )}
-        <div ref={messagesEndRef} className='h-3 sm:h-4 md:h-6' />
+        <div ref={messagesEndRef} className='h-4 sm:h-6' />
       </div>
 
       {/* Scroll to bottom button */}
@@ -343,15 +342,14 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
           className={cn(
             'absolute bottom-4 left-1/2 -translate-x-1/2 z-10',
             'flex items-center justify-center gap-1.5',
-            'px-3 py-2 rounded-full',
-            'bg-white/95 dark:bg-dark-100/95',
-            'border border-gray-200/50 dark:border-dark-300/50',
-            'shadow-lg backdrop-blur-sm',
+            'px-3.5 py-2 rounded-full',
+            'bg-white/90 dark:bg-dark-200/90',
+            'border border-black/[0.07] dark:border-white/[0.08]',
+            'shadow-[0_8px_28px_rgba(15,23,42,0.12)] backdrop-blur-xl',
             'text-gray-600 dark:text-dark-600',
-            'hover:bg-gray-50 dark:hover:bg-dark-200',
+            'hover:bg-white dark:hover:bg-dark-200',
             'hover:text-gray-900 dark:hover:text-dark-800',
-            'transition-all duration-200',
-            'hover:shadow-xl hover:scale-105 active:scale-95'
+            'transition-colors duration-150'
           )}
           title={t('chatMessage.scrollToBottom')}
         >
