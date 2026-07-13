@@ -17,23 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.13.0] - 2026-07-13
 
-Libre WebUI 0.13.0 is the agent integration release. It replaces the previous OpenClaw bridge with a first-class Libre Claw control surface, giving admins a local agent dashboard for durable runs, approvals, automations, usage, and daemon configuration. The release also modernizes the application interface across the board and adds varied new chat prompts.
+Libre WebUI 0.13.0 is a creator-focused interface release. It brings a quieter, warm-neutral design system to the full workspace and gives every new chat a broader range of localized starting prompts, making the blank canvas feel more considered and less repetitive.
 
 ### ✨ New Features
 
-- Added a first-class Libre Claw agent surface with daemon status, dashboard access, and a dedicated `/agents` route.
-- Added WebUI run management for Libre Claw chat and goal-mode runs, including event timelines, cancellation, provider/model overrides, and tool-call approvals.
-- Added automation controls for Libre Claw schedules, including create, update, run now, pause, resume, and delete actions.
-- Added varied new chat prompts to give users a broader selection of starting points.
-- Modernized the application interface with a refreshed design system, including updated UI components (Button, Card, Input, Select, Switch, Textarea), a new PageShell layout component, and restyled pages across Chat, Gallery, Models, Personas, and User Management.
+- Added 11 creator-oriented welcome prompts that rotate as users start new chats, alongside the existing personalized time-of-day greeting.
+- Persisted welcome-prompt rotation for the current session, with an in-memory fallback when browser storage is unavailable.
 
 ### 🔧 Improvements
 
-- Completed Libre Claw translations across all 25 supported locales instead of falling back to English.
+- Reworked the application around a cohesive warm-neutral visual system with editorial typography, quieter surfaces, hairline separators, neutral primary actions, and restrained motion in both light and dark modes.
+- Refreshed the chat experience, including the welcome canvas, composer, messages, branch controls, model selection, sidebar, and image-generation workflow.
+- Standardized Gallery, Models, Personas, User Management, and Libre Claw with shared `PageShell` and `PageHeader` layouts, while aligning settings, authentication, onboarding, and management surfaces with the same component language.
+- Expanded the new-chat prompt library across all 25 supported locales and added end-to-end coverage for prompt rotation.
+- Removed third-party font downloads in favor of privacy-friendly system font stacks, and improved reduced-motion and mobile input behavior.
 
 ### 📚 Documentation
 
-- Updated DESIGN.md to reflect the new architecture and interface direction.
+- Updated `DESIGN.md` with the warm-neutral palette, semantic surface and ink roles, editorial typography, responsive layout guidance, and motion principles used by the new interface.
 
 ## [0.12.1] - 2026-07-08
 
