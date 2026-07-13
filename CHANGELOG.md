@@ -15,6 +15,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.13.0] - 2026-07-13
+
+Libre WebUI 0.13.0 is the agent integration release. It replaces the previous OpenClaw bridge with a first-class Libre Claw control surface, giving admins a local agent dashboard for durable runs, approvals, automations, usage, and daemon configuration. The release also modernizes the application interface across the board and adds varied new chat prompts.
+
+### ✨ New Features
+
+- Added a first-class Libre Claw agent surface with daemon status, dashboard access, and a dedicated `/agents` route.
+- Added WebUI run management for Libre Claw chat and goal-mode runs, including event timelines, cancellation, provider/model overrides, and tool-call approvals.
+- Added automation controls for Libre Claw schedules, including create, update, run now, pause, resume, and delete actions.
+- Added varied new chat prompts to give users a broader selection of starting points.
+- Modernized the application interface with a refreshed design system, including updated UI components (Button, Card, Input, Select, Switch, Textarea), a new PageShell layout component, and restyled pages across Chat, Gallery, Models, Personas, and User Management.
+
+### 🔧 Improvements
+
+- Completed Libre Claw translations across all 25 supported locales instead of falling back to English.
+
+### 📚 Documentation
+
+- Updated DESIGN.md to reflect the new architecture and interface direction.
+
 ## [0.12.1] - 2026-07-08
 
 Libre WebUI 0.12.1 introduces a refreshed brand identity alongside verified provider catalog updates and significant repository maintenance. This release refreshes 14 dependencies to keep the build environment secure and modern, while streamlining internal release automation and removing obsolete scripts and documentation.
