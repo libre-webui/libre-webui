@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Apa yang bisa saya bantu hari ini?",
-      "helpTonight": "Apa yang bisa saya bantu malam ini?"
+      "helpTonight": "Apa yang bisa saya bantu malam ini?",
+      "variety": {
+        "create": {
+          "title": "Kita mau membuat apa?",
+          "subtitle": "Mulai dari sebuah gagasan, sketsa, atau masalah yang tak kunjung terpecahkan."
+        },
+        "explore": {
+          "title": "Mulai dari mana?",
+          "subtitle": "Bawa pertanyaan yang terus terlintas di benak Anda."
+        },
+        "imagine": {
+          "title": "Apa yang Anda bayangkan?",
+          "subtitle": "Kita bisa membentuknya bersama."
+        },
+        "focus": {
+          "title": "Apa yang layak mendapat perhatian Anda?",
+          "subtitle": "Mari perjelas langkah berikutnya."
+        },
+        "untangle": {
+          "title": "Apa yang terasa kusut?",
+          "subtitle": "Ceritakan versi yang masih berantakan dulu."
+        },
+        "momentum": {
+          "title": "Mulai kapan pun Anda siap.",
+          "subtitle": "Lanjutkan ide, rencana, atau percakapan yang sempat tertunda."
+        },
+        "open": {
+          "title": "Apa yang sedang Anda pikirkan?",
+          "subtitle": "Gagasan kecil atau proyek ambisius, keduanya bisa."
+        },
+        "challenge": {
+          "title": "Apa yang perlu kita pecahkan?",
+          "subtitle": "Ceritakan bagian yang masih belum berjalan."
+        },
+        "draft": {
+          "title": "Mari mulai dari mana saja.",
+          "subtitle": "Belum harus sempurna."
+        },
+        "possibility": {
+          "title": "Ini bisa menjadi apa?",
+          "subtitle": "Tunjukkan bahan mentahnya."
+        },
+        "unexpected": {
+          "title": "Mari buat sesuatu yang tak terduga.",
+          "subtitle": "Beri saya batasan, suasana, atau gagasan yang baru setengah jadi."
+        }
+      }
     },
     "input": {
       "placeholder": "Kirim pesan",

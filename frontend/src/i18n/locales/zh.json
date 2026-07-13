@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "今天我能帮您什么？",
-      "helpTonight": "今晚我能帮您什么？"
+      "helpTonight": "今晚我能帮您什么？",
+      "variety": {
+        "create": {
+          "title": "我们来做点什么？",
+          "subtitle": "从一个念头、一张草图，或一个迟迟没解决的问题开始。"
+        },
+        "explore": {
+          "title": "从哪里开始？",
+          "subtitle": "带上那个总让你反复思考的问题。"
+        },
+        "imagine": {
+          "title": "你在想象什么？",
+          "subtitle": "我们可以一起让它成形。"
+        },
+        "focus": {
+          "title": "什么值得你关注？",
+          "subtitle": "让下一步清晰起来。"
+        },
+        "untangle": {
+          "title": "哪里理不清？",
+          "subtitle": "先把最混乱的版本告诉我。"
+        },
+        "momentum": {
+          "title": "随时可以开始。",
+          "subtitle": "继续一个想法、一份计划，或一段没完成的思路。"
+        },
+        "open": {
+          "title": "你在想什么？",
+          "subtitle": "小小的念头或宏大的项目，都可以。"
+        },
+        "challenge": {
+          "title": "我们要解决什么？",
+          "subtitle": "告诉我哪里还没有达到预期。"
+        },
+        "draft": {
+          "title": "先从某处开始吧。",
+          "subtitle": "不必一开始就很完善。"
+        },
+        "possibility": {
+          "title": "它可能变成什么？",
+          "subtitle": "先让我看看最原始的素材。"
+        },
+        "unexpected": {
+          "title": "做点意想不到的东西。",
+          "subtitle": "给我一个限制、一种氛围，或一个尚未成形的想法。"
+        }
+      }
     },
     "input": {
       "placeholder": "发送消息",

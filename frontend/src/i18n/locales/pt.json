@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Como posso ajudar você hoje?",
-      "helpTonight": "Como posso ajudar você esta noite?"
+      "helpTonight": "Como posso ajudar você esta noite?",
+      "variety": {
+        "create": {
+          "title": "O que vamos criar?",
+          "subtitle": "Comece com um pensamento, um rascunho ou um problema insistente."
+        },
+        "explore": {
+          "title": "Por onde começamos?",
+          "subtitle": "Traga aquela pergunta que não sai da sua cabeça."
+        },
+        "imagine": {
+          "title": "O que você está imaginando?",
+          "subtitle": "Podemos dar forma a isso juntos."
+        },
+        "focus": {
+          "title": "O que merece sua atenção?",
+          "subtitle": "Vamos deixar claro o próximo passo."
+        },
+        "untangle": {
+          "title": "Onde está o nó?",
+          "subtitle": "Comece pela versão bagunçada."
+        },
+        "momentum": {
+          "title": "Quando você estiver pronto.",
+          "subtitle": "Retome uma ideia, um plano ou algo que ficou pela metade."
+        },
+        "open": {
+          "title": "O que está passando pela sua cabeça?",
+          "subtitle": "Uma pequena ideia ou um projeto ambicioso. Os dois funcionam."
+        },
+        "challenge": {
+          "title": "O que vamos resolver?",
+          "subtitle": "Conte o que ainda não está funcionando."
+        },
+        "draft": {
+          "title": "Vamos começar por algum lugar.",
+          "subtitle": "Não precisa estar perfeito."
+        },
+        "possibility": {
+          "title": "No que isso poderia se transformar?",
+          "subtitle": "Mostre o material bruto."
+        },
+        "unexpected": {
+          "title": "Vamos criar algo inesperado.",
+          "subtitle": "Dê uma restrição, um clima ou uma ideia ainda pela metade."
+        }
+      }
     },
     "input": {
       "placeholder": "Envie uma mensagem",

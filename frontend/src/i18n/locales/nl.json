@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Waarmee kan ik u vandaag helpen?",
-      "helpTonight": "Waarmee kan ik u vanavond helpen?"
+      "helpTonight": "Waarmee kan ik u vanavond helpen?",
+      "variety": {
+        "create": {
+          "title": "Wat zullen we maken?",
+          "subtitle": "Begin met een gedachte, een schets of een hardnekkig probleem."
+        },
+        "explore": {
+          "title": "Waar zullen we beginnen?",
+          "subtitle": "Breng de vraag mee waar u steeds op terugkomt."
+        },
+        "imagine": {
+          "title": "Wat stelt u zich voor?",
+          "subtitle": "We kunnen het samen vormgeven."
+        },
+        "focus": {
+          "title": "Wat verdient uw aandacht?",
+          "subtitle": "Laten we de volgende stap helder maken."
+        },
+        "untangle": {
+          "title": "Waar zit de knoop?",
+          "subtitle": "Geef me eerst de ongeordende versie."
+        },
+        "momentum": {
+          "title": "Klaar wanneer u dat bent.",
+          "subtitle": "Pak een idee, plan of onafgemaakt spoor weer op."
+        },
+        "open": {
+          "title": "Waar denkt u aan?",
+          "subtitle": "Een kleine gedachte of een ambitieus project. Allebei goed."
+        },
+        "challenge": {
+          "title": "Wat gaan we oplossen?",
+          "subtitle": "Vertel me wat nog niet werkt."
+        },
+        "draft": {
+          "title": "Laten we ergens beginnen.",
+          "subtitle": "Het hoeft nog niet perfect te zijn."
+        },
+        "possibility": {
+          "title": "Wat zou dit kunnen worden?",
+          "subtitle": "Laat me het ruwe materiaal zien."
+        },
+        "unexpected": {
+          "title": "Maak iets onverwachts.",
+          "subtitle": "Geef me een beperking, een sfeer of een halfgevormd idee."
+        }
+      }
     },
     "input": {
       "placeholder": "Stuur een bericht",

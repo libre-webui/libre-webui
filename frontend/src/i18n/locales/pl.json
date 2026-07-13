@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "W czym mogę dziś pomóc?",
-      "helpTonight": "W czym mogę dziś wieczorem pomóc?"
+      "helpTonight": "W czym mogę dziś wieczorem pomóc?",
+      "variety": {
+        "create": {
+          "title": "Co stworzymy?",
+          "subtitle": "Zacznij od myśli, szkicu albo upartego problemu."
+        },
+        "explore": {
+          "title": "Od czego zaczniemy?",
+          "subtitle": "Przynieś pytanie, które wciąż do ciebie wraca."
+        },
+        "imagine": {
+          "title": "Co sobie wyobrażasz?",
+          "subtitle": "Możemy nadać temu kształt razem."
+        },
+        "focus": {
+          "title": "Co zasługuje na twoją uwagę?",
+          "subtitle": "Ustalmy jasno kolejny krok."
+        },
+        "untangle": {
+          "title": "Co trzeba rozplątać?",
+          "subtitle": "Najpierw pokaż mi nieuporządkowaną wersję."
+        },
+        "momentum": {
+          "title": "Możemy ruszać, kiedy zechcesz.",
+          "subtitle": "Wróć do pomysłu, planu albo niedokończonego wątku."
+        },
+        "open": {
+          "title": "Co chodzi ci po głowie?",
+          "subtitle": "Mała myśl albo ambitny projekt. Jedno i drugie pasuje."
+        },
+        "challenge": {
+          "title": "Co rozwiązujemy?",
+          "subtitle": "Powiedz, co jeszcze nie działa."
+        },
+        "draft": {
+          "title": "Zacznijmy od dowolnego miejsca.",
+          "subtitle": "Nie musi być dopracowane."
+        },
+        "possibility": {
+          "title": "Co może z tego powstać?",
+          "subtitle": "Pokaż mi surowy materiał."
+        },
+        "unexpected": {
+          "title": "Stwórzmy coś nieoczekiwanego.",
+          "subtitle": "Daj mi ograniczenie, nastrój albo zalążek pomysłu."
+        }
+      }
     },
     "input": {
       "placeholder": "Wyślij wiadomość",

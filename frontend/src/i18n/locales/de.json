@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Wie kann ich Ihnen heute helfen?",
-      "helpTonight": "Wie kann ich Ihnen heute Abend helfen?"
+      "helpTonight": "Wie kann ich Ihnen heute Abend helfen?",
+      "variety": {
+        "create": {
+          "title": "Was wollen wir erschaffen?",
+          "subtitle": "Beginnen Sie mit einem Gedanken, einer Skizze oder einem hartnäckigen Problem."
+        },
+        "explore": {
+          "title": "Wo fangen wir an?",
+          "subtitle": "Bringen Sie die Frage mit, die Sie immer wieder beschäftigt."
+        },
+        "imagine": {
+          "title": "Was stellen Sie sich vor?",
+          "subtitle": "Gemeinsam können wir der Idee Form geben."
+        },
+        "focus": {
+          "title": "Was verdient Ihre Aufmerksamkeit?",
+          "subtitle": "Machen wir den nächsten Schritt klar."
+        },
+        "untangle": {
+          "title": "Wo ist der Knoten?",
+          "subtitle": "Geben Sie mir zuerst die ungeschönte Version."
+        },
+        "momentum": {
+          "title": "Bereit, wenn Sie es sind.",
+          "subtitle": "Greifen wir eine Idee, einen Plan oder einen offenen Gedanken wieder auf."
+        },
+        "open": {
+          "title": "Was beschäftigt Sie?",
+          "subtitle": "Ob kleiner Gedanke oder großes Projekt: Beides passt."
+        },
+        "challenge": {
+          "title": "Was lösen wir?",
+          "subtitle": "Sagen Sie mir, was noch nicht funktioniert."
+        },
+        "draft": {
+          "title": "Fangen wir irgendwo an.",
+          "subtitle": "Es muss noch nicht perfekt sein."
+        },
+        "possibility": {
+          "title": "Was könnte daraus werden?",
+          "subtitle": "Zeigen Sie mir das Rohmaterial."
+        },
+        "unexpected": {
+          "title": "Erschaffen wir etwas Unerwartetes.",
+          "subtitle": "Geben Sie mir eine Vorgabe, eine Stimmung oder eine halbfertige Idee."
+        }
+      }
     },
     "input": {
       "placeholder": "Nachricht senden",

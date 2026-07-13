@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Bugün size nasıl yardımcı olabilirim?",
-      "helpTonight": "Bu gece size nasıl yardımcı olabilirim?"
+      "helpTonight": "Bu gece size nasıl yardımcı olabilirim?",
+      "variety": {
+        "create": {
+          "title": "Ne üretelim?",
+          "subtitle": "Bir düşünce, taslak ya da çözülmek bilmeyen bir sorunla başlayın."
+        },
+        "explore": {
+          "title": "Nereden başlayalım?",
+          "subtitle": "Aklınıza dönüp duran o soruyu getirin."
+        },
+        "imagine": {
+          "title": "Ne hayal ediyorsunuz?",
+          "subtitle": "Birlikte ona şekil verebiliriz."
+        },
+        "focus": {
+          "title": "Dikkatinizi ne hak ediyor?",
+          "subtitle": "Bir sonraki adımı netleştirelim."
+        },
+        "untangle": {
+          "title": "Neyi çözmemiz gerekiyor?",
+          "subtitle": "Önce dağınık hâlini anlatın."
+        },
+        "momentum": {
+          "title": "Siz hazırsanız ben de hazırım.",
+          "subtitle": "Bir fikre, plana ya da yarım kalmış konuya geri dönün."
+        },
+        "open": {
+          "title": "Aklınızda ne var?",
+          "subtitle": "Küçük bir düşünce ya da iddialı bir proje. İkisi de olur."
+        },
+        "challenge": {
+          "title": "Neyi çözüyoruz?",
+          "subtitle": "Henüz neyin işlemediğini anlatın."
+        },
+        "draft": {
+          "title": "Bir yerden başlayalım.",
+          "subtitle": "Kusursuz olmak zorunda değil."
+        },
+        "possibility": {
+          "title": "Bu neye dönüşebilir?",
+          "subtitle": "Elinizdeki ham malzemeyi gösterin."
+        },
+        "unexpected": {
+          "title": "Beklenmedik bir şey yapalım.",
+          "subtitle": "Bana bir kısıt, bir ruh hâli ya da yarım kalmış bir fikir verin."
+        }
+      }
     },
     "input": {
       "placeholder": "Bir mesaj gönderin",

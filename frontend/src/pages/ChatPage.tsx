@@ -32,30 +32,81 @@ import { useChat } from '@/hooks/useChat';
 import { imageGenApi } from '@/utils/api';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
+import {
+  getWelcomePromptId,
+  getWelcomePromptIndex,
+  WELCOME_PROMPT_CHANGE_EVENT,
+  type WelcomePromptId,
+} from '@/utils/welcomePrompts';
 
 const logger = createLogger('pages:chat-page');
 
-// Get personalized greeting and time-appropriate suffix based on time of day
-const getGreeting = (
+interface WelcomePrompt {
+  id: WelcomePromptId;
+  title: string;
+  subtitle: string;
+}
+
+const getTimeWelcomePrompt = (
   username?: string,
   t?: (key: string) => string
-): { greeting: string; timeSuffix: string } => {
+): WelcomePrompt => {
   const hour = new Date().getHours();
   const name = username ? `, ${username}` : '';
 
   if (hour >= 5 && hour < 12) {
     const greetingText = t ? t('chat.greeting.morning') : 'Good morning';
-    return { greeting: `${greetingText}${name}`, timeSuffix: 'today' };
+    return {
+      id: 'time',
+      title: `${greetingText}${name}`,
+      subtitle: t ? t('chat.welcome.helpToday') : 'What can I help with today?',
+    };
   } else if (hour >= 12 && hour < 17) {
     const greetingText = t ? t('chat.greeting.afternoon') : 'Good afternoon';
-    return { greeting: `${greetingText}${name}`, timeSuffix: 'today' };
+    return {
+      id: 'time',
+      title: `${greetingText}${name}`,
+      subtitle: t ? t('chat.welcome.helpToday') : 'What can I help with today?',
+    };
   } else if (hour >= 17 && hour < 21) {
     const greetingText = t ? t('chat.greeting.evening') : 'Good evening';
-    return { greeting: `${greetingText}${name}`, timeSuffix: 'tonight' };
+    return {
+      id: 'time',
+      title: `${greetingText}${name}`,
+      subtitle: t
+        ? t('chat.welcome.helpTonight')
+        : 'What can I help with tonight?',
+    };
   } else {
     const greetingText = t ? t('chat.greeting.night') : 'Good night';
-    return { greeting: `${greetingText}${name}`, timeSuffix: 'tonight' };
+    return {
+      id: 'time',
+      title: `${greetingText}${name}`,
+      subtitle: t
+        ? t('chat.welcome.helpTonight')
+        : 'What can I help with tonight?',
+    };
   }
+};
+
+const getWelcomePrompt = (
+  index: number,
+  username?: string,
+  t?: (key: string) => string
+): WelcomePrompt => {
+  const id = getWelcomePromptId(index);
+
+  if (id === 'time') {
+    return getTimeWelcomePrompt(username, t);
+  }
+
+  return {
+    id,
+    title: t ? t(`chat.welcome.variety.${id}.title`) : 'What should we make?',
+    subtitle: t
+      ? t(`chat.welcome.variety.${id}.subtitle`)
+      : 'Start with a thought, a sketch, or a stubborn problem.',
+  };
 };
 
 export const ChatPage: React.FC = () => {
@@ -87,10 +138,12 @@ export const ChatPage: React.FC = () => {
   } = useChat(currentSession?.id || '');
   const currentPersona = getCurrentPersona();
 
-  // Personalized greeting based on time of day
-  const { greeting, timeSuffix } = useMemo(
-    () => getGreeting(user?.username, t),
-    [user?.username, t]
+  const [welcomePromptIndex, setWelcomePromptIndex] = useState(
+    getWelcomePromptIndex
+  );
+  const welcomePrompt = useMemo(
+    () => getWelcomePrompt(welcomePromptIndex, user?.username, t),
+    [t, user?.username, welcomePromptIndex]
   );
 
   // Welcome screen state
@@ -98,6 +151,22 @@ export const ChatPage: React.FC = () => {
   const [welcomeImages, setWelcomeImages] = useState<string[]>([]);
   const [showWelcomeAdvanced, setShowWelcomeAdvanced] = useState(false);
   const welcomeTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const handleWelcomePromptChange = () => {
+      setWelcomePromptIndex(getWelcomePromptIndex());
+    };
+
+    window.addEventListener(
+      WELCOME_PROMPT_CHANGE_EVENT,
+      handleWelcomePromptChange
+    );
+    return () =>
+      window.removeEventListener(
+        WELCOME_PROMPT_CHANGE_EVENT,
+        handleWelcomePromptChange
+      );
+  }, []);
 
   // Image generation state
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
@@ -317,15 +386,18 @@ export const ChatPage: React.FC = () => {
         </button>
 
         <div className='relative z-[1] mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center'>
-          {/* Personalized greeting based on time of day */}
-          <h1 className='mb-4 max-w-3xl text-balance text-center text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-gray-950 dark:text-dark-950'>
-            {greeting}
-          </h1>
-          <p className='mb-10 max-w-xl text-balance text-center text-base leading-relaxed text-gray-500 dark:text-dark-600 sm:mb-12 sm:text-lg'>
-            {timeSuffix === 'today'
-              ? t('chat.welcome.helpToday')
-              : t('chat.welcome.helpTonight')}
-          </p>
+          <div
+            key={welcomePrompt.id}
+            className='mb-10 flex flex-col items-center text-center animate-fade-in sm:mb-12'
+            aria-live='polite'
+          >
+            <h1 className='mb-4 max-w-3xl text-balance text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-gray-950 dark:text-dark-950'>
+              {welcomePrompt.title}
+            </h1>
+            <p className='max-w-xl text-balance text-base leading-relaxed text-gray-500 dark:text-dark-600 sm:text-lg'>
+              {welcomePrompt.subtitle}
+            </p>
+          </div>
 
           {models.length > 0 ? (
             <div className='w-full'>

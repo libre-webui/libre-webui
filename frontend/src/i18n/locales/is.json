@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Hvernig get ég aðstoðað í dag?",
-      "helpTonight": "Hvernig get ég aðstoðað í kvöld?"
+      "helpTonight": "Hvernig get ég aðstoðað í kvöld?",
+      "variety": {
+        "create": {
+          "title": "Hvað eigum við að skapa?",
+          "subtitle": "Byrjaðu á hugmynd, skissu eða þrálátu vandamáli."
+        },
+        "explore": {
+          "title": "Hvar eigum við að byrja?",
+          "subtitle": "Komdu með spurninguna sem þú snýrð alltaf aftur að."
+        },
+        "imagine": {
+          "title": "Hvað ertu að ímynda þér?",
+          "subtitle": "Við getum mótað það saman."
+        },
+        "focus": {
+          "title": "Hvað verðskuldar athygli þína?",
+          "subtitle": "Skýrum næsta skref."
+        },
+        "untangle": {
+          "title": "Hvar er flækjan?",
+          "subtitle": "Segðu mér fyrst óreiðukenndu útgáfuna."
+        },
+        "momentum": {
+          "title": "Við byrjum þegar þér hentar.",
+          "subtitle": "Tökum aftur upp hugmynd, áætlun eða ókláraðan þráð."
+        },
+        "open": {
+          "title": "Hvað ertu að hugsa um?",
+          "subtitle": "Lítil hugmynd eða metnaðarfullt verkefni. Hvort tveggja virkar."
+        },
+        "challenge": {
+          "title": "Hvað ætlum við að leysa?",
+          "subtitle": "Segðu mér hvað virkar ekki enn."
+        },
+        "draft": {
+          "title": "Byrjum einhvers staðar.",
+          "subtitle": "Það þarf ekki að vera fullmótað."
+        },
+        "possibility": {
+          "title": "Hvað gæti þetta orðið?",
+          "subtitle": "Sýndu mér hráefnið."
+        },
+        "unexpected": {
+          "title": "Sköpum eitthvað óvænt.",
+          "subtitle": "Gefðu mér takmörkun, stemningu eða hálfmótaða hugmynd."
+        }
+      }
     },
     "input": {
       "placeholder": "Senda skilaboð",

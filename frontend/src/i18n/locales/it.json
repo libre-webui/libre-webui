@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Come posso aiutarti oggi?",
-      "helpTonight": "Come posso aiutarti stasera?"
+      "helpTonight": "Come posso aiutarti stasera?",
+      "variety": {
+        "create": {
+          "title": "Cosa vogliamo creare?",
+          "subtitle": "Parti da un pensiero, uno schizzo o un problema ostinato."
+        },
+        "explore": {
+          "title": "Da dove cominciamo?",
+          "subtitle": "Porta la domanda a cui continui a tornare."
+        },
+        "imagine": {
+          "title": "Cosa stai immaginando?",
+          "subtitle": "Possiamo darle forma insieme."
+        },
+        "focus": {
+          "title": "Cosa merita la tua attenzione?",
+          "subtitle": "Rendiamo chiaro il prossimo passo."
+        },
+        "untangle": {
+          "title": "Dove si è creato il nodo?",
+          "subtitle": "Raccontami prima la versione disordinata."
+        },
+        "momentum": {
+          "title": "Ci sono quando vuoi.",
+          "subtitle": "Riprendiamo un’idea, un piano o un filo rimasto in sospeso."
+        },
+        "open": {
+          "title": "A cosa stai pensando?",
+          "subtitle": "Un piccolo pensiero o un progetto ambizioso. Vanno bene entrambi."
+        },
+        "challenge": {
+          "title": "Cosa dobbiamo risolvere?",
+          "subtitle": "Dimmi cosa non sta ancora funzionando."
+        },
+        "draft": {
+          "title": "Cominciamo da qualche parte.",
+          "subtitle": "Non deve essere già perfetto."
+        },
+        "possibility": {
+          "title": "Cosa potrebbe diventare?",
+          "subtitle": "Mostrami il materiale grezzo."
+        },
+        "unexpected": {
+          "title": "Creiamo qualcosa di inaspettato.",
+          "subtitle": "Dammi un vincolo, un’atmosfera o un’idea ancora abbozzata."
+        }
+      }
     },
     "input": {
       "placeholder": "Invia un messaggio",

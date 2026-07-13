@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "S čím vám mohu dnes pomoci?",
-      "helpTonight": "S čím vám mohu dnes večer pomoci?"
+      "helpTonight": "S čím vám mohu dnes večer pomoci?",
+      "variety": {
+        "create": {
+          "title": "Co vytvoříme?",
+          "subtitle": "Začněte myšlenkou, náčrtem nebo zapeklitým problémem."
+        },
+        "explore": {
+          "title": "Kde začneme?",
+          "subtitle": "Přineste otázku, ke které se stále vracíte."
+        },
+        "imagine": {
+          "title": "Co si představujete?",
+          "subtitle": "Společně tomu můžeme dát tvar."
+        },
+        "focus": {
+          "title": "Co si zaslouží vaši pozornost?",
+          "subtitle": "Ujasněme si další krok."
+        },
+        "untangle": {
+          "title": "Co je potřeba rozmotat?",
+          "subtitle": "Nejdřív mi ukažte tu neuspořádanou verzi."
+        },
+        "momentum": {
+          "title": "Můžeme začít, až budete připraveni.",
+          "subtitle": "Navážeme na nápad, plán nebo rozdělané téma."
+        },
+        "open": {
+          "title": "Co máte na mysli?",
+          "subtitle": "Drobná myšlenka nebo ambiciózní projekt. Obojí funguje."
+        },
+        "challenge": {
+          "title": "Co řešíme?",
+          "subtitle": "Řekněte mi, co zatím nefunguje."
+        },
+        "draft": {
+          "title": "Někde začněme.",
+          "subtitle": "Nemusí to být vybroušené."
+        },
+        "possibility": {
+          "title": "Co by z toho mohlo vzniknout?",
+          "subtitle": "Ukažte mi výchozí materiál."
+        },
+        "unexpected": {
+          "title": "Vytvořme něco nečekaného.",
+          "subtitle": "Dejte mi omezení, náladu nebo nedokončenou myšlenku."
+        }
+      }
     },
     "input": {
       "placeholder": "Odeslat zprávu",

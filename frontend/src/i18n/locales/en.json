@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "What can I help with today?",
-      "helpTonight": "What can I help with tonight?"
+      "helpTonight": "What can I help with tonight?",
+      "variety": {
+        "create": {
+          "title": "What should we make?",
+          "subtitle": "Start with a thought, a sketch, or a stubborn problem."
+        },
+        "explore": {
+          "title": "Where should we begin?",
+          "subtitle": "Bring the question you keep returning to."
+        },
+        "imagine": {
+          "title": "What are you imagining?",
+          "subtitle": "We can shape it together."
+        },
+        "focus": {
+          "title": "What deserves your attention?",
+          "subtitle": "Let's make the next step clear."
+        },
+        "untangle": {
+          "title": "What's tangled?",
+          "subtitle": "Give me the messy version first."
+        },
+        "momentum": {
+          "title": "Ready when you are.",
+          "subtitle": "Pick up an idea, plan, or unfinished thread."
+        },
+        "open": {
+          "title": "What's on your mind?",
+          "subtitle": "Small thought or ambitious project. Both work."
+        },
+        "challenge": {
+          "title": "What are we solving?",
+          "subtitle": "Tell me what isn't working yet."
+        },
+        "draft": {
+          "title": "Let's start somewhere.",
+          "subtitle": "It doesn't have to be polished."
+        },
+        "possibility": {
+          "title": "What could this become?",
+          "subtitle": "Show me the raw material."
+        },
+        "unexpected": {
+          "title": "Make something unexpected.",
+          "subtitle": "Give me a constraint, a mood, or a half-formed idea."
+        }
+      }
     },
     "input": {
       "placeholder": "Send a message",

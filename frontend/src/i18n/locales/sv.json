@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Vad kan jag hjälpa till med idag?",
-      "helpTonight": "Vad kan jag hjälpa till med ikväll?"
+      "helpTonight": "Vad kan jag hjälpa till med ikväll?",
+      "variety": {
+        "create": {
+          "title": "Vad ska vi skapa?",
+          "subtitle": "Börja med en tanke, en skiss eller ett envist problem."
+        },
+        "explore": {
+          "title": "Var ska vi börja?",
+          "subtitle": "Ta med frågan som du ständigt återkommer till."
+        },
+        "imagine": {
+          "title": "Vad föreställer du dig?",
+          "subtitle": "Vi kan forma det tillsammans."
+        },
+        "focus": {
+          "title": "Vad förtjänar din uppmärksamhet?",
+          "subtitle": "Låt oss göra nästa steg tydligt."
+        },
+        "untangle": {
+          "title": "Var sitter knuten?",
+          "subtitle": "Ge mig den röriga versionen först."
+        },
+        "momentum": {
+          "title": "Redo när du är.",
+          "subtitle": "Plocka upp en idé, en plan eller en oavslutad tråd."
+        },
+        "open": {
+          "title": "Vad tänker du på?",
+          "subtitle": "En liten tanke eller ett ambitiöst projekt. Båda fungerar."
+        },
+        "challenge": {
+          "title": "Vad ska vi lösa?",
+          "subtitle": "Berätta vad som inte fungerar än."
+        },
+        "draft": {
+          "title": "Låt oss börja någonstans.",
+          "subtitle": "Det behöver inte vara finslipat."
+        },
+        "possibility": {
+          "title": "Vad skulle det här kunna bli?",
+          "subtitle": "Visa mig råmaterialet."
+        },
+        "unexpected": {
+          "title": "Skapa något oväntat.",
+          "subtitle": "Ge mig en begränsning, en stämning eller en halvfärdig idé."
+        }
+      }
     },
     "input": {
       "placeholder": "Skicka ett meddelande",

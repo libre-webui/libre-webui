@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "¿En qué puedo ayudarte hoy?",
-      "helpTonight": "¿En qué puedo ayudarte esta noche?"
+      "helpTonight": "¿En qué puedo ayudarte esta noche?",
+      "variety": {
+        "create": {
+          "title": "¿Qué vamos a crear?",
+          "subtitle": "Empieza con una idea, un boceto o un problema que se resiste."
+        },
+        "explore": {
+          "title": "¿Por dónde empezamos?",
+          "subtitle": "Trae esa pregunta a la que siempre vuelves."
+        },
+        "imagine": {
+          "title": "¿Qué estás imaginando?",
+          "subtitle": "Podemos darle forma juntos."
+        },
+        "focus": {
+          "title": "¿Qué merece tu atención?",
+          "subtitle": "Aclaremos cuál es el siguiente paso."
+        },
+        "untangle": {
+          "title": "¿Qué se ha complicado?",
+          "subtitle": "Cuéntame primero la versión desordenada."
+        },
+        "momentum": {
+          "title": "Cuando quieras.",
+          "subtitle": "Retoma una idea, un plan o algo que dejaste a medias."
+        },
+        "open": {
+          "title": "¿Qué tienes en mente?",
+          "subtitle": "Una idea pequeña o un proyecto ambicioso. Todo sirve."
+        },
+        "challenge": {
+          "title": "¿Qué vamos a resolver?",
+          "subtitle": "Cuéntame qué no está funcionando todavía."
+        },
+        "draft": {
+          "title": "Empecemos por algún sitio.",
+          "subtitle": "No tiene que estar perfecto."
+        },
+        "possibility": {
+          "title": "¿En qué podría convertirse?",
+          "subtitle": "Enséñame el material en bruto."
+        },
+        "unexpected": {
+          "title": "Hagamos algo inesperado.",
+          "subtitle": "Dame una condición, un estado de ánimo o una idea a medio formar."
+        }
+      }
     },
     "input": {
       "placeholder": "Enviar un mensaje",

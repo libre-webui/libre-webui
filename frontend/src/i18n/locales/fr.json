@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Comment puis-je vous aider aujourd'hui ?",
-      "helpTonight": "Comment puis-je vous aider ce soir ?"
+      "helpTonight": "Comment puis-je vous aider ce soir ?",
+      "variety": {
+        "create": {
+          "title": "Qu’allons-nous créer ?",
+          "subtitle": "Partez d’une pensée, d’une esquisse ou d’un problème qui résiste."
+        },
+        "explore": {
+          "title": "Par où commencer ?",
+          "subtitle": "Apportez cette question qui vous revient sans cesse."
+        },
+        "imagine": {
+          "title": "Qu’imaginez-vous ?",
+          "subtitle": "Nous pouvons lui donner forme ensemble."
+        },
+        "focus": {
+          "title": "Qu’est-ce qui mérite votre attention ?",
+          "subtitle": "Clarifions la prochaine étape."
+        },
+        "untangle": {
+          "title": "Qu’est-ce qui coince ?",
+          "subtitle": "Commencez par me donner la version en vrac."
+        },
+        "momentum": {
+          "title": "Quand vous voulez.",
+          "subtitle": "Reprenons une idée, un plan ou un fil resté en suspens."
+        },
+        "open": {
+          "title": "À quoi pensez-vous ?",
+          "subtitle": "Petite idée ou projet ambitieux : tout fonctionne."
+        },
+        "challenge": {
+          "title": "Quel problème allons-nous résoudre ?",
+          "subtitle": "Dites-moi ce qui ne fonctionne pas encore."
+        },
+        "draft": {
+          "title": "Commençons quelque part.",
+          "subtitle": "Pas besoin que ce soit parfait."
+        },
+        "possibility": {
+          "title": "Que pourrait devenir cette idée ?",
+          "subtitle": "Montrez-moi la matière brute."
+        },
+        "unexpected": {
+          "title": "Créons quelque chose d’inattendu.",
+          "subtitle": "Donnez-moi une contrainte, une ambiance ou une idée encore floue."
+        }
+      }
     },
     "input": {
       "placeholder": "Envoyer un message",

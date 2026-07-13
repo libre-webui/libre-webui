@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Tôi có thể giúp gì cho bạn hôm nay?",
-      "helpTonight": "Tôi có thể giúp gì cho bạn tối nay?"
+      "helpTonight": "Tôi có thể giúp gì cho bạn tối nay?",
+      "variety": {
+        "create": {
+          "title": "Chúng ta sẽ tạo gì đây?",
+          "subtitle": "Bắt đầu từ một ý nghĩ, bản phác thảo hay bài toán mãi chưa gỡ được."
+        },
+        "explore": {
+          "title": "Ta nên bắt đầu từ đâu?",
+          "subtitle": "Hãy mang đến câu hỏi bạn vẫn luôn trăn trở."
+        },
+        "imagine": {
+          "title": "Bạn đang hình dung điều gì?",
+          "subtitle": "Chúng ta có thể cùng nhau tạo hình cho nó."
+        },
+        "focus": {
+          "title": "Điều gì đáng để bạn tập trung?",
+          "subtitle": "Hãy làm rõ bước tiếp theo."
+        },
+        "untangle": {
+          "title": "Điều gì đang rối?",
+          "subtitle": "Cứ cho tôi xem phiên bản lộn xộn trước."
+        },
+        "momentum": {
+          "title": "Khi bạn sẵn sàng, ta bắt đầu.",
+          "subtitle": "Tiếp tục một ý tưởng, kế hoạch hay mạch suy nghĩ còn dang dở."
+        },
+        "open": {
+          "title": "Bạn đang nghĩ gì?",
+          "subtitle": "Một ý nghĩ nhỏ hay dự án đầy tham vọng đều được."
+        },
+        "challenge": {
+          "title": "Chúng ta cần giải quyết gì?",
+          "subtitle": "Hãy cho tôi biết điều gì vẫn chưa ổn."
+        },
+        "draft": {
+          "title": "Hãy bắt đầu từ đâu đó.",
+          "subtitle": "Chưa cần phải trau chuốt."
+        },
+        "possibility": {
+          "title": "Điều này có thể trở thành gì?",
+          "subtitle": "Cho tôi xem những nguyên liệu thô."
+        },
+        "unexpected": {
+          "title": "Hãy tạo một điều bất ngờ.",
+          "subtitle": "Cho tôi một giới hạn, một tâm trạng hay ý tưởng còn dang dở."
+        }
+      }
     },
     "input": {
       "placeholder": "Gửi tin nhắn",

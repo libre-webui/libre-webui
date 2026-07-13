@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Hvad kan jeg hjælpe med i dag?",
-      "helpTonight": "Hvad kan jeg hjælpe med i aften?"
+      "helpTonight": "Hvad kan jeg hjælpe med i aften?",
+      "variety": {
+        "create": {
+          "title": "Hvad skal vi skabe?",
+          "subtitle": "Begynd med en tanke, en skitse eller et genstridigt problem."
+        },
+        "explore": {
+          "title": "Hvor skal vi begynde?",
+          "subtitle": "Tag det spørgsmål med, som du bliver ved med at vende tilbage til."
+        },
+        "imagine": {
+          "title": "Hvad forestiller du dig?",
+          "subtitle": "Vi kan forme det sammen."
+        },
+        "focus": {
+          "title": "Hvad fortjener din opmærksomhed?",
+          "subtitle": "Lad os gøre det næste skridt tydeligt."
+        },
+        "untangle": {
+          "title": "Hvor er knuden?",
+          "subtitle": "Giv mig den rodede version først."
+        },
+        "momentum": {
+          "title": "Klar, når du er.",
+          "subtitle": "Tag fat i en idé, en plan eller en ufærdig tråd."
+        },
+        "open": {
+          "title": "Hvad tænker du på?",
+          "subtitle": "En lille tanke eller et ambitiøst projekt. Begge dele virker."
+        },
+        "challenge": {
+          "title": "Hvad skal vi løse?",
+          "subtitle": "Fortæl mig, hvad der ikke fungerer endnu."
+        },
+        "draft": {
+          "title": "Lad os begynde et sted.",
+          "subtitle": "Det behøver ikke være poleret."
+        },
+        "possibility": {
+          "title": "Hvad kan det her blive til?",
+          "subtitle": "Vis mig råmaterialet."
+        },
+        "unexpected": {
+          "title": "Skab noget uventet.",
+          "subtitle": "Giv mig en begrænsning, en stemning eller en halvfærdig idé."
+        }
+      }
     },
     "input": {
       "placeholder": "Send en besked",

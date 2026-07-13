@@ -168,7 +168,53 @@
     },
     "welcome": {
       "helpToday": "Apa yang boleh saya bantu hari ini?",
-      "helpTonight": "Apa yang boleh saya bantu malam ini?"
+      "helpTonight": "Apa yang boleh saya bantu malam ini?",
+      "variety": {
+        "create": {
+          "title": "Apa yang mahu kita cipta?",
+          "subtitle": "Mulakan dengan buah fikiran, lakaran, atau masalah yang sukar diselesaikan."
+        },
+        "explore": {
+          "title": "Dari mana kita patut bermula?",
+          "subtitle": "Bawa persoalan yang sering bermain di fikiran anda."
+        },
+        "imagine": {
+          "title": "Apa yang anda bayangkan?",
+          "subtitle": "Kita boleh membentuknya bersama-sama."
+        },
+        "focus": {
+          "title": "Apa yang wajar mendapat perhatian anda?",
+          "subtitle": "Mari jelaskan langkah seterusnya."
+        },
+        "untangle": {
+          "title": "Apa yang bersimpul?",
+          "subtitle": "Ceritakan dahulu versi yang masih berserabut."
+        },
+        "momentum": {
+          "title": "Mulakan apabila anda bersedia.",
+          "subtitle": "Sambung semula idea, rancangan, atau perkara yang belum selesai."
+        },
+        "open": {
+          "title": "Apa yang sedang anda fikirkan?",
+          "subtitle": "Fikiran kecil atau projek bercita-cita besar, kedua-duanya boleh."
+        },
+        "challenge": {
+          "title": "Apa yang mahu kita selesaikan?",
+          "subtitle": "Beritahu saya bahagian yang masih belum menjadi."
+        },
+        "draft": {
+          "title": "Mari bermula di mana-mana.",
+          "subtitle": "Tak perlu sempurna lagi."
+        },
+        "possibility": {
+          "title": "Ini boleh menjadi apa?",
+          "subtitle": "Tunjukkan bahan mentahnya."
+        },
+        "unexpected": {
+          "title": "Mari cipta sesuatu yang tidak dijangka.",
+          "subtitle": "Beri saya satu kekangan, suasana, atau idea yang masih samar."
+        }
+      }
     },
     "input": {
       "placeholder": "Hantar mesej",

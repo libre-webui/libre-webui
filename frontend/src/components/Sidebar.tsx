@@ -26,6 +26,7 @@ import { cn } from '@/utils';
 import { authApi, usersApi } from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { createLogger } from '@/utils/logger';
+import { advanceWelcomePrompt } from '@/utils/welcomePrompts';
 import { AvatarModal } from '@/components/sidebar/AvatarModal';
 import { SidebarHeader } from '@/components/sidebar/SidebarHeader';
 import { SidebarNavigation } from '@/components/sidebar/SidebarNavigation';
@@ -89,6 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const forceWelcomeScreen = () => {
     const { setCurrentSession } = useChatStore.getState();
+    advanceWelcomePrompt();
     setCurrentSession(null);
     sessionStorage.setItem('forceWelcomeScreen', 'true');
   };
