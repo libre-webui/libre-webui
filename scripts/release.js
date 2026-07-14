@@ -109,7 +109,6 @@ class ReleaseManager {
     const status = git(['status', '--porcelain'], { silent: true });
     const changedPaths = status
       .split('\n')
-      .map(line => line.trim())
       .filter(Boolean)
       .map(line => line.slice(3).replace(/^"|"$/g, ''));
 
