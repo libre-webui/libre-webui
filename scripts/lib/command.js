@@ -41,7 +41,17 @@ function git(args, options = {}) {
 }
 
 function npm(args, options = {}) {
-  return run('npm', args, options);
+  if (process.env.npm_execpath) {
+    return run(process.execPath, [process.env.npm_execpath, ...args], options);
+  }
+
+  return run(process.platform === 'win32' ? 'npm.cmd' : 'npm', args, {
+    ...options,
+    spawn: {
+      shell: process.platform === 'win32',
+      ...options.spawn,
+    },
+  });
 }
 
 module.exports = {
