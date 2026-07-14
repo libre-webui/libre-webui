@@ -15,6 +15,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.13.1] - 2026-07-14
+
+Libre WebUI 0.13.1 is a maintenance release focused on reliable npm packaging and cross-platform installation. It fixes `npx libre-webui` on Windows, restores the CLI entry point in the published package, and hardens Docker and release automation against the same packaging regressions.
+
+### 🔧 Improvements
+
+- Updated the project screenshot to reflect the current UI.
+
+### 🐛 Bug Fixes
+
+- Fixed `npx libre-webui` on Windows by replacing the POSIX-only `postinstall` command with a cross-platform Node.js script.
+- Ensured the npm package retains both the `libre-webui` CLI entry point and its required postinstall script.
+- Copied the postinstall script into every Docker dependency stage so Buildx can complete `npm ci --omit=dev` on amd64 and arm64.
+- Made release npm commands run correctly on Windows and preserved complete paths when parsing Git porcelain status output.
+- Added regression tests for npm package contents, release status parsing, and Docker dependency-stage layout.
+
 ## [0.13.0] - 2026-07-13
 
 Libre WebUI 0.13.0 is a creator-focused interface release. It brings a quieter, warm-neutral design system to the full workspace and gives every new chat a broader range of localized starting prompts, making the blank canvas feel more considered and less repetitive.
