@@ -152,12 +152,6 @@ const ConditionalKeyboardShortcutsIndicator: React.FC<{
 const App: React.FC = () => {
   const { t, i18n } = useTranslation();
 
-  // Handle RTL direction based on language
-  React.useEffect(() => {
-    const dir = isRTL(i18n.language) ? 'rtl' : 'ltr';
-    document.documentElement.dir = dir;
-    document.documentElement.lang = i18n.language;
-  }, [i18n.language]);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -447,11 +441,11 @@ const App: React.FC = () => {
             <div
               data-testid='app-shell-content'
               className={cn(
-                'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pr-2',
+                'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pe-2',
                 // Mobile behavior:
-                // - Compact sidebar: push content right to avoid overlap
+                // - Compact sidebar: push content away to avoid overlap
                 // - Expanded sidebar: overlay (no transform)
-                sidebarOpen && sidebarCompact ? 'max-lg:ml-18' : 'max-lg:ml-0',
+                sidebarOpen && sidebarCompact ? 'max-lg:ms-18' : 'max-lg:ms-0',
                 hasActiveBackground()
                   ? 'bg-white/10 dark:bg-dark-50/10'
                   : 'bg-transparent'
@@ -512,13 +506,13 @@ const App: React.FC = () => {
                     <div
                       data-testid='app-shell-content'
                       className={cn(
-                        'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pr-2',
+                        'flex-1 basis-0 flex flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pe-2',
                         // Mobile behavior:
-                        // - Compact sidebar: push content right to avoid overlap
+                        // - Compact sidebar: push content away to avoid overlap
                         // - Expanded sidebar: overlay (no transform)
                         sidebarOpen && sidebarCompact
-                          ? 'max-lg:ml-18'
-                          : 'max-lg:ml-0',
+                          ? 'max-lg:ms-18'
+                          : 'max-lg:ms-0',
                         hasActiveBackground()
                           ? 'bg-white/10 dark:bg-dark-50/10'
                           : 'bg-transparent'
@@ -610,7 +604,7 @@ const App: React.FC = () => {
         )}
 
         <Toaster
-          position='top-right'
+          position={isRTL(i18n.language) ? 'top-left' : 'top-right'}
           toastOptions={{
             duration: 4000,
             className: 'animate-slide-up',
@@ -638,7 +632,7 @@ const App: React.FC = () => {
           }}
           containerStyle={{
             top: 80, // Position below header (header height + some margin)
-            right: 20,
+            insetInlineEnd: 20,
           }}
         />
       </Router>

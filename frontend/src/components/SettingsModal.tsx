@@ -1192,7 +1192,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className='sticky top-0 z-10 flex items-center justify-between border-b border-gray-200/70 px-4 py-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
             <h2
               id={settingsTitleId}
-              className='text-xl font-normal tracking-[-0.025em] text-gray-950 dark:text-dark-950 sm:text-2xl'
+              className='text-xl font-normal tracking-[-0.025em] text-gray-950 dark:text-dark-950 sm:text-2xl rtl:tracking-normal'
             >
               {t('settings.title')}
             </h2>

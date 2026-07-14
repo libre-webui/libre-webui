@@ -210,7 +210,7 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
               checked={backgroundSettings.enabled}
               onChange={e => handleToggleBackground(e.target.checked)}
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
           </label>
         </div>
 
@@ -269,7 +269,7 @@ export const BackgroundUpload: React.FC<BackgroundUploadProps> = ({
                 disabled={uploading}
                 className='mx-auto'
               >
-                <Upload className='h-4 w-4 mr-2' />
+                <Upload className='h-4 w-4 me-2' />
                 {uploading
                   ? t('common.loading')
                   : t('settings.appearance.background.chooseImage')}

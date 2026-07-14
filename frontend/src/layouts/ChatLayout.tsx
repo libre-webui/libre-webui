@@ -36,12 +36,12 @@ export const ChatLayout: React.FC<ChatLayoutProps> = ({ children }) => {
       <div
         className={cn(
           'flex-1 flex flex-col min-w-0 transition-[margin] duration-200 ease-out',
-          // Add left margin when sidebar is open (on all screen sizes for side-by-side layout)
+          // Reserve space on the logical start edge where the sidebar is mounted.
           sidebarOpen
             ? sidebarCompact
-              ? 'ml-18'
-              : 'ml-72 max-sm:ml-64'
-            : 'ml-0'
+              ? 'ms-18'
+              : 'ms-72 max-sm:ms-64'
+            : 'ms-0'
         )}
       >
         <main className='flex-1 overflow-hidden'>{children}</main>

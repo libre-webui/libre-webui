@@ -93,11 +93,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   >
     <div className='min-w-0 max-w-3xl'>
       {eyebrow && (
-        <div className='mb-3 text-[11px] font-medium uppercase tracking-[0.18em] text-gray-500 dark:text-dark-500'>
+        <div className='mb-3 text-[11px] font-medium uppercase tracking-[0.18em] text-gray-500 dark:text-dark-500 rtl:tracking-normal'>
           {eyebrow}
         </div>
       )}
-      <h1 className='text-balance text-3xl font-normal leading-[1.02] tracking-[-0.04em] text-gray-950 dark:text-dark-950 sm:text-5xl'>
+      <h1 className='text-balance text-3xl font-normal leading-[1.02] tracking-[-0.04em] text-gray-950 dark:text-dark-950 sm:text-5xl rtl:leading-[1.15] rtl:tracking-normal'>
         {title}
       </h1>
       {description && (

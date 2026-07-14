@@ -171,7 +171,7 @@ export function SettingsAppearanceTab({
               type='button'
               aria-pressed={!theme.adaptToAccent}
               onClick={() => onAdaptToAccentChange(false)}
-              className={`rounded-xl border p-3 text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-50 ${
+              className={`rounded-xl border p-3 text-start transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-50 ${
                 !theme.adaptToAccent
                   ? 'border-primary-500 bg-primary-50/70 shadow-sm dark:border-primary-400 dark:bg-primary-950/25'
                   : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-dark-300 dark:bg-dark-100 dark:hover:border-dark-400 dark:hover:bg-dark-200'
@@ -189,7 +189,7 @@ export function SettingsAppearanceTab({
               type='button'
               aria-pressed={theme.adaptToAccent === true}
               onClick={() => onAdaptToAccentChange(true)}
-              className={`rounded-xl border p-3 text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-50 ${
+              className={`rounded-xl border p-3 text-start transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-50 ${
                 theme.adaptToAccent
                   ? 'border-primary-500 bg-primary-50/70 shadow-sm dark:border-primary-400 dark:bg-primary-950/25'
                   : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-dark-300 dark:bg-dark-100 dark:hover:border-dark-400 dark:hover:bg-dark-200'
@@ -227,7 +227,7 @@ export function SettingsAppearanceTab({
                 checked={preferences.showUsername}
                 onChange={event => onShowUsernameChange(event.target.checked)}
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
             </label>
           </div>
         </div>

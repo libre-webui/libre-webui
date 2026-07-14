@@ -53,7 +53,7 @@ export function SidebarSessions({
   onCancelEdit,
   onDeleteSession,
 }: SidebarSessionsProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <div
@@ -67,7 +67,7 @@ export function SidebarSessions({
       <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
         {!sidebarCompact && sessions.length > 0 && (
           <div className='flex items-center justify-between mb-2 px-1'>
-            <h3 className='text-[10px] font-semibold text-gray-500 dark:text-dark-500 uppercase tracking-[0.16em]'>
+            <h3 className='text-[10px] font-semibold text-gray-500 dark:text-dark-500 uppercase tracking-[0.16em] rtl:tracking-normal'>
               {t('chat.session.chats')}
             </h3>
             <span className='text-[10px] tabular-nums text-gray-400 dark:text-dark-500 font-medium'>
@@ -182,7 +182,7 @@ export function SidebarSessions({
                     </div>
                   ) : (
                     <div className='flex items-center justify-between w-full'>
-                      <div className='flex-1 min-w-0 mr-2'>
+                      <div className='flex-1 min-w-0 me-2'>
                         <h3 className='text-[13px] font-medium truncate leading-tight text-gray-900 dark:text-dark-900'>
                           {generatingTitleForSession === session.id ? (
                             <span className='inline-flex items-center gap-1'>
@@ -216,6 +216,7 @@ export function SidebarSessions({
                         </h3>
                         <div className='flex items-center gap-1.5 mt-0.5'>
                           <span
+                            dir='auto'
                             className={cn(
                               'text-[11px] tabular-nums',
                               isActive
@@ -223,7 +224,7 @@ export function SidebarSessions({
                                 : 'text-gray-400 dark:text-dark-500'
                             )}
                           >
-                            {formatTimestamp(session.updatedAt)}
+                            {formatTimestamp(session.updatedAt, i18n.language)}
                           </span>
                           <span className='text-gray-300 dark:text-dark-400'>
                             •
@@ -263,6 +264,7 @@ export function SidebarSessions({
                             )
                           ) : (
                             <span
+                              dir='ltr'
                               className={cn(
                                 'text-[11px] font-medium truncate max-w-[108px]',
                                 isActive

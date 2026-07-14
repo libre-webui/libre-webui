@@ -63,7 +63,16 @@ export const CodeAwareTextarea = React.forwardRef<
   CodeAwareTextareaProps
 >(
   (
-    { value, onChange, className, placeholder, disabled, onKeyDown, ...props },
+    {
+      value,
+      onChange,
+      className,
+      placeholder,
+      disabled,
+      onKeyDown,
+      dir = 'auto',
+      ...props
+    },
     ref
   ) => {
     const { hasCodeBlocks, isInCodeBlock, language } = useMemo(
@@ -80,6 +89,7 @@ export const CodeAwareTextarea = React.forwardRef<
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           disabled={disabled}
+          dir={dir}
           className={cn(
             'w-full resize-none transition-all duration-200',
             isInCodeBlock && [
@@ -94,7 +104,7 @@ export const CodeAwareTextarea = React.forwardRef<
 
         {/* Code indicator badge */}
         {hasCodeBlocks && (
-          <div className='absolute right-0 top-0 pointer-events-none flex items-center gap-1'>
+          <div className='absolute end-0 top-0 pointer-events-none flex items-center gap-1'>
             <div
               className={cn(
                 'flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-medium',

@@ -112,6 +112,14 @@ export const isRTL = (langCode: string): boolean => {
   );
 };
 
+export const applyDocumentLanguage = (langCode: string): void => {
+  if (typeof document === 'undefined') return;
+
+  const language = normalizeLanguageCode(langCode);
+  document.documentElement.lang = language;
+  document.documentElement.dir = isRTL(language) ? 'rtl' : 'ltr';
+};
+
 export const loadLanguageResource = async (
   langCode: string
 ): Promise<SupportedLanguageCode> => {
@@ -133,40 +141,63 @@ export const changeAppLanguage = async (
   return language;
 };
 
-if (!i18n.isInitialized) {
-  void i18n
-    .use(LanguageDetector)
-    .use(initReactI18next)
-    .init({
-      resources,
-      fallbackLng: 'en',
-      supportedLngs: languageCodes,
-      nonExplicitSupportedLngs: true,
-      load: 'languageOnly',
-      debug: process.env.NODE_ENV === 'development',
-      interpolation: {
-        escapeValue: false,
-      },
-      detection: {
-        order: ['localStorage', 'navigator', 'htmlTag'],
-        caches: ['localStorage'],
-        lookupLocalStorage: 'i18nextLng',
-      },
-    })
-    .then(() => {
-      const language = normalizeLanguageCode(
-        i18n.language || i18n.resolvedLanguage
-      );
-      if (language === 'en') {
-        return;
-      }
+if (typeof window !== 'undefined') {
+  let initialLanguage = navigator.language;
 
-      void loadLanguageResource(language).then(() => {
-        if (normalizeLanguageCode(i18n.language) === language) {
-          void i18n.changeLanguage(language);
-        }
-      });
-    });
+  try {
+    initialLanguage =
+      window.localStorage.getItem('i18nextLng') || initialLanguage;
+  } catch {
+    // Storage can be unavailable in privacy-restricted browser contexts.
+  }
+
+  // Apply direction before React renders so persisted Arabic does not flash LTR.
+  applyDocumentLanguage(initialLanguage);
+  i18n.on('languageChanged', applyDocumentLanguage);
 }
+
+const initializeI18n = async (): Promise<void> => {
+  if (!i18n.isInitialized) {
+    await i18n
+      .use(LanguageDetector)
+      .use(initReactI18next)
+      .init({
+        resources,
+        fallbackLng: 'en',
+        supportedLngs: languageCodes,
+        nonExplicitSupportedLngs: true,
+        load: 'languageOnly',
+        debug: process.env.NODE_ENV === 'development',
+        interpolation: {
+          escapeValue: false,
+        },
+        detection: {
+          order: ['localStorage', 'navigator', 'htmlTag'],
+          caches: ['localStorage'],
+          lookupLocalStorage: 'i18nextLng',
+        },
+      });
+  }
+
+  const language = normalizeLanguageCode(
+    i18n.language || i18n.resolvedLanguage
+  );
+
+  if (language !== 'en') {
+    try {
+      await loadLanguageResource(language);
+      if (normalizeLanguageCode(i18n.language) === language) {
+        await i18n.changeLanguage(language);
+      }
+    } catch {
+      // Render the English fallback in LTR if a lazy locale chunk cannot load.
+      await i18n.changeLanguage('en');
+    }
+  }
+
+  applyDocumentLanguage(i18n.resolvedLanguage || i18n.language || 'en');
+};
+
+export const i18nReady = initializeI18n();
 
 export default i18n;

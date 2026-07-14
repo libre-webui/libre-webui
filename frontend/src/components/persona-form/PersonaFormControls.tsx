@@ -115,8 +115,8 @@ export const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
     >
       <div
         className={cn(
-          'absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform',
-          checked && 'translate-x-5'
+          'absolute top-0.5 start-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform',
+          checked && 'translate-x-5 rtl:-translate-x-5'
         )}
       />
     </div>

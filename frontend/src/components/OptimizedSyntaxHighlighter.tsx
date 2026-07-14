@@ -92,7 +92,8 @@ export const OptimizedSyntaxHighlighter: React.FC<
   if (!supportedLanguages.has(normalizedLanguage)) {
     return (
       <pre
-        className={`bg-gray-100 dark:bg-dark-200 p-3 rounded-lg overflow-x-auto text-sm font-mono ${className}`}
+        dir='ltr'
+        className={`bg-gray-100 dark:bg-dark-200 p-3 rounded-lg overflow-x-auto text-left text-sm font-mono ${className}`}
       >
         <code className=''>{children}</code>
       </pre>
@@ -102,20 +103,22 @@ export const OptimizedSyntaxHighlighter: React.FC<
   const selectedStyle = isDark ? oneDark : oneLight;
 
   return (
-    <SyntaxHighlighter
-      language={normalizedLanguage}
-      style={selectedStyle}
-      className={className}
-      customStyle={{
-        margin: 0,
-        padding: '0.75rem',
-        borderRadius: '0.5rem',
-        fontSize: '0.875rem',
-      }}
-      showLineNumbers={false}
-    >
-      {children}
-    </SyntaxHighlighter>
+    <div dir='ltr' className='text-left'>
+      <SyntaxHighlighter
+        language={normalizedLanguage}
+        style={selectedStyle}
+        className={className}
+        customStyle={{
+          margin: 0,
+          padding: '0.75rem',
+          borderRadius: '0.5rem',
+          fontSize: '0.875rem',
+        }}
+        showLineNumbers={false}
+      >
+        {children}
+      </SyntaxHighlighter>
+    </div>
   );
 };
 

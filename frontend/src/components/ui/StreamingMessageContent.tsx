@@ -31,7 +31,7 @@ function StreamingTextSegment({ content }: { content: string }) {
   if (!content) return null;
 
   return (
-    <div className='whitespace-pre-wrap break-words leading-relaxed'>
+    <div dir='auto' className='whitespace-pre-wrap break-words leading-relaxed'>
       {content}
     </div>
   );
@@ -43,7 +43,10 @@ function StreamingCodeBlock({
   complete,
 }: StreamingMarkdownCodeSegment) {
   return (
-    <div className='my-4 overflow-hidden rounded-xl border border-gray-200 dark:border-dark-300 bg-gray-950 shadow-sm dark:bg-black/40'>
+    <div
+      dir='ltr'
+      className='my-4 overflow-hidden rounded-xl border border-gray-200 bg-gray-950 text-left shadow-sm dark:border-dark-300 dark:bg-black/40'
+    >
       <div className='flex h-11 items-center justify-between border-b border-white/10 bg-gray-900 px-4 dark:bg-dark-200'>
         <span className='truncate text-xs font-semibold uppercase tracking-wide text-gray-300 dark:text-dark-700'>
           {language || 'code'}
@@ -63,7 +66,7 @@ function StreamingCodeBlock({
           {!complete && (
             <span
               aria-hidden='true'
-              className='ml-0.5 inline-block h-4 w-2 translate-y-0.5 animate-pulse rounded-sm bg-primary-300 align-baseline dark:bg-primary-400'
+              className='ms-0.5 inline-block h-4 w-2 translate-y-0.5 animate-pulse rounded-sm bg-primary-300 align-baseline dark:bg-primary-400'
             />
           )}
         </code>

@@ -50,7 +50,9 @@ export function SettingsToggle({
         <span
           className={cn(
             'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-            checked ? 'translate-x-6' : 'translate-x-1'
+            checked
+              ? 'translate-x-6 rtl:-translate-x-6'
+              : 'translate-x-1 rtl:-translate-x-1'
           )}
         />
       </div>

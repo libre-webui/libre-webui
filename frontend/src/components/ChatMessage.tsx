@@ -60,7 +60,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   isLastAssistantMessage = false,
   onRegenerate,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
   const { preferences } = useAppStore();
@@ -280,7 +280,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           className={cn(
             'min-w-0 flex-1',
             isUser
-              ? 'rounded-[1.35rem] rounded-br-md border border-black/[0.06] bg-gray-900 px-4 py-3 text-white shadow-sm dark:border-white/[0.07] dark:bg-dark-300'
+              ? 'rounded-[1.35rem] rounded-ee-md border border-black/[0.06] bg-gray-900 px-4 py-3 text-white shadow-sm dark:border-white/[0.07] dark:bg-dark-300'
               : isSystem
                 ? 'bg-transparent py-2'
                 : 'bg-transparent py-1'
@@ -295,8 +295,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               )}
             >
               <span
+                dir='auto'
                 className={cn(
-                  'text-[11px] font-semibold uppercase tracking-[0.1em]',
+                  'text-[11px] font-semibold uppercase tracking-[0.1em] rtl:tracking-normal',
                   isUser ? 'text-white/70' : 'text-gray-700 dark:text-dark-700'
                 )}
               >
@@ -304,6 +305,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               </span>
               {message.model && !isUser && currentPersona?.name && (
                 <span
+                  dir='ltr'
                   className='max-w-32 truncate rounded-full bg-gray-100 px-2 py-0.5 text-[10px] text-gray-500 dark:bg-dark-200 dark:text-dark-600 sm:max-w-48'
                   title={message.model}
                 >
@@ -311,12 +313,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 </span>
               )}
               <span
+                dir='auto'
                 className={cn(
                   'text-[10px] tabular-nums',
                   isUser ? 'text-white/45' : 'text-gray-400 dark:text-dark-500'
                 )}
               >
-                {formatTimestamp(message.timestamp)}
+                {formatTimestamp(message.timestamp, i18n.language)}
               </span>
             </div>
           )}
@@ -348,7 +351,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             )}
 
             {isUser ? (
-              <p className='whitespace-pre-wrap leading-relaxed'>
+              <p dir='auto' className='whitespace-pre-wrap leading-relaxed'>
                 {message.content}
               </p>
             ) : isSystem ? (
@@ -391,6 +394,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 </div>
                 {isEditing ? (
                   <textarea
+                    dir='auto'
                     value={editedContent}
                     onChange={e => setEditedContent(e.target.value)}
                     className='min-h-[100px] w-full resize-none rounded-xl border border-black/[0.08] bg-white p-3 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-white/[0.08] dark:bg-dark-100 dark:text-dark-900 dark:focus:ring-primary-400'
@@ -399,7 +403,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   />
                 ) : (
                   <div>
-                    <p className='whitespace-pre-wrap text-xs leading-relaxed text-gray-500 dark:text-dark-600'>
+                    <p
+                      dir='auto'
+                      className='whitespace-pre-wrap text-xs leading-relaxed text-gray-500 dark:text-dark-600'
+                    >
                       {isSystemMessageExpanded
                         ? message.content
                         : truncateSystemMessage(message.content)}
@@ -431,7 +438,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               <div className='relative'>
                 {/* Collapsible Thinking/CoT Section */}
                 {thinkingContent && (
-                  <div className='mb-4 border-l border-gray-200 pl-3 dark:border-dark-300'>
+                  <div className='mb-4 border-s border-gray-200 ps-3 dark:border-dark-300'>
                     <button
                       onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
                       className='flex items-center gap-2 text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-dark-600 dark:hover:text-dark-900'
@@ -448,7 +455,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     </button>
                     {isThinkingExpanded && (
                       <div className='mt-3 rounded-xl bg-gray-100/60 p-3 dark:bg-dark-200/60'>
-                        <p className='whitespace-pre-wrap text-sm leading-relaxed text-gray-600 dark:text-dark-700'>
+                        <p
+                          dir='auto'
+                          className='whitespace-pre-wrap text-sm leading-relaxed text-gray-600 dark:text-dark-700'
+                        >
                           {thinkingContent}
                         </p>
                       </div>
@@ -460,7 +470,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   isStreaming={isStreaming}
                 />
                 {isStreaming && !parsedContent.includes('```') && (
-                  <div className='ml-1 inline-block h-5 w-1 animate-pulse rounded-full bg-primary-500' />
+                  <div className='ms-1 inline-block h-5 w-1 animate-pulse rounded-full bg-primary-500' />
                 )}
               </div>
             )}
@@ -546,7 +556,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             onClick={() => setLightboxImage(null)}
           >
             <button
-              className='absolute right-6 top-6 rounded-full border border-white/15 bg-white/10 p-3 text-white transition-colors hover:bg-white/20'
+              className='absolute end-6 top-6 rounded-full border border-white/15 bg-white/10 p-3 text-white transition-colors hover:bg-white/20'
               onClick={e => {
                 e.stopPropagation();
                 setLightboxImage(null);

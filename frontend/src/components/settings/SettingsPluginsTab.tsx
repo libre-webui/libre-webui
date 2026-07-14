@@ -133,7 +133,7 @@ export function SettingsPluginsTab({
                 onClick={() => onShowUploadFormChange(!showUploadForm)}
                 disabled={loading || uploading}
               >
-                <Upload className='h-4 w-4 mr-2' />
+                <Upload className='h-4 w-4 me-2' />
                 {t('settings.plugins.upload')}
               </Button>
               <Button
@@ -155,7 +155,7 @@ export function SettingsPluginsTab({
                   type='file'
                   accept='.json,.zip'
                   onChange={onFileUpload}
-                  className='flex-1 p-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 dark:file:bg-dark-200 dark:file:text-dark-700 hover:file:bg-gray-200 dark:hover:file:bg-dark-300'
+                  className='flex-1 p-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 file:me-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 dark:file:bg-dark-200 dark:file:text-dark-700 hover:file:bg-gray-200 dark:hover:file:bg-dark-300'
                   disabled={uploading}
                 />
                 <Button
@@ -403,7 +403,7 @@ function PluginListItem({
           >
             {plugin.active ? (
               <>
-                <Check className='h-4 w-4 mr-1' />
+                <Check className='h-4 w-4 me-1' />
                 {t('settings.plugins.activeLabel')}
               </>
             ) : (
@@ -542,12 +542,12 @@ function ApiKeyPanel({
               value={apiKey}
               onChange={event => onApiKeyChange(event.target.value)}
               placeholder={t('settings.plugins.apiKeyPlaceholder')}
-              className='w-full p-2 pr-10 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500'
+              className='w-full p-2 pe-10 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500'
             />
             <button
               type='button'
               onClick={() => onShowApiKeyChange(!showApiKey)}
-              className='absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
+              className='absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
             >
               {showApiKey ? (
                 <EyeOff className='h-4 w-4' />
@@ -564,7 +564,7 @@ function ApiKeyPanel({
             >
               {savingApiKey ? (
                 <>
-                  <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                  <Loader2 className='h-4 w-4 me-2 animate-spin' />
                   {t('common.saving')}
                 </>
               ) : (

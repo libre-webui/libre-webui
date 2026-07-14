@@ -79,7 +79,7 @@ export function SettingsTtsTab({
         {loading ? (
           <div className='flex items-center justify-center py-8'>
             <Loader2 className='h-8 w-8 animate-spin text-primary-500' />
-            <span className='ml-3 text-gray-600 dark:text-gray-400'>
+            <span className='ms-3 text-gray-600 dark:text-gray-400'>
               {t('settings.tts.loadingProviders')}
             </span>
           </div>

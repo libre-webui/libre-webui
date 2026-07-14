@@ -94,7 +94,7 @@ export function SettingsModelsTab({
           {user?.role === 'admin' && (
             <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
               <div className='flex items-center justify-between'>
-                <div className='flex flex-col pr-4'>
+                <div className='flex flex-col pe-4'>
                   <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                     {t('settings.model.modelPullAccess')}
                   </span>
@@ -289,7 +289,7 @@ function ModelInfoItem({ label, value, truncate = false }: ModelInfoItemProps) {
       <span
         className={
           truncate
-            ? 'text-sm font-semibold text-gray-900 dark:text-gray-100 truncate ml-2'
+            ? 'text-sm font-semibold text-gray-900 dark:text-gray-100 truncate ms-2'
             : 'text-sm font-semibold text-gray-900 dark:text-gray-100'
         }
       >

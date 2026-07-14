@@ -33,6 +33,14 @@ test('settings modal lazy-loads and switches languages from async locale chunks'
 
   await expect(page.getByRole('heading', { name: 'Paramètres' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Langue' })).toBeVisible();
+
+  await page.getByTestId('language-switcher-select').selectOption('ar');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+
+  await page.getByTestId('language-switcher-select').selectOption('en');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 });
 
 test('theme preference survives refresh and retries a failed save', async ({

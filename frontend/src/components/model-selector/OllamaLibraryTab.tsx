@@ -120,7 +120,10 @@ export function OllamaLibraryTab({
                     </div>
                     <div className='flex-1 min-w-0'>
                       <div className='flex items-center gap-2'>
-                        <h4 className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                        <h4
+                          dir='ltr'
+                          className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'
+                        >
                           {model.name}
                         </h4>
                         {installed && (

@@ -203,7 +203,7 @@ export function SettingsGenerationTab({
             <div className='md:col-span-2'>
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
                 {t('settings.generation.stopSequences')}
-                <span className='text-xs text-gray-500 ml-1'>
+                <span className='text-xs text-gray-500 ms-1'>
                   ({t('settings.generation.commaSeparated')})
                 </span>
               </label>
@@ -409,7 +409,7 @@ function NumberSetting({
     <div>
       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
         {label}
-        {hint && <span className='text-xs text-gray-500 ml-1'>{hint}</span>}
+        {hint && <span className='text-xs text-gray-500 ms-1'>{hint}</span>}
       </label>
       <input
         type='number'
@@ -459,7 +459,7 @@ function EmbeddingNumberSetting({
     <div>
       <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
         {label}
-        {hint && <span className='text-xs text-gray-500 ml-1'>{hint}</span>}
+        {hint && <span className='text-xs text-gray-500 ms-1'>{hint}</span>}
       </label>
       <input
         type='number'

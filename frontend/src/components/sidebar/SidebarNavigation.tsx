@@ -64,7 +64,7 @@ export function SidebarNavigation({
       >
         <button
           onClick={onChatClick}
-          className={cn(itemClass(chatActive), 'text-left')}
+          className={cn(itemClass(chatActive), 'text-start')}
           title={sidebarCompact ? t('sidebar.navigation.chat') : undefined}
           aria-current={chatActive ? 'page' : undefined}
         >

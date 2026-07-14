@@ -50,3 +50,43 @@ test('mobile navigation compacts the sidebar and pushes content aside', async ({
     .poll(async () => (await appContent.boundingBox())?.x ?? 0)
     .toBeGreaterThan(50);
 });
+
+test('Arabic mobile navigation mirrors the sidebar and content offset', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'ar');
+  });
+
+  await page.goto('/chat');
+
+  const sidebar = page.getByTestId('sidebar');
+  const appContent = page.getByTestId('app-shell-content');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(sidebar).toBeVisible();
+
+  const expandedBox = await sidebar.boundingBox();
+  expect(expandedBox).not.toBeNull();
+  expect(expandedBox!.x + expandedBox!.width).toBeCloseTo(390, 0);
+
+  await page.locator('a[href="/models"]').click();
+  await page.waitForURL('**/models');
+
+  await expect
+    .poll(async () => (await sidebar.boundingBox())?.width ?? 0)
+    .toBeCloseTo(72, 0);
+
+  await expect
+    .poll(async () => {
+      const compactSidebarBox = await sidebar.boundingBox();
+      const compactContentBox = await appContent.boundingBox();
+      if (!compactSidebarBox || !compactContentBox)
+        return Number.POSITIVE_INFINITY;
+
+      return (
+        compactContentBox.x + compactContentBox.width - compactSidebarBox.x
+      );
+    })
+    .toBeLessThanOrEqual(3);
+});

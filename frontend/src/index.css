@@ -170,7 +170,7 @@
   content: '×';
   position: absolute;
   top: 8px;
-  right: 12px;
+  inset-inline-end: 12px;
   font-size: 16px;
   color: rgb(var(--color-ink-subtle));
   opacity: 0;

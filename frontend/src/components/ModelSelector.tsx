@@ -442,7 +442,10 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       return (
         <div className='flex items-center gap-2 min-w-0'>
           {getModelIcon(currentModel)}
-          <span className='text-xs font-medium text-gray-700 dark:text-gray-200 truncate'>
+          <span
+            dir={currentModel.isPersona ? 'auto' : 'ltr'}
+            className='text-xs font-medium text-gray-700 dark:text-gray-200 truncate'
+          >
             {modelName}
           </span>
         </div>
@@ -456,15 +459,23 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       <div className='flex items-center gap-2 min-w-0'>
         {getModelIcon(currentModel)}
         <div className='flex flex-col min-w-0'>
-          <span className='text-sm font-medium truncate'>{label}</span>
+          <span
+            dir={currentModel.isPersona ? 'auto' : 'ltr'}
+            className='text-sm font-medium truncate'
+          >
+            {label}
+          </span>
           {subLabel && (
-            <span className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+            <span
+              dir='auto'
+              className='text-xs text-gray-500 dark:text-gray-400 truncate'
+            >
               {subLabel}
             </span>
           )}
         </div>
         {currentModel.isPersona && currentPersona && (
-          <div className='flex items-center gap-1 ml-auto'>
+          <div className='flex items-center gap-1 ms-auto'>
             <Brain className='h-3 w-3 text-gray-500 dark:text-dark-600' />
             {currentPersona.embedding_model && (
               <Sparkles className='h-3 w-3 text-gray-400 dark:text-dark-500' />
@@ -490,8 +501,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         aria-expanded={isOpen}
         className={cn(
           compact
-            ? 'h-9 sm:h-10 px-2.5 flex items-center justify-between text-left w-full'
-            : 'w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left',
+            ? 'h-9 sm:h-10 px-2.5 flex items-center justify-between text-start w-full'
+            : 'w-full flex items-center justify-between gap-2 px-3 py-2.5 text-start',
           'border border-black/[0.06] bg-gray-100/70 dark:border-white/[0.06] dark:bg-dark-300/70',
           'rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-dark-300',
           'transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500/40',
@@ -539,7 +550,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
             >
               <div className='flex-shrink-0'>
                 <div className='flex items-center justify-between px-4 pb-2 pt-4 sm:px-5 sm:pt-5'>
-                  <h2 className='text-lg font-medium tracking-[-0.025em] text-gray-950 dark:text-dark-950'>
+                  <h2 className='text-lg font-medium tracking-[-0.025em] text-gray-950 dark:text-dark-950 rtl:tracking-normal'>
                     {t('modelSelector.selectModel')}
                   </h2>
                   <button
@@ -557,7 +568,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
                 <div className='px-4 pb-3 sm:px-5'>
                   <div className='relative'>
-                    <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+                    <Search className='absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
                     <input
                       ref={searchInputRef}
                       type='text'
@@ -571,7 +582,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                       value={searchTerm}
                       onChange={e => setSearchTerm(e.target.value)}
                       className={cn(
-                        'w-full rounded-xl border border-black/[0.07] bg-gray-100/70 py-2.5 pl-10 pr-4 text-sm dark:border-white/[0.07] dark:bg-dark-200/70',
+                        'w-full rounded-xl border border-black/[0.07] bg-gray-100/70 py-2.5 ps-10 pe-4 text-sm dark:border-white/[0.07] dark:bg-dark-200/70',
                         'focus:outline-none focus:ring-2 focus:ring-primary-500/20',
                         'text-gray-900 dark:text-dark-900 placeholder:text-gray-400 dark:placeholder:text-dark-500'
                       )}
@@ -592,7 +603,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                     )}
                     aria-pressed={activeTab === 'installed'}
                   >
-                    <HardDrive className='h-4 w-4 inline mr-1.5' />
+                    <HardDrive className='h-4 w-4 inline me-1.5' />
                     {t('modelSelector.installed')}
                   </button>
                   <button
@@ -607,7 +618,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                     )}
                     aria-pressed={activeTab === 'ollama'}
                   >
-                    <Cloud className='h-4 w-4 inline mr-1.5' />
+                    <Cloud className='h-4 w-4 inline me-1.5' />
                     Ollama
                   </button>
                   <button
@@ -622,7 +633,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                     )}
                     aria-pressed={activeTab === 'huggingface'}
                   >
-                    <Zap className='h-4 w-4 inline mr-1.5' />
+                    <Zap className='h-4 w-4 inline me-1.5' />
                     HuggingFace
                   </button>
                 </div>

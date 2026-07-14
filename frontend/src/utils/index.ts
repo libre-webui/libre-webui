@@ -25,24 +25,60 @@ export function cn(...inputs: ClassValue[]) {
 // Export demo mode utilities
 export * from './demoMode';
 
-export function formatTimestamp(timestamp: number): string {
+const relativeTimeFormatters = new Map<string, Intl.RelativeTimeFormat>();
+const dateTimeFormatters = new Map<string, Intl.DateTimeFormat>();
+
+const getRelativeTimeFormatter = (locale: string): Intl.RelativeTimeFormat => {
+  let formatter = relativeTimeFormatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.RelativeTimeFormat(locale, {
+      numeric: 'auto',
+      style: 'narrow',
+    });
+    relativeTimeFormatters.set(locale, formatter);
+  }
+  return formatter;
+};
+
+const getDateTimeFormatter = (locale: string): Intl.DateTimeFormat => {
+  let formatter = dateTimeFormatters.get(locale);
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat(locale);
+    dateTimeFormatters.set(locale, formatter);
+  }
+  return formatter;
+};
+
+export function formatTimestamp(timestamp: number, locale = 'en'): string {
   const date = new Date(timestamp);
   const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
+  const diffInMs = Math.max(0, now.getTime() - date.getTime());
   const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
   const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
   const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const language = locale.toLowerCase().split('-')[0];
+
+  // Preserve the established compact English labels while localizing other UIs.
+  if (language === 'en') {
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    return getDateTimeFormatter(locale).format(date);
+  }
+
+  const relativeTime = getRelativeTimeFormatter(locale);
 
   if (diffInMinutes < 1) {
-    return 'Just now';
+    return relativeTime.format(0, 'second');
   } else if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`;
+    return relativeTime.format(-diffInMinutes, 'minute');
   } else if (diffInHours < 24) {
-    return `${diffInHours}h ago`;
+    return relativeTime.format(-diffInHours, 'hour');
   } else if (diffInDays < 7) {
-    return `${diffInDays}d ago`;
+    return relativeTime.format(-diffInDays, 'day');
   } else {
-    return date.toLocaleDateString();
+    return getDateTimeFormatter(locale).format(date);
   }
 }
 

@@ -249,9 +249,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ref={sidebarRef}
         data-testid='sidebar'
         className={cn(
-          'fixed inset-y-0 left-0 z-50 border-r border-black/[0.06] dark:border-white/[0.06] transform transition-[width,transform,background-color] duration-200 ease-out shadow-[0_24px_80px_rgba(15,23,42,0.12)]',
+          'fixed inset-y-0 start-0 z-50 border-e border-black/[0.06] dark:border-white/[0.06] transform transition-[width,transform,background-color] duration-200 ease-out shadow-[0_24px_80px_rgba(15,23,42,0.12)]',
           sidebarCompact ? 'w-18' : 'w-72 max-sm:w-64',
-          isOpen ? 'translate-x-0' : '-translate-x-full',
+          isOpen
+            ? 'translate-x-0'
+            : 'ltr:-translate-x-full rtl:translate-x-full',
           'lg:shadow-none',
           backgroundImage
             ? 'bg-gray-100/75 dark:bg-dark-50/75 backdrop-blur-xl'
@@ -265,7 +267,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {isElectron && (
           <div
-            className='absolute top-0 left-16 right-0 h-8 z-[60]'
+            className='absolute top-0 start-16 end-0 h-8 z-[60]'
             style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
           />
         )}

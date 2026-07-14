@@ -89,7 +89,11 @@ export const GenerationStats: React.FC<GenerationStatsProps> = ({
         onClick={() => setIsExpanded(!isExpanded)}
         className='flex items-center gap-1 text-gray-400 dark:text-dark-400 hover:text-gray-600 dark:hover:text-dark-600 transition-colors'
       >
-        {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+        {isExpanded ? (
+          <ChevronDown size={12} />
+        ) : (
+          <ChevronRight size={12} className='rtl:rotate-180' />
+        )}
         <span>{t('generationStats.details')}</span>
       </button>
 

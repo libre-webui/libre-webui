@@ -72,7 +72,7 @@ export function SidebarHeader({
                 title={t('sidebar.toggleSize')}
                 aria-label={t('sidebar.toggleSize')}
               >
-                <ChevronLeft className='h-4 w-4' />
+                <ChevronLeft className='h-4 w-4 rtl:rotate-180' />
               </Button>
             </div>
           </>
@@ -91,7 +91,7 @@ export function SidebarHeader({
               title={t('sidebar.expandSidebar')}
               aria-label={t('sidebar.expandSidebar')}
             >
-              <ChevronRight className='h-4 w-4' />
+              <ChevronRight className='h-4 w-4 rtl:rotate-180' />
             </Button>
             <ThemeToggle />
           </div>
@@ -106,7 +106,7 @@ export function SidebarHeader({
           size='sm'
           title={disabledTitle}
         >
-          <Plus className='h-4 w-4 mr-2' />
+          <Plus className='h-4 w-4 me-2' />
           {t('chat.session.new')}
         </Button>
       ) : (

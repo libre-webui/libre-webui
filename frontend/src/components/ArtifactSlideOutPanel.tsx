@@ -42,6 +42,7 @@ import {
 } from '@/utils/artifactHtml';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
+import { isRTL } from '@/i18n';
 
 const logger = createLogger('components:artifact-slide-out-panel');
 
@@ -51,7 +52,8 @@ const MAX_PANEL_WIDTH_RATIO = 0.9; // 90% of screen width
 const DEFAULT_PANEL_WIDTH = 600;
 
 export const ArtifactSlideOutPanel: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const rtl = isRTL(i18n.language);
   const {
     artifactPanelOpen,
     artifactPanelArtifact,
@@ -131,7 +133,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       }
 
       e.preventDefault();
-      const deltaX = resizeStartXRef.current - e.clientX;
+      const deltaX = (resizeStartXRef.current - e.clientX) * (rtl ? -1 : 1);
       const maxWidth = window.innerWidth * MAX_PANEL_WIDTH_RATIO;
       const newWidth = Math.min(
         maxWidth,
@@ -139,7 +141,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
       );
       schedulePanelWidth(newWidth);
     },
-    [isResizing, schedulePanelWidth]
+    [isResizing, rtl, schedulePanelWidth]
   );
 
   // Resize event listeners
@@ -325,7 +327,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
           onClick={() => setViewMode('code')}
           className='mt-4'
         >
-          <Code2 className='h-3.5 w-3.5 mr-1.5' />
+          <Code2 className='h-3.5 w-3.5 me-1.5' />
           {t('artifacts.code')}
         </Button>
       </div>
@@ -492,12 +494,14 @@ export const ArtifactSlideOutPanel: React.FC = () => {
         data-testid='artifact-slide-out-panel'
         style={{ width: effectiveWidth }}
         className={cn(
-          'fixed top-0 right-0 h-full z-50',
+          'fixed top-0 end-0 h-full z-50',
           'bg-white dark:bg-dark-25',
-          'shadow-2xl border-l border-gray-200 dark:border-dark-200',
+          'shadow-2xl border-s border-gray-200 dark:border-dark-200',
           'flex flex-col',
           'transform transition-transform duration-300 ease-out',
-          artifactPanelOpen ? 'translate-x-0' : 'translate-x-full'
+          artifactPanelOpen
+            ? 'translate-x-0'
+            : 'translate-x-full rtl:-translate-x-full'
         )}
       >
         {/* Resize Handle - only show on non-mobile */}
@@ -506,7 +510,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             onPointerDown={handleResizeStart}
             data-testid='artifact-resize-handle'
             className={cn(
-              'absolute left-0 top-0 bottom-0 w-4 -ml-2 cursor-col-resize z-[56]',
+              'absolute start-0 top-0 bottom-0 w-4 -ms-2 cursor-col-resize z-[56]',
               'flex items-center justify-center',
               'touch-none select-none group'
             )}
@@ -570,7 +574,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                   className='h-8 px-3 text-xs'
                   title={t('artifacts.previewMode')}
                 >
-                  <Eye className='h-3.5 w-3.5 mr-1.5' />
+                  <Eye className='h-3.5 w-3.5 me-1.5' />
                   {t('artifacts.preview')}
                 </Button>
                 <Button
@@ -580,7 +584,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                   className='h-8 px-3 text-xs'
                   title={t('artifacts.codeMode')}
                 >
-                  <Code2 className='h-3.5 w-3.5 mr-1.5' />
+                  <Code2 className='h-3.5 w-3.5 me-1.5' />
                   {t('artifacts.code')}
                 </Button>
               </>
@@ -597,12 +601,12 @@ export const ArtifactSlideOutPanel: React.FC = () => {
             >
               {copied ? (
                 <>
-                  <Check className='h-3.5 w-3.5 mr-1.5 text-green-500' />
+                  <Check className='h-3.5 w-3.5 me-1.5 text-green-500' />
                   {t('artifacts.copied')}
                 </>
               ) : (
                 <>
-                  <Copy className='h-3.5 w-3.5 mr-1.5' />
+                  <Copy className='h-3.5 w-3.5 me-1.5' />
                   {t('artifacts.copyButton')}
                 </>
               )}
@@ -615,7 +619,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
               className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
               title={t('artifacts.download')}
             >
-              <Download className='h-3.5 w-3.5 mr-1.5' />
+              <Download className='h-3.5 w-3.5 me-1.5' />
               {t('artifacts.download')}
             </Button>
 
@@ -638,7 +642,7 @@ export const ArtifactSlideOutPanel: React.FC = () => {
                 className='h-8 px-3 text-xs hover:bg-gray-100 dark:hover:bg-dark-200'
                 title={t('artifacts.openInNewWindow')}
               >
-                <ExternalLink className='h-3.5 w-3.5 mr-1.5' />
+                <ExternalLink className='h-3.5 w-3.5 me-1.5' />
                 {t('artifacts.open')}
               </Button>
             )}

@@ -51,8 +51,9 @@ function CodeFallback({
 }) {
   return (
     <pre
+      dir='ltr'
       className={cn(
-        'bg-gray-100 dark:bg-dark-200 p-3 rounded-lg overflow-x-auto text-sm font-mono',
+        'bg-gray-100 dark:bg-dark-200 p-3 rounded-lg overflow-x-auto text-left text-sm font-mono',
         className
       )}
     >
@@ -93,7 +94,10 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
 
       if (isBlockCode) {
         return (
-          <div className='relative group my-4 overflow-hidden rounded-xl border border-gray-200 dark:border-dark-300 shadow-sm'>
+          <div
+            dir='ltr'
+            className='relative group my-4 overflow-hidden rounded-xl border border-gray-200 dark:border-dark-300 shadow-sm text-left'
+          >
             <div className='flex items-center justify-between bg-gray-50 dark:bg-dark-100 px-4 py-3 border-b border-gray-200 dark:border-dark-300'>
               <span className='text-xs font-semibold text-gray-700 dark:text-dark-700 uppercase tracking-wide'>
                 {language || 'text'}
@@ -133,6 +137,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
 
       return (
         <code
+          dir='ltr'
           className={cn(
             'px-2 py-1 rounded-md bg-gray-100 dark:bg-dark-200 text-gray-800 dark:text-dark-800',
             'font-mono text-sm border border-gray-200 dark:border-dark-300',
@@ -144,26 +149,38 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
         </code>
       );
     },
-    pre({ children, node: _node, ...props }: MarkdownPreProps) {
-      return <pre {...props}>{children}</pre>;
+    pre({ children, className, node: _node, ...props }: MarkdownPreProps) {
+      return (
+        <pre dir='ltr' className={cn('text-left', className)} {...props}>
+          {children}
+        </pre>
+      );
     },
     p({ children, ...props }) {
       return (
-        <div className='mb-4 last:mb-0 leading-relaxed' {...props}>
+        <div dir='auto' className='mb-4 last:mb-0 leading-relaxed' {...props}>
           {children}
         </div>
       );
     },
     ul({ children, ...props }) {
       return (
-        <ul className='list-disc list-inside mb-4 space-y-2 pl-4' {...props}>
+        <ul
+          dir='auto'
+          className='list-disc list-inside mb-4 space-y-2 ps-4'
+          {...props}
+        >
           {children}
         </ul>
       );
     },
     ol({ children, ...props }) {
       return (
-        <ol className='list-decimal list-inside mb-4 space-y-2 pl-4' {...props}>
+        <ol
+          dir='auto'
+          className='list-decimal list-inside mb-4 space-y-2 ps-4'
+          {...props}
+        >
           {children}
         </ol>
       );
@@ -171,6 +188,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     li({ children, ...props }) {
       return (
         <li
+          dir='auto'
           className='text-gray-700 dark:text-dark-700 leading-relaxed'
           {...props}
         >
@@ -181,7 +199,8 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     blockquote({ children, ...props }) {
       return (
         <blockquote
-          className='border-l-4 border-primary-400 dark:border-primary-500 bg-primary-25 dark:bg-primary-950/30 pl-4 py-3 my-4 rounded-r-lg italic text-gray-700 dark:text-dark-700'
+          dir='auto'
+          className='border-s-4 border-primary-400 dark:border-primary-500 bg-primary-25 dark:bg-primary-950/30 ps-4 py-3 my-4 rounded-e-lg italic text-gray-700 dark:text-dark-700'
           {...props}
         >
           {children}
@@ -191,6 +210,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     h1({ children, ...props }) {
       return (
         <h1
+          dir='auto'
           className='text-2xl font-bold mb-4 mt-6 first:mt-0 text-gray-900 dark:text-dark-800 border-b border-gray-200 dark:border-dark-300 pb-2'
           {...props}
         >
@@ -201,6 +221,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     h2({ children, ...props }) {
       return (
         <h2
+          dir='auto'
           className='text-xl font-semibold mb-3 mt-6 first:mt-0 text-gray-900 dark:text-dark-800'
           {...props}
         >
@@ -211,6 +232,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     h3({ children, ...props }) {
       return (
         <h3
+          dir='auto'
           className='text-lg font-medium mb-3 mt-4 first:mt-0 text-gray-900 dark:text-dark-800'
           {...props}
         >
@@ -222,6 +244,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
 
   return (
     <div
+      dir='auto'
       className={cn(
         'prose prose-sm max-w-none dark:prose-invert prose-gray',
         '[&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex-display]:py-2',

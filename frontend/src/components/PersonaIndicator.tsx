@@ -52,9 +52,18 @@ export const PersonaIndicator: React.FC<PersonaIndicatorProps> = ({
   useEffect(() => {
     if (showDetails && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const popupWidth = 288;
+      const viewportPadding = 8;
+      const preferredLeft =
+        document.documentElement.dir === 'rtl'
+          ? rect.right - popupWidth
+          : rect.left;
       setPopupPosition({
         top: rect.bottom + 8, // 8px gap (mt-2)
-        left: rect.left,
+        left: Math.min(
+          window.innerWidth - popupWidth - viewportPadding,
+          Math.max(viewportPadding, preferredLeft)
+        ),
       });
     }
   }, [showDetails]);
@@ -142,7 +151,7 @@ export const PersonaIndicator: React.FC<PersonaIndicatorProps> = ({
                         onClear();
                         setShowDetails(false);
                       }}
-                      className='absolute top-2 right-2 p-1 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-colors'
+                      className='absolute top-2 end-2 p-1 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-sm transition-colors'
                       title='Remove persona'
                     >
                       <X className='h-3.5 w-3.5 text-white' />
@@ -151,7 +160,7 @@ export const PersonaIndicator: React.FC<PersonaIndicatorProps> = ({
 
                   {/* Advanced badge */}
                   {hasAdvancedFeatures && (
-                    <div className='absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[10px] font-medium'>
+                    <div className='absolute top-2 start-2 flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[10px] font-medium'>
                       <Brain className='h-3 w-3' />
                       Enhanced
                     </div>

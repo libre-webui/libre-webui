@@ -277,7 +277,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 {hasAdvancedFeatures ? (
                   <div className='relative flex items-center justify-center'>
                     <Paperclip className='h-4 w-4' />
-                    <div className='absolute -top-0.5 -right-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
+                    <div className='absolute -top-0.5 -end-0.5 h-2 w-2 bg-primary-500 dark:bg-primary-400 rounded-full ring-2 ring-white dark:ring-dark-50' />
                   </div>
                 ) : showAdvanced ? (
                   <Minus className='h-4 w-4' />
@@ -392,7 +392,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <div className='text-center leading-relaxed'>
               <span>{t('chat.footer.disclaimer')}</span>
               {hasAdvancedFeatures && (
-                <span className='ml-2 text-primary-600 dark:text-primary-400'>
+                <span className='ms-2 text-primary-600 dark:text-primary-400'>
                   •{' '}
                   {images.length > 0 &&
                     t('chat.footer.images', { count: images.length })}

@@ -128,7 +128,7 @@ export function SettingsAboutTab({ appVersion }: SettingsAboutTabProps) {
                       {t(link.descriptionKey)}
                     </p>
                   </div>
-                  <ExternalLink className='h-4 w-4 text-gray-400 ml-auto opacity-0 group-hover:opacity-100 transition-opacity' />
+                  <ExternalLink className='h-4 w-4 text-gray-400 ms-auto opacity-0 group-hover:opacity-100 transition-opacity' />
                 </a>
               );
             })}

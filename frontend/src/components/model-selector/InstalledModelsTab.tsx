@@ -74,11 +74,17 @@ export function InstalledModelsTab({
                 <div className='flex items-center gap-3'>
                   {getModelIcon(model)}
                   <div className='flex-1 min-w-0'>
-                    <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                    <div
+                      dir={model.isPersona ? 'auto' : 'ltr'}
+                      className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'
+                    >
                       {getModelLabel(model)}
                     </div>
                     {getModelSubLabel(model) && (
-                      <div className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                      <div
+                        dir='auto'
+                        className='text-xs text-gray-500 dark:text-gray-400 truncate'
+                      >
                         {getModelSubLabel(model)}
                       </div>
                     )}

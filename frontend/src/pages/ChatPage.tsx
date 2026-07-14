@@ -32,6 +32,7 @@ import { useChat } from '@/hooks/useChat';
 import { imageGenApi } from '@/utils/api';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
+import { isRTL } from '@/i18n';
 import {
   getWelcomePromptId,
   getWelcomePromptIndex,
@@ -49,10 +50,11 @@ interface WelcomePrompt {
 
 const getTimeWelcomePrompt = (
   username?: string,
-  t?: (key: string) => string
+  t?: (key: string) => string,
+  rtl = false
 ): WelcomePrompt => {
   const hour = new Date().getHours();
-  const name = username ? `, ${username}` : '';
+  const name = username ? `${rtl ? '،' : ','} \u2068${username}\u2069` : '';
 
   if (hour >= 5 && hour < 12) {
     const greetingText = t ? t('chat.greeting.morning') : 'Good morning';
@@ -92,12 +94,13 @@ const getTimeWelcomePrompt = (
 const getWelcomePrompt = (
   index: number,
   username?: string,
-  t?: (key: string) => string
+  t?: (key: string) => string,
+  rtl = false
 ): WelcomePrompt => {
   const id = getWelcomePromptId(index);
 
   if (id === 'time') {
-    return getTimeWelcomePrompt(username, t);
+    return getTimeWelcomePrompt(username, t, rtl);
   }
 
   return {
@@ -110,7 +113,7 @@ const getWelcomePrompt = (
 };
 
 export const ChatPage: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { sessionId } = useParams<{ sessionId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
@@ -142,8 +145,14 @@ export const ChatPage: React.FC = () => {
     getWelcomePromptIndex
   );
   const welcomePrompt = useMemo(
-    () => getWelcomePrompt(welcomePromptIndex, user?.username, t),
-    [t, user?.username, welcomePromptIndex]
+    () =>
+      getWelcomePrompt(
+        welcomePromptIndex,
+        user?.username,
+        t,
+        isRTL(i18n.language)
+      ),
+    [i18n.language, t, user?.username, welcomePromptIndex]
   );
 
   // Welcome screen state
@@ -378,7 +387,7 @@ export const ChatPage: React.FC = () => {
             setCurrentSession(privateSession);
           }}
           disabled={!selectedModel && models.length === 0}
-          className='absolute right-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-white/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-white hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:right-6 sm:top-6'
+          className='absolute end-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-white/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-white hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6 sm:top-6'
           title={t('chat.session.privateTooltip')}
         >
           <Ghost className='h-3.5 w-3.5' />
@@ -391,7 +400,7 @@ export const ChatPage: React.FC = () => {
             className='mb-10 flex flex-col items-center text-center animate-fade-in sm:mb-12'
             aria-live='polite'
           >
-            <h1 className='mb-4 max-w-3xl text-balance text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-gray-950 dark:text-dark-950'>
+            <h1 className='mb-4 max-w-3xl text-balance text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-gray-950 dark:text-dark-950 rtl:leading-[1.12] rtl:tracking-normal'>
               {welcomePrompt.title}
             </h1>
             <p className='max-w-xl text-balance text-base leading-relaxed text-gray-500 dark:text-dark-600 sm:text-lg'>
@@ -440,7 +449,7 @@ export const ChatPage: React.FC = () => {
                     {hasAdvancedFeatures ? (
                       <div className='relative flex items-center justify-center'>
                         <Paperclip className='h-4 w-4' />
-                        <div className='absolute -top-0.5 -right-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
+                        <div className='absolute -top-0.5 -end-0.5 h-1.5 w-1.5 bg-primary-500 rounded-full' />
                       </div>
                     ) : showWelcomeAdvanced ? (
                       <Minus className='h-4 w-4' />
