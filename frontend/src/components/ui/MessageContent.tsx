@@ -18,8 +18,8 @@
 import React from 'react';
 import { cn } from '@/utils';
 import {
+  getStreamingMarkdownSegments,
   shouldUseRichMarkdown,
-  shouldUseStreamingCodeRenderer,
 } from './messageContentUtils';
 import { StreamingMessageContent } from './StreamingMessageContent';
 
@@ -56,19 +56,56 @@ export const MessageContent: React.FC<MessageContentProps> = ({
   className,
   isStreaming = false,
 }) => {
-  if (isStreaming && shouldUseStreamingCodeRenderer(content)) {
-    return <StreamingMessageContent content={content} className={className} />;
+  const streamingSegments = React.useMemo(
+    () => (isStreaming ? getStreamingMarkdownSegments(content) : []),
+    [content, isStreaming]
+  );
+  const hasStreamingCode = streamingSegments.some(
+    segment => segment.type === 'code'
+  );
+
+  if (isStreaming && hasStreamingCode) {
+    return (
+      <StreamingMessageContent
+        content={content}
+        className={className}
+        segments={streamingSegments}
+      />
+    );
   }
 
+  let messageBody: React.ReactNode;
+
   if (!shouldUseRichMarkdown(content)) {
-    return <PlainMessageContent content={content} className={className} />;
+    messageBody = (
+      <PlainMessageContent content={content} className={className} />
+    );
+  } else {
+    messageBody = (
+      <React.Suspense
+        fallback={
+          <StreamingMessageContent
+            content={content}
+            className={className}
+            isStreaming={false}
+          />
+        }
+      >
+        <RichMessageContent content={content} className={className} />
+      </React.Suspense>
+    );
   }
 
   return (
-    <React.Suspense
-      fallback={<PlainMessageContent content={content} className={className} />}
-    >
-      <RichMessageContent content={content} className={className} />
-    </React.Suspense>
+    <>
+      {messageBody}
+      {isStreaming && (
+        <span
+          data-testid='message-streaming-cursor'
+          aria-hidden='true'
+          className='ms-1 inline-block h-5 w-1 animate-pulse rounded-full bg-primary-500 align-text-bottom'
+        />
+      )}
+    </>
   );
 };

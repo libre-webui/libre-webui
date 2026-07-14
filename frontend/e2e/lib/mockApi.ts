@@ -114,6 +114,13 @@ type MockSession = {
   updatedAt: number;
 };
 
+type MockChatStream = {
+  chunks: string[];
+  finalChunk?: string;
+  chunkDelayMs?: number;
+  completionDelayMs?: number;
+};
+
 type MockOptions = {
   systemInfo?: MockSystemInfo;
   sessions?: MockSession[];
@@ -128,6 +135,7 @@ type MockOptions = {
     title: string;
     source?: 'plugin' | 'ollama' | 'fallback';
   };
+  chatStream?: MockChatStream;
 };
 
 const defaultSystemInfo: MockSystemInfo = {
@@ -252,6 +260,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     },
   };
   let preferenceUpdateFailures = options.preferenceUpdateFailures ?? 0;
+  const chatStream = options.chatStream
+    ? {
+        chunks: options.chatStream.chunks,
+        finalChunk: options.chatStream.finalChunk,
+        chunkDelayMs: options.chatStream.chunkDelayMs ?? 40,
+        completionDelayMs: options.chatStream.completionDelayMs ?? 40,
+      }
+    : null;
   const pullStreamUrls: string[] = [];
   const ttsGenerationRequests: MockTTSGenerationRequest[] = [];
   const titleGenerationRequests: Array<{
@@ -264,7 +280,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     updates: Partial<MockSession>;
   }> = [];
 
-  await page.addInitScript(() => {
+  await page.addInitScript(streamConfig => {
     class MockWebSocket {
       static CONNECTING = 0;
       static OPEN = 1;
@@ -281,31 +297,80 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         setTimeout(() => this.onopen?.(new Event('open')), 0);
       }
 
-      send(payload: string) {
-        const message = JSON.parse(payload) as {
+      send(rawMessage: string) {
+        let message: {
           type?: string;
           data?: { assistantMessageId?: string };
         };
 
-        if (message.type !== 'chat_stream') {
+        try {
+          message = JSON.parse(rawMessage);
+        } catch {
           return;
         }
 
-        setTimeout(() => {
+        if (message.type !== 'chat_stream') return;
+
+        const messageId = message.data?.assistantMessageId;
+        if (!messageId) return;
+
+        const dispatch = (type: string, data: unknown) => {
           this.onmessage?.(
             new MessageEvent('message', {
-              data: JSON.stringify({
-                type: 'assistant_complete',
-                data: {
-                  content: 'Mock assistant response',
-                  role: 'assistant',
-                  timestamp: Date.now(),
-                  messageId: message.data?.assistantMessageId,
-                },
-              }),
+              data: JSON.stringify({ type, data }),
             })
           );
-        }, 0);
+        };
+
+        if (!streamConfig) {
+          window.setTimeout(() => {
+            dispatch('assistant_complete', {
+              content: 'Mock assistant response',
+              role: 'assistant',
+              timestamp: Date.now(),
+              messageId,
+            });
+          }, 0);
+          return;
+        }
+
+        const pieces = [...streamConfig.chunks];
+        if (streamConfig.finalChunk !== undefined) {
+          pieces.push(streamConfig.finalChunk);
+        }
+        if (pieces.length === 0) return;
+
+        let total = '';
+        const cumulativeChunks = pieces.map(content => {
+          total += content;
+          return { content, total };
+        });
+
+        cumulativeChunks.forEach((chunk, index) => {
+          window.setTimeout(
+            () => {
+              dispatch('assistant_chunk', {
+                ...chunk,
+                done: index === cumulativeChunks.length - 1,
+                messageId,
+              });
+            },
+            streamConfig.chunkDelayMs * (index + 1)
+          );
+        });
+
+        window.setTimeout(
+          () => {
+            dispatch('assistant_complete', {
+              content: cumulativeChunks[cumulativeChunks.length - 1].total,
+              role: 'assistant',
+              timestamp: Date.now(),
+              messageId,
+            });
+          },
+          streamConfig.chunkDelayMs * cumulativeChunks.length +
+            streamConfig.completionDelayMs
+        );
       }
 
       close() {
@@ -318,7 +383,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       configurable: true,
       value: MockWebSocket,
     });
-  });
+  }, chatStream);
 
   await page.route(
     /^http:\/\/(?:127\.0\.0\.1|localhost|demo\.localhost):3001\/api\/.*$/,

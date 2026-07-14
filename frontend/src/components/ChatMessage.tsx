@@ -469,9 +469,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   content={parsedContent}
                   isStreaming={isStreaming}
                 />
-                {isStreaming && !parsedContent.includes('```') && (
-                  <div className='ms-1 inline-block h-5 w-1 animate-pulse rounded-full bg-primary-500' />
-                )}
               </div>
             )}
 
