@@ -194,6 +194,7 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     const pkg = JSON.parse(
       fs.readFileSync(path.join(packedRoot, 'package.json'), 'utf8')
     );
+    assert.equal(pkg.bin?.['libre-webui'], 'bin/cli.js');
     assert.equal(pkg.scripts?.postinstall, 'node scripts/postinstall.js');
     const helper = await import(pathToFileURL(helperPath).href);
     const backendEntryUrl = pathToFileURL(backendEntry).href;

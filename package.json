@@ -4,7 +4,7 @@
   "description": "Privacy-first AI chat interface. Self-hosted, open source, extensible.",
   "main": "electron/main.js",
   "bin": {
-    "libre-webui": "./bin/cli.js"
+    "libre-webui": "bin/cli.js"
   },
   "files": [
     "bin",
