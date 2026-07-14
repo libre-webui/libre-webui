@@ -10,6 +10,7 @@ const {
   getPreviousTag,
   updateChangelogWithSection,
 } = require('./lib/releaseNotes');
+const { parsePorcelainStatus } = require('./lib/releaseStatus');
 
 const releaseFiles = [
   'CHANGELOG.md',
@@ -107,10 +108,7 @@ class ReleaseManager {
 
   ensureOnlyReleaseFilesChanged() {
     const status = git(['status', '--porcelain'], { silent: true });
-    const changedPaths = status
-      .split('\n')
-      .filter(Boolean)
-      .map(line => line.slice(3).replace(/^"|"$/g, ''));
+    const changedPaths = parsePorcelainStatus(status);
 
     const unexpected = changedPaths.filter(
       changedPath => !releaseFiles.includes(changedPath)

@@ -21,6 +21,7 @@ WORKDIR /app
 COPY .npmrc package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
+COPY scripts/postinstall.js ./scripts/postinstall.js
 
 # Copy git hooks directory (needed for postinstall)
 COPY .githooks/ ./.githooks/
@@ -49,6 +50,7 @@ WORKDIR /app
 COPY .npmrc package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
+COPY scripts/postinstall.js ./scripts/postinstall.js
 
 # Copy git hooks directory (needed for postinstall)
 COPY .githooks/ ./.githooks/
@@ -77,6 +79,7 @@ WORKDIR /app
 COPY .npmrc package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
+COPY scripts/postinstall.js ./scripts/postinstall.js
 
 # Copy git hooks directory (needed for postinstall)
 COPY .githooks/ ./.githooks/
@@ -124,6 +127,7 @@ WORKDIR /app
 COPY .npmrc package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
+COPY scripts/postinstall.js ./scripts/postinstall.js
 
 # Copy git hooks directory (needed for postinstall)
 COPY .githooks/ ./.githooks/
