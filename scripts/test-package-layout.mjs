@@ -11,14 +11,20 @@ import { x as extractTarball } from 'tar';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
+const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
 function packProject(outputDir) {
   try {
     return JSON.parse(
-      execFileSync('npm', ['pack', '--json', '--pack-destination', outputDir], {
-        cwd: repoRoot,
-        encoding: 'utf8',
-      })
+      execFileSync(
+        npmCommand,
+        ['pack', '--json', '--pack-destination', outputDir],
+        {
+          cwd: repoRoot,
+          encoding: 'utf8',
+          shell: process.platform === 'win32',
+        }
+      )
     );
   } catch (error) {
     if (!error.stdout?.includes('pack-destination')) {
@@ -26,9 +32,10 @@ function packProject(outputDir) {
     }
 
     const result = JSON.parse(
-      execFileSync('npm', ['pack', '--json'], {
+      execFileSync(npmCommand, ['pack', '--json'], {
         cwd: repoRoot,
         encoding: 'utf8',
+        shell: process.platform === 'win32',
       })
     );
 
@@ -80,7 +87,11 @@ function linkInstalledDependencies(packedRoot) {
     'repo root node_modules must exist to boot the packed backend in tests'
   );
 
-  fs.symlinkSync(installedNodeModules, path.join(packedRoot, 'node_modules'));
+  fs.symlinkSync(
+    installedNodeModules,
+    path.join(packedRoot, 'node_modules'),
+    process.platform === 'win32' ? 'junction' : 'dir'
+  );
 }
 
 function startServer(server) {
@@ -121,16 +132,40 @@ async function stopChild(child) {
     return;
   }
 
+  const waitForExit = timeoutMs =>
+    new Promise(resolve => {
+      if (child.exitCode !== null) {
+        resolve(true);
+        return;
+      }
+
+      const timeout = setTimeout(() => {
+        child.off('exit', onExit);
+        resolve(false);
+      }, timeoutMs);
+
+      const onExit = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+
+      child.once('exit', onExit);
+
+      // Avoid missing an exit that occurs between the initial check and listener.
+      if (child.exitCode !== null) {
+        child.off('exit', onExit);
+        clearTimeout(timeout);
+        resolve(true);
+      }
+    });
+
   child.kill('SIGTERM');
 
-  await Promise.race([
-    new Promise(resolve => child.once('exit', resolve)),
-    new Promise(resolve => setTimeout(resolve, 5000)),
-  ]);
+  await waitForExit(5000);
 
   if (child.exitCode === null) {
     child.kill('SIGKILL');
-    await new Promise(resolve => child.once('exit', resolve));
+    await waitForExit(5000);
   }
 }
 
@@ -152,10 +187,14 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     assert.ok(fs.existsSync(backendEntry));
     assert.ok(fs.existsSync(path.join(frontendDist, 'index.html')));
     assert.ok(fs.existsSync(helperPath));
+    assert.ok(
+      fs.existsSync(path.join(packedRoot, 'scripts', 'postinstall.js'))
+    );
 
     const pkg = JSON.parse(
       fs.readFileSync(path.join(packedRoot, 'package.json'), 'utf8')
     );
+    assert.equal(pkg.scripts?.postinstall, 'node scripts/postinstall.js');
     const helper = await import(pathToFileURL(helperPath).href);
     const backendEntryUrl = pathToFileURL(backendEntry).href;
 
