@@ -357,7 +357,13 @@
       "accent": {
         "title": "Màu nhấn",
         "custom": "Màu tùy chỉnh",
-        "useColor": "Dùng {{color}} làm màu nhấn"
+        "useColor": "Dùng {{color}} làm màu nhấn",
+        "behaviorTitle": "Bảng màu giao diện",
+        "behaviorDescription": "Chọn chỉ dùng màu nhấn cho các điều khiển hoặc áp dụng cho toàn bộ giao diện sáng hay tối.",
+        "defaultStyle": "Mặc định",
+        "defaultStyleDescription": "Giữ các bề mặt trung tính của giao diện sáng và tối.",
+        "adaptedStyle": "Thích ứng với màu nhấn",
+        "adaptedStyleDescription": "Nhuộm bề mặt, đường viền và văn bản bằng màu nhấn."
       },
       "chatInterface": {
         "title": "Giao diện trò chuyện",

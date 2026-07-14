@@ -25,19 +25,25 @@ export interface PluginCapabilityRegistryDependencies {
 export class PluginCapabilityRegistryService {
   constructor(private readonly deps: PluginCapabilityRegistryDependencies) {}
 
-  getPluginsByCapability(capabilityType: PluginType): Plugin[] {
+  getPluginsByCapability(
+    capabilityType: PluginType,
+    userId?: string
+  ): Plugin[] {
     const allPlugins = this.deps.getAllPlugins();
     const result: Plugin[] = [];
 
     for (const plugin of allPlugins) {
       if (plugin.type === capabilityType) {
+        const capabilityConfig =
+          capabilityType === 'tts'
+            ? plugin.capabilities?.tts?.config
+            : capabilityType === 'image'
+              ? plugin.capabilities?.image?.config
+              : undefined;
         const noAuthRequired =
-          capabilityType === 'image' &&
-          (
-            plugin.capabilities?.image?.config as
-              Record<string, unknown> | undefined
-          )?.no_auth_required === true;
-        const apiKey = this.deps.getApiKey(plugin);
+          (capabilityConfig as Record<string, unknown> | undefined)
+            ?.no_auth_required === true;
+        const apiKey = this.deps.getApiKey(plugin, userId);
         if (apiKey || noAuthRequired) {
           result.push(plugin);
         }
@@ -78,7 +84,7 @@ export class PluginCapabilityRegistryService {
         }
 
         if (hasCapability) {
-          const apiKey = this.deps.getApiKey(plugin);
+          const apiKey = this.deps.getApiKey(plugin, userId);
           if (apiKey || noAuthRequired) {
             result.push(plugin);
           }

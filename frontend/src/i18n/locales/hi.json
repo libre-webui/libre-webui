@@ -357,7 +357,13 @@
       "accent": {
         "title": "एक्सेंट रंग",
         "custom": "कस्टम रंग",
-        "useColor": "{{color}} एक्सेंट का उपयोग करें"
+        "useColor": "{{color}} एक्सेंट का उपयोग करें",
+        "behaviorTitle": "इंटरफ़ेस पैलेट",
+        "behaviorDescription": "चुनें कि एक्सेंट केवल नियंत्रणों पर रहे या पूरे हल्के अथवा गहरे इंटरफ़ेस को अनुकूलित करे।",
+        "defaultStyle": "डिफ़ॉल्ट",
+        "defaultStyleDescription": "हल्के और गहरे थीम की तटस्थ सतहें बनाए रखें।",
+        "adaptedStyle": "एक्सेंट के अनुसार ढालें",
+        "adaptedStyleDescription": "सतहों, बॉर्डर और टेक्स्ट को एक्सेंट रंग से रंगें।"
       },
       "chatInterface": {
         "title": "चैट इंटरफ़ेस",

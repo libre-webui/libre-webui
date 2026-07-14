@@ -36,8 +36,12 @@ import {
   type MulterRequest,
 } from '../utils/pluginUpload.js';
 import { validatePluginVariables } from '../utils/pluginVariableValidation.js';
+import type { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = express.Router();
+
+const getRequestUserId = (req: Request): string =>
+  (req as AuthenticatedRequest).user?.userId || 'default';
 
 // Rate limiting for plugin operations
 const pluginRateLimit = rateLimit({
@@ -515,7 +519,7 @@ router.get(
   ): Promise<void> => {
     try {
       // Get userId from auth context (defaults to 'default' for single-user mode)
-      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const userId = getRequestUserId(req);
       const credentials = pluginCredentialsService.getCredentials(userId);
 
       res.json({
@@ -559,7 +563,7 @@ router.post(
       }
 
       // Get userId from auth context
-      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const userId = getRequestUserId(req);
       const success = pluginCredentialsService.setApiKey(id, api_key, userId);
 
       if (success) {
@@ -601,7 +605,7 @@ router.delete(
       }
 
       // Get userId from auth context
-      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const userId = getRequestUserId(req);
       const success = pluginCredentialsService.deleteApiKey(id, userId);
 
       res.json({
@@ -635,7 +639,7 @@ router.get(
       }
 
       // Get userId from auth context
-      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const userId = getRequestUserId(req);
       const hasKey = pluginCredentialsService.hasApiKey(
         id,
         plugin.auth.key_env,
@@ -680,7 +684,7 @@ router.get(
         return;
       }
 
-      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const userId = getRequestUserId(req);
       const variables = pluginVariablesService.getVariables(
         id,
         plugin.variables,
@@ -734,7 +738,7 @@ router.put(
         return;
       }
 
-      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const userId = getRequestUserId(req);
       const success = pluginVariablesService.setVariables(
         id,
         validation.variables,
@@ -772,7 +776,7 @@ router.delete(
         return;
       }
 
-      const userId = (req as Request & { userId?: string }).userId || 'default';
+      const userId = getRequestUserId(req);
       const success = pluginVariablesService.deletePluginVariables(id, userId);
 
       res.json({ success: true, data: success });

@@ -357,7 +357,13 @@
       "accent": {
         "title": "Color de acento",
         "custom": "Color personalizado",
-        "useColor": "Usar {{color}} como acento"
+        "useColor": "Usar {{color}} como acento",
+        "behaviorTitle": "Paleta de la interfaz",
+        "behaviorDescription": "Elige si el acento se limita a los controles o adapta toda la interfaz clara u oscura.",
+        "defaultStyle": "Predeterminada",
+        "defaultStyleDescription": "Mantener las superficies neutras de los temas claro y oscuro.",
+        "adaptedStyle": "Adaptar al acento",
+        "adaptedStyleDescription": "Teñir superficies, bordes y texto con el color de acento."
       },
       "chatInterface": {
         "title": "Interfaz de chat",

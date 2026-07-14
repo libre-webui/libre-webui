@@ -20,14 +20,16 @@ import { isDemoMode } from '@/utils/demoMode';
 import { api, createDemoResponse } from './client';
 
 // TTS API
+export type TTSResponseFormat = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+
 export interface TTSModel {
   model: string;
   plugin: string;
   config?: {
     voices?: string[];
     default_voice?: string;
-    formats?: string[];
-    default_format?: string;
+    formats?: TTSResponseFormat[];
+    default_format?: TTSResponseFormat;
     max_characters?: number;
     supports_streaming?: boolean;
   };
@@ -42,9 +44,10 @@ export interface TTSPlugin {
 
 export interface TTSGenerateRequest {
   model: string;
+  pluginId?: string;
   input: string;
   voice?: string;
-  response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+  response_format?: TTSResponseFormat;
   speed?: number;
 }
 
@@ -53,6 +56,31 @@ export interface TTSGenerateBase64Response {
   format: string;
   mimeType: string;
   size: number;
+}
+
+export function findTTSModel(
+  models: TTSModel[],
+  model?: string,
+  pluginId?: string
+): TTSModel | undefined {
+  if (!model) return undefined;
+
+  return models.find(
+    candidate =>
+      candidate.model === model && (!pluginId || candidate.plugin === pluginId)
+  );
+}
+
+export function resolveTTSModel(
+  models: TTSModel[],
+  model?: string,
+  pluginId?: string
+): TTSModel | undefined {
+  return findTTSModel(models, model, pluginId) || models[0];
+}
+
+export function getTTSModelOptionValue(model: TTSModel): string {
+  return `${encodeURIComponent(model.plugin)}::${encodeURIComponent(model.model)}`;
 }
 
 export const ttsApi = {
@@ -137,7 +165,12 @@ export const ttsApi = {
       });
     }
 
-    return api.post('/tts/generate-base64', request).then(res => res.data);
+    const payload = {
+      ...request,
+      pluginId: request.pluginId || undefined,
+    };
+
+    return api.post('/tts/generate-base64', payload).then(res => res.data);
   },
 
   // Generate speech and get as blob (for direct playback)
@@ -147,7 +180,12 @@ export const ttsApi = {
       return new Blob([], { type: 'audio/mpeg' });
     }
 
-    const response = await api.post('/tts/generate', request, {
+    const payload = {
+      ...request,
+      pluginId: request.pluginId || undefined,
+    };
+
+    const response = await api.post('/tts/generate', payload, {
       responseType: 'blob',
     });
     return response.data;
@@ -158,8 +196,10 @@ export const ttsApi = {
     text: string,
     options: {
       model?: string;
+      pluginId?: string;
       voice?: string;
       speed?: number;
+      responseFormat?: TTSResponseFormat;
       onStart?: () => void;
       onEnd?: () => void;
       onError?: (error: Error) => void;
@@ -170,10 +210,11 @@ export const ttsApi = {
 
       const response = await ttsApi.generateBase64({
         model: options.model || 'tts-1',
+        pluginId: options.pluginId,
         input: text,
         voice: options.voice,
         speed: options.speed,
-        response_format: 'mp3',
+        response_format: options.responseFormat,
       });
 
       if (!response.success || !response.data?.audio) {

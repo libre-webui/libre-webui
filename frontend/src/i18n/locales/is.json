@@ -357,7 +357,13 @@
       "accent": {
         "title": "Áherslulitur",
         "custom": "Sérsniðinn litur",
-        "useColor": "Nota {{color}} sem áherslulit"
+        "useColor": "Nota {{color}} sem áherslulit",
+        "behaviorTitle": "Litapalletta viðmóts",
+        "behaviorDescription": "Veldu hvort áhersluliturinn sé aðeins á stýringum eða aðlagi allt ljósa eða dökka viðmótið.",
+        "defaultStyle": "Sjálfgefið",
+        "defaultStyleDescription": "Halda hlutlausum flötum í ljósu og dökku þema.",
+        "adaptedStyle": "Aðlaga að áherslulit",
+        "adaptedStyleDescription": "Lita fleti, jaðra og texta með áherslulitnum."
       },
       "chatInterface": {
         "title": "Spjallviðmót",

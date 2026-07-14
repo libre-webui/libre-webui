@@ -49,4 +49,10 @@ export type {
   TTSGenerateRequest,
   TTSModel,
   TTSPlugin,
+  TTSResponseFormat,
+} from './api/ttsApi';
+export {
+  findTTSModel,
+  getTTSModelOptionValue,
+  resolveTTSModel,
 } from './api/ttsApi';

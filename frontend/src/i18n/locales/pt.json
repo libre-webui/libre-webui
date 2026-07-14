@@ -357,7 +357,13 @@
       "accent": {
         "title": "Cor de destaque",
         "custom": "Cor personalizada",
-        "useColor": "Usar {{color}} como destaque"
+        "useColor": "Usar {{color}} como destaque",
+        "behaviorTitle": "Paleta da interface",
+        "behaviorDescription": "Escolha se a cor de destaque fica limitada aos controlos ou adapta toda a interface clara ou escura.",
+        "defaultStyle": "Predefinida",
+        "defaultStyleDescription": "Manter as superfícies neutras dos temas claro e escuro.",
+        "adaptedStyle": "Adaptar ao destaque",
+        "adaptedStyleDescription": "Tingir superfícies, contornos e texto com a cor de destaque."
       },
       "chatInterface": {
         "title": "Interface do Chat",

@@ -174,7 +174,9 @@ Status colors always pair with dark text on the colored fill to keep contrast co
 
 ## Accent Customization
 
-Accent selection is a user preference, not a theme fork. Changing the accent updates the primary and accent token scales used by buttons, focus rings, links, sliders, progress bars, and selected states. The neutral palette, typography, spacing, and component hierarchy do not change.
+Accent selection is a user preference, not a separate light or dark theme. By default, changing the accent updates the primary and accent token scales used by buttons, focus rings, links, sliders, progress bars, and selected states while preserving the neutral palette.
+
+Appearance also offers an opt-in **Adapt to accent** palette. When enabled, the selected preset or custom color tints the canvas, surfaces, borders, text hierarchy, and legacy neutral scales in both light and dark mode. Typography, spacing, component hierarchy, and semantic status colors do not change. Disabling the option restores the exact default neutral light or dark palette.
 
 Preset accents are violet, blue, cyan, teal, emerald, amber, rose, and slate. Custom accents generate a full shade scale from the selected color, and button shades are darkened as needed so white button text remains at least 4.5:1 contrast. Avoid using multiple accent families in the same viewport. Status colors remain semantic and should not inherit the custom accent.
 

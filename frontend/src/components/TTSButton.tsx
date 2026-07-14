@@ -18,7 +18,13 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Volume2, VolumeX, Loader2, Square } from 'lucide-react';
-import { ttsApi, TTSModel } from '@/utils/api';
+import {
+  findTTSModel,
+  resolveTTSModel,
+  ttsApi,
+  type TTSModel,
+  type TTSResponseFormat,
+} from '@/utils/api';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
@@ -31,11 +37,15 @@ let cachePromise: Promise<TTSModel[]> | null = null;
 let cacheTimestamp = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
 
-async function getCachedTTSModels(): Promise<TTSModel[]> {
+async function getCachedTTSModels(forceRefresh = false): Promise<TTSModel[]> {
   const now = Date.now();
 
   // Return cached models if still valid
-  if (cachedModels !== null && now - cacheTimestamp < CACHE_TTL) {
+  if (
+    !forceRefresh &&
+    cachedModels !== null &&
+    now - cacheTimestamp < CACHE_TTL
+  ) {
     return cachedModels;
   }
 
@@ -110,17 +120,29 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
   useEffect(() => {
     let mounted = true;
 
-    getCachedTTSModels().then(models => {
+    const loadModels = async () => {
+      let models = await getCachedTTSModels();
+      const savedSelection = findTTSModel(
+        models,
+        preferences.ttsSettings?.model,
+        preferences.ttsSettings?.pluginId
+      );
+      if (preferences.ttsSettings?.model && !savedSelection) {
+        models = await getCachedTTSModels(true);
+      }
+
       if (mounted) {
         setAvailableModels(models);
         setHasModels(models.length > 0);
       }
-    });
+    };
+
+    void loadModels();
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [preferences.ttsSettings?.model, preferences.ttsSettings?.pluginId]);
 
   /**
    * Generate and play audio for a single piece of text
@@ -129,15 +151,18 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
     async (
       inputText: string,
       model: string,
+      pluginId: string | undefined,
       voice: string,
-      speed: number
+      speed: number,
+      responseFormat?: TTSResponseFormat
     ): Promise<void> => {
       const response = await ttsApi.generateBase64({
         model,
+        pluginId,
         input: inputText,
         voice,
         speed,
-        response_format: 'mp3',
+        response_format: responseFormat,
       });
 
       if (!response.success || !response.data?.audio) {
@@ -172,8 +197,10 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
     async (
       sentences: string[],
       model: string,
+      pluginId: string | undefined,
       voice: string,
-      speed: number
+      speed: number,
+      responseFormat?: TTSResponseFormat
     ) => {
       sentenceQueueRef.current = sentences;
       currentIndexRef.current = 0;
@@ -191,10 +218,11 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
         try {
           const response = await ttsApi.generateBase64({
             model,
+            pluginId,
             input: inputText,
             voice,
             speed,
-            response_format: 'mp3',
+            response_format: responseFormat,
           });
 
           if (!response.success || !response.data?.audio) {
@@ -305,12 +333,22 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
     try {
       // Use saved settings from preferences, fall back to first available model
       const ttsSettings = preferences.ttsSettings;
-      const model = ttsSettings?.model || availableModels[0]?.model || 'tts-1';
-      const voice =
-        ttsSettings?.voice ||
-        availableModels[0]?.config?.default_voice ||
-        'alloy';
+      const selectedModel = resolveTTSModel(
+        availableModels,
+        ttsSettings?.model,
+        ttsSettings?.pluginId
+      );
+      const model = selectedModel?.model || ttsSettings?.model || 'tts-1';
+      const pluginId = selectedModel?.plugin || ttsSettings?.pluginId;
+      const savedSelectionIsValid =
+        selectedModel?.model === ttsSettings?.model &&
+        (!ttsSettings?.pluginId ||
+          selectedModel?.plugin === ttsSettings.pluginId);
+      const voice = savedSelectionIsValid
+        ? ttsSettings?.voice || selectedModel?.config?.default_voice || 'alloy'
+        : selectedModel?.config?.default_voice || 'alloy';
       const speed = ttsSettings?.speed || 1.0;
+      const responseFormat = selectedModel?.config?.default_format;
       const streamSentences = ttsSettings?.streamSentences || false;
 
       if (streamSentences) {
@@ -324,14 +362,28 @@ export const TTSButton: React.FC<TTSButtonProps> = ({
         setIsLoading(false);
         setIsPlaying(true);
 
-        await playSentenceBysentence(sentences, model, voice, speed);
+        await playSentenceBysentence(
+          sentences,
+          model,
+          pluginId,
+          voice,
+          speed,
+          responseFormat
+        );
 
         if (!stopRequestedRef.current) {
           setIsPlaying(false);
         }
       } else {
         // Traditional full-message playback
-        await generateAndPlayAudio(text, model, voice, speed);
+        await generateAndPlayAudio(
+          text,
+          model,
+          pluginId,
+          voice,
+          speed,
+          responseFormat
+        );
         setIsLoading(false);
         setIsPlaying(true);
 

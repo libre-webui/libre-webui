@@ -129,6 +129,7 @@ export interface UserPreferences {
   defaultModel: string;
   theme: {
     mode: 'light' | 'dark' | 'ophelia';
+    adaptToAccent?: boolean;
     accent?:
       | 'violet'
       | 'blue'
@@ -416,6 +417,7 @@ export interface Plugin {
 // TTS Request/Response types
 export interface TTSRequest {
   model: string;
+  pluginId?: string;
   input: string;
   voice?: string;
   response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';

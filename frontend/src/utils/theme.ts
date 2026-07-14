@@ -45,9 +45,92 @@ const SHADE_KEYS = [
   '950',
 ] as const;
 
+const NEUTRAL_SHADE_KEYS = ['25', ...SHADE_KEYS] as const;
+const INTERFACE_ROLE_KEYS = [
+  'canvas',
+  'surface',
+  'surface-subtle',
+  'surface-raised',
+  'surface-overlay',
+  'surface-inverse',
+  'ink',
+  'ink-muted',
+  'ink-subtle',
+  'ink-inverse',
+  'line',
+  'line-strong',
+] as const;
+
 type AccentId = (typeof ACCENT_OPTIONS)[number]['id'];
 type AccentShade = (typeof SHADE_KEYS)[number];
 type AccentPalette = Record<AccentShade, string>;
+type NeutralShade = (typeof NEUTRAL_SHADE_KEYS)[number];
+type NeutralPalette = Record<NeutralShade, string>;
+type InterfaceRole = (typeof INTERFACE_ROLE_KEYS)[number];
+type InterfaceRoleDefinition = {
+  lightness: number;
+  saturationFactor: number;
+};
+
+const LIGHT_NEUTRAL_LIGHTNESS: Record<NeutralShade, number> = {
+  25: 99,
+  50: 97,
+  100: 94,
+  200: 88,
+  300: 80,
+  400: 66,
+  500: 48,
+  600: 36,
+  700: 27,
+  800: 18,
+  900: 11,
+  950: 6,
+};
+
+const DARK_NEUTRAL_LIGHTNESS: Record<NeutralShade, number> = {
+  25: 13,
+  50: 4,
+  100: 7,
+  200: 10,
+  300: 16,
+  400: 27,
+  500: 46,
+  600: 65,
+  700: 82,
+  800: 89,
+  900: 95,
+  950: 99,
+};
+
+const LIGHT_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
+  canvas: { lightness: 96, saturationFactor: 1 },
+  surface: { lightness: 98, saturationFactor: 0.9 },
+  'surface-subtle': { lightness: 93, saturationFactor: 1 },
+  'surface-raised': { lightness: 99, saturationFactor: 0.8 },
+  'surface-overlay': { lightness: 100, saturationFactor: 0 },
+  'surface-inverse': { lightness: 10, saturationFactor: 0.7 },
+  ink: { lightness: 10, saturationFactor: 0.45 },
+  'ink-muted': { lightness: 38, saturationFactor: 0.35 },
+  'ink-subtle': { lightness: 54, saturationFactor: 0.4 },
+  'ink-inverse': { lightness: 98, saturationFactor: 0.4 },
+  line: { lightness: 86, saturationFactor: 0.8 },
+  'line-strong': { lightness: 75, saturationFactor: 0.65 },
+};
+
+const DARK_INTERFACE_ROLES: Record<InterfaceRole, InterfaceRoleDefinition> = {
+  canvas: { lightness: 5, saturationFactor: 0.9 },
+  surface: { lightness: 7, saturationFactor: 0.9 },
+  'surface-subtle': { lightness: 9, saturationFactor: 1 },
+  'surface-raised': { lightness: 11, saturationFactor: 1 },
+  'surface-overlay': { lightness: 13, saturationFactor: 1 },
+  'surface-inverse': { lightness: 96, saturationFactor: 0.35 },
+  ink: { lightness: 96, saturationFactor: 0.3 },
+  'ink-muted': { lightness: 67, saturationFactor: 0.35 },
+  'ink-subtle': { lightness: 48, saturationFactor: 0.4 },
+  'ink-inverse': { lightness: 7, saturationFactor: 0.45 },
+  line: { lightness: 18, saturationFactor: 0.8 },
+  'line-strong': { lightness: 28, saturationFactor: 0.65 },
+};
 
 const ACCENT_PALETTES: Record<AccentId, AccentPalette> = {
   violet: {
@@ -340,6 +423,7 @@ export const normalizeTheme = (theme?: Partial<Theme> | null): Theme => {
 
   return {
     mode,
+    adaptToAccent: theme?.adaptToAccent === true,
     accent: accent === 'custom' ? 'custom' : presetAccent,
     customAccent,
   };
@@ -368,6 +452,84 @@ export const getThemeAccentColor = (theme?: Partial<Theme> | null) => {
   );
 };
 
+const getInterfaceSaturation = (accentSaturation: number, factor: number) => {
+  if (factor === 0 || accentSaturation < 8) {
+    return accentSaturation * factor;
+  }
+
+  return clamp(accentSaturation * 0.24 * factor, 6 * factor, 24 * factor);
+};
+
+const createNeutralPalette = (
+  hue: number,
+  saturation: number,
+  lightness: Record<NeutralShade, number>
+): NeutralPalette =>
+  NEUTRAL_SHADE_KEYS.reduce((palette, shade) => {
+    palette[shade] = hslToHex(
+      hue,
+      getInterfaceSaturation(saturation, 1),
+      lightness[shade]
+    );
+    return palette;
+  }, {} as NeutralPalette);
+
+const createInterfaceRoles = (
+  hue: number,
+  saturation: number,
+  definitions: Record<InterfaceRole, InterfaceRoleDefinition>
+) =>
+  INTERFACE_ROLE_KEYS.reduce(
+    (roles, role) => {
+      const definition = definitions[role];
+      roles[role] = hslToHex(
+        hue,
+        getInterfaceSaturation(saturation, definition.saturationFactor),
+        definition.lightness
+      );
+      return roles;
+    },
+    {} as Record<InterfaceRole, string>
+  );
+
+const setRgbVariable = (root: HTMLElement, variable: string, hex: string) => {
+  const { r, g, b } = hexToRgb(hex);
+  root.style.setProperty(variable, `${r} ${g} ${b}`);
+};
+
+const clearAdaptiveInterfaceVariables = (root: HTMLElement) => {
+  for (const shade of NEUTRAL_SHADE_KEYS) {
+    root.style.removeProperty(`--color-gray-${shade}`);
+    root.style.removeProperty(`--color-dark-${shade}`);
+  }
+
+  for (const role of INTERFACE_ROLE_KEYS) {
+    root.style.removeProperty(`--color-${role}`);
+  }
+};
+
+const applyAdaptiveInterfaceVariables = (root: HTMLElement, theme: Theme) => {
+  const accent = getThemeAccentColor(theme);
+  const { r, g, b } = hexToRgb(accent);
+  const { h, s } = rgbToHsl(r, g, b);
+  const grayPalette = createNeutralPalette(h, s, LIGHT_NEUTRAL_LIGHTNESS);
+  const darkPalette = createNeutralPalette(h, s, DARK_NEUTRAL_LIGHTNESS);
+  const roles = createInterfaceRoles(
+    h,
+    s,
+    theme.mode === 'dark' ? DARK_INTERFACE_ROLES : LIGHT_INTERFACE_ROLES
+  );
+
+  for (const shade of NEUTRAL_SHADE_KEYS) {
+    setRgbVariable(root, `--color-gray-${shade}`, grayPalette[shade]);
+    setRgbVariable(root, `--color-dark-${shade}`, darkPalette[shade]);
+  }
+
+  for (const role of INTERFACE_ROLE_KEYS) {
+    setRgbVariable(root, `--color-${role}`, roles[role]);
+  }
+};
+
 export const applyThemeToDocument = (theme?: Partial<Theme> | null) => {
   if (typeof document === 'undefined') return;
 
@@ -382,11 +544,20 @@ export const applyThemeToDocument = (theme?: Partial<Theme> | null) => {
 
   root.style.colorScheme = normalizedTheme.mode;
   root.dataset.accent = normalizedTheme.accent || DEFAULT_ACCENT;
+  root.dataset.themeStyle = normalizedTheme.adaptToAccent
+    ? 'accent'
+    : 'default';
 
   for (const shade of SHADE_KEYS) {
     const { r, g, b } = hexToRgb(palette[shade]);
     const rgb = `${r} ${g} ${b}`;
     root.style.setProperty(`--color-primary-${shade}`, rgb);
     root.style.setProperty(`--color-accent-${shade}`, rgb);
+  }
+
+  if (normalizedTheme.adaptToAccent) {
+    applyAdaptiveInterfaceVariables(root, normalizedTheme);
+  } else {
+    clearAdaptiveInterfaceVariables(root);
   }
 };

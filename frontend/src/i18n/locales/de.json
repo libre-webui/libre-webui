@@ -357,7 +357,13 @@
       "accent": {
         "title": "Akzentfarbe",
         "custom": "Benutzerdefinierte Farbe",
-        "useColor": "{{color}} als Akzent verwenden"
+        "useColor": "{{color}} als Akzent verwenden",
+        "behaviorTitle": "Oberflächenpalette",
+        "behaviorDescription": "Wähle, ob die Akzentfarbe nur Bedienelemente hervorhebt oder die gesamte helle bzw. dunkle Oberfläche anpasst.",
+        "defaultStyle": "Standard",
+        "defaultStyleDescription": "Neutrale Flächen im hellen und dunklen Design beibehalten.",
+        "adaptedStyle": "An Akzent anpassen",
+        "adaptedStyleDescription": "Flächen, Rahmen und Text mit der Akzentfarbe einfärben."
       },
       "chatInterface": {
         "title": "Chat-Oberfläche",

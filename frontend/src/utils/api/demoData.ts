@@ -76,7 +76,12 @@ export const getDemoSessions = (): ChatSession[] => {
 export const DEMO_SESSIONS: ChatSession[] = getDemoSessions();
 
 export const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
-  theme: { mode: 'dark', accent: 'blue', customAccent: '#2563eb' },
+  theme: {
+    mode: 'dark',
+    adaptToAccent: false,
+    accent: 'blue',
+    customAccent: '#2563eb',
+  },
   defaultModel: 'llama3.2:3b',
   systemMessage: 'You are a helpful assistant.',
   generationOptions: {

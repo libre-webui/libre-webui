@@ -357,7 +357,13 @@
       "accent": {
         "title": "Accentfärg",
         "custom": "Anpassad färg",
-        "useColor": "Använd {{color}} som accent"
+        "useColor": "Använd {{color}} som accent",
+        "behaviorTitle": "Gränssnittspalett",
+        "behaviorDescription": "Välj om accentfärgen bara används på kontroller eller anpassar hela det ljusa eller mörka gränssnittet.",
+        "defaultStyle": "Standard",
+        "defaultStyleDescription": "Behåll neutrala ytor i ljust och mörkt tema.",
+        "adaptedStyle": "Anpassa till accent",
+        "adaptedStyleDescription": "Färga ytor, kanter och text med accentfärgen."
       },
       "chatInterface": {
         "title": "Chattgränssnitt",

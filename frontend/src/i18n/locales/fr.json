@@ -357,7 +357,13 @@
       "accent": {
         "title": "Couleur d'accent",
         "custom": "Couleur personnalisée",
-        "useColor": "Utiliser {{color}} comme couleur d'accent"
+        "useColor": "Utiliser {{color}} comme couleur d'accent",
+        "behaviorTitle": "Palette de l'interface",
+        "behaviorDescription": "Choisissez si la couleur d'accent reste limitée aux commandes ou adapte toute l'interface claire ou sombre.",
+        "defaultStyle": "Par défaut",
+        "defaultStyleDescription": "Conserver les surfaces neutres des thèmes clair et sombre.",
+        "adaptedStyle": "Adapter à l'accent",
+        "adaptedStyleDescription": "Teinter les surfaces, bordures et textes avec votre couleur d'accent."
       },
       "chatInterface": {
         "title": "Interface de chat",

@@ -1,12 +1,17 @@
 const accentShades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+const neutralShades = [
+  25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950,
+];
 
-const variableAccent = prefix =>
+const variablePalette = (prefix, shades) =>
   Object.fromEntries(
-    accentShades.map(shade => [
+    shades.map(shade => [
       shade,
       `rgb(var(--color-${prefix}-${shade}) / <alpha-value>)`,
     ])
   );
+
+const variableAccent = prefix => variablePalette(prefix, accentShades);
 
 const variableColor = name => `rgb(var(--color-${name}) / <alpha-value>)`;
 
@@ -43,37 +48,11 @@ export default {
           DEFAULT: variableColor('line'),
           strong: variableColor('line-strong'),
         },
-        // Cool neutrals — DESIGN.md neutral hierarchy.
-        gray: {
-          25: '#fcfcfd',
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#d1d5db',
-          400: '#9ca3af',
-          500: '#6b7280',
-          600: '#4b5563',
-          700: '#374151',
-          800: '#1f2937',
-          900: '#111827',
-          950: '#0b1020',
-        },
+        // Runtime neutrals preserve these defaults unless accent adaptation is enabled.
+        gray: variablePalette('gray', neutralShades),
         // Dark surface ladder for layered backgrounds — near-black warm neutrals.
         // Higher numeric keys = lighter text (inverted scale, kept for backwards compat).
-        dark: {
-          25: '#202023', // neutral-surface (panels, popovers)
-          50: '#0a0a0b', // neutral (sidebar — deepest)
-          100: '#111113', // app background
-          200: '#18181b', // chat area / raised surface
-          300: '#27272a', // cards, inputs, user bubbles
-          400: '#3f3f46', // dim border / subtle divider
-          500: '#71717a', // muted text
-          600: '#a1a1aa', // secondary text
-          700: '#d4d4d8', // body text in dark mode
-          800: '#e4e4e7', // emphasized text
-          900: '#f4f4f5', // strong text
-          950: '#ffffff', // primary text on dark
-        },
+        dark: variablePalette('dark', neutralShades),
         // DESIGN.md status colors
         success: {
           50: '#ecfdf5',

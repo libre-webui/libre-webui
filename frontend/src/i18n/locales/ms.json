@@ -357,7 +357,13 @@
       "accent": {
         "title": "Warna aksen",
         "custom": "Warna tersuai",
-        "useColor": "Gunakan aksen {{color}}"
+        "useColor": "Gunakan aksen {{color}}",
+        "behaviorTitle": "Palet antara muka",
+        "behaviorDescription": "Pilih sama ada aksen hanya digunakan pada kawalan atau menyesuaikan seluruh antara muka cerah atau gelap.",
+        "defaultStyle": "Lalai",
+        "defaultStyleDescription": "Kekalkan permukaan neutral tema cerah dan gelap.",
+        "adaptedStyle": "Sesuaikan dengan aksen",
+        "adaptedStyleDescription": "Warnakan permukaan, sempadan dan teks dengan warna aksen."
       },
       "chatInterface": {
         "title": "Antara Muka Sembang",

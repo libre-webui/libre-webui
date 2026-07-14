@@ -18,7 +18,11 @@
 import { Check, Loader2, Play, RotateCcw, Square, Volume2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select } from '@/components/ui';
-import type { TTSModel, TTSPlugin } from '@/utils/api';
+import {
+  getTTSModelOptionValue,
+  type TTSModel,
+  type TTSPlugin,
+} from '@/utils/api';
 import type { TTSSettings } from '@/types';
 import { SettingsToggle } from './SettingsToggle';
 
@@ -34,7 +38,7 @@ interface SettingsTtsTabProps {
     key: keyof TTSSettings,
     value: string | number | boolean
   ) => void;
-  onModelChange: (modelName: string) => void;
+  onModelChange: (modelName: string, pluginId: string) => void;
   onReset: () => void;
   onTest: () => void;
   onSave: () => void;
@@ -55,6 +59,12 @@ export function SettingsTtsTab({
   onSave,
 }: SettingsTtsTabProps) {
   const { t } = useTranslation();
+  const selectedModel = models.find(
+    model =>
+      model.model === effectiveSettings.model &&
+      (!effectiveSettings.pluginId ||
+        model.plugin === effectiveSettings.pluginId)
+  );
 
   return (
     <div className='space-y-6'>
@@ -154,8 +164,18 @@ export function SettingsTtsTab({
                     {t('settings.tts.model')}
                   </label>
                   <Select
-                    value={effectiveSettings.model}
-                    onChange={event => onModelChange(event.target.value)}
+                    aria-label={t('settings.tts.model')}
+                    value={
+                      selectedModel ? getTTSModelOptionValue(selectedModel) : ''
+                    }
+                    onChange={event => {
+                      const model = models.find(
+                        candidate =>
+                          getTTSModelOptionValue(candidate) ===
+                          event.target.value
+                      );
+                      if (model) onModelChange(model.model, model.plugin);
+                    }}
                     disabled={!settings.enabled}
                     options={[
                       {
@@ -163,8 +183,9 @@ export function SettingsTtsTab({
                         label: t('settings.model.selectModel'),
                       },
                       ...models.map(model => ({
-                        value: model.model,
+                        value: getTTSModelOptionValue(model),
                         label: `${model.model} (${model.plugin})`,
+                        key: `${model.plugin}:${model.model}`,
                       })),
                     ]}
                   />
@@ -178,6 +199,7 @@ export function SettingsTtsTab({
                     {t('settings.tts.voice')}
                   </label>
                   <Select
+                    aria-label={t('settings.tts.voice')}
                     value={effectiveSettings.voice}
                     onChange={event =>
                       onSettingChange('voice', event.target.value)

@@ -53,6 +53,8 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
 
       login: (user: User, token: string, systemInfo: SystemInfo) => {
+        const isSameUser = get().user?.id === user.id;
+
         // Save token to localStorage
         localStorage.setItem('auth-token', token);
 
@@ -62,9 +64,12 @@ export const useAuthStore = create<AuthState>()(
           chatStore.clearAllState();
         }
 
-        // Clear app store user-specific state (background, preferences) to prevent data leaking between users
-        const appStore = useAppStore.getState();
-        appStore.clearUserState();
+        // Preserve the verified user's hydrated preferences on page refresh, but
+        // clear them when the authenticated user actually changes.
+        if (!isSameUser) {
+          const appStore = useAppStore.getState();
+          appStore.clearUserState();
+        }
 
         set({
           user,

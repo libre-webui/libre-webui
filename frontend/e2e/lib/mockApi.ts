@@ -55,6 +55,35 @@ type MockLibraryModel = {
   tags?: string[];
 };
 
+type MockTTSModel = {
+  model: string;
+  plugin: string;
+  config?: {
+    voices?: string[];
+    default_voice?: string;
+    formats?: Array<'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm'>;
+    default_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
+    max_characters?: number;
+    supports_streaming?: boolean;
+  };
+};
+
+type MockTTSPlugin = {
+  id: string;
+  name: string;
+  models: string[];
+  config?: MockTTSModel['config'];
+};
+
+type MockTTSGenerationRequest = {
+  model: string;
+  pluginId?: string;
+  input: string;
+  voice?: string;
+  response_format?: string;
+  speed?: number;
+};
+
 type MockMessage = {
   id: string;
   role: 'system' | 'user' | 'assistant';
@@ -91,6 +120,10 @@ type MockOptions = {
   models?: MockModel[];
   libraryModels?: MockLibraryModel[];
   cloudLibraryModels?: MockLibraryModel[];
+  ttsModels?: MockTTSModel[];
+  ttsPlugins?: MockTTSPlugin[];
+  preferences?: Partial<typeof defaultPreferences>;
+  preferenceUpdateFailures?: number;
 };
 
 const defaultSystemInfo: MockSystemInfo = {
@@ -119,7 +152,12 @@ const defaultModels: MockModel[] = [
 ];
 
 const defaultPreferences = {
-  theme: { mode: 'dark', accent: 'blue', customAccent: '#2563eb' },
+  theme: {
+    mode: 'dark',
+    adaptToAccent: false,
+    accent: 'blue',
+    customAccent: '#2563eb',
+  },
   defaultModel: 'llama3.2:3b',
   systemMessage: 'You are a helpful assistant.',
   generationOptions: {
@@ -134,6 +172,15 @@ const defaultPreferences = {
     chunkSize: 1000,
     chunkOverlap: 200,
     similarityThreshold: 0.7,
+  },
+  ttsSettings: {
+    enabled: false,
+    autoPlay: false,
+    model: '',
+    voice: '',
+    speed: 1,
+    pluginId: '',
+    streamSentences: false,
   },
   titleSettings: {
     autoTitle: false,
@@ -190,7 +237,19 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const libraryModels = options.libraryModels ?? defaultLibraryModels;
   const cloudLibraryModels =
     options.cloudLibraryModels ?? defaultCloudLibraryModels;
+  const ttsModels = options.ttsModels ?? [];
+  const ttsPlugins = options.ttsPlugins ?? [];
+  const preferences = {
+    ...structuredClone(defaultPreferences),
+    ...options.preferences,
+    theme: {
+      ...defaultPreferences.theme,
+      ...options.preferences?.theme,
+    },
+  };
+  let preferenceUpdateFailures = options.preferenceUpdateFailures ?? 0;
   const pullStreamUrls: string[] = [];
+  const ttsGenerationRequests: MockTTSGenerationRequest[] = [];
 
   await page.addInitScript(() => {
     class MockWebSocket {
@@ -309,12 +368,33 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path === '/preferences' && method === 'GET') {
-        await fulfillJson(route, defaultPreferences);
+        await fulfillJson(route, preferences);
+        return;
+      }
+
+      if (path === '/preferences' && method === 'PUT') {
+        if (preferenceUpdateFailures > 0) {
+          preferenceUpdateFailures -= 1;
+          await fulfillJson(route, {}, false);
+          return;
+        }
+
+        const updates = route.request().postDataJSON() as Partial<
+          typeof defaultPreferences
+        >;
+        Object.assign(preferences, updates);
+        if (updates.theme) {
+          preferences.theme = {
+            ...preferences.theme,
+            ...updates.theme,
+          };
+        }
+        await fulfillJson(route, preferences);
         return;
       }
 
       if (path.startsWith('/preferences') && method !== 'GET') {
-        await fulfillJson(route, defaultPreferences);
+        await fulfillJson(route, preferences);
         return;
       }
 
@@ -356,6 +436,29 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/tts/models' && method === 'GET') {
+        await fulfillJson(route, ttsModels);
+        return;
+      }
+
+      if (path === '/tts/plugins' && method === 'GET') {
+        await fulfillJson(route, ttsPlugins);
+        return;
+      }
+
+      if (path === '/tts/generate-base64' && method === 'POST') {
+        ttsGenerationRequests.push(
+          route.request().postDataJSON() as MockTTSGenerationRequest
+        );
+        await fulfillJson(route, {
+          audio: 'UklGRg==',
+          format: 'wav',
+          mimeType: 'audio/wav',
+          size: 4,
+        });
+        return;
+      }
+
       await route.fulfill({
         status: 404,
         contentType: 'application/json',
@@ -369,5 +472,6 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 
   return {
     pullStreamUrls,
+    ttsGenerationRequests,
   };
 }

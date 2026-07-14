@@ -25,7 +25,7 @@ import { ArtifactContainer } from '@/components/ArtifactContainer';
 import { TTSButton } from '@/components/TTSButton';
 import { formatTimestamp, cn, parseThinkingContent } from '@/utils';
 import { parseArtifacts } from '@/utils/artifactParser';
-import { ttsApi } from '@/utils/api';
+import { findTTSModel, resolveTTSModel, ttsApi } from '@/utils/api';
 import {
   Settings,
   Edit3,
@@ -148,12 +148,34 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       const playMessage = async () => {
         setIsAutoPlaying(true);
         try {
+          const modelsResponse = await ttsApi.getModels();
+          const availableModels =
+            modelsResponse.success && modelsResponse.data
+              ? modelsResponse.data
+              : [];
+          const savedSettings = preferences.ttsSettings;
+          const selectedModel = resolveTTSModel(
+            availableModels,
+            savedSettings?.model,
+            savedSettings?.pluginId
+          );
+          const savedSelection = findTTSModel(
+            availableModels,
+            savedSettings?.model,
+            savedSettings?.pluginId
+          );
+
           const response = await ttsApi.generateBase64({
-            model: preferences.ttsSettings?.model || 'tts-1',
+            model: selectedModel?.model || savedSettings?.model || 'tts-1',
+            pluginId: selectedModel?.plugin || savedSettings?.pluginId,
             input: parsedContent,
-            voice: preferences.ttsSettings?.voice || 'alloy',
-            speed: preferences.ttsSettings?.speed || 1.0,
-            response_format: 'mp3',
+            voice: savedSelection
+              ? savedSettings?.voice ||
+                selectedModel?.config?.default_voice ||
+                'alloy'
+              : selectedModel?.config?.default_voice || 'alloy',
+            speed: savedSettings?.speed || 1.0,
+            response_format: selectedModel?.config?.default_format,
           });
 
           if (response.success && response.data?.audio) {

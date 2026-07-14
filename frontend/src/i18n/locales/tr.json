@@ -357,7 +357,13 @@
       "accent": {
         "title": "Vurgu rengi",
         "custom": "Özel renk",
-        "useColor": "{{color}} vurgusunu kullan"
+        "useColor": "{{color}} vurgusunu kullan",
+        "behaviorTitle": "Arayüz paleti",
+        "behaviorDescription": "Vurgu renginin yalnızca denetimlerde kalmasını veya tüm açık ya da koyu arayüze uyarlanmasını seçin.",
+        "defaultStyle": "Varsayılan",
+        "defaultStyleDescription": "Açık ve koyu temaların nötr yüzeylerini koruyun.",
+        "adaptedStyle": "Vurguya uyarla",
+        "adaptedStyleDescription": "Yüzeyleri, kenarlıkları ve metni vurgu renginizle renklendirin."
       },
       "chatInterface": {
         "title": "Sohbet Arayüzü",

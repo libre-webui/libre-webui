@@ -357,7 +357,13 @@
       "accent": {
         "title": "لون التمييز",
         "custom": "لون مخصص",
-        "useColor": "استخدام {{color}} كلون تمييز"
+        "useColor": "استخدام {{color}} كلون تمييز",
+        "behaviorTitle": "لوحة ألوان الواجهة",
+        "behaviorDescription": "اختر ما إذا كان لون التمييز يقتصر على عناصر التحكم أو يكيّف الواجهة الفاتحة أو الداكنة بالكامل.",
+        "defaultStyle": "افتراضي",
+        "defaultStyleDescription": "الاحتفاظ بالأسطح المحايدة للوضعين الفاتح والداكن.",
+        "adaptedStyle": "التكيف مع لون التمييز",
+        "adaptedStyleDescription": "تلوين الأسطح والحدود والنصوص بلون التمييز."
       },
       "chatInterface": {
         "title": "واجهة المحادثة",

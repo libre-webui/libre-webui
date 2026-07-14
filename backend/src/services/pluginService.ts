@@ -57,11 +57,15 @@ import {
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 import { createLogger } from '../utils/logger.js';
+import { resolveBundledPluginsDir } from '../utils/packagePaths.js';
 
 const logger = createLogger('plugins');
 
 class PluginService {
   private pluginsDir: string;
+  private bundledPluginsDir: string;
+  private legacyPluginsDir: string;
+  private pluginReadDirs: string[];
   private activePluginIds: Set<string> = new Set();
   private embeddingService: PluginEmbeddingService;
   private ttsService: PluginTTSService;
@@ -69,7 +73,16 @@ class PluginService {
   private capabilityRegistryService: PluginCapabilityRegistryService;
 
   constructor() {
-    this.pluginsDir = path.join(process.cwd(), 'plugins');
+    this.bundledPluginsDir = resolveBundledPluginsDir(import.meta.url);
+    this.legacyPluginsDir = path.join(process.cwd(), 'plugins');
+    this.pluginsDir =
+      process.env.PLUGINS_DIR ||
+      (process.env.DATA_DIR
+        ? path.join(process.env.DATA_DIR, 'plugins')
+        : this.legacyPluginsDir);
+    this.pluginReadDirs = Array.from(
+      new Set([this.bundledPluginsDir, this.legacyPluginsDir, this.pluginsDir])
+    );
     this.ensurePluginsDirectory();
     this.loadActivePlugins();
     this.embeddingService = new PluginEmbeddingService({
@@ -108,8 +121,16 @@ class PluginService {
   }
 
   private loadActivePlugins(): void {
-    const statusFile = path.join(this.pluginsDir, '.status.json');
-    if (fs.existsSync(statusFile)) {
+    const statusDirs = Array.from(
+      new Set([this.pluginsDir, this.legacyPluginsDir])
+    );
+
+    for (const statusDir of statusDirs) {
+      const statusFile = path.join(statusDir, '.status.json');
+      if (!fs.existsSync(statusFile)) {
+        continue;
+      }
+
       try {
         const status = JSON.parse(fs.readFileSync(statusFile, 'utf8'));
         if (Array.isArray(status.activePlugins)) {
@@ -118,6 +139,7 @@ class PluginService {
           // Legacy support for single active plugin
           this.activePluginIds = new Set([status.activePlugin]);
         }
+        return;
       } catch (error) {
         logger.error('Failed to load plugin status:', error);
       }
@@ -261,12 +283,12 @@ class PluginService {
           if (!filePath.startsWith(path.resolve(this.pluginsDir))) {
             throw new Error('Path traversal detected');
           }
-          if (fs.existsSync(filePath)) {
-            const pluginData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-            pluginData.model_map = models;
-            pluginData.updated_at = Date.now();
-            fs.writeFileSync(filePath, JSON.stringify(pluginData, null, 2));
-          }
+          const pluginData = fs.existsSync(filePath)
+            ? JSON.parse(fs.readFileSync(filePath, 'utf8'))
+            : plugin;
+          pluginData.model_map = models;
+          pluginData.updated_at = Date.now();
+          fs.writeFileSync(filePath, JSON.stringify(pluginData, null, 2));
 
           return models;
         }
@@ -282,33 +304,38 @@ class PluginService {
 
   // List all installed plugins
   getAllPlugins(): Plugin[] {
-    const plugins: Plugin[] = [];
+    const plugins = new Map<string, Plugin>();
 
-    try {
-      const files = fs.readdirSync(this.pluginsDir);
+    for (const pluginsDir of this.pluginReadDirs) {
+      if (!fs.existsSync(pluginsDir)) {
+        continue;
+      }
 
-      for (const file of files) {
-        if (file.endsWith('.json') && !file.startsWith('.')) {
-          try {
-            const filePath = path.join(this.pluginsDir, file);
-            const content = fs.readFileSync(filePath, 'utf8');
-            const plugin: Plugin = JSON.parse(content);
+      try {
+        const files = fs.readdirSync(pluginsDir);
+        for (const file of files) {
+          if (file.endsWith('.json') && !file.startsWith('.')) {
+            try {
+              const filePath = path.join(pluginsDir, file);
+              const content = fs.readFileSync(filePath, 'utf8');
+              const plugin: Plugin = JSON.parse(content);
 
-            // Validate plugin structure
-            if (this.validatePlugin(plugin)) {
-              plugin.active = this.activePluginIds.has(plugin.id);
-              plugins.push(plugin);
+              // Validate plugin structure
+              if (this.validatePlugin(plugin)) {
+                plugin.active = this.activePluginIds.has(plugin.id);
+                plugins.set(plugin.id, plugin);
+              }
+            } catch (error) {
+              logger.error(`Failed to load plugin ${file}:`, error);
             }
-          } catch (error) {
-            logger.error(`Failed to load plugin ${file}:`, error);
           }
         }
+      } catch (error) {
+        logger.error(`Failed to read plugins directory ${pluginsDir}:`, error);
       }
-    } catch (error) {
-      logger.error('Failed to read plugins directory:', error);
     }
 
-    return plugins;
+    return Array.from(plugins.values());
   }
 
   // Get a specific plugin by ID
@@ -320,26 +347,27 @@ class PluginService {
       return null;
     }
 
-    const filePath = path.resolve(this.pluginsDir, `${sanitizedId}.json`);
+    for (const pluginsDir of [...this.pluginReadDirs].reverse()) {
+      const filePath = path.resolve(pluginsDir, `${sanitizedId}.json`);
 
-    // Ensure the file path is within the plugins directory
-    if (
-      !filePath.startsWith(path.resolve(this.pluginsDir)) ||
-      !fs.existsSync(filePath)
-    ) {
-      return null;
-    }
-
-    try {
-      const content = fs.readFileSync(filePath, 'utf8');
-      const plugin: Plugin = JSON.parse(content);
-
-      if (this.validatePlugin(plugin)) {
-        plugin.active = this.activePluginIds.has(plugin.id);
-        return plugin;
+      if (
+        !filePath.startsWith(path.resolve(pluginsDir)) ||
+        !fs.existsSync(filePath)
+      ) {
+        continue;
       }
-    } catch (error) {
-      logger.error('Failed to load plugin %s:', sanitizedId, error);
+
+      try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        const plugin: Plugin = JSON.parse(content);
+
+        if (this.validatePlugin(plugin)) {
+          plugin.active = this.activePluginIds.has(plugin.id);
+          return plugin;
+        }
+      } catch (error) {
+        logger.error('Failed to load plugin %s:', sanitizedId, error);
+      }
     }
 
     return null;
@@ -386,13 +414,14 @@ class PluginService {
       return false;
     }
 
-    const filePath = path.resolve(this.pluginsDir, `${sanitizedId}.json`);
+    const writablePluginDirs = Array.from(
+      new Set([this.pluginsDir, this.legacyPluginsDir])
+    );
+    const filePath = writablePluginDirs
+      .map(pluginsDir => path.resolve(pluginsDir, `${sanitizedId}.json`))
+      .find(candidate => fs.existsSync(candidate));
 
-    // Ensure the file path is within the plugins directory
-    if (
-      !filePath.startsWith(path.resolve(this.pluginsDir)) ||
-      !fs.existsSync(filePath)
-    ) {
+    if (!filePath) {
       logger.error('File path is invalid or does not exist:', filePath);
       return false;
     }
@@ -688,8 +717,12 @@ class PluginService {
   // Capability Methods
   // ============================================
 
-  getPluginForTTS(model: string): Plugin | null {
-    return this.ttsService.getPluginForTTS(model);
+  getPluginForTTS(
+    model: string,
+    pluginId?: string,
+    userId?: string
+  ): Plugin | null {
+    return this.ttsService.getPluginForTTS(model, pluginId, userId);
   }
 
   getPluginForEmbedding(
@@ -725,12 +758,12 @@ class PluginService {
     );
   }
 
-  getAvailableTTSModels(): {
+  getAvailableTTSModels(userId?: string): {
     model: string;
     plugin: string;
     config?: TTSConfig;
   }[] {
-    return this.ttsService.getAvailableTTSModels();
+    return this.ttsService.getAvailableTTSModels(userId);
   }
 
   async executeTTSRequest(
@@ -740,6 +773,8 @@ class PluginService {
       voice?: string;
       response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
       speed?: number;
+      pluginId?: string;
+      userId?: string;
     } = {}
   ): Promise<Buffer> {
     return this.ttsService.executeTTSRequest(model, input, options);
@@ -783,9 +818,13 @@ class PluginService {
     return this.imageGenerationService.getImageGenConfig(pluginId);
   }
 
-  getPluginsByCapability(capabilityType: PluginType): Plugin[] {
+  getPluginsByCapability(
+    capabilityType: PluginType,
+    userId?: string
+  ): Plugin[] {
     return this.capabilityRegistryService.getPluginsByCapability(
-      capabilityType
+      capabilityType,
+      userId
     );
   }
 }

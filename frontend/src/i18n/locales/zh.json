@@ -357,7 +357,13 @@
       "accent": {
         "title": "强调色",
         "custom": "自定义颜色",
-        "useColor": "使用 {{color}} 强调色"
+        "useColor": "使用 {{color}} 强调色",
+        "behaviorTitle": "界面调色板",
+        "behaviorDescription": "选择强调色仅用于控件，或应用到整个浅色或深色界面。",
+        "defaultStyle": "默认",
+        "defaultStyleDescription": "保留浅色和深色主题的中性色表面。",
+        "adaptedStyle": "适配强调色",
+        "adaptedStyleDescription": "使用强调色渲染表面、边框和文本。"
       },
       "chatInterface": {
         "title": "聊天界面",

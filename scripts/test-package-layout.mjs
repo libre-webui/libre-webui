@@ -202,6 +202,13 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     assert.equal(helper.resolveAppPackageRoot(backendEntryUrl), packedRoot);
     assert.equal(helper.loadAppPackage(backendEntryUrl).version, pkg.version);
     assert.equal(helper.resolveFrontendDist(backendEntryUrl), frontendDist);
+    assert.equal(
+      helper.resolveBundledPluginsDir(
+        backendEntryUrl,
+        path.join(packedRoot, 'unrelated-caller')
+      ),
+      path.join(packedRoot, 'plugins')
+    );
   });
 });
 
@@ -340,6 +347,173 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
     } finally {
       await stopChild(backendProcess);
       await new Promise(resolve => providerServer.close(resolve));
+    }
+  });
+});
+
+test('packed npm artifact routes TTS through the selected plugin valve from any cwd', async () => {
+  await withTempPackedProject(async ({ tempDir, packedRoot }) => {
+    linkInstalledDependencies(packedRoot);
+
+    const targetRequests = [];
+    const targetServer = http.createServer(async (req, res) => {
+      let body = '';
+      for await (const chunk of req) {
+        body += chunk;
+      }
+      targetRequests.push({ method: req.method, url: req.url, body });
+      res.writeHead(200, { 'Content-Type': 'audio/wav' });
+      res.end(Buffer.from('RIFFmock-wave-audio'));
+    });
+    const targetPort = await startServer(targetServer);
+    const targetEndpoint = `http://127.0.0.1:${targetPort}/v1/audio/speech`;
+
+    const wrongProviderRequests = [];
+    const wrongProviderServer = http.createServer((req, res) => {
+      wrongProviderRequests.push(req.url);
+      res.writeHead(418, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'wrong TTS provider selected' }));
+    });
+    const wrongProviderPort = await startServer(wrongProviderServer);
+    const wrongProviderEndpoint = `http://127.0.0.1:${wrongProviderPort}/v1/audio/speech`;
+
+    fs.writeFileSync(
+      path.join(packedRoot, 'plugins', 'aaa-shared-tts.json'),
+      JSON.stringify(
+        {
+          id: 'aaa-shared-tts',
+          name: 'Wrong shared-alias provider',
+          type: 'tts',
+          endpoint: wrongProviderEndpoint,
+          auth: { header: '', key_env: '' },
+          model_map: ['tts-1-hd'],
+          capabilities: {
+            tts: {
+              endpoint: wrongProviderEndpoint,
+              model_map: ['tts-1-hd'],
+              config: {
+                voices: ['wrong'],
+                default_voice: 'wrong',
+                formats: ['wav'],
+                default_format: 'wav',
+                no_auth_required: true,
+              },
+            },
+          },
+        },
+        null,
+        2
+      )
+    );
+
+    const backendPortServer = http.createServer();
+    const backendPort = await startServer(backendPortServer);
+    await new Promise(resolve => backendPortServer.close(resolve));
+
+    const callerDir = path.join(tempDir, 'unrelated-caller');
+    const dataDir = path.join(tempDir, 'runtime-data');
+    fs.mkdirSync(callerDir, { recursive: true });
+    const backendEntry = path.join(packedRoot, 'backend', 'dist', 'index.js');
+    const backendProcess = spawn(process.execPath, [backendEntry], {
+      cwd: callerDir,
+      env: {
+        ...process.env,
+        PORT: String(backendPort),
+        DATA_DIR: dataDir,
+        OLLAMA_BASE_URL: 'http://127.0.0.1:9',
+        JWT_SECRET: 'test-jwt-secret',
+        ENCRYPTION_KEY:
+          '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+      },
+      stdio: 'pipe',
+    });
+
+    let backendLogs = '';
+    backendProcess.stdout.on('data', chunk => {
+      backendLogs += chunk.toString();
+    });
+    backendProcess.stderr.on('data', chunk => {
+      backendLogs += chunk.toString();
+    });
+
+    try {
+      await waitForServer(
+        `http://127.0.0.1:${backendPort}/health`,
+        backendProcess
+      );
+
+      const modelsResponse = await fetch(
+        `http://127.0.0.1:${backendPort}/api/tts/models`
+      );
+      assert.equal(modelsResponse.status, 200);
+      const modelsPayload = await modelsResponse.json();
+      const kyutaiModels = modelsPayload.data
+        .filter(model => model.plugin === 'kyutai-tts-1.6b')
+        .map(model => model.model)
+        .sort();
+      assert.deepEqual(kyutaiModels, ['kyutai-tts-1.6b', 'tts-1-hd']);
+
+      const pluginsResponse = await fetch(
+        `http://127.0.0.1:${backendPort}/api/tts/plugins`
+      );
+      assert.equal(pluginsResponse.status, 200);
+      const pluginsPayload = await pluginsResponse.json();
+      assert.ok(
+        pluginsPayload.data.some(plugin => plugin.id === 'kyutai-tts-1.6b')
+      );
+
+      const valveResponse = await fetch(
+        `http://127.0.0.1:${backendPort}/api/plugins/kyutai-tts-1.6b/variables`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            variables: { endpoint: targetEndpoint, speed: 1 },
+          }),
+        }
+      );
+      assert.equal(valveResponse.status, 200);
+
+      const generateResponse = await fetch(
+        `http://127.0.0.1:${backendPort}/api/tts/generate-base64`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'tts-1-hd',
+            pluginId: 'kyutai-tts-1.6b',
+            input: 'hello from the selected Kyutai provider',
+            voice: 'alba',
+            response_format: 'wav',
+          }),
+        }
+      );
+      assert.equal(generateResponse.status, 200);
+      const generatePayload = await generateResponse.json();
+      assert.equal(generatePayload.success, true);
+      assert.equal(generatePayload.data.format, 'wav');
+
+      assert.equal(wrongProviderRequests.length, 0);
+      assert.equal(targetRequests.length, 1);
+      assert.equal(targetRequests[0].method, 'POST');
+      assert.equal(targetRequests[0].url, '/v1/audio/speech');
+      assert.deepEqual(JSON.parse(targetRequests[0].body), {
+        model: 'tts-1-hd',
+        input: 'hello from the selected Kyutai provider',
+        voice: 'alba',
+        response_format: 'wav',
+        speed: 1,
+      });
+    } catch (error) {
+      throw new Error(
+        `${error instanceof Error ? error.message : String(error)}\n\nPacked backend logs:\n${backendLogs}`
+      );
+    } finally {
+      await stopChild(backendProcess);
+      await Promise.all([
+        new Promise(resolve => targetServer.close(resolve)),
+        new Promise(resolve => wrongProviderServer.close(resolve)),
+      ]);
     }
   });
 });

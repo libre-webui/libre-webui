@@ -154,6 +154,7 @@ export interface WebSocketMessage {
 
 export interface Theme {
   mode: 'light' | 'dark';
+  adaptToAccent?: boolean;
   accent?:
     | 'violet'
     | 'blue'

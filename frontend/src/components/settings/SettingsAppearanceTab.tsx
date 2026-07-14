@@ -33,6 +33,7 @@ interface SettingsAppearanceTabProps {
   onThemeChange: (mode: 'light' | 'dark') => void;
   onAccentChange: (accent: NonNullable<Theme['accent']>) => void;
   onCustomAccentChange: (customAccent: string) => void;
+  onAdaptToAccentChange: (adaptToAccent: boolean) => void;
   onShowUsernameChange: (showUsername: boolean) => void;
 }
 
@@ -42,6 +43,7 @@ export function SettingsAppearanceTab({
   onThemeChange,
   onAccentChange,
   onCustomAccentChange,
+  onAdaptToAccentChange,
   onShowUsernameChange,
 }: SettingsAppearanceTabProps) {
   const { t } = useTranslation();
@@ -154,6 +156,53 @@ export function SettingsAppearanceTab({
             />
             <Palette className='absolute inset-0 m-auto h-4 w-4 text-white drop-shadow' />
           </label>
+        </div>
+
+        <div className='mt-5 border-t border-gray-200 pt-5 dark:border-dark-300'>
+          <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+            {t('settings.appearance.accent.behaviorTitle')}
+          </h4>
+          <p className='mt-1 text-xs leading-relaxed text-gray-500 dark:text-dark-500'>
+            {t('settings.appearance.accent.behaviorDescription')}
+          </p>
+
+          <div className='mt-3 grid grid-cols-2 gap-3'>
+            <button
+              type='button'
+              aria-pressed={!theme.adaptToAccent}
+              onClick={() => onAdaptToAccentChange(false)}
+              className={`rounded-xl border p-3 text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-50 ${
+                !theme.adaptToAccent
+                  ? 'border-primary-500 bg-primary-50/70 shadow-sm dark:border-primary-400 dark:bg-primary-950/25'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-dark-300 dark:bg-dark-100 dark:hover:border-dark-400 dark:hover:bg-dark-200'
+              }`}
+            >
+              <span className='block text-sm font-medium text-gray-900 dark:text-dark-900'>
+                {t('settings.appearance.accent.defaultStyle')}
+              </span>
+              <span className='mt-1 block text-xs leading-snug text-gray-500 dark:text-dark-500'>
+                {t('settings.appearance.accent.defaultStyleDescription')}
+              </span>
+            </button>
+
+            <button
+              type='button'
+              aria-pressed={theme.adaptToAccent === true}
+              onClick={() => onAdaptToAccentChange(true)}
+              className={`rounded-xl border p-3 text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-50 ${
+                theme.adaptToAccent
+                  ? 'border-primary-500 bg-primary-50/70 shadow-sm dark:border-primary-400 dark:bg-primary-950/25'
+                  : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 dark:border-dark-300 dark:bg-dark-100 dark:hover:border-dark-400 dark:hover:bg-dark-200'
+              }`}
+            >
+              <span className='block text-sm font-medium text-gray-900 dark:text-dark-900'>
+                {t('settings.appearance.accent.adaptedStyle')}
+              </span>
+              <span className='mt-1 block text-xs leading-snug text-gray-500 dark:text-dark-500'>
+                {t('settings.appearance.accent.adaptedStyleDescription')}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 

@@ -18,6 +18,7 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
+import type { AuthenticatedRequest } from '../middleware/auth.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('routes:tts');
@@ -40,9 +41,9 @@ const ttsRateLimiter = rateLimit({
  * GET /api/tts/models
  * Get all available TTS models from plugins
  */
-router.get('/models', async (_req, res) => {
+router.get('/models', async (req: AuthenticatedRequest, res) => {
   try {
-    const models = pluginService.getAvailableTTSModels();
+    const models = pluginService.getAvailableTTSModels(req.user?.userId);
     res.json({
       success: true,
       data: models,
@@ -97,238 +98,280 @@ router.get('/voices/:pluginId', async (req, res) => {
  * POST /api/tts/generate
  * Generate speech from text using a TTS plugin
  */
-router.post('/generate', ttsRateLimiter, async (req, res) => {
-  try {
-    const { model, input, voice, response_format, speed } = req.body;
+router.post(
+  '/generate',
+  ttsRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { model, pluginId, input, voice, response_format, speed } =
+        req.body;
 
-    // Validate required fields
-    if (!model || typeof model !== 'string') {
-      res.status(400).json({
-        success: false,
-        message: 'Model is required and must be a string',
-      });
-      return;
-    }
-
-    if (!input || typeof input !== 'string') {
-      res.status(400).json({
-        success: false,
-        message: 'Input text is required and must be a string',
-      });
-      return;
-    }
-
-    if (input.length === 0) {
-      res.status(400).json({
-        success: false,
-        message: 'Input text cannot be empty',
-      });
-      return;
-    }
-
-    // Validate optional parameters
-    if (speed !== undefined) {
-      const speedNum = Number(speed);
-      if (isNaN(speedNum) || speedNum < 0.25 || speedNum > 4.0) {
+      // Validate required fields
+      if (!model || typeof model !== 'string') {
         res.status(400).json({
           success: false,
-          message: 'Speed must be a number between 0.25 and 4.0',
+          message: 'Model is required and must be a string',
         });
         return;
       }
-    }
 
-    const validFormats = ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'];
-    if (response_format && !validFormats.includes(response_format)) {
-      res.status(400).json({
-        success: false,
-        message: `Invalid response_format. Must be one of: ${validFormats.join(', ')}`,
+      if (!input || typeof input !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Input text is required and must be a string',
+        });
+        return;
+      }
+
+      if (
+        pluginId !== undefined &&
+        (typeof pluginId !== 'string' || pluginId.length === 0)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'pluginId must be a non-empty string when provided',
+        });
+        return;
+      }
+
+      if (input.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Input text cannot be empty',
+        });
+        return;
+      }
+
+      // Validate optional parameters
+      if (speed !== undefined) {
+        const speedNum = Number(speed);
+        if (isNaN(speedNum) || speedNum < 0.25 || speedNum > 4.0) {
+          res.status(400).json({
+            success: false,
+            message: 'Speed must be a number between 0.25 and 4.0',
+          });
+          return;
+        }
+      }
+
+      const validFormats = ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'];
+      if (response_format && !validFormats.includes(response_format)) {
+        res.status(400).json({
+          success: false,
+          message: `Invalid response_format. Must be one of: ${validFormats.join(', ')}`,
+        });
+        return;
+      }
+
+      // Execute TTS request
+      const audioBuffer = await pluginService.executeTTSRequest(model, input, {
+        voice,
+        response_format,
+        speed,
+        pluginId,
+        userId: req.user?.userId,
       });
-      return;
+
+      // Determine content type based on format
+      const contentTypeMap: Record<string, string> = {
+        mp3: 'audio/mpeg',
+        opus: 'audio/opus',
+        aac: 'audio/aac',
+        flac: 'audio/flac',
+        wav: 'audio/wav',
+        pcm: 'audio/pcm',
+      };
+
+      const format = response_format || 'mp3';
+      const contentType = contentTypeMap[format] || 'audio/mpeg';
+
+      // Set response headers
+      res.set({
+        'Content-Type': contentType,
+        'Content-Length': audioBuffer.length.toString(),
+        'Content-Disposition': `inline; filename="speech.${format}"`,
+      });
+
+      // Send audio data
+      res.send(audioBuffer);
+    } catch (error) {
+      logger.error('TTS generation failed:', error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      // Determine appropriate status code
+      let statusCode = 500;
+      if (errorMessage.includes('No TTS plugin found')) {
+        statusCode = 404;
+      } else if (errorMessage.includes('API key not found')) {
+        statusCode = 503; // Service unavailable
+      } else if (errorMessage.includes('exceeds maximum length')) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        message: errorMessage,
+      });
     }
-
-    // Execute TTS request
-    const audioBuffer = await pluginService.executeTTSRequest(model, input, {
-      voice,
-      response_format,
-      speed,
-    });
-
-    // Determine content type based on format
-    const contentTypeMap: Record<string, string> = {
-      mp3: 'audio/mpeg',
-      opus: 'audio/opus',
-      aac: 'audio/aac',
-      flac: 'audio/flac',
-      wav: 'audio/wav',
-      pcm: 'audio/pcm',
-    };
-
-    const format = response_format || 'mp3';
-    const contentType = contentTypeMap[format] || 'audio/mpeg';
-
-    // Set response headers
-    res.set({
-      'Content-Type': contentType,
-      'Content-Length': audioBuffer.length.toString(),
-      'Content-Disposition': `inline; filename="speech.${format}"`,
-    });
-
-    // Send audio data
-    res.send(audioBuffer);
-  } catch (error) {
-    logger.error('TTS generation failed:', error);
-
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-
-    // Determine appropriate status code
-    let statusCode = 500;
-    if (errorMessage.includes('No TTS plugin found')) {
-      statusCode = 404;
-    } else if (errorMessage.includes('API key not found')) {
-      statusCode = 503; // Service unavailable
-    } else if (errorMessage.includes('exceeds maximum length')) {
-      statusCode = 400;
-    }
-
-    res.status(statusCode).json({
-      success: false,
-      message: errorMessage,
-    });
   }
-});
+);
 
 /**
  * POST /api/tts/generate-base64
  * Generate speech from text and return as base64 encoded string
  * Useful for frontend playback without streaming
  */
-router.post('/generate-base64', ttsRateLimiter, async (req, res) => {
-  try {
-    const { model, input, voice, response_format, speed } = req.body;
+router.post(
+  '/generate-base64',
+  ttsRateLimiter,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const { model, pluginId, input, voice, response_format, speed } =
+        req.body;
 
-    // Validate required fields
-    if (!model || typeof model !== 'string') {
-      res.status(400).json({
-        success: false,
-        message: 'Model is required and must be a string',
-      });
-      return;
-    }
-
-    if (!input || typeof input !== 'string') {
-      res.status(400).json({
-        success: false,
-        message: 'Input text is required and must be a string',
-      });
-      return;
-    }
-
-    if (input.length === 0) {
-      res.status(400).json({
-        success: false,
-        message: 'Input text cannot be empty',
-      });
-      return;
-    }
-
-    // Validate optional parameters
-    if (speed !== undefined) {
-      const speedNum = Number(speed);
-      if (isNaN(speedNum) || speedNum < 0.25 || speedNum > 4.0) {
+      // Validate required fields
+      if (!model || typeof model !== 'string') {
         res.status(400).json({
           success: false,
-          message: 'Speed must be a number between 0.25 and 4.0',
+          message: 'Model is required and must be a string',
         });
         return;
       }
-    }
 
-    const validFormats = ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'];
-    if (response_format && !validFormats.includes(response_format)) {
-      res.status(400).json({
-        success: false,
-        message: `Invalid response_format. Must be one of: ${validFormats.join(', ')}`,
-      });
-      return;
-    }
-
-    // Execute TTS request
-    const audioBuffer = await pluginService.executeTTSRequest(model, input, {
-      voice,
-      response_format,
-      speed,
-    });
-
-    // Auto-detect actual audio format from buffer header
-    let detectedFormat = response_format || 'mp3';
-    if (audioBuffer.length >= 4) {
-      const header = audioBuffer.slice(0, 4).toString('ascii');
-      if (header === 'RIFF') {
-        detectedFormat = 'wav';
-      } else if (header === 'fLaC') {
-        detectedFormat = 'flac';
-      } else if (header === 'OggS') {
-        detectedFormat = 'opus';
-      } else if (audioBuffer[0] === 0xff && (audioBuffer[1] & 0xe0) === 0xe0) {
-        detectedFormat = 'mp3';
+      if (!input || typeof input !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Input text is required and must be a string',
+        });
+        return;
       }
+
+      if (
+        pluginId !== undefined &&
+        (typeof pluginId !== 'string' || pluginId.length === 0)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'pluginId must be a non-empty string when provided',
+        });
+        return;
+      }
+
+      if (input.length === 0) {
+        res.status(400).json({
+          success: false,
+          message: 'Input text cannot be empty',
+        });
+        return;
+      }
+
+      // Validate optional parameters
+      if (speed !== undefined) {
+        const speedNum = Number(speed);
+        if (isNaN(speedNum) || speedNum < 0.25 || speedNum > 4.0) {
+          res.status(400).json({
+            success: false,
+            message: 'Speed must be a number between 0.25 and 4.0',
+          });
+          return;
+        }
+      }
+
+      const validFormats = ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'];
+      if (response_format && !validFormats.includes(response_format)) {
+        res.status(400).json({
+          success: false,
+          message: `Invalid response_format. Must be one of: ${validFormats.join(', ')}`,
+        });
+        return;
+      }
+
+      // Execute TTS request
+      const audioBuffer = await pluginService.executeTTSRequest(model, input, {
+        voice,
+        response_format,
+        speed,
+        pluginId,
+        userId: req.user?.userId,
+      });
+
+      // Auto-detect actual audio format from buffer header
+      let detectedFormat = response_format || 'mp3';
+      if (audioBuffer.length >= 4) {
+        const header = audioBuffer.slice(0, 4).toString('ascii');
+        if (header === 'RIFF') {
+          detectedFormat = 'wav';
+        } else if (header === 'fLaC') {
+          detectedFormat = 'flac';
+        } else if (header === 'OggS') {
+          detectedFormat = 'opus';
+        } else if (
+          audioBuffer[0] === 0xff &&
+          (audioBuffer[1] & 0xe0) === 0xe0
+        ) {
+          detectedFormat = 'mp3';
+        }
+      }
+
+      const format = detectedFormat;
+
+      // Determine MIME type for data URL
+      const mimeTypeMap: Record<string, string> = {
+        mp3: 'audio/mpeg',
+        opus: 'audio/opus',
+        aac: 'audio/aac',
+        flac: 'audio/flac',
+        wav: 'audio/wav',
+        pcm: 'audio/pcm',
+      };
+
+      const mimeType = mimeTypeMap[format] || 'audio/mpeg';
+
+      // Return base64 encoded audio
+      res.json({
+        success: true,
+        data: {
+          audio: audioBuffer.toString('base64'),
+          format,
+          mimeType,
+          size: audioBuffer.length,
+        },
+      });
+    } catch (error) {
+      logger.error('TTS generation failed:', error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+
+      let statusCode = 500;
+      if (errorMessage.includes('No TTS plugin found')) {
+        statusCode = 404;
+      } else if (errorMessage.includes('API key not found')) {
+        statusCode = 503;
+      } else if (errorMessage.includes('exceeds maximum length')) {
+        statusCode = 400;
+      }
+
+      res.status(statusCode).json({
+        success: false,
+        message: errorMessage,
+      });
     }
-
-    const format = detectedFormat;
-
-    // Determine MIME type for data URL
-    const mimeTypeMap: Record<string, string> = {
-      mp3: 'audio/mpeg',
-      opus: 'audio/opus',
-      aac: 'audio/aac',
-      flac: 'audio/flac',
-      wav: 'audio/wav',
-      pcm: 'audio/pcm',
-    };
-
-    const mimeType = mimeTypeMap[format] || 'audio/mpeg';
-
-    // Return base64 encoded audio
-    res.json({
-      success: true,
-      data: {
-        audio: audioBuffer.toString('base64'),
-        format,
-        mimeType,
-        size: audioBuffer.length,
-      },
-    });
-  } catch (error) {
-    logger.error('TTS generation failed:', error);
-
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-
-    let statusCode = 500;
-    if (errorMessage.includes('No TTS plugin found')) {
-      statusCode = 404;
-    } else if (errorMessage.includes('API key not found')) {
-      statusCode = 503;
-    } else if (errorMessage.includes('exceeds maximum length')) {
-      statusCode = 400;
-    }
-
-    res.status(statusCode).json({
-      success: false,
-      message: errorMessage,
-    });
   }
-});
+);
 
 /**
  * GET /api/tts/plugins
  * Get all plugins that support TTS capability
  */
-router.get('/plugins', async (_req, res) => {
+router.get('/plugins', async (req: AuthenticatedRequest, res) => {
   try {
-    const plugins = pluginService.getPluginsByCapability('tts');
+    const plugins = pluginService.getPluginsByCapability(
+      'tts',
+      req.user?.userId
+    );
     res.json({
       success: true,
       data: plugins.map(p => ({

@@ -28,11 +28,17 @@ import {
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('store:app-store');
+const THEME_SYNC_DELAY_MS = 250;
+let themeSyncTimeout: ReturnType<typeof setTimeout> | null = null;
 
 interface AppState {
   // Theme
   theme: Theme;
+  themeSyncPending: boolean;
   setTheme: (theme: Theme) => void;
+  syncThemePreference: (theme: Theme) => Promise<void>;
+  scheduleThemePreferenceSync: () => void;
+  updateTheme: (theme: Theme) => void;
   toggleTheme: () => void;
 
   // Sidebar
@@ -83,8 +89,59 @@ export const useAppStore = create<AppState>()(
       // Theme
       theme: {
         mode: 'light',
+        adaptToAccent: false,
         accent: DEFAULT_ACCENT,
         customAccent: DEFAULT_CUSTOM_ACCENT,
+      },
+      themeSyncPending: false,
+      syncThemePreference: async theme => {
+        if (themeSyncTimeout) {
+          clearTimeout(themeSyncTimeout);
+          themeSyncTimeout = null;
+        }
+
+        if (!isDemoMode() && !localStorage.getItem('auth-token')) {
+          return;
+        }
+
+        try {
+          const { preferencesApi } = await import('@/utils/api');
+          const response = await preferencesApi.updatePreferences({ theme });
+
+          if (!response.success) {
+            logger.warn('Failed to save theme preference to backend');
+            return;
+          }
+
+          const currentTheme = normalizeTheme(get().theme);
+          const savedTheme = normalizeTheme(theme);
+          const isCurrentTheme =
+            currentTheme.mode === savedTheme.mode &&
+            currentTheme.adaptToAccent === savedTheme.adaptToAccent &&
+            currentTheme.accent === savedTheme.accent &&
+            currentTheme.customAccent === savedTheme.customAccent;
+
+          if (isCurrentTheme) {
+            set({ themeSyncPending: false });
+          } else {
+            // A newer selection won the UI race; save it again so an older
+            // response cannot leave the backend with the wrong theme.
+            set({ themeSyncPending: true });
+            get().scheduleThemePreferenceSync();
+          }
+        } catch (error: unknown) {
+          logger.warn('Failed to save theme preference to backend:', error);
+        }
+      },
+      scheduleThemePreferenceSync: () => {
+        if (themeSyncTimeout) {
+          clearTimeout(themeSyncTimeout);
+        }
+
+        themeSyncTimeout = setTimeout(() => {
+          themeSyncTimeout = null;
+          void get().syncThemePreference(normalizeTheme(get().theme));
+        }, THEME_SYNC_DELAY_MS);
       },
       setTheme: theme => {
         const nextTheme = normalizeTheme(theme);
@@ -97,10 +154,16 @@ export const useAppStore = create<AppState>()(
         }));
         applyThemeToDocument(nextTheme);
       },
+      updateTheme: theme => {
+        const nextTheme = normalizeTheme(theme);
+        get().setTheme(nextTheme);
+        set({ themeSyncPending: true });
+        get().scheduleThemePreferenceSync();
+      },
       toggleTheme: () => {
         const currentTheme = get().theme;
         const nextMode = currentTheme.mode === 'dark' ? 'light' : 'dark';
-        get().setTheme({ ...currentTheme, mode: nextMode });
+        get().updateTheme({ ...currentTheme, mode: nextMode });
       },
 
       // Sidebar
@@ -124,6 +187,7 @@ export const useAppStore = create<AppState>()(
       preferences: {
         theme: {
           mode: 'light',
+          adaptToAccent: false,
           accent: DEFAULT_ACCENT,
           customAccent: DEFAULT_CUSTOM_ACCENT,
         },
@@ -179,9 +243,21 @@ export const useAppStore = create<AppState>()(
           const response = await preferencesApi.getPreferences();
           if (response.success && response.data) {
             const data = response.data;
-            get().setPreferences(data);
+            const pendingTheme = get().themeSyncPending
+              ? normalizeTheme(get().theme)
+              : null;
+
+            get().setPreferences(
+              pendingTheme ? { ...data, theme: pendingTheme } : data
+            );
             // Restore background image from backend preferences
-            set({ backgroundImage: data.backgroundSettings?.imageUrl || null });
+            set({
+              backgroundImage: data.backgroundSettings?.imageUrl || null,
+            });
+
+            if (pendingTheme) {
+              void get().syncThemePreference(pendingTheme);
+            }
           }
         } catch (error: unknown) {
           logger.warn('Failed to load preferences from backend:', error);
@@ -299,12 +375,19 @@ export const useAppStore = create<AppState>()(
       clearUserState: () => {
         const defaultTheme = normalizeTheme({
           mode: 'light',
+          adaptToAccent: false,
           accent: DEFAULT_ACCENT,
           customAccent: DEFAULT_CUSTOM_ACCENT,
         });
 
+        if (themeSyncTimeout) {
+          clearTimeout(themeSyncTimeout);
+          themeSyncTimeout = null;
+        }
+
         set({
           theme: defaultTheme,
+          themeSyncPending: false,
           backgroundImage: null,
           preferences: {
             theme: defaultTheme,
@@ -352,6 +435,7 @@ export const useAppStore = create<AppState>()(
           state.preferences;
         return {
           theme: state.theme,
+          themeSyncPending: state.themeSyncPending,
           sidebarOpen: state.sidebarOpen,
           sidebarCompact: state.sidebarCompact,
           preferences: preferencesWithoutBackground,

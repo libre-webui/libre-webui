@@ -357,7 +357,13 @@
       "accent": {
         "title": "Accentkleur",
         "custom": "Aangepaste kleur",
-        "useColor": "{{color}} als accent gebruiken"
+        "useColor": "{{color}} als accent gebruiken",
+        "behaviorTitle": "Interfacepalet",
+        "behaviorDescription": "Kies of de accentkleur beperkt blijft tot bedieningselementen of de volledige lichte of donkere interface aanpast.",
+        "defaultStyle": "Standaard",
+        "defaultStyleDescription": "Behoud de neutrale oppervlakken van het lichte en donkere thema.",
+        "adaptedStyle": "Aan accent aanpassen",
+        "adaptedStyleDescription": "Geef oppervlakken, randen en tekst de accentkleur."
       },
       "chatInterface": {
         "title": "Chat-interface",

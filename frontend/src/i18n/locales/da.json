@@ -357,7 +357,13 @@
       "accent": {
         "title": "Accentfarve",
         "custom": "Brugerdefineret farve",
-        "useColor": "Brug {{color}} som accent"
+        "useColor": "Brug {{color}} som accent",
+        "behaviorTitle": "Grænsefladepalette",
+        "behaviorDescription": "Vælg, om accentfarven kun bruges på kontrolelementer eller tilpasser hele den lyse eller mørke grænseflade.",
+        "defaultStyle": "Standard",
+        "defaultStyleDescription": "Behold neutrale flader i lyst og mørkt tema.",
+        "adaptedStyle": "Tilpas til accent",
+        "adaptedStyleDescription": "Farv flader, kanter og tekst med din accentfarve."
       },
       "chatInterface": {
         "title": "Chat-grænseflade",

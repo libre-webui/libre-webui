@@ -55,6 +55,8 @@ import {
   ttsApi,
   imageGenApi,
   pluginApi,
+  findTTSModel,
+  resolveTTSModel,
   TTSModel,
   TTSPlugin,
   ImageGenModel,
@@ -111,7 +113,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     loadModels,
     loadSessions,
   } = useChatStore();
-  const { theme, setTheme, preferences, setPreferences, loadPreferences } =
+  const { theme, updateTheme, preferences, setPreferences, loadPreferences } =
     useAppStore();
   const { user, systemInfo, setSystemInfo } = useAuthStore();
   const {
@@ -298,26 +300,39 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   });
   const ttsModels: TTSModel[] = useMemo(() => ttsData?.models ?? [], [ttsData]);
   const ttsPlugins: TTSPlugin[] = ttsData?.plugins ?? [];
+  const selectedTtsModel = useMemo(
+    () => resolveTTSModel(ttsModels, ttsSettings.model, ttsSettings.pluginId),
+    [ttsModels, ttsSettings.model, ttsSettings.pluginId]
+  );
   const effectiveTtsSettings = useMemo(() => {
-    if (ttsSettings.model || ttsModels.length === 0) return ttsSettings;
+    if (!selectedTtsModel) return ttsSettings;
 
-    const firstModel = ttsModels[0];
+    const savedModel = findTTSModel(
+      ttsModels,
+      ttsSettings.model,
+      ttsSettings.pluginId
+    );
+    if (savedModel && ttsSettings.pluginId === savedModel.plugin) {
+      return ttsSettings;
+    }
+
     return {
       ...ttsSettings,
-      model: firstModel.model,
-      pluginId: firstModel.plugin,
-      voice: firstModel.config?.default_voice || '',
+      model: selectedTtsModel.model,
+      pluginId: selectedTtsModel.plugin,
+      voice: selectedTtsModel.config?.default_voice || '',
     };
-  }, [ttsModels, ttsSettings]);
+  }, [selectedTtsModel, ttsModels, ttsSettings]);
 
   // TTS voices derived from currently selected model
   const ttsVoices = useMemo(() => {
-    if (!effectiveTtsSettings.model) return [];
-    const currentModel = ttsModels.find(
-      m => m.model === effectiveTtsSettings.model
+    const currentModel = findTTSModel(
+      ttsModels,
+      effectiveTtsSettings.model,
+      effectiveTtsSettings.pluginId
     );
     return currentModel?.config?.voices ?? [];
-  }, [effectiveTtsSettings.model, ttsModels]);
+  }, [effectiveTtsSettings, ttsModels]);
 
   // Image Gen data query
   const { data: imageGenData, isLoading: loadingImageGen } = useQuery({
@@ -487,13 +502,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
-  const handleTtsModelChange = async (modelName: string) => {
-    const selectedModel = ttsModels.find(m => m.model === modelName);
+  const handleTtsModelChange = (modelName: string, pluginId: string) => {
+    const selectedModel = findTTSModel(ttsModels, modelName, pluginId);
     if (selectedModel) {
       setTtsSettings(prev => ({
         ...prev,
         model: modelName,
-        pluginId: selectedModel.plugin,
+        pluginId,
         voice: selectedModel.config?.default_voice || prev.voice,
       }));
     }
@@ -556,10 +571,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       const response = await ttsApi.generateBase64({
         model: effectiveTtsSettings.model || 'tts-1',
+        pluginId: effectiveTtsSettings.pluginId,
         input: 'Hello! This is a test of the text-to-speech system.',
         voice: effectiveTtsSettings.voice || 'alloy',
         speed: effectiveTtsSettings.speed || 1.0,
-        response_format: 'mp3',
+        response_format: selectedTtsModel?.config?.default_format,
       });
 
       if (response.success && response.data?.audio) {
@@ -731,15 +747,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleThemeChange = (mode: 'light' | 'dark') => {
     const currentTheme = useAppStore.getState().theme;
     const newTheme = normalizeTheme({ ...currentTheme, mode });
-    setTheme(newTheme);
-    handleUpdatePreferences({ theme: newTheme });
+    updateTheme(newTheme);
   };
 
   const handleAccentChange = (accent: NonNullable<Theme['accent']>) => {
     const currentTheme = useAppStore.getState().theme;
     const newTheme = normalizeTheme({ ...currentTheme, accent });
-    setTheme(newTheme);
-    handleUpdatePreferences({ theme: newTheme });
+    updateTheme(newTheme);
   };
 
   const handleCustomAccentChange = (customAccent: string) => {
@@ -749,8 +763,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       accent: 'custom',
       customAccent,
     });
-    setTheme(newTheme);
-    handleUpdatePreferences({ theme: newTheme });
+    updateTheme(newTheme);
+  };
+
+  const handleAdaptToAccentChange = (adaptToAccent: boolean) => {
+    const currentTheme = useAppStore.getState().theme;
+    const newTheme = normalizeTheme({ ...currentTheme, adaptToAccent });
+    updateTheme(newTheme);
   };
 
   const handleShowUsernameChange = (showUsername: boolean) => {
@@ -990,6 +1009,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onThemeChange={handleThemeChange}
             onAccentChange={handleAccentChange}
             onCustomAccentChange={handleCustomAccentChange}
+            onAdaptToAccentChange={handleAdaptToAccentChange}
             onShowUsernameChange={handleShowUsernameChange}
           />
         );

@@ -35,10 +35,18 @@ export interface PluginTTSServiceDependencies {
 export class PluginTTSService {
   constructor(private readonly deps: PluginTTSServiceDependencies) {}
 
-  getPluginForTTS(model: string): Plugin | null {
+  getPluginForTTS(
+    model: string,
+    pluginId?: string,
+    userId?: string
+  ): Plugin | null {
     const allPlugins = this.deps.getAllPlugins();
 
     for (const plugin of allPlugins) {
+      if (pluginId && plugin.id !== pluginId) {
+        continue;
+      }
+
       if (plugin.capabilities?.tts) {
         const ttsCapability = plugin.capabilities.tts;
         if (ttsCapability.model_map.includes(model)) {
@@ -46,7 +54,7 @@ export class PluginTTSService {
             (ttsCapability.config as Record<string, unknown> | undefined)
               ?.no_auth_required === true;
 
-          const apiKey = this.deps.getApiKey(plugin);
+          const apiKey = this.deps.getApiKey(plugin, userId);
           if (!apiKey && !noAuthRequired) {
             continue;
           }
@@ -62,7 +70,7 @@ export class PluginTTSService {
               Record<string, unknown> | undefined
           )?.no_auth_required === true;
 
-        const apiKey = this.deps.getApiKey(plugin);
+        const apiKey = this.deps.getApiKey(plugin, userId);
         if (!apiKey && !noAuthRequired) {
           continue;
         }
@@ -74,7 +82,7 @@ export class PluginTTSService {
     return null;
   }
 
-  getAvailableTTSModels(): {
+  getAvailableTTSModels(userId?: string): {
     model: string;
     plugin: string;
     config?: TTSConfig;
@@ -83,37 +91,25 @@ export class PluginTTSService {
     const allPlugins = this.deps.getAllPlugins();
 
     for (const plugin of allPlugins) {
-      if (plugin.capabilities?.tts) {
-        const ttsCapability = plugin.capabilities.tts;
-        const noAuthRequired =
-          (ttsCapability.config as Record<string, unknown> | undefined)
-            ?.no_auth_required === true;
-        const apiKey = this.deps.getApiKey(plugin);
-        if (apiKey || noAuthRequired) {
-          for (const model of ttsCapability.model_map) {
-            models.push({
-              model,
-              plugin: plugin.id,
-              config: ttsCapability.config,
-            });
-          }
-        }
+      const ttsCapability = plugin.capabilities?.tts;
+      const supportedModels =
+        ttsCapability?.model_map ||
+        (plugin.type === 'tts' ? plugin.model_map : []);
+      if (supportedModels.length === 0) {
+        continue;
       }
 
-      if (plugin.type === 'tts') {
-        const noAuthRequired =
-          (
-            plugin.capabilities?.tts?.config as
-              Record<string, unknown> | undefined
-          )?.no_auth_required === true;
-        const apiKey = this.deps.getApiKey(plugin);
-        if (apiKey || noAuthRequired) {
-          for (const model of plugin.model_map) {
-            models.push({
-              model,
-              plugin: plugin.id,
-            });
-          }
+      const noAuthRequired =
+        (ttsCapability?.config as Record<string, unknown> | undefined)
+          ?.no_auth_required === true;
+      const apiKey = this.deps.getApiKey(plugin, userId);
+      if (apiKey || noAuthRequired) {
+        for (const model of supportedModels) {
+          models.push({
+            model,
+            plugin: plugin.id,
+            config: ttsCapability?.config,
+          });
         }
       }
     }
@@ -128,11 +124,17 @@ export class PluginTTSService {
       voice?: string;
       response_format?: 'mp3' | 'opus' | 'aac' | 'flac' | 'wav' | 'pcm';
       speed?: number;
+      pluginId?: string;
+      userId?: string;
     } = {}
   ): Promise<Buffer> {
     validatePluginModel(model);
 
-    const plugin = this.getPluginForTTS(model);
+    const plugin = this.getPluginForTTS(
+      model,
+      options.pluginId,
+      options.userId
+    );
     if (!plugin) {
       throw new Error(`No TTS plugin found for model: ${model}`);
     }
@@ -151,7 +153,7 @@ export class PluginTTSService {
       (ttsConfig as Record<string, unknown> | undefined)?.no_auth_required ===
       true;
 
-    const apiKey = this.deps.getApiKey(plugin);
+    const apiKey = this.deps.getApiKey(plugin, options.userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
@@ -169,7 +171,7 @@ export class PluginTTSService {
       headers[plugin.auth.header] = authValue;
     }
 
-    const ttsVars = this.deps.getPluginVariables(plugin);
+    const ttsVars = this.deps.getPluginVariables(plugin, options.userId);
 
     if (ttsVars.endpoint && typeof ttsVars.endpoint === 'string') {
       const validated = this.deps.validateEndpointUrl(ttsVars.endpoint);

@@ -357,7 +357,13 @@
       "accent": {
         "title": "Kolor akcentu",
         "custom": "Kolor niestandardowy",
-        "useColor": "Użyj {{color}} jako akcentu"
+        "useColor": "Użyj {{color}} jako akcentu",
+        "behaviorTitle": "Paleta interfejsu",
+        "behaviorDescription": "Wybierz, czy akcent ma pozostać na elementach sterujących, czy dostosować cały jasny lub ciemny interfejs.",
+        "defaultStyle": "Domyślna",
+        "defaultStyleDescription": "Zachowaj neutralne powierzchnie jasnego i ciemnego motywu.",
+        "adaptedStyle": "Dostosuj do akcentu",
+        "adaptedStyleDescription": "Zabarw powierzchnie, obramowania i tekst kolorem akcentu."
       },
       "chatInterface": {
         "title": "Interfejs czatu",

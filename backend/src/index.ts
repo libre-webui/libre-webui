@@ -386,7 +386,7 @@ app.use(
   optionalAuth,
   preferencesRoutes
 );
-app.use('/api/plugins', pluginRoutes);
+app.use('/api/plugins', optionalAuth, pluginRoutes);
 app.use('/api/embeddings', embeddingsRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);

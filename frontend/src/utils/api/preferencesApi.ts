@@ -129,7 +129,12 @@ export const preferencesApi = {
   ): Promise<ApiResponse<UserPreferences>> => {
     if (isDemoMode()) {
       return createDemoResponse<UserPreferences>({
-        theme: { mode: 'dark', accent: 'blue', customAccent: '#2563eb' },
+        theme: {
+          mode: 'dark',
+          adaptToAccent: false,
+          accent: 'blue',
+          customAccent: '#2563eb',
+        },
         defaultModel: 'llama3.2',
         systemMessage: 'You are a helpful assistant.',
         generationOptions: {},

@@ -357,7 +357,13 @@
       "accent": {
         "title": "Accent color",
         "custom": "Custom color",
-        "useColor": "Use {{color}} accent"
+        "useColor": "Use {{color}} accent",
+        "behaviorTitle": "Interface palette",
+        "behaviorDescription": "Choose whether the accent stays on controls or adapts the entire light or dark interface.",
+        "defaultStyle": "Default",
+        "defaultStyleDescription": "Keep the neutral light and dark surfaces.",
+        "adaptedStyle": "Adapt to accent",
+        "adaptedStyleDescription": "Tint surfaces, borders, and text with your accent."
       },
       "chatInterface": {
         "title": "Chat Interface",

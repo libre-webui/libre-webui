@@ -57,6 +57,34 @@
   --color-line: 226 226 221;
   --color-line-strong: 203 203 196;
 
+  /* Runtime-compatible legacy neutral scales. Accent adaptation can replace
+     these without requiring component-specific theme variants. */
+  --color-gray-25: 252 252 253;
+  --color-gray-50: 248 250 252;
+  --color-gray-100: 241 245 249;
+  --color-gray-200: 226 232 240;
+  --color-gray-300: 209 213 219;
+  --color-gray-400: 156 163 175;
+  --color-gray-500: 107 114 128;
+  --color-gray-600: 75 85 99;
+  --color-gray-700: 55 65 81;
+  --color-gray-800: 31 41 55;
+  --color-gray-900: 17 24 39;
+  --color-gray-950: 11 16 32;
+
+  --color-dark-25: 32 32 35;
+  --color-dark-50: 10 10 11;
+  --color-dark-100: 17 17 19;
+  --color-dark-200: 24 24 27;
+  --color-dark-300: 39 39 42;
+  --color-dark-400: 63 63 70;
+  --color-dark-500: 113 113 122;
+  --color-dark-600: 161 161 170;
+  --color-dark-700: 212 212 216;
+  --color-dark-800: 228 228 231;
+  --color-dark-900: 244 244 245;
+  --color-dark-950: 255 255 255;
+
   --motion-fast: 140ms;
   --motion-standard: 180ms;
   --ease-product: cubic-bezier(0.22, 1, 0.36, 1);

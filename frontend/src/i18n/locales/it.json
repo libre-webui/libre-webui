@@ -357,7 +357,13 @@
       "accent": {
         "title": "Colore accento",
         "custom": "Colore personalizzato",
-        "useColor": "Usa {{color}} come accento"
+        "useColor": "Usa {{color}} come accento",
+        "behaviorTitle": "Tavolozza dell'interfaccia",
+        "behaviorDescription": "Scegli se limitare l'accento ai controlli o adattare l'intera interfaccia chiara o scura.",
+        "defaultStyle": "Predefinita",
+        "defaultStyleDescription": "Mantieni le superfici neutre dei temi chiaro e scuro.",
+        "adaptedStyle": "Adatta all'accento",
+        "adaptedStyleDescription": "Colora superfici, bordi e testo con il colore di accento."
       },
       "chatInterface": {
         "title": "Interfaccia chat",

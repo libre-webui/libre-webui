@@ -72,6 +72,35 @@ export function loadAppPackage(moduleUrl: string): AppPackageMetadata {
   return pkg ?? { version: DEFAULT_VERSION };
 }
 
+export function resolveBundledPluginsDir(
+  moduleUrl: string,
+  cwd: string = process.cwd()
+): string {
+  const moduleDir = getModuleDir(moduleUrl);
+  const packageRoot = resolveAppPackageRoot(moduleUrl);
+  const candidates = [
+    packageRoot ? path.join(packageRoot, 'plugins') : null,
+    path.resolve(moduleDir, '../../../plugins'),
+    path.join(cwd, 'plugins'),
+  ];
+
+  const seen = new Set<string>();
+  for (const candidate of candidates) {
+    if (!candidate || seen.has(candidate)) {
+      continue;
+    }
+    seen.add(candidate);
+
+    if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+      return candidate;
+    }
+  }
+
+  return packageRoot
+    ? path.join(packageRoot, 'plugins')
+    : path.join(cwd, 'plugins');
+}
+
 export function resolveFrontendDist(
   moduleUrl: string,
   cwd: string = process.cwd()

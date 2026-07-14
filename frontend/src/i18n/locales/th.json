@@ -357,7 +357,13 @@
       "accent": {
         "title": "สีเน้น",
         "custom": "สีที่กำหนดเอง",
-        "useColor": "ใช้ {{color}} เป็นสีเน้น"
+        "useColor": "ใช้ {{color}} เป็นสีเน้น",
+        "behaviorTitle": "ชุดสีอินเทอร์เฟซ",
+        "behaviorDescription": "เลือกว่าจะใช้สีเน้นเฉพาะส่วนควบคุมหรือปรับทั้งอินเทอร์เฟซสว่างหรือมืด",
+        "defaultStyle": "ค่าเริ่มต้น",
+        "defaultStyleDescription": "คงพื้นผิวโทนกลางของธีมสว่างและมืด",
+        "adaptedStyle": "ปรับตามสีเน้น",
+        "adaptedStyleDescription": "แต่งพื้นผิว เส้นขอบ และข้อความด้วยสีเน้นของคุณ"
       },
       "chatInterface": {
         "title": "อินเทอร์เฟซแชท",

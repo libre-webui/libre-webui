@@ -357,7 +357,13 @@
       "accent": {
         "title": "アクセントカラー",
         "custom": "カスタムカラー",
-        "useColor": "{{color}}のアクセントを使用"
+        "useColor": "{{color}}のアクセントを使用",
+        "behaviorTitle": "インターフェースパレット",
+        "behaviorDescription": "アクセントを操作部だけに使うか、ライト／ダークのインターフェース全体に反映するかを選択します。",
+        "defaultStyle": "デフォルト",
+        "defaultStyleDescription": "ライト／ダークテーマのニュートラルな表面色を維持します。",
+        "adaptedStyle": "アクセントに合わせる",
+        "adaptedStyleDescription": "表面、境界線、テキストをアクセントカラーで色付けします。"
       },
       "chatInterface": {
         "title": "チャットインターフェース",
