@@ -1077,6 +1077,10 @@
       "updateFailed": "Kunne ikke opdatere bruger"
     }
   },
+  "chatHistory": {
+    "label": "Samtalehistorik",
+    "jumpToTurn": "Gå til tur {{index}} af {{total}}"
+  },
   "chatMessage": {
     "you": "Dig",
     "assistant": "Assistent",

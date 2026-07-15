@@ -1077,6 +1077,10 @@
       "updateFailed": "사용자 업데이트 실패"
     }
   },
+  "chatHistory": {
+    "label": "대화 기록",
+    "jumpToTurn": "{{total}}개 중 {{index}}번째 대화로 이동"
+  },
   "chatMessage": {
     "you": "나",
     "assistant": "어시스턴트",

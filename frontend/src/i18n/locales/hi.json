@@ -1077,6 +1077,10 @@
       "updateFailed": "उपयोगकर्ता अपडेट करने में विफल"
     }
   },
+  "chatHistory": {
+    "label": "बातचीत का इतिहास",
+    "jumpToTurn": "चरण {{index}} / {{total}} पर जाएँ"
+  },
   "chatMessage": {
     "you": "आप",
     "assistant": "सहायक",

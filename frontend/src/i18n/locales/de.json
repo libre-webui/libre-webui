@@ -1077,6 +1077,10 @@
       "updateFailed": "Benutzer konnte nicht aktualisiert werden"
     }
   },
+  "chatHistory": {
+    "label": "Gesprächsverlauf",
+    "jumpToTurn": "Zu Abschnitt {{index}} von {{total}} springen"
+  },
   "chatMessage": {
     "you": "Sie",
     "assistant": "Assistent",

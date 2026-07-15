@@ -91,6 +91,10 @@ type MockMessage = {
   timestamp: number;
   model?: string;
   artifacts?: MockArtifact[];
+  parentId?: string;
+  branchIndex?: number;
+  isActive?: boolean;
+  siblingCount?: number;
 };
 
 type MockArtifact = {

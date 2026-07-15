@@ -1077,6 +1077,10 @@
       "updateFailed": "ユーザーの更新に失敗しました"
     }
   },
+  "chatHistory": {
+    "label": "会話履歴",
+    "jumpToTurn": "{{total}} 件中 {{index}} 件目に移動"
+  },
   "chatMessage": {
     "you": "あなた",
     "assistant": "アシスタント",

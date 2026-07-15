@@ -1077,6 +1077,10 @@
       "updateFailed": "Kunde inte uppdatera användare"
     }
   },
+  "chatHistory": {
+    "label": "Konversationshistorik",
+    "jumpToTurn": "Gå till tur {{index}} av {{total}}"
+  },
   "chatMessage": {
     "you": "Du",
     "assistant": "Assistent",

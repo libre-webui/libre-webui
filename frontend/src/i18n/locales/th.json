@@ -1077,6 +1077,10 @@
       "updateFailed": "ไม่สามารถอัปเดตผู้ใช้"
     }
   },
+  "chatHistory": {
+    "label": "ประวัติการสนทนา",
+    "jumpToTurn": "ไปยังช่วงที่ {{index}} จาก {{total}}"
+  },
   "chatMessage": {
     "you": "คุณ",
     "assistant": "ผู้ช่วย",

@@ -1077,6 +1077,10 @@
       "updateFailed": "Gagal memperbarui pengguna"
     }
   },
+  "chatHistory": {
+    "label": "Riwayat percakapan",
+    "jumpToTurn": "Buka giliran {{index}} dari {{total}}"
+  },
   "chatMessage": {
     "you": "Anda",
     "assistant": "Asisten",

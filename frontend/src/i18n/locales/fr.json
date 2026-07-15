@@ -1077,6 +1077,10 @@
       "updateFailed": "Échec de la mise à jour de l'utilisateur"
     }
   },
+  "chatHistory": {
+    "label": "Historique de la conversation",
+    "jumpToTurn": "Aller au tour {{index}} sur {{total}}"
+  },
   "chatMessage": {
     "you": "Vous",
     "assistant": "Assistant",

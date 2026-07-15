@@ -24,6 +24,10 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage } from '@/components/ChatMessage';
+import {
+  ConversationHistoryItem,
+  ConversationHistoryRail,
+} from '@/components/ConversationHistoryRail';
 import { MessageBranch } from '@/components/MessageBranch';
 import { ChatMessage as ChatMessageType, ToolActivity } from '@/types';
 import { ToolActivityIndicator } from '@/components/ToolActivityIndicator';
@@ -51,6 +55,20 @@ interface MessageGroup {
   messageIndex: number; // Original position in conversation
 }
 
+const getActiveGroupMessage = (group: MessageGroup) =>
+  group.messages.find(message => message.isActive === true) ||
+  group.messages.find(message => message.isActive !== false) ||
+  group.messages[0];
+
+const preferredScrollBehavior = (): ScrollBehavior =>
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ? 'auto'
+    : 'smooth';
+
+const getHistoryReadingOffset = (viewportHeight: number) =>
+  Math.min(120, viewportHeight * 0.28);
+
 export const ChatMessages: React.FC<ChatMessagesProps> = ({
   messages,
   streamingMessage,
@@ -63,8 +81,13 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const messagesContentRef = useRef<HTMLDivElement>(null);
+  const historyGroupRefs = useRef(new Map<string, HTMLDivElement>());
+  const historyFrameRef = useRef<number | null>(null);
+  const activeHistoryIndexRef = useRef(0);
+  const isHistoryNavigatingRef = useRef(false);
   const isUserScrolledUpRef = useRef<boolean>(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
@@ -171,13 +194,134 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     });
   }, [messages]);
 
+  const historyItems = useMemo<ConversationHistoryItem[]>(() => {
+    const items: ConversationHistoryItem[] = [];
+
+    for (let index = 0; index < messageGroups.length; index++) {
+      const group = messageGroups[index];
+      const userMessage = getActiveGroupMessage(group);
+      if (userMessage.role !== 'user') continue;
+
+      let response: string | undefined;
+      for (
+        let nextIndex = index + 1;
+        nextIndex < messageGroups.length;
+        nextIndex++
+      ) {
+        const nextMessage = getActiveGroupMessage(messageGroups[nextIndex]);
+        if (nextMessage.role === 'user') break;
+        if (nextMessage.role !== 'assistant') continue;
+
+        response = nextMessage.content;
+        break;
+      }
+
+      items.push({
+        id: group.id,
+        prompt: userMessage.content,
+        response,
+      });
+    }
+
+    return items;
+  }, [messageGroups]);
+
+  const historyIdsKey = historyItems.map(item => item.id).join('\u001f');
+  const historyIds = useMemo(
+    () => (historyIdsKey ? historyIdsKey.split('\u001f') : []),
+    [historyIdsKey]
+  );
+  const historyIdSet = useMemo(() => new Set(historyIds), [historyIds]);
+  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
+
+  const updateActiveHistory = useCallback(() => {
+    if (isHistoryNavigatingRef.current) return;
+
+    const container = scrollContainerRef.current;
+    if (!container || historyIds.length === 0) {
+      setActiveHistoryId(null);
+      return;
+    }
+
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    let activeIndex = Math.min(
+      activeHistoryIndexRef.current,
+      historyIds.length - 1
+    );
+
+    if (distanceFromBottom <= 2) {
+      activeIndex = historyIds.length - 1;
+    } else {
+      const readingLine =
+        container.scrollTop + getHistoryReadingOffset(container.clientHeight);
+
+      while (activeIndex < historyIds.length - 1) {
+        const nextAnchor = historyGroupRefs.current.get(
+          historyIds[activeIndex + 1]
+        );
+        if (!nextAnchor || nextAnchor.offsetTop > readingLine) break;
+        activeIndex++;
+      }
+
+      while (activeIndex > 0) {
+        const activeAnchor = historyGroupRefs.current.get(
+          historyIds[activeIndex]
+        );
+        if (!activeAnchor || activeAnchor.offsetTop <= readingLine) break;
+        activeIndex--;
+      }
+    }
+
+    activeHistoryIndexRef.current = activeIndex;
+    const nextActiveId = historyIds[activeIndex];
+    setActiveHistoryId(current =>
+      current === nextActiveId ? current : nextActiveId
+    );
+  }, [historyIds]);
+
+  const scheduleHistoryUpdate = useCallback(() => {
+    if (historyFrameRef.current !== null) return;
+
+    historyFrameRef.current = window.requestAnimationFrame(() => {
+      historyFrameRef.current = null;
+      updateActiveHistory();
+    });
+  }, [updateActiveHistory]);
+
+  const finishHistoryNavigation = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    isHistoryNavigatingRef.current = false;
+    scrollTimeoutRef.current = undefined;
+    if (!container) return;
+
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const isAtBottom = distanceFromBottom < 100;
+    isUserScrolledUpRef.current = !isAtBottom;
+    setShowScrollButton(!isAtBottom && messages.length > 0);
+    scheduleHistoryUpdate();
+  }, [messages.length, scheduleHistoryUpdate]);
+
+  const queueHistoryNavigationFinish = useCallback(() => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(finishHistoryNavigation, 180);
+  }, [finishHistoryNavigation]);
+
   const scrollToBottom = useCallback((force: boolean = false) => {
     // Respect user scroll position unless forced
     if (isUserScrolledUpRef.current && !force) {
       return;
     }
 
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: preferredScrollBehavior(),
+    });
   }, []);
 
   const handleScroll = useCallback(() => {
@@ -189,9 +333,56 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
     const isAtBottom = distanceFromBottom < 100;
 
+    if (isHistoryNavigatingRef.current) {
+      isUserScrolledUpRef.current = true;
+      setShowScrollButton(!isAtBottom && messages.length > 0);
+      queueHistoryNavigationFinish();
+      return;
+    }
+
     isUserScrolledUpRef.current = !isAtBottom;
     setShowScrollButton(!isAtBottom && messages.length > 0);
-  }, [messages.length]);
+    if (distanceFromBottom <= 2 && historyIds.length > 0) {
+      activeHistoryIndexRef.current = historyIds.length - 1;
+      setActiveHistoryId(historyIds[historyIds.length - 1]);
+    } else {
+      scheduleHistoryUpdate();
+    }
+  }, [
+    historyIds,
+    messages.length,
+    queueHistoryNavigationFinish,
+    scheduleHistoryUpdate,
+  ]);
+
+  const scrollToHistoryItem = useCallback(
+    (id: string) => {
+      const container = scrollContainerRef.current;
+      const anchor = historyGroupRefs.current.get(id);
+      if (!container || !anchor) return;
+
+      const selectedIndex = historyIds.indexOf(id);
+      if (selectedIndex >= 0) activeHistoryIndexRef.current = selectedIndex;
+      const behavior = preferredScrollBehavior();
+      isHistoryNavigatingRef.current = true;
+      isUserScrolledUpRef.current = true;
+      container.scrollTo({
+        top: Math.max(
+          0,
+          anchor.offsetTop - getHistoryReadingOffset(container.clientHeight)
+        ),
+        behavior,
+      });
+      setActiveHistoryId(id);
+
+      if (behavior === 'auto') {
+        finishHistoryNavigation();
+      } else {
+        queueHistoryNavigationFinish();
+      }
+    },
+    [finishHistoryNavigation, historyIds, queueHistoryNavigationFinish]
+  );
 
   // Only scroll to bottom when a NEW message is added (not on every render)
   const prevMessagesLengthRef = useRef(messages.length);
@@ -219,10 +410,37 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   }, [isStreaming, streamingMessage]);
 
   useEffect(() => {
-    const timeoutRef = scrollTimeoutRef.current;
+    scheduleHistoryUpdate();
+
+    const content = messagesContentRef.current;
+    const container = scrollContainerRef.current;
+    const observer =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(scheduleHistoryUpdate);
+    if (content) observer?.observe(content);
+    if (container) observer?.observe(container);
+    window.addEventListener('resize', scheduleHistoryUpdate);
+
     return () => {
-      if (timeoutRef) {
-        clearTimeout(timeoutRef);
+      observer?.disconnect();
+      window.removeEventListener('resize', scheduleHistoryUpdate);
+    };
+  }, [historyIdsKey, scheduleHistoryUpdate]);
+
+  useEffect(
+    () => () => {
+      if (historyFrameRef.current !== null) {
+        window.cancelAnimationFrame(historyFrameRef.current);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
       }
     };
   }, []);
@@ -260,80 +478,118 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   }
 
   const handleScrollToBottom = () => {
+    isHistoryNavigatingRef.current = false;
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = undefined;
+    }
     isUserScrolledUpRef.current = false;
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: preferredScrollBehavior(),
+    });
     setShowScrollButton(false);
   };
 
   return (
     <div
-      ref={scrollContainerRef}
-      onScroll={handleScroll}
-      className={cn(
-        'relative flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600',
-        'scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500',
-        'overscroll-behavior-y-contain',
-        '[-webkit-overflow-scrolling:touch]',
-        className
-      )}
-      style={
-        {
-          WebkitOverflowScrolling: 'touch',
-          overscrollBehaviorY: 'contain',
-          WebkitAppRegion: 'no-drag',
-        } as React.CSSProperties
-      }
+      className={cn('relative min-h-0 flex-1', className)}
+      style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
     >
-      <div className='mx-auto w-full min-w-0 max-w-4xl px-4 sm:px-6 md:px-8'>
-        {messageGroups.map((group, groupIndex) => {
-          const isLastAssistantGroup = groupIndex === lastAssistantGroupIndex;
-          // Check if any message in this group is being streamed
-          const isStreamingThisGroup =
-            isStreaming &&
-            group.messages.some(m => m.id === streamingMessageId);
+      <div
+        ref={scrollContainerRef}
+        data-testid='chat-scroll-viewport'
+        onScroll={handleScroll}
+        className={cn(
+          'h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600',
+          'scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500',
+          'overscroll-behavior-y-contain',
+          '[-webkit-overflow-scrolling:touch]'
+        )}
+        style={
+          {
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehaviorY: 'contain',
+          } as React.CSSProperties
+        }
+      >
+        <div
+          ref={messagesContentRef}
+          className='mx-auto w-full min-w-0 max-w-4xl px-4 sm:px-6 md:px-8'
+        >
+          {messageGroups.map((group, groupIndex) => {
+            const isLastAssistantGroup = groupIndex === lastAssistantGroupIndex;
+            const isHistoryItem = historyIdSet.has(group.id);
+            // Check if any message in this group is being streamed
+            const isStreamingThisGroup =
+              isStreaming &&
+              group.messages.some(m => m.id === streamingMessageId);
 
-          // For single messages (no branches), render normally
-          if (group.messages.length === 1) {
-            const message = group.messages[0];
-            const isThisMessageStreaming =
-              isStreaming && message.id === streamingMessageId;
-            const displayMessage =
-              isThisMessageStreaming && streamingMessage
-                ? { ...message, content: streamingMessage }
-                : message;
+            let renderedMessage: React.ReactNode;
+
+            // For single messages (no branches), render normally
+            if (group.messages.length === 1) {
+              const message = group.messages[0];
+              const isThisMessageStreaming =
+                isStreaming && message.id === streamingMessageId;
+              const displayMessage =
+                isThisMessageStreaming && streamingMessage
+                  ? { ...message, content: streamingMessage }
+                  : message;
+
+              renderedMessage = (
+                <ChatMessage
+                  message={displayMessage}
+                  isStreaming={isThisMessageStreaming}
+                  isLastAssistantMessage={isLastAssistantGroup}
+                  onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
+                  className={groupIndex === 0 ? 'mt-5 sm:mt-7' : ''}
+                />
+              );
+            } else {
+              // For branched messages, use MessageBranch component
+              renderedMessage = (
+                <MessageBranch
+                  messages={group.messages}
+                  isStreaming={isStreamingThisGroup}
+                  streamingMessage={streamingMessage}
+                  streamingMessageId={streamingMessageId || undefined}
+                  isLastAssistantMessage={isLastAssistantGroup}
+                  onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
+                  onSelectBranch={onSelectBranch}
+                  className={groupIndex === 0 ? 'mt-5 sm:mt-7' : ''}
+                />
+              );
+            }
 
             return (
-              <ChatMessage
-                key={message.id}
-                message={displayMessage}
-                isStreaming={isThisMessageStreaming}
-                isLastAssistantMessage={isLastAssistantGroup}
-                onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
-                className={groupIndex === 0 ? 'mt-5 sm:mt-7' : ''}
-              />
+              <div
+                key={group.id}
+                ref={element => {
+                  if (!isHistoryItem) return;
+                  if (element) historyGroupRefs.current.set(group.id, element);
+                  else historyGroupRefs.current.delete(group.id);
+                }}
+                data-testid={
+                  isHistoryItem ? 'conversation-turn-anchor' : undefined
+                }
+                data-history-id={isHistoryItem ? group.id : undefined}
+              >
+                {renderedMessage}
+              </div>
             );
-          }
-
-          // For branched messages, use MessageBranch component
-          return (
-            <MessageBranch
-              key={group.id}
-              messages={group.messages}
-              isStreaming={isStreamingThisGroup}
-              streamingMessage={streamingMessage}
-              streamingMessageId={streamingMessageId || undefined}
-              isLastAssistantMessage={isLastAssistantGroup}
-              onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
-              onSelectBranch={onSelectBranch}
-              className={groupIndex === 0 ? 'mt-5 sm:mt-7' : ''}
-            />
-          );
-        })}
-        {isStreaming && toolActivities.length > 0 && (
-          <ToolActivityIndicator tools={toolActivities} className='px-0' />
-        )}
-        <div ref={messagesEndRef} className='h-4 sm:h-6' />
+          })}
+          {isStreaming && toolActivities.length > 0 && (
+            <ToolActivityIndicator tools={toolActivities} className='px-0' />
+          )}
+          <div ref={messagesEndRef} className='h-4 sm:h-6' />
+        </div>
       </div>
+
+      <ConversationHistoryRail
+        items={historyItems}
+        activeId={activeHistoryId}
+        onSelect={scrollToHistoryItem}
+      />
 
       {/* Scroll to bottom button */}
       {showScrollButton && (

@@ -1077,6 +1077,10 @@
       "updateFailed": "Error al actualizar usuario"
     }
   },
+  "chatHistory": {
+    "label": "Historial de la conversación",
+    "jumpToTurn": "Ir al turno {{index}} de {{total}}"
+  },
   "chatMessage": {
     "you": "Tú",
     "assistant": "Asistente",

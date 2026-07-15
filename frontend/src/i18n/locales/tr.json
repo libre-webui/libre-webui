@@ -1077,6 +1077,10 @@
       "updateFailed": "Kullanıcı güncellenemedi"
     }
   },
+  "chatHistory": {
+    "label": "Konuşma geçmişi",
+    "jumpToTurn": "{{total}} turdan {{index}}. tura git"
+  },
   "chatMessage": {
     "you": "Siz",
     "assistant": "Asistan",

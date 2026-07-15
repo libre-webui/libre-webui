@@ -1077,6 +1077,10 @@
       "updateFailed": "更新用户失败"
     }
   },
+  "chatHistory": {
+    "label": "对话历史",
+    "jumpToTurn": "跳转到第 {{index}} 项，共 {{total}} 项"
+  },
   "chatMessage": {
     "you": "您",
     "assistant": "助手",

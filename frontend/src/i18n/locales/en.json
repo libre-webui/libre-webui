@@ -1077,6 +1077,10 @@
       "updateFailed": "Failed to update user"
     }
   },
+  "chatHistory": {
+    "label": "Conversation history",
+    "jumpToTurn": "Jump to turn {{index}} of {{total}}"
+  },
   "chatMessage": {
     "you": "You",
     "assistant": "Assistant",

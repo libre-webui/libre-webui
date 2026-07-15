@@ -1077,6 +1077,10 @@
       "updateFailed": "Không thể cập nhật người dùng"
     }
   },
+  "chatHistory": {
+    "label": "Lịch sử cuộc trò chuyện",
+    "jumpToTurn": "Chuyển đến lượt {{index}} / {{total}}"
+  },
   "chatMessage": {
     "you": "Bạn",
     "assistant": "Trợ lý",

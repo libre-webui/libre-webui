@@ -1077,6 +1077,10 @@
       "updateFailed": "Nepodařilo se aktualizovat uživatele"
     }
   },
+  "chatHistory": {
+    "label": "Historie konverzace",
+    "jumpToTurn": "Přejít na část {{index}} z {{total}}"
+  },
   "chatMessage": {
     "you": "Vy",
     "assistant": "Asistent",

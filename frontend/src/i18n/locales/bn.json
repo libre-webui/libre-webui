@@ -1077,6 +1077,10 @@
       "updateFailed": "ব্যবহারকারী আপডেট করতে ব্যর্থ"
     }
   },
+  "chatHistory": {
+    "label": "কথোপকথনের ইতিহাস",
+    "jumpToTurn": "পর্ব {{index}} / {{total}}-এ যান"
+  },
   "chatMessage": {
     "you": "আপনি",
     "assistant": "সহকারী",

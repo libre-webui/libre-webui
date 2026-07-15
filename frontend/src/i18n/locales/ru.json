@@ -1077,6 +1077,10 @@
       "updateFailed": "Не удалось обновить пользователя"
     }
   },
+  "chatHistory": {
+    "label": "История разговора",
+    "jumpToTurn": "Перейти к реплике {{index}} из {{total}}"
+  },
   "chatMessage": {
     "you": "Вы",
     "assistant": "Ассистент",
