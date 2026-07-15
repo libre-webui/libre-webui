@@ -1187,7 +1187,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           if (event.target === event.currentTarget) onClose();
         }}
       >
-        <div className='flex h-full w-full flex-col overscroll-behavior-contain border border-gray-200/80 bg-white/95 shadow-2xl backdrop-blur-xl animate-scale-in dark:border-white/10 dark:bg-dark-25/95 sm:max-h-[94vh] sm:max-w-6xl sm:rounded-3xl'>
+        <div
+          data-testid='settings-modal-panel'
+          className='flex h-full w-full flex-col overscroll-behavior-contain border border-gray-200/80 bg-surface/95 shadow-2xl backdrop-blur-xl animate-scale-in dark:border-white/10 dark:bg-dark-25/95 sm:max-h-[94vh] sm:max-w-6xl sm:rounded-3xl'
+        >
           {/* Header */}
           <div className='sticky top-0 z-10 flex items-center justify-between border-b border-gray-200/70 px-4 py-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
             <h2

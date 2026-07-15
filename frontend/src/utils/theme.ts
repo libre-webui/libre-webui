@@ -71,6 +71,23 @@ type InterfaceRoleDefinition = {
   lightness: number;
   saturationFactor: number;
 };
+type InterfaceSaturationProfile = {
+  multiplier: number;
+  minimum: number;
+  maximum: number;
+};
+
+const DEFAULT_INTERFACE_SATURATION: InterfaceSaturationProfile = {
+  multiplier: 0.24,
+  minimum: 6,
+  maximum: 24,
+};
+
+const LIGHT_INTERFACE_SATURATION: InterfaceSaturationProfile = {
+  multiplier: 0.36,
+  minimum: 6,
+  maximum: 32,
+};
 
 const LIGHT_NEUTRAL_LIGHTNESS: Record<NeutralShade, number> = {
   25: 99,
@@ -452,23 +469,32 @@ export const getThemeAccentColor = (theme?: Partial<Theme> | null) => {
   );
 };
 
-const getInterfaceSaturation = (accentSaturation: number, factor: number) => {
+const getInterfaceSaturation = (
+  accentSaturation: number,
+  factor: number,
+  profile: InterfaceSaturationProfile
+) => {
   if (factor === 0 || accentSaturation < 8) {
     return accentSaturation * factor;
   }
 
-  return clamp(accentSaturation * 0.24 * factor, 6 * factor, 24 * factor);
+  return clamp(
+    accentSaturation * profile.multiplier * factor,
+    profile.minimum * factor,
+    profile.maximum * factor
+  );
 };
 
 const createNeutralPalette = (
   hue: number,
   saturation: number,
-  lightness: Record<NeutralShade, number>
+  lightness: Record<NeutralShade, number>,
+  profile: InterfaceSaturationProfile
 ): NeutralPalette =>
   NEUTRAL_SHADE_KEYS.reduce((palette, shade) => {
     palette[shade] = hslToHex(
       hue,
-      getInterfaceSaturation(saturation, 1),
+      getInterfaceSaturation(saturation, 1, profile),
       lightness[shade]
     );
     return palette;
@@ -477,14 +503,19 @@ const createNeutralPalette = (
 const createInterfaceRoles = (
   hue: number,
   saturation: number,
-  definitions: Record<InterfaceRole, InterfaceRoleDefinition>
+  definitions: Record<InterfaceRole, InterfaceRoleDefinition>,
+  profile: InterfaceSaturationProfile
 ) =>
   INTERFACE_ROLE_KEYS.reduce(
     (roles, role) => {
       const definition = definitions[role];
       roles[role] = hslToHex(
         hue,
-        getInterfaceSaturation(saturation, definition.saturationFactor),
+        getInterfaceSaturation(
+          saturation,
+          definition.saturationFactor,
+          profile
+        ),
         definition.lightness
       );
       return roles;
@@ -512,12 +543,27 @@ const applyAdaptiveInterfaceVariables = (root: HTMLElement, theme: Theme) => {
   const accent = getThemeAccentColor(theme);
   const { r, g, b } = hexToRgb(accent);
   const { h, s } = rgbToHsl(r, g, b);
-  const grayPalette = createNeutralPalette(h, s, LIGHT_NEUTRAL_LIGHTNESS);
-  const darkPalette = createNeutralPalette(h, s, DARK_NEUTRAL_LIGHTNESS);
+  const activeProfile =
+    theme.mode === 'light'
+      ? LIGHT_INTERFACE_SATURATION
+      : DEFAULT_INTERFACE_SATURATION;
+  const grayPalette = createNeutralPalette(
+    h,
+    s,
+    LIGHT_NEUTRAL_LIGHTNESS,
+    activeProfile
+  );
+  const darkPalette = createNeutralPalette(
+    h,
+    s,
+    DARK_NEUTRAL_LIGHTNESS,
+    DEFAULT_INTERFACE_SATURATION
+  );
   const roles = createInterfaceRoles(
     h,
     s,
-    theme.mode === 'dark' ? DARK_INTERFACE_ROLES : LIGHT_INTERFACE_ROLES
+    theme.mode === 'dark' ? DARK_INTERFACE_ROLES : LIGHT_INTERFACE_ROLES,
+    activeProfile
   );
 
   for (const shade of NEUTRAL_SHADE_KEYS) {

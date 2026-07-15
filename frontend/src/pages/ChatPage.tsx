@@ -387,7 +387,7 @@ export const ChatPage: React.FC = () => {
             setCurrentSession(privateSession);
           }}
           disabled={!selectedModel && models.length === 0}
-          className='absolute end-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-white/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-white hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6 sm:top-6'
+          className='absolute end-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-surface/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6 sm:top-6'
           title={t('chat.session.privateTooltip')}
         >
           <Ghost className='h-3.5 w-3.5' />
@@ -412,7 +412,7 @@ export const ChatPage: React.FC = () => {
             <div className='w-full'>
               {/* Advanced Features Panel */}
               {showWelcomeAdvanced && (
-                <div className='mb-3 animate-slide-up rounded-2xl border border-black/[0.07] bg-white/80 p-4 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/80'>
+                <div className='mb-3 animate-slide-up rounded-2xl border border-black/[0.07] bg-surface/80 p-4 shadow-sm backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/80'>
                   <ImageUpload
                     images={welcomeImages}
                     onImagesChange={setWelcomeImages}
@@ -426,7 +426,7 @@ export const ChatPage: React.FC = () => {
                 <div
                   className={cn(
                     'flex items-end gap-2 rounded-[1.6rem] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200 sm:p-3',
-                    'border-black/[0.08] bg-white/90 dark:border-white/[0.09] dark:bg-dark-200/90',
+                    'border-black/[0.08] bg-surface/90 dark:border-white/[0.09] dark:bg-dark-200/90',
                     'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl',
                     'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_22px_65px_rgba(15,23,42,0.12)]'
                   )}
@@ -523,7 +523,7 @@ export const ChatPage: React.FC = () => {
             </div>
           ) : (
             <div className='w-full max-w-lg'>
-              <div className='rounded-2xl border border-black/[0.07] bg-white/70 p-6 backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/70'>
+              <div className='rounded-2xl border border-black/[0.07] bg-surface/70 p-6 backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/70'>
                 <p className='mb-4 text-sm leading-relaxed text-gray-600 dark:text-dark-700'>
                   {t('chat.model.noModelsDescription')}
                 </p>
@@ -560,7 +560,7 @@ export const ChatPage: React.FC = () => {
       <div className='relative z-10 flex h-full flex-col'>
         {/* Private mode indicator */}
         {currentSession?.isPrivate && (
-          <div className='flex-shrink-0 border-b border-black/[0.05] bg-white/55 px-4 py-2 backdrop-blur-xl dark:border-white/[0.06] dark:bg-dark-100/55'>
+          <div className='flex-shrink-0 border-b border-black/[0.05] bg-surface/55 px-4 py-2 backdrop-blur-xl dark:border-white/[0.06] dark:bg-dark-100/55'>
             <div className='flex items-center justify-center gap-2 text-gray-500 dark:text-dark-600'>
               <Ghost className='h-3.5 w-3.5' />
               <span className='text-xs font-medium'>
@@ -574,7 +574,7 @@ export const ChatPage: React.FC = () => {
         )}
         {/* Persona indicator header */}
         {currentPersona && !currentSession?.isPrivate && (
-          <div className='flex-shrink-0 border-b border-black/[0.05] bg-white/55 px-4 py-2 backdrop-blur-xl dark:border-white/[0.06] dark:bg-dark-100/55'>
+          <div className='flex-shrink-0 border-b border-black/[0.05] bg-surface/55 px-4 py-2 backdrop-blur-xl dark:border-white/[0.06] dark:bg-dark-100/55'>
             <PersonaIndicator
               persona={currentPersona}
               onClear={() => {

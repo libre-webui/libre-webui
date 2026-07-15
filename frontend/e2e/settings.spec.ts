@@ -134,6 +134,9 @@ test('accent palette can adapt the full light and dark interface and persists', 
       const sidebar = document.querySelector<HTMLElement>(
         '[data-testid="sidebar"]'
       );
+      const settingsPanel = document.querySelector<HTMLElement>(
+        '[data-testid="settings-modal-panel"]'
+      );
 
       if (!sidebar) {
         throw new Error('Sidebar not found');
@@ -146,12 +149,25 @@ test('accent palette can adapt the full light and dark interface and persists', 
         accent: root.dataset.accent,
         primary: styles.getPropertyValue('--color-primary-500').trim(),
         canvas: styles.getPropertyValue('--color-canvas').trim(),
+        surface: styles.getPropertyValue('--color-surface').trim(),
+        surfaceRaised: styles.getPropertyValue('--color-surface-raised').trim(),
         ink: styles.getPropertyValue('--color-ink').trim(),
+        inkMuted: styles.getPropertyValue('--color-ink-muted').trim(),
+        gray50: styles.getPropertyValue('--color-gray-50').trim(),
         gray100: styles.getPropertyValue('--color-gray-100').trim(),
+        dark100: styles.getPropertyValue('--color-dark-100').trim(),
         inlineGray100: root.style.getPropertyValue('--color-gray-100').trim(),
         sidebar: getComputedStyle(sidebar).backgroundColor,
+        settingsPanel: settingsPanel
+          ? getComputedStyle(settingsPanel).backgroundColor
+          : null,
       };
     });
+
+  const getChannelSpread = (color: string) => {
+    const channels = color.split(/\s+/).map(Number);
+    return Math.max(...channels) - Math.min(...channels);
+  };
 
   const getContrastRatio = (foreground: string, background: string) => {
     const getLuminance = (color: string) => {
@@ -180,12 +196,15 @@ test('accent palette can adapt the full light and dark interface and persists', 
 
   await page.keyboard.press('Control+,');
   await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+  const defaultSettingsPanel = (await getThemeSnapshot()).settingsPanel;
+  expect(defaultSettingsPanel).not.toBeNull();
   await page.getByRole('button', { name: 'Use Rose accent' }).click();
 
   await expect.poll(async () => (await getThemeSnapshot()).accent).toBe('rose');
   const neutralRoseTheme = await getThemeSnapshot();
   expect(neutralRoseTheme.primary).not.toBe(initialTheme.primary);
   expect(neutralRoseTheme.sidebar).toBe(initialTheme.sidebar);
+  expect(neutralRoseTheme.settingsPanel).toBe(defaultSettingsPanel);
 
   await page.getByRole('button', { name: 'Adapt to accent' }).click();
   await expect
@@ -197,8 +216,15 @@ test('accent palette can adapt the full light and dark interface and persists', 
   const adaptedRoseTheme = await getThemeSnapshot();
   expect(adaptedRoseTheme.inlineGray100).not.toBe('');
   expect(adaptedRoseTheme.gray100).not.toBe(initialTheme.gray100);
+  expect(getChannelSpread(adaptedRoseTheme.gray100)).toBeGreaterThanOrEqual(8);
   expect(adaptedRoseTheme.canvas).not.toBe(initialTheme.canvas);
+  expect(adaptedRoseTheme.surface).not.toBe('255 255 255');
+  expect(adaptedRoseTheme.surfaceRaised).not.toBe('255 255 255');
   expect(adaptedRoseTheme.sidebar).not.toBe(initialTheme.sidebar);
+  expect(adaptedRoseTheme.settingsPanel).not.toBe(defaultSettingsPanel);
+  expect(
+    getContrastRatio(adaptedRoseTheme.inkMuted, adaptedRoseTheme.canvas)
+  ).toBeGreaterThanOrEqual(4.5);
 
   await page.locator('input[type="color"]').fill('#7c2d92');
   await expect
@@ -212,6 +238,9 @@ test('accent palette can adapt the full light and dark interface and persists', 
   expect(
     getContrastRatio(adaptedCustomTheme.ink, adaptedCustomTheme.canvas)
   ).toBeGreaterThanOrEqual(4.5);
+  expect(
+    getContrastRatio(adaptedCustomTheme.inkMuted, adaptedCustomTheme.canvas)
+  ).toBeGreaterThanOrEqual(4.5);
 
   await page.getByRole('button', { name: 'Dark', exact: true }).click();
   await expect(page.locator('html')).toHaveClass(/dark/);
@@ -221,6 +250,7 @@ test('accent palette can adapt the full light and dark interface and persists', 
   const adaptedDarkTheme = await getThemeSnapshot();
   expect(adaptedDarkTheme.mode).toBe('dark');
   expect(adaptedDarkTheme.style).toBe('accent');
+  expect(adaptedDarkTheme.dark100).toBe(adaptedCustomTheme.dark100);
   expect(adaptedDarkTheme.sidebar).not.toBe(adaptedCustomTheme.sidebar);
   expect(
     getContrastRatio(adaptedDarkTheme.ink, adaptedDarkTheme.canvas)

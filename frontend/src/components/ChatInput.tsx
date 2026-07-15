@@ -233,7 +233,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       <div className='pointer-events-auto mx-auto w-full max-w-4xl px-4 sm:px-6 md:px-8'>
         {/* Advanced Features Panel */}
         {showAdvanced && (
-          <div className='mb-2 animate-slide-up rounded-2xl border border-black/[0.07] bg-white/90 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/90'>
+          <div className='mb-2 animate-slide-up rounded-2xl border border-black/[0.07] bg-surface/90 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/90'>
             <MediaUpload
               images={images}
               onImagesChange={setImages}
@@ -252,7 +252,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             <div
               className={cn(
                 'flex items-end gap-2 rounded-[1.55rem] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200 sm:p-3',
-                'bg-white/[0.92] dark:bg-dark-200/[0.92] backdrop-blur-xl',
+                'bg-surface/[0.92] dark:bg-dark-200/[0.92] backdrop-blur-xl',
                 'border-black/[0.08] dark:border-white/[0.09]',
                 'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_14px_42px_rgba(15,23,42,0.08)]',
                 'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_52px_rgba(15,23,42,0.11)]'
