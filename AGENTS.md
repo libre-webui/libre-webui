@@ -10,6 +10,9 @@ branch and `main` as the production branch.
 - Push every required branch commit and exact release tag to both remotes:
   - GitHub: `https://github.com/libre-webui/libre-webui.git`
   - GitLab: `https://git.kroonen.ai/libre-webui/libre-webui.git`
+- For branch refs, push GitLab first, verify it, then push GitHub and verify the
+  pair. Always disable followed tags explicitly:
+  `git -c push.followTags=false push <url> HEAD:refs/heads/<branch>`.
 - After every push, use `git ls-remote` to prove that both remote refs equal the
   intended local commit. A successful command alone is not sufficient.
 - Never force-push, push `--tags`, or move a tag that exists on either remote.
@@ -30,12 +33,16 @@ Follow this sequence when asked to merge `dev`, make a patch release, publish
 after CI is green, and sync `dev` afterward.
 
 1. **Audit before mutation**
-   - Require a clean worktree and the configured author identity.
+   - Require `git status --porcelain=v1 --untracked-files=all` to be empty and
+     confirm the configured author identity.
    - Fetch GitHub branches and tags.
    - Inspect GitHub and GitLab `main`, `dev`, and the proposed tag with
      `git ls-remote`.
-   - Confirm the next patch version and review every commit since the previous
-     tag. Stop on an unexpected remote tag or unrelated divergence.
+   - Confirm the proposed tag is absent locally and on both remotes. Treat the
+     tag matching the current package version as the authoritative previous
+     production tag, and require it to be reachable from `main`.
+   - Confirm the next patch version and review every commit since that tag.
+     Stop on an unexpected tag or unrelated divergence.
 
 2. **Promote `dev` locally**
    - Switch to `main` and update it from the verified production ref.
@@ -65,26 +72,38 @@ after CI is green, and sync `dev` afterward.
 
 5. **Gate publication on the release commit**
    - Push the final `main` commit, without the tag, explicitly to GitHub and
-     GitLab.
+     GitLab using the branch command above. Reconfirm after each push that the
+     release tag is still absent from both remotes.
    - Verify both `refs/heads/main` values equal local `HEAD`.
    - Wait for every required GitHub workflow for that exact SHA to finish
-     successfully, including Format & Lint, Docker multi-architecture build and
-     manifest publication, Electron builds, and applicable code scanning.
+     successfully: Format & Lint; both Docker architecture builds and manifest
+     publication; Electron macOS, Windows, and Linux builds; applicable Helm
+     checks when chart files changed; and every code scan present for the SHA.
    - Do not push the tag while any required job is queued, running, skipped
      unexpectedly, cancelled, or failed.
+   - A `main` branch push can publish Docker `latest` before the other workflows
+     finish. The gate protects the tag, npm package, and GitHub release; report
+     this limitation honestly rather than claiming branch artifacts were held.
 
 6. **Publish only the exact release tag**
    - Push only `vX.Y.Z` to GitHub and GitLab; never use `--tags`.
+   - Do not use the manual `workflow_dispatch` release path for this gated,
+     dual-remote workflow.
    - Verify the tag object and peeled commit on both remotes.
    - Wait for the complete tag-triggered Release workflow: preflight, Electron
      macOS/Windows/Linux builds, and create-release.
-   - Verify the GitHub release is published with the expected assets, npm
-     `latest` equals `X.Y.Z`, and the Docker/main workflow succeeded.
+   - Verify the GitHub release has the artifacts actually produced by CI:
+     macOS arm64 DMG and ZIP, Windows Setup and portable EXE, and Linux AppImage
+     and DEB. Require an MSI only if that release workflow produced one.
+   - Verify npm `latest` equals `X.Y.Z` and the Docker/main workflow succeeded.
+     Do not report Homebrew as updated unless its workflow ran successfully and
+     its expected asset name matches the release asset.
    - If a published tag fails, fix forward deliberately. Never rewrite it.
 
 7. **Sync production back to development**
-   - Only after every release artifact succeeds, switch to `dev` and merge
-     `main` into it. Prefer `--ff-only` when possible.
+   - Only after every release artifact succeeds, refetch and revalidate both
+     remote `dev` refs. Stop if either advanced unexpectedly.
+   - Switch to `dev` and merge `main` into it. Prefer `--ff-only` when possible.
    - Push `dev` explicitly to both remotes and verify both SHAs.
    - Wait for the exact dev-SHA Docker and Electron workflows to pass.
    - Verify `main` is an ancestor of `dev`, both remote branch pairs match the
@@ -92,7 +111,8 @@ after CI is green, and sync `dev` afterward.
 
 ## Release reporting
 
-Report the release commit and tag SHAs, both-remote verification, local test
-results, GitHub Actions URLs and conclusions, GitHub release URL, npm published
-version, release assets, final branch ancestry, and worktree state. Never claim
-success while a required check or publication is still pending.
+Report the release commit, tag object, and peeled tag SHAs, both-remote
+verification, local test results, GitHub Actions URLs and conclusions, GitHub
+release URL, npm published version, release assets, final branch ancestry, and
+worktree state. Never claim success while a required check or publication is
+still pending.
