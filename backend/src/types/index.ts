@@ -220,6 +220,7 @@ export interface OllamaGenerateRequest {
   model: string;
   prompt: string;
   stream?: boolean;
+  think?: boolean;
   options?: {
     temperature?: number;
     top_p?: number;

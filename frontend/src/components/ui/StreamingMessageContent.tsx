@@ -20,11 +20,16 @@ import { cn } from '@/utils';
 import {
   getStreamingMarkdownSegments,
   type StreamingMarkdownCodeSegment,
+  type StreamingMarkdownSegment,
 } from './messageContentUtils';
+import { MessageCodeBlock } from './MessageCodeBlock';
+import { messageCodeBodyClassName } from './messageCodeStyles';
 
 interface StreamingMessageContentProps {
   content: string;
   className?: string;
+  segments?: StreamingMarkdownSegment[];
+  isStreaming?: boolean;
 }
 
 function StreamingTextSegment({ content }: { content: string }) {
@@ -42,46 +47,58 @@ function StreamingCodeBlock({
   language,
   complete,
 }: StreamingMarkdownCodeSegment) {
+  const displayedContent = complete ? content.replace(/\r?\n$/, '') : content;
+  const viewportRef = React.useRef<HTMLPreElement>(null);
+  const shouldFollowTailRef = React.useRef(true);
+
+  React.useLayoutEffect(() => {
+    const viewport = viewportRef.current;
+    if (viewport && shouldFollowTailRef.current) {
+      viewport.scrollTop = viewport.scrollHeight;
+    }
+  }, [displayedContent]);
+
+  const handleScroll = () => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const distanceFromBottom =
+      viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+    shouldFollowTailRef.current = distanceFromBottom < 24;
+  };
+
   return (
-    <div
-      dir='ltr'
-      className='my-4 overflow-hidden rounded-xl border border-gray-200 bg-gray-950 text-left shadow-sm dark:border-dark-300 dark:bg-black/40'
+    <MessageCodeBlock
+      code={displayedContent}
+      language={language}
+      state={complete ? 'complete' : 'streaming'}
     >
-      <div className='flex h-11 items-center justify-between border-b border-white/10 bg-gray-900 px-4 dark:bg-dark-200'>
-        <span className='truncate text-xs font-semibold uppercase tracking-wide text-gray-300 dark:text-dark-700'>
-          {language || 'code'}
-        </span>
-        {!complete && (
-          <span
-            className='flex h-6 w-6 items-center justify-center rounded-full bg-primary-500/10 text-primary-300 dark:text-primary-400'
-            aria-label='Streaming code block'
-          >
-            <span className='h-1.5 w-1.5 rounded-full bg-current animate-pulse' />
-          </span>
-        )}
-      </div>
-      <pre className='max-h-[60vh] min-h-[3rem] overflow-auto p-4 text-sm leading-relaxed text-gray-100 font-mono whitespace-pre tabular-nums'>
-        <code>
-          {content}
-          {!complete && (
-            <span
-              aria-hidden='true'
-              className='ms-0.5 inline-block h-4 w-2 translate-y-0.5 animate-pulse rounded-sm bg-primary-300 align-baseline dark:bg-primary-400'
-            />
-          )}
-        </code>
+      <pre
+        ref={viewportRef}
+        onScroll={handleScroll}
+        className={messageCodeBodyClassName}
+      >
+        <code>{displayedContent}</code>
       </pre>
-    </div>
+    </MessageCodeBlock>
   );
 }
 
 export const StreamingMessageContent: React.FC<
   StreamingMessageContentProps
-> = ({ content, className }) => {
+> = ({
+  content,
+  className,
+  segments: providedSegments,
+  isStreaming = true,
+}) => {
   const segments = React.useMemo(
-    () => getStreamingMarkdownSegments(content),
-    [content]
+    () => providedSegments ?? getStreamingMarkdownSegments(content),
+    [content, providedSegments]
   );
+  const lastSegment = segments[segments.length - 1];
+  const isStreamingInsideCode =
+    lastSegment?.type === 'code' && !lastSegment.complete;
 
   return (
     <div
@@ -99,6 +116,13 @@ export const StreamingMessageContent: React.FC<
             content={segment.content}
           />
         )
+      )}
+      {isStreaming && !isStreamingInsideCode && (
+        <span
+          data-testid='message-streaming-cursor'
+          aria-hidden='true'
+          className='ms-1 inline-block h-5 w-1 animate-pulse rounded-full bg-primary-500 align-text-bottom'
+        />
       )}
     </div>
   );

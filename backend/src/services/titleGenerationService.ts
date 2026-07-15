@@ -295,6 +295,7 @@ export class TitleGenerationService {
       model: target.actualModelName,
       prompt,
       stream: false,
+      think: false,
       options: {
         ...target.mergedOptions,
         temperature: TITLE_GENERATION_OPTIONS.temperature,

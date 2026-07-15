@@ -13,7 +13,7 @@ keywords:
 
 | Requirement | Minimum  | Recommended                         |
 | ----------- | -------- | ----------------------------------- |
-| Node.js     | 18+      | 20+                                 |
+| Node.js     | 22.12+   | Latest LTS                          |
 | RAM         | 8 GB     | 16 GB+                              |
 | Disk        | 5 GB     | 20 GB+ for models                   |
 | GPU         | Optional | 8 GB+ VRAM for fast local inference |

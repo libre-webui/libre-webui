@@ -1090,6 +1090,11 @@ test('title generation falls back to Ollama when no plugin is active', async () 
   assert.equal(calls.executePluginRequest.length, 0);
   assert.equal(calls.generateResponse.length, 1);
   assert.equal(calls.generateResponse[0].model, 'llama3.3:latest');
+  assert.equal(calls.generateResponse[0].think, false);
+  assert.equal(
+    Object.hasOwn(calls.generateResponse[0].options, 'think'),
+    false
+  );
   assert.deepEqual(calls.generateResponse[0].options.stop, [
     '\n',
     '.',

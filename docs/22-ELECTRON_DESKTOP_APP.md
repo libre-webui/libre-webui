@@ -37,7 +37,7 @@ The Electron desktop app provides:
 
 Before building the desktop app, ensure you have:
 
-1. **Node.js 18+** installed
+1. **Node.js 22.12+** installed
 2. **npm** or **yarn** package manager
 3. **Xcode Command Line Tools** (macOS):
    ```bash
