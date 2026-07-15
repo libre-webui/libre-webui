@@ -606,7 +606,13 @@ router.post(
   '/sessions/:sessionId/generate-title',
   async (
     req: AuthenticatedRequest,
-    res: Response<ApiResponse<{ title: string }>>
+    res: Response<
+      ApiResponse<{
+        title: string;
+        source: 'plugin' | 'ollama' | 'fallback';
+        updatedAt: number;
+      }>
+    >
   ): Promise<void> => {
     try {
       const sessionId = req.params.sessionId as string;
@@ -646,7 +652,11 @@ router.post(
 
       res.json({
         success: true,
-        data: { title: titleResult.title },
+        data: {
+          title: titleResult.title,
+          source: titleResult.source,
+          updatedAt: titleResult.session.updatedAt,
+        },
       });
     } catch (error: unknown) {
       res.status(500).json({

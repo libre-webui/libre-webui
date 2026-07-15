@@ -124,6 +124,10 @@ type MockOptions = {
   ttsPlugins?: MockTTSPlugin[];
   preferences?: Partial<typeof defaultPreferences>;
   preferenceUpdateFailures?: number;
+  generatedTitle?: {
+    title: string;
+    source?: 'plugin' | 'ollama' | 'fallback';
+  };
 };
 
 const defaultSystemInfo: MockSystemInfo = {
@@ -232,7 +236,7 @@ const fulfillJson = async <T>(route: Route, data: T, success = true) => {
 
 export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const systemInfo = options.systemInfo ?? defaultSystemInfo;
-  const sessions = options.sessions ?? [];
+  const sessions = structuredClone(options.sessions ?? []);
   const models = options.models ?? defaultModels;
   const libraryModels = options.libraryModels ?? defaultLibraryModels;
   const cloudLibraryModels =
@@ -250,6 +254,15 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   let preferenceUpdateFailures = options.preferenceUpdateFailures ?? 0;
   const pullStreamUrls: string[] = [];
   const ttsGenerationRequests: MockTTSGenerationRequest[] = [];
+  const titleGenerationRequests: Array<{
+    sessionId: string;
+    model: string;
+    message: string;
+  }> = [];
+  const sessionUpdateRequests: Array<{
+    sessionId: string;
+    updates: Partial<MockSession>;
+  }> = [];
 
   await page.addInitScript(() => {
     class MockWebSocket {
@@ -268,8 +281,31 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         setTimeout(() => this.onopen?.(new Event('open')), 0);
       }
 
-      send() {
-        // Messages are intentionally ignored in mocked e2e runs.
+      send(payload: string) {
+        const message = JSON.parse(payload) as {
+          type?: string;
+          data?: { assistantMessageId?: string };
+        };
+
+        if (message.type !== 'chat_stream') {
+          return;
+        }
+
+        setTimeout(() => {
+          this.onmessage?.(
+            new MessageEvent('message', {
+              data: JSON.stringify({
+                type: 'assistant_complete',
+                data: {
+                  content: 'Mock assistant response',
+                  role: 'assistant',
+                  timestamp: Date.now(),
+                  messageId: message.data?.assistantMessageId,
+                },
+              }),
+            })
+          );
+        }, 0);
       }
 
       close() {
@@ -403,6 +439,54 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      const generatedTitleMatch = path.match(
+        /^\/chat\/sessions\/([^/]+)\/generate-title$/
+      );
+      if (generatedTitleMatch && method === 'POST') {
+        const sessionId = generatedTitleMatch[1];
+        const request = route.request().postDataJSON() as {
+          model: string;
+          message: string;
+        };
+        const generatedTitle = options.generatedTitle ?? {
+          title: 'Generated Conversation Summary',
+          source: 'ollama' as const,
+        };
+        const updatedAt = Date.now();
+        const session = sessions.find(item => item.id === sessionId);
+
+        titleGenerationRequests.push({ sessionId, ...request });
+        if (session) {
+          session.title = generatedTitle.title;
+          session.updatedAt = updatedAt;
+        }
+
+        await fulfillJson(route, {
+          title: generatedTitle.title,
+          source: generatedTitle.source ?? 'ollama',
+          updatedAt,
+        });
+        return;
+      }
+
+      const sessionMatch = path.match(/^\/chat\/sessions\/([^/]+)$/);
+      if (sessionMatch && method === 'PUT') {
+        const sessionId = sessionMatch[1];
+        const updates = route.request().postDataJSON() as Partial<MockSession>;
+        const session = sessions.find(item => item.id === sessionId);
+        const updatedAt = Date.now();
+
+        sessionUpdateRequests.push({ sessionId, updates });
+        if (!session) {
+          await fulfillJson(route, {}, false);
+          return;
+        }
+
+        Object.assign(session, updates, { updatedAt });
+        await fulfillJson(route, session);
+        return;
+      }
+
       if (path === '/personas' && method === 'GET') {
         await fulfillJson(route, []);
         return;
@@ -473,5 +557,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   return {
     pullStreamUrls,
     ttsGenerationRequests,
+    titleGenerationRequests,
+    sessionUpdateRequests,
   };
 }

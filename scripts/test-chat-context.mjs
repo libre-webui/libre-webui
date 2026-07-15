@@ -1086,6 +1086,7 @@ test('title generation falls back to Ollama when no plugin is active', async () 
 
   assert.equal(result.title, 'Ollama Planning');
   assert.equal(result.source, 'ollama');
+  assert.equal(result.session.updatedAt, 3);
   assert.equal(calls.executePluginRequest.length, 0);
   assert.equal(calls.generateResponse.length, 1);
   assert.equal(calls.generateResponse[0].model, 'llama3.3:latest');
@@ -1119,23 +1120,48 @@ test('title generation falls back to the message when providers fail', async () 
   });
 });
 
-test('sanitizeGeneratedTitle strips wrapper characters and rejects unusable titles', () => {
+test('title generation labels empty provider output as fallback', async () => {
+  const { service, updates } = createTitleGenerationHarness({
+    ollamaResponse: '   ',
+  });
+
+  const result = await service.generateTitleForSession({
+    sessionId: 'session-1',
+    requestedModel: 'llama3.3:latest',
+    message: 'Explain the deployment architecture',
+    userId: 'alice',
+  });
+
+  assert.equal(result.source, 'fallback');
+  assert.equal(result.title, 'Explain the deployment archite...');
+  assert.deepEqual(updates[0].update, {
+    title: 'Explain the deployment archite...',
+  });
+});
+
+test('sanitizeGeneratedTitle strips wrappers and preserves verbose generated titles', () => {
   assert.equal(
     titleGeneration.sanitizeGeneratedTitle(
-      '  `"Mars Transfer Simulator!!!"`  ',
+      '  `"Title: Mars Transfer Simulator!!!"`  ',
       'fallback message'
     ),
     'Mars Transfer Simulator'
   );
-  assert.equal(
-    titleGeneration.sanitizeGeneratedTitle(
-      'This generated title is far too long for the sidebar and should never be used directly',
-      'Use this user message as the title instead'
-    ),
-    'Use this user message as the t...'
+
+  const verboseTitle = titleGeneration.sanitizeGeneratedTitleResult(
+    'This generated title is far too long for the sidebar and should never be used directly',
+    'Use this user message as the title instead'
   );
-  assert.equal(
-    titleGeneration.sanitizeGeneratedTitle('', 'short prompt'),
-    'short prompt'
+  assert.equal(verboseTitle.usedFallback, false);
+  assert.match(verboseTitle.title, /^This generated title/);
+  assert.ok(verboseTitle.title.length <= 50);
+  assert.notEqual(verboseTitle.title, 'Use this user message as the t...');
+
+  assert.deepEqual(
+    titleGeneration.sanitizeGeneratedTitleResult('', 'short prompt'),
+    {
+      title: 'short prompt',
+      usedFallback: true,
+    }
   );
 });

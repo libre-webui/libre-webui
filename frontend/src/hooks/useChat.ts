@@ -43,7 +43,7 @@ export const useChat = (sessionId: string) => {
     addMessage,
     updateMessage,
     updateMessageWithStatistics,
-    updateSessionTitle,
+    applySessionTitle,
     setGeneratingTitleForSession,
   } = useChatStore();
   const { setIsGenerating, preferences } = useAppStore();
@@ -105,7 +105,7 @@ export const useChat = (sessionId: string) => {
   }, []);
 
   const maybeGenerateTitle = useCallback(
-    (targetSessionId: string) => {
+    async (targetSessionId: string) => {
       const currentPrefs = useAppStore.getState().preferences;
       const titleSettings = currentPrefs.titleSettings;
       const firstMessage = firstUserMessageRef.current;
@@ -121,36 +121,55 @@ export const useChat = (sessionId: string) => {
       });
 
       if (
-        firstMessage &&
-        shouldGenerateTitle &&
-        titleSettings?.autoTitle &&
-        titleSettings?.taskModel
+        !firstMessage ||
+        !shouldGenerateTitle ||
+        !titleSettings?.autoTitle ||
+        !titleSettings?.taskModel
       ) {
-        logger.debug('Triggering auto-title generation...');
-        setGeneratingTitleForSession(targetSessionId);
-
-        chatApi
-          .generateTitle(targetSessionId, titleSettings.taskModel, firstMessage)
-          .then(response => {
-            logger.debug('Title generation response:', response);
-            if (response.success && response.data?.title) {
-              updateSessionTitle(targetSessionId, response.data.title);
-            }
-          })
-          .catch(error => {
-            logger.error('Failed to generate title:', error);
-          })
-          .finally(() => {
-            setGeneratingTitleForSession(null);
-          });
+        clearQueuedTitleGeneration();
+        return;
       }
 
       clearQueuedTitleGeneration();
+      logger.debug('Triggering auto-title generation...');
+      setGeneratingTitleForSession(targetSessionId);
+
+      try {
+        const response = await chatApi.generateTitle(
+          targetSessionId,
+          titleSettings.taskModel,
+          firstMessage
+        );
+        logger.debug('Title generation response:', response);
+
+        if (!response.success || !response.data?.title) {
+          throw new Error(
+            response.error || 'Title generation returned no title'
+          );
+        }
+
+        applySessionTitle(
+          targetSessionId,
+          response.data.title,
+          response.data.updatedAt
+        );
+
+        if (response.data.source === 'fallback') {
+          toast.error('Could not generate a title; using the message preview');
+        } else {
+          toast.success('Chat title generated');
+        }
+      } catch (error) {
+        logger.error('Failed to generate title:', error);
+        toast.error('Failed to generate chat title');
+      } finally {
+        setGeneratingTitleForSession(null);
+      }
     },
     [
+      applySessionTitle,
       clearQueuedTitleGeneration,
       setGeneratingTitleForSession,
-      updateSessionTitle,
     ]
   );
 

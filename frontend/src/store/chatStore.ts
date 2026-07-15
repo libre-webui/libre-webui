@@ -57,6 +57,11 @@ interface ChatState {
   deleteSession: (sessionId: string) => Promise<void>;
   clearAllSessions: () => Promise<void>;
   clearAllState: () => void; // Clear all store state (for logout)
+  applySessionTitle: (
+    sessionId: string,
+    title: string,
+    updatedAt?: number
+  ) => void;
   updateSessionTitle: (sessionId: string, title: string) => Promise<void>;
 
   // Messages
@@ -255,6 +260,26 @@ export const useChatStore = create<ChatState>((set, get) => ({
     });
   },
 
+  applySessionTitle: (
+    sessionId: string,
+    title: string,
+    updatedAt = Date.now()
+  ) => {
+    set(state => ({
+      sessions: state.sessions.map(session =>
+        session.id === sessionId ? { ...session, title, updatedAt } : session
+      ),
+      currentSession:
+        state.currentSession?.id === sessionId
+          ? {
+              ...state.currentSession,
+              title,
+              updatedAt,
+            }
+          : state.currentSession,
+    }));
+  },
+
   updateSessionTitle: async (sessionId: string, title: string) => {
     try {
       const response = await chatApi.updateSession(sessionId, { title });
@@ -263,19 +288,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const updatedTitle = response.data.title;
         const updatedAt = response.data.updatedAt ?? Date.now();
 
-        set(state => ({
-          sessions: state.sessions.map(s =>
-            s.id === sessionId ? { ...s, title: updatedTitle, updatedAt } : s
-          ),
-          currentSession:
-            state.currentSession?.id === sessionId
-              ? {
-                  ...state.currentSession,
-                  title: updatedTitle,
-                  updatedAt,
-                }
-              : state.currentSession,
-        }));
+        get().applySessionTitle(sessionId, updatedTitle, updatedAt);
         toast.success('Chat title updated');
       }
     } catch (error: unknown) {

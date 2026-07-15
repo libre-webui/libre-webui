@@ -113,11 +113,21 @@ export const chatApi = {
     sessionId: string,
     model: string,
     message: string
-  ): Promise<ApiResponse<{ title: string }>> => {
+  ): Promise<
+    ApiResponse<{
+      title: string;
+      source: 'plugin' | 'ollama' | 'fallback';
+      updatedAt: number;
+    }>
+  > => {
     if (isDemoMode()) {
       const title =
         message.substring(0, 30) + (message.length > 30 ? '...' : '');
-      return createDemoResponse({ title });
+      return createDemoResponse({
+        title,
+        source: 'fallback' as const,
+        updatedAt: Date.now(),
+      });
     }
     return api
       .post(`/chat/sessions/${sessionId}/generate-title`, { model, message })

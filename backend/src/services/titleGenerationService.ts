@@ -48,6 +48,11 @@ export interface GenerateTitleForSessionResult {
   source: 'plugin' | 'ollama' | 'fallback';
 }
 
+export interface SanitizedGeneratedTitle {
+  title: string;
+  usedFallback: boolean;
+}
+
 interface ChatServiceDependency {
   getSession(sessionId: string, userId?: string): ChatSession | undefined;
   updateSession(
@@ -106,22 +111,53 @@ export function buildFallbackTitle(message: string): string {
   return message.substring(0, 30) + (message.length > 30 ? '...' : '');
 }
 
-export function sanitizeGeneratedTitle(
+function truncateGeneratedTitle(title: string, maxLength = 50): string {
+  if (title.length <= maxLength) {
+    return title;
+  }
+
+  const availableLength = maxLength - 3;
+  const hardCut = title.slice(0, availableLength).trimEnd();
+  const lastSpace = hardCut.lastIndexOf(' ');
+  const wordBoundary =
+    lastSpace >= Math.floor(availableLength * 0.6)
+      ? hardCut.slice(0, lastSpace)
+      : hardCut;
+
+  return `${wordBoundary.replace(/[,:;.!?]+$/, '').trimEnd()}...`;
+}
+
+export function sanitizeGeneratedTitleResult(
   rawTitle: string,
   sourceMessage: string
-): string {
+): SanitizedGeneratedTitle {
   const title = rawTitle
     .trim()
+    .replace(/^```(?:\w+)?\s*|\s*```$/g, '')
     .replace(/^["'`]+|["'`]+$/g, '')
+    .replace(/^title\s*:\s*/i, '')
     .replace(/\s+/g, ' ')
     .replace(/[.!?]+$/, '')
     .trim();
 
-  if (!title || title.length > 50) {
-    return buildFallbackTitle(sourceMessage);
+  if (!title) {
+    return {
+      title: buildFallbackTitle(sourceMessage),
+      usedFallback: true,
+    };
   }
 
-  return title;
+  return {
+    title: truncateGeneratedTitle(title),
+    usedFallback: false,
+  };
+}
+
+export function sanitizeGeneratedTitle(
+  rawTitle: string,
+  sourceMessage: string
+): string {
+  return sanitizeGeneratedTitleResult(rawTitle, sourceMessage).title;
 }
 
 export class TitleGenerationService {
@@ -190,8 +226,12 @@ export class TitleGenerationService {
         message,
         userId
       );
-      title = sanitizeGeneratedTitle(generation.title, message);
-      source = generation.source;
+      const sanitizedTitle = sanitizeGeneratedTitleResult(
+        generation.title,
+        message
+      );
+      title = sanitizedTitle.title;
+      source = sanitizedTitle.usedFallback ? 'fallback' : generation.source;
     } catch (error) {
       this.logger.error('Error generating title:', error);
     }
