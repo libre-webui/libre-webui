@@ -15,6 +15,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.13.3] - 2026-07-15
+
+Libre WebUI 0.13.3 fixes automatic chat titles so generated summaries appear immediately in the sidebar, strengthens accent-adapted light themes while preserving the existing dark palette, and refocuses the project documentation around local-first operation, provider choice, and inspectable independence.
+
+### 🔧 Improvements
+
+- Strengthened the opt-in accent-adapted light palette so the selected color is clearer across the canvas, settings, composer, chat surfaces, and supporting interface states without becoming overpowering.
+- Preserved the existing adaptive dark palette and readable text contrast for preset and custom accent colors.
+- Expanded end-to-end regression coverage for generated-title updates, fallback behavior, adaptive theme visibility, persistence, and contrast.
+
+### 🐛 Bug Fixes
+
+- Fixed automatically generated chat titles remaining stuck on the original user-message preview by applying the already-persisted title response directly to the sidebar's local session state.
+- Removed the redundant second title-update request, kept generation status active until the sidebar updates, and made notifications accurately distinguish generated summaries from fallback previews.
+- Improved generated-title cleanup by stripping common wrappers and `Title:` prefixes, truncating long valid summaries at a readable word boundary, and reliably identifying empty provider responses as fallbacks.
+- Replaced fixed white surfaces in key light-theme chat and settings views with adaptive semantic surface colors so the chosen accent is reflected throughout the interface.
+
+### 📚 Documentation
+
+- Reworked the README around Libre WebUI's local-first model, provider flexibility, Apache 2.0 licensing, inspectable project commitments, inclusive participation, deployment choices, and clearly stated privacy and security boundaries.
+- Updated the design guide to document the clearer light-mode accent treatment and unchanged dark-mode behavior.
+- Added project-scoped release instructions covering dual-remote verification, main-before-tag CI gates, release artifact checks, and the final `main`-to-`dev` synchronization.
+
 ## [0.13.2] - 2026-07-15
 
 Libre WebUI 0.13.2 is a focused interface and provider-routing release. It keeps appearance choices stable across reloads, adds an optional accent-adapted palette for light and dark mode, routes speech through the exact selected TTS plugin and per-user valve, restores bundled plugin discovery for packed `npx` installs, and improves Arabic right-to-left behavior across desktop and mobile layouts.
