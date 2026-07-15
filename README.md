@@ -2,334 +2,205 @@
 
 <br>
 
-# 🕊️ Libre WebUI
+# Libre WebUI
 
-### Your AI, Your Rules.
+### Your AI stack should answer to you.
 
-**The privacy-first, open-source chat interface for local and cloud AI.**<br>
-No telemetry. No tracking. No compromises.
+**A local-first workspace for Ollama, your chosen providers, private knowledge, artifacts, and local agents.**<br>
+Self-hosted. Provider-flexible. Apache 2.0.
 
-<br>
-
-<p>
-  <a href="https://github.com/libre-webui/libre-webui/releases"><img src="https://img.shields.io/github/v/release/libre-webui/libre-webui?style=flat-square&label=version&color=blue" alt="Version"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green?style=flat-square" alt="License"></a>
-  <a href="https://github.com/libre-webui/libre-webui/actions"><img src="https://img.shields.io/github/actions/workflow/status/libre-webui/libre-webui/release.yml?style=flat-square&label=Build" alt="CI"></a>
-  <a href="https://huggingface.co/libre-webui"><img src="https://img.shields.io/badge/🤗_Hugging_Face-models-yellow?style=flat-square" alt="Hugging Face"></a>
-  <a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=flat-square&label=Stars" alt="Stars"></a>
-</p>
-
-<p>
-  <a href="https://librewebui.org">Website</a> •
-  <a href="https://docs.librewebui.org">Docs</a> •
-  <a href="https://github.com/libre-webui/libre-webui/releases">Download</a> •
-  <a href="#quick-start">Quick Start</a>
-</p>
+**Run local. Bring the providers you choose. Keep control of the interface around them.**
 
 <br>
 
 <p>
-  <img src="./screenshot.png" width="100%" alt="Libre WebUI — Privacy-first AI chat interface">
+  <a href="https://github.com/libre-webui/libre-webui/releases"><img src="https://img.shields.io/github/v/release/libre-webui/libre-webui?style=flat-square&label=release&color=2563eb" alt="Latest release"></a>
+  <a href="https://www.npmjs.com/package/libre-webui"><img src="https://img.shields.io/npm/v/libre-webui?style=flat-square&label=npm&color=cb3837" alt="npm version"></a>
+  <a href="https://github.com/libre-webui/libre-webui/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-15803d?style=flat-square" alt="Apache 2.0 License"></a>
+  <a href="https://github.com/libre-webui/libre-webui/actions/workflows/format.yml"><img src="https://img.shields.io/github/actions/workflow/status/libre-webui/libre-webui/format.yml?branch=main&style=flat-square&label=main%20checks" alt="Main branch checks"></a>
+  <a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=flat-square&label=stars&color=f59e0b" alt="GitHub stars"></a>
 </p>
+
+<p>
+  <a href="https://librewebui.org"><strong>Website</strong></a> ·
+  <a href="https://docs.librewebui.org"><strong>Documentation</strong></a> ·
+  <a href="https://github.com/libre-webui/libre-webui/releases"><strong>Download</strong></a> ·
+  <a href="#start-in-one-command"><strong>Quick start</strong></a>
+</p>
+
+<br>
+
+<img src="https://raw.githubusercontent.com/libre-webui/libre-webui/main/screenshot.png" width="100%" alt="Libre WebUI local-first AI workspace">
 
 </div>
 
 ---
 
-## Why Libre WebUI?
+## Freedom should survive success
 
-Most AI chat tools either **lock you into a cloud**, **harvest your data**, or **pull the rug on their open-source license through restrictive relicensing or contributor agreements**. We think you deserve better.
+An AI interface can be self-hosted today and still become a gatekeeper tomorrow. Libre WebUI is built so your freedom does not depend on a company remaining benevolent.
 
-Libre WebUI is a **self-hosted AI workspace** that connects to [Ollama](https://ollama.com) for local AI and to cloud providers through plugins — all from one clean, fast UI. Your conversations stay on your device or server unless _you_ choose to use a remote provider.
+Run it. Inspect it. Change it. Fork it. Connect it to something else. Or leave it behind. The code is Apache 2.0, local inference is the default path, remote providers are opt-in, and the project charter puts independence and inclusive participation into writing.
 
-> **Built by [Kroonen AI](https://kroonen.ai) and the open-source community.** Apache 2.0 forever — [we put it in our charter](./CHARTER.md).
+> **Open source is a license. Libre is an operating principle.**
 
----
+Do not trust the pitch. Inspect the [license](https://github.com/libre-webui/libre-webui/blob/main/LICENSE), [charter](https://github.com/libre-webui/libre-webui/blob/main/CHARTER.md), [source](https://github.com/libre-webui/libre-webui), and [CI](https://github.com/libre-webui/libre-webui/actions).
 
-## ✨ Features at a Glance
+| What stays yours      | Libre WebUI's approach                                                              | Verify it                                                                  |
+| --------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Data path**         | Self-hosted by default; remote inference only when you select it                    | [Deployment docs](https://docs.librewebui.org/DOCKER)                      |
+| **Model choice**      | Local Ollama plus optional provider plugins and OpenAI-compatible endpoints         | [Plugin architecture](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)     |
+| **Code**              | Use, modify, redistribute, and fork under Apache 2.0                                | [License](https://github.com/libre-webui/libre-webui/blob/main/LICENSE)    |
+| **Project direction** | The charter rejects funding control over the roadmap, license, or community         | [Charter](https://github.com/libre-webui/libre-webui/blob/main/CHARTER.md) |
+| **Participation**     | Contributors and users are welcome regardless of background, identity, or geography | [Charter](https://github.com/libre-webui/libre-webui/blob/main/CHARTER.md) |
+| **Exit**              | Your installation and your fork do not need our permission                          | [Source](https://github.com/libre-webui/libre-webui)                       |
 
-|     | Feature                  | What it does                                                              |
-| --- | ------------------------ | ------------------------------------------------------------------------- |
-| 💬  | **Streaming Chat**       | Real-time local and provider-backed conversations                         |
-| 🧠  | **Model Manager**        | Pull, browse, unload, and manage Ollama, Ollama Cloud, and HF GGUF models |
-| 🔌  | **Plugin System**        | Connect OpenAI-compatible providers with JSON config and user credentials |
-| 📄  | **Document Chat (RAG)**  | Upload PDF and plain-text files, then search them from chat               |
-| 🎭  | **Personas**             | Reusable assistants with prompts, parameters, memory, and import/export   |
-| 🎨  | **Artifacts**            | Sandboxed HTML, SVG, JSON, and code previews beside chat                  |
-| 🖼️  | **Image Generation**     | ComfyUI and provider plugins for generated images                         |
-| 🔊  | **Text-to-Speech**       | Qwen3-TTS, Kyutai, OpenAI-compatible voices, and provider plugins         |
-| 🤗  | **Hugging Face Hub**     | Discover Hub models and compatible GGUF files from the UI                 |
-| 🔐  | **Auth & Signup Safety** | Local accounts, GitHub/Hugging Face OAuth, roles, and optional Turnstile  |
-| 🌍  | **25+ Languages**        | Full i18n coverage from Arabic to Vietnamese                              |
-| 🖥️  | **Desktop App**          | Electron builds for macOS, Windows, and Linux                             |
-| 🤖  | **AI Agent Support**     | Libre Claw runs, approvals, tools, schedules, memory, and usage           |
-| 🏢  | **Self-Hosted Ops**      | Docker, Kubernetes, SQLite storage, encrypted credentials, and backups    |
+## Start in one command
 
----
-
-## 🚀 Quick Start
-
-### One command — that's it
+With [Node.js 20 or newer](https://nodejs.org):
 
 ```bash
 npx libre-webui
 ```
 
-Opens at `http://localhost:8080`. Install [Ollama](https://ollama.com) for local AI, or add provider API keys in Settings.
+Open [http://localhost:8080](http://localhost:8080). The first account created on a fresh install becomes the administrator.
 
-For a first local model:
+For private local inference, install [Ollama](https://ollama.com) and pull a model:
 
 ```bash
 ollama pull gemma3:4b
 ```
 
-The first account created on a fresh install becomes the administrator.
+That is enough to start. Cloud accounts are not required. When you do want a remote model, add only the provider you choose.
 
-### 🐳 Docker
+## One workspace. Your choices.
 
-```bash
-# With bundled Ollama
-docker compose up -d
+Libre WebUI turns a model endpoint into a complete working environment without taking ownership of the stack around it.
 
-# With your existing Ollama
-docker compose -f docker-compose.external-ollama.yml up -d
+|                                | What you can do                                                                                                                              |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Talk to the model you want** | Stream conversations through local Ollama, Ollama Cloud, bundled providers, or compatible endpoints. Discover and manage models from the UI. |
+| **Bring your own context**     | Chat with PDF and plain-text documents using keyword retrieval or optional semantic embeddings.                                              |
+| **Turn answers into work**     | Preview sandboxed HTML, SVG, JSON, code, and multi-file artifacts beside the conversation.                                                   |
+| **Create with more than text** | Generate images, use provider-backed speech, and build reusable personas with prompts, parameters, and memory.                               |
+| **Make the interface yours**   | Keep light or dark mode across refreshes, apply an adaptive accent theme, and work in 25 languages/locales including Arabic RTL.             |
+| **Operate it your way**        | Use local accounts, roles, optional OAuth, Docker, Kubernetes, npm, or the Electron desktop client.                                          |
+| **Extend without lock-in**     | Configure chat, embeddings, image generation, and text-to-speech providers through the plugin layer.                                         |
 
-# GPU support (NVIDIA)
-docker compose -f docker-compose.gpu.yml up -d
+## Local-first is a real boundary
+
+Libre WebUI ships without application telemetry or analytics. When you use Ollama locally, prompts and responses stay on the infrastructure you control. If you select a remote provider, that provider receives the requests you choose to send to it; Libre WebUI does not pretend otherwise.
+
+For shared and public deployments, the backend includes:
+
+- Local accounts with bcrypt password hashing and JWT sessions
+- Admin and user roles, login/signup rate limits, and optional Cloudflare Turnstile
+- Optional GitHub and Hugging Face OAuth
+- Application-layer AES-256-GCM encryption for supported sensitive values such as credentials
+- Persistent SQLite storage, configurable data directories, and documented backup practices
+
+Application-layer encryption is not full-disk or end-to-end encryption. Use HTTPS, access-controlled storage, stable secrets, and disk encryption where your threat model requires them. Start with the [authentication guide](https://docs.librewebui.org/AUTHENTICATION) and [encryption guide](https://docs.librewebui.org/DATABASE_ENCRYPTION).
+
+## Models and providers without a single-provider worldview
+
+Ollama is the local path, not a lock-in strategy. Libre WebUI bundles provider definitions spanning chat, images, embeddings, speech, and OpenAI-compatible services, including OpenAI, Anthropic, Google Gemini, Groq, Mistral, OpenRouter, Hugging Face, GitHub Models, ComfyUI, ElevenLabs, Qwen3-TTS, and Kyutai TTS.
+
+Credentials can come from deployment-wide environment variables or encrypted, user-scoped settings. Plugins can define static model fallbacks and use live discovery when a provider exposes a compatible model-list endpoint.
+
+[Explore the plugin system →](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)
+
+## Local agents, with the runtime kept separate
+
+[Libre Claw](https://github.com/kroonen-ai/libre-claw) is an optional, admin-controlled local agent runtime. Libre WebUI provides the authenticated control surface for durable runs, timelines, approvals, schedules, usage, and configuration; Libre Claw owns the tools, memory, permission model, and execution.
+
+```text
+Browser or desktop client
+          │
+          ▼
+  Libre WebUI interface
+   React + TypeScript
+          │
+          ▼
+  Express API + WebSocket ─────► SQLite
+          │
+          ├────────► Ollama (local models)
+          ├────────► selected provider plugins
+          └────────► Libre Claw (optional agent runtime)
 ```
 
-### 🍺 Homebrew (macOS)
+The WebUI backend does not execute Libre Claw's shell or browser tools itself. It proxies authenticated admin actions to the separately running daemon, where approvals and safety rules remain authoritative.
 
-```bash
-brew tap libre-webui/tap && brew install libre-webui
-libre-webui
+[Read the Libre Claw integration guide →](https://docs.librewebui.org/LIBRE_CLAW_INTEGRATION)
 
-# Or install the desktop app
-brew install --cask libre-webui
-```
+## Deploy on your terms
 
-### ☸️ Kubernetes
+| Path                | Command or link                                                         | Best for                                            |
+| ------------------- | ----------------------------------------------------------------------- | --------------------------------------------------- |
+| **npm**             | `npx libre-webui`                                                       | The fastest local start                             |
+| **Docker + Ollama** | `docker compose up -d`                                                  | Persistent self-hosting in one stack                |
+| **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | An existing local or remote Ollama service          |
+| **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference                                 |
+| **Kubernetes**      | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployments                                 |
+| **Desktop client**  | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)  | Electron client builds; the backend runs separately |
+| **Source**          | `npm install && npm run dev`                                            | Development and contribution                        |
 
-```bash
-helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui
-```
+Docker commands assume you have cloned this repository. Production deployments should set stable `JWT_SECRET` and `ENCRYPTION_KEY` values, persist the data directory, back up the database and key together, and terminate public traffic with HTTPS.
 
-### 🖥️ Desktop App
+[Docker](https://docs.librewebui.org/DOCKER) · [Kubernetes](https://docs.librewebui.org/KUBERNETES) · [Environment variables](https://docs.librewebui.org/ENVIRONMENT_VARIABLES) · [Hardware guide](https://docs.librewebui.org/HARDWARE_REQUIREMENTS)
 
-Download from [GitHub Releases](https://github.com/libre-webui/libre-webui/releases) — available for **macOS**, **Windows**, and **Linux**.
+## Built from experience, for independence
 
-### 🛠️ From Source
+Libre WebUI is built around a hard-earned lesson: source availability alone does not guarantee shared power. Our response is constructive—compete by shipping better software and stronger commitments that anyone can inspect.
 
-```bash
-git clone https://github.com/libre-webui/libre-webui
-cd libre-webui
-cp backend/.env.example backend/.env
-npm install && npm run dev
-```
+That means local-first defaults without forbidding the cloud, commercial support without changing the core license, and a community where identity, background, or geography never determines who belongs. Kroonen AI maintains Libre WebUI under the project's public charter, which accepts donations or grants only when they do not control the roadmap, license, or community.
 
-<details>
-<summary><strong>⚙️ Configuration</strong></summary>
+**Freedom should not be a phase in a startup's growth plan. It should be part of the architecture.**
 
-Edit `backend/.env`:
+## Build with us
 
-```env
-# Local AI (default — just install Ollama)
-OLLAMA_BASE_URL=http://localhost:11434
-JWT_SECRET=replace-with-a-long-random-secret
+Libre WebUI is for people who want excellent AI software and the freedom to outgrow its maintainers.
 
-# Cloud providers (optional — add what you need)
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-HUGGINGFACE_API_KEY=hf_...
+1. Fork and clone the repository.
+2. Create a branch from `dev`.
+3. Run `npm install && npm run dev`.
+4. Add tests and documentation with your change.
+5. Open a pull request against `dev`.
 
-# Optional signup protection
-TURNSTILE_SITE_KEY=...
-TURNSTILE_SECRET_KEY=...
-```
+You can also help by [reporting bugs](https://github.com/libre-webui/libre-webui/issues), improving documentation, translating the interface, or contributing provider definitions.
 
-</details>
+All participation follows the [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) and the [Libre WebUI Community & Ethical Charter](https://github.com/libre-webui/libre-webui/blob/main/CHARTER.md). Report security issues privately to **security@kroonen.ai**.
 
-<details>
-<summary><strong>🧪 Development builds (unstable)</strong></summary>
+## Stewardship and support
 
-Dev builds are auto-generated from the `dev` branch. **Not for production.**
+[Kroonen AI](https://kroonen.ai) funds development and provides professional deployment, integration, security review, training, customization, and SLA-backed support. Commercial services do not change the Apache 2.0 license of the core project.
 
-```bash
-docker compose -f docker-compose.dev.yml up -d
-```
+For enterprise work, contact **enterprise@kroonen.ai**. To support independent development directly, [sponsor Libre WebUI](https://github.com/sponsors/libre-webui).
 
-Uses separate data volumes (`libre_webui_dev_data`) so your stable install stays safe.
+## Project links
 
-</details>
-
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────┐
-│              Libre WebUI                    │
-├──────────────────┬──────────────────────────┤
-│   React 18 + TS  │   Express 5 + SQLite     │
-│   Frontend       │   Backend                │
-│   (Vite)         │   (JWT + encrypted vals) │
-├──────────────────┴──────────────────────────┤
-│              Plugin Layer                   │
-│   Ollama │ OpenAI │ Anthropic │ Google │ …  │
-├─────────────────────────────────────────────┤
-│   Electron (Desktop) │ Docker │ Kubernetes  │
-└─────────────────────────────────────────────┘
-```
-
-- **Frontend:** React 18 + TypeScript, Vite, Tailwind, responsive with keyboard shortcuts
-- **Backend:** Express 5, SQLite, JWT auth, rate limits, SSE/WebSocket streaming
-- **Plugins:** JSON config files with per-user credentials, variables, and model discovery
-- **Desktop:** Electron with native macOS/Windows/Linux builds
-
----
-
-## 🔌 Plugin System
-
-Add any AI provider with a JSON file — no code changes needed:
-
-```json
-{
-  "id": "my-provider",
-  "name": "My Provider",
-  "type": "completion",
-  "endpoint": "https://api.example.com/v1/chat/completions",
-  "auth": {
-    "header": "Authorization",
-    "prefix": "Bearer ",
-    "key_env": "MY_API_KEY"
-  },
-  "model_map": ["model-a", "model-b"]
-}
-```
-
-Built-in plugins: **OpenAI, Anthropic, Google Gemini, Groq, Mistral, OpenRouter, Hugging Face**, GitHub Models, ComfyUI, ElevenLabs, and more.
-
-Plugins support **multi-capability** (chat + TTS + image gen in one config), **per-user variables**, and **encrypted credential storage**.
-
-📖 [Full plugin docs →](./docs/08-PLUGIN_ARCHITECTURE.md)
-
----
-
-## 🤖 AI Agent Support (Libre Claw)
-
-Libre WebUI supports **AI agents** through
-[Libre Claw](https://github.com/kroonen-ai/libre-claw), a local agent daemon
-for durable runs, permissioned tools, memory, skills, schedules, Telegram, and
-provider routing.
-
-**What agents can do:**
-
-- 🧠 **Persistent memory** — durable local memory, run archives, and project summaries
-- 🔧 **Tool use** — file operations, shell, git, browser work, HTTP, MCP, schedules, and web search
-- 🧰 **Workspace access** — run agent work in the configured local workspace
-- ✅ **Approvals** — review and approve tool calls from WebUI before side effects
-- 🧭 **Run timeline** — inspect assistant deltas, tool calls, tool results, errors, and artifacts
-- 📅 **Automations** — create, pause, resume, run, and delete Libre Claw schedules
-- 📊 **Usage** — inspect provider usage and fallback behavior
-
-Start Libre Claw locally:
-
-```bash
-libre-claw start
-```
-
-Then open **Libre WebUI → Libre Claw**. The backend talks to
-`http://127.0.0.1:8766` by default, or to `LIBRE_CLAW_BASE_URL` when configured.
-
-> **Your agent, your workspace, your data.** Libre WebUI provides the browser
-> control surface while Libre Claw keeps the local agent runtime, safety model,
-> memory, tools, and schedules.
-
-📖 [Libre Claw integration docs →](./docs/31-LIBRE_CLAW_INTEGRATION.md)
-
----
-
-## 🤝 Contributing
-
-We'd love your help! Libre WebUI is built by people who care about privacy and AI freedom.
-
-**Getting started is easy:**
-
-1. Fork the repo and clone it
-2. `npm install && npm run dev`
-3. Make your changes on a branch off `dev`
-4. Open a PR — one approving review from the TSC and you're in
-
-**Ways to contribute:**
-
-- 🐛 **Bug reports** — [open an issue](https://github.com/libre-webui/libre-webui/issues)
-- 💡 **Feature ideas** — start a discussion
-- 🌍 **Translations** — help us reach more languages
-- 📖 **Documentation** — every improvement helps
-- 🔌 **Plugins** — share your provider configs
-
-All contributors follow our [Code of Conduct](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) and [Community Charter](./CHARTER.md).
-
-Security issues? Email **security@kroonen.ai** — we follow a 30-day coordinated disclosure.
-
----
-
-## 📜 Our Promise
-
-Libre WebUI has an [Ethical Charter](./CHARTER.md) that guarantees:
-
-- 🔓 **Apache 2.0 forever** — no bait-and-switch relicensing
-- 🚫 **Zero telemetry** — no analytics, no tracking, no phone-home. Ever.
-- 🏛️ **Community governance** — transparent decisions, public roadmap
-- 🤝 **No VC capture** — funded by the community, for the community
-- ✊ **Ethical use** — we actively oppose surveillance and weapons applications
-
----
-
-## 🏢 Enterprise
-
-Need to deploy at scale? [Kroonen AI](https://kroonen.ai) provides professional services:
-
-| Service                  | Description                                       |
-| ------------------------ | ------------------------------------------------- |
-| **Custom Deployment**    | On-prem, cloud, private-network, and Kubernetes   |
-| **Identity & Access**    | OAuth setup, role design, and enterprise planning |
-| **Custom Development**   | Integrations, white-labeling, and plugins         |
-| **Security Reviews**     | Deployment hardening and control documentation    |
-| **SLA-Backed Support**   | Priority response and dedicated channels          |
-| **Air-Gapped Workflows** | Offline deployments and local model operations    |
-
-📧 **enterprise@kroonen.ai** • [Learn more →](https://kroonen.ai/services)
-
----
-
-## 🔗 Links
-
-|                      |                                                                                  |
-| -------------------- | -------------------------------------------------------------------------------- |
-| 🌐 **Website**       | [librewebui.org](https://librewebui.org)                                         |
-| 📖 **Documentation** | [docs.librewebui.org](https://docs.librewebui.org)                               |
-| 🐙 **GitHub**        | [github.com/libre-webui/libre-webui](https://github.com/libre-webui/libre-webui) |
-| 🦊 **GitLab**        | [git.kroonen.ai/libre-webui](https://git.kroonen.ai/libre-webui/libre-webui)     |
-| 🤗 **Hugging Face**  | [huggingface.co/libre-webui](https://huggingface.co/libre-webui)                 |
-| 𝕏 **Twitter**        | [@librewebui](https://x.com/librewebui)                                          |
-| 🐘 **Mastodon**      | [@librewebui@fosstodon.org](https://fosstodon.org/@librewebui)                   |
-| ❤️ **Sponsor**       | [github.com/sponsors/libre-webui](https://github.com/sponsors/libre-webui)       |
+|                   |                                                                                          |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| **Website**       | [librewebui.org](https://librewebui.org)                                                 |
+| **Documentation** | [docs.librewebui.org](https://docs.librewebui.org)                                       |
+| **Releases**      | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)                   |
+| **GitHub**        | [github.com/libre-webui/libre-webui](https://github.com/libre-webui/libre-webui)         |
+| **GitLab mirror** | [git.kroonen.ai/libre-webui/libre-webui](https://git.kroonen.ai/libre-webui/libre-webui) |
+| **Hugging Face**  | [huggingface.co/libre-webui](https://huggingface.co/libre-webui)                         |
+| **Sponsor**       | [github.com/sponsors/libre-webui](https://github.com/sponsors/libre-webui)               |
 
 ---
 
 <div align="center">
 
-### ⭐ If Libre WebUI helps you, give us a star!
+### If Libre WebUI gives you more control, give it a star.
 
-It helps others discover the project and keeps us motivated.
+Stars help independent software get discovered without buying attention.
 
-<a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=for-the-badge&label=Star%20on%20GitHub&color=gold" alt="Star on GitHub"></a>
+<a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=for-the-badge&label=Star%20Libre%20WebUI&color=f59e0b" alt="Star Libre WebUI on GitHub"></a>
 
 <br><br>
 
-**Apache 2.0 License** • Copyright © 2025–present Libre WebUI™
-
-Built with ❤️ by [Kroonen AI](https://kroonen.ai) and the open-source community
+**Apache 2.0** · Copyright © 2025–present Kroonen AI, Inc. and Libre WebUI contributors<br>
+Built by [Kroonen AI](https://kroonen.ai) and the open-source community
 
 </div>
