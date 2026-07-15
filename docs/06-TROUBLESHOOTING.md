@@ -45,7 +45,7 @@ npm install
 npm run dev
 ```
 
-Node.js 18+ is required; Node.js 20+ is recommended.
+Node.js 22.12 or newer is required.
 
 **Port already in use**
 

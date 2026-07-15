@@ -28,7 +28,7 @@
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
-    "test:package": "npm run build && node --test scripts/test-chat-context.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs",
+    "test:package": "node --test scripts/test-deprecated-dependencies.mjs && npm run build && node --test scripts/test-chat-context.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs",
     "test:e2e": "npm run e2e --workspace=frontend",
     "security:audit": "npm audit --audit-level=moderate",
     "release:check": "npm run format:check && npm run lint && npm run security:audit && npm run test:package && npm run npm:publish:dry-run",
@@ -70,9 +70,12 @@
   },
   "homepage": "https://librewebui.org",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.12.0"
   },
   "overrides": {
+    "@electron/asar": "4.2.0",
+    "@electron/get": "5.0.0",
+    "@electron/universal": "3.0.6",
     "prismjs": "^1.30.0",
     "@isaacs/brace-expansion": ">=5.0.1",
     "react": "^18.2.0",
@@ -95,7 +98,7 @@
     "@typescript-eslint/parser": "^8.34.0",
     "concurrently": "^10.0.1",
     "electron": "41.10.0",
-    "electron-builder": "26.15.3",
+    "electron-builder": "26.15.6",
     "eslint": "^9.39.4",
     "png-to-ico": "^3.0.1",
     "prettier": "^3.7.4",
