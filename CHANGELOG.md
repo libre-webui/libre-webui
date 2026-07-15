@@ -15,6 +15,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.13.2] - 2026-07-15
+
+Libre WebUI 0.13.2 is a focused interface and provider-routing release. It keeps appearance choices stable across reloads, adds an optional accent-adapted palette for light and dark mode, routes speech through the exact selected TTS plugin and per-user valve, restores bundled plugin discovery for packed `npx` installs, and improves Arabic right-to-left behavior across desktop and mobile layouts.
+
+### ✨ New Features
+
+- Added an opt-in **Adapt to accent** appearance style that tints the canvas, surfaces, borders, text hierarchy, and neutral scales from a preset or custom accent in both light and dark mode, while preserving the existing neutral palettes as the default style.
+- Added localized controls for choosing the default or accent-adapted appearance across all 25 supported locales.
+
+### 🔧 Improvements
+
+- Improved Arabic and other right-to-left layouts across the desktop and mobile shell, sidebar, chat, settings, model selector, artifact panel, dialogs, and notifications by using direction-aware logical positioning.
+- Applied the saved language and text direction before the first React render, localized relative timestamps, isolated Latin usernames inside Arabic greetings, allowed message text to choose its natural direction, and kept code and model identifiers left-to-right.
+- Added end-to-end and packaged-runtime regression coverage for theme persistence, adaptive palettes and contrast, RTL desktop/mobile behavior, shared TTS model aliases, per-user valves, and packed `npx` launches.
+
+### 🐛 Bug Fixes
+
+- Fixed light/dark mode and accent preferences reverting after a refresh by persisting theme changes locally and to the backend, retrying failed saves, reconciling stale responses, and preserving hydrated preferences for the same signed-in user.
+- Fixed TTS provider selection when multiple plugins expose the same model alias by preserving the plugin ID through settings, test playback, read-aloud, sentence streaming, and autoplay, while using the selected provider's default voice and audio format.
+- Fixed authenticated plugin credentials and valve values so they are stored and resolved per user, allowing TTS requests to reach the configured endpoint such as Kyutai's `/v1/audio/speech` address.
+- Fixed bundled plugin discovery in packed `npx libre-webui` installs launched from an arbitrary working directory, while continuing to support writable custom plugin directories.
+- Removed duplicate TTS model entries and made no-authentication TTS providers available to the model and plugin selectors.
+
+### 📚 Documentation
+
+- Updated `DESIGN.md` to document the default neutral appearance and the opt-in accent-adapted light and dark palettes.
+
 ## [0.13.1] - 2026-07-14
 
 Libre WebUI 0.13.1 is a maintenance release focused on reliable npm packaging and cross-platform installation. It fixes `npx libre-webui` on Windows, restores the CLI entry point in the published package, and hardens Docker and release automation against the same packaging regressions.
