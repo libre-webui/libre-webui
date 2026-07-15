@@ -15,6 +15,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.13.4] - 2026-07-15
+
+Libre WebUI 0.13.4 restores purpose-built code rendering throughout streamed responses, makes automatic titles reliable with reasoning-capable Ollama models, hardens the plugin API against abusive request volumes, and modernizes Electron packaging to remove deprecated dependency warnings.
+
+### 🔧 Improvements
+
+- Unified streaming and completed code behind the same accessible code-block component, with localized copy feedback, stable styling, and consistent dimensions as responses finish.
+- Expanded syntax highlighting for C#, Go, Kotlin, PHP, Ruby, Rust, SQL, Swift, and YAML, including common language aliases.
+- Made long streaming code blocks follow the newest output until the reader intentionally scrolls away.
+- Added end-to-end coverage for live code rendering, CommonMark fence parsing, bare HTML documents, reader-controlled scrolling, code-safe LaTeX preprocessing, and title-generation request behavior.
+
+### 🐛 Bug Fixes
+
+- Fixed reasoning-capable Ollama models consuming the entire automatic-title token budget before producing visible text by disabling reasoning for title utility requests.
+- Restored specialized code blocks as soon as generated code begins streaming instead of temporarily displaying code as plain text or exposing Markdown fence markers.
+- Improved streaming parsing for incomplete and multiple CommonMark code fences, backtick and tilde fences, indented fences, variable-length fences, CRLF input, and unfenced HTML documents.
+- Prevented LaTeX preprocessing from modifying fenced or inline generated code and removed the visual layout jump when a streaming code block completes.
+
+### 🔒 Security & Dependencies
+
+- Added an IP-based limit of 200 requests per 15 minutes to `/api/plugins`, applied before optional authentication to protect authentication, filesystem, credential-store, and plugin-enumeration work.
+- Upgraded `electron-builder` to 26.15.6 and modernized its Electron packaging dependencies, removing the deprecated `inflight`, `glob` 7, and `boolean` packages that produced installation warnings.
+- Added a package-lock regression test that fails when any dependency is marked deprecated.
+- Raised the supported Node.js minimum to 22.12 to match the modern Electron packaging toolchain.
+
+### 📚 Documentation
+
+- Updated the README, Quick Start, troubleshooting guide, and Electron desktop build guide to document the Node.js 22.12 minimum.
+
 ## [0.13.3] - 2026-07-15
 
 Libre WebUI 0.13.3 fixes automatic chat titles so generated summaries appear immediately in the sidebar, strengthens accent-adapted light themes while preserving the existing dark palette, and refocuses the project documentation around local-first operation, provider choice, and inspectable independence.
