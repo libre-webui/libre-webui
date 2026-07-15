@@ -161,6 +161,46 @@ test('history rail represents user turns and navigates the chat viewport', async
   await expect(currentMarkers).toHaveCount(1);
 });
 
+test('manual scrolling updates the active turn in both directions', async ({
+  page,
+}) => {
+  await mockHistorySession(page);
+  await page.goto('/c/history-rail-session');
+
+  const viewport = page.getByTestId('chat-scroll-viewport');
+  const markers = page.getByTestId('conversation-history-marker');
+  const anchors = page.getByTestId('conversation-turn-anchor');
+  await expect(anchors).toHaveCount(userPrompts.length);
+  const anchorOffsets = await anchors.evaluateAll(elements =>
+    elements.map(element => (element as HTMLElement).offsetTop)
+  );
+  const clientHeight = await viewport.evaluate(element => element.clientHeight);
+  const readingOffset = Math.min(120, clientHeight * 0.28);
+
+  const scrollToTurn = async (index: number) => {
+    await viewport.evaluate(
+      (element, top) => {
+        element.scrollTop = top;
+        element.dispatchEvent(new Event('scroll', { bubbles: true }));
+      },
+      Math.max(0, anchorOffsets[index] - readingOffset + 1)
+    );
+    await expect(markers.nth(index)).toHaveAttribute(
+      'aria-current',
+      'location',
+      { timeout: 500 }
+    );
+    await expect(
+      page.locator(
+        '[data-testid="conversation-history-marker"][aria-current="location"]'
+      )
+    ).toHaveCount(1);
+  };
+
+  for (const index of [1, 2, 3, 4]) await scrollToTurn(index);
+  for (const index of [3, 2, 1, 0]) await scrollToTurn(index);
+});
+
 test('history preview follows the active regenerated branch', async ({
   page,
 }) => {

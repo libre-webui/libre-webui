@@ -235,8 +235,6 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
   const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
 
   const updateActiveHistory = useCallback(() => {
-    if (isHistoryNavigatingRef.current) return;
-
     const container = scrollContainerRef.current;
     if (!container || historyIds.length === 0) {
       setActiveHistoryId(null);
@@ -336,6 +334,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     if (isHistoryNavigatingRef.current) {
       isUserScrolledUpRef.current = true;
       setShowScrollButton(!isAtBottom && messages.length > 0);
+      scheduleHistoryUpdate();
       queueHistoryNavigationFinish();
       return;
     }
@@ -361,8 +360,6 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       const anchor = historyGroupRefs.current.get(id);
       if (!container || !anchor) return;
 
-      const selectedIndex = historyIds.indexOf(id);
-      if (selectedIndex >= 0) activeHistoryIndexRef.current = selectedIndex;
       const behavior = preferredScrollBehavior();
       isHistoryNavigatingRef.current = true;
       isUserScrolledUpRef.current = true;
@@ -373,7 +370,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         ),
         behavior,
       });
-      setActiveHistoryId(id);
+      scheduleHistoryUpdate();
 
       if (behavior === 'auto') {
         finishHistoryNavigation();
@@ -381,7 +378,11 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
         queueHistoryNavigationFinish();
       }
     },
-    [finishHistoryNavigation, historyIds, queueHistoryNavigationFinish]
+    [
+      finishHistoryNavigation,
+      queueHistoryNavigationFinish,
+      scheduleHistoryUpdate,
+    ]
   );
 
   // Only scroll to bottom when a NEW message is added (not on every render)
@@ -432,6 +433,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
     () => () => {
       if (historyFrameRef.current !== null) {
         window.cancelAnimationFrame(historyFrameRef.current);
+        historyFrameRef.current = null;
       }
     },
     []
