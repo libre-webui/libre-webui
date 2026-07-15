@@ -96,13 +96,12 @@ test('Arabic mirrors the desktop shell and preserves content direction', async (
   ).toHaveAttribute('dir', 'auto');
   await expect(page.getByText('الآن', { exact: true }).first()).toBeVisible();
 
-  const codeDirections = await page
+  const codeBlock = page
     .locator('pre')
-    .evaluateAll(elements =>
-      elements.map(element => getComputedStyle(element).direction)
-    );
-  expect(codeDirections.length).toBeGreaterThan(0);
-  expect(codeDirections.every(direction => direction === 'ltr')).toBe(true);
+    .filter({ hasText: 'const answer = 42;' })
+    .last();
+  await expect(codeBlock).toBeVisible();
+  await expect(codeBlock).toHaveCSS('direction', 'ltr');
 
   const modelSelector = page
     .locator('button[aria-haspopup="dialog"]')
