@@ -41,7 +41,7 @@ cask "libre-webui-frontend" do
   caveats <<~EOS
     Libre WebUI Frontend connects to a Libre WebUI backend on port 3001.
     Install and start the backend with:
-      brew install libre-webui
+      brew install --formula libre-webui
       libre-webui --port 3001
 
     Documentation: https://docs.librewebui.org

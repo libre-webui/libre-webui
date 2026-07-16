@@ -42,6 +42,7 @@ test('Homebrew templates match current release packaging', () => {
   assert.match(cask, /depends_on arch: :arm64/);
   assert.match(cask, /depends_on macos: :monterey/);
   assert.match(cask, /app "Libre WebUI Frontend\.app"/);
+  assert.match(cask, /brew install --formula libre-webui/);
   assert.doesNotMatch(
     cask,
     /Libre\.WebUI-|app "Libre WebUI\.app"|auto_updates/
