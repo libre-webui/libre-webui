@@ -415,8 +415,8 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   };
 
   return (
-    <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-      <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-3 sm:p-6'>
+      <div className='flex max-h-[calc(100dvh-1.5rem)] min-h-0 w-full max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-xl dark:bg-gray-800 sm:max-h-[90dvh]'>
         {/* Header */}
         <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700'>
           <div className='flex items-center space-x-3'>
@@ -544,7 +544,7 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
         )}
 
         {/* Plugin List */}
-        <div className='flex-1 overflow-y-auto'>
+        <div className='scroll-region min-h-0 flex-1 scrollbar-thin'>
           {isLoading ? (
             <div className='flex items-center justify-center p-8'>
               <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600'></div>

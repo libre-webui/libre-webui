@@ -116,10 +116,14 @@
   --toast-color: rgb(var(--color-ink));
   --toast-border: rgb(var(--color-line));
 
-  --scrollbar-width: 6px;
+  --scrollbar-width: 8px;
   --scrollbar-track: transparent;
   --scrollbar-thumb: rgb(var(--color-line-strong));
   --scrollbar-thumb-hover: rgb(var(--color-ink-subtle));
+}
+
+html[data-runtime='electron'] {
+  --scrollbar-width: 10px;
 }
 
 .dark {
@@ -206,6 +210,15 @@
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
+}
+
+.scroll-region {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  touch-action: pan-y pinch-zoom;
+  -webkit-overflow-scrolling: touch;
 }
 
 .scrollbar-hidden {

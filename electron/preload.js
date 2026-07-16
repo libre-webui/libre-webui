@@ -39,23 +39,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 });
 
-// Add CSS for native-like appearance on macOS
-if (process.platform === 'darwin') {
-  document.addEventListener('DOMContentLoaded', () => {
-    // Add padding for traffic lights
-    const style = document.createElement('style');
-    style.textContent = `
-      body {
-        -webkit-app-region: drag;
-      }
-      input, textarea, button, select, a, [role="button"] {
-        -webkit-app-region: no-drag;
-      }
-      /* Add top padding for macOS title bar */
-      .sidebar-header, .main-header {
-        padding-top: 28px !important;
-      }
-    `;
-    document.head.appendChild(style);
+// Let the renderer tune native-only details without turning the entire
+// document into a draggable region. App.tsx and Sidebar.tsx own the explicit
+// title-bar drag surfaces so page and menu scroll gestures stay interactive.
+const markElectronRuntime = () => {
+  if (!document.documentElement) return;
+  document.documentElement.dataset.runtime = 'electron';
+  document.documentElement.dataset.platform = process.platform;
+};
+
+if (document.documentElement) {
+  markElectronRuntime();
+} else {
+  document.addEventListener('DOMContentLoaded', markElectronRuntime, {
+    once: true,
   });
 }

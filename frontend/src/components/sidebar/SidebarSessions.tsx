@@ -57,12 +57,9 @@ export function SidebarSessions({
 
   return (
     <div
-      className='flex-1 overflow-y-auto scrollbar-thin border-t border-black/[0.05] dark:border-white/[0.05]'
-      style={{
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-        willChange: 'scroll-position',
-      }}
+      data-testid='sidebar-session-scroll-region'
+      className='scroll-region min-h-0 flex-1 scrollbar-thin border-t border-black/[0.05] dark:border-white/[0.05]'
+      style={{ willChange: 'scroll-position' }}
     >
       <div className={cn('px-3 py-3', sidebarCompact && 'px-2')}>
         {!sidebarCompact && sessions.length > 0 && (

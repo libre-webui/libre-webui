@@ -284,7 +284,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         </div>
 
         {/* Content */}
-        <div className='flex-1 space-y-5 overflow-y-auto p-5 sm:p-6'>
+        <div className='scroll-region min-h-0 flex-1 space-y-5 p-5 scrollbar-thin sm:p-6'>
           {plugins.length === 0 ? (
             <div className='text-center py-8'>
               <ImageIcon className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600' />

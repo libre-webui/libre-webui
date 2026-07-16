@@ -23,6 +23,17 @@ test('macOS packaging uses intentional ad-hoc signing', () => {
   );
 });
 
+test('Electron limits draggable regions so content remains scrollable', () => {
+  const preload = readRepoFile('electron/preload.js');
+  const appShell = readRepoFile('frontend/src/App.tsx');
+  const sidebar = readRepoFile('frontend/src/components/Sidebar.tsx');
+
+  assert.doesNotMatch(preload, /-webkit-app-region:\s*drag/);
+  assert.match(preload, /dataset\.runtime = 'electron'/);
+  assert.match(appShell, /WebkitAppRegion: 'drag'/);
+  assert.match(sidebar, /WebkitAppRegion: 'drag'/);
+});
+
 test('macOS DMG uses the branded Libre WebUI installer layout', () => {
   const builderConfig = readRepoFile('electron-builder.yml');
   const backgroundSvg = readRepoFile('electron/assets/dmg-background.svg');

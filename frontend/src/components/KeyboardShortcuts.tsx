@@ -57,7 +57,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
 
   return (
     <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
-      <div className='bg-white dark:bg-dark-100 rounded-xl shadow-2xl w-full max-w-md max-h-[80vh] overflow-hidden'>
+      <div className='flex max-h-[calc(100dvh-2rem)] min-h-0 w-full max-w-md flex-col overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-dark-100 sm:max-h-[80dvh]'>
         {/* Header */}
         <div className='flex items-center justify-between p-6 border-b border-gray-200 dark:border-dark-300'>
           <div className='flex items-center gap-2'>
@@ -77,7 +77,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className='p-6 space-y-6 overflow-y-auto max-h-[60vh]'>
+        <div className='scroll-region min-h-0 flex-1 space-y-6 p-6 scrollbar-thin'>
           {Object.entries(shortcutGroups).map(([groupKey, groupShortcuts]) => {
             if (groupShortcuts.length === 0) return null;
 

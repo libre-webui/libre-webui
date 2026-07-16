@@ -17,12 +17,13 @@
 
 import React from 'react';
 import { ArtifactDemo } from '@/components/ArtifactDemo';
+import { PageShell } from '@/components/ui';
 
 const ArtifactDemoPage: React.FC = () => {
   return (
-    <div className='min-h-screen bg-gray-50 dark:bg-dark-100'>
+    <PageShell width='wide'>
       <ArtifactDemo />
-    </div>
+    </PageShell>
   );
 };
 

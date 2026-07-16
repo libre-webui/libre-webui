@@ -154,7 +154,7 @@ export function SidebarUserSection({
           </button>
 
           {userMenuOpen && (
-            <div className='absolute bottom-full left-0 right-0 mb-2 py-2 bg-white/95 dark:bg-dark-25/95 rounded-2xl shadow-[0_18px_60px_rgba(15,23,42,0.16)] border border-black/[0.07] dark:border-white/[0.08] backdrop-blur-xl z-50 animate-scale-in'>
+            <div className='scroll-region absolute bottom-full left-0 right-0 z-50 mb-2 max-h-[calc(100dvh-1rem)] rounded-2xl border border-black/[0.07] bg-white/95 py-2 shadow-[0_18px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in scrollbar-thin dark:border-white/[0.08] dark:bg-dark-25/95'>
               <div className='px-3 py-2 border-b border-gray-100 dark:border-dark-200/50'>
                 <div className='flex items-center gap-2.5'>
                   <UserAvatar user={user} size='md' />

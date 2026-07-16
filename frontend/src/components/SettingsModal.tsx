@@ -1255,10 +1255,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Tab Content */}
             <div
-              className='flex-1 overflow-auto overscroll-behavior-contain p-4 sm:p-6 lg:p-8'
-              style={{
-                WebkitOverflowScrolling: 'touch',
-              }}
+              data-testid='settings-scroll-region'
+              className='scroll-region min-h-0 flex-1 p-4 scrollbar-thin sm:p-6 lg:p-8'
               id='settings-tab-panel'
               role='tabpanel'
             >

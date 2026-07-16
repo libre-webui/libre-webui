@@ -61,7 +61,7 @@ export function OllamaLibraryTab({
   const { t } = useTranslation();
 
   return (
-    <div className='flex-1 flex flex-col overflow-hidden'>
+    <div className='flex min-h-0 flex-1 flex-col overflow-hidden'>
       <div className='px-3 py-2 border-b border-gray-200 dark:border-dark-300 flex-shrink-0'>
         <div className='flex flex-wrap gap-1.5'>
           {libraryCategories.map(cat => (
@@ -85,7 +85,7 @@ export function OllamaLibraryTab({
         </div>
       </div>
 
-      <div className='flex-1 overflow-y-auto'>
+      <div className='scroll-region min-h-0 flex-1 scrollbar-thin'>
         {!canInstallModels && (
           <div className='mx-3 mt-3 mb-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300'>
             {t('modelSelector.pullRestricted')}

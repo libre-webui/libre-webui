@@ -45,10 +45,8 @@ export const PageShell: React.FC<PageShellProps> = ({
   ...props
 }) => (
   <div
-    className={cn(
-      'h-full overflow-y-auto overscroll-y-contain scrollbar-thin',
-      className
-    )}
+    data-testid='page-scroll-region'
+    className={cn('scroll-region h-full min-h-0 scrollbar-thin', className)}
     {...props}
   >
     <div

@@ -181,7 +181,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onSettingsClick }) => {
         createPortal(
           <div
             ref={menuRef}
-            className='w-48 sm:w-52 border border-gray-200 dark:border-dark-200 rounded-xl shadow-2xl'
+            className='scroll-region max-h-[calc(100dvh-1rem)] w-48 rounded-xl border border-gray-200 shadow-2xl scrollbar-thin dark:border-dark-200 sm:w-52'
             style={{
               position: 'fixed',
               top: dropdownPosition.top,

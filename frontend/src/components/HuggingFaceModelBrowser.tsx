@@ -234,8 +234,8 @@ export const HuggingFaceModelBrowser: React.FC<
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-      <div className='relative w-full max-w-4xl max-h-[90vh] bg-white dark:bg-dark-100 rounded-xl shadow-2xl flex flex-col overflow-hidden'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 backdrop-blur-sm sm:p-6'>
+      <div className='relative flex max-h-[calc(100dvh-1.5rem)] min-h-0 w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-dark-100 sm:max-h-[90dvh]'>
         {/* Header */}
         <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-dark-300'>
           <div className='flex items-center gap-3'>
@@ -330,7 +330,7 @@ export const HuggingFaceModelBrowser: React.FC<
         </div>
 
         {/* Model List */}
-        <div className='flex-1 overflow-y-auto px-6 py-4'>
+        <div className='scroll-region min-h-0 flex-1 px-6 py-4 scrollbar-thin'>
           {!canInstallModels && (
             <div className='mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300'>
               {t('modelSelector.pullRestricted')}

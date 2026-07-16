@@ -46,7 +46,7 @@ export function InstalledModelsTab({
   const { t } = useTranslation();
 
   return (
-    <div className='flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400'>
+    <div className='scroll-region min-h-0 flex-1 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-dark-400'>
       {filteredGroups.length > 0 ? (
         filteredGroups.map(group => (
           <div key={group.type}>

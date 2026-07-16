@@ -155,7 +155,7 @@ export const PersonaQuickSwitch: React.FC<PersonaQuickSwitchProps> = ({
         )}
 
         {/* List */}
-        <div className='flex-1 overflow-y-auto p-2'>
+        <div className='scroll-region min-h-0 flex-1 p-2 scrollbar-thin'>
           {isLoading ? (
             <div className='flex items-center justify-center py-8'>
               <div className='animate-spin h-6 w-6 border-2 border-primary-500 border-t-transparent rounded-full' />
