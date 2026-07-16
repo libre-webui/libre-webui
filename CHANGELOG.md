@@ -15,6 +15,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.14.1] - 2026-07-16
+
+Libre WebUI 0.14.1 corrects the macOS installer artwork introduced in 0.14.0 so Finder presents the complete branded layout at the intended scale, keeps packaging support files out of the installation canvas, and preserves valid update metadata after finalization.
+
+### 🔧 Improvements
+
+- Added native Retina DMG artwork with a 760×500 72-DPI representation and a 1520×1000 144-DPI representation for a sharp, correctly sized installer on standard and high-density displays.
+- Strengthened macOS artifact verification to mount the finished DMG and validate its checksum, background format, dimensions, density, Applications shortcut, visible item count, Finder metadata, application identifier, and ad-hoc signature before CI uploads it.
+
+### 🐛 Bug Fixes
+
+- Fixed Finder enlarging and cropping the branded installer background because the generated PNG was encoded at 25 DPI instead of the expected 72 DPI.
+- Marked the background, volume icon, and disk-image metadata as Finder-invisible so the installation window exposes only Libre WebUI and the Applications shortcut.
+- Regenerated the DMG blockmap and release checksum metadata after Finder finalization so differential updates and `latest-mac.yml` continue to describe the published artifact exactly.
+
 ## [0.14.0] - 2026-07-16
 
 Libre WebUI 0.14.0 adds a compact conversation history rail for navigating long chats and brings the Electron desktop experience closer to the main product aesthetic with reliable scrolling, valid ad-hoc macOS packages, and a purpose-built installer.
