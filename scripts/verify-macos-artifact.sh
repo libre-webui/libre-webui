@@ -45,18 +45,41 @@ if [[ -z "${app_path}" ]]; then
   exit 1
 fi
 
-background_path="${mount_point}/.background.png"
-if [[ ! -f "${background_path}" ]]; then
+background_path="$(find "${mount_point}" -maxdepth 1 -type f \( -name '.background.png' -o -name '.background.tiff' \) -print -quit)"
+if [[ -z "${background_path}" ]]; then
   echo "The disk image does not contain the branded installer background." >&2
   exit 1
 fi
 
 background_width="$(sips -g pixelWidth "${background_path}" | awk '/pixelWidth/ {print $2}')"
 background_height="$(sips -g pixelHeight "${background_path}" | awk '/pixelHeight/ {print $2}')"
+background_dpi="$(sips -g dpiWidth "${background_path}" | awk '/dpiWidth/ {print $2}')"
 if [[ "${background_width}" != "760" || "${background_height}" != "500" ]]; then
   echo "The installer background must be 760x500, got ${background_width}x${background_height}." >&2
   exit 1
 fi
+if [[ "${background_dpi}" != "72.000" ]]; then
+  echo "The installer background must use 72 DPI, got ${background_dpi}." >&2
+  exit 1
+fi
+
+if [[ ! -L "${mount_point}/Applications" ]]; then
+  echo "The disk image does not contain the Applications shortcut." >&2
+  exit 1
+fi
+
+visible_item_count="$(find "${mount_point}" -mindepth 1 -maxdepth 1 ! -name '.*' -print | wc -l | tr -d ' ')"
+if [[ "${visible_item_count}" != "2" ]]; then
+  echo "The disk image must expose only the app and Applications shortcut, got ${visible_item_count} visible items." >&2
+  exit 1
+fi
+
+for support_path in "${background_path}" "${mount_point}/.VolumeIcon.icns" "${mount_point}/.DS_Store"; do
+  if [[ -e "${support_path}" ]] && ! /usr/bin/GetFileInfo -a "${support_path}" | grep -q 'V'; then
+    echo "$(basename "${support_path}") must be Finder-invisible." >&2
+    exit 1
+  fi
+done
 
 echo "Verifying application bundle: ${app_path}"
 codesign --verify --deep --strict --verbose=2 "${app_path}"
@@ -79,5 +102,6 @@ if find "${app_path}/Contents" -type f -name 'dmg-art.png' -print -quit | grep -
   exit 1
 fi
 
-echo "macOS artifact contains the branded 760x500 installer background."
+echo "macOS artifact contains the branded 760x500 Retina installer background."
+echo "macOS packaging support files are Finder-invisible."
 echo "macOS artifact has a valid ad-hoc application signature."

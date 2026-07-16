@@ -110,43 +110,56 @@ async function generateIcons() {
   // Generate DMG background from SVG
   const dmgBgSvgPath = path.join(assetsDir, 'dmg-background.svg');
   const dmgBgPngPath = path.join(assetsDir, 'dmg-background.png');
+  const dmgBgRetinaPngPath = path.join(assetsDir, 'dmg-background@2x.png');
   const dmgArtPath = path.join(assetsDir, 'dmg-art.png');
   if (fs.existsSync(dmgBgSvgPath)) {
     console.log('\nGenerating DMG background...');
     const dmgWidth = 760;
     const dmgHeight = 500;
     const dmgArtHeight = 220;
-    const composites = [];
+    const dmgDensity = 72;
+    const backgroundSvg = fs.readFileSync(dmgBgSvgPath);
 
-    if (fs.existsSync(dmgArtPath)) {
-      const artBuffer = await sharp(dmgArtPath)
-        .resize(dmgWidth, dmgArtHeight, {
-          fit: 'cover',
-          position: 'centre',
-        })
+    for (const scale of [1, 2]) {
+      const width = dmgWidth * scale;
+      const height = dmgHeight * scale;
+      const density = dmgDensity * scale;
+      const composites = [];
+
+      if (fs.existsSync(dmgArtPath)) {
+        const artBuffer = await sharp(dmgArtPath)
+          .resize(width, dmgArtHeight * scale, {
+            fit: 'cover',
+            position: 'centre',
+          })
+          .png()
+          .toBuffer();
+        composites.push({ input: artBuffer, top: 0, left: 0 });
+      }
+
+      const overlayBuffer = await sharp(backgroundSvg, { density })
+        .resize(width, height)
         .png()
         .toBuffer();
-      composites.push({ input: artBuffer, top: 0, left: 0 });
+      composites.push({ input: overlayBuffer, top: 0, left: 0 });
+
+      const outputPath = scale === 1 ? dmgBgPngPath : dmgBgRetinaPngPath;
+      await sharp({
+        create: {
+          width,
+          height,
+          channels: 4,
+          background: '#f3f0ea',
+        },
+      })
+        .composite(composites)
+        .png()
+        .withMetadata({ density })
+        .toFile(outputPath);
+      console.log(
+        `  ✓ ${path.basename(outputPath)} generated at ${density} DPI`
+      );
     }
-
-    composites.push({
-      input: fs.readFileSync(dmgBgSvgPath),
-      top: 0,
-      left: 0,
-    });
-
-    await sharp({
-      create: {
-        width: dmgWidth,
-        height: dmgHeight,
-        channels: 4,
-        background: '#f3f0ea',
-      },
-    })
-      .composite(composites)
-      .png()
-      .toFile(dmgBgPngPath);
-    console.log('  ✓ dmg-background.png generated');
   }
 
   // Generate Windows .ico file

@@ -9,9 +9,12 @@ directories:
 files:
   - electron/**/*
   - '!electron/assets/dmg-background.png'
+  - '!electron/assets/dmg-background@2x.png'
   - '!electron/assets/dmg-art.png'
   - '!electron/assets/icon.icns'
   - '!electron/assets/icon.ico'
+
+artifactBuildCompleted: scripts/finalize-macos-artifact.cjs
 
 extraResources:
   - from: frontend/dist

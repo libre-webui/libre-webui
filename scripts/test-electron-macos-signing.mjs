@@ -38,8 +38,15 @@ test('macOS DMG uses the branded Libre WebUI installer layout', () => {
   const builderConfig = readRepoFile('electron-builder.yml');
   const backgroundSvg = readRepoFile('electron/assets/dmg-background.svg');
   const iconGenerator = readRepoFile('scripts/generate-icons.js');
+  const artifactFinalizer = readRepoFile('scripts/finalize-macos-artifact.cjs');
+  const dmgFinalizer = readRepoFile('scripts/finalize-macos-dmg.sh');
+  const artifactVerifier = readRepoFile('scripts/verify-macos-artifact.sh');
 
   assert.match(builderConfig, /^\s+title: 'Install Libre WebUI'$/m);
+  assert.match(
+    builderConfig,
+    /^artifactBuildCompleted: scripts\/finalize-macos-artifact\.cjs$/m
+  );
   assert.match(builderConfig, /^\s+iconSize: 112$/m);
   assert.match(builderConfig, /^\s+iconTextSize: 13$/m);
   assert.match(builderConfig, /^\s+width: 760$/m);
@@ -50,6 +57,14 @@ test('macOS DMG uses the branded Libre WebUI installer layout', () => {
   assert.match(iconGenerator, /dmg-art\.png/);
   assert.match(iconGenerator, /const dmgWidth = 760/);
   assert.match(iconGenerator, /const dmgHeight = 500/);
+  assert.match(iconGenerator, /const dmgDensity = 72/);
+  assert.match(iconGenerator, /dmg-background@2x\.png/);
+  assert.match(iconGenerator, /\.withMetadata\(\{ density \}\)/);
+  assert.match(artifactFinalizer, /finalize-macos-dmg\.sh/);
+  assert.match(artifactFinalizer, /buildBlockMap/);
+  assert.match(dmgFinalizer, /SetFile -a V/);
+  assert.match(artifactVerifier, /background_dpi/);
+  assert.match(artifactVerifier, /Finder-invisible/);
   assert.ok(
     fs.existsSync(path.join(repoRoot, 'electron/assets/dmg-art.png')),
     'the generated DMG artwork must be committed'
