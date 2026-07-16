@@ -35,6 +35,9 @@ test('Homebrew templates match current release packaging', () => {
   );
 
   assert.match(cask, /Libre-WebUI-Frontend-#\{version\}-mac-arm64\.dmg/);
+  assert.match(cask, /^cask "libre-webui-frontend" do/m);
+  assert.match(cask, /name "Libre WebUI Frontend"/);
+  assert.doesNotMatch(cask, /^cask "libre-webui" do/m);
   assert.match(cask, /verified: "github\.com\/libre-webui\/libre-webui\/"/);
   assert.match(cask, /depends_on arch: :arm64/);
   assert.match(cask, /depends_on macos: :monterey/);
@@ -87,14 +90,19 @@ test('Homebrew renderer produces a current formula and cask together', () => {
       'utf8'
     );
     const cask = fs.readFileSync(
-      path.join(outputDir, 'Casks/libre-webui.rb'),
+      path.join(outputDir, 'Casks/libre-webui-frontend.rb'),
       'utf8'
     );
 
     assert.match(formula, /libre-webui-9\.8\.7\.tgz/);
     assert.match(formula, new RegExp(`sha256 "${'a'.repeat(64)}"`));
     assert.match(cask, /version "9\.8\.7"/);
+    assert.match(cask, /^cask "libre-webui-frontend" do/m);
     assert.match(cask, new RegExp(`sha256 "${'b'.repeat(64)}"`));
+    assert.equal(
+      fs.existsSync(path.join(outputDir, 'Casks/libre-webui.rb')),
+      false
+    );
   } finally {
     fs.rmSync(outputDir, { recursive: true, force: true });
   }

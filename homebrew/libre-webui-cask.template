@@ -3,18 +3,18 @@
 #
 # Installation:
 #   brew tap libre-webui/tap
-#   brew install --cask libre-webui
+#   brew install --cask libre-webui-frontend
 #
 # Or install directly:
-#   brew install --cask libre-webui/tap/libre-webui
+#   brew install --cask libre-webui/tap/libre-webui-frontend
 
-cask "libre-webui" do
+cask "libre-webui-frontend" do
   version "{{VERSION}}"
   sha256 "{{DMG_SHA256}}"
 
   url "https://github.com/libre-webui/libre-webui/releases/download/v#{version}/Libre-WebUI-Frontend-#{version}-mac-arm64.dmg",
       verified: "github.com/libre-webui/libre-webui/"
-  name "Libre WebUI"
+  name "Libre WebUI Frontend"
   desc "Open, self-hosted workspace for creating with AI"
   homepage "https://librewebui.org/"
 

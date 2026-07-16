@@ -68,7 +68,7 @@ const caskTemplatePath = path.join(
 );
 
 const formulaOutputPath = path.join(outputDir, 'Formula', 'libre-webui.rb');
-const caskOutputPath = path.join(outputDir, 'Casks', 'libre-webui.rb');
+const caskOutputPath = path.join(outputDir, 'Casks', 'libre-webui-frontend.rb');
 
 const formulaContent = renderTemplate(formulaTemplatePath, {
   VERSION: version,
