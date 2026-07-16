@@ -134,11 +134,12 @@ mac:
 
 ### Available Scripts
 
-| Script                   | Description                      |
-| ------------------------ | -------------------------------- |
-| `npm run electron:dev`   | Development mode with hot reload |
-| `npm run electron:build` | Build production DMG for macOS   |
-| `npm run electron:pack`  | Build without creating installer |
+| Script                        | Description                           |
+| ----------------------------- | ------------------------------------- |
+| `npm run electron:dev`        | Development mode with hot reload      |
+| `npm run electron:build`      | Build production DMG for macOS        |
+| `npm run electron:verify:mac` | Verify the packaged macOS application |
+| `npm run electron:pack`       | Build without creating installer      |
 
 ## 🎨 macOS Integration
 
@@ -208,13 +209,24 @@ npm install
 npm run electron:build
 ```
 
-**Code signing warnings:**
+**macOS blocks the downloaded application as damaged:**
 
-```
-skipped macOS application code signing
+Libre WebUI temporarily uses an ad-hoc signature for macOS builds. This keeps
+the application bundle structurally valid, but it does not identify the
+publisher to Apple and cannot be notarized. After copying the application to
+Applications, approve it in **System Settings → Privacy & Security → Open
+Anyway**.
+
+If macOS does not offer that option, remove the quarantine attribute only after
+verifying that the application came from the official Libre WebUI release:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/Libre WebUI Frontend.app"
+open "/Applications/Libre WebUI Frontend.app"
 ```
 
-This is normal for development builds. For distribution, you'll need an Apple Developer certificate.
+Do not disable Gatekeeper globally. Seamless distribution still requires a
+Developer ID Application certificate and Apple notarization.
 
 ## 📦 Distribution
 
@@ -225,14 +237,20 @@ For App Store or notarized distribution:
 1. **Get an Apple Developer account**
 2. **Create signing certificates** in Xcode
 3. **Create entitlements file** at `electron/entitlements.mac.plist`
-4. **Configure signing** in `electron-builder.yml`:
+4. **Remove the temporary `identity: '-'` override** and configure signing in
+   `electron-builder.yml`:
+
    ```yaml
    mac:
      hardenedRuntime: true
      gatekeeperAssess: false
      entitlements: electron/entitlements.mac.plist
      entitlementsInherit: electron/entitlements.mac.plist
+     notarize: true
    ```
+
+5. **Provide CI credentials** through `CSC_LINK`, `CSC_KEY_PASSWORD`, and one
+   of electron-builder's supported Apple notarization credential sets.
 
 ### GitHub Releases
 

@@ -45,7 +45,9 @@ jobs:
         run: npm run electron:build
         env:
           ELECTRON_BUILD: true
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Verify macOS application signature
+        run: npm run electron:verify:mac
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7

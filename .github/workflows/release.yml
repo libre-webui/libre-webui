@@ -80,8 +80,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ELECTRON_BUILD: true
-          # Disable auto-discovery to prevent signing attempts without certificate
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Verify macOS application signature
+        run: npm run electron:verify:mac
 
       - name: Upload Electron artifacts
         uses: actions/upload-artifact@v7

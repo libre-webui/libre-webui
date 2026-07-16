@@ -42,10 +42,13 @@ mac:
         - arm64
   icon: electron/assets/icon.icns
   darkModeSupport: true
+  # Temporary distribution mode until Developer ID credentials are available.
+  # This produces a structurally valid bundle without identifying it to Apple.
+  identity: '-'
   hardenedRuntime: true
   entitlements: electron/entitlements.mac.plist
   entitlementsInherit: electron/entitlements.mac.plist
-  notarize: true
+  notarize: false
   gatekeeperAssess: false
   artifactName: 'Libre-WebUI-Frontend-${version}-mac-arm64.${ext}'
 
