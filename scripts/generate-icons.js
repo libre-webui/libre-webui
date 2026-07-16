@@ -9,6 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execFileSync, execSync } = require('child_process');
 
 async function generateIcons() {
   let sharp;
@@ -93,7 +94,6 @@ async function generateIcons() {
 
   // Try to generate .icns file on macOS
   if (process.platform === 'darwin') {
-    const { execSync } = require('child_process');
     try {
       execSync(
         `iconutil -c icns "${iconsetDir}" -o "${path.join(assetsDir, 'icon.icns')}"`,
@@ -111,12 +111,13 @@ async function generateIcons() {
   const dmgBgSvgPath = path.join(assetsDir, 'dmg-background.svg');
   const dmgBgPngPath = path.join(assetsDir, 'dmg-background.png');
   const dmgBgRetinaPngPath = path.join(assetsDir, 'dmg-background@2x.png');
+  const dmgBgTiffPath = path.join(assetsDir, 'dmg-background.tiff');
   const dmgArtPath = path.join(assetsDir, 'dmg-art.png');
   if (fs.existsSync(dmgBgSvgPath)) {
     console.log('\nGenerating DMG background...');
     const dmgWidth = 760;
     const dmgHeight = 500;
-    const dmgArtHeight = 220;
+    const dmgArtHeight = 176;
     const dmgDensity = 72;
     const backgroundSvg = fs.readFileSync(dmgBgSvgPath);
 
@@ -159,6 +160,21 @@ async function generateIcons() {
       console.log(
         `  ✓ ${path.basename(outputPath)} generated at ${density} DPI`
       );
+    }
+
+    if (process.platform === 'darwin') {
+      execFileSync(
+        '/usr/bin/tiffutil',
+        [
+          '-cathidpicheck',
+          dmgBgPngPath,
+          dmgBgRetinaPngPath,
+          '-out',
+          dmgBgTiffPath,
+        ],
+        { stdio: 'inherit' }
+      );
+      console.log('  ✓ dmg-background.tiff generated with Retina resources');
     }
   }
 

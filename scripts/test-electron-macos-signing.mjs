@@ -40,6 +40,7 @@ test('macOS DMG uses the branded Libre WebUI installer layout', () => {
   const iconGenerator = readRepoFile('scripts/generate-icons.js');
   const artifactFinalizer = readRepoFile('scripts/finalize-macos-artifact.cjs');
   const dmgFinalizer = readRepoFile('scripts/finalize-macos-dmg.sh');
+  const finderMetadata = readRepoFile('scripts/macos-dmg-finder.py');
   const artifactVerifier = readRepoFile('scripts/verify-macos-artifact.sh');
 
   assert.match(builderConfig, /^\s+title: 'Install Libre WebUI'$/m);
@@ -47,8 +48,20 @@ test('macOS DMG uses the branded Libre WebUI installer layout', () => {
     builderConfig,
     /^artifactBuildCompleted: scripts\/finalize-macos-artifact\.cjs$/m
   );
-  assert.match(builderConfig, /^\s+iconSize: 112$/m);
-  assert.match(builderConfig, /^\s+iconTextSize: 13$/m);
+  assert.match(
+    builderConfig,
+    /^\s+background: electron\/assets\/dmg-background\.tiff$/m
+  );
+  assert.match(builderConfig, /^\s+icon: null$/m);
+  assert.match(builderConfig, /^\s+iconSize: 96$/m);
+  assert.match(builderConfig, /^\s+iconTextSize: 12$/m);
+  assert.match(builderConfig, /^\s+- x: 180$/m);
+  assert.match(builderConfig, /^\s+- x: 580$/m);
+  assert.match(builderConfig, /^\s+y: 300$/m);
+  assert.match(
+    builderConfig,
+    /^\s+- from: electron\/assets\/dmg-background\.tiff$/m
+  );
   assert.match(builderConfig, /^\s+width: 760$/m);
   assert.match(builderConfig, /^\s+height: 500$/m);
   assert.match(backgroundSvg, /<svg width="760" height="500"/);
@@ -57,14 +70,21 @@ test('macOS DMG uses the branded Libre WebUI installer layout', () => {
   assert.match(iconGenerator, /dmg-art\.png/);
   assert.match(iconGenerator, /const dmgWidth = 760/);
   assert.match(iconGenerator, /const dmgHeight = 500/);
+  assert.match(iconGenerator, /const dmgArtHeight = 176/);
   assert.match(iconGenerator, /const dmgDensity = 72/);
   assert.match(iconGenerator, /dmg-background@2x\.png/);
+  assert.match(iconGenerator, /dmg-background\.tiff/);
+  assert.match(iconGenerator, /tiffutil/);
   assert.match(iconGenerator, /\.withMetadata\(\{ density \}\)/);
   assert.match(artifactFinalizer, /finalize-macos-dmg\.sh/);
   assert.match(artifactFinalizer, /buildBlockMap/);
-  assert.match(dmgFinalizer, /SetFile -a V/);
+  assert.match(dmgFinalizer, /macos-dmg-finder\.py/);
+  assert.match(dmgFinalizer, /unlink "\$\{background_path\}"/);
+  assert.match(finderMetadata, /backgroundImageAlias/);
+  assert.match(finderMetadata, /Alias\.for_file/);
   assert.match(artifactVerifier, /background_dpi/);
-  assert.match(artifactVerifier, /Finder-invisible/);
+  assert.match(artifactVerifier, /root_item_count/);
+  assert.match(artifactVerifier, /must not expose Finder background/);
   assert.ok(
     fs.existsSync(path.join(repoRoot, 'electron/assets/dmg-art.png')),
     'the generated DMG artwork must be committed'
