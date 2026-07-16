@@ -15,6 +15,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.14.0] - 2026-07-16
+
+Libre WebUI 0.14.0 adds a compact conversation history rail for navigating long chats and brings the Electron desktop experience closer to the main product aesthetic with reliable scrolling, valid ad-hoc macOS packages, and a purpose-built installer.
+
+### ✨ New Features
+
+- Added a desktop conversation history rail that maps each user turn beside the chat, lets readers jump directly to any turn, and previews the matching prompt and active assistant response on hover or keyboard focus.
+- Added keyboard navigation for the history rail with arrow, Home, End, Enter, and Escape behavior, localized accessible labels across all supported languages, reduced-motion support, and mirrored placement for right-to-left layouts.
+- Redesigned the macOS arm64 DMG as a 760×500 branded installation canvas with original artwork, the “Make whatever comes next.” identity, a clear Applications drag target, and the same editorial visual language as the website and documentation.
+
+### 🔧 Improvements
+
+- Made the history rail follow the reader dynamically while scrolling in either direction, keep the active marker visible inside long rails, resolve regenerated branches to the active response, and preserve the selected position while a newer response streams.
+- Kept the rail available in compact desktop windows while intentionally removing it from mobile chat layouts where it would compete with the conversation.
+- Standardized constrained scrolling across application pages, sidebar history, Settings, model selectors, plugin and Hugging Face browsers, image generation, persona switching, keyboard shortcuts, and user menus.
+- Switched the application shell to dynamic viewport sizing, tightened nested flex layouts, added stable scroll regions, and increased Electron scrollbar width for easier pointer interaction.
+- Expanded end-to-end coverage for rail navigation, manual scroll synchronization, branching, live streaming, Arabic RTL placement, compact desktop behavior, mobile visibility, and Electron-sized wheel scrolling at the minimum 800×600 window size.
+
+### 🐛 Bug Fixes
+
+- Removed the Electron preload rule that made the entire document draggable and could intercept page or menu scroll gestures; window dragging is now limited to the explicit title-bar surfaces.
+- Fixed clipped or difficult-to-scroll Electron pages and dialogs by giving their actual content regions bounded height and native overflow behavior.
+- Made unsigned macOS distribution builds structurally valid by applying an explicit ad-hoc signature with hardened runtime entitlements instead of producing an unverified application bundle.
+- Added macOS artifact verification that checks the DMG checksum, mounted application bundle, identifier, and ad-hoc code signature before CI uploads the package.
+
+### 📚 Documentation
+
+- Updated the Electron desktop guide with the ad-hoc signing model, packaged-app verification command, safe Gatekeeper approval steps, quarantine removal for verified downloads, and the future Developer ID/notarization path.
+
 ## [0.13.4] - 2026-07-15
 
 Libre WebUI 0.13.4 restores purpose-built code rendering throughout streamed responses, makes automatic titles reliable with reasoning-capable Ollama models, hardens the plugin API against abusive request volumes, and modernizes Electron packaging to remove deprecated dependency warnings.
