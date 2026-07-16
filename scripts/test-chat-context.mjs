@@ -826,6 +826,50 @@ test('plugin validation rejects unsafe models and remote HTTP endpoints', () => 
   );
 });
 
+test('Kimi Code plugin builds OpenAI-compatible K3 requests', () => {
+  const plugin = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'plugins', 'kimi-code.json'), 'utf8')
+  );
+  const headers = pluginValidation.buildPluginAuthHeaders(
+    plugin,
+    'test-kimi-key'
+  );
+  const { payload } = pluginChatAdapter.buildPluginChatPayload(
+    plugin,
+    'k3',
+    [
+      {
+        role: 'system',
+        content: 'Be precise.',
+      },
+      {
+        role: 'user',
+        content: 'Review this function.',
+      },
+    ],
+    { temperature: 0.2, num_predict: 8192 },
+    { stream: true }
+  );
+
+  assert.deepEqual(headers, {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer test-kimi-key',
+  });
+  assert.equal(
+    plugin.endpoint,
+    'https://api.kimi.com/coding/v1/chat/completions'
+  );
+  assert.equal(payload.model, 'k3');
+  assert.equal(payload.temperature, 0.2);
+  assert.equal(payload.max_tokens, 8192);
+  assert.equal(payload.stream, true);
+  assert.deepEqual(payload.messages, [
+    { role: 'system', content: 'Be precise.' },
+    { role: 'user', content: 'Review this function.' },
+  ]);
+  assert.equal('reasoning_effort' in payload, false);
+});
+
 test('buildPluginChatPayload adapts Anthropic multimodal chat requests', () => {
   const { payload, headers } = pluginChatAdapter.buildPluginChatPayload(
     { id: 'anthropic' },

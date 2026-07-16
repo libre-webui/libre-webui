@@ -9,11 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- Added a bundled Kimi Code provider for Moonshot AI's OpenAI-compatible API, with Kimi K3, Kimi K2.7 Code, and Kimi K2.7 Code HighSpeed model profiles, streaming, configurable generation valves, and per-user or environment-based credentials.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes
 
 ### 📚 Documentation
+
+- Added Kimi Code setup, membership-aware model guidance, privacy boundaries, troubleshooting, and the `KIMI_API_KEY` environment variable to the provider documentation.
 
 ## [0.14.1] - 2026-07-16
 

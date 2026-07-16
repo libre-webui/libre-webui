@@ -191,6 +191,29 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
       fs.existsSync(path.join(packedRoot, 'scripts', 'postinstall.js'))
     );
 
+    const kimiPlugin = JSON.parse(
+      fs.readFileSync(
+        path.join(packedRoot, 'plugins', 'kimi-code.json'),
+        'utf8'
+      )
+    );
+    assert.equal(kimiPlugin.id, 'kimi-code');
+    assert.equal(kimiPlugin.name, 'Kimi Code (Moonshot AI)');
+    assert.equal(
+      kimiPlugin.endpoint,
+      'https://api.kimi.com/coding/v1/chat/completions'
+    );
+    assert.deepEqual(kimiPlugin.auth, {
+      header: 'Authorization',
+      prefix: 'Bearer ',
+      key_env: 'KIMI_API_KEY',
+    });
+    assert.deepEqual(kimiPlugin.model_map, [
+      'k3',
+      'kimi-for-coding',
+      'kimi-for-coding-highspeed',
+    ]);
+
     const pkg = JSON.parse(
       fs.readFileSync(path.join(packedRoot, 'package.json'), 'utf8')
     );
