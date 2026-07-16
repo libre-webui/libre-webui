@@ -28,7 +28,7 @@
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
-    "test:package": "node --test scripts/test-deprecated-dependencies.mjs && npm run build && node --test scripts/test-chat-context.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs && node --test scripts/test-electron-macos-signing.mjs",
+    "test:package": "node --test scripts/test-deprecated-dependencies.mjs && npm run build && node --test scripts/test-chat-context.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs && node --test scripts/test-electron-macos-signing.mjs && node --test scripts/test-homebrew-publishing.mjs",
     "test:e2e": "npm run e2e --workspace=frontend",
     "security:audit": "npm audit --audit-level=moderate",
     "release:check": "npm run format:check && npm run lint && npm run security:audit && npm run test:package && npm run npm:publish:dry-run",

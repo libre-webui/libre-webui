@@ -9,45 +9,18 @@
 #   brew install libre-webui/tap/libre-webui
 
 class LibreWebui < Formula
-  desc "Privacy-first AI chat interface - Self-hosted, open source, extensible"
-  homepage "https://librewebui.org"
-  url "https://github.com/libre-webui/libre-webui/archive/refs/tags/v{{VERSION}}.tar.gz"
-  sha256 "{{SOURCE_SHA256}}"
+  desc "Open, self-hosted workspace for creating with AI"
+  homepage "https://librewebui.org/"
+  url "https://registry.npmjs.org/libre-webui/-/libre-webui-{{VERSION}}.tgz"
+  sha256 "{{NPM_SHA256}}"
   license "Apache-2.0"
   head "https://github.com/libre-webui/libre-webui.git", branch: "main"
 
-  depends_on "node@20"
-  depends_on "python-setuptools" => :build
+  depends_on "node"
 
   def install
-    # Set up environment for native module compilation
-    ENV.prepend_path "PATH", Formula["node@20"].opt_bin
-
-    # Install dependencies and build native modules
-    system "npm", "install", "--legacy-peer-deps"
-
-    # Explicitly rebuild native modules
-    system "npm", "rebuild", "better-sqlite3"
-    system "npm", "rebuild", "bcrypt"
-
-    # Build the app
-    system "npm", "run", "build"
-
-    # Install the package to libexec
-    libexec.install Dir["*"]
-    libexec.install ".env.example" if File.exist?(".env.example")
-
-    # Create wrapper script
-    (bin/"libre-webui").write <<~EOS
-      #!/bin/bash
-      export PATH="#{Formula["node@20"].opt_bin}:$PATH"
-      exec "#{libexec}/bin/cli.js" "$@"
-    EOS
-  end
-
-  def post_install
-    # Create data directory
-    (var/"libre-webui").mkpath
+    system "npm", "install", *std_npm_args(ignore_scripts: false)
+    bin.install_symlink libexec.glob("bin/*")
   end
 
   def caveats
@@ -61,8 +34,8 @@ class LibreWebui < Formula
         libre-webui --port 3000
 
       Configuration:
-        Data is stored in: #{var}/libre-webui
-        Or set DATA_DIR environment variable
+        Data is stored in: ~/.libre-webui
+        Set DATA_DIR to use another location.
 
       Optional: Connect to Ollama for local LLM support:
         brew install ollama
@@ -87,6 +60,6 @@ class LibreWebui < Formula
   end
 
   test do
-    assert_match "libre-webui", shell_output("#{bin}/libre-webui --version")
+    assert_match version.to_s, shell_output("#{bin}/libre-webui --version")
   end
 end
