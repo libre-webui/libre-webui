@@ -23,6 +23,28 @@ test('macOS packaging uses intentional ad-hoc signing', () => {
   );
 });
 
+test('macOS DMG uses the branded Libre WebUI installer layout', () => {
+  const builderConfig = readRepoFile('electron-builder.yml');
+  const backgroundSvg = readRepoFile('electron/assets/dmg-background.svg');
+  const iconGenerator = readRepoFile('scripts/generate-icons.js');
+
+  assert.match(builderConfig, /^\s+title: 'Install Libre WebUI'$/m);
+  assert.match(builderConfig, /^\s+iconSize: 112$/m);
+  assert.match(builderConfig, /^\s+iconTextSize: 13$/m);
+  assert.match(builderConfig, /^\s+width: 760$/m);
+  assert.match(builderConfig, /^\s+height: 500$/m);
+  assert.match(backgroundSvg, /<svg width="760" height="500"/);
+  assert.match(backgroundSvg, /Make whatever/);
+  assert.match(backgroundSvg, /comes next\./);
+  assert.match(iconGenerator, /dmg-art\.png/);
+  assert.match(iconGenerator, /const dmgWidth = 760/);
+  assert.match(iconGenerator, /const dmgHeight = 500/);
+  assert.ok(
+    fs.existsSync(path.join(repoRoot, 'electron/assets/dmg-art.png')),
+    'the generated DMG artwork must be committed'
+  );
+});
+
 test('macOS CI verifies the packaged application before upload', () => {
   for (const workflowPath of [
     '.github/workflows/electron-dev.yml',

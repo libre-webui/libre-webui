@@ -45,6 +45,19 @@ if [[ -z "${app_path}" ]]; then
   exit 1
 fi
 
+background_path="${mount_point}/.background.png"
+if [[ ! -f "${background_path}" ]]; then
+  echo "The disk image does not contain the branded installer background." >&2
+  exit 1
+fi
+
+background_width="$(sips -g pixelWidth "${background_path}" | awk '/pixelWidth/ {print $2}')"
+background_height="$(sips -g pixelHeight "${background_path}" | awk '/pixelHeight/ {print $2}')"
+if [[ "${background_width}" != "760" || "${background_height}" != "500" ]]; then
+  echo "The installer background must be 760x500, got ${background_width}x${background_height}." >&2
+  exit 1
+fi
+
 echo "Verifying application bundle: ${app_path}"
 codesign --verify --deep --strict --verbose=2 "${app_path}"
 
@@ -61,4 +74,10 @@ if ! grep -q '^Signature=adhoc$' <<<"${signature_details}"; then
   exit 1
 fi
 
+if find "${app_path}/Contents" -type f -name 'dmg-art.png' -print -quit | grep -q .; then
+  echo "The DMG source artwork must not be bundled inside the application." >&2
+  exit 1
+fi
+
+echo "macOS artifact contains the branded 760x500 installer background."
 echo "macOS artifact has a valid ad-hoc application signature."

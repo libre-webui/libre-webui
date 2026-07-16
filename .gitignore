@@ -105,6 +105,7 @@ electron/assets/*.icns
 electron/assets/*.ico
 electron/assets/*.png
 !electron/assets/icon.svg
+!electron/assets/dmg-art.png
 .claude/
 backend/data/data.sqlite-shm
 backend/data/data.sqlite-wal

@@ -59,7 +59,9 @@ async function generateIcons() {
   // For now, we'll generate the required PNGs and note that icns needs manual creation
   console.log('\n📝 Note: For macOS .icns file:');
   console.log('   Run: iconutil -c icns electron/assets/icon.iconset');
-  console.log('   After creating icon.iconset folder with properly named files\n');
+  console.log(
+    '   After creating icon.iconset folder with properly named files\n'
+  );
 
   // Create iconset structure for macOS
   const iconsetDir = path.join(assetsDir, 'icon.iconset');
@@ -93,9 +95,12 @@ async function generateIcons() {
   if (process.platform === 'darwin') {
     const { execSync } = require('child_process');
     try {
-      execSync(`iconutil -c icns "${iconsetDir}" -o "${path.join(assetsDir, 'icon.icns')}"`, {
-        stdio: 'inherit',
-      });
+      execSync(
+        `iconutil -c icns "${iconsetDir}" -o "${path.join(assetsDir, 'icon.icns')}"`,
+        {
+          stdio: 'inherit',
+        }
+      );
       console.log('  ✓ icon.icns generated');
     } catch (error) {
       console.log('  ⚠ Could not generate .icns (iconutil failed)');
@@ -105,10 +110,40 @@ async function generateIcons() {
   // Generate DMG background from SVG
   const dmgBgSvgPath = path.join(assetsDir, 'dmg-background.svg');
   const dmgBgPngPath = path.join(assetsDir, 'dmg-background.png');
+  const dmgArtPath = path.join(assetsDir, 'dmg-art.png');
   if (fs.existsSync(dmgBgSvgPath)) {
     console.log('\nGenerating DMG background...');
-    await sharp(dmgBgSvgPath)
-      .resize(540, 380)
+    const dmgWidth = 760;
+    const dmgHeight = 500;
+    const dmgArtHeight = 220;
+    const composites = [];
+
+    if (fs.existsSync(dmgArtPath)) {
+      const artBuffer = await sharp(dmgArtPath)
+        .resize(dmgWidth, dmgArtHeight, {
+          fit: 'cover',
+          position: 'centre',
+        })
+        .png()
+        .toBuffer();
+      composites.push({ input: artBuffer, top: 0, left: 0 });
+    }
+
+    composites.push({
+      input: fs.readFileSync(dmgBgSvgPath),
+      top: 0,
+      left: 0,
+    });
+
+    await sharp({
+      create: {
+        width: dmgWidth,
+        height: dmgHeight,
+        channels: 4,
+        background: '#f3f0ea',
+      },
+    })
+      .composite(composites)
       .png()
       .toFile(dmgBgPngPath);
     console.log('  ✓ dmg-background.png generated');
@@ -120,7 +155,9 @@ async function generateIcons() {
     const pngToIcoModule = require('png-to-ico');
     const pngToIco = pngToIcoModule.default || pngToIcoModule;
     const icoSizes = [16, 32, 48, 256];
-    const icoPngs = icoSizes.map(size => path.join(iconsDir, `${size}x${size}.png`));
+    const icoPngs = icoSizes.map(size =>
+      path.join(iconsDir, `${size}x${size}.png`)
+    );
     const icoBuffer = await pngToIco(icoPngs);
     fs.writeFileSync(path.join(assetsDir, 'icon.ico'), icoBuffer);
     console.log('  ✓ icon.ico generated');

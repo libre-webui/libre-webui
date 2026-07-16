@@ -1,31 +1,61 @@
-<svg width="540" height="380" viewBox="0 0 540 380" xmlns="http://www.w3.org/2000/svg">
+<svg width="760" height="500" viewBox="0 0 760 500" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a1a2e"/>
-      <stop offset="100%" style="stop-color:#16213e"/>
+    <linearGradient id="artShade" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#050506" stop-opacity="0.92"/>
+      <stop offset="44%" stop-color="#050506" stop-opacity="0.48"/>
+      <stop offset="100%" stop-color="#050506" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="artDepth" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#050506" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#050506" stop-opacity="0.42"/>
     </linearGradient>
   </defs>
 
-  <!-- Background -->
-  <rect width="540" height="380" fill="url(#bgGrad)"/>
+  <!-- The generated artwork is composited beneath this overlay. -->
+  <rect width="760" height="220" fill="url(#artShade)"/>
+  <rect width="760" height="220" fill="url(#artDepth)"/>
 
-  <!-- Subtle grid pattern -->
-  <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-  </pattern>
-  <rect width="540" height="380" fill="url(#grid)"/>
-
-  <!-- Title -->
-  <text x="270" y="60" text-anchor="middle" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="28" font-weight="600">
-    Libre WebUI
+  <line x1="48" y1="32" x2="76" y2="32" stroke="#f7f5f0" stroke-opacity="0.72" stroke-width="1"/>
+  <text x="88" y="36" fill="#f7f5f0" fill-opacity="0.74" font-family="Menlo, monospace" font-size="10" letter-spacing="1.4">
+    LIBRE / DESKTOP
+  </text>
+  <text x="712" y="36" text-anchor="end" fill="#f7f5f0" fill-opacity="0.62" font-family="Menlo, monospace" font-size="9" letter-spacing="1.2">
+    MACOS / ARM64
   </text>
 
-  <!-- Subtitle -->
-  <text x="270" y="90" text-anchor="middle" fill="#a0aec0" font-family="-apple-system, BlinkMacSystemFont, sans-serif" font-size="14">
-    Drag to Applications to install
+  <text x="46" y="105" fill="#f7f5f0" font-family="Helvetica Neue, Arial, sans-serif" font-size="48" font-weight="400" letter-spacing="-3.3">
+    Make whatever
+  </text>
+  <text x="46" y="154" fill="#f7f5f0" font-family="Helvetica Neue, Arial, sans-serif" font-size="48" font-weight="400" letter-spacing="-3.3">
+    comes next.
+  </text>
+  <text x="49" y="188" fill="#f7f5f0" fill-opacity="0.64" font-family="Helvetica Neue, Arial, sans-serif" font-size="12">
+    A private, open place to think, build, and make.
   </text>
 
-  <!-- Arrow -->
-  <path d="M 200 220 L 340 220" stroke="#667eea" stroke-width="3" stroke-linecap="round" stroke-dasharray="8 8"/>
-  <path d="M 330 210 L 345 220 L 330 230" fill="none" stroke="#667eea" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="0" y1="220" x2="760" y2="220" stroke="#d7d3cb" stroke-width="1"/>
+
+  <text x="48" y="255" fill="#6d6a64" font-family="Menlo, monospace" font-size="9" letter-spacing="1.3">
+    INSTALL / 01
+  </text>
+  <text x="48" y="283" fill="#0a0a0b" font-family="Helvetica Neue, Arial, sans-serif" font-size="19" font-weight="500" letter-spacing="-0.5">
+    Drag Libre WebUI into Applications.
+  </text>
+  <text x="48" y="305" fill="#6d6a64" font-family="Helvetica Neue, Arial, sans-serif" font-size="11.5">
+    One gesture. Your workspace is ready.
+  </text>
+
+  <text x="380" y="348" text-anchor="middle" fill="#77736c" font-family="Menlo, monospace" font-size="8" letter-spacing="1.5">
+    DRAG TO INSTALL
+  </text>
+  <line x1="310" y1="372" x2="449" y2="372" stroke="#0a0a0b" stroke-width="1.5"/>
+  <path d="M 441 364 L 450 372 L 441 380" fill="none" stroke="#0a0a0b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <line x1="48" y1="466" x2="712" y2="466" stroke="#d7d3cb" stroke-width="1"/>
+  <text x="48" y="486" fill="#77736c" font-family="Menlo, monospace" font-size="8.5" letter-spacing="1.2">
+    LOCAL FIRST / OPEN SOURCE / YOURS
+  </text>
+  <text x="712" y="486" text-anchor="end" fill="#77736c" font-family="Menlo, monospace" font-size="8.5" letter-spacing="1.2">
+    LIBREWEBUI.ORG
+  </text>
 </svg>
