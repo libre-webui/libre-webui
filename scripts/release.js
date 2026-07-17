@@ -18,18 +18,24 @@ const releaseFiles = [
   'package-lock.json',
   'frontend/package.json',
   'backend/package.json',
+  'helm/libre-webui/Chart.yaml',
 ];
 
 class ReleaseManager {
   constructor(options = {}) {
     this.options = options;
-    this.changelogPath = path.join(projectRoot, 'CHANGELOG.md');
+    this.projectRoot = options.projectRoot || projectRoot;
+    this.changelogPath = path.join(this.projectRoot, 'CHANGELOG.md');
     this.packageJsonPaths = [
-      path.join(projectRoot, 'package.json'),
-      path.join(projectRoot, 'frontend/package.json'),
-      path.join(projectRoot, 'backend/package.json'),
+      path.join(this.projectRoot, 'package.json'),
+      path.join(this.projectRoot, 'frontend/package.json'),
+      path.join(this.projectRoot, 'backend/package.json'),
     ];
-    this.packageLockPath = path.join(projectRoot, 'package-lock.json');
+    this.packageLockPath = path.join(this.projectRoot, 'package-lock.json');
+    this.helmChartPath = path.join(
+      this.projectRoot,
+      'helm/libre-webui/Chart.yaml'
+    );
   }
 
   async createRelease(releaseType = null) {
@@ -63,7 +69,8 @@ class ReleaseManager {
       useAI: !this.options.noAI,
     });
 
-    console.log('📝 Updating package files...');
+    console.log('📝 Updating version files...');
+    this.updateHelmChartVersions(currentVersion, nextVersion);
     this.updatePackageJsonVersions(nextVersion);
     this.updatePackageLockVersion(nextVersion);
 
@@ -158,7 +165,7 @@ class ReleaseManager {
         packageJsonPath,
         `${JSON.stringify(packageJson, null, 2)}\n`
       );
-      console.log(`  ✅ ${path.relative(projectRoot, packageJsonPath)}`);
+      console.log(`  ✅ ${path.relative(this.projectRoot, packageJsonPath)}`);
     }
   }
 
@@ -181,7 +188,40 @@ class ReleaseManager {
       this.packageLockPath,
       `${JSON.stringify(packageLock, null, 2)}\n`
     );
-    console.log(`  ✅ ${path.relative(projectRoot, this.packageLockPath)}`);
+    console.log(
+      `  ✅ ${path.relative(this.projectRoot, this.packageLockPath)}`
+    );
+  }
+
+  updateHelmChartVersions(currentVersion, newVersion) {
+    const chart = fs.readFileSync(this.helmChartPath, 'utf8');
+    const chartVersion = this.readHelmVersion(chart, 'version');
+    const appVersion = this.readHelmVersion(chart, 'appVersion');
+
+    if (chartVersion !== currentVersion || appVersion !== currentVersion) {
+      throw new Error(
+        `Helm version policy requires chart version and appVersion to both match the current package version ${currentVersion}; found ${chartVersion} and ${appVersion}`
+      );
+    }
+
+    const updatedChart = chart
+      .replace(/^version:.*$/m, `version: ${newVersion}`)
+      .replace(/^appVersion:.*$/m, `appVersion: "${newVersion}"`);
+
+    fs.writeFileSync(this.helmChartPath, updatedChart);
+    console.log(`  ✅ ${path.relative(this.projectRoot, this.helmChartPath)}`);
+  }
+
+  readHelmVersion(chart, key) {
+    const match = chart.match(
+      new RegExp(`^${key}:\\s*["']?([^"'\\s#]+)["']?(?:\\s+#.*)?$`, 'm')
+    );
+
+    if (!match) {
+      throw new Error(`Unable to read ${key} from the Helm chart`);
+    }
+
+    return match[1];
   }
 
   printEvidenceSummary(evidence) {
@@ -239,14 +279,25 @@ Environment:
 `);
 }
 
-const options = parseArgs(process.argv.slice(2));
-if (options.help) {
-  printUsage();
-  process.exit(0);
+function run() {
+  const options = parseArgs(process.argv.slice(2));
+  if (options.help) {
+    printUsage();
+    return;
+  }
+
+  const manager = new ReleaseManager(options);
+  manager.createRelease(options.releaseType).catch(error => {
+    console.error(`❌ Release failed: ${error.message}`);
+    process.exit(1);
+  });
 }
 
-const manager = new ReleaseManager(options);
-manager.createRelease(options.releaseType).catch(error => {
-  console.error(`❌ Release failed: ${error.message}`);
-  process.exit(1);
-});
+if (require.main === module) {
+  run();
+}
+
+module.exports = {
+  ReleaseManager,
+  releaseFiles,
+};
