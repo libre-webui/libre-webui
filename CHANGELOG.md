@@ -13,14 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔧 Improvements
 
-- Aligned Helm chart and application versions with the release version, added regression coverage for version updates, and limited chart publication to matching immutable release tags.
+- Aligned Helm chart, application, and Docker image versions with each release; pinned default Kubernetes deployments to the chart `appVersion`; added regression coverage for release artifacts; and limited chart publication to matching immutable release tags.
+- Made the local release command run the complete format, lint, security, package, build, and npm publish dry-run gate before it creates a release commit or tag.
 
 ### 🐛 Bug Fixes
 
 ### 📚 Documentation
 
 - Added Kimi Code setup, membership-aware model guidance, privacy boundaries, troubleshooting, and the `KIMI_API_KEY` environment variable to the provider documentation.
-- Simplified the public project stewardship language, removed an unnecessary third-party comparison from the Hetzner deployment tutorial, and documented the Helm version policy.
+- Simplified the public project stewardship language, removed an unnecessary third-party comparison from the Hetzner deployment tutorial, and documented version-pinned Kubernetes releases.
 
 ## [0.14.1] - 2026-07-16
 

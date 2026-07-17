@@ -63,6 +63,7 @@ class ReleaseManager {
     );
     console.log(`📦 Current version: ${currentVersion}`);
     console.log(`📦 Next version: ${nextVersion}\n`);
+    this.ensureTagAvailable(nextVersion);
 
     console.log('📝 Generating release notes from git history...');
     const releaseSection = await createReleaseSection(nextVersion, evidence, {
@@ -82,9 +83,9 @@ class ReleaseManager {
 
     this.ensureOnlyReleaseFilesChanged();
 
-    console.log('🔍 Running pre-release checks...');
-    npm(['run', 'lint']);
-    npm(['run', 'build']);
+    console.log('🔍 Running the complete pre-release gate...');
+    npm(['run', 'release:check']);
+    this.ensureOnlyReleaseFilesChanged();
 
     console.log('📝 Committing release changes...');
     git(['add', ...releaseFiles]);
@@ -110,6 +111,15 @@ class ReleaseManager {
         '❌ Working directory is not clean. Commit or stash changes before releasing.'
       );
       process.exit(1);
+    }
+  }
+
+  ensureTagAvailable(version) {
+    const tag = git(['tag', '-l', `v${version}`], { silent: true });
+    if (tag.trim()) {
+      throw new Error(
+        `Tag v${version} already exists locally; refusing to create a partial release`
+      );
     }
   }
 

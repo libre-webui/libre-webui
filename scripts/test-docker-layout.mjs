@@ -7,6 +7,10 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '..');
 const dockerfile = fs.readFileSync(path.join(repoRoot, 'Dockerfile'), 'utf8');
+const dockerWorkflow = fs.readFileSync(
+  path.join(repoRoot, '.github', 'workflows', 'docker-build.yml'),
+  'utf8'
+);
 
 test('Docker install stages include the root postinstall script before npm ci', () => {
   const installStages = dockerfile
@@ -28,4 +32,14 @@ test('Docker install stages include the root postinstall script before npm ci', 
       'install stage must copy scripts/postinstall.js before npm ci'
     );
   }
+});
+
+test('Docker workflow publishes semantic version tags from release tags', () => {
+  assert.match(dockerWorkflow, /tags: \['v\*'\]/);
+  assert.match(dockerWorkflow, /type=semver,pattern=\{\{version\}\}/);
+  assert.match(
+    dockerWorkflow,
+    /type=semver,pattern=\{\{major\}\}\.\{\{minor\}\}/
+  );
+  assert.match(dockerWorkflow, /Release tag .* does not match package version/);
 });

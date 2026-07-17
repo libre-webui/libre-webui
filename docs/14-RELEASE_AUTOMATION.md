@@ -54,13 +54,15 @@ npm run release:major
 
 The script automatically:
 
-1. Checks that the working tree is clean.
+1. Checks that the working tree is clean and the next local tag is available.
 2. Collects commit, file, dependency, locale, and unreleased changelog evidence.
 3. Generates the release notes from that evidence.
 4. Updates `package.json`, workspace package files, `package-lock.json`, the
    Helm chart and app versions, and `CHANGELOG.md`.
-5. Runs formatting, lint, build, tests, security audit, and npm dry-run checks.
-6. Commits the release and creates the annotated version tag.
+5. Runs `npm run release:check`, including formatting, lint, builds, tests,
+   security audit, and the npm publish dry-run.
+6. Only after every check passes, commits the release and creates the annotated
+   version tag.
 
 ## Changelog Generation
 
@@ -128,6 +130,11 @@ them together, and CI rejects a mismatch.
 The chart is published only from an immutable `v*` release tag. Do not publish
 modified chart contents under an existing chart version. A chart change must go
 through the next application release so it receives a new version.
+
+The default Libre WebUI image tag resolves to the chart `appVersion`, and the
+Docker workflow publishes that semantic-version tag to GHCR and Docker Hub from
+the same `v*` release tag. The bundled Ollama image remains independently
+configurable and defaults to its upstream `latest` tag.
 
 ## Conventional Commits
 

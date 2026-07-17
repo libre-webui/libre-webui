@@ -16,7 +16,9 @@ Libre WebUI ships a Helm chart under `helm/libre-webui`.
 helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui
 ```
 
-The default chart deploys Libre WebUI with persistent storage and a bundled Ollama service.
+The default chart deploys Libre WebUI with persistent storage and a bundled
+Ollama service. Libre WebUI is pinned to the chart's `appVersion`; set
+`image.tag` explicitly only when you intentionally want a different image.
 
 ## Access Locally
 

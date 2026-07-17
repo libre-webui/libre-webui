@@ -45,6 +45,28 @@ test('checked-in Helm versions match the application version', () => {
   assert.ok(releaseFiles.includes('helm/libre-webui/Chart.yaml'));
 });
 
+test('Helm defaults Libre WebUI to appVersion without changing Ollama latest', () => {
+  const values = fs.readFileSync(
+    path.join(repoRoot, 'helm', 'libre-webui', 'values.yaml'),
+    'utf8'
+  );
+  const deployment = fs.readFileSync(
+    path.join(repoRoot, 'helm', 'libre-webui', 'templates', 'deployment.yaml'),
+    'utf8'
+  );
+  const topLevelImage = values.match(/^image:\n(?:  .*\n)*/m)?.[0] || '';
+
+  assert.match(topLevelImage, /^  tag:\s*['"]{2}\s*$/m);
+  assert.match(
+    deployment,
+    /\.Values\.image\.tag \| default \.Chart\.AppVersion/
+  );
+  assert.match(
+    values,
+    /ollama:[\s\S]*?bundled:[\s\S]*?image:[\s\S]*?tag: latest/
+  );
+});
+
 test('Helm workflow validates main and publishes only matching release tags', () => {
   const workflow = fs.readFileSync(
     path.join(repoRoot, '.github', 'workflows', 'helm-publish.yml'),
