@@ -22,8 +22,6 @@ Large language models (LLMs) like Llama, Mistral, and Gemma are incredibly power
 
 [Libre WebUI](https://github.com/libre-webui/libre-webui) is an open-source AI chat interface licensed under **Apache 2.0** with zero telemetry, zero tracking, and no CLA. It works with Ollama for local models and provider plugins for hosted models, and includes document chat (RAG), interactive artifacts, custom personas, multi-user access control, and application-level encryption for sensitive stored values.
 
-> **Note:** Libre WebUI was started after Open WebUI adopted a BSD-3 license with a CLA and took on venture capital. Libre WebUI is a separate project rewritten around privacy and encryption, maintained under Apache 2.0.
-
 In this tutorial, you will deploy Libre WebUI alongside [Ollama](https://ollama.com) on a Hetzner GPU dedicated server. By the end, you'll have a GPU-accelerated AI chat application accessible from your browser, with local model inference running on your own server.
 
 **What you'll set up:**

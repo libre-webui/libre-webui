@@ -32,7 +32,7 @@ We pursue simplicity and user sovereignty above growth, hype, or outside investm
 ## 3 Governance Model
 
 1. **Stewardship**
-   Kroonen AI, Inc. holds the trademark and domains **as a fiduciary** for the community.
+   Kroonen AI, Inc. maintains the Libre WebUI project and its public infrastructure under this charter.
 2. **Technical Steering Committee (TSC)**
    _Composition_: minimum 3, maximum 7 active contributors (rotating annually).
    _Responsibilities_: roadmap approval, release signing, Code‑of‑Conduct enforcement.
