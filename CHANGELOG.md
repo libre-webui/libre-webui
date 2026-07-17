@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 🔧 Improvements
 
-- Aligned Helm chart, application, and Docker image versions with each release; pinned default Kubernetes deployments to the chart `appVersion`; added regression coverage for release artifacts; and limited chart publication to matching immutable release tags.
+- Aligned Helm chart, application, and Docker image versions with each release; pinned the 0.14.1 transition to its verified multi-architecture digest while preserving explicit tag overrides; made subsequent Kubernetes deployments use the chart `appVersion`; and limited chart publication to releases whose default Docker image exists.
 - Made the local release command run the complete format, lint, security, package, build, and npm publish dry-run gate before it creates a release commit or tag.
 
 ### 🐛 Bug Fixes

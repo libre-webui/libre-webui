@@ -19,7 +19,12 @@ const releaseFiles = [
   'frontend/package.json',
   'backend/package.json',
   'helm/libre-webui/Chart.yaml',
+  'helm/libre-webui/values.yaml',
 ];
+
+const HELM_TRANSITION_VERSION = '0.14.1';
+const HELM_TRANSITION_DIGEST =
+  'sha256:38b8da92ffb0e2c0ec0d460c3e4a485727045c1b29980d17cfd4a9ca5882d9c0';
 
 class ReleaseManager {
   constructor(options = {}) {
@@ -35,6 +40,10 @@ class ReleaseManager {
     this.helmChartPath = path.join(
       this.projectRoot,
       'helm/libre-webui/Chart.yaml'
+    );
+    this.helmValuesPath = path.join(
+      this.projectRoot,
+      'helm/libre-webui/values.yaml'
     );
   }
 
@@ -214,12 +223,36 @@ class ReleaseManager {
       );
     }
 
+    this.clearHelmTransitionDigest(currentVersion);
+
     const updatedChart = chart
       .replace(/^version:.*$/m, `version: ${newVersion}`)
       .replace(/^appVersion:.*$/m, `appVersion: "${newVersion}"`);
 
     fs.writeFileSync(this.helmChartPath, updatedChart);
     console.log(`  ✅ ${path.relative(this.projectRoot, this.helmChartPath)}`);
+  }
+
+  clearHelmTransitionDigest(currentVersion) {
+    const values = fs.readFileSync(this.helmValuesPath, 'utf8');
+    const digestMatch = values.match(/^  digest:\s*["']([^"']*)["']\s*$/m);
+
+    if (!digestMatch) {
+      throw new Error('Unable to read image.digest from Helm values');
+    }
+
+    const expectedDigest =
+      currentVersion === HELM_TRANSITION_VERSION ? HELM_TRANSITION_DIGEST : '';
+
+    if (digestMatch[1] !== expectedDigest) {
+      throw new Error(
+        `Helm image digest policy expected ${expectedDigest || 'an empty digest'} for ${currentVersion}; found ${digestMatch[1] || 'an empty digest'}`
+      );
+    }
+
+    const updatedValues = values.replace(/^  digest:.*$/m, '  digest: ""');
+    fs.writeFileSync(this.helmValuesPath, updatedValues);
+    console.log(`  ✅ ${path.relative(this.projectRoot, this.helmValuesPath)}`);
   }
 
   readHelmVersion(chart, key) {
@@ -308,6 +341,8 @@ if (require.main === module) {
 }
 
 module.exports = {
+  HELM_TRANSITION_DIGEST,
+  HELM_TRANSITION_VERSION,
   ReleaseManager,
   releaseFiles,
 };

@@ -131,9 +131,16 @@ The chart is published only from an immutable `v*` release tag. Do not publish
 modified chart contents under an existing chart version. A chart change must go
 through the next application release so it receives a new version.
 
-The default Libre WebUI image tag resolves to the chart `appVersion`, and the
-Docker workflow publishes that semantic-version tag to GHCR and Docker Hub from
-the same `v*` release tag. The bundled Ollama image remains independently
+Chart version 0.14.1 carries a one-time digest override because that release
+predates semantic Docker tags. The digest identifies the verified
+multi-architecture 0.14.1 image. The release script clears this override when it
+creates the next release, after which the default image resolves to the chart
+`appVersion`.
+
+The Docker workflow publishes that semantic-version tag to GHCR and Docker Hub
+from the same `v*` release tag. Helm publication waits up to 20 minutes for the
+matching public Docker Hub image and fails instead of publishing a chart with a
+missing default image. The bundled Ollama image remains independently
 configurable and defaults to its upstream `latest` tag.
 
 ## Conventional Commits

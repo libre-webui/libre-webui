@@ -17,8 +17,11 @@ helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui
 ```
 
 The default chart deploys Libre WebUI with persistent storage and a bundled
-Ollama service. Libre WebUI is pinned to the chart's `appVersion`; set
-`image.tag` explicitly only when you intentionally want a different image.
+Ollama service. The 0.14.1 transition is pinned to its verified
+multi-architecture image digest; subsequent charts default to the matching
+semantic `appVersion` image. Set `image.tag` or `image.digest` explicitly only
+when you intentionally want a different image. A non-empty `image.tag` takes
+precedence over the transition digest.
 
 ## Access Locally
 
