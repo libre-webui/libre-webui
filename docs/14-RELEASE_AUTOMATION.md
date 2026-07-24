@@ -54,13 +54,15 @@ npm run release:major
 
 The script automatically:
 
-1. Checks that the working tree is clean.
+1. Checks that the working tree is clean and the next local tag is available.
 2. Collects commit, file, dependency, locale, and unreleased changelog evidence.
 3. Generates the release notes from that evidence.
-4. Updates `package.json`, workspace package files, `package-lock.json`, and
-   `CHANGELOG.md`.
-5. Runs formatting, lint, build, tests, security audit, and npm dry-run checks.
-6. Commits the release and creates the annotated version tag.
+4. Updates `package.json`, workspace package files, `package-lock.json`, the
+   Helm chart and app versions, and `CHANGELOG.md`.
+5. Runs `npm run release:check`, including formatting, lint, builds, tests,
+   security audit, and the npm publish dry-run.
+6. Only after every check passes, commits the release and creates the annotated
+   version tag.
 
 ## Changelog Generation
 
@@ -110,6 +112,7 @@ Pushing a `v*` tag runs the GitHub release workflow. The workflow:
 - Builds Electron artifacts for macOS, Windows, and Linux
 - Creates the GitHub release from the matching `CHANGELOG.md` section
 - Builds Docker images
+- Publishes the Helm chart with the same version as the release tag
 - Publishes the npm package with `NPM_TOKEN`
 
 The same check can be run locally before tagging:
@@ -117,6 +120,28 @@ The same check can be run locally before tagging:
 ```bash
 npm run release:check
 ```
+
+## Helm Version Policy
+
+The Helm chart `version`, chart `appVersion`, root package version, and release
+tag intentionally use the same semantic version. The release script advances
+them together, and CI rejects a mismatch.
+
+The chart is published only from an immutable `v*` release tag. Do not publish
+modified chart contents under an existing chart version. A chart change must go
+through the next application release so it receives a new version.
+
+Chart version 0.14.1 carries a one-time digest override because that release
+predates semantic Docker tags. The digest identifies the verified
+multi-architecture 0.14.1 image. The release script clears this override when it
+creates the next release, after which the default image resolves to the chart
+`appVersion`.
+
+The Docker workflow publishes that semantic-version tag to GHCR and Docker Hub
+from the same `v*` release tag. Helm publication waits up to 20 minutes for the
+matching public Docker Hub image and fails instead of publishing a chart with a
+missing default image. The bundled Ollama image remains independently
+configurable and defaults to its upstream `latest` tag.
 
 ## Conventional Commits
 
@@ -196,6 +221,7 @@ git push origin :refs/tags/v0.12.0
 - `scripts/generate-changelog.js` - changelog preview/update command
 - `scripts/lib/releaseNotes.js` - evidence collection and changelog generation
 - `.github/workflows/release.yml` - tag-driven CI release workflow
+- `.github/workflows/helm-publish.yml` - Helm validation and tag publication
 
 For more information about Conventional Commits, visit
 https://www.conventionalcommits.org/.

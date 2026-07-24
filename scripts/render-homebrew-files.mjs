@@ -42,11 +42,19 @@ function writeFile(outputPath, content) {
   fs.writeFileSync(outputPath, content);
 }
 
-const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8'));
+const packageJson = JSON.parse(
+  fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')
+);
 const version = normalizeVersion(getArg('--version') ?? packageJson.version);
-const sourceSha = ensureHexSha(getArg('--source-sha'), 'source sha');
+const npmSha = ensureHexSha(
+  getArg('--npm-sha') ?? getArg('--source-sha'),
+  'npm sha'
+);
 const dmgSha = getArg('--dmg-sha');
-const outputDir = path.resolve(repoRoot, getArg('--output-dir') ?? 'homebrew/generated');
+const outputDir = path.resolve(
+  repoRoot,
+  getArg('--output-dir') ?? 'homebrew/generated'
+);
 
 const formulaTemplatePath = path.join(
   repoRoot,
@@ -60,11 +68,11 @@ const caskTemplatePath = path.join(
 );
 
 const formulaOutputPath = path.join(outputDir, 'Formula', 'libre-webui.rb');
-const caskOutputPath = path.join(outputDir, 'Casks', 'libre-webui.rb');
+const caskOutputPath = path.join(outputDir, 'Casks', 'libre-webui-frontend.rb');
 
 const formulaContent = renderTemplate(formulaTemplatePath, {
   VERSION: version,
-  SOURCE_SHA256: sourceSha,
+  NPM_SHA256: npmSha,
 });
 
 writeFile(formulaOutputPath, formulaContent);

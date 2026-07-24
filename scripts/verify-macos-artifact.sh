@@ -45,8 +45,8 @@ if [[ -z "${app_path}" ]]; then
   exit 1
 fi
 
-background_path="$(find "${mount_point}" -maxdepth 1 -type f \( -name '.background.png' -o -name '.background.tiff' \) -print -quit)"
-if [[ -z "${background_path}" ]]; then
+background_path="${app_path}/Contents/Resources/dmg-background.tiff"
+if [[ ! -f "${background_path}" ]]; then
   echo "The disk image does not contain the branded installer background." >&2
   exit 1
 fi
@@ -68,19 +68,39 @@ if [[ ! -L "${mount_point}/Applications" ]]; then
   exit 1
 fi
 
-visible_item_count="$(find "${mount_point}" -mindepth 1 -maxdepth 1 ! -name '.*' -print | wc -l | tr -d ' ')"
-if [[ "${visible_item_count}" != "2" ]]; then
-  echo "The disk image must expose only the app and Applications shortcut, got ${visible_item_count} visible items." >&2
+root_item_count="$(find "${mount_point}" -mindepth 1 -maxdepth 1 ! -name '.DS_Store' -print | wc -l | tr -d ' ')"
+if [[ "${root_item_count}" != "2" ]]; then
+  echo "The disk image root must contain only the app and Applications shortcut, got ${root_item_count} items." >&2
   exit 1
 fi
 
-for support_path in "${background_path}" "${mount_point}/.VolumeIcon.icns" "${mount_point}/.DS_Store"; do
-  if [[ -e "${support_path}" ]] && ! /usr/bin/GetFileInfo -a "${support_path}" | grep -q 'V'; then
-    echo "$(basename "${support_path}") must be Finder-invisible." >&2
-    exit 1
-  fi
-done
+if find "${mount_point}" -maxdepth 1 -type f \( -name '.background.png' -o -name '.background.tiff' -o -name '.VolumeIcon.icns' \) -print -quit | grep -q .; then
+  echo "The disk image root must not expose Finder background or volume icon files." >&2
+  exit 1
+fi
 
+if ! /usr/bin/GetFileInfo -a "${mount_point}/.DS_Store" | grep -q 'V'; then
+  echo ".DS_Store must be Finder-invisible." >&2
+  exit 1
+fi
+
+script_directory="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+dmg_python="$(find \
+  "${HOME}/Library/Caches/electron-builder" \
+  -type f \
+  -path '*/dmg-builder@*/dmgbuild-bundle-*/python/bin/python3.*' \
+  ! -name '*-config' \
+  -print \
+  -quit)"
+if [[ -z "${dmg_python}" ]]; then
+  echo "Could not locate electron-builder's dmgbuild Python runtime." >&2
+  exit 1
+fi
+"${dmg_python}" \
+  "${script_directory}/macos-dmg-finder.py" \
+  verify \
+  "${mount_point}/.DS_Store" \
+  "${background_path}"
 echo "Verifying application bundle: ${app_path}"
 codesign --verify --deep --strict --verbose=2 "${app_path}"
 
@@ -103,5 +123,5 @@ if find "${app_path}/Contents" -type f -name 'dmg-art.png' -print -quit | grep -
 fi
 
 echo "macOS artifact contains the branded 760x500 Retina installer background."
-echo "macOS packaging support files are Finder-invisible."
+echo "macOS disk image root contains only the app and Applications shortcut."
 echo "macOS artifact has a valid ad-hoc application signature."

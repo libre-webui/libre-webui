@@ -10,6 +10,7 @@ files:
   - electron/**/*
   - '!electron/assets/dmg-background.png'
   - '!electron/assets/dmg-background@2x.png'
+  - '!electron/assets/dmg-background.tiff'
   - '!electron/assets/dmg-art.png'
   - '!electron/assets/icon.icns'
   - '!electron/assets/icon.ico'
@@ -55,18 +56,21 @@ mac:
   notarize: false
   gatekeeperAssess: false
   artifactName: 'Libre-WebUI-Frontend-${version}-mac-arm64.${ext}'
+  extraResources:
+    - from: electron/assets/dmg-background.tiff
+      to: dmg-background.tiff
 
 dmg:
   title: 'Install Libre WebUI'
-  background: electron/assets/dmg-background.png
-  icon: electron/assets/icon.icns
-  iconSize: 112
-  iconTextSize: 13
+  background: electron/assets/dmg-background.tiff
+  icon: null
+  iconSize: 96
+  iconTextSize: 12
   contents:
-    - x: 220
-      y: 372
-    - x: 540
-      y: 372
+    - x: 180
+      y: 300
+    - x: 580
+      y: 300
       type: link
       path: /Applications
   window:

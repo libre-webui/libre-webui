@@ -104,6 +104,7 @@ electron/assets/icons/
 electron/assets/*.icns
 electron/assets/*.ico
 electron/assets/*.png
+electron/assets/*.tiff
 !electron/assets/icon.svg
 !electron/assets/dmg-art.png
 .claude/

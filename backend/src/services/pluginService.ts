@@ -45,6 +45,7 @@ import {
   toOpenAICompatibleMessages,
 } from '../utils/pluginChatAdapter.js';
 import {
+  streamAnthropicResponse,
   streamOpenAICompatibleResponse,
   type PluginStreamChunk,
 } from '../utils/pluginStreamAdapter.js';
@@ -52,7 +53,9 @@ import {
   applyModelEndpointTemplate,
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
+  buildPluginModelDiscoveryHeaders,
   resolvePluginEndpoint,
+  resolvePluginModelsEndpoint,
   validatePluginEndpointOverride,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
@@ -194,42 +197,9 @@ class PluginService {
     return validatePluginEndpointOverride(endpoint);
   }
 
-  private getModelsEndpoint(endpoint: string): string {
-    const url = new URL(endpoint);
-    url.search = '';
-
-    if (url.pathname.endsWith('/models')) {
-      return url.toString();
-    }
-
-    if (url.pathname.endsWith('/chat/completions')) {
-      url.pathname = `${url.pathname.slice(0, -'/chat/completions'.length)}/models`;
-      return url.toString();
-    }
-
-    if (url.pathname.endsWith('/completions')) {
-      url.pathname = `${url.pathname.slice(0, -'/completions'.length)}/models`;
-      return url.toString();
-    }
-
-    if (url.pathname.endsWith('/embeddings')) {
-      url.pathname = `${url.pathname.slice(0, -'/embeddings'.length)}/models`;
-      return url.toString();
-    }
-
-    const basePath =
-      url.pathname === '/'
-        ? ''
-        : url.pathname.endsWith('/')
-          ? url.pathname.slice(0, -1)
-          : url.pathname;
-    url.pathname = `${basePath}/models`;
-    return url.toString();
-  }
-
   /**
    * Attempt to auto-discover available models from a plugin's base endpoint.
-   * Hits {baseUrl}/v1/models (OpenAI-compatible) and updates the plugin's model_map.
+   * Resolves the provider's model-list endpoint and updates the plugin's model_map.
    * Falls back silently to the existing model_map if the endpoint is unavailable.
    */
   async discoverModels(pluginId: string, userId?: string): Promise<string[]> {
@@ -243,19 +213,11 @@ class PluginService {
       plugin.endpoint;
 
     const apiKey = this.getApiKey(plugin, userId);
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-    };
-    if (apiKey) {
-      const authValue = plugin.auth.prefix
-        ? `${plugin.auth.prefix}${apiKey}`
-        : apiKey;
-      headers[plugin.auth.header] = authValue;
-    }
+    const headers = buildPluginModelDiscoveryHeaders(plugin, apiKey);
 
     try {
       const response = await axios.get(
-        this.getModelsEndpoint(effectiveEndpoint),
+        resolvePluginModelsEndpoint(effectiveEndpoint),
         {
           headers,
           timeout: 5000,
@@ -635,20 +597,34 @@ class PluginService {
       activePlugin.endpoint,
       pluginVars.endpoint as string | undefined
     );
-    const params = resolvePluginChatParameters(options, pluginVars);
     const headers = buildPluginAuthHeaders(activePlugin, apiKey);
+    let payload: Record<string, unknown>;
 
-    const payload = {
-      model,
-      messages: toOpenAICompatibleMessages(messages),
-      temperature: params.temperature,
-      max_tokens: params.maxTokens,
-      top_p: params.topP,
-      frequency_penalty: params.frequencyPenalty,
-      presence_penalty: params.presencePenalty,
-      stop: options.stop,
-      stream: true,
-    };
+    if (activePlugin.id === 'anthropic') {
+      const anthropicRequest = buildPluginChatPayload(
+        activePlugin,
+        model,
+        messages,
+        options,
+        pluginVars,
+        true
+      );
+      payload = anthropicRequest.payload;
+      Object.assign(headers, anthropicRequest.headers);
+    } else {
+      const params = resolvePluginChatParameters(options, pluginVars);
+      payload = {
+        model,
+        messages: toOpenAICompatibleMessages(messages),
+        temperature: params.temperature,
+        max_tokens: params.maxTokens,
+        top_p: params.topP,
+        frequency_penalty: params.frequencyPenalty,
+        presence_penalty: params.presencePenalty,
+        stop: options.stop,
+        stream: true,
+      };
+    }
 
     const processedEndpoint = applyModelEndpointTemplate(
       effectiveEndpoint,
@@ -662,7 +638,11 @@ class PluginService {
       body: JSON.stringify(payload),
     });
 
-    yield* streamOpenAICompatibleResponse(response);
+    if (activePlugin.id === 'anthropic') {
+      yield* streamAnthropicResponse(response);
+    } else {
+      yield* streamOpenAICompatibleResponse(response);
+    }
   }
 
   // Validate plugin structure

@@ -38,6 +38,19 @@ export interface PluginChatPayloadResult {
   headers?: Record<string, string>;
 }
 
+const ANTHROPIC_LEGACY_SAMPLING_MODELS = new Set([
+  'claude-haiku-4-5',
+  'claude-haiku-4-5-20251001',
+  'claude-opus-4-1',
+  'claude-opus-4-1-20250805',
+  'claude-opus-4-5',
+  'claude-opus-4-5-20251101',
+  'claude-opus-4-6',
+  'claude-sonnet-4-5',
+  'claude-sonnet-4-5-20250929',
+  'claude-sonnet-4-6',
+]);
+
 export function resolvePluginChatParameters(
   options: GenerationOptions = {},
   pluginVars: PluginVariables = {}
@@ -184,11 +197,20 @@ function buildAnthropicChatPayload(
     model,
     messages: toAnthropicMessages(nonSystemMessages),
     max_tokens: params.maxTokens ?? 1024,
-    temperature: params.temperature,
-    top_p: params.topP,
     stop_sequences: options.stop,
     stream: params.shouldStream,
   };
+
+  // Anthropic rejects non-default sampling parameters on Claude Opus 4.7 and
+  // newer model families. Unknown model IDs are treated as current so models
+  // found through discovery remain safe as Anthropic expands the catalog.
+  if (ANTHROPIC_LEGACY_SAMPLING_MODELS.has(model)) {
+    if (params.topP !== undefined && params.topP < 1) {
+      payload.top_p = params.topP;
+    } else {
+      payload.temperature = params.temperature;
+    }
+  }
 
   if (systemMessages.length > 0) {
     payload.system = systemMessages.map(message => message.content).join('\n');

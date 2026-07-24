@@ -11,11 +11,11 @@
   "model_map": [
     "claude-fable-5",
     "claude-haiku-4-5-20251001",
-    "claude-opus-4-1-20250805",
     "claude-opus-4-5-20251101",
     "claude-opus-4-6",
     "claude-opus-4-7",
     "claude-opus-4-8",
+    "claude-opus-5",
     "claude-sonnet-4-5-20250929",
     "claude-sonnet-4-6",
     "claude-sonnet-5"
@@ -32,17 +32,17 @@
       "name": "temperature",
       "type": "number",
       "label": "Temperature",
-      "description": "Controls randomness. Lower values are more focused, higher values more creative.",
+      "description": "Controls randomness on compatible legacy Claude models. Current models use their default sampling behavior.",
       "default": 0.7,
       "min": 0,
-      "max": 2
+      "max": 1
     },
     {
       "name": "max_tokens",
       "type": "number",
       "label": "Max Tokens",
-      "description": "Maximum number of tokens to generate in the response.",
-      "default": 4096,
+      "description": "Maximum combined thinking and response tokens. Current Claude models may use part of this budget for adaptive thinking.",
+      "default": 16384,
       "min": 1,
       "max": 128000
     },
@@ -50,28 +50,10 @@
       "name": "top_p",
       "type": "number",
       "label": "Top P",
-      "description": "Nucleus sampling. Lower values make output more focused.",
+      "description": "Nucleus sampling for compatible legacy Claude models. Current models use their default sampling behavior.",
       "default": 1,
       "min": 0,
       "max": 1
-    },
-    {
-      "name": "frequency_penalty",
-      "type": "number",
-      "label": "Frequency Penalty",
-      "description": "Reduces repetition of frequent tokens.",
-      "default": 0,
-      "min": -2,
-      "max": 2
-    },
-    {
-      "name": "presence_penalty",
-      "type": "number",
-      "label": "Presence Penalty",
-      "description": "Encourages the model to talk about new topics.",
-      "default": 0,
-      "min": -2,
-      "max": 2
     },
     {
       "name": "stream",

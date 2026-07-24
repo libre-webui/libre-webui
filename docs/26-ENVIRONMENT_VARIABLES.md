@@ -76,6 +76,7 @@ Provider plugins can use environment keys as deployment-wide defaults:
 | `GEMINI_API_KEY`      | Google Gemini                               |
 | `MISTRAL_API_KEY`     | Mistral                                     |
 | `OPENROUTER_API_KEY`  | OpenRouter                                  |
+| `KIMI_API_KEY`        | Kimi Code by Moonshot AI                    |
 | `GITHUB_API_KEY`      | GitHub Models                               |
 | `HUGGINGFACE_API_KEY` | Hugging Face APIs where configured          |
 | `ELEVENLABS_API_KEY`  | ElevenLabs TTS                              |
@@ -98,11 +99,11 @@ Users can also store provider credentials in the UI when per-user keys are prefe
 
 ## Maintenance Scripts
 
-| Variable                    | Purpose                                             |
-| --------------------------- | --------------------------------------------------- |
-| `CHANGELOG_AI`              | Set to `0` to disable AI-assisted changelog drafts  |
-| `CHANGELOG_AI_MODEL`        | Ollama model for release/changelog generation       |
-| `CHANGELOG_AI_TIMEOUT_MS`   | Timeout for AI changelog generation in milliseconds |
+| Variable                  | Purpose                                             |
+| ------------------------- | --------------------------------------------------- |
+| `CHANGELOG_AI`            | Set to `0` to disable AI-assisted changelog drafts  |
+| `CHANGELOG_AI_MODEL`      | Ollama model for release/changelog generation       |
+| `CHANGELOG_AI_TIMEOUT_MS` | Timeout for AI changelog generation in milliseconds |
 
 Example:
 
