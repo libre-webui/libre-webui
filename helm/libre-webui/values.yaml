@@ -7,7 +7,7 @@ image:
   pullPolicy: IfNotPresent
   # Optional digest override; release automation clears the 0.14.1 transition pin.
   tag: ""
-  digest: "sha256:38b8da92ffb0e2c0ec0d460c3e4a485727045c1b29980d17cfd4a9ca5882d9c0"
+  digest: ""
 
 imagePullSecrets: []
 nameOverride: ""

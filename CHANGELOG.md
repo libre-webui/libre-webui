@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.14.2] - 2026-07-24
+
+Libre WebUI 0.14.2 adds Kimi Code and Claude Opus 5, brings native Anthropic streaming and tool events up to the current Messages API, repairs macOS and Homebrew installation metadata, hardens versioned Docker and Helm releases, and resolves applicable dependency advisories.
+
+### ✨ New Features
+
 - Added a bundled Kimi Code provider for Moonshot AI's OpenAI-compatible API, with Kimi K3, Kimi K2.7 Code, and Kimi K2.7 Code HighSpeed model profiles, streaming, configurable generation valves, and per-user or environment-based credentials.
 - Added Claude Opus 5 to the bundled Anthropic provider catalog.
 
@@ -16,15 +28,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Aligned the Anthropic catalog and controls with the current Claude API: retained supported public model snapshots, removed the retiring Claude Opus 4.1 entry and unsupported penalty controls, corrected the legacy temperature range, and expanded the default token budget for adaptive thinking.
 - Aligned Helm chart, application, and Docker image versions with each release; pinned the 0.14.1 transition to its verified multi-architecture digest while preserving explicit tag overrides; made subsequent Kubernetes deployments use the chart `appVersion`; and limited chart publication to releases whose default Docker image exists.
-- Made the local release command run the complete format, lint, security, package, build, and npm publish dry-run gate before it creates a release commit or tag.
+- Made the local release command run the complete format, lint, security, package, build, and npm publish dry-run gate before it creates a release commit or tag, and added regression coverage for release status, Docker tags, Helm rendering, Homebrew metadata, macOS artifacts, and packaged npm contents.
 
 ### 🐛 Bug Fixes
 
 - Fixed Anthropic requests for Opus 5 and other current Claude models by omitting rejected sampling parameters, using the native Messages payload and version header while streaming, parsing Anthropic text and tool-use events, and discovering models from the correct `/v1/models` endpoint.
+- Fixed the macOS DMG installation canvas so Finder exposes only Libre WebUI and Applications, embeds the Retina background inside the app, preserves its Finder alias, and uses correctly scaled artwork and icon positions.
+- Repaired Homebrew packaging by installing the CLI formula from the published npm tarball, matching the cask to the actual arm64 DMG and application bundle, separating the `libre-webui` formula from the `libre-webui-frontend` cask, and clarifying explicit formula installation.
 
 ### 🔒 Security & Dependencies
 
-- Updated PostCSS and tar to patched releases, and pinned React Router to the latest compatible 7.x release while explicitly scoping its unstable-RSC-only advisory out of the declarative SPA security gate.
+- Updated `body-parser` to 2.3.0, `fast-uri` to 3.1.4, PostCSS to 8.5.23, and tar to 7.5.22, and enforced patched transitive versions of `brace-expansion` 5.0.7, `js-yaml` 4.3.0, and `shell-quote` 1.10.0.
+- Pinned React Router to 7.18.1 and added a time-bounded, fail-closed audit exception for an unstable-RSC-only advisory that does not apply to Libre WebUI's declarative browser SPA; the gate rejects version drift, RSC usage, malformed reports, additional advisories, and registry failures.
 
 ### 📚 Documentation
 
