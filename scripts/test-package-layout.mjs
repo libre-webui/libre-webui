@@ -214,6 +214,32 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
       'kimi-for-coding-highspeed',
     ]);
 
+    const anthropicPlugin = JSON.parse(
+      fs.readFileSync(
+        path.join(packedRoot, 'plugins', 'anthropic.json'),
+        'utf8'
+      )
+    );
+    assert.deepEqual(anthropicPlugin.model_map, [
+      'claude-fable-5',
+      'claude-haiku-4-5-20251001',
+      'claude-opus-4-5-20251101',
+      'claude-opus-4-6',
+      'claude-opus-4-7',
+      'claude-opus-4-8',
+      'claude-opus-5',
+      'claude-sonnet-4-5-20250929',
+      'claude-sonnet-4-6',
+      'claude-sonnet-5',
+    ]);
+    const anthropicVariables = new Map(
+      anthropicPlugin.variables.map(variable => [variable.name, variable])
+    );
+    assert.equal(anthropicVariables.get('temperature')?.max, 1);
+    assert.equal(anthropicVariables.get('max_tokens')?.default, 16384);
+    assert.equal(anthropicVariables.has('frequency_penalty'), false);
+    assert.equal(anthropicVariables.has('presence_penalty'), false);
+
     const pkg = JSON.parse(
       fs.readFileSync(path.join(packedRoot, 'package.json'), 'utf8')
     );

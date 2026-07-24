@@ -10,13 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### ✨ New Features
 
 - Added a bundled Kimi Code provider for Moonshot AI's OpenAI-compatible API, with Kimi K3, Kimi K2.7 Code, and Kimi K2.7 Code HighSpeed model profiles, streaming, configurable generation valves, and per-user or environment-based credentials.
+- Added Claude Opus 5 to the bundled Anthropic provider catalog.
 
 ### 🔧 Improvements
 
+- Aligned the Anthropic catalog and controls with the current Claude API: retained supported public model snapshots, removed the retiring Claude Opus 4.1 entry and unsupported penalty controls, corrected the legacy temperature range, and expanded the default token budget for adaptive thinking.
 - Aligned Helm chart, application, and Docker image versions with each release; pinned the 0.14.1 transition to its verified multi-architecture digest while preserving explicit tag overrides; made subsequent Kubernetes deployments use the chart `appVersion`; and limited chart publication to releases whose default Docker image exists.
 - Made the local release command run the complete format, lint, security, package, build, and npm publish dry-run gate before it creates a release commit or tag.
 
 ### 🐛 Bug Fixes
+
+- Fixed Anthropic requests for Opus 5 and other current Claude models by omitting rejected sampling parameters, using the native Messages payload and version header while streaming, parsing Anthropic text and tool-use events, and discovering models from the correct `/v1/models` endpoint.
 
 ### 📚 Documentation
 

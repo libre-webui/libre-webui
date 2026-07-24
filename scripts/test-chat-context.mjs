@@ -826,6 +826,36 @@ test('plugin validation rejects unsafe models and remote HTTP endpoints', () => 
   );
 });
 
+test('plugin model discovery resolves Anthropic Messages endpoints', () => {
+  const anthropicPlugin = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'plugins', 'anthropic.json'), 'utf8')
+  );
+
+  assert.equal(
+    pluginValidation.resolvePluginModelsEndpoint(
+      'https://api.anthropic.com/v1/messages'
+    ),
+    'https://api.anthropic.com/v1/models'
+  );
+  assert.equal(
+    pluginValidation.resolvePluginModelsEndpoint(
+      'https://api.example.com/v1/chat/completions?preview=true'
+    ),
+    'https://api.example.com/v1/models'
+  );
+  assert.deepEqual(
+    pluginValidation.buildPluginModelDiscoveryHeaders(
+      anthropicPlugin,
+      'test-anthropic-key'
+    ),
+    {
+      Accept: 'application/json',
+      'x-api-key': 'test-anthropic-key',
+      'anthropic-version': '2023-06-01',
+    }
+  );
+});
+
 test('Kimi Code plugin builds OpenAI-compatible K3 requests', () => {
   const plugin = JSON.parse(
     fs.readFileSync(path.join(repoRoot, 'plugins', 'kimi-code.json'), 'utf8')
@@ -873,7 +903,7 @@ test('Kimi Code plugin builds OpenAI-compatible K3 requests', () => {
 test('buildPluginChatPayload adapts Anthropic multimodal chat requests', () => {
   const { payload, headers } = pluginChatAdapter.buildPluginChatPayload(
     { id: 'anthropic' },
-    'claude-test',
+    'claude-opus-4-6',
     [
       { role: 'system', content: 'Be concise.' },
       {
@@ -888,9 +918,10 @@ test('buildPluginChatPayload adapts Anthropic multimodal chat requests', () => {
 
   assert.deepEqual(headers, { 'anthropic-version': '2023-06-01' });
   assert.equal(payload.system, 'Be concise.');
-  assert.equal(payload.model, 'claude-test');
+  assert.equal(payload.model, 'claude-opus-4-6');
   assert.equal(payload.max_tokens, 128);
   assert.equal(payload.top_p, 0.8);
+  assert.equal('temperature' in payload, false);
   assert.equal(payload.stop_sequences[0], 'END');
   assert.equal(payload.messages.length, 1);
   assert.equal(payload.messages[0].content[0].type, 'image');
@@ -900,6 +931,29 @@ test('buildPluginChatPayload adapts Anthropic multimodal chat requests', () => {
     type: 'text',
     text: 'describe',
   });
+});
+
+test('buildPluginChatPayload uses Anthropic defaults for Claude Opus 5', () => {
+  const { payload, headers } = pluginChatAdapter.buildPluginChatPayload(
+    { id: 'anthropic' },
+    'claude-opus-5',
+    [{ role: 'user', content: 'Review this change.' }],
+    { temperature: 0.2, num_predict: 128 },
+    { top_p: 0.8 },
+    true
+  );
+
+  assert.deepEqual(headers, { 'anthropic-version': '2023-06-01' });
+  assert.equal(payload.model, 'claude-opus-5');
+  assert.equal(payload.max_tokens, 128);
+  assert.equal(payload.stream, true);
+  assert.equal('temperature' in payload, false);
+  assert.equal('top_p' in payload, false);
+  assert.equal('frequency_penalty' in payload, false);
+  assert.equal('presence_penalty' in payload, false);
+  assert.deepEqual(payload.messages, [
+    { role: 'user', content: 'Review this change.' },
+  ]);
 });
 
 test('convertProviderResponse normalizes Gemini responses', () => {
@@ -960,6 +1014,61 @@ test('streamOpenAICompatibleResponse parses content and tool call deltas', async
       type: 'tool_call',
       toolCall: {
         id: 'call-1',
+        name: 'render',
+        arguments: '{"ok":true}',
+      },
+    },
+    { type: 'done' },
+  ]);
+});
+
+test('streamAnthropicResponse parses text and tool call events', async () => {
+  const body = [
+    'event: message_start',
+    'data: {"type":"message_start","message":{"content":[]}}',
+    '',
+    'event: content_block_start',
+    'data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"","signature":""}}',
+    '',
+    'event: content_block_delta',
+    'data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"private reasoning"}}',
+    '',
+    'event: content_block_start',
+    'data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}',
+    '',
+    'event: content_block_delta',
+    'data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Hello"}}',
+    '',
+    'event: content_block_start',
+    'data: {"type":"content_block_start","index":2,"content_block":{"type":"tool_use","id":"toolu_1","name":"render","input":{}}}',
+    '',
+    'event: content_block_delta',
+    'data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"{\\"ok\\":"}}',
+    '',
+    'event: content_block_delta',
+    'data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"true}"}}',
+    '',
+    'event: content_block_stop',
+    'data: {"type":"content_block_stop","index":2}',
+    '',
+    'event: message_stop',
+    'data: {"type":"message_stop"}',
+    '',
+  ].join('\n');
+
+  const chunks = [];
+  for await (const chunk of pluginStreamAdapter.streamAnthropicResponse(
+    new Response(body)
+  )) {
+    chunks.push(chunk);
+  }
+
+  assert.deepEqual(chunks, [
+    { type: 'content', content: 'Hello' },
+    {
+      type: 'tool_call',
+      toolCall: {
+        id: 'toolu_1',
         name: 'render',
         arguments: '{"ok":true}',
       },

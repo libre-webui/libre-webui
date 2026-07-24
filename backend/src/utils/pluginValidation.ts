@@ -101,6 +101,36 @@ export function resolvePluginEndpoint(
   );
 }
 
+export function resolvePluginModelsEndpoint(endpoint: string): string {
+  const url = new URL(endpoint);
+  url.search = '';
+
+  if (url.pathname.endsWith('/models')) {
+    return url.toString();
+  }
+
+  for (const suffix of [
+    '/chat/completions',
+    '/completions',
+    '/embeddings',
+    '/messages',
+  ]) {
+    if (url.pathname.endsWith(suffix)) {
+      url.pathname = `${url.pathname.slice(0, -suffix.length)}/models`;
+      return url.toString();
+    }
+  }
+
+  const basePath =
+    url.pathname === '/'
+      ? ''
+      : url.pathname.endsWith('/')
+        ? url.pathname.slice(0, -1)
+        : url.pathname;
+  url.pathname = `${basePath}/models`;
+  return url.toString();
+}
+
 export function applyModelEndpointTemplate(
   endpoint: string,
   model: string
@@ -120,6 +150,27 @@ export function buildPluginAuthHeaders(
     headers[plugin.auth.header] = plugin.auth.prefix
       ? `${plugin.auth.prefix}${apiKey}`
       : apiKey;
+  }
+
+  return headers;
+}
+
+export function buildPluginModelDiscoveryHeaders(
+  plugin: Plugin,
+  apiKey?: string | null
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+  };
+
+  if (apiKey && plugin.auth.header) {
+    headers[plugin.auth.header] = plugin.auth.prefix
+      ? `${plugin.auth.prefix}${apiKey}`
+      : apiKey;
+  }
+
+  if (plugin.id === 'anthropic') {
+    headers['anthropic-version'] = '2023-06-01';
   }
 
   return headers;
