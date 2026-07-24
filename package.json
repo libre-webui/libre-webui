@@ -28,9 +28,9 @@
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
-    "test:package": "node --test scripts/test-deprecated-dependencies.mjs && node --test scripts/test-helm-versioning.mjs && npm run build && node --test scripts/test-chat-context.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs && node --test scripts/test-electron-macos-signing.mjs && node --test scripts/test-homebrew-publishing.mjs",
+    "test:package": "node --test scripts/test-deprecated-dependencies.mjs && node --test scripts/test-security-audit.mjs && node --test scripts/test-helm-versioning.mjs && npm run build && node --test scripts/test-chat-context.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs && node --test scripts/test-electron-macos-signing.mjs && node --test scripts/test-homebrew-publishing.mjs",
     "test:e2e": "npm run e2e --workspace=frontend",
-    "security:audit": "npm audit --audit-level=moderate",
+    "security:audit": "node scripts/security-audit.mjs",
     "release:check": "npm run format:check && npm run lint && npm run security:audit && npm run test:package && npm run npm:publish:dry-run",
     "start": "cd backend && npm start",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
@@ -134,7 +134,7 @@
     "pdfjs-dist": "^6.0.227",
     "sanitize-filename": "^1.6.3",
     "sonner": "^2.0.7",
-    "tar": "^7.5.10",
+    "tar": "7.5.22",
     "uuid": "^14.0.0",
     "ws": "^8.14.2"
   }

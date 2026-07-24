@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed Anthropic requests for Opus 5 and other current Claude models by omitting rejected sampling parameters, using the native Messages payload and version header while streaming, parsing Anthropic text and tool-use events, and discovering models from the correct `/v1/models` endpoint.
 
+### 🔒 Security & Dependencies
+
+- Updated PostCSS and tar to patched releases, and pinned React Router to the latest compatible 7.x release while explicitly scoping its unstable-RSC-only advisory out of the declarative SPA security gate.
+
 ### 📚 Documentation
 
 - Added Kimi Code setup, membership-aware model guidance, privacy boundaries, troubleshooting, and the `KIMI_API_KEY` environment variable to the provider documentation.
