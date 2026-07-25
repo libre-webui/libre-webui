@@ -59,7 +59,7 @@ export const useChat = (sessionId: string) => {
 
   // Store update batching with debounced timer approach
   const lastStoreUpdate = useRef<number>(0);
-  const storeUpdateTimer = useRef<NodeJS.Timeout>();
+  const storeUpdateTimer = useRef<NodeJS.Timeout | undefined>(undefined);
   const streamingFrameRef = useRef<number | null>(null);
   const pendingStreamingContentRef = useRef<string>('');
 

@@ -45,7 +45,7 @@ npm install
 npm run dev
 ```
 
-Node.js 22.12 or newer is required.
+Node.js 22.22 or newer is required.
 
 **Port already in use**
 

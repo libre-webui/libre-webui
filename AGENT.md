@@ -260,7 +260,7 @@ libre-webui/
 | **Backend**   | Express 5, TypeScript, better-sqlite3, WebSocket (ws)       |
 | **Auth**      | JWT (jsonwebtoken), bcrypt (12 rounds), OAuth2 (GitHub, HF) |
 | **Desktop**   | Electron 41, electron-builder                               |
-| **Container** | Docker (node:22-alpine), multi-stage builds                 |
+| **Container** | Docker (node:22.22-alpine), multi-stage builds              |
 | **K8s**       | Helm chart (oci://ghcr.io/libre-webui/charts/libre-webui)   |
 | **i18n**      | i18next + react-i18next (25 languages)                      |
 | **Markdown**  | react-markdown, rehype-katex, remark-math, lowlight         |

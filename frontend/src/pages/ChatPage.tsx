@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Send, Plus, Paperclip, Minus, Ghost } from 'lucide-react';
 import { ChatMessages } from '@/components/ChatMessages';

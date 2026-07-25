@@ -85,8 +85,7 @@ export default defineConfig({
         manualChunks(id) {
           if (id.includes('node_modules/react-dom')) return 'react-vendor';
           if (id.includes('node_modules/react/')) return 'react-vendor';
-          if (id.includes('node_modules/react-router-dom'))
-            return 'router-vendor';
+          if (id.includes('node_modules/react-router')) return 'router-vendor';
           if (
             id.includes('node_modules/lucide-react') ||
             id.includes('node_modules/react-hot-toast')
@@ -143,7 +142,7 @@ export default defineConfig({
     include: [
       'react',
       'react-dom',
-      'react-router-dom',
+      'react-router',
       'zustand',
       'axios',
       'react-hot-toast',

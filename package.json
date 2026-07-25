@@ -28,9 +28,9 @@
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
     "build:backend": "cd backend && npm run build",
-    "test:package": "node --test scripts/test-deprecated-dependencies.mjs && node --test scripts/test-security-audit.mjs && node --test scripts/test-helm-versioning.mjs && npm run build && node --test scripts/test-chat-context.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs && node --test scripts/test-electron-macos-signing.mjs && node --test scripts/test-homebrew-publishing.mjs",
+    "test:package": "node --test scripts/test-deprecated-dependencies.mjs && node --test scripts/test-helm-versioning.mjs && node --test scripts/test-tts-example-security.mjs && npm run build && node --test scripts/test-chat-context.mjs && node --test scripts/test-tts-routing.mjs && node --test scripts/test-package-layout.mjs && node --test scripts/test-release-notes.mjs && node --test scripts/test-release-status.mjs && node --test scripts/test-docker-layout.mjs && node --test scripts/test-electron-macos-signing.mjs && node --test scripts/test-homebrew-publishing.mjs",
     "test:e2e": "npm run e2e --workspace=frontend",
-    "security:audit": "node scripts/security-audit.mjs",
+    "security:audit": "npm audit --audit-level=moderate",
     "release:check": "npm run format:check && npm run lint && npm run security:audit && npm run test:package && npm run npm:publish:dry-run",
     "start": "cd backend && npm start",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
@@ -71,7 +71,7 @@
   },
   "homepage": "https://librewebui.org",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=22.22.0"
   },
   "overrides": {
     "@electron/asar": "4.2.0",
@@ -79,8 +79,10 @@
     "@electron/universal": "3.0.6",
     "prismjs": "^1.30.0",
     "@isaacs/brace-expansion": ">=5.0.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "lodash": "^4.18.1",
     "refractor": {
       "prismjs": "^1.30.0"
@@ -92,12 +94,14 @@
       }
     },
     "minimatch": ">=10.2.1",
-    "brace-expansion": "5.0.7",
+    "brace-expansion": "5.0.8",
     "js-yaml": "4.3.0",
     "shell-quote": "1.10.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.51.0",
     "@typescript-eslint/parser": "^8.34.0",
     "concurrently": "^10.0.1",
@@ -132,6 +136,8 @@
     "morgan": "^1.10.0",
     "multer": "^2.2.0",
     "pdfjs-dist": "^6.0.227",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "sanitize-filename": "^1.6.3",
     "sonner": "^2.0.7",
     "tar": "7.5.22",

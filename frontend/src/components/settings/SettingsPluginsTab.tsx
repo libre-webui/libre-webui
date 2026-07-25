@@ -45,7 +45,7 @@ interface SettingsPluginsTabProps {
   showUploadForm: boolean;
   showJsonForm: boolean;
   jsonInput: string;
-  fileInputRef: RefObject<HTMLInputElement>;
+  fileInputRef: RefObject<HTMLInputElement | null>;
   expandedPluginId: string | null;
   pluginApiKeys: Record<string, string>;
   showApiKey: Record<string, boolean>;

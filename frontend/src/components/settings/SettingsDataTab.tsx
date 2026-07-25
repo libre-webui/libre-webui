@@ -30,7 +30,7 @@ interface SettingsDataTabProps {
   showImportOptions: boolean;
   mergeStrategy: ImportMergeStrategy;
   importResult: SettingsImportResult | null;
-  importFileInputRef: React.RefObject<HTMLInputElement>;
+  importFileInputRef: React.RefObject<HTMLInputElement | null>;
   onExportData: () => void;
   onImportFileSelect: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onClearAllHistory: () => void;

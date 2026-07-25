@@ -341,26 +341,96 @@ def get_voice_path(voice: str) -> str:
     return model.get_voice_path(voice_file)
 
 
+EMOJI_CODEPOINT_RANGES = (
+    (0x24C2, 0x24C2),
+    (0x2600, 0x27BF),
+    (0x1F170, 0x1F251),
+    (0x1F1E0, 0x1F1FF),
+    (0x1F300, 0x1F64F),
+    (0x1F680, 0x1F6FF),
+    (0x1F900, 0x1F9FF),
+    (0x1FA00, 0x1FAFF),
+)
+
+
+def _remove_emoji(text: str) -> str:
+    """Remove emoji without a regex range that also consumes ordinary scripts."""
+    return "".join(
+        character
+        for character in text
+        if not any(
+            start <= ord(character) <= end
+            for start, end in EMOJI_CODEPOINT_RANGES
+        )
+    )
+
+
+def _strip_markdown_links(text: str) -> str:
+    """Replace simple Markdown links with their labels in linear passes."""
+    output = []
+    cursor = 0
+
+    while cursor < len(text):
+        label_start = text.find("[", cursor)
+        if label_start == -1:
+            output.append(text[cursor:])
+            break
+
+        output.append(text[cursor:label_start])
+        label_end = text.find("]", label_start + 1)
+        if label_end == -1:
+            output.append(text[label_start:])
+            break
+
+        if label_end + 1 >= len(text) or text[label_end + 1] != "(":
+            output.append(text[label_start:label_end + 1])
+            cursor = label_end + 1
+            continue
+
+        url_end = text.find(")", label_end + 2)
+        if url_end == -1:
+            output.append(text[label_start:])
+            break
+
+        output.append(text[label_start + 1:label_end])
+        cursor = url_end + 1
+
+    return "".join(output)
+
+
+def _strip_parenthetical_stage_directions(text: str) -> str:
+    """Remove balanced parenthetical directions without regex backtracking."""
+    output = []
+    cursor = 0
+
+    while cursor < len(text):
+        direction_start = text.find("(", cursor)
+        if direction_start == -1:
+            output.append(text[cursor:])
+            break
+
+        direction_end = text.find(")", direction_start + 1)
+        if direction_end == -1:
+            output.append(text[cursor:])
+            break
+
+        remove_start = direction_start
+        if direction_start > cursor and text[direction_start - 1] == "*":
+            remove_start -= 1
+
+        remove_end = direction_end + 1
+        if remove_end < len(text) and text[remove_end] == "*":
+            remove_end += 1
+
+        output.append(text[cursor:remove_start])
+        cursor = remove_end
+
+    return "".join(output)
+
+
 def sanitize_text(text: str) -> str:
     """Sanitize text to prevent model issues"""
-    # Remove emojis
-    emoji_pattern = re.compile(
-        "["
-        "\U0001F600-\U0001F64F"
-        "\U0001F300-\U0001F5FF"
-        "\U0001F680-\U0001F6FF"
-        "\U0001F1E0-\U0001F1FF"
-        "\U00002702-\U000027B0"
-        "\U000024C2-\U0001F251"
-        "\U0001F900-\U0001F9FF"
-        "\U0001FA00-\U0001FA6F"
-        "\U0001FA70-\U0001FAFF"
-        "\U00002600-\U000026FF"
-        "\U00002700-\U000027BF"
-        "]+",
-        flags=re.UNICODE
-    )
-    text = emoji_pattern.sub('', text)
+    text = _remove_emoji(text)
 
     # Remove markdown formatting
     text = re.sub(r'\*+', '', text)
@@ -369,10 +439,10 @@ def sanitize_text(text: str) -> str:
     text = re.sub(r'`+', '', text)
     text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'^-{3,}$', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', text)
+    text = _strip_markdown_links(text)
 
     # Remove parenthetical stage directions
-    text = re.sub(r'\*?\([^)]*\)\*?', '', text)
+    text = _strip_parenthetical_stage_directions(text)
 
     # Remove zero-width characters
     text = re.sub(r'[\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff]', '', text)

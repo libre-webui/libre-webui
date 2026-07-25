@@ -208,26 +208,123 @@ def chunk_text(text: str, max_chunk_size: int = 500) -> list[str]:
     return chunks if chunks else [text[:max_chunk_size]]
 
 
+_EMOJI_PATTERN = re.compile(
+    "["
+    "\u24C2"                 # Circled M
+    "\u2600-\u27BF"          # Miscellaneous symbols and dingbats
+    "\uFE0E-\uFE0F"          # Text and emoji variation selectors
+    "\U0001F1E0-\U0001F1FF"  # Regional indicator symbols
+    "\U0001F201-\U0001F251"  # Enclosed ideographic supplement
+    "\U0001F300-\U0001F6FF"  # Pictographs, emoticons, transport, and maps
+    "\U0001F900-\U0001FAFF"  # Supplemental and extended symbols
+    "]+",
+    flags=re.UNICODE,
+)
+
+
+def _strip_markdown_links(text: str) -> str:
+    """Replace inline Markdown links with labels in a single pass."""
+    output = []
+    cursor = 0
+    text_length = len(text)
+
+    while cursor < text_length:
+        if text[cursor] != '[':
+            output.append(text[cursor])
+            cursor += 1
+            continue
+
+        label_end = cursor + 1
+        while label_end < text_length and text[label_end] != ']':
+            label_end += 1
+
+        if label_end == text_length:
+            output.append(text[cursor:])
+            break
+
+        if label_end + 1 == text_length or text[label_end + 1] != '(':
+            output.append(text[cursor:label_end + 1])
+            cursor = label_end + 1
+            continue
+
+        url_cursor = label_end + 2
+        parenthesis_depth = 1
+        while url_cursor < text_length and parenthesis_depth:
+            char = text[url_cursor]
+            if char == '\\' and url_cursor + 1 < text_length:
+                url_cursor += 2
+                continue
+            if char == '(':
+                parenthesis_depth += 1
+            elif char == ')':
+                parenthesis_depth -= 1
+            url_cursor += 1
+
+        if parenthesis_depth:
+            output.append(text[cursor:])
+            break
+
+        output.append(text[cursor + 1:label_end])
+        cursor = url_cursor
+
+    return ''.join(output)
+
+
+def _strip_parenthetical_directions(text: str) -> str:
+    """Remove balanced parenthetical directions without regex backtracking."""
+    output = []
+    pending = []
+    parenthesis_depth = 0
+    leading_asterisk = False
+    cursor = 0
+
+    while cursor < len(text):
+        char = text[cursor]
+
+        if parenthesis_depth == 0:
+            if char != '(':
+                output.append(char)
+                cursor += 1
+                continue
+
+            leading_asterisk = bool(output and output[-1] == '*')
+            if leading_asterisk:
+                output.pop()
+            pending = ['(']
+            parenthesis_depth = 1
+            cursor += 1
+            continue
+
+        pending.append(char)
+        if char == '(':
+            parenthesis_depth += 1
+        elif char == ')':
+            parenthesis_depth -= 1
+            if parenthesis_depth == 0:
+                pending = []
+                if cursor + 1 < len(text) and text[cursor + 1] == '*':
+                    cursor += 1
+                leading_asterisk = False
+        cursor += 1
+
+    if pending:
+        if leading_asterisk:
+            output.append('*')
+        output.extend(pending)
+
+    return ''.join(output)
+
+
 def sanitize_text(text: str) -> str:
-    """Sanitize text to prevent model hangs on problematic input"""
-    # Remove emojis and other symbols that can cause issues
-    emoji_pattern = re.compile(
-        "["
-        "\U0001F600-\U0001F64F"  # emoticons
-        "\U0001F300-\U0001F5FF"  # symbols & pictographs
-        "\U0001F680-\U0001F6FF"  # transport & map symbols
-        "\U0001F1E0-\U0001F1FF"  # flags
-        "\U00002702-\U000027B0"  # dingbats
-        "\U000024C2-\U0001F251"  # enclosed characters
-        "\U0001F900-\U0001F9FF"  # supplemental symbols
-        "\U0001FA00-\U0001FA6F"  # chess symbols
-        "\U0001FA70-\U0001FAFF"  # symbols and pictographs extended-A
-        "\U00002600-\U000026FF"  # misc symbols
-        "\U00002700-\U000027BF"  # dingbats
-        "]+",
-        flags=re.UNICODE
-    )
-    text = emoji_pattern.sub('', text)
+    """Sanitize text to prevent model hangs on problematic input."""
+    # Explicit, non-overlapping code-point checks avoid an overly broad regex
+    # range that previously removed ordinary scripts such as Chinese.
+    text = _EMOJI_PATTERN.sub('', text)
+
+    # Parse user-controlled Markdown constructs in linear time. Malformed,
+    # unclosed constructs are preserved instead of repeatedly rescanning them.
+    text = _strip_markdown_links(text)
+    text = _strip_parenthetical_directions(text)
 
     # Remove markdown formatting
     text = re.sub(r'\*+', '', text)  # asterisks (bold/italic)
@@ -236,13 +333,8 @@ def sanitize_text(text: str) -> str:
     text = re.sub(r'`+', '', text)  # code
     text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)  # headers
     text = re.sub(r'^-{3,}$', '', text, flags=re.MULTILINE)  # horizontal rules
-    text = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', text)  # links
-
     # Collapse repeated characters (more than 3 of the same char)
     text = re.sub(r'(.)\1{3,}', r'\1\1\1', text)
-
-    # Remove parenthetical stage directions like *(action)* or (action)
-    text = re.sub(r'\*?\([^)]*\)\*?', '', text)
 
     # Remove zero-width characters and other invisible chars
     text = re.sub(r'[\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff]', '', text)

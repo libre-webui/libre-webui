@@ -57,7 +57,7 @@ Do not trust the pitch. Inspect the [license](https://github.com/libre-webui/lib
 
 ## Start in one command
 
-With [Node.js 22.12 or newer](https://nodejs.org):
+With [Node.js 22.22 or newer](https://nodejs.org):
 
 ```bash
 npx libre-webui

@@ -25,6 +25,7 @@ import os
 import re
 import tempfile
 from typing import Optional
+from urllib.parse import urlsplit
 
 import torch
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
@@ -89,6 +90,21 @@ HUGGINGFACE_VOICE_PREFIXES = {
     "expresso": "hf://kyutai/tts-voices/expresso/{speaker}.wav",
 }
 
+# Explicit emoji blocks avoid the overly broad U+24C2-U+1F251 range that
+# removes unrelated scripts and symbols.
+EMOJI_CODEPOINT_RANGES = (
+    (0x2600, 0x26FF),
+    (0x2700, 0x27BF),
+    (0x1F170, 0x1F251),
+    (0x1F300, 0x1F5FF),
+    (0x1F600, 0x1F64F),
+    (0x1F680, 0x1F6FF),
+    (0x1F900, 0x1F9FF),
+    (0x1FA00, 0x1FA6F),
+    (0x1FA70, 0x1FAFF),
+)
+EMOJI_CODEPOINTS = frozenset((0x20E3, 0x24C2, 0xFE0F))
+
 
 class TTSRequest(BaseModel):
     """OpenAI TTS API compatible request"""
@@ -105,8 +121,14 @@ class VoiceCloneRequest(BaseModel):
     """Voice cloning request"""
     model: str = "kyutai-tts-clone"
     input: str
-    voice_url: str  # HuggingFace URL or local path
+    voice_url: str  # HuggingFace or HTTP(S) URL
     response_format: str = "wav"
+
+
+def is_remote_voice_reference(voice: str) -> bool:
+    """Return whether a voice reference uses an approved remote URL scheme."""
+    parsed = urlsplit(voice)
+    return parsed.scheme in {"hf", "http", "https"} and bool(parsed.netloc)
 
 
 def load_model():
@@ -148,13 +170,9 @@ def get_voice_state(voice: str):
         voice_states[voice_lower] = model.get_state_for_audio_prompt(voice_lower)
         return voice_states[voice_lower]
 
-    # Check if it's a HuggingFace URL
-    if voice.startswith("hf://") or voice.startswith("http"):
-        voice_states[voice] = model.get_state_for_audio_prompt(voice)
-        return voice_states[voice]
-
-    # Check if it's a local file
-    if os.path.exists(voice):
+    # Remote references are supported. Local paths are deliberately rejected;
+    # callers can use the upload-based voice-clone endpoint instead.
+    if is_remote_voice_reference(voice):
         voice_states[voice] = model.get_state_for_audio_prompt(voice)
         return voice_states[voice]
 
@@ -162,38 +180,92 @@ def get_voice_state(voice: str):
     return voice_states.get("alba")
 
 
+def is_emoji_character(character: str) -> bool:
+    """Return whether a character belongs to a known emoji codepoint block."""
+    codepoint = ord(character)
+    return codepoint in EMOJI_CODEPOINTS or any(
+        start <= codepoint <= end for start, end in EMOJI_CODEPOINT_RANGES
+    )
+
+
+def strip_markdown_links(text: str) -> str:
+    """Replace Markdown links with their labels in linear time."""
+    parts = []
+    cursor = 0
+
+    while cursor < len(text):
+        label_start = text.find("[", cursor)
+        if label_start == -1:
+            parts.append(text[cursor:])
+            break
+
+        parts.append(text[cursor:label_start])
+        label_end = text.find("]", label_start + 1)
+        if label_end == -1:
+            parts.append(text[label_start:])
+            break
+
+        if label_end + 1 >= len(text) or text[label_end + 1] != "(":
+            parts.append(text[label_start:label_end + 1])
+            cursor = label_end + 1
+            continue
+
+        target_end = text.find(")", label_end + 2)
+        if target_end == -1:
+            parts.append(text[label_start:])
+            break
+
+        parts.append(text[label_start + 1 : label_end])
+        cursor = target_end + 1
+
+    return "".join(parts)
+
+
+def strip_parenthetical_stage_directions(text: str) -> str:
+    """Remove parenthetical stage directions without backtracking regexes."""
+    parts = []
+    cursor = 0
+
+    while cursor < len(text):
+        opening = text.find("(", cursor)
+        if opening == -1:
+            parts.append(text[cursor:])
+            break
+
+        closing = text.find(")", opening + 1)
+        if closing == -1:
+            parts.append(text[cursor:])
+            break
+
+        removal_start = opening
+        if opening > cursor and text[opening - 1] == "*":
+            removal_start -= 1
+
+        parts.append(text[cursor:removal_start])
+        cursor = closing + 1
+        if cursor < len(text) and text[cursor] == "*":
+            cursor += 1
+
+    return "".join(parts)
+
+
 def sanitize_text(text: str) -> str:
     """Sanitize text to prevent model issues"""
-    # Remove emojis
-    emoji_pattern = re.compile(
-        "["
-        "\U0001F600-\U0001F64F"
-        "\U0001F300-\U0001F5FF"
-        "\U0001F680-\U0001F6FF"
-        "\U0001F1E0-\U0001F1FF"
-        "\U00002702-\U000027B0"
-        "\U000024C2-\U0001F251"
-        "\U0001F900-\U0001F9FF"
-        "\U0001FA00-\U0001FA6F"
-        "\U0001FA70-\U0001FAFF"
-        "\U00002600-\U000026FF"
-        "\U00002700-\U000027BF"
-        "]+",
-        flags=re.UNICODE
+    text = "".join(
+        character for character in text if not is_emoji_character(character)
     )
-    text = emoji_pattern.sub('', text)
 
     # Remove markdown formatting
-    text = re.sub(r'\*+', '', text)
-    text = re.sub(r'_+', ' ', text)
-    text = re.sub(r'~+', '', text)
-    text = re.sub(r'`+', '', text)
+    text = text.replace("*", "")
+    text = text.replace("_", " ")
+    text = text.replace("~", "")
+    text = text.replace("`", "")
     text = re.sub(r'^#{1,6}\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'^-{3,}$', '', text, flags=re.MULTILINE)
-    text = re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', text)
+    text = strip_markdown_links(text)
 
     # Remove parenthetical stage directions
-    text = re.sub(r'\*?\([^)]*\)\*?', '', text)
+    text = strip_parenthetical_stage_directions(text)
 
     # Remove zero-width characters
     text = re.sub(r'[\u200b-\u200f\u2028-\u202f\u2060-\u206f\ufeff]', '', text)
@@ -433,9 +505,15 @@ async def create_voice_clone_speech(
 
 @app.post("/v1/audio/voice-clone-url")
 async def create_voice_clone_from_url(request: VoiceCloneRequest):
-    """Clone a voice from a HuggingFace URL or local path"""
+    """Clone a voice from a HuggingFace or HTTP(S) URL"""
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded")
+
+    if not is_remote_voice_reference(request.voice_url):
+        raise HTTPException(
+            status_code=400,
+            detail="voice_url must use the hf, http, or https scheme",
+        )
 
     try:
         # Get voice state from URL

@@ -22,7 +22,7 @@ import {
   Routes,
   Route,
   useLocation,
-} from 'react-router-dom';
+} from 'react-router';
 
 // Initialize i18n
 import '@/i18n';
