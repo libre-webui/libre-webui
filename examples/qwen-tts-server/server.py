@@ -208,18 +208,30 @@ def chunk_text(text: str, max_chunk_size: int = 500) -> list[str]:
     return chunks if chunks else [text[:max_chunk_size]]
 
 
-_EMOJI_PATTERN = re.compile(
-    "["
-    "\u24C2"                 # Circled M
-    "\u2600-\u27BF"          # Miscellaneous symbols and dingbats
-    "\uFE0E-\uFE0F"          # Text and emoji variation selectors
-    "\U0001F1E0-\U0001F1FF"  # Regional indicator symbols
-    "\U0001F201-\U0001F251"  # Enclosed ideographic supplement
-    "\U0001F300-\U0001F6FF"  # Pictographs, emoticons, transport, and maps
-    "\U0001F900-\U0001FAFF"  # Supplemental and extended symbols
-    "]+",
-    flags=re.UNICODE,
+_EMOJI_CODEPOINTS = frozenset({0x24C2})
+_EMOJI_CODEPOINT_RANGES = (
+    (0x2600, 0x27BF),  # Miscellaneous symbols and dingbats
+    (0xFE0E, 0xFE0F),  # Text and emoji variation selectors
+    (0x1F1E0, 0x1F1FF),  # Regional indicator symbols
+    (0x1F201, 0x1F251),  # Enclosed ideographic supplement
+    (0x1F300, 0x1F6FF),  # Pictographs, emoticons, transport, and maps
+    (0x1F900, 0x1FAFF),  # Supplemental and extended symbols
 )
+
+
+def _is_emoji_character(character: str) -> bool:
+    """Return whether a character belongs to an explicitly supported emoji block."""
+    codepoint = ord(character)
+    return codepoint in _EMOJI_CODEPOINTS or any(
+        start <= codepoint <= end for start, end in _EMOJI_CODEPOINT_RANGES
+    )
+
+
+def _remove_emoji(text: str) -> str:
+    """Remove emoji using numeric intervals instead of permissive regex ranges."""
+    return ''.join(
+        character for character in text if not _is_emoji_character(character)
+    )
 
 
 def _strip_markdown_links(text: str) -> str:
@@ -317,9 +329,9 @@ def _strip_parenthetical_directions(text: str) -> str:
 
 def sanitize_text(text: str) -> str:
     """Sanitize text to prevent model hangs on problematic input."""
-    # Explicit, non-overlapping code-point checks avoid an overly broad regex
-    # range that previously removed ordinary scripts such as Chinese.
-    text = _EMOJI_PATTERN.sub('', text)
+    # Numeric code-point checks make every accepted interval explicit and avoid
+    # regex ranges that static analysis cannot distinguish from accidental spans.
+    text = _remove_emoji(text)
 
     # Parse user-controlled Markdown constructs in linear time. Malformed,
     # unclosed constructs are preserved instead of repeatedly rescanning them.
