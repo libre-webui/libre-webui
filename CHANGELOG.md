@@ -15,6 +15,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.14.3] - 2026-07-25
+
+Libre WebUI 0.14.3 completes the migration to the patched React Router 8 line, aligns the frontend with React 19 and Node.js 22.22, and hardens the bundled Qwen and Kyutai text-to-speech examples against local-path injection and unsafe or pathological text processing. The release removes the temporary router advisory exception and restores a strict zero-vulnerability npm audit gate.
+
+### 🔧 Improvements
+
+- Migrated the browser SPA from `react-router-dom` 7.18.1 to `react-router` 8.3.0, updated all routing imports and Vite chunking, and aligned the frontend with React and React DOM 19.2.8 plus matching type packages.
+- Raised the supported Node.js baseline to 22.22 across package metadata, Docker images, GitHub Actions, and installation and desktop documentation.
+- Consolidated the React runtime and type dependency graph at the workspace root to prevent duplicate React installations and keep lockfile resolution deterministic.
+
+### 🐛 Bug Fixes
+
+- Replaced Qwen TTS's permissive emoji regular expression with explicit Unicode code-point checks that remove the intended emoji sequences without consuming CJK, Arabic, Indic, mathematical, or other astral text.
+- Reworked Qwen and Kyutai Markdown-link and stage-direction sanitization as bounded forward scanners so malformed or adversarial input is handled without repeated rescanning or polynomial regular-expression behavior.
+- Rejected local filesystem paths in Kyutai TTS voice references while preserving built-in voices and explicitly allowed remote references.
+
+### 🔒 Security & Dependencies
+
+- Upgraded React Router to 8.3.0 and `brace-expansion` to 5.0.8, refreshed ESLint and minimatch to patched lockfile versions, and removed the obsolete `react-router-dom` package.
+- Removed the temporary router advisory exception and custom audit wrapper; `npm audit --audit-level=moderate` now fails directly on every applicable advisory.
+- Added regression coverage for exact Unicode interval boundaries, multilingual preservation, multi-code-point emoji sequences, local-path rejection, nested or malformed markup, and inputs exceeding 100,000 characters across the Qwen and Kyutai TTS examples.
+
 ## [0.14.2] - 2026-07-24
 
 Libre WebUI 0.14.2 adds Kimi Code and Claude Opus 5, brings native Anthropic streaming and tool events up to the current Messages API, repairs macOS and Homebrew installation metadata, hardens versioned Docker and Helm releases, and resolves applicable dependency advisories.
