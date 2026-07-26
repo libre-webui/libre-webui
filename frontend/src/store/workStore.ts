@@ -49,7 +49,12 @@ const thrownError = (error: unknown, fallback: string): string => {
 };
 
 const sortTasks = (tasks: WorkTaskSummary[]): WorkTaskSummary[] =>
-  [...tasks].sort((a, b) => b.updatedAt - a.updatedAt);
+  [...tasks].sort(
+    (a, b) =>
+      b.updatedAt - a.updatedAt ||
+      b.createdAt - a.createdAt ||
+      a.id.localeCompare(b.id)
+  );
 
 const toSummary = ({
   messages: _messages,
@@ -117,10 +122,31 @@ const upsertTask = (
 ): WorkTaskSummary[] => {
   const current = tasks.find(item => item.id === task.id);
   if (current && current.updatedAt > task.updatedAt) return tasks;
-  return sortTasks([
-    toSummary(task),
-    ...tasks.filter(item => item.id !== task.id),
-  ]);
+  const summary = toSummary(task);
+  const currentIndex = tasks.findIndex(item => item.id === task.id);
+  if (currentIndex === -1) return [summary, ...tasks];
+  const nextTasks = [...tasks];
+  nextTasks[currentIndex] = summary;
+  return nextTasks;
+};
+
+const mergeTaskList = (
+  currentTasks: WorkTaskSummary[],
+  incomingTasks: WorkTaskSummary[]
+): WorkTaskSummary[] => {
+  const incomingById = new Map(
+    incomingTasks.map(task => [task.id, task] as const)
+  );
+  const currentIds = new Set(currentTasks.map(task => task.id));
+  const newTasks = sortTasks(
+    incomingTasks.filter(task => !currentIds.has(task.id))
+  );
+  const existingTasks = currentTasks.flatMap(current => {
+    const incoming = incomingById.get(current.id);
+    if (!incoming) return [];
+    return [current.updatedAt > incoming.updatedAt ? current : incoming];
+  });
+  return [...newTasks, ...existingTasks];
 };
 
 interface WorkState {
@@ -348,17 +374,7 @@ export const useWorkStore = create<WorkState>((set, get) => {
         }
         latestCommittedTaskListRequest = requestId;
         set(state => {
-          const currentTasks = new Map(
-            state.tasks.map(task => [task.id, task])
-          );
-          const mergedTasks = sortTasks(
-            tasks.map(task => {
-              const current = currentTasks.get(task.id);
-              return current && current.updatedAt > task.updatedAt
-                ? current
-                : task;
-            })
-          );
+          const mergedTasks = mergeTaskList(state.tasks, tasks);
           const summary = state.selectedTaskId
             ? mergedTasks.find(task => task.id === state.selectedTaskId)
             : undefined;

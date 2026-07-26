@@ -318,7 +318,7 @@ function initializeTables(): void {
       provider_type TEXT NOT NULL DEFAULT 'ollama',
       provider_id TEXT,
       status TEXT NOT NULL DEFAULT 'idle',
-      network_enabled INTEGER NOT NULL DEFAULT 0,
+      network_enabled INTEGER NOT NULL DEFAULT 1,
       volume_name TEXT NOT NULL UNIQUE,
       container_name TEXT NOT NULL UNIQUE,
       preview_url TEXT,
@@ -555,6 +555,13 @@ function runMigrations(): void {
             OR (provider_type = 'ollama' AND provider_id IS NOT NULL)`
       ).run();
     }
+
+    // Work networking is now an implementation detail instead of a task-level
+    // switch. Existing workspaces must stay preview-capable after the control
+    // is removed from the UI.
+    db.prepare(
+      'UPDATE work_tasks SET network_enabled = 1 WHERE network_enabled != 1'
+    ).run();
   } catch (error) {
     logger.error('Error running migrations:', error);
   }

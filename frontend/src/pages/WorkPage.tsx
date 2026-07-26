@@ -26,8 +26,6 @@ import {
   MoreHorizontal,
   ShieldCheck,
   Trash2,
-  Wifi,
-  WifiOff,
   Wrench,
 } from 'lucide-react';
 import {
@@ -43,6 +41,7 @@ import { useTranslation } from 'react-i18next';
 import { useBlocker, useLocation, useNavigate, useParams } from 'react-router';
 import { WorkComposer } from '@/components/work/WorkComposer';
 import { WorkConversation } from '@/components/work/WorkConversation';
+import { WorkSplitPane } from '@/components/work/WorkSplitPane';
 import { WorkspacePane } from '@/components/work/WorkspacePane';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
@@ -58,20 +57,9 @@ import {
 import { cn } from '@/utils';
 import { preferencesApi } from '@/utils/api';
 import { clearWorkDraft, clearWorkTaskDrafts } from '@/utils/workDrafts';
+import { workStatusPresentation } from '@/utils/workStatus';
 
 type MobileSurface = 'conversation' | 'workspace';
-
-const taskStatusTone: Record<
-  WorkTask['status'],
-  { dot: string; text: string }
-> = {
-  idle: { dot: 'bg-gray-400', text: 'text-ink-muted' },
-  preparing: { dot: 'bg-amber-500 animate-pulse', text: 'text-ink' },
-  running: { dot: 'bg-primary-500 animate-pulse', text: 'text-primary-700' },
-  completed: { dot: 'bg-emerald-500', text: 'text-emerald-700' },
-  failed: { dot: 'bg-error-500', text: 'text-error-600' },
-  cancelled: { dot: 'bg-gray-400', text: 'text-ink-muted' },
-};
 
 const workModel = (name: string): boolean => {
   const normalized = name.trim().toLowerCase();
@@ -155,16 +143,6 @@ export default function WorkPage() {
     [models]
   );
   const [draftModelKey, setDraftModelKey] = useState('');
-  const [draftNetworkState, setDraftNetworkState] = useState({
-    locationKey: location.key,
-    enabled: false,
-  });
-  const draftNetwork =
-    draftNetworkState.locationKey === location.key
-      ? draftNetworkState.enabled
-      : false;
-  const setDraftNetwork = (enabled: boolean) =>
-    setDraftNetworkState({ locationKey: location.key, enabled });
   const [mobileSurfaceState, setMobileSurfaceState] = useState<{
     locationKey: string;
     value: MobileSurface;
@@ -370,12 +348,17 @@ export default function WorkPage() {
     }
   };
 
-  const navigationBlocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
+  const navigationBlocker = useBlocker(({ currentLocation, nextLocation }) => {
+    const navigationState = nextLocation.state as {
+      deletedWorkTaskId?: unknown;
+    } | null;
+    return (
       workspaceDirty &&
+      navigationState?.deletedWorkTaskId !== taskId &&
       `${currentLocation.pathname}${currentLocation.search}${currentLocation.hash}` !==
         `${nextLocation.pathname}${nextLocation.search}${nextLocation.hash}`
-  );
+    );
+  });
 
   useEffect(() => {
     if (navigationBlocker.state !== 'blocked') return;
@@ -394,7 +377,6 @@ export default function WorkPage() {
 
   const goToNewTask = () => {
     clearError();
-    setDraftNetwork(false);
     setMobileSurface('conversation');
     navigate('/work');
   };
@@ -422,7 +404,7 @@ export default function WorkPage() {
           model: freshModel.model,
           providerType: freshModel.providerType,
           providerId: freshModel.providerId,
-          networkEnabled: draftNetwork,
+          networkEnabled: true,
         });
         navigate(`/work/${task.id}`);
       }
@@ -459,25 +441,6 @@ export default function WorkPage() {
           updateError,
           t('work.toasts.updateFailed', {
             defaultValue: 'Could not update this task.',
-          })
-        )
-      );
-    }
-  };
-
-  const changeNetwork = async (enabled: boolean) => {
-    if (!selectedTask) {
-      setDraftNetwork(enabled);
-      return;
-    }
-    try {
-      await updateTask(selectedTask.id, { networkEnabled: enabled });
-    } catch (updateError) {
-      toast.error(
-        errorMessage(
-          updateError,
-          t('work.toasts.networkFailed', {
-            defaultValue: 'Could not update network access.',
           })
         )
       );
@@ -613,7 +576,7 @@ export default function WorkPage() {
           defaultValue: 'Docker + plugin ready',
         })
     : t('work.runtime.readyOllama', {
-        defaultValue: 'Docker + Ollama ready',
+        defaultValue: 'Docker ready',
       });
   const activeTask = selectedTask ? isWorkTaskActive(selectedTask) : false;
   const taskModel = selectedTask
@@ -645,10 +608,10 @@ export default function WorkPage() {
   const effectiveModelOptions = persistedModelOption
     ? [persistedModelOption, ...modelOptions]
     : modelOptions;
-  const networkEnabled = selectedTask?.networkEnabled ?? draftNetwork;
-  const tone = selectedTask
-    ? taskStatusTone[selectedTask.status]
-    : taskStatusTone.idle;
+  const status = workStatusPresentation[selectedTask?.status ?? 'idle'];
+  const statusLabel = t(status.labelKey, {
+    defaultValue: status.label,
+  });
 
   const dismissRemoteDisclosure = async () => {
     if (
@@ -742,24 +705,28 @@ export default function WorkPage() {
           {selectedTask && (
             <span
               data-testid='work-compact-status'
-              className={cn(
-                'inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-2 text-[11px] font-medium capitalize xl:hidden',
-                tone.text
-              )}
+              className='inline-flex h-7 shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-2 text-[11px] font-medium text-ink-muted xl:hidden'
               aria-label={t('work.tasks.status', {
-                status: selectedTask.status,
+                status: statusLabel,
                 defaultValue: 'Status: {{status}}',
               })}
               title={t('work.tasks.status', {
-                status: selectedTask.status,
+                status: statusLabel,
                 defaultValue: 'Status: {{status}}',
               })}
             >
               <span
                 aria-hidden='true'
-                className={cn('h-1.5 w-1.5 rounded-full', tone.dot)}
+                data-testid='work-compact-status-indicator'
+                className={cn(
+                  'h-1.5 w-1.5 rounded-full',
+                  status.animated && 'animate-pulse',
+                  selectedTask.status === 'idle' &&
+                    'ring-1 ring-black/20 dark:ring-white/20'
+                )}
+                style={{ backgroundColor: status.color }}
               />
-              <span className='hidden md:inline'>{selectedTask.status}</span>
+              <span className='hidden md:inline'>{statusLabel}</span>
             </span>
           )}
 
@@ -824,16 +791,21 @@ export default function WorkPage() {
           >
             {selectedTask && (
               <span
-                className={cn(
-                  'inline-flex h-7 items-center gap-1.5 rounded-full border border-line px-2.5 text-[11px] font-medium capitalize',
-                  tone.text
-                )}
+                data-testid='work-status'
+                className='inline-flex h-7 items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 text-[11px] font-medium text-ink-muted'
               >
                 <span
                   aria-hidden='true'
-                  className={cn('h-1.5 w-1.5 rounded-full', tone.dot)}
+                  data-testid='work-status-indicator'
+                  className={cn(
+                    'h-1.5 w-1.5 rounded-full',
+                    status.animated && 'animate-pulse',
+                    selectedTask.status === 'idle' &&
+                      'ring-1 ring-black/20 dark:ring-white/20'
+                  )}
+                  style={{ backgroundColor: status.color }}
                 />
-                {selectedTask.status}
+                {statusLabel}
               </span>
             )}
             <span
@@ -857,33 +829,10 @@ export default function WorkPage() {
                 : runtimeReadyLabel}
             </span>
             {selectedTask && (
-              <>
-                <span className='hidden h-7 max-w-44 items-center gap-1.5 truncate rounded-full border border-line bg-surface px-2.5 text-[11px] font-medium text-ink-muted md:inline-flex'>
-                  <HardDrive className='h-3.5 w-3.5 shrink-0' />
-                  <span className='truncate'>{selectedTask.model}</span>
-                </span>
-                <span
-                  className={cn(
-                    'hidden h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium md:inline-flex',
-                    selectedTask.networkEnabled
-                      ? 'border-amber-500/30 bg-amber-500/10 text-ink'
-                      : 'border-line bg-surface text-ink-muted'
-                  )}
-                >
-                  {selectedTask.networkEnabled ? (
-                    <Wifi className='h-3.5 w-3.5' />
-                  ) : (
-                    <WifiOff className='h-3.5 w-3.5' />
-                  )}
-                  {selectedTask.networkEnabled
-                    ? t('work.composer.networkOn', {
-                        defaultValue: 'Network on',
-                      })
-                    : t('work.composer.networkOff', {
-                        defaultValue: 'Network off',
-                      })}
-                </span>
-              </>
+              <span className='hidden h-7 max-w-44 items-center gap-1.5 truncate rounded-full border border-line bg-surface px-2.5 text-[11px] font-medium text-ink-muted md:inline-flex'>
+                <HardDrive className='h-3.5 w-3.5 shrink-0' />
+                <span className='truncate'>{selectedTask.model}</span>
+              </span>
             )}
           </div>
 
@@ -1034,7 +983,7 @@ export default function WorkPage() {
                       }),
                       body: t('work.landing.controlledBody', {
                         defaultValue:
-                          'Network access stays off until you opt in.',
+                          'The runtime and task files stay isolated from the host.',
                       }),
                     },
                   ].map(item => {
@@ -1060,7 +1009,6 @@ export default function WorkPage() {
             <WorkComposer
               models={modelOptions}
               modelKey={freshModel?.key || ''}
-              networkEnabled={draftNetwork}
               running={false}
               loading={actionLoading}
               disabled={runtimeUnavailable}
@@ -1069,51 +1017,42 @@ export default function WorkPage() {
               }
               remoteDisclosureSaving={remoteDisclosureSaving}
               onModelChange={changeModel}
-              onNetworkChange={changeNetwork}
               onDismissRemoteDisclosure={dismissRemoteDisclosure}
               onSubmit={submitMessage}
               onCancel={stopRun}
             />
           </>
         ) : selectedTask ? (
-          <div className='flex min-h-0 flex-1'>
-            <section
-              className={cn(
-                'min-h-0 min-w-0 flex-1 flex-col bg-surface xl:flex xl:basis-1/2',
-                mobileSurface === 'conversation' ? 'flex' : 'hidden'
-              )}
-            >
-              <WorkConversation
-                task={selectedTask}
-                loading={loadingTask}
-                loadingOlder={loadingOlderMessages}
-                onLoadOlder={() => loadOlderMessages(selectedTask.id)}
-              />
-              <WorkComposer
-                key={selectedTask.id}
-                models={effectiveModelOptions}
-                modelKey={selectedModelKey}
-                networkEnabled={networkEnabled}
-                running={activeTask}
-                loading={actionLoading}
-                disabled={runtimeUnavailable}
-                remoteDisclosureDismissed={
-                  preferences.workRemoteProviderDisclosureDismissed
-                }
-                remoteDisclosureSaving={remoteDisclosureSaving}
-                onModelChange={changeModel}
-                onNetworkChange={changeNetwork}
-                onDismissRemoteDisclosure={dismissRemoteDisclosure}
-                onSubmit={submitMessage}
-                onCancel={stopRun}
-              />
-            </section>
-            <section
-              className={cn(
-                'min-h-0 min-w-0 flex-1 border-s border-line xl:flex xl:basis-1/2',
-                mobileSurface === 'workspace' ? 'flex' : 'hidden'
-              )}
-            >
+          <WorkSplitPane
+            userId={authenticatedUserId}
+            mobileSurface={mobileSurface}
+            conversation={
+              <>
+                <WorkConversation
+                  task={selectedTask}
+                  loading={loadingTask}
+                  loadingOlder={loadingOlderMessages}
+                  onLoadOlder={() => loadOlderMessages(selectedTask.id)}
+                />
+                <WorkComposer
+                  key={selectedTask.id}
+                  models={effectiveModelOptions}
+                  modelKey={selectedModelKey}
+                  running={activeTask}
+                  loading={actionLoading}
+                  disabled={runtimeUnavailable}
+                  remoteDisclosureDismissed={
+                    preferences.workRemoteProviderDisclosureDismissed
+                  }
+                  remoteDisclosureSaving={remoteDisclosureSaving}
+                  onModelChange={changeModel}
+                  onDismissRemoteDisclosure={dismissRemoteDisclosure}
+                  onSubmit={submitMessage}
+                  onCancel={stopRun}
+                />
+              </>
+            }
+            workspace={
               <div className='min-h-0 min-w-0 flex-1'>
                 <WorkspacePane
                   key={selectedTask.id}
@@ -1145,8 +1084,8 @@ export default function WorkPage() {
                   onDirtyChange={setWorkspaceDirty}
                 />
               </div>
-            </section>
-          </div>
+            }
+          />
         ) : (
           <div className='flex min-h-0 flex-1 flex-col items-center justify-center px-6 text-center'>
             {loadingTask ? (

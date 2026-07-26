@@ -152,7 +152,7 @@ router.post(
         userId,
         message,
         model,
-        req.body?.networkEnabled === true,
+        true,
         provider
       );
       const runId = detail.activeRun?.id;

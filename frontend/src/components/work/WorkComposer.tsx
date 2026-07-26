@@ -15,24 +15,21 @@
  * limitations under the License.
  */
 
-import { CircleAlert, Send, Square, Wifi, WifiOff, X } from 'lucide-react';
+import { CircleAlert, Send, Square, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkModelOption } from '@/types/work';
-import { cn } from '@/utils';
 import { Button } from '@/components/ui';
 
 interface WorkComposerProps {
   models: WorkModelOption[];
   modelKey: string;
-  networkEnabled: boolean;
   running: boolean;
   loading: boolean;
   disabled?: boolean;
   remoteDisclosureDismissed: boolean;
   remoteDisclosureSaving: boolean;
   onModelChange: (modelKey: string) => void | Promise<void>;
-  onNetworkChange: (enabled: boolean) => void | Promise<void>;
   onDismissRemoteDisclosure: () => Promise<boolean>;
   onSubmit: (message: string) => Promise<boolean>;
   onCancel: () => void | Promise<void>;
@@ -41,14 +38,12 @@ interface WorkComposerProps {
 export function WorkComposer({
   models,
   modelKey,
-  networkEnabled,
   running,
   loading,
   disabled = false,
   remoteDisclosureDismissed,
   remoteDisclosureSaving,
   onModelChange,
-  onNetworkChange,
   onDismissRemoteDisclosure,
   onSubmit,
   onCancel,
@@ -180,39 +175,6 @@ export function WorkComposer({
                 </option>
               ))}
             </select>
-
-            <label
-              className={cn(
-                'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2 text-xs font-medium transition-colors',
-                networkEnabled
-                  ? 'border-amber-500/30 bg-amber-500/10 text-ink'
-                  : 'border-line bg-surface-raised text-ink-muted',
-                running && 'cursor-not-allowed opacity-50'
-              )}
-              title={t('work.composer.networkHelp', {
-                defaultValue:
-                  'Off by default. Enable only when this task needs network access.',
-              })}
-            >
-              <input
-                data-testid='work-network-toggle'
-                type='checkbox'
-                checked={networkEnabled}
-                disabled={running}
-                onChange={event => void onNetworkChange(event.target.checked)}
-                className='sr-only'
-              />
-              {networkEnabled ? (
-                <Wifi className='h-3.5 w-3.5' />
-              ) : (
-                <WifiOff className='h-3.5 w-3.5' />
-              )}
-              {networkEnabled
-                ? t('work.composer.networkOn', { defaultValue: 'Network on' })
-                : t('work.composer.networkOff', {
-                    defaultValue: 'Network off',
-                  })}
-            </label>
           </div>
 
           {running ? (

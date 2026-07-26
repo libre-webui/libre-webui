@@ -24,7 +24,7 @@ const task = (
   id: string,
   title: string,
   assistantMessage: string,
-  networkEnabled = false
+  networkEnabled = true
 ) => ({
   id,
   title,
@@ -60,7 +60,7 @@ const task = (
   workspacePath: '/workspace' as const,
 });
 
-test('creates a persistent Work task with networking off by default', async ({
+test('creates a persistent Work task without exposing network controls', async ({
   page,
 }) => {
   const mock = await mockLibreWebUiApi(page, {
@@ -85,7 +85,10 @@ test('creates a persistent Work task with networking off by default', async ({
   await expect(
     page.getByRole('heading', { name: 'Start a new Work task' })
   ).toBeVisible();
-  await expect(page.getByTestId('work-network-toggle')).not.toBeChecked();
+  await expect(page.getByText('Docker ready')).toBeVisible();
+  await expect(page.getByText(/Docker \+ Ollama ready/)).toHaveCount(0);
+  await expect(page.getByTestId('work-network-toggle')).toHaveCount(0);
+  await expect(page.getByText(/Network (?:on|off)/)).toHaveCount(0);
 
   await page
     .getByTestId('work-composer-input')
@@ -101,7 +104,7 @@ test('creates a persistent Work task with networking off by default', async ({
       message: 'Build a calm city landing page',
       model: 'llama3.2:3b',
       providerType: 'ollama',
-      networkEnabled: false,
+      networkEnabled: true,
     },
   ]);
 
@@ -229,7 +232,7 @@ test('offers cloud models and remembers remote disclosure dismissal', async ({
       model: 'gpt-5.4',
       providerType: 'plugin',
       providerId: 'openai',
-      networkEnabled: false,
+      networkEnabled: true,
     },
   ]);
 });
@@ -502,6 +505,7 @@ test('reopens each task with its own conversation and filesystem', async ({
       .getByTestId('sidebar-work-task-item')
       .filter({ hasText: 'Garden planner' })
       .getByRole('button')
+      .first()
   ).toHaveAttribute('aria-current', 'page');
   await expect(
     page.getByText('Only workspace A contains the garden plan.')
@@ -555,6 +559,92 @@ test('reopens each task with its own conversation and filesystem', async ({
   );
 });
 
+test('keeps task positions stable and uses the requested status palette', async ({
+  page,
+}) => {
+  const statuses = [
+    {
+      raw: 'idle' as const,
+      label: 'Idle',
+      color: 'rgb(255, 255, 255)',
+    },
+    {
+      raw: 'preparing' as const,
+      label: 'Thinking',
+      color: 'rgb(48, 121, 255)',
+    },
+    {
+      raw: 'running' as const,
+      label: 'Thinking',
+      color: 'rgb(48, 121, 255)',
+    },
+    {
+      raw: 'completed' as const,
+      label: 'Complete',
+      color: 'rgb(76, 212, 117)',
+    },
+    {
+      raw: 'cancelled' as const,
+      label: 'Needs input',
+      color: 'rgb(255, 204, 0)',
+    },
+    {
+      raw: 'failed' as const,
+      label: 'Error',
+      color: 'rgb(255, 61, 129)',
+    },
+  ];
+  const statusTasks = statuses.map(status => ({
+    ...task(
+      `status-${status.raw}`,
+      `${status.label} task`,
+      `${status.label} response`
+    ),
+    status: status.raw,
+  }));
+  await mockLibreWebUiApi(page, {
+    workTasks: statusTasks,
+  });
+
+  await page.goto('/work/status-idle');
+
+  const list = page.getByTestId('sidebar-work-task-list');
+  const taskIds = async () =>
+    list
+      .getByTestId('sidebar-work-task-item')
+      .evaluateAll(items =>
+        items.map(item => item.getAttribute('data-task-id'))
+      );
+  await expect(list.getByTestId('sidebar-work-task-item')).toHaveCount(
+    statuses.length
+  );
+  const initialOrder = await taskIds();
+
+  for (const expected of statuses) {
+    const row = list.locator(
+      `[data-testid="sidebar-work-task-item"][data-task-id="status-${expected.raw}"]`
+    );
+    const sidebarIndicator = row.getByTestId('sidebar-work-task-status');
+    await expect(sidebarIndicator).toHaveCSS(
+      'background-color',
+      expected.color
+    );
+    await expect(sidebarIndicator).toHaveAttribute(
+      'data-status-label',
+      expected.label
+    );
+
+    await row.getByRole('button').first().click();
+    await expect(page).toHaveURL(new RegExp(`/work/status-${expected.raw}$`));
+    await expect(page.getByTestId('work-status')).toContainText(expected.label);
+    await expect(page.getByTestId('work-status-indicator')).toHaveCSS(
+      'background-color',
+      expected.color
+    );
+    expect(await taskIds()).toEqual(initialOrder);
+  }
+});
+
 test('keeps an inactive task deleted when an older poll finishes', async ({
   page,
 }) => {
@@ -589,6 +679,63 @@ test('keeps an inactive task deleted when an older poll finishes', async ({
   expect(mock.workTaskDeleteRequests).toEqual(['inactive-workspace']);
   await page.waitForTimeout(1_300);
   await expect(inactiveRow).toHaveCount(0);
+});
+
+test('deletes the selected sidebar task directly without a second dirty prompt', async ({
+  page,
+}) => {
+  const selectedTask = task(
+    'selected-delete-workspace',
+    'Delete this workspace',
+    'The editable file is ready.'
+  );
+  const mock = await mockLibreWebUiApi(page, {
+    workTasks: [selectedTask],
+    workFiles: {
+      'selected-delete-workspace': [
+        {
+          path: 'draft.txt',
+          name: 'draft.txt',
+          type: 'file',
+          size: 5,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'selected-delete-workspace:draft.txt': 'saved',
+    },
+  });
+
+  await page.goto('/work/selected-delete-workspace');
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'draft.txt' })
+    .click();
+  await page.getByTestId('work-file-editor').fill('unsaved');
+
+  const selectedRow = page.locator(
+    '[data-testid="sidebar-work-task-item"][data-task-id="selected-delete-workspace"]'
+  );
+  const deleteButton = selectedRow.getByTestId('sidebar-work-task-delete');
+  await expect(deleteButton).toBeVisible();
+
+  const dialogs: string[] = [];
+  page.on('dialog', dialog => {
+    dialogs.push(dialog.message());
+    void dialog.accept();
+  });
+  await deleteButton.click();
+
+  await expect(page).toHaveURL(/\/work$/);
+  await expect(
+    page.getByRole('heading', { name: 'Start a new Work task' })
+  ).toBeVisible();
+  expect(dialogs).toHaveLength(1);
+  expect(dialogs[0]).toContain(
+    'Delete “Delete this workspace” and its workspace permanently?'
+  );
+  expect(mock.workTaskDeleteRequests).toEqual(['selected-delete-workspace']);
 });
 
 test('surfaces an initial list failure after a later silent poll fails', async ({
@@ -849,6 +996,76 @@ test('shows tool activity, saves files, and isolates preview content', async ({
     { taskId: 'preview-workspace', action: 'start', command: undefined },
     { taskId: 'preview-workspace', action: 'stop' },
   ]);
+});
+
+test('resizes the Work conversation and workspace with pointer and keyboard controls', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const splitTask = task(
+    'resizable-workspace',
+    'Resizable workspace',
+    'Drag the divider to make room.'
+  );
+  await mockLibreWebUiApi(page, {
+    workTasks: [splitTask],
+  });
+
+  await page.goto('/work/resizable-workspace');
+
+  const splitPane = page.getByTestId('work-split-pane');
+  const conversation = page.getByTestId('work-conversation-panel');
+  const workspace = page.getByTestId('work-workspace-panel');
+  const resizer = page.getByTestId('work-split-resizer');
+  await expect(resizer).toBeVisible();
+  await expect(resizer).toHaveAttribute('role', 'separator');
+  await expect(resizer).toHaveAttribute('aria-orientation', 'vertical');
+  await expect(resizer).toHaveAttribute('aria-valuenow', '45');
+
+  await resizer.focus();
+  await resizer.press('ArrowRight');
+  await expect(resizer).toHaveAttribute('aria-valuenow', '47');
+  await resizer.press('Enter');
+  await expect(resizer).toHaveAttribute('aria-valuenow', '45');
+
+  const beforeConversation = await conversation.boundingBox();
+  const beforeWorkspace = await workspace.boundingBox();
+  const handle = await resizer.boundingBox();
+  expect(beforeConversation).not.toBeNull();
+  expect(beforeWorkspace).not.toBeNull();
+  expect(handle).not.toBeNull();
+
+  await page.mouse.move(
+    (handle?.x ?? 0) + (handle?.width ?? 0) / 2,
+    (handle?.y ?? 0) + (handle?.height ?? 0) / 2
+  );
+  await page.mouse.down();
+  await expect(splitPane).toHaveAttribute('data-resizing', 'true');
+  await expect(page.getByTestId('work-split-drag-shield')).toBeVisible();
+  await page.mouse.move(
+    (handle?.x ?? 0) + (handle?.width ?? 0) / 2 + 100,
+    (handle?.y ?? 0) + (handle?.height ?? 0) / 2,
+    { steps: 5 }
+  );
+  await page.mouse.up();
+  await expect(splitPane).toHaveAttribute('data-resizing', 'false');
+
+  const afterConversation = await conversation.boundingBox();
+  const afterWorkspace = await workspace.boundingBox();
+  expect(
+    (afterConversation?.width ?? 0) - (beforeConversation?.width ?? 0)
+  ).toBeGreaterThan(70);
+  expect(
+    (beforeWorkspace?.width ?? 0) - (afterWorkspace?.width ?? 0)
+  ).toBeGreaterThan(70);
+  const persistedPercent = await resizer.getAttribute('aria-valuenow');
+  expect(Number(persistedPercent)).toBeGreaterThan(45);
+
+  await page.reload();
+  await expect(page.getByTestId('work-split-resizer')).toHaveAttribute(
+    'aria-valuenow',
+    persistedPercent || ''
+  );
 });
 
 test('formats and highlights workspace code in dark and light mode', async ({
@@ -1332,8 +1549,9 @@ test('keeps the compact task surface switch in the task header', async ({
 
   const surfaceSwitch = page.getByRole('group', { name: 'Task surface' });
   await expect(surfaceSwitch).toBeVisible();
+  await expect(page.getByTestId('work-split-resizer')).not.toBeVisible();
   await expect(page.getByTestId('work-compact-status')).toHaveAccessibleName(
-    'Status: completed'
+    'Status: Complete'
   );
   expect(
     await surfaceSwitch.evaluate(element => element.parentElement?.tagName)

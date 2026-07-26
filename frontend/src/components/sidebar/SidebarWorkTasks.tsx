@@ -17,8 +17,9 @@
 
 import { Briefcase, Loader2, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { WorkTask, WorkTaskSummary } from '@/types/work';
+import type { WorkTaskSummary } from '@/types/work';
 import { cn, formatTimestamp, truncateText } from '@/utils';
+import { workStatusPresentation } from '@/utils/workStatus';
 
 interface SidebarWorkTasksProps {
   tasks: WorkTaskSummary[];
@@ -29,15 +30,6 @@ interface SidebarWorkTasksProps {
   onSelectTask: (taskId: string) => void;
   onDeleteTask: (task: WorkTaskSummary) => void;
 }
-
-const statusTone: Record<WorkTask['status'], string> = {
-  idle: 'bg-gray-400',
-  preparing: 'bg-amber-500 animate-pulse',
-  running: 'bg-primary-500 animate-pulse',
-  completed: 'bg-emerald-500',
-  failed: 'bg-error-500',
-  cancelled: 'bg-gray-400',
-};
 
 export function SidebarWorkTasks({
   tasks,
@@ -121,6 +113,10 @@ export function SidebarWorkTasks({
           >
             {tasks.map(task => {
               const selected = currentTaskId === task.id;
+              const status = workStatusPresentation[task.status];
+              const statusLabel = t(status.labelKey, {
+                defaultValue: status.label,
+              });
               return (
                 <div
                   key={task.id}
@@ -164,10 +160,15 @@ export function SidebarWorkTasks({
                         {task.title.trim().charAt(0) || '•'}
                         <span
                           aria-hidden='true'
+                          data-testid='sidebar-work-task-status'
+                          data-status-label={statusLabel}
                           className={cn(
                             'absolute -bottom-0.5 -end-0.5 h-2.5 w-2.5 rounded-full border-2 border-gray-100 dark:border-dark-50',
-                            statusTone[task.status]
+                            status.animated && 'animate-pulse',
+                            task.status === 'idle' &&
+                              'ring-1 ring-black/20 dark:ring-white/20'
                           )}
+                          style={{ backgroundColor: status.color }}
                         />
                       </span>
                     ) : (
@@ -175,10 +176,15 @@ export function SidebarWorkTasks({
                         <span className='flex items-center gap-2'>
                           <span
                             aria-hidden='true'
+                            data-testid='sidebar-work-task-status'
+                            data-status-label={statusLabel}
                             className={cn(
                               'h-2 w-2 shrink-0 rounded-full',
-                              statusTone[task.status]
+                              status.animated && 'animate-pulse',
+                              task.status === 'idle' &&
+                                'ring-1 ring-black/20 dark:ring-white/20'
                             )}
+                            style={{ backgroundColor: status.color }}
                           />
                           <span className='min-w-0 flex-1 truncate text-[13px] font-medium leading-tight text-gray-900 dark:text-dark-900'>
                             {truncateText(
@@ -210,16 +216,19 @@ export function SidebarWorkTasks({
                     <span className='sr-only'>
                       {t('work.tasks.status', {
                         defaultValue: 'Status: {{status}}',
-                        status: task.status,
+                        status: statusLabel,
                       })}
                     </span>
                   </button>
-                  {!selected && !sidebarCompact && (
+                  {!sidebarCompact && (
                     <button
                       type='button'
                       data-testid='sidebar-work-task-delete'
                       disabled={actionLoading}
-                      className='absolute end-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 opacity-0 transition-[color,background-color,opacity] hover:bg-error-500/10 hover:text-error-600 focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error-500/30 disabled:cursor-not-allowed disabled:opacity-40 group-focus-within:opacity-100 group-hover:opacity-100 dark:text-dark-500'
+                      className={cn(
+                        'absolute end-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-gray-400 transition-[color,background-color,opacity] hover:bg-error-500/10 hover:text-error-600 focus:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error-500/30 disabled:cursor-not-allowed disabled:opacity-40 group-focus-within:opacity-100 group-hover:opacity-100 dark:text-dark-500',
+                        selected ? 'opacity-100' : 'opacity-0'
+                      )}
                       aria-label={t('work.tasks.deleteNamed', {
                         defaultValue: 'Delete {{title}}',
                         title:

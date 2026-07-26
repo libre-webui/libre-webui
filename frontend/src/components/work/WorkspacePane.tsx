@@ -637,15 +637,7 @@ export function WorkspacePane({
                   data-testid='work-start-preview-button'
                   size='sm'
                   className='h-8 w-8 rounded-lg bg-[#ff7b52] px-0 text-[#3d120c] hover:bg-[#ff7b52]/90 sm:w-auto sm:px-2.5'
-                  disabled={!task.networkEnabled || actionLoading}
-                  title={
-                    task.networkEnabled
-                      ? undefined
-                      : t('work.preview.networkRequired', {
-                          defaultValue:
-                            'Enable network access to start a preview.',
-                        })
-                  }
+                  disabled={actionLoading}
                   onClick={() =>
                     void onStartPreview(previewCommand.trim() || undefined)
                   }
@@ -830,15 +822,7 @@ export function WorkspacePane({
           aria-labelledby='work-workspace-tab-preview'
           className='flex min-h-0 flex-1 flex-col'
         >
-          {!task.networkEnabled ? (
-            <div className='m-auto max-w-sm px-6 text-center text-xs leading-relaxed text-ink-muted'>
-              <Monitor className='mx-auto mb-3 h-8 w-8 text-ink-subtle' />
-              {t('work.preview.enableNetwork', {
-                defaultValue:
-                  'Preview is off. Enable network access for this task only when you are ready to expose its local development server.',
-              })}
-            </div>
-          ) : task.previewStatus === 'starting' ? (
+          {task.previewStatus === 'starting' ? (
             <div className='m-auto flex items-center gap-2 text-xs text-ink-muted'>
               <Loader2 className='h-4 w-4 animate-spin' />
               {t('work.preview.starting', {

@@ -206,6 +206,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     try {
       await deleteWorkTask(task.id);
       clearWorkTaskDrafts(task.id);
+      if (currentWorkTaskId === task.id) {
+        navigate('/work', {
+          replace: true,
+          state: { deletedWorkTaskId: task.id },
+        });
+      }
     } catch (error) {
       logger.error('Failed to delete Work task:', error);
       toast.error(

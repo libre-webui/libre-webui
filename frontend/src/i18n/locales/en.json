@@ -1476,15 +1476,12 @@
       "durable": "Durable",
       "durableBody": "Return to its conversation and workspace later.",
       "controlled": "Controlled",
-      "controlledBody": "Container network access stays off until you opt in."
+      "controlledBody": "The runtime and task files stay isolated from the host."
     },
     "composer": {
       "placeholder": "Describe what you want to build or change…",
       "model": "Work model",
       "noModels": "No Work-compatible models",
-      "networkHelp": "Controls the workspace container only. Keep it off unless this task needs external access.",
-      "networkOn": "Network on",
-      "networkOff": "Network off",
       "cancel": "Stop",
       "send": "Run",
       "hint": "Each task keeps its own files and history. Review model output before using it.",
@@ -1503,9 +1500,16 @@
       "preparing": "Preparing isolated workspace…",
       "running": "Working in the local workspace…"
     },
+    "statusLabels": {
+      "idle": "Idle",
+      "thinking": "Thinking",
+      "complete": "Complete",
+      "needsInput": "Needs input",
+      "error": "Error"
+    },
     "runtime": {
       "unavailable": "Runtime unavailable",
-      "readyOllama": "Docker + Ollama ready",
+      "readyOllama": "Docker ready",
       "readyPlugin": "Docker + plugin ready",
       "readyHybrid": "Docker + models ready",
       "reason": "Docker and an available Ollama or plugin model provider are required."
@@ -1514,7 +1518,10 @@
       "label": "Workspace views",
       "files": "Files",
       "activity": "Activity",
-      "preview": "Preview"
+      "preview": "Preview",
+      "resize": "Resize conversation and workspace",
+      "resizeHint": "Drag to resize. Use arrow keys for precise control. Double-click or press Enter to reset.",
+      "splitSize": "Conversation {{conversation}}%, workspace {{workspace}}%"
     },
     "files": {
       "discard": "Discard unsaved file changes?",
@@ -1540,8 +1547,6 @@
       "start": "Start preview",
       "stop": "Stop preview",
       "open": "Open",
-      "networkRequired": "Enable network access to start a preview.",
-      "enableNetwork": "Preview is off. Enable network access for this task only when you are ready to expose its local development server.",
       "starting": "Starting preview…",
       "frameTitle": "Workspace preview",
       "failed": "The preview could not start. Check Activity, then try another command.",
@@ -1555,7 +1560,6 @@
     "toasts": {
       "runFailed": "Could not start the Work task.",
       "updateFailed": "Could not update this task.",
-      "networkFailed": "Could not update network access.",
       "cancelled": "Work run stopped.",
       "cancelFailed": "Could not stop the Work run.",
       "deleteFailed": "Could not delete this Work task.",
