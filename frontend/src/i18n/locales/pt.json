@@ -1542,6 +1542,13 @@
       "needsInput": "Entrada necessária",
       "error": "Erro"
     },
+    "live": {
+      "connecting": "Conectando às atualizações ao vivo…",
+      "reconnecting": "Reconectando às atualizações ao vivo…",
+      "unavailable": "Atualizações ao vivo indisponíveis",
+      "newActivity": "Nova atividade",
+      "skillsLoaded": "Habilidades do espaço de trabalho · {{count}}"
+    },
     "runtime": {
       "unavailable": "Ambiente de execução indisponível",
       "readyOllama": "Docker pronto",

@@ -23,11 +23,18 @@ import type {
   WorkCapabilities,
   WorkFile,
   WorkFileEntry,
+  WorkLiveRun,
+  WorkRunConnectionState,
+  WorkRunEvent,
   WorkMessage,
   WorkTask,
   WorkTaskSummary,
 } from '@/types/work';
 import { workApi } from '@/utils/api';
+import {
+  applyWorkRunEvent as reduceWorkRunEvent,
+  createWorkLiveRun,
+} from '@/utils/workEvents';
 
 const responseError = (
   fallback: string,
@@ -156,6 +163,7 @@ interface WorkState {
   selectedTask: WorkTask | null;
   files: WorkFileEntry[];
   selectedFile: WorkFile | null;
+  liveRuns: Record<string, WorkLiveRun>;
   loadingTasks: boolean;
   loadingTask: boolean;
   loadingOlderMessages: boolean;
@@ -175,6 +183,16 @@ interface WorkState {
   deleteTask: (taskId: string) => Promise<void>;
   startRun: (taskId: string, payload: StartWorkRunRequest) => Promise<WorkTask>;
   cancelRun: (taskId: string) => Promise<WorkTask>;
+  beginLiveRun: (taskId: string, runId: string, startedAt?: number) => void;
+  applyRunEvent: (event: WorkRunEvent) => void;
+  applyRunEvents: (events: WorkRunEvent[]) => void;
+  setLiveRunConnection: (
+    taskId: string,
+    runId: string,
+    connection: WorkRunConnectionState,
+    error?: string
+  ) => void;
+  clearLiveRun: (taskId: string, runId?: string) => void;
   loadFiles: (taskId: string, path?: string) => Promise<WorkFileEntry[]>;
   loadFile: (taskId: string, path: string) => Promise<WorkFile>;
   clearSelectedFile: () => void;
@@ -320,6 +338,7 @@ export const useWorkStore = create<WorkState>((set, get) => {
     selectedTask: null,
     files: [],
     selectedFile: null,
+    liveRuns: {},
     loadingTasks: false,
     loadingTask: false,
     loadingOlderMessages: false,
@@ -554,6 +573,9 @@ export const useWorkStore = create<WorkState>((set, get) => {
           files: state.selectedTaskId === taskId ? [] : state.files,
           selectedFile:
             state.selectedTaskId === taskId ? null : state.selectedFile,
+          liveRuns: Object.fromEntries(
+            Object.entries(state.liveRuns).filter(([id]) => id !== taskId)
+          ),
         }));
       } catch (error) {
         const message = thrownError(error, 'Could not delete the Work task.');
@@ -606,6 +628,92 @@ export const useWorkStore = create<WorkState>((set, get) => {
       } finally {
         finishActionRequest(actionToken, requestEpoch);
       }
+    },
+
+    beginLiveRun: (taskId, runId, startedAt) => {
+      set(state => {
+        const existing = state.liveRuns[taskId];
+        return {
+          liveRuns: {
+            ...state.liveRuns,
+            [taskId]:
+              existing?.runId === runId
+                ? {
+                    ...existing,
+                    startedAt: existing.startedAt ?? startedAt,
+                  }
+                : createWorkLiveRun(taskId, runId, startedAt),
+          },
+        };
+      });
+    },
+
+    applyRunEvent: event => {
+      get().applyRunEvents([event]);
+    },
+
+    applyRunEvents: events => {
+      if (events.length === 0) return;
+      set(state => {
+        const liveRuns = { ...state.liveRuns };
+        let tasks = state.tasks;
+        let selectedTask = state.selectedTask;
+        for (const event of events) {
+          liveRuns[event.taskId] = reduceWorkRunEvent(
+            liveRuns[event.taskId],
+            event
+          );
+          const snapshot =
+            event.type === 'snapshot'
+              ? (event.data.task ?? event.data.detail)
+              : undefined;
+          const snapshotTask =
+            snapshot &&
+            typeof snapshot === 'object' &&
+            !Array.isArray(snapshot) &&
+            (snapshot as { id?: unknown }).id === event.taskId &&
+            Array.isArray((snapshot as { messages?: unknown }).messages)
+              ? (snapshot as WorkTask)
+              : undefined;
+          if (snapshotTask) {
+            tasks = upsertTask(tasks, snapshotTask);
+            if (state.selectedTaskId === snapshotTask.id) {
+              selectedTask = mergeTaskDetail(selectedTask, snapshotTask);
+            }
+          }
+        }
+        return {
+          liveRuns,
+          tasks,
+          selectedTask,
+        };
+      });
+    },
+
+    setLiveRunConnection: (taskId, runId, connection, connectionError) => {
+      set(state => {
+        const current = state.liveRuns[taskId];
+        if (!current || current.runId !== runId) return {};
+        return {
+          liveRuns: {
+            ...state.liveRuns,
+            [taskId]: {
+              ...current,
+              connection,
+              connectionError,
+            },
+          },
+        };
+      });
+    },
+
+    clearLiveRun: (taskId, runId) => {
+      set(state => {
+        if (runId && state.liveRuns[taskId]?.runId !== runId) return {};
+        const liveRuns = { ...state.liveRuns };
+        delete liveRuns[taskId];
+        return { liveRuns };
+      });
     },
 
     loadFiles: async (taskId, path = '') => {
@@ -754,6 +862,7 @@ export const useWorkStore = create<WorkState>((set, get) => {
         selectedTask: null,
         files: [],
         selectedFile: null,
+        liveRuns: {},
         loadingTasks: false,
         loadingTask: false,
         loadingOlderMessages: false,

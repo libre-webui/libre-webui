@@ -34,8 +34,20 @@ export type PluginStreamChunk =
       content?: string;
     }
   | {
+      type: 'reasoning';
+      content?: string;
+    }
+  | {
       type: 'tool_call';
       toolCall?: PluginStreamToolCall;
+    }
+  | {
+      type: 'usage';
+      usage?: {
+        promptTokens?: number;
+        completionTokens?: number;
+        totalTokens?: number;
+      };
     }
   | {
       type: 'done';

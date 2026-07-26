@@ -1542,6 +1542,13 @@
       "needsInput": "Cần nhập liệu",
       "error": "Lỗi"
     },
+    "live": {
+      "connecting": "Đang kết nối với cập nhật trực tiếp…",
+      "reconnecting": "Đang kết nối lại với cập nhật trực tiếp…",
+      "unavailable": "Cập nhật trực tiếp không khả dụng",
+      "newActivity": "Hoạt động mới",
+      "skillsLoaded": "Kỹ năng không gian làm việc · {{count}}"
+    },
     "runtime": {
       "unavailable": "Môi trường chạy không khả dụng",
       "readyOllama": "Docker đã sẵn sàng",

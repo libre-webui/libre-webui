@@ -1542,6 +1542,13 @@
       "needsInput": "ইনপুট প্রয়োজন",
       "error": "ত্রুটি"
     },
+    "live": {
+      "connecting": "লাইভ আপডেটের সাথে সংযোগ করা হচ্ছে…",
+      "reconnecting": "লাইভ আপডেটে পুনরায় সংযোগ করা হচ্ছে…",
+      "unavailable": "লাইভ আপডেট পাওয়া যাচ্ছে না",
+      "newActivity": "নতুন কার্যকলাপ",
+      "skillsLoaded": "ওয়ার্কস্পেস দক্ষতা · {{count}}"
+    },
     "runtime": {
       "unavailable": "রানটাইম পাওয়া যাচ্ছে না",
       "readyOllama": "Docker প্রস্তুত",

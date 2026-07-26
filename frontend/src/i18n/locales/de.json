@@ -1542,6 +1542,13 @@
       "needsInput": "Eingabe erforderlich",
       "error": "Fehler"
     },
+    "live": {
+      "connecting": "Verbindung zu Live-Updates wird hergestellt…",
+      "reconnecting": "Verbindung zu Live-Updates wird wiederhergestellt…",
+      "unavailable": "Live-Updates nicht verfügbar",
+      "newActivity": "Neue Aktivität",
+      "skillsLoaded": "Arbeitsbereichsfähigkeiten · {{count}}"
+    },
     "runtime": {
       "unavailable": "Laufzeit nicht verfügbar",
       "readyOllama": "Docker bereit",

@@ -19,11 +19,20 @@ export interface PluginToolCall {
   id: string;
   name: string;
   arguments: string;
+  providerMetadata?: Record<string, unknown>;
+}
+
+export interface PluginStreamUsage {
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
 }
 
 export type PluginStreamChunk =
   | { type: 'content'; content: string }
+  | { type: 'reasoning'; content: string }
   | { type: 'tool_call'; toolCall: PluginToolCall }
+  | { type: 'usage'; usage: PluginStreamUsage }
   | { type: 'done' };
 
 interface ToolCallDelta {
@@ -133,6 +142,19 @@ export async function* streamOpenAICompatibleResponse(
   const decoder = new TextDecoder();
   let buffer = '';
   const toolCallsInProgress = new Map<number, PluginToolCall>();
+  let reasoningContent = '';
+  let completed = false;
+
+  const completedToolCalls = (): PluginToolCall[] => {
+    const calls = [...toolCallsInProgress.values()];
+    if (reasoningContent && calls[0]) {
+      calls[0].providerMetadata = {
+        ...calls[0].providerMetadata,
+        openAIReasoningContent: reasoningContent,
+      };
+    }
+    return calls;
+  };
 
   try {
     while (true) {
@@ -147,9 +169,11 @@ export async function* streamOpenAICompatibleResponse(
         const trimmed = line.trim();
         if (!trimmed || trimmed === 'data: [DONE]') {
           if (trimmed === 'data: [DONE]') {
-            for (const toolCall of toolCallsInProgress.values()) {
+            for (const toolCall of completedToolCalls()) {
               yield { type: 'tool_call', toolCall };
             }
+            toolCallsInProgress.clear();
+            completed = true;
             yield { type: 'done' };
           }
           continue;
@@ -159,32 +183,98 @@ export async function* streamOpenAICompatibleResponse(
           continue;
         }
 
+        let payload: Record<string, unknown>;
         try {
-          const delta = getChoiceDelta(JSON.parse(trimmed.slice(6)));
-          if (!delta) {
-            continue;
-          }
-
-          if (typeof delta.content === 'string' && delta.content) {
-            yield { type: 'content', content: delta.content };
-          }
-
-          if (Array.isArray(delta.tool_calls)) {
-            for (const toolCall of delta.tool_calls) {
-              const parsedDelta = parseToolCallDelta(toolCall);
-              if (parsedDelta) {
-                applyToolCallDelta(toolCallsInProgress, parsedDelta);
-              }
-            }
-          }
+          payload = JSON.parse(trimmed.slice(6)) as Record<string, unknown>;
         } catch {
           // Ignore malformed SSE payloads and keep the stream alive.
+          continue;
+        }
+        const providerError = pluginStreamError(payload);
+        if (providerError) {
+          throw new Error(`Plugin API error: ${providerError}`);
+        }
+        const usage = parseOpenAIUsage(payload.usage);
+        if (usage) {
+          yield { type: 'usage', usage };
+        }
+        const delta = getChoiceDelta(payload);
+        if (!delta) {
+          continue;
+        }
+
+        const reasoning =
+          typeof delta.reasoning_content === 'string'
+            ? delta.reasoning_content
+            : typeof delta.reasoning === 'string'
+              ? delta.reasoning
+              : '';
+        if (reasoning) {
+          reasoningContent += reasoning;
+          yield { type: 'reasoning', content: reasoning };
+        }
+
+        if (typeof delta.content === 'string' && delta.content) {
+          yield { type: 'content', content: delta.content };
+        }
+
+        if (Array.isArray(delta.tool_calls)) {
+          for (const toolCall of delta.tool_calls) {
+            const parsedDelta = parseToolCallDelta(toolCall);
+            if (parsedDelta) {
+              applyToolCallDelta(toolCallsInProgress, parsedDelta);
+            }
+          }
         }
       }
+    }
+
+    if (!completed) {
+      for (const toolCall of completedToolCalls()) {
+        yield { type: 'tool_call', toolCall };
+      }
+      yield { type: 'done' };
     }
   } finally {
     reader.releaseLock();
   }
+}
+
+function pluginStreamError(
+  payload: Record<string, unknown>
+): string | undefined {
+  const error =
+    payload.error && typeof payload.error === 'object'
+      ? (payload.error as Record<string, unknown>)
+      : undefined;
+  const message =
+    typeof error?.message === 'string'
+      ? error.message
+      : typeof payload.error === 'string'
+        ? payload.error
+        : typeof payload.message === 'string' &&
+            (payload.type === 'error' || payload.status === 'error')
+          ? payload.message
+          : undefined;
+  return message?.slice(0, 500);
+}
+
+function parseOpenAIUsage(value: unknown): PluginStreamUsage | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const usage = value as Record<string, unknown>;
+  const promptTokens =
+    typeof usage.prompt_tokens === 'number' ? usage.prompt_tokens : undefined;
+  const completionTokens =
+    typeof usage.completion_tokens === 'number'
+      ? usage.completion_tokens
+      : undefined;
+  const totalTokens =
+    typeof usage.total_tokens === 'number' ? usage.total_tokens : undefined;
+  return promptTokens !== undefined ||
+    completionTokens !== undefined ||
+    totalTokens !== undefined
+    ? { promptTokens, completionTokens, totalTokens }
+    : undefined;
 }
 
 function getAnthropicEventType(payload: unknown): string | null {
@@ -213,8 +303,38 @@ export async function* streamAnthropicResponse(
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   const toolCallsInProgress = new Map<number, PluginToolCall>();
+  const thinkingBlocks = new Map<number, Record<string, unknown>>();
   let buffer = '';
   let completed = false;
+  let attachedThinking = false;
+  let inputTokens: number | undefined;
+  let outputTokens: number | undefined;
+
+  const attachThinking = (toolCall: PluginToolCall): PluginToolCall => {
+    if (attachedThinking || thinkingBlocks.size === 0) return toolCall;
+    attachedThinking = true;
+    return {
+      ...toolCall,
+      providerMetadata: {
+        ...toolCall.providerMetadata,
+        anthropicThinkingBlocks: [...thinkingBlocks.values()],
+      },
+    };
+  };
+
+  const usageChunk = (): PluginStreamChunk | undefined => {
+    if (inputTokens === undefined && outputTokens === undefined) {
+      return undefined;
+    }
+    return {
+      type: 'usage',
+      usage: {
+        promptTokens: inputTokens,
+        completionTokens: outputTokens,
+        totalTokens: (inputTokens || 0) + (outputTokens || 0),
+      },
+    };
+  };
 
   try {
     while (true) {
@@ -244,6 +364,36 @@ export async function* streamAnthropicResponse(
         }
 
         const eventType = getAnthropicEventType(payload);
+        if (eventType === 'message_start') {
+          const message =
+            payload.message && typeof payload.message === 'object'
+              ? (payload.message as Record<string, unknown>)
+              : undefined;
+          const usage =
+            message?.usage && typeof message.usage === 'object'
+              ? (message.usage as Record<string, unknown>)
+              : undefined;
+          if (typeof usage?.input_tokens === 'number') {
+            inputTokens = usage.input_tokens;
+            const chunk = usageChunk();
+            if (chunk) yield chunk;
+          }
+          continue;
+        }
+
+        if (eventType === 'message_delta') {
+          const usage =
+            payload.usage && typeof payload.usage === 'object'
+              ? (payload.usage as Record<string, unknown>)
+              : undefined;
+          if (typeof usage?.output_tokens === 'number') {
+            outputTokens = usage.output_tokens;
+            const chunk = usageChunk();
+            if (chunk) yield chunk;
+          }
+          continue;
+        }
+
         if (eventType === 'content_block_start') {
           const index =
             typeof payload.index === 'number' ? payload.index : undefined;
@@ -263,6 +413,12 @@ export async function* streamAnthropicResponse(
               name: contentBlock.name,
               arguments: '',
             });
+          } else if (
+            index !== undefined &&
+            (contentBlock?.type === 'thinking' ||
+              contentBlock?.type === 'redacted_thinking')
+          ) {
+            thinkingBlocks.set(index, { ...contentBlock });
           }
           continue;
         }
@@ -283,6 +439,27 @@ export async function* streamAnthropicResponse(
             yield { type: 'content', content: delta.text };
           } else if (
             index !== undefined &&
+            delta?.type === 'thinking_delta' &&
+            typeof delta.thinking === 'string'
+          ) {
+            const block = thinkingBlocks.get(index);
+            if (block) {
+              block.thinking = `${typeof block.thinking === 'string' ? block.thinking : ''}${delta.thinking}`;
+            }
+            if (delta.thinking) {
+              yield { type: 'reasoning', content: delta.thinking };
+            }
+          } else if (
+            index !== undefined &&
+            delta?.type === 'signature_delta' &&
+            typeof delta.signature === 'string'
+          ) {
+            const block = thinkingBlocks.get(index);
+            if (block) {
+              block.signature = `${typeof block.signature === 'string' ? block.signature : ''}${delta.signature}`;
+            }
+          } else if (
+            index !== undefined &&
             delta?.type === 'input_json_delta' &&
             typeof delta.partial_json === 'string'
           ) {
@@ -301,7 +478,7 @@ export async function* streamAnthropicResponse(
             index === undefined ? undefined : toolCallsInProgress.get(index);
           if (index !== undefined && toolCall) {
             toolCallsInProgress.delete(index);
-            yield { type: 'tool_call', toolCall };
+            yield { type: 'tool_call', toolCall: attachThinking(toolCall) };
           }
           continue;
         }
@@ -320,7 +497,7 @@ export async function* streamAnthropicResponse(
 
         if (eventType === 'message_stop') {
           for (const toolCall of toolCallsInProgress.values()) {
-            yield { type: 'tool_call', toolCall };
+            yield { type: 'tool_call', toolCall: attachThinking(toolCall) };
           }
           toolCallsInProgress.clear();
           completed = true;
@@ -331,7 +508,7 @@ export async function* streamAnthropicResponse(
 
     if (!completed) {
       for (const toolCall of toolCallsInProgress.values()) {
-        yield { type: 'tool_call', toolCall };
+        yield { type: 'tool_call', toolCall: attachThinking(toolCall) };
       }
       yield { type: 'done' };
     }

@@ -137,12 +137,25 @@ conflict-aware saves, and a draggable responsive split between conversation and
 workspace. Tasks remain in the main sidebar so returning to an older task also
 returns to its existing files and history.
 
+Active runs stream assistant text, provider-exposed reasoning, tool calls,
+results, usage, and state changes into the interface. Reasoning appears only
+when the selected provider returns it; Libre WebUI cannot reveal a model's
+hidden chain-of-thought. Server-owned worker skills teach the model the
+workspace boundary, efficient project discovery, safe editing, verification,
+and preview lifecycle without adding control files to the project.
+
 Work can use installed Ollama models, Ollama Cloud models, or configured
 completion/chat plugins through OpenAI-compatible, Anthropic, and Gemini tool
 adapters. Tool support is required. Selecting a remote route shows a dismissible
 per-user disclosure because an autonomous run may make multiple paid provider
 calls and may send conversation context and requested tool results—including
 file contents—to that service.
+
+The same configurable round budget applies to every provider route (48 by
+default). If it is exhausted, Work requests a final no-tools progress handoff
+and ends in the yellow **Needs input** state instead of reporting a false
+success or a raw provider-specific round-limit error. A follow-up run continues
+in the same durable workspace.
 
 Work is admin-only and never falls back to host command execution. Containers
 run as a non-root user with a read-only root filesystem, dropped capabilities,

@@ -16,14 +16,109 @@
  */
 
 export type WorkTaskStatus =
-  'idle' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
+  | 'idle'
+  | 'preparing'
+  | 'running'
+  | 'completed'
+  | 'needs_input'
+  | 'failed'
+  | 'cancelled';
 
 export type WorkRunStatus =
-  'queued' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
+  | 'queued'
+  | 'preparing'
+  | 'running'
+  | 'completed'
+  | 'needs_input'
+  | 'failed'
+  | 'cancelled';
 
 export type WorkPreviewStatus = 'stopped' | 'starting' | 'running' | 'failed';
 
 export type WorkProviderType = 'ollama' | 'plugin';
+
+export type WorkRunEventType =
+  | 'snapshot'
+  | 'run_state'
+  | 'reasoning_delta'
+  | 'assistant_delta'
+  | 'tool_call'
+  | 'tool_result'
+  | 'usage'
+  | 'skill_loaded'
+  | 'error'
+  | 'done';
+
+export type WorkRunConnectionState =
+  'idle' | 'connecting' | 'connected' | 'reconnecting' | 'closed' | 'error';
+
+export type WorkLiveRunPhase =
+  | 'queued'
+  | 'preparing'
+  | 'thinking'
+  | 'using_tool'
+  | 'responding'
+  | 'completed'
+  | 'needs_input'
+  | 'failed'
+  | 'cancelled';
+
+export interface WorkRunEvent {
+  id: number;
+  type: WorkRunEventType;
+  taskId: string;
+  runId: string;
+  timestamp: number;
+  data: Record<string, unknown>;
+}
+
+export interface WorkLiveToolActivity {
+  id: string;
+  name: string;
+  status: 'running' | 'completed' | 'error';
+  arguments?: unknown;
+  output?: string;
+  metadata?: Record<string, unknown>;
+  startedAt?: number;
+  finishedAt?: number;
+  durationMs?: number;
+}
+
+export interface WorkRunUsage {
+  inputTokens?: number;
+  outputTokens?: number;
+  reasoningTokens?: number;
+  cachedTokens?: number;
+  totalTokens?: number;
+  tokensPerSecond?: number;
+  durationMs?: number;
+}
+
+export interface WorkRunSkill {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface WorkLiveRun {
+  taskId: string;
+  runId: string;
+  connection: WorkRunConnectionState;
+  connectionError?: string;
+  phase: WorkLiveRunPhase;
+  lastEventId: number;
+  reasoning: string;
+  response: string;
+  tools: WorkLiveToolActivity[];
+  usage?: WorkRunUsage;
+  skills: WorkRunSkill[];
+  round?: number;
+  roundLimit?: number;
+  startedAt?: number;
+  finishedAt?: number;
+  error?: string;
+  terminal: boolean;
+}
 
 export interface WorkModelSelection {
   model: string;
@@ -53,7 +148,7 @@ export interface WorkMessage {
   runId?: string | null;
   messageIndex: number;
   role: 'user' | 'assistant' | 'tool';
-  kind: 'message' | 'tool_call' | 'tool_result' | 'error';
+  kind: 'message' | 'reasoning' | 'tool_call' | 'tool_result' | 'error';
   content: string;
   metadata?: Record<string, unknown> | null;
   createdAt: number;

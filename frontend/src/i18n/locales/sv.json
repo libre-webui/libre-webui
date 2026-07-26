@@ -1542,6 +1542,13 @@
       "needsInput": "Behöver inmatning",
       "error": "Fel"
     },
+    "live": {
+      "connecting": "Ansluter till liveuppdateringar…",
+      "reconnecting": "Återansluter till liveuppdateringar…",
+      "unavailable": "Liveuppdateringar är inte tillgängliga",
+      "newActivity": "Ny aktivitet",
+      "skillsLoaded": "Arbetsytefärdigheter · {{count}}"
+    },
     "runtime": {
       "unavailable": "Körmiljön är inte tillgänglig",
       "readyOllama": "Docker redo",

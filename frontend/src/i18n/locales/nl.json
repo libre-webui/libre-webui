@@ -1542,6 +1542,13 @@
       "needsInput": "Invoer nodig",
       "error": "Fout"
     },
+    "live": {
+      "connecting": "Verbinden met live-updates…",
+      "reconnecting": "Opnieuw verbinden met live-updates…",
+      "unavailable": "Live-updates niet beschikbaar",
+      "newActivity": "Nieuwe activiteit",
+      "skillsLoaded": "Werkruimtevaardigheden · {{count}}"
+    },
     "runtime": {
       "unavailable": "Runtime niet beschikbaar",
       "readyOllama": "Docker gereed",

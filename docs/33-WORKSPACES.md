@@ -50,6 +50,11 @@ This release introduces Work as a complete task workflow:
   task. Containers can be stopped or recreated without deleting task files.
 - Durable conversation, run state, tool activity, model selection, and task
   ownership in Libre WebUI's database.
+- A live, authenticated run stream for assistant text, provider-exposed
+  reasoning, tool calls and results, usage, worker skills, and state changes.
+- Server-owned worker skills that teach the selected model how to inspect,
+  edit, verify, and preview efficiently without writing control files into the
+  project.
 - Tool-capable local Ollama models, Ollama Cloud models, and configured
   completion or chat provider plugins.
 - A responsive Conversation/Workspace split with draggable, keyboard
@@ -167,15 +172,18 @@ against the same conversation and filesystem.
 
 The interface maps durable backend states to a smaller user-facing set:
 
-| Interface status | Backend state            | Indicator color      |
-| ---------------- | ------------------------ | -------------------- |
-| Idle             | `idle`                   | `rgb(255, 255, 255)` |
-| Thinking         | `preparing` or `running` | `rgb(48, 121, 255)`  |
-| Complete         | `completed`              | `rgb(76, 212, 117)`  |
-| Needs input      | `cancelled`              | `rgb(255, 204, 0)`   |
-| Error            | `failed`                 | `rgb(255, 61, 129)`  |
+| Interface status | Backend state                 | Indicator color      |
+| ---------------- | ----------------------------- | -------------------- |
+| Idle             | `idle`                        | `rgb(255, 255, 255)` |
+| Thinking         | `preparing` or `running`      | `rgb(48, 121, 255)`  |
+| Complete         | `completed`                   | `rgb(76, 212, 117)`  |
+| Needs input      | `needs_input` or `cancelled`  | `rgb(255, 204, 0)`   |
+| Error            | `failed`                      | `rgb(255, 61, 129)`  |
 
 Stopping an active run changes it to **Needs input** and preserves its files.
+Exhausting the round or tool-call safety budget also ends in **Needs input**
+after the final no-tools handoff, so incomplete work is never labeled
+**Complete**.
 
 ### Resize the workspace
 
@@ -228,9 +236,47 @@ output, and errors. Tool metadata can be expanded in the conversation. Command
 and tool output is displayed left-to-right even when the surrounding
 interface is right-to-left.
 
+While a run is active, Libre WebUI opens an authenticated server-sent event
+stream and renders progress as the backend receives it. The stream can carry:
+
+- an initial `snapshot` and later `run_state` changes;
+- `reasoning_delta` when the selected provider explicitly exposes reasoning;
+- `assistant_delta` text;
+- `tool_call` and `tool_result` activity;
+- `usage` measurements;
+- `skill_loaded` notifications for server-supplied worker guidance; and
+- terminal `error` or `done` events.
+
+Reasoning availability and granularity depend on the model and provider.
+Libre WebUI displays only reasoning content the provider returns through its
+API; it cannot recover hidden chain-of-thought, and some models provide no
+reasoning stream at all. Assistant text and tool activity still stream when
+supported independently of reasoning.
+
 Output is deliberately bounded. A truncated result is not proof that a command
 produced no additional output; ask the model to inspect a narrower result or
 run a more focused command.
+
+### Built-in worker skills
+
+Every run receives a server-owned workspace guide. It explains the durable
+`/workspace` boundary, read-only container root, temporary process and `/tmp`
+state, network policy, command and output limits, and preview lifecycle. Its
+built-in skills direct the model to:
+
+- inspect project instructions, manifests, lockfiles, scripts, and current
+  repository state before editing;
+- preserve unrelated work and batch independent reads or searches;
+- continue through implementation instead of stopping after a plan;
+- run focused verification before broader checks;
+- diagnose a failure instead of blindly retrying it; and
+- verify the application before starting the preview as the final long-lived
+  process.
+
+The guide exists in model context only. Libre WebUI does not create an
+`AGENTS.md`, skill directory, or other control file in the user's workspace.
+Project-provided instructions remain project guidance and cannot override the
+container or tool security boundary.
 
 ### Preview
 
@@ -271,6 +317,7 @@ name as an Ollama model cannot intercept an existing task.
 For each model round, the selected provider can receive:
 
 - the Work system prompt;
+- the built-in worker skills and current runtime limits;
 - up to the most recent 30 user/assistant conversation messages, bounded to
   256 KB;
 - Work tool definitions;
@@ -300,10 +347,15 @@ remote for disclosure purposes. Selecting one opens a dismissible notice that
 explains provider data flow and the possibility of multiple billable calls.
 The dismissal preference is remembered per Libre WebUI user.
 
-Plugin runs are capped at 12 model/tool rounds, 64 total tool calls, and 4,096
-requested output tokens per model response. Ollama runs use the configured
-round limit, 48 by default, and allow up to 128 total tool calls. A single Work
-run can therefore make many model-provider requests.
+All provider routes use the same `WORK_MAX_AGENT_ROUNDS` budget, 48 rounds by
+default. There is no separate 12-round plugin clamp. The tool-call safety
+budget is the larger of 128 calls or eight calls per configured round. When the
+round budget is exhausted, Libre WebUI asks the model for one final no-tools
+handoff describing completed work, checks, blockers, and remaining steps. It
+then records the terminal run as **Needs input** instead of exposing a raw
+round-limit exception or marking incomplete work complete. A follow-up run
+continues in the same durable workspace. A single Work run can still make many
+billable provider requests.
 
 ## Persistence and Runtime Lifecycle
 
@@ -463,7 +515,7 @@ Work reads these variables in the backend process:
 | `WORK_DOCKER_COMMAND`               | `docker`                                                                                      | Docker CLI executable                                      |
 | `WORK_COMMAND_TIMEOUT_MS`           | `120000`                                                                                      | Default command timeout                                    |
 | `WORK_MAX_OUTPUT_CHARS`             | `50000`                                                                                       | Maximum captured command/search output                     |
-| `WORK_MAX_AGENT_ROUNDS`             | `48`                                                                                          | Maximum Ollama model/tool rounds per run                   |
+| `WORK_MAX_AGENT_ROUNDS`             | `48`                                                                                          | Provider-agnostic model/tool round budget per run          |
 | `WORK_MEMORY_LIMIT`                 | `2g`                                                                                          | Per-container memory limit                                 |
 | `WORK_CPU_LIMIT`                    | `2`                                                                                           | Per-container CPU limit                                    |
 | `WORK_PIDS_LIMIT`                   | `256`                                                                                         | Per-container process limit                                |
@@ -484,25 +536,25 @@ admission limit return HTTP 429.
 
 ### Fixed protocol and UI limits
 
-| Item                                   | Limit                                            |
-| -------------------------------------- | ------------------------------------------------ |
-| New task or run message                | 65,536 characters and UTF-8 bytes                |
-| Model identifier on task create/update | 500 characters and UTF-8 bytes                   |
-| Plugin provider ID                     | 200 characters                                   |
-| Active runs per task                   | 1                                                |
-| Command text                           | 20,000 characters                                |
-| Command timeout requested by a tool    | 1 to 600 seconds                                 |
-| Preview readiness                      | 15 seconds                                       |
-| File read/write                        | 2,000,000 bytes of UTF-8 text                    |
-| Direct directory listing               | First 1,000 entries                              |
-| Message page                           | Up to 200 messages and 1,000,000 bytes           |
-| Persisted individual message           | 100 KB                                           |
-| Conversation context sent to a model   | Last 30 user/assistant messages, up to 256 KB    |
-| Persisted tool output                  | About 20,000 source characters plus a marker     |
-| Live editor highlighting               | 8,000 characters and 400 lines                   |
-| Browser-side formatting                | 100,000 characters and 4,000 lines               |
-| Plugin agent loop                      | Up to 12 rounds and 64 total tool calls          |
-| Ollama agent loop                      | Configured rounds and up to 128 total tool calls |
+| Item                                   | Limit                                                       |
+| -------------------------------------- | ----------------------------------------------------------- |
+| New task or run message                | 65,536 characters and UTF-8 bytes                           |
+| Model identifier on task create/update | 500 characters and UTF-8 bytes                              |
+| Plugin provider ID                     | 200 characters                                              |
+| Active runs per task                   | 1                                                           |
+| Command text                           | 20,000 characters                                           |
+| Command timeout requested by a tool    | 1 to 600 seconds                                            |
+| Preview readiness                      | 15 seconds                                                  |
+| File read/write                        | 2,000,000 bytes of UTF-8 text                               |
+| Direct directory listing               | First 1,000 entries                                         |
+| Message page                           | Up to 200 messages and 1,000,000 bytes                      |
+| Persisted individual message           | 100 KB                                                      |
+| Conversation context sent to a model   | Last 30 user/assistant messages, up to 256 KB               |
+| Persisted tool output                  | About 20,000 source characters plus a marker                |
+| Live editor highlighting               | 8,000 characters and 400 lines                              |
+| Browser-side formatting                | 100,000 characters and 4,000 lines                          |
+| Agent loop, every provider route       | 48 rounds by default, configured by `WORK_MAX_AGENT_ROUNDS` |
+| Tool-call safety budget                | `max(128, configured rounds × 8)` calls                     |
 
 File access is for UTF-8 text. The integrated editor is not a binary-file
 editor, and a file larger than 2 MB cannot be opened through the Work file API.
@@ -512,22 +564,23 @@ editor, and a file larger than 2 MB cannot be opened through the Work file API.
 All endpoints are under `/api/work`, require authentication, and require the
 current database role to be `admin`.
 
-| Method   | Path                       | Purpose                                      |
-| -------- | -------------------------- | -------------------------------------------- |
-| `GET`    | `/capabilities`            | Docker/provider availability and limits      |
-| `GET`    | `/tasks`                   | List the current administrator's tasks       |
-| `POST`   | `/tasks`                   | Create a task and its first asynchronous run |
-| `GET`    | `/tasks/:id`               | Load task state and recent messages          |
-| `GET`    | `/tasks/:id/messages`      | Page older messages                          |
-| `PATCH`  | `/tasks/:id`               | Rename or change the explicit model route    |
-| `DELETE` | `/tasks/:id`               | Remove the task and durable workspace        |
-| `POST`   | `/tasks/:id/runs`          | Start a follow-up run                        |
-| `POST`   | `/tasks/:id/cancel`        | Cancel the active run                        |
-| `GET`    | `/tasks/:id/files`         | List a workspace directory                   |
-| `GET`    | `/tasks/:id/file`          | Read a workspace text file                   |
-| `PUT`    | `/tasks/:id/file`          | Save a workspace text file                   |
-| `POST`   | `/tasks/:id/preview/start` | Start the managed preview                    |
-| `POST`   | `/tasks/:id/preview/stop`  | Stop the managed preview                     |
+| Method   | Path                                | Purpose                                        |
+| -------- | ----------------------------------- | ---------------------------------------------- |
+| `GET`    | `/capabilities`                     | Docker/provider availability and limits        |
+| `GET`    | `/tasks`                            | List the current administrator's tasks         |
+| `POST`   | `/tasks`                            | Create a task and its first asynchronous run   |
+| `GET`    | `/tasks/:id`                        | Load task state and recent messages            |
+| `GET`    | `/tasks/:id/messages`               | Page older messages                            |
+| `PATCH`  | `/tasks/:id`                        | Rename or change the explicit model route      |
+| `DELETE` | `/tasks/:id`                        | Remove the task and durable workspace          |
+| `POST`   | `/tasks/:id/runs`                   | Start a follow-up run                          |
+| `GET`    | `/tasks/:taskId/runs/:runId/events` | Stream authenticated live run events using SSE |
+| `POST`   | `/tasks/:id/cancel`                 | Cancel the active run                          |
+| `GET`    | `/tasks/:id/files`                  | List a workspace directory                     |
+| `GET`    | `/tasks/:id/file`                   | Read a workspace text file                     |
+| `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                     |
+| `POST`   | `/tasks/:id/preview/start`          | Start the managed preview                      |
+| `POST`   | `/tasks/:id/preview/stop`           | Stop the managed preview                       |
 
 The task ID is always checked against the authenticated owner. Current-role
 authorization is read from the database on each request, so demoting an
@@ -668,10 +721,13 @@ runtime image contains the command being invoked.
 
 ### A run stops at an agent limit
 
-The model may have exhausted its round or tool-call allowance. Start a
-follow-up run with a narrower instruction. For plugin models, remember that the
-limit is 12 rounds and 64 tool calls even when
-`WORK_MAX_AGENT_ROUNDS` is higher.
+The model may have exhausted the configured round or derived tool-call safety
+budget. Work requests a final no-tools handoff before ending the run, so review
+its completed work and remaining steps. The task remains in **Needs input**,
+which is terminal for that run but deliberately does not claim completion.
+Start a follow-up run to continue in the same durable workspace, or
+deliberately raise `WORK_MAX_AGENT_ROUNDS` for all providers if the host and
+remote-provider cost policy allow longer runs.
 
 ### HTTP 429 when starting work
 

@@ -863,6 +863,222 @@ test('polls active task summaries and refreshes detail once at completion', asyn
   expect(mock.workTaskDetailRequests).toHaveLength(terminalDetailRequests);
 });
 
+test('renders live reasoning, tokens, skills, and tool activity from the Work event stream', async ({
+  page,
+}) => {
+  const liveTask = {
+    ...task(
+      'live-stream-workspace',
+      'Live workspace',
+      'An earlier result remains in history.'
+    ),
+    status: 'running' as const,
+    messages: [
+      ...task(
+        'live-stream-workspace',
+        'Live workspace',
+        'An earlier result remains in history.'
+      ).messages,
+      {
+        id: 'persisted-provider-reasoning',
+        taskId: 'live-stream-workspace',
+        runId: 'earlier-run',
+        role: 'assistant' as const,
+        kind: 'reasoning' as const,
+        content: 'Persisted provider reasoning.',
+        createdAt: createdAt + 2,
+      },
+      {
+        id: 'persisted-live-tool-call',
+        taskId: 'live-stream-workspace',
+        runId: 'live-stream-run',
+        role: 'assistant' as const,
+        kind: 'tool_call' as const,
+        content: 'Calling read_file',
+        metadata: {
+          name: 'read_file',
+          toolCallId: 'call-read',
+          path: 'package.json',
+        },
+        createdAt: createdAt + 3,
+      },
+      {
+        id: 'persisted-live-tool-result',
+        taskId: 'live-stream-workspace',
+        runId: 'live-stream-run',
+        role: 'tool' as const,
+        kind: 'tool_result' as const,
+        content: '{"name":"calm-city"}',
+        metadata: {
+          name: 'read_file',
+          toolCallId: 'call-read',
+        },
+        createdAt: createdAt + 4,
+      },
+    ],
+    activeRun: {
+      id: 'live-stream-run',
+      taskId: 'live-stream-workspace',
+      model: 'llama3.2:3b',
+      providerType: 'ollama' as const,
+      status: 'running' as const,
+      createdAt,
+      startedAt: createdAt,
+    },
+  };
+  await mockLibreWebUiApi(page, {
+    workTasks: [liveTask],
+  });
+
+  await page.route(
+    '**/api/work/tasks/live-stream-workspace/runs/live-stream-run/events?**',
+    async route => {
+      const after = Number(
+        new URL(route.request().url()).searchParams.get('after')
+      );
+      const events = [
+        {
+          id: 1,
+          type: 'run_state',
+          taskId: liveTask.id,
+          runId: 'live-stream-run',
+          timestamp: createdAt + 10,
+          data: {
+            status: 'running',
+            phase: 'thinking',
+            round: 1,
+            roundLimit: 48,
+          },
+        },
+        {
+          id: 2,
+          type: 'skill_loaded',
+          taskId: liveTask.id,
+          runId: 'live-stream-run',
+          timestamp: createdAt + 11,
+          data: {
+            id: 'web-app',
+            name: 'Web app workflow',
+            description:
+              'Inspect, implement, and verify a browser application.',
+          },
+        },
+        {
+          id: 3,
+          type: 'reasoning_delta',
+          taskId: liveTask.id,
+          runId: 'live-stream-run',
+          timestamp: createdAt + 12,
+          data: {
+            delta: 'I will inspect the project structure.',
+            total: 'I will inspect the project structure.',
+          },
+        },
+        {
+          id: 4,
+          type: 'tool_call',
+          taskId: liveTask.id,
+          runId: 'live-stream-run',
+          timestamp: createdAt + 13,
+          data: {
+            toolCallId: 'call-read',
+            name: 'read_file',
+            arguments: { path: 'package.json' },
+          },
+        },
+        {
+          id: 5,
+          type: 'tool_result',
+          taskId: liveTask.id,
+          runId: 'live-stream-run',
+          timestamp: createdAt + 14,
+          data: {
+            toolCallId: 'call-read',
+            name: 'read_file',
+            content: '{"name":"calm-city"}',
+          },
+        },
+        {
+          id: 6,
+          type: 'assistant_delta',
+          taskId: liveTask.id,
+          runId: 'live-stream-run',
+          timestamp: createdAt + 15,
+          data: {
+            delta: 'I am building the calm city now.',
+            total: 'I am building the calm city now.',
+          },
+        },
+      ];
+      const snapshot = {
+        id: Math.max(0, after),
+        type: 'snapshot',
+        taskId: liveTask.id,
+        runId: 'live-stream-run',
+        timestamp: createdAt + 9,
+        data: {
+          task: {
+            ...liveTask,
+            messages: liveTask.messages.map((message, messageIndex) => ({
+              ...message,
+              messageIndex,
+            })),
+            hasMoreMessages: false,
+          },
+        },
+      };
+      const body = [snapshot, ...events.filter(event => event.id > after)]
+        .map(
+          event =>
+            `id: ${event.id}\nevent: ${event.type}\ndata: ${JSON.stringify(
+              event
+            )}\n\n`
+        )
+        .join('');
+      await route.fulfill({
+        status: 200,
+        headers: {
+          'content-type': 'text/event-stream; charset=utf-8',
+          'cache-control': 'no-cache',
+        },
+        body,
+      });
+    }
+  );
+
+  await page.goto('/work/live-stream-workspace');
+
+  const liveRun = page.getByTestId('work-live-run').first();
+  await expect(liveRun).toBeVisible();
+  await expect(liveRun).toContainText('1/48');
+  await expect(liveRun).toContainText('Workspace skills · 1');
+  await expect(liveRun).not.toContainText('Web app workflow');
+  await expect(liveRun).toContainText('I will inspect the project structure.');
+  await expect(liveRun).toContainText('I am building the calm city now.');
+  await expect(liveRun).toContainText(/Generated tokens:\s*≈\d+/);
+
+  const liveTool = liveRun.getByTestId('work-live-tool');
+  await expect(liveTool).toContainText('read_file');
+  await liveTool.getByRole('button').click();
+  await expect(liveTool).toContainText('package.json');
+  await expect(liveTool).toContainText('calm-city');
+
+  const activityTab = page.getByTestId('work-activity-tab');
+  await expect(activityTab).toContainText('1');
+  await activityTab.click();
+  const activityPanel = page.locator('#work-workspace-panel-activity');
+  await expect(
+    activityPanel.getByText('read_file', { exact: true })
+  ).toHaveCount(1);
+
+  const persistedReasoning = page.getByTestId('work-provider-reasoning');
+  await expect(persistedReasoning).not.toHaveAttribute('open');
+  await persistedReasoning.locator('summary').click();
+  await expect(persistedReasoning).toContainText(
+    'Persisted provider reasoning.'
+  );
+});
+
 test('shows tool activity, saves files, and isolates preview content', async ({
   page,
 }) => {

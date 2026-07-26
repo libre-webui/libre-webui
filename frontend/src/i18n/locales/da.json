@@ -1542,6 +1542,13 @@
       "needsInput": "Kræver input",
       "error": "Fejl"
     },
+    "live": {
+      "connecting": "Opretter forbindelse til liveopdateringer…",
+      "reconnecting": "Genopretter forbindelse til liveopdateringer…",
+      "unavailable": "Liveopdateringer er ikke tilgængelige",
+      "newActivity": "Ny aktivitet",
+      "skillsLoaded": "Arbejdsområdefærdigheder · {{count}}"
+    },
     "runtime": {
       "unavailable": "Kørselsmiljø ikke tilgængeligt",
       "readyOllama": "Docker klar",

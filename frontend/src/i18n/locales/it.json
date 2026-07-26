@@ -1542,6 +1542,13 @@
       "needsInput": "Input necessario",
       "error": "Errore"
     },
+    "live": {
+      "connecting": "Connessione agli aggiornamenti in tempo reale…",
+      "reconnecting": "Riconnessione agli aggiornamenti in tempo reale…",
+      "unavailable": "Aggiornamenti in tempo reale non disponibili",
+      "newActivity": "Nuova attività",
+      "skillsLoaded": "Competenze dell’area di lavoro · {{count}}"
+    },
     "runtime": {
       "unavailable": "Runtime non disponibile",
       "readyOllama": "Docker pronto",

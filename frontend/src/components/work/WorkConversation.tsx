@@ -15,18 +15,29 @@
  * limitations under the License.
  */
 
-import { Bot, CircleAlert, Loader2, TerminalSquare, User } from 'lucide-react';
-import { useEffect, useMemo, useRef } from 'react';
+import {
+  ArrowDown,
+  Brain,
+  Bot,
+  ChevronDown,
+  CircleAlert,
+  Loader2,
+  TerminalSquare,
+  User,
+} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RichMessageContent } from '@/components/ui/RichMessageContent';
 import { StreamingMessageContent } from '@/components/ui/StreamingMessageContent';
-import type { WorkMessage, WorkTask } from '@/types/work';
+import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
+import type { WorkLiveRun, WorkMessage, WorkTask } from '@/types/work';
 import { cn } from '@/utils';
 
 interface WorkConversationProps {
   task: WorkTask;
   loading: boolean;
   loadingOlder: boolean;
+  liveRun?: WorkLiveRun;
   onLoadOlder: () => Promise<WorkMessage[]>;
 }
 
@@ -48,6 +59,35 @@ const toolTitle = (message: WorkMessage, fallback: string): string => {
   return typeof name === 'string' && name ? name : fallback;
 };
 
+function ProviderReasoningMessage({ message }: { message: WorkMessage }) {
+  const { t } = useTranslation();
+  return (
+    <details
+      data-testid='work-provider-reasoning'
+      className='group ms-11 overflow-hidden rounded-xl border border-line bg-surface-subtle/70'
+    >
+      <summary className='flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-ink-muted marker:hidden [&::-webkit-details-marker]:hidden'>
+        <span className='flex min-w-0 items-center gap-2'>
+          <Brain className='h-3.5 w-3.5 shrink-0 text-[rgb(48,121,255)]' />
+          <span className='truncate'>
+            {t('libreClaw.metrics.provider', { defaultValue: 'Provider' })} ·{' '}
+            {t('libreClaw.metrics.reasoning', {
+              defaultValue: 'Reasoning',
+            })}
+          </span>
+        </span>
+        <ChevronDown className='h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180' />
+      </summary>
+      <p
+        dir='auto'
+        className='whitespace-pre-wrap break-words border-t border-line px-3 py-2.5 text-xs leading-relaxed text-ink-muted'
+      >
+        {message.content}
+      </p>
+    </details>
+  );
+}
+
 function ToolMessage({ message }: { message: WorkMessage }) {
   const { t } = useTranslation();
   const details = metadataText(message.metadata);
@@ -55,6 +95,9 @@ function ToolMessage({ message }: { message: WorkMessage }) {
   const kindLabel = {
     message: t('work.activity.kinds.message', {
       defaultValue: 'Message',
+    }),
+    reasoning: t('libreClaw.metrics.reasoning', {
+      defaultValue: 'Reasoning',
     }),
     tool_call: t('work.activity.kinds.toolCall', {
       defaultValue: 'Tool call',
@@ -123,11 +166,13 @@ export function WorkConversation({
   task,
   loading,
   loadingOlder,
+  liveRun,
   onLoadOlder,
 }: WorkConversationProps) {
   const { t } = useTranslation();
   const viewportRef = useRef<HTMLDivElement>(null);
   const followTailRef = useRef(true);
+  const [showNewActivity, setShowNewActivity] = useState(false);
   const messages = useMemo(
     () =>
       [...(task.messages || [])].sort(
@@ -140,20 +185,31 @@ export function WorkConversation({
   );
   const lastAssistantId = [...messages]
     .reverse()
-    .find(message => message.role === 'assistant')?.id;
+    .find(
+      message => message.role === 'assistant' && message.kind === 'message'
+    )?.id;
 
   useEffect(() => {
     followTailRef.current = true;
     const viewport = viewportRef.current;
     if (viewport) viewport.scrollTop = viewport.scrollHeight;
+    const frame = window.requestAnimationFrame(() => setShowNewActivity(false));
+    return () => window.cancelAnimationFrame(frame);
   }, [task.id]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
+    let frame: number | undefined;
     if (viewport && followTailRef.current) {
       viewport.scrollTop = viewport.scrollHeight;
+      frame = window.requestAnimationFrame(() => setShowNewActivity(false));
+    } else if (viewport && liveRun) {
+      frame = window.requestAnimationFrame(() => setShowNewActivity(true));
     }
-  }, [messages, task.status]);
+    return () => {
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+    };
+  }, [liveRun, messages, task.status]);
 
   const loadOlder = async () => {
     const viewport = viewportRef.current;
@@ -183,127 +239,175 @@ export function WorkConversation({
   }
 
   return (
-    <div
-      ref={viewportRef}
-      onScroll={event => {
-        const viewport = event.currentTarget;
-        followTailRef.current =
-          viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <
-          80;
-      }}
-      className='min-h-0 flex-1 overflow-y-auto'
-    >
-      <div className='mx-auto flex min-h-full max-w-3xl flex-col px-4 py-6 md:px-6'>
-        {messages.length === 0 ? (
-          <div className='m-auto max-w-md text-center'>
-            <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-line bg-surface-raised text-ink-muted'>
-              <Bot className='h-6 w-6' />
-            </div>
-            <h2 className='text-lg font-semibold tracking-tight text-ink'>
-              {t('work.conversation.ready', {
-                defaultValue: 'Workspace ready',
-              })}
-            </h2>
-            <p className='mt-2 text-sm leading-relaxed text-ink-muted'>
-              {t('work.conversation.empty', {
-                defaultValue:
-                  'Continue the task below. This conversation and its files stay attached to this workspace.',
-              })}
-            </p>
-          </div>
-        ) : (
-          <div className='space-y-6'>
-            {task.hasMoreMessages && (
-              <div className='flex justify-center'>
-                <button
-                  type='button'
-                  data-testid='work-load-older-messages'
-                  disabled={loadingOlder}
-                  onClick={() => void loadOlder()}
-                  className='inline-flex items-center gap-2 rounded-lg border border-line bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink disabled:cursor-not-allowed disabled:opacity-60'
-                >
-                  {loadingOlder && (
-                    <Loader2 className='h-3.5 w-3.5 animate-spin' />
-                  )}
-                  {t('work.conversation.loadOlder', {
-                    defaultValue: 'Load older messages',
-                  })}
-                </button>
+    <div className='relative flex min-h-0 flex-1'>
+      <div
+        ref={viewportRef}
+        onScroll={event => {
+          const viewport = event.currentTarget;
+          followTailRef.current =
+            viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <
+            80;
+          if (followTailRef.current) setShowNewActivity(false);
+        }}
+        className='min-h-0 flex-1 overflow-y-auto'
+      >
+        <div className='mx-auto flex min-h-full max-w-3xl flex-col px-4 py-6 md:px-6'>
+          {messages.length === 0 && !liveRun ? (
+            <div className='m-auto max-w-md text-center'>
+              <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-line bg-surface-raised text-ink-muted'>
+                <Bot className='h-6 w-6' />
               </div>
-            )}
-            {messages.map(message => {
-              if (message.role === 'tool' || message.kind !== 'message') {
-                return <ToolMessage key={message.id} message={message} />;
-              }
-              const user = message.role === 'user';
-              const streaming =
-                !user &&
-                task.status === 'running' &&
-                message.id === lastAssistantId &&
-                message.runId === task.activeRun?.id;
-              return (
+              <h2 className='text-lg font-semibold tracking-tight text-ink'>
+                {t('work.conversation.ready', {
+                  defaultValue: 'Workspace ready',
+                })}
+              </h2>
+              <p className='mt-2 text-sm leading-relaxed text-ink-muted'>
+                {t('work.conversation.empty', {
+                  defaultValue:
+                    'Continue the task below. This conversation and its files stay attached to this workspace.',
+                })}
+              </p>
+            </div>
+          ) : (
+            <div className='space-y-6'>
+              {task.hasMoreMessages && (
+                <div className='flex justify-center'>
+                  <button
+                    type='button'
+                    data-testid='work-load-older-messages'
+                    disabled={loadingOlder}
+                    onClick={() => void loadOlder()}
+                    className='inline-flex items-center gap-2 rounded-lg border border-line bg-surface-raised px-3 py-1.5 text-xs font-medium text-ink-muted transition-colors hover:bg-surface-subtle hover:text-ink disabled:cursor-not-allowed disabled:opacity-60'
+                  >
+                    {loadingOlder && (
+                      <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                    )}
+                    {t('work.conversation.loadOlder', {
+                      defaultValue: 'Load older messages',
+                    })}
+                  </button>
+                </div>
+              )}
+              {messages.map(message => {
+                if (
+                  liveRun &&
+                  message.runId === liveRun.runId &&
+                  message.role !== 'user'
+                ) {
+                  return null;
+                }
+                if (message.kind === 'reasoning') {
+                  return (
+                    <ProviderReasoningMessage
+                      key={message.id}
+                      message={message}
+                    />
+                  );
+                }
+                if (message.role === 'tool' || message.kind !== 'message') {
+                  return <ToolMessage key={message.id} message={message} />;
+                }
+                const user = message.role === 'user';
+                const streaming =
+                  !user &&
+                  task.status === 'running' &&
+                  message.id === lastAssistantId &&
+                  message.runId === task.activeRun?.id;
+                return (
+                  <article
+                    key={message.id}
+                    className={cn('flex gap-3', user && 'flex-row-reverse')}
+                  >
+                    <div
+                      className={cn(
+                        'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
+                        user
+                          ? 'bg-ink text-ink-inverse'
+                          : 'border border-line bg-surface-raised text-ink-muted'
+                      )}
+                    >
+                      {user ? (
+                        <User className='h-4 w-4' />
+                      ) : (
+                        <Bot className='h-4 w-4' />
+                      )}
+                    </div>
+                    <div
+                      className={cn(
+                        'min-w-0 max-w-[88%]',
+                        user &&
+                          'rounded-2xl rounded-se-md bg-ink px-4 py-2.5 text-ink-inverse'
+                      )}
+                    >
+                      {user ? (
+                        <p
+                          dir='auto'
+                          className='whitespace-pre-wrap break-words text-sm leading-relaxed'
+                        >
+                          {message.content}
+                        </p>
+                      ) : streaming ? (
+                        <StreamingMessageContent
+                          content={message.content}
+                          className='text-ink'
+                        />
+                      ) : (
+                        <RichMessageContent
+                          content={message.content}
+                          className='text-sm text-ink'
+                        />
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+              {liveRun && (
                 <article
-                  key={message.id}
-                  className={cn('flex gap-3', user && 'flex-row-reverse')}
+                  className='flex gap-3'
+                  data-testid='work-live-run-message'
                 >
-                  <div
-                    className={cn(
-                      'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
-                      user
-                        ? 'bg-ink text-ink-inverse'
-                        : 'border border-line bg-surface-raised text-ink-muted'
-                    )}
-                  >
-                    {user ? (
-                      <User className='h-4 w-4' />
-                    ) : (
-                      <Bot className='h-4 w-4' />
-                    )}
+                  <div className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-raised text-ink-muted'>
+                    <Bot className='h-4 w-4' />
                   </div>
-                  <div
-                    className={cn(
-                      'min-w-0 max-w-[88%]',
-                      user &&
-                        'rounded-2xl rounded-se-md bg-ink px-4 py-2.5 text-ink-inverse'
-                    )}
-                  >
-                    {user ? (
-                      <p
-                        dir='auto'
-                        className='whitespace-pre-wrap break-words text-sm leading-relaxed'
-                      >
-                        {message.content}
-                      </p>
-                    ) : streaming ? (
-                      <StreamingMessageContent
-                        content={message.content}
-                        className='text-ink'
-                      />
-                    ) : (
-                      <RichMessageContent
-                        content={message.content}
-                        className='text-sm text-ink'
-                      />
-                    )}
+                  <div className='min-w-0 max-w-[92%] flex-1'>
+                    <WorkLiveRunSurface run={liveRun} />
                   </div>
                 </article>
-              );
-            })}
-            {(task.status === 'preparing' || task.status === 'running') && (
-              <div className='flex items-center gap-2 ps-11 text-xs text-ink-muted'>
-                <Loader2 className='h-3.5 w-3.5 animate-spin' />
-                {task.status === 'preparing'
-                  ? t('work.status.preparing', {
-                      defaultValue: 'Preparing isolated workspace…',
-                    })
-                  : t('work.status.running', {
-                      defaultValue: 'Working in the local workspace…',
-                    })}
-              </div>
-            )}
-          </div>
-        )}
+              )}
+              {!liveRun &&
+                (task.status === 'preparing' || task.status === 'running') && (
+                  <div className='flex items-center gap-2 ps-11 text-xs text-ink-muted'>
+                    <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                    {task.status === 'preparing'
+                      ? t('work.status.preparing', {
+                          defaultValue: 'Preparing isolated workspace…',
+                        })
+                      : t('work.status.running', {
+                          defaultValue: 'Working in the local workspace…',
+                        })}
+                  </div>
+                )}
+            </div>
+          )}
+        </div>
       </div>
+      {showNewActivity && (
+        <button
+          type='button'
+          data-testid='work-new-activity-button'
+          onClick={() => {
+            const viewport = viewportRef.current;
+            if (viewport) viewport.scrollTop = viewport.scrollHeight;
+            followTailRef.current = true;
+            setShowNewActivity(false);
+          }}
+          className='absolute bottom-4 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-line bg-surface-overlay/95 px-3 py-2 text-xs font-medium text-ink shadow-overlay backdrop-blur transition-colors hover:bg-surface-raised'
+        >
+          <ArrowDown className='h-3.5 w-3.5' />
+          {t('work.live.newActivity', { defaultValue: 'New activity' })}
+        </button>
+      )}
     </div>
   );
 }

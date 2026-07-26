@@ -16,6 +16,13 @@
  */
 
 import workModelProviderService from './workModelProviderService.js';
+import workEventService from './workEventService.js';
+import {
+  buildWorkAgentSystemPrompt,
+  buildWorkBudgetExhaustionPrompt,
+  WORK_AGENT_SKILLS,
+  workToolCallBudget,
+} from './workAgentGuidance.js';
 import workRuntimeService, { WorkCommandResult } from './workRuntimeService.js';
 import workTaskService, {
   WorkConflictError,
@@ -26,21 +33,6 @@ import { WorkTaskDetail, WorkTaskRecord, WorkToolCall } from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('services:work-agent');
-
-const workSystemPrompt = (
-  task: WorkTaskRecord
-): string => `You are Libre WebUI Work, an autonomous coding agent.
-You operate only in the persistent /workspace mounted for this task.
-Use the supplied tools to inspect the workspace before editing it, make the requested
-changes, and verify the result. Keep tool calls focused. Never claim a command or file
-change succeeded unless its tool result says it did. The workspace persists between
-turns. Network access is ${task.networkEnabled ? 'ENABLED' : 'DISABLED'}.
-${task.networkEnabled ? 'Package downloads may be used when needed.' : 'Package downloads and other internet access will fail; do not repeatedly retry them.'}
-When building a browser application, use start_preview after the app is ready.
-Preview servers must bind to 0.0.0.0:${workRuntimeService.previewPort}.
-start_preview is the only supported way to leave a process running; run_command
-cleans up background processes when each command finishes.
-Finish with a concise summary of what you changed and how you verified it.`;
 
 export const WORK_TOOL_SCHEMAS: Record<string, unknown>[] = [
   functionTool('list_files', 'List direct children of a workspace directory.', {
@@ -145,6 +137,10 @@ export class WorkAgentService {
       });
       workTaskService.updateTaskStatus(taskId, 'cancelled');
       workTaskService.updatePreview(taskId, 'stopped');
+      workEventService.publish(taskId, run.id, 'done', {
+        status: 'cancelled',
+        error: 'Cancelled by user.',
+      });
     }
     return workTaskService.requireTaskDetail(taskId, userId);
   }
@@ -210,6 +206,10 @@ export class WorkAgentService {
               finished: true,
             });
             workTaskService.updateTaskStatus(task.id, 'cancelled');
+            workEventService.publish(task.id, run.id, 'done', {
+              status: 'cancelled',
+              error: 'Administrator access was revoked.',
+            });
           }
           workTaskService.updatePreview(task.id, 'stopped');
           if (run) await this.executions.get(run.id);
@@ -305,6 +305,17 @@ export class WorkAgentService {
       }
       workTaskService.updateRun(runId, 'preparing', { started: true });
       workTaskService.updateTaskStatus(taskId, 'preparing');
+      workEventService.publish(taskId, runId, 'run_state', {
+        status: 'preparing',
+        phase: 'preparing',
+      });
+      for (const skill of WORK_AGENT_SKILLS) {
+        workEventService.publish(taskId, runId, 'skill_loaded', {
+          id: skill.id,
+          name: skill.title,
+          description: skill.instructions[0],
+        });
+      }
       releaseExecutionLease = await workRuntimeService.prepare(
         task,
         controller.signal
@@ -312,46 +323,110 @@ export class WorkAgentService {
       this.throwIfCancelled(runId, controller);
       workTaskService.updateRun(runId, 'running', { started: true });
       workTaskService.updateTaskStatus(taskId, 'running');
-
-      const messages = this.contextMessages(task);
-      const roundLimit =
-        run.providerType === 'plugin'
-          ? Math.min(workRuntimeService.limits.maxRounds, 12)
-          : workRuntimeService.limits.maxRounds;
-      const toolCallLimit = run.providerType === 'plugin' ? 64 : 128;
+      const roundLimit = workRuntimeService.limits.maxRounds;
+      const toolCallLimit = workToolCallBudget(roundLimit);
+      const messages = this.contextMessages(task, roundLimit);
       let totalToolCalls = 0;
-      for (let round = 0; round < roundLimit; round++) {
+      let accumulatedInputTokens = 0;
+      let accumulatedOutputTokens = 0;
+      let streamedAssistantTotal = '';
+      let streamedReasoningTotal = '';
+      let budgetReason = 'round';
+
+      roundLoop: for (let round = 0; round < roundLimit; round++) {
         this.throwIfCancelled(runId, controller);
-        const response = await workModelProviderService.generateChatResponse(
-          {
-            model: run.model,
-            messages,
-            tools: WORK_TOOL_SCHEMAS,
-            options:
-              run.providerType === 'plugin' ? { num_predict: 4096 } : undefined,
-            stream: false,
-          },
-          {
-            providerType: run.providerType,
-            providerId: run.providerId,
-          },
-          userId,
-          controller.signal
+        workEventService.publish(taskId, runId, 'run_state', {
+          status: 'running',
+          phase: 'thinking',
+          round: round + 1,
+          roundLimit,
+        });
+        const contentStream = new WorkDeltaPublisher(
+          taskId,
+          runId,
+          'assistant_delta',
+          streamedAssistantTotal
         );
+        const reasoningStream = new WorkDeltaPublisher(
+          taskId,
+          runId,
+          'reasoning_delta',
+          streamedReasoningTotal
+        );
+        let roundInputTokens = 0;
+        let roundOutputTokens = 0;
+        const roundStartedAt = Date.now();
+        let response: OllamaChatResponse;
+        try {
+          response = await workModelProviderService.generateChatStreamResponse(
+            {
+              model: run.model,
+              messages,
+              tools: WORK_TOOL_SCHEMAS,
+              options:
+                run.providerType === 'plugin'
+                  ? { num_predict: 4096 }
+                  : undefined,
+              stream: true,
+            },
+            {
+              providerType: run.providerType,
+              providerId: run.providerId,
+            },
+            userId,
+            {
+              onContent: delta => contentStream.push(delta),
+              onReasoning: delta => reasoningStream.push(delta),
+              onUsage: usage => {
+                roundInputTokens = usage.promptTokens ?? roundInputTokens;
+                roundOutputTokens = usage.completionTokens ?? roundOutputTokens;
+                workEventService.publish(taskId, runId, 'usage', {
+                  inputTokens: accumulatedInputTokens + roundInputTokens,
+                  outputTokens: accumulatedOutputTokens + roundOutputTokens,
+                  totalTokens:
+                    accumulatedInputTokens +
+                    roundInputTokens +
+                    accumulatedOutputTokens +
+                    roundOutputTokens,
+                  durationMs: Date.now() - roundStartedAt,
+                });
+              },
+            },
+            controller.signal
+          );
+        } finally {
+          contentStream.flush();
+          reasoningStream.flush();
+          streamedAssistantTotal = contentStream.currentTotal;
+          streamedReasoningTotal = reasoningStream.currentTotal;
+        }
         this.throwIfCancelled(runId, controller);
+        accumulatedInputTokens += roundInputTokens;
+        accumulatedOutputTokens += roundOutputTokens;
         const toolCalls = normalizeToolCalls(response);
         totalToolCalls += toolCalls.length;
         if (totalToolCalls > toolCallLimit) {
-          throw new WorkAgentHttpError(
-            `Agent exceeded the ${toolCallLimit} tool-call limit.`,
-            422,
-            'WORK_AGENT_TOOL_CALL_LIMIT'
-          );
+          budgetReason = 'tool-call';
+          break roundLoop;
         }
         const assistantContent = boundUtf8(
           response.message?.content?.trim() || '',
           100_000
         );
+        const reasoningContent = boundUtf8(
+          response.message?.thinking?.trim() || '',
+          100_000
+        );
+        if (reasoningContent) {
+          workTaskService.addMessage(
+            taskId,
+            runId,
+            'assistant',
+            'reasoning',
+            reasoningContent,
+            { providerExposed: true, round: round + 1 }
+          );
+        }
         if (toolCalls.length === 0) {
           const finalContent =
             assistantContent ||
@@ -373,6 +448,9 @@ export class WorkAgentService {
           }
           workTaskService.updateRun(runId, 'completed', { finished: true });
           workTaskService.updateTaskStatus(taskId, 'completed');
+          workEventService.publish(taskId, runId, 'done', {
+            status: 'completed',
+          });
           return;
         }
 
@@ -392,14 +470,29 @@ export class WorkAgentService {
         }
         for (const call of toolCalls) {
           this.throwIfCancelled(runId, controller);
-          workTaskService.addMessage(
+          const toolCallMetadata = summarizeToolCall(call);
+          const toolCallMessage = workTaskService.addMessage(
             taskId,
             runId,
             'assistant',
             'tool_call',
             `Calling ${call.function.name}`,
-            summarizeToolCall(call)
+            toolCallMetadata
           );
+          workEventService.publish(taskId, runId, 'run_state', {
+            status: 'running',
+            phase: 'using_tool',
+            round: round + 1,
+            roundLimit,
+          });
+          workEventService.publish(taskId, runId, 'tool_call', {
+            toolCallId: call.id,
+            name: call.function.name,
+            arguments: toolCallMetadata,
+            metadata: toolCallMetadata,
+            phase: 'running',
+            message: toolCallMessage,
+          });
           let toolOutput: string;
           let toolMetadata: Record<string, unknown> = {
             name: call.function.name,
@@ -422,7 +515,7 @@ export class WorkAgentService {
             toolMetadata.outputTruncated = true;
             toolOutput = boundedOutput;
           }
-          workTaskService.addMessage(
+          const toolResultMessage = workTaskService.addMessage(
             taskId,
             runId,
             'tool',
@@ -430,6 +523,14 @@ export class WorkAgentService {
             toolOutput,
             toolMetadata
           );
+          workEventService.publish(taskId, runId, 'tool_result', {
+            toolCallId: call.id,
+            name: call.function.name,
+            phase: toolMetadata.error ? 'failed' : 'completed',
+            content: toolOutput,
+            error: toolMetadata.error === true,
+            message: toolResultMessage,
+          });
           messages.push({
             role: 'tool',
             content: toolOutput,
@@ -437,11 +538,132 @@ export class WorkAgentService {
           });
         }
       }
-      throw new WorkAgentHttpError(
-        `Agent exceeded the ${roundLimit} round limit.`,
-        422,
-        'WORK_AGENT_ROUND_LIMIT'
+      this.throwIfCancelled(runId, controller);
+      workEventService.publish(taskId, runId, 'run_state', {
+        status: 'running',
+        phase: 'responding',
+        round: roundLimit,
+        roundLimit,
+      });
+      const handoffContentStream = new WorkDeltaPublisher(
+        taskId,
+        runId,
+        'assistant_delta',
+        streamedAssistantTotal
       );
+      const handoffReasoningStream = new WorkDeltaPublisher(
+        taskId,
+        runId,
+        'reasoning_delta',
+        streamedReasoningTotal
+      );
+      let handoffInputTokens = 0;
+      let handoffOutputTokens = 0;
+      const handoffStartedAt = Date.now();
+      let handoffResponse: OllamaChatResponse;
+      try {
+        try {
+          handoffResponse =
+            await workModelProviderService.generateChatStreamResponse(
+              {
+                model: run.model,
+                messages: [
+                  ...messages,
+                  {
+                    role: 'user',
+                    content: `${buildWorkBudgetExhaustionPrompt()}\nThe ${budgetReason} budget was reached.`,
+                  },
+                ],
+                tools: [],
+                options:
+                  run.providerType === 'plugin'
+                    ? { num_predict: 2048 }
+                    : undefined,
+                stream: true,
+              },
+              {
+                providerType: run.providerType,
+                providerId: run.providerId,
+              },
+              userId,
+              {
+                onContent: delta => handoffContentStream.push(delta),
+                onReasoning: delta => handoffReasoningStream.push(delta),
+                onUsage: usage => {
+                  handoffInputTokens = usage.promptTokens ?? handoffInputTokens;
+                  handoffOutputTokens =
+                    usage.completionTokens ?? handoffOutputTokens;
+                  workEventService.publish(taskId, runId, 'usage', {
+                    inputTokens: accumulatedInputTokens + handoffInputTokens,
+                    outputTokens: accumulatedOutputTokens + handoffOutputTokens,
+                    totalTokens:
+                      accumulatedInputTokens +
+                      handoffInputTokens +
+                      accumulatedOutputTokens +
+                      handoffOutputTokens,
+                    durationMs: Date.now() - handoffStartedAt,
+                  });
+                },
+              },
+              controller.signal
+            );
+        } catch (error) {
+          if (controller.signal.aborted) throw error;
+          const fallback = `The run reached its ${budgetReason} budget. The final provider handoff was unavailable${
+            error instanceof Error ? `: ${error.message}` : '.'
+          }\n\nStart a follow-up run to continue in the same durable workspace.`;
+          handoffContentStream.push(fallback);
+          handoffResponse = {
+            model: run.model,
+            created_at: new Date().toISOString(),
+            message: {
+              role: 'assistant',
+              content: fallback,
+            },
+            done: true,
+          };
+        }
+      } finally {
+        handoffContentStream.flush();
+        handoffReasoningStream.flush();
+      }
+      this.throwIfCancelled(runId, controller);
+      const handoffReasoning = boundUtf8(
+        handoffResponse.message?.thinking?.trim() || '',
+        100_000
+      );
+      if (handoffReasoning) {
+        workTaskService.addMessage(
+          taskId,
+          runId,
+          'assistant',
+          'reasoning',
+          handoffReasoning,
+          { providerExposed: true, budgetHandoff: true }
+        );
+      }
+      const handoffContent = boundUtf8(
+        handoffResponse.message?.content?.trim() ||
+          `The run reached its ${budgetReason} budget. Start a follow-up run to continue in the same workspace.`,
+        100_000
+      );
+      workTaskService.addMessage(
+        taskId,
+        runId,
+        'assistant',
+        'message',
+        handoffContent,
+        { budgetHandoff: true, budgetReason }
+      );
+      await settleExecutionContainer();
+      this.throwIfCancelled(runId, controller);
+      if (!isActiveRunStatus(workTaskService.getRun(runId)?.status)) return;
+      workTaskService.updateRun(runId, 'needs_input', { finished: true });
+      workTaskService.updateTaskStatus(taskId, 'needs_input');
+      workEventService.publish(taskId, runId, 'done', {
+        status: 'needs_input',
+        budgetReason,
+      });
     } catch (error) {
       const currentRun = workTaskService.getRun(runId);
       if (currentRun?.status === 'cancelled' || controller.signal.aborted) {
@@ -456,6 +678,10 @@ export class WorkAgentService {
               });
               workTaskService.updateTaskStatus(taskId, 'cancelled');
               workTaskService.updatePreview(taskId, 'stopped');
+              workEventService.publish(taskId, runId, 'done', {
+                status: 'cancelled',
+                error: 'Cancelled by user.',
+              });
             }
           } catch (cleanupError) {
             logger.error(
@@ -480,6 +706,10 @@ export class WorkAgentService {
           });
           workTaskService.updateTaskStatus(taskId, 'cancelled');
           workTaskService.updatePreview(taskId, 'stopped');
+          workEventService.publish(taskId, runId, 'done', {
+            status: 'cancelled',
+            error: 'Cancelled by user.',
+          });
         }
         return;
       }
@@ -492,6 +722,14 @@ export class WorkAgentService {
         finished: true,
       });
       workTaskService.updateTaskStatus(taskId, 'failed');
+      workEventService.publish(taskId, runId, 'error', {
+        message,
+        code: error instanceof WorkAgentHttpError ? error.code : undefined,
+      });
+      workEventService.publish(taskId, runId, 'done', {
+        status: 'failed',
+        error: message,
+      });
     } finally {
       this.controllers.delete(runId);
       try {
@@ -531,14 +769,29 @@ export class WorkAgentService {
     }
   }
 
-  private contextMessages(task: WorkTaskRecord): OllamaChatMessage[] {
+  private contextMessages(
+    task: WorkTaskRecord,
+    roundLimit: number
+  ): OllamaChatMessage[] {
     const persisted = workTaskService
       .getRecentConversationMessages(task.id, 30)
       .map(message => ({
         role: message.role,
         content: message.content,
       })) satisfies OllamaChatMessage[];
-    return [{ role: 'system', content: workSystemPrompt(task) }, ...persisted];
+    return [
+      {
+        role: 'system',
+        content: buildWorkAgentSystemPrompt({
+          networkEnabled: task.networkEnabled,
+          previewPort: workRuntimeService.previewPort,
+          roundBudget: roundLimit,
+          commandTimeoutMs: workRuntimeService.limits.commandTimeoutMs,
+          maxOutputChars: workRuntimeService.limits.maxOutputChars,
+        }),
+      },
+      ...persisted,
+    ];
   }
 
   private async executeTool(
@@ -642,6 +895,51 @@ export class WorkAgentService {
         'WORK_RUN_CANCELLED'
       );
     }
+  }
+}
+
+class WorkDeltaPublisher {
+  private pending = '';
+  private total = '';
+  private separatorPending = '';
+  private timer?: ReturnType<typeof setTimeout>;
+
+  constructor(
+    private readonly taskId: string,
+    private readonly runId: string,
+    private readonly type: 'assistant_delta' | 'reasoning_delta',
+    initialTotal = ''
+  ) {
+    this.total = initialTotal;
+    this.separatorPending = initialTotal ? '\n\n' : '';
+  }
+
+  get currentTotal(): string {
+    return this.total;
+  }
+
+  push(delta: string): void {
+    if (!delta) return;
+    const next = `${this.separatorPending}${delta}`;
+    this.separatorPending = '';
+    this.pending += next;
+    this.total = boundUtf8(this.total + next, 100_000);
+    if (this.timer) return;
+    this.timer = setTimeout(() => this.flush(), 32);
+    this.timer.unref?.();
+  }
+
+  flush(): void {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+    }
+    if (!this.pending) return;
+    const delta = this.pending;
+    this.pending = '';
+    workEventService.publish(this.taskId, this.runId, this.type, {
+      delta,
+    });
   }
 }
 

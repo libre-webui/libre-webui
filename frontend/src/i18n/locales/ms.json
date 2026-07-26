@@ -1542,6 +1542,13 @@
       "needsInput": "Memerlukan input",
       "error": "Ralat"
     },
+    "live": {
+      "connecting": "Menyambung ke kemas kini langsung…",
+      "reconnecting": "Menyambung semula ke kemas kini langsung…",
+      "unavailable": "Kemas kini langsung tidak tersedia",
+      "newActivity": "Aktiviti baharu",
+      "skillsLoaded": "Kemahiran ruang kerja · {{count}}"
+    },
     "runtime": {
       "unavailable": "Masa jalan tidak tersedia",
       "readyOllama": "Docker sedia",

@@ -1542,6 +1542,13 @@
       "needsInput": "Memerlukan input",
       "error": "Error"
     },
+    "live": {
+      "connecting": "Menghubungkan ke pembaruan langsung…",
+      "reconnecting": "Menghubungkan kembali ke pembaruan langsung…",
+      "unavailable": "Pembaruan langsung tidak tersedia",
+      "newActivity": "Aktivitas baru",
+      "skillsLoaded": "Keterampilan ruang kerja · {{count}}"
+    },
     "runtime": {
       "unavailable": "Runtime tidak tersedia",
       "readyOllama": "Docker siap",

@@ -16,10 +16,22 @@
  */
 
 export type WorkTaskStatus =
-  'idle' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
+  | 'idle'
+  | 'preparing'
+  | 'running'
+  | 'completed'
+  | 'needs_input'
+  | 'failed'
+  | 'cancelled';
 
 export type WorkRunStatus =
-  'queued' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
+  | 'queued'
+  | 'preparing'
+  | 'running'
+  | 'completed'
+  | 'needs_input'
+  | 'failed'
+  | 'cancelled';
 
 export type WorkPreviewStatus = 'stopped' | 'starting' | 'running' | 'failed';
 
@@ -36,7 +48,7 @@ export interface WorkMessage {
   runId?: string;
   messageIndex: number;
   role: 'user' | 'assistant' | 'tool';
-  kind: 'message' | 'tool_call' | 'tool_result' | 'error';
+  kind: 'message' | 'reasoning' | 'tool_call' | 'tool_result' | 'error';
   content: string;
   metadata?: Record<string, unknown>;
   createdAt: number;
@@ -79,6 +91,132 @@ export interface WorkTaskDetail {
   previewStatus: WorkPreviewStatus;
   workspacePath: '/workspace';
 }
+
+export type WorkLiveEventType =
+  | 'snapshot'
+  | 'run_state'
+  | 'reasoning_delta'
+  | 'assistant_delta'
+  | 'tool_call'
+  | 'tool_result'
+  | 'usage'
+  | 'skill_loaded'
+  | 'error'
+  | 'done';
+
+export interface WorkLiveRunSnapshotTool {
+  id: string;
+  name: string;
+  status: 'running' | 'completed' | 'failed';
+  isError?: boolean;
+  arguments?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+  output?: string;
+  startedAt?: number;
+  finishedAt?: number;
+}
+
+export interface WorkLiveRunSnapshot {
+  status?: WorkRunStatus;
+  phase?: string;
+  round?: number;
+  roundLimit?: number;
+  reasoning: string;
+  response: string;
+  tools: WorkLiveRunSnapshotTool[];
+  usage?: {
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+    durationMs?: number;
+  };
+  skills: Array<{
+    id: string;
+    name: string;
+    description?: string;
+  }>;
+  terminal: boolean;
+  error?: string;
+  budgetReason?: string;
+}
+
+export interface WorkLiveEventDataMap {
+  snapshot: {
+    task: WorkTaskDetail;
+    liveRun?: WorkLiveRunSnapshot;
+    replayTruncated?: boolean;
+  };
+  run_state: {
+    status: WorkRunStatus;
+    round?: number;
+    roundLimit?: number;
+    phase?: string;
+  };
+  reasoning_delta: {
+    delta: string;
+    messageId?: string;
+    total?: string;
+  };
+  assistant_delta: {
+    delta: string;
+    messageId?: string;
+    total?: string;
+  };
+  tool_call: {
+    toolCallId: string;
+    name: string;
+    arguments?: Record<string, unknown>;
+    metadata?: Record<string, unknown>;
+    phase?: 'queued' | 'running';
+    message?: WorkMessage;
+  };
+  tool_result: {
+    toolCallId: string;
+    name: string;
+    phase?: 'completed' | 'failed';
+    content?: string;
+    error?: boolean;
+    message?: WorkMessage;
+  };
+  usage: {
+    inputTokens?: number;
+    outputTokens?: number;
+    totalTokens?: number;
+    durationMs?: number;
+  };
+  skill_loaded: {
+    id: string;
+    name: string;
+    description?: string;
+  };
+  error: {
+    message: string;
+    code?: string;
+  };
+  done: {
+    status: Extract<
+      WorkRunStatus,
+      'completed' | 'needs_input' | 'failed' | 'cancelled'
+    >;
+    error?: string;
+    budgetReason?: string;
+  };
+}
+
+interface WorkLiveEventBase {
+  id: number;
+  taskId: string;
+  runId: string;
+  timestamp: number;
+}
+
+export type WorkLiveEvent<T extends WorkLiveEventType = WorkLiveEventType> =
+  T extends WorkLiveEventType
+    ? WorkLiveEventBase & {
+        type: T;
+        data: WorkLiveEventDataMap[T];
+      }
+    : never;
 
 export type WorkTaskSummary = Omit<
   WorkTaskDetail,

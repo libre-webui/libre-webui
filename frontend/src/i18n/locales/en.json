@@ -1510,6 +1510,13 @@
       "needsInput": "Needs input",
       "error": "Error"
     },
+    "live": {
+      "connecting": "Connecting to live updates…",
+      "reconnecting": "Reconnecting to live updates…",
+      "unavailable": "Live updates unavailable",
+      "newActivity": "New activity",
+      "skillsLoaded": "Workspace skills · {{count}}"
+    },
     "runtime": {
       "unavailable": "Runtime unavailable",
       "readyOllama": "Docker ready",

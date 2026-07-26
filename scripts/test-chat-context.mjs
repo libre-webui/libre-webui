@@ -1102,6 +1102,7 @@ test('streamAnthropicResponse parses text and tool call events', async () => {
   }
 
   assert.deepEqual(chunks, [
+    { type: 'reasoning', content: 'private reasoning' },
     { type: 'content', content: 'Hello' },
     {
       type: 'tool_call',
@@ -1109,6 +1110,15 @@ test('streamAnthropicResponse parses text and tool call events', async () => {
         id: 'toolu_1',
         name: 'render',
         arguments: '{"ok":true}',
+        providerMetadata: {
+          anthropicThinkingBlocks: [
+            {
+              type: 'thinking',
+              thinking: 'private reasoning',
+              signature: '',
+            },
+          ],
+        },
       },
     },
     { type: 'done' },

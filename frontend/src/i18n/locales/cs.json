@@ -1542,6 +1542,13 @@
       "needsInput": "Vyžaduje vstup",
       "error": "Chyba"
     },
+    "live": {
+      "connecting": "Připojování k živým aktualizacím…",
+      "reconnecting": "Obnovování připojení k živým aktualizacím…",
+      "unavailable": "Živé aktualizace nejsou dostupné",
+      "newActivity": "Nová aktivita",
+      "skillsLoaded": "Dovednosti pracovního prostoru · {{count}}"
+    },
     "runtime": {
       "unavailable": "Běhové prostředí není dostupné",
       "readyOllama": "Docker je připraven",

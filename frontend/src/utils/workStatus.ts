@@ -52,6 +52,12 @@ export const workStatusPresentation: Record<
     color: 'rgb(76, 212, 117)',
     animated: false,
   },
+  needs_input: {
+    labelKey: 'work.statusLabels.needsInput',
+    label: 'Needs input',
+    color: 'rgb(255, 204, 0)',
+    animated: false,
+  },
   cancelled: {
     labelKey: 'work.statusLabels.needsInput',
     label: 'Needs input',

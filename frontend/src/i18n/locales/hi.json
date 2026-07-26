@@ -1542,6 +1542,13 @@
       "needsInput": "इनपुट चाहिए",
       "error": "त्रुटि"
     },
+    "live": {
+      "connecting": "लाइव अपडेट से कनेक्ट हो रहा है…",
+      "reconnecting": "लाइव अपडेट से फिर से कनेक्ट हो रहा है…",
+      "unavailable": "लाइव अपडेट उपलब्ध नहीं हैं",
+      "newActivity": "नई गतिविधि",
+      "skillsLoaded": "वर्कस्पेस कौशल · {{count}}"
+    },
     "runtime": {
       "unavailable": "रनटाइम उपलब्ध नहीं है",
       "readyOllama": "Docker तैयार है",

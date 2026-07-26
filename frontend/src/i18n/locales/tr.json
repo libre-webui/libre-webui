@@ -1542,6 +1542,13 @@
       "needsInput": "Girdi gerekli",
       "error": "Hata"
     },
+    "live": {
+      "connecting": "Canlı güncellemelere bağlanılıyor…",
+      "reconnecting": "Canlı güncellemelere yeniden bağlanılıyor…",
+      "unavailable": "Canlı güncellemeler kullanılamıyor",
+      "newActivity": "Yeni etkinlik",
+      "skillsLoaded": "Çalışma alanı becerileri · {{count}}"
+    },
     "runtime": {
       "unavailable": "Çalışma ortamı kullanılamıyor",
       "readyOllama": "Docker hazır",

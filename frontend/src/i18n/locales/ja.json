@@ -1542,6 +1542,13 @@
       "needsInput": "入力待ち",
       "error": "エラー"
     },
+    "live": {
+      "connecting": "ライブ更新に接続しています…",
+      "reconnecting": "ライブ更新に再接続しています…",
+      "unavailable": "ライブ更新を利用できません",
+      "newActivity": "新しいアクティビティ",
+      "skillsLoaded": "ワークスペーススキル · {{count}}"
+    },
     "runtime": {
       "unavailable": "ランタイムを利用できません",
       "readyOllama": "Docker 準備完了",

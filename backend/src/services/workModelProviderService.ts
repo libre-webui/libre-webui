@@ -29,6 +29,12 @@ import {
   type PluginVariables,
 } from '../utils/pluginChatAdapter.js';
 import {
+  streamAnthropicResponse,
+  streamOpenAICompatibleResponse,
+  type PluginStreamChunk,
+  type PluginStreamUsage,
+} from '../utils/pluginStreamAdapter.js';
+import {
   applyModelEndpointTemplate,
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
@@ -50,12 +56,19 @@ interface WorkModelProviderDependencies {
   ollama: Pick<
     typeof ollamaService,
     'isHealthy' | 'showModel' | 'generateChatResponse'
-  >;
+  > &
+    Partial<Pick<typeof ollamaService, 'generateChatStreamResponse'>>;
   plugins: Pick<
     typeof pluginService,
     'getActivePlugins' | 'getPlugin' | 'getApiKey' | 'getPluginVariables'
   >;
   post: typeof axios.post;
+}
+
+export interface WorkModelStreamObserver {
+  onContent?: (content: string) => void;
+  onReasoning?: (content: string) => void;
+  onUsage?: (usage: PluginStreamUsage) => void;
 }
 
 export class WorkModelProviderError extends Error {
@@ -144,6 +157,32 @@ export class WorkModelProviderService {
       userId
     );
     return this.generatePluginResponse(plugin, request, userId, signal);
+  }
+
+  async generateChatStreamResponse(
+    request: OllamaChatRequest,
+    provider: WorkProviderSelection,
+    userId: string,
+    observer: WorkModelStreamObserver,
+    signal?: AbortSignal
+  ): Promise<OllamaChatResponse> {
+    const streamRequest = { ...request, stream: true };
+    if (provider.providerType === 'ollama') {
+      assertOllamaProvider(provider);
+      return this.generateOllamaStream(streamRequest, observer, signal);
+    }
+    const plugin = this.requireExactPlugin(
+      provider.providerId,
+      request.model,
+      userId
+    );
+    return this.generatePluginStream(
+      plugin,
+      streamRequest,
+      userId,
+      observer,
+      signal
+    );
   }
 
   private hasConfiguredPlugin(userId: string): boolean {
@@ -257,6 +296,187 @@ export class WorkModelProviderService {
       );
     }
   }
+
+  private async generateOllamaStream(
+    request: OllamaChatRequest,
+    observer: WorkModelStreamObserver,
+    signal?: AbortSignal
+  ): Promise<OllamaChatResponse> {
+    const stream = this.dependencies.ollama.generateChatStreamResponse;
+    if (!stream) {
+      const response = await this.dependencies.ollama.generateChatResponse(
+        { ...request, stream: false },
+        signal
+      );
+      if (response.message?.thinking) {
+        observer.onReasoning?.(response.message.thinking);
+      }
+      if (response.message?.content) {
+        observer.onContent?.(response.message.content);
+      }
+      observer.onUsage?.(ollamaUsage(response));
+      return response;
+    }
+
+    return new Promise<OllamaChatResponse>((resolve, reject) => {
+      let settled = false;
+      let content = '';
+      let reasoning = '';
+      let latest: OllamaChatResponse | undefined;
+      const toolCalls: Record<string, unknown>[] = [];
+
+      const finish = (error?: Error) => {
+        if (settled) return;
+        settled = true;
+        if (error) {
+          reject(error);
+          return;
+        }
+        const response: OllamaChatResponse = {
+          ...(latest || {
+            model: request.model,
+            created_at: new Date().toISOString(),
+            done: true,
+          }),
+          message: {
+            role: 'assistant',
+            content,
+            ...(reasoning ? { thinking: reasoning } : {}),
+            ...(toolCalls.length ? { tool_calls: toolCalls } : {}),
+          },
+          done: true,
+        };
+        observer.onUsage?.(ollamaUsage(response));
+        resolve(response);
+      };
+
+      void stream
+        .call(
+          this.dependencies.ollama,
+          request,
+          chunk => {
+            latest = chunk;
+            const contentDelta = chunk.message?.content || '';
+            const reasoningDelta = chunk.message?.thinking || '';
+            if (contentDelta) {
+              content += contentDelta;
+              observer.onContent?.(contentDelta);
+            }
+            if (reasoningDelta) {
+              reasoning += reasoningDelta;
+              observer.onReasoning?.(reasoningDelta);
+            }
+            if (Array.isArray(chunk.message?.tool_calls)) {
+              for (const call of chunk.message.tool_calls) {
+                toolCalls.push(call);
+              }
+            }
+            if (chunk.done) finish();
+          },
+          error => finish(error),
+          () => finish(),
+          signal
+        )
+        .catch(error =>
+          finish(error instanceof Error ? error : new Error(String(error)))
+        );
+    });
+  }
+
+  private async generatePluginStream(
+    plugin: Plugin,
+    request: OllamaChatRequest,
+    userId: string,
+    observer: WorkModelStreamObserver,
+    signal?: AbortSignal
+  ): Promise<OllamaChatResponse> {
+    validatePluginModel(request.model);
+    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    if (!apiKey) {
+      throw new WorkModelProviderError(
+        `API key not found for plugin ${plugin.id}.`,
+        422,
+        'WORK_PLUGIN_CREDENTIALS_MISSING'
+      );
+    }
+    const variables = this.dependencies.plugins.getPluginVariables(
+      plugin,
+      userId
+    );
+    let endpoint = applyModelEndpointTemplate(
+      resolvePluginEndpoint(
+        plugin.endpoint,
+        variables.endpoint as string | undefined
+      ),
+      request.model
+    );
+    if (plugin.id === 'gemini') {
+      endpoint = geminiStreamingEndpoint(endpoint);
+    }
+    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
+    const headers = buildPluginAuthHeaders(plugin, apiKey);
+    const { payload, extraHeaders } = buildPluginWorkPayload(
+      plugin,
+      { ...request, stream: true },
+      variables
+    );
+    Object.assign(headers, extraHeaders);
+    const timeoutSignal = AbortSignal.timeout(300_000);
+    const requestSignal = signal
+      ? AbortSignal.any([signal, timeoutSignal])
+      : timeoutSignal;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        signal: requestSignal,
+      });
+      const contentType = response.headers.get('content-type') || '';
+      if (
+        response.ok &&
+        !contentType.includes('text/event-stream') &&
+        !contentType.includes('application/x-ndjson')
+      ) {
+        const data = (await response.json()) as JsonObject;
+        const normalized = normalizePluginWorkResponse(
+          plugin,
+          data,
+          request.model
+        );
+        if (normalized.message.thinking) {
+          observer.onReasoning?.(normalized.message.thinking);
+        }
+        if (normalized.message.content) {
+          observer.onContent?.(normalized.message.content);
+        }
+        return normalized;
+      }
+      const chunks =
+        plugin.id === 'anthropic'
+          ? streamAnthropicResponse(response)
+          : plugin.id === 'gemini'
+            ? streamGeminiWorkResponse(response)
+            : streamOpenAICompatibleResponse(response);
+      return await collectPluginWorkStream(chunks, request.model, observer);
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      if (timeoutSignal.aborted) {
+        throw new WorkModelProviderError(
+          'Plugin request timed out after 300 seconds.',
+          504,
+          'WORK_PLUGIN_REQUEST_TIMEOUT'
+        );
+      }
+      if (error instanceof WorkModelProviderError) throw error;
+      throw new WorkModelProviderError(
+        error instanceof Error ? error.message : 'Plugin request failed.',
+        502,
+        'WORK_PLUGIN_REQUEST_FAILED'
+      );
+    }
+  }
 }
 
 export function buildPluginWorkPayload(
@@ -272,7 +492,8 @@ export function buildPluginWorkPayload(
         request.model,
         request.messages,
         request.tools || [],
-        params.maxTokens
+        params.maxTokens,
+        Boolean(request.stream)
       ),
       extraHeaders: { 'anthropic-version': '2023-06-01' },
     };
@@ -295,7 +516,7 @@ export function buildPluginWorkPayload(
       tool_choice: request.tools?.length ? 'auto' : undefined,
       ...getOpenAICompatibleSamplingParameters(plugin, params),
       max_tokens: params.maxTokens,
-      stream: false,
+      stream: Boolean(request.stream),
     },
     extraHeaders: {},
   };
@@ -369,7 +590,8 @@ function buildAnthropicWorkPayload(
   model: string,
   messages: OllamaChatMessage[],
   tools: JsonObject[],
-  maxTokens?: number
+  maxTokens?: number,
+  stream = false
 ): JsonObject {
   const system = messages
     .filter(message => message.role === 'system')
@@ -447,7 +669,7 @@ function buildAnthropicWorkPayload(
     messages: providerMessages,
     tools: toAnthropicTools(tools),
     max_tokens: maxTokens ?? 4096,
-    stream: false,
+    stream,
   };
 }
 
@@ -514,22 +736,26 @@ function buildGeminiWorkPayload(
   return {
     systemInstruction: system ? { parts: [{ text: system }] } : undefined,
     contents,
-    tools: [
-      {
-        functionDeclarations: tools.flatMap(tool => {
-          const fn = asObject(tool.function);
-          return fn
-            ? [
-                {
-                  name: fn.name,
-                  description: fn.description,
-                  parameters: fn.parameters,
-                },
-              ]
-            : [];
-        }),
-      },
-    ],
+    ...(tools.length
+      ? {
+          tools: [
+            {
+              functionDeclarations: tools.flatMap(tool => {
+                const fn = asObject(tool.function);
+                return fn
+                  ? [
+                      {
+                        name: fn.name,
+                        description: fn.description,
+                        parameters: fn.parameters,
+                      },
+                    ]
+                  : [];
+              }),
+            },
+          ],
+        }
+      : {}),
     generationConfig: {
       temperature: params.temperature,
       maxOutputTokens: params.maxTokens ?? 4096,
@@ -559,7 +785,14 @@ function normalizeOpenAIWorkResponse(
       openAIReasoningContent: message.reasoning_content,
     };
   }
-  return workResponse(model, contentText(message.content), toolCalls);
+  return workResponse(
+    model,
+    contentText(message.content),
+    toolCalls,
+    typeof message.reasoning_content === 'string'
+      ? message.reasoning_content
+      : ''
+  );
 }
 
 function normalizeAnthropicWorkResponse(
@@ -570,10 +803,12 @@ function normalizeAnthropicWorkResponse(
   const text: string[] = [];
   const calls: JsonObject[] = [];
   const thinkingBlocks: JsonObject[] = [];
+  const reasoning: string[] = [];
   for (const [index, value] of blocks.entries()) {
     const block = asObject(value);
     if (block?.type === 'thinking' || block?.type === 'redacted_thinking') {
       thinkingBlocks.push(block);
+      if (typeof block.thinking === 'string') reasoning.push(block.thinking);
     }
     if (block?.type === 'text' && typeof block.text === 'string') {
       text.push(block.text);
@@ -593,7 +828,7 @@ function normalizeAnthropicWorkResponse(
       anthropicThinkingBlocks: thinkingBlocks,
     };
   }
-  return workResponse(model, text.join(''), calls);
+  return workResponse(model, text.join(''), calls, reasoning.join(''));
 }
 
 function normalizeGeminiWorkResponse(
@@ -607,10 +842,14 @@ function normalizeGeminiWorkResponse(
   const content = asObject(candidate?.content);
   const parts = Array.isArray(content?.parts) ? content.parts : [];
   const text: string[] = [];
+  const reasoning: string[] = [];
   const calls: JsonObject[] = [];
   for (const [index, value] of parts.entries()) {
     const part = asObject(value);
-    if (typeof part?.text === 'string') text.push(part.text);
+    if (typeof part?.text === 'string') {
+      if (part.thought === true) reasoning.push(part.text);
+      else text.push(part.text);
+    }
     const call = asObject(part?.functionCall);
     if (call && typeof call.name === 'string') {
       calls.push({
@@ -625,13 +864,14 @@ function normalizeGeminiWorkResponse(
       });
     }
   }
-  return workResponse(model, text.join(''), calls);
+  return workResponse(model, text.join(''), calls, reasoning.join(''));
 }
 
 function workResponse(
   model: string,
   content: string,
-  toolCalls: JsonObject[]
+  toolCalls: JsonObject[],
+  reasoning = ''
 ): OllamaChatResponse {
   return {
     model,
@@ -639,10 +879,207 @@ function workResponse(
     message: {
       role: 'assistant',
       content,
+      ...(reasoning ? { thinking: reasoning } : {}),
       tool_calls: toolCalls,
     },
     done: true,
   };
+}
+
+async function collectPluginWorkStream(
+  chunks: AsyncIterable<PluginStreamChunk>,
+  model: string,
+  observer: WorkModelStreamObserver
+): Promise<OllamaChatResponse> {
+  let content = '';
+  let reasoning = '';
+  let usage: PluginStreamUsage = {};
+  const toolCalls: JsonObject[] = [];
+
+  for await (const chunk of chunks) {
+    if (chunk.type === 'content') {
+      content += chunk.content;
+      observer.onContent?.(chunk.content);
+      continue;
+    }
+    if (chunk.type === 'reasoning') {
+      reasoning += chunk.content;
+      observer.onReasoning?.(chunk.content);
+      continue;
+    }
+    if (chunk.type === 'usage') {
+      usage = { ...usage, ...chunk.usage };
+      observer.onUsage?.(usage);
+      continue;
+    }
+    if (chunk.type === 'tool_call') {
+      const metadata = chunk.toolCall.providerMetadata;
+      toolCalls.push({
+        id: chunk.toolCall.id || `work-plugin-${toolCalls.length}`,
+        ...(typeof metadata?.geminiThoughtSignature === 'string'
+          ? { thoughtSignature: metadata.geminiThoughtSignature }
+          : {}),
+        ...(metadata &&
+        Object.keys(metadata).some(key => key !== 'geminiThoughtSignature')
+          ? {
+              providerMetadata: Object.fromEntries(
+                Object.entries(metadata).filter(
+                  ([key]) => key !== 'geminiThoughtSignature'
+                )
+              ),
+            }
+          : {}),
+        function: {
+          name: chunk.toolCall.name,
+          arguments: parseToolArguments(chunk.toolCall.arguments),
+        },
+      });
+    }
+  }
+
+  if (reasoning && toolCalls[0]) {
+    const firstMetadata = asObject(toolCalls[0].providerMetadata) || {};
+    if (
+      !firstMetadata.openAIReasoningContent &&
+      !firstMetadata.anthropicThinkingBlocks
+    ) {
+      toolCalls[0].providerMetadata = {
+        ...firstMetadata,
+        openAIReasoningContent: reasoning,
+      };
+    }
+  }
+
+  return {
+    ...workResponse(model, content, toolCalls, reasoning),
+    prompt_eval_count: usage.promptTokens,
+    eval_count: usage.completionTokens,
+  };
+}
+
+function ollamaUsage(response: OllamaChatResponse): PluginStreamUsage {
+  return {
+    promptTokens: response.prompt_eval_count,
+    completionTokens: response.eval_count,
+    totalTokens:
+      response.prompt_eval_count !== undefined ||
+      response.eval_count !== undefined
+        ? (response.prompt_eval_count || 0) + (response.eval_count || 0)
+        : undefined,
+  };
+}
+
+function geminiStreamingEndpoint(endpoint: string): string {
+  const url = new URL(endpoint);
+  url.pathname = url.pathname.replace(
+    /:generateContent$/,
+    ':streamGenerateContent'
+  );
+  url.searchParams.set('alt', 'sse');
+  return url.toString();
+}
+
+async function* streamGeminiWorkResponse(
+  response: Response
+): AsyncGenerator<PluginStreamChunk, void, unknown> {
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Plugin API error: ${response.status} - ${errorText.slice(0, 200)}`
+    );
+  }
+  if (!response.body) {
+    throw new Error('No response body for streaming');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let callIndex = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        let payload: JsonObject;
+        try {
+          payload = JSON.parse(trimmed.slice(5).trim()) as JsonObject;
+        } catch {
+          continue;
+        }
+        const streamError = providerStreamErrorMessage(payload);
+        if (streamError) {
+          throw new Error(`Plugin API error: ${streamError}`);
+        }
+        const candidates = Array.isArray(payload.candidates)
+          ? payload.candidates
+          : [];
+        const candidate = asObject(candidates[0]);
+        const candidateContent = asObject(candidate?.content);
+        const parts = Array.isArray(candidateContent?.parts)
+          ? candidateContent.parts
+          : [];
+        for (const rawPart of parts) {
+          const part = asObject(rawPart);
+          if (typeof part?.text === 'string' && part.text) {
+            yield part.thought === true
+              ? { type: 'reasoning', content: part.text }
+              : { type: 'content', content: part.text };
+          }
+          const call = asObject(part?.functionCall);
+          if (call && typeof call.name === 'string') {
+            yield {
+              type: 'tool_call',
+              toolCall: {
+                id:
+                  typeof call.id === 'string'
+                    ? call.id
+                    : `work-gemini-${callIndex++}`,
+                name: call.name,
+                arguments: JSON.stringify(asObject(call.args) || {}),
+                ...(typeof part?.thoughtSignature === 'string'
+                  ? {
+                      providerMetadata: {
+                        geminiThoughtSignature: part.thoughtSignature,
+                      },
+                    }
+                  : {}),
+              },
+            };
+          }
+        }
+        const usageMetadata = asObject(payload.usageMetadata);
+        if (usageMetadata) {
+          const promptTokens =
+            typeof usageMetadata.promptTokenCount === 'number'
+              ? usageMetadata.promptTokenCount
+              : undefined;
+          const completionTokens =
+            typeof usageMetadata.candidatesTokenCount === 'number'
+              ? usageMetadata.candidatesTokenCount
+              : undefined;
+          const totalTokens =
+            typeof usageMetadata.totalTokenCount === 'number'
+              ? usageMetadata.totalTokenCount
+              : promptTokens !== undefined || completionTokens !== undefined
+                ? (promptTokens || 0) + (completionTokens || 0)
+                : undefined;
+          yield {
+            type: 'usage',
+            usage: { promptTokens, completionTokens, totalTokens },
+          };
+        }
+      }
+    }
+    yield { type: 'done' };
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 function normalizeOutboundToolCalls(value: unknown): JsonObject[] {
@@ -746,6 +1183,22 @@ function providerErrorMessage(value: unknown): string {
   if (typeof error?.message === 'string') return error.message;
   if (typeof payload?.message === 'string') return payload.message;
   return 'Request failed.';
+}
+
+function providerStreamErrorMessage(value: unknown): string | undefined {
+  const payload = asObject(value);
+  if (!payload) return undefined;
+  const error = asObject(payload.error);
+  const message =
+    typeof error?.message === 'string'
+      ? error.message
+      : typeof payload.error === 'string'
+        ? payload.error
+        : typeof payload.message === 'string' &&
+            (payload.type === 'error' || payload.status === 'error')
+          ? payload.message
+          : undefined;
+  return message?.slice(0, 500);
 }
 
 function asObject(value: unknown): JsonObject | undefined {

@@ -1542,6 +1542,13 @@
       "needsInput": "Þarf inntak",
       "error": "Villa"
     },
+    "live": {
+      "connecting": "Tengist rauntímauppfærslum…",
+      "reconnecting": "Endurtengist rauntímauppfærslum…",
+      "unavailable": "Rauntímauppfærslur eru ekki tiltækar",
+      "newActivity": "Ný virkni",
+      "skillsLoaded": "Færni vinnusvæðis · {{count}}"
+    },
     "runtime": {
       "unavailable": "Keyrsluumhverfi ekki tiltækt",
       "readyOllama": "Docker tilbúið",

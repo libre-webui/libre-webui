@@ -1510,6 +1510,13 @@
       "needsInput": "Saisie requise",
       "error": "Erreur"
     },
+    "live": {
+      "connecting": "Connexion aux mises à jour en direct…",
+      "reconnecting": "Reconnexion aux mises à jour en direct…",
+      "unavailable": "Mises à jour en direct indisponibles",
+      "newActivity": "Nouvelle activité",
+      "skillsLoaded": "Compétences d’espace de travail · {{count}}"
+    },
     "runtime": {
       "unavailable": "Environnement d'exécution indisponible",
       "readyOllama": "Docker prêt",

@@ -1542,6 +1542,13 @@
       "needsInput": "Wymaga danych",
       "error": "Błąd"
     },
+    "live": {
+      "connecting": "Łączenie z aktualizacjami na żywo…",
+      "reconnecting": "Ponowne łączenie z aktualizacjami na żywo…",
+      "unavailable": "Aktualizacje na żywo są niedostępne",
+      "newActivity": "Nowa aktywność",
+      "skillsLoaded": "Umiejętności obszaru roboczego · {{count}}"
+    },
     "runtime": {
       "unavailable": "Środowisko uruchomieniowe niedostępne",
       "readyOllama": "Docker gotowy",

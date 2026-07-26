@@ -76,6 +76,26 @@ const plugin = id => ({
   model_map: ['test-model'],
 });
 
+const streamingService = remotePlugin =>
+  new WorkModelProviderService({
+    ollama: {
+      isHealthy: async () => false,
+      showModel: async () => ({ capabilities: [] }),
+      generateChatResponse: async () => {
+        throw new Error('Unexpected local request');
+      },
+    },
+    plugins: {
+      getActivePlugins: () => [remotePlugin],
+      getPlugin: id => (id === remotePlugin.id ? remotePlugin : null),
+      getApiKey: () => 'test-key',
+      getPluginVariables: () => ({ max_tokens: 4096 }),
+    },
+    post: async () => {
+      throw new Error('Streaming should use fetch');
+    },
+  });
+
 test('OpenAI-compatible Work payload preserves tool-call correlation', () => {
   const converted = toOpenAIWorkMessages(messages);
   assert.equal(converted[2].tool_calls[0].id, 'call-read');
@@ -129,6 +149,18 @@ test('OpenAI-compatible Work payload preserves tool-call correlation', () => {
     response.message.tool_calls[0].function.arguments,
     '{"path":"remote.txt"}'
   );
+
+  const { payload: streamingPayload } = buildPluginWorkPayload(
+    plugin('openai'),
+    {
+      model: 'test-model',
+      messages,
+      tools: [tool],
+      stream: true,
+    },
+    { max_tokens: 2048 }
+  );
+  assert.equal(streamingPayload.stream, true);
 });
 
 test('Kimi Work omits fixed sampling and preserves tool-call reasoning', () => {
@@ -304,6 +336,390 @@ test('Anthropic Work payload and response use native tool blocks', () => {
     signature: 'anthropic-thinking-signature',
   });
   assert.equal(roundTripPayload.messages[1].content[2].type, 'tool_use');
+
+  const { payload: streamingPayload } = buildPluginWorkPayload(
+    plugin('anthropic'),
+    {
+      model: 'test-model',
+      messages,
+      tools: [tool],
+      stream: true,
+    },
+    { max_tokens: 4096 }
+  );
+  assert.equal(streamingPayload.stream, true);
+});
+
+test('Work streams OpenAI-compatible reasoning, text, usage, and tools', async () => {
+  const remotePlugin = {
+    ...plugin('kimi-code'),
+    active: true,
+  };
+  const service = streamingService(remotePlugin);
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (_url, init) => {
+    const payload = JSON.parse(init.body);
+    assert.equal(payload.stream, true);
+    const body = [
+      'data: {"choices":[{"delta":{"reasoning_content":"Inspecting "}}]}',
+      '',
+      'data: {"choices":[{"delta":{"content":"Done."}}]}',
+      '',
+      'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call-live","function":{"name":"read_file","arguments":"{\\"path\\":\\"live"}}]}}]}',
+      '',
+      'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"function":{"arguments":".txt\\"}"}}]}}]}',
+      '',
+      'data: {"choices":[],"usage":{"prompt_tokens":11,"completion_tokens":7,"total_tokens":18}}',
+      '',
+      'data: [DONE]',
+      '',
+    ].join('\n');
+    return new Response(body, {
+      headers: { 'content-type': 'text/event-stream' },
+    });
+  };
+
+  const content = [];
+  const reasoning = [];
+  const usage = [];
+  try {
+    const response = await service.generateChatStreamResponse(
+      {
+        model: 'test-model',
+        messages: messages.slice(0, 2),
+        tools: [tool],
+        stream: true,
+      },
+      { providerType: 'plugin', providerId: remotePlugin.id },
+      'test-user',
+      {
+        onContent: chunk => content.push(chunk),
+        onReasoning: chunk => reasoning.push(chunk),
+        onUsage: value => usage.push(value),
+      }
+    );
+    assert.equal(content.join(''), 'Done.');
+    assert.equal(reasoning.join(''), 'Inspecting ');
+    assert.equal(response.message.content, 'Done.');
+    assert.equal(response.message.thinking, 'Inspecting ');
+    assert.deepEqual(response.message.tool_calls[0], {
+      id: 'call-live',
+      providerMetadata: {
+        openAIReasoningContent: 'Inspecting ',
+      },
+      function: {
+        name: 'read_file',
+        arguments: { path: 'live.txt' },
+      },
+    });
+    assert.deepEqual(usage.at(-1), {
+      promptTokens: 11,
+      completionTokens: 7,
+      totalTokens: 18,
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Work streams Anthropic reasoning, text, usage, and signed tools', async () => {
+  const remotePlugin = {
+    ...plugin('anthropic'),
+    active: true,
+  };
+  const service = streamingService(remotePlugin);
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (_url, init) => {
+    const payload = JSON.parse(init.body);
+    assert.equal(payload.stream, true);
+    const body = [
+      'data: {"type":"message_start","message":{"usage":{"input_tokens":9}}}',
+      '',
+      'data: {"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"","signature":""}}',
+      '',
+      'data: {"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"Inspecting "}}',
+      '',
+      'data: {"type":"content_block_delta","index":0,"delta":{"type":"signature_delta","signature":"anthropic-stream-signature"}}',
+      '',
+      'data: {"type":"content_block_start","index":1,"content_block":{"type":"text","text":""}}',
+      '',
+      'data: {"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Ready."}}',
+      '',
+      'data: {"type":"content_block_start","index":2,"content_block":{"type":"tool_use","id":"toolu-live","name":"read_file","input":{}}}',
+      '',
+      'data: {"type":"content_block_delta","index":2,"delta":{"type":"input_json_delta","partial_json":"{\\"path\\":\\"anthropic.txt\\"}"}}',
+      '',
+      'data: {"type":"content_block_stop","index":2}',
+      '',
+      'data: {"type":"message_delta","usage":{"output_tokens":4}}',
+      '',
+      'data: {"type":"message_stop"}',
+      '',
+    ].join('\n');
+    return new Response(body, {
+      headers: { 'content-type': 'text/event-stream' },
+    });
+  };
+
+  const content = [];
+  const reasoning = [];
+  const usage = [];
+  try {
+    const response = await service.generateChatStreamResponse(
+      {
+        model: 'test-model',
+        messages: messages.slice(0, 2),
+        tools: [tool],
+        stream: true,
+      },
+      { providerType: 'plugin', providerId: remotePlugin.id },
+      'test-user',
+      {
+        onContent: chunk => content.push(chunk),
+        onReasoning: chunk => reasoning.push(chunk),
+        onUsage: value => usage.push(value),
+      }
+    );
+
+    assert.equal(content.join(''), 'Ready.');
+    assert.equal(reasoning.join(''), 'Inspecting ');
+    assert.equal(response.message.content, 'Ready.');
+    assert.equal(response.message.thinking, 'Inspecting ');
+    assert.deepEqual(response.message.tool_calls[0], {
+      id: 'toolu-live',
+      providerMetadata: {
+        anthropicThinkingBlocks: [
+          {
+            type: 'thinking',
+            thinking: 'Inspecting ',
+            signature: 'anthropic-stream-signature',
+          },
+        ],
+      },
+      function: {
+        name: 'read_file',
+        arguments: { path: 'anthropic.txt' },
+      },
+    });
+    assert.deepEqual(usage.at(-1), {
+      promptTokens: 9,
+      completionTokens: 4,
+      totalTokens: 13,
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Work streams Gemini reasoning, text, usage, and signed tools', async () => {
+  const remotePlugin = {
+    ...plugin('gemini'),
+    endpoint: 'https://example.invalid/v1beta/models/{model}:generateContent',
+    active: true,
+  };
+  const service = streamingService(remotePlugin);
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    assert.match(String(url), /test-model:streamGenerateContent\?alt=sse$/);
+    const payload = JSON.parse(init.body);
+    assert.equal(payload.contents[0].parts[0].text, 'Read the plan.');
+    const body = [
+      'data: {"candidates":[{"content":{"parts":[{"text":"Considering ","thought":true}]}}]}',
+      '',
+      'data: {"candidates":[{"content":{"parts":[{"text":"Ready."},{"thoughtSignature":"gemini-stream-signature","functionCall":{"id":"gemini-live","name":"read_file","args":{"path":"gemini.txt"}}}]}}],"usageMetadata":{"promptTokenCount":7,"candidatesTokenCount":5,"totalTokenCount":12}}',
+      '',
+    ].join('\n');
+    return new Response(body, {
+      headers: { 'content-type': 'text/event-stream' },
+    });
+  };
+
+  const content = [];
+  const reasoning = [];
+  const usage = [];
+  try {
+    const response = await service.generateChatStreamResponse(
+      {
+        model: 'test-model',
+        messages: messages.slice(0, 2),
+        tools: [tool],
+        stream: true,
+      },
+      { providerType: 'plugin', providerId: remotePlugin.id },
+      'test-user',
+      {
+        onContent: chunk => content.push(chunk),
+        onReasoning: chunk => reasoning.push(chunk),
+        onUsage: value => usage.push(value),
+      }
+    );
+
+    assert.equal(content.join(''), 'Ready.');
+    assert.equal(reasoning.join(''), 'Considering ');
+    assert.equal(response.message.content, 'Ready.');
+    assert.equal(response.message.thinking, 'Considering ');
+    assert.equal(response.message.tool_calls[0].id, 'gemini-live');
+    assert.equal(
+      response.message.tool_calls[0].thoughtSignature,
+      'gemini-stream-signature'
+    );
+    assert.deepEqual(response.message.tool_calls[0].function, {
+      name: 'read_file',
+      arguments: { path: 'gemini.txt' },
+    });
+    assert.deepEqual(usage.at(-1), {
+      promptTokens: 7,
+      completionTokens: 5,
+      totalTokens: 12,
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Work rejects HTTP-200 OpenAI-compatible SSE error events', async () => {
+  const remotePlugin = {
+    ...plugin('openai'),
+    active: true,
+  };
+  const service = streamingService(remotePlugin);
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    new Response(
+      'data: {"error":{"message":"quota exhausted"}}\n\ndata: [DONE]\n\n',
+      { headers: { 'content-type': 'text/event-stream' } }
+    );
+
+  try {
+    await assert.rejects(
+      service.generateChatStreamResponse(
+        {
+          model: 'test-model',
+          messages: messages.slice(0, 2),
+          tools: [tool],
+          stream: true,
+        },
+        { providerType: 'plugin', providerId: remotePlugin.id },
+        'test-user',
+        {}
+      ),
+      /quota exhausted/
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Work rejects HTTP-200 Gemini SSE error events', async () => {
+  const remotePlugin = {
+    ...plugin('gemini'),
+    endpoint: 'https://example.invalid/v1beta/models/{model}:generateContent',
+    active: true,
+  };
+  const service = streamingService(remotePlugin);
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () =>
+    new Response(
+      'data: {"error":{"message":"billing disabled"}}\n\ndata: {"candidates":[]}\n\n',
+      { headers: { 'content-type': 'text/event-stream' } }
+    );
+
+  try {
+    await assert.rejects(
+      service.generateChatStreamResponse(
+        {
+          model: 'test-model',
+          messages: messages.slice(0, 2),
+          tools: [tool],
+          stream: true,
+        },
+        { providerType: 'plugin', providerId: remotePlugin.id },
+        'test-user',
+        {}
+      ),
+      /billing disabled/
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Work aggregates Ollama thinking and content chunks', async () => {
+  const service = new WorkModelProviderService({
+    ollama: {
+      isHealthy: async () => true,
+      showModel: async () => ({ capabilities: ['tools'] }),
+      generateChatResponse: async () => {
+        throw new Error('Buffered request was not expected');
+      },
+      generateChatStreamResponse: async (
+        request,
+        onChunk,
+        _onError,
+        onComplete
+      ) => {
+        onChunk({
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            thinking: 'Checking ',
+          },
+          done: false,
+        });
+        onChunk({
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: 'Ready.',
+          },
+          done: true,
+          prompt_eval_count: 5,
+          eval_count: 3,
+        });
+        onComplete();
+      },
+    },
+    plugins: {
+      getActivePlugins: () => [],
+      getPlugin: () => null,
+      getApiKey: () => null,
+      getPluginVariables: () => ({}),
+    },
+    post: async () => {
+      throw new Error('Unexpected plugin request');
+    },
+  });
+  const content = [];
+  const reasoning = [];
+  const usage = [];
+  const response = await service.generateChatStreamResponse(
+    {
+      model: 'local-tools',
+      messages: [{ role: 'user', content: 'Check it.' }],
+      tools: [tool],
+      stream: true,
+    },
+    { providerType: 'ollama' },
+    'test-user',
+    {
+      onContent: chunk => content.push(chunk),
+      onReasoning: chunk => reasoning.push(chunk),
+      onUsage: value => usage.push(value),
+    }
+  );
+
+  assert.equal(content.join(''), 'Ready.');
+  assert.equal(reasoning.join(''), 'Checking ');
+  assert.equal(response.message.content, 'Ready.');
+  assert.equal(response.message.thinking, 'Checking ');
+  assert.deepEqual(usage.at(-1), {
+    promptTokens: 5,
+    completionTokens: 3,
+    totalTokens: 8,
+  });
 });
 
 test('Gemini Work payload and response preserve function calls', () => {
@@ -381,6 +797,18 @@ test('Gemini Work payload and response preserve function calls', () => {
     roundTripPayload.contents[1].parts[1].functionCall.id,
     'gemini-call'
   );
+
+  const { payload: noToolsPayload } = buildPluginWorkPayload(
+    plugin('gemini'),
+    {
+      model: 'test-model',
+      messages: messages.slice(0, 2),
+      tools: [],
+      stream: true,
+    },
+    { max_tokens: 1024 }
+  );
+  assert.equal('tools' in noToolsPayload, false);
 });
 
 test('provider identity keeps colliding local and plugin model routes separate', async () => {

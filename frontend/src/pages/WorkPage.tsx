@@ -52,10 +52,11 @@ import {
   workModelSelectionKey,
   type WorkFile,
   type WorkModelOption,
+  type WorkRunEvent,
   type WorkTask,
 } from '@/types/work';
 import { cn } from '@/utils';
-import { preferencesApi } from '@/utils/api';
+import { preferencesApi, workApi } from '@/utils/api';
 import { clearWorkDraft, clearWorkTaskDrafts } from '@/utils/workDrafts';
 import { workStatusPresentation } from '@/utils/workStatus';
 
@@ -68,6 +69,25 @@ const workModel = (name: string): boolean => {
 
 const errorMessage = (error: unknown, fallback: string): string =>
   error instanceof Error && error.message ? error.message : fallback;
+
+const waitForReconnect = (
+  milliseconds: number,
+  signal: AbortSignal
+): Promise<void> =>
+  new Promise(resolve => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+    let timer: number | undefined;
+    const finish = () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      signal.removeEventListener('abort', finish);
+      resolve();
+    };
+    timer = window.setTimeout(finish, milliseconds);
+    signal.addEventListener('abort', finish, { once: true });
+  });
 
 export default function WorkPage() {
   const { t } = useTranslation();
@@ -86,6 +106,7 @@ export default function WorkPage() {
     selectedTask,
     files,
     selectedFile,
+    liveRuns,
     loadingTask,
     loadingOlderMessages,
     loadingFiles,
@@ -101,6 +122,10 @@ export default function WorkPage() {
     deleteTask,
     startRun,
     cancelRun,
+    beginLiveRun,
+    applyRunEvents,
+    setLiveRunConnection,
+    clearLiveRun,
     loadFiles,
     loadFile,
     clearSelectedFile,
@@ -269,6 +294,17 @@ export default function WorkPage() {
     ? tasks.find(task => task.id === taskId)
     : undefined;
   const selectedStatus = selectedTaskSummary?.status ?? selectedTask?.status;
+  const selectedRun =
+    selectedTask?.activeRun ?? selectedTaskSummary?.activeRun ?? null;
+  const selectedRunId = selectedRun?.id;
+  const selectedRunActive =
+    selectedRun?.status === 'queued' ||
+    selectedRun?.status === 'preparing' ||
+    selectedRun?.status === 'running';
+  const liveRun =
+    taskId && liveRuns[taskId]?.runId === selectedRunId
+      ? liveRuns[taskId]
+      : undefined;
   const summaryPollingActive =
     selectedStatus === 'preparing' || selectedStatus === 'running';
   const summaryPollingDelay = summaryPollingActive ? 1000 : 4000;
@@ -310,6 +346,134 @@ export default function WorkPage() {
       void loadFiles(taskId, '').catch(() => undefined);
     }
   }, [loadFiles, loadTask, selectedStatus, taskId]);
+
+  useEffect(() => {
+    if (!taskId || !selectedRunId || !selectedRunActive) return undefined;
+
+    const controller = new AbortController();
+    let stopped = false;
+    let reconnectAttempt = 0;
+    let after =
+      useWorkStore.getState().liveRuns[taskId]?.runId === selectedRunId
+        ? useWorkStore.getState().liveRuns[taskId]?.lastEventId || 0
+        : 0;
+    let terminal = false;
+    let pendingEvents: WorkRunEvent[] = [];
+    let eventFrame: number | null = null;
+
+    const flushEvents = () => {
+      if (eventFrame !== null) {
+        window.cancelAnimationFrame(eventFrame);
+        eventFrame = null;
+      }
+      if (pendingEvents.length === 0) return;
+      const events = pendingEvents;
+      pendingEvents = [];
+      applyRunEvents(events);
+    };
+
+    const queueEvent = (event: WorkRunEvent) => {
+      if (event.type !== 'snapshot') reconnectAttempt = 0;
+      after = Math.max(after, event.id);
+      pendingEvents.push(event);
+      if (
+        event.type === 'done' ||
+        (event.type === 'error' && event.data.terminal !== false)
+      ) {
+        terminal = true;
+        flushEvents();
+        return;
+      }
+      if (eventFrame === null) {
+        eventFrame = window.requestAnimationFrame(flushEvents);
+      }
+    };
+
+    beginLiveRun(taskId, selectedRunId, selectedRun?.startedAt || undefined);
+
+    const subscribe = async () => {
+      while (!stopped && !controller.signal.aborted && !terminal) {
+        setLiveRunConnection(
+          taskId,
+          selectedRunId,
+          reconnectAttempt >= 3
+            ? 'error'
+            : reconnectAttempt === 0
+              ? 'connecting'
+              : 'reconnecting'
+        );
+        const connectionStartedAt = Date.now();
+        try {
+          await workApi.streamRunEvents({
+            taskId,
+            runId: selectedRunId,
+            after,
+            signal: controller.signal,
+            onEvent: queueEvent,
+          });
+          flushEvents();
+          if (terminal || stopped || controller.signal.aborted) break;
+          throw new Error('The live Work connection closed.');
+        } catch (streamError) {
+          flushEvents();
+          if (stopped || controller.signal.aborted) return;
+          if (Date.now() - connectionStartedAt >= 5_000) {
+            reconnectAttempt = 0;
+          }
+          reconnectAttempt += 1;
+          setLiveRunConnection(
+            taskId,
+            selectedRunId,
+            reconnectAttempt >= 3 ? 'error' : 'reconnecting',
+            reconnectAttempt >= 3
+              ? errorMessage(
+                  streamError,
+                  'Live updates are reconnecting in the background.'
+                )
+              : undefined
+          );
+          await waitForReconnect(
+            Math.min(4000, 250 * 2 ** Math.min(reconnectAttempt, 4)),
+            controller.signal
+          );
+        }
+      }
+
+      flushEvents();
+      if (!terminal || controller.signal.aborted) return;
+      setLiveRunConnection(taskId, selectedRunId, 'closed');
+      try {
+        await Promise.all([
+          loadTask(taskId, true),
+          loadFiles(taskId, ''),
+          loadTasks(true),
+        ]);
+      } catch {
+        // The next summary poll can reconcile a terminal run.
+      } finally {
+        clearLiveRun(taskId, selectedRunId);
+      }
+    };
+
+    void subscribe();
+    return () => {
+      stopped = true;
+      controller.abort();
+      flushEvents();
+    };
+  }, [
+    applyRunEvents,
+    beginLiveRun,
+    clearLiveRun,
+    loadFiles,
+    loadTask,
+    loadTasks,
+    selectedRun?.startedAt,
+    selectedRunActive,
+    selectedRunId,
+    setLiveRunConnection,
+    taskId,
+  ]);
 
   useEffect(() => {
     if (!workspaceDirty) return;
@@ -1045,6 +1209,7 @@ export default function WorkPage() {
               <>
                 <WorkConversation
                   task={selectedTask}
+                  liveRun={liveRun}
                   loading={loadingTask}
                   loadingOlder={loadingOlderMessages}
                   onLoadOlder={() => loadOlderMessages(selectedTask.id)}
@@ -1072,6 +1237,7 @@ export default function WorkPage() {
                 <WorkspacePane
                   key={selectedTask.id}
                   task={selectedTask}
+                  liveRun={liveRun}
                   files={files}
                   selectedFile={selectedFile}
                   loadingFiles={loadingFiles}

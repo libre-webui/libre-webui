@@ -41,11 +41,13 @@ import {
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
+import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
 import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
 import { isRTL } from '@/i18n';
 import type {
   WorkFile,
   WorkFileEntry,
+  WorkLiveRun,
   WorkMessage,
   WorkTask,
 } from '@/types/work';
@@ -65,6 +67,7 @@ type WorkspaceTab = 'files' | 'activity' | 'preview';
 
 interface WorkspacePaneProps {
   task: WorkTask;
+  liveRun?: WorkLiveRun;
   files: WorkFileEntry[];
   selectedFile: WorkFile | null;
   loadingFiles: boolean;
@@ -115,6 +118,7 @@ const toolName = (message: WorkMessage, fallback: string): string => {
 
 export function WorkspacePane({
   task,
+  liveRun,
   files,
   selectedFile,
   loadingFiles,
@@ -138,13 +142,25 @@ export function WorkspacePane({
   const [previewCommand, setPreviewCommand] = useState('');
   const [formatting, setFormatting] = useState(false);
   const previewUrl = safePreviewUrl(task.previewUrl);
-  const activity = useMemo(
-    () =>
-      (task.messages || []).filter(
-        message => message.role === 'tool' || message.kind !== 'message'
-      ),
-    [task.messages]
-  );
+  const liveRunId = liveRun?.runId;
+  const liveRunError = liveRun?.error;
+  const liveTools = liveRun?.tools;
+  const activity = useMemo(() => {
+    const liveToolIds = new Set(liveTools?.map(tool => tool.id) || []);
+    return (task.messages || []).filter(message => {
+      if (
+        message.kind === 'reasoning' ||
+        (message.role !== 'tool' && message.kind === 'message')
+      ) {
+        return false;
+      }
+      if (!liveRunId || message.runId !== liveRunId) return true;
+      if (message.kind === 'error' && liveRunError) return false;
+      const toolCallId = message.metadata?.toolCallId;
+      return typeof toolCallId !== 'string' || !liveToolIds.has(toolCallId);
+    });
+  }, [liveRunError, liveRunId, liveTools, task.messages]);
+  const activityCount = activity.length + (liveTools?.length || 0);
   const dirty =
     Boolean(selectedFile) && editorContent !== (selectedFile?.content ?? '');
   const taskActive = task.status === 'preparing' || task.status === 'running';
@@ -465,9 +481,9 @@ export function WorkspacePane({
               >
                 <Icon className='h-3.5 w-3.5 shrink-0' />
                 <span className='hidden xs:inline'>{item.label}</span>
-                {item.id === 'activity' && activity.length > 0 && (
+                {item.id === 'activity' && activityCount > 0 && (
                   <span className='rounded-full bg-surface px-1.5 text-[10px] text-ink-muted'>
-                    {activity.length}
+                    {activityCount}
                   </span>
                 )}
               </button>
@@ -793,7 +809,12 @@ export function WorkspacePane({
           aria-labelledby='work-workspace-tab-activity'
           className='min-h-0 flex-1 overflow-y-auto p-3'
         >
-          {activity.length === 0 ? (
+          {liveRun && (
+            <div className='mb-3'>
+              <WorkLiveRunSurface run={liveRun} variant='activity' />
+            </div>
+          )}
+          {activity.length === 0 && !liveRun ? (
             <div className='flex h-full flex-col items-center justify-center px-6 text-center text-xs text-ink-muted'>
               <TerminalSquare className='mb-3 h-7 w-7 text-ink-subtle' />
               {t('work.activity.empty', {
@@ -825,6 +846,9 @@ export function WorkspacePane({
                         {
                           message: t('work.activity.kinds.message', {
                             defaultValue: 'Message',
+                          }),
+                          reasoning: t('libreClaw.metrics.reasoning', {
+                            defaultValue: 'Reasoning',
                           }),
                           tool_call: t('work.activity.kinds.toolCall', {
                             defaultValue: 'Tool call',

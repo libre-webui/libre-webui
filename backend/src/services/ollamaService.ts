@@ -474,7 +474,8 @@ class OllamaService {
     request: OllamaChatRequest,
     onChunk: (chunk: OllamaChatResponse) => void,
     onError: (error: Error) => void,
-    onComplete: () => void
+    onComplete: () => void,
+    signal?: AbortSignal
   ): Promise<void> {
     try {
       // Use long operation client for chat streaming as it may need to load model on first use
@@ -487,6 +488,7 @@ class OllamaService {
         },
         {
           responseType: 'stream',
+          signal,
         }
       );
 

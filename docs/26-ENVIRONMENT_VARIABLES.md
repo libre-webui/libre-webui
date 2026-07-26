@@ -85,7 +85,7 @@ Libre WebUI backend:
 | `WORK_DOCKER_COMMAND`               | `docker`                                                                                      | Docker CLI executable available to the backend process   |
 | `WORK_COMMAND_TIMEOUT_MS`           | `120000`                                                                                      | Default timeout; a tool can request up to `600000` ms    |
 | `WORK_MAX_OUTPUT_CHARS`             | `50000`                                                                                       | Captured stdout/stderr limit, applied to each stream     |
-| `WORK_MAX_AGENT_ROUNDS`             | `48`                                                                                          | Maximum Ollama model/tool iterations in one run          |
+| `WORK_MAX_AGENT_ROUNDS`             | `48`                                                                                          | Provider-agnostic model/tool round budget for one run    |
 | `WORK_MEMORY_LIMIT`                 | `2g`                                                                                          | Memory limit passed to each Work container               |
 | `WORK_CPU_LIMIT`                    | `2`                                                                                           | CPU limit passed to each Work container                  |
 | `WORK_PIDS_LIMIT`                   | `256`                                                                                         | Process limit passed to each Work container              |
@@ -101,11 +101,14 @@ port rather than exposing this value directly on every host interface.
 
 Keep the runtime image pinned to a reviewed version or digest. Increasing
 concurrency or resource limits raises the amount of Docker-host capacity one or
-more autonomous runs can consume. Plugin-backed runs use the lower of
-`WORK_MAX_AGENT_ROUNDS` and 12 rounds, with caps of 64 total tool calls and
-4,096 requested output tokens per response. Persisted tool output has a
-separate bound of approximately 20,000 source characters plus a truncation
-marker.
+more autonomous runs can consume. `WORK_MAX_AGENT_ROUNDS` applies equally to
+Ollama and plugin-backed runs; there is no lower plugin-only clamp. The
+tool-call safety budget is `max(128, WORK_MAX_AGENT_ROUNDS × 8)`. When a run
+uses its round budget, Work requests a final no-tools handoff from the model
+and ends in the terminal `needs_input` state instead of returning a raw
+round-limit error or claiming successful completion. A follow-up run continues
+in the same durable workspace. Persisted tool output has a separate bound of
+approximately 20,000 source characters plus a truncation marker.
 
 These variables do not make Work available inside the standard Libre WebUI
 Docker image or Helm chart. Those deployments do not include a Docker CLI,

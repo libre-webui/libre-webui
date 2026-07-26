@@ -187,6 +187,7 @@ export interface OllamaChatResponse {
   message: {
     role: string;
     content: string;
+    thinking?: string;
     images?: string[] | null;
     tool_calls?: Record<string, unknown>[];
   };

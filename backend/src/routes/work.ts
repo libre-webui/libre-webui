@@ -22,13 +22,20 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth.js';
 import workAgentService from '../services/workAgentService.js';
+import workEventService, {
+  WORK_EVENT_MAX_RESUME_CURSOR,
+} from '../services/workEventService.js';
 import workModelProviderService from '../services/workModelProviderService.js';
 import workRuntimeService from '../services/workRuntimeService.js';
-import workTaskService from '../services/workTaskService.js';
+import workTaskService, {
+  WorkNotFoundError,
+} from '../services/workTaskService.js';
 import {
   WorkCapabilities,
+  WorkLiveEvent,
   WorkMessagePage,
   WorkProviderSelection,
+  WorkRunStatus,
   WorkTaskDetail,
   WorkTaskRecord,
   WorkTaskSummary,
@@ -36,6 +43,8 @@ import {
 import { ApiResponse } from '../types/index.js';
 
 const router = express.Router();
+const WORK_SSE_MAX_PENDING_BYTES = 1_000_000;
+const WORK_SSE_BACKPRESSURE_TIMEOUT_MS = 15_000;
 router.use(authenticate);
 router.use(requireAdmin);
 
@@ -84,7 +93,8 @@ router.use(
     const readOnlyTaskRoute =
       req.method === 'GET' &&
       (/^\/tasks(?:\/[^/]+)?$/.test(req.path) ||
-        /^\/tasks\/[^/]+\/messages$/.test(req.path));
+        /^\/tasks\/[^/]+\/messages$/.test(req.path) ||
+        /^\/tasks\/[^/]+\/runs\/[^/]+\/events$/.test(req.path));
     const teardownRoute =
       (req.method === 'POST' &&
         (/^\/tasks\/[^/]+\/cancel$/.test(req.path) ||
@@ -208,6 +218,233 @@ router.get(
         workTaskService.getMessagePage(taskId, before, Math.min(limit, 200))
       );
     } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.get(
+  '/tasks/:taskId/runs/:runId/events',
+  (req: AuthenticatedRequest, res: Response): void => {
+    let unsubscribe = (): void => undefined;
+    let heartbeat: ReturnType<typeof setInterval> | undefined;
+    let backpressureTimer: ReturnType<typeof setTimeout> | undefined;
+    let closed = false;
+    let writeBlocked = false;
+    let queuedBytes = 0;
+    let latestEventId = 0;
+    let doneQueued = false;
+    const queuedFrames: Array<{
+      value: string;
+      bytes: number;
+      terminal: boolean;
+    }> = [];
+
+    const cleanup = (): boolean => {
+      if (closed) return false;
+      closed = true;
+      if (heartbeat) clearInterval(heartbeat);
+      if (backpressureTimer) clearTimeout(backpressureTimer);
+      res.off('drain', flushQueuedFrames);
+      unsubscribe();
+      queuedFrames.length = 0;
+      queuedBytes = 0;
+      return true;
+    };
+
+    const close = (): void => {
+      if (!cleanup()) return;
+      if (!res.writableEnded && !res.destroyed) res.end();
+    };
+
+    const forceDisconnect = (): void => {
+      if (!cleanup()) return;
+      if (!res.destroyed) res.destroy();
+    };
+
+    const waitForDrain = (): void => {
+      writeBlocked = true;
+      if (backpressureTimer) clearTimeout(backpressureTimer);
+      backpressureTimer = setTimeout(
+        forceDisconnect,
+        WORK_SSE_BACKPRESSURE_TIMEOUT_MS
+      );
+      backpressureTimer.unref?.();
+      res.once('drain', flushQueuedFrames);
+    };
+
+    const writeFrame = (value: string, terminal = false): void => {
+      if (closed || res.writableEnded || res.destroyed) {
+        close();
+        return;
+      }
+      const bytes = Buffer.byteLength(value, 'utf8');
+      if (writeBlocked || queuedFrames.length > 0) {
+        if (queuedBytes + bytes > WORK_SSE_MAX_PENDING_BYTES) {
+          forceDisconnect();
+          return;
+        }
+        queuedFrames.push({ value, bytes, terminal });
+        queuedBytes += bytes;
+        return;
+      }
+      try {
+        const accepted = res.write(value);
+        if (terminal) {
+          close();
+          return;
+        }
+        if (!accepted) {
+          waitForDrain();
+        }
+      } catch {
+        close();
+      }
+    };
+
+    function flushQueuedFrames(): void {
+      if (closed || res.writableEnded || res.destroyed) {
+        close();
+        return;
+      }
+      writeBlocked = false;
+      if (backpressureTimer) {
+        clearTimeout(backpressureTimer);
+        backpressureTimer = undefined;
+      }
+      while (queuedFrames.length > 0) {
+        const frame = queuedFrames.shift();
+        if (!frame) break;
+        queuedBytes -= frame.bytes;
+        try {
+          const accepted = res.write(frame.value);
+          if (frame.terminal) {
+            close();
+            return;
+          }
+          if (!accepted) {
+            waitForDrain();
+            return;
+          }
+        } catch {
+          close();
+          return;
+        }
+      }
+    }
+
+    try {
+      const taskId = String(req.params.taskId || '').trim();
+      const runId = String(req.params.runId || '').trim();
+      const userId = requireUserId(req);
+      workTaskService.requireTaskRecord(taskId, userId);
+      const run = workTaskService.getRun(runId);
+      if (!run || run.taskId !== taskId) {
+        throw new WorkNotFoundError('Work run not found.');
+      }
+      const after = optionalNonNegativeInteger(req.query.after, 'after') ?? 0;
+      if (after > WORK_EVENT_MAX_RESUME_CURSOR) {
+        throw new WorkRouteError(
+          'Query parameter "after" is outside the resumable cursor range.',
+          400
+        );
+      }
+
+      res.status(200);
+      res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders();
+
+      const writeEvent = (event: WorkLiveEvent): void => {
+        if (closed || res.writableEnded) return;
+        latestEventId = Math.max(latestEventId, event.id);
+        const terminal = event.type === 'done';
+        if (terminal) doneQueued = true;
+        writeFrame(
+          `id: ${event.id}\nevent: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`,
+          terminal
+        );
+      };
+
+      res.once('close', close);
+      let replaying = true;
+      const bufferedLiveEvents: WorkLiveEvent[] = [];
+      workEventService.advanceCursor(taskId, runId, after);
+      unsubscribe = workEventService.subscribe(taskId, runId, event => {
+        if (replaying) {
+          bufferedLiveEvents.push(event);
+          return;
+        }
+        writeEvent(event);
+      });
+      const task = workTaskService.requireTaskDetail(taskId, userId);
+      const replay = workEventService.replay(taskId, runId, after);
+      const snapshotRun = workTaskService.getRun(runId) ?? run;
+      const snapshotStatus = replay.snapshot.status ?? snapshotRun.status;
+      const snapshotTerminal =
+        replay.snapshot.terminal || isTerminalWorkRunStatus(snapshotStatus);
+      workEventService.emitSnapshot(
+        taskId,
+        runId,
+        replay.latestEventId,
+        {
+          task,
+          liveRun: {
+            ...replay.snapshot,
+            status: snapshotStatus,
+            phase: replay.snapshot.phase ?? snapshotStatus,
+            error: replay.snapshot.error ?? snapshotRun.error,
+            terminal: snapshotTerminal,
+          },
+          replayTruncated: replay.truncated,
+        },
+        writeEvent
+      );
+      replaying = false;
+      for (const event of bufferedLiveEvents
+        .filter(event => event.id > replay.latestEventId)
+        .sort((left, right) => left.id - right.id)) {
+        writeEvent(event);
+        if (closed) return;
+      }
+
+      const currentRun = workTaskService.getRun(runId) ?? snapshotRun;
+      const terminalStatus = isTerminalWorkRunStatus(replay.snapshot.status)
+        ? replay.snapshot.status
+        : isTerminalWorkRunStatus(currentRun.status)
+          ? currentRun.status
+          : undefined;
+      if (terminalStatus && !doneQueued) {
+        writeEvent({
+          id: latestEventId + 1,
+          type: 'done',
+          taskId,
+          runId,
+          timestamp: Date.now(),
+          data: {
+            status: terminalStatus,
+            error: replay.snapshot.error ?? currentRun.error,
+            budgetReason: replay.snapshot.budgetReason,
+          },
+        });
+      }
+      if (doneQueued || closed) return;
+
+      heartbeat = setInterval(() => {
+        if (closed || res.writableEnded) {
+          close();
+          return;
+        }
+        writeFrame(`: heartbeat ${Date.now()}\n\n`);
+      }, 15_000);
+      heartbeat.unref?.();
+    } catch (error) {
+      if (res.headersSent) {
+        close();
+        return;
+      }
       sendError(res, error);
     }
   }
@@ -597,6 +834,20 @@ function optionalPositiveInteger(
     );
   }
   return parsed;
+}
+
+function isTerminalWorkRunStatus(
+  status: WorkRunStatus | undefined
+): status is Extract<
+  WorkRunStatus,
+  'completed' | 'needs_input' | 'failed' | 'cancelled'
+> {
+  return (
+    status === 'completed' ||
+    status === 'needs_input' ||
+    status === 'failed' ||
+    status === 'cancelled'
+  );
 }
 
 function sendSuccess<T>(res: Response<ApiResponse<T>>, data: T): void {

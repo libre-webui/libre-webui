@@ -28,6 +28,10 @@ import type {
   WorkTaskSummary,
 } from '@/types/work';
 import { api } from './client';
+import {
+  streamWorkRunEvents,
+  type WorkRunEventStreamOptions,
+} from './workEventStream';
 
 const taskPath = (taskId: string): string =>
   `/work/tasks/${encodeURIComponent(taskId)}`;
@@ -79,6 +83,9 @@ export const workApi = {
 
   cancelRun: (taskId: string): Promise<ApiResponse<WorkTask>> =>
     api.post(`${taskPath(taskId)}/cancel`).then(response => response.data),
+
+  streamRunEvents: (options: WorkRunEventStreamOptions): Promise<void> =>
+    streamWorkRunEvents(options),
 
   listFiles: (
     taskId: string,

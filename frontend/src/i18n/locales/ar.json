@@ -1542,6 +1542,13 @@
       "needsInput": "بحاجة إلى إدخال",
       "error": "خطأ"
     },
+    "live": {
+      "connecting": "جارٍ الاتصال بالتحديثات المباشرة…",
+      "reconnecting": "جارٍ إعادة الاتصال بالتحديثات المباشرة…",
+      "unavailable": "التحديثات المباشرة غير متاحة",
+      "newActivity": "نشاط جديد",
+      "skillsLoaded": "مهارات مساحة العمل · {{count}}"
+    },
     "runtime": {
       "unavailable": "بيئة التشغيل غير متاحة",
       "readyOllama": "Docker جاهز",

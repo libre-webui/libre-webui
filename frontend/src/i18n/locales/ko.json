@@ -1542,6 +1542,13 @@
       "needsInput": "입력 필요",
       "error": "오류"
     },
+    "live": {
+      "connecting": "실시간 업데이트에 연결하는 중…",
+      "reconnecting": "실시간 업데이트에 다시 연결하는 중…",
+      "unavailable": "실시간 업데이트를 사용할 수 없습니다",
+      "newActivity": "새 활동",
+      "skillsLoaded": "워크스페이스 기술 · {{count}}"
+    },
     "runtime": {
       "unavailable": "런타임을 사용할 수 없습니다",
       "readyOllama": "Docker 준비 완료",
