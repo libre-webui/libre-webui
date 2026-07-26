@@ -292,7 +292,8 @@
       "settings": "Nastavení",
       "userManagement": "Správa uživatelů",
       "signOut": "Odhlásit se",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Práce"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Nelze vytvořit automatizaci",
       "automationUpdated": "Automatizace aktualizována",
       "updateAutomationFailed": "Automatizaci nelze aktualizovat"
+    }
+  },
+  "work": {
+    "title": "Práce",
+    "subtitle": "Izolované pracovní prostory modelů",
+    "tasks": {
+      "title": "Pracovní úlohy",
+      "subtitle": "Trvalé místní pracovní prostory",
+      "new": "Nová úloha",
+      "emptyTitle": "Zatím žádné pracovní úlohy",
+      "empty": "Vaše pracovní úlohy se zde zobrazí po odeslání první zprávy.",
+      "untitled": "Úloha bez názvu",
+      "actions": "Akce úlohy",
+      "delete": "Smazat úlohu",
+      "deleteNamed": "Smazat „{{title}}“",
+      "deleteConfirm": "Trvale smazat „{{title}}“ i její pracovní prostor?",
+      "close": "Zavřít pracovní úlohy",
+      "open": "Otevřít pracovní úlohy",
+      "rename": "Název úlohy",
+      "loading": "Načítání úlohy…",
+      "notFound": "Tato pracovní úloha není dostupná",
+      "back": "Spustit novou úlohu",
+      "status": "Stav: {{status}}"
+    },
+    "landing": {
+      "title": "Spustit novou pracovní úlohu",
+      "description": "Poskytněte místnímu modelu nebo modelu nakonfigurovaného poskytovatele trvalý izolovaný pracovní prostor. Může procházet soubory, spouštět nástroje a po vašem návratu pokračovat tam, kde skončil.",
+      "isolated": "Izolované",
+      "isolatedBody": "Každá úloha má vlastní kontejner a soubory.",
+      "durable": "Trvalé",
+      "durableBody": "Později se můžete vrátit ke konverzaci i pracovnímu prostoru.",
+      "controlled": "Kontrolované",
+      "controlledBody": "Běhové prostředí a soubory úlohy zůstávají izolované od hostitele."
+    },
+    "composer": {
+      "placeholder": "Popište, co chcete vytvořit nebo změnit…",
+      "model": "Pracovní model",
+      "noModels": "Žádné modely kompatibilní s režimem Práce",
+      "cancel": "Zastavit",
+      "send": "Spustit",
+      "hint": "Každá úloha uchovává vlastní soubory a historii. Před použitím výstup modelu zkontrolujte.",
+      "remoteTitle": "Vzdálený poskytovatel",
+      "remoteHint": "Konverzace a výstup nástrojů se odesílají do nakonfigurované služby. Jedno autonomní spuštění může poskytovatele kontaktovat vícekrát a způsobit poplatky. Soubory pracovního prostoru zůstávají místní, pokud nástroj nevrátí jejich obsah.",
+      "remoteDismiss": "Skrýt",
+      "remoteDismissLabel": "Skrýt upozornění na vzdáleného poskytovatele",
+      "remoteDismissFailed": "Předvolbu vzdáleného poskytovatele se nepodařilo uložit.",
+      "noModelSelected": "Není vybrán žádný model kompatibilní s režimem Práce."
+    },
+    "conversation": {
+      "ready": "Pracovní prostor je připraven",
+      "empty": "Pokračujte v úloze níže. Tato konverzace a její soubory zůstávají připojené k tomuto pracovnímu prostoru.",
+      "loadOlder": "Načíst starší zprávy"
+    },
+    "status": {
+      "preparing": "Příprava izolovaného pracovního prostoru…",
+      "running": "Práce v místním pracovním prostoru…"
+    },
+    "statusLabels": {
+      "idle": "Nečinné",
+      "thinking": "Přemýšlí",
+      "complete": "Dokončeno",
+      "needsInput": "Vyžaduje vstup",
+      "error": "Chyba"
+    },
+    "runtime": {
+      "unavailable": "Běhové prostředí není dostupné",
+      "readyOllama": "Docker je připraven",
+      "readyPlugin": "Docker + plugin jsou připraveny",
+      "readyHybrid": "Docker + modely jsou připraveny",
+      "reason": "Je vyžadován Docker a dostupný poskytovatel modelu Ollama nebo pluginu."
+    },
+    "workspace": {
+      "label": "Zobrazení pracovního prostoru",
+      "files": "Soubory",
+      "activity": "Aktivita",
+      "preview": "Náhled",
+      "resize": "Změnit velikost konverzace a pracovního prostoru",
+      "resizeHint": "Velikost změníte přetažením. Pro přesné nastavení použijte klávesy se šipkami. Dvojitým kliknutím nebo klávesou Enter obnovíte výchozí velikost.",
+      "splitSize": "Konverzace {{conversation}} %, pracovní prostor {{workspace}} %"
+    },
+    "files": {
+      "discard": "Zahodit neuložené změny souboru?",
+      "leaveWithDraft": "Opustit tento soubor? Neuložená úprava zůstane v prohlížeči jako koncept.",
+      "up": "Nadřazená složka",
+      "back": "Zpět k souborům",
+      "empty": "V této složce zatím nejsou žádné soubory.",
+      "select": "Vyberte soubor, který chcete prohlédnout a upravit.",
+      "editorLabel": "Editor souboru: {{path}}",
+      "format": "Formátovat",
+      "formatted": "Kód byl naformátován.",
+      "formatFailed": "Tento soubor se nepodařilo naformátovat.",
+      "formatShortcut": "Formátovat (Shift+Alt+F)",
+      "formatTooLarge": "Formátování je omezeno na soubory do 100 000 znaků a 4 000 řádků.",
+      "formatUnsupported": "Pro tento typ souboru není formátování dostupné.",
+      "saveShortcut": "Uložit (⌘/Ctrl+S)",
+      "highlightPaused": "U velkých souborů je živé zvýrazňování pozastaveno, aby editor zůstal plynulý.",
+      "plainTextLarge": "Prostý text · velký soubor"
+    },
+    "activity": {
+      "empty": "Zde se zobrazí příkazy, operace se soubory a výsledky nástrojů.",
+      "toolActivity": "Aktivita nástrojů",
+      "details": "Podrobnosti",
+      "kinds": {
+        "message": "Zpráva",
+        "toolCall": "Volání nástroje",
+        "toolResult": "Výsledek nástroje",
+        "error": "Chyba"
+      }
+    },
+    "preview": {
+      "command": "Volitelný spouštěcí příkaz",
+      "start": "Spustit náhled",
+      "stop": "Zastavit náhled",
+      "open": "Otevřít",
+      "starting": "Spouštění náhledu…",
+      "frameTitle": "Náhled pracovního prostoru",
+      "failed": "Náhled se nepodařilo spustit. Zkontrolujte Aktivitu a zkuste jiný příkaz.",
+      "empty": "Spusťte aplikaci v tomto pracovním prostoru, abyste ji zde mohli prohlédnout."
+    },
+    "mobile": {
+      "surface": "Plocha úlohy",
+      "conversation": "Konverzace",
+      "workspace": "Pracovní prostor"
+    },
+    "toasts": {
+      "runFailed": "Pracovní úlohu se nepodařilo spustit.",
+      "updateFailed": "Tuto úlohu se nepodařilo aktualizovat.",
+      "renameFailed": "Tuto úlohu se nepodařilo přejmenovat.",
+      "cancelled": "Běh pracovní úlohy byl zastaven.",
+      "cancelFailed": "Běh pracovní úlohy se nepodařilo zastavit.",
+      "deleteFailed": "Tuto pracovní úlohu se nepodařilo smazat.",
+      "saveFailed": "Tento soubor se nepodařilo uložit.",
+      "saved": "Soubor byl uložen.",
+      "previewFailed": "Náhled se nepodařilo spustit.",
+      "previewStopFailed": "Náhled se nepodařilo zastavit."
     }
   }
 }

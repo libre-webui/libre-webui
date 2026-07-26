@@ -292,7 +292,8 @@
       "settings": "Pengaturan",
       "userManagement": "Manajemen Pengguna",
       "signOut": "Keluar",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Kerja"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Tidak dapat membuat otomatisasi",
       "automationUpdated": "Otomatisasi diperbarui",
       "updateAutomationFailed": "Tidak dapat memperbarui otomatisasi"
+    }
+  },
+  "work": {
+    "title": "Kerja",
+    "subtitle": "Ruang kerja model terisolasi",
+    "tasks": {
+      "title": "Tugas Kerja",
+      "subtitle": "Ruang kerja lokal persisten",
+      "new": "Tugas baru",
+      "emptyTitle": "Belum ada tugas Kerja",
+      "empty": "Tugas Kerja Anda akan muncul di sini setelah Anda mengirim pesan pertama.",
+      "untitled": "Tugas tanpa judul",
+      "actions": "Tindakan tugas",
+      "delete": "Hapus tugas",
+      "deleteNamed": "Hapus {{title}}",
+      "deleteConfirm": "Hapus “{{title}}” dan ruang kerjanya secara permanen?",
+      "close": "Tutup tugas Kerja",
+      "open": "Buka tugas Kerja",
+      "rename": "Judul tugas",
+      "loading": "Memuat tugas…",
+      "notFound": "Tugas Kerja ini tidak tersedia",
+      "back": "Mulai tugas baru",
+      "status": "Status: {{status}}"
+    },
+    "landing": {
+      "title": "Mulai tugas Kerja baru",
+      "description": "Berikan ruang kerja yang persisten dan terisolasi kepada model lokal atau model penyedia yang dikonfigurasi. Model dapat memeriksa file, menjalankan alat, dan melanjutkan pekerjaan saat Anda kembali.",
+      "isolated": "Terisolasi",
+      "isolatedBody": "Setiap tugas memiliki kontainer dan filenya sendiri.",
+      "durable": "Persisten",
+      "durableBody": "Kembali ke percakapan dan ruang kerjanya nanti.",
+      "controlled": "Terkendali",
+      "controlledBody": "Runtime dan file tugas tetap terisolasi dari host."
+    },
+    "composer": {
+      "placeholder": "Jelaskan apa yang ingin Anda buat atau ubah…",
+      "model": "Model Kerja",
+      "noModels": "Tidak ada model yang kompatibel dengan Kerja",
+      "cancel": "Hentikan",
+      "send": "Jalankan",
+      "hint": "Setiap tugas menyimpan file dan riwayatnya sendiri. Tinjau keluaran model sebelum menggunakannya.",
+      "remoteTitle": "Penyedia jarak jauh",
+      "remoteHint": "Percakapan dan keluaran alat dikirim ke layanan yang dikonfigurasi. Satu proses otonom dapat melakukan beberapa panggilan penyedia dan mungkin dikenai biaya. File ruang kerja tetap lokal kecuali alat mengembalikan isinya.",
+      "remoteDismiss": "Tutup",
+      "remoteDismissLabel": "Tutup pemberitahuan penyedia jarak jauh",
+      "remoteDismissFailed": "Tidak dapat menyimpan preferensi penyedia jarak jauh.",
+      "noModelSelected": "Tidak ada model kompatibel Kerja yang dipilih."
+    },
+    "conversation": {
+      "ready": "Ruang kerja siap",
+      "empty": "Lanjutkan tugas di bawah ini. Percakapan dan filenya tetap terhubung ke ruang kerja ini.",
+      "loadOlder": "Muat pesan lama"
+    },
+    "status": {
+      "preparing": "Menyiapkan ruang kerja terisolasi…",
+      "running": "Bekerja di ruang kerja lokal…"
+    },
+    "statusLabels": {
+      "idle": "Siaga",
+      "thinking": "Berpikir",
+      "complete": "Selesai",
+      "needsInput": "Memerlukan input",
+      "error": "Error"
+    },
+    "runtime": {
+      "unavailable": "Runtime tidak tersedia",
+      "readyOllama": "Docker siap",
+      "readyPlugin": "Docker + plugin siap",
+      "readyHybrid": "Docker + model siap",
+      "reason": "Docker dan penyedia model Ollama atau plugin yang tersedia diperlukan."
+    },
+    "workspace": {
+      "label": "Tampilan ruang kerja",
+      "files": "File",
+      "activity": "Aktivitas",
+      "preview": "Pratinjau",
+      "resize": "Ubah ukuran percakapan dan ruang kerja",
+      "resizeHint": "Seret untuk mengubah ukuran. Gunakan tombol panah untuk kontrol presisi. Klik dua kali atau tekan Enter untuk mereset.",
+      "splitSize": "Percakapan {{conversation}}%, ruang kerja {{workspace}}%"
+    },
+    "files": {
+      "discard": "Buang perubahan file yang belum disimpan?",
+      "leaveWithDraft": "Tinggalkan file ini? Editan yang belum disimpan akan tetap menjadi draf di browser.",
+      "up": "Folder induk",
+      "back": "Kembali ke file",
+      "empty": "Belum ada file di folder ini.",
+      "select": "Pilih file untuk diperiksa dan diedit.",
+      "editorLabel": "Editor file: {{path}}",
+      "format": "Format",
+      "formatted": "Kode telah diformat.",
+      "formatFailed": "Tidak dapat memformat file ini.",
+      "formatShortcut": "Format (Shift+Alt+F)",
+      "formatTooLarge": "Pemformatan dibatasi untuk file di bawah 100.000 karakter dan 4.000 baris.",
+      "formatUnsupported": "Pemformatan tidak tersedia untuk jenis file ini.",
+      "saveShortcut": "Simpan (⌘/Ctrl+S)",
+      "highlightPaused": "Penyorotan langsung dijeda untuk file besar agar pengeditan tetap responsif.",
+      "plainTextLarge": "Teks biasa · file besar"
+    },
+    "activity": {
+      "empty": "Perintah, operasi file, dan hasil alat akan muncul di sini.",
+      "toolActivity": "Aktivitas alat",
+      "details": "Detail",
+      "kinds": {
+        "message": "Pesan",
+        "toolCall": "Panggilan alat",
+        "toolResult": "Hasil alat",
+        "error": "Error"
+      }
+    },
+    "preview": {
+      "command": "Perintah mulai opsional",
+      "start": "Mulai pratinjau",
+      "stop": "Hentikan pratinjau",
+      "open": "Buka",
+      "starting": "Memulai pratinjau…",
+      "frameTitle": "Pratinjau ruang kerja",
+      "failed": "Pratinjau tidak dapat dimulai. Periksa Aktivitas, lalu coba perintah lain.",
+      "empty": "Mulai aplikasi di dalam ruang kerja ini untuk memeriksanya di sini."
+    },
+    "mobile": {
+      "surface": "Tampilan tugas",
+      "conversation": "Percakapan",
+      "workspace": "Ruang kerja"
+    },
+    "toasts": {
+      "runFailed": "Tidak dapat memulai tugas Kerja.",
+      "updateFailed": "Tidak dapat memperbarui tugas ini.",
+      "renameFailed": "Tidak dapat mengganti nama tugas ini.",
+      "cancelled": "Proses Kerja dihentikan.",
+      "cancelFailed": "Tidak dapat menghentikan proses Kerja.",
+      "deleteFailed": "Tidak dapat menghapus tugas Kerja ini.",
+      "saveFailed": "Tidak dapat menyimpan file ini.",
+      "saved": "File disimpan.",
+      "previewFailed": "Tidak dapat memulai pratinjau.",
+      "previewStopFailed": "Tidak dapat menghentikan pratinjau."
     }
   }
 }

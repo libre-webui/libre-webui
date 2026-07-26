@@ -26,6 +26,7 @@ import {
   type KeyboardEvent,
   type UIEvent,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
 import { detectWorkLanguage } from '@/utils/workCode';
@@ -58,6 +59,7 @@ export function WorkspaceCodeEditor({
   onSaveShortcut,
   onFormatShortcut,
 }: WorkspaceCodeEditorProps) {
+  const { t } = useTranslation();
   const isDark = useAppStore(state => state.theme.mode === 'dark');
   const highlightContentRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -116,6 +118,7 @@ export function WorkspaceCodeEditor({
 
   return (
     <div
+      dir='ltr'
       className={cn(
         'relative min-h-0 flex-1 overflow-hidden bg-surface focus-within:ring-1 focus-within:ring-inset focus-within:ring-primary-500/60',
         disabled && 'opacity-60'
@@ -195,10 +198,16 @@ export function WorkspaceCodeEditor({
 
       {isLarge && (
         <span
+          dir='auto'
           className='pointer-events-none absolute bottom-2 end-3 z-20 rounded-md border border-line bg-surface-overlay/90 px-2 py-1 text-[10px] text-ink-muted shadow-subtle'
-          title='Live highlighting is paused for large files to keep editing responsive.'
+          title={t('work.files.highlightPaused', {
+            defaultValue:
+              'Live highlighting is paused for large files to keep editing responsive.',
+          })}
         >
-          Plain text · large file
+          {t('work.files.plainTextLarge', {
+            defaultValue: 'Plain text · large file',
+          })}
         </span>
       )}
     </div>

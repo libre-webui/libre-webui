@@ -186,7 +186,10 @@ export function SidebarWorkTasks({
                             )}
                             style={{ backgroundColor: status.color }}
                           />
-                          <span className='min-w-0 flex-1 truncate text-[13px] font-medium leading-tight text-gray-900 dark:text-dark-900'>
+                          <span
+                            dir='auto'
+                            className='min-w-0 flex-1 truncate text-[13px] font-medium leading-tight text-gray-900 dark:text-dark-900'
+                          >
                             {truncateText(
                               task.title ||
                                 t('work.tasks.untitled', {

@@ -292,7 +292,8 @@
       "settings": "设置",
       "userManagement": "用户管理",
       "signOut": "退出登录",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "工作"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "无法创建自动化",
       "automationUpdated": "自动化更新",
       "updateAutomationFailed": "无法更新自动化"
+    }
+  },
+  "work": {
+    "title": "工作",
+    "subtitle": "隔离的模型工作区",
+    "tasks": {
+      "title": "工作任务",
+      "subtitle": "持久本地工作区",
+      "new": "新建任务",
+      "emptyTitle": "尚无工作任务",
+      "empty": "发送第一条消息后，您的工作任务将显示在这里。",
+      "untitled": "无标题任务",
+      "actions": "任务操作",
+      "delete": "删除任务",
+      "deleteNamed": "删除 {{title}}",
+      "deleteConfirm": "要永久删除“{{title}}”及其工作区吗？",
+      "close": "关闭工作任务",
+      "open": "打开工作任务",
+      "rename": "任务标题",
+      "loading": "正在加载任务…",
+      "notFound": "此工作任务不可用",
+      "back": "开始新任务",
+      "status": "状态：{{status}}"
+    },
+    "landing": {
+      "title": "开始新的工作任务",
+      "description": "为本地模型或已配置提供商的模型提供一个持久、隔离的工作区。它可以检查文件、运行工具，并在您回来后从上次位置继续。",
+      "isolated": "隔离",
+      "isolatedBody": "每个任务都有自己的容器和文件。",
+      "durable": "持久",
+      "durableBody": "稍后可返回其对话和工作区。",
+      "controlled": "受控",
+      "controlledBody": "运行时和任务文件与宿主机保持隔离。"
+    },
+    "composer": {
+      "placeholder": "描述您想要构建或更改的内容…",
+      "model": "工作模型",
+      "noModels": "没有兼容工作模式的模型",
+      "cancel": "停止",
+      "send": "运行",
+      "hint": "每个任务都会保留自己的文件和历史记录。使用前请检查模型输出。",
+      "remoteTitle": "远程提供商",
+      "remoteHint": "对话和工具输出会发送到已配置的服务。单次自主运行可能多次调用提供商并产生费用。除非工具返回文件内容，否则工作区文件会保留在本地。",
+      "remoteDismiss": "关闭",
+      "remoteDismissLabel": "关闭远程提供商提示",
+      "remoteDismissFailed": "无法保存远程提供商偏好设置。",
+      "noModelSelected": "尚未选择兼容工作模式的模型。"
+    },
+    "conversation": {
+      "ready": "工作区已就绪",
+      "empty": "在下方继续此任务。该对话及其文件会一直关联到此工作区。",
+      "loadOlder": "加载更早的消息"
+    },
+    "status": {
+      "preparing": "正在准备隔离工作区…",
+      "running": "正在本地工作区中工作…"
+    },
+    "statusLabels": {
+      "idle": "空闲",
+      "thinking": "思考中",
+      "complete": "已完成",
+      "needsInput": "需要输入",
+      "error": "错误"
+    },
+    "runtime": {
+      "unavailable": "运行时不可用",
+      "readyOllama": "Docker 已就绪",
+      "readyPlugin": "Docker + 插件已就绪",
+      "readyHybrid": "Docker + 模型已就绪",
+      "reason": "需要 Docker 以及可用的 Ollama 或插件模型提供商。"
+    },
+    "workspace": {
+      "label": "工作区视图",
+      "files": "文件",
+      "activity": "活动",
+      "preview": "预览",
+      "resize": "调整对话和工作区大小",
+      "resizeHint": "拖动以调整大小。使用方向键精确控制。双击或按 Enter 重置。",
+      "splitSize": "对话 {{conversation}}%，工作区 {{workspace}}%"
+    },
+    "files": {
+      "discard": "放弃未保存的文件更改？",
+      "leaveWithDraft": "离开此文件？未保存的编辑内容会作为浏览器草稿保留。",
+      "up": "上级文件夹",
+      "back": "返回文件",
+      "empty": "此文件夹中尚无文件。",
+      "select": "选择一个文件进行查看和编辑。",
+      "editorLabel": "文件编辑器：{{path}}",
+      "format": "格式化",
+      "formatted": "代码已格式化。",
+      "formatFailed": "无法格式化此文件。",
+      "formatShortcut": "格式化 (Shift+Alt+F)",
+      "formatTooLarge": "仅支持格式化少于 100,000 个字符且不超过 4,000 行的文件。",
+      "formatUnsupported": "此文件类型不支持格式化。",
+      "saveShortcut": "保存 (⌘/Ctrl+S)",
+      "highlightPaused": "为保持编辑流畅，大文件的实时高亮已暂停。",
+      "plainTextLarge": "纯文本 · 大文件"
+    },
+    "activity": {
+      "empty": "命令、文件操作和工具结果将显示在这里。",
+      "toolActivity": "工具活动",
+      "details": "详细信息",
+      "kinds": {
+        "message": "消息",
+        "toolCall": "工具调用",
+        "toolResult": "工具结果",
+        "error": "错误"
+      }
+    },
+    "preview": {
+      "command": "可选启动命令",
+      "start": "启动预览",
+      "stop": "停止预览",
+      "open": "打开",
+      "starting": "正在启动预览…",
+      "frameTitle": "工作区预览",
+      "failed": "无法启动预览。请检查“活动”，然后尝试其他命令。",
+      "empty": "在此工作区中启动应用，即可在这里查看。"
+    },
+    "mobile": {
+      "surface": "任务视图",
+      "conversation": "对话",
+      "workspace": "工作区"
+    },
+    "toasts": {
+      "runFailed": "无法启动工作任务。",
+      "updateFailed": "无法更新此任务。",
+      "renameFailed": "无法重命名此任务。",
+      "cancelled": "工作运行已停止。",
+      "cancelFailed": "无法停止工作运行。",
+      "deleteFailed": "无法删除此工作任务。",
+      "saveFailed": "无法保存此文件。",
+      "saved": "文件已保存。",
+      "previewFailed": "无法启动预览。",
+      "previewStopFailed": "无法停止预览。"
     }
   }
 }

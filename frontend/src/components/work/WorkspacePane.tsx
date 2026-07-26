@@ -42,6 +42,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
 import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
+import { isRTL } from '@/i18n';
 import type {
   WorkFile,
   WorkFileEntry,
@@ -103,13 +104,13 @@ const parentPath = (path: string): string => {
   return parts.join('/');
 };
 
-const toolName = (message: WorkMessage): string => {
+const toolName = (message: WorkMessage, fallback: string): string => {
   const value =
     message.metadata?.name ??
     message.metadata?.toolName ??
     message.metadata?.tool ??
     message.metadata?.command;
-  return typeof value === 'string' && value ? value : message.kind;
+  return typeof value === 'string' && value ? value : fallback;
 };
 
 export function WorkspacePane({
@@ -126,7 +127,8 @@ export function WorkspacePane({
   onStopPreview,
   onDirtyChange,
 }: WorkspacePaneProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const rtl = isRTL(i18n.language);
   const [tab, setTab] = useState<WorkspaceTab>('files');
   const [currentPath, setCurrentPath] = useState('');
   const [editorContent, setEditorContent] = useState('');
@@ -402,9 +404,12 @@ export function WorkspacePane({
     index: number
   ) => {
     let nextIndex: number | null = null;
-    if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
-    if (event.key === 'ArrowLeft')
-      nextIndex = (index - 1 + tabs.length) % tabs.length;
+    if (event.key === 'ArrowRight') {
+      nextIndex = (index + (rtl ? -1 : 1) + tabs.length) % tabs.length;
+    }
+    if (event.key === 'ArrowLeft') {
+      nextIndex = (index + (rtl ? 1 : -1) + tabs.length) % tabs.length;
+    }
     if (event.key === 'Home') nextIndex = 0;
     if (event.key === 'End') nextIndex = tabs.length - 1;
     if (nextIndex === null) return;
@@ -440,7 +445,11 @@ export function WorkspacePane({
                 role='tab'
                 id={`work-workspace-tab-${item.id}`}
                 aria-selected={tab === item.id}
-                aria-controls={`work-workspace-panel-${item.id}`}
+                aria-controls={
+                  tab === item.id
+                    ? `work-workspace-panel-${item.id}`
+                    : undefined
+                }
                 aria-label={item.label}
                 tabIndex={tab === item.id ? 0 : -1}
                 title={item.label}
@@ -478,10 +487,11 @@ export function WorkspacePane({
                     defaultValue: 'Back to files',
                   })}
                 >
-                  <ArrowLeft className='h-3.5 w-3.5' />
+                  <ArrowLeft className='h-3.5 w-3.5 rtl:rotate-180' />
                 </button>
               )}
               <span
+                dir='ltr'
                 className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink-muted'
                 title={
                   selectedFile?.path ??
@@ -510,7 +520,7 @@ export function WorkspacePane({
                   defaultValue: 'Parent folder',
                 })}
               >
-                <ArrowLeft className='h-3.5 w-3.5' />
+                <ArrowLeft className='h-3.5 w-3.5 rtl:rotate-180' />
               </button>
               <button
                 type='button'
@@ -598,6 +608,7 @@ export function WorkspacePane({
         {tab === 'preview' && (
           <>
             <input
+              dir='auto'
               value={previewCommand}
               onChange={event => setPreviewCommand(event.target.value)}
               placeholder={t('work.preview.command', {
@@ -731,7 +742,9 @@ export function WorkspacePane({
                       ) : (
                         <File className='h-3.5 w-3.5 shrink-0' />
                       )}
-                      <span className='truncate'>{entry.name}</span>
+                      <span dir='auto' className='truncate'>
+                        {entry.name}
+                      </span>
                     </button>
                   ))
               )}
@@ -796,15 +809,41 @@ export function WorkspacePane({
                   className='rounded-xl border border-line bg-surface p-3'
                 >
                   <div className='flex items-center justify-between gap-2'>
-                    <span className='truncate font-mono text-xs font-medium text-ink'>
-                      {toolName(message)}
+                    <span
+                      dir='auto'
+                      className='truncate font-mono text-xs font-medium text-ink'
+                    >
+                      {toolName(
+                        message,
+                        t('work.activity.toolActivity', {
+                          defaultValue: 'Tool activity',
+                        })
+                      )}
                     </span>
-                    <span className='shrink-0 text-[10px] uppercase tracking-wide text-ink-subtle'>
-                      {message.kind.replace('_', ' ')}
+                    <span className='shrink-0 text-[10px] uppercase tracking-wide text-ink-subtle rtl:tracking-normal'>
+                      {
+                        {
+                          message: t('work.activity.kinds.message', {
+                            defaultValue: 'Message',
+                          }),
+                          tool_call: t('work.activity.kinds.toolCall', {
+                            defaultValue: 'Tool call',
+                          }),
+                          tool_result: t('work.activity.kinds.toolResult', {
+                            defaultValue: 'Tool result',
+                          }),
+                          error: t('work.activity.kinds.error', {
+                            defaultValue: 'Error',
+                          }),
+                        }[message.kind]
+                      }
                     </span>
                   </div>
                   {message.content && (
-                    <pre className='mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words font-mono text-[11px] leading-relaxed text-ink-muted'>
+                    <pre
+                      dir='ltr'
+                      className='mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words text-left font-mono text-[11px] leading-relaxed text-ink-muted'
+                    >
                       {message.content}
                     </pre>
                   )}

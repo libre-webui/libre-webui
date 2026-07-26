@@ -292,7 +292,8 @@
       "settings": "Stillingar",
       "userManagement": "Notendastjórnun",
       "signOut": "Skrá út",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Vinna"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Gat ekki búið til sjálfvirkni",
       "automationUpdated": "Sjálfvirkni uppfærð",
       "updateAutomationFailed": "Gat ekki uppfært sjálfvirkni"
+    }
+  },
+  "work": {
+    "title": "Vinna",
+    "subtitle": "Einangruð vinnusvæði líkana",
+    "tasks": {
+      "title": "Vinnuverkefni",
+      "subtitle": "Varanleg staðbundin vinnusvæði",
+      "new": "Nýtt verkefni",
+      "emptyTitle": "Engin vinnuverkefni enn",
+      "empty": "Vinnuverkefnin þín birtast hér eftir að þú sendir fyrstu skilaboðin.",
+      "untitled": "Ónefnt verkefni",
+      "actions": "Aðgerðir verkefnis",
+      "delete": "Eyða verkefni",
+      "deleteNamed": "Eyða „{{title}}“",
+      "deleteConfirm": "Eyða „{{title}}“ og vinnusvæði þess varanlega?",
+      "close": "Loka vinnuverkefnum",
+      "open": "Opna vinnuverkefni",
+      "rename": "Heiti verkefnis",
+      "loading": "Hleður verkefni…",
+      "notFound": "Þetta vinnuverkefni er ekki tiltækt",
+      "back": "Hefja nýtt verkefni",
+      "status": "Staða: {{status}}"
+    },
+    "landing": {
+      "title": "Hefja nýtt vinnuverkefni",
+      "description": "Gefðu staðbundnu líkani eða líkani frá stilltum þjónustuaðila varanlegt, einangrað vinnusvæði. Það getur skoðað skrár, keyrt verkfæri og haldið áfram þar sem frá var horfið þegar þú kemur aftur.",
+      "isolated": "Einangrað",
+      "isolatedBody": "Hvert verkefni fær eigin gám og skrár.",
+      "durable": "Varanlegt",
+      "durableBody": "Farðu aftur í samtalið og vinnusvæðið síðar.",
+      "controlled": "Stýrt",
+      "controlledBody": "Keyrsluumhverfið og verkefnaskrárnar eru áfram einangruð frá hýsilkerfinu."
+    },
+    "composer": {
+      "placeholder": "Lýstu því sem þú vilt búa til eða breyta…",
+      "model": "Vinnulíkan",
+      "noModels": "Engin líkön sem styðja Vinnu",
+      "cancel": "Stöðva",
+      "send": "Keyra",
+      "hint": "Hvert verkefni geymir eigin skrár og feril. Farðu yfir úttak líkansins áður en þú notar það.",
+      "remoteTitle": "Fjartengdur þjónustuaðili",
+      "remoteHint": "Samtalið og úttak verkfæra eru send til stilltu þjónustunnar. Ein sjálfvirk keyrsla getur sent margar beiðnir til þjónustuaðilans og valdið kostnaði. Skrár vinnusvæðisins haldast staðbundnar nema verkfæri skili efni þeirra.",
+      "remoteDismiss": "Loka",
+      "remoteDismissLabel": "Loka tilkynningu um fjartengdan þjónustuaðila",
+      "remoteDismissFailed": "Ekki tókst að vista val fyrir fjartengdan þjónustuaðila.",
+      "noModelSelected": "Ekkert líkan sem styður Vinnu er valið."
+    },
+    "conversation": {
+      "ready": "Vinnusvæði tilbúið",
+      "empty": "Haltu verkefninu áfram hér að neðan. Samtalið og skrár þess fylgja þessu vinnusvæði.",
+      "loadOlder": "Hlaða eldri skilaboðum"
+    },
+    "status": {
+      "preparing": "Undirbý einangrað vinnusvæði…",
+      "running": "Vinn í staðbundna vinnusvæðinu…"
+    },
+    "statusLabels": {
+      "idle": "Aðgerðalaus",
+      "thinking": "Hugsar",
+      "complete": "Lokið",
+      "needsInput": "Þarf inntak",
+      "error": "Villa"
+    },
+    "runtime": {
+      "unavailable": "Keyrsluumhverfi ekki tiltækt",
+      "readyOllama": "Docker tilbúið",
+      "readyPlugin": "Docker + viðbót tilbúin",
+      "readyHybrid": "Docker + líkön tilbúin",
+      "reason": "Docker og tiltækur Ollama- eða viðbótarþjónustuaðili fyrir líkan eru nauðsynleg."
+    },
+    "workspace": {
+      "label": "Yfirlit vinnusvæðis",
+      "files": "Skrár",
+      "activity": "Virkni",
+      "preview": "Forskoðun",
+      "resize": "Breyta stærð samtals og vinnusvæðis",
+      "resizeHint": "Dragðu til að breyta stærð. Notaðu örvatakkana til að fínstilla. Tvísmelltu eða ýttu á Enter til að endurstilla.",
+      "splitSize": "Samtal {{conversation}}%, vinnusvæði {{workspace}}%"
+    },
+    "files": {
+      "discard": "Fleygja óvistuðum breytingum á skrá?",
+      "leaveWithDraft": "Fara úr þessari skrá? Óvistaða breytingin verður áfram sem drög í vafranum.",
+      "up": "Mappa ofar",
+      "back": "Til baka í skrár",
+      "empty": "Engar skrár í þessari möppu enn.",
+      "select": "Veldu skrá til að skoða og breyta henni.",
+      "editorLabel": "Skráaritill: {{path}}",
+      "format": "Forsníða",
+      "formatted": "Kóði forsniðinn.",
+      "formatFailed": "Ekki tókst að forsníða þessa skrá.",
+      "formatShortcut": "Forsníða (Shift+Alt+F)",
+      "formatTooLarge": "Aðeins er hægt að forsníða skrár með færri en 100.000 stafi og 4.000 línur.",
+      "formatUnsupported": "Forsníðing er ekki tiltæk fyrir þessa skráartegund.",
+      "saveShortcut": "Vista (⌘/Ctrl+S)",
+      "highlightPaused": "Lifandi auðkenning er stöðvuð fyrir stórar skrár svo breytingar haldist liprar.",
+      "plainTextLarge": "Venjulegur texti · stór skrá"
+    },
+    "activity": {
+      "empty": "Skipanir, skráaraðgerðir og niðurstöður verkfæra birtast hér.",
+      "toolActivity": "Virkni verkfæra",
+      "details": "Upplýsingar",
+      "kinds": {
+        "message": "Skilaboð",
+        "toolCall": "Verkfærakall",
+        "toolResult": "Niðurstaða verkfæris",
+        "error": "Villa"
+      }
+    },
+    "preview": {
+      "command": "Valfrjáls ræsingarskipun",
+      "start": "Hefja forskoðun",
+      "stop": "Stöðva forskoðun",
+      "open": "Opna",
+      "starting": "Ræsi forskoðun…",
+      "frameTitle": "Forskoðun vinnusvæðis",
+      "failed": "Ekki tókst að hefja forskoðun. Athugaðu Virkni og prófaðu aðra skipun.",
+      "empty": "Ræstu forritið á þessu vinnusvæði til að skoða það hér."
+    },
+    "mobile": {
+      "surface": "Verkefnissvæði",
+      "conversation": "Samtal",
+      "workspace": "Vinnusvæði"
+    },
+    "toasts": {
+      "runFailed": "Ekki tókst að hefja vinnuverkefnið.",
+      "updateFailed": "Ekki tókst að uppfæra þetta verkefni.",
+      "renameFailed": "Ekki tókst að endurnefna þetta verkefni.",
+      "cancelled": "Vinnukeyrsla stöðvuð.",
+      "cancelFailed": "Ekki tókst að stöðva vinnukeyrsluna.",
+      "deleteFailed": "Ekki tókst að eyða þessu vinnuverkefni.",
+      "saveFailed": "Ekki tókst að vista þessa skrá.",
+      "saved": "Skrá vistuð.",
+      "previewFailed": "Ekki tókst að hefja forskoðun.",
+      "previewStopFailed": "Ekki tókst að stöðva forskoðun."
     }
   }
 }

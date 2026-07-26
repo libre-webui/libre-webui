@@ -292,7 +292,8 @@
       "settings": "Configuración",
       "userManagement": "Gestión de usuarios",
       "signOut": "Cerrar sesión",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Trabajo"
     },
     "toggleSize": "Cambiar tamaño de barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "No se pudo crear la automatización",
       "automationUpdated": "Automatización actualizada",
       "updateAutomationFailed": "No se pudo actualizar la automatización"
+    }
+  },
+  "work": {
+    "title": "Trabajo",
+    "subtitle": "Espacios de trabajo aislados para modelos",
+    "tasks": {
+      "title": "Tareas de trabajo",
+      "subtitle": "Espacios de trabajo locales persistentes",
+      "new": "Nueva tarea",
+      "emptyTitle": "Aún no hay tareas de trabajo",
+      "empty": "Tus tareas de trabajo aparecerán aquí después de enviar el primer mensaje.",
+      "untitled": "Tarea sin título",
+      "actions": "Acciones de la tarea",
+      "delete": "Eliminar tarea",
+      "deleteNamed": "Eliminar {{title}}",
+      "deleteConfirm": "¿Eliminar «{{title}}» y su espacio de trabajo de forma permanente?",
+      "close": "Cerrar tareas de trabajo",
+      "open": "Abrir tareas de trabajo",
+      "rename": "Título de la tarea",
+      "loading": "Cargando tarea…",
+      "notFound": "Esta tarea de trabajo no está disponible",
+      "back": "Iniciar una nueva tarea",
+      "status": "Estado: {{status}}"
+    },
+    "landing": {
+      "title": "Iniciar una nueva tarea de trabajo",
+      "description": "Asigna a un modelo local o de un proveedor configurado un espacio de trabajo aislado y persistente. Puede inspeccionar archivos, ejecutar herramientas y continuar donde lo dejó cuando vuelvas.",
+      "isolated": "Aislado",
+      "isolatedBody": "Cada tarea tiene su propio contenedor y archivos.",
+      "durable": "Persistente",
+      "durableBody": "Vuelve más tarde a su conversación y espacio de trabajo.",
+      "controlled": "Controlado",
+      "controlledBody": "El entorno de ejecución y los archivos de la tarea permanecen aislados del host."
+    },
+    "composer": {
+      "placeholder": "Describe lo que quieres crear o cambiar…",
+      "model": "Modelo de trabajo",
+      "noModels": "No hay modelos compatibles con el modo Trabajo",
+      "cancel": "Detener",
+      "send": "Ejecutar",
+      "hint": "Cada tarea conserva sus propios archivos e historial. Revisa la salida del modelo antes de usarla.",
+      "remoteTitle": "Proveedor remoto",
+      "remoteHint": "La conversación y la salida de las herramientas se envían al servicio configurado. Una ejecución autónoma puede realizar varias llamadas al proveedor y generar cargos. Los archivos del espacio de trabajo permanecen locales, salvo que una herramienta devuelva su contenido.",
+      "remoteDismiss": "Ocultar",
+      "remoteDismissLabel": "Ocultar aviso del proveedor remoto",
+      "remoteDismissFailed": "No se pudo guardar la preferencia del proveedor remoto.",
+      "noModelSelected": "No hay ningún modelo compatible con el modo Trabajo seleccionado."
+    },
+    "conversation": {
+      "ready": "Espacio de trabajo listo",
+      "empty": "Continúa la tarea abajo. Esta conversación y sus archivos permanecen asociados a este espacio de trabajo.",
+      "loadOlder": "Cargar mensajes anteriores"
+    },
+    "status": {
+      "preparing": "Preparando el espacio de trabajo aislado…",
+      "running": "Trabajando en el espacio de trabajo local…"
+    },
+    "statusLabels": {
+      "idle": "Inactivo",
+      "thinking": "Pensando",
+      "complete": "Completado",
+      "needsInput": "Requiere información",
+      "error": "Error"
+    },
+    "runtime": {
+      "unavailable": "Entorno de ejecución no disponible",
+      "readyOllama": "Docker listo",
+      "readyPlugin": "Docker + plugin listos",
+      "readyHybrid": "Docker + modelos listos",
+      "reason": "Se requieren Docker y un proveedor de modelos disponible mediante Ollama o un plugin."
+    },
+    "workspace": {
+      "label": "Vistas del espacio de trabajo",
+      "files": "Archivos",
+      "activity": "Actividad",
+      "preview": "Vista previa",
+      "resize": "Cambiar el tamaño de la conversación y el espacio de trabajo",
+      "resizeHint": "Arrastra para cambiar el tamaño. Usa las teclas de flecha para un control preciso. Haz doble clic o pulsa Intro para restablecer.",
+      "splitSize": "Conversación {{conversation}} %, espacio de trabajo {{workspace}} %"
+    },
+    "files": {
+      "discard": "¿Descartar los cambios no guardados del archivo?",
+      "leaveWithDraft": "¿Salir de este archivo? La edición sin guardar se conservará como borrador en el navegador.",
+      "up": "Carpeta principal",
+      "back": "Volver a los archivos",
+      "empty": "Aún no hay archivos en esta carpeta.",
+      "select": "Selecciona un archivo para inspeccionarlo y editarlo.",
+      "editorLabel": "Editor de archivos: {{path}}",
+      "format": "Formatear",
+      "formatted": "Código formateado.",
+      "formatFailed": "No se pudo formatear este archivo.",
+      "formatShortcut": "Formatear (Mayús+Alt+F)",
+      "formatTooLarge": "El formateo está limitado a archivos de menos de 100.000 caracteres y 4.000 líneas.",
+      "formatUnsupported": "El formato no está disponible para este tipo de archivo.",
+      "saveShortcut": "Guardar (⌘/Ctrl+S)",
+      "highlightPaused": "El resaltado en tiempo real está pausado para archivos grandes, a fin de mantener una edición fluida.",
+      "plainTextLarge": "Texto sin formato · archivo grande"
+    },
+    "activity": {
+      "empty": "Los comandos, las operaciones de archivos y los resultados de las herramientas aparecerán aquí.",
+      "toolActivity": "Actividad de herramientas",
+      "details": "Detalles",
+      "kinds": {
+        "message": "Mensaje",
+        "toolCall": "Llamada a herramienta",
+        "toolResult": "Resultado de herramienta",
+        "error": "Error"
+      }
+    },
+    "preview": {
+      "command": "Comando de inicio opcional",
+      "start": "Iniciar vista previa",
+      "stop": "Detener vista previa",
+      "open": "Abrir",
+      "starting": "Iniciando vista previa…",
+      "frameTitle": "Vista previa del espacio de trabajo",
+      "failed": "No se pudo iniciar la vista previa. Revisa Actividad e inténtalo con otro comando.",
+      "empty": "Inicia la aplicación dentro de este espacio de trabajo para inspeccionarla aquí."
+    },
+    "mobile": {
+      "surface": "Vista de la tarea",
+      "conversation": "Conversación",
+      "workspace": "Espacio de trabajo"
+    },
+    "toasts": {
+      "runFailed": "No se pudo iniciar la tarea de trabajo.",
+      "updateFailed": "No se pudo actualizar esta tarea.",
+      "renameFailed": "No se pudo cambiar el nombre de esta tarea.",
+      "cancelled": "Ejecución de trabajo detenida.",
+      "cancelFailed": "No se pudo detener la ejecución de trabajo.",
+      "deleteFailed": "No se pudo eliminar esta tarea de trabajo.",
+      "saveFailed": "No se pudo guardar este archivo.",
+      "saved": "Archivo guardado.",
+      "previewFailed": "No se pudo iniciar la vista previa.",
+      "previewStopFailed": "No se pudo detener la vista previa."
     }
   }
 }

@@ -292,7 +292,8 @@
       "settings": "Ayarlar",
       "userManagement": "Kullanıcı Yönetimi",
       "signOut": "Çıkış Yap",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Çalışma"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Otomasyon oluşturulamadı",
       "automationUpdated": "Otomasyon güncellendi",
       "updateAutomationFailed": "Otomasyon güncellenemedi"
+    }
+  },
+  "work": {
+    "title": "Çalışma",
+    "subtitle": "Yalıtılmış model çalışma alanları",
+    "tasks": {
+      "title": "Çalışma görevleri",
+      "subtitle": "Kalıcı yerel çalışma alanları",
+      "new": "Yeni görev",
+      "emptyTitle": "Henüz çalışma görevi yok",
+      "empty": "İlk mesajı gönderdikten sonra çalışma görevleriniz burada görünür.",
+      "untitled": "Adsız görev",
+      "actions": "Görev işlemleri",
+      "delete": "Görevi sil",
+      "deleteNamed": "{{title}} görevini sil",
+      "deleteConfirm": "“{{title}}” görevi ve çalışma alanı kalıcı olarak silinsin mi?",
+      "close": "Çalışma görevlerini kapat",
+      "open": "Çalışma görevlerini aç",
+      "rename": "Görev başlığı",
+      "loading": "Görev yükleniyor…",
+      "notFound": "Bu çalışma görevi kullanılamıyor",
+      "back": "Yeni görev başlat",
+      "status": "Durum: {{status}}"
+    },
+    "landing": {
+      "title": "Yeni çalışma görevi başlat",
+      "description": "Yerel bir modele veya yapılandırılmış bir sağlayıcının modeline kalıcı ve yalıtılmış bir çalışma alanı verin. Model dosyaları inceleyebilir, araçları çalıştırabilir ve geri döndüğünüzde kaldığı yerden devam edebilir.",
+      "isolated": "Yalıtılmış",
+      "isolatedBody": "Her görevin kendine ait kapsayıcısı ve dosyaları vardır.",
+      "durable": "Kalıcı",
+      "durableBody": "Daha sonra konuşmasına ve çalışma alanına geri dönün.",
+      "controlled": "Denetimli",
+      "controlledBody": "Çalışma ortamı ve görev dosyaları ana sistemden yalıtılmış kalır."
+    },
+    "composer": {
+      "placeholder": "Ne oluşturmak veya değiştirmek istediğinizi açıklayın…",
+      "model": "Çalışma modeli",
+      "noModels": "Çalışma ile uyumlu model yok",
+      "cancel": "Durdur",
+      "send": "Çalıştır",
+      "hint": "Her görev kendi dosyalarını ve geçmişini saklar. Kullanmadan önce model çıktısını inceleyin.",
+      "remoteTitle": "Uzak sağlayıcı",
+      "remoteHint": "Konuşma ve araç çıktısı yapılandırılmış hizmete gönderilir. Tek bir otonom çalıştırma, sağlayıcıya birden çok çağrı yapabilir ve ücretlere neden olabilir. Bir araç içeriklerini döndürmediği sürece çalışma alanı dosyaları yerel kalır.",
+      "remoteDismiss": "Kapat",
+      "remoteDismissLabel": "Uzak sağlayıcı bildirimini kapat",
+      "remoteDismissFailed": "Uzak sağlayıcı tercihi kaydedilemedi.",
+      "noModelSelected": "Çalışma ile uyumlu bir model seçilmedi."
+    },
+    "conversation": {
+      "ready": "Çalışma alanı hazır",
+      "empty": "Aşağıdan göreve devam edin. Bu konuşma ve dosyaları bu çalışma alanına bağlı kalır.",
+      "loadOlder": "Eski mesajları yükle"
+    },
+    "status": {
+      "preparing": "Yalıtılmış çalışma alanı hazırlanıyor…",
+      "running": "Yerel çalışma alanında çalışıyor…"
+    },
+    "statusLabels": {
+      "idle": "Boşta",
+      "thinking": "Düşünüyor",
+      "complete": "Tamamlandı",
+      "needsInput": "Girdi gerekli",
+      "error": "Hata"
+    },
+    "runtime": {
+      "unavailable": "Çalışma ortamı kullanılamıyor",
+      "readyOllama": "Docker hazır",
+      "readyPlugin": "Docker + eklenti hazır",
+      "readyHybrid": "Docker + modeller hazır",
+      "reason": "Docker ve kullanılabilir bir Ollama ya da eklenti model sağlayıcısı gereklidir."
+    },
+    "workspace": {
+      "label": "Çalışma alanı görünümleri",
+      "files": "Dosyalar",
+      "activity": "Etkinlik",
+      "preview": "Önizleme",
+      "resize": "Konuşmayı ve çalışma alanını yeniden boyutlandır",
+      "resizeHint": "Yeniden boyutlandırmak için sürükleyin. Hassas ayar için ok tuşlarını kullanın. Sıfırlamak için çift tıklayın veya Enter tuşuna basın.",
+      "splitSize": "Konuşma %{{conversation}}, çalışma alanı %{{workspace}}"
+    },
+    "files": {
+      "discard": "Kaydedilmemiş dosya değişiklikleri silinsin mi?",
+      "leaveWithDraft": "Bu dosyadan ayrılmak istiyor musunuz? Kaydedilmemiş düzenlemeniz tarayıcıda taslak olarak kalır.",
+      "up": "Üst klasör",
+      "back": "Dosyalara dön",
+      "empty": "Bu klasörde henüz dosya yok.",
+      "select": "İncelemek ve düzenlemek için bir dosya seçin.",
+      "editorLabel": "Dosya düzenleyici: {{path}}",
+      "format": "Biçimlendir",
+      "formatted": "Kod biçimlendirildi.",
+      "formatFailed": "Bu dosya biçimlendirilemedi.",
+      "formatShortcut": "Biçimlendir (Shift+Alt+F)",
+      "formatTooLarge": "Biçimlendirme 100.000 karakterden ve 4.000 satırdan küçük dosyalarla sınırlıdır.",
+      "formatUnsupported": "Bu dosya türü için biçimlendirme kullanılamıyor.",
+      "saveShortcut": "Kaydet (⌘/Ctrl+S)",
+      "highlightPaused": "Düzenlemeyi akıcı tutmak için büyük dosyalarda canlı vurgulama duraklatıldı.",
+      "plainTextLarge": "Düz metin · büyük dosya"
+    },
+    "activity": {
+      "empty": "Komutlar, dosya işlemleri ve araç sonuçları burada görünür.",
+      "toolActivity": "Araç etkinliği",
+      "details": "Ayrıntılar",
+      "kinds": {
+        "message": "Mesaj",
+        "toolCall": "Araç çağrısı",
+        "toolResult": "Araç sonucu",
+        "error": "Hata"
+      }
+    },
+    "preview": {
+      "command": "İsteğe bağlı başlatma komutu",
+      "start": "Önizlemeyi başlat",
+      "stop": "Önizlemeyi durdur",
+      "open": "Aç",
+      "starting": "Önizleme başlatılıyor…",
+      "frameTitle": "Çalışma alanı önizlemesi",
+      "failed": "Önizleme başlatılamadı. Etkinliği kontrol edip başka bir komut deneyin.",
+      "empty": "Burada incelemek için uygulamayı bu çalışma alanında başlatın."
+    },
+    "mobile": {
+      "surface": "Görev alanı",
+      "conversation": "Konuşma",
+      "workspace": "Çalışma alanı"
+    },
+    "toasts": {
+      "runFailed": "Çalışma görevi başlatılamadı.",
+      "updateFailed": "Bu görev güncellenemedi.",
+      "renameFailed": "Bu görev yeniden adlandırılamadı.",
+      "cancelled": "Çalışma görevi durduruldu.",
+      "cancelFailed": "Çalışma görevi durdurulamadı.",
+      "deleteFailed": "Bu çalışma görevi silinemedi.",
+      "saveFailed": "Bu dosya kaydedilemedi.",
+      "saved": "Dosya kaydedildi.",
+      "previewFailed": "Önizleme başlatılamadı.",
+      "previewStopFailed": "Önizleme durdurulamadı."
     }
   }
 }

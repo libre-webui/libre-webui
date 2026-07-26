@@ -292,7 +292,8 @@
       "settings": "Ustawienia",
       "userManagement": "Zarządzanie użytkownikami",
       "signOut": "Wyloguj się",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Praca"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
     "expandSidebar": "Rozwiń panel boczny"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Nie można utworzyć automatyzacji",
       "automationUpdated": "Automatyka zaktualizowana",
       "updateAutomationFailed": "Nie można zaktualizować automatyzacji"
+    }
+  },
+  "work": {
+    "title": "Praca",
+    "subtitle": "Izolowane obszary robocze modeli",
+    "tasks": {
+      "title": "Zadania robocze",
+      "subtitle": "Trwałe lokalne obszary robocze",
+      "new": "Nowe zadanie",
+      "emptyTitle": "Brak zadań roboczych",
+      "empty": "Twoje zadania robocze pojawią się tutaj po wysłaniu pierwszej wiadomości.",
+      "untitled": "Zadanie bez nazwy",
+      "actions": "Działania zadania",
+      "delete": "Usuń zadanie",
+      "deleteNamed": "Usuń „{{title}}”",
+      "deleteConfirm": "Trwale usunąć „{{title}}” wraz z jego obszarem roboczym?",
+      "close": "Zamknij zadania robocze",
+      "open": "Otwórz zadania robocze",
+      "rename": "Tytuł zadania",
+      "loading": "Wczytywanie zadania…",
+      "notFound": "To zadanie robocze jest niedostępne",
+      "back": "Rozpocznij nowe zadanie",
+      "status": "Stan: {{status}}"
+    },
+    "landing": {
+      "title": "Rozpocznij nowe zadanie robocze",
+      "description": "Zapewnij modelowi lokalnemu lub modelowi skonfigurowanego dostawcy trwały, izolowany obszar roboczy. Model może przeglądać pliki, uruchamiać narzędzia i kontynuować pracę od miejsca, w którym ją przerwano.",
+      "isolated": "Izolowany",
+      "isolatedBody": "Każde zadanie otrzymuje własny kontener i pliki.",
+      "durable": "Trwały",
+      "durableBody": "Wróć później do rozmowy i obszaru roboczego.",
+      "controlled": "Kontrolowany",
+      "controlledBody": "Środowisko uruchomieniowe i pliki zadania pozostają odizolowane od hosta."
+    },
+    "composer": {
+      "placeholder": "Opisz, co chcesz utworzyć lub zmienić…",
+      "model": "Model roboczy",
+      "noModels": "Brak modeli zgodnych z trybem „Praca”",
+      "cancel": "Zatrzymaj",
+      "send": "Uruchom",
+      "hint": "Każde zadanie zachowuje własne pliki i historię. Sprawdź wyniki modelu przed ich użyciem.",
+      "remoteTitle": "Zdalny dostawca",
+      "remoteHint": "Rozmowa i wyniki narzędzi są wysyłane do skonfigurowanej usługi. Jedno autonomiczne uruchomienie może wielokrotnie wywołać usługę dostawcy i spowodować opłaty. Pliki obszaru roboczego pozostają lokalne, chyba że narzędzie zwróci ich zawartość.",
+      "remoteDismiss": "Ukryj",
+      "remoteDismissLabel": "Ukryj informację o zdalnym dostawcy",
+      "remoteDismissFailed": "Nie udało się zapisać ustawienia zdalnego dostawcy.",
+      "noModelSelected": "Nie wybrano modelu zgodnego z trybem „Praca”."
+    },
+    "conversation": {
+      "ready": "Obszar roboczy jest gotowy",
+      "empty": "Kontynuuj zadanie poniżej. Ta rozmowa i jej pliki pozostają przypisane do tego obszaru roboczego.",
+      "loadOlder": "Wczytaj starsze wiadomości"
+    },
+    "status": {
+      "preparing": "Przygotowywanie izolowanego obszaru roboczego…",
+      "running": "Praca w lokalnym obszarze roboczym…"
+    },
+    "statusLabels": {
+      "idle": "Bezczynny",
+      "thinking": "Myśli",
+      "complete": "Ukończono",
+      "needsInput": "Wymaga danych",
+      "error": "Błąd"
+    },
+    "runtime": {
+      "unavailable": "Środowisko uruchomieniowe niedostępne",
+      "readyOllama": "Docker gotowy",
+      "readyPlugin": "Docker i wtyczka gotowe",
+      "readyHybrid": "Docker i modele gotowe",
+      "reason": "Wymagany jest Docker oraz dostępny dostawca modelu Ollama lub wtyczki."
+    },
+    "workspace": {
+      "label": "Widoki obszaru roboczego",
+      "files": "Pliki",
+      "activity": "Aktywność",
+      "preview": "Podgląd",
+      "resize": "Zmień rozmiar rozmowy i obszaru roboczego",
+      "resizeHint": "Przeciągnij, aby zmienić rozmiar. Użyj klawiszy strzałek do precyzyjnej regulacji. Kliknij dwukrotnie lub naciśnij Enter, aby zresetować.",
+      "splitSize": "Rozmowa {{conversation}}%, obszar roboczy {{workspace}}%"
+    },
+    "files": {
+      "discard": "Odrzucić niezapisane zmiany w pliku?",
+      "leaveWithDraft": "Opuścić ten plik? Niezapisana zmiana pozostanie w przeglądarce jako wersja robocza.",
+      "up": "Folder nadrzędny",
+      "back": "Wróć do plików",
+      "empty": "W tym folderze nie ma jeszcze plików.",
+      "select": "Wybierz plik, aby go przejrzeć i edytować.",
+      "editorLabel": "Edytor pliku: {{path}}",
+      "format": "Formatuj",
+      "formatted": "Kod został sformatowany.",
+      "formatFailed": "Nie udało się sformatować tego pliku.",
+      "formatShortcut": "Formatuj (Shift+Alt+F)",
+      "formatTooLarge": "Formatowanie jest ograniczone do plików poniżej 100 000 znaków i 4 000 wierszy.",
+      "formatUnsupported": "Formatowanie nie jest dostępne dla tego typu pliku.",
+      "saveShortcut": "Zapisz (⌘/Ctrl+S)",
+      "highlightPaused": "Wyróżnianie na żywo jest wstrzymane dla dużych plików, aby edycja pozostała płynna.",
+      "plainTextLarge": "Zwykły tekst · duży plik"
+    },
+    "activity": {
+      "empty": "Tutaj pojawią się polecenia, operacje na plikach i wyniki narzędzi.",
+      "toolActivity": "Aktywność narzędzi",
+      "details": "Szczegóły",
+      "kinds": {
+        "message": "Wiadomość",
+        "toolCall": "Wywołanie narzędzia",
+        "toolResult": "Wynik narzędzia",
+        "error": "Błąd"
+      }
+    },
+    "preview": {
+      "command": "Opcjonalne polecenie startowe",
+      "start": "Uruchom podgląd",
+      "stop": "Zatrzymaj podgląd",
+      "open": "Otwórz",
+      "starting": "Uruchamianie podglądu…",
+      "frameTitle": "Podgląd obszaru roboczego",
+      "failed": "Nie udało się uruchomić podglądu. Sprawdź Aktywność i spróbuj użyć innego polecenia.",
+      "empty": "Uruchom aplikację w tym obszarze roboczym, aby ją tutaj wyświetlić."
+    },
+    "mobile": {
+      "surface": "Widok zadania",
+      "conversation": "Rozmowa",
+      "workspace": "Obszar roboczy"
+    },
+    "toasts": {
+      "runFailed": "Nie udało się uruchomić zadania roboczego.",
+      "updateFailed": "Nie udało się zaktualizować tego zadania.",
+      "renameFailed": "Nie udało się zmienić nazwy tego zadania.",
+      "cancelled": "Uruchomienie zadania zostało zatrzymane.",
+      "cancelFailed": "Nie udało się zatrzymać uruchomienia zadania.",
+      "deleteFailed": "Nie udało się usunąć tego zadania roboczego.",
+      "saveFailed": "Nie udało się zapisać tego pliku.",
+      "saved": "Plik zapisany.",
+      "previewFailed": "Nie udało się uruchomić podglądu.",
+      "previewStopFailed": "Nie udało się zatrzymać podglądu."
     }
   }
 }

@@ -134,6 +134,7 @@ export function WorkComposer({
       <div className='mx-auto max-w-3xl rounded-2xl border border-line bg-surface shadow-subtle focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/15'>
         <textarea
           data-testid='work-composer-input'
+          dir='auto'
           value={message}
           onChange={event => setMessage(event.target.value)}
           onKeyDown={event => {
@@ -154,6 +155,7 @@ export function WorkComposer({
             <select
               ref={modelSelectRef}
               data-testid='work-model-select'
+              dir='auto'
               value={modelKey}
               onChange={event => void onModelChange(event.target.value)}
               disabled={running || models.length === 0}

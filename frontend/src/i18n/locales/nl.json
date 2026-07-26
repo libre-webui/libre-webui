@@ -292,7 +292,8 @@
       "settings": "Instellingen",
       "userManagement": "Gebruikersbeheer",
       "signOut": "Uitloggen",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Werk"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Kan automatisering niet creëren",
       "automationUpdated": "Automatisering bijgewerkt",
       "updateAutomationFailed": "Kan de automatisering niet updaten"
+    }
+  },
+  "work": {
+    "title": "Werk",
+    "subtitle": "Geïsoleerde modelwerkruimten",
+    "tasks": {
+      "title": "Werktaken",
+      "subtitle": "Permanente lokale werkruimten",
+      "new": "Nieuwe taak",
+      "emptyTitle": "Nog geen werktaken",
+      "empty": "Je werktaken verschijnen hier nadat je het eerste bericht hebt verzonden.",
+      "untitled": "Naamloze taak",
+      "actions": "Taakacties",
+      "delete": "Taak verwijderen",
+      "deleteNamed": "{{title}} verwijderen",
+      "deleteConfirm": "‘{{title}}’ en de bijbehorende werkruimte definitief verwijderen?",
+      "close": "Werktaken sluiten",
+      "open": "Werktaken openen",
+      "rename": "Taaktitel",
+      "loading": "Taak laden…",
+      "notFound": "Deze werktaak is niet beschikbaar",
+      "back": "Nieuwe taak starten",
+      "status": "Status: {{status}}"
+    },
+    "landing": {
+      "title": "Een nieuwe werktaak starten",
+      "description": "Geef een lokaal model of een model van een geconfigureerde aanbieder een duurzame, geïsoleerde werkruimte. Het kan bestanden inspecteren, tools uitvoeren en bij terugkeer doorgaan waar het gebleven was.",
+      "isolated": "Geïsoleerd",
+      "isolatedBody": "Elke taak krijgt een eigen container en bestanden.",
+      "durable": "Duurzaam",
+      "durableBody": "Keer later terug naar de conversatie en werkruimte.",
+      "controlled": "Beheerd",
+      "controlledBody": "De runtime en taakbestanden blijven geïsoleerd van de host."
+    },
+    "composer": {
+      "placeholder": "Beschrijf wat je wilt bouwen of wijzigen…",
+      "model": "Werkmodel",
+      "noModels": "Geen modellen die de Werk-modus ondersteunen",
+      "cancel": "Stoppen",
+      "send": "Uitvoeren",
+      "hint": "Elke taak behoudt zijn eigen bestanden en geschiedenis. Controleer de modeluitvoer voordat je deze gebruikt.",
+      "remoteTitle": "Externe aanbieder",
+      "remoteHint": "De conversatie en tooluitvoer worden naar de geconfigureerde service verzonden. Eén autonome run kan meerdere aanroepen bij de aanbieder doen en kosten veroorzaken. Werkruimtebestanden blijven lokaal, tenzij een tool de inhoud terugstuurt.",
+      "remoteDismiss": "Verbergen",
+      "remoteDismissLabel": "Melding over externe aanbieder verbergen",
+      "remoteDismissFailed": "De voorkeur voor de externe aanbieder kon niet worden opgeslagen.",
+      "noModelSelected": "Er is geen model geselecteerd dat de Werk-modus ondersteunt."
+    },
+    "conversation": {
+      "ready": "Werkruimte gereed",
+      "empty": "Ga hieronder verder met de taak. Deze conversatie en de bestanden blijven aan deze werkruimte gekoppeld.",
+      "loadOlder": "Eerdere berichten laden"
+    },
+    "status": {
+      "preparing": "Geïsoleerde werkruimte voorbereiden…",
+      "running": "Bezig in de lokale werkruimte…"
+    },
+    "statusLabels": {
+      "idle": "Inactief",
+      "thinking": "Denkt na",
+      "complete": "Voltooid",
+      "needsInput": "Invoer nodig",
+      "error": "Fout"
+    },
+    "runtime": {
+      "unavailable": "Runtime niet beschikbaar",
+      "readyOllama": "Docker gereed",
+      "readyPlugin": "Docker + plugin gereed",
+      "readyHybrid": "Docker + modellen gereed",
+      "reason": "Docker en een beschikbare modelprovider via Ollama of een plug-in zijn vereist."
+    },
+    "workspace": {
+      "label": "Werkruimteweergaven",
+      "files": "Bestanden",
+      "activity": "Activiteit",
+      "preview": "Voorbeeld",
+      "resize": "Conversatie en werkruimte groter of kleiner maken",
+      "resizeHint": "Sleep om het formaat te wijzigen. Gebruik de pijltoetsen voor nauwkeurige bediening. Dubbelklik of druk op Enter om te herstellen.",
+      "splitSize": "Conversatie {{conversation}}%, werkruimte {{workspace}}%"
+    },
+    "files": {
+      "discard": "Niet-opgeslagen bestandswijzigingen negeren?",
+      "leaveWithDraft": "Dit bestand verlaten? Je niet-opgeslagen wijziging blijft als concept in de browser bewaard.",
+      "up": "Bovenliggende map",
+      "back": "Terug naar bestanden",
+      "empty": "Deze map bevat nog geen bestanden.",
+      "select": "Selecteer een bestand om het te inspecteren en te bewerken.",
+      "editorLabel": "Bestandseditor: {{path}}",
+      "format": "Formatteren",
+      "formatted": "Code geformatteerd.",
+      "formatFailed": "Dit bestand kon niet worden geformatteerd.",
+      "formatShortcut": "Formatteren (Shift+Alt+F)",
+      "formatTooLarge": "Formattering is beperkt tot bestanden met minder dan 100.000 tekens en 4.000 regels.",
+      "formatUnsupported": "Formattering is niet beschikbaar voor dit bestandstype.",
+      "saveShortcut": "Opslaan (⌘/Ctrl+S)",
+      "highlightPaused": "Live-syntaxmarkering is gepauzeerd voor grote bestanden om de editor responsief te houden.",
+      "plainTextLarge": "Platte tekst · groot bestand"
+    },
+    "activity": {
+      "empty": "Opdrachten, bestandsbewerkingen en toolresultaten verschijnen hier.",
+      "toolActivity": "Toolactiviteit",
+      "details": "Details",
+      "kinds": {
+        "message": "Bericht",
+        "toolCall": "Toolaanroep",
+        "toolResult": "Toolresultaat",
+        "error": "Fout"
+      }
+    },
+    "preview": {
+      "command": "Optionele startopdracht",
+      "start": "Voorbeeld starten",
+      "stop": "Voorbeeld stoppen",
+      "open": "Openen",
+      "starting": "Voorbeeld starten…",
+      "frameTitle": "Werkruimtevoorbeeld",
+      "failed": "Het voorbeeld kon niet worden gestart. Controleer Activiteit en probeer daarna een andere opdracht.",
+      "empty": "Start de app in deze werkruimte om deze hier te inspecteren."
+    },
+    "mobile": {
+      "surface": "Taakweergave",
+      "conversation": "Conversatie",
+      "workspace": "Werkruimte"
+    },
+    "toasts": {
+      "runFailed": "De werktaak kon niet worden gestart.",
+      "updateFailed": "Deze taak kon niet worden bijgewerkt.",
+      "renameFailed": "Deze taak kon niet worden hernoemd.",
+      "cancelled": "De uitvoering van de werktaak is gestopt.",
+      "cancelFailed": "De uitvoering van de werktaak kon niet worden gestopt.",
+      "deleteFailed": "Deze werktaak kon niet worden verwijderd.",
+      "saveFailed": "Dit bestand kon niet worden opgeslagen.",
+      "saved": "Bestand opgeslagen.",
+      "previewFailed": "Het voorbeeld kon niet worden gestart.",
+      "previewStopFailed": "Het voorbeeld kon niet worden gestopt."
     }
   }
 }

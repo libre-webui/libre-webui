@@ -292,7 +292,8 @@
       "settings": "Configurações",
       "userManagement": "Gerenciamento de Usuários",
       "signOut": "Sair",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Trabalho"
     },
     "toggleSize": "Alternar tamanho da barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Não foi possível criar a automação",
       "automationUpdated": "Automação atualizada",
       "updateAutomationFailed": "Não foi possível atualizar a automação"
+    }
+  },
+  "work": {
+    "title": "Trabalho",
+    "subtitle": "Espaços de trabalho isolados para modelos",
+    "tasks": {
+      "title": "Tarefas de trabalho",
+      "subtitle": "Espaços de trabalho locais persistentes",
+      "new": "Nova tarefa",
+      "emptyTitle": "Nenhuma tarefa de trabalho ainda",
+      "empty": "Suas tarefas de trabalho aparecerão aqui depois que você enviar a primeira mensagem.",
+      "untitled": "Tarefa sem título",
+      "actions": "Ações da tarefa",
+      "delete": "Excluir tarefa",
+      "deleteNamed": "Excluir {{title}}",
+      "deleteConfirm": "Excluir “{{title}}” e seu espaço de trabalho permanentemente?",
+      "close": "Fechar tarefas de trabalho",
+      "open": "Abrir tarefas de trabalho",
+      "rename": "Título da tarefa",
+      "loading": "Carregando tarefa…",
+      "notFound": "Esta tarefa de trabalho não está disponível",
+      "back": "Iniciar uma nova tarefa",
+      "status": "Status: {{status}}"
+    },
+    "landing": {
+      "title": "Iniciar uma nova tarefa de trabalho",
+      "description": "Dê a um modelo local ou de um provedor configurado um espaço de trabalho isolado e persistente. Ele pode inspecionar arquivos, executar ferramentas e continuar de onde parou quando você voltar.",
+      "isolated": "Isolado",
+      "isolatedBody": "Cada tarefa tem seu próprio contêiner e arquivos.",
+      "durable": "Persistente",
+      "durableBody": "Volte mais tarde à conversa e ao espaço de trabalho.",
+      "controlled": "Controlado",
+      "controlledBody": "O ambiente de execução e os arquivos da tarefa permanecem isolados do host."
+    },
+    "composer": {
+      "placeholder": "Descreva o que você quer criar ou alterar…",
+      "model": "Modelo de trabalho",
+      "noModels": "Nenhum modelo compatível com o modo Trabalho",
+      "cancel": "Parar",
+      "send": "Executar",
+      "hint": "Cada tarefa mantém seus próprios arquivos e histórico. Revise a saída do modelo antes de usá-la.",
+      "remoteTitle": "Provedor remoto",
+      "remoteHint": "A conversa e a saída das ferramentas são enviadas ao serviço configurado. Uma execução autônoma pode fazer várias chamadas ao provedor e gerar cobranças. Os arquivos do espaço de trabalho permanecem locais, a menos que uma ferramenta retorne seu conteúdo.",
+      "remoteDismiss": "Ocultar",
+      "remoteDismissLabel": "Ocultar aviso do provedor remoto",
+      "remoteDismissFailed": "Não foi possível salvar a preferência do provedor remoto.",
+      "noModelSelected": "Nenhum modelo compatível com o modo Trabalho está selecionado."
+    },
+    "conversation": {
+      "ready": "Espaço de trabalho pronto",
+      "empty": "Continue a tarefa abaixo. Esta conversa e seus arquivos permanecem vinculados a este espaço de trabalho.",
+      "loadOlder": "Carregar mensagens anteriores"
+    },
+    "status": {
+      "preparing": "Preparando o espaço de trabalho isolado…",
+      "running": "Trabalhando no espaço de trabalho local…"
+    },
+    "statusLabels": {
+      "idle": "Inativo",
+      "thinking": "Pensando",
+      "complete": "Concluído",
+      "needsInput": "Entrada necessária",
+      "error": "Erro"
+    },
+    "runtime": {
+      "unavailable": "Ambiente de execução indisponível",
+      "readyOllama": "Docker pronto",
+      "readyPlugin": "Docker + plugin prontos",
+      "readyHybrid": "Docker + modelos prontos",
+      "reason": "São necessários o Docker e um provedor de modelos disponível via Ollama ou um plugin."
+    },
+    "workspace": {
+      "label": "Visualizações do espaço de trabalho",
+      "files": "Arquivos",
+      "activity": "Atividade",
+      "preview": "Pré-visualização",
+      "resize": "Redimensionar a conversa e o espaço de trabalho",
+      "resizeHint": "Arraste para redimensionar. Use as teclas de seta para um controle preciso. Clique duas vezes ou pressione Enter para restaurar.",
+      "splitSize": "Conversa {{conversation}}%, espaço de trabalho {{workspace}}%"
+    },
+    "files": {
+      "discard": "Descartar alterações não salvas no arquivo?",
+      "leaveWithDraft": "Sair deste arquivo? Sua edição não salva permanecerá como rascunho no navegador.",
+      "up": "Pasta superior",
+      "back": "Voltar aos arquivos",
+      "empty": "Ainda não há arquivos nesta pasta.",
+      "select": "Selecione um arquivo para inspecioná-lo e editá-lo.",
+      "editorLabel": "Editor de arquivos: {{path}}",
+      "format": "Formatar",
+      "formatted": "Código formatado.",
+      "formatFailed": "Não foi possível formatar este arquivo.",
+      "formatShortcut": "Formatar (Shift+Alt+F)",
+      "formatTooLarge": "A formatação é limitada a arquivos com menos de 100.000 caracteres e 4.000 linhas.",
+      "formatUnsupported": "A formatação não está disponível para este tipo de arquivo.",
+      "saveShortcut": "Salvar (⌘/Ctrl+S)",
+      "highlightPaused": "O realce em tempo real está pausado para arquivos grandes, mantendo a edição responsiva.",
+      "plainTextLarge": "Texto sem formatação · arquivo grande"
+    },
+    "activity": {
+      "empty": "Comandos, operações de arquivo e resultados de ferramentas aparecerão aqui.",
+      "toolActivity": "Atividade de ferramentas",
+      "details": "Detalhes",
+      "kinds": {
+        "message": "Mensagem",
+        "toolCall": "Chamada de ferramenta",
+        "toolResult": "Resultado da ferramenta",
+        "error": "Erro"
+      }
+    },
+    "preview": {
+      "command": "Comando de início opcional",
+      "start": "Iniciar pré-visualização",
+      "stop": "Parar pré-visualização",
+      "open": "Abrir",
+      "starting": "Iniciando pré-visualização…",
+      "frameTitle": "Pré-visualização do espaço de trabalho",
+      "failed": "Não foi possível iniciar a pré-visualização. Verifique Atividade e tente outro comando.",
+      "empty": "Inicie o aplicativo neste espaço de trabalho para inspecioná-lo aqui."
+    },
+    "mobile": {
+      "surface": "Visualização da tarefa",
+      "conversation": "Conversa",
+      "workspace": "Espaço de trabalho"
+    },
+    "toasts": {
+      "runFailed": "Não foi possível iniciar a tarefa de trabalho.",
+      "updateFailed": "Não foi possível atualizar esta tarefa.",
+      "renameFailed": "Não foi possível renomear esta tarefa.",
+      "cancelled": "Execução da tarefa de trabalho interrompida.",
+      "cancelFailed": "Não foi possível interromper a execução da tarefa de trabalho.",
+      "deleteFailed": "Não foi possível excluir esta tarefa de trabalho.",
+      "saveFailed": "Não foi possível salvar este arquivo.",
+      "saved": "Arquivo salvo.",
+      "previewFailed": "Não foi possível iniciar a pré-visualização.",
+      "previewStopFailed": "Não foi possível parar a pré-visualização."
     }
   }
 }

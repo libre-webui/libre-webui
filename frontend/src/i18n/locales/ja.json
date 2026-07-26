@@ -292,7 +292,8 @@
       "settings": "設定",
       "userManagement": "ユーザー管理",
       "signOut": "サインアウト",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "作業"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "オートメーションを作成できませんでした",
       "automationUpdated": "自動化が更新されました",
       "updateAutomationFailed": "オートメーションを更新できませんでした"
+    }
+  },
+  "work": {
+    "title": "作業",
+    "subtitle": "隔離されたモデルワークスペース",
+    "tasks": {
+      "title": "作業タスク",
+      "subtitle": "永続的なローカルワークスペース",
+      "new": "新しいタスク",
+      "emptyTitle": "作業タスクはまだありません",
+      "empty": "最初のメッセージを送信すると、作業タスクがここに表示されます。",
+      "untitled": "無題のタスク",
+      "actions": "タスク操作",
+      "delete": "タスクを削除",
+      "deleteNamed": "{{title}}を削除",
+      "deleteConfirm": "「{{title}}」とそのワークスペースを完全に削除しますか？",
+      "close": "作業タスクを閉じる",
+      "open": "作業タスクを開く",
+      "rename": "タスク名",
+      "loading": "タスクを読み込み中…",
+      "notFound": "この作業タスクは利用できません",
+      "back": "新しいタスクを開始",
+      "status": "ステータス：{{status}}"
+    },
+    "landing": {
+      "title": "新しい作業タスクを開始",
+      "description": "ローカルモデルまたは設定済みプロバイダーのモデルに、永続的で隔離されたワークスペースを提供します。モデルはファイルの確認やツールの実行ができ、次回も続きから作業できます。",
+      "isolated": "隔離",
+      "isolatedBody": "各タスクには専用のコンテナとファイルがあります。",
+      "durable": "永続的",
+      "durableBody": "後から会話とワークスペースに戻れます。",
+      "controlled": "制御",
+      "controlledBody": "ランタイムとタスクファイルはホストから隔離されます。"
+    },
+    "composer": {
+      "placeholder": "作成または変更したい内容を入力…",
+      "model": "作業モデル",
+      "noModels": "作業対応モデルがありません",
+      "cancel": "停止",
+      "send": "実行",
+      "hint": "各タスクは専用のファイルと履歴を保持します。使用前にモデルの出力を確認してください。",
+      "remoteTitle": "リモートプロバイダー",
+      "remoteHint": "会話とツール出力は、設定済みのサービスに送信されます。1 回の自律実行で複数回プロバイダーを呼び出し、料金が発生する場合があります。ツールが内容を返さない限り、ワークスペースのファイルはローカルに保持されます。",
+      "remoteDismiss": "閉じる",
+      "remoteDismissLabel": "リモートプロバイダーの通知を閉じる",
+      "remoteDismissFailed": "リモートプロバイダーの設定を保存できませんでした。",
+      "noModelSelected": "作業対応モデルが選択されていません。"
+    },
+    "conversation": {
+      "ready": "ワークスペースの準備ができました",
+      "empty": "下からタスクを続けてください。この会話とファイルは、このワークスペースに紐づいたまま保持されます。",
+      "loadOlder": "過去のメッセージを読み込む"
+    },
+    "status": {
+      "preparing": "隔離ワークスペースを準備中…",
+      "running": "ローカルワークスペースで作業中…"
+    },
+    "statusLabels": {
+      "idle": "待機中",
+      "thinking": "思考中",
+      "complete": "完了",
+      "needsInput": "入力待ち",
+      "error": "エラー"
+    },
+    "runtime": {
+      "unavailable": "ランタイムを利用できません",
+      "readyOllama": "Docker 準備完了",
+      "readyPlugin": "Docker + プラグイン準備完了",
+      "readyHybrid": "Docker + モデル準備完了",
+      "reason": "Docker と、利用可能な Ollama またはプラグインのモデルプロバイダーが必要です。"
+    },
+    "workspace": {
+      "label": "ワークスペース表示",
+      "files": "ファイル",
+      "activity": "アクティビティ",
+      "preview": "プレビュー",
+      "resize": "会話とワークスペースのサイズを変更",
+      "resizeHint": "ドラッグしてサイズを変更します。細かく調整するには矢印キーを使用します。ダブルクリックまたは Enter キーでリセットします。",
+      "splitSize": "会話 {{conversation}}%、ワークスペース {{workspace}}%"
+    },
+    "files": {
+      "discard": "未保存のファイル変更を破棄しますか？",
+      "leaveWithDraft": "このファイルから移動しますか？未保存の編集内容はブラウザーの下書きとして残ります。",
+      "up": "親フォルダー",
+      "back": "ファイルに戻る",
+      "empty": "このフォルダーにはまだファイルがありません。",
+      "select": "確認・編集するファイルを選択してください。",
+      "editorLabel": "ファイルエディター：{{path}}",
+      "format": "整形",
+      "formatted": "コードを整形しました。",
+      "formatFailed": "このファイルを整形できませんでした。",
+      "formatShortcut": "整形（Shift+Alt+F）",
+      "formatTooLarge": "整形できるのは、100,000 文字未満かつ 4,000 行未満のファイルです。",
+      "formatUnsupported": "このファイル形式は整形できません。",
+      "saveShortcut": "保存（⌘/Ctrl+S）",
+      "highlightPaused": "編集の応答性を保つため、大きなファイルではリアルタイムハイライトを一時停止しています。",
+      "plainTextLarge": "プレーンテキスト・大きなファイル"
+    },
+    "activity": {
+      "empty": "コマンド、ファイル操作、ツールの結果がここに表示されます。",
+      "toolActivity": "ツールアクティビティ",
+      "details": "詳細",
+      "kinds": {
+        "message": "メッセージ",
+        "toolCall": "ツール呼び出し",
+        "toolResult": "ツール結果",
+        "error": "エラー"
+      }
+    },
+    "preview": {
+      "command": "任意の起動コマンド",
+      "start": "プレビューを開始",
+      "stop": "プレビューを停止",
+      "open": "開く",
+      "starting": "プレビューを開始中…",
+      "frameTitle": "ワークスペースのプレビュー",
+      "failed": "プレビューを開始できませんでした。アクティビティを確認して、別のコマンドをお試しください。",
+      "empty": "このワークスペース内でアプリを起動すると、ここで確認できます。"
+    },
+    "mobile": {
+      "surface": "タスク画面",
+      "conversation": "会話",
+      "workspace": "ワークスペース"
+    },
+    "toasts": {
+      "runFailed": "作業タスクを開始できませんでした。",
+      "updateFailed": "このタスクを更新できませんでした。",
+      "renameFailed": "このタスク名を変更できませんでした。",
+      "cancelled": "作業の実行を停止しました。",
+      "cancelFailed": "作業の実行を停止できませんでした。",
+      "deleteFailed": "この作業タスクを削除できませんでした。",
+      "saveFailed": "このファイルを保存できませんでした。",
+      "saved": "ファイルを保存しました。",
+      "previewFailed": "プレビューを開始できませんでした。",
+      "previewStopFailed": "プレビューを停止できませんでした。"
     }
   }
 }

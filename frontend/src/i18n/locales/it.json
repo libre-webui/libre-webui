@@ -292,7 +292,8 @@
       "settings": "Impostazioni",
       "userManagement": "Gestione utenti",
       "signOut": "Esci",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Lavoro"
     },
     "toggleSize": "Cambia dimensione barra laterale",
     "expandSidebar": "Espandi barra laterale"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Impossibile creare l'automazione",
       "automationUpdated": "Automazione aggiornata",
       "updateAutomationFailed": "Impossibile aggiornare l'automazione"
+    }
+  },
+  "work": {
+    "title": "Lavoro",
+    "subtitle": "Spazi di lavoro isolati per i modelli",
+    "tasks": {
+      "title": "Attività di lavoro",
+      "subtitle": "Spazi di lavoro locali persistenti",
+      "new": "Nuova attività",
+      "emptyTitle": "Nessuna attività di lavoro",
+      "empty": "Le tue attività di lavoro appariranno qui dopo l'invio del primo messaggio.",
+      "untitled": "Attività senza titolo",
+      "actions": "Azioni attività",
+      "delete": "Elimina attività",
+      "deleteNamed": "Elimina {{title}}",
+      "deleteConfirm": "Eliminare definitivamente “{{title}}” e il relativo spazio di lavoro?",
+      "close": "Chiudi attività di lavoro",
+      "open": "Apri attività di lavoro",
+      "rename": "Titolo attività",
+      "loading": "Caricamento attività…",
+      "notFound": "Questa attività di lavoro non è disponibile",
+      "back": "Avvia una nuova attività",
+      "status": "Stato: {{status}}"
+    },
+    "landing": {
+      "title": "Avvia una nuova attività di lavoro",
+      "description": "Assegna a un modello locale o di un fornitore configurato uno spazio di lavoro isolato e persistente. Può esaminare file, eseguire strumenti e riprendere da dove si era interrotto al tuo ritorno.",
+      "isolated": "Isolato",
+      "isolatedBody": "Ogni attività dispone di un proprio container e dei propri file.",
+      "durable": "Persistente",
+      "durableBody": "Torna in seguito alla conversazione e allo spazio di lavoro.",
+      "controlled": "Controllato",
+      "controlledBody": "L'ambiente di esecuzione e i file dell'attività restano isolati dall'host."
+    },
+    "composer": {
+      "placeholder": "Descrivi cosa vuoi creare o modificare…",
+      "model": "Modello di lavoro",
+      "noModels": "Nessun modello compatibile con la modalità Lavoro",
+      "cancel": "Interrompi",
+      "send": "Esegui",
+      "hint": "Ogni attività conserva i propri file e la propria cronologia. Controlla l'output del modello prima di utilizzarlo.",
+      "remoteTitle": "Fornitore remoto",
+      "remoteHint": "La conversazione e l'output degli strumenti vengono inviati al servizio configurato. Un'esecuzione autonoma può effettuare più chiamate al fornitore e comportare costi. I file dello spazio di lavoro restano locali, salvo che uno strumento ne restituisca il contenuto.",
+      "remoteDismiss": "Nascondi",
+      "remoteDismissLabel": "Nascondi avviso sul fornitore remoto",
+      "remoteDismissFailed": "Impossibile salvare la preferenza del fornitore remoto.",
+      "noModelSelected": "Non è selezionato alcun modello compatibile con la modalità Lavoro."
+    },
+    "conversation": {
+      "ready": "Spazio di lavoro pronto",
+      "empty": "Continua l'attività qui sotto. Questa conversazione e i relativi file restano associati allo spazio di lavoro.",
+      "loadOlder": "Carica messaggi precedenti"
+    },
+    "status": {
+      "preparing": "Preparazione dello spazio di lavoro isolato…",
+      "running": "Operazione in corso nello spazio di lavoro locale…"
+    },
+    "statusLabels": {
+      "idle": "Inattivo",
+      "thinking": "Elaborazione",
+      "complete": "Completato",
+      "needsInput": "Input necessario",
+      "error": "Errore"
+    },
+    "runtime": {
+      "unavailable": "Runtime non disponibile",
+      "readyOllama": "Docker pronto",
+      "readyPlugin": "Docker + plugin pronti",
+      "readyHybrid": "Docker + modelli pronti",
+      "reason": "Sono richiesti Docker e un fornitore di modelli disponibile tramite Ollama o un plugin."
+    },
+    "workspace": {
+      "label": "Viste dello spazio di lavoro",
+      "files": "File",
+      "activity": "Attività",
+      "preview": "Anteprima",
+      "resize": "Ridimensiona conversazione e spazio di lavoro",
+      "resizeHint": "Trascina per ridimensionare. Usa i tasti freccia per un controllo preciso. Fai doppio clic o premi Invio per ripristinare.",
+      "splitSize": "Conversazione {{conversation}}%, spazio di lavoro {{workspace}}%"
+    },
+    "files": {
+      "discard": "Ignorare le modifiche al file non salvate?",
+      "leaveWithDraft": "Uscire da questo file? La modifica non salvata resterà come bozza nel browser.",
+      "up": "Cartella superiore",
+      "back": "Torna ai file",
+      "empty": "Non sono ancora presenti file in questa cartella.",
+      "select": "Seleziona un file per esaminarlo e modificarlo.",
+      "editorLabel": "Editor file: {{path}}",
+      "format": "Formatta",
+      "formatted": "Codice formattato.",
+      "formatFailed": "Impossibile formattare questo file.",
+      "formatShortcut": "Formatta (Maiusc+Alt+F)",
+      "formatTooLarge": "La formattazione è limitata ai file con meno di 100.000 caratteri e 4.000 righe.",
+      "formatUnsupported": "La formattazione non è disponibile per questo tipo di file.",
+      "saveShortcut": "Salva (⌘/Ctrl+S)",
+      "highlightPaused": "L'evidenziazione in tempo reale è sospesa per i file di grandi dimensioni, per mantenere fluida la modifica.",
+      "plainTextLarge": "Testo normale · file di grandi dimensioni"
+    },
+    "activity": {
+      "empty": "I comandi, le operazioni sui file e i risultati degli strumenti appariranno qui.",
+      "toolActivity": "Attività strumenti",
+      "details": "Dettagli",
+      "kinds": {
+        "message": "Messaggio",
+        "toolCall": "Chiamata strumento",
+        "toolResult": "Risultato strumento",
+        "error": "Errore"
+      }
+    },
+    "preview": {
+      "command": "Comando di avvio facoltativo",
+      "start": "Avvia anteprima",
+      "stop": "Interrompi anteprima",
+      "open": "Apri",
+      "starting": "Avvio anteprima…",
+      "frameTitle": "Anteprima dello spazio di lavoro",
+      "failed": "Impossibile avviare l'anteprima. Controlla Attività, quindi prova un altro comando.",
+      "empty": "Avvia l'app in questo spazio di lavoro per esaminarla qui."
+    },
+    "mobile": {
+      "surface": "Vista attività",
+      "conversation": "Conversazione",
+      "workspace": "Spazio di lavoro"
+    },
+    "toasts": {
+      "runFailed": "Impossibile avviare l'attività di lavoro.",
+      "updateFailed": "Impossibile aggiornare questa attività.",
+      "renameFailed": "Impossibile rinominare questa attività.",
+      "cancelled": "Esecuzione dell'attività interrotta.",
+      "cancelFailed": "Impossibile interrompere l'esecuzione dell'attività.",
+      "deleteFailed": "Impossibile eliminare questa attività di lavoro.",
+      "saveFailed": "Impossibile salvare questo file.",
+      "saved": "File salvato.",
+      "previewFailed": "Impossibile avviare l'anteprima.",
+      "previewStopFailed": "Impossibile interrompere l'anteprima."
     }
   }
 }

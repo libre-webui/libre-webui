@@ -292,7 +292,8 @@
       "settings": "Inställningar",
       "userManagement": "Användarhantering",
       "signOut": "Logga ut",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Arbete"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Det gick inte att skapa automatisering",
       "automationUpdated": "Automatisering uppdaterad",
       "updateAutomationFailed": "Det gick inte att uppdatera automatiseringen"
+    }
+  },
+  "work": {
+    "title": "Arbete",
+    "subtitle": "Isolerade arbetsytor för modeller",
+    "tasks": {
+      "title": "Arbetsuppgifter",
+      "subtitle": "Beständiga lokala arbetsytor",
+      "new": "Ny uppgift",
+      "emptyTitle": "Inga arbetsuppgifter än",
+      "empty": "Dina arbetsuppgifter visas här när du har skickat det första meddelandet.",
+      "untitled": "Namnlös uppgift",
+      "actions": "Uppgiftsåtgärder",
+      "delete": "Ta bort uppgift",
+      "deleteNamed": "Ta bort {{title}}",
+      "deleteConfirm": "Ta bort ”{{title}}” och dess arbetsyta permanent?",
+      "close": "Stäng arbetsuppgifter",
+      "open": "Öppna arbetsuppgifter",
+      "rename": "Uppgiftstitel",
+      "loading": "Läser in uppgift…",
+      "notFound": "Den här arbetsuppgiften är inte tillgänglig",
+      "back": "Starta en ny uppgift",
+      "status": "Status: {{status}}"
+    },
+    "landing": {
+      "title": "Starta en ny arbetsuppgift",
+      "description": "Ge en lokal modell eller en modell från en konfigurerad leverantör en beständig, isolerad arbetsyta. Den kan granska filer, köra verktyg och fortsätta där den slutade när du återvänder.",
+      "isolated": "Isolerad",
+      "isolatedBody": "Varje uppgift får en egen container och egna filer.",
+      "durable": "Beständig",
+      "durableBody": "Återvänd senare till konversationen och arbetsytan.",
+      "controlled": "Kontrollerad",
+      "controlledBody": "Körmiljön och uppgiftsfilerna förblir isolerade från värdsystemet."
+    },
+    "composer": {
+      "placeholder": "Beskriv vad du vill skapa eller ändra…",
+      "model": "Modell för arbete",
+      "noModels": "Inga modeller som är kompatibla med Arbete",
+      "cancel": "Stoppa",
+      "send": "Kör",
+      "hint": "Varje uppgift behåller sina egna filer och sin historik. Granska modellens utdata innan du använder dem.",
+      "remoteTitle": "Fjärrleverantör",
+      "remoteHint": "Konversationen och verktygens utdata skickas till den konfigurerade tjänsten. En autonom körning kan göra flera leverantörsanrop och medföra kostnader. Filerna på arbetsytan stannar lokalt om inte ett verktyg returnerar deras innehåll.",
+      "remoteDismiss": "Dölj",
+      "remoteDismissLabel": "Dölj meddelandet om fjärrleverantören",
+      "remoteDismissFailed": "Det gick inte att spara inställningen för fjärrleverantören.",
+      "noModelSelected": "Ingen modell som är kompatibel med Arbete har valts."
+    },
+    "conversation": {
+      "ready": "Arbetsytan är klar",
+      "empty": "Fortsätt med uppgiften nedan. Konversationen och dess filer förblir kopplade till den här arbetsytan.",
+      "loadOlder": "Läs in äldre meddelanden"
+    },
+    "status": {
+      "preparing": "Förbereder den isolerade arbetsytan…",
+      "running": "Arbetar på den lokala arbetsytan…"
+    },
+    "statusLabels": {
+      "idle": "Inaktiv",
+      "thinking": "Tänker",
+      "complete": "Klar",
+      "needsInput": "Behöver inmatning",
+      "error": "Fel"
+    },
+    "runtime": {
+      "unavailable": "Körmiljön är inte tillgänglig",
+      "readyOllama": "Docker redo",
+      "readyPlugin": "Docker + tillägg redo",
+      "readyHybrid": "Docker + modeller redo",
+      "reason": "Docker och en tillgänglig modellleverantör via Ollama eller ett tillägg krävs."
+    },
+    "workspace": {
+      "label": "Arbetsytevyer",
+      "files": "Filer",
+      "activity": "Aktivitet",
+      "preview": "Förhandsgranskning",
+      "resize": "Ändra storlek på konversationen och arbetsytan",
+      "resizeHint": "Dra för att ändra storleken. Använd piltangenterna för exakt kontroll. Dubbelklicka eller tryck på Retur för att återställa.",
+      "splitSize": "Konversation {{conversation}} %, arbetsyta {{workspace}} %"
+    },
+    "files": {
+      "discard": "Kassera osparade filändringar?",
+      "leaveWithDraft": "Lämna den här filen? Din osparade redigering sparas som ett utkast i webbläsaren.",
+      "up": "Överordnad mapp",
+      "back": "Tillbaka till filer",
+      "empty": "Det finns inga filer i den här mappen än.",
+      "select": "Välj en fil för att granska och redigera den.",
+      "editorLabel": "Filredigerare: {{path}}",
+      "format": "Formatera",
+      "formatted": "Koden har formaterats.",
+      "formatFailed": "Det gick inte att formatera den här filen.",
+      "formatShortcut": "Formatera (Skift+Alt+F)",
+      "formatTooLarge": "Formatering är begränsad till filer med färre än 100 000 tecken och 4 000 rader.",
+      "formatUnsupported": "Formatering är inte tillgänglig för den här filtypen.",
+      "saveShortcut": "Spara (⌘/Ctrl+S)",
+      "highlightPaused": "Syntaxmarkering i realtid har pausats för stora filer så att redigeringen förblir responsiv.",
+      "plainTextLarge": "Oformaterad text · stor fil"
+    },
+    "activity": {
+      "empty": "Kommandon, filåtgärder och verktygsresultat visas här.",
+      "toolActivity": "Verktygsaktivitet",
+      "details": "Detaljer",
+      "kinds": {
+        "message": "Meddelande",
+        "toolCall": "Verktygsanrop",
+        "toolResult": "Verktygsresultat",
+        "error": "Fel"
+      }
+    },
+    "preview": {
+      "command": "Valfritt startkommando",
+      "start": "Starta förhandsgranskning",
+      "stop": "Stoppa förhandsgranskning",
+      "open": "Öppna",
+      "starting": "Startar förhandsgranskning…",
+      "frameTitle": "Förhandsgranskning av arbetsyta",
+      "failed": "Det gick inte att starta förhandsgranskningen. Kontrollera Aktivitet och prova sedan ett annat kommando.",
+      "empty": "Starta appen på den här arbetsytan för att granska den här."
+    },
+    "mobile": {
+      "surface": "Uppgiftsvy",
+      "conversation": "Konversation",
+      "workspace": "Arbetsyta"
+    },
+    "toasts": {
+      "runFailed": "Det gick inte att starta arbetsuppgiften.",
+      "updateFailed": "Det gick inte att uppdatera den här uppgiften.",
+      "renameFailed": "Det gick inte att byta namn på den här uppgiften.",
+      "cancelled": "Arbetskörningen stoppades.",
+      "cancelFailed": "Det gick inte att stoppa arbetskörningen.",
+      "deleteFailed": "Det gick inte att ta bort den här arbetsuppgiften.",
+      "saveFailed": "Det gick inte att spara den här filen.",
+      "saved": "Filen har sparats.",
+      "previewFailed": "Det gick inte att starta förhandsgranskningen.",
+      "previewStopFailed": "Det gick inte att stoppa förhandsgranskningen."
     }
   }
 }

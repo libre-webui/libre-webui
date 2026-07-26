@@ -292,7 +292,8 @@
       "settings": "Indstillinger",
       "userManagement": "Brugeradministration",
       "signOut": "Log ud",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Arbejde"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Kunne ikke oprette automatisering",
       "automationUpdated": "Automatisering opdateret",
       "updateAutomationFailed": "Automatiseringen kunne ikke opdateres"
+    }
+  },
+  "work": {
+    "title": "Arbejde",
+    "subtitle": "Isolerede arbejdsområder til modeller",
+    "tasks": {
+      "title": "Arbejdsopgaver",
+      "subtitle": "Permanente lokale arbejdsområder",
+      "new": "Ny opgave",
+      "emptyTitle": "Ingen arbejdsopgaver endnu",
+      "empty": "Dine arbejdsopgaver vises her, når du har sendt den første besked.",
+      "untitled": "Unavngiven opgave",
+      "actions": "Opgavehandlinger",
+      "delete": "Slet opgave",
+      "deleteNamed": "Slet {{title}}",
+      "deleteConfirm": "Slet “{{title}}” og dens arbejdsområde permanent?",
+      "close": "Luk arbejdsopgaver",
+      "open": "Åbn arbejdsopgaver",
+      "rename": "Opgavetitel",
+      "loading": "Indlæser opgave…",
+      "notFound": "Denne arbejdsopgave er ikke tilgængelig",
+      "back": "Start en ny opgave",
+      "status": "Status: {{status}}"
+    },
+    "landing": {
+      "title": "Start en ny arbejdsopgave",
+      "description": "Giv en lokal model eller en model fra en konfigureret udbyder et permanent, isoleret arbejdsområde. Den kan undersøge filer, køre værktøjer og fortsætte, hvor den slap, når du vender tilbage.",
+      "isolated": "Isoleret",
+      "isolatedBody": "Hver opgave får sin egen container og sine egne filer.",
+      "durable": "Permanent",
+      "durableBody": "Vend tilbage til samtalen og arbejdsområdet senere.",
+      "controlled": "Kontrolleret",
+      "controlledBody": "Kørselsmiljøet og opgavefilerne forbliver isolerede fra værtssystemet."
+    },
+    "composer": {
+      "placeholder": "Beskriv, hvad du vil oprette eller ændre…",
+      "model": "Arbejdsmodel",
+      "noModels": "Ingen modeller, der er kompatible med Arbejde",
+      "cancel": "Stop",
+      "send": "Kør",
+      "hint": "Hver opgave beholder sine egne filer og sin historik. Gennemse modellens output, før du bruger det.",
+      "remoteTitle": "Fjernudbyder",
+      "remoteHint": "Samtalen og værktøjsoutput sendes til den konfigurerede tjeneste. En autonom kørsel kan foretage flere udbyderkald og medføre omkostninger. Filer i arbejdsområdet forbliver lokale, medmindre et værktøj returnerer deres indhold.",
+      "remoteDismiss": "Skjul",
+      "remoteDismissLabel": "Skjul meddelelsen om fjernudbyderen",
+      "remoteDismissFailed": "Indstillingen for fjernudbyderen kunne ikke gemmes.",
+      "noModelSelected": "Der er ikke valgt en model, der er kompatibel med Arbejde."
+    },
+    "conversation": {
+      "ready": "Arbejdsområdet er klar",
+      "empty": "Fortsæt opgaven nedenfor. Samtalen og dens filer forbliver knyttet til dette arbejdsområde.",
+      "loadOlder": "Indlæs ældre beskeder"
+    },
+    "status": {
+      "preparing": "Forbereder det isolerede arbejdsområde…",
+      "running": "Arbejder i det lokale arbejdsområde…"
+    },
+    "statusLabels": {
+      "idle": "Inaktiv",
+      "thinking": "Tænker",
+      "complete": "Fuldført",
+      "needsInput": "Kræver input",
+      "error": "Fejl"
+    },
+    "runtime": {
+      "unavailable": "Kørselsmiljø ikke tilgængeligt",
+      "readyOllama": "Docker klar",
+      "readyPlugin": "Docker + plugin klar",
+      "readyHybrid": "Docker + modeller klar",
+      "reason": "Docker og en tilgængelig modeludbyder via Ollama eller et plugin er påkrævet."
+    },
+    "workspace": {
+      "label": "Arbejdsområdevisninger",
+      "files": "Filer",
+      "activity": "Aktivitet",
+      "preview": "Forhåndsvisning",
+      "resize": "Tilpas størrelsen på samtalen og arbejdsområdet",
+      "resizeHint": "Træk for at ændre størrelsen. Brug piletasterne til præcis styring. Dobbeltklik eller tryk på Enter for at nulstille.",
+      "splitSize": "Samtale {{conversation}} %, arbejdsområde {{workspace}} %"
+    },
+    "files": {
+      "discard": "Kassér ændringer i filen, der ikke er gemt?",
+      "leaveWithDraft": "Forlad denne fil? Din redigering, der ikke er gemt, bevares som en kladde i browseren.",
+      "up": "Overordnet mappe",
+      "back": "Tilbage til filer",
+      "empty": "Der er endnu ingen filer i denne mappe.",
+      "select": "Vælg en fil for at undersøge og redigere den.",
+      "editorLabel": "Fileditor: {{path}}",
+      "format": "Formatér",
+      "formatted": "Koden er formateret.",
+      "formatFailed": "Filen kunne ikke formateres.",
+      "formatShortcut": "Formatér (Skift+Alt+F)",
+      "formatTooLarge": "Formatering er begrænset til filer med under 100.000 tegn og 4.000 linjer.",
+      "formatUnsupported": "Formatering er ikke tilgængelig for denne filtype.",
+      "saveShortcut": "Gem (⌘/Ctrl+S)",
+      "highlightPaused": "Syntaksfremhævning i realtid er sat på pause for store filer, så redigeringen forbliver responsiv.",
+      "plainTextLarge": "Almindelig tekst · stor fil"
+    },
+    "activity": {
+      "empty": "Kommandoer, filhandlinger og værktøjsresultater vises her.",
+      "toolActivity": "Værktøjsaktivitet",
+      "details": "Detaljer",
+      "kinds": {
+        "message": "Besked",
+        "toolCall": "Værktøjskald",
+        "toolResult": "Værktøjsresultat",
+        "error": "Fejl"
+      }
+    },
+    "preview": {
+      "command": "Valgfri startkommando",
+      "start": "Start forhåndsvisning",
+      "stop": "Stop forhåndsvisning",
+      "open": "Åbn",
+      "starting": "Starter forhåndsvisning…",
+      "frameTitle": "Forhåndsvisning af arbejdsområde",
+      "failed": "Forhåndsvisningen kunne ikke starte. Kontrollér Aktivitet, og prøv derefter en anden kommando.",
+      "empty": "Start appen i dette arbejdsområde for at undersøge den her."
+    },
+    "mobile": {
+      "surface": "Opgavevisning",
+      "conversation": "Samtale",
+      "workspace": "Arbejdsområde"
+    },
+    "toasts": {
+      "runFailed": "Arbejdsopgaven kunne ikke startes.",
+      "updateFailed": "Opgaven kunne ikke opdateres.",
+      "renameFailed": "Opgaven kunne ikke omdøbes.",
+      "cancelled": "Arbejdskørslen er stoppet.",
+      "cancelFailed": "Arbejdskørslen kunne ikke stoppes.",
+      "deleteFailed": "Arbejdsopgaven kunne ikke slettes.",
+      "saveFailed": "Filen kunne ikke gemmes.",
+      "saved": "Filen er gemt.",
+      "previewFailed": "Forhåndsvisningen kunne ikke startes.",
+      "previewStopFailed": "Forhåndsvisningen kunne ikke stoppes."
     }
   }
 }

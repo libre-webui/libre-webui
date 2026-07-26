@@ -397,8 +397,13 @@ export default function WorkPage() {
           providerId: selectedTask.providerId || undefined,
         });
       } else {
-        if (!freshModel)
-          throw new Error('No Work-compatible model is selected.');
+        if (!freshModel) {
+          throw new Error(
+            t('work.composer.noModelSelected', {
+              defaultValue: 'No Work-compatible model is selected.',
+            })
+          );
+        }
         const task = await createTask({
           message,
           model: freshModel.model,
@@ -513,7 +518,14 @@ export default function WorkPage() {
       await updateTask(selectedTask.id, { title });
       return true;
     } catch (updateError) {
-      toast.error(errorMessage(updateError, 'Could not rename this task.'));
+      toast.error(
+        errorMessage(
+          updateError,
+          t('work.toasts.renameFailed', {
+            defaultValue: 'Could not rename this task.',
+          })
+        )
+      );
       return false;
     }
   };
@@ -666,6 +678,7 @@ export default function WorkPage() {
             <input
               key={`${selectedTask.id}:${selectedTask.title}`}
               data-testid='work-task-title'
+              dir='auto'
               defaultValue={selectedTask.title}
               onBlur={event => {
                 const input = event.currentTarget;
@@ -831,7 +844,9 @@ export default function WorkPage() {
             {selectedTask && (
               <span className='hidden h-7 max-w-44 items-center gap-1.5 truncate rounded-full border border-line bg-surface px-2.5 text-[11px] font-medium text-ink-muted md:inline-flex'>
                 <HardDrive className='h-3.5 w-3.5 shrink-0' />
-                <span className='truncate'>{selectedTask.model}</span>
+                <span dir='ltr' className='truncate'>
+                  {selectedTask.model}
+                </span>
               </span>
             )}
           </div>
@@ -912,7 +927,7 @@ export default function WorkPage() {
             )}
           >
             <CircleAlert className='h-4 w-4 shrink-0' />
-            <span className='min-w-0 flex-1'>
+            <span dir='auto' className='min-w-0 flex-1'>
               {runtimeUnavailable
                 ? capabilities?.reason ||
                   t('work.runtime.reason', {
@@ -1105,7 +1120,7 @@ export default function WorkPage() {
                   onClick={goToNewTask}
                   className='mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 hover:text-primary-700'
                 >
-                  <ChevronLeft className='h-4 w-4' />
+                  <ChevronLeft className='h-4 w-4 rtl:rotate-180' />
                   {t('work.tasks.back', {
                     defaultValue: 'Start a new task',
                   })}

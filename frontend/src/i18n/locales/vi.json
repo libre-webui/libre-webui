@@ -292,7 +292,8 @@
       "settings": "Cài đặt",
       "userManagement": "Quản lý người dùng",
       "signOut": "Đăng xuất",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Công việc"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Không thể tạo tự động hóa",
       "automationUpdated": "Đã cập nhật tự động hóa",
       "updateAutomationFailed": "Không thể cập nhật tự động hóa"
+    }
+  },
+  "work": {
+    "title": "Công việc",
+    "subtitle": "Không gian làm việc mô hình biệt lập",
+    "tasks": {
+      "title": "Tác vụ công việc",
+      "subtitle": "Không gian làm việc cục bộ lâu dài",
+      "new": "Tác vụ mới",
+      "emptyTitle": "Chưa có tác vụ công việc",
+      "empty": "Tác vụ công việc của bạn sẽ xuất hiện ở đây sau khi bạn gửi tin nhắn đầu tiên.",
+      "untitled": "Tác vụ chưa đặt tên",
+      "actions": "Thao tác tác vụ",
+      "delete": "Xóa tác vụ",
+      "deleteNamed": "Xóa {{title}}",
+      "deleteConfirm": "Xóa vĩnh viễn “{{title}}” và không gian làm việc của tác vụ này?",
+      "close": "Đóng tác vụ công việc",
+      "open": "Mở tác vụ công việc",
+      "rename": "Tên tác vụ",
+      "loading": "Đang tải tác vụ…",
+      "notFound": "Tác vụ công việc này không khả dụng",
+      "back": "Bắt đầu tác vụ mới",
+      "status": "Trạng thái: {{status}}"
+    },
+    "landing": {
+      "title": "Bắt đầu tác vụ công việc mới",
+      "description": "Cung cấp cho mô hình cục bộ hoặc mô hình của nhà cung cấp đã cấu hình một không gian làm việc lâu dài và biệt lập. Mô hình có thể kiểm tra tệp, chạy công cụ và tiếp tục từ vị trí cũ khi bạn quay lại.",
+      "isolated": "Biệt lập",
+      "isolatedBody": "Mỗi tác vụ có vùng chứa và tệp riêng.",
+      "durable": "Lâu dài",
+      "durableBody": "Quay lại cuộc trò chuyện và không gian làm việc sau.",
+      "controlled": "Được kiểm soát",
+      "controlledBody": "Môi trường chạy và tệp tác vụ được biệt lập khỏi máy chủ."
+    },
+    "composer": {
+      "placeholder": "Mô tả nội dung bạn muốn tạo hoặc thay đổi…",
+      "model": "Mô hình công việc",
+      "noModels": "Không có mô hình tương thích với chế độ Công việc",
+      "cancel": "Dừng",
+      "send": "Chạy",
+      "hint": "Mỗi tác vụ lưu tệp và lịch sử riêng. Hãy xem lại đầu ra của mô hình trước khi sử dụng.",
+      "remoteTitle": "Nhà cung cấp từ xa",
+      "remoteHint": "Cuộc trò chuyện và đầu ra công cụ được gửi đến dịch vụ đã cấu hình. Một lượt chạy tự động có thể gọi nhà cung cấp nhiều lần và phát sinh chi phí. Tệp trong không gian làm việc vẫn ở cục bộ trừ khi công cụ trả về nội dung của tệp.",
+      "remoteDismiss": "Đóng",
+      "remoteDismissLabel": "Đóng thông báo về nhà cung cấp từ xa",
+      "remoteDismissFailed": "Không thể lưu tùy chọn nhà cung cấp từ xa.",
+      "noModelSelected": "Chưa chọn mô hình tương thích với chế độ Công việc."
+    },
+    "conversation": {
+      "ready": "Không gian làm việc đã sẵn sàng",
+      "empty": "Tiếp tục tác vụ bên dưới. Cuộc trò chuyện và các tệp vẫn được gắn với không gian làm việc này.",
+      "loadOlder": "Tải tin nhắn cũ hơn"
+    },
+    "status": {
+      "preparing": "Đang chuẩn bị không gian làm việc biệt lập…",
+      "running": "Đang làm việc trong không gian cục bộ…"
+    },
+    "statusLabels": {
+      "idle": "Đang chờ",
+      "thinking": "Đang suy nghĩ",
+      "complete": "Hoàn tất",
+      "needsInput": "Cần nhập liệu",
+      "error": "Lỗi"
+    },
+    "runtime": {
+      "unavailable": "Môi trường chạy không khả dụng",
+      "readyOllama": "Docker đã sẵn sàng",
+      "readyPlugin": "Docker + plugin đã sẵn sàng",
+      "readyHybrid": "Docker + mô hình đã sẵn sàng",
+      "reason": "Cần có Docker và nhà cung cấp mô hình Ollama hoặc plugin khả dụng."
+    },
+    "workspace": {
+      "label": "Chế độ xem không gian làm việc",
+      "files": "Tệp",
+      "activity": "Hoạt động",
+      "preview": "Xem trước",
+      "resize": "Đổi kích thước cuộc trò chuyện và không gian làm việc",
+      "resizeHint": "Kéo để đổi kích thước. Dùng phím mũi tên để điều chỉnh chính xác. Nhấp đúp hoặc nhấn Enter để đặt lại.",
+      "splitSize": "Cuộc trò chuyện {{conversation}}%, không gian làm việc {{workspace}}%"
+    },
+    "files": {
+      "discard": "Bỏ các thay đổi tệp chưa lưu?",
+      "leaveWithDraft": "Rời khỏi tệp này? Nội dung chỉnh sửa chưa lưu sẽ được giữ dưới dạng bản nháp trong trình duyệt.",
+      "up": "Thư mục mẹ",
+      "back": "Quay lại tệp",
+      "empty": "Thư mục này chưa có tệp.",
+      "select": "Chọn một tệp để kiểm tra và chỉnh sửa.",
+      "editorLabel": "Trình sửa tệp: {{path}}",
+      "format": "Định dạng",
+      "formatted": "Đã định dạng mã.",
+      "formatFailed": "Không thể định dạng tệp này.",
+      "formatShortcut": "Định dạng (Shift+Alt+F)",
+      "formatTooLarge": "Chỉ có thể định dạng tệp dưới 100.000 ký tự và 4.000 dòng.",
+      "formatUnsupported": "Không hỗ trợ định dạng loại tệp này.",
+      "saveShortcut": "Lưu (⌘/Ctrl+S)",
+      "highlightPaused": "Tính năng tô sáng trực tiếp bị tạm dừng với tệp lớn để duy trì tốc độ chỉnh sửa.",
+      "plainTextLarge": "Văn bản thuần · tệp lớn"
+    },
+    "activity": {
+      "empty": "Lệnh, thao tác tệp và kết quả công cụ sẽ xuất hiện ở đây.",
+      "toolActivity": "Hoạt động công cụ",
+      "details": "Chi tiết",
+      "kinds": {
+        "message": "Tin nhắn",
+        "toolCall": "Lệnh gọi công cụ",
+        "toolResult": "Kết quả công cụ",
+        "error": "Lỗi"
+      }
+    },
+    "preview": {
+      "command": "Lệnh khởi động không bắt buộc",
+      "start": "Bắt đầu xem trước",
+      "stop": "Dừng xem trước",
+      "open": "Mở",
+      "starting": "Đang bắt đầu xem trước…",
+      "frameTitle": "Xem trước không gian làm việc",
+      "failed": "Không thể bắt đầu bản xem trước. Hãy kiểm tra Hoạt động rồi thử một lệnh khác.",
+      "empty": "Khởi động ứng dụng trong không gian làm việc này để kiểm tra tại đây."
+    },
+    "mobile": {
+      "surface": "Chế độ xem tác vụ",
+      "conversation": "Cuộc trò chuyện",
+      "workspace": "Không gian làm việc"
+    },
+    "toasts": {
+      "runFailed": "Không thể bắt đầu tác vụ công việc.",
+      "updateFailed": "Không thể cập nhật tác vụ này.",
+      "renameFailed": "Không thể đổi tên tác vụ này.",
+      "cancelled": "Đã dừng lượt chạy công việc.",
+      "cancelFailed": "Không thể dừng lượt chạy công việc.",
+      "deleteFailed": "Không thể xóa tác vụ công việc này.",
+      "saveFailed": "Không thể lưu tệp này.",
+      "saved": "Đã lưu tệp.",
+      "previewFailed": "Không thể bắt đầu bản xem trước.",
+      "previewStopFailed": "Không thể dừng bản xem trước."
     }
   }
 }

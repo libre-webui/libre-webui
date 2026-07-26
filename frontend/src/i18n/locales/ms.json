@@ -292,7 +292,8 @@
       "settings": "Tetapan",
       "userManagement": "Pengurusan Pengguna",
       "signOut": "Log Keluar",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Kerja"
     },
     "toggleSize": "Togol saiz bar sisi",
     "expandSidebar": "Kembangkan bar sisi"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Tidak dapat membuat automasi",
       "automationUpdated": "Automasi dikemas kini",
       "updateAutomationFailed": "Tidak dapat mengemas kini automasi"
+    }
+  },
+  "work": {
+    "title": "Kerja",
+    "subtitle": "Ruang kerja model terasing",
+    "tasks": {
+      "title": "Tugas Kerja",
+      "subtitle": "Ruang kerja setempat yang berkekalan",
+      "new": "Tugas baharu",
+      "emptyTitle": "Belum ada tugas Kerja",
+      "empty": "Tugas Kerja anda akan dipaparkan di sini selepas anda menghantar mesej pertama.",
+      "untitled": "Tugas tanpa tajuk",
+      "actions": "Tindakan tugas",
+      "delete": "Padam tugas",
+      "deleteNamed": "Padam {{title}}",
+      "deleteConfirm": "Padam “{{title}}” dan ruang kerjanya secara kekal?",
+      "close": "Tutup tugas Kerja",
+      "open": "Buka tugas Kerja",
+      "rename": "Tajuk tugas",
+      "loading": "Memuatkan tugas…",
+      "notFound": "Tugas Kerja ini tidak tersedia",
+      "back": "Mulakan tugas baharu",
+      "status": "Status: {{status}}"
+    },
+    "landing": {
+      "title": "Mulakan tugas Kerja baharu",
+      "description": "Berikan model setempat atau model penyedia yang dikonfigurasi ruang kerja yang berkekalan dan terasing. Model boleh memeriksa fail, menjalankan alat dan menyambung kerja apabila anda kembali.",
+      "isolated": "Terasing",
+      "isolatedBody": "Setiap tugas mempunyai bekas dan failnya sendiri.",
+      "durable": "Berkekalan",
+      "durableBody": "Kembali kepada perbualan dan ruang kerjanya kemudian.",
+      "controlled": "Terkawal",
+      "controlledBody": "Masa jalan dan fail tugas kekal terasing daripada hos."
+    },
+    "composer": {
+      "placeholder": "Terangkan perkara yang ingin anda bina atau ubah…",
+      "model": "Model Kerja",
+      "noModels": "Tiada model yang serasi dengan Kerja",
+      "cancel": "Hentikan",
+      "send": "Jalankan",
+      "hint": "Setiap tugas menyimpan fail dan sejarahnya sendiri. Semak output model sebelum menggunakannya.",
+      "remoteTitle": "Penyedia jauh",
+      "remoteHint": "Perbualan dan output alat dihantar kepada perkhidmatan yang dikonfigurasi. Satu pelaksanaan autonomi boleh membuat beberapa panggilan penyedia dan mungkin dikenakan caj. Fail ruang kerja kekal setempat melainkan alat mengembalikan kandungannya.",
+      "remoteDismiss": "Tutup",
+      "remoteDismissLabel": "Tutup notis penyedia jauh",
+      "remoteDismissFailed": "Tidak dapat menyimpan pilihan penyedia jauh.",
+      "noModelSelected": "Tiada model serasi Kerja yang dipilih."
+    },
+    "conversation": {
+      "ready": "Ruang kerja sedia",
+      "empty": "Teruskan tugas di bawah. Perbualan dan failnya kekal dilampirkan pada ruang kerja ini.",
+      "loadOlder": "Muatkan mesej lama"
+    },
+    "status": {
+      "preparing": "Menyediakan ruang kerja terasing…",
+      "running": "Sedang bekerja dalam ruang kerja setempat…"
+    },
+    "statusLabels": {
+      "idle": "Tidak aktif",
+      "thinking": "Berfikir",
+      "complete": "Selesai",
+      "needsInput": "Memerlukan input",
+      "error": "Ralat"
+    },
+    "runtime": {
+      "unavailable": "Masa jalan tidak tersedia",
+      "readyOllama": "Docker sedia",
+      "readyPlugin": "Docker + pemalam sedia",
+      "readyHybrid": "Docker + model sedia",
+      "reason": "Docker dan penyedia model Ollama atau pemalam yang tersedia diperlukan."
+    },
+    "workspace": {
+      "label": "Paparan ruang kerja",
+      "files": "Fail",
+      "activity": "Aktiviti",
+      "preview": "Pratonton",
+      "resize": "Ubah saiz perbualan dan ruang kerja",
+      "resizeHint": "Seret untuk mengubah saiz. Gunakan kekunci anak panah untuk kawalan tepat. Klik dua kali atau tekan Enter untuk menetapkan semula.",
+      "splitSize": "Perbualan {{conversation}}%, ruang kerja {{workspace}}%"
+    },
+    "files": {
+      "discard": "Buang perubahan fail yang belum disimpan?",
+      "leaveWithDraft": "Tinggalkan fail ini? Suntingan yang belum disimpan akan kekal sebagai draf pelayar.",
+      "up": "Folder induk",
+      "back": "Kembali ke fail",
+      "empty": "Belum ada fail dalam folder ini.",
+      "select": "Pilih fail untuk diperiksa dan disunting.",
+      "editorLabel": "Penyunting fail: {{path}}",
+      "format": "Format",
+      "formatted": "Kod telah diformat.",
+      "formatFailed": "Tidak dapat memformat fail ini.",
+      "formatShortcut": "Format (Shift+Alt+F)",
+      "formatTooLarge": "Pemformatan terhad kepada fail di bawah 100,000 aksara dan 4,000 baris.",
+      "formatUnsupported": "Pemformatan tidak tersedia untuk jenis fail ini.",
+      "saveShortcut": "Simpan (⌘/Ctrl+S)",
+      "highlightPaused": "Penyerlahan langsung dijeda untuk fail besar agar penyuntingan kekal responsif.",
+      "plainTextLarge": "Teks biasa · fail besar"
+    },
+    "activity": {
+      "empty": "Perintah, operasi fail dan hasil alat akan dipaparkan di sini.",
+      "toolActivity": "Aktiviti alat",
+      "details": "Butiran",
+      "kinds": {
+        "message": "Mesej",
+        "toolCall": "Panggilan alat",
+        "toolResult": "Hasil alat",
+        "error": "Ralat"
+      }
+    },
+    "preview": {
+      "command": "Perintah mula pilihan",
+      "start": "Mulakan pratonton",
+      "stop": "Hentikan pratonton",
+      "open": "Buka",
+      "starting": "Memulakan pratonton…",
+      "frameTitle": "Pratonton ruang kerja",
+      "failed": "Pratonton tidak dapat dimulakan. Semak Aktiviti, kemudian cuba perintah lain.",
+      "empty": "Mulakan aplikasi dalam ruang kerja ini untuk memeriksanya di sini."
+    },
+    "mobile": {
+      "surface": "Paparan tugas",
+      "conversation": "Perbualan",
+      "workspace": "Ruang kerja"
+    },
+    "toasts": {
+      "runFailed": "Tidak dapat memulakan tugas Kerja.",
+      "updateFailed": "Tidak dapat mengemas kini tugas ini.",
+      "renameFailed": "Tidak dapat menamakan semula tugas ini.",
+      "cancelled": "Pelaksanaan Kerja dihentikan.",
+      "cancelFailed": "Tidak dapat menghentikan pelaksanaan Kerja.",
+      "deleteFailed": "Tidak dapat memadam tugas Kerja ini.",
+      "saveFailed": "Tidak dapat menyimpan fail ini.",
+      "saved": "Fail disimpan.",
+      "previewFailed": "Tidak dapat memulakan pratonton.",
+      "previewStopFailed": "Tidak dapat menghentikan pratonton."
     }
   }
 }

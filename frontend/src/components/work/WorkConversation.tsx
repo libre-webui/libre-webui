@@ -41,16 +41,31 @@ const metadataText = (
   }
 };
 
-const toolTitle = (message: WorkMessage): string => {
+const toolTitle = (message: WorkMessage, fallback: string): string => {
   const metadata = message.metadata;
   const name =
     metadata?.name ?? metadata?.toolName ?? metadata?.tool ?? metadata?.command;
-  return typeof name === 'string' && name ? name : 'Tool activity';
+  return typeof name === 'string' && name ? name : fallback;
 };
 
 function ToolMessage({ message }: { message: WorkMessage }) {
+  const { t } = useTranslation();
   const details = metadataText(message.metadata);
   const error = message.kind === 'error';
+  const kindLabel = {
+    message: t('work.activity.kinds.message', {
+      defaultValue: 'Message',
+    }),
+    tool_call: t('work.activity.kinds.toolCall', {
+      defaultValue: 'Tool call',
+    }),
+    tool_result: t('work.activity.kinds.toolResult', {
+      defaultValue: 'Tool result',
+    }),
+    error: t('work.activity.kinds.error', {
+      defaultValue: 'Error',
+    }),
+  }[message.kind];
   return (
     <div
       className={cn(
@@ -64,24 +79,38 @@ function ToolMessage({ message }: { message: WorkMessage }) {
         ) : (
           <TerminalSquare className='h-4 w-4 text-ink-muted' />
         )}
-        <span className='min-w-0 flex-1 truncate font-mono text-xs font-medium text-ink'>
-          {toolTitle(message)}
+        <span
+          dir='auto'
+          className='min-w-0 flex-1 truncate font-mono text-xs font-medium text-ink'
+        >
+          {toolTitle(
+            message,
+            t('work.activity.toolActivity', {
+              defaultValue: 'Tool activity',
+            })
+          )}
         </span>
-        <span className='rounded-md bg-surface-raised px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-muted'>
-          {message.kind.replace('_', ' ')}
+        <span className='rounded-md bg-surface-raised px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-muted rtl:tracking-normal'>
+          {kindLabel}
         </span>
       </div>
       {message.content && (
-        <pre className='max-h-56 overflow-auto whitespace-pre-wrap break-words px-3 py-2.5 font-mono text-xs leading-relaxed text-ink-muted'>
+        <pre
+          dir='ltr'
+          className='max-h-56 overflow-auto whitespace-pre-wrap break-words px-3 py-2.5 text-left font-mono text-xs leading-relaxed text-ink-muted'
+        >
           {message.content}
         </pre>
       )}
       {details && (
         <details className='border-t border-line px-3 py-2'>
           <summary className='cursor-pointer text-[11px] font-medium text-ink-muted'>
-            Details
+            {t('work.activity.details', { defaultValue: 'Details' })}
           </summary>
-          <pre className='mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] text-ink-muted'>
+          <pre
+            dir='ltr'
+            className='mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-all text-left font-mono text-[11px] text-ink-muted'
+          >
             {details}
           </pre>
         </details>
@@ -239,7 +268,10 @@ export function WorkConversation({
                     )}
                   >
                     {user ? (
-                      <p className='whitespace-pre-wrap break-words text-sm leading-relaxed'>
+                      <p
+                        dir='auto'
+                        className='whitespace-pre-wrap break-words text-sm leading-relaxed'
+                      >
                         {message.content}
                       </p>
                     ) : streaming ? (

@@ -292,7 +292,8 @@
       "settings": "설정",
       "userManagement": "사용자 관리",
       "signOut": "로그아웃",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "작업"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "자동화를 생성할 수 없습니다.",
       "automationUpdated": "자동화 업데이트됨",
       "updateAutomationFailed": "자동화를 업데이트할 수 없습니다."
+    }
+  },
+  "work": {
+    "title": "작업",
+    "subtitle": "격리된 모델 워크스페이스",
+    "tasks": {
+      "title": "작업 태스크",
+      "subtitle": "영구 로컬 워크스페이스",
+      "new": "새 태스크",
+      "emptyTitle": "아직 작업 태스크가 없습니다",
+      "empty": "첫 메시지를 보내면 작업 태스크가 여기에 표시됩니다.",
+      "untitled": "제목 없는 태스크",
+      "actions": "태스크 작업",
+      "delete": "태스크 삭제",
+      "deleteNamed": "{{title}} 삭제",
+      "deleteConfirm": "“{{title}}” 및 해당 워크스페이스를 영구적으로 삭제할까요?",
+      "close": "작업 태스크 닫기",
+      "open": "작업 태스크 열기",
+      "rename": "태스크 제목",
+      "loading": "태스크 불러오는 중…",
+      "notFound": "이 작업 태스크를 사용할 수 없습니다",
+      "back": "새 태스크 시작",
+      "status": "상태: {{status}}"
+    },
+    "landing": {
+      "title": "새 작업 태스크 시작",
+      "description": "로컬 모델 또는 설정된 제공자 모델에 영구적이고 격리된 워크스페이스를 제공합니다. 모델은 파일을 확인하고 도구를 실행하며, 나중에 돌아와 이어서 작업할 수 있습니다.",
+      "isolated": "격리",
+      "isolatedBody": "각 태스크에는 전용 컨테이너와 파일이 있습니다.",
+      "durable": "영구",
+      "durableBody": "나중에 대화와 워크스페이스로 돌아올 수 있습니다.",
+      "controlled": "제어",
+      "controlledBody": "런타임과 태스크 파일은 호스트에서 격리됩니다."
+    },
+    "composer": {
+      "placeholder": "만들거나 변경할 내용을 설명하세요…",
+      "model": "작업 모델",
+      "noModels": "작업 호환 모델이 없습니다",
+      "cancel": "중지",
+      "send": "실행",
+      "hint": "각 태스크는 자체 파일과 기록을 보관합니다. 사용하기 전에 모델 출력을 검토하세요.",
+      "remoteTitle": "원격 제공자",
+      "remoteHint": "대화와 도구 출력이 설정된 서비스로 전송됩니다. 한 번의 자율 실행에서 제공자를 여러 번 호출해 비용이 발생할 수 있습니다. 도구가 파일 내용을 반환하지 않는 한 워크스페이스 파일은 로컬에 유지됩니다.",
+      "remoteDismiss": "닫기",
+      "remoteDismissLabel": "원격 제공자 안내 닫기",
+      "remoteDismissFailed": "원격 제공자 설정을 저장할 수 없습니다.",
+      "noModelSelected": "선택된 작업 호환 모델이 없습니다."
+    },
+    "conversation": {
+      "ready": "워크스페이스 준비 완료",
+      "empty": "아래에서 태스크를 계속하세요. 이 대화와 파일은 해당 워크스페이스에 계속 연결됩니다.",
+      "loadOlder": "이전 메시지 불러오기"
+    },
+    "status": {
+      "preparing": "격리된 워크스페이스 준비 중…",
+      "running": "로컬 워크스페이스에서 작업 중…"
+    },
+    "statusLabels": {
+      "idle": "대기",
+      "thinking": "생각 중",
+      "complete": "완료",
+      "needsInput": "입력 필요",
+      "error": "오류"
+    },
+    "runtime": {
+      "unavailable": "런타임을 사용할 수 없습니다",
+      "readyOllama": "Docker 준비 완료",
+      "readyPlugin": "Docker + 플러그인 준비 완료",
+      "readyHybrid": "Docker + 모델 준비 완료",
+      "reason": "Docker와 사용 가능한 Ollama 또는 플러그인 모델 제공자가 필요합니다."
+    },
+    "workspace": {
+      "label": "워크스페이스 보기",
+      "files": "파일",
+      "activity": "활동",
+      "preview": "미리보기",
+      "resize": "대화 및 워크스페이스 크기 조절",
+      "resizeHint": "드래그하여 크기를 조절하세요. 세밀하게 조절하려면 화살표 키를 사용하세요. 재설정하려면 두 번 클릭하거나 Enter를 누르세요.",
+      "splitSize": "대화 {{conversation}}%, 워크스페이스 {{workspace}}%"
+    },
+    "files": {
+      "discard": "저장하지 않은 파일 변경 사항을 버릴까요?",
+      "leaveWithDraft": "이 파일을 닫을까요? 저장하지 않은 편집 내용은 브라우저 초안으로 유지됩니다.",
+      "up": "상위 폴더",
+      "back": "파일로 돌아가기",
+      "empty": "이 폴더에는 아직 파일이 없습니다.",
+      "select": "확인하고 편집할 파일을 선택하세요.",
+      "editorLabel": "파일 편집기: {{path}}",
+      "format": "서식 정리",
+      "formatted": "코드 서식을 정리했습니다.",
+      "formatFailed": "이 파일의 서식을 정리할 수 없습니다.",
+      "formatShortcut": "서식 정리(Shift+Alt+F)",
+      "formatTooLarge": "서식 정리는 100,000자 및 4,000줄 미만의 파일로 제한됩니다.",
+      "formatUnsupported": "이 파일 형식은 서식 정리를 지원하지 않습니다.",
+      "saveShortcut": "저장(⌘/Ctrl+S)",
+      "highlightPaused": "편집 반응성을 유지하기 위해 큰 파일의 실시간 강조 표시를 일시 중지했습니다.",
+      "plainTextLarge": "일반 텍스트 · 큰 파일"
+    },
+    "activity": {
+      "empty": "명령, 파일 작업 및 도구 결과가 여기에 표시됩니다.",
+      "toolActivity": "도구 활동",
+      "details": "세부 정보",
+      "kinds": {
+        "message": "메시지",
+        "toolCall": "도구 호출",
+        "toolResult": "도구 결과",
+        "error": "오류"
+      }
+    },
+    "preview": {
+      "command": "선택적 시작 명령",
+      "start": "미리보기 시작",
+      "stop": "미리보기 중지",
+      "open": "열기",
+      "starting": "미리보기 시작 중…",
+      "frameTitle": "워크스페이스 미리보기",
+      "failed": "미리보기를 시작할 수 없습니다. 활동을 확인한 다음 다른 명령을 시도하세요.",
+      "empty": "이 워크스페이스에서 앱을 시작하면 여기에서 확인할 수 있습니다."
+    },
+    "mobile": {
+      "surface": "태스크 화면",
+      "conversation": "대화",
+      "workspace": "워크스페이스"
+    },
+    "toasts": {
+      "runFailed": "작업 태스크를 시작할 수 없습니다.",
+      "updateFailed": "이 태스크를 업데이트할 수 없습니다.",
+      "renameFailed": "이 태스크의 이름을 변경할 수 없습니다.",
+      "cancelled": "작업 실행을 중지했습니다.",
+      "cancelFailed": "작업 실행을 중지할 수 없습니다.",
+      "deleteFailed": "이 작업 태스크를 삭제할 수 없습니다.",
+      "saveFailed": "이 파일을 저장할 수 없습니다.",
+      "saved": "파일을 저장했습니다.",
+      "previewFailed": "미리보기를 시작할 수 없습니다.",
+      "previewStopFailed": "미리보기를 중지할 수 없습니다."
     }
   }
 }

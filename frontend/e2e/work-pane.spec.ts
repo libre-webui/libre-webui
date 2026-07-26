@@ -1068,6 +1068,156 @@ test('resizes the Work conversation and workspace with pointer and keyboard cont
   );
 });
 
+test('mirrors the translated Work workspace and resize controls in Arabic', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const rtlTask = task(
+    'rtl-workspace',
+    'مساحة عمل عربية',
+    'اكتملت المهمة داخل مساحة العمل.'
+  );
+  await mockLibreWebUiApi(page, {
+    workTasks: [rtlTask],
+    workFiles: {
+      'rtl-workspace': [
+        {
+          path: 'src/rtl.ts',
+          name: 'rtl.ts',
+          type: 'file',
+          size: 24,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'rtl-workspace:src/rtl.ts': 'const direction = "ltr";\n',
+    },
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'ar');
+  });
+
+  await page.goto('/work/rtl-workspace');
+
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+  await expect(page.getByTestId('work-task-title')).toHaveAttribute(
+    'dir',
+    'auto'
+  );
+  await expect(page.getByTestId('work-status')).toContainText('مكتمل');
+  await expect(page.getByTestId('work-composer-input')).toHaveAttribute(
+    'placeholder',
+    'صِف ما تريد بناءه أو تغييره…'
+  );
+  await expect(page.getByTestId('work-composer-input')).toHaveAttribute(
+    'dir',
+    'auto'
+  );
+  await expect(page.getByTestId('work-model-select')).toHaveAttribute(
+    'aria-label',
+    'نموذج العمل'
+  );
+  await expect(page.getByTestId('work-model-select')).toHaveAttribute(
+    'dir',
+    'auto'
+  );
+  await expect(page.getByTestId('work-model-select')).toHaveCSS(
+    'direction',
+    'ltr'
+  );
+  await expect(
+    page.getByRole('link', { name: 'العمل', exact: true })
+  ).toBeVisible();
+
+  const conversation = page.getByTestId('work-conversation-panel');
+  const workspace = page.getByTestId('work-workspace-panel');
+  const resizer = page.getByTestId('work-split-resizer');
+  await expect(resizer).toHaveAttribute(
+    'aria-label',
+    'تغيير حجم المحادثة ومساحة العمل'
+  );
+  await expect(resizer).toHaveAttribute(
+    'aria-valuetext',
+    'المحادثة 45٪، مساحة العمل 55٪'
+  );
+
+  const conversationBox = await conversation.boundingBox();
+  const workspaceBox = await workspace.boundingBox();
+  expect(conversationBox).not.toBeNull();
+  expect(workspaceBox).not.toBeNull();
+  expect(conversationBox!.x).toBeGreaterThan(workspaceBox!.x);
+
+  await resizer.focus();
+  await resizer.press('ArrowLeft');
+  await expect(resizer).toHaveAttribute('aria-valuenow', '47');
+  await resizer.press('ArrowRight');
+  await expect(resizer).toHaveAttribute('aria-valuenow', '45');
+
+  const beforeConversation = await conversation.boundingBox();
+  const handle = await resizer.boundingBox();
+  expect(beforeConversation).not.toBeNull();
+  expect(handle).not.toBeNull();
+
+  await page.mouse.move(
+    handle!.x + handle!.width / 2,
+    handle!.y + handle!.height / 2
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    handle!.x + handle!.width / 2 - 100,
+    handle!.y + handle!.height / 2,
+    { steps: 5 }
+  );
+  await page.mouse.up();
+
+  const afterConversation = await conversation.boundingBox();
+  expect(afterConversation).not.toBeNull();
+  expect(afterConversation!.width - beforeConversation!.width).toBeGreaterThan(
+    70
+  );
+
+  const filesTab = page.getByTestId('work-files-tab');
+  const activityTab = page.getByTestId('work-activity-tab');
+  const previewTab = page.getByTestId('work-preview-tab');
+  await expect(filesTab).toHaveAttribute(
+    'aria-controls',
+    'work-workspace-panel-files'
+  );
+  await expect(activityTab).not.toHaveAttribute('aria-controls');
+  await page.getByTestId('work-file-item').click();
+  await expect(page.getByTestId('work-file-editor')).toHaveCSS(
+    'direction',
+    'ltr'
+  );
+  await filesTab.focus();
+  await filesTab.press('ArrowLeft');
+  await expect(activityTab).toBeFocused();
+  await expect(activityTab).toHaveAttribute(
+    'aria-controls',
+    'work-workspace-panel-activity'
+  );
+  await expect(filesTab).not.toHaveAttribute('aria-controls');
+
+  await previewTab.click();
+  await expect(
+    page.getByRole('textbox', { name: 'أمر تشغيل اختياري' })
+  ).toHaveAttribute('dir', 'auto');
+
+  await page.goto('/work/missing');
+  await expect(
+    page.getByRole('heading', { name: 'مهمة العمل هذه غير متاحة' })
+  ).toBeVisible();
+  const newTaskButton = page.getByRole('button', {
+    name: 'بدء مهمة جديدة',
+  });
+  await expect(newTaskButton.locator('svg')).toHaveCSS(
+    'transform',
+    'matrix(-1, 0, 0, -1, 0, 0)'
+  );
+});
+
 test('formats and highlights workspace code in dark and light mode', async ({
   page,
 }) => {
@@ -1844,6 +1994,10 @@ test('explains when the local container runtime is unavailable', async ({
   await page.goto('/work');
 
   await expect(page.getByText('Docker daemon unavailable')).toBeVisible();
+  await expect(page.getByText('Docker daemon unavailable')).toHaveAttribute(
+    'dir',
+    'auto'
+  );
   await expect(page.getByTestId('work-composer-input')).toBeDisabled();
   await expect(page.getByTestId('work-submit-button')).toBeDisabled();
 });

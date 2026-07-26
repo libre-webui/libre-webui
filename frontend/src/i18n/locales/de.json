@@ -292,7 +292,8 @@
       "settings": "Einstellungen",
       "userManagement": "Benutzerverwaltung",
       "signOut": "Abmelden",
-      "agents": "Libre Claw"
+      "agents": "Libre Claw",
+      "work": "Arbeit"
     },
     "toggleSize": "Seitenleistengröße umschalten",
     "expandSidebar": "Seitenleiste erweitern"
@@ -1477,6 +1478,141 @@
       "createAutomationFailed": "Die Automatisierung konnte nicht erstellt werden",
       "automationUpdated": "Automatisierung aktualisiert",
       "updateAutomationFailed": "Die Automatisierung konnte nicht aktualisiert werden"
+    }
+  },
+  "work": {
+    "title": "Arbeit",
+    "subtitle": "Isolierte Modell-Arbeitsbereiche",
+    "tasks": {
+      "title": "Arbeitsaufgaben",
+      "subtitle": "Dauerhafte lokale Arbeitsbereiche",
+      "new": "Neue Aufgabe",
+      "emptyTitle": "Noch keine Arbeitsaufgaben",
+      "empty": "Ihre Arbeitsaufgaben werden hier angezeigt, nachdem Sie die erste Nachricht gesendet haben.",
+      "untitled": "Unbenannte Aufgabe",
+      "actions": "Aufgabenaktionen",
+      "delete": "Aufgabe löschen",
+      "deleteNamed": "„{{title}}“ löschen",
+      "deleteConfirm": "„{{title}}“ und den zugehörigen Arbeitsbereich dauerhaft löschen?",
+      "close": "Arbeitsaufgaben schließen",
+      "open": "Arbeitsaufgaben öffnen",
+      "rename": "Aufgabentitel",
+      "loading": "Aufgabe wird geladen…",
+      "notFound": "Diese Arbeitsaufgabe ist nicht verfügbar",
+      "back": "Neue Aufgabe starten",
+      "status": "Status: {{status}}"
+    },
+    "landing": {
+      "title": "Neue Arbeitsaufgabe starten",
+      "description": "Stellen Sie einem lokalen oder konfigurierten Anbietermodell einen dauerhaften, isolierten Arbeitsbereich bereit. Es kann Dateien prüfen, Werkzeuge ausführen und bei Ihrer Rückkehr dort fortfahren, wo es aufgehört hat.",
+      "isolated": "Isoliert",
+      "isolatedBody": "Jede Aufgabe erhält einen eigenen Container und eigene Dateien.",
+      "durable": "Dauerhaft",
+      "durableBody": "Kehren Sie später zur Unterhaltung und zum Arbeitsbereich zurück.",
+      "controlled": "Kontrolliert",
+      "controlledBody": "Die Laufzeit und die Aufgabendateien bleiben vom Host isoliert."
+    },
+    "composer": {
+      "placeholder": "Beschreiben Sie, was Sie erstellen oder ändern möchten…",
+      "model": "Arbeitsmodell",
+      "noModels": "Keine mit Arbeit kompatiblen Modelle",
+      "cancel": "Stoppen",
+      "send": "Ausführen",
+      "hint": "Jede Aufgabe behält ihre eigenen Dateien und ihren Verlauf. Prüfen Sie die Modellausgabe, bevor Sie sie verwenden.",
+      "remoteTitle": "Remote-Anbieter",
+      "remoteHint": "Unterhaltung und Werkzeugausgaben werden an den konfigurierten Dienst gesendet. Eine autonome Ausführung kann den Anbieter mehrfach aufrufen und Kosten verursachen. Arbeitsbereichsdateien bleiben lokal, sofern ein Werkzeug ihre Inhalte nicht zurückgibt.",
+      "remoteDismiss": "Ausblenden",
+      "remoteDismissLabel": "Hinweis zum Remote-Anbieter ausblenden",
+      "remoteDismissFailed": "Die Einstellung für den Remote-Anbieter konnte nicht gespeichert werden.",
+      "noModelSelected": "Es ist kein mit Arbeit kompatibles Modell ausgewählt."
+    },
+    "conversation": {
+      "ready": "Arbeitsbereich bereit",
+      "empty": "Setzen Sie die Aufgabe unten fort. Diese Unterhaltung und ihre Dateien bleiben mit diesem Arbeitsbereich verknüpft.",
+      "loadOlder": "Ältere Nachrichten laden"
+    },
+    "status": {
+      "preparing": "Isolierter Arbeitsbereich wird vorbereitet…",
+      "running": "Arbeit im lokalen Arbeitsbereich…"
+    },
+    "statusLabels": {
+      "idle": "Inaktiv",
+      "thinking": "Denkt nach",
+      "complete": "Abgeschlossen",
+      "needsInput": "Eingabe erforderlich",
+      "error": "Fehler"
+    },
+    "runtime": {
+      "unavailable": "Laufzeit nicht verfügbar",
+      "readyOllama": "Docker bereit",
+      "readyPlugin": "Docker + Plugin bereit",
+      "readyHybrid": "Docker + Modelle bereit",
+      "reason": "Docker sowie ein verfügbarer Modellanbieter über Ollama oder ein Plugin sind erforderlich."
+    },
+    "workspace": {
+      "label": "Arbeitsbereichsansichten",
+      "files": "Dateien",
+      "activity": "Aktivität",
+      "preview": "Vorschau",
+      "resize": "Größe von Unterhaltung und Arbeitsbereich ändern",
+      "resizeHint": "Ziehen Sie zum Ändern der Größe. Verwenden Sie die Pfeiltasten zur präzisen Steuerung. Doppelklicken Sie oder drücken Sie die Eingabetaste zum Zurücksetzen.",
+      "splitSize": "Unterhaltung {{conversation}} %, Arbeitsbereich {{workspace}} %"
+    },
+    "files": {
+      "discard": "Ungespeicherte Dateiänderungen verwerfen?",
+      "leaveWithDraft": "Diese Datei verlassen? Ihre ungespeicherte Änderung bleibt als Browserentwurf erhalten.",
+      "up": "Übergeordneter Ordner",
+      "back": "Zurück zu den Dateien",
+      "empty": "Dieser Ordner enthält noch keine Dateien.",
+      "select": "Wählen Sie eine Datei aus, um sie zu prüfen und zu bearbeiten.",
+      "editorLabel": "Datei-Editor: {{path}}",
+      "format": "Formatieren",
+      "formatted": "Code formatiert.",
+      "formatFailed": "Diese Datei konnte nicht formatiert werden.",
+      "formatShortcut": "Formatieren (Shift+Alt+F)",
+      "formatTooLarge": "Die Formatierung ist auf Dateien mit weniger als 100.000 Zeichen und 4.000 Zeilen beschränkt.",
+      "formatUnsupported": "Für diesen Dateityp ist keine Formatierung verfügbar.",
+      "saveShortcut": "Speichern (⌘/Strg+S)",
+      "highlightPaused": "Die Live-Syntaxhervorhebung ist bei großen Dateien pausiert, damit die Bearbeitung flüssig bleibt.",
+      "plainTextLarge": "Klartext · große Datei"
+    },
+    "activity": {
+      "empty": "Befehle, Dateioperationen und Werkzeugergebnisse werden hier angezeigt.",
+      "toolActivity": "Werkzeugaktivität",
+      "details": "Details",
+      "kinds": {
+        "message": "Nachricht",
+        "toolCall": "Werkzeugaufruf",
+        "toolResult": "Werkzeugergebnis",
+        "error": "Fehler"
+      }
+    },
+    "preview": {
+      "command": "Optionaler Startbefehl",
+      "start": "Vorschau starten",
+      "stop": "Vorschau stoppen",
+      "open": "Öffnen",
+      "starting": "Vorschau wird gestartet…",
+      "frameTitle": "Arbeitsbereichsvorschau",
+      "failed": "Die Vorschau konnte nicht gestartet werden. Prüfen Sie „Aktivität“ und versuchen Sie es mit einem anderen Befehl.",
+      "empty": "Starten Sie die App in diesem Arbeitsbereich, um sie hier zu prüfen."
+    },
+    "mobile": {
+      "surface": "Aufgabenansicht",
+      "conversation": "Unterhaltung",
+      "workspace": "Arbeitsbereich"
+    },
+    "toasts": {
+      "runFailed": "Die Arbeitsaufgabe konnte nicht gestartet werden.",
+      "updateFailed": "Diese Aufgabe konnte nicht aktualisiert werden.",
+      "renameFailed": "Diese Aufgabe konnte nicht umbenannt werden.",
+      "cancelled": "Arbeitsausführung gestoppt.",
+      "cancelFailed": "Die Arbeitsausführung konnte nicht gestoppt werden.",
+      "deleteFailed": "Diese Arbeitsaufgabe konnte nicht gelöscht werden.",
+      "saveFailed": "Diese Datei konnte nicht gespeichert werden.",
+      "saved": "Datei gespeichert.",
+      "previewFailed": "Die Vorschau konnte nicht gestartet werden.",
+      "previewStopFailed": "Die Vorschau konnte nicht gestoppt werden."
     }
   }
 }
