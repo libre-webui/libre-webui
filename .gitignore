@@ -119,3 +119,6 @@ __pycache__/
 examples/qwen-tts-server/venv/
 docker-compose.dev.external-ollama.watchtower.yml
 plugins/openclaw-agent.json
+
+# Local Codex instructions
+/AGENTS.md
