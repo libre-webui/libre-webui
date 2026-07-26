@@ -41,6 +41,7 @@ import { PluginTTSService } from './pluginTTSService.js';
 import {
   buildPluginChatPayload,
   convertProviderResponse,
+  getOpenAICompatibleSamplingParameters,
   resolvePluginChatParameters,
   toOpenAICompatibleMessages,
 } from '../utils/pluginChatAdapter.js';
@@ -616,11 +617,8 @@ class PluginService {
       payload = {
         model,
         messages: toOpenAICompatibleMessages(messages),
-        temperature: params.temperature,
+        ...getOpenAICompatibleSamplingParameters(activePlugin, params),
         max_tokens: params.maxTokens,
-        top_p: params.topP,
-        frequency_penalty: params.frequencyPenalty,
-        presence_penalty: params.presencePenalty,
         stop: options.stop,
         stream: true,
       };

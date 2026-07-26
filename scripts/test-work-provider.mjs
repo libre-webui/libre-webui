@@ -131,6 +131,97 @@ test('OpenAI-compatible Work payload preserves tool-call correlation', () => {
   );
 });
 
+test('Kimi Work omits fixed sampling and preserves tool-call reasoning', () => {
+  const kimiPlugin = plugin('kimi-code');
+  const { payload } = buildPluginWorkPayload(
+    kimiPlugin,
+    {
+      model: 'test-model',
+      messages: messages.slice(0, 2),
+      tools: [tool],
+      stream: false,
+      options: {
+        temperature: 0.2,
+        top_p: 0.4,
+      },
+    },
+    {
+      max_tokens: 4096,
+      temperature: 0.3,
+      top_p: 0.8,
+      frequency_penalty: 1,
+      presence_penalty: 1,
+    }
+  );
+  assert.equal('temperature' in payload, false);
+  assert.equal('top_p' in payload, false);
+  assert.equal('frequency_penalty' in payload, false);
+  assert.equal('presence_penalty' in payload, false);
+  assert.equal(payload.max_tokens, 4096);
+
+  const response = normalizePluginWorkResponse(
+    kimiPlugin,
+    {
+      choices: [
+        {
+          message: {
+            role: 'assistant',
+            content: '',
+            reasoning_content: 'opaque Kimi reasoning',
+            tool_calls: [
+              {
+                id: 'kimi-call',
+                type: 'function',
+                function: {
+                  name: 'read_file',
+                  arguments: '{"path":"kimi.txt"}',
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+    'test-model'
+  );
+  assert.equal(
+    response.message.tool_calls[0].providerMetadata.openAIReasoningContent,
+    'opaque Kimi reasoning'
+  );
+
+  const { payload: roundTripPayload } = buildPluginWorkPayload(
+    kimiPlugin,
+    {
+      model: 'test-model',
+      messages: [
+        messages[0],
+        messages[1],
+        {
+          role: 'assistant',
+          content: response.message.content,
+          tool_calls: response.message.tool_calls,
+        },
+        {
+          role: 'tool',
+          content: 'Kimi file contents',
+          tool_name: 'read_file',
+        },
+      ],
+      tools: [tool],
+      stream: false,
+    },
+    { max_tokens: 4096 }
+  );
+  assert.equal(
+    roundTripPayload.messages[2].reasoning_content,
+    'opaque Kimi reasoning'
+  );
+  assert.equal(
+    'providerMetadata' in roundTripPayload.messages[2].tool_calls[0],
+    false
+  );
+});
+
 test('Anthropic Work payload and response use native tool blocks', () => {
   const { payload, extraHeaders } = buildPluginWorkPayload(
     plugin('anthropic'),

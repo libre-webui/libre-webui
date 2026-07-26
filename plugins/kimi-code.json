@@ -8,7 +8,12 @@
     "prefix": "Bearer ",
     "key_env": "KIMI_API_KEY"
   },
-  "model_map": ["k3", "kimi-for-coding", "kimi-for-coding-highspeed"],
+  "model_map": [
+    "k3",
+    "k3-256k",
+    "kimi-for-coding",
+    "kimi-for-coding-highspeed"
+  ],
   "variables": [
     {
       "name": "endpoint",
@@ -18,15 +23,6 @@
       "default": "https://api.kimi.com/coding/v1/chat/completions"
     },
     {
-      "name": "temperature",
-      "type": "number",
-      "label": "Temperature",
-      "description": "Controls randomness. Lower values are more focused, higher values more creative.",
-      "default": 0.7,
-      "min": 0,
-      "max": 2
-    },
-    {
       "name": "max_tokens",
       "type": "number",
       "label": "Max Output Tokens",
@@ -34,33 +30,6 @@
       "default": 8192,
       "min": 1,
       "max": 128000
-    },
-    {
-      "name": "top_p",
-      "type": "number",
-      "label": "Top P",
-      "description": "Nucleus sampling. Lower values make output more focused.",
-      "default": 1,
-      "min": 0,
-      "max": 1
-    },
-    {
-      "name": "frequency_penalty",
-      "type": "number",
-      "label": "Frequency Penalty",
-      "description": "Reduces repetition of frequent tokens.",
-      "default": 0,
-      "min": -2,
-      "max": 2
-    },
-    {
-      "name": "presence_penalty",
-      "type": "number",
-      "label": "Presence Penalty",
-      "description": "Encourages the model to introduce new topics.",
-      "default": 0,
-      "min": -2,
-      "max": 2
     },
     {
       "name": "stream",

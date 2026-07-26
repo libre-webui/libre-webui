@@ -210,9 +210,14 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
     });
     assert.deepEqual(kimiPlugin.model_map, [
       'k3',
+      'k3-256k',
       'kimi-for-coding',
       'kimi-for-coding-highspeed',
     ]);
+    assert.deepEqual(
+      kimiPlugin.variables.map(variable => variable.name),
+      ['endpoint', 'max_tokens', 'stream']
+    );
 
     const anthropicPlugin = JSON.parse(
       fs.readFileSync(
@@ -350,6 +355,20 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
       await waitForServer(
         `http://127.0.0.1:${backendPort}/health`,
         backendProcess
+      );
+
+      const pluginReadStatuses = [];
+      for (let request = 0; request < 205; request++) {
+        const pluginReadResponse = await fetch(
+          `http://127.0.0.1:${backendPort}/api/plugins`,
+          { method: 'HEAD' }
+        );
+        pluginReadStatuses.push(pluginReadResponse.status);
+      }
+      assert.deepEqual(
+        [...new Set(pluginReadStatuses)],
+        [200],
+        'read-only plugin discovery must not exhaust an IP-wide limiter'
       );
 
       const modelsResponse = await fetch(

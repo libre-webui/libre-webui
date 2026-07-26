@@ -24,6 +24,7 @@ import type {
   Plugin,
 } from '../types/index.js';
 import {
+  getOpenAICompatibleSamplingParameters,
   resolvePluginChatParameters,
   type PluginVariables,
 } from '../utils/pluginChatAdapter.js';
@@ -292,11 +293,8 @@ export function buildPluginWorkPayload(
       messages: toOpenAIWorkMessages(request.messages),
       tools: request.tools,
       tool_choice: request.tools?.length ? 'auto' : undefined,
-      temperature: params.temperature,
+      ...getOpenAICompatibleSamplingParameters(plugin, params),
       max_tokens: params.maxTokens,
-      top_p: params.topP,
-      frequency_penalty: params.frequencyPenalty,
-      presence_penalty: params.presencePenalty,
       stream: false,
     },
     extraHeaders: {},
@@ -324,6 +322,9 @@ export function toOpenAIWorkMessages(
   return messages.map((message, messageIndex) => {
     if (message.role === 'assistant') {
       const toolCalls = normalizeOutboundToolCalls(message.tool_calls);
+      const reasoningContent = toolCalls
+        .map(call => asObject(call.providerMetadata)?.openAIReasoningContent)
+        .find(value => typeof value === 'string');
       pendingCalls = toolCalls.map(call => ({
         id: String(call.id),
         name: String((call.function as JsonObject).name),
@@ -331,7 +332,18 @@ export function toOpenAIWorkMessages(
       return {
         role: 'assistant',
         content: message.content || null,
-        ...(toolCalls.length ? { tool_calls: toolCalls } : {}),
+        ...(typeof reasoningContent === 'string'
+          ? { reasoning_content: reasoningContent }
+          : {}),
+        ...(toolCalls.length
+          ? {
+              tool_calls: toolCalls.map(call => ({
+                id: call.id,
+                type: 'function',
+                function: call.function,
+              })),
+            }
+          : {}),
       };
     }
     if (message.role === 'tool') {
@@ -540,11 +552,14 @@ function normalizeOpenAIWorkResponse(
       'WORK_PLUGIN_INVALID_RESPONSE'
     );
   }
-  return workResponse(
-    model,
-    contentText(message.content),
-    normalizeInboundToolCalls(message.tool_calls)
-  );
+  const toolCalls = normalizeInboundToolCalls(message.tool_calls);
+  if (typeof message.reasoning_content === 'string' && toolCalls[0]) {
+    toolCalls[0].providerMetadata = {
+      ...asObject(toolCalls[0].providerMetadata),
+      openAIReasoningContent: message.reasoning_content,
+    };
+  }
+  return workResponse(model, contentText(message.content), toolCalls);
 }
 
 function normalizeAnthropicWorkResponse(

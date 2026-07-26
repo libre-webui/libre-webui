@@ -297,20 +297,6 @@ const preferencesRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Rate limiter for the /api/plugins route. This must run before optionalAuth so
-// unauthenticated requests cannot exhaust authentication, filesystem, or
-// credential-store work before reaching the route-specific write limits.
-const pluginsRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // allow normal settings traffic while bounding plugin enumeration
-  message: {
-    success: false,
-    error: 'Too many plugin requests from this IP, please try again later.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // Rate limiter for the /api/ollama route
 const ollamaRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -433,7 +419,10 @@ app.use(
   optionalAuth,
   preferencesRoutes
 );
-app.use('/api/plugins', pluginsRateLimiter, optionalAuth, pluginRoutes);
+// Plugin mutations and uploads have route-specific limits. Keep read-only
+// plugin discovery available so shared proxies cannot lock every user out of
+// Settings with one IP-wide counter.
+app.use('/api/plugins', optionalAuth, pluginRoutes);
 app.use('/api/embeddings', embeddingsRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);

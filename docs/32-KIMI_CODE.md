@@ -29,13 +29,19 @@ model selector.
 
 | Model ID                    | Model                    | Availability                                             |
 | --------------------------- | ------------------------ | -------------------------------------------------------- |
-| `k3`                        | Kimi K3                  | Moderato and above; context depends on membership tier   |
+| `k3`                        | Kimi K3                  | Moderato and above; up to 1M context on eligible tiers   |
+| `k3-256k`                   | Kimi K3                  | Moderato and above; fixed 256K context                   |
 | `kimi-for-coding`           | Kimi K2.7 Code           | All Kimi Code members                                    |
 | `kimi-for-coding-highspeed` | Kimi K2.7 Code HighSpeed | Allegretto and above; higher speed and greater quota use |
 
 Kimi documents K3 as supporting up to a one-million-token context window for
 eligible membership tiers. Libre WebUI leaves K3's reasoning effort unset so
-the Kimi API applies its documented default, currently `max`.
+the Kimi API applies its documented default, currently `high`.
+
+Kimi Code models choose fixed sampling values for their active reasoning mode.
+Libre WebUI therefore does not send the global temperature, top-p, frequency
+penalty, or presence penalty settings to this provider. This follows Kimi's
+recommendation and prevents invalid-parameter errors when its defaults change.
 
 ## API Endpoint
 
@@ -71,8 +77,17 @@ to obtain different access.
 
 - K3 context limits depend on membership.
 - Moderato supports a smaller K3 context than Allegretto and higher tiers.
+- Select `k3-256k` when you want the lower-quota 256K K3 route explicitly.
 - Start a new chat after switching model families to avoid reusing an
   incompatible context cache.
+
+**HTTP 429**
+
+- Read the provider message shown in the Work activity. Kimi distinguishes
+  temporary engine overload, concurrent-request limits, rolling usage limits,
+  and monthly quota exhaustion.
+- Retry temporary overloads after the indicated delay. Quota errors require
+  waiting for the reset or changing the account plan.
 
 **The model does not appear**
 

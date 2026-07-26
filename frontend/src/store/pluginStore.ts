@@ -19,6 +19,7 @@ import { create } from 'zustand';
 import { Plugin, PluginStatus } from '@/types';
 import { pluginApi, PluginVariableValue } from '@/utils/api';
 import { createLogger } from '@/utils/logger';
+import { getErrorMessage } from './chatStoreHelpers';
 
 const logger = createLogger('store:plugin-store');
 
@@ -82,8 +83,7 @@ export const usePluginStore = create<PluginState>((set, get) => ({
       }
     } catch (error) {
       set({
-        error:
-          error instanceof Error ? error.message : 'Failed to load plugins',
+        error: getErrorMessage(error, 'Failed to load plugins'),
       });
     } finally {
       set({ isLoading: false });

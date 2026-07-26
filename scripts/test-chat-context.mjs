@@ -856,7 +856,7 @@ test('plugin model discovery resolves Anthropic Messages endpoints', () => {
   );
 });
 
-test('Kimi Code plugin builds OpenAI-compatible K3 requests', () => {
+test('Kimi Code plugin omits model-fixed sampling parameters', () => {
   const plugin = JSON.parse(
     fs.readFileSync(path.join(repoRoot, 'plugins', 'kimi-code.json'), 'utf8')
   );
@@ -877,8 +877,14 @@ test('Kimi Code plugin builds OpenAI-compatible K3 requests', () => {
         content: 'Review this function.',
       },
     ],
-    { temperature: 0.2, num_predict: 8192 },
-    { stream: true }
+    { temperature: 0.2, top_p: 0.4, num_predict: 8192 },
+    {
+      stream: true,
+      temperature: 0.3,
+      top_p: 0.8,
+      frequency_penalty: 1,
+      presence_penalty: 1,
+    }
   );
 
   assert.deepEqual(headers, {
@@ -890,7 +896,10 @@ test('Kimi Code plugin builds OpenAI-compatible K3 requests', () => {
     'https://api.kimi.com/coding/v1/chat/completions'
   );
   assert.equal(payload.model, 'k3');
-  assert.equal(payload.temperature, 0.2);
+  assert.equal('temperature' in payload, false);
+  assert.equal('top_p' in payload, false);
+  assert.equal('frequency_penalty' in payload, false);
+  assert.equal('presence_penalty' in payload, false);
   assert.equal(payload.max_tokens, 8192);
   assert.equal(payload.stream, true);
   assert.deepEqual(payload.messages, [

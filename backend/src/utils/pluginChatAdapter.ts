@@ -38,6 +38,13 @@ export interface PluginChatPayloadResult {
   headers?: Record<string, string>;
 }
 
+type OpenAICompatibleSamplingParameters = Partial<{
+  temperature: number;
+  top_p: number;
+  frequency_penalty: number;
+  presence_penalty: number;
+}>;
+
 const ANTHROPIC_LEGACY_SAMPLING_MODELS = new Set([
   'claude-haiku-4-5',
   'claude-haiku-4-5-20251001',
@@ -73,6 +80,25 @@ export function resolvePluginChatParameters(
     presencePenalty:
       (pluginVars.presence_penalty as number | undefined) ?? undefined,
     shouldStream: (pluginVars.stream as boolean | undefined) ?? false,
+  };
+}
+
+export function getOpenAICompatibleSamplingParameters(
+  plugin: Pick<Plugin, 'id'>,
+  params: PluginChatParameters
+): OpenAICompatibleSamplingParameters {
+  // Kimi Code models choose fixed sampling values for their active mode and
+  // reject generic application preferences. Moonshot recommends omitting
+  // these fields instead of sending explicit fixed values.
+  if (plugin.id === 'kimi-code') {
+    return {};
+  }
+
+  return {
+    temperature: params.temperature,
+    top_p: params.topP,
+    frequency_penalty: params.frequencyPenalty,
+    presence_penalty: params.presencePenalty,
   };
 }
 
@@ -266,6 +292,7 @@ function buildGeminiChatPayload(
 }
 
 function buildOpenAICompatibleChatPayload(
+  plugin: Pick<Plugin, 'id'>,
   model: string,
   messages: ChatMessage[],
   options: GenerationOptions,
@@ -275,11 +302,8 @@ function buildOpenAICompatibleChatPayload(
     payload: {
       model,
       messages: toOpenAICompatibleMessages(messages),
-      temperature: params.temperature,
+      ...getOpenAICompatibleSamplingParameters(plugin, params),
       max_tokens: params.maxTokens,
-      top_p: params.topP,
-      frequency_penalty: params.frequencyPenalty,
-      presence_penalty: params.presencePenalty,
       stop: options.stop,
       stream: params.shouldStream,
     },
@@ -307,7 +331,13 @@ export function buildPluginChatPayload(
     return buildGeminiChatPayload(model, messages, options, params);
   }
 
-  return buildOpenAICompatibleChatPayload(model, messages, options, params);
+  return buildOpenAICompatibleChatPayload(
+    plugin,
+    model,
+    messages,
+    options,
+    params
+  );
 }
 
 export function convertAnthropicResponse(
