@@ -36,6 +36,8 @@ import { useBlocker, useLocation, useNavigate, useParams } from 'react-router';
 import { WorkComposer } from '@/components/work/WorkComposer';
 import { WorkConversation } from '@/components/work/WorkConversation';
 import { WorkspacePane } from '@/components/work/WorkspacePane';
+import { useAppStore } from '@/store/appStore';
+import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
 import {
@@ -46,6 +48,7 @@ import {
   type WorkTask,
 } from '@/types/work';
 import { cn } from '@/utils';
+import { preferencesApi } from '@/utils/api';
 import { clearWorkDraft, clearWorkTaskDrafts } from '@/utils/workDrafts';
 
 type MobileSurface = 'conversation' | 'workspace';
@@ -55,7 +58,7 @@ const taskStatusTone: Record<
   { dot: string; text: string }
 > = {
   idle: { dot: 'bg-gray-400', text: 'text-ink-muted' },
-  preparing: { dot: 'bg-amber-500 animate-pulse', text: 'text-amber-700' },
+  preparing: { dot: 'bg-amber-500 animate-pulse', text: 'text-ink' },
   running: { dot: 'bg-primary-500 animate-pulse', text: 'text-primary-700' },
   completed: { dot: 'bg-emerald-500', text: 'text-emerald-700' },
   failed: { dot: 'bg-error-500', text: 'text-error-600' },
@@ -75,6 +78,10 @@ export default function WorkPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
+  const preferences = useAppStore(state => state.preferences);
+  const setPreferences = useAppStore(state => state.setPreferences);
+  const authenticatedUserId = useAuthStore(state => state.user?.id ?? null);
+  const [remoteDisclosureSaving, setRemoteDisclosureSaving] = useState(false);
   const chatModels = useChatStore(state => state.models);
   const chatSelectedModel = useChatStore(state => state.selectedModel);
   const {
@@ -546,6 +553,48 @@ export default function WorkPage() {
     ? taskStatusTone[selectedTask.status]
     : taskStatusTone.idle;
 
+  const dismissRemoteDisclosure = async () => {
+    if (
+      preferences.workRemoteProviderDisclosureDismissed ||
+      remoteDisclosureSaving
+    ) {
+      return false;
+    }
+
+    const initiatingUserId = authenticatedUserId;
+    setRemoteDisclosureSaving(true);
+    try {
+      const response = await preferencesApi.updatePreferences({
+        workRemoteProviderDisclosureDismissed: true,
+      });
+
+      if (!response.success) {
+        throw new Error(
+          response.error ||
+            t('work.composer.remoteDismissFailed', {
+              defaultValue: 'Could not save the remote provider preference.',
+            })
+        );
+      }
+
+      if ((useAuthStore.getState().user?.id ?? null) !== initiatingUserId) {
+        return false;
+      }
+
+      setPreferences({ workRemoteProviderDisclosureDismissed: true });
+      return true;
+    } catch {
+      toast.error(
+        t('work.composer.remoteDismissFailed', {
+          defaultValue: 'Could not save the remote provider preference.',
+        })
+      );
+      return false;
+    } finally {
+      setRemoteDisclosureSaving(false);
+    }
+  };
+
   return (
     <div
       data-testid='work-page'
@@ -652,7 +701,7 @@ export default function WorkPage() {
                   className={cn(
                     'hidden h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium md:inline-flex',
                     selectedTask.networkEnabled
-                      ? 'border-amber-500/30 bg-amber-500/10 text-amber-700'
+                      ? 'border-amber-500/30 bg-amber-500/10 text-ink'
                       : 'border-line bg-surface text-ink-muted'
                   )}
                 >
@@ -680,7 +729,7 @@ export default function WorkPage() {
               'flex shrink-0 items-center gap-2 border-b px-4 py-2 text-xs',
               runtimeUnavailable
                 ? 'border-error-500/20 bg-error-500/10 text-error-700'
-                : 'border-amber-500/20 bg-amber-500/10 text-amber-800'
+                : 'border-amber-500/20 bg-amber-500/10 text-ink'
             )}
           >
             <CircleAlert className='h-4 w-4 shrink-0' />
@@ -785,8 +834,13 @@ export default function WorkPage() {
               running={false}
               loading={actionLoading}
               disabled={runtimeUnavailable}
+              remoteDisclosureDismissed={
+                preferences.workRemoteProviderDisclosureDismissed
+              }
+              remoteDisclosureSaving={remoteDisclosureSaving}
               onModelChange={changeModel}
               onNetworkChange={changeNetwork}
+              onDismissRemoteDisclosure={dismissRemoteDisclosure}
               onSubmit={submitMessage}
               onCancel={stopRun}
             />
@@ -844,8 +898,13 @@ export default function WorkPage() {
                   running={activeTask}
                   loading={actionLoading}
                   disabled={runtimeUnavailable}
+                  remoteDisclosureDismissed={
+                    preferences.workRemoteProviderDisclosureDismissed
+                  }
+                  remoteDisclosureSaving={remoteDisclosureSaving}
                   onModelChange={changeModel}
                   onNetworkChange={changeNetwork}
+                  onDismissRemoteDisclosure={dismissRemoteDisclosure}
                   onSubmit={submitMessage}
                   onCancel={stopRun}
                 />

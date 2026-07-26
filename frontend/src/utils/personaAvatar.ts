@@ -25,7 +25,7 @@ const AVATAR_GRADIENTS = [
   ['#0891b2', '#2563eb'],
   ['#0f766e', '#2563eb'],
   ['#be123c', '#7c3aed'],
-  ['#b45309', '#dc2626'],
+  ['#ff7b52', '#dc2626'],
 ] as const;
 
 const hashString = (value: string): number => {

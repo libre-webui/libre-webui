@@ -211,6 +211,7 @@ export const useAppStore = create<AppState>()(
           taskModel: '',
         },
         showUsername: false, // Default to showing "you" instead of username
+        workRemoteProviderDisclosureDismissed: false,
         backgroundSettings: {
           enabled: false,
           imageUrl: '',
@@ -411,6 +412,7 @@ export const useAppStore = create<AppState>()(
               taskModel: '',
             },
             showUsername: false,
+            workRemoteProviderDisclosureDismissed: false,
             backgroundSettings: {
               enabled: false,
               imageUrl: '',

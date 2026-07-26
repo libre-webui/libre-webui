@@ -384,7 +384,7 @@ function PluginListItem({
             size='sm'
             onClick={onExpand}
             title='Configure API key'
-            className={hasApiKey ? 'text-green-600' : 'text-amber-600'}
+            className={hasApiKey ? 'text-green-600' : 'text-ink'}
           >
             <Key className='h-4 w-4' />
             {expanded ? (

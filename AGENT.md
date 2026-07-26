@@ -662,7 +662,7 @@ The backend is expected to be running separately (detected via health check on p
 | Neutral-tertiary  | `#262626`              | `#F3F4F6` | Cards, inputs, user bubbles    |
 | Neutral-surface   | `#1F1F1F`              | `#E5E7EB` | Panels, popovers               |
 | Success           | `#34D399`              | —         | Confirmation states            |
-| Warning           | `#FBBF24`              | —         | Rate limits, warnings          |
+| Warning           | `#FF7B52`              | —         | Rate limits, warnings          |
 | Error             | `#F87171`              | —         | Errors, failures               |
 | Info              | `#60A5FA`              | —         | Informational banners          |
 

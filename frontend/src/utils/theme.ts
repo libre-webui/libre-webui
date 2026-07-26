@@ -21,14 +21,55 @@ export const DEFAULT_ACCENT = 'blue';
 export const DEFAULT_CUSTOM_ACCENT = '#2563eb';
 
 export const ACCENT_OPTIONS = [
-  { id: 'violet', label: 'Violet', color: '#7c3aed' },
-  { id: 'blue', label: 'Blue', color: '#2563eb' },
-  { id: 'cyan', label: 'Cyan', color: '#0e7490' },
-  { id: 'teal', label: 'Teal', color: '#0f766e' },
-  { id: 'emerald', label: 'Emerald', color: '#15803d' },
-  { id: 'amber', label: 'Amber', color: '#b45309' },
-  { id: 'rose', label: 'Rose', color: '#e11d48' },
-  { id: 'slate', label: 'Slate', color: '#475569' },
+  {
+    id: 'violet',
+    label: 'Violet',
+    color: '#7c3aed',
+    foreground: '#ffffff',
+  },
+  {
+    id: 'blue',
+    label: 'Blue',
+    color: '#2563eb',
+    foreground: '#ffffff',
+  },
+  {
+    id: 'cyan',
+    label: 'Cyan',
+    color: '#0e7490',
+    foreground: '#ffffff',
+  },
+  {
+    id: 'teal',
+    label: 'Teal',
+    color: '#0f766e',
+    foreground: '#ffffff',
+  },
+  {
+    id: 'emerald',
+    label: 'Emerald',
+    color: '#15803d',
+    foreground: '#ffffff',
+  },
+  {
+    // Keep the legacy id so existing saved themes migrate without data loss.
+    id: 'amber',
+    label: 'Coral',
+    color: '#ff7b52',
+    foreground: '#3d120c',
+  },
+  {
+    id: 'rose',
+    label: 'Rose',
+    color: '#e11d48',
+    foreground: '#ffffff',
+  },
+  {
+    id: 'slate',
+    label: 'Slate',
+    color: '#475569',
+    foreground: '#ffffff',
+  },
 ] as const;
 
 const SHADE_KEYS = [
@@ -216,17 +257,17 @@ const ACCENT_PALETTES: Record<AccentId, AccentPalette> = {
     950: '#022c22',
   },
   amber: {
-    50: '#fffbeb',
-    100: '#fef3c7',
-    200: '#fde68a',
-    300: '#fcd34d',
-    400: '#f59e0b',
-    500: '#b45309',
-    600: '#92400e',
-    700: '#78350f',
-    800: '#5f2c0b',
-    900: '#451a03',
-    950: '#2f1200',
+    50: '#fff5f1',
+    100: '#ffe8df',
+    200: '#ffd0c2',
+    300: '#ffae96',
+    400: '#ff9273',
+    500: '#ff7b52',
+    600: '#c94a27',
+    700: '#a83a1f',
+    800: '#87301f',
+    900: '#70291e',
+    950: '#3d120c',
   },
   rose: {
     50: '#fff1f2',

@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { Send, Square, Wifi, WifiOff } from 'lucide-react';
-import { useState } from 'react';
+import { CircleAlert, Send, Square, Wifi, WifiOff, X } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WorkModelOption } from '@/types/work';
 import { cn } from '@/utils';
@@ -29,8 +29,11 @@ interface WorkComposerProps {
   running: boolean;
   loading: boolean;
   disabled?: boolean;
+  remoteDisclosureDismissed: boolean;
+  remoteDisclosureSaving: boolean;
   onModelChange: (modelKey: string) => void | Promise<void>;
   onNetworkChange: (enabled: boolean) => void | Promise<void>;
+  onDismissRemoteDisclosure: () => Promise<boolean>;
   onSubmit: (message: string) => Promise<boolean>;
   onCancel: () => void | Promise<void>;
 }
@@ -42,15 +45,25 @@ export function WorkComposer({
   running,
   loading,
   disabled = false,
+  remoteDisclosureDismissed,
+  remoteDisclosureSaving,
   onModelChange,
   onNetworkChange,
+  onDismissRemoteDisclosure,
   onSubmit,
   onCancel,
 }: WorkComposerProps) {
   const { t } = useTranslation();
   const [message, setMessage] = useState('');
+  const modelSelectRef = useRef<HTMLSelectElement>(null);
   const selectedModel = models.find(item => item.key === modelKey);
   const remoteProvider = selectedModel?.remote === true;
+
+  const dismissRemoteDisclosure = async () => {
+    if (await onDismissRemoteDisclosure()) {
+      modelSelectRef.current?.focus();
+    }
+  };
 
   const submit = async () => {
     const trimmed = message.trim();
@@ -59,7 +72,70 @@ export function WorkComposer({
   };
 
   return (
-    <div className='border-t border-line bg-surface-raised/95 px-3 py-3 backdrop-blur md:px-5'>
+    <div className='relative shrink-0 border-t border-line bg-surface-raised/95 px-3 py-3 backdrop-blur md:px-5'>
+      {remoteProvider && !remoteDisclosureDismissed && (
+        <div className='absolute inset-x-3 bottom-full z-30 mx-auto mb-3 max-w-3xl md:inset-x-5'>
+          <aside
+            data-testid='work-provider-disclosure-popover'
+            aria-labelledby='work-provider-disclosure-title'
+            aria-live='polite'
+            className='relative rounded-2xl border border-warning-500/40 bg-surface-overlay p-3 pe-10 shadow-overlay backdrop-blur dark:border-warning-500/45'
+          >
+            <button
+              type='button'
+              onClick={() => void dismissRemoteDisclosure()}
+              disabled={remoteDisclosureSaving}
+              className='absolute end-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-warning-500/20 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning-500 disabled:cursor-wait disabled:opacity-50'
+              aria-label={t('work.composer.remoteDismissLabel', {
+                defaultValue: 'Dismiss remote provider notice',
+              })}
+            >
+              <X className='h-4 w-4' />
+            </button>
+            <div className='flex items-start gap-3'>
+              <div className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-warning-500/20'>
+                <CircleAlert
+                  data-testid='work-provider-disclosure-accent'
+                  className='h-4 w-4 text-warning-500'
+                  aria-hidden='true'
+                />
+              </div>
+              <div className='min-w-0 flex-1'>
+                <p
+                  id='work-provider-disclosure-title'
+                  className='text-sm font-semibold text-ink'
+                >
+                  {t('work.composer.remoteTitle', {
+                    defaultValue: 'Remote provider',
+                  })}
+                </p>
+                <p className='mt-0.5 text-xs leading-relaxed text-ink-muted'>
+                  {t('work.composer.remoteHint', {
+                    defaultValue:
+                      'Conversation and tool output are sent to the configured service. One autonomous run can make multiple provider calls and may incur charges. Workspace files stay local unless a tool returns their contents.',
+                  })}
+                </p>
+                <div className='mt-2.5 flex justify-end'>
+                  <Button
+                    data-testid='work-provider-disclosure-dismiss'
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    loading={remoteDisclosureSaving}
+                    className='h-7 border-warning-500 bg-warning-500 px-2.5 text-xs text-[#3d120c] hover:bg-warning-500/90 hover:text-[#3d120c]'
+                    onClick={() => void dismissRemoteDisclosure()}
+                  >
+                    {t('work.composer.remoteDismiss', {
+                      defaultValue: 'Dismiss',
+                    })}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
+
       <div className='mx-auto max-w-3xl rounded-2xl border border-line bg-surface shadow-subtle focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/15'>
         <textarea
           data-testid='work-composer-input'
@@ -81,6 +157,7 @@ export function WorkComposer({
         <div className='flex flex-wrap items-center justify-between gap-2 px-2.5 pb-2.5'>
           <div className='flex min-w-0 flex-1 flex-wrap items-center gap-2'>
             <select
+              ref={modelSelectRef}
               data-testid='work-model-select'
               value={modelKey}
               onChange={event => void onModelChange(event.target.value)}
@@ -108,7 +185,7 @@ export function WorkComposer({
               className={cn(
                 'inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border px-2 text-xs font-medium transition-colors',
                 networkEnabled
-                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                  ? 'border-amber-500/30 bg-amber-500/10 text-ink'
                   : 'border-line bg-surface-raised text-ink-muted',
                 running && 'cursor-not-allowed opacity-50'
               )}
@@ -164,23 +241,13 @@ export function WorkComposer({
         </div>
       </div>
       <p
-        data-testid='work-provider-disclosure'
-        className={cn(
-          'mt-1.5 text-center text-[11px]',
-          remoteProvider
-            ? 'text-amber-700 dark:text-amber-300'
-            : 'text-ink-subtle'
-        )}
+        data-testid='work-composer-hint'
+        className='mt-1.5 text-center text-[11px] text-ink-subtle'
       >
-        {remoteProvider
-          ? t('work.composer.remoteHint', {
-              defaultValue:
-                'Remote provider: conversation and tool output are sent to the configured service. One autonomous run can make multiple provider calls and may incur charges. Workspace files stay local unless a tool returns their contents.',
-            })
-          : t('work.composer.hint', {
-              defaultValue:
-                'Each task keeps its own files and history. Review model output before using it.',
-            })}
+        {t('work.composer.hint', {
+          defaultValue:
+            'Each task keeps its own files and history. Review model output before using it.',
+        })}
       </p>
     </div>
   );

@@ -221,6 +221,7 @@ export interface UserPreferences {
   imageGenSettings?: ImageGenSettings;
   titleSettings?: TitleSettings;
   showUsername: boolean; // If true, show username in chat; if false, show "you"
+  workRemoteProviderDisclosureDismissed: boolean;
   backgroundSettings?: {
     enabled: boolean;
     imageUrl: string;

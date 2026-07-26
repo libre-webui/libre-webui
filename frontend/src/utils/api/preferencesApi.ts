@@ -146,6 +146,7 @@ export const preferencesApi = {
           similarityThreshold: 0.7,
         },
         showUsername: false, // Default to showing "You"
+        workRemoteProviderDisclosureDismissed: false,
       });
     }
 

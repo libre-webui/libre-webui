@@ -406,7 +406,7 @@ export const UserManager: React.FC = () => {
                   </select>
                   {editingUser?.id === currentUser?.id &&
                     currentUser?.role === 'admin' && (
-                      <p className='text-xs text-amber-600 dark:text-amber-400 mt-1'>
+                      <p className='mt-1 text-xs text-ink-muted'>
                         {t('userManager.cannotDeleteSelf')}
                       </p>
                     )}

@@ -15,6 +15,22 @@ const variableAccent = prefix => variablePalette(prefix, accentShades);
 
 const variableColor = name => `rgb(var(--color-${name}) / <alpha-value>)`;
 
+// Coral replaces Tailwind's yellow and amber families so legacy utility names
+// continue to work while every warning surface uses the product color.
+const coralPalette = {
+  50: '#ff7b52',
+  100: '#ff7b52',
+  200: '#ff7b52',
+  300: '#ff7b52',
+  400: '#ff7b52',
+  500: '#ff7b52',
+  600: '#ff7b52',
+  700: '#ff7b52',
+  800: '#ff7b52',
+  900: '#ff7b52',
+  950: '#ff7b52',
+};
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -66,18 +82,10 @@ export default {
           800: '#047857',
           900: '#064e3b',
         },
-        warning: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#fbbf24',
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
-        },
+        warning: coralPalette,
+        // Compatibility aliases for existing components.
+        amber: coralPalette,
+        yellow: coralPalette,
         error: {
           50: '#fef2f2',
           100: '#fee2e2',

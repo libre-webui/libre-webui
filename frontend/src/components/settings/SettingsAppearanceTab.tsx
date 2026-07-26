@@ -123,7 +123,10 @@ export function SettingsAppearanceTab({
                 title={option.label}
               >
                 {isSelected && (
-                  <Check className='absolute inset-0 m-auto h-4 w-4 text-white drop-shadow' />
+                  <Check
+                    className='absolute inset-0 m-auto h-4 w-4 drop-shadow'
+                    style={{ color: option.foreground }}
+                  />
                 )}
               </button>
             );

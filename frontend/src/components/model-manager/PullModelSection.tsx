@@ -160,7 +160,7 @@ export function PullModelSection({
           )}
 
           {!canInstallModels && (
-            <p className='text-xs text-amber-700 dark:text-amber-300'>
+            <p className='text-xs text-ink-muted'>
               {t('modelManager.pull.restricted')}
             </p>
           )}

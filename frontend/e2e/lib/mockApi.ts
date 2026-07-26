@@ -228,6 +228,14 @@ type MockWorkTaskTransition = {
 type MockOptions = {
   systemInfo?: MockSystemInfo;
   authRole?: 'admin' | 'user';
+  authUsers?: Array<{
+    id: string;
+    username: string;
+    email: string;
+    role: 'admin' | 'user';
+    token: string;
+    preferences?: Partial<typeof defaultPreferences>;
+  }>;
   sessions?: MockSession[];
   models?: MockModel[];
   ollamaHealthy?: boolean;
@@ -238,6 +246,7 @@ type MockOptions = {
   ttsPlugins?: MockTTSPlugin[];
   preferences?: Partial<typeof defaultPreferences>;
   preferenceUpdateFailures?: number;
+  deferPreferenceUpdates?: boolean;
   generatedTitle?: {
     title: string;
     source?: 'plugin' | 'ollama' | 'fallback';
@@ -315,6 +324,7 @@ const defaultPreferences = {
     taskModel: '',
   },
   showUsername: false,
+  workRemoteProviderDisclosureDismissed: false,
   backgroundSettings: {
     enabled: false,
     imageUrl: '',
@@ -383,6 +393,7 @@ const fulfillApiError = async (route: Route, status: number, error: string) => {
 export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const systemInfo = options.systemInfo ?? defaultSystemInfo;
   const authRole = options.authRole ?? 'admin';
+  const authUsers = options.authUsers ?? [];
   const sessions = structuredClone(options.sessions ?? []);
   const models = options.models ?? defaultModels;
   const ollamaHealthy = options.ollamaHealthy ?? true;
@@ -399,14 +410,24 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const workFileContents = {
     ...(options.workFileContents ?? {}),
   };
-  const preferences = {
+  const createPreferences = (
+    overrides: Partial<typeof defaultPreferences> | undefined
+  ) => ({
     ...structuredClone(defaultPreferences),
-    ...options.preferences,
+    ...overrides,
     theme: {
       ...defaultPreferences.theme,
-      ...options.preferences?.theme,
+      ...overrides?.theme,
     },
-  };
+  });
+  const preferences = createPreferences(options.preferences);
+  const preferencesByUserId = new Map(
+    authUsers.map(user => [user.id, createPreferences(user.preferences)])
+  );
+  const preferenceUpdateRequests: Array<Partial<typeof defaultPreferences>> =
+    [];
+  const preferenceUpdateUserIds: Array<string | null> = [];
+  const pendingPreferenceUpdateReleases: Array<() => void> = [];
   let preferenceUpdateFailures = options.preferenceUpdateFailures ?? 0;
   const chatStream = options.chatStream
     ? {
@@ -463,6 +484,35 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   }> = [];
   let nextWorkTaskId = workTasks.length + 1;
   let nextWorkMessageId = 1;
+
+  const authUserForRoute = (route: Route) => {
+    const authorization = route.request().headers().authorization;
+    const token = authorization?.replace(/^Bearer\s+/i, '');
+    return authUsers.find(user => user.token === token);
+  };
+
+  const publicAuthUser = (
+    user:
+      | (typeof authUsers)[number]
+      | {
+          id: string;
+          username: string;
+          email: string;
+          role: 'admin' | 'user';
+        }
+  ) => ({
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    createdAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
+    updatedAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
+  });
+
+  const preferencesForRoute = (route: Route) => {
+    const user = authUserForRoute(route);
+    return user ? preferencesByUserId.get(user.id)! : preferences;
+  };
 
   const indexedWorkMessages = (task: MockWorkTask): MockWorkMessage[] =>
     task.messages.map((message, messageIndex) => ({
@@ -760,30 +810,46 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path === '/auth/verify' && method === 'GET') {
-        await fulfillJson(route, {
-          id: 'e2e-user',
-          username: 'e2e',
-          email: 'e2e@example.test',
-          role: authRole,
-          createdAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
-          updatedAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
-        });
+        const authenticatedUser = authUserForRoute(route);
+        await fulfillJson(
+          route,
+          publicAuthUser(
+            authenticatedUser ?? {
+              id: 'e2e-user',
+              username: 'e2e',
+              email: 'e2e@example.test',
+              role: authRole,
+            }
+          )
+        );
         return;
       }
 
       if (path === '/auth/login' && method === 'POST') {
-        await fulfillJson(route, {
-          user: {
+        const credentials = route.request().postDataJSON() as {
+          username: string;
+        };
+        const authenticatedUser = authUsers.find(
+          user => user.username === credentials.username
+        );
+        const user = publicAuthUser(
+          authenticatedUser ?? {
             id: 'e2e-user',
             username: 'e2e',
             email: 'e2e@example.test',
             role: authRole,
-            createdAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
-            updatedAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
-          },
-          token: 'e2e-token',
+          }
+        );
+        await fulfillJson(route, {
+          user,
+          token: authenticatedUser?.token ?? 'e2e-token',
           systemInfo,
         });
+        return;
+      }
+
+      if (path === '/auth/logout' && method === 'POST') {
+        await fulfillJson(route, undefined);
         return;
       }
 
@@ -1157,33 +1223,44 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path === '/preferences' && method === 'GET') {
-        await fulfillJson(route, preferences);
+        await fulfillJson(route, preferencesForRoute(route));
         return;
       }
 
       if (path === '/preferences' && method === 'PUT') {
+        const authenticatedUser = authUserForRoute(route);
+        const activePreferences = preferencesForRoute(route);
+        const updates = route.request().postDataJSON() as Partial<
+          typeof defaultPreferences
+        >;
+        preferenceUpdateRequests.push(structuredClone(updates));
+        preferenceUpdateUserIds.push(authenticatedUser?.id ?? null);
+
+        if (options.deferPreferenceUpdates) {
+          await new Promise<void>(resolve => {
+            pendingPreferenceUpdateReleases.push(resolve);
+          });
+        }
+
         if (preferenceUpdateFailures > 0) {
           preferenceUpdateFailures -= 1;
           await fulfillJson(route, {}, false);
           return;
         }
 
-        const updates = route.request().postDataJSON() as Partial<
-          typeof defaultPreferences
-        >;
-        Object.assign(preferences, updates);
+        Object.assign(activePreferences, updates);
         if (updates.theme) {
-          preferences.theme = {
-            ...preferences.theme,
+          activePreferences.theme = {
+            ...activePreferences.theme,
             ...updates.theme,
           };
         }
-        await fulfillJson(route, preferences);
+        await fulfillJson(route, activePreferences);
         return;
       }
 
       if (path.startsWith('/preferences') && method !== 'GET') {
-        await fulfillJson(route, preferences);
+        await fulfillJson(route, preferencesForRoute(route));
         return;
       }
 
@@ -1309,6 +1386,13 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 
   return {
     pullStreamUrls,
+    preferenceUpdateRequests,
+    preferenceUpdateUserIds,
+    releasePreferenceUpdates: () => {
+      pendingPreferenceUpdateReleases
+        .splice(0)
+        .forEach(releasePreferenceUpdate => releasePreferenceUpdate());
+    },
     ttsGenerationRequests,
     titleGenerationRequests,
     sessionUpdateRequests,

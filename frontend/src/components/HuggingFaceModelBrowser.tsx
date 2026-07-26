@@ -239,7 +239,7 @@ export const HuggingFaceModelBrowser: React.FC<
         {/* Header */}
         <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-dark-300'>
           <div className='flex items-center gap-3'>
-            <div className='p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg'>
+            <div className='rounded-lg bg-yellow-500/20 p-2 dark:bg-yellow-900/30'>
               <Zap className='w-5 h-5 text-yellow-600 dark:text-yellow-400' />
             </div>
             <div>
@@ -332,7 +332,7 @@ export const HuggingFaceModelBrowser: React.FC<
         {/* Model List */}
         <div className='scroll-region min-h-0 flex-1 px-6 py-4 scrollbar-thin'>
           {!canInstallModels && (
-            <div className='mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300'>
+            <div className='mb-4 rounded-lg border border-amber-200 bg-amber-500/10 px-3 py-2 text-xs text-ink dark:border-amber-800 dark:bg-amber-900/20'>
               {t('modelSelector.pullRestricted')}
             </div>
           )}
@@ -381,7 +381,7 @@ export const HuggingFaceModelBrowser: React.FC<
                               {model.id}
                             </h3>
                             {model.gated && (
-                              <span className='px-1.5 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded'>
+                              <span className='rounded bg-yellow-500/20 px-1.5 py-0.5 text-xs text-ink dark:bg-yellow-900/30'>
                                 {t('huggingface.gated')}
                               </span>
                             )}
@@ -538,7 +538,7 @@ export const HuggingFaceModelBrowser: React.FC<
                                       {t('models.pull', 'Pull')}
                                     </button>
                                   ) : (
-                                    <span className='px-2 py-1 rounded text-[11px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'>
+                                    <span className='rounded bg-amber-500/20 px-2 py-1 text-[11px] font-medium text-ink dark:bg-amber-900/30'>
                                       {t('modelSelector.adminOnlyPull')}
                                     </span>
                                   )}

@@ -89,6 +89,7 @@ class PreferencesService {
       similarityThreshold: 0.3,
     },
     showUsername: false, // Default to showing "you" instead of username
+    workRemoteProviderDisclosureDismissed: false,
   };
 
   constructor() {

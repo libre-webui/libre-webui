@@ -11,7 +11,7 @@ colors:
   neutral-surface: '#171716'
   accent: '#60A5FA'
   success: '#34D399'
-  warning: '#FBBF24'
+  warning: '#FF7B52'
   error: '#F87171'
   info: '#60A5FA'
 accent-presets:
@@ -22,7 +22,7 @@ accent-presets:
     cyan: '#0E7490'
     teal: '#0F766E'
     emerald: '#15803D'
-    amber: '#B45309'
+    amber: '#FF7B52' # Legacy preference id; displayed as Coral.
     rose: '#E11D48'
     slate: '#475569'
   custom:
@@ -166,7 +166,7 @@ The palette is anchored in warm neutrals with one active accent family at a time
 - **Neutral-tertiary (#1B1B1A):** Inputs, user message bubbles, and raised surfaces.
 - **Neutral-surface (#171716):** A subtly distinct dark for panels that need separation without a hard border.
 - **Success (#34D399):** Confirmation states, connection indicators, successful operations. Green but not neon — it should feel calm, not celebratory.
-- **Warning (#FBBF24):** Rate limits, approaching quotas, non-critical alerts. Amber, not orange.
+- **Warning (#FF7B52):** Rate limits, approaching quotas, and non-critical alerts use the shared coral scale.
 - **Error (#F87171):** Failed requests, validation errors, disconnection states. Red but not aggressive — this is a tool, not an alarm.
 - **Info (#60A5FA):** Informational banners, tooltip accents, documentation links. Cool blue that stays distinct from the active accent.
 
@@ -178,7 +178,7 @@ Accent selection is a user preference, not a separate light or dark theme. By de
 
 Appearance also offers an opt-in **Adapt to accent** palette. When enabled, the selected preset or custom color tints the canvas, surfaces, borders, text hierarchy, and legacy neutral scales in both light and dark mode. Light mode uses a slightly clearer tint so the accent remains visible across high-lightness surfaces; dark mode keeps its existing restrained saturation. Typography, spacing, component hierarchy, and semantic status colors do not change. Disabling the option restores the exact default neutral light or dark palette.
 
-Preset accents are violet, blue, cyan, teal, emerald, amber, rose, and slate. Custom accents generate a full shade scale from the selected color, and button shades are darkened as needed so white button text remains at least 4.5:1 contrast. Avoid using multiple accent families in the same viewport. Status colors remain semantic and should not inherit the custom accent.
+Preset accents are violet, blue, cyan, teal, emerald, Coral (stored under the legacy `amber` preference id), rose, and slate. Custom accents generate a full shade scale from the selected color, and button shades are darkened as needed so white button text remains at least 4.5:1 contrast. Avoid using multiple accent families in the same viewport. Status colors remain semantic and should not inherit the custom accent.
 
 ## Typography
 

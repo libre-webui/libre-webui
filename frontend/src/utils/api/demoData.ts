@@ -102,6 +102,7 @@ export const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
     taskModel: '',
   },
   showUsername: false,
+  workRemoteProviderDisclosureDismissed: false,
   backgroundSettings: {
     enabled: false,
     imageUrl: '',

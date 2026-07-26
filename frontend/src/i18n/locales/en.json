@@ -1486,7 +1486,11 @@
       "cancel": "Stop",
       "send": "Run",
       "hint": "Each task keeps its own files and history. Review model output before using it.",
-      "remoteHint": "Remote provider: conversation and tool output are sent to the configured service. One autonomous run can make multiple provider calls and may incur charges. Workspace files stay local unless a tool returns their contents."
+      "remoteTitle": "Remote provider",
+      "remoteHint": "Conversation and tool output are sent to the configured service. One autonomous run can make multiple provider calls and may incur charges. Workspace files stay local unless a tool returns their contents.",
+      "remoteDismiss": "Dismiss",
+      "remoteDismissLabel": "Dismiss remote provider notice",
+      "remoteDismissFailed": "Could not save the remote provider preference."
     },
     "conversation": {
       "ready": "Workspace ready",

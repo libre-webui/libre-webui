@@ -265,7 +265,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
           <div className='mx-auto w-full max-w-lg rounded-2xl border border-gray-200/80 bg-white/80 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] sm:p-8'>
             <div className='mb-7 text-start'>
               <div className='flex justify-center mb-4'>
-                <div className='rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/60 dark:bg-amber-900/20'>
+                <div className='rounded-xl border border-amber-200 bg-amber-500/10 p-3 dark:border-amber-800/60 dark:bg-amber-900/20'>
                   <Key className='h-8 w-8 text-amber-600 dark:text-amber-400' />
                 </div>
               </div>
@@ -278,10 +278,10 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             </div>
 
             {/* Warning Box */}
-            <div className='mb-6 rounded-xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-800/60 dark:bg-amber-900/15'>
+            <div className='mb-6 rounded-xl border border-amber-200 bg-amber-500/10 p-4 dark:border-amber-800/60 dark:bg-amber-900/20'>
               <div className='flex items-start gap-3'>
                 <AlertTriangle className='h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5' />
-                <div className='text-sm text-amber-800 dark:text-amber-200'>
+                <div className='text-sm text-ink'>
                   <p className='font-medium mb-1'>
                     {t('setup.encryptionKey.warning')}
                   </p>

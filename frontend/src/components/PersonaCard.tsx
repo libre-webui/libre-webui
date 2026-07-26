@@ -282,7 +282,7 @@ const PersonaCard: React.FC<PersonaCardProps> = ({
               className={cn(
                 'h-4 w-4',
                 persona.is_favorite
-                  ? 'text-white fill-white'
+                  ? 'fill-ink text-ink dark:fill-ink-inverse dark:text-ink-inverse'
                   : 'text-white/80 hover:text-white'
               )}
             />

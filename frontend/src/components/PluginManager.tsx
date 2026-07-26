@@ -448,9 +448,9 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
               size='sm'
               onClick={() => setShowHuggingFaceBrowser(true)}
               disabled={isLoading}
-              className='text-yellow-600 border-yellow-300 hover:bg-yellow-50 dark:text-yellow-400 dark:border-yellow-600 dark:hover:bg-yellow-900/20'
+              className='border-yellow-300 text-ink hover:bg-yellow-500/10 dark:border-yellow-600 dark:hover:bg-yellow-900/20'
             >
-              <Zap className='w-4 h-4 mr-2' />
+              <Zap className='mr-2 h-4 w-4 text-yellow-500' />
               {t('pluginManager.browseHF')}
             </Button>
             {onClose && (

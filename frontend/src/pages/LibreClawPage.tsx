@@ -55,8 +55,7 @@ const stateStyles: Record<string, string> = {
   queued: 'bg-gray-100 text-gray-700 dark:bg-dark-200 dark:text-dark-700',
   running:
     'bg-primary-100 text-primary-700 dark:bg-primary-900/25 dark:text-primary-300',
-  blocked:
-    'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  blocked: 'bg-amber-500/20 text-ink dark:bg-amber-900/30',
   done: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   failed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300',
   cancelled:
@@ -67,7 +66,7 @@ const eventTypeStyles: Record<string, string> = {
   assistant_message: 'text-primary-600 dark:text-primary-300',
   assistant_delta: 'text-primary-600 dark:text-primary-300',
   user_message: 'text-gray-700 dark:text-dark-700',
-  permission_request: 'text-amber-600 dark:text-amber-300',
+  permission_request: 'text-ink',
   permission_response: 'text-gray-600 dark:text-dark-600',
   tool_call: 'text-gray-600 dark:text-dark-600',
   tool_result: 'text-gray-600 dark:text-dark-600',
@@ -481,9 +480,9 @@ const LibreClawPage: React.FC = () => {
       />
 
       {!status?.connected && !loading && (
-        <section className='rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200'>
+        <section className='rounded-xl border border-amber-200 bg-amber-500/10 p-4 text-ink dark:border-amber-800 dark:bg-amber-900/20'>
           <div className='flex items-start gap-3'>
-            <Terminal className='mt-0.5 h-5 w-5 shrink-0' />
+            <Terminal className='mt-0.5 h-5 w-5 shrink-0 text-amber-500' />
             <div>
               <h2 className='font-semibold'>
                 {t('libreClaw.connection.disconnectedTitle')}
@@ -683,9 +682,9 @@ const LibreClawPage: React.FC = () => {
           }
         >
           {pendingPermissionEvents.length > 0 && (
-            <div className='mb-4 space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20'>
-              <div className='flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-200'>
-                <ShieldCheck className='h-4 w-4' />
+            <div className='mb-4 space-y-2 rounded-xl border border-amber-200 bg-amber-500/10 p-3 dark:border-amber-800 dark:bg-amber-900/20'>
+              <div className='flex items-center gap-2 text-sm font-semibold text-ink'>
+                <ShieldCheck className='h-4 w-4 text-amber-500' />
                 {t('libreClaw.approvals.needed')}
               </div>
               {pendingPermissionEvents.map(event => (
@@ -899,7 +898,7 @@ const StatusPill: React.FC<{
         'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium',
         connected
           ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
-          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+          : 'bg-amber-500/20 text-ink dark:bg-amber-900/30'
       )}
     >
       <span

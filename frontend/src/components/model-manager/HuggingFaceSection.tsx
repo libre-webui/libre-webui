@@ -200,7 +200,7 @@ export function HuggingFaceSection({
           </div>
 
           {!canInstallModels && (
-            <p className='text-xs text-amber-700 dark:text-amber-300'>
+            <p className='text-xs text-ink'>
               {t('modelManager.pull.restricted')}
             </p>
           )}
@@ -319,8 +319,8 @@ function HuggingFaceModelCard({
                 <span
                   className={cn(
                     'px-1.5 py-0.5 rounded text-xs',
-                    'bg-yellow-100 dark:bg-yellow-900/30',
-                    'text-yellow-700 dark:text-yellow-400'
+                    'bg-yellow-500/20 dark:bg-yellow-900/30',
+                    'text-ink'
                   )}
                 >
                   {t('modelManager.huggingface.gated', 'Gated')}

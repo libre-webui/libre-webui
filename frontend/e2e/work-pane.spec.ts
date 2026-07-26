@@ -114,7 +114,7 @@ test('creates a persistent Work task with networking off by default', async ({
   );
 });
 
-test('offers Ollama cloud and configured plugin models with a data disclosure', async ({
+test('offers cloud models and remembers remote disclosure dismissal', async ({
   page,
 }) => {
   const model = (
@@ -169,6 +169,9 @@ test('offers Ollama cloud and configured plugin models with a data disclosure', 
   await page.goto('/work');
 
   await expect(page.getByText('Docker + plugin ready')).toBeVisible();
+  await expect(
+    page.getByTestId('work-provider-disclosure-popover')
+  ).toHaveCount(0);
   const selector = page.getByTestId('work-model-select');
   await expect(selector.locator('option')).toHaveText([
     'llama3.2:3b',
@@ -184,9 +187,39 @@ test('offers Ollama cloud and configured plugin models with a data disclosure', 
   expect(new Set(optionValues).size).toBe(optionValues.length);
 
   await selector.selectOption({ label: 'gpt-5.4 · OpenAI GPT' });
-  await expect(page.getByTestId('work-provider-disclosure')).toContainText(
-    'conversation and tool output are sent'
+  const disclosure = page.getByTestId('work-provider-disclosure-popover');
+  await expect(disclosure).toBeVisible();
+  await expect(disclosure).toContainText(
+    'Conversation and tool output are sent'
   );
+  await expect(page.getByTestId('work-provider-disclosure-accent')).toHaveCSS(
+    'color',
+    'rgb(255, 123, 82)'
+  );
+
+  const dismissButton = page.getByTestId('work-provider-disclosure-dismiss');
+  await expect(dismissButton).toHaveCSS(
+    'background-color',
+    'rgb(255, 123, 82)'
+  );
+  await dismissButton.click();
+  await expect(disclosure).toHaveCount(0);
+  await expect(selector).toBeFocused();
+  expect(mock.preferenceUpdateRequests).toEqual([
+    {
+      workRemoteProviderDisclosureDismissed: true,
+    },
+  ]);
+
+  await page.reload();
+  await expect(page.getByText('Docker + plugin ready')).toBeVisible();
+  await page
+    .getByTestId('work-model-select')
+    .selectOption({ label: 'gpt-5.4 · OpenAI GPT' });
+  await expect(
+    page.getByTestId('work-provider-disclosure-popover')
+  ).toHaveCount(0);
+
   await page.getByTestId('work-composer-input').fill('Build with the plugin');
   await page.getByTestId('work-submit-button').click();
 
@@ -199,6 +232,144 @@ test('offers Ollama cloud and configured plugin models with a data disclosure', 
       networkEnabled: false,
     },
   ]);
+});
+
+test('keeps an in-flight remote disclosure dismissal scoped to its user', async ({
+  page,
+}) => {
+  const systemInfo = {
+    requiresAuth: true,
+    hasUsers: true,
+    userCount: 2,
+    allowUserModelPull: true,
+    version: '0.10.0-e2e',
+    turnstile: { enabled: false },
+  };
+  const mock = await mockLibreWebUiApi(page, {
+    systemInfo,
+    authUsers: [
+      {
+        id: 'user-alice',
+        username: 'alice',
+        email: 'alice@example.test',
+        role: 'admin',
+        token: 'alice-token',
+      },
+      {
+        id: 'user-bob',
+        username: 'bob',
+        email: 'bob@example.test',
+        role: 'admin',
+        token: 'bob-token',
+      },
+    ],
+    models: [
+      {
+        name: 'glm5.2:cloud',
+        size: 0,
+        digest: '',
+        modified_at: new Date(createdAt).toISOString(),
+        details: {
+          format: '',
+          family: '',
+          families: [],
+          parameter_size: '',
+          quantization_level: '',
+        },
+      },
+    ],
+    deferPreferenceUpdates: true,
+  });
+
+  const login = async (username: string) => {
+    await page.getByLabel('Username').fill(username);
+    await page.getByLabel('Password').fill('password');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page).toHaveURL(url => url.pathname === '/');
+  };
+  const logout = async (username: string) => {
+    await page.getByText(username, { exact: true }).click();
+    await page.getByRole('button', { name: 'Log out' }).click();
+    await expect(page).toHaveURL(/\/login$/);
+  };
+
+  await page.goto('/login');
+  await login('alice');
+  await page.getByTestId('sidebar-work-button').click();
+  await expect(page).toHaveURL(/\/work$/);
+
+  const disclosure = page.getByTestId('work-provider-disclosure-popover');
+  await expect(disclosure).toBeVisible();
+
+  const preferenceResponse = page.waitForResponse(
+    response =>
+      response.request().method() === 'PUT' &&
+      new URL(response.url()).pathname === '/api/preferences'
+  );
+  await page.getByTestId('work-provider-disclosure-dismiss').click();
+  await expect.poll(() => mock.preferenceUpdateRequests.length).toBe(1);
+  expect(mock.preferenceUpdateUserIds).toEqual(['user-alice']);
+
+  await logout('alice');
+  await login('bob');
+  await page.getByTestId('sidebar-work-button').click();
+  await expect(page).toHaveURL(/\/work$/);
+  await expect(disclosure).toBeVisible();
+
+  mock.releasePreferenceUpdates();
+  await preferenceResponse;
+
+  await expect(disclosure).toBeVisible();
+  await page.reload();
+  await expect(disclosure).toBeVisible();
+
+  await logout('bob');
+  await login('alice');
+  await page.getByTestId('sidebar-work-button').click();
+  await expect(page).toHaveURL(/\/work$/);
+  await expect(disclosure).toHaveCount(0);
+});
+
+test('keeps the remote disclosure open when saving dismissal fails', async ({
+  page,
+}) => {
+  const mock = await mockLibreWebUiApi(page, {
+    models: [
+      {
+        name: 'glm5.2:cloud',
+        size: 0,
+        digest: '',
+        modified_at: new Date(createdAt).toISOString(),
+        details: {
+          format: '',
+          family: '',
+          families: [],
+          parameter_size: '',
+          quantization_level: '',
+        },
+      },
+    ],
+    preferenceUpdateFailures: 1,
+  });
+
+  await page.goto('/work');
+
+  const disclosure = page.getByTestId('work-provider-disclosure-popover');
+  await expect(disclosure).toBeVisible();
+  await page.getByTestId('work-provider-disclosure-dismiss').click();
+
+  await expect(disclosure).toBeVisible();
+  await expect(
+    page.getByText('Could not save the remote provider preference.')
+  ).toBeVisible();
+  expect(mock.preferenceUpdateRequests).toEqual([
+    {
+      workRemoteProviderDisclosureDismissed: true,
+    },
+  ]);
+  await expect(
+    page.getByTestId('work-provider-disclosure-dismiss')
+  ).toBeEnabled();
 });
 
 test('loads plugin Work models when Ollama is offline', async ({ page }) => {
