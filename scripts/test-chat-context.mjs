@@ -909,6 +909,35 @@ test('Kimi Code plugin omits model-fixed sampling parameters', () => {
   assert.equal('reasoning_effort' in payload, false);
 });
 
+test('Kimi Code policy hides obsolete sampling controls after upgrades', () => {
+  const existingPlugin = {
+    id: 'kimi-code',
+    variables: [
+      { name: 'endpoint' },
+      { name: 'temperature' },
+      { name: 'max_tokens' },
+      { name: 'top_p' },
+      { name: 'frequency_penalty' },
+      { name: 'presence_penalty' },
+      { name: 'stream' },
+    ],
+  };
+  const normalized =
+    pluginChatAdapter.applyPluginDefinitionPolicy(existingPlugin);
+
+  assert.deepEqual(
+    normalized.variables.map(variable => variable.name),
+    ['endpoint', 'max_tokens', 'stream']
+  );
+  assert.equal(existingPlugin.variables.length, 7);
+
+  const otherPlugin = { ...existingPlugin, id: 'openai' };
+  assert.equal(
+    pluginChatAdapter.applyPluginDefinitionPolicy(otherPlugin),
+    otherPlugin
+  );
+});
+
 test('buildPluginChatPayload adapts Anthropic multimodal chat requests', () => {
   const { payload, headers } = pluginChatAdapter.buildPluginChatPayload(
     { id: 'anthropic' },

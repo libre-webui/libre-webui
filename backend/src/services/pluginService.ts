@@ -39,6 +39,7 @@ import { PluginEmbeddingService } from './pluginEmbeddingService.js';
 import { PluginImageGenerationService } from './pluginImageGenerationService.js';
 import { PluginTTSService } from './pluginTTSService.js';
 import {
+  applyPluginDefinitionPolicy,
   buildPluginChatPayload,
   convertProviderResponse,
   getOpenAICompatibleSamplingParameters,
@@ -281,10 +282,11 @@ class PluginService {
             try {
               const filePath = path.join(pluginsDir, file);
               const content = fs.readFileSync(filePath, 'utf8');
-              const plugin: Plugin = JSON.parse(content);
+              const parsedPlugin: Plugin = JSON.parse(content);
 
               // Validate plugin structure
-              if (this.validatePlugin(plugin)) {
+              if (this.validatePlugin(parsedPlugin)) {
+                const plugin = applyPluginDefinitionPolicy(parsedPlugin);
                 plugin.active = this.activePluginIds.has(plugin.id);
                 plugins.set(plugin.id, plugin);
               }
@@ -322,9 +324,10 @@ class PluginService {
 
       try {
         const content = fs.readFileSync(filePath, 'utf8');
-        const plugin: Plugin = JSON.parse(content);
+        const parsedPlugin: Plugin = JSON.parse(content);
 
-        if (this.validatePlugin(plugin)) {
+        if (this.validatePlugin(parsedPlugin)) {
+          const plugin = applyPluginDefinitionPolicy(parsedPlugin);
           plugin.active = this.activePluginIds.has(plugin.id);
           return plugin;
         }

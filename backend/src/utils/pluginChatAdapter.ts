@@ -45,6 +45,13 @@ type OpenAICompatibleSamplingParameters = Partial<{
   presence_penalty: number;
 }>;
 
+const KIMI_CODE_FIXED_SAMPLING_VARIABLES = new Set([
+  'temperature',
+  'top_p',
+  'frequency_penalty',
+  'presence_penalty',
+]);
+
 const ANTHROPIC_LEGACY_SAMPLING_MODELS = new Set([
   'claude-haiku-4-5',
   'claude-haiku-4-5-20251001',
@@ -81,6 +88,19 @@ export function resolvePluginChatParameters(
       (pluginVars.presence_penalty as number | undefined) ?? undefined,
     shouldStream: (pluginVars.stream as boolean | undefined) ?? false,
   };
+}
+
+export function applyPluginDefinitionPolicy(plugin: Plugin): Plugin {
+  if (plugin.id !== 'kimi-code' || !plugin.variables) {
+    return plugin;
+  }
+
+  const variables = plugin.variables.filter(
+    variable => !KIMI_CODE_FIXED_SAMPLING_VARIABLES.has(variable.name)
+  );
+  return variables.length === plugin.variables.length
+    ? plugin
+    : { ...plugin, variables };
 }
 
 export function getOpenAICompatibleSamplingParameters(
