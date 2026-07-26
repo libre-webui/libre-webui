@@ -17,10 +17,11 @@
 
 import type { CSSProperties } from 'react';
 
-export const MESSAGE_CODE_BACKGROUND = '#0D1117';
+export const MESSAGE_CODE_BACKGROUND_DARK = '#0D1117';
+export const MESSAGE_CODE_BACKGROUND_LIGHT = 'rgb(var(--color-surface-subtle))';
 
 export const messageCodeBodyClassName =
-  'max-h-[60vh] min-h-12 overflow-auto bg-[#0D1117] p-4 text-left font-mono text-[14px] leading-6 text-[#E6EDF3] whitespace-pre tabular-nums';
+  'max-h-[60vh] min-h-12 overflow-auto bg-surface-subtle p-4 text-left font-mono text-[14px] leading-6 text-ink whitespace-pre tabular-nums dark:bg-[#0D1117] dark:text-[#E6EDF3]';
 
 export const messageCodeBodyStyle: CSSProperties = {
   maxHeight: '60vh',

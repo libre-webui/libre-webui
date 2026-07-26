@@ -29,10 +29,19 @@ import {
   Save,
   Square,
   TerminalSquare,
+  WandSparkles,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
+import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
 import type {
   WorkFile,
   WorkFileEntry,
@@ -45,6 +54,11 @@ import {
   loadWorkDraft,
   saveWorkDraft,
 } from '@/utils/workDrafts';
+import {
+  canFormatWorkFile,
+  formatWorkCode,
+  isWorkCodeFormatSizeSupported,
+} from '@/utils/workCode';
 
 type WorkspaceTab = 'files' | 'activity' | 'preview';
 
@@ -120,6 +134,7 @@ export function WorkspacePane({
     number | undefined
   >();
   const [previewCommand, setPreviewCommand] = useState('');
+  const [formatting, setFormatting] = useState(false);
   const previewUrl = safePreviewUrl(task.previewUrl);
   const activity = useMemo(
     () =>
@@ -139,25 +154,42 @@ export function WorkspacePane({
   const taskIdRef = useRef(task.id);
   const onLoadFilesRef = useRef(onLoadFiles);
   const onLoadFileRef = useRef(onLoadFile);
+  const onDirtyChangeRef = useRef(onDirtyChange);
+  const aliveRef = useRef(true);
+  const formatTypeSupported = selectedFile
+    ? canFormatWorkFile(selectedFile.path)
+    : false;
+  const formatSizeSupported =
+    !selectedFile || isWorkCodeFormatSizeSupported(editorContent);
+  const formatSupported = formatTypeSupported && formatSizeSupported;
 
   useEffect(() => {
     editorContentRef.current = editorContent;
     editorBaseUpdatedAtRef.current = editorBaseUpdatedAt;
     selectedFileRef.current = selectedFile;
     taskIdRef.current = task.id;
-  }, [editorBaseUpdatedAt, editorContent, selectedFile, task.id]);
+    onDirtyChangeRef.current = onDirtyChange;
+  }, [
+    editorBaseUpdatedAt,
+    editorContent,
+    onDirtyChange,
+    selectedFile,
+    task.id,
+  ]);
 
   useEffect(() => {
     onLoadFilesRef.current = onLoadFiles;
     onLoadFileRef.current = onLoadFile;
   }, [onLoadFile, onLoadFiles]);
 
-  useEffect(
-    () => () => {
-      onDirtyChange(false);
-    },
-    [onDirtyChange]
-  );
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+      openFileGeneration.current += 1;
+      onDirtyChangeRef.current(false);
+    };
+  }, []);
 
   useEffect(() => {
     if (wasTaskActive.current && !taskActive) {
@@ -171,6 +203,7 @@ export function WorkspacePane({
           .current(selectedPath)
           .then(file => {
             if (
+              !aliveRef.current ||
               generation !== openFileGeneration.current ||
               file.path !== selectedPath ||
               editorContentRef.current !== editorContentAtLoad ||
@@ -216,7 +249,8 @@ export function WorkspacePane({
     const generation = ++openFileGeneration.current;
     discardCurrentDraft();
     const file = await onLoadFile(path).catch(() => undefined);
-    if (!file || generation !== openFileGeneration.current) return;
+    if (!aliveRef.current || !file || generation !== openFileGeneration.current)
+      return;
     const draft = loadWorkDraft(task.id, file.path);
     const content = draft?.content ?? file.content;
     const baseUpdatedAt =
@@ -236,6 +270,24 @@ export function WorkspacePane({
     onDirtyChange(false);
   };
 
+  const updateEditorContent = (content: string) => {
+    if (!selectedFile) return;
+    editorContentRef.current = content;
+    setEditorContent(content);
+    if (content === selectedFile.content) {
+      clearWorkDraft(task.id, selectedFile.path);
+    } else {
+      saveWorkDraft(task.id, selectedFile.path, {
+        content,
+        baseUpdatedAt:
+          editorBaseUpdatedAt ??
+          selectedFile.updatedAt ??
+          selectedFile.modifiedAt,
+      });
+    }
+    onDirtyChange(content !== selectedFile.content);
+  };
+
   const saveFile = async () => {
     if (!selectedFile) return;
     const submittedTaskId = task.id;
@@ -248,6 +300,7 @@ export function WorkspacePane({
       editorBaseUpdatedAt
     ).catch((): false => false);
     if (
+      !aliveRef.current ||
       result === false ||
       submittedGeneration !== openFileGeneration.current ||
       taskIdRef.current !== submittedTaskId ||
@@ -270,6 +323,52 @@ export function WorkspacePane({
       baseUpdatedAt: updatedAt,
     });
     onDirtyChange(true);
+  };
+
+  const formatCurrentFile = async () => {
+    if (!selectedFile || taskActive || formatting || !formatSupported) {
+      return;
+    }
+
+    setFormatting(true);
+    const submittedGeneration = openFileGeneration.current;
+    const submittedPath = selectedFile.path;
+    const submittedContent = editorContentRef.current;
+    try {
+      const formatted = await formatWorkCode(submittedPath, submittedContent);
+      if (
+        !aliveRef.current ||
+        submittedGeneration !== openFileGeneration.current ||
+        selectedFileRef.current?.path !== submittedPath ||
+        editorContentRef.current !== submittedContent
+      ) {
+        return;
+      }
+      updateEditorContent(formatted);
+      toast.success(
+        t('work.files.formatted', {
+          defaultValue: 'Code formatted.',
+        })
+      );
+    } catch (error) {
+      if (
+        !aliveRef.current ||
+        submittedGeneration !== openFileGeneration.current ||
+        selectedFileRef.current?.path !== submittedPath ||
+        editorContentRef.current !== submittedContent
+      ) {
+        return;
+      }
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('work.files.formatFailed', {
+              defaultValue: 'Could not format this file.',
+            })
+      );
+    } finally {
+      if (aliveRef.current) setFormatting(false);
+    }
   };
 
   const tabs: Array<{
@@ -298,72 +397,305 @@ export function WorkspacePane({
     },
   ];
 
+  const handleTabKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number
+  ) => {
+    let nextIndex: number | null = null;
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+    if (event.key === 'ArrowLeft')
+      nextIndex = (index - 1 + tabs.length) % tabs.length;
+    if (event.key === 'Home') nextIndex = 0;
+    if (event.key === 'End') nextIndex = tabs.length - 1;
+    if (nextIndex === null) return;
+
+    event.preventDefault();
+    const nextTab = tabs[nextIndex];
+    setTab(nextTab.id);
+    event.currentTarget.parentElement
+      ?.querySelector<HTMLButtonElement>(`#work-workspace-tab-${nextTab.id}`)
+      ?.focus();
+  };
+
   return (
     <section className='flex h-full min-h-0 flex-col bg-surface-raised'>
-      <div className='flex h-12 shrink-0 items-center border-b border-line px-2'>
-        {tabs.map(item => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              type='button'
-              data-testid={item.testId}
-              onClick={() => setTab(item.id)}
-              className={cn(
-                'flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-medium transition-colors',
-                tab === item.id
-                  ? 'bg-surface-subtle text-ink'
-                  : 'text-ink-muted hover:text-ink'
-              )}
-            >
-              <Icon className='h-3.5 w-3.5' />
-              {item.label}
-              {item.id === 'activity' && activity.length > 0 && (
-                <span className='rounded-full bg-surface px-1.5 text-[10px] text-ink-muted'>
-                  {activity.length}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      <div
+        data-testid='work-workspace-toolbar'
+        className='flex h-12 shrink-0 items-center gap-2 border-b border-line bg-surface-raised px-2'
+      >
+        <div
+          role='tablist'
+          aria-orientation='horizontal'
+          aria-label={t('work.workspace.label', {
+            defaultValue: 'Workspace views',
+          })}
+          className='flex shrink-0 items-center rounded-xl border border-line bg-surface-subtle p-0.5'
+        >
+          {tabs.map((item, index) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type='button'
+                role='tab'
+                id={`work-workspace-tab-${item.id}`}
+                aria-selected={tab === item.id}
+                aria-controls={`work-workspace-panel-${item.id}`}
+                aria-label={item.label}
+                tabIndex={tab === item.id ? 0 : -1}
+                title={item.label}
+                data-testid={item.testId}
+                onClick={() => setTab(item.id)}
+                onKeyDown={event => handleTabKeyDown(event, index)}
+                className={cn(
+                  'flex h-7 items-center gap-1.5 rounded-lg px-2 text-[11px] font-medium transition-[background-color,color,box-shadow]',
+                  tab === item.id
+                    ? 'bg-surface-raised text-ink shadow-subtle'
+                    : 'text-ink-muted hover:text-ink'
+                )}
+              >
+                <Icon className='h-3.5 w-3.5 shrink-0' />
+                <span className='hidden xs:inline'>{item.label}</span>
+                {item.id === 'activity' && activity.length > 0 && (
+                  <span className='rounded-full bg-surface px-1.5 text-[10px] text-ink-muted'>
+                    {activity.length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
 
-      {tab === 'files' && (
-        <div className='flex min-h-0 flex-1'>
-          <div
-            className={cn(
-              'flex min-h-0 w-full flex-col border-e border-line',
-              selectedFile ? 'hidden sm:flex sm:w-52 xl:w-60' : 'flex'
-            )}
-          >
-            <div className='flex h-10 shrink-0 items-center gap-1 border-b border-line px-2'>
+        {tab === 'files' && (
+          <>
+            <div className='flex min-w-0 flex-1 items-center gap-1.5'>
+              {selectedFile && (
+                <button
+                  type='button'
+                  className='inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-muted hover:bg-surface-subtle hover:text-ink sm:hidden'
+                  onClick={closeFile}
+                  aria-label={t('work.files.back', {
+                    defaultValue: 'Back to files',
+                  })}
+                >
+                  <ArrowLeft className='h-3.5 w-3.5' />
+                </button>
+              )}
+              <span
+                className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink-muted'
+                title={
+                  selectedFile?.path ??
+                  `/workspace${currentPath ? `/${currentPath}` : ''}`
+                }
+              >
+                {selectedFile?.path ??
+                  `/workspace${currentPath ? `/${currentPath}` : ''}`}
+                {dirty && ' •'}
+              </span>
+            </div>
+
+            <div className='flex shrink-0 items-center gap-1'>
               <button
                 type='button'
                 disabled={!currentPath}
                 onClick={() => void openDirectory(parentPath(currentPath))}
-                className='rounded-lg p-1.5 text-ink-muted hover:bg-surface-subtle hover:text-ink disabled:opacity-30'
+                className={cn(
+                  'hidden h-8 w-8 items-center justify-center rounded-lg border border-transparent text-ink-muted hover:border-line hover:bg-surface-subtle hover:text-ink disabled:opacity-30 sm:inline-flex',
+                  !selectedFile && 'inline-flex'
+                )}
                 aria-label={t('work.files.up', {
+                  defaultValue: 'Parent folder',
+                })}
+                title={t('work.files.up', {
                   defaultValue: 'Parent folder',
                 })}
               >
                 <ArrowLeft className='h-3.5 w-3.5' />
               </button>
-              <span className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink-muted'>
-                /workspace{currentPath ? `/${currentPath}` : ''}
-              </span>
               <button
                 type='button'
+                data-testid='work-refresh-files-button'
                 onClick={() =>
                   void onLoadFiles(currentPath).catch(() => undefined)
                 }
-                className='rounded-lg p-1.5 text-ink-muted hover:bg-surface-subtle hover:text-ink'
+                className='inline-flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-ink-muted hover:border-line hover:bg-surface-subtle hover:text-ink'
                 aria-label={t('common.refresh', { defaultValue: 'Refresh' })}
+                title={t('common.refresh', { defaultValue: 'Refresh' })}
               >
                 <RefreshCw
                   className={cn('h-3.5 w-3.5', loadingFiles && 'animate-spin')}
                 />
               </button>
+              {selectedFile && (
+                <>
+                  <Button
+                    data-testid='work-format-file-button'
+                    size='sm'
+                    variant='ghost'
+                    className='h-8 w-8 rounded-lg px-0 sm:w-auto sm:px-2.5'
+                    disabled={taskActive || formatting || !formatSupported}
+                    onClick={() => void formatCurrentFile()}
+                    aria-busy={formatting || undefined}
+                    title={
+                      formatSupported
+                        ? t('work.files.formatShortcut', {
+                            defaultValue: 'Format (Shift+Alt+F)',
+                          })
+                        : formatTypeSupported
+                          ? t('work.files.formatTooLarge', {
+                              defaultValue:
+                                'Formatting is limited to files under 100,000 characters and 4,000 lines.',
+                            })
+                          : t('work.files.formatUnsupported', {
+                              defaultValue:
+                                'Formatting is not available for this file type.',
+                            })
+                    }
+                    aria-label={t('work.files.format', {
+                      defaultValue: 'Format file',
+                    })}
+                  >
+                    {formatting ? (
+                      <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                    ) : (
+                      <WandSparkles className='h-3.5 w-3.5' />
+                    )}
+                    <span className='hidden 2xl:inline'>
+                      {t('work.files.format', { defaultValue: 'Format' })}
+                    </span>
+                  </Button>
+                  <Button
+                    data-testid='work-save-file-button'
+                    size='sm'
+                    className='h-8 w-8 rounded-lg bg-[#ff7b52] px-0 text-[#3d120c] hover:bg-[#ff7b52]/90 sm:w-auto sm:px-2.5'
+                    disabled={
+                      !dirty || taskActive || formatting || actionLoading
+                    }
+                    onClick={() => void saveFile()}
+                    aria-busy={actionLoading || undefined}
+                    title={t('work.files.saveShortcut', {
+                      defaultValue: 'Save (⌘/Ctrl+S)',
+                    })}
+                    aria-label={t('common.save')}
+                  >
+                    {actionLoading ? (
+                      <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                    ) : (
+                      <Save className='h-3.5 w-3.5' />
+                    )}
+                    <span className='hidden 2xl:inline'>
+                      {t('common.save')}
+                    </span>
+                  </Button>
+                </>
+              )}
             </div>
+          </>
+        )}
+
+        {tab === 'activity' && <div className='min-w-0 flex-1' />}
+
+        {tab === 'preview' && (
+          <>
+            <input
+              value={previewCommand}
+              onChange={event => setPreviewCommand(event.target.value)}
+              placeholder={t('work.preview.command', {
+                defaultValue: 'Optional start command',
+              })}
+              aria-label={t('work.preview.command', {
+                defaultValue: 'Optional start command',
+              })}
+              className='h-8 min-w-0 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-[11px] text-ink outline-none placeholder:text-ink-subtle focus:border-primary-500'
+            />
+            <div className='flex shrink-0 items-center gap-1'>
+              {task.previewStatus === 'running' ||
+              task.previewStatus === 'starting' ? (
+                <Button
+                  data-testid='work-stop-preview-button'
+                  variant='danger'
+                  size='sm'
+                  className='h-8 w-8 rounded-lg px-0 sm:w-auto sm:px-2.5'
+                  disabled={actionLoading}
+                  onClick={() => void onStopPreview()}
+                  aria-busy={actionLoading || undefined}
+                  aria-label={t('work.preview.stop', {
+                    defaultValue: 'Stop preview',
+                  })}
+                >
+                  {actionLoading ? (
+                    <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                  ) : (
+                    <Square className='h-3.5 w-3.5 fill-current' />
+                  )}
+                  <span className='hidden 2xl:inline'>
+                    {t('work.preview.stop', { defaultValue: 'Stop preview' })}
+                  </span>
+                </Button>
+              ) : (
+                <Button
+                  data-testid='work-start-preview-button'
+                  size='sm'
+                  className='h-8 w-8 rounded-lg bg-[#ff7b52] px-0 text-[#3d120c] hover:bg-[#ff7b52]/90 sm:w-auto sm:px-2.5'
+                  disabled={!task.networkEnabled || actionLoading}
+                  title={
+                    task.networkEnabled
+                      ? undefined
+                      : t('work.preview.networkRequired', {
+                          defaultValue:
+                            'Enable network access to start a preview.',
+                        })
+                  }
+                  onClick={() =>
+                    void onStartPreview(previewCommand.trim() || undefined)
+                  }
+                  aria-busy={actionLoading || undefined}
+                  aria-label={t('work.preview.start', {
+                    defaultValue: 'Start preview',
+                  })}
+                >
+                  {actionLoading ? (
+                    <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                  ) : (
+                    <Play className='h-3.5 w-3.5 fill-current' />
+                  )}
+                  <span className='hidden 2xl:inline'>
+                    {t('work.preview.start', {
+                      defaultValue: 'Start preview',
+                    })}
+                  </span>
+                </Button>
+              )}
+              {previewUrl && (
+                <a
+                  href={previewUrl}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  aria-label={t('work.preview.open', { defaultValue: 'Open' })}
+                  title={t('work.preview.open', { defaultValue: 'Open' })}
+                  className='inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line text-ink-muted hover:bg-surface-subtle hover:text-ink'
+                >
+                  <ExternalLink className='h-3.5 w-3.5' />
+                </a>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      {tab === 'files' && (
+        <div
+          id='work-workspace-panel-files'
+          role='tabpanel'
+          aria-labelledby='work-workspace-tab-files'
+          className='flex min-h-0 flex-1'
+        >
+          <div
+            className={cn(
+              'flex min-h-0 w-full flex-col border-e border-line bg-surface-raised',
+              selectedFile ? 'hidden sm:flex sm:w-52 xl:w-60' : 'flex'
+            )}
+          >
             <div className='min-h-0 flex-1 overflow-y-auto p-1.5'>
               {loadingFiles && files.length === 0 ? (
                 <div className='flex justify-center py-8 text-ink-muted'>
@@ -421,60 +753,22 @@ export function WorkspacePane({
             )}
           >
             {selectedFile ? (
-              <>
-                <div className='flex h-10 shrink-0 items-center gap-2 border-b border-line px-2.5'>
-                  <button
-                    type='button'
-                    className='rounded-lg p-1.5 text-ink-muted hover:bg-surface-subtle sm:hidden'
-                    onClick={closeFile}
-                    aria-label={t('work.files.back', {
-                      defaultValue: 'Back to files',
-                    })}
-                  >
-                    <ArrowLeft className='h-3.5 w-3.5' />
-                  </button>
-                  <span className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink'>
-                    {selectedFile.path}
-                    {dirty && ' •'}
-                  </span>
-                  <Button
-                    data-testid='work-save-file-button'
-                    size='sm'
-                    variant='secondary'
-                    className='h-7 rounded-lg px-2 text-xs'
-                    loading={actionLoading}
-                    disabled={!dirty || taskActive}
-                    onClick={() => void saveFile()}
-                  >
-                    <Save className='h-3.5 w-3.5' />
-                    {t('common.save')}
-                  </Button>
-                </div>
-                <textarea
-                  data-testid='work-file-editor'
-                  value={editorContent}
-                  onChange={event => {
-                    const content = event.target.value;
-                    editorContentRef.current = content;
-                    setEditorContent(content);
-                    if (content === selectedFile.content) {
-                      clearWorkDraft(task.id, selectedFile.path);
-                    } else {
-                      saveWorkDraft(task.id, selectedFile.path, {
-                        content,
-                        baseUpdatedAt:
-                          editorBaseUpdatedAt ??
-                          selectedFile.updatedAt ??
-                          selectedFile.modifiedAt,
-                      });
-                    }
-                    onDirtyChange(content !== selectedFile.content);
-                  }}
-                  disabled={taskActive}
-                  spellCheck={false}
-                  className='min-h-0 flex-1 resize-none bg-surface p-4 font-mono text-xs leading-relaxed text-ink outline-none disabled:cursor-not-allowed disabled:opacity-60'
-                />
-              </>
+              <WorkspaceCodeEditor
+                path={selectedFile.path}
+                value={editorContent}
+                ariaLabel={t('work.files.editorLabel', {
+                  path: selectedFile.path,
+                  defaultValue: 'File editor: {{path}}',
+                })}
+                onChange={updateEditorContent}
+                onSaveShortcut={() => {
+                  if (dirty && !taskActive && !actionLoading && !formatting) {
+                    void saveFile();
+                  }
+                }}
+                onFormatShortcut={() => void formatCurrentFile()}
+                disabled={taskActive || formatting}
+              />
             ) : (
               <div className='m-auto px-6 text-center text-xs text-ink-muted'>
                 <File className='mx-auto mb-3 h-7 w-7 text-ink-subtle' />
@@ -488,7 +782,12 @@ export function WorkspacePane({
       )}
 
       {tab === 'activity' && (
-        <div className='min-h-0 flex-1 overflow-y-auto p-3'>
+        <div
+          id='work-workspace-panel-activity'
+          role='tabpanel'
+          aria-labelledby='work-workspace-tab-activity'
+          className='min-h-0 flex-1 overflow-y-auto p-3'
+        >
           {activity.length === 0 ? (
             <div className='flex h-full flex-col items-center justify-center px-6 text-center text-xs text-ink-muted'>
               <TerminalSquare className='mb-3 h-7 w-7 text-ink-subtle' />
@@ -525,65 +824,12 @@ export function WorkspacePane({
       )}
 
       {tab === 'preview' && (
-        <div className='flex min-h-0 flex-1 flex-col'>
-          <div className='flex flex-wrap items-center gap-2 border-b border-line p-2.5'>
-            <input
-              value={previewCommand}
-              onChange={event => setPreviewCommand(event.target.value)}
-              placeholder={t('work.preview.command', {
-                defaultValue: 'Optional start command',
-              })}
-              className='h-8 min-w-40 flex-1 rounded-lg border border-line bg-surface px-2.5 font-mono text-xs text-ink outline-none focus:border-primary-500'
-            />
-            {task.previewStatus === 'running' ||
-            task.previewStatus === 'starting' ? (
-              <Button
-                data-testid='work-stop-preview-button'
-                variant='danger'
-                size='sm'
-                className='h-8 rounded-lg'
-                loading={actionLoading}
-                onClick={() => void onStopPreview()}
-              >
-                <Square className='h-3.5 w-3.5 fill-current' />
-                {t('work.preview.stop', { defaultValue: 'Stop preview' })}
-              </Button>
-            ) : (
-              <Button
-                data-testid='work-start-preview-button'
-                size='sm'
-                className='h-8 rounded-lg'
-                loading={actionLoading}
-                disabled={!task.networkEnabled}
-                title={
-                  task.networkEnabled
-                    ? undefined
-                    : t('work.preview.networkRequired', {
-                        defaultValue:
-                          'Enable network access to start a preview.',
-                      })
-                }
-                onClick={() =>
-                  void onStartPreview(previewCommand.trim() || undefined)
-                }
-              >
-                <Play className='h-3.5 w-3.5 fill-current' />
-                {t('work.preview.start', { defaultValue: 'Start preview' })}
-              </Button>
-            )}
-            {previewUrl && (
-              <a
-                href={previewUrl}
-                target='_blank'
-                rel='noopener noreferrer'
-                className='inline-flex h-8 items-center gap-1.5 rounded-lg border border-line px-2.5 text-xs font-medium text-ink-muted hover:bg-surface-subtle hover:text-ink'
-              >
-                <ExternalLink className='h-3.5 w-3.5' />
-                {t('work.preview.open', { defaultValue: 'Open' })}
-              </a>
-            )}
-          </div>
-
+        <div
+          id='work-workspace-panel-preview'
+          role='tabpanel'
+          aria-labelledby='work-workspace-tab-preview'
+          className='flex min-h-0 flex-1 flex-col'
+        >
           {!task.networkEnabled ? (
             <div className='m-auto max-w-sm px-6 text-center text-xs leading-relaxed text-ink-muted'>
               <Monitor className='mx-auto mb-3 h-8 w-8 text-ink-subtle' />

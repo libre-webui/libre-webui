@@ -23,11 +23,13 @@ import ReactMarkdown, {
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { useAppStore } from '@/store/appStore';
 import { cn } from '@/utils';
 import { preprocessLaTeX } from './messageContentUtils';
 import { MessageCodeBlock } from './MessageCodeBlock';
 import {
-  MESSAGE_CODE_BACKGROUND,
+  MESSAGE_CODE_BACKGROUND_DARK,
+  MESSAGE_CODE_BACKGROUND_LIGHT,
   messageCodeBodyClassName,
   messageCodeBodyStyle,
 } from './messageCodeStyles';
@@ -63,6 +65,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
   content,
   className,
 }) => {
+  const isDark = useAppStore(state => state.theme.mode === 'dark');
   const processedContent = React.useMemo(
     () => preprocessLaTeX(content),
     [content]
@@ -93,8 +96,12 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
               >
                 <LazySyntaxHighlighter
                   language={language || 'text'}
-                  isDark
-                  backgroundColor={MESSAGE_CODE_BACKGROUND}
+                  isDark={isDark}
+                  backgroundColor={
+                    isDark
+                      ? MESSAGE_CODE_BACKGROUND_DARK
+                      : MESSAGE_CODE_BACKGROUND_LIGHT
+                  }
                   borderRadius={0}
                   customStyle={messageCodeBodyStyle}
                   className='!m-0 !rounded-none !border-none'

@@ -178,8 +178,10 @@ export const useWorkStore = create<WorkState>((set, get) => {
   let latestFileListRequest = 0;
   let latestFileRequest = 0;
   let latestFileTarget: string | null = null;
+  let actionRequestSequence = 0;
   const visibleTaskListRequests = new Set<number>();
   const activeWorkspaceRequests = new Set<number>();
+  const activeActionRequests = new Map<number, string | null>();
   const fileTarget = (taskId: string, path: string): string =>
     `${taskId}\u0000${path}`;
   const isCurrentEpoch = (epoch: number): boolean => epoch === stateEpoch;
@@ -210,6 +212,35 @@ export const useWorkStore = create<WorkState>((set, get) => {
       set({ loadingFiles: activeWorkspaceRequests.size > 0 });
     }
   };
+  const actionAppliesToSelection = (taskId: string | null): boolean =>
+    get().selectedTaskId === taskId;
+  const beginActionRequest = (taskId: string | null): number => {
+    const token = ++actionRequestSequence;
+    activeActionRequests.set(token, taskId);
+    if (actionAppliesToSelection(taskId)) {
+      set({ actionLoading: true, error: null });
+    }
+    return token;
+  };
+  const finishActionRequest = (token: number, epoch: number): void => {
+    activeActionRequests.delete(token);
+    if (!isCurrentEpoch(epoch)) return;
+    const selectedTaskId = get().selectedTaskId;
+    set({
+      actionLoading: [...activeActionRequests.values()].some(
+        taskId => taskId === selectedTaskId
+      ),
+    });
+  };
+  const commitActionError = (
+    taskId: string | null,
+    epoch: number,
+    message: string
+  ): void => {
+    if (isCurrentEpoch(epoch) && actionAppliesToSelection(taskId)) {
+      set({ error: message });
+    }
+  };
 
   const commitTask = (
     task: WorkTask,
@@ -234,10 +265,11 @@ export const useWorkStore = create<WorkState>((set, get) => {
       error?: string;
       message?: string;
     }>,
-    fallback: string
+    fallback: string,
+    taskId: string | null
   ): Promise<WorkTask> => {
     const requestEpoch = stateEpoch;
-    set({ actionLoading: true, error: null });
+    const actionToken = beginActionRequest(taskId);
     try {
       const response = await action();
       assertCurrentEpoch(requestEpoch);
@@ -248,10 +280,10 @@ export const useWorkStore = create<WorkState>((set, get) => {
       return response.data;
     } catch (error) {
       const message = thrownError(error, fallback);
-      if (isCurrentEpoch(requestEpoch)) set({ error: message });
+      commitActionError(taskId, requestEpoch, message);
       throw new Error(message);
     } finally {
-      if (isCurrentEpoch(requestEpoch)) set({ actionLoading: false });
+      finishActionRequest(actionToken, requestEpoch);
     }
   };
 
@@ -384,6 +416,9 @@ export const useWorkStore = create<WorkState>((set, get) => {
         selectedFile: null,
         loadingFiles: false,
         loadingOlderMessages: false,
+        actionLoading: [...activeActionRequests.values()].some(
+          activeTaskId => activeTaskId === taskId
+        ),
         error: null,
       }));
     },
@@ -470,18 +505,20 @@ export const useWorkStore = create<WorkState>((set, get) => {
     createTask: payload =>
       runTaskAction(
         () => workApi.createTask(payload),
-        'Could not create the Work task.'
+        'Could not create the Work task.',
+        null
       ),
 
     updateTask: (taskId, payload) =>
       runTaskAction(
         () => workApi.updateTask(taskId, payload),
-        'Could not update the Work task.'
+        'Could not update the Work task.',
+        taskId
       ),
 
     deleteTask: async taskId => {
       const requestEpoch = stateEpoch;
-      set({ actionLoading: true, error: null });
+      const actionToken = beginActionRequest(taskId);
       try {
         const response = await workApi.deleteTask(taskId);
         assertCurrentEpoch(requestEpoch);
@@ -504,16 +541,16 @@ export const useWorkStore = create<WorkState>((set, get) => {
         }));
       } catch (error) {
         const message = thrownError(error, 'Could not delete the Work task.');
-        if (isCurrentEpoch(requestEpoch)) set({ error: message });
+        commitActionError(taskId, requestEpoch, message);
         throw new Error(message);
       } finally {
-        if (isCurrentEpoch(requestEpoch)) set({ actionLoading: false });
+        finishActionRequest(actionToken, requestEpoch);
       }
     },
 
     startRun: async (taskId, payload) => {
       const requestEpoch = stateEpoch;
-      set({ actionLoading: true, error: null });
+      const actionToken = beginActionRequest(taskId);
       try {
         const response = await workApi.startRun(taskId, payload);
         assertCurrentEpoch(requestEpoch);
@@ -524,16 +561,16 @@ export const useWorkStore = create<WorkState>((set, get) => {
         return response.data;
       } catch (error) {
         const message = thrownError(error, 'Could not start the Work run.');
-        if (isCurrentEpoch(requestEpoch)) set({ error: message });
+        commitActionError(taskId, requestEpoch, message);
         throw new Error(message);
       } finally {
-        if (isCurrentEpoch(requestEpoch)) set({ actionLoading: false });
+        finishActionRequest(actionToken, requestEpoch);
       }
     },
 
     cancelRun: async taskId => {
       const requestEpoch = stateEpoch;
-      set({ actionLoading: true, error: null });
+      const actionToken = beginActionRequest(taskId);
       try {
         const response = await workApi.cancelRun(taskId);
         assertCurrentEpoch(requestEpoch);
@@ -548,10 +585,10 @@ export const useWorkStore = create<WorkState>((set, get) => {
         return response.data;
       } catch (error) {
         const message = thrownError(error, 'Could not cancel the Work run.');
-        if (isCurrentEpoch(requestEpoch)) set({ error: message });
+        commitActionError(taskId, requestEpoch, message);
         throw new Error(message);
       } finally {
-        if (isCurrentEpoch(requestEpoch)) set({ actionLoading: false });
+        finishActionRequest(actionToken, requestEpoch);
       }
     },
 
@@ -632,12 +669,12 @@ export const useWorkStore = create<WorkState>((set, get) => {
 
     saveFile: async (taskId, path, content, expectedUpdatedAt) => {
       const requestEpoch = stateEpoch;
+      const actionToken = beginActionRequest(taskId);
       const saveTarget = fileTarget(taskId, path);
       if (latestFileTarget === saveTarget) {
         latestFileRequest += 1;
         latestFileTarget = null;
       }
-      set({ actionLoading: true, error: null });
       try {
         const response = await workApi.saveFile(
           taskId,
@@ -662,23 +699,25 @@ export const useWorkStore = create<WorkState>((set, get) => {
         return response.data;
       } catch (error) {
         const message = thrownError(error, 'Could not save this file.');
-        if (isCurrentEpoch(requestEpoch)) set({ error: message });
+        commitActionError(taskId, requestEpoch, message);
         throw new Error(message);
       } finally {
-        if (isCurrentEpoch(requestEpoch)) set({ actionLoading: false });
+        finishActionRequest(actionToken, requestEpoch);
       }
     },
 
     startPreview: (taskId, command) =>
       runTaskAction(
         () => workApi.startPreview(taskId, command),
-        'Could not start the workspace preview.'
+        'Could not start the workspace preview.',
+        taskId
       ),
 
     stopPreview: taskId =>
       runTaskAction(
         () => workApi.stopPreview(taskId),
-        'Could not stop the workspace preview.'
+        'Could not stop the workspace preview.',
+        taskId
       ),
 
     clearError: () => set({ error: null }),
@@ -690,6 +729,7 @@ export const useWorkStore = create<WorkState>((set, get) => {
       taskMutationRevision += 1;
       taskListError = null;
       visibleTaskListRequests.clear();
+      activeActionRequests.clear();
       invalidateWorkspaceRequests();
       set({
         capabilities: null,

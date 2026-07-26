@@ -77,12 +77,12 @@ export function MessageCodeBlock({
       data-testid='code-block'
       data-state={state}
       data-language={languageLabel}
-      className='group relative my-4 overflow-hidden rounded-xl border border-white/10 bg-[#0D1117] text-left text-[#E6EDF3] shadow-[0_12px_32px_rgba(13,17,23,0.16)]'
+      className='group relative my-4 overflow-hidden rounded-xl border border-line bg-surface-subtle text-left text-ink shadow-[0_12px_32px_rgba(13,17,23,0.1)] dark:border-white/10 dark:bg-[#0D1117] dark:text-[#E6EDF3] dark:shadow-[0_12px_32px_rgba(13,17,23,0.16)]'
     >
-      <div className='flex h-10 items-center justify-between border-b border-white/10 bg-white/[0.035] px-3.5'>
+      <div className='flex h-10 items-center justify-between border-b border-line bg-surface-raised/70 px-3.5 dark:border-white/10 dark:bg-white/[0.035]'>
         <div className='flex min-w-0 items-center gap-2'>
-          <Code2 className='h-3.5 w-3.5 shrink-0 text-[#8B949E]' />
-          <span className='truncate font-mono text-[11px] font-medium lowercase tracking-[-0.01em] text-[#B1BAC4]'>
+          <Code2 className='h-3.5 w-3.5 shrink-0 text-ink-subtle dark:text-[#8B949E]' />
+          <span className='truncate font-mono text-[11px] font-medium lowercase tracking-[-0.01em] text-ink-muted dark:text-[#B1BAC4]'>
             {languageLabel}
           </span>
         </div>
@@ -101,7 +101,7 @@ export function MessageCodeBlock({
             type='button'
             onClick={handleCopy}
             disabled={!code}
-            className='flex h-7 w-7 items-center justify-center rounded-md text-[#8B949E] transition-colors hover:bg-white/[0.08] hover:text-[#E6EDF3] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/70 disabled:cursor-default disabled:opacity-35'
+            className='flex h-7 w-7 items-center justify-center rounded-md text-ink-subtle transition-colors hover:bg-surface-subtle hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/70 disabled:cursor-default disabled:opacity-35 dark:text-[#8B949E] dark:hover:bg-white/[0.08] dark:hover:text-[#E6EDF3]'
             title={copyLabel}
             aria-label={accessibleCopyLabel}
           >

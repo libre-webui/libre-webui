@@ -817,7 +817,19 @@ test('shows tool activity, saves files, and isolates preview content', async ({
     ]);
 
   await page.getByTestId('work-preview-tab').click();
-  await page.getByTestId('work-start-preview-button').click();
+  const previewToolbar = page.getByTestId('work-workspace-toolbar');
+  const startPreviewButton = previewToolbar.getByTestId(
+    'work-start-preview-button'
+  );
+  await expect(
+    previewToolbar.getByRole('textbox', { name: 'Optional start command' })
+  ).toBeVisible();
+  await expect(startPreviewButton).toHaveCSS(
+    'background-color',
+    'rgb(255, 123, 82)'
+  );
+  await expect(startPreviewButton).toHaveCSS('color', 'rgb(61, 18, 12)');
+  await startPreviewButton.click();
   const frame = page.getByTestId('work-preview-frame');
   await expect(frame).toHaveAttribute('src', 'http://127.0.0.1:49173/');
   await expect(frame).toHaveAttribute(
@@ -831,12 +843,588 @@ test('shows tool activity, saves files, and isolates preview content', async ({
     new URL(page.url()).origin
   );
 
-  await page.getByTestId('work-stop-preview-button').click();
+  await previewToolbar.getByTestId('work-stop-preview-button').press('Enter');
   await expect(frame).toHaveCount(0);
   expect(mock.workPreviewRequests).toEqual([
     { taskId: 'preview-workspace', action: 'start', command: undefined },
     { taskId: 'preview-workspace', action: 'stop' },
   ]);
+});
+
+test('formats and highlights workspace code in dark and light mode', async ({
+  page,
+}) => {
+  const rawCard = 'export function Card(){return <article>Calm</article>}';
+  const codeTask = task(
+    'code-workspace',
+    'Code workspace',
+    '```tsx\nexport function Card(){return <article>Calm</article>}\n```'
+  );
+  const mock = await mockLibreWebUiApi(page, {
+    workTasks: [codeTask],
+    workFiles: {
+      'code-workspace': [
+        {
+          path: 'src/Card.tsx',
+          name: 'Card.tsx',
+          type: 'file',
+          size: 59,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'code-workspace:src/Card.tsx': rawCard,
+    },
+  });
+
+  await page.goto('/work/code-workspace');
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'Card.tsx' })
+    .click();
+
+  const editor = page.getByTestId('work-file-editor');
+  const editorShell = editor.locator('xpath=..');
+  const highlight = page.getByTestId('work-file-highlight');
+  const workspaceToolbar = page.getByTestId('work-workspace-toolbar');
+
+  await expect(editor).toHaveAttribute('data-language', 'tsx');
+  await expect(editorShell).toHaveAttribute('data-highlighted', 'true');
+  await expect(highlight).toBeVisible();
+  await expect.poll(() => highlight.locator('span').count()).toBeGreaterThan(2);
+  await expect(
+    workspaceToolbar.getByTestId('work-format-file-button')
+  ).toBeVisible();
+  await expect(
+    workspaceToolbar.getByTestId('work-save-file-button')
+  ).toBeVisible();
+  await expect(page.getByTestId('work-files-tab')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  await page.getByTestId('work-files-tab').focus();
+  await page.getByTestId('work-files-tab').press('ArrowRight');
+  await expect(page.getByTestId('work-activity-tab')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  await page.getByTestId('work-activity-tab').press('End');
+  await expect(page.getByTestId('work-preview-tab')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  await page.getByTestId('work-preview-tab').press('Home');
+  await expect(page.getByTestId('work-files-tab')).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+
+  const scrollSource = Array.from(
+    { length: 40 },
+    (_, index) =>
+      `export const value${index} = "${'workspace-scroll-check-'.repeat(5)}";`
+  ).join('\n');
+  await editor.fill(scrollSource);
+  await expect(editorShell).toHaveAttribute('data-highlighted', 'true');
+  const scrollPosition = await editor.evaluate(element => {
+    element.scrollTop = 180;
+    element.scrollLeft = 90;
+    element.dispatchEvent(new Event('scroll', { bubbles: true }));
+    return { left: element.scrollLeft, top: element.scrollTop };
+  });
+  expect(scrollPosition.left).toBeGreaterThan(0);
+  expect(scrollPosition.top).toBeGreaterThan(0);
+  await expect
+    .poll(() =>
+      page
+        .getByTestId('work-file-highlight-content')
+        .evaluate(element => element.style.transform)
+    )
+    .toBe(
+      `translate3d(${-scrollPosition.left}px, ${-scrollPosition.top}px, 0px)`
+    );
+  await editor.fill(rawCard);
+  await expect(editorShell).toHaveAttribute('data-highlighted', 'true');
+
+  const editorToken = highlight
+    .locator('span')
+    .filter({ hasText: 'export' })
+    .first();
+  const darkTokenColor = await editorToken.evaluate(
+    element => getComputedStyle(element).color
+  );
+  const darkCodeBackground = await page
+    .getByTestId('code-block')
+    .evaluate(element => getComputedStyle(element).backgroundColor);
+
+  await page.getByRole('button', { name: 'Switch to light mode' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Switch to dark mode' })
+  ).toBeVisible();
+
+  const lightTokenColor = await editorToken.evaluate(
+    element => getComputedStyle(element).color
+  );
+  const lightCodeBackground = await page
+    .getByTestId('code-block')
+    .evaluate(element => getComputedStyle(element).backgroundColor);
+  expect(lightTokenColor).not.toBe(darkTokenColor);
+  expect(lightCodeBackground).not.toBe(darkCodeBackground);
+
+  await page.getByTestId('work-format-file-button').click();
+  await expect(editor).toHaveValue(
+    'export function Card() {\n  return <article>Calm</article>;\n}\n'
+  );
+  await expect(page.getByTestId('work-save-file-button')).toHaveCSS(
+    'background-color',
+    'rgb(255, 123, 82)'
+  );
+  await expect(page.getByTestId('work-save-file-button')).toHaveCSS(
+    'color',
+    'rgb(61, 18, 12)'
+  );
+  await editor.press('Control+s');
+  await expect
+    .poll(() => mock.workFileUpdateRequests)
+    .toEqual([
+      {
+        taskId: 'code-workspace',
+        path: 'src/Card.tsx',
+        content:
+          'export function Card() {\n  return <article>Calm</article>;\n}\n',
+        expectedUpdatedAt: createdAt,
+      },
+    ]);
+});
+
+test('keeps unsupported and large workspace files readable when highlighting falls back', async ({
+  page,
+}) => {
+  const largeSource = `export const payload = "${'x'.repeat(20_100)}";`;
+  const fallbackTask = task(
+    'fallback-workspace',
+    'Fallback workspace',
+    'Fallback files are ready.'
+  );
+  await mockLibreWebUiApi(page, {
+    workTasks: [fallbackTask],
+    workFiles: {
+      'fallback-workspace': [
+        {
+          path: 'notes.txt',
+          name: 'notes.txt',
+          type: 'file',
+          size: 18,
+          modifiedAt: createdAt,
+        },
+        {
+          path: 'src/Large.ts',
+          name: 'Large.ts',
+          type: 'file',
+          size: largeSource.length,
+          modifiedAt: createdAt,
+        },
+        {
+          path: 'broken.json',
+          name: 'broken.json',
+          type: 'file',
+          size: 11,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'fallback-workspace:notes.txt': 'Readable plain text',
+      'fallback-workspace:src/Large.ts': largeSource,
+      'fallback-workspace:broken.json': '{"missing":}',
+    },
+  });
+
+  await page.goto('/work/fallback-workspace');
+  const editor = page.getByTestId('work-file-editor');
+  const editorShell = editor.locator('xpath=..');
+  const formatButton = page.getByTestId('work-format-file-button');
+
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'notes.txt' })
+    .click();
+  await expect(editor).toHaveValue('Readable plain text');
+  await expect(editorShell).toHaveAttribute('data-highlighted', 'false');
+  await expect(page.getByTestId('work-file-highlight')).toHaveCount(0);
+  expect(
+    await editor.evaluate(
+      element => getComputedStyle(element).webkitTextFillColor
+    )
+  ).not.toBe('rgba(0, 0, 0, 0)');
+  await expect(formatButton).toBeDisabled();
+
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'Large.ts' })
+    .click();
+  await expect(editor).toHaveValue(largeSource);
+  await expect(editorShell).toHaveAttribute('data-highlighted', 'false');
+  await expect(page.getByText('Plain text · large file')).toBeVisible();
+  await expect(page.getByTestId('work-file-highlight')).toHaveCount(0);
+  expect(
+    await editor.evaluate(
+      element => getComputedStyle(element).webkitTextFillColor
+    )
+  ).not.toBe('rgba(0, 0, 0, 0)');
+
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'broken.json' })
+    .click();
+  await expect(formatButton).toBeEnabled();
+  await formatButton.click();
+  await expect(page.getByText(/Could not format.*broken\.json/i)).toBeVisible();
+  await expect(editor).toBeEnabled();
+  await expect(formatButton).toBeEnabled();
+  await expect(editor).toHaveValue('{"missing":}');
+});
+
+test('keeps the current workspace draft editable when saving fails', async ({
+  page,
+}) => {
+  const failureTask = task(
+    'save-failure',
+    'Save failure',
+    'The editable file is ready.'
+  );
+  await mockLibreWebUiApi(page, {
+    workTasks: [failureTask],
+    workFileUpdateFailure: 'Current save failed.',
+    workFiles: {
+      'save-failure': [
+        {
+          path: 'src/value.ts',
+          name: 'value.ts',
+          type: 'file',
+          size: 23,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'save-failure:src/value.ts': 'export const value = 1;',
+    },
+  });
+
+  await page.goto('/work/save-failure');
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'value.ts' })
+    .click();
+  const editor = page.getByTestId('work-file-editor');
+  const saveButton = page.getByTestId('work-save-file-button');
+  await editor.fill('export const value = 2;');
+
+  const failedSaveResponsePromise = page.waitForResponse(
+    response =>
+      response.request().method() === 'PUT' &&
+      response.url().includes('/work/tasks/save-failure/file')
+  );
+  await saveButton.click();
+  expect((await failedSaveResponsePromise).status()).toBe(500);
+
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Current save failed.' })
+  ).toBeVisible();
+  await expect(editor).toHaveValue('export const value = 2;');
+  await expect(editor).toBeEnabled();
+  await expect(saveButton).toBeEnabled();
+  await expect(saveButton).not.toHaveAttribute('aria-busy', 'true');
+});
+
+test('ignores a file save that finishes after switching tasks', async ({
+  page,
+}) => {
+  const firstTask = task(
+    'delayed-save-a',
+    'Delayed save A',
+    'The first file is ready.'
+  );
+  const secondTask = task(
+    'delayed-save-b',
+    'Delayed save B',
+    'The second file is ready.'
+  );
+  const mock = await mockLibreWebUiApi(page, {
+    workTasks: [firstTask, secondTask],
+    deferWorkFileUpdates: true,
+    workFileUpdateFailure: 'Deferred save failed.',
+    workFiles: {
+      'delayed-save-a': [
+        {
+          path: 'first.ts',
+          name: 'first.ts',
+          type: 'file',
+          size: 20,
+          modifiedAt: createdAt,
+        },
+      ],
+      'delayed-save-b': [
+        {
+          path: 'second.ts',
+          name: 'second.ts',
+          type: 'file',
+          size: 21,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'delayed-save-a:first.ts': 'export const first=1',
+      'delayed-save-b:second.ts': 'export const second=2',
+    },
+  });
+
+  await page.goto('/work/delayed-save-a');
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'first.ts' })
+    .click();
+  await page.getByTestId('work-file-editor').fill('export const first = 10;');
+  await page.getByTestId('work-save-file-button').click();
+  await expect.poll(() => mock.workFileUpdateRequests.length).toBe(1);
+
+  const switchDialogPromise = page.waitForEvent('dialog');
+  const switchTask = page
+    .getByTestId('sidebar-work-task-item')
+    .filter({ hasText: 'Delayed save B' })
+    .getByRole('button')
+    .first()
+    .click();
+  const switchDialog = await switchDialogPromise;
+  await switchDialog.accept();
+  await switchTask;
+  await expect(page).toHaveURL(/\/work\/delayed-save-b$/);
+
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'second.ts' })
+    .click();
+  await page.getByTestId('work-file-editor').fill('export const second = 20;');
+
+  const failedSaveResponsePromise = page.waitForResponse(
+    response =>
+      response.request().method() === 'PUT' &&
+      response.url().includes('/work/tasks/delayed-save-a/file')
+  );
+  mock.releaseWorkFileUpdates();
+  const failedSaveResponse = await failedSaveResponsePromise;
+  expect(failedSaveResponse.status()).toBe(500);
+  await page.evaluate(
+    () =>
+      new Promise<void>(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      })
+  );
+  await expect(page.getByTestId('work-save-file-button')).toBeEnabled();
+  await expect(page.getByText('Deferred save failed.')).toHaveCount(0);
+  await expect(page.getByText('File saved.')).toHaveCount(0);
+  await expect(page.getByTestId('work-file-editor')).toHaveValue(
+    'export const second = 20;'
+  );
+
+  const leaveDialogPromise = page.waitForEvent('dialog');
+  const leaveAttempt = page.getByTestId('sidebar-chat-button').click();
+  const leaveDialog = await leaveDialogPromise;
+  expect(leaveDialog.message()).toContain(
+    'Your unsaved edit will remain as a browser draft.'
+  );
+  await leaveDialog.dismiss();
+  await leaveAttempt;
+  await expect(page).toHaveURL(/\/work\/delayed-save-b$/);
+});
+
+test('preserves edits typed while the same workspace file is saving', async ({
+  page,
+}) => {
+  const saveTask = task(
+    'same-file-save',
+    'Same file save',
+    'The editable file is ready.'
+  );
+  const mock = await mockLibreWebUiApi(page, {
+    workTasks: [saveTask],
+    deferWorkFileUpdates: true,
+    workFiles: {
+      'same-file-save': [
+        {
+          path: 'src/value.ts',
+          name: 'value.ts',
+          type: 'file',
+          size: 23,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'same-file-save:src/value.ts': 'export const value = 1;',
+    },
+  });
+
+  await page.goto('/work/same-file-save');
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'value.ts' })
+    .click();
+  const editor = page.getByTestId('work-file-editor');
+  const saveButton = page.getByTestId('work-save-file-button');
+
+  await editor.fill('export const value = 2;');
+  await saveButton.click();
+  await expect.poll(() => mock.workFileUpdateRequests.length).toBe(1);
+  await editor.fill('export const value = 3;');
+
+  mock.releaseWorkFileUpdates();
+  await expect(saveButton).toBeEnabled();
+  await expect(editor).toHaveValue('export const value = 3;');
+
+  await saveButton.click();
+  await expect.poll(() => mock.workFileUpdateRequests.length).toBe(2);
+  expect(mock.workFileUpdateRequests[1]).toMatchObject({
+    taskId: 'same-file-save',
+    path: 'src/value.ts',
+    content: 'export const value = 3;',
+  });
+  expect(mock.workFileUpdateRequests[1]?.expectedUpdatedAt).toBeGreaterThan(
+    createdAt
+  );
+  mock.releaseWorkFileUpdates();
+  await expect(saveButton).not.toHaveAttribute('aria-busy', 'true');
+  await expect(saveButton).toBeDisabled();
+  await expect(editor).toHaveValue('export const value = 3;');
+});
+
+test('keeps the compact task surface switch in the task header', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const compactTask = task(
+    'compact-workspace',
+    'Compact workspace',
+    'The workspace is ready.'
+  );
+  await mockLibreWebUiApi(page, {
+    workTasks: [compactTask],
+    workFiles: {
+      'compact-workspace': [
+        {
+          path: 'README.md',
+          name: 'README.md',
+          type: 'file',
+          size: 7,
+          modifiedAt: createdAt,
+        },
+      ],
+    },
+    workFileContents: {
+      'compact-workspace:README.md': '# Ready',
+    },
+  });
+
+  await page.goto('/work/compact-workspace');
+
+  const surfaceSwitch = page.getByRole('group', { name: 'Task surface' });
+  await expect(surfaceSwitch).toBeVisible();
+  await expect(page.getByTestId('work-compact-status')).toHaveAccessibleName(
+    'Status: completed'
+  );
+  expect(
+    await surfaceSwitch.evaluate(element => element.parentElement?.tagName)
+  ).toBe('HEADER');
+  await expect(
+    surfaceSwitch.getByRole('button', { name: 'Conversation' })
+  ).toHaveAttribute('aria-pressed', 'true');
+
+  await surfaceSwitch.getByRole('button', { name: 'Workspace' }).click();
+  await expect(page.getByTestId('work-files-tab')).toBeVisible();
+  await expect(
+    surfaceSwitch.getByRole('button', { name: 'Workspace' })
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByTestId('work-composer-input')).not.toBeVisible();
+  await page
+    .getByTestId('work-file-item')
+    .filter({ hasText: 'README.md' })
+    .click();
+
+  const workspaceToolbar = page.getByTestId('work-workspace-toolbar');
+  await expect(
+    workspaceToolbar.getByTestId('work-format-file-button')
+  ).toBeVisible();
+  await expect(
+    workspaceToolbar.getByTestId('work-save-file-button')
+  ).toBeVisible();
+  const toolbarBox = await workspaceToolbar.boundingBox();
+  expect(toolbarBox).not.toBeNull();
+  expect(toolbarBox?.x).toBeGreaterThanOrEqual(0);
+  expect((toolbarBox?.x ?? 0) + (toolbarBox?.width ?? 0)).toBeLessThanOrEqual(
+    390
+  );
+  const filesToolbarMetrics = await workspaceToolbar.evaluate(element => {
+    const toolbar = element.getBoundingClientRect();
+    const childrenContained = [...element.children].every(child => {
+      const bounds = child.getBoundingClientRect();
+      return (
+        bounds.left >= toolbar.left - 1 && bounds.right <= toolbar.right + 1
+      );
+    });
+    return {
+      childrenContained,
+      clientWidth: element.clientWidth,
+      scrollWidth: element.scrollWidth,
+    };
+  });
+  expect(filesToolbarMetrics.scrollWidth).toBeLessThanOrEqual(
+    filesToolbarMetrics.clientWidth
+  );
+  expect(filesToolbarMetrics.childrenContained).toBe(true);
+
+  await workspaceToolbar.getByTestId('work-preview-tab').click();
+  await expect(
+    workspaceToolbar.getByRole('textbox', { name: 'Optional start command' })
+  ).toBeVisible();
+  await expect(
+    workspaceToolbar.getByTestId('work-start-preview-button')
+  ).toBeVisible();
+  const previewToolbarMetrics = await workspaceToolbar.evaluate(element => ({
+    clientWidth: element.clientWidth,
+    scrollWidth: element.scrollWidth,
+  }));
+  expect(previewToolbarMetrics.scrollWidth).toBeLessThanOrEqual(
+    previewToolbarMetrics.clientWidth
+  );
+
+  const taskActionsButton = page.getByTestId('work-task-actions-button');
+  await expect(taskActionsButton).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByTestId('work-delete-task-button')).toHaveCount(0);
+  await taskActionsButton.click();
+  await expect(taskActionsButton).toHaveAttribute('aria-expanded', 'true');
+  const deleteTaskButton = page.getByTestId('work-delete-task-button');
+  await expect(deleteTaskButton).toBeFocused();
+  await deleteTaskButton.press('ArrowDown');
+  await expect(deleteTaskButton).toBeFocused();
+  await deleteTaskButton.press('Escape');
+  await expect(taskActionsButton).toBeFocused();
+  await expect(taskActionsButton).toHaveAttribute('aria-expanded', 'false');
+  await expect(deleteTaskButton).toHaveCount(0);
+
+  await taskActionsButton.press('ArrowDown');
+  await expect(deleteTaskButton).toBeFocused();
+  const deleteDialogPromise = page.waitForEvent('dialog');
+  const deleteClick = deleteTaskButton.click();
+  const deleteDialog = await deleteDialogPromise;
+  expect(deleteDialog.message()).toContain(
+    'Delete “Compact workspace” and its workspace permanently?'
+  );
+  await deleteDialog.accept();
+  await deleteClick;
+  await expect(page).toHaveURL(/\/work$/);
 });
 
 test('restores an unsaved file draft after app navigation', async ({

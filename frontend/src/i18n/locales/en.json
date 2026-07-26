@@ -1457,6 +1457,7 @@
       "new": "New task",
       "empty": "Your Work tasks will appear here after you send the first message.",
       "untitled": "Untitled task",
+      "actions": "Task actions",
       "delete": "Delete task",
       "deleteConfirm": "Delete “{{title}}” and its workspace permanently?",
       "close": "Close Work tasks",
@@ -1464,7 +1465,8 @@
       "rename": "Task title",
       "loading": "Loading task…",
       "notFound": "This Work task is unavailable",
-      "back": "Start a new task"
+      "back": "Start a new task",
+      "status": "Status: {{status}}"
     },
     "landing": {
       "title": "Start a new Work task",
@@ -1509,6 +1511,7 @@
       "reason": "Docker and an available Ollama or plugin model provider are required."
     },
     "workspace": {
+      "label": "Workspace views",
       "files": "Files",
       "activity": "Activity",
       "preview": "Preview"
@@ -1519,7 +1522,15 @@
       "up": "Parent folder",
       "back": "Back to files",
       "empty": "No files in this folder yet.",
-      "select": "Select a file to inspect and edit it."
+      "select": "Select a file to inspect and edit it.",
+      "editorLabel": "File editor: {{path}}",
+      "format": "Format",
+      "formatted": "Code formatted.",
+      "formatFailed": "Could not format this file.",
+      "formatShortcut": "Format (Shift+Alt+F)",
+      "formatTooLarge": "Formatting is limited to files under 100,000 characters and 4,000 lines.",
+      "formatUnsupported": "Formatting is not available for this file type.",
+      "saveShortcut": "Save (⌘/Ctrl+S)"
     },
     "activity": {
       "empty": "Commands, file operations, and tool results will appear here."
@@ -1537,6 +1548,7 @@
       "empty": "Start the app inside this workspace to inspect it here."
     },
     "mobile": {
+      "surface": "Task surface",
       "conversation": "Conversation",
       "workspace": "Workspace"
     },

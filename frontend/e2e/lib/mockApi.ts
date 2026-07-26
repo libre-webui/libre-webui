@@ -259,6 +259,8 @@ type MockOptions = {
   workTaskDetailUpdates?: Record<string, Partial<MockWorkTask>>;
   workFiles?: Record<string, MockWorkFile[]>;
   workFileContents?: Record<string, string>;
+  deferWorkFileUpdates?: boolean;
+  workFileUpdateFailure?: string;
   workRunResult?: MockWorkRunResult;
   workTaskTransition?: MockWorkTaskTransition;
 };
@@ -477,6 +479,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     content: string;
     expectedUpdatedAt?: number;
   }> = [];
+  const pendingWorkFileUpdateReleases: Array<() => void> = [];
   const workPreviewRequests: Array<{
     taskId: string;
     action: 'start' | 'stop';
@@ -1098,6 +1101,21 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
             await fulfillApiError(route, 400, 'A workspace path is required');
             return;
           }
+          workFileUpdateRequests.push({
+            taskId,
+            path: filePath,
+            content: request.content,
+            expectedUpdatedAt: request.expectedUpdatedAt,
+          });
+          if (options.deferWorkFileUpdates) {
+            await new Promise<void>(resolve => {
+              pendingWorkFileUpdateReleases.push(resolve);
+            });
+          }
+          if (options.workFileUpdateFailure) {
+            await fulfillApiError(route, 500, options.workFileUpdateFailure);
+            return;
+          }
           const now = Date.now();
           const files = (workFiles[taskId] ??= []);
           const existing = files.find(item => item.path === filePath);
@@ -1114,12 +1132,6 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
             });
           }
           workFileContents[`${taskId}:${filePath}`] = request.content;
-          workFileUpdateRequests.push({
-            taskId,
-            path: filePath,
-            content: request.content,
-            expectedUpdatedAt: request.expectedUpdatedAt,
-          });
           await fulfillJson(route, {
             path: filePath,
             content: request.content,
@@ -1405,6 +1417,11 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     workRunRequests,
     workCancelRequests,
     workFileUpdateRequests,
+    releaseWorkFileUpdates: () => {
+      pendingWorkFileUpdateReleases
+        .splice(0)
+        .forEach(releaseWorkFileUpdate => releaseWorkFileUpdate());
+    },
     workPreviewRequests,
   };
 }
