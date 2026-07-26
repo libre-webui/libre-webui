@@ -27,6 +27,22 @@ const session = {
   updatedAt: 1,
 };
 
+const privateWorkTask = {
+  id: 'private-work-task',
+  title: 'Private admin workspace',
+  model: 'llama3.2:3b',
+  providerType: 'ollama' as const,
+  status: 'completed' as const,
+  networkEnabled: false,
+  createdAt: 1,
+  updatedAt: 1,
+  messages: [],
+  activeRun: null,
+  previewUrl: null,
+  previewStatus: 'stopped' as const,
+  workspacePath: '/workspace' as const,
+};
+
 test('sidebar Work and Chat actions navigate to their fresh start screens', async ({
   page,
 }) => {
@@ -34,12 +50,43 @@ test('sidebar Work and Chat actions navigate to their fresh start screens', asyn
 
   await page.goto(`/c/${session.id}`);
   await expect(page.getByPlaceholder('Send a message')).toBeVisible();
+  const navigation = page.getByTestId('sidebar-navigation');
+  const chatNavigation = navigation.getByRole('button', { name: 'Chat' });
+  const workNavigation = navigation.getByRole('link', { name: 'Work' });
+  await expect(page.getByTestId('sidebar-chat-button')).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  await expect(page.getByTestId('sidebar-work-button')).toHaveAttribute(
+    'aria-pressed',
+    'false'
+  );
+  await expect(chatNavigation).toHaveAttribute('aria-current', 'page');
+  await expect(workNavigation).not.toHaveAttribute('aria-current', 'page');
 
   await page.getByTestId('sidebar-work-button').click();
   await expect(page).toHaveURL(/\/work$/);
+  await expect(page.getByTestId('sidebar-work-button')).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  await expect(page.getByTestId('sidebar-chat-button')).toHaveAttribute(
+    'aria-pressed',
+    'false'
+  );
+  await expect(workNavigation).toHaveAttribute('aria-current', 'page');
+  await expect(chatNavigation).not.toHaveAttribute('aria-current', 'page');
 
   await page.getByTestId('sidebar-chat-button').click();
   await expect(page).toHaveURL(/\/chat$/);
+  await expect(page.getByTestId('sidebar-chat-button')).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
+  await expect(page.getByTestId('sidebar-work-button')).toHaveAttribute(
+    'aria-pressed',
+    'false'
+  );
   await expect(page.getByPlaceholder('Message...')).toBeVisible();
   await expect(page.getByPlaceholder('Send a message')).toHaveCount(0);
 });
@@ -58,8 +105,9 @@ test('Work stays available when no chat model is installed', async ({
 test('Work is hidden and route-protected for non-admin users', async ({
   page,
 }) => {
-  await mockLibreWebUiApi(page, {
+  const mock = await mockLibreWebUiApi(page, {
     authRole: 'user',
+    workTasks: [privateWorkTask],
     systemInfo: {
       requiresAuth: true,
       hasUsers: true,
@@ -82,4 +130,6 @@ test('Work is hidden and route-protected for non-admin users', async ({
   await page.goto('/work');
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId('work-page')).toHaveCount(0);
+  await expect(page.getByText(privateWorkTask.title)).toHaveCount(0);
+  expect(mock.workTaskListRequests).toHaveLength(0);
 });

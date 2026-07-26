@@ -60,6 +60,7 @@ export function SidebarNavigation({
   return (
     <div className={cn('pb-3', sidebarCompact ? 'px-2' : 'px-3')}>
       <nav
+        data-testid='sidebar-navigation'
         className={cn(
           'space-y-0.5',
           sidebarCompact && 'flex flex-col items-center'

@@ -16,7 +16,12 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { Bot, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
+import {
+  Briefcase,
+  ChevronLeft,
+  ChevronRight,
+  MessageSquare,
+} from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -26,6 +31,7 @@ interface SidebarHeaderProps {
   sidebarCompact: boolean;
   isElectron: boolean;
   showWork: boolean;
+  activeMode: 'chat' | 'work' | null;
   selectedModel: string;
   modelCount: number;
   onToggleCompact: () => void;
@@ -37,6 +43,7 @@ export function SidebarHeader({
   sidebarCompact,
   isElectron,
   showWork,
+  activeMode,
   selectedModel,
   modelCount,
   onToggleCompact,
@@ -111,32 +118,35 @@ export function SidebarHeader({
       >
         {showWork && (
           <Button
-            variant='secondary'
+            variant={activeMode === 'work' ? 'primary' : 'secondary'}
             onClick={onStartWork}
             className={cn(
-              'h-10 rounded-xl border-black/[0.08] bg-white/80 text-gray-950 shadow-none transition-colors duration-150 hover:bg-white active:bg-gray-50 dark:border-white/[0.08] dark:bg-dark-200/80 dark:text-dark-950 dark:hover:bg-dark-200 dark:active:bg-dark-300 touch-manipulation',
+              'h-10 rounded-xl shadow-none touch-manipulation',
               sidebarCompact && 'w-full p-0'
             )}
             size='sm'
             title={t('chat.session.work')}
             aria-label={t('chat.session.work')}
+            aria-pressed={activeMode === 'work'}
             data-testid='sidebar-work-button'
           >
-            <Bot className='h-4 w-4' />
+            <Briefcase className='h-4 w-4' />
             {!sidebarCompact && t('chat.session.work')}
           </Button>
         )}
 
         <Button
+          variant={activeMode === 'chat' ? 'primary' : 'secondary'}
           onClick={onCreateSession}
           disabled={createDisabled}
           className={cn(
-            'h-10 rounded-xl bg-gray-950 hover:bg-gray-800 active:bg-gray-900 text-white dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100 dark:active:bg-gray-200 shadow-none transition-colors duration-150 border-0 touch-manipulation',
+            'h-10 rounded-xl shadow-none touch-manipulation',
             sidebarCompact && 'w-full p-0'
           )}
           size='sm'
           title={createDisabled ? disabledTitle : t('chat.session.chat')}
           aria-label={t('chat.session.chat')}
+          aria-pressed={activeMode === 'chat'}
           data-testid='sidebar-chat-button'
         >
           <MessageSquare className='h-4 w-4' />

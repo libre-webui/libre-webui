@@ -245,6 +245,9 @@ type MockOptions = {
   chatStream?: MockChatStream;
   workCapabilities?: MockWorkCapabilities;
   workTasks?: MockWorkTask[];
+  workTaskListDelaysMs?: number[];
+  workTaskListFailures?: Array<string | undefined>;
+  workTaskDetailUpdates?: Record<string, Partial<MockWorkTask>>;
   workFiles?: Record<string, MockWorkFile[]>;
   workFileContents?: Record<string, string>;
   workRunResult?: MockWorkRunResult;
@@ -433,6 +436,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   }> = [];
   const workTaskDetailRequests: string[] = [];
   const workTaskListRequests: number[] = [];
+  const workTaskDeleteRequests: string[] = [];
   const workMessagePageRequests: Array<{
     taskId: string;
     before: number;
@@ -789,6 +793,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path === '/work/tasks' && method === 'GET') {
+        const requestIndex = workTaskListRequests.length;
         workTaskListRequests.push(Date.now());
         if (
           workTaskTransition &&
@@ -796,10 +801,19 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         ) {
           applyWorkTaskTransition();
         }
-        await fulfillJson(
-          route,
-          workTasks.map(({ messages: _messages, ...summary }) => summary)
+        const summaries = workTasks.map(
+          ({ messages: _messages, ...summary }) => summary
         );
+        const delayMs = options.workTaskListDelaysMs?.[requestIndex] ?? 0;
+        if (delayMs > 0) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+        const failure = options.workTaskListFailures?.[requestIndex];
+        if (failure) {
+          await fulfillApiError(route, 500, failure);
+          return;
+        }
+        await fulfillJson(route, summaries);
         return;
       }
 
@@ -867,6 +881,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 
         if (method === 'GET') {
           workTaskDetailRequests.push(taskId);
+          Object.assign(task, options.workTaskDetailUpdates?.[taskId]);
           await fulfillJson(route, workTaskDetail(task));
           return;
         }
@@ -891,6 +906,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         }
 
         if (method === 'DELETE') {
+          workTaskDeleteRequests.push(taskId);
           workTasks.splice(taskIndex, 1);
           delete workFiles[taskId];
           for (const key of Object.keys(workFileContents)) {
@@ -1299,6 +1315,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     workTaskCreateRequests,
     workTaskDetailRequests,
     workTaskListRequests,
+    workTaskDeleteRequests,
     workMessagePageRequests,
     applyWorkTaskTransition,
     workRunRequests,

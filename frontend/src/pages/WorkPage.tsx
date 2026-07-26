@@ -21,10 +21,10 @@ import {
   ChevronLeft,
   CircleAlert,
   HardDrive,
-  Menu,
   MessageSquare,
   Monitor,
   ShieldCheck,
+  Trash2,
   Wifi,
   WifiOff,
   Wrench,
@@ -32,10 +32,9 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useBlocker, useNavigate, useParams } from 'react-router';
+import { useBlocker, useLocation, useNavigate, useParams } from 'react-router';
 import { WorkComposer } from '@/components/work/WorkComposer';
 import { WorkConversation } from '@/components/work/WorkConversation';
-import { WorkTaskRail } from '@/components/work/WorkTaskRail';
 import { WorkspacePane } from '@/components/work/WorkspacePane';
 import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
@@ -73,6 +72,7 @@ const errorMessage = (error: unknown, fallback: string): string =>
 
 export default function WorkPage() {
   const { t } = useTranslation();
+  const location = useLocation();
   const navigate = useNavigate();
   const { taskId } = useParams<{ taskId: string }>();
   const chatModels = useChatStore(state => state.models);
@@ -83,7 +83,6 @@ export default function WorkPage() {
     selectedTask,
     files,
     selectedFile,
-    loadingTasks,
     loadingTask,
     loadingOlderMessages,
     loadingFiles,
@@ -141,10 +140,29 @@ export default function WorkPage() {
     [models]
   );
   const [draftModelKey, setDraftModelKey] = useState('');
-  const [draftNetwork, setDraftNetwork] = useState(false);
-  const [mobileRailOpen, setMobileRailOpen] = useState(false);
-  const [mobileSurface, setMobileSurface] =
-    useState<MobileSurface>('conversation');
+  const [draftNetworkState, setDraftNetworkState] = useState({
+    locationKey: location.key,
+    enabled: false,
+  });
+  const draftNetwork =
+    draftNetworkState.locationKey === location.key
+      ? draftNetworkState.enabled
+      : false;
+  const setDraftNetwork = (enabled: boolean) =>
+    setDraftNetworkState({ locationKey: location.key, enabled });
+  const [mobileSurfaceState, setMobileSurfaceState] = useState<{
+    locationKey: string;
+    value: MobileSurface;
+  }>({
+    locationKey: location.key,
+    value: 'conversation',
+  });
+  const mobileSurface =
+    mobileSurfaceState.locationKey === location.key
+      ? mobileSurfaceState.value
+      : 'conversation';
+  const setMobileSurface = (value: MobileSurface) =>
+    setMobileSurfaceState({ locationKey: location.key, value });
   const [workspaceDirty, setWorkspaceDirty] = useState(false);
 
   useEffect(() => {
@@ -278,7 +296,6 @@ export default function WorkPage() {
   const goToNewTask = () => {
     clearError();
     setDraftNetwork(false);
-    setMobileRailOpen(false);
     setMobileSurface('conversation');
     navigate('/work');
   };
@@ -534,34 +551,8 @@ export default function WorkPage() {
       data-testid='work-page'
       className='relative flex h-full min-h-0 overflow-hidden bg-surface'
     >
-      <WorkTaskRail
-        tasks={tasks}
-        selectedTaskId={taskId || null}
-        loading={loadingTasks}
-        mobileOpen={mobileRailOpen}
-        onCloseMobile={() => setMobileRailOpen(false)}
-        onNewTask={goToNewTask}
-        onSelectTask={id => {
-          setMobileRailOpen(false);
-          setMobileSurface('conversation');
-          navigate(`/work/${id}`);
-        }}
-        onDeleteTask={id => void removeTask(id)}
-      />
-
       <main className='flex min-h-0 min-w-0 flex-1 flex-col'>
         <header className='flex h-16 shrink-0 items-center gap-3 border-b border-line bg-surface-raised px-3 md:px-4'>
-          <button
-            type='button'
-            onClick={() => setMobileRailOpen(true)}
-            className='rounded-lg p-2 text-ink-muted hover:bg-surface-subtle hover:text-ink lg:hidden'
-            aria-label={t('work.tasks.open', {
-              defaultValue: 'Open Work tasks',
-            })}
-          >
-            <Menu className='h-5 w-5' />
-          </button>
-
           {selectedTask ? (
             <input
               key={`${selectedTask.id}:${selectedTask.title}`}
@@ -600,6 +591,20 @@ export default function WorkPage() {
                 })}
               </p>
             </div>
+          )}
+
+          {selectedTask && (
+            <button
+              type='button'
+              data-testid='work-delete-task-button'
+              onClick={() => void removeTask(selectedTask.id)}
+              className='rounded-lg p-2 text-ink-muted transition-colors hover:bg-error-500/10 hover:text-error-600'
+              aria-label={t('work.tasks.delete', {
+                defaultValue: 'Delete task',
+              })}
+            >
+              <Trash2 className='h-4 w-4' />
+            </button>
           )}
 
           <div className='ms-auto hidden min-w-0 items-center gap-2 sm:flex'>

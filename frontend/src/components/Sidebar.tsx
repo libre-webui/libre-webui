@@ -16,14 +16,17 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
+import { useWorkStore } from '@/store/workStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import type { ChatSession } from '@/types';
+import type { WorkTaskSummary } from '@/types/work';
 import { cn } from '@/utils';
 import { authApi, usersApi } from '@/utils/api';
+import { clearWorkTaskDrafts } from '@/utils/workDrafts';
 import { toast } from 'react-hot-toast';
 import { createLogger } from '@/utils/logger';
 import { advanceWelcomePrompt } from '@/utils/welcomePrompts';
@@ -32,6 +35,7 @@ import { SidebarHeader } from '@/components/sidebar/SidebarHeader';
 import { SidebarNavigation } from '@/components/sidebar/SidebarNavigation';
 import { SidebarSessions } from '@/components/sidebar/SidebarSessions';
 import { SidebarUserSection } from '@/components/sidebar/SidebarUserSection';
+import { SidebarWorkTasks } from '@/components/sidebar/SidebarWorkTasks';
 
 const logger = createLogger('components:sidebar');
 const SettingsModal = React.lazy(() =>
@@ -64,6 +68,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     generatingTitleForSession,
     personas,
   } = useChatStore();
+  const workTasks = useWorkStore(state => state.tasks);
+  const loadingWorkTasks = useWorkStore(state => state.loadingTasks);
+  const workActionLoading = useWorkStore(state => state.actionLoading);
+  const deleteWorkTask = useWorkStore(state => state.deleteTask);
   const { user, isAdmin, systemInfo, setUser } = useAuthStore();
   const { backgroundImage, sidebarCompact, toggleSidebarCompact } =
     useAppStore();
@@ -78,8 +86,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const userMenuRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  const { sessionId } = useParams<{ sessionId: string }>();
-  const currentSessionIdFromUrl = sessionId || null;
+  const currentSessionIdFromUrl =
+    location.pathname.match(/^\/c\/([^/]+)$/)?.[1] || null;
   const currentSessionId = currentSession?.id || currentSessionIdFromUrl;
 
   const compactOnMobile = () => {
@@ -158,6 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleStartWork = () => {
+    useWorkStore.getState().clearError();
     navigate('/work');
     compactOnMobile();
   };
@@ -171,6 +180,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleSelectSession = (session: ChatSession) => {
     navigate(`/c/${session.id}`, { replace: true });
     compactOnMobile();
+  };
+
+  const handleSelectWorkTask = (workTaskId: string) => {
+    navigate(`/work/${workTaskId}`, { replace: true });
+    compactOnMobile();
+  };
+
+  const handleDeleteWorkTask = async (task: WorkTaskSummary) => {
+    if (
+      !window.confirm(
+        t('work.tasks.deleteConfirm', {
+          defaultValue: 'Delete “{{title}}” and its workspace permanently?',
+          title:
+            task.title ||
+            t('work.tasks.untitled', {
+              defaultValue: 'Untitled task',
+            }),
+        })
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteWorkTask(task.id);
+      clearWorkTaskDrafts(task.id);
+    } catch (error) {
+      logger.error('Failed to delete Work task:', error);
+      toast.error(
+        t('work.toasts.deleteFailed', {
+          defaultValue: 'Could not delete this Work task.',
+        })
+      );
+    }
   };
 
   const handleDeleteSession = async (
@@ -249,6 +292,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isElectron = window.location.protocol === 'file:';
   const isWorkRoute =
     location.pathname === '/work' || location.pathname.startsWith('/work/');
+  const currentWorkTaskId =
+    location.pathname.match(/^\/work\/([^/]+)$/)?.[1] || null;
+  const isChatRoute =
+    location.pathname === '/' ||
+    location.pathname === '/chat' ||
+    location.pathname.startsWith('/c/');
   const showWork = systemInfo?.requiresAuth === false || isAdmin();
 
   return (
@@ -285,6 +334,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             sidebarCompact={sidebarCompact}
             isElectron={isElectron}
             showWork={showWork}
+            activeMode={isWorkRoute ? 'work' : isChatRoute ? 'chat' : null}
             selectedModel={selectedModel}
             modelCount={models.length}
             onToggleCompact={toggleSidebarCompact}
@@ -300,7 +350,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onMobileNavigate={compactOnMobile}
           />
 
-          {!isWorkRoute && (
+          {isWorkRoute && showWork ? (
+            <SidebarWorkTasks
+              tasks={workTasks}
+              currentTaskId={currentWorkTaskId}
+              loading={loadingWorkTasks}
+              actionLoading={workActionLoading}
+              sidebarCompact={sidebarCompact}
+              onSelectTask={handleSelectWorkTask}
+              onDeleteTask={task => void handleDeleteWorkTask(task)}
+            />
+          ) : (
             <SidebarSessions
               sessions={sessions}
               personas={personas}

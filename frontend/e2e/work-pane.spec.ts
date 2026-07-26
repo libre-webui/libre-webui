@@ -252,6 +252,9 @@ test('loads plugin Work models when Ollama is offline', async ({ page }) => {
 test('reopens each task with its own conversation and filesystem', async ({
   page,
 }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
   const taskA = task(
     'workspace-a',
     'Garden planner',
@@ -264,7 +267,22 @@ test('reopens each task with its own conversation and filesystem', async ({
   );
 
   const mock = await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      allowUserModelPull: true,
+      version: '0.10.0-e2e',
+      turnstile: { enabled: false },
+    },
     workTasks: [taskB, taskA],
+    workTaskListDelaysMs: [350],
+    workTaskDetailUpdates: {
+      'workspace-a': {
+        title: 'Garden planner refreshed',
+        updatedAt: createdAt + 100,
+      },
+    },
     workFiles: {
       'workspace-a': [
         {
@@ -292,6 +310,28 @@ test('reopens each task with its own conversation and filesystem', async ({
   });
 
   await page.goto('/work/workspace-a');
+  const sidebar = page.getByTestId('sidebar');
+  const workTaskList = sidebar.getByTestId('sidebar-work-task-list');
+  await expect(
+    sidebar.getByTestId('sidebar-session-scroll-region')
+  ).toHaveCount(0);
+  await expect(page.getByTestId('work-task-rail')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Open Work tasks' })
+  ).toHaveCount(0);
+  await expect(workTaskList).toBeVisible();
+  await expect(workTaskList.getByTestId('sidebar-work-task-item')).toHaveCount(
+    2
+  );
+  await expect(page.getByLabel('Task title')).toHaveValue(
+    'Garden planner refreshed'
+  );
+  await expect(
+    workTaskList
+      .getByTestId('sidebar-work-task-item')
+      .filter({ hasText: 'Garden planner' })
+      .getByRole('button')
+  ).toHaveAttribute('aria-current', 'page');
   await expect(
     page.getByText('Only workspace A contains the garden plan.')
   ).toBeVisible();
@@ -307,7 +347,7 @@ test('reopens each task with its own conversation and filesystem', async ({
     .fill('Unsent prompt for workspace A');
 
   await page
-    .getByTestId('work-task-item')
+    .getByTestId('sidebar-work-task-item')
     .filter({ hasText: 'Transit planner' })
     .getByRole('button')
     .first()
@@ -326,7 +366,7 @@ test('reopens each task with its own conversation and filesystem', async ({
   );
 
   await page
-    .getByTestId('work-task-item')
+    .getByTestId('sidebar-work-task-item')
     .filter({ hasText: 'Garden planner' })
     .getByRole('button')
     .first()
@@ -342,6 +382,68 @@ test('reopens each task with its own conversation and filesystem', async ({
   expect(mock.workTaskDetailRequests).toEqual(
     expect.arrayContaining(['workspace-a', 'workspace-b'])
   );
+});
+
+test('keeps an inactive task deleted when an older poll finishes', async ({
+  page,
+}) => {
+  const activeTask = {
+    ...task('active-workspace', 'Active planner', 'Active task response'),
+    status: 'running' as const,
+  };
+  const inactiveTask = task(
+    'inactive-workspace',
+    'Inactive planner',
+    'Inactive task response'
+  );
+  const mock = await mockLibreWebUiApi(page, {
+    workTasks: [inactiveTask, activeTask],
+    workTaskListDelaysMs: [0, 1_200],
+  });
+
+  await page.goto('/work/active-workspace');
+  const inactiveRow = page
+    .getByTestId('sidebar-work-task-item')
+    .filter({ hasText: inactiveTask.title });
+  await expect(inactiveRow).toBeVisible();
+  await expect
+    .poll(() => mock.workTaskListRequests.length, { timeout: 3_000 })
+    .toBeGreaterThanOrEqual(2);
+
+  page.once('dialog', dialog => void dialog.accept());
+  await inactiveRow.hover();
+  await inactiveRow.getByTestId('sidebar-work-task-delete').click();
+
+  await expect(inactiveRow).toHaveCount(0);
+  expect(mock.workTaskDeleteRequests).toEqual(['inactive-workspace']);
+  await page.waitForTimeout(1_300);
+  await expect(inactiveRow).toHaveCount(0);
+});
+
+test('surfaces an initial list failure after a later silent poll fails', async ({
+  page,
+}) => {
+  const activeTask = {
+    ...task('list-error-workspace', 'List error task', 'Task detail loaded'),
+    status: 'running' as const,
+  };
+  await mockLibreWebUiApi(page, {
+    workTasks: [activeTask],
+    workTaskListDelaysMs: [1_500, 1_500, 700, 700],
+    workTaskListFailures: [
+      'Initial Work task list failed',
+      'Initial Work task list failed',
+      'Silent Work task poll failed',
+      'Silent Work task poll failed',
+    ],
+  });
+
+  await page.goto('/work/list-error-workspace');
+
+  await expect(page.getByText('Task detail loaded')).toBeVisible();
+  await expect(page.getByText('Initial Work task list failed')).toBeVisible({
+    timeout: 3_000,
+  });
 });
 
 test('loads bounded Work history pages without polling full task details', async ({
@@ -622,7 +724,7 @@ test('restores an unsaved file draft after app navigation', async ({
   await page.getByTestId('sidebar-work-button').click();
   await expect(page).toHaveURL(/\/work$/);
   await page
-    .getByTestId('work-task-item')
+    .getByTestId('sidebar-work-task-item')
     .filter({ hasText: 'Draft project' })
     .getByRole('button')
     .first()

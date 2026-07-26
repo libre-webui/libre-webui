@@ -76,8 +76,20 @@ const mergeTaskDetail = (
   current: WorkTask | null,
   incoming: WorkTask
 ): WorkTask => {
-  if (!current || current.id !== incoming.id || current.messages.length === 0) {
+  if (!current || current.id !== incoming.id) {
     return incoming;
+  }
+  const metadata =
+    current.updatedAt > incoming.updatedAt
+      ? { ...incoming, ...current }
+      : { ...current, ...incoming };
+  if (current.messages.length === 0) {
+    return {
+      ...metadata,
+      messages: incoming.messages,
+      messageCursor: incoming.messageCursor,
+      hasMoreMessages: incoming.hasMoreMessages,
+    };
   }
   const currentLastIndex = Math.max(
     ...current.messages.map(message => message.messageIndex)
@@ -88,8 +100,7 @@ const mergeTaskDetail = (
   const hasMessageGap =
     incoming.messages.length > 0 && currentLastIndex + 1 < incomingFirstIndex;
   return {
-    ...current,
-    ...incoming,
+    ...metadata,
     messages: mergeMessages(current.messages, incoming.messages),
     messageCursor: hasMessageGap
       ? incoming.messageCursor
@@ -103,8 +114,14 @@ const mergeTaskDetail = (
 const upsertTask = (
   tasks: WorkTaskSummary[],
   task: WorkTask
-): WorkTaskSummary[] =>
-  sortTasks([toSummary(task), ...tasks.filter(item => item.id !== task.id)]);
+): WorkTaskSummary[] => {
+  const current = tasks.find(item => item.id === task.id);
+  if (current && current.updatedAt > task.updatedAt) return tasks;
+  return sortTasks([
+    toSummary(task),
+    ...tasks.filter(item => item.id !== task.id),
+  ]);
+};
 
 interface WorkState {
   capabilities: WorkCapabilities | null;
@@ -149,10 +166,19 @@ interface WorkState {
 
 export const useWorkStore = create<WorkState>((set, get) => {
   let stateEpoch = 0;
+  let taskListRequestSequence = 0;
+  let latestStartedVisibleTaskListRequest = 0;
+  let latestCommittedTaskListRequest = 0;
+  let taskMutationRevision = 0;
+  let taskListError: {
+    requestId: number;
+    message: string;
+  } | null = null;
   let workspaceRequestSequence = 0;
   let latestFileListRequest = 0;
   let latestFileRequest = 0;
   let latestFileTarget: string | null = null;
+  const visibleTaskListRequests = new Set<number>();
   const activeWorkspaceRequests = new Set<number>();
   const fileTarget = (taskId: string, path: string): string =>
     `${taskId}\u0000${path}`;
@@ -185,8 +211,13 @@ export const useWorkStore = create<WorkState>((set, get) => {
     }
   };
 
-  const commitTask = (task: WorkTask, epoch = stateEpoch): void => {
+  const commitTask = (
+    task: WorkTask,
+    epoch = stateEpoch,
+    mutation = false
+  ): void => {
     if (!isCurrentEpoch(epoch)) return;
+    if (mutation) taskMutationRevision += 1;
     set(state => ({
       tasks: upsertTask(state.tasks, task),
       selectedTask:
@@ -213,7 +244,7 @@ export const useWorkStore = create<WorkState>((set, get) => {
       if (!response.success || !response.data) {
         throw responseError(fallback, response);
       }
-      commitTask(response.data, requestEpoch);
+      commitTask(response.data, requestEpoch, true);
       return response.data;
     } catch (error) {
       const message = thrownError(error, fallback);
@@ -263,7 +294,13 @@ export const useWorkStore = create<WorkState>((set, get) => {
 
     loadTasks: async (silent = false) => {
       const requestEpoch = stateEpoch;
-      if (!silent) set({ loadingTasks: true, error: null });
+      const requestId = ++taskListRequestSequence;
+      const requestRevision = taskMutationRevision;
+      if (!silent) {
+        latestStartedVisibleTaskListRequest = requestId;
+        visibleTaskListRequests.add(requestId);
+        set({ loadingTasks: true, error: null });
+      }
       try {
         const response = await workApi.listTasks();
         assertCurrentEpoch(requestEpoch);
@@ -271,9 +308,27 @@ export const useWorkStore = create<WorkState>((set, get) => {
           throw responseError('Could not load Work tasks.', response);
         }
         const tasks = sortTasks(response.data);
+        if (
+          requestId <= latestCommittedTaskListRequest ||
+          requestRevision !== taskMutationRevision
+        ) {
+          return;
+        }
+        latestCommittedTaskListRequest = requestId;
         set(state => {
+          const currentTasks = new Map(
+            state.tasks.map(task => [task.id, task])
+          );
+          const mergedTasks = sortTasks(
+            tasks.map(task => {
+              const current = currentTasks.get(task.id);
+              return current && current.updatedAt > task.updatedAt
+                ? current
+                : task;
+            })
+          );
           const summary = state.selectedTaskId
-            ? tasks.find(task => task.id === state.selectedTaskId)
+            ? mergedTasks.find(task => task.id === state.selectedTaskId)
             : undefined;
           const selectedTask =
             summary && state.selectedTask
@@ -285,15 +340,34 @@ export const useWorkStore = create<WorkState>((set, get) => {
                   hasMoreMessages: state.selectedTask.hasMoreMessages,
                 }
               : state.selectedTask;
-          return { tasks, selectedTask };
+          const listError = taskListError;
+          const clearListError =
+            listError !== null && requestId > listError.requestId;
+          if (clearListError) taskListError = null;
+          return {
+            tasks: mergedTasks,
+            selectedTask,
+            ...(clearListError && state.error === listError.message
+              ? { error: null }
+              : {}),
+          };
         });
       } catch (error) {
-        if (!silent && isCurrentEpoch(requestEpoch)) {
-          set({ error: thrownError(error, 'Could not load Work tasks.') });
+        const message = thrownError(error, 'Could not load Work tasks.');
+        if (
+          !silent &&
+          isCurrentEpoch(requestEpoch) &&
+          requestId === latestStartedVisibleTaskListRequest &&
+          requestId > latestCommittedTaskListRequest &&
+          requestRevision === taskMutationRevision
+        ) {
+          taskListError = { requestId, message };
+          set({ error: message });
         }
       } finally {
+        visibleTaskListRequests.delete(requestId);
         if (!silent && isCurrentEpoch(requestEpoch)) {
-          set({ loadingTasks: false });
+          set({ loadingTasks: visibleTaskListRequests.size > 0 });
         }
       }
     },
@@ -417,6 +491,7 @@ export const useWorkStore = create<WorkState>((set, get) => {
         if (get().selectedTaskId === taskId) {
           invalidateWorkspaceRequests();
         }
+        taskMutationRevision += 1;
         set(state => ({
           tasks: state.tasks.filter(task => task.id !== taskId),
           selectedTaskId:
@@ -445,7 +520,7 @@ export const useWorkStore = create<WorkState>((set, get) => {
         if (!response.success || !response.data) {
           throw responseError('Could not start the Work run.', response);
         }
-        commitTask(response.data, requestEpoch);
+        commitTask(response.data, requestEpoch, true);
         return response.data;
       } catch (error) {
         const message = thrownError(error, 'Could not start the Work run.');
@@ -466,9 +541,10 @@ export const useWorkStore = create<WorkState>((set, get) => {
           throw responseError('Could not cancel the Work run.', response);
         }
         if (!response.data) {
+          taskMutationRevision += 1;
           return await get().loadTask(taskId, true);
         }
-        commitTask(response.data, requestEpoch);
+        commitTask(response.data, requestEpoch, true);
         return response.data;
       } catch (error) {
         const message = thrownError(error, 'Could not cancel the Work run.');
@@ -609,6 +685,11 @@ export const useWorkStore = create<WorkState>((set, get) => {
 
     clearAllState: () => {
       stateEpoch += 1;
+      latestStartedVisibleTaskListRequest = ++taskListRequestSequence;
+      latestCommittedTaskListRequest = latestStartedVisibleTaskListRequest;
+      taskMutationRevision += 1;
+      taskListError = null;
+      visibleTaskListRequests.clear();
       invalidateWorkspaceRequests();
       set({
         capabilities: null,
