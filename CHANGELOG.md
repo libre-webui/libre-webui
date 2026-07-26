@@ -7,13 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Libre WebUI's next release introduces **Work**, a native model-driven coding
+environment that gives every task its own durable conversation and filesystem,
+executes tools inside a policy-checked Docker container, and keeps local Ollama,
+Ollama Cloud, and configured provider plugins available from one interface. The
+release also brings the full Work experience to all 25 supported locales,
+including a genuinely mirrored Arabic right-to-left layout.
+
 ### ✨ New Features
+
+- Added distinct **Chat** and **Work** modes in the primary sidebar. Work tasks live alongside normal navigation, retain their own title, status, selected provider, conversation, run history, and files, and can be reopened or permanently deleted from the current task or sidebar.
+- Added one persistent Docker named volume and one managed container identity per Work task. The native agent can list, read, write, and search workspace files, run bounded shell commands, and start or stop an isolated browser preview without receiving a host filesystem mount.
+- Added a responsive Work interface with a durable conversation, Files, Activity, and Preview views, a pointer- and keyboard-resizable desktop split, compact mobile surface controls, run cancellation, editable task titles, paginated history, and stable task ordering while runs update.
+- Added a workspace code editor with light/dark syntax highlighting, LTR code rendering inside RTL layouts, conflict-aware saves, per-file browser drafts, large-file fallbacks, and client-side formatting for supported JavaScript, TypeScript, JSON, CSS, HTML, Markdown, and YAML-family files.
+- Added Work model routing for tool-capable local Ollama and Ollama Cloud models plus active completion/chat plugins through OpenAI-compatible, Anthropic, and Gemini tool-call adapters. The exact provider identity is persisted with each task and run so equal model names cannot silently change routes.
 
 ### 🔧 Improvements
 
+- Added a per-user remote-provider disclosure when Work selects plugin-backed or cloud models. The notice explains that autonomous runs can make multiple billable calls and send requested tool results or file contents, and its dismissal is remembered for that user.
+- Added explicit Work states for Idle, Thinking, Complete, Needs input, and Error, with consistent indicators in the page header and task sidebar.
+- Localized the complete Work interface across all 25 supported locales and added RTL-aware layout, pane resizing, tabs, navigation, and typography for Arabic while preserving LTR direction for code, paths, commands, model IDs, and tool output.
+- Added configurable runtime, concurrency, task-count, command, output, and agent limits plus focused coverage for container policy, lifecycle, capacity, provider adapters, and translations.
+
 ### 🐛 Bug Fixes
 
+- Kept Work tasks in a stable sidebar position as their status and timestamps change, and made the selected task directly deletable without navigating away first.
+- Preserved unsaved workspace drafts across navigation, prevented stale async file responses from replacing the active file, and rejected saves when the underlying file changed after it was opened.
+- Corrected Work layout and keyboard interactions across desktop, compact, light, dark, and Arabic RTL modes.
+
+### 🔒 Security & Dependencies
+
+- Required a current administrator for every Work API and enforced ownership on task-resource endpoints. Role revocation immediately blocks further Work access and attempts to stop active execution while preserving tasks and volumes; user deletion removes managed Work resources before deleting the account.
+- Hardened task containers with a non-root user, read-only root filesystem, bounded temporary storage, dropped Linux capabilities, `no-new-privileges`, CPU, memory, PID, command-time, output, and concurrency limits, and a single task-owned volume mounted at `/workspace`.
+- Added task-ownership labels, path and symlink containment, optimistic file version checks, startup recovery, graceful shutdown, and fail-closed cleanup retries so resources with conflicting task ownership are not silently reused or deleted.
+- Bound previews to a Docker-assigned loopback port and sandboxed the embedded frame. Documented that current task containers have Docker bridge egress, that containers are not virtual machines, and that provider credentials and the Docker socket are never mounted into a task.
+
 ### 📚 Documentation
+
+- Added a complete Work guide covering the UI, models and remote-provider data flow, container lifecycle, persistence and backups, security boundaries, runtime configuration, deployment support, previews, localization, and troubleshooting.
+- Updated the README, quick start, model, shortcut, authentication, storage, Docker, Kubernetes, Electron, hardware, environment-variable, Libre Claw, and troubleshooting documentation for the Work release.
 
 ## [0.14.3] - 2026-07-25
 

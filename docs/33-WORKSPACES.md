@@ -1,252 +1,752 @@
 ---
-title: 'Work Workspaces'
-description: 'Run model-driven coding tasks in persistent, task-scoped local containers'
+sidebar_position: 8
+title: 'Work: Isolated Workspaces'
+description: 'Use Libre WebUI Work for persistent, task-scoped coding workspaces backed by isolated Docker containers'
 slug: /WORKSPACES
-keywords: [work, workspace, coding agent, docker, ollama, local container]
+keywords:
+  [
+    work,
+    workspace,
+    coding agent,
+    docker,
+    ollama,
+    ollama cloud,
+    model provider,
+    persistent workspace,
+    rtl,
+  ]
 ---
 
-# Work Workspaces
+# Work: Isolated Workspaces
 
-Work is Libre WebUI's native local coding surface. Each Work task combines a
-durable conversation with its own durable filesystem. A model can inspect and
-edit that filesystem, run commands in an isolated container, and start a
-preview without receiving general access to the host.
+Work is Libre WebUI's native coding-agent surface. Each Work task combines a
+durable conversation, an explicit model-provider route, and a dedicated
+filesystem at `/workspace`. The selected model can inspect and edit files, run
+commands in a task-scoped Docker container, and start a browser preview.
 
-Work is implemented directly in Libre WebUI and uses a native model tool loop
-with Ollama and configured plugin-provider adapters. It does not require a
-separate agent daemon.
+Work is implemented directly in Libre WebUI. It does not require Libre Claw or
+another agent daemon.
 
-Work is restricted to administrator accounts. It deliberately exposes an
-arbitrary-code container runtime, so every administrator with Work access must
-be treated as a trusted runtime operator—not merely as a normal chat user.
+:::warning Trusted administrators only
 
-## How It Works
+Every Work API requires an authenticated administrator account. Work
+deliberately lets a model execute arbitrary shell commands inside a container,
+and current UI-created Work containers have network egress. Treat every
+administrator with Work access as a trusted runtime operator, not merely as a
+chat user.
+
+:::
+
+## Release Highlights
+
+This release introduces Work as a complete task workflow:
+
+- Separate **Work** and **Chat** actions in the main sidebar, with the active
+  mode visibly selected.
+- Work tasks in the normal sidebar instead of a second task rail. Existing
+  task positions remain stable while runs update, and the selected task can be
+  deleted directly.
+- A dedicated Docker container identity and persistent named volume for every
+  task. Containers can be stopped or recreated without deleting task files.
+- Durable conversation, run state, tool activity, model selection, and task
+  ownership in Libre WebUI's database.
+- Tool-capable local Ollama models, Ollama Cloud models, and configured
+  completion or chat provider plugins.
+- A responsive Conversation/Workspace split with draggable, keyboard
+  accessible sizing on desktop and a focused surface switcher on smaller
+  screens.
+- Integrated Files, Activity, and Preview views.
+- Dark- and light-mode syntax highlighting, browser-side code formatting,
+  save conflict detection, and temporary unsaved drafts.
+- A dismissible, per-user disclosure when a remote model provider is selected.
+- Complete Work translations across all 25 supported locales, including
+  native Arabic right-to-left layout while code, paths, model identifiers, and
+  command output remain left-to-right.
+
+The persistent unit is the task workspace, not a continuously running
+container. Libre WebUI starts, stops, and may recreate the task's container as
+needed while retaining its named volume.
+
+## Architecture
 
 ```mermaid
 flowchart LR
-    UI["Work pane"]
-    API["Authenticated /api/work routes"]
-    AGENT["Model tool loop"]
-    RUNTIME["Docker runtime"]
-    FILES["Persistent named volume"]
+    UI["Work interface"]
+    API["Authenticated admin-only /api/work API"]
+    DB["Libre WebUI database"]
+    AGENT["Native model/tool loop"]
+    PROVIDER["Selected Ollama or plugin provider"]
+    CONTAINER["Task-scoped Docker container"]
+    VOLUME["Task-scoped named volume"]
+    PREVIEW["Loopback browser preview"]
 
     UI --> API
+    API --> DB
     API --> AGENT
-    AGENT --> RUNTIME
-    RUNTIME --> FILES
-    API --> FILES
+    AGENT <--> PROVIDER
+    AGENT --> CONTAINER
+    API --> CONTAINER
+    CONTAINER <--> VOLUME
+    CONTAINER --> PREVIEW
 ```
 
-Libre WebUI owns the task record, messages, tool activity, runtime policy, and
-workspace location. The model receives a small set of tools; it never chooses a
-host mount, container image, container identifier, or runtime flag.
+Libre WebUI, rather than the model or browser, chooses the container name,
+volume name, image, mount, user, limits, network mode, and preview port. The
+model receives only these tools:
 
-The container is replaceable. The workspace is not: reopening an older task
-loads its existing messages and files even after Libre WebUI or the task
-container has restarted.
+- `list_files`
+- `read_file`
+- `write_file`
+- `search_files`
+- `run_command`
+- `start_preview`
+- `stop_preview`
+
+Model requests are made by the Libre WebUI backend. They do not originate from
+the Work container and do not depend on the container's network policy.
 
 ## Requirements
 
-- A model provider with tool calling: an installed Ollama model, an Ollama
-  Cloud model, or an active completion plugin with credentials configured for
-  the current administrator. Plugin-backed models must implement the standard
-  tool-calling API for their provider.
-- Docker installed on the machine that runs the Libre WebUI backend.
-- Permission for that backend process to invoke the configured runtime.
-- Enough disk space for generated projects and their local dependencies.
-- An authenticated Libre WebUI administrator account.
+Work needs all of the following on the machine running the Libre WebUI backend:
 
-Choose a model that supports tool calls. Libre WebUI inspects Ollama model
-capabilities before a run. Configured plugin providers are allowed through the
-same OpenAI-compatible, Anthropic, or Gemini tool-call adapters used by Work;
-if the remote model rejects tools, the run fails without falling back to a
-different provider.
+- Docker installed, with a reachable daemon.
+- Permission for the backend process to invoke `docker`, or the executable
+  configured through `WORK_DOCKER_COMMAND`.
+- A tool-capable model exposed through:
+  - a healthy Ollama service, including models reached through Ollama Cloud; or
+  - an active completion/chat plugin with an exact configured model and
+    credentials for the current administrator.
+- Enough Docker storage for the runtime image, generated projects, and
+  project-local dependencies.
+- An authenticated administrator account.
 
-## Runtime Configuration
+Libre WebUI checks Ollama's advertised model capabilities before creating a
+run and rejects an Ollama model that does not advertise `tools`. Plugin-backed
+models must support their provider's tool-calling protocol. If a selected
+remote model rejects tools, the run fails; Work does not silently switch to a
+different model or provider.
 
-Work runtime settings are read by the backend:
+## Start Locally
 
-| Variable                  | Default                                                                                       | Purpose                                         |
-| ------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `WORK_RUNTIME_IMAGE`      | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Image used for task commands                    |
-| `WORK_DOCKER_COMMAND`     | `docker`                                                                                      | Docker CLI executable                           |
-| `WORK_COMMAND_TIMEOUT_MS` | `120000`                                                                                      | Maximum duration of one command                 |
-| `WORK_MAX_OUTPUT_CHARS`   | `50000`                                                                                       | Maximum captured characters per command         |
-| `WORK_MAX_AGENT_ROUNDS`   | `48`                                                                                          | Maximum model/tool iterations in one run        |
-| `WORK_MEMORY_LIMIT`       | `2g`                                                                                          | Per-container memory limit                      |
-| `WORK_CPU_LIMIT`          | `2`                                                                                           | Per-container CPU limit                         |
-| `WORK_PIDS_LIMIT`         | `256`                                                                                         | Per-container process limit                     |
-| `WORK_PREVIEW_PORT`       | `4173`                                                                                        | Container port used by the task preview process |
-| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`   | `2`                                                                                | Concurrent container-backed tasks per instance  |
-| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` | `1`                                                                                | Concurrent container-backed tasks per admin     |
-| `WORK_MAX_TASKS_GLOBAL`              | `500`                                                                              | Persisted task limit per instance                |
-| `WORK_MAX_TASKS_PER_USER`            | `100`                                                                              | Persisted task limit per admin                   |
+For the simplest supported Work setup, run Libre WebUI and Docker on the same
+computer as the browser:
 
-Runtime status is shown in the Work pane. Libre WebUI does not silently fall
-back to running model commands on the host.
+```bash
+docker info
+npx libre-webui
+```
 
-Run, preview, file-helper, command, and container-recreation paths all acquire
-the same in-process runtime capacity lease. Database admission checks reject
-excess run/preview requests before they start, while the runtime lease also
-covers short-lived helper requests that do not have a durable run row. A task
-with nested operations counts once. Limits return HTTP 429 and can be raised
-explicitly for a larger Docker host.
+Open `http://localhost:8080`, sign in as an administrator, select **Work** in
+the sidebar, choose a compatible model, and describe the project or change.
 
-Plugin-backed runs are additionally capped at 12 model/tool rounds, 64 total
-tool calls, and at most 4,096 requested output tokens per model response.
-Ollama runs allow at most 128 total tool calls. A single autonomous run can
-therefore make multiple provider calls and may incur charges; review the
-selected provider's pricing and usage controls before starting it.
+If Docker is missing, stopped, or inaccessible, Work shows **Runtime
+unavailable** with the backend's reason and disables the Run composer. Libre
+WebUI never falls back to executing Work commands directly on the host.
 
-Use a fixed image version or digest in production. A mutable `latest` image can
-change the available tools and the security boundary without changing Libre
-WebUI itself.
+The runtime image is inspected on first use and pulled automatically when it
+is absent. The first operation can therefore take longer than later ones.
 
-On backend startup, every known Work container is stopped before Work accepts
-new operations. Any failed whole-container teardown—during startup, preview
-failure, cancellation, demotion, or ordinary run cleanup—remains fail-closed
-and retries every 10 seconds. This prevents a command or network-enabled
-preview kept alive by the Docker daemon from becoming invisible after its
-database or UI state becomes terminal.
+## Using the Work Interface
 
-## Network Access
+### Create and revisit tasks
 
-New tasks start with container networking disabled. This is enough for projects
-that use tools already present in the Work image, but package downloads,
-external APIs, and remote Git operations require network access.
+Select **Work** beside **Chat** in the sidebar. Enter an instruction, choose a
+model, and select **Run**. The first message creates the task, its first run,
+its provider route, and its persistent workspace.
 
-The toggle controls network access for the task container only. It does not
-control model traffic sent by the Libre WebUI backend. Model requests go to the
-operator-configured Ollama endpoint, Ollama Cloud, or the exact plugin endpoint
-persisted with the task and run. Model names never decide the provider route:
-this prevents a plugin model from intercepting an identically named Ollama
-model.
+Each task remains in the primary sidebar. Reopening it restores its recent
+conversation, Files view, current provider/model selection, and workspace.
+Older conversation messages can be loaded in pages. You can rename the task
+from its title and permanently delete it from either the selected-task menu or
+the sidebar.
 
-When a remote model is selected, its provider receives the Work system prompt,
-conversation history, tool definitions, and tool results. Tool results can
-contain source files, command output, directory listings, or other workspace
-data the model requested. The named volume and provider credentials remain on
-the backend host; credentials are never mounted into the task container.
-Operators must review the provider's retention and training policies before
-using Work with sensitive projects.
+Only one run can be active for a task. A later instruction creates another run
+against the same conversation and filesystem.
 
-Enabling the task's network toggle is a security decision. Code running in the
-container can then send prompts, generated files, source code, and tool output
-to external services. Disable networking again when it is no longer needed.
-Network access does not add credentials: Libre WebUI does not mount SSH keys,
-cloud credentials, browser profiles, or the Docker socket into task
-containers.
+### Understand task status
 
-The current network-enabled mode provides unrestricted Docker bridge egress. It
-does not provide an outbound firewall: generated code may be able to reach
-other containers on that bridge, services on the Docker host or local network,
-and cloud-instance metadata endpoints. Use Work only for trusted administrators
-on a host and network where that access is acceptable.
+The interface maps durable backend states to a smaller user-facing set:
 
-## Persistence And Isolation
+| Interface status | Backend state            | Indicator color      |
+| ---------------- | ------------------------ | -------------------- |
+| Idle             | `idle`                   | `rgb(255, 255, 255)` |
+| Thinking         | `preparing` or `running` | `rgb(48, 121, 255)`  |
+| Complete         | `completed`              | `rgb(76, 212, 117)`  |
+| Needs input      | `cancelled`              | `rgb(255, 204, 0)`   |
+| Error            | `failed`                 | `rgb(255, 61, 129)`  |
 
-Each task receives an opaque server-generated identifier and a dedicated Docker
-named volume. The volume name is derived on the backend and is never accepted
-from a browser request. Every Work API operation also verifies the authenticated
-task owner.
+Stopping an active run changes it to **Needs input** and preserves its files.
 
-Only the task workspace is writable and persistent. The remainder of the
-container is disposable. Two tasks can contain files with the same names
-without sharing their contents, command history, preview process, or model
-conversation.
+### Resize the workspace
 
-Deleting a task is destructive because it removes the durable workspace.
-Review the confirmation in the UI before proceeding. Stopping a preview or
-cancelling a run does not delete task files.
+At the `xl` desktop breakpoint, Conversation and Workspace share a draggable
+split:
+
+- The default conversation width is 45%.
+- The preferred range is 30% to 70%, subject to minimum content widths.
+- The saved ratio is scoped to the signed-in user in that browser.
+- Arrow keys move the separator by 2%; hold Shift for 10%.
+- Home and End select the available minimum and maximum.
+- Enter or double-click resets the split.
+
+The controls follow the active writing direction. In Arabic, Conversation is
+on the right, Workspace is on the left, and pointer and arrow-key resizing
+continue to operate in the expected visual direction.
+
+On smaller screens, use the Conversation/Workspace control in the task header
+to switch surfaces.
+
+### Files
+
+The Files tab browses direct children of `/workspace`, opens UTF-8 text files,
+and saves changes back to the task volume.
+
+The editor provides:
+
+- syntax highlighting in both light and dark modes for common web, systems,
+  scripting, data, and markup languages;
+- `Cmd/Ctrl+S` to save;
+- `Shift+Alt+F` to format supported files;
+- optimistic save conflict detection, so an older editor view cannot silently
+  overwrite a file changed since it was opened;
+- task-and-path-scoped unsaved drafts in browser session storage; and
+- navigation warnings while an unsaved edit is open.
+
+Live highlighting pauses above 8,000 characters or 400 lines to keep editing
+responsive. Formatting is available up to 100,000 characters and 4,000 lines
+for JavaScript/JSX, TypeScript/TSX, JSON variants, CSS/SCSS/Less, HTML,
+Markdown/MDX, and YAML.
+
+Browser drafts are convenience state, not a backup. They are cleared after a
+successful save or task deletion and normally disappear when the browser
+session ends.
+
+### Activity
+
+The Activity tab shows tool calls, tool results, file operations, command
+output, and errors. Tool metadata can be expanded in the conversation. Command
+and tool output is displayed left-to-right even when the surrounding
+interface is right-to-left.
+
+Output is deliberately bounded. A truncated result is not proof that a command
+produced no additional output; ask the model to inspect a narrower result or
+run a more focused command.
+
+### Preview
+
+The Preview tab starts, stops, embeds, and opens the generated web application.
+The default start command is:
+
+```bash
+npm run dev -- --host 0.0.0.0 --port 4173
+```
+
+If the project uses another command, enter it before selecting **Start
+preview**. The process must listen on `0.0.0.0` and the configured
+`WORK_PREVIEW_PORT`. Work waits up to 15 seconds for the port to become ready.
+
+The model can also start the preview through its `start_preview` tool. This is
+the only supported way for a model to leave a process running. Ordinary
+`run_command` calls clean up background descendants when the command finishes.
+
+## Providers, Routing, and Data Disclosure
+
+### Supported provider routes
+
+| Route                    | Validation and behavior                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------------- |
+| Local Ollama             | Ollama must be healthy and the exact model must advertise tool support.                           |
+| Ollama Cloud             | Routed explicitly through Ollama; cloud-suffixed models display the remote-provider disclosure.   |
+| Completion/chat plugin   | Plugin must be active, list the exact model, and have a credential for the current administrator. |
+| Anthropic plugin         | Uses Work's Anthropic messages and tool-use adapter.                                              |
+| Gemini plugin            | Uses Work's Gemini contents and function-calling adapter.                                         |
+| Other compatible plugins | Use the OpenAI-style messages, tools, and tool-choice request shape.                              |
+
+Provider type and plugin ID are stored on both the task and each run. A model
+name never chooses the route by itself. Activating a plugin with the same model
+name as an Ollama model cannot intercept an existing task.
+
+### What a provider receives
+
+For each model round, the selected provider can receive:
+
+- the Work system prompt;
+- up to the most recent 30 user/assistant conversation messages, bounded to
+  256 KB;
+- Work tool definitions;
+- assistant tool-call history; and
+- tool results, which can include directory listings, requested file contents,
+  search results, command output, and errors.
+
+The named volume is not uploaded wholesale. However, any file content or
+command output returned through a tool becomes part of the model conversation
+and is sent to the selected provider. Review remote providers' retention,
+training, pricing, and usage policies before using sensitive source code.
+
+Provider credentials remain on the Libre WebUI backend, whether they are
+configured deployment-wide or for an individual user. They are used for
+backend model requests and are never mounted into the Work container.
+
+Application-layer credential encryption is not whole-task encryption. Work
+conversations, tool results, command output, and task metadata are ordinary
+database content, while workspace files and dependencies are ordinary files in
+the task's Docker volume. Use host access controls and disk encryption when the
+deployment's threat model requires encryption at rest.
+
+### Remote-provider disclosure
+
+Work treats plugin models and Ollama names ending in `:cloud` or `-cloud` as
+remote for disclosure purposes. Selecting one opens a dismissible notice that
+explains provider data flow and the possibility of multiple billable calls.
+The dismissal preference is remembered per Libre WebUI user.
+
+Plugin runs are capped at 12 model/tool rounds, 64 total tool calls, and 4,096
+requested output tokens per model response. Ollama runs use the configured
+round limit, 48 by default, and allow up to 128 total tool calls. A single Work
+run can therefore make many model-provider requests.
+
+## Persistence and Runtime Lifecycle
+
+Libre WebUI separates durable state from execution state:
+
+| State                                       | Storage                           | Lifetime                                                                   |
+| ------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------- |
+| Task ownership, title, provider, and status | Libre WebUI database              | Until the task or owning user is deleted                                   |
+| Runs, errors, messages, and tool activity   | Libre WebUI database              | Until the task is deleted                                                  |
+| Workspace files                             | Task-specific Docker named volume | Survive run cancellation, preview stop, container restart, and app restart |
+| Root filesystem and temporary files         | Task-specific Docker container    | Disposable; may be stopped or recreated                                    |
+| Preview process                             | Running task container            | Ephemeral; retained only while verified healthy                            |
+| Unsaved editor draft                        | Browser session storage           | Temporary browser-session convenience state                                |
+
+Every task gets a server-generated UUID. Its container and volume names are
+derived on the backend and are never accepted from a browser request. Libre
+WebUI creates both resources with managed and task-ownership labels. Before
+reuse or deletion, it verifies the task-ownership label and refuses a resource
+whose label belongs to another task.
+
+Containers are prepared on demand. File-helper operations stop an otherwise
+idle container, commands stop the container after completion, and a verified
+preview may keep it running so the user can inspect the app. The named volume
+stays mounted again when the same task container is restarted or recreated.
+
+On backend startup, active runs are marked failed, preview state is cleared,
+and Libre WebUI attempts to stop every known Work container. If Docker cannot
+prove a container was stopped, the cleanup remains tracked, new mutable Work
+operations stay blocked, and Libre WebUI retries every 10 seconds. An old
+command or preview may still be running while Docker is unavailable, so restore
+daemon access and let recovery complete before treating the runtime as stopped.
+
+## Network Behavior
+
+:::caution Work is not offline
+
+Current UI-created Work tasks use Docker bridge networking from creation.
+Existing tasks are migrated to the same network-enabled state. There is no
+network on/off control in the Work interface.
+
+:::
+
+Bridge egress allows package downloads, remote Git operations, external APIs,
+and any other connection permitted by the Docker host's network policy. It is
+not an outbound firewall. Generated code may be able to reach:
+
+- other services or containers reachable through Docker networking;
+- services on the Docker host;
+- systems on the host's local network;
+- internet services; and
+- infrastructure metadata endpoints, depending on the deployment.
+
+Do not assume that placing code in Work prevents it from transmitting data.
+Use Work only for trusted administrators and apply host, Docker, or upstream
+egress controls when the deployment requires a stricter network boundary.
+There is no Work environment variable that changes the UI-created task default
+to offline mode.
+
+Network access does not add credentials. Libre WebUI does not mount SSH keys,
+cloud credentials, browser profiles, the host home directory, or the Docker
+socket into task containers. Code can still transmit any credentials or
+secrets that a user or model writes into `/workspace`.
+
+This container traffic is separate from model traffic. Ollama and plugin
+requests are always sent by the Libre WebUI backend to the explicitly selected
+provider route.
 
 ## Container Security Boundary
 
-The default runtime policy:
+A current UI-created Work container:
 
-- runs as a non-root user;
-- mounts only the selected task workspace at `/workspace`;
-- uses a read-only container root filesystem plus bounded temporary storage;
-- drops Linux capabilities and enables `no-new-privileges`;
+- runs as non-root UID/GID `1000:1000`;
+- uses `/workspace` as its working directory;
+- mounts only the selected task's named volume at `/workspace`;
+- uses a read-only root filesystem and a bounded `/tmp` temporary filesystem;
+- drops all Linux capabilities;
+- enables `no-new-privileges`;
+- is non-privileged and uses an init process;
 - applies CPU, memory, process, command-time, and output limits;
-- disables networking unless it was enabled for that task;
-- never mounts the host home directory, repository root, devices, credentials,
-  or container-runtime socket.
+- uses Docker bridge networking; and
+- publishes only the configured preview port to a Docker-assigned loopback
+  host port.
 
-Tool arguments are still validated by Libre WebUI. Container isolation is not
-used as a substitute for authorization, path containment, resource limits, or
-command cancellation.
+Path validation rejects absolute paths, traversal segments, backslashes, NUL
+characters, and overlong paths. File helpers resolve real paths and reject
+symlink escapes. Writes use a temporary file and atomic rename.
 
-A Work volume does not currently have an independent disk quota. A generated
-project or package install can exhaust space allocated to Docker volumes.
-Monitor Docker storage, enforce host-level storage limits where available, and
-do not expose Work to untrusted users.
+These controls reduce accidental host exposure; they do not make Work a
+virtual machine or a safe malware-analysis environment. Containers share the
+Docker host's kernel. A Docker, runtime, image, dependency, or kernel
+vulnerability can cross the intended boundary.
 
-A container is not a virtual machine. It shares the runtime host's kernel, and a
-runtime or kernel vulnerability can cross this boundary. Do not present Work as
-a safe place to execute deliberately malicious code on a sensitive host.
+Work volumes do not have an independent disk quota. A generated project or
+package installation can exhaust Docker storage. Monitor volume growth and
+apply host-level storage limits where needed.
 
-## Preview Security
+## Preview Security and Reachability
 
-Generated applications are untrusted code. For a network-enabled task, Libre
-WebUI publishes the configured preview port to a dynamically assigned loopback
-port. The preview therefore has a different origin from Libre WebUI and does not
-receive the WebUI's authentication credentials. The model and browser cannot
-choose an arbitrary host port.
+For each task, Docker publishes the configured container preview port to a
+dynamically assigned port on `127.0.0.1`. The model and browser cannot choose
+an arbitrary host port. Libre WebUI accepts only loopback HTTP/HTTPS preview
+URLs and embeds the application in an iframe sandbox that allows scripts,
+forms, modals, and downloads, but does not grant same-origin access to Libre
+WebUI.
 
-Preview is unavailable while task networking is disabled.
+The preview has a different origin and does not receive Libre WebUI's
+authentication token. Generated application code remains untrusted and can use
+the task's network egress to transmit anything it can read from its own
+workspace or browser inputs.
 
-To permit these embedded loopback frames, the current WebUI response policy
-allows loopback frame sources and does not enable cross-origin embedder policy
-or automatic HTTP-to-HTTPS request upgrades. Those response-header choices
-apply to the full WebUI origin, not only the Work pane. Operators who require
-stricter cross-origin isolation should disable or remove embedded previews and
-restore those headers.
+The embedded preview is intentionally local to the backend host:
 
-The embedded preview is a local-machine feature: the browser and Libre WebUI
-backend must run on the same host because the preview URL uses a dynamically
-assigned loopback port. A browser connecting to Libre WebUI from another
-machine cannot reach that backend loopback address. HTTPS deployments may also
-block a plain-HTTP local preview under browser mixed-content rules.
+- It works when the browser and backend run on the same computer.
+- A browser connecting to a Libre WebUI backend on another machine resolves
+  `127.0.0.1` to the browser's own computer, not the backend.
+- An HTTPS-hosted Libre WebUI can have its plain-HTTP loopback preview blocked
+  by browser mixed-content policy.
 
-Do not copy secrets into a generated application. Browser code with task
-network access can transmit any data that application can read.
+To allow local previews, Libre WebUI's response policy permits loopback frame
+sources, disables cross-origin embedder policy, and does not automatically
+upgrade HTTP previews to HTTPS. Those header choices apply to the whole WebUI
+origin. Operators requiring stricter cross-origin isolation should disable or
+remove embedded previews and restore their preferred headers.
 
-## Docker, The Docker Image, And Helm
+## Deployment Matrix
 
-The normal Libre WebUI Docker image does not include the Docker CLI and does not
-receive the host Docker socket. Therefore Work reports the runtime as
-unavailable in the standard Compose and Helm deployments.
+Work availability follows the machine and process running the Libre WebUI
+backend, not merely the browser or desktop interface.
+
+| Deployment                                | Work runs and files                                                                                       | Embedded preview                                                                            |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `npx libre-webui` on a local computer     | Supported when Docker is installed, running, and callable by the backend user.                            | Supported when the browser is on that same computer.                                        |
+| Source development on a local computer    | Supported under the same Docker and provider requirements.                                                | Supported when the development browser and backend share the host.                          |
+| Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.  | Supported only when that backend's loopback is also local to the desktop client.            |
+| Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                               | Not reachable from an ordinary remote browser because the returned URL is backend loopback. |
+| Standard repository Docker Compose        | Unavailable by default: the Libre WebUI image has no Docker CLI and is not given the host socket.         | Unavailable with the default runtime configuration.                                         |
+| Current Kubernetes/Helm deployment        | Unavailable: the chart does not create a Work runtime driver, per-task Pods, RBAC, or persistent volumes. | Unavailable.                                                                                |
 
 Mounting `/var/run/docker.sock` into a web application container gives that
-application root-equivalent control of the Docker host. Libre WebUI does not
-enable this configuration by default. Operators who deliberately provide a
-runtime are responsible for protecting access to the Docker daemon and for
-backing up the Docker volumes that contain Work task data.
+container root-equivalent control over the Docker host. Libre WebUI does not
+enable this in its Compose or Helm configuration. An operator who builds a
+custom Docker-backed deployment owns the daemon-security, network, lifecycle,
+backup, and access-control consequences.
 
-Kubernetes does not expose Docker inside a pod. Supporting Work there requires a
-separate Kubernetes runtime driver, tightly scoped RBAC, per-task pods, and
-persistent volumes. The current Helm chart does not create those resources.
+Kubernetes support would require a separate runtime implementation with
+tightly scoped RBAC, a Pod and persistent volume design for each task, cleanup
+reconciliation, and a preview-routing design. The current Docker runtime must
+not be described as Kubernetes-native.
+
+## Runtime Configuration
+
+Work reads these variables in the backend process:
+
+| Variable                            | Default                                                                                       | Purpose                                                    |
+| ----------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `WORK_RUNTIME_IMAGE`                | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Image used for task containers                             |
+| `WORK_DOCKER_COMMAND`               | `docker`                                                                                      | Docker CLI executable                                      |
+| `WORK_COMMAND_TIMEOUT_MS`           | `120000`                                                                                      | Default command timeout                                    |
+| `WORK_MAX_OUTPUT_CHARS`             | `50000`                                                                                       | Maximum captured command/search output                     |
+| `WORK_MAX_AGENT_ROUNDS`             | `48`                                                                                          | Maximum Ollama model/tool rounds per run                   |
+| `WORK_MEMORY_LIMIT`                 | `2g`                                                                                          | Per-container memory limit                                 |
+| `WORK_CPU_LIMIT`                    | `2`                                                                                           | Per-container CPU limit                                    |
+| `WORK_PIDS_LIMIT`                   | `256`                                                                                         | Per-container process limit                                |
+| `WORK_PREVIEW_PORT`                 | `4173`                                                                                        | Port the app must listen on inside the container           |
+| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`   | `2`                                                                                           | Concurrent container-backed tasks per Libre WebUI instance |
+| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` | `1`                                                                                           | Concurrent container-backed tasks per administrator        |
+| `WORK_MAX_TASKS_GLOBAL`             | `500`                                                                                         | Persisted Work task limit per Libre WebUI instance         |
+| `WORK_MAX_TASKS_PER_USER`           | `100`                                                                                         | Persisted Work task limit per administrator                |
+
+Use a fixed image version or digest in production. A mutable image tag can
+change both the available command-line tools and the security boundary without
+changing Libre WebUI.
+
+Run, preview, file-helper, command, and container-recreation operations share
+the same in-process capacity accounting. A nested operation on an already
+counted task does not count as another task. Requests over a task or runtime
+admission limit return HTTP 429.
+
+### Fixed protocol and UI limits
+
+| Item                                   | Limit                                            |
+| -------------------------------------- | ------------------------------------------------ |
+| New task or run message                | 65,536 characters and UTF-8 bytes                |
+| Model identifier on task create/update | 500 characters and UTF-8 bytes                   |
+| Plugin provider ID                     | 200 characters                                   |
+| Active runs per task                   | 1                                                |
+| Command text                           | 20,000 characters                                |
+| Command timeout requested by a tool    | 1 to 600 seconds                                 |
+| Preview readiness                      | 15 seconds                                       |
+| File read/write                        | 2,000,000 bytes of UTF-8 text                    |
+| Direct directory listing               | First 1,000 entries                              |
+| Message page                           | Up to 200 messages and 1,000,000 bytes           |
+| Persisted individual message           | 100 KB                                           |
+| Conversation context sent to a model   | Last 30 user/assistant messages, up to 256 KB    |
+| Persisted tool output                  | About 20,000 source characters plus a marker     |
+| Live editor highlighting               | 8,000 characters and 400 lines                   |
+| Browser-side formatting                | 100,000 characters and 4,000 lines               |
+| Plugin agent loop                      | Up to 12 rounds and 64 total tool calls          |
+| Ollama agent loop                      | Configured rounds and up to 128 total tool calls |
+
+File access is for UTF-8 text. The integrated editor is not a binary-file
+editor, and a file larger than 2 MB cannot be opened through the Work file API.
+
+## API Summary
+
+All endpoints are under `/api/work`, require authentication, and require the
+current database role to be `admin`.
+
+| Method   | Path                       | Purpose                                      |
+| -------- | -------------------------- | -------------------------------------------- |
+| `GET`    | `/capabilities`            | Docker/provider availability and limits      |
+| `GET`    | `/tasks`                   | List the current administrator's tasks       |
+| `POST`   | `/tasks`                   | Create a task and its first asynchronous run |
+| `GET`    | `/tasks/:id`               | Load task state and recent messages          |
+| `GET`    | `/tasks/:id/messages`      | Page older messages                          |
+| `PATCH`  | `/tasks/:id`               | Rename or change the explicit model route    |
+| `DELETE` | `/tasks/:id`               | Remove the task and durable workspace        |
+| `POST`   | `/tasks/:id/runs`          | Start a follow-up run                        |
+| `POST`   | `/tasks/:id/cancel`        | Cancel the active run                        |
+| `GET`    | `/tasks/:id/files`         | List a workspace directory                   |
+| `GET`    | `/tasks/:id/file`          | Read a workspace text file                   |
+| `PUT`    | `/tasks/:id/file`          | Save a workspace text file                   |
+| `POST`   | `/tasks/:id/preview/start` | Start the managed preview                    |
+| `POST`   | `/tasks/:id/preview/stop`  | Stop the managed preview                     |
+
+The task ID is always checked against the authenticated owner. Current-role
+authorization is read from the database on each request, so demoting an
+administrator takes effect even if an older JWT still says that user was an
+administrator.
+
+The task update schema retains a backend `networkEnabled` field for internal
+compatibility. It is not exposed as a supported Work UI control, and database
+migration restores existing tasks to the current network-enabled behavior. Do
+not use that field as a durable offline-mode configuration.
+
+## Deletion, Account Changes, and Backup
+
+### Task deletion
+
+Task deletion is intentionally destructive:
+
+1. The backend marks the task as retiring so no new mutable operation can
+   begin.
+2. An active run is cancelled and the task container is stopped.
+3. Libre WebUI validates the task-ownership labels on both Docker resources.
+4. The container and named volume are removed.
+5. The database task is deleted, cascading its runs and messages.
+6. Browser drafts for that task are cleared after the API succeeds.
+
+If Docker cleanup fails, Libre WebUI retains the task database record and
+returns an error so the administrator can repair Docker and retry. It does not
+silently delete the metadata while leaving an untracked workspace container or
+volume.
+
+Stopping a run or preview is different from deletion: it stops execution but
+preserves the named volume and conversation.
+
+### Administrator demotion and user deletion
+
+When an administrator is demoted, Libre WebUI persists the role revocation
+before depending on Docker cleanup. Every later Work request checks the current
+role. The backend then suspends the user's Work tasks and attempts to abort
+active runs and stop their containers. If cleanup fails, Work access remains
+revoked and the role update reports the failure so an operator can restore
+Docker and retry the same update.
+
+Deleting another user first removes all of that user's managed Work resources.
+If external Docker cleanup fails, the user record is retained so an
+administrator can retry instead of losing the ownership metadata needed for
+safe cleanup.
+
+### Back up the complete task
+
+A complete Work backup needs both:
+
+- the Libre WebUI database, which contains task ownership, Docker resource
+  names, provider routing, runs, messages, and activity; and
+- every Docker volume labeled `ai.libre-webui.managed=true`, which contains
+  the Work files.
+
+The disposable containers and preview processes do not need to be backed up.
+For a consistent backup, stop new Work activity and stop the backend before
+capturing the database and task volumes. Follow Docker's documented
+volume-backup procedure for the storage driver in use.
+
+Restore the database and its matching volumes together. Recreate each volume
+under the exact name recorded in the database and restore its task-ownership
+metadata, including `ai.libre-webui.task=<task UUID>`; also restore
+`ai.libre-webui.managed=true` so operator inventory remains accurate. Copying
+only a volume's files does not preserve Docker labels. Restoring only the
+database produces task records whose files are absent; restoring only volumes
+loses the task ownership and generated resource names that Libre WebUI uses to
+find and validate them.
+
+If the installation also uses encrypted provider credentials, follow the main
+Libre WebUI backup guidance for its data directory and encryption key.
+
+## Localization and Arabic RTL
+
+The complete Work interface is translated in all 25 supported locales:
+English, Arabic, Bengali, Czech, Danish, German, Spanish, French, Hindi,
+Indonesian, Icelandic, Italian, Japanese, Korean, Malay, Dutch, Polish,
+Portuguese, Russian, Swedish, Thai, Turkish, Ukrainian, Vietnamese, and
+Chinese.
+
+Arabic applies `lang="ar"` and `dir="rtl"` before React renders. The sidebar
+moves to the right, Conversation occupies the right side of the desktop split,
+Workspace occupies the left, directional icons mirror, tab navigation follows
+RTL order, and drag/keyboard resizing uses visual RTL semantics.
+
+Technical content remains left-to-right where direction affects correctness:
+
+- code and syntax highlighting;
+- filesystem paths;
+- model identifiers;
+- commands and preview logs;
+- tool output and metadata; and
+- code-block content.
+
+Task names, natural-language prompts, errors, filenames, and preview commands
+use automatic text direction where appropriate.
 
 ## Troubleshooting
 
-### Runtime unavailable
+### Runtime unavailable when using `npx`
 
-Confirm Docker is installed on the backend machine and that the backend user can
-run the configured `WORK_DOCKER_COMMAND`. If Libre WebUI itself runs in Docker or
-Kubernetes, read the deployment limitations above.
+`npx libre-webui` runs the backend on the host, but it does not install Docker.
+Run `docker info` as the same operating-system user that starts Libre WebUI. If
+the command is absent or cannot reach the daemon, install/start Docker or fix
+that user's daemon permissions, then reload Work.
 
-### A run says the model lacks tools
+Also confirm that either Ollama is healthy or at least one active
+completion/chat plugin has a model and credential configured for the current
+administrator.
 
-Inspect the model in Ollama and confirm its capabilities include `tools`. Pull a
-tool-capable model or choose one of the compatible installed models.
+### Runtime unavailable in Docker or Kubernetes
 
-### Package installation fails
+This is expected with the repository's standard Compose and Helm deployment.
+They do not provide a Docker CLI/socket or a Kubernetes Work runtime. Do not
+mount the host Docker socket merely to clear the status without first
+understanding its root-equivalent host privileges.
 
-The task probably has networking disabled. Enable network access only if the
-project and dependencies are trusted. A change applies to subsequent commands
-and previews; it does not alter a command that is already running.
+### No Work-compatible models
 
-### Files are present but the preview stopped
+For Ollama, inspect or choose a model that advertises `tools`. For a plugin,
+confirm that:
 
-Preview processes are ephemeral. Reopen the task and start its preview again;
-the persistent workspace remains unchanged.
+- its type is completion or chat;
+- it is active;
+- the exact model appears in its configured model map;
+- the current administrator has a usable API key; and
+- the remote model implements tool calling for that provider.
+
+Work never routes to another provider as a fallback.
+
+### A package install or remote Git command fails
+
+Current UI-created tasks already have bridge egress; there is no Work network
+toggle to enable. Inspect DNS, proxy, firewall, registry, certificate, Docker
+daemon, and upstream service configuration. Also confirm that the selected
+runtime image contains the command being invoked.
+
+### A run stops at an agent limit
+
+The model may have exhausted its round or tool-call allowance. Start a
+follow-up run with a narrower instruction. For plugin models, remember that the
+limit is 12 rounds and 64 tool calls even when
+`WORK_MAX_AGENT_ROUNDS` is higher.
+
+### HTTP 429 when starting work
+
+The instance or administrator reached an active-runtime or persisted-task
+admission limit. Wait for another run or preview to stop, delete obsolete
+tasks, or deliberately raise the corresponding `WORK_MAX_*` setting for a
+host with enough resources.
+
+### The preview does not become ready
+
+Confirm that the command remains running, binds to `0.0.0.0`, and listens on
+`WORK_PREVIEW_PORT` within 15 seconds. Check Activity for the preview log. Use
+the optional command field if the project does not define the default
+`npm run dev` script.
+
+### The preview works on the server but not in a remote browser
+
+The preview URL is intentionally published on backend loopback. It is not a
+remote preview proxy. Run the browser on the backend host or implement a
+separate authenticated preview-routing design. On HTTPS sites, also check for
+mixed-content blocking.
+
+### Files remain but the preview stopped
+
+This is expected after cancellation, backend restart, explicit preview stop,
+or failed readiness checks. The preview process is ephemeral; the named volume
+is durable. Reopen the task and start the preview again.
+
+### A file cannot be opened or saved
+
+The integrated file API accepts UTF-8 text files up to 2 MB. If save reports
+that the file changed since it was opened, reload it before editing again so
+you do not overwrite another model or browser change.
+
+Syntax highlighting intentionally switches to plain text above 8,000
+characters or 400 lines. Formatting has a separate 100,000-character and
+4,000-line limit and supports only the documented file families.
+
+### Work says it is recovering containers
+
+Startup or teardown could not prove that one or more known containers stopped.
+Work remains fail-closed and retries every 10 seconds. Restore Docker daemon
+access and inspect the backend log. Do not delete the task database rows while
+their labeled Docker resources still need reconciliation.
+
+### Task deletion fails
+
+Make sure Docker is reachable. A conflicting resource without the expected
+`ai.libre-webui.task` label is intentionally rejected rather than removed.
+Resolve that name/ownership conflict carefully, then retry deletion.
+
+## Security Summary
+
+Before enabling Work for an installation, remember:
+
+- Work is admin-only but administrators are powerful trusted operators.
+- The backend must control a Docker daemon.
+- Containers reduce filesystem exposure but are not virtual machines.
+- Current UI-created Work tasks have bridge network egress and no UI network
+  switch.
+- Work volumes have no independent disk quota.
+- Remote providers receive requested tool results and can incur multiple calls
+  per run.
+- Embedded preview URLs are backend-loopback only.
+- Standard Docker Compose and current Kubernetes/Helm deployments do not
+  provide the Work runtime.
+- A complete backup requires both the Libre WebUI database and Work volumes.
+
+## Related Docs
+
+- [Quick Start](./QUICK_START)
+- [Working with Models](./WORKING_WITH_MODELS)
+- [Keyboard Shortcuts](./KEYBOARD_SHORTCUTS)
+- [Environment Variables](./ENVIRONMENT_VARIABLES)
+- [Docker](./DOCKER)
+- [Kubernetes](./KUBERNETES)
+- [Authentication](./AUTHENTICATION)
+- [Troubleshooting](./TROUBLESHOOTING)

@@ -129,6 +129,91 @@ Administrators can disable model pulls for normal users. Check admin settings if
 - Confirm the model fits in RAM/VRAM.
 - For provider plugins, confirm the API key and provider quota.
 
+## Work Problems
+
+### Work Is Missing or Reports Runtime Unavailable
+
+Work requires a currently authenticated administrator. Its container runtime
+must be available to the Libre WebUI backend:
+
+```bash
+docker info
+docker version
+```
+
+Confirm Docker is running and that the operating-system user running the
+backend can invoke the configured `WORK_DOCKER_COMMAND`. Installing Libre WebUI
+with `npx` does not install Docker. If Docker is missing, Libre WebUI keeps the
+rest of the application available and does not fall back to executing model
+commands on the host.
+
+The standard Compose image and current Helm chart do not provide a Work runtime
+by default. The application container has neither the Docker CLI nor the host
+Docker socket. Mounting `/var/run/docker.sock` into a web application grants
+root-equivalent control of the Docker host; review
+[Work: Isolated Workspaces](./WORKSPACES) before designing a custom deployment.
+
+### The Model Lacks Tool Support
+
+Work requires a tool-capable chat model. For Ollama, choose an installed model
+whose reported capabilities include `tools`. For a plugin-backed model:
+
+- Confirm the chat or completion plugin is active.
+- Confirm the selected model is in that plugin's configured model list.
+- Confirm an API key is available for the current administrator.
+- Confirm the provider supports tool calls for that exact model.
+
+Libre WebUI does not silently route a failed Work run to a different provider.
+
+### A Work Request Returns HTTP 429
+
+The instance has reached a task or active-runtime admission limit. By default,
+Libre WebUI allows two active container-backed tasks across the instance and
+one per user. A running preview also occupies runtime capacity. Wait for the
+other operation to finish, stop an unused preview, or have the operator review
+the `WORK_MAX_ACTIVE_RUNTIMES_*` and `WORK_MAX_TASKS_*` settings.
+
+### Package Installation or Network Access Fails
+
+New Work tasks use Docker bridge networking so generated projects can download
+packages and start previews. Check Docker DNS, proxy configuration, registry
+availability, and the command output in **Activity**. Libre WebUI does not mount
+host SSH keys, cloud credentials, browser profiles, or the Docker socket into
+the task container.
+
+### A Work Preview Does Not Start
+
+- Check **Activity** for the preview command and its output.
+- Make sure the server binds to `0.0.0.0` on `WORK_PREVIEW_PORT` (`4173` by
+  default).
+- Try the project's explicit development command in the optional start-command
+  field.
+- Stop an existing preview before starting another command that needs the
+  container.
+
+Preview URLs use a dynamically assigned loopback port. The browser and Libre
+WebUI backend therefore need to run on the same machine. A browser connected to
+a remote backend cannot reach that backend's loopback preview, and an HTTPS page
+may block a plain-HTTP preview as mixed content.
+
+### A Workspace File Cannot Be Opened or Saved
+
+The Work file API accepts UTF-8 text files up to 2 MB. If a file changed after
+you opened it, reload it before saving so you do not overwrite the newer
+version. Formatting is limited to supported file types under 100,000 characters
+and 4,000 lines; syntax highlighting pauses for large files to keep editing
+responsive.
+
+Unsaved edits are kept as a draft in the current browser. They are not a
+substitute for saving to the persistent workspace.
+
+### A Task or Preview Was Stopped
+
+Stopping a run, stopping a preview, or restarting Libre WebUI stops disposable
+container processes but preserves the task's named workspace volume. Reopen the
+task and restart its preview. Deleting the task is different: after
+confirmation, it permanently removes the task and its workspace.
+
 ## Login and Signup Problems
 
 **First user is not admin**
@@ -228,6 +313,8 @@ Open an issue with:
 - Operating system
 - Node.js version
 - Ollama version
+- Docker version and `docker info` result for Work problems
 - Backend logs around the failure
 - Browser console errors
 - The exact model or provider being used
+- Work Activity output when a task or preview fails

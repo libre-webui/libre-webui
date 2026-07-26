@@ -35,12 +35,33 @@ Passwords are hashed with bcrypt before storage. Login and signup routes are rat
 
 ## Roles
 
-| Role    | Purpose                                                       |
-| ------- | ------------------------------------------------------------- |
-| `admin` | Instance administration, user management, system settings     |
-| `user`  | Normal chat, model, persona, document, and settings workflows |
+| Role    | Purpose                                                                                       |
+| ------- | --------------------------------------------------------------------------------------------- |
+| `admin` | Instance administration, user management, system settings, and trusted Work runtime operation |
+| `user`  | Normal chat, model, persona, document, and settings workflows                                 |
 
 Administrators can update some system settings, including whether normal users may pull models.
+
+### Work Access
+
+Work is restricted to administrators because it lets a selected model execute
+arbitrary commands inside a managed container. Treat every administrator with
+Work access as a trusted runtime operator, not only as a WebUI settings
+administrator.
+
+Admin authorization is checked against the current database role rather than
+only the role cached in an existing JWT. Demoting an administrator therefore
+revokes Work access immediately. The backend then attempts to abort active runs
+and stop the user's Work containers and previews while preserving task records
+and named volumes. If Docker cleanup fails, access remains revoked, the role
+change reports the cleanup failure, and the operator must restore Docker access
+and retry cleanup.
+
+Deleting a user is destructive for that user's Work data. Libre WebUI first
+stops their managed containers and removes their Work volumes, then deletes the
+account and database records. If Docker cannot prove that cleanup succeeded,
+the account deletion fails so an administrator can correct the runtime problem
+and retry.
 
 ## Sessions
 
@@ -117,10 +138,13 @@ Demo mode is a frontend preview mode. It pre-fills disabled demo credentials and
 - Use HTTPS for public deployments.
 - Restrict provider API keys to the minimum scope needed.
 - Keep OAuth callback URLs exact.
+- Grant Work-capable administrator accounts only to people trusted to operate
+  the backend's container runtime.
 
 ## Related Docs
 
 - [Single Sign-On](./SINGLE_SIGN_ON)
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Environment Variables](./ENVIRONMENT_VARIABLES)
 - [Database Encryption](./DATABASE_ENCRYPTION)
 - [Demo Mode](./DEMO_MODE)

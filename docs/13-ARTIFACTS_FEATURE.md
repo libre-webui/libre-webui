@@ -18,6 +18,12 @@ image: /img/social/13.png
 
 Artifacts turn model-generated files and code blocks into a previewable side panel. They are useful for games, diagrams, HTML demos, JSON payloads, scripts, and generated assets.
 
+Artifacts are different from [Work](./WORKSPACES). An artifact is created from
+a normal chat response and rendered in the browser; it does not give the model a
+persistent filesystem or shell. A Work task keeps durable project files and
+conversation history, and runs model tools inside a task-scoped Docker
+container.
+
 ## Supported Inputs
 
 Libre WebUI detects:
@@ -65,9 +71,15 @@ If an interactive artifact needs keyboard input, click inside the preview first 
 
 ## Sandbox Behavior
 
-HTML artifacts run in an iframe sandbox that allows scripts, forms, modals, popups, pointer lock, downloads, clipboard access, fullscreen, and gamepad access. This is enough for most generated demos and games while keeping them isolated from the main application shell.
+HTML artifacts run in an iframe sandbox that allows scripts, same-origin
+behavior, forms, modals, popups (including opening a destination outside the
+sandbox), pointer lock, and downloads. The iframe feature policy also allows
+clipboard access, fullscreen, and gamepad access.
 
-Artifacts can still execute code inside their sandbox. Treat untrusted generated code like any other code before downloading or reusing it outside Libre WebUI.
+Those permissions support generated demos and games, but they are not a strict
+security boundary from the main application origin. Artifacts can execute code;
+inspect untrusted generated HTML before rendering, downloading, or reusing it,
+and do not place secrets in an artifact.
 
 ## Better Prompts
 
@@ -97,6 +109,7 @@ Return only one valid SVG code block with width, height, and viewBox.
 
 ## Related Docs
 
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Pro Tips](./PRO_TIPS)
 - [Working with Models](./WORKING_WITH_MODELS)
 - [Troubleshooting](./TROUBLESHOOTING)

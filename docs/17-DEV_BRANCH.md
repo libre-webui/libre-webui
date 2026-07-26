@@ -37,6 +37,12 @@ The development branch (`dev`) is where new features are tested before being mer
 
 ### Docker Setup (Recommended)
 
+The standard development image is suitable for Chat and the rest of Libre
+WebUI, but it does not include the Docker CLI or mount the host Docker socket.
+It therefore cannot exercise the new Work runtime by default. Use the
+from-source setup below when testing Work, with Docker available to the native
+backend process.
+
 **With External Ollama:**
 
 ```bash
@@ -47,8 +53,8 @@ cd libre-webui
 # Switch to dev branch
 git checkout dev
 
-# Start with external Ollama configuration
-docker-compose -f docker-compose.external-ollama.yml up -d
+# Start the dev image with external Ollama
+docker compose -f docker-compose.dev.external-ollama.yml up -d
 ```
 
 **Simple Docker:**
@@ -73,6 +79,25 @@ npm install
 npm run dev
 ```
 
+### Testing Work
+
+1. Start Docker and confirm `docker info` succeeds as the same user running the
+   backend.
+2. Start Libre WebUI from source with `npm run dev`.
+3. Sign in as an administrator.
+4. Select **Work** and use a tool-capable Ollama, Ollama Cloud, or configured
+   plugin-backed model.
+
+Run the focused backend provider and container-policy tests with:
+
+```bash
+npm run test:work
+```
+
+The tests validate the generated Docker policy, path containment, lifecycle and
+capacity behavior, and OpenAI-compatible, Anthropic, and Gemini tool adapters.
+See [Work: Isolated Workspaces](./WORKSPACES) for the full runtime boundary.
+
 ## 🔄 Staying Updated
 
 The dev branch is updated frequently. To get the latest changes:
@@ -81,8 +106,9 @@ The dev branch is updated frequently. To get the latest changes:
 # Update your local dev branch
 git pull origin dev
 
-# Rebuild Docker containers
-docker-compose -f docker-compose.external-ollama.yml up -d --build
+# Refresh the dev Compose stack
+docker compose -f docker-compose.dev.external-ollama.yml pull
+docker compose -f docker-compose.dev.external-ollama.yml up -d
 
 # Or restart simple Docker
 docker pull ghcr.io/libre-webui/libre-webui:dev
@@ -114,6 +140,8 @@ Your bug reports are incredibly valuable! Here's how to report issues effectivel
 - OS: [Windows/macOS/Linux]
 - Browser: [Chrome/Firefox/Safari version]
 - Setup: [Docker/Source/etc.]
+- Docker: [version and whether `docker info` succeeds, for Work issues]
+- Work model/provider: [exact route, when applicable]
 
 **Bug Description:**
 Clear description of what went wrong
@@ -132,6 +160,9 @@ What actually happened
 
 **Screenshots/Logs:**
 [If applicable, add screenshots or error logs]
+
+**Work Activity:**
+[Relevant tool call/result or preview output, with secrets removed]
 ```
 
 ### Get Your Git Commit Hash
@@ -177,6 +208,9 @@ See our [Contributing Guidelines](https://github.com/libre-webui/libre-webui/blo
 ### Data Safety
 
 - **Backup your data** before switching to dev branch
+- Work task files live in separate `libre-work-*` Docker named volumes. Back
+  those up separately from the SQLite data directory before testing destructive
+  task or user lifecycle changes.
 - **Use a separate Docker volume** for dev testing:
   ```bash
   # Use different volume name for dev
@@ -201,7 +235,8 @@ Switch back to the stable `main` branch if you:
 ```bash
 # Switch back to stable
 git checkout main
-docker-compose -f docker-compose.external-ollama.yml up -d --build
+docker compose -f docker-compose.external-ollama.yml pull
+docker compose -f docker-compose.external-ollama.yml up -d
 ```
 
 ## 🌟 Join the Community

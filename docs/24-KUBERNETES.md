@@ -10,6 +10,20 @@ keywords: [libre webui kubernetes, helm chart, k8s deployment]
 
 Libre WebUI ships a Helm chart under `helm/libre-webui`.
 
+## Work Availability
+
+The current Helm chart does not create a Work runtime. Kubernetes pods do not
+normally expose Docker, and the standard Libre WebUI image contains neither the
+Docker CLI nor a container-runtime socket. Work therefore reports
+**Runtime unavailable** in a normal chart installation; Chat and the other
+application features continue to work.
+
+Do not mount a node's container-runtime socket into the WebUI pod. Supporting
+Work safely in Kubernetes requires a separate runtime driver with tightly
+scoped RBAC, one isolated workload and persistent volume per task, admission and
+resource policies, cleanup guarantees, and a preview-routing design. Those
+resources are not part of the current chart.
+
 ## Install
 
 ```bash
@@ -44,30 +58,48 @@ helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui \
 
 ## Secrets
 
-Set a stable JWT secret and encryption key for production. Use Kubernetes Secrets rather than plaintext values files.
+Set a stable JWT secret and encryption key for production. The current chart
+creates its own `<release>-libre-webui-secrets` object from `secrets.*` values;
+it does not have an `existingSecret` setting, so pre-creating an unrelated
+generic Secret does not wire those values into the pod.
 
 ```bash
-kubectl create secret generic libre-webui-secrets \
-  --from-literal=JWT_SECRET="$(openssl rand -hex 64)" \
-  --from-literal=ENCRYPTION_KEY="$(openssl rand -hex 32)"
+helm upgrade --install libre-webui \
+  oci://ghcr.io/libre-webui/charts/libre-webui \
+  --set-string secrets.jwtSecret="$(openssl rand -hex 64)" \
+  --set-string secrets.encryptionKey="$(openssl rand -hex 32)"
 ```
 
-Add provider API keys the same way when you want deployment-wide plugin credentials.
+For production automation, supply stable values through an encrypted Helm
+values workflow or an external-secrets integration you maintain; command-line
+values can be exposed through process inspection and are retained in Helm
+release metadata. The current chart exposes only the secret keys declared in
+`values.yaml`. Add provider keys through a deliberate chart extension or
+configure per-user credentials in the WebUI.
 
 ## Persistence
 
 Keep the Libre WebUI data PVC and Ollama model PVC on persistent storage. Back up the Libre WebUI data volume and the encryption key together.
 
+A future Work runtime would also need an independent backup policy for
+task-owned persistent volumes. Work files do not live in the Libre WebUI data
+PVC.
+
 ## Ingress
 
-For public access, configure ingress with HTTPS and set backend origins:
+For public access, configure ingress with HTTPS and set the exact browser
+origin through the chart:
 
-```env
-BASE_URL=https://your-domain.example
-CORS_ORIGIN=https://your-domain.example
+```bash
+helm upgrade libre-webui \
+  oci://ghcr.io/libre-webui/charts/libre-webui \
+  --reuse-values \
+  --set-string env.CORS_ORIGIN=https://your-domain.example
 ```
 
-OAuth callback URLs must match the public domain.
+The current chart does not expose `BASE_URL` or OAuth callback URL values.
+Deployments using OAuth must extend the chart or patch the Deployment to set
+those variables, and the callback URLs must match the public domain.
 
 ## Resource Planning
 
@@ -75,6 +107,7 @@ For local Ollama inside the cluster, schedule the Ollama pod on nodes with enoug
 
 ## Related Docs
 
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Docker](./DOCKER)
 - [Hardware Requirements](./HARDWARE_REQUIREMENTS)
 - [Environment Variables](./ENVIRONMENT_VARIABLES)

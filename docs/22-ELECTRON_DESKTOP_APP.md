@@ -1,13 +1,15 @@
 ---
 sidebar_position: 1
 title: 'Electron Desktop App'
-description: 'Build and run Libre WebUI as a native desktop application for macOS. Complete guide for building, packaging, and distributing the Electron app.'
+description: 'Build and run the Libre WebUI frontend as an Electron desktop application for macOS, Windows, and Linux.'
 slug: /ELECTRON_DESKTOP_APP
 keywords:
   [
     libre webui electron,
     desktop app,
     macos app,
+    windows app,
+    linux app,
     native app,
     electron build,
     dmg installer,
@@ -22,16 +24,17 @@ import TabItem from '@theme/TabItem';
 
 # 🖥️ Electron Desktop App
 
-This guide covers building and running Libre WebUI as a native desktop application for macOS using Electron.
+This guide covers building and running the Libre WebUI frontend as an Electron
+desktop application for macOS, Windows, and Linux.
 
 ## 🎯 Overview
 
 The Electron desktop app provides:
 
-- **Native macOS experience** - Proper window management, menu bar, traffic lights
+- **Desktop window integration** - Native window management and application menus
 - **Offline-first design** - Works with local Ollama without internet
-- **DMG installer** - Easy drag-and-drop installation
-- **Auto-backend detection** - Connects to existing backend or prompts to start one
+- **Platform packages** - DMG/ZIP, Windows Setup/portable EXE, AppImage, and DEB targets
+- **Backend detection** - Connects to an existing backend and logs manual start instructions when it is absent
 
 ## 📋 Prerequisites
 
@@ -39,11 +42,16 @@ Before building the desktop app, ensure you have:
 
 1. **Node.js 22.22+** installed
 2. **npm** or **yarn** package manager
-3. **Xcode Command Line Tools** (macOS):
+3. The build tools required by the target operating system. On macOS, install
+   **Xcode Command Line Tools**:
    ```bash
    xcode-select --install
    ```
-4. **Ollama** installed and running (for AI functionality)
+4. A separately running Libre WebUI backend connected to Ollama or configured
+   model-provider plugins
+
+To use Work, also install and start Docker on the machine running the backend.
+Docker is not bundled in the desktop application.
 
 ## 🚀 Quick Start
 
@@ -62,19 +70,28 @@ This will:
 - Wait for the frontend to be ready
 - Launch Electron pointing to the dev server
 
-### Production Build
+### Production Builds
 
-Build a distributable macOS app:
+Build on the operating system matching the desired package:
 
 ```bash
-# Build frontend, backend, and create DMG
+# macOS arm64: DMG and ZIP
 npm run electron:build
+
+# Windows: Setup and portable EXE
+npm run electron:build:win
+
+# Linux: AppImage and DEB
+npm run electron:build:linux
 ```
 
-The built app will be available at:
+Packages are written to `dist-electron/`. The configured release names are:
 
-- **DMG**: `dist-electron/Libre WebUI-{version}-mac-arm64.dmg`
-- **ZIP**: `dist-electron/Libre WebUI-{version}-mac-arm64.zip`
+- macOS: `Libre-WebUI-Frontend-{version}-mac-arm64.dmg` and `.zip`
+- Windows: `Libre-WebUI-Frontend-Setup-{version}.exe` and
+  `Libre-WebUI-Frontend-{version}.exe`
+- Linux: `Libre-WebUI-Frontend-{version}.AppImage` and
+  `Libre-WebUI-Frontend-{version}-{arch}.deb`
 
 ## 🏗️ Architecture
 
@@ -96,9 +113,28 @@ The built app will be available at:
 │                     Communicates with                    │
 │              External Backend (port 3001)                │
 │                         ↓                                │
-│                   Ollama (port 11434)                    │
+│             Ollama or configured model provider         │
 └─────────────────────────────────────────────────────────┘
 ```
+
+### Work in the Desktop App
+
+The Electron package is a frontend client. It does not bundle the Libre WebUI
+backend, Docker, or a Work container runtime. Work availability is determined
+by the separately running backend:
+
+- a native backend that can run `docker info` can create task-scoped Work
+  containers and named volumes;
+- a backend running in the standard Libre WebUI Docker image reports Work as
+  unavailable; and
+- the Electron app continues to support Chat when Work is unavailable.
+
+Work files live on the backend's Docker host, not inside the Electron app. The
+embedded preview uses a dynamically assigned loopback port on that backend host,
+so preview works only when the desktop client and backend are on the same
+machine. A custom Electron build pointed at a remote backend can still use Work
+conversation and file APIs, but it cannot reach that server's loopback preview
+URL.
 
 ### Key Files
 
@@ -117,7 +153,7 @@ The build configuration supports:
 
 ```yaml
 appId: com.librewebui.app
-productName: Libre WebUI
+productName: Libre WebUI Frontend
 
 mac:
   category: public.app-category.productivity
@@ -134,12 +170,14 @@ mac:
 
 ### Available Scripts
 
-| Script                        | Description                           |
-| ----------------------------- | ------------------------------------- |
-| `npm run electron:dev`        | Development mode with hot reload      |
-| `npm run electron:build`      | Build production DMG for macOS        |
-| `npm run electron:verify:mac` | Verify the packaged macOS application |
-| `npm run electron:pack`       | Build without creating installer      |
+| Script                         | Description                                |
+| ------------------------------ | ------------------------------------------ |
+| `npm run electron:dev`         | Development mode with hot reload           |
+| `npm run electron:build`       | Build macOS arm64 DMG and ZIP              |
+| `npm run electron:build:win`   | Build Windows Setup and portable EXE       |
+| `npm run electron:build:linux` | Build Linux AppImage and DEB               |
+| `npm run electron:verify:mac`  | Verify the packaged macOS application      |
+| `npm run electron:pack`        | Build unpacked output without an installer |
 
 ## 🎨 macOS Integration
 
@@ -156,7 +194,7 @@ The app uses a custom title bar style (`hiddenInset`) for a native macOS look:
 - **Minimum size**: 800x600 pixels
 - **Default size**: 1400x900 pixels
 - **Dark mode support**: Follows system preference
-- **Traffic light position**: Custom positioned at (15, 15)
+- **Traffic light position**: Custom positioned at (12, 12)
 
 ### Menu Bar
 
@@ -291,7 +329,14 @@ External links are opened in the default browser, not inside the app:
 
 ```javascript
 mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-  shell.openExternal(url);
+  try {
+    const target = new URL(url);
+    if (target.protocol === 'http:' || target.protocol === 'https:') {
+      shell.openExternal(target.toString());
+    }
+  } catch {
+    // Refuse malformed and non-web schemes.
+  }
   return { action: 'deny' };
 });
 ```
@@ -300,16 +345,18 @@ mainWindow.webContents.setWindowOpenHandler(({ url }) => {
 
 ### Current Limitations
 
-- **macOS only** - Currently only Apple Silicon (arm64) is supported
+- **macOS architecture** - Current macOS packages support Apple Silicon
+  (`arm64`) only; Windows and Linux have their own configured build targets
 - **Requires external backend** - The backend must run separately
-- **No auto-updates** - Updates require downloading new DMG
+- **Work depends on backend Docker** - The desktop package does not include a
+  container runtime
+- **No auto-updates** - Updates require downloading and installing a new package
 
 ### Future Plans
 
-- Windows and Linux support
 - Bundled backend option
 - Auto-update functionality
-- Universal binary (arm64 + x64)
+- Universal macOS binary (arm64 + x64)
 
 ## 📊 Technical Details
 
@@ -330,4 +377,8 @@ The built app includes:
 
 ---
 
-**🚀 Ready to build?** Run `npm run electron:build` and find your DMG in `dist-electron/`.
+**🚀 Ready to build?** Run the platform command above and find the package in
+`dist-electron/`.
+
+See [Work: Isolated Workspaces](./WORKSPACES) for runtime, provider, storage, and
+preview security details.

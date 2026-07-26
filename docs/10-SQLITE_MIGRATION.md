@@ -36,8 +36,26 @@ DATA_DIR=/var/lib/libre-webui
 - Persona memories and mutation state
 - Plugin credentials and variables
 - System settings
+- Work task ownership, model/provider routing, runs, messages, tool activity,
+  status, and Docker resource identifiers
 
 Sensitive values are encrypted at the application layer when they pass through the encrypted storage helpers.
+
+## Work Storage Is Split
+
+Work conversation and task metadata live in SQLite, but Work files do not. Each
+task receives a dedicated Docker named volume mounted at `/workspace`. The
+container is replaceable execution state; the named volume is the task's durable
+filesystem.
+
+This means a database backup by itself is not a complete Work backup. Back up
+the corresponding Docker volumes using your Docker host's volume-backup process.
+Libre WebUI labels managed Work volumes with
+`ai.libre-webui.managed=true` and the owning task ID.
+
+Deleting a Work task permanently removes its SQLite records and managed named
+volume. Cancelling a run, stopping a preview, or restarting the backend does not
+delete its files.
 
 ## JSON Compatibility
 
@@ -59,9 +77,18 @@ For deployments using `DATA_DIR`:
 cp -R "$DATA_DIR" "$DATA_DIR.backup"
 ```
 
+If the instance uses Work, also back up every managed Work named volume while
+the backend is stopped. Keep the database, encryption key, and Work-volume
+backup from the same point in time.
+
 ## Restore
 
 Stop the backend, replace the data directory with your backup, then restart. Keep the same `ENCRYPTION_KEY`; encrypted values cannot be decrypted with a different key.
+
+For Work, restore the named volumes under the exact names recorded in the
+restored database before starting the backend. Libre WebUI can recreate a task
+container, but it cannot reconstruct missing workspace files from the
+conversation history.
 
 ## Operational Notes
 
@@ -69,10 +96,13 @@ Stop the backend, replace the data directory with your backup, then restart. Kee
 - The data directory must be writable by the backend process.
 - Keep `DATA_DIR` on persistent storage in Docker and Kubernetes.
 - Back up `ENCRYPTION_KEY` together with the database.
+- Account for Work named volumes separately when measuring, migrating, or
+  restoring storage.
 
 ## Related Docs
 
 - [Database Encryption](./DATABASE_ENCRYPTION)
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Docker](./DOCKER)
 - [Kubernetes](./KUBERNETES)
 - [Environment Variables](./ENVIRONMENT_VARIABLES)

@@ -27,6 +27,23 @@ Libre Claw remains the runtime that owns the powerful agent behavior:
 Libre WebUI talks to the Libre Claw daemon over HTTP and exposes those features
 inside the normal authenticated WebUI shell.
 
+## Libre Claw And Work Are Different
+
+Libre Claw remains an optional external runtime. It is not required for
+Libre WebUI's built-in **Work** mode.
+
+|                         | Work                                                                   | Libre Claw                                                                |
+| ----------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Runtime                 | Native Libre WebUI model/tool loop plus Docker                         | Separate Libre Claw daemon                                                |
+| Primary scope           | One persistent, isolated coding workspace per task                     | Broader agent runs, memory, approvals, schedules, browser, MCP, and tools |
+| Persistence             | SQLite task history plus a task-owned Docker named volume              | Libre Claw's own run and memory stores                                    |
+| Model routing           | Ollama, Ollama Cloud, or configured Libre WebUI completion/chat plugin | Libre Claw provider, model, and fallback configuration                    |
+| Availability without it | Work continues normally                                                | Only the `/agents` Libre Claw surface is disconnected                     |
+
+Use Work when a model should build or modify files inside a constrained
+task-scoped container. Use Libre Claw when you need the daemon's broader tool
+set, approval system, memory, goals, or automations.
+
 ## Architecture
 
 ```mermaid
@@ -208,3 +225,9 @@ libre-claw start
 ```
 
 The daemon must be running for scheduled automations and Telegram delivery.
+
+## Related Docs
+
+- [Work: Isolated Workspaces](./WORKSPACES)
+- [Authentication](./AUTHENTICATION)
+- [Environment Variables](./ENVIRONMENT_VARIABLES)

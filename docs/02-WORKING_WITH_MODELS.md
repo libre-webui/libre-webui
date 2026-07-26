@@ -60,6 +60,34 @@ For Ollama Cloud results, the UI normalizes cloud model names before pulling. If
 
 You can keep local models for private work and enable provider plugins for tasks that need larger hosted models.
 
+## Models for Work
+
+Work needs a chat model that can call tools. It can use:
+
+- An installed Ollama model that advertises the `tools` capability.
+- An Ollama Cloud model available through the configured Ollama endpoint.
+- A model listed by an active chat or completion plugin with credentials
+  configured for the current administrator.
+
+Plugin-backed Work runs use the provider adapter appropriate to the configured
+plugin: OpenAI-compatible, Anthropic, or Gemini. Libre WebUI persists the exact
+provider type and plugin identifier with the task and each run, so a plugin
+cannot capture an identically named Ollama model. If the selected model or
+provider rejects tool calling, the run fails instead of silently switching to
+another provider.
+
+Local Ollama keeps model requests on the configured Ollama infrastructure.
+With a remote model, the configured provider receives the Work system prompt,
+conversation, tool definitions, and tool results. Tool results can include
+source text, command output, or directory listings requested by the model.
+Workspace volumes and provider credentials remain on the backend host, but a
+file's contents can leave that host when they are included in a tool result.
+
+One autonomous Work run can make multiple model calls. Check the remote
+provider's pricing, retention, and training policies before using sensitive
+projects. Libre WebUI shows a remote-provider notice in Work with a per-user
+dismiss control.
+
 ## Hardware Guide
 
 | System                              | Practical model range | Notes                           |
@@ -118,6 +146,7 @@ Provider model names change frequently. In Libre WebUI, use the provider’s mod
 
 ## Related Docs
 
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Hardware Requirements](./HARDWARE_REQUIREMENTS)
 - [Plugin Architecture](./PLUGIN_ARCHITECTURE)
 - [Hugging Face Hub](./HUGGINGFACE_HUB)

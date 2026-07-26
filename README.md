@@ -6,7 +6,7 @@
 
 ### Your AI stack should answer to you.
 
-**A local-first workspace for Ollama, your chosen providers, private knowledge, artifacts, and local agents.**<br>
+**A local-first workspace for chat, private knowledge, artifacts, and isolated model-driven work.**<br>
 Self-hosted. Provider-flexible. Apache 2.0.
 
 **Run local. Bring the providers you choose. Keep control of the interface around them.**
@@ -18,7 +18,7 @@ Self-hosted. Provider-flexible. Apache 2.0.
   <a href="https://www.npmjs.com/package/libre-webui"><img src="https://img.shields.io/npm/v/libre-webui?style=flat-square&label=npm&color=cb3837" alt="npm version"></a>
   <a href="https://github.com/libre-webui/libre-webui/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-15803d?style=flat-square" alt="Apache 2.0 License"></a>
   <a href="https://github.com/libre-webui/libre-webui/actions/workflows/format.yml"><img src="https://img.shields.io/github/actions/workflow/status/libre-webui/libre-webui/format.yml?branch=main&style=flat-square&label=main%20checks" alt="Main branch checks"></a>
-  <a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=flat-square&label=stars&color=f59e0b" alt="GitHub stars"></a>
+  <a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=flat-square&label=stars&color=ff7b52" alt="GitHub stars"></a>
 </p>
 
 <p>
@@ -73,19 +73,25 @@ ollama pull gemma3:4b
 
 That is enough to start. Cloud accounts are not required. When you do want a remote model, add only the provider you choose.
 
+Chat works without Docker. The new **Work** mode additionally needs Docker on
+the machine running the Libre WebUI backend. If Docker is missing, Libre WebUI
+still starts normally and Work shows a clear **Runtime unavailable** state
+instead of running commands on the host.
+
 ## One workspace. Your choices.
 
 Libre WebUI turns a model endpoint into a complete working environment without taking ownership of the stack around it.
 
-|                                | What you can do                                                                                                                              |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Talk to the model you want** | Stream conversations through local Ollama, Ollama Cloud, bundled providers, or compatible endpoints. Discover and manage models from the UI. |
-| **Bring your own context**     | Chat with PDF and plain-text documents using keyword retrieval or optional semantic embeddings.                                              |
-| **Turn answers into work**     | Preview sandboxed HTML, SVG, JSON, code, and multi-file artifacts beside the conversation.                                                   |
-| **Create with more than text** | Generate images, use provider-backed speech, and build reusable personas with prompts, parameters, and memory.                               |
-| **Make the interface yours**   | Keep light or dark mode across refreshes, apply an adaptive accent theme, and work in 25 languages/locales including Arabic RTL.             |
-| **Operate it your way**        | Use local accounts, roles, optional OAuth, Docker, Kubernetes, npm, or the Electron desktop client.                                          |
-| **Extend without lock-in**     | Configure chat, embeddings, image generation, and text-to-speech providers through the plugin layer.                                         |
+|                                 | What you can do                                                                                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Talk to the model you want**  | Stream conversations through local Ollama, Ollama Cloud, bundled providers, or compatible endpoints. Discover and manage models from the UI. |
+| **Give every task a workspace** | Let a tool-capable model inspect files, edit code, run commands, and preview an app in a persistent, task-scoped Docker workspace.           |
+| **Bring your own context**      | Chat with PDF and plain-text documents using keyword retrieval or optional semantic embeddings.                                              |
+| **Turn answers into artifacts** | Preview sandboxed HTML, SVG, JSON, code, and multi-file artifacts beside a normal chat.                                                      |
+| **Create with more than text**  | Generate images, use provider-backed speech, and build reusable personas with prompts, parameters, and memory.                               |
+| **Make the interface yours**    | Keep light or dark mode across refreshes, apply an adaptive accent theme, and work in 25 languages/locales including Arabic RTL.             |
+| **Operate it your way**         | Use local accounts, roles, optional OAuth, Docker, Kubernetes, npm, or the Electron desktop client.                                          |
+| **Extend without lock-in**      | Configure chat, embeddings, image generation, and text-to-speech providers through the plugin layer.                                         |
 
 ## Local-first is a real boundary
 
@@ -109,9 +115,51 @@ Credentials can come from deployment-wide environment variables or encrypted, us
 
 [Explore the plugin system →](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)
 
-## Local agents, with the runtime kept separate
+## Work: one persistent environment per task
+
+Work is Libre WebUI's built-in coding-agent surface. Choose **Work** beside
+**Chat**, select a tool-capable model, and describe what you want to build or
+change. Each task keeps its own conversation, exact provider route, files, tool
+activity, and preview state.
+
+```text
+Work task
+   ├── durable conversation and run history in SQLite
+   ├── dedicated Docker named volume mounted at /workspace
+   ├── disposable, policy-checked container for commands
+   └── Files · Activity · Preview workspace pane
+```
+
+The model can list, read, write, and search task files, run bounded shell
+commands, and start or stop a browser preview. The workspace includes a
+light/dark syntax-highlighted editor, supported-file formatting, browser drafts,
+conflict-aware saves, and a draggable responsive split between conversation and
+workspace. Tasks remain in the main sidebar so returning to an older task also
+returns to its existing files and history.
+
+Work can use installed Ollama models, Ollama Cloud models, or configured
+completion/chat plugins through OpenAI-compatible, Anthropic, and Gemini tool
+adapters. Tool support is required. Selecting a remote route shows a dismissible
+per-user disclosure because an autonomous run may make multiple paid provider
+calls and may send conversation context and requested tool results—including
+file contents—to that service.
+
+Work is admin-only and never falls back to host command execution. Containers
+run as a non-root user with a read-only root filesystem, dropped capabilities,
+resource limits, and only the task volume mounted. Containers are still not
+virtual machines, current Work tasks have Docker bridge egress, and task volumes
+need their own backup and storage policy.
+
+[Read the Work workspace guide →](https://docs.librewebui.org/WORKSPACES)
+
+## Optional broader agents, with the runtime kept separate
 
 [Libre Claw](https://github.com/kroonen-ai/libre-claw) is an optional, admin-controlled local agent runtime. Libre WebUI provides the authenticated control surface for durable runs, timelines, approvals, schedules, usage, and configuration; Libre Claw owns the tools, memory, permission model, and execution.
+
+Libre Claw is separate from Work. Work is native to Libre WebUI and focused on
+one isolated project workspace; Libre Claw is the optional daemon for broader
+file, shell, git, browser, HTTP, web-search, MCP, memory, approval, and
+automation workflows.
 
 ```text
 Browser or desktop client
@@ -125,6 +173,7 @@ Browser or desktop client
           │
           ├────────► Ollama (local models)
           ├────────► selected provider plugins
+          ├────────► Docker (native Work task containers)
           └────────► Libre Claw (optional agent runtime)
 ```
 
@@ -134,19 +183,25 @@ The WebUI backend does not execute Libre Claw's shell or browser tools itself. I
 
 ## Deploy on your terms
 
-| Path                | Command or link                                                         | Best for                                            |
-| ------------------- | ----------------------------------------------------------------------- | --------------------------------------------------- |
-| **npm**             | `npx libre-webui`                                                       | The fastest local start                             |
-| **Docker + Ollama** | `docker compose up -d`                                                  | Persistent self-hosting in one stack                |
-| **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | An existing local or remote Ollama service          |
-| **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference                                 |
-| **Kubernetes**      | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployments                                 |
-| **Desktop client**  | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)  | Electron client builds; the backend runs separately |
-| **Source**          | `npm install && npm run dev`                                            | Development and contribution                        |
+| Path                | Command or link                                                         | Best for                                                              |
+| ------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **npm**             | `npx libre-webui`                                                       | Fast local start; Work is available when local Docker is installed    |
+| **Docker + Ollama** | `docker compose up -d`                                                  | Persistent chat stack; Work is unavailable in the standard image      |
+| **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | Existing Ollama; same standard-container Work limitation              |
+| **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference; same standard-container Work limitation          |
+| **Kubernetes**      | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployment; the current chart has no Work runtime driver      |
+| **Desktop client**  | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)  | Electron UI; Work runs wherever its separately managed backend runs   |
+| **Source**          | `npm install && npm run dev`                                            | Development; Work uses Docker available to the native backend process |
 
 Docker commands assume you have cloned this repository. Production deployments should set stable `JWT_SECRET` and `ENCRYPTION_KEY` values, persist the data directory, back up the database and key together, and terminate public traffic with HTTPS.
 
-[Docker](https://docs.librewebui.org/DOCKER) · [Kubernetes](https://docs.librewebui.org/KUBERNETES) · [Environment variables](https://docs.librewebui.org/ENVIRONMENT_VARIABLES) · [Hardware guide](https://docs.librewebui.org/HARDWARE_REQUIREMENTS)
+The standard Libre WebUI container deliberately does not include the Docker CLI
+or mount the host Docker socket, so it reports Work as unavailable. Mounting
+`/var/run/docker.sock` into a web application grants root-equivalent control of
+the Docker host and is not enabled or recommended as a casual workaround. See
+the Work guide before designing a separate runtime integration.
+
+[Work](https://docs.librewebui.org/WORKSPACES) · [Docker](https://docs.librewebui.org/DOCKER) · [Kubernetes](https://docs.librewebui.org/KUBERNETES) · [Environment variables](https://docs.librewebui.org/ENVIRONMENT_VARIABLES) · [Hardware guide](https://docs.librewebui.org/HARDWARE_REQUIREMENTS)
 
 ## Built from experience, for independence
 
@@ -196,7 +251,7 @@ For enterprise work, contact **enterprise@kroonen.ai**. To support independent d
 
 Stars help independent software get discovered without buying attention.
 
-<a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=for-the-badge&label=Star%20Libre%20WebUI&color=f59e0b" alt="Star Libre WebUI on GitHub"></a>
+<a href="https://github.com/libre-webui/libre-webui"><img src="https://img.shields.io/github/stars/libre-webui/libre-webui?style=for-the-badge&label=Star%20Libre%20WebUI&color=ff7b52" alt="Star Libre WebUI on GitHub"></a>
 
 <br><br>
 

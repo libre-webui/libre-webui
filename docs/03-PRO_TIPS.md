@@ -23,6 +23,34 @@ Good daily-driver examples:
 
 Open **Models** to see which models are running. Unload models you are not using when VRAM gets tight.
 
+## Keep Work Tasks Focused
+
+Use a separate Work task for each project or independent goal. Every task has
+its own conversation, managed container identity, and persistent files. The
+container itself can stop or be recreated while its named volume survives, so
+reusing the same task preserves useful context while starting a new task creates
+a clean boundary.
+
+A good first instruction gives the model:
+
+- The result you want.
+- Important technical or design constraints.
+- The command or behavior that should verify completion.
+- Any files or interfaces that must remain unchanged.
+
+Follow progress in **Activity**, then inspect and test the result in **Files**
+and **Preview**. The file editor supports syntax highlighting in light and dark
+themes, browser-backed unsaved drafts, and formatting for supported file types.
+Use `Cmd/Ctrl + S` to save and `Shift + Alt + F` to format.
+
+Use an installed tool-capable Ollama model when you want model traffic to stay
+on your configured Ollama infrastructure. A remote or cloud model can reduce
+local inference memory pressure, but it can make multiple billable calls and
+receives requested tool results, which may contain workspace data.
+
+Stopping a run or preview keeps the workspace. Deleting a Work task removes its
+workspace permanently, so copy out anything you need first.
+
 ## Use Personas for Repeatable Work
 
 Create personas for workflows you repeat:
@@ -111,6 +139,7 @@ The product changes quickly. Prefer durable docs that describe behavior and work
 
 ## Related Docs
 
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Working with Models](./WORKING_WITH_MODELS)
 - [Document Chat](./RAG_FEATURE)
 - [Artifacts](./ARTIFACTS_FEATURE)

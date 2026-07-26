@@ -52,6 +52,20 @@ Encryption is applied by code paths that use the encryption service or encrypted
 
 It is not full-disk encryption, SQLite page encryption, or end-to-end encryption between users and the browser. Use disk encryption and HTTPS for those layers.
 
+### Work Data
+
+Application-layer encryption does not encrypt an entire Work task. Work source
+files and project dependencies are ordinary files in task-scoped Docker named
+volumes. Work conversations, tool results, command output, and task metadata are
+stored in SQLite and are not automatically encrypted merely because some
+credential-storage paths use the encryption service.
+
+Protect the Docker data root and `DATA_DIR` with access controls and disk
+encryption when required. Back up the database, `ENCRYPTION_KEY`, and managed
+Work volumes together. Sending a Work task to a remote model can also disclose
+conversation context and requested file or command output to that provider;
+storage encryption does not change that network boundary.
+
 ## Docker and Kubernetes
 
 Set a stable key explicitly for production:
@@ -84,6 +98,7 @@ Restart after the backend writes the generated key to `backend/.env`, or set `EN
 ## Related Docs
 
 - [SQLite Storage](./SQLITE_MIGRATION)
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Environment Variables](./ENVIRONMENT_VARIABLES)
 - [Docker](./DOCKER)
 - [Kubernetes](./KUBERNETES)

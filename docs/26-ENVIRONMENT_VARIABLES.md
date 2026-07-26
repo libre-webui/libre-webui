@@ -20,22 +20,25 @@ This page lists the environment variables read by the current Libre WebUI backen
 
 ## Backend Server
 
-| Variable         | Default                             | Purpose                                       |
-| ---------------- | ----------------------------------- | --------------------------------------------- |
-| `NODE_ENV`       | `development`                       | Runtime mode                                  |
-| `PORT`           | `3001` in dev, `8080` in production | Backend HTTP port                             |
-| `TRUST_PROXY`    | unset                               | Express trust proxy setting                   |
-| `CORS_ORIGIN`    | local dev origins                   | Comma-separated allowed browser origins       |
-| `SERVE_FRONTEND` | unset                               | Serve built frontend from backend when `true` |
-| `DOCKER_ENV`     | unset                               | Enables Docker-oriented behavior when `true`  |
-| `DATA_DIR`       | `backend/data`                      | Persistent data directory                     |
-| `BASE_URL`       | `http://localhost:3001`             | Base URL used for OAuth callback defaults     |
+| Variable         | Default                                   | Purpose                                             |
+| ---------------- | ----------------------------------------- | --------------------------------------------------- |
+| `NODE_ENV`       | `development`                             | Runtime mode                                        |
+| `PORT`           | `3001` in dev, `8080` in production       | Backend HTTP port                                   |
+| `TRUST_PROXY`    | unset                                     | Express trust proxy setting                         |
+| `CORS_ORIGIN`    | local dev origins                         | Comma-separated allowed browser origins             |
+| `SERVE_FRONTEND` | unset                                     | Serve built frontend from backend when `true`       |
+| `DOCKER_ENV`     | unset                                     | Enables Docker-oriented behavior when `true`        |
+| `DATA_DIR`       | `backend/data`                            | Persistent data directory                           |
+| `PLUGINS_DIR`    | `$DATA_DIR/plugins`, otherwise `plugins/` | Writable directory for installed/customized plugins |
+| `BASE_URL`       | `http://localhost:3001`                   | Base URL used for OAuth callback defaults           |
+| `LOG_LEVEL`      | `info` (`warn` in tests)                  | Backend log level                                   |
 
 ## Authentication and Security
 
 | Variable               | Default                           | Purpose                                                  |
 | ---------------------- | --------------------------------- | -------------------------------------------------------- |
 | `JWT_SECRET`           | generated/fallback in development | JWT signing secret; set explicitly in production         |
+| `JWT_EXPIRES_IN`       | `7d`                              | Session-token lifetime                                   |
 | `ENCRYPTION_KEY`       | auto-generated                    | 64-character hex key for encrypted values                |
 | `DEBUG_ENCRYPTION`     | unset                             | Logs encryption debug output when set                    |
 | `TURNSTILE_SITE_KEY`   | unset                             | Cloudflare Turnstile site key for signup                 |
@@ -63,6 +66,51 @@ If callback URLs are not set, Libre WebUI builds defaults from `BASE_URL`.
 | `OLLAMA_BASE_URL`               | `http://localhost:11434` | Ollama API base URL                                 |
 | `OLLAMA_TIMEOUT`                | `300000`                 | Standard Ollama request timeout in milliseconds     |
 | `OLLAMA_LONG_OPERATION_TIMEOUT` | `900000`                 | Long operation timeout for pulls and large requests |
+
+## Libre Claw
+
+| Variable                | Default                 | Purpose                         |
+| ----------------------- | ----------------------- | ------------------------------- |
+| `LIBRE_CLAW_BASE_URL`   | `http://127.0.0.1:8766` | Optional Libre Claw daemon URL  |
+| `LIBRE_CLAW_TIMEOUT_MS` | `30000`                 | Libre Claw HTTP request timeout |
+
+## Work Runtime
+
+These variables configure native Work execution on the machine running the
+Libre WebUI backend:
+
+| Variable                            | Default                                                                                       | Purpose                                                  |
+| ----------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `WORK_RUNTIME_IMAGE`                | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Pinned image used for Work task containers               |
+| `WORK_DOCKER_COMMAND`               | `docker`                                                                                      | Docker CLI executable available to the backend process   |
+| `WORK_COMMAND_TIMEOUT_MS`           | `120000`                                                                                      | Default timeout; a tool can request up to `600000` ms    |
+| `WORK_MAX_OUTPUT_CHARS`             | `50000`                                                                                       | Captured stdout/stderr limit, applied to each stream     |
+| `WORK_MAX_AGENT_ROUNDS`             | `48`                                                                                          | Maximum Ollama model/tool iterations in one run          |
+| `WORK_MEMORY_LIMIT`                 | `2g`                                                                                          | Memory limit passed to each Work container               |
+| `WORK_CPU_LIMIT`                    | `2`                                                                                           | CPU limit passed to each Work container                  |
+| `WORK_PIDS_LIMIT`                   | `256`                                                                                         | Process limit passed to each Work container              |
+| `WORK_PREVIEW_PORT`                 | `4173`                                                                                        | Port a preview server must use inside the task container |
+| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`   | `2`                                                                                           | Concurrent container-backed tasks for the whole instance |
+| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` | `1`                                                                                           | Concurrent container-backed tasks for one administrator  |
+| `WORK_MAX_TASKS_GLOBAL`             | `500`                                                                                         | Maximum persisted Work tasks for the whole instance      |
+| `WORK_MAX_TASKS_PER_USER`           | `100`                                                                                         | Maximum persisted Work tasks for one administrator       |
+
+Work reads these values when the backend starts. The preview port is internal to
+the task container; Libre WebUI publishes it to a dynamically assigned loopback
+port rather than exposing this value directly on every host interface.
+
+Keep the runtime image pinned to a reviewed version or digest. Increasing
+concurrency or resource limits raises the amount of Docker-host capacity one or
+more autonomous runs can consume. Plugin-backed runs use the lower of
+`WORK_MAX_AGENT_ROUNDS` and 12 rounds, with caps of 64 total tool calls and
+4,096 requested output tokens per response. Persisted tool output has a
+separate bound of approximately 20,000 source characters plus a truncation
+marker.
+
+These variables do not make Work available inside the standard Libre WebUI
+Docker image or Helm chart. Those deployments do not include a Docker CLI,
+runtime socket, or Kubernetes Work driver. The currently supported path is a
+native backend process that can successfully run the configured Docker command.
 
 ## Provider Plugin Keys
 
@@ -95,6 +143,7 @@ Users can also store provider credentials in the UI when per-user keys are prefe
 | `VITE_API_TIMEOUT`   | `300000`                                | Frontend API timeout in milliseconds                |
 | `VITE_BACKEND_URL`   | `http://localhost:3001`                 | Used by some auth helper components                 |
 | `VITE_DEBUG_VERBOSE` | unset                                   | Enables verbose frontend debug logs in development  |
+| `VITE_LOG_LEVEL`     | unset                                   | Overrides the frontend log level                    |
 | `ELECTRON_BUILD`     | unset                                   | Enables Electron-specific Vite behavior when `true` |
 
 ## Maintenance Scripts
@@ -138,4 +187,5 @@ TURNSTILE_SECRET_KEY=...
 - [Authentication](./AUTHENTICATION)
 - [Single Sign-On](./SINGLE_SIGN_ON)
 - [Database Encryption](./DATABASE_ENCRYPTION)
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Docker](./DOCKER)

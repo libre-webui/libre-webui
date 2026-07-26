@@ -38,7 +38,7 @@ This keeps the demo interactive without writing real user data.
 
 ## What Demo Mode Does Not Do
 
-Demo mode is not a production authentication strategy. It does not provide real persistence, real provider calls, or real account management.
+Demo mode is not a production authentication strategy. It does not provide real persistence, real provider calls, real account management, or real Work task containers and command execution.
 
 For a real deployment, run the backend with normal authentication and configure the providers you want to expose.
 

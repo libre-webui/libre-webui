@@ -11,6 +11,19 @@ image: /img/social/15.png
 
 Use this setup when Ollama already runs on your host, another server, or a Tailscale/LAN machine.
 
+## Work Availability
+
+This Compose setup changes where Ollama runs; it does not give the Libre WebUI
+container access to a Work runtime. The standard image has no Docker CLI and
+does not mount the host Docker socket, so Work reports **Runtime unavailable**
+while Chat and the rest of the application continue normally.
+
+To use the currently supported Work runtime with the same external Ollama
+endpoint, run the Libre WebUI backend natively with `npx libre-webui` or from
+source on a host where that backend process can invoke Docker. Mounting the host
+Docker socket into the WebUI container grants root-equivalent host control and
+is not a safe drop-in configuration.
+
 ## Prerequisites
 
 Confirm Ollama is reachable:
@@ -70,18 +83,30 @@ Back up the data volume and encryption key together.
 
 ## Network Access
 
-If you access the app from another device, include that origin:
+The repository Compose file currently sets `CORS_ORIGIN` directly. A value in
+your shell or `.env` file does not replace that literal. Edit the
+`libre-webui.environment` entry or add an explicit Compose override, for example
+`compose.origin.yml`:
 
-```env
-CORS_ORIGIN=http://localhost:8080,http://192.168.1.50:8080
+```yaml
+services:
+  libre-webui:
+    environment:
+      CORS_ORIGIN: http://localhost:8080,http://192.168.1.50:8080
+      BASE_URL: http://192.168.1.50:8080
 ```
 
-For a public domain, use HTTPS and set:
+Apply both files:
 
-```env
-BASE_URL=https://your-domain.example
-CORS_ORIGIN=https://your-domain.example
+```bash
+docker compose \
+  -f docker-compose.external-ollama.yml \
+  -f compose.origin.yml \
+  up -d
 ```
+
+For a public domain, use the exact HTTPS origin for both values and terminate
+traffic with HTTPS.
 
 ## Useful Commands
 
@@ -120,6 +145,7 @@ Make sure `CORS_ORIGIN` matches the exact browser origin, including scheme and p
 
 ## Related Docs
 
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Docker](./DOCKER)
 - [Working with Models](./WORKING_WITH_MODELS)
 - [Troubleshooting](./TROUBLESHOOTING)

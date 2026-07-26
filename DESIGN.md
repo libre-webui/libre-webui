@@ -75,7 +75,7 @@ spacing:
 components:
   sidebar:
     backgroundColor: '{colors.neutral}'
-    width: 260px
+    width: 288px
   chat-area:
     backgroundColor: '{colors.neutral-secondary}'
     width: 48rem
@@ -172,6 +172,18 @@ The palette is anchored in warm neutrals with one active accent family at a time
 
 Status colors always pair with dark text on the colored fill to keep contrast comfortably above WCAG AA.
 
+Work task status indicators use a fixed operational palette rather than the
+custom accent:
+
+- **Idle:** `rgb(255, 255, 255)`
+- **Thinking:** `rgb(48, 121, 255)`
+- **Complete:** `rgb(76, 212, 117)`
+- **Needs input:** `rgb(255, 204, 0)`
+- **Error:** `rgb(255, 61, 129)`
+
+Every indicator is paired with a translated text label; color never carries the
+state alone.
+
 ## Accent Customization
 
 Accent selection is a user preference, not a separate light or dark theme. By default, changing the accent updates the primary and accent token scales used by buttons, focus rings, links, sliders, progress bars, and selected states while preserving the neutral palette.
@@ -210,13 +222,42 @@ The sidebar is the navigation anchor — darker than the chat area to recede vis
 
 Centered with a width of 48rem. User messages get a subtle neutral-tertiary background bubble with rounded-lg corners. Assistant messages have no background fill — they sit directly on the chat area surface, creating visual asymmetry that makes the conversation scannable at a glance.
 
+### Work Area
+
+Chat and Work are peer modes in the primary sidebar header. The active mode is
+visibly selected; Work tasks use the main sidebar list instead of introducing a
+second navigation rail. Each task row keeps its position while status changes,
+shows the task title, model, updated time, and labeled status color, and exposes
+deletion even when that task is selected.
+
+On wide screens, Work divides the main surface into conversation and workspace
+panes with a draggable, keyboard-operable separator. The default conversation
+share is 45%, constrained to keep both sides usable, and the saved value is
+scoped to the current user. Smaller screens replace the simultaneous split with
+clear Conversation and Workspace controls. RTL layouts reverse the visual pane
+order and resize direction without changing the logical meaning of either
+surface.
+
+The workspace toolbar keeps the high-frequency controls close to the content:
+Files contains navigation, formatting, and save actions; Activity shows tool
+calls and results; Preview contains the start command, lifecycle controls, and
+open action. Code, paths, commands, model identifiers, and tool output always
+remain LTR, including inside Arabic RTL layouts.
+
 ### Input Bar
 
 The message input is the most important interactive element. It uses neutral-tertiary fill with rounded-xl corners, creating a pill-like shape. The send button uses the neutral inverse treatment and sits inside the input container, aligned right. The active accent is reserved for focus and selection states. Placeholder text uses the secondary color.
 
 ### Code Blocks
 
-Use GitHub's dark palette (#0D1117 background) regardless of the app's light/dark mode. Code is always dark. Syntax highlighting follows standard conventions — strings in green-ish tones, keywords in blue-purple, comments in gray. A copy button sits in the top-right corner with ghost button styling.
+Code rendering follows the active light or dark mode. Dark mode uses GitHub's
+dark palette with a `#0D1117` background; light mode uses the quiet
+`surface-subtle` palette so code does not become an unrelated dark slab. Syntax
+highlighting follows standard conventions, and a copy button sits in the
+top-right corner of message code blocks with ghost button styling. Work's file
+editor uses the same theme-aware tokens, keeps the editable text, caret, and
+highlight overlay scroll-synchronized, and falls back to readable plain text for
+large files.
 
 ### Buttons
 

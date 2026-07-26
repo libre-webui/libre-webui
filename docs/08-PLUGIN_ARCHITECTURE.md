@@ -74,6 +74,33 @@ Many providers expose an OpenAI-compatible API. A plugin can define:
 
 If a provider does not support live model discovery, Libre WebUI uses the configured model map.
 
+## Plugins in Work
+
+Work can use active `completion` and `chat` plugins in addition to Ollama and
+Ollama Cloud. A plugin-backed Work run is accepted only when:
+
+- the plugin is active;
+- its model is present in the plugin's configured model map; and
+- credentials are available for the current administrator.
+
+Work keeps the selected provider type and plugin ID with both the task and each
+run. Routing is therefore based on the exact saved provider, not only the model
+name. Activating a plugin whose model name matches an Ollama model cannot
+silently redirect an existing task.
+
+Work adapts tool calls through native OpenAI-compatible, Anthropic, and Gemini
+request/response formats. The selected model must support tool calling even if
+the provider offers ordinary chat completions. If the provider rejects tools or
+returns an incompatible response, the run fails without falling back to another
+provider.
+
+A remote Work run can make several provider requests. The provider receives the
+Work system prompt, conversation context, tool definitions, and requested tool
+results. Tool results can contain source files, directory listings, or command
+output. Libre WebUI shows a per-user, dismissible remote-provider disclosure in
+Work; operators should still review provider pricing, retention, and training
+policies before enabling a service for sensitive projects.
+
 ## Embeddings
 
 Embedding-capable plugins can appear in the document embedding settings. Libre WebUI also detects likely Ollama embedding models such as `nomic-embed-text`, `bge`, `e5`, `gte`, and similar model names.
@@ -96,4 +123,5 @@ When adding a provider:
 
 - [Environment Variables](./ENVIRONMENT_VARIABLES)
 - [Working with Models](./WORKING_WITH_MODELS)
+- [Work: Isolated Workspaces](./WORKSPACES)
 - [Kimi Code](./KIMI_CODE)
