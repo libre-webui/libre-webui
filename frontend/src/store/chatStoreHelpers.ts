@@ -24,6 +24,7 @@ interface ChatMessageState {
 }
 
 interface PluginModelSource {
+  id: string;
   active?: boolean;
   type?: string;
   name: string;
@@ -311,6 +312,7 @@ export function buildPluginModels(plugins: PluginModelSource[]): OllamaModel[] {
         expires_at: new Date().toISOString(),
         size_vram: 0,
         isPlugin: true,
+        pluginId: plugin.id,
         pluginName: plugin.name,
       }))
     );

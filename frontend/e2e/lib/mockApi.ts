@@ -37,6 +37,9 @@ type MockModel = {
   size: number;
   digest: string;
   modified_at: string;
+  isPlugin?: boolean;
+  pluginId?: string;
+  pluginName?: string;
   details: {
     format: string;
     family: string;
@@ -73,6 +76,20 @@ type MockTTSPlugin = {
   name: string;
   models: string[];
   config?: MockTTSModel['config'];
+};
+
+type MockPlugin = {
+  id: string;
+  name: string;
+  type: 'completion' | 'chat';
+  endpoint: string;
+  auth: {
+    header: string;
+    key_env: string;
+    prefix?: string;
+  };
+  model_map: string[];
+  active: boolean;
 };
 
 type MockTTSGenerationRequest = {
@@ -125,10 +142,96 @@ type MockChatStream = {
   completionDelayMs?: number;
 };
 
+type MockWorkCapabilities = {
+  available: boolean;
+  runtime: 'docker';
+  image: string;
+  reason?: string;
+  dockerAvailable?: boolean;
+  ollamaAvailable?: boolean;
+  pluginAvailable?: boolean;
+  runtimeImage?: string;
+  limits?: {
+    maxRounds: number;
+    commandTimeoutMs: number;
+    maxOutputChars: number;
+  };
+};
+
+type MockWorkMessage = {
+  id: string;
+  taskId: string;
+  runId?: string;
+  messageIndex?: number;
+  role: 'user' | 'assistant' | 'tool';
+  kind: 'message' | 'tool_call' | 'tool_result' | 'error';
+  content: string;
+  createdAt: number;
+  metadata?: Record<string, unknown>;
+};
+
+type MockWorkRun = {
+  id: string;
+  taskId: string;
+  model: string;
+  providerType: 'ollama' | 'plugin';
+  providerId?: string;
+  status:
+    'queued' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
+  error?: string;
+  createdAt: number;
+  startedAt?: number;
+  finishedAt?: number;
+};
+
+type MockWorkTask = {
+  id: string;
+  title: string;
+  model: string;
+  providerType: 'ollama' | 'plugin';
+  providerId?: string;
+  status:
+    'idle' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
+  networkEnabled: boolean;
+  createdAt: number;
+  updatedAt: number;
+  messages: MockWorkMessage[];
+  activeRun?: MockWorkRun | null;
+  previewUrl?: string | null;
+  previewStatus: 'stopped' | 'starting' | 'running' | 'failed';
+  workspacePath: '/workspace';
+};
+
+type MockWorkFile = {
+  path: string;
+  name: string;
+  type: 'file' | 'directory';
+  size: number;
+  modifiedAt: number;
+  updatedAt?: number;
+};
+
+type MockWorkRunResult = {
+  assistantMessage?: string;
+  messages?: MockWorkMessage[];
+  files?: Array<MockWorkFile & { content?: string }>;
+  stayRunning?: boolean;
+};
+
+type MockWorkTaskTransition = {
+  taskId: string;
+  status: MockWorkTask['status'];
+  afterListRequests: number;
+  messages?: MockWorkMessage[];
+};
+
 type MockOptions = {
   systemInfo?: MockSystemInfo;
+  authRole?: 'admin' | 'user';
   sessions?: MockSession[];
   models?: MockModel[];
+  ollamaHealthy?: boolean;
+  plugins?: MockPlugin[];
   libraryModels?: MockLibraryModel[];
   cloudLibraryModels?: MockLibraryModel[];
   ttsModels?: MockTTSModel[];
@@ -140,6 +243,12 @@ type MockOptions = {
     source?: 'plugin' | 'ollama' | 'fallback';
   };
   chatStream?: MockChatStream;
+  workCapabilities?: MockWorkCapabilities;
+  workTasks?: MockWorkTask[];
+  workFiles?: Record<string, MockWorkFile[]>;
+  workFileContents?: Record<string, string>;
+  workRunResult?: MockWorkRunResult;
+  workTaskTransition?: MockWorkTaskTransition;
 };
 
 const defaultSystemInfo: MockSystemInfo = {
@@ -233,6 +342,20 @@ const defaultCloudLibraryModels: MockLibraryModel[] = [
   },
 ];
 
+const defaultWorkCapabilities: MockWorkCapabilities = {
+  available: true,
+  runtime: 'docker',
+  image: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
+  dockerAvailable: true,
+  ollamaAvailable: true,
+  runtimeImage: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
+  limits: {
+    maxRounds: 48,
+    commandTimeoutMs: 120_000,
+    maxOutputChars: 50_000,
+  },
+};
+
 const json = <T>(data: T, success = true): ApiEnvelope<T> => ({
   success,
   data,
@@ -246,15 +369,33 @@ const fulfillJson = async <T>(route: Route, data: T, success = true) => {
   });
 };
 
+const fulfillApiError = async (route: Route, status: number, error: string) => {
+  await route.fulfill({
+    status,
+    contentType: 'application/json',
+    body: JSON.stringify({ success: false, error }),
+  });
+};
+
 export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const systemInfo = options.systemInfo ?? defaultSystemInfo;
+  const authRole = options.authRole ?? 'admin';
   const sessions = structuredClone(options.sessions ?? []);
   const models = options.models ?? defaultModels;
+  const ollamaHealthy = options.ollamaHealthy ?? true;
+  const plugins = options.plugins ?? [];
   const libraryModels = options.libraryModels ?? defaultLibraryModels;
   const cloudLibraryModels =
     options.cloudLibraryModels ?? defaultCloudLibraryModels;
   const ttsModels = options.ttsModels ?? [];
   const ttsPlugins = options.ttsPlugins ?? [];
+  const workCapabilities = options.workCapabilities ?? defaultWorkCapabilities;
+  const workTaskTransition = options.workTaskTransition;
+  const workTasks = structuredClone(options.workTasks ?? []);
+  const workFiles = structuredClone(options.workFiles ?? {});
+  const workFileContents = {
+    ...(options.workFileContents ?? {}),
+  };
   const preferences = {
     ...structuredClone(defaultPreferences),
     ...options.preferences,
@@ -283,6 +424,207 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     sessionId: string;
     updates: Partial<MockSession>;
   }> = [];
+  const workTaskCreateRequests: Array<{
+    message: string;
+    model: string;
+    providerType: 'ollama' | 'plugin';
+    providerId?: string;
+    networkEnabled: boolean;
+  }> = [];
+  const workTaskDetailRequests: string[] = [];
+  const workTaskListRequests: number[] = [];
+  const workMessagePageRequests: Array<{
+    taskId: string;
+    before: number;
+    limit: number;
+  }> = [];
+  const workRunRequests: Array<{
+    taskId: string;
+    message: string;
+    model?: string;
+    providerType?: 'ollama' | 'plugin';
+    providerId?: string;
+  }> = [];
+  const workCancelRequests: string[] = [];
+  const workFileUpdateRequests: Array<{
+    taskId: string;
+    path: string;
+    content: string;
+    expectedUpdatedAt?: number;
+  }> = [];
+  const workPreviewRequests: Array<{
+    taskId: string;
+    action: 'start' | 'stop';
+    command?: string;
+  }> = [];
+  let nextWorkTaskId = workTasks.length + 1;
+  let nextWorkMessageId = 1;
+
+  const indexedWorkMessages = (task: MockWorkTask): MockWorkMessage[] =>
+    task.messages.map((message, messageIndex) => ({
+      ...message,
+      messageIndex: message.messageIndex ?? messageIndex,
+    }));
+
+  const workMessagePage = (
+    task: MockWorkTask,
+    before?: number,
+    limit = 200
+  ) => {
+    const eligible = indexedWorkMessages(task).filter(
+      message => before === undefined || (message.messageIndex ?? 0) < before
+    );
+    const messages = eligible.slice(-limit);
+    const hasMore = eligible.length > messages.length;
+    return {
+      messages,
+      cursor: hasMore ? messages[0]?.messageIndex : undefined,
+      hasMore,
+    };
+  };
+
+  const workTaskDetail = (task: MockWorkTask) => {
+    const page = workMessagePage(task);
+    return {
+      ...task,
+      messages: page.messages,
+      messageCursor: page.cursor,
+      hasMoreMessages: page.hasMore,
+    };
+  };
+
+  let workTaskTransitionApplied = false;
+  const applyWorkTaskTransition = () => {
+    if (!workTaskTransition || workTaskTransitionApplied) return;
+    const task = workTasks.find(item => item.id === workTaskTransition.taskId);
+    if (!task) return;
+    workTaskTransitionApplied = true;
+    task.status = workTaskTransition.status;
+    task.updatedAt = Date.now();
+    if (
+      workTaskTransition.status !== 'preparing' &&
+      workTaskTransition.status !== 'running'
+    ) {
+      task.activeRun = null;
+    }
+    if (workTaskTransition.messages) {
+      task.messages.push(...structuredClone(workTaskTransition.messages));
+    }
+  };
+
+  const appendMockWorkRun = (
+    task: MockWorkTask,
+    message: string,
+    model?: string,
+    providerType?: 'ollama' | 'plugin',
+    providerId?: string
+  ) => {
+    const now = Date.now();
+    const runId = `work-run-${task.id}-${now}`;
+    const userMessage: MockWorkMessage = {
+      id: `work-message-${nextWorkMessageId++}`,
+      taskId: task.id,
+      runId,
+      role: 'user',
+      kind: 'message',
+      content: message,
+      createdAt: now,
+    };
+    const result = options.workRunResult;
+    const generatedMessages: MockWorkMessage[] = result?.messages ?? [
+      {
+        id: `work-message-${nextWorkMessageId++}`,
+        taskId: task.id,
+        runId,
+        role: 'assistant',
+        kind: 'tool_call',
+        content: 'Writing index.html',
+        createdAt: now + 1,
+        metadata: {
+          toolCallId: `tool-${now}`,
+          toolName: 'write_file',
+          path: 'index.html',
+        },
+      },
+      {
+        id: `work-message-${nextWorkMessageId++}`,
+        taskId: task.id,
+        runId,
+        role: 'tool',
+        kind: 'tool_result',
+        content: 'Created /workspace/index.html',
+        createdAt: now + 2,
+        metadata: {
+          toolCallId: `tool-${now}`,
+          toolName: 'write_file',
+          path: 'index.html',
+        },
+      },
+      {
+        id: `work-message-${nextWorkMessageId++}`,
+        taskId: task.id,
+        runId,
+        role: 'assistant',
+        kind: 'message',
+        content:
+          result?.assistantMessage ??
+          'Finished the requested changes in this task workspace.',
+        createdAt: now + 3,
+      },
+    ];
+
+    const nextIndex = task.messages.length;
+    task.messages.push(
+      { ...userMessage, messageIndex: nextIndex },
+      ...structuredClone(generatedMessages).map((message, index) => ({
+        ...message,
+        messageIndex: nextIndex + index + 1,
+      }))
+    );
+    task.model = model || task.model;
+    task.providerType = providerType || task.providerType;
+    task.providerId =
+      task.providerType === 'plugin'
+        ? providerId || task.providerId
+        : undefined;
+    task.updatedAt = now;
+    task.status = result?.stayRunning ? 'running' : 'completed';
+    task.activeRun = result?.stayRunning
+      ? {
+          id: runId,
+          taskId: task.id,
+          model: task.model,
+          providerType: task.providerType,
+          providerId: task.providerId,
+          status: 'running',
+          createdAt: now,
+          startedAt: now,
+        }
+      : null;
+
+    if (result?.files) {
+      workFiles[task.id] = result.files.map(
+        ({ content: _content, ...file }) => file
+      );
+      for (const file of result.files) {
+        if (file.type === 'file' && file.content !== undefined) {
+          workFileContents[`${task.id}:${file.path}`] = file.content;
+        }
+      }
+    }
+
+    return {
+      id: runId,
+      taskId: task.id,
+      model: task.model,
+      status: result?.stayRunning
+        ? ('running' as const)
+        : ('completed' as const),
+      createdAt: now,
+      startedAt: now,
+      finishedAt: result?.stayRunning ? undefined : now + 3,
+    };
+  };
 
   await page.addInitScript(streamConfig => {
     class MockWebSocket {
@@ -389,6 +731,18 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     });
   }, chatStream);
 
+  await page.route('http://127.0.0.1:49173/**', async route => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: `<!doctype html>
+<html>
+  <head><title>Work preview</title></head>
+  <body><main data-testid="mock-work-preview">Isolated Work preview</main></body>
+</html>`,
+    });
+  });
+
   await page.route(
     /^http:\/\/(?:127\.0\.0\.1|localhost|demo\.localhost):3001\/api\/.*$/,
     async route => {
@@ -406,7 +760,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           id: 'e2e-user',
           username: 'e2e',
           email: 'e2e@example.test',
-          role: 'admin',
+          role: authRole,
           createdAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
           updatedAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
         });
@@ -419,7 +773,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
             id: 'e2e-user',
             username: 'e2e',
             email: 'e2e@example.test',
-            role: 'admin',
+            role: authRole,
             createdAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
             updatedAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
           },
@@ -429,12 +783,326 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/work/capabilities' && method === 'GET') {
+        await fulfillJson(route, workCapabilities);
+        return;
+      }
+
+      if (path === '/work/tasks' && method === 'GET') {
+        workTaskListRequests.push(Date.now());
+        if (
+          workTaskTransition &&
+          workTaskListRequests.length === workTaskTransition.afterListRequests
+        ) {
+          applyWorkTaskTransition();
+        }
+        await fulfillJson(
+          route,
+          workTasks.map(({ messages: _messages, ...summary }) => summary)
+        );
+        return;
+      }
+
+      if (path === '/work/tasks' && method === 'POST') {
+        if (!workCapabilities.available) {
+          await fulfillApiError(
+            route,
+            503,
+            workCapabilities.reason || 'Docker runtime is unavailable'
+          );
+          return;
+        }
+
+        const request = route.request().postDataJSON() as {
+          message: string;
+          model: string;
+          providerType: 'ollama' | 'plugin';
+          providerId?: string;
+          networkEnabled: boolean;
+        };
+        const now = Date.now();
+        const task: MockWorkTask = {
+          id: `work-task-${nextWorkTaskId++}`,
+          title:
+            request.message.trim().replace(/\s+/g, ' ').slice(0, 80) ||
+            'New Work task',
+          model: request.model,
+          providerType: request.providerType,
+          providerId: request.providerId,
+          status: 'preparing',
+          networkEnabled: request.networkEnabled === true,
+          createdAt: now,
+          updatedAt: now,
+          messages: [],
+          activeRun: null,
+          previewUrl: null,
+          previewStatus: 'stopped',
+          workspacePath: '/workspace',
+        };
+
+        workTaskCreateRequests.push(request);
+        workTasks.unshift(task);
+        workFiles[task.id] ??= [];
+        appendMockWorkRun(
+          task,
+          request.message,
+          request.model,
+          request.providerType,
+          request.providerId
+        );
+        await fulfillJson(route, workTaskDetail(task));
+        return;
+      }
+
+      const workTaskMatch = path.match(/^\/work\/tasks\/([^/]+)$/);
+      if (workTaskMatch) {
+        const taskId = decodeURIComponent(workTaskMatch[1]);
+        const taskIndex = workTasks.findIndex(item => item.id === taskId);
+        const task = workTasks[taskIndex];
+
+        if (!task) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+
+        if (method === 'GET') {
+          workTaskDetailRequests.push(taskId);
+          await fulfillJson(route, workTaskDetail(task));
+          return;
+        }
+
+        if (method === 'PATCH') {
+          const updates = route.request().postDataJSON() as Partial<
+            Pick<
+              MockWorkTask,
+              | 'title'
+              | 'model'
+              | 'providerType'
+              | 'providerId'
+              | 'networkEnabled'
+            >
+          >;
+          Object.assign(task, updates, { updatedAt: Date.now() });
+          if (updates.providerType === 'ollama') {
+            task.providerId = undefined;
+          }
+          await fulfillJson(route, workTaskDetail(task));
+          return;
+        }
+
+        if (method === 'DELETE') {
+          workTasks.splice(taskIndex, 1);
+          delete workFiles[taskId];
+          for (const key of Object.keys(workFileContents)) {
+            if (key.startsWith(`${taskId}:`)) delete workFileContents[key];
+          }
+          await fulfillJson(route, { id: taskId, deleted: true });
+          return;
+        }
+      }
+
+      const workMessagesMatch = path.match(
+        /^\/work\/tasks\/([^/]+)\/messages$/
+      );
+      if (workMessagesMatch && method === 'GET') {
+        const taskId = decodeURIComponent(workMessagesMatch[1]);
+        const task = workTasks.find(item => item.id === taskId);
+        if (!task) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        const before = Number(url.searchParams.get('before'));
+        const limit = Number(url.searchParams.get('limit') || 200);
+        workMessagePageRequests.push({ taskId, before, limit });
+        await fulfillJson(route, workMessagePage(task, before, limit));
+        return;
+      }
+
+      const workRunMatch = path.match(/^\/work\/tasks\/([^/]+)\/runs$/);
+      if (workRunMatch && method === 'POST') {
+        const taskId = decodeURIComponent(workRunMatch[1]);
+        const task = workTasks.find(item => item.id === taskId);
+        if (!task) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        const request = route.request().postDataJSON() as {
+          message: string;
+          model?: string;
+          providerType?: 'ollama' | 'plugin';
+          providerId?: string;
+        };
+        workRunRequests.push({ taskId, ...request });
+        appendMockWorkRun(
+          task,
+          request.message,
+          request.model,
+          request.providerType,
+          request.providerId
+        );
+        await fulfillJson(route, workTaskDetail(task));
+        return;
+      }
+
+      const workCancelMatch = path.match(/^\/work\/tasks\/([^/]+)\/cancel$/);
+      if (workCancelMatch && method === 'POST') {
+        const taskId = decodeURIComponent(workCancelMatch[1]);
+        const task = workTasks.find(item => item.id === taskId);
+        if (!task) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        const now = Date.now();
+        workCancelRequests.push(taskId);
+        task.status = 'cancelled';
+        task.updatedAt = now;
+        if (task.activeRun) {
+          task.activeRun.status = 'cancelled';
+          task.activeRun.finishedAt = now;
+        }
+        await fulfillJson(route, workTaskDetail(task));
+        return;
+      }
+
+      const workFilesMatch = path.match(/^\/work\/tasks\/([^/]+)\/files$/);
+      if (workFilesMatch && method === 'GET') {
+        const taskId = decodeURIComponent(workFilesMatch[1]);
+        if (!workTasks.some(item => item.id === taskId)) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        await fulfillJson(route, {
+          path: url.searchParams.get('path') || '',
+          entries: workFiles[taskId] ?? [],
+        });
+        return;
+      }
+
+      const workFileMatch = path.match(/^\/work\/tasks\/([^/]+)\/file$/);
+      if (workFileMatch) {
+        const taskId = decodeURIComponent(workFileMatch[1]);
+        if (!workTasks.some(item => item.id === taskId)) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+
+        if (method === 'GET') {
+          const filePath = url.searchParams.get('path') || '';
+          const content = workFileContents[`${taskId}:${filePath}`];
+          const file = (workFiles[taskId] ?? []).find(
+            item => item.path === filePath && item.type === 'file'
+          );
+          if (content === undefined || !file) {
+            await fulfillApiError(route, 404, 'Work file not found');
+            return;
+          }
+          await fulfillJson(route, {
+            path: filePath,
+            content,
+            size: file.size,
+            modifiedAt: file.modifiedAt,
+            updatedAt: file.updatedAt ?? file.modifiedAt,
+          });
+          return;
+        }
+
+        if (method === 'PUT') {
+          const request = route.request().postDataJSON() as {
+            content: string;
+            expectedUpdatedAt?: number;
+          };
+          const filePath = url.searchParams.get('path') || '';
+          if (!filePath) {
+            await fulfillApiError(route, 400, 'A workspace path is required');
+            return;
+          }
+          const now = Date.now();
+          const files = (workFiles[taskId] ??= []);
+          const existing = files.find(item => item.path === filePath);
+          if (existing) {
+            existing.size = request.content.length;
+            existing.modifiedAt = now;
+          } else {
+            files.push({
+              path: filePath,
+              name: filePath.split('/').pop() || filePath,
+              type: 'file',
+              size: request.content.length,
+              modifiedAt: now,
+            });
+          }
+          workFileContents[`${taskId}:${filePath}`] = request.content;
+          workFileUpdateRequests.push({
+            taskId,
+            path: filePath,
+            content: request.content,
+            expectedUpdatedAt: request.expectedUpdatedAt,
+          });
+          await fulfillJson(route, {
+            path: filePath,
+            content: request.content,
+            size: request.content.length,
+            modifiedAt: now,
+          });
+          return;
+        }
+      }
+
+      const workPreviewMatch = path.match(
+        /^\/work\/tasks\/([^/]+)\/preview\/(start|stop)$/
+      );
+      if (workPreviewMatch && method === 'POST') {
+        const taskId = decodeURIComponent(workPreviewMatch[1]);
+        const action = workPreviewMatch[2] as 'start' | 'stop';
+        const task = workTasks.find(item => item.id === taskId);
+        if (!task) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+
+        if (action === 'start') {
+          if (!task.networkEnabled) {
+            await fulfillApiError(
+              route,
+              409,
+              'Enable task networking before starting a preview'
+            );
+            return;
+          }
+          const request = (route.request().postDataJSON() || {}) as {
+            command?: string;
+          };
+          workPreviewRequests.push({
+            taskId,
+            action,
+            command: request.command,
+          });
+          task.previewStatus = 'running';
+          task.previewUrl = 'http://127.0.0.1:49173/';
+        } else {
+          workPreviewRequests.push({ taskId, action });
+          task.previewStatus = 'stopped';
+          task.previewUrl = null;
+        }
+        task.updatedAt = Date.now();
+        await fulfillJson(route, workTaskDetail(task));
+        return;
+      }
+
       if (path === '/ollama/health' && method === 'GET') {
-        await fulfillJson(route, { status: 'ok' });
+        await fulfillJson(
+          route,
+          { status: ollamaHealthy ? 'ok' : 'offline' },
+          ollamaHealthy
+        );
         return;
       }
 
       if (path === '/ollama/models' && method === 'GET') {
+        if (!ollamaHealthy) {
+          await fulfillApiError(route, 503, 'Ollama is offline');
+          return;
+        }
         await fulfillJson(route, models);
         return;
       }
@@ -570,7 +1238,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path === '/plugins' && method === 'GET') {
-        await fulfillJson(route, []);
+        await fulfillJson(route, plugins);
         return;
       }
 
@@ -628,5 +1296,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     ttsGenerationRequests,
     titleGenerationRequests,
     sessionUpdateRequests,
+    workTaskCreateRequests,
+    workTaskDetailRequests,
+    workTaskListRequests,
+    workMessagePageRequests,
+    applyWorkTaskTransition,
+    workRunRequests,
+    workCancelRequests,
+    workFileUpdateRequests,
+    workPreviewRequests,
   };
 }

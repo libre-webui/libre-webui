@@ -307,6 +307,67 @@ function initializeTables(): void {
     )
   `);
 
+  // Native Work tasks. Workspace files live in a task-owned Docker volume;
+  // SQLite stores ownership, conversation history, and durable run state.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS work_tasks (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      model TEXT NOT NULL,
+      provider_type TEXT NOT NULL DEFAULT 'ollama',
+      provider_id TEXT,
+      status TEXT NOT NULL DEFAULT 'idle',
+      network_enabled INTEGER NOT NULL DEFAULT 0,
+      volume_name TEXT NOT NULL UNIQUE,
+      container_name TEXT NOT NULL UNIQUE,
+      preview_url TEXT,
+      preview_status TEXT NOT NULL DEFAULT 'stopped',
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS work_runs (
+      id TEXT PRIMARY KEY,
+      task_id TEXT NOT NULL,
+      model TEXT NOT NULL,
+      provider_type TEXT NOT NULL DEFAULT 'ollama',
+      provider_id TEXT,
+      status TEXT NOT NULL DEFAULT 'queued',
+      error TEXT,
+      created_at INTEGER NOT NULL,
+      started_at INTEGER,
+      finished_at INTEGER,
+      FOREIGN KEY (task_id) REFERENCES work_tasks(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS work_messages (
+      id TEXT PRIMARY KEY,
+      task_id TEXT NOT NULL,
+      run_id TEXT,
+      role TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      content TEXT NOT NULL,
+      metadata TEXT,
+      message_index INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      FOREIGN KEY (task_id) REFERENCES work_tasks(id) ON DELETE CASCADE,
+      FOREIGN KEY (run_id) REFERENCES work_runs(id) ON DELETE SET NULL,
+      UNIQUE(task_id, message_index)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_work_tasks_user_updated
+      ON work_tasks(user_id, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_work_runs_task_created
+      ON work_runs(task_id, created_at DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_work_runs_one_active
+      ON work_runs(task_id)
+      WHERE status IN ('queued', 'preparing', 'running');
+    CREATE INDEX IF NOT EXISTS idx_work_messages_task_index
+      ON work_messages(task_id, message_index);
+  `);
+
   // Create indexes for better performance
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
@@ -466,6 +527,33 @@ function runMigrations(): void {
           `ALTER TABLE personas ADD COLUMN ${column.name} ${column.type}`
         );
       }
+    }
+
+    // Work initially stored only a model name. Preserve those existing tasks as
+    // explicit Ollama routes so a newly activated plugin with the same model
+    // name can never silently redirect their prompts to a remote provider.
+    for (const table of ['work_tasks', 'work_runs']) {
+      const tableInfo = db
+        .prepare(`PRAGMA table_info(${table})`)
+        .all() as Array<{
+        name: string;
+      }>;
+      const columns = tableInfo.map(column => column.name);
+      if (!columns.includes('provider_type')) {
+        db.exec(
+          `ALTER TABLE ${table} ADD COLUMN provider_type TEXT NOT NULL DEFAULT 'ollama'`
+        );
+      }
+      if (!columns.includes('provider_id')) {
+        db.exec(`ALTER TABLE ${table} ADD COLUMN provider_id TEXT`);
+      }
+      db.prepare(
+        `UPDATE ${table}
+         SET provider_type = 'ollama', provider_id = NULL
+         WHERE provider_type IS NULL
+            OR provider_type NOT IN ('ollama', 'plugin')
+            OR (provider_type = 'ollama' AND provider_id IS NOT NULL)`
+      ).run();
     }
   } catch (error) {
     logger.error('Error running migrations:', error);

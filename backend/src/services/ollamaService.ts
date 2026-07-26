@@ -35,10 +35,12 @@ const logger = createLogger('ollama');
  * Ollama "cloud" models (tagged ":cloud" or "-cloud", e.g. "deepseek-v4-pro:cloud")
  * are hosted and proxy through ollama.com.
  */
-function isCloudModel(model: string | undefined): boolean {
-  if (!model || !model.includes(':')) return false;
-  const tag = model.slice(model.lastIndexOf(':') + 1);
-  return tag === 'cloud' || tag.endsWith('-cloud');
+export function isCloudModel(model: string | undefined): boolean {
+  const normalized = model?.trim().toLowerCase();
+  return Boolean(
+    normalized &&
+    (normalized.endsWith(':cloud') || normalized.endsWith('-cloud'))
+  );
 }
 
 /**
@@ -445,15 +447,20 @@ class OllamaService {
 
   // Chat completion methods
   async generateChatResponse(
-    request: OllamaChatRequest
+    request: OllamaChatRequest,
+    signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     try {
       // Use long operation client for chat generation as it may need to load model on first use
-      const response = await this.longOperationClient.post('/api/chat', {
-        ...request,
-        options: sanitizeOptionsForModel(request.model, request.options),
-        stream: false,
-      });
+      const response = await this.longOperationClient.post(
+        '/api/chat',
+        {
+          ...request,
+          options: sanitizeOptionsForModel(request.model, request.options),
+          stream: false,
+        },
+        { signal }
+      );
       return response.data;
     } catch (error: unknown) {
       logger.error('Failed to generate chat response:', error);

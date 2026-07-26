@@ -290,6 +290,7 @@
       "personas": "Personas",
       "imagine": "Imagine",
       "agents": "Libre Claw",
+      "work": "Work",
       "settings": "Settings",
       "userManagement": "User Management",
       "signOut": "Sign Out"
@@ -1445,6 +1446,107 @@
       "createAutomationFailed": "Could not create automation",
       "automationUpdated": "Automation updated",
       "updateAutomationFailed": "Could not update automation"
+    }
+  },
+  "work": {
+    "title": "Work",
+    "subtitle": "Isolated model workspaces",
+    "tasks": {
+      "title": "Work tasks",
+      "subtitle": "Persistent local workspaces",
+      "new": "New task",
+      "empty": "Your Work tasks will appear here after you send the first message.",
+      "untitled": "Untitled task",
+      "delete": "Delete task",
+      "deleteConfirm": "Delete “{{title}}” and its workspace permanently?",
+      "close": "Close Work tasks",
+      "open": "Open Work tasks",
+      "rename": "Task title",
+      "loading": "Loading task…",
+      "notFound": "This Work task is unavailable",
+      "back": "Start a new task"
+    },
+    "landing": {
+      "title": "Start a new Work task",
+      "description": "Give a local or configured provider model a durable, isolated workspace. It can inspect files, run tools, and continue where it left off when you return.",
+      "isolated": "Isolated",
+      "isolatedBody": "Every task gets its own container and files.",
+      "durable": "Durable",
+      "durableBody": "Return to its conversation and workspace later.",
+      "controlled": "Controlled",
+      "controlledBody": "Container network access stays off until you opt in."
+    },
+    "composer": {
+      "placeholder": "Describe what you want to build or change…",
+      "model": "Work model",
+      "noModels": "No Work-compatible models",
+      "networkHelp": "Controls the workspace container only. Keep it off unless this task needs external access.",
+      "networkOn": "Network on",
+      "networkOff": "Network off",
+      "cancel": "Stop",
+      "send": "Run",
+      "hint": "Each task keeps its own files and history. Review model output before using it.",
+      "remoteHint": "Remote provider: conversation and tool output are sent to the configured service. One autonomous run can make multiple provider calls and may incur charges. Workspace files stay local unless a tool returns their contents."
+    },
+    "conversation": {
+      "ready": "Workspace ready",
+      "empty": "Continue the task below. This conversation and its files stay attached to this workspace.",
+      "loadOlder": "Load older messages"
+    },
+    "status": {
+      "preparing": "Preparing isolated workspace…",
+      "running": "Working in the local workspace…"
+    },
+    "runtime": {
+      "unavailable": "Runtime unavailable",
+      "readyOllama": "Docker + Ollama ready",
+      "readyPlugin": "Docker + plugin ready",
+      "readyHybrid": "Docker + models ready",
+      "reason": "Docker and an available Ollama or plugin model provider are required."
+    },
+    "workspace": {
+      "files": "Files",
+      "activity": "Activity",
+      "preview": "Preview"
+    },
+    "files": {
+      "discard": "Discard unsaved file changes?",
+      "leaveWithDraft": "Leave this file? Your unsaved edit will remain as a browser draft.",
+      "up": "Parent folder",
+      "back": "Back to files",
+      "empty": "No files in this folder yet.",
+      "select": "Select a file to inspect and edit it."
+    },
+    "activity": {
+      "empty": "Commands, file operations, and tool results will appear here."
+    },
+    "preview": {
+      "command": "Optional start command",
+      "start": "Start preview",
+      "stop": "Stop preview",
+      "open": "Open",
+      "networkRequired": "Enable network access to start a preview.",
+      "enableNetwork": "Preview is off. Enable network access for this task only when you are ready to expose its local development server.",
+      "starting": "Starting preview…",
+      "frameTitle": "Workspace preview",
+      "failed": "The preview could not start. Check Activity, then try another command.",
+      "empty": "Start the app inside this workspace to inspect it here."
+    },
+    "mobile": {
+      "conversation": "Conversation",
+      "workspace": "Workspace"
+    },
+    "toasts": {
+      "runFailed": "Could not start the Work task.",
+      "updateFailed": "Could not update this task.",
+      "networkFailed": "Could not update network access.",
+      "cancelled": "Work run stopped.",
+      "cancelFailed": "Could not stop the Work run.",
+      "deleteFailed": "Could not delete this Work task.",
+      "saveFailed": "Could not save this file.",
+      "saved": "File saved.",
+      "previewFailed": "Could not start the preview.",
+      "previewStopFailed": "Could not stop the preview."
     }
   },
   "personaBackground": {

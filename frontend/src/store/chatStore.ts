@@ -359,14 +359,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
       set({ loading: true, error: null });
       logger.debug('Loading models from API...');
 
-      // Load Ollama models
-      const ollamaResponse = await ollamaApi.getModels();
-
       let allModels: OllamaModel[] = [];
+      let ollamaLoadError: unknown;
 
-      if (ollamaResponse.success && ollamaResponse.data) {
-        allModels = [...ollamaResponse.data];
-        logger.debug('Ollama models loaded:', ollamaResponse.data.length);
+      // Ollama and plugins are independent providers. Keep loading configured
+      // plugin models when the local Ollama endpoint is offline.
+      try {
+        const ollamaResponse = await ollamaApi.getModels();
+        if (ollamaResponse.success && ollamaResponse.data) {
+          allModels = [...ollamaResponse.data];
+          logger.debug('Ollama models loaded:', ollamaResponse.data.length);
+        } else {
+          ollamaLoadError = new Error(
+            ollamaResponse.error ||
+              ollamaResponse.message ||
+              'Ollama models are unavailable.'
+          );
+        }
+      } catch (error) {
+        ollamaLoadError = error;
+        logger.warn(
+          'Ollama models are unavailable; continuing with plugin models:',
+          error
+        );
       }
 
       // Load plugin models
@@ -403,6 +418,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         // Continue without plugin models
       }
 
+      const providerModelCount = allModels.length;
+
       // Load personas and add them as special models
       try {
         const { personaApi } = await import('@/utils/api');
@@ -421,6 +438,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
 
       logger.debug('Total models loaded:', allModels.length);
+      const providerLoadError =
+        providerModelCount === 0 && ollamaLoadError
+          ? getErrorMessage(ollamaLoadError, 'No model provider is available')
+          : null;
 
       // Validate that the currently selected model still exists in the models list
       const currentState = get();
@@ -437,12 +458,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
           models: allModels,
           loading: false,
           selectedModel: fallbackModel,
+          error: providerLoadError,
         });
         toast.success(
           `Switched to ${fallbackModel} (previous model no longer available)`
         );
       } else {
-        set({ models: allModels, loading: false });
+        set({ models: allModels, loading: false, error: providerLoadError });
+      }
+      if (providerLoadError) {
+        toast.error(providerLoadError);
       }
     } catch (error: unknown) {
       logger.error('Error loading models:', error);

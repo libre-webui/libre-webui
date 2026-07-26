@@ -9,7 +9,15 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
-const { app, BrowserWindow, shell, Menu, dialog, nativeTheme, nativeImage } = require('electron');
+const {
+  app,
+  BrowserWindow,
+  shell,
+  Menu,
+  dialog,
+  nativeTheme,
+  nativeImage,
+} = require('electron');
 const path = require('path');
 const http = require('http');
 const { spawn } = require('child_process');
@@ -109,7 +117,14 @@ function createMainWindow() {
 
   // Handle external links
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    try {
+      const target = new URL(url);
+      if (target.protocol === 'http:' || target.protocol === 'https:') {
+        shell.openExternal(target.toString());
+      }
+    } catch {
+      // Refuse malformed and non-web schemes.
+    }
     return { action: 'deny' };
   });
 
@@ -132,8 +147,8 @@ function createMainWindow() {
 
 // Check if backend is running
 async function checkBackend() {
-  return new Promise((resolve) => {
-    const req = http.get(`http://localhost:${BACKEND_PORT}/api/health`, (res) => {
+  return new Promise(resolve => {
+    const req = http.get(`http://localhost:${BACKEND_PORT}/api/health`, res => {
       resolve(res.statusCode === 200);
     });
     req.on('error', () => resolve(false));
@@ -250,12 +265,16 @@ function createMenu() {
         },
         {
           label: 'GitHub',
-          click: () => shell.openExternal('https://github.com/libre-webui/libre-webui'),
+          click: () =>
+            shell.openExternal('https://github.com/libre-webui/libre-webui'),
         },
         { type: 'separator' },
         {
           label: 'Report Issue',
-          click: () => shell.openExternal('https://github.com/libre-webui/libre-webui/issues'),
+          click: () =>
+            shell.openExternal(
+              'https://github.com/libre-webui/libre-webui/issues'
+            ),
         },
       ],
     },
@@ -276,7 +295,9 @@ async function main() {
     if (backendAvailable) {
       console.log('Backend server detected on port', BACKEND_PORT);
     } else {
-      console.log('Backend not detected - please start it manually with: npm run dev:backend');
+      console.log(
+        'Backend not detected - please start it manually with: npm run dev:backend'
+      );
       // Disabled auto-start in Terminal for now
       // startBackendInTerminal();
     }
@@ -292,7 +313,7 @@ async function main() {
       // In production, load the built frontend
       const frontendPath = getResourcePath('frontend', 'dist', 'index.html');
       console.log('Loading frontend from:', frontendPath);
-      window.loadFile(frontendPath).catch((err) => {
+      window.loadFile(frontendPath).catch(err => {
         console.error('Failed to load frontend:', err);
         dialog.showErrorBox('Load Error', `Could not load app: ${err.message}`);
       });
@@ -340,13 +361,15 @@ app.on('activate', () => {
   }
 });
 
-
 // Handle certificate errors for localhost
-app.on('certificate-error', (event, _webContents, url, _error, _certificate, callback) => {
-  if (url.startsWith('https://localhost')) {
-    event.preventDefault();
-    callback(true);
-  } else {
-    callback(false);
+app.on(
+  'certificate-error',
+  (event, _webContents, url, _error, _certificate, callback) => {
+    if (url.startsWith('https://localhost')) {
+      event.preventDefault();
+      callback(true);
+    } else {
+      callback(false);
+    }
   }
-});
+);

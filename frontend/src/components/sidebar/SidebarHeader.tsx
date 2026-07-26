@@ -25,6 +25,7 @@ import { cn } from '@/utils';
 interface SidebarHeaderProps {
   sidebarCompact: boolean;
   isElectron: boolean;
+  showWork: boolean;
   selectedModel: string;
   modelCount: number;
   onToggleCompact: () => void;
@@ -35,6 +36,7 @@ interface SidebarHeaderProps {
 export function SidebarHeader({
   sidebarCompact,
   isElectron,
+  showWork,
   selectedModel,
   modelCount,
   onToggleCompact,
@@ -103,25 +105,27 @@ export function SidebarHeader({
       <div
         className={cn(
           'grid w-full gap-2',
-          sidebarCompact ? 'grid-cols-1' : 'grid-cols-2'
+          sidebarCompact || !showWork ? 'grid-cols-1' : 'grid-cols-2'
         )}
         data-testid='sidebar-create-actions'
       >
-        <Button
-          variant='secondary'
-          onClick={onStartWork}
-          className={cn(
-            'h-10 rounded-xl border-black/[0.08] bg-white/80 text-gray-950 shadow-none transition-colors duration-150 hover:bg-white active:bg-gray-50 dark:border-white/[0.08] dark:bg-dark-200/80 dark:text-dark-950 dark:hover:bg-dark-200 dark:active:bg-dark-300 touch-manipulation',
-            sidebarCompact && 'w-full p-0'
-          )}
-          size='sm'
-          title={t('chat.session.work')}
-          aria-label={t('chat.session.work')}
-          data-testid='sidebar-work-button'
-        >
-          <Bot className='h-4 w-4' />
-          {!sidebarCompact && t('chat.session.work')}
-        </Button>
+        {showWork && (
+          <Button
+            variant='secondary'
+            onClick={onStartWork}
+            className={cn(
+              'h-10 rounded-xl border-black/[0.08] bg-white/80 text-gray-950 shadow-none transition-colors duration-150 hover:bg-white active:bg-gray-50 dark:border-white/[0.08] dark:bg-dark-200/80 dark:text-dark-950 dark:hover:bg-dark-200 dark:active:bg-dark-300 touch-manipulation',
+              sidebarCompact && 'w-full p-0'
+            )}
+            size='sm'
+            title={t('chat.session.work')}
+            aria-label={t('chat.session.work')}
+            data-testid='sidebar-work-button'
+          >
+            <Bot className='h-4 w-4' />
+            {!sidebarCompact && t('chat.session.work')}
+          </Button>
+        )}
 
         <Button
           onClick={onCreateSession}

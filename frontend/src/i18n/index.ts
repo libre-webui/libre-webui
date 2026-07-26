@@ -62,7 +62,13 @@ export const supportedLanguages = [
 export const rtlLanguages = ['ar', 'he', 'fa', 'ur'] as const;
 
 type SupportedLanguageCode = (typeof supportedLanguages)[number]['code'];
-type LocaleMessages = typeof en;
+// Lazy locale bundles intentionally may lag new English fallback keys.
+type DeepPartial<T> = {
+  [Key in keyof T]?: T[Key] extends Record<string, unknown>
+    ? DeepPartial<T[Key]>
+    : T[Key];
+};
+type LocaleMessages = DeepPartial<typeof en>;
 
 const languageCodes = supportedLanguages.map(language => language.code);
 const localeLoaders: Record<

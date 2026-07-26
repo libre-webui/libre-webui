@@ -91,6 +91,7 @@ export interface OllamaModel {
   };
   // Plugin-specific fields
   isPlugin?: boolean;
+  pluginId?: string;
   pluginName?: string;
   // Persona-specific fields
   isPersona?: boolean;

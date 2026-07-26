@@ -17,8 +17,9 @@
 
 import React, { useState, Suspense } from 'react';
 import {
-  BrowserRouter,
-  HashRouter,
+  createBrowserRouter,
+  createHashRouter,
+  RouterProvider,
   Routes,
   Route,
   useLocation,
@@ -29,9 +30,6 @@ import '@/i18n';
 import { isRTL } from '@/i18n';
 import { useTranslation } from 'react-i18next';
 
-// Use HashRouter for Electron (file:// protocol) since BrowserRouter doesn't work with file://
-const Router =
-  window.location.protocol === 'file:' ? HashRouter : BrowserRouter;
 const isElectron = window.location.protocol === 'file:';
 
 // Draggable title bar area for Electron macOS
@@ -77,6 +75,7 @@ const ModelsPage = React.lazy(() => import('@/pages/ModelsPage'));
 const PersonasPage = React.lazy(() => import('@/pages/PersonasPage'));
 const GalleryPage = React.lazy(() => import('@/pages/GalleryPage'));
 const LibreClawPage = React.lazy(() => import('@/pages/LibreClawPage'));
+const WorkPage = React.lazy(() => import('@/pages/WorkPage'));
 const UserManagementPage = React.lazy(
   () => import('@/pages/UserManagementPage')
 );
@@ -149,7 +148,7 @@ const ConditionalKeyboardShortcutsIndicator: React.FC<{
   );
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const { t, i18n } = useTranslation();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -415,230 +414,261 @@ const App: React.FC = () => {
   }
 
   return (
-    <ErrorBoundary>
-      <Router>
-        {/* Show full layout only if system doesn't require auth or user is authenticated */}
-        {systemInfo && !systemInfo.requiresAuth ? (
-          // No auth required - show full layout
+    <>
+      {/* Show full layout only if system doesn't require auth or user is authenticated */}
+      {systemInfo && !systemInfo.requiresAuth ? (
+        // No auth required - show full layout
+        <div
+          className={cn(
+            'flex h-dvh min-h-0 text-gray-950 dark:text-dark-900 relative overflow-hidden',
+            hasActiveBackground()
+              ? 'bg-gray-100/60 dark:bg-dark-50/60'
+              : 'bg-gray-100 dark:bg-dark-50'
+          )}
+        >
+          <ElectronTitleBar />
+          <BackgroundRenderer />
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <SidebarLayoutSpacer isOpen={sidebarOpen} compact={sidebarCompact} />
           <div
+            data-testid='app-shell-content'
             className={cn(
-              'flex h-dvh min-h-0 text-gray-950 dark:text-dark-900 relative overflow-hidden',
+              'flex-1 basis-0 flex min-h-0 flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pe-2',
+              // Mobile behavior:
+              // - Compact sidebar: push content away to avoid overlap
+              // - Expanded sidebar: overlay (no transform)
+              sidebarOpen && sidebarCompact ? 'max-lg:ms-18' : 'max-lg:ms-0',
               hasActiveBackground()
-                ? 'bg-gray-100/60 dark:bg-dark-50/60'
-                : 'bg-gray-100 dark:bg-dark-50'
+                ? 'bg-white/10 dark:bg-dark-50/10'
+                : 'bg-transparent'
             )}
           >
-            <ElectronTitleBar />
-            <BackgroundRenderer />
-            <Sidebar
-              isOpen={sidebarOpen}
-              onClose={() => setSidebarOpen(false)}
-            />
-            <SidebarLayoutSpacer
-              isOpen={sidebarOpen}
-              compact={sidebarCompact}
-            />
-            <div
-              data-testid='app-shell-content'
+            {isDemoMode && demoConfig.showBanner && (
+              <DemoModeBanner message={demoConfig.message} />
+            )}
+            <main
               className={cn(
-                'flex-1 basis-0 flex min-h-0 flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pe-2',
-                // Mobile behavior:
-                // - Compact sidebar: push content away to avoid overlap
-                // - Expanded sidebar: overlay (no transform)
-                sidebarOpen && sidebarCompact ? 'max-lg:ms-18' : 'max-lg:ms-0',
+                'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
                 hasActiveBackground()
-                  ? 'bg-white/10 dark:bg-dark-50/10'
-                  : 'bg-transparent'
+                  ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
+                  : 'bg-gray-50 dark:bg-dark-100'
               )}
             >
-              {isDemoMode && demoConfig.showBanner && (
-                <DemoModeBanner message={demoConfig.message} />
-              )}
-              <main
-                className={cn(
-                  'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
-                  hasActiveBackground()
-                    ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
-                    : 'bg-gray-50 dark:bg-dark-100'
-                )}
-              >
-                <ErrorBoundary>
-                  <Suspense fallback={<PageLoader />}>
-                    <Routes>
-                      <Route path='/' element={<ChatPage />} />
-                      <Route path='/chat' element={<ChatPage />} />
-                      <Route path='/c/:sessionId' element={<ChatPage />} />
-                      <Route path='/models' element={<ModelsPage />} />
-                      <Route path='/personas' element={<PersonasPage />} />
-                      <Route path='/agents' element={<LibreClawPage />} />
-                      <Route path='/login' element={<LoginPage />} />
-                    </Routes>
-                  </Suspense>
-                </ErrorBoundary>
-              </main>
-            </div>
+              <ErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path='/' element={<ChatPage />} />
+                    <Route path='/chat' element={<ChatPage />} />
+                    <Route path='/c/:sessionId' element={<ChatPage />} />
+                    <Route path='/models' element={<ModelsPage />} />
+                    <Route path='/personas' element={<PersonasPage />} />
+                    <Route
+                      path='/work'
+                      element={
+                        <ProtectedRoute requireAdmin={true}>
+                          <WorkPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path='/work/:taskId'
+                      element={
+                        <ProtectedRoute requireAdmin={true}>
+                          <WorkPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path='/agents' element={<LibreClawPage />} />
+                    <Route path='/login' element={<LoginPage />} />
+                  </Routes>
+                </Suspense>
+              </ErrorBoundary>
+            </main>
           </div>
-        ) : (
-          // Auth required - show routes without main layout constraining login
-          <Routes>
-            <Route path='/login' element={<LoginPage />} />
-            <Route
-              path='/*'
-              element={
-                <ProtectedRoute>
+        </div>
+      ) : (
+        // Auth required - show routes without main layout constraining login
+        <Routes>
+          <Route path='/login' element={<LoginPage />} />
+          <Route
+            path='/*'
+            element={
+              <ProtectedRoute>
+                <div
+                  className={cn(
+                    'flex h-dvh min-h-0 text-gray-950 dark:text-dark-900 relative overflow-hidden',
+                    hasActiveBackground()
+                      ? 'bg-gray-100/60 dark:bg-dark-50/60'
+                      : 'bg-gray-100 dark:bg-dark-50'
+                  )}
+                >
+                  <ElectronTitleBar />
+                  <BackgroundRenderer />
+                  <Sidebar
+                    isOpen={sidebarOpen}
+                    onClose={() => setSidebarOpen(false)}
+                  />
+                  <SidebarLayoutSpacer
+                    isOpen={sidebarOpen}
+                    compact={sidebarCompact}
+                  />
                   <div
+                    data-testid='app-shell-content'
                     className={cn(
-                      'flex h-dvh min-h-0 text-gray-950 dark:text-dark-900 relative overflow-hidden',
+                      'flex-1 basis-0 flex min-h-0 flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pe-2',
+                      // Mobile behavior:
+                      // - Compact sidebar: push content away to avoid overlap
+                      // - Expanded sidebar: overlay (no transform)
+                      sidebarOpen && sidebarCompact
+                        ? 'max-lg:ms-18'
+                        : 'max-lg:ms-0',
                       hasActiveBackground()
-                        ? 'bg-gray-100/60 dark:bg-dark-50/60'
-                        : 'bg-gray-100 dark:bg-dark-50'
+                        ? 'bg-white/10 dark:bg-dark-50/10'
+                        : 'bg-transparent'
                     )}
                   >
-                    <ElectronTitleBar />
-                    <BackgroundRenderer />
-                    <Sidebar
-                      isOpen={sidebarOpen}
-                      onClose={() => setSidebarOpen(false)}
-                    />
-                    <SidebarLayoutSpacer
-                      isOpen={sidebarOpen}
-                      compact={sidebarCompact}
-                    />
-                    <div
-                      data-testid='app-shell-content'
+                    {isDemoMode && demoConfig.showBanner && (
+                      <DemoModeBanner message={demoConfig.message} />
+                    )}
+                    <main
                       className={cn(
-                        'flex-1 basis-0 flex min-h-0 flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pe-2',
-                        // Mobile behavior:
-                        // - Compact sidebar: push content away to avoid overlap
-                        // - Expanded sidebar: overlay (no transform)
-                        sidebarOpen && sidebarCompact
-                          ? 'max-lg:ms-18'
-                          : 'max-lg:ms-0',
+                        'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
                         hasActiveBackground()
-                          ? 'bg-white/10 dark:bg-dark-50/10'
-                          : 'bg-transparent'
+                          ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
+                          : 'bg-gray-50 dark:bg-dark-100'
                       )}
                     >
-                      {isDemoMode && demoConfig.showBanner && (
-                        <DemoModeBanner message={demoConfig.message} />
-                      )}
-                      <main
-                        className={cn(
-                          'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
-                          hasActiveBackground()
-                            ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
-                            : 'bg-gray-50 dark:bg-dark-100'
-                        )}
-                      >
-                        <ErrorBoundary>
-                          <Suspense fallback={<PageLoader />}>
-                            <Routes>
-                              <Route path='/' element={<ChatPage />} />
-                              <Route path='/chat' element={<ChatPage />} />
-                              <Route
-                                path='/c/:sessionId'
-                                element={<ChatPage />}
-                              />
-                              <Route path='/models' element={<ModelsPage />} />
-                              <Route
-                                path='/personas'
-                                element={<PersonasPage />}
-                              />
-                              <Route
-                                path='/gallery'
-                                element={<GalleryPage />}
-                              />
-                              <Route
-                                path='/agents'
-                                element={<LibreClawPage />}
-                              />
-                              <Route
-                                path='/artifacts'
-                                element={<ArtifactDemoPage />}
-                              />
-                              <Route
-                                path='/users'
-                                element={
-                                  <ProtectedRoute requireAdmin={true}>
-                                    <UserManagementPage />
-                                  </ProtectedRoute>
-                                }
-                              />
-                            </Routes>
-                          </Suspense>
-                        </ErrorBoundary>
-                      </main>
-                    </div>
+                      <ErrorBoundary>
+                        <Suspense fallback={<PageLoader />}>
+                          <Routes>
+                            <Route path='/' element={<ChatPage />} />
+                            <Route path='/chat' element={<ChatPage />} />
+                            <Route
+                              path='/c/:sessionId'
+                              element={<ChatPage />}
+                            />
+                            <Route path='/models' element={<ModelsPage />} />
+                            <Route
+                              path='/personas'
+                              element={<PersonasPage />}
+                            />
+                            <Route path='/gallery' element={<GalleryPage />} />
+                            <Route
+                              path='/work'
+                              element={
+                                <ProtectedRoute requireAdmin={true}>
+                                  <WorkPage />
+                                </ProtectedRoute>
+                              }
+                            />
+                            <Route
+                              path='/work/:taskId'
+                              element={
+                                <ProtectedRoute requireAdmin={true}>
+                                  <WorkPage />
+                                </ProtectedRoute>
+                              }
+                            />
+                            <Route path='/agents' element={<LibreClawPage />} />
+                            <Route
+                              path='/artifacts'
+                              element={<ArtifactDemoPage />}
+                            />
+                            <Route
+                              path='/users'
+                              element={
+                                <ProtectedRoute requireAdmin={true}>
+                                  <UserManagementPage />
+                                </ProtectedRoute>
+                              }
+                            />
+                          </Routes>
+                        </Suspense>
+                      </ErrorBoundary>
+                    </main>
                   </div>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        )}
+                </div>
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      )}
 
-        {/* Modals */}
-        {settingsOpen && (
-          <Suspense fallback={null}>
-            <SettingsModal
-              isOpen={settingsOpen}
-              onClose={() => setSettingsOpen(false)}
-            />
-          </Suspense>
-        )}
+      {/* Modals */}
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsModal
+            isOpen={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+          />
+        </Suspense>
+      )}
 
-        <KeyboardShortcutsModal
-          isOpen={shortcutsOpen}
-          onClose={() => setShortcutsOpen(false)}
-          shortcuts={shortcuts}
-        />
+      <KeyboardShortcutsModal
+        isOpen={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+        shortcuts={shortcuts}
+      />
 
-        {/* Keyboard shortcuts indicator - only show on chat pages */}
-        <ConditionalKeyboardShortcutsIndicator
-          onClick={() => setShortcutsOpen(true)}
-        />
+      {/* Keyboard shortcuts indicator - only show on chat pages */}
+      <ConditionalKeyboardShortcutsIndicator
+        onClick={() => setShortcutsOpen(true)}
+      />
 
-        {/* Artifact slide-out panel */}
-        {artifactPanelOpen && (
-          <Suspense fallback={null}>
-            <ArtifactSlideOutPanel />
-          </Suspense>
-        )}
+      {/* Artifact slide-out panel */}
+      {artifactPanelOpen && (
+        <Suspense fallback={null}>
+          <ArtifactSlideOutPanel />
+        </Suspense>
+      )}
 
-        <Toaster
-          position={isRTL(i18n.language) ? 'top-left' : 'top-right'}
-          toastOptions={{
-            duration: 4000,
-            className: 'animate-slide-up',
-            style: {
-              background: 'var(--toast-bg)',
-              color: 'var(--toast-color)',
-              border: '1px solid var(--toast-border)',
-              borderRadius: '0.75rem',
-              boxShadow:
-                '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              cursor: 'pointer',
+      <Toaster
+        position={isRTL(i18n.language) ? 'top-left' : 'top-right'}
+        toastOptions={{
+          duration: 4000,
+          className: 'animate-slide-up',
+          style: {
+            background: 'var(--toast-bg)',
+            color: 'var(--toast-color)',
+            border: '1px solid var(--toast-border)',
+            borderRadius: '0.75rem',
+            boxShadow:
+              '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+            cursor: 'pointer',
+          },
+          success: {
+            iconTheme: {
+              primary: 'rgb(var(--color-primary-600))',
+              secondary: '#ffffff',
             },
-            success: {
-              iconTheme: {
-                primary: 'rgb(var(--color-primary-600))',
-                secondary: '#ffffff',
-              },
+          },
+          error: {
+            iconTheme: {
+              primary: 'rgb(var(--color-primary-600))',
+              secondary: '#ffffff',
             },
-            error: {
-              iconTheme: {
-                primary: 'rgb(var(--color-primary-600))',
-                secondary: '#ffffff',
-              },
-            },
-          }}
-          containerStyle={{
-            top: 80, // Position below header (header height + some margin)
-            insetInlineEnd: 20,
-          }}
-        />
-      </Router>
-    </ErrorBoundary>
+          },
+        }}
+        containerStyle={{
+          top: 80, // Position below header (header height + some margin)
+          insetInlineEnd: 20,
+        }}
+      />
+    </>
   );
 };
+
+// Data routers support navigation blockers used by the Work file editor.
+// Electron still uses hash-based URLs because file:// cannot serve history
+// fallbacks.
+const appRouter = isElectron
+  ? createHashRouter([{ path: '*', element: <AppContent /> }])
+  : createBrowserRouter([{ path: '*', element: <AppContent /> }]);
+
+const App: React.FC = () => (
+  <ErrorBoundary>
+    <RouterProvider router={appRouter} />
+  </ErrorBoundary>
+);
 
 export default App;

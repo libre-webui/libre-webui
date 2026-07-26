@@ -43,6 +43,7 @@ export { personaApi } from './api/personaApi';
 export { pluginApi } from './api/pluginApi';
 export type { PluginVariableValue } from './api/pluginApi';
 export { preferencesApi } from './api/preferencesApi';
+export { workApi } from './api/workApi';
 export { ttsApi } from './api/ttsApi';
 export type {
   TTSGenerateBase64Response,

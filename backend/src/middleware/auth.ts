@@ -16,6 +16,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { userModel } from '../models/userModel.js';
 import { authService, AuthTokenPayload } from '../services/authService.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -74,7 +75,7 @@ export const requireAdmin = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user) {
     res.status(403).json({
       success: false,
       message: 'Admin access required',
@@ -82,7 +83,31 @@ export const requireAdmin = async (
     return;
   }
 
-  next();
+  try {
+    const currentUser = userModel.getUserById(req.user.userId);
+    if (!currentUser || currentUser.role !== 'admin') {
+      res.status(403).json({
+        success: false,
+        message: 'Admin access required',
+      });
+      return;
+    }
+
+    // Authorization follows current database state rather than the role cached
+    // in a still-valid JWT, so demotion or deletion takes effect immediately.
+    req.user = {
+      ...req.user,
+      username: currentUser.username,
+      role: currentUser.role,
+    };
+    next();
+  } catch (error) {
+    logger.error('Admin authorization error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Authorization check failed',
+    });
+  }
 };
 
 /**

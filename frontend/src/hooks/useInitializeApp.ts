@@ -29,6 +29,7 @@ const logger = createLogger('initialize');
 
 export const useInitializeApp = () => {
   const initialized = useRef(false);
+  const initializing = useRef(false);
   const {
     loadSessions,
     loadModels,
@@ -40,35 +41,43 @@ export const useInitializeApp = () => {
   const { loadPlugins, plugins } = usePluginStore();
 
   useEffect(() => {
-    if (initialized.current) return;
+    if (initialized.current || initializing.current) return;
 
     const initialize = async () => {
+      initializing.current = true;
       try {
         logger.debug('Initializing Libre WebUI...');
-        initialized.current = true;
 
         // Initialize authentication first
         await UserService.initializeAuth();
 
-        // Check Ollama health
-        const healthResponse = await ollamaApi.checkHealth();
-        if (!healthResponse.success) {
+        // Ollama and configured plugins are independent model providers. An
+        // unavailable Ollama daemon must not prevent the rest of the app (or
+        // plugin-backed Work models) from initializing.
+        try {
+          const healthResponse = await ollamaApi.checkHealth();
+          if (!healthResponse.success && !isDemoMode()) {
+            toast.error(
+              'Ollama service is not available. Plugin models may still be used.'
+            );
+          }
+        } catch (healthError) {
+          logger.warn(
+            'Ollama health check failed; continuing provider initialization:',
+            healthError
+          );
           if (!isDemoMode()) {
             toast.error(
-              "Ollama service is not available. Please make sure it's running."
+              'Ollama service is not available. Plugin models may still be used.'
             );
-            return;
-          } else {
-            // In demo mode, proceed to load models and sessions anyway
-            await Promise.all([loadAppPreferences(), loadChatPreferences()]);
-            await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
-            return;
           }
         }
+
         // Load preferences first, then models, sessions, and plugins
         await Promise.all([loadAppPreferences(), loadChatPreferences()]);
         await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
 
+        initialized.current = true;
         logger.debug('Libre WebUI initialized successfully');
       } catch (_error) {
         if (!isDemoMode()) {
@@ -78,7 +87,10 @@ export const useInitializeApp = () => {
           // In demo mode, proceed to load models and sessions anyway, no error log
           await Promise.all([loadAppPreferences(), loadChatPreferences()]);
           await Promise.all([loadModels(), loadSessions(), loadPlugins()]);
+          initialized.current = true;
         }
+      } finally {
+        initializing.current = false;
       }
     };
 
@@ -126,10 +138,8 @@ export const useInitializeApp = () => {
 
   // Reload models when active plugins change
   useEffect(() => {
-    const activePlugins = plugins.filter(plugin => plugin.active);
-    if (activePlugins.length > 0) {
-      logger.debug('Active plugins changed, reloading models...');
-      loadModels();
-    }
+    if (!initialized.current) return;
+    logger.debug('Plugin availability changed, reloading models...');
+    void loadModels();
   }, [plugins, loadModels]);
 };

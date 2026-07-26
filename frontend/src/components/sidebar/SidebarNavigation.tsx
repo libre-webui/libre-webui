@@ -19,6 +19,7 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   Bot,
+  Briefcase,
   Database,
   MessageSquare,
   Sparkles,
@@ -29,6 +30,7 @@ import { cn } from '@/utils';
 interface SidebarNavigationProps {
   sidebarCompact: boolean;
   activePath: string;
+  showWork: boolean;
   onChatClick: () => void;
   onMobileNavigate: () => void;
 }
@@ -36,6 +38,7 @@ interface SidebarNavigationProps {
 export function SidebarNavigation({
   sidebarCompact,
   activePath,
+  showWork,
   onChatClick,
   onMobileNavigate,
 }: SidebarNavigationProps) {
@@ -104,6 +107,30 @@ export function SidebarNavigation({
           <Sparkles className='h-[18px] w-[18px] shrink-0' />
           {!sidebarCompact && t('sidebar.navigation.imagine')}
         </Link>
+
+        {showWork && (
+          <Link
+            to='/work'
+            onClick={onMobileNavigate}
+            className={itemClass(
+              activePath === '/work' || activePath.startsWith('/work/')
+            )}
+            title={
+              sidebarCompact
+                ? t('sidebar.navigation.work', { defaultValue: 'Work' })
+                : undefined
+            }
+            aria-current={
+              activePath === '/work' || activePath.startsWith('/work/')
+                ? 'page'
+                : undefined
+            }
+          >
+            <Briefcase className='h-[18px] w-[18px] shrink-0' />
+            {!sidebarCompact &&
+              t('sidebar.navigation.work', { defaultValue: 'Work' })}
+          </Link>
+        )}
 
         <Link
           to='/agents'

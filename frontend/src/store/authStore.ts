@@ -21,9 +21,11 @@ import { User, SystemInfo } from '@/types';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
+import { useWorkStore } from '@/store/workStore';
 import { ollamaApi } from '@/utils/api';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
+import { clearAllWorkDrafts } from '@/utils/workDrafts';
 import websocketService from '@/utils/websocket';
 
 const logger = createLogger('auth-store');
@@ -63,10 +65,13 @@ export const useAuthStore = create<AuthState>()(
         if (chatStore.clearAllState) {
           chatStore.clearAllState();
         }
+        useWorkStore.getState().clearAllState();
 
         // Preserve the verified user's hydrated preferences on page refresh, but
-        // clear them when the authenticated user actually changes.
+        // clear them and any unsaved Work drafts when the authenticated user
+        // actually changes.
         if (!isSameUser) {
+          clearAllWorkDrafts();
           const appStore = useAppStore.getState();
           appStore.clearUserState();
         }
@@ -92,10 +97,18 @@ export const useAuthStore = create<AuthState>()(
             websocketService.disconnect();
             await websocketService.connect();
 
-            // Check Ollama health first
-            const healthResponse = await ollamaApi.checkHealth();
-            if (!healthResponse.success && !isDemoMode()) {
-              logger.warn('Ollama service not available after login');
+            // Ollama is optional when the user has a configured plugin model.
+            // Its health check must not block the rest of post-login loading.
+            try {
+              const healthResponse = await ollamaApi.checkHealth();
+              if (!healthResponse.success && !isDemoMode()) {
+                logger.warn('Ollama service not available after login');
+              }
+            } catch (healthError) {
+              logger.warn(
+                'Ollama health check failed after login; continuing provider initialization:',
+                healthError
+              );
             }
 
             // Load the new user's data
@@ -127,6 +140,8 @@ export const useAuthStore = create<AuthState>()(
         if (chatStore.clearAllState) {
           chatStore.clearAllState();
         }
+        useWorkStore.getState().clearAllState();
+        clearAllWorkDrafts();
 
         // Clear app store user-specific state (background, preferences)
         const appStore = useAppStore.getState();

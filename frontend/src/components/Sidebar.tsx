@@ -158,7 +158,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const handleStartWork = () => {
-    navigate('/agents');
+    navigate('/work');
     compactOnMobile();
   };
 
@@ -247,6 +247,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const isElectron = window.location.protocol === 'file:';
+  const isWorkRoute =
+    location.pathname === '/work' || location.pathname.startsWith('/work/');
+  const showWork = systemInfo?.requiresAuth === false || isAdmin();
 
   return (
     <>
@@ -281,6 +284,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <SidebarHeader
             sidebarCompact={sidebarCompact}
             isElectron={isElectron}
+            showWork={showWork}
             selectedModel={selectedModel}
             modelCount={models.length}
             onToggleCompact={toggleSidebarCompact}
@@ -291,25 +295,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <SidebarNavigation
             sidebarCompact={sidebarCompact}
             activePath={location.pathname}
+            showWork={showWork}
             onChatClick={handleChatNavigation}
             onMobileNavigate={compactOnMobile}
           />
 
-          <SidebarSessions
-            sessions={sessions}
-            personas={personas}
-            currentSessionId={currentSessionId}
-            generatingTitleForSession={generatingTitleForSession}
-            sidebarCompact={sidebarCompact}
-            editingSessionId={editingSessionId}
-            editingTitle={editingTitle}
-            onEditingTitleChange={setEditingTitle}
-            onSelectSession={handleSelectSession}
-            onStartEditing={handleStartEditing}
-            onSaveEdit={handleSaveEdit}
-            onCancelEdit={handleCancelEdit}
-            onDeleteSession={handleDeleteSession}
-          />
+          {!isWorkRoute && (
+            <SidebarSessions
+              sessions={sessions}
+              personas={personas}
+              currentSessionId={currentSessionId}
+              generatingTitleForSession={generatingTitleForSession}
+              sidebarCompact={sidebarCompact}
+              editingSessionId={editingSessionId}
+              editingTitle={editingTitle}
+              onEditingTitleChange={setEditingTitle}
+              onSelectSession={handleSelectSession}
+              onStartEditing={handleStartEditing}
+              onSaveEdit={handleSaveEdit}
+              onCancelEdit={handleCancelEdit}
+              onDeleteSession={handleDeleteSession}
+            />
+          )}
 
           <SidebarUserSection
             requiresAuth={systemInfo?.requiresAuth}

@@ -17,12 +17,13 @@
 
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { userModel } from '../models/userModel.js';
+import { userModel, UserPublic } from '../models/userModel.js';
 import {
   authenticate,
   requireAdmin,
   AuthenticatedRequest,
 } from '../middleware/auth.js';
+import workAgentService from '../services/workAgentService.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('routes:users');
@@ -194,6 +195,14 @@ router.patch(
     try {
       const id = req.params.id as string;
       const { username, email, password, role, avatar } = req.body;
+      const existingUser = userModel.getUserById(id);
+      if (!existingUser) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+        });
+        return;
+      }
 
       // Validate role if provided
       if (role && role !== 'admin' && role !== 'user') {
@@ -206,8 +215,7 @@ router.patch(
 
       // Check if username exists (and is not the current user)
       if (username && userModel.usernameExists(username)) {
-        const existingUser = userModel.getUserById(id);
-        if (!existingUser || existingUser.username !== username) {
+        if (existingUser.username !== username) {
           res.status(400).json({
             success: false,
             message: 'Username already exists',
@@ -218,8 +226,7 @@ router.patch(
 
       // Check if email exists (and is not the current user)
       if (email && userModel.emailExists(email)) {
-        const existingUser = userModel.getUserById(id);
-        if (!existingUser || existingUser.email !== email) {
+        if (existingUser.email !== email) {
           res.status(400).json({
             success: false,
             message: 'Email already exists',
@@ -228,13 +235,22 @@ router.patch(
         }
       }
 
-      const user = await userModel.updateUser(id, {
-        username,
-        email,
-        password,
-        role,
-        avatar,
-      });
+      const updateUser = (): Promise<UserPublic | null> =>
+        userModel.updateUser(id, {
+          username,
+          email,
+          password,
+          role,
+          avatar,
+        });
+      // Persist a requested non-admin role before depending on Docker
+      // teardown. Existing JWTs are checked against the current database role,
+      // so access remains revoked even if cleanup fails and an administrator
+      // has to retry this same update later.
+      const user =
+        role === 'user'
+          ? await workAgentService.revokeWorkAccessForUser(id, updateUser)
+          : await updateUser();
 
       if (!user) {
         res.status(404).json({
@@ -279,14 +295,34 @@ router.delete(
         return;
       }
 
-      const deleted = userModel.deleteUser(id);
-      if (!deleted) {
+      if (!userModel.getUserById(id)) {
         res.status(404).json({
           success: false,
           message: 'User not found',
         });
         return;
       }
+
+      // Docker resources are external to SQLite and must be removed before
+      // the user row cascades its Work metadata. Any cleanup failure leaves
+      // the user intact so an administrator can safely retry.
+      await workAgentService.removeTasksForUser(id);
+      let deleted: boolean;
+      try {
+        deleted = userModel.deleteUser(id);
+      } catch (error) {
+        workAgentService.releaseUserRetirement(id);
+        throw error;
+      }
+      if (!deleted) {
+        workAgentService.releaseUserRetirement(id);
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+        });
+        return;
+      }
+      workAgentService.releaseUserRetirement(id);
 
       res.json({
         success: true,

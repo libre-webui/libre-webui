@@ -1,0 +1,153 @@
+/*
+ * Libre WebUI
+ * Copyright (C) 2025 Kroonen AI, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+export type WorkTaskStatus =
+  'idle' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
+
+export type WorkRunStatus =
+  'queued' | 'preparing' | 'running' | 'completed' | 'failed' | 'cancelled';
+
+export type WorkPreviewStatus = 'stopped' | 'starting' | 'running' | 'failed';
+
+export type WorkProviderType = 'ollama' | 'plugin';
+
+export interface WorkModelSelection {
+  model: string;
+  providerType: WorkProviderType;
+  providerId?: string;
+}
+
+export interface WorkModelOption extends WorkModelSelection {
+  key: string;
+  label: string;
+  remote: boolean;
+}
+
+export interface WorkCapabilities {
+  available: boolean;
+  runtime: 'docker';
+  image: string;
+  dockerAvailable?: boolean;
+  ollamaAvailable?: boolean;
+  pluginAvailable?: boolean;
+  reason?: string;
+}
+
+export interface WorkMessage {
+  id: string;
+  taskId: string;
+  runId?: string | null;
+  messageIndex: number;
+  role: 'user' | 'assistant' | 'tool';
+  kind: 'message' | 'tool_call' | 'tool_result' | 'error';
+  content: string;
+  metadata?: Record<string, unknown> | null;
+  createdAt: number;
+}
+
+export interface WorkMessagePage {
+  messages: WorkMessage[];
+  cursor?: number;
+  hasMore: boolean;
+}
+
+export interface WorkRun {
+  id: string;
+  taskId: string;
+  model: string;
+  providerType: WorkProviderType;
+  providerId?: string | null;
+  status: WorkRunStatus;
+  error?: string | null;
+  createdAt: number;
+  startedAt?: number | null;
+  finishedAt?: number | null;
+}
+
+export interface WorkTaskSummary {
+  id: string;
+  title: string;
+  model: string;
+  providerType: WorkProviderType;
+  providerId?: string | null;
+  status: WorkTaskStatus;
+  networkEnabled: boolean;
+  createdAt: number;
+  updatedAt: number;
+  activeRun?: WorkRun | null;
+  previewUrl?: string | null;
+  previewStatus: WorkPreviewStatus;
+  workspacePath: '/workspace';
+}
+
+export interface WorkTask extends WorkTaskSummary {
+  messages: WorkMessage[];
+  messageCursor?: number;
+  hasMoreMessages: boolean;
+}
+
+export interface WorkFileEntry {
+  path: string;
+  name: string;
+  type: 'file' | 'directory';
+  size: number;
+  modifiedAt: number;
+  updatedAt?: number;
+}
+
+export interface WorkFile {
+  path: string;
+  content: string;
+  size: number;
+  modifiedAt: number;
+  updatedAt?: number;
+}
+
+export interface CreateWorkTaskRequest {
+  message: string;
+  model: string;
+  providerType: WorkProviderType;
+  providerId?: string;
+  networkEnabled: boolean;
+}
+
+export interface StartWorkRunRequest {
+  message: string;
+  model: string;
+  providerType: WorkProviderType;
+  providerId?: string;
+}
+
+export interface UpdateWorkTaskRequest {
+  title?: string;
+  model?: string;
+  providerType?: WorkProviderType;
+  providerId?: string;
+  networkEnabled?: boolean;
+}
+
+export const isWorkTaskActive = (task: Pick<WorkTask, 'status'>): boolean =>
+  task.status === 'preparing' || task.status === 'running';
+
+export const workModelSelectionKey = (
+  selection: WorkModelSelection
+): string => {
+  const model = encodeURIComponent(selection.model);
+  return selection.providerType === 'plugin'
+    ? `plugin:${encodeURIComponent(selection.providerId || '')}:${model}`
+    : `ollama:${model}`;
+};

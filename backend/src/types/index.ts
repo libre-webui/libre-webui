@@ -166,6 +166,7 @@ export interface OllamaChatMessage {
   thinking?: string;
   images?: string[];
   tool_calls?: Record<string, unknown>[];
+  tool_name?: string;
 }
 
 export interface OllamaChatRequest {
