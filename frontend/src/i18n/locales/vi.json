@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Cuộc trò chuyện mới",
+      "work": "Công việc",
+      "chat": "Trò chuyện",
       "private": "Riêng tư",
       "privateMode": "Chế độ riêng tư",
       "privateDescription": "Cuộc trò chuyện này sẽ không được lưu",

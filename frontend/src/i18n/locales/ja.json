@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "新しいチャット",
+      "work": "作業",
+      "chat": "チャット",
       "private": "プライベート",
       "privateMode": "プライベートモード",
       "privateDescription": "この会話は保存されません",

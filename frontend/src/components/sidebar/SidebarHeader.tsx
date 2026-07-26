@@ -16,7 +16,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { Bot, ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -28,6 +28,7 @@ interface SidebarHeaderProps {
   selectedModel: string;
   modelCount: number;
   onToggleCompact: () => void;
+  onStartWork: () => void;
   onCreateSession: () => void;
 }
 
@@ -37,6 +38,7 @@ export function SidebarHeader({
   selectedModel,
   modelCount,
   onToggleCompact,
+  onStartWork,
   onCreateSession,
 }: SidebarHeaderProps) {
   const { t } = useTranslation();
@@ -98,28 +100,45 @@ export function SidebarHeader({
         )}
       </div>
 
-      {!sidebarCompact ? (
+      <div
+        className={cn(
+          'grid w-full gap-2',
+          sidebarCompact ? 'grid-cols-1' : 'grid-cols-2'
+        )}
+        data-testid='sidebar-create-actions'
+      >
         <Button
-          onClick={onCreateSession}
-          disabled={createDisabled}
-          className='w-full h-10 rounded-xl bg-gray-950 hover:bg-gray-800 active:bg-gray-900 text-white dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100 dark:active:bg-gray-200 shadow-none transition-colors duration-150 border-0 touch-manipulation'
+          variant='secondary'
+          onClick={onStartWork}
+          className={cn(
+            'h-10 rounded-xl border-black/[0.08] bg-white/80 text-gray-950 shadow-none transition-colors duration-150 hover:bg-white active:bg-gray-50 dark:border-white/[0.08] dark:bg-dark-200/80 dark:text-dark-950 dark:hover:bg-dark-200 dark:active:bg-dark-300 touch-manipulation',
+            sidebarCompact && 'w-full p-0'
+          )}
           size='sm'
-          title={disabledTitle}
+          title={t('chat.session.work')}
+          aria-label={t('chat.session.work')}
+          data-testid='sidebar-work-button'
         >
-          <Plus className='h-4 w-4 me-2' />
-          {t('chat.session.new')}
+          <Bot className='h-4 w-4' />
+          {!sidebarCompact && t('chat.session.work')}
         </Button>
-      ) : (
+
         <Button
           onClick={onCreateSession}
           disabled={createDisabled}
-          className='w-full h-10 rounded-xl bg-gray-950 hover:bg-gray-800 active:bg-gray-900 text-white dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100 dark:active:bg-gray-200 shadow-none transition-colors duration-150 border-0 touch-manipulation p-0'
-          title={createDisabled ? disabledTitle : t('chat.session.new')}
-          aria-label={t('chat.session.new')}
+          className={cn(
+            'h-10 rounded-xl bg-gray-950 hover:bg-gray-800 active:bg-gray-900 text-white dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100 dark:active:bg-gray-200 shadow-none transition-colors duration-150 border-0 touch-manipulation',
+            sidebarCompact && 'w-full p-0'
+          )}
+          size='sm'
+          title={createDisabled ? disabledTitle : t('chat.session.chat')}
+          aria-label={t('chat.session.chat')}
+          data-testid='sidebar-chat-button'
         >
-          <Plus className='h-4 w-4' />
+          <MessageSquare className='h-4 w-4' />
+          {!sidebarCompact && t('chat.session.chat')}
         </Button>
-      )}
+      </div>
     </div>
   );
 }

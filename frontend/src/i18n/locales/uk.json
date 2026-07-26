@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Новий чат",
+      "work": "Робота",
+      "chat": "Чат",
       "private": "Приватний",
       "privateMode": "Приватний режим",
       "privateDescription": "Ця розмова не буде збережена",

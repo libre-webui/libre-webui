@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Nýtt spjall",
+      "work": "Vinna",
+      "chat": "Spjall",
       "private": "Einkamál",
       "privateMode": "Einkahamur",
       "privateDescription": "Þetta samtal verður ekki vistað",

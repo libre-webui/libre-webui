@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Nový chat",
+      "work": "Práce",
+      "chat": "Chat",
       "private": "Soukromý",
       "privateMode": "Soukromý režim",
       "privateDescription": "Tato konverzace nebude uložena",

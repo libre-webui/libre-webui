@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "নতুন চ্যাট",
+      "work": "কাজ",
+      "chat": "চ্যাট",
       "private": "ব্যক্তিগত",
       "privateMode": "ব্যক্তিগত মোড",
       "privateDescription": "এই কথোপকথন সংরক্ষণ করা হবে না",

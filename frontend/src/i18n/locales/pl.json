@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Nowy czat",
+      "work": "Praca",
+      "chat": "Czat",
       "private": "Prywatny",
       "privateMode": "Tryb prywatny",
       "privateDescription": "Ta rozmowa nie zostanie zapisana",

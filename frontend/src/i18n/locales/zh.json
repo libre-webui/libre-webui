@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "新对话",
+      "work": "工作",
+      "chat": "对话",
       "private": "私密",
       "privateMode": "私密模式",
       "privateDescription": "此对话不会被保存",

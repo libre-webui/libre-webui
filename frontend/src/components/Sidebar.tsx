@@ -157,6 +157,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     compactOnMobile();
   };
 
+  const handleStartWork = () => {
+    navigate('/agents');
+    compactOnMobile();
+  };
+
   const handleChatNavigation = () => {
     forceWelcomeScreen();
     navigate('/chat', { replace: true });
@@ -279,6 +284,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             selectedModel={selectedModel}
             modelCount={models.length}
             onToggleCompact={toggleSidebarCompact}
+            onStartWork={handleStartWork}
             onCreateSession={handleCreateSession}
           />
 

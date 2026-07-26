@@ -26,10 +26,7 @@ test('new chats rotate through distinct creator prompts', async ({ page }) => {
 
   await page.goto('/chat');
 
-  const newChatButton = page.getByRole('button', {
-    name: 'New Chat',
-    exact: true,
-  });
+  const newChatButton = page.getByTestId('sidebar-chat-button');
   await expect(newChatButton).toBeEnabled();
 
   await newChatButton.click();

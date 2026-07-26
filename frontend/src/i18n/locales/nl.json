@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Nieuwe chat",
+      "work": "Werk",
+      "chat": "Chat",
       "private": "Privé",
       "privateMode": "Privémodus",
       "privateDescription": "Dit gesprek wordt niet opgeslagen",

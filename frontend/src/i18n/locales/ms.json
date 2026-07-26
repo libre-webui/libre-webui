@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Sembang Baharu",
+      "work": "Kerja",
+      "chat": "Sembang",
       "private": "Peribadi",
       "privateMode": "Mod Peribadi",
       "privateDescription": "Perbualan ini tidak akan disimpan",

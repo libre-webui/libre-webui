@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Nouvelle conversation",
+      "work": "Travail",
+      "chat": "Chat",
       "private": "Privé",
       "privateMode": "Mode privé",
       "privateDescription": "Cette conversation ne sera pas sauvegardée",

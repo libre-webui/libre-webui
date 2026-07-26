@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Ny chatt",
+      "work": "Arbete",
+      "chat": "Chatt",
       "private": "Privat",
       "privateMode": "Privat läge",
       "privateDescription": "Denna konversation sparas inte",

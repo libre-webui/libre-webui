@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Yeni Sohbet",
+      "work": "Çalışma",
+      "chat": "Sohbet",
       "private": "Gizli",
       "privateMode": "Gizli Mod",
       "privateDescription": "Bu konuşma kaydedilmeyecek",

@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "새 채팅",
+      "work": "작업",
+      "chat": "채팅",
       "private": "비공개",
       "privateMode": "비공개 모드",
       "privateDescription": "이 대화는 저장되지 않습니다",

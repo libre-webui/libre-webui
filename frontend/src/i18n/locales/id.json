@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Chat Baru",
+      "work": "Kerja",
+      "chat": "Chat",
       "private": "Privat",
       "privateMode": "Mode Privat",
       "privateDescription": "Percakapan ini tidak akan disimpan",

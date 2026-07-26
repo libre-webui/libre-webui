@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Neuer Chat",
+      "work": "Arbeit",
+      "chat": "Chat",
       "private": "Privat",
       "privateMode": "Privater Modus",
       "privateDescription": "Dieses Gespräch wird nicht gespeichert",

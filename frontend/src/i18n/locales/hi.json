@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "नई चैट",
+      "work": "काम",
+      "chat": "चैट",
       "private": "निजी",
       "privateMode": "निजी मोड",
       "privateDescription": "यह बातचीत सहेजी नहीं जाएगी",

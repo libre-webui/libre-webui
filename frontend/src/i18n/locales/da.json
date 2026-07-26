@@ -226,6 +226,8 @@
     },
     "session": {
       "new": "Ny chat",
+      "work": "Arbejde",
+      "chat": "Chat",
       "private": "Privat",
       "privateMode": "Privat tilstand",
       "privateDescription": "Denne samtale gemmes ikke",
