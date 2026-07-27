@@ -7,45 +7,189 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Libre WebUI's next release introduces **Work**, a native model-driven coding
-environment that gives every task its own durable conversation and filesystem,
-executes tools inside a policy-checked Docker container, and keeps local Ollama,
-Ollama Cloud, and configured provider plugins available from one interface. The
-release also brings the full Work experience to all 25 supported locales,
-including a genuinely mirrored Arabic right-to-left layout.
-
 ### ✨ New Features
-
-- Added distinct **Chat** and **Work** modes in the primary sidebar. Work tasks live alongside normal navigation, retain their own title, status, selected provider, conversation, run history, and files, and can be reopened or permanently deleted from the current task or sidebar.
-- Added one persistent Docker named volume and one managed container identity per Work task. The native agent can list, read, write, and search workspace files, run bounded shell commands, and start or stop an isolated browser preview without receiving a host filesystem mount.
-- Added a responsive Work interface with a durable conversation, Files, Activity, and Preview views, a pointer- and keyboard-resizable desktop split, compact mobile surface controls, run cancellation, editable task titles, paginated history, and stable task ordering while runs update.
-- Added a workspace code editor with light/dark syntax highlighting, LTR code rendering inside RTL layouts, conflict-aware saves, per-file browser drafts, large-file fallbacks, and client-side formatting for supported JavaScript, TypeScript, JSON, CSS, HTML, Markdown, and YAML-family files.
-- Added Work model routing for tool-capable local Ollama and Ollama Cloud models plus active completion/chat plugins through OpenAI-compatible, Anthropic, and Gemini tool-call adapters. The exact provider identity is persisted with each task and run so equal model names cannot silently change routes.
 
 ### 🔧 Improvements
 
-- Added a per-user remote-provider disclosure when Work selects plugin-backed or cloud models. The notice explains that autonomous runs can make multiple billable calls and send requested tool results or file contents, and its dismissal is remembered for that user.
-- Added explicit Work states for Idle, Thinking, Complete, Needs input, and Error, with consistent indicators in the page header and task sidebar.
-- Localized the complete Work interface across all 25 supported locales and added RTL-aware layout, pane resizing, tabs, navigation, and typography for Arabic while preserving LTR direction for code, paths, commands, model IDs, and tool output.
-- Added configurable runtime, concurrency, task-count, command, output, and agent limits plus focused coverage for container policy, lifecycle, capacity, provider adapters, and translations.
-
 ### 🐛 Bug Fixes
-
-- Kept Work tasks in a stable sidebar position as their status and timestamps change, and made the selected task directly deletable without navigating away first.
-- Preserved unsaved workspace drafts across navigation, prevented stale async file responses from replacing the active file, and rejected saves when the underlying file changed after it was opened.
-- Corrected Work layout and keyboard interactions across desktop, compact, light, dark, and Arabic RTL modes.
-
-### 🔒 Security & Dependencies
-
-- Required a current administrator for every Work API and enforced ownership on task-resource endpoints. Role revocation immediately blocks further Work access and attempts to stop active execution while preserving tasks and volumes; user deletion removes managed Work resources before deleting the account.
-- Hardened task containers with a non-root user, read-only root filesystem, bounded temporary storage, dropped Linux capabilities, `no-new-privileges`, CPU, memory, PID, command-time, output, and concurrency limits, and a single task-owned volume mounted at `/workspace`.
-- Added task-ownership labels, path and symlink containment, optimistic file version checks, startup recovery, graceful shutdown, and fail-closed cleanup retries so resources with conflicting task ownership are not silently reused or deleted.
-- Bound previews to a Docker-assigned loopback port and sandboxed the embedded frame. Documented that current task containers have Docker bridge egress, that containers are not virtual machines, and that provider credentials and the Docker socket are never mounted into a task.
 
 ### 📚 Documentation
 
-- Added a complete Work guide covering the UI, models and remote-provider data flow, container lifecycle, persistence and backups, security boundaries, runtime configuration, deployment support, previews, localization, and troubleshooting.
-- Updated the README, quick start, model, shortcut, authentication, storage, Docker, Kubernetes, Electron, hardware, environment-variable, Libre Claw, and troubleshooting documentation for the Work release.
+## [0.15.0] - 2026-07-27
+
+Libre WebUI 0.15.0 introduces **Work**, a native, admin-only coding-agent
+environment built directly into Libre WebUI. Every Work task combines a durable
+conversation and exact provider route in SQLite with its own persistent Docker
+named volume and an on-demand, disposable container for isolated execution.
+Users can return to an older task and continue with the same files, history,
+model route, and tool activity without requiring Libre Claw or another agent
+daemon.
+
+This release also adds real-time agent activity, built-in worker skills, a
+complete responsive workspace interface, automatic application previews, cloud
+and plugin model routing, full localization, and extensive runtime and API
+hardening.
+
+### ✨ New Features
+
+- Added distinct **Chat** and **Work** actions in the primary sidebar, with the
+  active mode visibly selected. Work tasks appear in the normal task list and
+  retain their title, provider, status, conversation, run history, and files
+  when reopened.
+- Added a durable workspace for every Work task: ownership, messages, runs,
+  errors, provider routing, and activity are stored in Libre WebUI's database,
+  while project files live in a task-specific Docker named volume mounted at
+  `/workspace`.
+- Added a managed, disposable Docker container identity for each task.
+  Containers are created, started, stopped, or recreated on demand while the
+  named volume survives run cancellation, preview shutdown, container
+  replacement, and Libre WebUI restarts.
+- Added a native autonomous tool loop with `list_files`, `read_file`,
+  `write_file`, `search_files`, `run_command`, `start_preview`, and
+  `stop_preview`. Server-owned workspace skills guide project discovery,
+  focused editing, verification, recovery, and preview use without writing an
+  `AGENTS.md` or another control file into the project.
+- Added explicit model routing for tool-capable local Ollama and Ollama Cloud
+  models plus configured completion/chat plugins through OpenAI-compatible,
+  Anthropic, and Gemini tool adapters. Provider type and plugin identity are
+  persisted with both the task and each run so equal model names cannot
+  silently switch routes.
+- Added an authenticated, resumable server-sent event stream for live run
+  state, assistant response deltas, provider-exposed reasoning, tool calls and
+  results, usage data, loaded skills, errors, and completion. The interface
+  shows active rounds, elapsed time, expandable tool details, generated-token
+  usage or an approximation when provider usage is unavailable, and
+  reconnection state.
+- Added a complete Work interface with Conversation, Files, Activity, and
+  Preview surfaces; a pointer- and keyboard-resizable desktop split; compact
+  mobile surface controls; editable task titles; cancellation; paginated
+  history; and direct task deletion.
+- Added a theme-aware workspace code editor with light and dark syntax
+  highlighting, LTR code inside RTL layouts, supported-file formatting,
+  `Cmd/Ctrl+S`, optimistic save-conflict detection, per-file browser drafts,
+  navigation protection, and responsive fallbacks for large files.
+- Added managed browser previews that can be embedded or opened separately.
+  With no custom command, Work detects root or nested `package.json`
+  development scripts, handles Next.js host arguments, or serves a plain
+  `index.html` through a bundled zero-dependency static server.
+
+### 🔧 Improvements
+
+- Raised the default provider-agnostic Work budget to 48 model rounds and
+  derived a larger bounded tool-call budget. Exhausted runs now request a final
+  no-tools progress handoff and finish as **Needs input**, allowing a later run
+  to continue in the same workspace instead of exposing a raw
+  provider-specific round-limit error or claiming false completion.
+- Added a dismissible, per-user disclosure for plugin-backed and Ollama Cloud
+  routes. It explains that autonomous work can make multiple billable requests
+  and can send conversation context and requested tool results, including file
+  contents, to the selected service.
+- Added consistent **Idle**, **Thinking**, **Complete**, **Needs input**, and
+  **Error** states across the Work page and sidebar, while keeping task
+  positions stable as activity and timestamps change. Status colors are now
+  white `rgb(255, 255, 255)`, blue `rgb(48, 121, 255)`, green
+  `rgb(76, 212, 117)`, yellow `rgb(255, 204, 0)`, and pink
+  `rgb(255, 61, 129)`, respectively.
+- Removed the misleading Work network toggle and standardized UI-created tasks
+  on Docker bridge networking. Runtime readiness now describes Docker and
+  available model routes without implying that Ollama is always required.
+- Replaced yellow and amber warning surfaces with the `#ff7b52` coral palette,
+  retained compatibility with existing saved accent preferences, and aligned
+  code rendering with the active light or dark theme.
+- Localized the complete Work experience across all 25 supported locales.
+  Arabic now uses a genuinely mirrored RTL layout for navigation, pane order,
+  tabs, and resize behavior while code, paths, commands, model identifiers, and
+  tool output remain LTR.
+- Added configurable runtime image, Docker command, command timeout, output,
+  memory, CPU, PID, preview-port, model-round, active-runtime, and task
+  admission limits.
+
+### 🐛 Bug Fixes
+
+- Fixed static Work projects failing preview startup with
+  `ENOENT: /workspace/package.json`. Empty preview commands now detect plain
+  static sites and single nested applications instead of always attempting
+  `npm run dev` from the workspace root.
+- Fixed ambiguous or unsupported preview layouts returning misleading npm
+  failures. Work now returns actionable errors and preserves explicit custom
+  commands for other project structures.
+- Fixed Kimi Code and Moonshot Work requests by omitting sampling fields that
+  Kimi fixes internally, removing obsolete temperature and penalty controls
+  from migrated provider definitions, adding `k3-256k`, and preserving provider
+  reasoning metadata across tool-call turns. Upstream quota throttling may
+  still return HTTP 429.
+- Fixed selected Work tasks being difficult to delete, task rows changing
+  position during runs, stale polling restoring deleted tasks, and Work/Chat
+  navigation selecting the wrong mode.
+- Made plugin settings surface structured provider error details instead of
+  reducing responses such as quota failures to a generic HTTP status message.
+- Fixed stale file reads and saves replacing the active file, edits typed
+  during an in-flight save being lost, failed saves discarding drafts, and
+  older editor revisions overwriting files changed by the model or another
+  browser action.
+- Corrected Work layout, code highlighting, formatting, resizing, status
+  indicators, and keyboard behavior across desktop, compact, dark, light, and
+  Arabic RTL modes.
+
+### 🔒 Security & Dependencies
+
+- Required current administrator authorization for every Work endpoint and
+  enforced task ownership across tasks, runs, event streams, files, previews,
+  and cancellation. Administrator demotion blocks further Work access
+  immediately, and account deletion cleans up owned Work resources before
+  removing ownership metadata.
+- Hardened task containers with a pinned Node runtime image, non-root UID/GID,
+  read-only root filesystem, bounded temporary storage, dropped Linux
+  capabilities, `no-new-privileges`, CPU, memory, PID, command-time, output,
+  and concurrency limits, and only the task-owned volume mounted at
+  `/workspace`.
+- Added managed-resource and task-ownership labels, path and symlink
+  containment, atomic writes, optimistic file versions, lifecycle locks,
+  startup reconciliation, graceful shutdown, and fail-closed cleanup retries
+  so resources with conflicting ownership are not reused or silently deleted.
+- Published previews only to a Docker-assigned loopback host port and embedded
+  them in a separate-origin sandboxed frame without Libre WebUI authentication
+  credentials.
+- Added authenticated per-user and guest-IP rate limiting to plugin discovery
+  routes, stricter mutation limits, and a pre-authentication burst guard.
+  Hardened Work preview lease cleanup against unvalidated dynamic callback
+  invocation reported by CodeQL.
+- Restricted Electron preview navigation to valid HTTP and HTTPS destinations.
+- Documented the remaining security boundary: Work containers share the Docker
+  host kernel, UI-created tasks have bridge egress, volumes have no independent
+  quota, and neither the Docker socket nor provider credentials are mounted
+  into a task.
+
+### 🚀 Deployment Notes
+
+- Work requires Docker to be installed, running, and callable by the Libre
+  WebUI backend user. Running Libre WebUI through `npx` does not install Docker;
+  when it is unavailable, Work reports the runtime as unavailable and never
+  falls back to running model commands on the host. Chat continues to work
+  without Docker.
+- The standard Docker Compose and Helm/Kubernetes configurations do not
+  currently expose a compatible nested Work runtime. Electron uses its
+  separately managed backend, while source, `npx`, bare-metal, and VM
+  deployments can use Work when their backend has Docker access.
+- Embedded previews are published on the backend's loopback interface. They are
+  suitable for a local browser but are not currently forwarded to remote
+  browsers when Libre WebUI runs on another server.
+- Complete Work backup and recovery requires both Libre WebUI's SQLite/data
+  storage and its labeled Docker workspace volumes.
+
+### 📚 Documentation
+
+- Added a comprehensive Work guide covering architecture, tools, providers,
+  data disclosure, live activity, worker skills, container lifecycle,
+  persistence, backups, previews, security boundaries, configuration,
+  deployment support, localization, and troubleshooting.
+- Updated the README, quick start, model, shortcuts, authentication, storage,
+  Docker, Kubernetes, Electron, hardware, environment-variable, Libre Claw,
+  plugin, Kimi Code, and troubleshooting documentation for the Work release,
+  and refreshed the Work screenshot.
+- Removed obsolete tracked `AGENT.md` and `AGENTS.md` instruction files and
+  ignored the repository-root `AGENTS.md` so private workspace guidance is not
+  committed accidentally.
 
 ## [0.14.3] - 2026-07-25
 
