@@ -1,5 +1,14 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { execFileSync, spawn } from 'node:child_process';
+import {
+  mkdtempSync,
+  mkdirSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
@@ -15,6 +24,8 @@ const runtimeModule = await import(
 );
 
 const {
+  PREVIEW_TARGET_SCRIPT,
+  STATIC_PREVIEW_SERVER_SCRIPT,
   WORK_RUNTIME_ADMISSION_DEFAULTS,
   WORK_RUNTIME_DEFAULTS,
   WorkRuntimeService,
@@ -22,6 +33,26 @@ const {
   parsePublishedPort,
   validateWorkspacePath,
 } = runtimeModule;
+
+const detectPreview = workspace =>
+  JSON.parse(
+    execFileSync(
+      process.execPath,
+      ['-e', PREVIEW_TARGET_SCRIPT, '--', workspace],
+      { encoding: 'utf8' }
+    )
+  );
+
+const availablePort = () =>
+  new Promise((resolve, reject) => {
+    const server = createServer();
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      const port = typeof address === 'object' && address ? address.port : 0;
+      server.close(error => (error ? reject(error) : resolve(port)));
+    });
+  });
 
 const task = {
   id: '1c95f122-0472-4b4c-ae88-0920de984cc8',
@@ -178,6 +209,320 @@ test('published preview ports are parsed only from loopback bindings', () => {
   assert.equal(parsePublishedPort('127.0.0.1:0', 4173), undefined);
   assert.equal(parsePublishedPort('127.0.0.1:65536', 4173), undefined);
   assert.equal(parsePublishedPort('not a Docker port', 4173), undefined);
+});
+
+test('preview discovery selects static sites without requiring package.json', t => {
+  const workspace = mkdtempSync(
+    path.join(tmpdir(), 'libre-work-static-preview-')
+  );
+  t.after(() => rmSync(workspace, { recursive: true, force: true }));
+  writeFileSync(path.join(workspace, 'index.html'), '<h1>Static app</h1>');
+
+  assert.deepEqual(detectPreview(workspace), {
+    kind: 'static',
+    workdir: realpathSync(workspace),
+  });
+});
+
+test('preview discovery prefers a root dev script and finds nested apps', t => {
+  const rootWorkspace = mkdtempSync(
+    path.join(tmpdir(), 'libre-work-root-preview-')
+  );
+  const nestedWorkspace = mkdtempSync(
+    path.join(tmpdir(), 'libre-work-nested-preview-')
+  );
+  t.after(() => {
+    rmSync(rootWorkspace, { recursive: true, force: true });
+    rmSync(nestedWorkspace, { recursive: true, force: true });
+  });
+
+  writeFileSync(path.join(rootWorkspace, 'index.html'), 'static fallback');
+  writeFileSync(
+    path.join(rootWorkspace, 'package.json'),
+    JSON.stringify({ scripts: { dev: 'vite' } })
+  );
+  assert.deepEqual(detectPreview(rootWorkspace), {
+    kind: 'npm',
+    workdir: realpathSync(rootWorkspace),
+    runner: 'standard',
+  });
+
+  const nestedApp = path.join(nestedWorkspace, 'apps', 'web client');
+  mkdirSync(nestedApp, { recursive: true });
+  writeFileSync(
+    path.join(nestedApp, 'package.json'),
+    JSON.stringify({ scripts: { dev: 'vite' } })
+  );
+  assert.deepEqual(detectPreview(nestedWorkspace), {
+    kind: 'npm',
+    workdir: realpathSync(nestedApp),
+    runner: 'standard',
+  });
+});
+
+test('preview discovery ignores dependencies and rejects ambiguous roots', t => {
+  const workspace = mkdtempSync(
+    path.join(tmpdir(), 'libre-work-ambiguous-preview-')
+  );
+  t.after(() => rmSync(workspace, { recursive: true, force: true }));
+  for (const relative of ['apps/alpha', 'apps/beta', 'node_modules/example']) {
+    const directory = path.join(workspace, relative);
+    mkdirSync(directory, { recursive: true });
+    writeFileSync(
+      path.join(directory, 'package.json'),
+      JSON.stringify({ scripts: { dev: 'vite' } })
+    );
+  }
+
+  assert.deepEqual(detectPreview(workspace), {
+    kind: 'ambiguous',
+    candidates: ['apps/alpha', 'apps/beta'],
+  });
+
+  rmSync(path.join(workspace, 'apps'), { recursive: true, force: true });
+  assert.deepEqual(detectPreview(workspace), { kind: 'none' });
+});
+
+test('preview discovery identifies Next.js and searches shallow apps first', t => {
+  const workspace = mkdtempSync(
+    path.join(tmpdir(), 'libre-work-bounded-preview-')
+  );
+  t.after(() => rmSync(workspace, { recursive: true, force: true }));
+
+  const noisyDirectory = path.join(workspace, 'a-noisy-subtree');
+  mkdirSync(noisyDirectory);
+  for (let index = 0; index < 520; index += 1) {
+    mkdirSync(path.join(noisyDirectory, `directory-${index}`));
+  }
+  const appDirectory = path.join(workspace, 'web');
+  mkdirSync(appDirectory);
+  writeFileSync(
+    path.join(appDirectory, 'package.json'),
+    JSON.stringify({
+      scripts: { dev: 'next dev --turbopack' },
+      dependencies: { next: '^15.0.0' },
+    })
+  );
+
+  assert.deepEqual(detectPreview(workspace), {
+    kind: 'npm',
+    workdir: realpathSync(appDirectory),
+    runner: 'next',
+  });
+});
+
+test('preview discovery keeps entry points beyond the child traversal cap', t => {
+  const workspace = mkdtempSync(
+    path.join(tmpdir(), 'libre-work-large-preview-')
+  );
+  t.after(() => rmSync(workspace, { recursive: true, force: true }));
+  for (let index = 0; index < 1_010; index += 1) {
+    writeFileSync(
+      path.join(workspace, `asset-${String(index).padStart(4, '0')}.txt`),
+      ''
+    );
+  }
+  writeFileSync(path.join(workspace, 'index.html'), '<h1>Large app</h1>');
+
+  assert.deepEqual(detectPreview(workspace), {
+    kind: 'static',
+    workdir: realpathSync(workspace),
+  });
+});
+
+test('built-in static preview serves app files and blocks symlink escapes', async t => {
+  const workspace = mkdtempSync(
+    path.join(tmpdir(), 'libre-work-static-server-')
+  );
+  const outside = mkdtempSync(path.join(tmpdir(), 'libre-work-outside-'));
+  const port = await availablePort();
+  writeFileSync(path.join(workspace, 'index.html'), '<h1>Preview ready</h1>');
+  writeFileSync(path.join(workspace, 'app.js'), 'window.previewReady = true;');
+  writeFileSync(path.join(outside, 'secret.txt'), 'must stay private');
+  symlinkSync(path.join(outside, 'secret.txt'), path.join(workspace, 'secret'));
+
+  const child = spawn(
+    process.execPath,
+    ['-e', STATIC_PREVIEW_SERVER_SCRIPT, '--', String(port)],
+    { cwd: workspace, stdio: ['ignore', 'pipe', 'pipe'] }
+  );
+  t.after(() => {
+    child.kill('SIGTERM');
+    rmSync(workspace, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
+  });
+  await new Promise((resolve, reject) => {
+    let diagnostics = '';
+    const timeout = setTimeout(
+      () => reject(new Error(`Static preview did not start: ${diagnostics}`)),
+      5_000
+    );
+    child.stdout.on('data', chunk => {
+      diagnostics += chunk;
+      if (diagnostics.includes('Static preview listening')) {
+        clearTimeout(timeout);
+        resolve();
+      }
+    });
+    child.stderr.on('data', chunk => {
+      diagnostics += chunk;
+    });
+    child.once('exit', code => {
+      clearTimeout(timeout);
+      reject(
+        new Error(`Static preview exited with code ${code}: ${diagnostics}`)
+      );
+    });
+  });
+
+  const rootResponse = await fetch(`http://127.0.0.1:${port}/`);
+  assert.equal(rootResponse.status, 200);
+  assert.equal(await rootResponse.text(), '<h1>Preview ready</h1>');
+  assert.match(rootResponse.headers.get('content-type') || '', /^text\/html/);
+
+  const scriptResponse = await fetch(`http://127.0.0.1:${port}/app.js`);
+  assert.equal(scriptResponse.status, 200);
+  assert.match(
+    scriptResponse.headers.get('content-type') || '',
+    /^text\/javascript/
+  );
+
+  const spaResponse = await fetch(`http://127.0.0.1:${port}/city/overview`, {
+    headers: { Accept: 'text/html' },
+  });
+  assert.equal(spaResponse.status, 200);
+  assert.equal(await spaResponse.text(), '<h1>Preview ready</h1>');
+
+  assert.equal((await fetch(`http://127.0.0.1:${port}/secret`)).status, 404);
+  assert.equal(
+    (
+      await fetch(`http://127.0.0.1:${port}/`, {
+        method: 'POST',
+      })
+    ).status,
+    405
+  );
+});
+
+test('preview startup wires detected targets into safe Docker launch arguments', async () => {
+  const detectedTask = { ...task, networkEnabled: true };
+  const runHarness = async detection => {
+    const service = new WorkRuntimeService();
+    const dockerCalls = [];
+    let releaseCalls = 0;
+    service.acquireRuntimeLease = () => () => {
+      releaseCalls += 1;
+    };
+    service.ensureImage = async () => {};
+    service.assertTaskIsActive = () => {};
+    service.assertCurrentNetworkPolicy = () => {};
+    service.prepareWithLock = async () => {};
+    service.withLifecycleLock = async (_taskId, operation) => operation();
+    service.docker = async args => {
+      dockerCalls.push(args);
+      if (args.includes(PREVIEW_TARGET_SCRIPT)) {
+        return {
+          exitCode: 0,
+          stdout: JSON.stringify(detection),
+          stderr: '',
+          truncated: false,
+        };
+      }
+      if (args[0] === 'exec' && args.includes('/bin/bash')) {
+        return { exitCode: 0, stdout: '', stderr: '', truncated: false };
+      }
+      if (args[0] === 'exec' && args.includes('node')) {
+        return { exitCode: 0, stdout: '', stderr: '', truncated: false };
+      }
+      if (args[0] === 'port') {
+        return {
+          exitCode: 0,
+          stdout: '127.0.0.1:49173',
+          stderr: '',
+          truncated: false,
+        };
+      }
+      throw new Error(`Unexpected Docker call: ${args.join(' ')}`);
+    };
+
+    const previewUrl = await service.startPreview(detectedTask);
+    assert.equal(previewUrl, 'http://127.0.0.1:49173');
+    assert.equal(releaseCalls, 0);
+    service.finalizeTaskRemoval(detectedTask.id);
+    assert.equal(releaseCalls, 1);
+    return dockerCalls;
+  };
+
+  const staticCalls = await runHarness({
+    kind: 'static',
+    workdir: '/workspace',
+  });
+  const staticLaunch = staticCalls.find(
+    args => args[0] === 'exec' && args.includes('/bin/bash')
+  );
+  assert.ok(staticLaunch);
+  assert.equal(optionValue(staticLaunch, '--workdir'), '/workspace');
+  assert.deepEqual(staticLaunch.slice(-3), [
+    'static',
+    STATIC_PREVIEW_SERVER_SCRIPT,
+    String(WORK_RUNTIME_DEFAULTS.previewPort),
+  ]);
+
+  const nextCalls = await runHarness({
+    kind: 'npm',
+    workdir: '/workspace/apps/web',
+    runner: 'next',
+  });
+  const nextLaunch = nextCalls.find(
+    args => args[0] === 'exec' && args.includes('/bin/bash')
+  );
+  assert.ok(nextLaunch);
+  assert.equal(optionValue(nextLaunch, '--workdir'), '/workspace/apps/web');
+  assert.deepEqual(nextLaunch.slice(-3), [
+    'shell',
+    `npm run dev -- --hostname 0.0.0.0 --port ${WORK_RUNTIME_DEFAULTS.previewPort}`,
+    String(WORK_RUNTIME_DEFAULTS.previewPort),
+  ]);
+});
+
+test('failed preview discovery stops the container and releases its lease', async () => {
+  const service = new WorkRuntimeService();
+  let failedCalls = 0;
+  let cleanupCalls = 0;
+  let releaseCalls = 0;
+  service.acquireRuntimeLease = () => () => {
+    releaseCalls += 1;
+  };
+  service.ensureImage = async () => {};
+  service.assertTaskIsActive = () => {};
+  service.assertCurrentNetworkPolicy = () => {};
+  service.prepareWithLock = async () => {};
+  service.withLifecycleLock = async (_taskId, operation) => operation();
+  service.stopContainerWithLock = async () => {
+    cleanupCalls += 1;
+  };
+  service.docker = async args => {
+    assert.ok(args.includes(PREVIEW_TARGET_SCRIPT));
+    return {
+      exitCode: 0,
+      stdout: JSON.stringify({ kind: 'none' }),
+      stderr: '',
+      truncated: false,
+    };
+  };
+
+  await assert.rejects(
+    service.startPreview({ ...task, networkEnabled: true }, undefined, {
+      onFailed: () => {
+        failedCalls += 1;
+      },
+    }),
+    error => error?.status === 422 && error?.code === 'WORK_PREVIEW_NOT_FOUND'
+  );
+  assert.equal(failedCalls, 1);
+  assert.equal(cleanupCalls, 1);
+  assert.equal(releaseCalls, 1);
+  assert.equal(service.previewLeaseReleases.has(task.id), false);
 });
 
 test('preview lease release validates callbacks selected by task ID', () => {

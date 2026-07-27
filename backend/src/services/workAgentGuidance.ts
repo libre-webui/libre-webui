@@ -72,6 +72,7 @@ export const WORK_AGENT_SKILLS: readonly WorkAgentSkill[] = [
     title: 'Browser preview',
     instructions: [
       'For browser applications, make the development server listen on the required host and preview port.',
+      'When the workspace has a package.json dev script or a plain index.html, start_preview can auto-detect it. Pass an explicit command for any other server.',
       'Verify the project before start_preview. Start the preview last because run_command cannot run while a preview is active; stop_preview before further commands.',
       'start_preview is the only supported way to keep a process alive. Background processes started by run_command are cleaned up when that command finishes.',
     ],

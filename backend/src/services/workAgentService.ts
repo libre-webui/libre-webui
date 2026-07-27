@@ -80,10 +80,10 @@ export const WORK_TOOL_SCHEMAS: Record<string, unknown>[] = [
   ),
   functionTool(
     'start_preview',
-    'Start the workspace web application on the managed preview port.',
+    'Start the workspace web application on the managed preview port. When command is omitted, Libre WebUI detects a package.json dev script or a static index.html.',
     {
       command: stringProperty(
-        `Optional development-server command. It must listen on 0.0.0.0:${workRuntimeService.previewPort}.`
+        `Optional custom server command. It must listen on 0.0.0.0:${workRuntimeService.previewPort}.`
       ),
     }
   ),

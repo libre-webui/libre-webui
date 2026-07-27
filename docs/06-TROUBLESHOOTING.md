@@ -183,11 +183,15 @@ the task container.
 
 ### A Work Preview Does Not Start
 
-- Check **Activity** for the preview command and its output.
 - Make sure the server binds to `0.0.0.0` on `WORK_PREVIEW_PORT` (`4173` by
   default).
-- Try the project's explicit development command in the optional start-command
-  field.
+- Leave the optional command empty to auto-detect a `package.json` `dev` script
+  or a plain `index.html`, including a single nested app.
+- If Work reports multiple apps or no supported entry point, enter the
+  project's explicit development command in the optional command field. The
+  command starts in `/workspace`, so use `cd <app-directory> && ...` for a
+  nested app.
+- Expand the returned error details to inspect startup output.
 - Stop an existing preview before starting another command that needs the
   container.
 

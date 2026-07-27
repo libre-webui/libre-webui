@@ -281,14 +281,19 @@ container or tool security boundary.
 ### Preview
 
 The Preview tab starts, stops, embeds, and opens the generated web application.
-The default start command is:
+When the command field is empty, Libre WebUI inspects the workspace and:
 
-```bash
-npm run dev -- --host 0.0.0.0 --port 4173
-```
+- runs a root `package.json` `dev` script with the required host and port;
+- serves a root `index.html` with a bundled, zero-dependency static server; or
+- uses the same rules for a single app in a nested directory.
 
-If the project uses another command, enter it before selecting **Start
-preview**. The process must listen on `0.0.0.0` and the configured
+Root applications take precedence. If multiple equally likely nested apps are
+found, or no supported entry point exists, Work returns an actionable error
+instead of attempting an unrelated npm command. Enter a custom command before
+selecting **Start preview** for other project layouts or servers. Custom
+commands start in `/workspace`, so include the relative directory when needed,
+for example `cd apps/web && npm run dev -- --host 0.0.0.0 --port 4173`. A
+custom process must listen on `0.0.0.0` and the configured
 `WORK_PREVIEW_PORT`. Work waits up to 15 seconds for the port to become ready.
 
 The model can also start the preview through its `start_preview` tool. This is
@@ -739,9 +744,11 @@ host with enough resources.
 ### The preview does not become ready
 
 Confirm that the command remains running, binds to `0.0.0.0`, and listens on
-`WORK_PREVIEW_PORT` within 15 seconds. Check Activity for the preview log. Use
-the optional command field if the project does not define the default
-`npm run dev` script.
+`WORK_PREVIEW_PORT` within 15 seconds. With an empty command, Work automatically
+detects a `package.json` `dev` script or a plain `index.html`, including a
+single nested app. If the error reports multiple apps or no supported entry
+point, enter an explicit command in the optional command field. Custom commands
+start in `/workspace`, so use `cd <app-directory> && ...` for a nested app.
 
 ### The preview works on the server but not in a remote browser
 

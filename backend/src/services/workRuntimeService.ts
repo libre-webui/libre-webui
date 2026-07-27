@@ -118,6 +118,24 @@ interface PreviewStateHooks {
   onStopped?: () => void;
 }
 
+type PreviewLaunch =
+  | {
+      kind: 'shell';
+      workdir: string;
+      command: string;
+    }
+  | {
+      kind: 'static';
+      workdir: string;
+    };
+
+interface PreviewDetection {
+  kind: 'npm' | 'static' | 'none' | 'ambiguous';
+  workdir?: string;
+  runner?: 'standard' | 'next';
+  candidates?: string[];
+}
+
 interface RuntimeLease {
   userId: string;
   holders: number;
@@ -914,10 +932,8 @@ export class WorkRuntimeService {
         'WORK_PREVIEW_REQUIRES_NETWORK'
       );
     }
-    const previewCommand =
-      command?.trim() ||
-      `npm run dev -- --host 0.0.0.0 --port ${config.previewPort}`;
-    if (previewCommand.length > 20_000) {
+    const previewCommand = command?.trim();
+    if (previewCommand && previewCommand.length > 20_000) {
       throw new WorkRuntimeError(
         'Preview command is too long.',
         400,
@@ -943,9 +959,16 @@ export class WorkRuntimeService {
         try {
           await this.prepareWithLock(task);
           this.assertTaskIsActive(task);
+          const previewLaunch: PreviewLaunch = previewCommand
+            ? {
+                kind: 'shell',
+                workdir: '/workspace',
+                command: previewCommand,
+              }
+            : await this.detectPreviewLaunch(task);
           const previewUrl = await this.startPreviewPrepared(
             task,
-            previewCommand
+            previewLaunch
           );
           this.assertTaskIsActive(task);
           hooks.onRunning?.(previewUrl);
@@ -970,9 +993,109 @@ export class WorkRuntimeService {
     }
   }
 
+  private async detectPreviewLaunch(
+    task: WorkTaskRecord
+  ): Promise<PreviewLaunch> {
+    try {
+      const result = await this.docker(
+        [
+          'exec',
+          '--user',
+          '1000:1000',
+          '--workdir',
+          '/workspace',
+          task.containerName,
+          'node',
+          '-e',
+          PREVIEW_TARGET_SCRIPT,
+          '--',
+          '/workspace',
+        ],
+        {
+          acceptFailure: true,
+          timeoutMs: 5_000,
+          maxOutputChars: 10_000,
+        }
+      );
+      if (result.exitCode !== 0) {
+        throw new WorkRuntimeError(
+          `Could not inspect the workspace for a previewable app.${result.stderr.trim() ? `\n${result.stderr.trim()}` : ''}`,
+          422,
+          'WORK_PREVIEW_DETECTION_FAILED'
+        );
+      }
+
+      const detection = parseJsonOutput<PreviewDetection>(result.stdout);
+      if (
+        !detection ||
+        !['npm', 'static', 'none', 'ambiguous'].includes(detection.kind)
+      ) {
+        throw new WorkRuntimeError(
+          'Workspace preview detection returned an invalid response.',
+          500,
+          'WORK_HELPER_INVALID_RESPONSE'
+        );
+      }
+      if (detection.kind === 'none') {
+        throw new WorkRuntimeError(
+          'No previewable app was found. Add an index.html file or a package.json dev script, or enter a custom start command.',
+          422,
+          'WORK_PREVIEW_NOT_FOUND'
+        );
+      }
+      if (detection.kind === 'ambiguous') {
+        const candidates = (detection.candidates || []).slice(0, 8).join(', ');
+        throw new WorkRuntimeError(
+          `More than one previewable app was found${candidates ? `: ${candidates}` : ''}. Custom commands run from /workspace, so select the intended app with a command such as "cd <app-directory> && npm run dev".`,
+          422,
+          'WORK_PREVIEW_AMBIGUOUS'
+        );
+      }
+      if (!isSafePreviewWorkdir(detection.workdir)) {
+        throw new WorkRuntimeError(
+          'Workspace preview detection returned an unsafe working directory.',
+          500,
+          'WORK_HELPER_INVALID_RESPONSE'
+        );
+      }
+      if (detection.kind === 'static') {
+        return { kind: 'static', workdir: detection.workdir };
+      }
+      if (
+        detection.runner !== undefined &&
+        detection.runner !== 'standard' &&
+        detection.runner !== 'next'
+      ) {
+        throw new WorkRuntimeError(
+          'Workspace preview detection returned an unsupported npm runner.',
+          500,
+          'WORK_HELPER_INVALID_RESPONSE'
+        );
+      }
+      return {
+        kind: 'shell',
+        workdir: detection.workdir,
+        command:
+          detection.runner === 'next'
+            ? `npm run dev -- --hostname 0.0.0.0 --port ${config.previewPort}`
+            : `npm run dev -- --host 0.0.0.0 --port ${config.previewPort}`,
+      };
+    } catch (error) {
+      try {
+        await this.stopPreviewPrepared(task);
+      } catch (cleanupError) {
+        logger.warn(
+          `Could not clean up failed preview detection for Work task ${task.id}:`,
+          cleanupError
+        );
+      }
+      throw error;
+    }
+  }
+
   private async startPreviewPrepared(
     task: WorkTaskRecord,
-    previewCommand: string
+    previewLaunch: PreviewLaunch
   ): Promise<string> {
     try {
       const launch = await this.docker(
@@ -981,7 +1104,7 @@ export class WorkRuntimeService {
           '--user',
           '1000:1000',
           '--workdir',
-          '/workspace',
+          previewLaunch.workdir,
           task.containerName,
           '/bin/bash',
           '-lc',
@@ -989,11 +1112,22 @@ export class WorkRuntimeService {
             kill -0 "$(cat /tmp/libre-work-preview.pid)" 2>/dev/null; then
            exit 17
          fi
-         nohup setsid /bin/bash -lc "$1" \
-           > /tmp/libre-work-preview.log 2>&1 < /dev/null &
+         if [ "$1" = "static" ]; then
+           nohup setsid node -e "$2" -- "$3" \
+             > /tmp/libre-work-preview.log 2>&1 < /dev/null &
+         elif [ "$1" = "shell" ]; then
+           nohup setsid /bin/bash -lc "$2" \
+             > /tmp/libre-work-preview.log 2>&1 < /dev/null &
+         else
+           exit 18
+         fi
          echo $! > /tmp/libre-work-preview.pid`,
           '--',
-          previewCommand,
+          previewLaunch.kind,
+          previewLaunch.kind === 'static'
+            ? STATIC_PREVIEW_SERVER_SCRIPT
+            : previewLaunch.command,
+          String(config.previewPort),
         ],
         { acceptFailure: true, timeoutMs: 5_000 }
       );
@@ -1792,6 +1926,20 @@ function stringArray(value: unknown): string[] {
     : [];
 }
 
+function isSafePreviewWorkdir(value: unknown): value is string {
+  if (
+    typeof value !== 'string' ||
+    value.length > 4096 ||
+    value.includes('\0')
+  ) {
+    return false;
+  }
+  return (
+    path.posix.normalize(value) === value &&
+    (value === '/workspace' || value.startsWith('/workspace/'))
+  );
+}
+
 const MANAGED_COMMAND_SCRIPT = String.raw`
 setsid /bin/bash -lc "$1" &
 command_pid=$!
@@ -1844,6 +1992,268 @@ const finish = code => {
 socket.setTimeout(750, () => finish(3));
 socket.once('connect', () => finish(0));
 socket.once('error', () => finish(3));
+`;
+
+export const PREVIEW_TARGET_SCRIPT = String.raw`
+const fs = require('node:fs');
+const path = require('node:path');
+const root = fs.realpathSync(process.argv[1] || '/workspace');
+const ignored = new Set([
+  '.git',
+  '.next',
+  '.nuxt',
+  '.output',
+  '.svelte-kit',
+  'build',
+  'coverage',
+  'dist',
+  'node_modules',
+  'out',
+  'target'
+]);
+const candidates = [];
+const queue = [{directory:root, depth:0}];
+let cursor = 0;
+while (cursor < queue.length && cursor < 500) {
+  const {directory, depth} = queue[cursor];
+  cursor += 1;
+  let entries;
+  try {
+    entries = fs.readdirSync(directory, {withFileTypes:true})
+      .sort((left, right) => left.name.localeCompare(right.name));
+  } catch {
+    continue;
+  }
+  const packageEntry = entries.find(
+    entry => entry.isFile() && entry.name === 'package.json'
+  );
+  if (packageEntry) {
+    try {
+      const manifestPath = path.join(directory, packageEntry.name);
+      if (fs.statSync(manifestPath).size > 1000000) {
+        throw new Error('Manifest is too large');
+      }
+      const manifest = JSON.parse(
+        fs.readFileSync(manifestPath, 'utf8')
+      );
+      if (
+        manifest &&
+        manifest.scripts &&
+        typeof manifest.scripts.dev === 'string' &&
+        manifest.scripts.dev.trim()
+      ) {
+        const dependencies = {
+          ...(manifest.dependencies || {}),
+          ...(manifest.devDependencies || {})
+        };
+        const runner =
+          typeof dependencies.next === 'string' ||
+          /(^|\\s)next(?:\\s|$)/.test(manifest.scripts.dev)
+            ? 'next'
+            : 'standard';
+        candidates.push({
+          kind:'npm',
+          workdir:directory,
+          depth,
+          rank:0,
+          runner
+        });
+      }
+    } catch {}
+  }
+  if (entries.some(entry => entry.isFile() && entry.name === 'index.html')) {
+    candidates.push({kind:'static', workdir:directory, depth, rank:1});
+  }
+  for (const entry of entries) {
+    if (
+      !entry.isDirectory() ||
+      ignored.has(entry.name) ||
+      entry.name.startsWith('.')
+    ) {
+      continue;
+    }
+    if (depth < 4 && queue.length < 1500) {
+      queue.push({
+        directory:path.join(directory, entry.name),
+        depth:depth + 1
+      });
+    }
+  }
+}
+if (candidates.length === 0) {
+  process.stdout.write(JSON.stringify({kind:'none'}));
+} else {
+  const rootNpm = candidates.filter(
+    candidate => candidate.depth === 0 && candidate.rank === 0
+  );
+  const rootStatic = candidates.filter(
+    candidate => candidate.depth === 0 && candidate.rank === 1
+  );
+  const nestedNpm = candidates.filter(
+    candidate => candidate.depth > 0 && candidate.rank === 0
+  );
+  const nestedStatic = candidates.filter(
+    candidate => candidate.depth > 0 && candidate.rank === 1
+  );
+  const pool =
+    rootNpm.length > 0
+      ? rootNpm
+      : rootStatic.length > 0
+        ? rootStatic
+        : nestedNpm.length > 0
+          ? nestedNpm
+          : nestedStatic;
+  pool.sort(
+    (left, right) =>
+      left.depth - right.depth ||
+      left.workdir.localeCompare(right.workdir)
+  );
+  const best = pool[0];
+  const competing = pool.filter(candidate => candidate.depth === best.depth);
+  if (competing.length > 1) {
+    process.stdout.write(JSON.stringify({
+      kind:'ambiguous',
+      candidates:competing.map(candidate =>
+        path.relative(root, candidate.workdir) || '.'
+      )
+    }));
+  } else {
+    process.stdout.write(JSON.stringify({
+      kind:best.kind,
+      workdir:best.workdir,
+      ...(best.runner ? {runner:best.runner} : {})
+    }));
+  }
+}
+`;
+
+export const STATIC_PREVIEW_SERVER_SCRIPT = String.raw`
+const fs = require('node:fs');
+const http = require('node:http');
+const path = require('node:path');
+const root = fs.realpathSync(process.cwd());
+const port = Number(process.argv[1]);
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  throw new Error('Invalid preview port');
+}
+const inside = candidate =>
+  candidate === root || candidate.startsWith(root + path.sep);
+const mimeTypes = {
+  '.avif':'image/avif',
+  '.css':'text/css; charset=utf-8',
+  '.gif':'image/gif',
+  '.htm':'text/html; charset=utf-8',
+  '.html':'text/html; charset=utf-8',
+  '.ico':'image/x-icon',
+  '.jpeg':'image/jpeg',
+  '.jpg':'image/jpeg',
+  '.js':'text/javascript; charset=utf-8',
+  '.json':'application/json; charset=utf-8',
+  '.mjs':'text/javascript; charset=utf-8',
+  '.mp3':'audio/mpeg',
+  '.mp4':'video/mp4',
+  '.ogg':'audio/ogg',
+  '.otf':'font/otf',
+  '.png':'image/png',
+  '.svg':'image/svg+xml',
+  '.ttf':'font/ttf',
+  '.txt':'text/plain; charset=utf-8',
+  '.wasm':'application/wasm',
+  '.webm':'video/webm',
+  '.webp':'image/webp',
+  '.woff':'font/woff',
+  '.woff2':'font/woff2',
+  '.xml':'application/xml; charset=utf-8'
+};
+const resolveFile = requestPath => {
+  if (
+    requestPath
+      .split('/')
+      .filter(Boolean)
+      .some(segment => segment.startsWith('.'))
+  ) {
+    return;
+  }
+  const lexical = path.resolve(root, '.' + requestPath);
+  if (!inside(lexical)) return;
+  let real;
+  let stat;
+  try {
+    real = fs.realpathSync(lexical);
+    if (!inside(real)) return;
+    stat = fs.statSync(real);
+  } catch {
+    return;
+  }
+  if (stat.isDirectory()) {
+    try {
+      real = fs.realpathSync(path.join(real, 'index.html'));
+      if (!inside(real)) return;
+      stat = fs.statSync(real);
+    } catch {
+      return;
+    }
+  }
+  return stat.isFile() ? {file:real, stat} : undefined;
+};
+const sendText = (response, status, message) => {
+  response.writeHead(status, {
+    'Content-Type':'text/plain; charset=utf-8',
+    'X-Content-Type-Options':'nosniff'
+  });
+  response.end(message);
+};
+const server = http.createServer((request, response) => {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    response.setHeader('Allow', 'GET, HEAD');
+    sendText(response, 405, 'Method not allowed');
+    return;
+  }
+  let pathname;
+  try {
+    pathname = decodeURIComponent(
+      new URL(request.url || '/', 'http://127.0.0.1').pathname
+    );
+  } catch {
+    sendText(response, 400, 'Invalid URL');
+    return;
+  }
+  let resolved = resolveFile(pathname);
+  if (
+    !resolved &&
+    request.headers.accept &&
+    request.headers.accept.includes('text/html') &&
+    !path.posix.extname(pathname)
+  ) {
+    resolved = resolveFile('/index.html');
+  }
+  if (!resolved) {
+    sendText(response, 404, 'Not found');
+    return;
+  }
+  response.writeHead(200, {
+    'Content-Type':
+      mimeTypes[path.extname(resolved.file).toLowerCase()] ||
+      'application/octet-stream',
+    'Content-Length':String(resolved.stat.size),
+    'Cache-Control':'no-store',
+    'X-Content-Type-Options':'nosniff'
+  });
+  if (request.method === 'HEAD') {
+    response.end();
+    return;
+  }
+  const stream = fs.createReadStream(resolved.file);
+  stream.on('error', () => response.destroy());
+  stream.pipe(response);
+});
+server.on('error', error => {
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+});
+server.listen(port, '0.0.0.0', () => {
+  console.log('Static preview listening on 0.0.0.0:' + port);
+});
 `;
 
 const LIST_FILES_SCRIPT = `${COMMON_PATH_GUARD}
