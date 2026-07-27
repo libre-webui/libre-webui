@@ -15,12 +15,16 @@
  * limitations under the License.
  */
 
-import workModelProviderService from './workModelProviderService.js';
+import workModelProviderService, {
+  WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY,
+  WORK_TOOL_ARGUMENTS_ERROR_MESSAGE,
+} from './workModelProviderService.js';
 import workEventService from './workEventService.js';
 import {
   buildWorkAgentSystemPrompt,
   buildWorkBudgetExhaustionPrompt,
   WORK_AGENT_SKILLS,
+  WORK_WRITE_FILE_RECOMMENDED_CHARS,
   workToolCallBudget,
 } from './workAgentGuidance.js';
 import workRuntimeService, { WorkCommandResult } from './workRuntimeService.js';
@@ -51,7 +55,9 @@ export const WORK_TOOL_SCHEMAS: Record<string, unknown>[] = [
     'Create or replace a UTF-8 text file in the persistent workspace.',
     {
       path: stringProperty('Relative file path.'),
-      content: stringProperty('Complete file content.'),
+      content: stringProperty(
+        `Complete file content. Keep one write below ${WORK_WRITE_FILE_RECOMMENDED_CHARS.toLocaleString('en-US')} characters and split larger implementations into focused files.`
+      ),
     },
     ['path', 'content']
   ),
@@ -363,10 +369,6 @@ export class WorkAgentService {
               model: run.model,
               messages,
               tools: WORK_TOOL_SCHEMAS,
-              options:
-                run.providerType === 'plugin'
-                  ? { num_predict: 4096 }
-                  : undefined,
               stream: true,
             },
             {
@@ -453,6 +455,12 @@ export class WorkAgentService {
           });
           return;
         }
+        const toolValidationErrors = new Map<WorkToolCall, string>();
+        for (const call of toolCalls) {
+          const validationError = validateToolCallArguments(call);
+          if (validationError) toolValidationErrors.set(call, validationError);
+        }
+        const hasInvalidToolArguments = toolValidationErrors.size > 0;
 
         messages.push({
           role: 'assistant',
@@ -500,6 +508,21 @@ export class WorkAgentService {
             toolName: call.function.name,
           };
           try {
+            const validationError = toolValidationErrors.get(call);
+            if (validationError) {
+              throw new WorkAgentHttpError(
+                validationError,
+                400,
+                'WORK_INVALID_TOOL_ARGUMENTS'
+              );
+            }
+            if (hasInvalidToolArguments) {
+              throw new WorkAgentHttpError(
+                'This tool call was not executed because another call in the same model response had incomplete or invalid arguments. Retry the batch with smaller payloads.',
+                400,
+                'WORK_TOOL_BATCH_NOT_EXECUTED'
+              );
+            }
             const result = await this.executeTool(task, call);
             toolOutput = result.content;
             toolMetadata = { ...toolMetadata, ...result.metadata };
@@ -970,17 +993,35 @@ export function normalizeToolCalls(
           : undefined;
       if (!fn || typeof fn.name !== 'string') return [];
       let args: Record<string, unknown> = {};
+      let argumentError: string | undefined;
       if (fn.arguments && typeof fn.arguments === 'object') {
         args = fn.arguments as Record<string, unknown>;
       } else if (typeof fn.arguments === 'string') {
         try {
           const parsed = JSON.parse(fn.arguments);
-          if (parsed && typeof parsed === 'object') {
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
             args = parsed as Record<string, unknown>;
+          } else if (fn.arguments.trim()) {
+            argumentError = WORK_TOOL_ARGUMENTS_ERROR_MESSAGE;
           }
         } catch {
           args = {};
+          if (fn.arguments.trim()) {
+            argumentError = WORK_TOOL_ARGUMENTS_ERROR_MESSAGE;
+          }
         }
+      }
+      const providerMetadata =
+        record.providerMetadata &&
+        typeof record.providerMetadata === 'object' &&
+        !Array.isArray(record.providerMetadata)
+          ? {
+              ...(record.providerMetadata as Record<string, unknown>),
+            }
+          : {};
+      if (argumentError) {
+        providerMetadata[WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY] =
+          argumentError;
       }
       return [
         {
@@ -991,15 +1032,8 @@ export function normalizeToolCalls(
           ...(typeof record.thoughtSignature === 'string'
             ? { thoughtSignature: record.thoughtSignature }
             : {}),
-          ...(record.providerMetadata &&
-          typeof record.providerMetadata === 'object' &&
-          !Array.isArray(record.providerMetadata)
-            ? {
-                providerMetadata: record.providerMetadata as Record<
-                  string,
-                  unknown
-                >,
-              }
+          ...(Object.keys(providerMetadata).length > 0
+            ? { providerMetadata }
             : {}),
           function: { name: fn.name, arguments: args },
         },
@@ -1055,6 +1089,45 @@ function optionalInteger(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isInteger(value)
     ? value
     : undefined;
+}
+
+function validateToolCallArguments(call: WorkToolCall): string | undefined {
+  const providerArgumentError =
+    call.providerMetadata?.[WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY];
+  if (typeof providerArgumentError === 'string') {
+    return providerArgumentError;
+  }
+
+  const args = call.function.arguments;
+  const invalidRequiredString = (
+    name: string,
+    allowEmpty = false
+  ): string | undefined => {
+    const value = args[name];
+    if (typeof value === 'string' && (allowEmpty || value.trim())) {
+      return undefined;
+    }
+    return `The model returned invalid arguments for ${call.function.name}: "${name}" must be a string. Retry with every required field; split large write_file content into focused files.`;
+  };
+
+  switch (call.function.name) {
+    case 'list_files':
+    case 'start_preview':
+    case 'stop_preview':
+      return undefined;
+    case 'read_file':
+      return invalidRequiredString('path');
+    case 'write_file':
+      return (
+        invalidRequiredString('path') || invalidRequiredString('content', true)
+      );
+    case 'search_files':
+      return invalidRequiredString('query');
+    case 'run_command':
+      return invalidRequiredString('command');
+    default:
+      return `The model requested an unknown tool: ${call.function.name}.`;
+  }
 }
 
 function isActiveRunStatus(status: unknown): boolean {

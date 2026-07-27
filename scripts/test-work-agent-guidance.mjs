@@ -67,6 +67,8 @@ test('Work guidance exposes the real runtime contract and efficient workflow', (
   assert.match(prompt, /preserve unrelated work/);
   assert.match(prompt, /Start the preview last/);
   assert.match(prompt, /do not stop after only describing a plan/);
+  assert.match(prompt, /each write_file payload below 8,000 characters/);
+  assert.match(prompt, /provider cannot truncate the tool arguments/);
 });
 
 test('Work guidance changes network policy without changing its core skills', () => {

@@ -47,6 +47,10 @@ import type { WorkProviderSelection } from '../types/work.js';
 
 type JsonObject = Record<string, unknown>;
 
+export const WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY = 'libreToolArgumentsError';
+export const WORK_TOOL_ARGUMENTS_ERROR_MESSAGE =
+  'The provider returned incomplete or invalid JSON for this tool call, likely because its output-token limit was reached. Retry with a smaller payload; split large write_file content into focused files.';
+
 export interface WorkProviderAvailability {
   ollamaAvailable: boolean;
   pluginAvailable: boolean;
@@ -913,7 +917,17 @@ async function collectPluginWorkStream(
       continue;
     }
     if (chunk.type === 'tool_call') {
-      const metadata = chunk.toolCall.providerMetadata;
+      const parsedArguments = parseToolArgumentsWithStatus(
+        chunk.toolCall.arguments
+      );
+      const metadata: JsonObject = {
+        ...chunk.toolCall.providerMetadata,
+        ...(parsedArguments.error
+          ? {
+              [WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY]: parsedArguments.error,
+            }
+          : {}),
+      };
       toolCalls.push({
         id: chunk.toolCall.id || `work-plugin-${toolCalls.length}`,
         ...(typeof metadata?.geminiThoughtSignature === 'string'
@@ -931,7 +945,7 @@ async function collectPluginWorkStream(
           : {}),
         function: {
           name: chunk.toolCall.name,
-          arguments: parseToolArguments(chunk.toolCall.arguments),
+          arguments: parsedArguments.arguments,
         },
       });
     }
@@ -1115,20 +1129,30 @@ function normalizeInboundToolCalls(value: unknown): JsonObject[] {
     const call = asObject(raw);
     const fn = asObject(call?.function);
     if (!fn || typeof fn.name !== 'string') return [];
-    const providerMetadata = asObject(call?.providerMetadata);
+    const parsedArguments = parseToolArgumentsWithStatus(fn.arguments);
+    const providerMetadata = {
+      ...asObject(call?.providerMetadata),
+      ...(parsedArguments.error
+        ? {
+            [WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY]: parsedArguments.error,
+          }
+        : {}),
+    };
     return [
       {
         id: typeof call?.id === 'string' ? call.id : `work-plugin-${index}`,
         ...(typeof call?.thoughtSignature === 'string'
           ? { thoughtSignature: call.thoughtSignature }
           : {}),
-        ...(providerMetadata ? { providerMetadata } : {}),
+        ...(Object.keys(providerMetadata).length > 0
+          ? { providerMetadata }
+          : {}),
         function: {
           name: fn.name,
           arguments:
-            typeof fn.arguments === 'string'
+            typeof fn.arguments === 'string' && !parsedArguments.error
               ? fn.arguments
-              : asObject(fn.arguments) || {},
+              : parsedArguments.arguments,
         },
       },
     ];
@@ -1153,17 +1177,34 @@ function toAnthropicTools(tools: JsonObject[]): JsonObject[] {
 }
 
 function parseToolArguments(value: unknown): JsonObject {
+  return parseToolArgumentsWithStatus(value).arguments;
+}
+
+function parseToolArgumentsWithStatus(value: unknown): {
+  arguments: JsonObject;
+  error?: string;
+} {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return value as JsonObject;
+    return { arguments: value as JsonObject };
   }
   if (typeof value === 'string') {
+    if (!value.trim()) return { arguments: {} };
     try {
-      return asObject(JSON.parse(value)) || {};
+      const parsed = asObject(JSON.parse(value));
+      return parsed
+        ? { arguments: parsed }
+        : {
+            arguments: {},
+            error: WORK_TOOL_ARGUMENTS_ERROR_MESSAGE,
+          };
     } catch {
-      return {};
+      return {
+        arguments: {},
+        error: WORK_TOOL_ARGUMENTS_ERROR_MESSAGE,
+      };
     }
   }
-  return {};
+  return { arguments: {} };
 }
 
 function contentText(value: unknown): string {

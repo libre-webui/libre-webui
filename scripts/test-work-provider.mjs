@@ -422,6 +422,57 @@ test('Work streams OpenAI-compatible reasoning, text, usage, and tools', async (
   }
 });
 
+test('Work marks truncated OpenAI-compatible tool arguments for safe recovery', async () => {
+  const remotePlugin = {
+    ...plugin('kimi-code'),
+    active: true,
+  };
+  const service = streamingService(remotePlugin);
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => {
+    const body = [
+      'data: {"choices":[{"delta":{"tool_calls":[{"index":0,"id":"call-truncated","function":{"name":"write_file","arguments":"{\\\"path\\\":\\\"app.js\\\",\\\"content\\\":\\\"unterminated"}}]}}]}',
+      '',
+      'data: [DONE]',
+      '',
+    ].join('\n');
+    return new Response(body, {
+      headers: { 'content-type': 'text/event-stream' },
+    });
+  };
+
+  try {
+    const response = await service.generateChatStreamResponse(
+      {
+        model: 'test-model',
+        messages: messages.slice(0, 2),
+        tools: [tool],
+        stream: true,
+      },
+      { providerType: 'plugin', providerId: remotePlugin.id },
+      'test-user',
+      {}
+    );
+    const call = response.message.tool_calls[0];
+    assert.deepEqual(call.function.arguments, {});
+    assert.match(
+      call.providerMetadata.libreToolArgumentsError,
+      /incomplete or invalid JSON/
+    );
+    assert.match(
+      call.providerMetadata.libreToolArgumentsError,
+      /smaller payload/
+    );
+    assert.equal(
+      'unterminated' in call.providerMetadata,
+      false,
+      'raw provider arguments must not be retained'
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('Work streams Anthropic reasoning, text, usage, and signed tools', async () => {
   const remotePlugin = {
     ...plugin('anthropic'),

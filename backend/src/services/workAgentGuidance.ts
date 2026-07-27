@@ -31,6 +31,7 @@ export interface WorkAgentSkill {
 
 const MAX_COMMAND_TIMEOUT_MS = 600_000;
 const MAX_TEXT_FILE_BYTES = 2_000_000;
+export const WORK_WRITE_FILE_RECOMMENDED_CHARS = 8_000;
 
 /**
  * Server-owned guidance is injected into model context and never written into
@@ -55,6 +56,7 @@ export const WORK_AGENT_SKILLS: readonly WorkAgentSkill[] = [
       'Continue through implementation and verification; do not stop after only describing a plan.',
       'Search for the relevant symbols before broad reads. Do not repeatedly list, search, or read unchanged content.',
       'Use write_file for a new file or an intentional complete replacement. Keep run_command non-interactive and narrowly scoped.',
+      `Keep each write_file payload below ${WORK_WRITE_FILE_RECOMMENDED_CHARS.toLocaleString('en-US')} characters. Split larger implementations into focused modules or files before writing so the provider cannot truncate the tool arguments.`,
       'Group independent operations into one model response and use one focused command when it can safely replace several serial tool calls.',
     ],
   },

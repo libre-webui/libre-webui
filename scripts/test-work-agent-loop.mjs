@@ -22,7 +22,11 @@ const [
   { closeDatabase, getDatabase },
   { default: workAgentService },
   { default: workEventService },
-  { default: workModelProviderService },
+  {
+    default: workModelProviderService,
+    WORK_TOOL_ARGUMENTS_ERROR_MESSAGE,
+    WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY,
+  },
   { default: workRuntimeService },
   { default: workTaskService },
 ] = await Promise.all([
@@ -85,6 +89,7 @@ test('plugin Work runs use the configured round budget and finish with a no-tool
       assert.equal(requestedUserId, userId);
 
       if (request.tools.length > 0) {
+        assert.equal(request.options, undefined);
         const round = requests.length;
         assert.ok(
           round <= 13,
@@ -176,5 +181,142 @@ test('plugin Work runs use the configured round budget and finish with a no-tool
   assert.equal(
     messages.filter(message => message.kind === 'tool_result').length,
     13
+  );
+});
+
+test('invalid provider tool arguments prevent partial writes and guide a smaller retry', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-tool-recovery-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const writes = [];
+  replaceMethod(
+    workRuntimeService,
+    'writeFile',
+    async (_task, filePath, content) => {
+      writes.push({ path: filePath, content });
+      return {
+        path: filePath,
+        content,
+        size: Buffer.byteLength(content),
+        updatedAt: Date.now(),
+        modifiedAt: Date.now(),
+      };
+    }
+  );
+
+  const requests = [];
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests.push(request);
+      assert.equal(request.options, undefined);
+
+      if (requests.length === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'valid-peer',
+                function: {
+                  name: 'write_file',
+                  arguments: {
+                    path: 'must-not-run.js',
+                    content: 'partial mutation',
+                  },
+                },
+              },
+              {
+                id: 'truncated-write',
+                providerMetadata: {
+                  [WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY]:
+                    WORK_TOOL_ARGUMENTS_ERROR_MESSAGE,
+                },
+                function: {
+                  name: 'write_file',
+                  arguments: {},
+                },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+
+      if (requests.length === 2) {
+        const results = request.messages
+          .filter(message => message.role === 'tool')
+          .slice(-2)
+          .map(message => message.content);
+        assert.match(results[0], /not executed/i);
+        assert.match(results[1], /incomplete or invalid JSON/i);
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            tool_calls: [
+              {
+                id: 'small-retry',
+                function: {
+                  name: 'write_file',
+                  arguments: {
+                    path: 'safe.js',
+                    content: 'ok',
+                  },
+                },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+
+      assert.equal(requests.length, 3);
+      assert.match(
+        request.messages.at(-1).content,
+        /Wrote 2 bytes to safe\.js/
+      );
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: {
+          role: 'assistant',
+          content: 'Recovered with a smaller write.',
+        },
+        done: true,
+      };
+    }
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Recover from a truncated tool call.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.deepEqual(writes, [{ path: 'safe.js', content: 'ok' }]);
+  assert.equal(workTaskService.getRun(runId).status, 'completed');
+  assert.equal(
+    workTaskService.getMessages(detail.id).at(-1).content,
+    'Recovered with a smaller write.'
   );
 });
