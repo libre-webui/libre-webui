@@ -36,7 +36,7 @@ import './env.js';
  */
 
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -47,7 +47,7 @@ import {
   notFoundHandler,
   requestLogger,
 } from './middleware/index.js';
-import { optionalAuth } from './middleware/auth.js';
+import { optionalAuth, type AuthenticatedRequest } from './middleware/auth.js';
 import ollamaRoutes from './routes/ollama.js';
 import chatRoutes from './routes/chat.js';
 import preferencesRoutes from './routes/preferences.js';
@@ -408,6 +408,39 @@ const workRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Bound authentication work before parsing bearer tokens without accumulating
+// successful requests into one long-lived shared-proxy quota.
+const pluginAuthBurstRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  skipSuccessfulRequests: true,
+  message: {
+    success: false,
+    error: 'Too many concurrent plugin requests, please try again later.',
+  },
+  standardHeaders: false,
+  legacyHeaders: false,
+});
+
+// Authenticated users receive independent discovery quotas. Guests fall back
+// to a normalized IP key, while writes retain stricter route-specific limits.
+const pluginRouteRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000,
+  keyGenerator: req => {
+    const userId = (req as AuthenticatedRequest).user?.userId;
+    return userId
+      ? `user:${userId}`
+      : `ip:${ipKeyGenerator(req.ip ?? 'unknown')}`;
+  },
+  message: {
+    success: false,
+    error: 'Too many plugin requests, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // API routes
 app.use('/api/auth', authRateLimiter, optionalAuth, authRoutes);
 app.use('/api/users', usersRateLimiter, optionalAuth, usersRoutes);
@@ -419,10 +452,13 @@ app.use(
   optionalAuth,
   preferencesRoutes
 );
-// Plugin mutations and uploads have route-specific limits. Keep read-only
-// plugin discovery available so shared proxies cannot lock every user out of
-// Settings with one IP-wide counter.
-app.use('/api/plugins', optionalAuth, pluginRoutes);
+app.use(
+  '/api/plugins',
+  pluginAuthBurstRateLimiter,
+  optionalAuth,
+  pluginRouteRateLimiter,
+  pluginRoutes
+);
 app.use('/api/embeddings', embeddingsRoutes);
 app.use('/api/documents', documentsRateLimiter, documentRoutes);
 app.use('/api/personas', personasRateLimiter, optionalAuth, personaRoutes);

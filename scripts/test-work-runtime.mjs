@@ -17,6 +17,7 @@ const runtimeModule = await import(
 const {
   WORK_RUNTIME_ADMISSION_DEFAULTS,
   WORK_RUNTIME_DEFAULTS,
+  WorkRuntimeService,
   buildWorkContainerRunArgs,
   parsePublishedPort,
   validateWorkspacePath,
@@ -177,6 +178,24 @@ test('published preview ports are parsed only from loopback bindings', () => {
   assert.equal(parsePublishedPort('127.0.0.1:0', 4173), undefined);
   assert.equal(parsePublishedPort('127.0.0.1:65536', 4173), undefined);
   assert.equal(parsePublishedPort('not a Docker port', 4173), undefined);
+});
+
+test('preview lease release validates callbacks selected by task ID', () => {
+  const service = new WorkRuntimeService();
+  let releaseCalls = 0;
+
+  service.previewLeaseReleases.set(task.id, () => {
+    releaseCalls += 1;
+  });
+  assert.doesNotThrow(() => service.finalizeTaskRemoval(task.id));
+  assert.equal(releaseCalls, 1);
+  assert.equal(service.previewLeaseReleases.has(task.id), false);
+
+  const malformedTaskId = '__proto__';
+  service.previewLeaseReleases.set(malformedTaskId, { invalid: true });
+  assert.doesNotThrow(() => service.finalizeTaskRemoval(malformedTaskId));
+  assert.equal(releaseCalls, 1);
+  assert.equal(service.previewLeaseReleases.has(malformedTaskId), false);
 });
 
 test('task retirement gates every new mutation before cleanup', async t => {

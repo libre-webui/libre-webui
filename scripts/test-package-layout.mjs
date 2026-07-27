@@ -6,6 +6,7 @@ import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import test from 'node:test';
 import { pathToFileURL, fileURLToPath } from 'node:url';
+import jwt from 'jsonwebtoken';
 import { x as extractTarball } from 'tar';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -407,6 +408,47 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         providerRequests.every(
           request => request.authorization === 'Bearer test-openai-key'
         )
+      );
+
+      for (let request = pluginReadStatuses.length; request < 1000; request++) {
+        const pluginReadResponse = await fetch(
+          `http://127.0.0.1:${backendPort}/api/plugins`,
+          { method: 'HEAD' }
+        );
+        assert.equal(pluginReadResponse.status, 200);
+      }
+      const limitedPluginRead = await fetch(
+        `http://127.0.0.1:${backendPort}/api/plugins`
+      );
+      assert.equal(
+        limitedPluginRead.status,
+        429,
+        'plugin discovery must eventually reject an abusive request burst'
+      );
+      assert.match(limitedPluginRead.headers.get('retry-after') || '', /^\d+$/);
+      assert.deepEqual(await limitedPluginRead.json(), {
+        success: false,
+        error: 'Too many plugin requests, please try again later.',
+      });
+
+      const authenticatedToken = jwt.sign(
+        {
+          userId: 'packed-plugin-user',
+          username: 'packed-plugin-user',
+          role: 'admin',
+        },
+        'test-jwt-secret'
+      );
+      const authenticatedPluginRead = await fetch(
+        `http://127.0.0.1:${backendPort}/api/plugins`,
+        {
+          headers: { Authorization: `Bearer ${authenticatedToken}` },
+        }
+      );
+      assert.equal(
+        authenticatedPluginRead.status,
+        200,
+        'authenticated users must not share the exhausted guest IP quota'
       );
     } catch (error) {
       throw new Error(

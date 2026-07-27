@@ -264,10 +264,12 @@ export class WorkRuntimeService {
   }
 
   private releasePreviewLease(taskId: string): void {
+    if (!this.previewLeaseReleases.has(taskId)) return;
     const release = this.previewLeaseReleases.get(taskId);
-    if (!release) return;
     this.previewLeaseReleases.delete(taskId);
-    release();
+    if (typeof release === 'function') {
+      release();
+    }
   }
 
   async prepare(

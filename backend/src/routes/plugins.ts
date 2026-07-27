@@ -310,6 +310,7 @@ router.post(
 // Update a plugin
 router.put(
   '/:id',
+  pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
       const id = req.params.id as string;
