@@ -524,7 +524,8 @@ class PluginService {
       model,
       messages,
       options,
-      pluginVars
+      pluginVars,
+      false
     );
     Object.assign(headers, payloadHeaders);
     const processedEndpoint = applyModelEndpointTemplate(

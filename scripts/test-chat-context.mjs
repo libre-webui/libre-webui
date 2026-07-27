@@ -909,6 +909,22 @@ test('Kimi Code plugin omits model-fixed sampling parameters', () => {
   assert.equal('reasoning_effort' in payload, false);
 });
 
+test('non-stream plugin payloads override a persisted streaming preference', () => {
+  const plugin = JSON.parse(
+    fs.readFileSync(path.join(repoRoot, 'plugins', 'kimi-code.json'), 'utf8')
+  );
+  const { payload } = pluginChatAdapter.buildPluginChatPayload(
+    plugin,
+    'k3',
+    [{ role: 'user', content: 'Generate a title.' }],
+    { num_predict: 20 },
+    { stream: true },
+    false
+  );
+
+  assert.equal(payload.stream, false);
+});
+
 test('Kimi Code policy hides obsolete sampling controls after upgrades', () => {
   const existingPlugin = {
     id: 'kimi-code',
