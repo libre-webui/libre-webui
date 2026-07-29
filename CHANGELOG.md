@@ -15,6 +15,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.15.1] - 2026-07-29
+
+Libre WebUI 0.15.1 makes Work feel native to Chat, adds an efficient local
+MLX LM route for Apple Silicon, restores the live Ollama catalogue, and
+hardens provider execution and dual-remote release publication.
+
+### ✨ New Features
+
+- Added a bundled **MLX LM** plugin path for local Apple Silicon inference,
+  including an OpenAI-compatible example server, plugin manifest, validation,
+  settings integration, Work routing, tests, and setup documentation.
+
+### 🔧 Improvements
+
+- Reworked the Work landing page and composer around the shared Chat model
+  selector. Work now retains provider-scoped model identities, presents the
+  selected model consistently on desktop and mobile, restores keyboard focus
+  correctly, and keeps remote-provider disclosure integrated with the
+  composer.
+- Unified Work conversation identities with Chat. User messages now use the
+  authenticated account avatar with an initials fallback, while worker
+  messages use the Libre WebUI assistant avatar and matching conversation
+  spacing.
+- Added verified GitHub-to-Forgejo release mirroring with tag-parity checks,
+  idempotent single-release and backfill commands, dry-run support,
+  GitHub-backed release assets, tests, and updated release documentation.
+
+### 🐛 Bug Fixes
+
+- Fixed non-stream plugin calls, including generated titles, accidentally
+  inheriting a saved `stream: true` preference and then appearing empty or
+  invalid to the JSON response parser.
+- Fixed Work providers returning truncated or malformed tool arguments.
+  Invalid arguments are now preserved as provider metadata, validated before
+  any tool in the same batch executes, and returned to the worker as an
+  actionable retry instead of risking partial tool execution. Worker guidance
+  also keeps individual file writes below 8,000 characters.
+- Restored the complete live Ollama catalogue after ollama.com changed its
+  model-card markup. Libre WebUI now loads and deduplicates every available
+  page, decodes descriptions and metadata, recognizes capability badges such
+  as `thinking`, `vision`, and `embedding`, removes the 50-model display cap,
+  and falls back to the curated catalogue only when the live response is
+  unreadable.
+
+### 📚 Documentation
+
+- Added a complete MLX LM guide for Apple Silicon and usage instructions for
+  the bundled example server.
+- Updated plugin architecture and release automation documentation for MLX LM
+  and the dual-remote Forgejo release workflow.
+
 ## [0.15.0] - 2026-07-27
 
 Libre WebUI 0.15.0 introduces **Work**, a native, admin-only coding-agent
