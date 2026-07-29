@@ -224,6 +224,88 @@ test('creates a persistent Work task without exposing network controls', async (
   );
 });
 
+test('shows a readable LTR model name without changing its identifier', async ({
+  page,
+}) => {
+  const modelName = 'hf.co/prism-ml/Ternary-Bonsai-27B';
+  await mockLibreWebUiApi(page, {
+    models: [
+      {
+        name: modelName,
+        size: 0,
+        digest: 'ternary-bonsai-e2e',
+        modified_at: new Date(createdAt).toISOString(),
+        details: {
+          format: 'gguf',
+          family: 'ternary',
+          families: ['ternary'],
+          parameter_size: '27B',
+          quantization_level: 'Q4_K_M',
+        },
+      },
+    ],
+  });
+
+  await page.goto('/work');
+
+  const selector = page.getByTestId('work-model-select');
+  await expect(selector).toHaveAttribute('dir', 'ltr');
+  await expect(selector).toHaveValue(
+    'ollama:hf.co%2Fprism-ml%2FTernary-Bonsai-27B'
+  );
+  await expect(selector.locator('option')).toHaveText(['Ternary Bonsai 27B']);
+
+  const trigger = page.getByTestId('work-model-selector-trigger');
+  await expect(trigger).toContainText('Ternary Bonsai 27B');
+  await expect(trigger).toHaveAttribute('title', modelName);
+  await trigger.click();
+  await expect(
+    page.getByRole('dialog', { name: 'Select a model' })
+  ).toBeVisible();
+  const modelOption = page.locator(
+    '[data-testid="model-selector-option"][data-model-value="ollama:hf.co%2Fprism-ml%2FTernary-Bonsai-27B"]'
+  );
+  await expect(modelOption).toContainText('Ternary Bonsai 27B');
+  await expect(modelOption).toHaveAttribute('aria-pressed', 'true');
+  await modelOption.press('Enter');
+  await expect(
+    page.getByRole('dialog', { name: 'Select a model' })
+  ).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+});
+
+test('shows the complete live Ollama catalogue in the shared selector', async ({
+  page,
+}) => {
+  const libraryModels = Array.from({ length: 75 }, (_, index) => ({
+    name: `catalogue-model-${index + 1}`,
+    description: `Ollama catalogue model ${index + 1}`,
+    category:
+      index % 3 === 0 ? 'general' : index % 3 === 1 ? 'coding' : 'reasoning',
+    sizes: ['7b'],
+    pulls: `${index + 1}K`,
+    tags: ['tools'],
+  }));
+  await mockLibreWebUiApi(page, { libraryModels });
+
+  await page.goto('/work');
+  await page.getByTestId('work-model-selector-trigger').click();
+  await page.getByRole('button', { name: 'Ollama' }).click();
+
+  await expect(
+    page.getByText('catalogue-model-75', { exact: true })
+  ).toHaveCount(1);
+  await expect(
+    page.getByRole('button', { name: 'General', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Coding', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Reasoning', exact: true })
+  ).toBeVisible();
+});
+
 test('offers cloud models and remembers remote disclosure dismissal', async ({
   page,
 }) => {

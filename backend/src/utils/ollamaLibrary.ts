@@ -15,6 +15,10 @@
  * limitations under the License.
  */
 
+import { createLogger } from './logger.js';
+
+const logger = createLogger('utils:ollama-library');
+
 export interface RemoteModelInfo {
   name: string;
   description: string;
@@ -30,6 +34,15 @@ export interface OllamaLibraryQuery {
   category?: string;
   pages?: number;
 }
+
+const MODEL_CAPABILITY_TAGS = new Set([
+  'audio',
+  'cloud',
+  'embedding',
+  'thinking',
+  'tools',
+  'vision',
+]);
 
 const CURATED_MODELS: RemoteModelInfo[] = [
   {
@@ -154,25 +167,107 @@ const CURATED_MODELS: RemoteModelInfo[] = [
   },
 ];
 
+const decodeHtmlEntities = (value: string): string =>
+  value.replace(
+    /&(#x[\da-f]+|#\d+|amp|apos|gt|lt|nbsp|quot);/gi,
+    (entity, code: string) => {
+      const normalized = code.toLowerCase();
+      if (normalized.startsWith('#x')) {
+        return String.fromCodePoint(parseInt(normalized.slice(2), 16));
+      }
+      if (normalized.startsWith('#')) {
+        return String.fromCodePoint(parseInt(normalized.slice(1), 10));
+      }
+      return (
+        {
+          amp: '&',
+          apos: "'",
+          gt: '>',
+          lt: '<',
+          nbsp: ' ',
+          quot: '"',
+        }[normalized] || entity
+      );
+    }
+  );
+
+const htmlText = (value: string): string =>
+  decodeHtmlEntities(value.replace(/<[^>]*>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const parseModelBadges = (
+  cardHtml: string
+): { sizes: string[]; tags: string[] } => {
+  const badgesHtml =
+    cardHtml.match(
+      /<div\b[^>]*class=["'][^"']*\bflex-wrap\b[^"']*["'][^>]*>([\s\S]*?)<\/div>/i
+    )?.[1] || '';
+  const sizes: string[] = [];
+  const tags: string[] = [];
+  const badgePattern =
+    /<span\b[^>]*class=["']([^"']*)["'][^>]*>([\s\S]*?)<\/span>/gi;
+  let badgeMatch: RegExpExecArray | null;
+
+  while ((badgeMatch = badgePattern.exec(badgesHtml)) !== null) {
+    const label = htmlText(badgeMatch[2]).toLowerCase();
+    if (!label) continue;
+
+    if (
+      MODEL_CAPABILITY_TAGS.has(label) ||
+      !badgeMatch[1].includes('text-blue-600')
+    ) {
+      if (!tags.includes(label)) tags.push(label);
+    } else if (!sizes.includes(label)) {
+      sizes.push(label);
+    }
+  }
+
+  return { sizes, tags };
+};
+
+const parsePullCount = (cardHtml: string): string | undefined => {
+  const match = cardHtml.match(
+    /<span\b[^>]*class=["'][^"']*\bflex items-center\b[^"']*["'][^>]*>[\s\S]*?<span\b[^>]*>([^<]+)<\/span>\s*<span\b[^>]*>[^<]*Pulls?<\/span>/i
+  );
+  return match ? htmlText(match[1]) : undefined;
+};
+
 export function parseOllamaSearchHtml(html: string): RemoteModelInfo[] {
   const models: RemoteModelInfo[] = [];
   const modelPattern =
-    /<a href="\/library\/([^"]+)"[^>]*>[\s\S]*?x-test-pull-count>([^<]+)<\/span>/g;
-  let match;
+    /<a\b[^>]*href=["']\/library\/([^"'?#]+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match: RegExpExecArray | null;
 
   while ((match = modelPattern.exec(html)) !== null) {
-    const name = match[1];
-    const pulls = match[2].trim();
+    let name = match[1];
+    try {
+      name = decodeURIComponent(name);
+    } catch {
+      // Keep the safe URL path segment when it is not valid percent encoding.
+    }
     if (models.some(model => model.name === name)) continue;
 
-    const category = inferOllamaModelCategory(name);
+    const cardHtml = match[2];
+    const descriptionMatch = cardHtml.match(
+      /<p\b[^>]*class=["'][^"']*\btext-neutral-800\b[^"']*["'][^>]*>([\s\S]*?)<\/p>/i
+    );
+    const { sizes, tags } = parseModelBadges(cardHtml);
+    const category = tags.includes('embedding')
+      ? 'embedding'
+      : tags.includes('vision')
+        ? 'vision'
+        : tags.includes('thinking')
+          ? 'reasoning'
+          : inferOllamaModelCategory(name);
+
     models.push({
       name,
-      description: '',
+      description: descriptionMatch ? htmlText(descriptionMatch[1]) : '',
       category,
-      sizes: [],
-      pulls,
-      tags: [category],
+      sizes,
+      pulls: parsePullCount(cardHtml),
+      tags: Array.from(new Set([category, ...tags])),
     });
   }
 
@@ -304,7 +399,12 @@ export async function getOllamaLibraryModels({
   }
 
   if (remoteModels.length === 0) {
+    logger.warn(
+      'The live Ollama catalogue returned no readable model cards; using the curated fallback.'
+    );
     remoteModels = filterCuratedModels(search, category);
+  } else {
+    logger.debug(`Loaded ${remoteModels.length} models from ollama.com`);
   }
 
   return category === 'cloud'

@@ -102,7 +102,7 @@ export function OllamaLibraryTab({
           </div>
         ) : (
           <div className='divide-y divide-gray-100 dark:divide-dark-200'>
-            {filteredLibraryModels.slice(0, 50).map(model => {
+            {filteredLibraryModels.map(model => {
               const installed = isModelInstalled(model.name);
               const isPulling = pullingModel === model.name;
 

@@ -113,9 +113,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
   const libraryCategories = [
     'all',
-    'popular',
-    'chat',
-    'code',
+    'general',
+    'coding',
+    'reasoning',
     'vision',
     'embedding',
     'cloud',
@@ -190,7 +190,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     queryKey: [
       'ollama-library-selector',
       libraryDebouncedSearch,
-      libraryCategory,
+      libraryCategory === 'cloud' ? 'cloud' : 'all',
     ],
     queryFn: async (): Promise<LibraryModel[]> => {
       const response = await ollamaApi.getLibraryModels({
