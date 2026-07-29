@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "Środowisko uruchomieniowe niedostępne",
+      "ready": "Środowisko uruchomieniowe gotowe",
       "readyOllama": "Docker gotowy",
       "readyPlugin": "Docker i wtyczka gotowe",
       "readyHybrid": "Docker i modele gotowe",

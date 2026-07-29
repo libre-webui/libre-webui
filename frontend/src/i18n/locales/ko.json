@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "런타임을 사용할 수 없습니다",
+      "ready": "런타임 준비 완료",
       "readyOllama": "Docker 준비 완료",
       "readyPlugin": "Docker + 플러그인 준비 완료",
       "readyHybrid": "Docker + 모델 준비 완료",

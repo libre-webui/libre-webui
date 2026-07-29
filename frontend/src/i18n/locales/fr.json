@@ -1519,6 +1519,7 @@
     },
     "runtime": {
       "unavailable": "Environnement d'exécution indisponible",
+      "ready": "Environnement d'exécution prêt",
       "readyOllama": "Docker prêt",
       "readyPlugin": "Docker + plugin prêts",
       "readyHybrid": "Docker + modèles prêts",

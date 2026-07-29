@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "রানটাইম পাওয়া যাচ্ছে না",
+      "ready": "রানটাইম প্রস্তুত",
       "readyOllama": "Docker প্রস্তুত",
       "readyPlugin": "Docker + প্লাগইন প্রস্তুত",
       "readyHybrid": "Docker + মডেল প্রস্তুত",

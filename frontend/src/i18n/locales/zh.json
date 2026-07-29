@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "运行时不可用",
+      "ready": "运行环境已就绪",
       "readyOllama": "Docker 已就绪",
       "readyPlugin": "Docker + 插件已就绪",
       "readyHybrid": "Docker + 模型已就绪",

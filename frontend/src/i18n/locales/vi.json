@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "Môi trường chạy không khả dụng",
+      "ready": "Môi trường chạy đã sẵn sàng",
       "readyOllama": "Docker đã sẵn sàng",
       "readyPlugin": "Docker + plugin đã sẵn sàng",
       "readyHybrid": "Docker + mô hình đã sẵn sàng",

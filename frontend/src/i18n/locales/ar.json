@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "بيئة التشغيل غير متاحة",
+      "ready": "بيئة التشغيل جاهزة",
       "readyOllama": "Docker جاهز",
       "readyPlugin": "Docker والمكوّن الإضافي جاهزان",
       "readyHybrid": "Docker والنماذج جاهزة",

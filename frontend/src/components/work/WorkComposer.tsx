@@ -15,49 +15,127 @@
  * limitations under the License.
  */
 
-import { CircleAlert, Send, Square, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { CircleAlert, Loader2, Send, Square, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { WorkModelOption } from '@/types/work';
+import { ModelSelector } from '@/components/ModelSelector';
 import { Button } from '@/components/ui';
+import type { OllamaModel } from '@/types';
+import { workModelSelectionKey, type WorkModelOption } from '@/types/work';
+import { cn } from '@/utils';
 
 interface WorkComposerProps {
   models: WorkModelOption[];
+  selectorModels: OllamaModel[];
   modelKey: string;
   running: boolean;
   loading: boolean;
+  variant?: 'landing' | 'task';
   disabled?: boolean;
   remoteDisclosureDismissed: boolean;
   remoteDisclosureSaving: boolean;
   onModelChange: (modelKey: string) => void | Promise<void>;
   onDismissRemoteDisclosure: () => Promise<boolean>;
+  onModelsRefresh: () => void | Promise<void>;
   onSubmit: (message: string) => Promise<boolean>;
   onCancel: () => void | Promise<void>;
 }
 
+const workSelectorModelValue = (model: OllamaModel): string =>
+  workModelSelectionKey({
+    model: model.name,
+    providerType: model.isPlugin ? 'plugin' : 'ollama',
+    providerId: model.isPlugin ? model.pluginId : undefined,
+  });
+
+const workSelectorModelLabel = (model: OllamaModel): string => {
+  const pathSegments = model.name.split('/').filter(Boolean);
+  const modelName = pathSegments[pathSegments.length - 1] || model.name;
+  const readableModelName =
+    pathSegments.length > 1 ? modelName.replace(/[-_]+/g, ' ') : modelName;
+
+  return readableModelName;
+};
+
+const modelFromOption = (option: WorkModelOption): OllamaModel => {
+  const providerPrefix = `${option.model} · `;
+  return {
+    name: option.model,
+    model: option.model,
+    size: 0,
+    digest: '',
+    modified_at: '',
+    details: {},
+    isPlugin: option.providerType === 'plugin',
+    pluginId: option.providerId,
+    pluginName:
+      option.providerType === 'plugin'
+        ? option.label.startsWith(providerPrefix)
+          ? option.label.slice(providerPrefix.length)
+          : option.providerId
+        : undefined,
+  };
+};
+
 export function WorkComposer({
   models,
+  selectorModels,
   modelKey,
   running,
   loading,
+  variant = 'task',
   disabled = false,
   remoteDisclosureDismissed,
   remoteDisclosureSaving,
   onModelChange,
   onDismissRemoteDisclosure,
+  onModelsRefresh,
   onSubmit,
   onCancel,
 }: WorkComposerProps) {
   const { t } = useTranslation();
   const [message, setMessage] = useState('');
-  const modelSelectRef = useRef<HTMLSelectElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const desktopModelTriggerRef = useRef<HTMLButtonElement>(null);
+  const mobileModelTriggerRef = useRef<HTMLButtonElement>(null);
   const selectedModel = models.find(item => item.key === modelKey);
   const remoteProvider = selectedModel?.remote === true;
+  const landing = variant === 'landing';
+  const effectiveSelectorModels = useMemo(() => {
+    const availableValues = new Set(selectorModels.map(workSelectorModelValue));
+    const persistedModels = models
+      .filter(option => !availableValues.has(option.key))
+      .map(modelFromOption);
+    return [...selectorModels, ...persistedModels];
+  }, [models, selectorModels]);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 160)}px`;
+  }, [message]);
 
   const dismissRemoteDisclosure = async () => {
     if (await onDismissRemoteDisclosure()) {
-      modelSelectRef.current?.focus();
+      const triggers = [
+        desktopModelTriggerRef.current,
+        mobileModelTriggerRef.current,
+      ];
+      const visibleTrigger = triggers.find(
+        trigger => trigger && trigger.offsetParent !== null
+      );
+      (visibleTrigger || desktopModelTriggerRef.current)?.focus();
     }
+  };
+
+  const changeModel = (value: string) => {
+    const option =
+      models.find(item => item.key === value) ||
+      models.find(
+        item => item.providerType === 'ollama' && item.model === value
+      );
+    if (option) void onModelChange(option.key);
   };
 
   const submit = async () => {
@@ -67,9 +145,23 @@ export function WorkComposer({
   };
 
   return (
-    <div className='relative shrink-0 border-t border-line bg-surface-raised/95 px-3 py-3 backdrop-blur md:px-5'>
+    <div
+      data-testid={landing ? 'work-landing-composer' : 'work-task-composer'}
+      data-variant={variant}
+      className={cn(
+        'relative shrink-0',
+        landing
+          ? 'mt-10 w-full'
+          : 'border-t border-line bg-surface/95 px-3 py-3 backdrop-blur md:px-5'
+      )}
+    >
       {remoteProvider && !remoteDisclosureDismissed && (
-        <div className='absolute inset-x-3 bottom-full z-30 mx-auto mb-3 max-w-3xl md:inset-x-5'>
+        <div
+          className={cn(
+            'absolute inset-x-3 z-30 mx-auto max-w-3xl md:inset-x-5',
+            'bottom-full mb-3'
+          )}
+        >
           <aside
             data-testid='work-provider-disclosure-popover'
             aria-labelledby='work-provider-disclosure-title'
@@ -131,88 +223,135 @@ export function WorkComposer({
         </div>
       )}
 
-      <div className='mx-auto max-w-3xl rounded-2xl border border-line bg-surface shadow-subtle focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-500/15'>
-        <textarea
-          data-testid='work-composer-input'
-          dir='auto'
-          value={message}
-          onChange={event => setMessage(event.target.value)}
-          onKeyDown={event => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-              event.preventDefault();
-              void submit();
-            }
-          }}
-          disabled={disabled || running}
-          rows={3}
-          className='block max-h-48 min-h-[5rem] w-full resize-none bg-transparent px-4 pt-3 text-sm leading-relaxed text-ink outline-none placeholder:text-ink-subtle disabled:cursor-not-allowed disabled:opacity-60'
-          placeholder={t('work.composer.placeholder', {
-            defaultValue: 'Describe what you want to build or change…',
-          })}
-        />
-        <div className='flex flex-wrap items-center justify-between gap-2 px-2.5 pb-2.5'>
-          <div className='flex min-w-0 flex-1 flex-wrap items-center gap-2'>
-            <select
-              ref={modelSelectRef}
-              data-testid='work-model-select'
+      <form
+        className='mx-auto w-full max-w-3xl'
+        onSubmit={event => {
+          event.preventDefault();
+          void submit();
+        }}
+      >
+        <div
+          data-testid='work-composer-surface'
+          className={cn(
+            'flex items-end gap-2 rounded-[1.6rem] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200 sm:p-3',
+            'border-black/[0.08] bg-surface/90 dark:border-white/[0.09] dark:bg-dark-200/90',
+            'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl',
+            'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_22px_65px_rgba(15,23,42,0.12)]'
+          )}
+        >
+          <div className='min-w-0 flex-1'>
+            <textarea
+              ref={textareaRef}
+              data-testid='work-composer-input'
               dir='auto'
-              value={modelKey}
-              onChange={event => void onModelChange(event.target.value)}
-              disabled={running || models.length === 0}
-              className='h-8 min-w-0 max-w-56 rounded-lg border border-line bg-surface-raised px-2 text-xs font-medium text-ink outline-none focus:border-primary-500'
-              aria-label={t('work.composer.model', {
+              value={message}
+              onChange={event => setMessage(event.target.value)}
+              onKeyDown={event => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  void submit();
+                }
+              }}
+              disabled={disabled || running}
+              rows={1}
+              className='m-0 block max-h-[160px] min-h-10 w-full resize-none overflow-y-auto rounded-none border-0 bg-transparent p-2 text-base leading-relaxed text-ink shadow-none outline-none placeholder:text-ink-subtle focus:border-0 focus:bg-transparent focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60'
+              placeholder={t('work.composer.placeholder', {
+                defaultValue: 'Describe what you want to build or change…',
+              })}
+            />
+          </div>
+
+          <div className='hidden shrink-0 sm:block'>
+            <ModelSelector
+              models={effectiveSelectorModels}
+              selectedModel={modelKey}
+              onModelChange={event => changeModel(event.target.value)}
+              onModelsRefresh={() => void onModelsRefresh()}
+              getModelValue={workSelectorModelValue}
+              getModelLabel={workSelectorModelLabel}
+              getModelTitle={model => model.name}
+              triggerRef={desktopModelTriggerRef}
+              triggerTestId='work-model-selector-trigger'
+              selectTestId='work-model-select'
+              ariaLabel={t('work.composer.model', {
                 defaultValue: 'Work model',
               })}
-            >
-              {models.length === 0 && (
-                <option value=''>
-                  {t('work.composer.noModels', {
-                    defaultValue: 'No Work-compatible models',
-                  })}
-                </option>
-              )}
-              {models.map(item => (
-                <option key={item.key} value={item.key}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+              disabled={running || models.length === 0}
+              className='min-w-[150px] max-w-[230px]'
+              compact
+            />
           </div>
 
           {running ? (
             <Button
               data-testid='work-cancel-button'
-              variant='danger'
+              type='button'
+              variant='ghost'
               size='sm'
-              loading={loading}
+              disabled={loading}
+              className='flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full bg-error-500/15 p-0 text-error-600 transition-colors duration-150 hover:bg-error-500/25 dark:text-error-400 sm:h-10 sm:w-10'
+              title={t('work.composer.cancel', { defaultValue: 'Stop' })}
+              aria-label={t('work.composer.cancel', {
+                defaultValue: 'Stop',
+              })}
               onClick={() => void onCancel()}
             >
-              <Square className='h-3.5 w-3.5 fill-current' />
-              {t('work.composer.cancel', { defaultValue: 'Stop' })}
+              {loading ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <Square className='h-4 w-4 fill-current' />
+              )}
             </Button>
           ) : (
             <Button
               data-testid='work-submit-button'
+              type='submit'
+              variant='ghost'
               size='sm'
-              loading={loading}
-              disabled={disabled || !message.trim() || !selectedModel}
-              onClick={() => void submit()}
+              disabled={
+                loading || disabled || !message.trim() || !selectedModel
+              }
+              className={cn(
+                'flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full p-0 transition-colors duration-150 sm:h-10 sm:w-10',
+                'bg-gray-950 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
+                'disabled:bg-gray-100 disabled:text-gray-400 disabled:hover:bg-gray-100 dark:disabled:bg-dark-300 dark:disabled:text-dark-500 dark:disabled:hover:bg-dark-300',
+                message.trim() && selectedModel && !disabled && 'shadow-sm'
+              )}
+              title={t('work.composer.send', { defaultValue: 'Run' })}
+              aria-label={t('work.composer.send', {
+                defaultValue: 'Run',
+              })}
             >
-              <Send className='h-3.5 w-3.5' />
-              {t('work.composer.send', { defaultValue: 'Run' })}
+              {loading ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <Send className='h-4 w-4' />
+              )}
             </Button>
           )}
         </div>
+      </form>
+
+      <div className='mx-auto mt-3 w-full max-w-3xl sm:hidden'>
+        <ModelSelector
+          models={effectiveSelectorModels}
+          selectedModel={modelKey}
+          onModelChange={event => changeModel(event.target.value)}
+          onModelsRefresh={() => void onModelsRefresh()}
+          getModelValue={workSelectorModelValue}
+          getModelLabel={workSelectorModelLabel}
+          getModelTitle={model => model.name}
+          triggerRef={mobileModelTriggerRef}
+          triggerTestId='work-model-selector-trigger-mobile'
+          selectTestId='work-model-select-mobile'
+          ariaLabel={t('work.composer.model', {
+            defaultValue: 'Work model',
+          })}
+          disabled={running || models.length === 0}
+          className='w-full'
+          compact
+        />
       </div>
-      <p
-        data-testid='work-composer-hint'
-        className='mt-1.5 text-center text-[11px] text-ink-subtle'
-      >
-        {t('work.composer.hint', {
-          defaultValue:
-            'Each task keeps its own files and history. Review model output before using it.',
-        })}
-      </p>
     </div>
   );
 }

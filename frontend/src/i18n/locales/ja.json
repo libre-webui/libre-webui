@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "ランタイムを利用できません",
+      "ready": "ランタイム準備完了",
       "readyOllama": "Docker 準備完了",
       "readyPlugin": "Docker + プラグイン準備完了",
       "readyHybrid": "Docker + モデル準備完了",

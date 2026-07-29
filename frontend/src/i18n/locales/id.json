@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "Runtime tidak tersedia",
+      "ready": "Runtime siap",
       "readyOllama": "Docker siap",
       "readyPlugin": "Docker + plugin siap",
       "readyHybrid": "Docker + model siap",

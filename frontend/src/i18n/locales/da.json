@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "Kørselsmiljø ikke tilgængeligt",
+      "ready": "Kørselsmiljø klar",
       "readyOllama": "Docker klar",
       "readyPlugin": "Docker + plugin klar",
       "readyHybrid": "Docker + modeller klar",

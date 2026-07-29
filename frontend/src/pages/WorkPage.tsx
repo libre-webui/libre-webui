@@ -17,16 +17,13 @@
 
 import {
   Boxes,
-  CheckCircle2,
   ChevronLeft,
   CircleAlert,
   HardDrive,
   MessageSquare,
   Monitor,
   MoreHorizontal,
-  ShieldCheck,
   Trash2,
-  Wrench,
 } from 'lucide-react';
 import {
   useCallback,
@@ -101,6 +98,7 @@ export default function WorkPage() {
   const [remoteDisclosureSaving, setRemoteDisclosureSaving] = useState(false);
   const chatModels = useChatStore(state => state.models);
   const chatSelectedModel = useChatStore(state => state.selectedModel);
+  const loadChatModels = useChatStore(state => state.loadModels);
   const {
     capabilities,
     tasks,
@@ -136,7 +134,13 @@ export default function WorkPage() {
     clearError,
   } = useWorkStore();
   const models = useMemo(
-    () => chatModels.filter(model => !model.isPersona && workModel(model.name)),
+    () =>
+      chatModels.filter(
+        model =>
+          !model.isPersona &&
+          workModel(model.name) &&
+          (!model.isPlugin || Boolean(model.pluginId))
+      ),
     [chatModels]
   );
   const modelOptions = useMemo<WorkModelOption[]>(
@@ -744,7 +748,7 @@ export default function WorkPage() {
   };
 
   const runtimeUnavailable = capabilities?.available === false;
-  const runtimeReadyLabel = capabilities?.pluginAvailable
+  const runtimeReadyDetail = capabilities?.pluginAvailable
     ? capabilities.ollamaAvailable
       ? t('work.runtime.readyHybrid', {
           defaultValue: 'Docker + models ready',
@@ -755,6 +759,9 @@ export default function WorkPage() {
     : t('work.runtime.readyOllama', {
         defaultValue: 'Docker ready',
       });
+  const runtimeReadyLabel = t('work.runtime.ready', {
+    defaultValue: 'Runtime ready',
+  });
   const activeTask = selectedTask ? isWorkTaskActive(selectedTask) : false;
   const taskModel = selectedTask
     ? {
@@ -838,7 +845,7 @@ export default function WorkPage() {
       className='relative flex h-full min-h-0 overflow-hidden bg-surface'
     >
       <main className='flex min-h-0 min-w-0 flex-1 flex-col'>
-        <header className='flex h-16 shrink-0 items-center gap-3 border-b border-line bg-surface-raised px-3 md:px-4'>
+        <header className='flex h-16 shrink-0 items-center gap-3 border-b border-line bg-surface px-3 md:px-4'>
           {selectedTask ? (
             <input
               key={`${selectedTask.id}:${selectedTask.title}`}
@@ -872,11 +879,6 @@ export default function WorkPage() {
               <h1 className='truncate text-sm font-semibold text-ink'>
                 {t('work.title', { defaultValue: 'Work' })}
               </h1>
-              <p className='truncate text-xs text-ink-muted'>
-                {t('work.subtitle', {
-                  defaultValue: 'Isolated model workspaces',
-                })}
-              </p>
             </div>
           )}
 
@@ -987,16 +989,22 @@ export default function WorkPage() {
               </span>
             )}
             <span
+              data-testid='work-runtime-status'
               className={cn(
                 'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium',
                 runtimeUnavailable
-                  ? 'border-error-500/30 bg-error-500/10 text-error-600'
-                  : 'border-line bg-surface text-ink-muted'
+                  ? 'border-transparent bg-error-500 text-[#0D0D0C]'
+                  : 'border-transparent bg-success-500 text-[#0D0D0C]'
               )}
               title={
-                capabilities?.image
-                  ? `${runtimeReadyLabel} · ${capabilities.image}`
-                  : runtimeReadyLabel
+                runtimeUnavailable
+                  ? capabilities?.reason ||
+                    t('work.runtime.unavailable', {
+                      defaultValue: 'Runtime unavailable',
+                    })
+                  : capabilities?.image
+                    ? `${runtimeReadyDetail} · ${capabilities.image}`
+                    : runtimeReadyDetail
               }
             >
               <Boxes className='h-3.5 w-3.5' />
@@ -1115,93 +1123,57 @@ export default function WorkPage() {
         )}
 
         {!taskId ? (
-          <>
-            <div className='min-h-0 flex-1 overflow-y-auto'>
-              <div className='mx-auto flex min-h-full max-w-3xl flex-col justify-center px-6 py-10'>
-                <div className='max-w-2xl'>
-                  <div className='mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-line bg-surface-raised shadow-subtle'>
-                    <Wrench className='h-7 w-7 text-primary-600' />
-                  </div>
-                  <h2 className='text-3xl font-semibold tracking-[-0.035em] text-ink md:text-4xl'>
-                    {t('work.landing.title', {
-                      defaultValue: 'Start a new Work task',
-                    })}
-                  </h2>
-                  <p className='mt-3 max-w-xl text-sm leading-relaxed text-ink-muted md:text-base'>
-                    {t('work.landing.description', {
-                      defaultValue:
-                        'Give a local model a durable, isolated workspace. It can inspect files, run tools, and continue where it left off when you return.',
-                    })}
-                  </p>
-                </div>
-                <div className='mt-8 grid gap-3 sm:grid-cols-3'>
-                  {[
-                    {
-                      icon: Boxes,
-                      title: t('work.landing.isolated', {
-                        defaultValue: 'Isolated',
-                      }),
-                      body: t('work.landing.isolatedBody', {
-                        defaultValue:
-                          'Every task gets its own container and files.',
-                      }),
-                    },
-                    {
-                      icon: CheckCircle2,
-                      title: t('work.landing.durable', {
-                        defaultValue: 'Durable',
-                      }),
-                      body: t('work.landing.durableBody', {
-                        defaultValue:
-                          'Return to its conversation and workspace later.',
-                      }),
-                    },
-                    {
-                      icon: ShieldCheck,
-                      title: t('work.landing.controlled', {
-                        defaultValue: 'Controlled',
-                      }),
-                      body: t('work.landing.controlledBody', {
-                        defaultValue:
-                          'The runtime and task files stay isolated from the host.',
-                      }),
-                    },
-                  ].map(item => {
-                    const Icon = item.icon;
-                    return (
-                      <div
-                        key={item.title}
-                        className='rounded-2xl border border-line bg-surface-raised p-4'
-                      >
-                        <Icon className='h-5 w-5 text-ink-muted' />
-                        <p className='mt-3 text-sm font-semibold text-ink'>
-                          {item.title}
-                        </p>
-                        <p className='mt-1 text-xs leading-relaxed text-ink-muted'>
-                          {item.body}
-                        </p>
-                      </div>
-                    );
+          <div className='min-h-0 flex-1 overflow-y-auto'>
+            <section
+              data-testid='work-landing'
+              className='mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center px-4 py-20 sm:px-8 sm:py-24'
+            >
+              <div className='flex flex-col items-center text-center'>
+                <h2 className='max-w-3xl text-balance text-[clamp(2.65rem,7vw,5.25rem)] font-light leading-[0.98] tracking-[-0.055em] text-ink rtl:leading-[1.12] rtl:tracking-normal'>
+                  {t('work.landing.title', {
+                    defaultValue: 'Start a new Work task',
                   })}
-                </div>
+                </h2>
+                <p className='mt-4 max-w-xl text-balance text-base leading-relaxed text-ink-muted sm:text-lg'>
+                  {t('work.landing.description', {
+                    defaultValue:
+                      'Give a local model a durable, isolated workspace. It can inspect files, run tools, and continue where it left off when you return.',
+                  })}
+                </p>
               </div>
-            </div>
-            <WorkComposer
-              models={modelOptions}
-              modelKey={freshModel?.key || ''}
-              running={false}
-              loading={actionLoading}
-              disabled={runtimeUnavailable}
-              remoteDisclosureDismissed={
-                preferences.workRemoteProviderDisclosureDismissed
-              }
-              remoteDisclosureSaving={remoteDisclosureSaving}
-              onModelChange={changeModel}
-              onDismissRemoteDisclosure={dismissRemoteDisclosure}
-              onSubmit={submitMessage}
-              onCancel={stopRun}
-            />
-          </>
+              <WorkComposer
+                variant='landing'
+                models={modelOptions}
+                selectorModels={models}
+                modelKey={freshModel?.key || ''}
+                running={false}
+                loading={actionLoading}
+                disabled={runtimeUnavailable}
+                remoteDisclosureDismissed={
+                  preferences.workRemoteProviderDisclosureDismissed
+                }
+                remoteDisclosureSaving={remoteDisclosureSaving}
+                onModelChange={changeModel}
+                onDismissRemoteDisclosure={dismissRemoteDisclosure}
+                onModelsRefresh={loadChatModels}
+                onSubmit={submitMessage}
+                onCancel={stopRun}
+              />
+              <div
+                data-testid='work-workspace-note'
+                role='note'
+                className='mt-4 flex max-w-2xl flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center text-[10px] leading-relaxed text-ink-subtle'
+              >
+                <Boxes aria-hidden='true' className='h-3.5 w-3.5' />
+                <span>
+                  {t('work.composer.hint', {
+                    defaultValue:
+                      'Each task keeps its own files and history. Review model output before using it.',
+                  })}
+                </span>
+              </div>
+            </section>
+          </div>
         ) : selectedTask ? (
           <WorkSplitPane
             userId={authenticatedUserId}
@@ -1219,6 +1191,7 @@ export default function WorkPage() {
                 <WorkComposer
                   key={selectedTask.id}
                   models={effectiveModelOptions}
+                  selectorModels={models}
                   modelKey={selectedModelKey}
                   running={activeTask}
                   loading={actionLoading}
@@ -1229,6 +1202,7 @@ export default function WorkPage() {
                   remoteDisclosureSaving={remoteDisclosureSaving}
                   onModelChange={changeModel}
                   onDismissRemoteDisclosure={dismissRemoteDisclosure}
+                  onModelsRefresh={loadChatModels}
                   onSubmit={submitMessage}
                   onCancel={stopRun}
                 />

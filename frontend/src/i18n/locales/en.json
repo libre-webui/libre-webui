@@ -1519,6 +1519,7 @@
     },
     "runtime": {
       "unavailable": "Runtime unavailable",
+      "ready": "Runtime ready",
       "readyOllama": "Docker ready",
       "readyPlugin": "Docker + plugin ready",
       "readyHybrid": "Docker + models ready",

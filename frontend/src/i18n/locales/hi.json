@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "रनटाइम उपलब्ध नहीं है",
+      "ready": "रनटाइम तैयार है",
       "readyOllama": "Docker तैयार है",
       "readyPlugin": "Docker + प्लगइन तैयार है",
       "readyHybrid": "Docker + मॉडल तैयार हैं",

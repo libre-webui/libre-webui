@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "Běhové prostředí není dostupné",
+      "ready": "Běhové prostředí je připraveno",
       "readyOllama": "Docker je připraven",
       "readyPlugin": "Docker + plugin jsou připraveny",
       "readyHybrid": "Docker + modely jsou připraveny",

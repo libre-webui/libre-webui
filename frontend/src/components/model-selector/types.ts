@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { ChangeEvent, ReactNode } from 'react';
+import type { ChangeEvent, ReactNode, Ref } from 'react';
 import type { OllamaModel, Persona } from '@/types';
 
 export interface ModelGroup {
@@ -45,6 +45,13 @@ export interface ModelSelectorProps {
   compact?: boolean;
   showImageGen?: boolean;
   onModelsRefresh?: () => void;
+  getModelValue?: (model: OllamaModel) => string;
+  getModelLabel?: (model: OllamaModel) => string;
+  getModelTitle?: (model: OllamaModel) => string;
+  triggerRef?: Ref<HTMLButtonElement>;
+  triggerTestId?: string;
+  selectTestId?: string;
+  ariaLabel?: string;
 }
 
 export interface PullProgress {

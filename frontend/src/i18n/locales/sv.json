@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "Körmiljön är inte tillgänglig",
+      "ready": "Körmiljön är redo",
       "readyOllama": "Docker redo",
       "readyPlugin": "Docker + tillägg redo",
       "readyHybrid": "Docker + modeller redo",

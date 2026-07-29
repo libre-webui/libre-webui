@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "Masa jalan tidak tersedia",
+      "ready": "Masa jalan sedia",
       "readyOllama": "Docker sedia",
       "readyPlugin": "Docker + pemalam sedia",
       "readyHybrid": "Docker + model sedia",

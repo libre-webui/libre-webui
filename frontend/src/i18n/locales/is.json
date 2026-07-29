@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "Keyrsluumhverfi ekki tiltækt",
+      "ready": "Keyrsluumhverfi tilbúið",
       "readyOllama": "Docker tilbúið",
       "readyPlugin": "Docker + viðbót tilbúin",
       "readyHybrid": "Docker + líkön tilbúin",

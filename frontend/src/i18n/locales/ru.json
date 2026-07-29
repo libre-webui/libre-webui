@@ -1551,6 +1551,7 @@
     },
     "runtime": {
       "unavailable": "Среда выполнения недоступна",
+      "ready": "Среда выполнения готова",
       "readyOllama": "Docker готов",
       "readyPlugin": "Docker и плагин готовы",
       "readyHybrid": "Docker и модели готовы",

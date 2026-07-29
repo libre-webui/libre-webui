@@ -156,7 +156,38 @@ test('creates a persistent Work task without exposing network controls', async (
   await expect(
     page.getByRole('heading', { name: 'Start a new Work task' })
   ).toBeVisible();
-  await expect(page.getByText('Docker ready')).toBeVisible();
+  const landing = page.getByTestId('work-landing');
+  await expect(landing).toBeVisible();
+  await expect(page.getByTestId('work-landing-composer')).toHaveAttribute(
+    'data-variant',
+    'landing'
+  );
+  await expect(page.getByTestId('work-task-composer')).toHaveCount(0);
+  await expect(page.getByTestId('work-workspace-note')).toContainText(
+    'Each task keeps its own files and history.'
+  );
+  await expect(page.getByTestId('work-workspace-note')).toHaveAttribute(
+    'role',
+    'note'
+  );
+  await expect(
+    page.getByText('Every task gets its own container and files.')
+  ).toHaveCount(0);
+  await expect(page.getByTestId('work-composer-surface')).toHaveCSS(
+    'border-radius',
+    '25.6px'
+  );
+  const modelTrigger = page.getByTestId('work-model-selector-trigger');
+  await expect(modelTrigger).toBeVisible();
+  await expect(modelTrigger).toHaveAttribute('aria-haspopup', 'dialog');
+  await expect(modelTrigger).toHaveCSS('border-radius', '12px');
+  const runtimeStatus = page.getByTestId('work-runtime-status');
+  await expect(runtimeStatus).toContainText('Runtime ready');
+  await expect(runtimeStatus).toHaveAttribute('title', /Docker ready/);
+  await expect(runtimeStatus).toHaveCSS(
+    'background-color',
+    'rgb(52, 211, 153)'
+  );
   await expect(page.getByText(/Docker \+ Ollama ready/)).toHaveCount(0);
   await expect(page.getByTestId('work-network-toggle')).toHaveCount(0);
   await expect(page.getByText(/Network (?:on|off)/)).toHaveCount(0);
@@ -167,6 +198,11 @@ test('creates a persistent Work task without exposing network controls', async (
   await page.getByTestId('work-submit-button').click();
 
   await expect(page).toHaveURL(/\/work\/work-task-1$/);
+  await expect(page.getByTestId('work-landing')).toHaveCount(0);
+  await expect(page.getByTestId('work-task-composer')).toHaveAttribute(
+    'data-variant',
+    'task'
+  );
   await expect(
     page.getByText('The landing page is ready in the task workspace.')
   ).toBeVisible();
@@ -242,7 +278,9 @@ test('offers cloud models and remembers remote disclosure dismissal', async ({
 
   await page.goto('/work');
 
-  await expect(page.getByText('Docker + plugin ready')).toBeVisible();
+  await expect(page.getByTestId('work-runtime-status')).toContainText(
+    'Runtime ready'
+  );
   await expect(
     page.getByTestId('work-provider-disclosure-popover')
   ).toHaveCount(0);
@@ -251,7 +289,7 @@ test('offers cloud models and remembers remote disclosure dismissal', async ({
     'llama3.2:3b',
     'glm5.2:cloud',
     'gpt-5.4',
-    'gpt-5.4 · OpenAI GPT',
+    'gpt-5.4',
   ]);
   const optionValues = await selector
     .locator('option')
@@ -260,7 +298,15 @@ test('offers cloud models and remembers remote disclosure dismissal', async ({
     );
   expect(new Set(optionValues).size).toBe(optionValues.length);
 
-  await selector.selectOption({ label: 'gpt-5.4 · OpenAI GPT' });
+  const selectorTrigger = page.getByTestId('work-model-selector-trigger');
+  await selectorTrigger.click();
+  const pluginOption = page.locator(
+    '[data-testid="model-selector-option"][data-model-value="plugin:openai:gpt-5.4"]'
+  );
+  await expect(pluginOption).toHaveCount(1);
+  await expect(pluginOption).toContainText('via OpenAI GPT');
+  await pluginOption.click();
+  await expect(selector).toHaveValue('plugin:openai:gpt-5.4');
   const disclosure = page.getByTestId('work-provider-disclosure-popover');
   await expect(disclosure).toBeVisible();
   await expect(disclosure).toContainText(
@@ -278,7 +324,7 @@ test('offers cloud models and remembers remote disclosure dismissal', async ({
   );
   await dismissButton.click();
   await expect(disclosure).toHaveCount(0);
-  await expect(selector).toBeFocused();
+  await expect(selectorTrigger).toBeFocused();
   expect(mock.preferenceUpdateRequests).toEqual([
     {
       workRemoteProviderDisclosureDismissed: true,
@@ -286,10 +332,15 @@ test('offers cloud models and remembers remote disclosure dismissal', async ({
   ]);
 
   await page.reload();
-  await expect(page.getByText('Docker + plugin ready')).toBeVisible();
+  await expect(page.getByTestId('work-runtime-status')).toContainText(
+    'Runtime ready'
+  );
+  await page.getByTestId('work-model-selector-trigger').click();
   await page
-    .getByTestId('work-model-select')
-    .selectOption({ label: 'gpt-5.4 · OpenAI GPT' });
+    .locator(
+      '[data-testid="model-selector-option"][data-model-value="plugin:openai:gpt-5.4"]'
+    )
+    .click();
   await expect(
     page.getByTestId('work-provider-disclosure-popover')
   ).toHaveCount(0);
@@ -482,15 +533,20 @@ test('loads plugin Work models when Ollama is offline', async ({ page }) => {
 
   await page.goto('/work');
 
-  await expect(page.getByText('Docker + plugin ready')).toBeVisible();
+  await expect(page.getByTestId('work-runtime-status')).toContainText(
+    'Runtime ready'
+  );
   await expect(page.getByTestId('work-model-select')).toHaveValue(
     'plugin:cloud-only:remote-tools-model'
   );
   await expect(
     page
       .getByTestId('work-model-select')
-      .locator('option', { hasText: 'remote-tools-model · Cloud only' })
+      .locator('option', { hasText: 'remote-tools-model' })
   ).toHaveCount(1);
+  await expect(page.getByTestId('work-model-selector-trigger')).toContainText(
+    'remote-tools-model'
+  );
   await expect(page.getByTestId('work-submit-button')).toBeDisabled();
 });
 
@@ -1412,11 +1468,18 @@ test('mirrors the translated Work workspace and resize controls in Arabic', asyn
   );
   await expect(page.getByTestId('work-model-select')).toHaveAttribute(
     'dir',
-    'auto'
+    'ltr'
   );
   await expect(page.getByTestId('work-model-select')).toHaveCSS(
     'direction',
     'ltr'
+  );
+  await expect(
+    page.getByTestId('work-model-selector-trigger')
+  ).toHaveAccessibleName('نموذج العمل: llama3.2:3b');
+  await expect(page.getByTestId('work-model-select')).toHaveAttribute(
+    'aria-hidden',
+    'true'
   );
   await expect(
     page.getByRole('link', { name: 'العمل', exact: true })
@@ -1991,6 +2054,12 @@ test('keeps the compact task surface switch in the task header', async ({
   const surfaceSwitch = page.getByRole('group', { name: 'Task surface' });
   await expect(surfaceSwitch).toBeVisible();
   await expect(page.getByTestId('work-split-resizer')).not.toBeVisible();
+  await expect(
+    page.getByTestId('work-model-selector-trigger-mobile')
+  ).toBeVisible();
+  await expect(
+    page.getByTestId('work-model-selector-trigger')
+  ).not.toBeVisible();
   await expect(page.getByTestId('work-compact-status')).toHaveAccessibleName(
     'Status: Complete'
   );
@@ -2284,6 +2353,13 @@ test('explains when the local container runtime is unavailable', async ({
 
   await page.goto('/work');
 
+  await expect(page.getByTestId('work-runtime-status')).toContainText(
+    'Runtime unavailable'
+  );
+  await expect(page.getByTestId('work-runtime-status')).toHaveAttribute(
+    'title',
+    'Docker daemon unavailable'
+  );
   await expect(page.getByText('Docker daemon unavailable')).toBeVisible();
   await expect(page.getByText('Docker daemon unavailable')).toHaveAttribute(
     'dir',

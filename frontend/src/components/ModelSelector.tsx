@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useImperativeHandle,
+} from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
@@ -65,12 +71,21 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   compact = false,
   showImageGen = false,
   onModelsRefresh,
+  getModelValue: getModelValueOverride,
+  getModelLabel: getModelLabelOverride,
+  getModelTitle,
+  triggerRef,
+  triggerTestId,
+  selectTestId,
+  ariaLabel,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<TabType>('installed');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const internalTriggerRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { user, systemInfo } = useAuthStore();
@@ -149,11 +164,23 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     }))
     .filter(group => group.models.length > 0);
 
+  const getModelValue = (model: OllamaModel): string =>
+    getModelValueOverride?.(model) ?? model.name;
+
   const currentModel = models.find(
-    m =>
-      m.name === selectedModel ||
-      (selectedModel.startsWith('persona:') && m.name === selectedModel)
+    model => getModelValue(model) === selectedModel
   );
+  useImperativeHandle(
+    triggerRef,
+    () => internalTriggerRef.current as HTMLButtonElement
+  );
+  const closeSelector = useCallback((restoreFocus = true) => {
+    setIsOpen(false);
+    setSearchTerm('');
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => internalTriggerRef.current?.focus());
+    }
+  }, []);
 
   const {
     data: libraryModels = [],
@@ -297,14 +324,34 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setIsOpen(false);
-        setSearchTerm('');
+        event.preventDefault();
+        closeSelector();
+        return;
+      }
+
+      if (event.key === 'Tab' && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+        ).filter(element => element.offsetParent !== null);
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+
+        if (!first || !last) return;
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [closeSelector, isOpen]);
 
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
@@ -312,18 +359,25 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     }
   }, [isOpen]);
 
-  const handleModelSelect = async (modelName: string) => {
-    setIsOpen(false);
-    setSearchTerm('');
+  const handleModelSelect = async (modelValue: string) => {
+    const selectedOption = models.find(
+      model => getModelValue(model) === modelValue
+    );
+    const runtimeModelName = selectedOption?.name ?? modelValue;
+    closeSelector();
 
     try {
       const runningModelsResponse = await ollamaApi.listRunningModels();
       if (runningModelsResponse.success && runningModelsResponse.data) {
         const runningModels = runningModelsResponse.data;
         if (runningModels.length > 0) {
-          const currentlyLoaded = runningModels.some(
-            m => m.name === modelName || modelName.startsWith('persona:')
-          );
+          const currentlyLoaded =
+            selectedOption?.isPlugin !== true &&
+            runningModels.some(
+              m =>
+                m.name === runtimeModelName ||
+                runtimeModelName.startsWith('persona:')
+            );
           if (!currentlyLoaded) {
             await ollamaApi.unloadAllModels();
           }
@@ -334,7 +388,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     }
 
     const syntheticEvent = {
-      target: { value: modelName },
+      target: { value: modelValue },
     } as React.ChangeEvent<HTMLSelectElement>;
 
     onModelChange(syntheticEvent);
@@ -403,6 +457,9 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
   const getModelLabel = (model: OllamaModel) => {
+    if (getModelLabelOverride) {
+      return getModelLabelOverride(model);
+    }
     if (model.isPersona) {
       return model.personaName || model.name;
     }
@@ -487,18 +544,25 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
   const openGallery = () => {
-    setIsOpen(false);
+    closeSelector(false);
     navigate('/gallery');
   };
 
   return (
     <div className={cn('relative', className)} ref={dropdownRef}>
       <button
+        ref={internalTriggerRef}
+        data-testid={triggerTestId}
         type='button'
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         aria-haspopup='dialog'
         aria-expanded={isOpen}
+        aria-label={
+          ariaLabel && currentModel
+            ? `${ariaLabel}: ${getModelLabel(currentModel)}`
+            : ariaLabel
+        }
         className={cn(
           compact
             ? 'h-9 sm:h-10 px-2.5 flex items-center justify-between text-start w-full'
@@ -511,7 +575,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         title={
           compact
             ? currentModel
-              ? getModelLabel(currentModel)
+              ? (getModelTitle?.(currentModel) ?? getModelLabel(currentModel))
               : t('modelSelector.selectModel')
             : undefined
         }
@@ -531,13 +595,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
           <div className='fixed inset-0 z-[999999] flex items-center justify-center p-3 sm:p-6'>
             <div
               className='absolute inset-0 bg-gray-950/55 backdrop-blur-md'
-              onClick={() => {
-                setIsOpen(false);
-                setSearchTerm('');
-              }}
+              onClick={() => closeSelector()}
             />
 
             <div
+              ref={dialogRef}
               role='dialog'
               aria-modal='true'
               aria-label={t('modelSelector.selectModel')}
@@ -555,10 +617,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   </h2>
                   <button
                     type='button'
-                    onClick={() => {
-                      setIsOpen(false);
-                      setSearchTerm('');
-                    }}
+                    onClick={() => closeSelector()}
                     className='flex h-9 w-9 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-950 dark:text-dark-500 dark:hover:bg-dark-200 dark:hover:text-dark-950'
                     title={t('common.close')}
                   >
@@ -644,6 +703,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
                   filteredGroups={filteredGroups}
                   selectedModel={selectedModel}
                   showImageGen={showImageGen}
+                  getModelValue={getModelValue}
                   getModelIcon={getModelIcon}
                   getModelLabel={getModelLabel}
                   getModelSubLabel={getModelSubLabel}
@@ -698,13 +758,19 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         )}
 
       <select
+        data-testid={selectTestId}
+        aria-hidden='true'
+        dir='ltr'
         value={selectedModel}
         onChange={onModelChange}
-        className='sr-only'
+        className='hidden'
         tabIndex={-1}
       >
         {models.map(model => (
-          <option key={model.name} value={model.name}>
+          <option
+            key={`${model.isPersona ? 'persona' : model.isPlugin ? 'plugin' : 'ollama'}:${model.pluginId || ''}:${getModelValue(model)}`}
+            value={getModelValue(model)}
+          >
             {getModelLabel(model)}
           </option>
         ))}

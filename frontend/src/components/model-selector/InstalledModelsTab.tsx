@@ -26,6 +26,7 @@ interface InstalledModelsTabProps {
   filteredGroups: ModelGroup[];
   selectedModel: string;
   showImageGen: boolean;
+  getModelValue: (model: OllamaModel) => string;
   getModelIcon: (model: OllamaModel) => ReactNode;
   getModelLabel: (model: OllamaModel) => string;
   getModelSubLabel: (model: OllamaModel) => string | null;
@@ -37,6 +38,7 @@ export function InstalledModelsTab({
   filteredGroups,
   selectedModel,
   showImageGen,
+  getModelValue,
   getModelIcon,
   getModelLabel,
   getModelSubLabel,
@@ -56,45 +58,50 @@ export function InstalledModelsTab({
                 {group.label} ({group.models.length})
               </div>
             </div>
-            {group.models.map(model => (
-              <div
-                key={model.name}
-                onMouseDown={e => {
-                  e.preventDefault();
-                  onModelSelect(model.name);
-                }}
-                className={cn(
-                  'px-3 py-3 cursor-pointer border-b border-gray-100 dark:border-dark-200 last:border-b-0',
-                  'hover:bg-gray-50 dark:hover:bg-dark-200',
-                  'bg-white dark:bg-dark-100 transition-colors',
-                  selectedModel === model.name &&
-                    'bg-primary-50 dark:bg-primary-900/30'
-                )}
-              >
-                <div className='flex items-center gap-3'>
-                  {getModelIcon(model)}
-                  <div className='flex-1 min-w-0'>
-                    <div
-                      dir={model.isPersona ? 'auto' : 'ltr'}
-                      className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'
-                    >
-                      {getModelLabel(model)}
-                    </div>
-                    {getModelSubLabel(model) && (
+            {group.models.map(model => {
+              const modelValue = getModelValue(model);
+              return (
+                <button
+                  type='button'
+                  key={modelValue}
+                  data-testid='model-selector-option'
+                  data-model-value={modelValue}
+                  aria-pressed={selectedModel === modelValue}
+                  onClick={() => onModelSelect(modelValue)}
+                  className={cn(
+                    'block w-full cursor-pointer border-b border-gray-100 px-3 py-3 text-start last:border-b-0 dark:border-dark-200',
+                    'hover:bg-gray-50 dark:hover:bg-dark-200',
+                    'bg-white dark:bg-dark-100 transition-colors',
+                    'focus-visible:relative focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-500/50',
+                    selectedModel === modelValue &&
+                      'bg-primary-50 dark:bg-primary-900/30'
+                  )}
+                >
+                  <div className='flex items-center gap-3'>
+                    {getModelIcon(model)}
+                    <div className='flex-1 min-w-0'>
                       <div
-                        dir='auto'
-                        className='text-xs text-gray-500 dark:text-gray-400 truncate'
+                        dir={model.isPersona ? 'auto' : 'ltr'}
+                        className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'
                       >
-                        {getModelSubLabel(model)}
+                        {getModelLabel(model)}
                       </div>
+                      {getModelSubLabel(model) && (
+                        <div
+                          dir='auto'
+                          className='text-xs text-gray-500 dark:text-gray-400 truncate'
+                        >
+                          {getModelSubLabel(model)}
+                        </div>
+                      )}
+                    </div>
+                    {selectedModel === modelValue && (
+                      <Check className='h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0' />
                     )}
                   </div>
-                  {selectedModel === model.name && (
-                    <Check className='h-4 w-4 text-primary-600 dark:text-primary-400 flex-shrink-0' />
-                  )}
-                </div>
-              </div>
-            ))}
+                </button>
+              );
+            })}
           </div>
         ))
       ) : (
