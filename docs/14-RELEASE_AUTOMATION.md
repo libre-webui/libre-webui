@@ -1,7 +1,7 @@
 ---
 sidebar_position: 2
 title: 'Release Automation'
-description: 'Release Libre WebUI with evidence-based changelog generation, checks, tags, and CI publishing.'
+description: 'Release Libre WebUI with evidence-based changelogs, gated checks, immutable tags, and GitHub-to-Forgejo mirroring.'
 slug: /RELEASE_AUTOMATION
 keywords:
   [
@@ -20,7 +20,9 @@ image: /img/social/14.png
 Libre WebUI releases are created from the repository root with the release
 script. The script reads real git history since the previous version tag,
 updates package versions, writes the changelog, runs release checks, commits the
-release, and creates the version tag.
+release, and creates the version tag. GitHub is the build and binary publication
+source; release metadata and named artifact links are mirrored to the project's
+Forgejo repository.
 
 ## One-Time Local Setup
 
@@ -93,16 +95,59 @@ OLLAMA_BASE_URL=http://127.0.0.1:11434 npm run release
 
 ## Push a Release
 
-After the release commit and tag are created, push the branch and the exact tag
-shown by the script:
+After the release commit and annotated tag are created, publish only the exact
+branch commit and tag shown by the script. The production branch is pushed to
+Forgejo first, then GitHub, with followed tags disabled explicitly:
 
 ```bash
-git push origin main
-git push origin v0.12.0
+git -c push.followTags=false push \
+  https://git.kroonen.ai/libre-webui/libre-webui.git \
+  HEAD:refs/heads/main
+git ls-remote \
+  https://git.kroonen.ai/libre-webui/libre-webui.git \
+  refs/heads/main
+
+git -c push.followTags=false push \
+  https://github.com/libre-webui/libre-webui.git \
+  HEAD:refs/heads/main
+git ls-remote \
+  https://github.com/libre-webui/libre-webui.git \
+  refs/heads/main
 ```
 
-Push the specific tag for the release you just created. Avoid `git push
-origin --tags` because it can publish unrelated local tags.
+Both returned branch SHAs must equal the intended local release commit. Wait for
+the required GitHub workflows for that exact commit to pass before publishing
+the tag.
+
+Confirm the version tag does not already exist on either service, then push that
+one tag to Forgejo first and GitHub second:
+
+```bash
+git ls-remote \
+  https://git.kroonen.ai/libre-webui/libre-webui.git \
+  'refs/tags/vX.Y.Z' 'refs/tags/vX.Y.Z^{}'
+git ls-remote \
+  https://github.com/libre-webui/libre-webui.git \
+  'refs/tags/vX.Y.Z' 'refs/tags/vX.Y.Z^{}'
+
+git -c push.followTags=false push \
+  https://git.kroonen.ai/libre-webui/libre-webui.git \
+  refs/tags/vX.Y.Z:refs/tags/vX.Y.Z
+git -c push.followTags=false push \
+  https://github.com/libre-webui/libre-webui.git \
+  refs/tags/vX.Y.Z:refs/tags/vX.Y.Z
+
+git ls-remote \
+  https://git.kroonen.ai/libre-webui/libre-webui.git \
+  'refs/tags/vX.Y.Z' 'refs/tags/vX.Y.Z^{}'
+git ls-remote \
+  https://github.com/libre-webui/libre-webui.git \
+  'refs/tags/vX.Y.Z' 'refs/tags/vX.Y.Z^{}'
+```
+
+Replace `vX.Y.Z` with the release tag. For an annotated tag, verify both the tag
+object SHA and its peeled commit SHA. Never use `git push --tags`, which can
+publish unrelated local tags.
 
 ## CI Release Path
 
@@ -111,6 +156,7 @@ Pushing a `v*` tag runs the GitHub release workflow. The workflow:
 - Runs `npm run release:check`
 - Builds Electron artifacts for macOS, Windows, and Linux
 - Creates the GitHub release from the matching `CHANGELOG.md` section
+- Mirrors the release record and named artifact links to Forgejo
 - Builds Docker images
 - Publishes the Helm chart with the same version as the release tag
 - Publishes the npm package with `NPM_TOKEN`
@@ -120,6 +166,85 @@ The same check can be run locally before tagging:
 ```bash
 npm run release:check
 ```
+
+## Forgejo Release Mirror
+
+The mirror uses a Forgejo personal access token stored as the encrypted GitHub
+Actions secret `FORGEJO_TOKEN`. Give the token only the
+`write:repository` scope, ensure its owner can write to
+`libre-webui/libre-webui`, and never commit or print the token.
+
+The mirror is deliberately idempotent. It looks up releases by tag, creates
+only missing release records, reconciles their GitHub release metadata, and
+skips artifact links that already exist. A retry after a network or workflow
+failure therefore completes the missing work without duplicating releases or
+assets.
+
+Forgejo release assets are named external links to the corresponding public
+GitHub `browser_download_url`. GitHub remains the binary host, while Forgejo
+shows the same downloadable filenames without duplicating tens of gigabytes of
+desktop artifacts. Source archives remain generated independently from the
+exact tag on each service.
+
+### Preview or Backfill One Release
+
+Inspect what would change without writing to Forgejo:
+
+```bash
+node scripts/mirror-forgejo-releases.mjs --tag vX.Y.Z --dry-run
+```
+
+After loading `FORGEJO_TOKEN` and `GITHUB_TOKEN` into the process environment
+from the maintainer's secret manager, mirror that release:
+
+```bash
+node scripts/mirror-forgejo-releases.mjs --tag vX.Y.Z
+```
+
+The exact tag must already exist on GitHub and Forgejo and resolve to the same
+tag object and peeled commit before a release is mirrored.
+
+### Preview or Backfill All Releases
+
+Audit every GitHub Release against Forgejo:
+
+```bash
+node scripts/mirror-forgejo-releases.mjs --all --dry-run
+```
+
+Backfill every missing or incomplete Forgejo Release:
+
+```bash
+node scripts/mirror-forgejo-releases.mjs --all
+```
+
+`GITHUB_TOKEN` is required for `--all`, including dry runs, because exact tag
+parity and asset discovery require more requests than GitHub's anonymous API
+limit permits. `FORGEJO_TOKEN` is additionally required whenever `--dry-run` is
+not used.
+
+The `--all` path paginates both APIs and considers GitHub Release objects, not
+every Git tag. A tag that intentionally has no GitHub Release remains tag-only
+on Forgejo. Run the dry-run again after a backfill; it should report no pending
+changes.
+
+## Immutable Tag Policy
+
+Published version tags are immutable. After a tag exists on either remote:
+
+- Do not delete it.
+- Do not force-push it.
+- Do not move it to a corrected commit.
+- Do not reuse its semantic version for different contents.
+
+If published release contents are wrong, correct the source and changelog and
+publish the next patch version. If only a release page or external asset link is
+missing, rerun the idempotent mirror without touching the tag.
+
+The Forgejo `v0.8.6` tag had a one-time, explicitly approved realignment during
+the introduction of dual release mirroring. It repaired two historical tag
+objects that described identical source trees but followed different commit
+lineages. That audited migration is not a precedent for moving published tags.
 
 ## Helm Version Policy
 
@@ -190,7 +315,7 @@ git log $(git describe --tags --abbrev=0)..HEAD --oneline
 
 ### Changelog Needs Manual Editing
 
-Edit `CHANGELOG.md`, then commit the correction before tagging:
+Edit `CHANGELOG.md`, then commit the correction before publishing the tag:
 
 ```bash
 git add CHANGELOG.md
@@ -199,18 +324,31 @@ git commit -m "docs: refine changelog"
 
 ### Roll Back a Local Release Commit
 
-If the tag has not been pushed yet:
+If neither the release commit nor tag has been pushed:
 
 ```bash
 git tag -d v0.12.0
 git reset --soft HEAD~1
 ```
 
-If the tag was already pushed, delete the remote tag deliberately:
+If either remote already has the tag, do not delete or replace it. Fix the
+problem on `main`, create the next patch release, and publish that new immutable
+tag through the complete gate.
+
+### Forgejo Mirror Is Incomplete
+
+First verify that both remote tag object and peeled commit SHAs match. Then
+preview and retry the affected release:
 
 ```bash
-git push origin :refs/tags/v0.12.0
+node scripts/mirror-forgejo-releases.mjs --tag vX.Y.Z --dry-run
+node scripts/mirror-forgejo-releases.mjs --tag vX.Y.Z
 ```
+
+An authorization failure means `FORGEJO_TOKEN` is missing, expired, owned by a
+user without repository access, or lacks `write:repository`. A missing or
+different remote tag must be investigated separately; the release mirror never
+creates or moves Git tags.
 
 ## Maintainer Files
 
@@ -218,6 +356,8 @@ git push origin :refs/tags/v0.12.0
 - `.githooks/commit-msg` - Conventional Commit validation
 - `.githooks/pre-commit` - formatting preflight
 - `scripts/release.js` - release orchestration
+- `scripts/mirror-forgejo-releases.mjs` - idempotent Forgejo release mirror and
+  backfill
 - `scripts/generate-changelog.js` - changelog preview/update command
 - `scripts/lib/releaseNotes.js` - evidence collection and changelog generation
 - `.github/workflows/release.yml` - tag-driven CI release workflow

@@ -238,6 +238,17 @@ You can also help by [reporting bugs](https://github.com/libre-webui/libre-webui
 
 All participation follows the [Contributor Covenant 2.1](https://www.contributor-covenant.org/version/2/1/code_of_conduct/) and the [Libre WebUI Community & Ethical Charter](https://github.com/libre-webui/libre-webui/blob/main/CHARTER.md). Report security issues privately to **security@kroonen.ai**.
 
+## Release mirrors
+
+Every release tag is pushed explicitly to both
+[GitHub](https://github.com/libre-webui/libre-webui/releases) and the
+[Forgejo mirror](https://git.kroonen.ai/libre-webui/libre-webui/releases).
+After GitHub CI publishes a release, an idempotent mirror copies its release
+notes to Forgejo and adds named links to the GitHub-hosted desktop artifacts.
+This keeps both release indexes aligned without storing a second copy of every
+large binary. Maintainers can find the gated publication and backfill procedure
+in the [release automation guide](https://docs.librewebui.org/RELEASE_AUTOMATION).
+
 ## Stewardship and support
 
 [Kroonen AI](https://kroonen.ai) funds development and provides professional deployment, integration, security review, training, customization, and SLA-backed support. Commercial services do not change the Apache 2.0 license of the core project.
@@ -246,15 +257,15 @@ For enterprise work, contact **enterprise@kroonen.ai**. To support independent d
 
 ## Project links
 
-|                   |                                                                                          |
-| ----------------- | ---------------------------------------------------------------------------------------- |
-| **Website**       | [librewebui.org](https://librewebui.org)                                                 |
-| **Documentation** | [docs.librewebui.org](https://docs.librewebui.org)                                       |
-| **Releases**      | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)                   |
-| **GitHub**        | [github.com/libre-webui/libre-webui](https://github.com/libre-webui/libre-webui)         |
-| **GitLab mirror** | [git.kroonen.ai/libre-webui/libre-webui](https://git.kroonen.ai/libre-webui/libre-webui) |
-| **Hugging Face**  | [huggingface.co/libre-webui](https://huggingface.co/libre-webui)                         |
-| **Sponsor**       | [github.com/sponsors/libre-webui](https://github.com/sponsors/libre-webui)               |
+|                    |                                                                                                                                    |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Website**        | [librewebui.org](https://librewebui.org)                                                                                           |
+| **Documentation**  | [docs.librewebui.org](https://docs.librewebui.org)                                                                                 |
+| **Releases**       | [GitHub](https://github.com/libre-webui/libre-webui/releases) · [Forgejo](https://git.kroonen.ai/libre-webui/libre-webui/releases) |
+| **GitHub**         | [github.com/libre-webui/libre-webui](https://github.com/libre-webui/libre-webui)                                                   |
+| **Forgejo mirror** | [git.kroonen.ai/libre-webui/libre-webui](https://git.kroonen.ai/libre-webui/libre-webui)                                           |
+| **Hugging Face**   | [huggingface.co/libre-webui](https://huggingface.co/libre-webui)                                                                   |
+| **Sponsor**        | [github.com/sponsors/libre-webui](https://github.com/sponsors/libre-webui)                                                         |
 
 ---
 

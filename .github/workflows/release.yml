@@ -8,17 +8,6 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      release_type:
-        description: 'Release type (patch, minor, major)'
-        required: true
-        default: 'patch'
-        type: choice
-        options:
-          - patch
-          - minor
-          - major
 
 jobs:
   release-preflight:
@@ -213,31 +202,10 @@ jobs:
           npm ci
           npm run install:all
 
-      - name: Configure Git
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-
-      - name: Create release (manual trigger)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          npm run release:${{ github.event.inputs.release_type }}
-
-      - name: Extract version from tag
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-        id: extract_version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       - name: Resolve release version
         id: release_version
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            VERSION="${{ steps.extract_version.outputs.version }}"
-          else
-            VERSION=$(node -p "require('./package.json').version")
-          fi
+          VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Run tests and build
@@ -253,13 +221,6 @@ jobs:
           echo "notes<<EOF" >> $GITHUB_OUTPUT
           echo "$CHANGELOG_SECTION" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Push release commit and tag (manual trigger)
-        if: github.event_name == 'workflow_dispatch'
-        run: |
-          VERSION="${{ steps.release_version.outputs.version }}"
-          git push origin HEAD:main
-          git push origin "v$VERSION"
 
       - name: Download Electron artifacts
         uses: actions/download-artifact@v8
@@ -288,6 +249,14 @@ jobs:
             electron-builds/**/*.AppImage
             electron-builds/**/*.deb
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Mirror release to Forgejo
+        run: >-
+          node scripts/mirror-forgejo-releases.mjs
+          --tag "v${{ steps.release_version.outputs.version }}"
+        env:
+          FORGEJO_TOKEN: ${{ secrets.FORGEJO_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker images

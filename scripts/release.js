@@ -107,8 +107,13 @@ class ReleaseManager {
     console.log(`\n✅ Release v${nextVersion} created successfully!`);
     console.log('\n📋 Next steps:');
     console.log(`  1. Review the release: git show v${nextVersion}`);
-    console.log('  2. Push the release commit: git push origin main');
-    console.log(`  3. Push this release tag: git push origin v${nextVersion}`);
+    console.log(
+      '  2. Push the release commit to Forgejo, then GitHub, with followed tags disabled'
+    );
+    console.log(`  3. Push only v${nextVersion} to Forgejo, then GitHub`);
+    console.log(
+      '  4. Verify both branch and tag refs with git ls-remote before publication'
+    );
   }
 
   ensureCleanWorkingTree() {
