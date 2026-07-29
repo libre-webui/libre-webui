@@ -340,6 +340,7 @@ function PluginListItem({
   onDeleteApiKey,
 }: PluginListItemProps) {
   const { t } = useTranslation();
+  const requiresApiKey = Boolean(plugin.auth?.header || plugin.auth?.key_env);
 
   return (
     <div className='p-4'>
@@ -365,7 +366,7 @@ function PluginListItem({
                     <span className='truncate max-w-32'>{plugin.endpoint}</span>
                   </>
                 )}
-                {hasApiKey && (
+                {requiresApiKey && hasApiKey && (
                   <>
                     <span>•</span>
                     <span className='text-green-600'>
@@ -379,20 +380,22 @@ function PluginListItem({
         </div>
 
         <div className='flex items-center space-x-1 flex-shrink-0'>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={onExpand}
-            title='Configure API key'
-            className={hasApiKey ? 'text-green-600' : 'text-ink'}
-          >
-            <Key className='h-4 w-4' />
-            {expanded ? (
-              <ChevronUp className='h-3 w-3' />
-            ) : (
-              <ChevronDown className='h-3 w-3' />
-            )}
-          </Button>
+          {requiresApiKey && (
+            <Button
+              variant='ghost'
+              size='sm'
+              onClick={onExpand}
+              title='Configure API key'
+              className={hasApiKey ? 'text-green-600' : 'text-ink'}
+            >
+              <Key className='h-4 w-4' />
+              {expanded ? (
+                <ChevronUp className='h-3 w-3' />
+              ) : (
+                <ChevronDown className='h-3 w-3' />
+              )}
+            </Button>
+          )}
 
           <Button
             variant='outline'
@@ -434,7 +437,7 @@ function PluginListItem({
         </div>
       </div>
 
-      {expanded && (
+      {requiresApiKey && expanded && (
         <ApiKeyPanel
           plugin={plugin}
           hasApiKey={hasApiKey}

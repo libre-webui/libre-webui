@@ -38,6 +38,7 @@ import {
   applyModelEndpointTemplate,
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
+  pluginRequiresApiKey,
   resolvePluginEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
@@ -196,7 +197,8 @@ export class WorkModelProviderService {
       .some(
         plugin =>
           plugin.model_map.length > 0 &&
-          Boolean(this.dependencies.plugins.getApiKey(plugin, userId))
+          (!pluginRequiresApiKey(plugin) ||
+            Boolean(this.dependencies.plugins.getApiKey(plugin, userId)))
       );
   }
 
@@ -229,7 +231,10 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_MODEL_UNAVAILABLE'
       );
     }
-    if (!this.dependencies.plugins.getApiKey(plugin, userId)) {
+    if (
+      pluginRequiresApiKey(plugin) &&
+      !this.dependencies.plugins.getApiKey(plugin, userId)
+    ) {
       throw new WorkModelProviderError(
         `API key not found for plugin ${plugin.id}.`,
         422,
@@ -247,7 +252,7 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
     const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
-    if (!apiKey) {
+    if (pluginRequiresApiKey(plugin) && !apiKey) {
       throw new WorkModelProviderError(
         `API key not found for plugin ${plugin.id}.`,
         422,
@@ -396,7 +401,7 @@ export class WorkModelProviderService {
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
     const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
-    if (!apiKey) {
+    if (pluginRequiresApiKey(plugin) && !apiKey) {
       throw new WorkModelProviderError(
         `API key not found for plugin ${plugin.id}.`,
         422,

@@ -109,7 +109,12 @@ Application-layer encryption is not full-disk or end-to-end encryption. Use HTTP
 
 ## Models and providers without a single-provider worldview
 
-Ollama is the local path, not a lock-in strategy. Libre WebUI bundles provider definitions spanning chat, images, embeddings, speech, and OpenAI-compatible services, including OpenAI, Anthropic, Google Gemini, Groq, Kimi Code by Moonshot AI, Mistral, OpenRouter, Hugging Face, GitHub Models, ComfyUI, ElevenLabs, Qwen3-TTS, and Kyutai TTS.
+Ollama is the default local path, not a lock-in strategy. Libre WebUI also
+bundles an MLX LM plugin for native Apple Silicon inference, plus provider
+definitions spanning chat, images, embeddings, speech, and OpenAI-compatible
+services, including OpenAI, Anthropic, Google Gemini, Groq, Kimi Code by
+Moonshot AI, Mistral, OpenRouter, Hugging Face, GitHub Models, ComfyUI,
+ElevenLabs, Qwen3-TTS, and Kyutai TTS.
 
 Credentials can come from deployment-wide environment variables or encrypted, user-scoped settings. Plugins can define static model fallbacks and use live discovery when a provider exposes a compatible model-list endpoint.
 

@@ -36,6 +36,7 @@ Libre WebUI includes provider definitions for common services:
 - OpenRouter
 - Hugging Face
 - GitHub Models
+- MLX LM for local Apple Silicon inference
 - ComfyUI
 - ElevenLabs
 
@@ -125,3 +126,4 @@ When adding a provider:
 - [Working with Models](./WORKING_WITH_MODELS)
 - [Work: Isolated Workspaces](./WORKSPACES)
 - [Kimi Code](./KIMI_CODE)
+- [MLX LM on Apple Silicon](./MLX_APPLE_SILICON)

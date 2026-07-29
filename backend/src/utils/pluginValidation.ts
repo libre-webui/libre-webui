@@ -155,6 +155,10 @@ export function buildPluginAuthHeaders(
   return headers;
 }
 
+export function pluginRequiresApiKey(plugin: Pick<Plugin, 'auth'>): boolean {
+  return Boolean(plugin.auth.header || plugin.auth.key_env);
+}
+
 export function buildPluginModelDiscoveryHeaders(
   plugin: Plugin,
   apiKey?: string | null

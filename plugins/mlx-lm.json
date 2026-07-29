@@ -1,0 +1,55 @@
+{
+  "id": "mlx-lm",
+  "name": "MLX LM (Apple Silicon)",
+  "type": "completion",
+  "endpoint": "http://127.0.0.1:8081/v1/chat/completions",
+  "auth": {
+    "header": "",
+    "prefix": "",
+    "key_env": ""
+  },
+  "model_map": ["prism-ml/Ternary-Bonsai-27B-mlx-2bit"],
+  "variables": [
+    {
+      "name": "endpoint",
+      "type": "string",
+      "label": "API Endpoint",
+      "description": "Local mlx_lm.server OpenAI-compatible chat endpoint.",
+      "default": "http://127.0.0.1:8081/v1/chat/completions"
+    },
+    {
+      "name": "temperature",
+      "type": "number",
+      "label": "Temperature",
+      "description": "Controls randomness. Ternary Bonsai recommends 0.7.",
+      "default": 0.7,
+      "min": 0,
+      "max": 2
+    },
+    {
+      "name": "max_tokens",
+      "type": "number",
+      "label": "Max Output Tokens",
+      "description": "Maximum output allowance for Ternary Bonsai. Prompt and output must fit its 262,144-token context together.",
+      "default": 262144,
+      "min": 1,
+      "max": 262144
+    },
+    {
+      "name": "top_p",
+      "type": "number",
+      "label": "Top P",
+      "description": "Nucleus sampling. Ternary Bonsai recommends 0.95.",
+      "default": 0.95,
+      "min": 0,
+      "max": 1
+    },
+    {
+      "name": "stream",
+      "type": "boolean",
+      "label": "Stream Response",
+      "description": "Use streaming for direct plugin requests.",
+      "default": false
+    }
+  ]
+}

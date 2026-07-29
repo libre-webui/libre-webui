@@ -22,16 +22,26 @@ const python = pythonCandidates.find(({ command, prefix }) => {
 });
 
 const suites = [
-  'examples/kyutai-tts-1.6b-server',
-  'examples/kyutai-tts-server',
-  'examples/qwen-tts-server',
+  {
+    directory: 'examples/kyutai-tts-1.6b-server',
+    pattern: 'test*_security.py',
+  },
+  {
+    directory: 'examples/kyutai-tts-server',
+    pattern: 'test*_security.py',
+  },
+  {
+    directory: 'examples/mlx-lm-server',
+    pattern: 'test_server.py',
+  },
+  {
+    directory: 'examples/qwen-tts-server',
+    pattern: 'test*_security.py',
+  },
 ];
 
-test('TTS examples reject unsafe paths and process markup without ReDoS', () => {
-  assert.ok(
-    python,
-    'Python 3 is required to run the TTS example security regression tests'
-  );
+test('Python examples pass their isolated regression suites', () => {
+  assert.ok(python, 'Python 3 is required to run the example regression tests');
 
   for (const suite of suites) {
     const result = spawnSync(
@@ -42,9 +52,9 @@ test('TTS examples reject unsafe paths and process markup without ReDoS', () => 
         'unittest',
         'discover',
         '-s',
-        suite,
+        suite.directory,
         '-p',
-        'test*_security.py',
+        suite.pattern,
         '-v',
       ],
       {
@@ -55,7 +65,11 @@ test('TTS examples reject unsafe paths and process markup without ReDoS', () => 
     assert.equal(
       result.status,
       0,
-      [`Security tests failed in ${suite}.`, result.stdout, result.stderr]
+      [
+        `Python example tests failed in ${suite.directory}.`,
+        result.stdout,
+        result.stderr,
+      ]
         .filter(Boolean)
         .join('\n')
     );

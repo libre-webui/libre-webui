@@ -1,0 +1,2 @@
+# OpenAI-compatible local inference for Apple Silicon
+mlx-lm>=0.31.3

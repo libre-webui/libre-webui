@@ -79,7 +79,13 @@ commands inside the task container.
 
 ## AI Providers
 
-Local inference is handled through Ollama. Cloud providers are added through plugins and include OpenAI-compatible APIs plus first-party entries for OpenAI, Anthropic, Google, Groq, Kimi Code by Moonshot AI, Mistral, OpenRouter, Hugging Face, and other compatible services. Provider plugin files in the repository are the fallback source of truth, while live provider discovery can populate newer models when a provider exposes a compatible model-list endpoint.
+Local inference is available through Ollama or the MLX LM plugin on Apple
+Silicon. Cloud providers are added through plugins and include OpenAI-compatible
+APIs plus first-party entries for OpenAI, Anthropic, Google, Groq, Kimi Code by
+Moonshot AI, Mistral, OpenRouter, Hugging Face, and other compatible services.
+Provider plugin files in the repository are the fallback source of truth, while
+live provider discovery can populate newer models when a provider exposes a
+compatible model-list endpoint.
 
 ## Documentation
 
@@ -105,6 +111,7 @@ Local inference is handled through Ollama. Cloud providers are added through plu
 - [Plugin Architecture](./PLUGIN_ARCHITECTURE)
 - [Kimi Code](./KIMI_CODE)
 - [Hugging Face Hub](./HUGGINGFACE_HUB)
+- [MLX LM on Apple Silicon](./MLX_APPLE_SILICON)
 - [Document Chat](./RAG_FEATURE)
 - [Artifacts](./ARTIFACTS_FEATURE)
 - [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK)

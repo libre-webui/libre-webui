@@ -19,6 +19,11 @@ const providerModule = await import(
     )
   ).href
 );
+const validationModule = await import(
+  pathToFileURL(
+    path.join(repoRoot, 'backend', 'dist', 'utils', 'pluginValidation.js')
+  ).href
+);
 
 const {
   buildPluginWorkPayload,
@@ -26,6 +31,7 @@ const {
   toOpenAIWorkMessages,
   WorkModelProviderService,
 } = providerModule;
+const { pluginRequiresApiKey } = validationModule;
 
 const tool = {
   type: 'function',
@@ -95,6 +101,76 @@ const streamingService = remotePlugin =>
       throw new Error('Streaming should use fetch');
     },
   });
+
+test('auth-free local plugins are available without a fake API key', async () => {
+  const localPlugin = {
+    ...plugin('mlx-lm'),
+    active: true,
+    endpoint: 'http://127.0.0.1:8081/v1/chat/completions',
+    auth: {
+      header: '',
+      prefix: '',
+      key_env: '',
+    },
+  };
+  const requests = [];
+  const service = new WorkModelProviderService({
+    ollama: {
+      isHealthy: async () => false,
+      showModel: async () => ({ capabilities: [] }),
+      generateChatResponse: async () => {
+        throw new Error('Unexpected local request');
+      },
+    },
+    plugins: {
+      getActivePlugins: () => [localPlugin],
+      getPlugin: id => (id === localPlugin.id ? localPlugin : null),
+      getApiKey: () => null,
+      getPluginVariables: () => ({ max_tokens: 262144 }),
+    },
+    post: async (endpoint, payload, config) => {
+      requests.push({ endpoint, payload, config });
+      return {
+        data: {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'Local MLX response',
+              },
+            },
+          ],
+        },
+      };
+    },
+  });
+
+  assert.equal(pluginRequiresApiKey(localPlugin), false);
+  assert.equal(pluginRequiresApiKey(plugin('openai')), true);
+  assert.deepEqual(await service.availability('test-user'), {
+    ollamaAvailable: false,
+    pluginAvailable: true,
+  });
+  await service.assertModelSupportsTools(
+    'test-model',
+    { providerType: 'plugin', providerId: localPlugin.id },
+    'test-user'
+  );
+  const response = await service.generateChatResponse(
+    {
+      model: 'test-model',
+      messages: [{ role: 'user', content: 'Hello locally.' }],
+      stream: false,
+    },
+    { providerType: 'plugin', providerId: localPlugin.id },
+    'test-user'
+  );
+
+  assert.equal(response.message.content, 'Local MLX response');
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].config.headers.Authorization, undefined);
+  assert.equal(requests[0].config.headers['Content-Type'], 'application/json');
+});
 
 test('OpenAI-compatible Work payload preserves tool-call correlation', () => {
   const converted = toOpenAIWorkMessages(messages);

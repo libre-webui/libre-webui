@@ -56,6 +56,7 @@ import {
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
   buildPluginModelDiscoveryHeaders,
+  pluginRequiresApiKey,
   resolvePluginEndpoint,
   resolvePluginModelsEndpoint,
   validatePluginEndpointOverride,
@@ -448,9 +449,10 @@ class PluginService {
     // Find the active plugin that supports this model
     for (const plugin of activePlugins) {
       if (plugin.model_map.includes(model)) {
-        // Check if we have the required API key (from DB or env)
+        // Local OpenAI-compatible servers can explicitly opt out of auth by
+        // leaving both auth fields empty.
         const apiKey = this.getApiKey(plugin, userId);
-        if (!apiKey) {
+        if (pluginRequiresApiKey(plugin) && !apiKey) {
           continue;
         }
 
@@ -507,7 +509,7 @@ class PluginService {
     }
 
     const apiKey = this.getApiKey(activePlugin, userId);
-    if (!apiKey) {
+    if (pluginRequiresApiKey(activePlugin) && !apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
       );
@@ -591,7 +593,7 @@ class PluginService {
     }
 
     const apiKey = this.getApiKey(activePlugin, userId);
-    if (!apiKey) {
+    if (pluginRequiresApiKey(activePlugin) && !apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
       );

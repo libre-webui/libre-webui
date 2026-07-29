@@ -220,6 +220,24 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
       ['endpoint', 'max_tokens', 'stream']
     );
 
+    const mlxPlugin = JSON.parse(
+      fs.readFileSync(path.join(packedRoot, 'plugins', 'mlx-lm.json'), 'utf8')
+    );
+    assert.equal(mlxPlugin.id, 'mlx-lm');
+    assert.equal(mlxPlugin.name, 'MLX LM (Apple Silicon)');
+    assert.equal(
+      mlxPlugin.endpoint,
+      'http://127.0.0.1:8081/v1/chat/completions'
+    );
+    assert.deepEqual(mlxPlugin.auth, {
+      header: '',
+      prefix: '',
+      key_env: '',
+    });
+    assert.ok(
+      mlxPlugin.model_map.includes('prism-ml/Ternary-Bonsai-27B-mlx-2bit')
+    );
+
     const anthropicPlugin = JSON.parse(
       fs.readFileSync(
         path.join(packedRoot, 'plugins', 'anthropic.json'),
