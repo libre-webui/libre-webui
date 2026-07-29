@@ -234,6 +234,7 @@ type MockOptions = {
     email: string;
     role: 'admin' | 'user';
     token: string;
+    avatar?: string | null;
     preferences?: Partial<typeof defaultPreferences>;
   }>;
   sessions?: MockSession[];
@@ -502,12 +503,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           username: string;
           email: string;
           role: 'admin' | 'user';
+          avatar?: string | null;
         }
   ) => ({
     id: user.id,
     username: user.username,
     email: user.email,
     role: user.role,
+    avatar: user.avatar ?? null,
     createdAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
     updatedAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
   });

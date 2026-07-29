@@ -18,27 +18,99 @@
 import {
   ArrowDown,
   Brain,
-  Bot,
   ChevronDown,
   CircleAlert,
   Loader2,
   TerminalSquare,
-  User,
+  User as UserIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RichMessageContent } from '@/components/ui/RichMessageContent';
 import { StreamingMessageContent } from '@/components/ui/StreamingMessageContent';
 import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
+import type { User } from '@/types';
 import type { WorkLiveRun, WorkMessage, WorkTask } from '@/types/work';
 import { cn } from '@/utils';
 
 interface WorkConversationProps {
   task: WorkTask;
+  user: User | null;
   loading: boolean;
   loadingOlder: boolean;
   liveRun?: WorkLiveRun;
   onLoadOlder: () => Promise<WorkMessage[]>;
+}
+
+interface WorkAvatarProps {
+  role: 'assistant' | 'user';
+  user?: User | null;
+  size?: 'message' | 'empty';
+}
+
+function WorkAvatar({ role, user, size = 'message' }: WorkAvatarProps) {
+  const [failedAvatar, setFailedAvatar] = useState<string | null>(null);
+
+  if (role === 'assistant') {
+    return (
+      <div
+        role='img'
+        aria-label='Libre WebUI'
+        data-testid='work-assistant-avatar'
+        className={cn(
+          'flex shrink-0 items-center justify-center rounded-full border border-line bg-surface-raised shadow-subtle',
+          size === 'empty' ? 'mx-auto mb-4 h-12 px-3' : 'mt-0.5 h-8 px-2'
+        )}
+      >
+        <span
+          aria-hidden='true'
+          className={cn(
+            'libre-brand text-ink',
+            size === 'empty' ? 'text-sm' : 'text-[11px]'
+          )}
+        >
+          Libre
+        </span>
+      </div>
+    );
+  }
+
+  const label = user?.username || 'User';
+  const avatar = user?.avatar?.trim() || '';
+  const hasAvatar = Boolean(avatar) && avatar !== failedAvatar;
+
+  return (
+    <div
+      role={hasAvatar ? undefined : 'img'}
+      aria-label={hasAvatar ? undefined : label}
+      data-testid='work-user-avatar'
+      className={cn(
+        'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full',
+        hasAvatar
+          ? 'border border-line bg-surface-raised'
+          : 'bg-ink text-ink-inverse'
+      )}
+      title={label}
+    >
+      {hasAvatar ? (
+        <img
+          src={avatar}
+          alt={label}
+          className='h-full w-full object-cover'
+          onError={() => setFailedAvatar(avatar)}
+        />
+      ) : user ? (
+        <span
+          aria-hidden='true'
+          className='text-xs font-medium uppercase leading-none'
+        >
+          {user.username.charAt(0)}
+        </span>
+      ) : (
+        <UserIcon aria-hidden='true' className='h-4 w-4' />
+      )}
+    </div>
+  );
 }
 
 const metadataText = (
@@ -64,7 +136,7 @@ function ProviderReasoningMessage({ message }: { message: WorkMessage }) {
   return (
     <details
       data-testid='work-provider-reasoning'
-      className='group ms-11 overflow-hidden rounded-xl border border-line bg-surface-subtle/70'
+      className='group ms-14 overflow-hidden rounded-xl border border-line bg-surface-subtle/70'
     >
       <summary className='flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-ink-muted marker:hidden [&::-webkit-details-marker]:hidden'>
         <span className='flex min-w-0 items-center gap-2'>
@@ -164,6 +236,7 @@ function ToolMessage({ message }: { message: WorkMessage }) {
 
 export function WorkConversation({
   task,
+  user: currentUser,
   loading,
   loadingOlder,
   liveRun,
@@ -254,9 +327,7 @@ export function WorkConversation({
         <div className='mx-auto flex min-h-full max-w-3xl flex-col px-4 py-6 md:px-6'>
           {messages.length === 0 && !liveRun ? (
             <div className='m-auto max-w-md text-center'>
-              <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border border-line bg-surface-raised text-ink-muted'>
-                <Bot className='h-6 w-6' />
-              </div>
+              <WorkAvatar role='assistant' size='empty' />
               <h2 className='text-lg font-semibold tracking-tight text-ink'>
                 {t('work.conversation.ready', {
                   defaultValue: 'Workspace ready',
@@ -308,39 +379,32 @@ export function WorkConversation({
                 if (message.role === 'tool' || message.kind !== 'message') {
                   return <ToolMessage key={message.id} message={message} />;
                 }
-                const user = message.role === 'user';
+                const isUserMessage = message.role === 'user';
                 const streaming =
-                  !user &&
+                  !isUserMessage &&
                   task.status === 'running' &&
                   message.id === lastAssistantId &&
                   message.runId === task.activeRun?.id;
                 return (
                   <article
                     key={message.id}
-                    className={cn('flex gap-3', user && 'flex-row-reverse')}
+                    className={cn(
+                      'flex gap-3',
+                      isUserMessage && 'flex-row-reverse'
+                    )}
                   >
-                    <div
-                      className={cn(
-                        'mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl',
-                        user
-                          ? 'bg-ink text-ink-inverse'
-                          : 'border border-line bg-surface-raised text-ink-muted'
-                      )}
-                    >
-                      {user ? (
-                        <User className='h-4 w-4' />
-                      ) : (
-                        <Bot className='h-4 w-4' />
-                      )}
-                    </div>
+                    <WorkAvatar
+                      role={isUserMessage ? 'user' : 'assistant'}
+                      user={isUserMessage ? currentUser : undefined}
+                    />
                     <div
                       className={cn(
                         'min-w-0 max-w-[88%]',
-                        user &&
+                        isUserMessage &&
                           'rounded-2xl rounded-se-md bg-ink px-4 py-2.5 text-ink-inverse'
                       )}
                     >
-                      {user ? (
+                      {isUserMessage ? (
                         <p
                           dir='auto'
                           className='whitespace-pre-wrap break-words text-sm leading-relaxed'
@@ -367,9 +431,7 @@ export function WorkConversation({
                   className='flex gap-3'
                   data-testid='work-live-run-message'
                 >
-                  <div className='mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-raised text-ink-muted'>
-                    <Bot className='h-4 w-4' />
-                  </div>
+                  <WorkAvatar role='assistant' />
                   <div className='min-w-0 max-w-[92%] flex-1'>
                     <WorkLiveRunSurface run={liveRun} />
                   </div>
@@ -377,7 +439,7 @@ export function WorkConversation({
               )}
               {!liveRun &&
                 (task.status === 'preparing' || task.status === 'running') && (
-                  <div className='flex items-center gap-2 ps-11 text-xs text-ink-muted'>
+                  <div className='flex items-center gap-2 ps-14 text-xs text-ink-muted'>
                     <Loader2 className='h-3.5 w-3.5 animate-spin' />
                     {task.status === 'preparing'
                       ? t('work.status.preparing', {

@@ -96,7 +96,8 @@ export default function WorkPage() {
   const { taskId } = useParams<{ taskId: string }>();
   const preferences = useAppStore(state => state.preferences);
   const setPreferences = useAppStore(state => state.setPreferences);
-  const authenticatedUserId = useAuthStore(state => state.user?.id ?? null);
+  const authenticatedUser = useAuthStore(state => state.user);
+  const authenticatedUserId = authenticatedUser?.id ?? null;
   const [remoteDisclosureSaving, setRemoteDisclosureSaving] = useState(false);
   const chatModels = useChatStore(state => state.models);
   const chatSelectedModel = useChatStore(state => state.selectedModel);
@@ -1209,6 +1210,7 @@ export default function WorkPage() {
               <>
                 <WorkConversation
                   task={selectedTask}
+                  user={authenticatedUser}
                   liveRun={liveRun}
                   loading={loadingTask}
                   loadingOlder={loadingOlderMessages}

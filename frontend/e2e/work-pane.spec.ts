@@ -60,6 +60,77 @@ const task = (
   workspacePath: '/workspace' as const,
 });
 
+test('uses the Libre identity and authenticated user avatar in Work', async ({
+  page,
+}) => {
+  const avatar = `data:image/svg+xml,${encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" rx="32" fill="#ff7b52"/><text x="32" y="39" text-anchor="middle" font-size="24" fill="white">R</text></svg>'
+  )}`;
+  await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      allowUserModelPull: true,
+      version: '0.15.0-e2e',
+      turnstile: { enabled: false },
+    },
+    authUsers: [
+      {
+        id: 'avatar-user',
+        username: 'robin',
+        email: 'robin@example.test',
+        role: 'admin',
+        token: 'avatar-token',
+        avatar,
+        preferences: {
+          theme: {
+            mode: 'light',
+            adaptToAccent: false,
+            accent: 'custom',
+            customAccent: '#ff7b52',
+          },
+        },
+      },
+    ],
+    workTasks: [
+      task(
+        'avatar-workspace',
+        'Avatar workspace',
+        'The workspace identities now match Chat.'
+      ),
+    ],
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'avatar-token');
+  });
+
+  await page.goto('/work/avatar-workspace');
+
+  const userAvatar = page.getByTestId('work-user-avatar');
+  await expect(userAvatar).toHaveCount(1);
+  const userImage = userAvatar.getByRole('img', { name: 'robin' });
+  await expect(userImage).toBeVisible();
+  await expect(userImage).toHaveAttribute('src', avatar);
+  await expect
+    .poll(() =>
+      userImage.evaluate(image => (image as HTMLImageElement).naturalWidth)
+    )
+    .toBeGreaterThan(0);
+
+  const assistantAvatar = page.getByTestId('work-assistant-avatar');
+  await expect(assistantAvatar).toHaveCount(1);
+  await expect(assistantAvatar).toHaveAttribute('aria-label', 'Libre WebUI');
+  await expect(assistantAvatar).toContainText('Libre');
+
+  const html = page.locator('html');
+  await expect(html).not.toHaveClass(/dark/);
+  await page.getByRole('button', { name: 'Switch to dark mode' }).click();
+  await expect(html).toHaveClass(/dark/);
+  await expect(userImage).toBeVisible();
+  await expect(assistantAvatar).toBeVisible();
+});
+
 test('creates a persistent Work task without exposing network controls', async ({
   page,
 }) => {
@@ -1050,6 +1121,10 @@ test('renders live reasoning, tokens, skills, and tool activity from the Work ev
 
   const liveRun = page.getByTestId('work-live-run').first();
   await expect(liveRun).toBeVisible();
+  const liveRunMessage = page.getByTestId('work-live-run-message');
+  await expect(
+    liveRunMessage.getByTestId('work-assistant-avatar')
+  ).toContainText('Libre');
   await expect(liveRun).toContainText('1/48');
   await expect(liveRun).toContainText('Workspace skills · 1');
   await expect(liveRun).not.toContainText('Web app workflow');
