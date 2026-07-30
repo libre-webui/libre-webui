@@ -20,7 +20,11 @@ const distModule = relativePath =>
   );
 const [
   { closeDatabase, getDatabase },
-  { default: workAgentService },
+  {
+    default: workAgentService,
+    normalizeToolCalls,
+    restorePersistedWorkContext,
+  },
   { default: workEventService },
   {
     default: workModelProviderService,
@@ -642,5 +646,273 @@ test('truncated Work context drops orphaned provider state and tool results', ()
         message.kind === 'provider_state' || message.kind === 'tool_result'
     ),
     false
+  );
+});
+
+test('persisted Responses batches synthesize exact outputs for interrupted tools', () => {
+  const scope = 'persisted-partial-batch-scope';
+  const provider = {
+    providerType: 'plugin',
+    providerId: 'responses-provider',
+    model: 'responses-model',
+  };
+  const metadata = {
+    workProviderState: {
+      ...provider,
+      providerMetadata: {
+        openAIResponsesStateScope: scope,
+        openAIResponsesOutputItems: [
+          {
+            type: 'function_call',
+            call_id: 'call-a',
+            name: 'list_files',
+            arguments: '{"path":"."}',
+          },
+          {
+            type: 'function_call',
+            call_id: 'call-b',
+            name: 'read_file',
+            arguments: '{"path":"README.md"}',
+          },
+        ],
+      },
+    },
+  };
+
+  const restored = restorePersistedWorkContext(
+    [
+      {
+        role: 'assistant',
+        kind: 'provider_state',
+        content: '',
+        metadata,
+      },
+      {
+        role: 'tool',
+        kind: 'tool_result',
+        content: 'README contents',
+        metadata: { name: 'read_file', toolCallId: 'call-b' },
+      },
+      {
+        role: 'user',
+        kind: 'message',
+        content: 'Continue safely.',
+      },
+    ],
+    provider,
+    scope
+  );
+
+  assert.deepEqual(
+    restored.slice(0, 4).map(message => ({
+      role: message.role,
+      toolCallId: message.tool_call_id,
+      content: message.content,
+    })),
+    [
+      { role: 'assistant', toolCallId: undefined, content: '' },
+      {
+        role: 'tool',
+        toolCallId: 'call-b',
+        content: 'README contents',
+      },
+      {
+        role: 'tool',
+        toolCallId: 'call-a',
+        content:
+          'Tool execution was interrupted; outcome unknown. Inspect the workspace before retrying.',
+      },
+      {
+        role: 'user',
+        toolCallId: undefined,
+        content: 'Continue safely.',
+      },
+    ]
+  );
+});
+
+test('malformed persisted Responses calls fail closed to visible assistant text', () => {
+  const scope = 'malformed-persisted-state-scope';
+  const provider = {
+    providerType: 'plugin',
+    providerId: 'responses-provider',
+    model: 'responses-model',
+  };
+  const providerState = outputItems => ({
+    workProviderState: {
+      ...provider,
+      providerMetadata: {
+        openAIResponsesStateScope: scope,
+        openAIResponsesOutputItems: outputItems,
+      },
+    },
+  });
+  const malformedBatches = [
+    [{ type: 'function_call', name: 'list_files', arguments: '{}' }],
+    [
+      {
+        type: 'function_call',
+        call_id: '',
+        name: 'list_files',
+        arguments: '{}',
+      },
+    ],
+    [
+      {
+        type: 'function_call',
+        call_id: 'duplicate',
+        name: 'list_files',
+        arguments: '{}',
+      },
+      {
+        type: 'function_call',
+        call_id: 'duplicate',
+        name: 'read_file',
+        arguments: '{}',
+      },
+    ],
+  ];
+
+  for (const outputItems of malformedBatches) {
+    assert.deepEqual(
+      restorePersistedWorkContext(
+        [
+          {
+            role: 'assistant',
+            kind: 'message',
+            content: 'Visible safe answer.',
+            metadata: providerState(outputItems),
+          },
+        ],
+        provider,
+        scope
+      ),
+      [{ role: 'assistant', content: 'Visible safe answer.' }]
+    );
+    assert.deepEqual(
+      restorePersistedWorkContext(
+        [
+          {
+            role: 'assistant',
+            kind: 'provider_state',
+            content: '',
+            metadata: providerState(outputItems),
+          },
+        ],
+        provider,
+        scope
+      ),
+      []
+    );
+  }
+});
+
+test('Responses tool batches reject missing, blank, duplicate, and excessive IDs', () => {
+  const response = toolCalls => ({
+    message: {
+      role: 'assistant',
+      content: '',
+      providerMetadata: {
+        openAIResponsesStateScope: 'normalize-call-scope',
+        openAIResponsesOutputItems: toolCalls.map(call => ({
+          type: 'function_call',
+          call_id: call.id,
+          name: call.function?.name,
+          arguments: '{}',
+        })),
+      },
+      tool_calls: toolCalls,
+    },
+  });
+  const call = id => ({
+    ...(id === undefined ? {} : { id }),
+    function: { name: 'list_files', arguments: {} },
+  });
+
+  for (const calls of [
+    [call(undefined)],
+    [call('')],
+    [call('duplicate'), call('duplicate')],
+    Array.from({ length: 17 }, (_, index) => call(`call-${index}`)),
+  ]) {
+    assert.throws(
+      () => normalizeToolCalls(response(calls)),
+      error =>
+        error?.code === 'WORK_PROVIDER_INVALID_TOOL_CALLS' &&
+        error?.status === 502
+    );
+  }
+
+  assert.equal(
+    normalizeToolCalls(response([call(' exact-id ')])).at(0).id,
+    ' exact-id '
+  );
+});
+
+test('oversized Responses tool state fails before Work performs a side effect', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-oversized-state-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  let sideEffects = 0;
+  replaceMethod(workRuntimeService, 'prepare', async () => () => undefined);
+  replaceMethod(workRuntimeService, 'isPreviewRunning', async () => false);
+  replaceMethod(workRuntimeService, 'stopContainer', async () => undefined);
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    sideEffects += 1;
+    return { entries: [] };
+  });
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => 'oversized-state-scope'
+  );
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => ({
+      model: request.model,
+      created_at: new Date().toISOString(),
+      message: {
+        role: 'assistant',
+        content: '',
+        providerMetadata: {
+          openAIResponsesStateScope: 'oversized-state-scope',
+          openAIResponsesStateDropped: true,
+        },
+        tool_calls: [
+          {
+            id: 'oversized-call',
+            function: { name: 'list_files', arguments: { path: '.' } },
+          },
+        ],
+      },
+      done: true,
+    })
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Do not execute an unpersistable call.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(sideEffects, 0);
+  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  const events = workEventService.replay(detail.id, runId, 0).events;
+  assert.equal(
+    events.find(event => event.type === 'error')?.data.code,
+    'WORK_PROVIDER_INVALID_TOOL_CALLS'
   );
 });

@@ -37,6 +37,9 @@ const pluginValidation = await import(
 const pluginStreamAdapter = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'pluginStreamAdapter.js')).href
 );
+const openAIResponsesAdapter = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'openAIResponsesAdapter.js')).href
+);
 const ollamaStreaming = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'ollamaStreaming.js')).href
 );
@@ -227,6 +230,45 @@ test('toOllamaMessages replaces latest user content and normalizes image payload
   ]);
 });
 
+test('Chat context keeps complete user-led turns when the message limit cuts through a turn', () => {
+  const providerMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        id: 'message-leading',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'output_text', text: 'answer 0' }],
+      },
+    ],
+    openAIResponsesStateScope: 'leading-state',
+  };
+  const messages = [
+    { role: 'system', content: 'system' },
+    { role: 'user', content: 'prompt 0' },
+    { role: 'assistant', content: 'answer 0', providerMetadata },
+    { role: 'user', content: 'prompt 1' },
+    { role: 'assistant', content: 'answer 1' },
+    { role: 'user', content: 'prompt 2' },
+    { role: 'assistant', content: 'answer 2' },
+    { role: 'user', content: 'prompt 3' },
+    { role: 'assistant', content: 'answer 3' },
+    { role: 'user', content: 'prompt 4' },
+    { role: 'assistant', content: 'answer 4' },
+    { role: 'user', content: 'prompt 5' },
+  ];
+
+  const selected = chatContext.selectChatMessagesForContext(messages, 10);
+
+  assert.equal(selected.length, 10);
+  assert.equal(selected[0].role, 'system');
+  assert.equal(selected[1].role, 'user');
+  assert.equal(selected[1].content, 'prompt 1');
+  assert.equal(
+    selected.some(message => message.providerMetadata === providerMetadata),
+    false
+  );
+});
+
 test('withSystemPrompt replaces stale system messages with the persona prompt', () => {
   const result = chatContext.withSystemPrompt(
     [
@@ -384,6 +426,93 @@ test('preparePluginChatContext adds the current private user message unless rege
   assert.equal(regenerated.messages.length, 2);
   assert.equal(regenerated.messages[1].content, 'old answer');
   assert.deepEqual(regenerated.messages[1].providerMetadata, providerMetadata);
+});
+
+test('preparePluginChatContext never replays Responses function calls without Chat tool results', () => {
+  const result = pluginChatContext.preparePluginChatContext({
+    isPrivate: false,
+    persistedMessages: [
+      {
+        id: 'user-1',
+        role: 'user',
+        content: 'Inspect the project',
+        timestamp: 1,
+      },
+      {
+        id: 'assistant-1',
+        role: 'assistant',
+        content: 'I requested a project scan.',
+        timestamp: 2,
+        providerMetadata: {
+          openAIResponsesOutputItems: [
+            {
+              id: 'reasoning-1',
+              type: 'reasoning',
+              encrypted_content: 'opaque',
+            },
+            {
+              id: 'call-1',
+              type: 'function_call',
+              call_id: 'call-1',
+              name: 'scan_project',
+              arguments: '{}',
+            },
+          ],
+          openAIResponsesStateScope: 'chat-state',
+        },
+      },
+      {
+        id: 'user-2',
+        role: 'user',
+        content: 'What happened?',
+        timestamp: 3,
+      },
+    ],
+    content: 'What happened?',
+  });
+
+  assert.equal(result.messages[1].content, 'I requested a project scan.');
+  assert.equal(result.messages[1].providerMetadata, undefined);
+});
+
+test('Chat drops oversized Responses replay state before storage or private replay', () => {
+  const oversizedMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        id: 'reasoning-oversized-chat',
+        type: 'reasoning',
+        encrypted_content: 'x'.repeat(
+          openAIResponsesAdapter.OPENAI_RESPONSES_REPLAY_MAX_BYTES
+        ),
+      },
+    ],
+    openAIResponsesStateScope: 'oversized-chat-scope',
+  };
+  const sanitized = chatContext.sanitizeChatMessageProviderState({
+    role: 'assistant',
+    content: 'Visible answer.',
+    providerMetadata: oversizedMetadata,
+  });
+  assert.deepEqual(sanitized.providerMetadata, {
+    openAIResponsesStateDropped: true,
+  });
+
+  const prepared = pluginChatContext.preparePluginChatContext({
+    isPrivate: true,
+    persistedMessages: [],
+    messageHistory: [
+      { role: 'user', content: 'Earlier prompt.' },
+      {
+        role: 'assistant',
+        content: 'Visible answer.',
+        providerMetadata: oversizedMetadata,
+      },
+    ],
+    content: 'Continue.',
+  });
+  assert.deepEqual(prepared.messages[1].providerMetadata, {
+    openAIResponsesStateDropped: true,
+  });
 });
 
 test('preparePluginChatContext replaces the latest user message with RAG content', () => {

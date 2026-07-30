@@ -722,14 +722,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
       `INSERT INTO users (
         id, username, email, password_hash, role, created_at, updated_at
       ) VALUES (?, ?, ?, ?, 'admin', ?, ?)`
-    ).run(
-      id,
-      id,
-      `${id}@example.invalid`,
-      'not-a-real-hash',
-      now,
-      now
-    );
+    ).run(id, id, `${id}@example.invalid`, 'not-a-real-hash', now, now);
   };
   const capacityUserTwo = 'capacity-user-two';
   const capacityUserThree = 'capacity-user-three';
@@ -750,8 +743,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
         'local-tools-model',
         false
       ),
-    error =>
-      error?.status === 429 && error?.code === 'WORK_USER_RUNTIME_LIMIT'
+    error => error?.status === 429 && error?.code === 'WORK_USER_RUNTIME_LIMIT'
   );
   const capacityTaskTwo = service.createTaskWithRun(
     capacityUserTwo,
@@ -883,13 +875,9 @@ test('task retirement gates every new mutation before cleanup', async t => {
 
   const capacityRuntime = new runtimeModule.WorkRuntimeService();
   capacityRuntime.ensureImage = async () => {};
-  capacityRuntime.withLifecycleLock = async (_taskId, operation) =>
-    operation();
+  capacityRuntime.withLifecycleLock = async (_taskId, operation) => operation();
   capacityRuntime.prepareWithLock = async () => {};
-  const taskOneRecord = service.requireTaskRecord(
-    capacityTaskOne.id,
-    userId
-  );
+  const taskOneRecord = service.requireTaskRecord(capacityTaskOne.id, userId);
   const taskTwoRecord = service.requireTaskRecord(
     capacityTaskTwo.id,
     capacityUserTwo
@@ -902,8 +890,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   const releaseUserSlot = await capacityRuntime.prepare(taskOneRecord);
   await assert.rejects(
     capacityRuntime.prepare(service.requireTaskRecord(created.id, userId)),
-    error =>
-      error?.status === 429 && error?.code === 'WORK_USER_RUNTIME_LIMIT'
+    error => error?.status === 429 && error?.code === 'WORK_USER_RUNTIME_LIMIT'
   );
   releaseUserSlot();
 
@@ -971,8 +958,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   assert.equal(teardownRuntime.recoveryPending, true);
   assert.throws(
     () => teardownRuntime.assertAcceptingWork(),
-    error =>
-      error?.status === 503 && error?.code === 'WORK_RUNTIME_RECOVERING'
+    error => error?.status === 503 && error?.code === 'WORK_RUNTIME_RECOVERING'
   );
   stopFails = false;
   const retriedTeardown = await teardownRuntime.beginRecovery([taskOneRecord]);
@@ -987,8 +973,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
   assert.equal(blockedRuntime.recoveryPending, true);
   assert.throws(
     () => blockedRuntime.assertAcceptingWork(),
-    error =>
-      error?.status === 503 && error?.code === 'WORK_RUNTIME_RECOVERING'
+    error => error?.status === 503 && error?.code === 'WORK_RUNTIME_RECOVERING'
   );
   blockedRuntime.beginShutdown();
 
@@ -1013,4 +998,285 @@ test('task retirement gates every new mutation before cleanup', async t => {
   cleanupRuntime.finalizeTaskRemoval(retiredRecord.id);
   service.deleteTask(retiredRecord.id, userId);
   db.prepare(`UPDATE users SET role = 'admin' WHERE id = ?`).run(userId);
+});
+
+test('Work message metadata and model context enforce exact byte bounds', async t => {
+  const dataDir = mkdtempSync(path.join(tmpdir(), 'libre-work-messages-'));
+  const previousDataDir = process.env.DATA_DIR;
+  process.env.DATA_DIR = dataDir;
+
+  const databaseModule = await import(
+    pathToFileURL(path.join(repoRoot, 'backend', 'dist', 'db.js')).href
+  );
+  const taskServiceModule = await import(
+    pathToFileURL(
+      path.join(repoRoot, 'backend', 'dist', 'services', 'workTaskService.js')
+    ).href
+  );
+  const service = new taskServiceModule.WorkTaskService();
+  const db = databaseModule.getDatabase();
+  const userId = 'message-bounds-user';
+  const now = Date.now();
+
+  t.after(() => {
+    databaseModule.closeDatabase();
+    if (previousDataDir === undefined) delete process.env.DATA_DIR;
+    else process.env.DATA_DIR = previousDataDir;
+    rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  db.prepare(
+    `INSERT INTO users (
+      id, username, email, password_hash, role, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, 'admin', ?, ?)`
+  ).run(
+    userId,
+    userId,
+    `${userId}@example.invalid`,
+    'not-a-real-hash',
+    now,
+    now
+  );
+
+  const persistenceTask = service.createTaskWithRun(
+    userId,
+    'Preserve exact provider response items',
+    'local-tools-model',
+    false
+  );
+  const exactMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        type: 'reasoning',
+        id: 'reasoning-exact',
+        encrypted_content: 'e'.repeat(90_000),
+      },
+    ],
+  };
+  assert.ok(
+    Buffer.byteLength(JSON.stringify(exactMetadata), 'utf8') <
+      taskServiceModule.WORK_MESSAGE_METADATA_MAX_BYTES
+  );
+  const exactMessage = service.addMessage(
+    persistenceTask.id,
+    persistenceTask.activeRun.id,
+    'assistant',
+    'provider_state',
+    '',
+    exactMetadata
+  );
+  assert.deepEqual(exactMessage.metadata, exactMetadata);
+  const storedExactMetadata = db
+    .prepare('SELECT metadata FROM work_messages WHERE id = ?')
+    .get(exactMessage.id).metadata;
+  assert.equal(storedExactMetadata, JSON.stringify(exactMetadata));
+  assert.deepEqual(
+    service
+      .getRecentModelContextMessages(persistenceTask.id)
+      .find(message => message.id === exactMessage.id)?.metadata,
+    exactMetadata
+  );
+
+  const oversizedMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        type: 'reasoning',
+        id: 'reasoning-oversized',
+        encrypted_content: 'o'.repeat(110_000),
+      },
+    ],
+  };
+  const droppedMessage = service.addMessage(
+    persistenceTask.id,
+    persistenceTask.activeRun.id,
+    'assistant',
+    'provider_state',
+    '',
+    oversizedMetadata
+  );
+  assert.equal(droppedMessage.metadata, undefined);
+  assert.equal(
+    db
+      .prepare('SELECT metadata FROM work_messages WHERE id = ?')
+      .get(droppedMessage.id).metadata,
+    null
+  );
+  service.updateRun(persistenceTask.activeRun.id, 'completed', {
+    finished: true,
+  });
+  service.updateTaskStatus(persistenceTask.id, 'completed');
+
+  const pageMetadata = { exact: 'p'.repeat(80_000) };
+  const pageMessages = Array.from({ length: 13 }, (_, index) =>
+    service.addMessage(
+      persistenceTask.id,
+      persistenceTask.activeRun.id,
+      'assistant',
+      'message',
+      `page-${index}`,
+      pageMetadata
+    )
+  );
+  const boundedPage = service.getMessagePage(persistenceTask.id);
+  assert.equal(boundedPage.messages.length, 12);
+  assert.equal(boundedPage.hasMore, true);
+  assert.ok(
+    boundedPage.messages.reduce(
+      (bytes, message) =>
+        bytes +
+        Buffer.byteLength(message.content, 'utf8') +
+        Buffer.byteLength(JSON.stringify(message.metadata || {}), 'utf8'),
+      0
+    ) <= 1_000_000
+  );
+  assert.ok(
+    boundedPage.messages.every(
+      message => message.metadata?.exact === pageMetadata.exact
+    )
+  );
+  assert.equal(
+    boundedPage.messages.some(message => message.id === pageMessages[0].id),
+    false
+  );
+
+  const invalidPageTask = service.createTaskWithRun(
+    userId,
+    'Advance past an entirely oversized legacy page',
+    'local-tools-model',
+    false
+  );
+  for (let index = 0; index < 201; index += 1) {
+    service.addMessage(
+      invalidPageTask.id,
+      invalidPageTask.activeRun.id,
+      'assistant',
+      'message',
+      `legacy-page-${index}`
+    );
+  }
+  db.prepare(`UPDATE work_messages SET content = ? WHERE task_id = ?`).run(
+    'x'.repeat(100_001),
+    invalidPageTask.id
+  );
+  const invalidFirstPage = service.getMessagePage(invalidPageTask.id);
+  assert.deepEqual(invalidFirstPage.messages, []);
+  assert.equal(invalidFirstPage.hasMore, true);
+  assert.equal(typeof invalidFirstPage.cursor, 'number');
+  const invalidSecondPage = service.getMessagePage(
+    invalidPageTask.id,
+    invalidFirstPage.cursor
+  );
+  assert.deepEqual(invalidSecondPage.messages, []);
+  assert.equal(invalidSecondPage.hasMore, false);
+  assert.equal(invalidSecondPage.cursor, undefined);
+  service.updateRun(invalidPageTask.activeRun.id, 'completed', {
+    finished: true,
+  });
+  service.updateTaskStatus(invalidPageTask.id, 'completed');
+
+  const contextTask = service.createTaskWithRun(
+    userId,
+    'Skip oversized historical context rows',
+    'local-tools-model',
+    false
+  );
+  const budgetMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        type: 'reasoning',
+        id: 'reasoning-within-cap',
+        encrypted_content: 'b'.repeat(70_000),
+      },
+    ],
+  };
+  const firstBudgetMessage = service.addMessage(
+    contextTask.id,
+    contextTask.activeRun.id,
+    'assistant',
+    'message',
+    'a'.repeat(90_000),
+    budgetMetadata
+  );
+  const latestBudgetMessage = service.addMessage(
+    contextTask.id,
+    contextTask.activeRun.id,
+    'assistant',
+    'message',
+    'z'.repeat(90_000),
+    budgetMetadata
+  );
+
+  const legacyOversizedMetadata = JSON.stringify({
+    openAIResponsesOutputItems: [
+      {
+        type: 'reasoning',
+        id: 'legacy-oversized',
+        encrypted_content: 'l'.repeat(110_000),
+      },
+    ],
+  });
+  db.prepare(
+    `INSERT INTO work_messages (
+      id, task_id, run_id, role, kind, content, metadata,
+      message_index, created_at
+    ) VALUES (?, ?, ?, 'assistant', 'message', ?, ?, ?, ?)`
+  ).run(
+    'legacy-oversized-metadata',
+    contextTask.id,
+    contextTask.activeRun.id,
+    'legacy metadata must be dropped',
+    legacyOversizedMetadata,
+    3,
+    now + 3
+  );
+  db.prepare(
+    `INSERT INTO work_messages (
+      id, task_id, run_id, role, kind, content, metadata,
+      message_index, created_at
+    ) VALUES (?, ?, ?, 'assistant', 'message', ?, NULL, ?, ?)`
+  ).run(
+    'legacy-oversized-first-row',
+    contextTask.id,
+    contextTask.activeRun.id,
+    'x'.repeat(300_000),
+    4,
+    now + 4
+  );
+
+  const legacyMessage = service
+    .getMessages(contextTask.id)
+    .find(message => message.id === 'legacy-oversized-metadata');
+  assert.ok(legacyMessage);
+  assert.equal(legacyMessage.metadata, undefined);
+
+  const retainedContext = service.getRecentModelContextMessages(contextTask.id);
+  assert.deepEqual(
+    retainedContext.map(message => message.id),
+    [latestBudgetMessage.id]
+  );
+  assert.ok(
+    retainedContext.every(
+      message =>
+        Buffer.byteLength(message.content, 'utf8') <=
+          taskServiceModule.WORK_MESSAGE_MAX_BYTES &&
+        Buffer.byteLength(JSON.stringify(message.metadata || {}), 'utf8') <=
+          taskServiceModule.WORK_MESSAGE_METADATA_MAX_BYTES
+    )
+  );
+  assert.ok(
+    retainedContext.reduce(
+      (bytes, message) =>
+        bytes +
+        Buffer.byteLength(message.content, 'utf8') +
+        Buffer.byteLength(JSON.stringify(message.metadata || {}), 'utf8'),
+      0
+    ) <= 256_000
+  );
+  assert.deepEqual(
+    service
+      .getRecentConversationMessages(contextTask.id)
+      .map(message => message.id),
+    [latestBudgetMessage.id]
+  );
+  assert.notEqual(firstBudgetMessage.id, latestBudgetMessage.id);
 });

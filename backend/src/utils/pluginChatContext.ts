@@ -17,6 +17,7 @@
 
 import {
   replaceLatestUserMessageContent,
+  sanitizeChatMessageProviderState,
   toChatMessages,
   type ChatContextMessage,
 } from './chatContext.js';
@@ -106,6 +107,11 @@ export function preparePluginChatContext({
         'private-context'
       )
     : [...persistedMessages];
+
+  // Legacy sessions and private client histories may contain Responses API
+  // function calls without matching tool results. Never replay that raw state
+  // from Chat; the visible assistant content remains in the conversation.
+  messages = messages.map(sanitizeChatMessageProviderState);
 
   if (hasRelevantContext && enhancedContent) {
     messages = replaceLatestUserMessageContent(messages, enhancedContent);

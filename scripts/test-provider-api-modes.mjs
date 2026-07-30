@@ -77,6 +77,41 @@ const pluginRoutesModule = await import(
 );
 const { default: axios } = await import('axios');
 
+const responsesStream = events =>
+  new Response(
+    events.map(event => `data: ${JSON.stringify(event)}\n\n`).join(''),
+    {
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+    }
+  );
+
+const collectResponsesStream = async (events, stateScope) => {
+  const chunks = [];
+  for await (const chunk of streamAdapter.streamOpenAIResponsesResponse(
+    responsesStream(events),
+    stateScope
+  )) {
+    chunks.push(chunk);
+  }
+  return chunks;
+};
+
+const collectResponsesStreamError = async events => {
+  const chunks = [];
+  let error;
+  try {
+    for await (const chunk of streamAdapter.streamOpenAIResponsesResponse(
+      responsesStream(events)
+    )) {
+      chunks.push(chunk);
+    }
+  } catch (caught) {
+    error = caught;
+  }
+  return { chunks, error };
+};
+
 test('Responses payload is stateless and maps chat fields to Responses fields', () => {
   const payload = adapter.buildOpenAIResponsesPayload(
     'gpt-test',
@@ -900,6 +935,83 @@ test('Chat adapter sends and normalizes Responses API payloads', () => {
   );
 });
 
+test('Chat Responses streaming accepts compatible JSON fallback responses', async () => {
+  const service = pluginServiceModule.default;
+  const plugin = {
+    id: 'json-responses-provider',
+    name: 'JSON Responses provider',
+    type: 'completion',
+    endpoint: 'https://provider.example/v1/responses',
+    api_mode: 'responses',
+    auth: {
+      header: 'Authorization',
+      prefix: 'Bearer ',
+      key_env: 'JSON_RESPONSES_API_KEY',
+    },
+    model_map: ['gpt-json'],
+  };
+  const messageItem = {
+    id: 'message-json-fallback',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'JSON fallback works.' }],
+  };
+  const originals = {
+    getActivePluginForModel: service.getActivePluginForModel,
+    getApiKey: service.getApiKey,
+    getPluginVariables: service.getPluginVariables,
+    fetch: globalThis.fetch,
+  };
+
+  try {
+    service.getActivePluginForModel = () => plugin;
+    service.getApiKey = () => 'json-key';
+    service.getPluginVariables = () => ({});
+    globalThis.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          id: 'response-json-fallback',
+          status: 'completed',
+          model: 'gpt-json',
+          output: [messageItem],
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+    const chunks = [];
+    for await (const chunk of service.executePluginStreamRequest(
+      'gpt-json',
+      [{ role: 'user', content: 'Hello' }],
+      {},
+      'json-user',
+      plugin.id
+    )) {
+      chunks.push(chunk);
+    }
+    assert.equal(
+      chunks
+        .filter(chunk => chunk.type === 'content')
+        .map(chunk => chunk.content)
+        .join(''),
+      'JSON fallback works.'
+    );
+    assert.deepEqual(
+      chunks.at(-1).providerMetadata[
+        adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+      ],
+      [messageItem]
+    );
+  } finally {
+    service.getActivePluginForModel = originals.getActivePluginForModel;
+    service.getApiKey = originals.getApiKey;
+    service.getPluginVariables = originals.getPluginVariables;
+    globalThis.fetch = originals.fetch;
+  }
+});
+
 test('Responses streaming emits typed content, reasoning, one correlated call, and usage', async () => {
   const reasoningItem = {
     id: 'reasoning-stream',
@@ -1125,6 +1237,511 @@ test('Responses streaming emits refusals once and falls back to terminal refusal
       },
     },
   ]);
+});
+
+test('Responses nonstream rejects nonterminal statuses and invalid call IDs', () => {
+  for (const status of ['queued', 'in_progress', 'cancelled']) {
+    assert.throws(
+      () =>
+        adapter.normalizeOpenAIResponsesResponse(
+          { status, output: [] },
+          'gpt-test'
+        ),
+      new RegExp(`unexpected response status "${status}"`)
+    );
+  }
+
+  const invalidOutputs = [
+    {
+      label: 'missing call_id',
+      output: [
+        {
+          id: 'function-missing',
+          type: 'function_call',
+          name: 'read_file',
+          arguments: '{}',
+        },
+      ],
+      pattern: /missing an exact call_id or name/,
+    },
+    {
+      label: 'malformed call_id',
+      output: [
+        {
+          id: 'function-malformed',
+          type: 'function_call',
+          call_id: 42,
+          name: 'read_file',
+          arguments: '{}',
+        },
+      ],
+      pattern: /missing an exact call_id or name/,
+    },
+    {
+      label: 'duplicate call_id',
+      output: [
+        {
+          id: 'function-duplicate-a',
+          type: 'function_call',
+          call_id: 'call-duplicate',
+          name: 'read_file',
+          arguments: '{"path":"a.txt"}',
+        },
+        {
+          id: 'function-duplicate-b',
+          type: 'function_call',
+          call_id: 'call-duplicate',
+          name: 'read_file',
+          arguments: '{"path":"b.txt"}',
+        },
+      ],
+      pattern: /duplicate function call_id "call-duplicate"/,
+    },
+    {
+      label: 'missing arguments',
+      output: [
+        {
+          id: 'function-missing-arguments',
+          type: 'function_call',
+          call_id: 'call-missing-arguments',
+          name: 'read_file',
+        },
+      ],
+      pattern: /or string arguments/,
+    },
+    {
+      label: 'object arguments',
+      output: [
+        {
+          id: 'function-object-arguments',
+          type: 'function_call',
+          call_id: 'call-object-arguments',
+          name: 'read_file',
+          arguments: { path: 'README.md' },
+        },
+      ],
+      pattern: /or string arguments/,
+    },
+  ];
+
+  for (const { label, output, pattern } of invalidOutputs) {
+    assert.throws(
+      () =>
+        adapter.normalizeOpenAIResponsesResponse(
+          { status: 'completed', output },
+          'gpt-test'
+        ),
+      pattern,
+      label
+    );
+  }
+});
+
+test('Responses replay bounds preserve visible text and reject oversized matching state', () => {
+  const stateScope = 'matching-state-scope';
+  const visibleItem = {
+    id: 'message-visible',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'The visible answer survives.' }],
+  };
+  const oversizedReasoningItem = {
+    id: 'reasoning-oversized',
+    type: 'reasoning',
+    encrypted_content: 'r'.repeat(adapter.OPENAI_RESPONSES_REPLAY_MAX_BYTES),
+    summary: [],
+  };
+  const normalized = adapter.normalizeOpenAIResponsesResponse(
+    {
+      status: 'completed',
+      output: [visibleItem, oversizedReasoningItem],
+    },
+    'gpt-test',
+    stateScope
+  );
+
+  assert.equal(
+    normalized.choices[0].message.content,
+    'The visible answer survives.'
+  );
+  assert.deepEqual(normalized.providerMetadata, {
+    [adapter.OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY]: true,
+    [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+  });
+  assert.equal(
+    adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY in
+      normalized.providerMetadata,
+    false
+  );
+
+  const replayInput = adapter.toOpenAIResponsesInput(
+    [
+      { role: 'user', content: 'Continue.' },
+      {
+        role: 'assistant',
+        content: 'Use only this normalized answer.',
+        providerMetadata: {
+          [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [
+            oversizedReasoningItem,
+          ],
+          [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+        },
+      },
+    ],
+    stateScope
+  );
+  assert.deepEqual(replayInput, [
+    { role: 'user', content: 'Continue.' },
+    {
+      role: 'assistant',
+      content: 'Use only this normalized answer.',
+    },
+  ]);
+});
+
+test('Responses terminal output replaces transient streamed function calls', async () => {
+  const transientCall = {
+    id: 'function-transient',
+    type: 'function_call',
+    call_id: 'call-transient',
+    name: 'delete_file',
+    arguments: '{"path":"wrong.txt"}',
+  };
+  const terminalMessage = {
+    id: 'message-terminal',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'Use the terminal result.' }],
+  };
+  const terminalCall = {
+    id: 'function-terminal',
+    type: 'function_call',
+    call_id: 'call-terminal',
+    name: 'read_file',
+    arguments: '{"path":"right.txt"}',
+  };
+  const chunks = await collectResponsesStream([
+    {
+      type: 'response.output_item.added',
+      output_index: 0,
+      item: transientCall,
+    },
+    {
+      type: 'response.completed',
+      response: {
+        status: 'completed',
+        output: [terminalMessage, terminalCall],
+      },
+    },
+  ]);
+
+  assert.deepEqual(
+    chunks.filter(chunk => chunk.type === 'content'),
+    [{ type: 'content', content: 'Use the terminal result.' }]
+  );
+  assert.deepEqual(
+    chunks.filter(chunk => chunk.type === 'tool_call'),
+    [
+      {
+        type: 'tool_call',
+        toolCall: {
+          id: 'call-terminal',
+          name: 'read_file',
+          arguments: '{"path":"right.txt"}',
+        },
+      },
+    ]
+  );
+  assert.deepEqual(chunks.at(-1), {
+    type: 'done',
+    providerMetadata: {
+      [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [
+        terminalMessage,
+        terminalCall,
+      ],
+    },
+  });
+});
+
+test('Responses streaming accepts only the first terminal event', async () => {
+  const firstItem = {
+    id: 'message-first-terminal',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'First terminal wins.' }],
+  };
+  const laterItem = {
+    id: 'message-later-terminal',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'This must be ignored.' }],
+  };
+  const firstTerminal = {
+    type: 'response.completed',
+    response: { status: 'completed', output: [firstItem] },
+  };
+  const trailingEvents = [
+    {
+      type: 'response.completed',
+      response: { status: 'completed', output: [laterItem] },
+    },
+    {
+      type: 'response.error',
+      error: { message: 'Error after completion must be ignored.' },
+    },
+  ];
+
+  for (const trailingEvent of trailingEvents) {
+    const chunks = await collectResponsesStream([firstTerminal, trailingEvent]);
+    assert.deepEqual(chunks, [
+      { type: 'content', content: 'First terminal wins.' },
+      {
+        type: 'done',
+        providerMetadata: {
+          [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [firstItem],
+        },
+      },
+    ]);
+  }
+});
+
+test('Responses streaming reconciles partial text with terminal output', async () => {
+  const terminalItem = {
+    id: 'message-reconciled-terminal',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'Hello world' }],
+  };
+  const chunks = await collectResponsesStream([
+    {
+      type: 'response.output_text.delta',
+      delta: 'Hello ',
+    },
+    {
+      type: 'response.completed',
+      response: { status: 'completed', output: [terminalItem] },
+    },
+  ]);
+
+  assert.deepEqual(
+    chunks.filter(chunk => chunk.type === 'content'),
+    [
+      { type: 'content', content: 'Hello ' },
+      { type: 'content', content: 'world' },
+    ]
+  );
+});
+
+test('Responses streaming orders transient calls by output_index', async () => {
+  const firstCall = {
+    id: 'function-first',
+    type: 'function_call',
+    call_id: 'call-first',
+    name: 'read_file',
+    arguments: '{"path":"first.txt"}',
+  };
+  const secondCall = {
+    id: 'function-second',
+    type: 'function_call',
+    call_id: 'call-second',
+    name: 'read_file',
+    arguments: '{"path":"second.txt"}',
+  };
+  const chunks = await collectResponsesStream([
+    {
+      type: 'response.output_item.added',
+      output_index: 1,
+      item: secondCall,
+    },
+    {
+      type: 'response.output_item.added',
+      output_index: 0,
+      item: firstCall,
+    },
+    {
+      type: 'response.completed',
+      response: { status: 'completed' },
+    },
+  ]);
+
+  assert.deepEqual(
+    chunks
+      .filter(chunk => chunk.type === 'tool_call')
+      .map(chunk => chunk.toolCall.id),
+    ['call-first', 'call-second']
+  );
+  assert.deepEqual(
+    chunks.at(-1).providerMetadata[
+      adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+    ],
+    [firstCall, secondCall]
+  );
+});
+
+test('Responses argument deltas persist the exact emitted function call', async () => {
+  const finalArguments = '{"path":"README.md","line":12}';
+  const chunks = await collectResponsesStream([
+    {
+      type: 'response.output_item.added',
+      output_index: 0,
+      item: {
+        id: 'function-arguments',
+        type: 'function_call',
+        call_id: 'call-arguments',
+        name: 'read_file',
+        arguments: '',
+      },
+    },
+    {
+      type: 'response.function_call_arguments.delta',
+      item_id: 'function-arguments',
+      output_index: 0,
+      delta: '{"path":"README.md",',
+    },
+    {
+      type: 'response.function_call_arguments.delta',
+      item_id: 'function-arguments',
+      output_index: 0,
+      delta: '"line":12}',
+    },
+    {
+      type: 'response.function_call_arguments.done',
+      item_id: 'function-arguments',
+      output_index: 0,
+      name: 'read_file',
+      arguments: finalArguments,
+    },
+    {
+      type: 'response.completed',
+      response: { status: 'completed' },
+    },
+  ]);
+
+  const emittedCall = chunks.find(chunk => chunk.type === 'tool_call').toolCall;
+  const persistedCall =
+    chunks.at(-1).providerMetadata[
+      adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+    ][0];
+  assert.equal(emittedCall.arguments, finalArguments);
+  assert.equal(persistedCall.arguments, emittedCall.arguments);
+  assert.equal(persistedCall.call_id, emittedCall.id);
+  assert.equal(persistedCall.name, emittedCall.name);
+});
+
+test('Responses streaming marks oversized replay state as dropped', async () => {
+  const stateScope = 'oversized-stream-scope';
+  const oversizedReasoningItem = {
+    id: 'reasoning-stream-oversized',
+    type: 'reasoning',
+    encrypted_content: 's'.repeat(adapter.OPENAI_RESPONSES_REPLAY_MAX_BYTES),
+    summary: [],
+  };
+  const visibleItem = {
+    id: 'message-stream-visible',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'Visible stream result.' }],
+  };
+  const chunks = await collectResponsesStream(
+    [
+      {
+        type: 'response.completed',
+        response: {
+          status: 'completed',
+          output: [oversizedReasoningItem, visibleItem],
+        },
+      },
+    ],
+    stateScope
+  );
+
+  assert.deepEqual(chunks, [
+    { type: 'content', content: 'Visible stream result.' },
+    {
+      type: 'done',
+      providerMetadata: {
+        [adapter.OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY]: true,
+        [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+      },
+    },
+  ]);
+});
+
+test('Responses invalid streams fail before emitting any tool call', async () => {
+  const validCall = index => ({
+    id: `function-${index}`,
+    type: 'function_call',
+    call_id: `call-${index}`,
+    name: 'read_file',
+    arguments: `{"path":"${index}.txt"}`,
+  });
+  const invalidOutputs = [
+    {
+      label: 'missing call_id',
+      output: [{ ...validCall('missing'), call_id: undefined }],
+    },
+    {
+      label: 'malformed call_id',
+      output: [{ ...validCall('malformed'), call_id: 42 }],
+    },
+    {
+      label: 'duplicate call_id',
+      output: [
+        validCall('duplicate'),
+        { ...validCall('other'), call_id: 'call-duplicate' },
+      ],
+    },
+    {
+      label: 'seventeen calls',
+      output: Array.from({ length: 17 }, (_, index) => validCall(index)),
+    },
+    {
+      label: 'missing arguments',
+      output: [{ ...validCall('missing-arguments'), arguments: undefined }],
+    },
+    {
+      label: 'object arguments',
+      output: [
+        {
+          ...validCall('object-arguments'),
+          arguments: { path: 'README.md' },
+        },
+      ],
+    },
+  ];
+
+  for (const { label, output } of invalidOutputs) {
+    const { chunks, error } = await collectResponsesStreamError([
+      {
+        type: 'response.completed',
+        response: { status: 'completed', output },
+      },
+    ]);
+    assert.ok(error, `${label} should reject the stream`);
+    assert.match(
+      error.message,
+      /Responses stream returned invalid function calls/,
+      label
+    );
+    assert.equal(
+      chunks.some(chunk => chunk.type === 'tool_call'),
+      false,
+      label
+    );
+  }
+});
+
+test('Responses streaming rejects nonterminal response statuses', async () => {
+  for (const status of ['queued', 'in_progress', 'cancelled']) {
+    const { chunks, error } = await collectResponsesStreamError([
+      {
+        type: 'response.completed',
+        response: { status, output: [] },
+      },
+    ]);
+    assert.equal(chunks.length, 0);
+    assert.match(error?.message || '', /unexpected Responses status/);
+  }
 });
 
 test('plugin routes and activation keep model discovery scoped to the authenticated user', async () => {

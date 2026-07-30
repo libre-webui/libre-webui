@@ -26,6 +26,10 @@ export const OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY =
   'openAIResponsesIncompleteReason';
 export const OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY =
   'openAIResponsesStateScope';
+export const OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY =
+  'openAIResponsesStateDropped';
+export const OPENAI_RESPONSES_REPLAY_MAX_ITEMS = 64;
+export const OPENAI_RESPONSES_REPLAY_MAX_BYTES = 90_000;
 
 export interface OpenAICompatibleChatMessage {
   role: string;
@@ -84,6 +88,39 @@ function asObject(value: unknown): JsonObject | undefined {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as JsonObject)
     : undefined;
+}
+
+export function boundedOpenAIResponsesOutputItems(value: unknown): {
+  items?: JsonObject[];
+  dropped: boolean;
+} {
+  if (!Array.isArray(value) || value.length === 0) {
+    return { dropped: false };
+  }
+  if (value.length > OPENAI_RESPONSES_REPLAY_MAX_ITEMS) {
+    return { dropped: true };
+  }
+
+  const items: JsonObject[] = [];
+  for (const rawItem of value) {
+    const item = asObject(rawItem);
+    if (!item) {
+      return { dropped: true };
+    }
+    items.push({ ...item });
+  }
+
+  try {
+    if (
+      Buffer.byteLength(JSON.stringify(items), 'utf8') >
+      OPENAI_RESPONSES_REPLAY_MAX_BYTES
+    ) {
+      return { dropped: true };
+    }
+  } catch {
+    return { dropped: true };
+  }
+  return { items, dropped: false };
 }
 
 function nonEmptyString(value: unknown): string | undefined {
@@ -177,10 +214,12 @@ function toResponsesFunctionCalls(
       return [];
     }
 
-    const callId =
-      nonEmptyString(call.call_id) ||
-      nonEmptyString(call.id) ||
-      `call-${messageIndex}-${callIndex}`;
+    const callId = nonEmptyString(call.call_id) || nonEmptyString(call.id);
+    if (!callId) {
+      throw new Error(
+        `Responses history function call ${messageIndex}:${callIndex} is missing an exact call_id`
+      );
+    }
     const args =
       fn && 'arguments' in fn ? fn.arguments : (call.arguments ?? undefined);
 
@@ -208,18 +247,14 @@ export function toOpenAIResponsesInput(
     if (message.role === 'assistant') {
       const storedStateScope =
         message.providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY];
-      const responseOutputItems = Array.isArray(
+      const responseOutputItems = boundedOpenAIResponsesOutputItems(
         message.providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
-      )
-        ? message.providerMetadata[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
-        : [];
+      ).items;
       const replayableOutputItems =
-        expectedStateScope === undefined ||
-        storedStateScope === expectedStateScope
-          ? responseOutputItems.flatMap(rawItem => {
-              const item = asObject(rawItem);
-              return item ? [{ ...item }] : [];
-            })
+        responseOutputItems &&
+        (expectedStateScope === undefined ||
+          storedStateScope === expectedStateScope)
+          ? responseOutputItems
           : [];
       if (replayableOutputItems.length > 0) {
         return replayableOutputItems;
@@ -227,13 +262,17 @@ export function toOpenAIResponsesInput(
     }
 
     if (message.role === 'tool') {
+      const callId =
+        nonEmptyString(message.call_id) || nonEmptyString(message.tool_call_id);
+      if (!callId) {
+        throw new Error(
+          `Responses history tool result ${messageIndex} is missing an exact call_id`
+        );
+      }
       return [
         {
           type: 'function_call_output',
-          call_id:
-            nonEmptyString(message.call_id) ||
-            nonEmptyString(message.tool_call_id) ||
-            `call-${messageIndex}`,
+          call_id: callId,
           output: stringifyJsonValue(message.content),
         },
       ];
@@ -366,22 +405,21 @@ function reasoningSummaryFromItem(item: JsonObject): string[] {
 }
 
 function functionCallFromItem(
-  item: JsonObject,
-  index: number
+  item: JsonObject
 ): NormalizedOpenAIResponsesToolCall | undefined {
   if (item.type !== 'function_call') {
     return undefined;
   }
 
   const name = nonEmptyString(item.name);
-  if (!name) {
+  if (!name || typeof item.arguments !== 'string') {
     return undefined;
   }
 
-  const callId =
-    nonEmptyString(item.call_id) ||
-    nonEmptyString(item.id) ||
-    `response-call-${index}`;
+  const callId = nonEmptyString(item.call_id);
+  if (!callId) {
+    return undefined;
+  }
 
   return {
     id: callId,
@@ -389,7 +427,7 @@ function functionCallFromItem(
     type: 'function',
     function: {
       name,
-      arguments: stringifyJsonValue(item.arguments),
+      arguments: item.arguments,
     },
   };
 }
@@ -465,6 +503,15 @@ export function normalizeOpenAIResponsesResponse(
       'Responses request failed';
     throw new Error(`Responses API error: ${message.slice(0, 500)}`);
   }
+  if (
+    typeof response.status === 'string' &&
+    response.status !== 'completed' &&
+    response.status !== 'incomplete'
+  ) {
+    throw new Error(
+      `Responses API error: unexpected response status "${response.status.slice(0, 100)}"`
+    );
+  }
 
   const output = Array.isArray(response.output) ? response.output : [];
   const text: string[] = [];
@@ -483,13 +530,30 @@ export function normalizeOpenAIResponsesResponse(
     if (item.type === 'reasoning') {
       reasoningItems.push({ ...item });
     }
-    const functionCall = functionCallFromItem(item, index);
+    const functionCall = functionCallFromItem(item);
+    if (item.type === 'function_call' && !functionCall) {
+      throw new Error(
+        `Responses API error: function call ${index} is missing an exact call_id or name, or string arguments`
+      );
+    }
     if (functionCall) {
+      if (toolCalls.some(call => call.id === functionCall.id)) {
+        throw new Error(
+          `Responses API error: duplicate function call_id "${functionCall.id}"`
+        );
+      }
       toolCalls.push(functionCall);
     }
   }
 
-  if (reasoningItems.length > 0 && toolCalls[0]) {
+  if (toolCalls.length > 16) {
+    throw new Error(
+      'Responses API error: more than 16 function calls returned'
+    );
+  }
+
+  const boundedOutput = boundedOpenAIResponsesOutputItems(output);
+  if (!boundedOutput.dropped && reasoningItems.length > 0 && toolCalls[0]) {
     toolCalls[0].providerMetadata = {
       openAIResponsesReasoningItems: reasoningItems,
     };
@@ -504,15 +568,14 @@ export function normalizeOpenAIResponsesResponse(
     typeof response.model === 'string' ? response.model : fallbackModel;
   const usage = normalizeResponsesUsage(response.usage);
   const incompleteReason = responsesIncompleteReason(response);
-  const replayableOutputItems = output.flatMap(rawItem => {
-    const item = asObject(rawItem);
-    return item ? [{ ...item }] : [];
-  });
   const providerMetadata = {
-    ...(replayableOutputItems.length > 0
+    ...(boundedOutput.items
       ? {
-          [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: replayableOutputItems,
+          [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: boundedOutput.items,
         }
+      : {}),
+    ...(boundedOutput.dropped
+      ? { [OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY]: true }
       : {}),
     ...(incompleteReason
       ? {

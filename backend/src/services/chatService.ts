@@ -30,6 +30,10 @@ import { memoryService } from './memoryService.js';
 import { mutationEngineService } from './mutationEngineService.js';
 import { createLogger } from '../utils/logger.js';
 import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
+import {
+  sanitizeChatMessageProviderState,
+  selectChatMessagesForContext,
+} from '../utils/chatContext.js';
 
 const logger = createLogger('chat-service');
 
@@ -179,9 +183,16 @@ class ChatService {
     const session = this.getSession(sessionId, userId);
     if (!session) return undefined;
 
+    const sanitizedUpdates =
+      updates.messages === undefined
+        ? updates
+        : {
+            ...updates,
+            messages: updates.messages.map(sanitizeChatMessageProviderState),
+          };
     const updatedSession = {
       ...session,
-      ...updates,
+      ...sanitizedUpdates,
       updatedAt: Date.now(),
     };
     const hasProviderUpdate =
@@ -244,11 +255,11 @@ class ChatService {
       return existingMessage;
     }
 
-    const newMessage: ChatMessage = {
+    const newMessage = sanitizeChatMessageProviderState<ChatMessage>({
       ...message,
       id: messageId,
       timestamp: Date.now(),
-    };
+    });
 
     // If this is a branch message (has parentId), update sibling messages
     if (newMessage.parentId) {
@@ -322,11 +333,11 @@ class ChatService {
     }
 
     // Update the message
-    const updatedMessage = {
+    const updatedMessage = sanitizeChatMessageProviderState<ChatMessage>({
       ...session.messages[messageIndex],
       ...updates,
       timestamp: Date.now(), // Always update timestamp
-    };
+    });
 
     session.messages[messageIndex] = updatedMessage;
     session.updatedAt = Date.now();
@@ -369,22 +380,9 @@ class ChatService {
     const session = this.sessions.get(sessionId);
     if (!session) return [];
 
-    // Separate system messages from conversation messages
-    // Only include active messages (isActive !== false) to respect branch selection
-    const systemMessages = session.messages.filter(
-      msg => msg.role === 'system'
+    return selectChatMessagesForContext(session.messages, maxMessages).map(
+      sanitizeChatMessageProviderState
     );
-    const conversationMessages = session.messages.filter(
-      msg => msg.role !== 'system' && msg.isActive !== false
-    );
-
-    // Take the last N conversation messages, but always include all system messages first
-    const recentConversation = conversationMessages.slice(-maxMessages);
-
-    // Return system messages first, then conversation messages
-    const contextMessages = [...systemMessages, ...recentConversation];
-
-    return contextMessages;
   }
 
   private async updateSystemMessageForPersona(
@@ -707,7 +705,7 @@ Guidelines:
     }
 
     const messageId = newMessage.id || uuidv4();
-    const newBranchMessage: ChatMessage = {
+    const newBranchMessage = sanitizeChatMessageProviderState<ChatMessage>({
       ...newMessage,
       id: messageId,
       timestamp: Date.now(),
@@ -715,7 +713,7 @@ Guidelines:
       branchIndex: newBranchIndex,
       isActive: true,
       siblingCount: newBranchIndex + 1,
-    };
+    });
 
     // Update sibling counts for all related messages
     for (const sibling of siblings) {

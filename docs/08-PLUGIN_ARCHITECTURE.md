@@ -119,17 +119,24 @@ Imported plugin JSON can provide the same defaults:
 Responses requests use `input`, `max_output_tokens`, flattened function tools,
 `store: false`, and request encrypted reasoning content for stateless
 continuation. Completed and streamed Responses output is normalized back to
-Libre WebUI's chat and Work event formats. Libre WebUI retains and replays the
-provider's ordered output Items verbatim across ordinary Chat turns, Work tool
-loops, and resumed Work runs, including encrypted reasoning and assistant
-`phase`, before appending function results. SQLite-backed Chat storage encrypts
-this provider state with the message; Work stores tool-only state in hidden
-context rows that are not returned by message APIs. A hashed scope binds replay
-to the same provider, model, Responses mode, and final configured endpoint. When
-that scope changes, Libre WebUI falls back to normalized message history rather
-than sending provider-specific Items to a different API. An incomplete
-Responses result is not treated as a successful Chat or Work turn; its
-`incomplete_details.reason` is retained and surfaced to the caller.
+Libre WebUI's chat and Work event formats. Replay state is retained only when
+the complete ordered output Item array is at most 64 Items and 90 KB; Items are
+kept exact and are never field-truncated. Oversized Chat state falls back to
+normalized visible history. Chat also discards raw function-call Items because
+Chat does not persist corresponding tool outputs. Tool-bearing Work responses
+without bounded, exact replay state are rejected before any tool side effect.
+
+SQLite-backed Chat storage encrypts retained provider state with the message;
+Work stores tool-only state in hidden context rows that are not returned by
+message APIs. A hashed scope binds replay to the same provider, model, Responses
+mode, and final configured endpoint. When that scope changes, Libre WebUI falls
+back to normalized message history rather than sending provider-specific Items
+to a different API. If a persisted Work batch was interrupted, every missing
+tool result is restored with its exact call ID and an outcome-unknown warning so
+the provider can inspect the workspace instead of blindly repeating a possible
+side effect. An incomplete Responses result is not treated as a successful Chat
+or Work turn; its `incomplete_details.reason` is retained and surfaced to the
+caller.
 
 Model discovery derives `/models` from either operation path. For example,
 `https://api.example.com/v1/responses` discovers from

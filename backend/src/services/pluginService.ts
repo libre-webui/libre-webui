@@ -66,7 +66,10 @@ import {
 import { createLogger } from '../utils/logger.js';
 import { resolveBundledPluginsDir } from '../utils/packagePaths.js';
 import { getDatabaseSafe } from '../db.js';
-import { createOpenAIResponsesStateScope } from '../utils/openAIResponsesAdapter.js';
+import {
+  createOpenAIResponsesStateScope,
+  OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY,
+} from '../utils/openAIResponsesAdapter.js';
 
 const logger = createLogger('plugins');
 
@@ -839,7 +842,78 @@ export class PluginService {
     if (activePlugin.id === 'anthropic') {
       yield* streamAnthropicResponse(response);
     } else if (apiMode === 'responses') {
-      yield* streamOpenAIResponsesResponse(response, providerStateScope);
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('text/event-stream')) {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(
+            `Plugin API error: ${response.status} - ${errorText.slice(0, 200)}`
+          );
+        }
+        const normalized = convertProviderResponse(
+          activePlugin,
+          (await response.json()) as Record<string, unknown>,
+          model,
+          apiMode,
+          providerStateScope
+        );
+        const choice = normalized.choices[0];
+        const message = choice?.message;
+        if (typeof message?.content === 'string' && message.content) {
+          yield { type: 'content', content: message.content };
+        }
+        if (
+          typeof message?.reasoning_content === 'string' &&
+          message.reasoning_content
+        ) {
+          yield {
+            type: 'reasoning',
+            content: message.reasoning_content,
+          };
+        }
+        for (const call of message?.tool_calls || []) {
+          yield {
+            type: 'tool_call',
+            toolCall: {
+              id: call.id,
+              name: call.function.name,
+              arguments: call.function.arguments,
+              ...(call.providerMetadata
+                ? { providerMetadata: call.providerMetadata }
+                : {}),
+            },
+          };
+        }
+        if (normalized.usage) {
+          yield {
+            type: 'usage',
+            usage: {
+              promptTokens: normalized.usage.prompt_tokens,
+              completionTokens: normalized.usage.completion_tokens,
+              totalTokens: normalized.usage.total_tokens,
+            },
+          };
+        }
+        const incompleteReason =
+          typeof normalized.providerMetadata?.[
+            OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY
+          ] === 'string'
+            ? normalized.providerMetadata[
+                OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY
+              ]
+            : undefined;
+        yield {
+          type: 'done',
+          ...(incompleteReason
+            ? { doneReason: `incomplete:${incompleteReason}` }
+            : {}),
+          ...(normalized.providerMetadata
+            ? { providerMetadata: normalized.providerMetadata }
+            : {}),
+        };
+      } else {
+        yield* streamOpenAIResponsesResponse(response, providerStateScope);
+      }
     } else {
       yield* streamOpenAICompatibleResponse(response);
     }
