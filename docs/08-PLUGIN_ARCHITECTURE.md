@@ -42,6 +42,45 @@ Libre WebUI includes provider definitions for common services:
 
 Provider catalogs change frequently. The UI should be treated as the source of truth for live model discovery when a plugin supports it.
 
+## Ownership and Authorization
+
+Plugin definitions are shared instance configuration. Every `/api/plugins`
+route requires authentication, and only administrators can upload, install,
+update, or delete a definition. Activation is different: each authenticated
+user can activate or deactivate a shared plugin only for their own account.
+That state is stored in SQLite and survives backend restarts without affecting
+another user's active providers.
+
+During upgrade, the legacy global `.status.json` activation list is copied once
+to the accounts that already exist, but only for definitions that exactly match
+Libre WebUI's compiled trust anchors. Legacy custom or shadow definitions stay
+quarantined and inactive. Accounts created after that migration start with no
+plugins activated.
+
+Bundled definitions are trusted only when their normalized contents match a
+hash compiled into the backend. Writable definitions are approved in SQLite by
+normalized source path and full definition hash. An administrator install,
+update, or re-import records that approval; direct file changes invalidate it.
+Approval and updates clear every account's activation before replacing the
+file, so each user must reactivate the reviewed definition. Pre-upgrade custom
+definitions must be re-imported by an administrator before they can appear in
+catalogs, discover models, accept credentials, or execute any capability.
+
+Plugin variables are split by purpose. Only administrators can store recognized
+connection-routing variables:
+
+`endpoint`, `base_url`, `api_path`, `models_endpoint`, `api_url`,
+`image_endpoint`, `embedding_endpoint`, `tts_endpoint`, `api_mode`, `model`,
+and `model_id`. A capability's declared
+`config.endpoint_variable` is also connection routing, even when it uses a
+different name.
+
+Non-administrators can continue to save generation controls such as temperature
+and streaming preferences. Old routing rows belonging to a non-administrator
+are ignored, are not returned as configured values, and are removed by that
+account's full plugin-variable reset. This prevents a later role promotion from
+silently reviving a dormant route.
+
 ## Credentials
 
 Credentials can come from environment variables or from user settings.
@@ -61,6 +100,29 @@ ELEVENLABS_API_KEY=...
 ```
 
 For shared deployments, user-level credentials are usually better because each user controls their own provider billing and limits. Environment keys are useful for single-user installs, demos, or managed deployments.
+
+An environment key is a fallback only while the request uses the routing and
+authentication projection from an unshadowed bundled plugin definition. An
+imported definition, a writable definition that shadows a bundled ID, or an
+administrator's stored connection-routing override requires a credential saved
+by the same account. Libre WebUI compares the root endpoint, authentication
+fields, capability endpoints and endpoint-variable selectors, and recognized
+routing-variable definitions and defaults before allowing environment fallback.
+The compiled manifest hash remains authoritative even when the legacy and
+bundled plugin directories share a path, as in the standard container layout;
+an overwritten package manifest cannot establish its own trust.
+
+This rule applies to discovery, Chat, Work, availability checks, and capability
+catalogs. It prevents a custom endpoint or a pre-upgrade custom manifest from
+receiving an operator-managed secret.
+
+User-stored credentials are bound to the effective definition source, complete
+definition hash, authentication contract, capability endpoints and selectors,
+and effective routing values at the moment the user saves them. A route or
+definition change makes the old credential unavailable until the user reviews
+the new destination and saves the credential again. Legacy credentials without
+a binding are accepted only on an exact anchored bundled route; their first
+successful use writes the binding before returning the decrypted key.
 
 ## OpenAI-Compatible Providers
 
@@ -90,14 +152,21 @@ requires HTTPS. Other protocols are rejected. Leaving the override empty uses
 the full endpoint from the plugin definition; an explicit invalid or unsafe
 override is rejected instead of silently routing to that default.
 
+Endpoint redirects require the redirect-hop validation delivered by the
+endpoint-isolation hardening tracked in issue #168. This change enforces the
+initial custom-route and credential boundary; deployments should include #168
+before treating provider redirects as fully covered by that boundary.
+
 Remember that requests originate from the Libre WebUI backend. In a container,
 `localhost` identifies the container itself, not automatically the container
 host or another service.
 
 ### Model Discovery
 
-When a plugin is activated, Libre WebUI attempts model discovery with the
-activating user's saved endpoint override and API key. For compatible APIs, it
+When a plugin is activated, Libre WebUI attempts model discovery with that
+account's effective endpoint and credential. An administrator's custom route
+requires a credential stored by the same account; an environment fallback is
+used only with the trusted manifest route. For compatible APIs, Libre WebUI
 derives a model-list URL from the full endpoint:
 
 - a URL ending in `/models` is used as-is;
@@ -114,10 +183,14 @@ another account. If the provider has no compatible model-list endpoint, cannot
 be reached, or returns another response shape, that user keeps their previous
 discovery result or the plugin's `model_map` fallback.
 
-Plugin capability routes use the same user context. For example, image model
+Saving or resetting connection routing clears that account's previous
+discovered catalog before the next discovery attempt, so models learned from
+one destination cannot remain selectable after a route change.
+
+Plugin status, Work availability, model catalogs, and capability routes use the
+same user context and credential boundary. For example, image model
 availability, endpoint variables, and credentials are resolved for the user
-making the request. In single-user mode, these values belong to the `default`
-user.
+making the request.
 
 ## Exact Provider Selection in Chat
 

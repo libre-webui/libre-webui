@@ -34,7 +34,8 @@ DATA_DIR=/var/lib/libre-webui
 - Documents and chunks
 - Personas and persona settings
 - Persona memories and mutation state
-- Plugin credentials and variables
+- Plugin credentials and their routing/auth bindings, variables, per-user
+  activations, writable-definition approvals, and discovered model catalogs
 - System settings
 - Work task ownership, model/provider routing, runs, messages, tool activity,
   status, and Docker resource identifiers
@@ -62,6 +63,13 @@ delete its files.
 Older Libre WebUI installs used JSON files for some data. Current builds use SQLite as the primary storage path and keep storage access behind service/model layers so the rest of the app does not need to know the persistence format.
 
 If you are upgrading an old install, back up the whole data directory before starting the newer backend.
+
+Legacy plugin activation in `.status.json` is migrated once into per-user
+SQLite rows for accounts that exist at upgrade time, but only for exact
+hash-anchored bundled definitions. Legacy custom and shadow definitions remain
+quarantined until an administrator re-imports them, and approval does not
+restore old activation rows. Later accounts start with no active plugins, and
+each account's activation changes are independent.
 
 ## Backup
 

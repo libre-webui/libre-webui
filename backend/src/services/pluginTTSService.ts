@@ -159,7 +159,7 @@ export class PluginTTSService {
     const apiKey = this.deps.getApiKey(plugin, options.userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
-        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
+        `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
 
@@ -328,9 +328,9 @@ export class PluginTTSService {
     }
   }
 
-  getTTSConfig(pluginId: string): TTSConfig | null {
-    const plugin = this.deps.getPlugin(pluginId);
-    if (!plugin) return null;
+  getTTSConfig(pluginId: string, userId?: string): TTSConfig | null {
+    const plugin = this.deps.getPlugin(pluginId, userId);
+    if (!plugin?.active) return null;
 
     if (plugin.capabilities?.tts?.config) {
       return plugin.capabilities.tts.config;

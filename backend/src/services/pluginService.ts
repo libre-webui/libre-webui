@@ -17,6 +17,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { createHash } from 'crypto';
 import sanitize from 'sanitize-filename';
 import axios from 'axios';
 import {
@@ -34,6 +35,7 @@ import {
 } from '../types/index.js';
 import pluginCredentialsService from './pluginCredentialsService.js';
 import pluginVariablesService from './pluginVariablesService.js';
+import pluginActivationService from './pluginActivationService.js';
 import { PluginCapabilityRegistryService } from './pluginCapabilityRegistryService.js';
 import { PluginEmbeddingService } from './pluginEmbeddingService.js';
 import { PluginImageGenerationService } from './pluginImageGenerationService.js';
@@ -64,20 +66,84 @@ import {
 import { createLogger } from '../utils/logger.js';
 import { resolveBundledPluginsDir } from '../utils/packagePaths.js';
 import { getDatabaseSafe } from '../db.js';
+import { getPluginConnectionVariableNames } from '../utils/pluginConnectionVariables.js';
+import {
+  getPluginDefinitionFingerprint,
+  matchesBundledPluginTrustAnchor,
+} from '../utils/pluginDefinitionTrust.js';
 
 const logger = createLogger('plugins');
+
+function getPluginRoutingAuthProjection(plugin: Plugin): string {
+  const capabilityEndpoints = Object.entries(
+    (plugin.capabilities || {}) as Record<string, unknown>
+  )
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, value]) => {
+      const capability =
+        value && typeof value === 'object'
+          ? (value as Record<string, unknown>)
+          : {};
+      const config =
+        capability.config && typeof capability.config === 'object'
+          ? (capability.config as Record<string, unknown>)
+          : {};
+      return {
+        name,
+        endpoint: capability.endpoint ?? null,
+        endpoint_variable:
+          config.endpoint_variable ?? capability.endpoint_variable ?? null,
+      };
+    });
+  const definitions = new Map(
+    (plugin.variables || []).map(definition => [definition.name, definition])
+  );
+  const connectionVariables = Array.from(
+    getPluginConnectionVariableNames(plugin),
+    name => {
+      const definition = definitions.get(name);
+      if (!definition) return null;
+      return {
+        name: definition.name,
+        type: definition.type,
+        label: definition.label,
+        description: definition.description ?? null,
+        default: definition.default ?? null,
+        required: definition.required ?? null,
+        sensitive: definition.sensitive ?? null,
+        options: definition.options ?? null,
+        min: definition.min ?? null,
+        max: definition.max ?? null,
+      };
+    }
+  );
+
+  return JSON.stringify({
+    endpoint: plugin.endpoint,
+    base_url: (plugin as unknown as Record<string, unknown>).base_url ?? null,
+    api_path: (plugin as unknown as Record<string, unknown>).api_path ?? null,
+    api_mode: (plugin as unknown as Record<string, unknown>).api_mode ?? null,
+    auth: {
+      header: plugin.auth.header,
+      prefix: plugin.auth.prefix ?? '',
+      key_env: plugin.auth.key_env,
+    },
+    capabilityEndpoints,
+    connectionVariables,
+  });
+}
 
 export class PluginService {
   private pluginsDir: string;
   private bundledPluginsDir: string;
   private legacyPluginsDir: string;
   private pluginReadDirs: string[];
-  private activePluginIds: Set<string> = new Set();
   private discoveredModelsCache = new Map<string, string[] | null>();
   private embeddingService: PluginEmbeddingService;
   private ttsService: PluginTTSService;
   private imageGenerationService: PluginImageGenerationService;
   private capabilityRegistryService: PluginCapabilityRegistryService;
+  private bundledRoutingProjectionCache = new Map<string, string | null>();
 
   constructor() {
     this.bundledPluginsDir = resolveBundledPluginsDir(import.meta.url);
@@ -91,16 +157,19 @@ export class PluginService {
       new Set([this.bundledPluginsDir, this.legacyPluginsDir, this.pluginsDir])
     );
     this.ensurePluginsDirectory();
-    this.loadActivePlugins();
+    pluginActivationService.migrateLegacyStatus(
+      [this.pluginsDir, this.legacyPluginsDir],
+      pluginId => this.canMigrateLegacyActivation(pluginId)
+    );
     this.embeddingService = new PluginEmbeddingService({
-      getAllPlugins: userId => this.getAllPlugins(userId),
+      getAllPlugins: userId => this.getActivePlugins(userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
     });
     this.ttsService = new PluginTTSService({
-      getAllPlugins: userId => this.getAllPlugins(userId),
+      getAllPlugins: userId => this.getActivePlugins(userId),
       getPlugin: (id, userId) => this.getPlugin(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
@@ -108,7 +177,7 @@ export class PluginService {
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
     });
     this.imageGenerationService = new PluginImageGenerationService({
-      getAllPlugins: userId => this.getAllPlugins(userId),
+      getAllPlugins: userId => this.getActivePlugins(userId),
       getPlugin: (id, userId) => this.getPlugin(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
@@ -116,7 +185,7 @@ export class PluginService {
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
     });
     this.capabilityRegistryService = new PluginCapabilityRegistryService({
-      getAllPlugins: userId => this.getAllPlugins(userId),
+      getAllPlugins: userId => this.getActivePlugins(userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
     });
   }
@@ -261,6 +330,17 @@ export class PluginService {
   }
 
   private applyDiscoveredModels(plugin: Plugin, userId?: string): Plugin {
+    if (
+      !this.canUseStoredConnectionOverrides(userId) &&
+      pluginVariablesService.hasStoredConnectionOverride(
+        plugin.id,
+        userId,
+        plugin.variables,
+        getPluginConnectionVariableNames(plugin)
+      )
+    ) {
+      return plugin;
+    }
     const models = this.getDiscoveredModels(plugin.id, userId);
     return models ? { ...plugin, model_map: [...models] } : plugin;
   }
@@ -271,39 +351,214 @@ export class PluginService {
     }
   }
 
-  private loadActivePlugins(): void {
-    const statusDirs = Array.from(
-      new Set([this.pluginsDir, this.legacyPluginsDir])
+  private bundledPluginPath(id: string): string {
+    return path.resolve(this.bundledPluginsDir, `${sanitize(id)}.json`);
+  }
+
+  private isAnchoredBundledDefinition(
+    plugin: Plugin,
+    filePath: string
+  ): boolean {
+    return (
+      path.resolve(filePath) === this.bundledPluginPath(plugin.id) &&
+      matchesBundledPluginTrustAnchor(plugin)
     );
+  }
 
-    for (const statusDir of statusDirs) {
-      const statusFile = path.join(statusDir, '.status.json');
-      if (!fs.existsSync(statusFile)) {
-        continue;
-      }
+  private isPluginDefinitionApproved(
+    plugin: Plugin,
+    filePath: string
+  ): boolean {
+    if (this.isAnchoredBundledDefinition(plugin, filePath)) {
+      return true;
+    }
 
-      try {
-        const status = JSON.parse(fs.readFileSync(statusFile, 'utf8'));
-        if (Array.isArray(status.activePlugins)) {
-          this.activePluginIds = new Set(status.activePlugins);
-        } else if (status.activePlugin) {
-          // Legacy support for single active plugin
-          this.activePluginIds = new Set([status.activePlugin]);
-        }
-        return;
-      } catch (error) {
-        logger.error('Failed to load plugin status:', error);
-      }
+    const db = getDatabaseSafe();
+    if (!db) return false;
+    try {
+      const row = db
+        .prepare(
+          `SELECT definition_fingerprint, source_path
+           FROM plugin_definition_approvals
+           WHERE plugin_id = ?`
+        )
+        .get(plugin.id) as
+        { definition_fingerprint: string; source_path: string } | undefined;
+      return (
+        row?.definition_fingerprint ===
+          getPluginDefinitionFingerprint(plugin) &&
+        row.source_path === path.resolve(filePath)
+      );
+    } catch (error) {
+      logger.warn(
+        'Failed to inspect definition approval for plugin %s:',
+        plugin.id,
+        error
+      );
+      return false;
     }
   }
 
-  private saveActivePlugins(): void {
-    const statusFile = path.join(this.pluginsDir, '.status.json');
-    const status = {
-      activePlugins: Array.from(this.activePluginIds),
-      lastUpdated: new Date().toISOString(),
-    };
-    fs.writeFileSync(statusFile, JSON.stringify(status, null, 2));
+  private approvePluginDefinition(
+    plugin: Plugin,
+    filePath: string,
+    userId: string
+  ): void {
+    if (!this.canUseStoredConnectionOverrides(userId)) {
+      throw new Error('Administrator approval is required');
+    }
+    const db = getDatabaseSafe();
+    if (!db) {
+      throw new Error('Database not available for plugin approval');
+    }
+    db.prepare(
+      `INSERT INTO plugin_definition_approvals
+         (plugin_id, definition_fingerprint, source_path,
+          approved_by_user_id, approved_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(plugin_id) DO UPDATE SET
+         definition_fingerprint = excluded.definition_fingerprint,
+         source_path = excluded.source_path,
+         approved_by_user_id = excluded.approved_by_user_id,
+         approved_at = excluded.approved_at`
+    ).run(
+      plugin.id,
+      getPluginDefinitionFingerprint(plugin),
+      path.resolve(filePath),
+      userId,
+      Date.now()
+    );
+  }
+
+  private removePluginDefinitionApproval(pluginId: string): void {
+    const db = getDatabaseSafe();
+    if (!db) return;
+    db.prepare(
+      'DELETE FROM plugin_definition_approvals WHERE plugin_id = ?'
+    ).run(pluginId);
+  }
+
+  private revokePluginDefinitionConsent(pluginId: string): void {
+    const db = getDatabaseSafe();
+    if (!db) {
+      throw new Error('Database not available for plugin approval');
+    }
+    db.transaction(() => {
+      db.prepare('DELETE FROM plugin_activations WHERE plugin_id = ?').run(
+        pluginId
+      );
+      db.prepare(
+        'DELETE FROM plugin_definition_approvals WHERE plugin_id = ?'
+      ).run(pluginId);
+    })();
+  }
+
+  private canMigrateLegacyActivation(pluginId: string): boolean {
+    const effectivePath = this.resolveEffectivePluginFilePath(pluginId);
+    if (!effectivePath) return false;
+    try {
+      const parsedPlugin = JSON.parse(
+        fs.readFileSync(effectivePath, 'utf8')
+      ) as Plugin;
+      return (
+        this.validatePlugin(parsedPlugin) &&
+        parsedPlugin.id === pluginId &&
+        this.isAnchoredBundledDefinition(parsedPlugin, effectivePath)
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  private resolveEffectivePluginFilePath(id: string): string | null {
+    const sanitizedId = sanitize(id);
+    if (!sanitizedId || sanitizedId !== id) return null;
+
+    for (const pluginsDir of [...this.pluginReadDirs].reverse()) {
+      const resolvedDirectory = path.resolve(pluginsDir);
+      const candidate = path.resolve(pluginsDir, `${sanitizedId}.json`);
+      if (candidate.startsWith(resolvedDirectory) && fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  private getBundledRoutingProjection(id: string): string | null {
+    if (this.bundledRoutingProjectionCache.has(id)) {
+      return this.bundledRoutingProjectionCache.get(id) ?? null;
+    }
+
+    const sanitizedId = sanitize(id);
+    if (!sanitizedId || sanitizedId !== id) return null;
+    const bundledDirectory = path.resolve(this.bundledPluginsDir);
+    const bundledPath = this.bundledPluginPath(sanitizedId);
+    if (
+      !bundledPath.startsWith(bundledDirectory) ||
+      !fs.existsSync(bundledPath)
+    ) {
+      this.bundledRoutingProjectionCache.set(id, null);
+      return null;
+    }
+
+    try {
+      const parsedPlugin = JSON.parse(
+        fs.readFileSync(bundledPath, 'utf8')
+      ) as Plugin;
+      if (
+        !this.validatePlugin(parsedPlugin) ||
+        parsedPlugin.id !== sanitizedId ||
+        !matchesBundledPluginTrustAnchor(parsedPlugin)
+      ) {
+        this.bundledRoutingProjectionCache.set(id, null);
+        return null;
+      }
+      const projection = getPluginRoutingAuthProjection(
+        applyPluginDefinitionPolicy(parsedPlugin)
+      );
+      this.bundledRoutingProjectionCache.set(id, projection);
+      return projection;
+    } catch (error) {
+      logger.warn(
+        'Failed to inspect bundled routing for plugin %s:',
+        id,
+        error
+      );
+      this.bundledRoutingProjectionCache.set(id, null);
+      return null;
+    }
+  }
+
+  private usesTrustedBundledRouting(plugin: Plugin): boolean {
+    const effectivePath = this.resolveEffectivePluginFilePath(plugin.id);
+    const bundledPath = this.bundledPluginPath(plugin.id);
+    if (!effectivePath || effectivePath !== bundledPath) return false;
+
+    const bundledProjection = this.getBundledRoutingProjection(plugin.id);
+    return (
+      bundledProjection !== null &&
+      getPluginRoutingAuthProjection(plugin) === bundledProjection
+    );
+  }
+
+  private isPluginActive(pluginId: string, userId?: string): boolean {
+    return pluginActivationService.getActivePluginIds(userId).has(pluginId);
+  }
+
+  private canUseStoredConnectionOverrides(userId?: string): boolean {
+    const db = getDatabaseSafe();
+    if (!db) return false;
+
+    try {
+      const row = db
+        .prepare('SELECT role FROM users WHERE id = ?')
+        .get(userId || 'default') as { role?: string } | undefined;
+      return row?.role === 'admin';
+    } catch (error) {
+      logger.warn('Failed to resolve plugin routing permission:', error);
+      return false;
+    }
   }
 
   /**
@@ -313,11 +568,78 @@ export class PluginService {
    * @returns The API key or null if not found
    */
   getApiKey(plugin: Plugin, userId?: string): string | null {
+    const hasHonoredConnectionOverride =
+      this.canUseStoredConnectionOverrides(userId) &&
+      pluginVariablesService.hasStoredConnectionOverride(
+        plugin.id,
+        userId,
+        plugin.variables,
+        getPluginConnectionVariableNames(plugin)
+      );
+    const usesTrustedBundledRouting = this.usesTrustedBundledRouting(plugin);
+    const allowTrustedFallback =
+      usesTrustedBundledRouting && !hasHonoredConnectionOverride;
     return pluginCredentialsService.getApiKey(
       plugin.id,
       plugin.auth.key_env,
-      userId
+      userId,
+      {
+        allowEnvironmentFallback: allowTrustedFallback,
+        expectedRoutingAuthFingerprint:
+          this.getCredentialRoutingAuthFingerprint(plugin, userId),
+        allowLegacyUnboundCredential: allowTrustedFallback,
+      }
     );
+  }
+
+  /**
+   * Bind a user credential to the exact routing/authentication contract in
+   * effect when they save it. Generation controls are intentionally excluded.
+   */
+  getCredentialRoutingAuthFingerprint(plugin: Plugin, userId?: string): string {
+    const variables = this.getPluginVariables(plugin, userId);
+    const effectiveConnectionValues = Array.from(
+      getPluginConnectionVariableNames(plugin),
+      name => {
+        const definition = plugin.variables?.find(
+          candidate => candidate.name === name
+        );
+        if (!definition) return null;
+        return {
+          name,
+          value: variables[name] ?? definition.default ?? '',
+        };
+      }
+    );
+    const effectivePath = this.resolveEffectivePluginFilePath(plugin.id);
+    let effectiveDefinitionFingerprint = getPluginDefinitionFingerprint(plugin);
+    if (effectivePath) {
+      try {
+        const effectiveDefinition = JSON.parse(
+          fs.readFileSync(effectivePath, 'utf8')
+        ) as Plugin;
+        if (
+          this.validatePlugin(effectiveDefinition) &&
+          effectiveDefinition.id === plugin.id
+        ) {
+          effectiveDefinitionFingerprint =
+            getPluginDefinitionFingerprint(effectiveDefinition);
+        }
+      } catch {
+        // Keep the in-memory fingerprint. A missing/invalid source is already
+        // excluded from normal plugin loading and cannot gain trust here.
+      }
+    }
+    const fingerprintInput = JSON.stringify({
+      plugin_id: plugin.id,
+      plugin_type: plugin.type,
+      trusted_bundled_source: this.usesTrustedBundledRouting(plugin),
+      effective_source_path: effectivePath ? path.resolve(effectivePath) : null,
+      effective_definition_fingerprint: effectiveDefinitionFingerprint,
+      routing_auth_projection: getPluginRoutingAuthProjection(plugin),
+      effective_connection_values: effectiveConnectionValues,
+    });
+    return createHash('sha256').update(fingerprintInput).digest('hex');
   }
 
   /**
@@ -330,10 +652,23 @@ export class PluginService {
     if (!plugin.variables || plugin.variables.length === 0) {
       return {};
     }
-    return pluginVariablesService.getResolvedVariables(
+    const variables = pluginVariablesService.getResolvedVariables(
       plugin.id,
       plugin.variables,
       userId
+    );
+    if (this.canUseStoredConnectionOverrides(userId)) return variables;
+
+    return Object.fromEntries(
+      Object.entries(variables).map(([name, value]) => {
+        if (!getPluginConnectionVariableNames(plugin).has(name)) {
+          return [name, value];
+        }
+        const definition = plugin.variables?.find(
+          candidate => candidate.name === name
+        );
+        return [name, definition?.default ?? ''];
+      })
     );
   }
 
@@ -364,6 +699,9 @@ export class PluginService {
     assertSafePluginEndpoint(modelsEndpoint, 'model discovery endpoint');
 
     const apiKey = this.getApiKey(plugin, userId);
+    if (pluginRequiresApiKey(plugin) && !apiKey) {
+      return plugin.model_map;
+    }
     const headers = buildPluginModelDiscoveryHeaders(plugin, apiKey);
 
     try {
@@ -401,6 +739,7 @@ export class PluginService {
   // List all installed plugins
   getAllPlugins(userId?: string): Plugin[] {
     const plugins = new Map<string, Plugin>();
+    const activePluginIds = pluginActivationService.getActivePluginIds(userId);
 
     for (const pluginsDir of this.pluginReadDirs) {
       if (!fs.existsSync(pluginsDir)) {
@@ -411,21 +750,42 @@ export class PluginService {
         const files = fs.readdirSync(pluginsDir);
         for (const file of files) {
           if (file.endsWith('.json') && !file.startsWith('.')) {
+            const filenameId = path.basename(file, '.json');
             try {
               const filePath = path.join(pluginsDir, file);
               const content = fs.readFileSync(filePath, 'utf8');
               const parsedPlugin: Plugin = JSON.parse(content);
 
               // Validate plugin structure
-              if (this.validatePlugin(parsedPlugin)) {
+              if (
+                this.validatePlugin(parsedPlugin) &&
+                parsedPlugin.id === filenameId
+              ) {
+                if (!this.isPluginDefinitionApproved(parsedPlugin, filePath)) {
+                  // A later writable definition shadows an earlier bundled
+                  // definition even while quarantined.
+                  plugins.delete(parsedPlugin.id);
+                  continue;
+                }
                 const plugin = applyPluginDefinitionPolicy(parsedPlugin);
-                plugin.active = this.activePluginIds.has(plugin.id);
+                plugin.active = activePluginIds.has(plugin.id);
                 plugins.set(
                   plugin.id,
                   this.applyDiscoveredModels(plugin, userId)
                 );
+              } else if (parsedPlugin.id !== filenameId) {
+                plugins.delete(filenameId);
+                logger.warn(
+                  'Ignoring plugin %s because its declared ID does not match its filename',
+                  file
+                );
+              } else {
+                plugins.delete(filenameId);
               }
             } catch (error) {
+              // Invalid JSON in an effective same-ID writable file must fail
+              // closed instead of revealing an earlier bundled definition.
+              plugins.delete(filenameId);
               logger.error(`Failed to load plugin ${file}:`, error);
             }
           }
@@ -447,37 +807,36 @@ export class PluginService {
       return null;
     }
 
-    for (const pluginsDir of [...this.pluginReadDirs].reverse()) {
-      const filePath = path.resolve(pluginsDir, `${sanitizedId}.json`);
+    const filePath = this.resolveEffectivePluginFilePath(sanitizedId);
+    if (!filePath) return null;
+
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const parsedPlugin: Plugin = JSON.parse(content);
 
       if (
-        !filePath.startsWith(path.resolve(pluginsDir)) ||
-        !fs.existsSync(filePath)
+        this.validatePlugin(parsedPlugin) &&
+        parsedPlugin.id === sanitizedId &&
+        this.isPluginDefinitionApproved(parsedPlugin, filePath)
       ) {
-        continue;
+        const plugin = applyPluginDefinitionPolicy(parsedPlugin);
+        plugin.active = this.isPluginActive(plugin.id, userId);
+        return this.applyDiscoveredModels(plugin, userId);
       }
-
-      try {
-        const content = fs.readFileSync(filePath, 'utf8');
-        const parsedPlugin: Plugin = JSON.parse(content);
-
-        if (this.validatePlugin(parsedPlugin)) {
-          const plugin = applyPluginDefinitionPolicy(parsedPlugin);
-          plugin.active = this.activePluginIds.has(plugin.id);
-          return this.applyDiscoveredModels(plugin, userId);
-        }
-      } catch (error) {
-        logger.error('Failed to load plugin %s:', sanitizedId, error);
-      }
+    } catch (error) {
+      logger.error('Failed to load plugin %s:', sanitizedId, error);
     }
 
     return null;
   }
 
   // Install or update a plugin
-  installPlugin(pluginData: Plugin): Plugin {
+  installPlugin(pluginData: Plugin, approvedByUserId: string): Plugin {
     if (!this.validatePlugin(pluginData)) {
       throw new Error('Invalid plugin structure');
+    }
+    if (!this.canUseStoredConnectionOverrides(approvedByUserId)) {
+      throw new Error('Administrator approval is required');
     }
 
     const now = Date.now();
@@ -494,8 +853,27 @@ export class PluginService {
     if (!filePath.startsWith(path.resolve(this.pluginsDir))) {
       throw new Error('Path traversal detected');
     }
-    fs.writeFileSync(filePath, JSON.stringify(plugin, null, 2));
+    // Revoke definition approval and every user's activation before replacing
+    // bytes on disk. Any crash or write failure therefore leaves the provider
+    // quarantined and inactive.
+    this.revokePluginDefinitionConsent(plugin.id);
     this.clearDiscoveredModels(plugin.id);
+    const temporaryPath = path.resolve(
+      this.pluginsDir,
+      `.${safeId}.${process.pid}.${Date.now()}.tmp`
+    );
+    try {
+      fs.writeFileSync(temporaryPath, JSON.stringify(plugin, null, 2), {
+        flag: 'wx',
+      });
+      fs.renameSync(temporaryPath, filePath);
+    } catch (error) {
+      if (fs.existsSync(temporaryPath)) {
+        fs.unlinkSync(temporaryPath);
+      }
+      throw error;
+    }
+    this.approvePluginDefinition(plugin, filePath, approvedByUserId);
 
     return plugin;
   }
@@ -516,9 +894,10 @@ export class PluginService {
       return false;
     }
 
+    const bundledDirectory = path.resolve(this.bundledPluginsDir);
     const writablePluginDirs = Array.from(
       new Set([this.pluginsDir, this.legacyPluginsDir])
-    );
+    ).filter(pluginsDir => path.resolve(pluginsDir) !== bundledDirectory);
     const filePath = writablePluginDirs
       .map(pluginsDir => path.resolve(pluginsDir, `${sanitizedId}.json`))
       .find(candidate => fs.existsSync(candidate));
@@ -531,14 +910,12 @@ export class PluginService {
     try {
       fs.unlinkSync(filePath);
 
-      // If this was an active plugin, deactivate it
-      if (this.activePluginIds.has(id)) {
-        this.activePluginIds.delete(id);
-        this.saveActivePlugins();
-      }
+      pluginActivationService.deletePlugin(id);
+      this.removePluginDefinitionApproval(id);
 
       // Clean up stored variables
       pluginVariablesService.deletePluginVariables(id);
+      pluginCredentialsService.deleteAllPluginCredentials(id);
       this.clearDiscoveredModels(id);
 
       return true;
@@ -556,8 +933,9 @@ export class PluginService {
       throw new Error('Plugin not found');
     }
 
-    this.activePluginIds.add(id);
-    this.saveActivePlugins();
+    if (!pluginActivationService.activate(id, userId)) {
+      throw new Error('Failed to persist plugin activation');
+    }
 
     // Wait for discovery so the activation response and the UI's first reload
     // observe the same user-scoped model catalog.
@@ -567,15 +945,9 @@ export class PluginService {
   }
 
   // Deactivate a specific plugin
-  deactivatePlugin(id?: string): boolean {
-    if (id) {
-      this.activePluginIds.delete(id);
-    } else {
-      // Legacy: deactivate all plugins
-      this.activePluginIds.clear();
-    }
-    this.saveActivePlugins();
-    return true;
+  deactivatePlugin(id?: string, userId?: string): boolean {
+    // The legacy no-ID route now deactivates all plugins only for this user.
+    return pluginActivationService.deactivate(id, userId);
   }
 
   // Get the active plugin for a specific model
@@ -589,7 +961,7 @@ export class PluginService {
       if (!plugin) {
         throw new Error(`Plugin not found: ${pluginId}`);
       }
-      if (!this.activePluginIds.has(pluginId)) {
+      if (!this.isPluginActive(pluginId, userId)) {
         throw new Error(`Plugin is not active: ${pluginId}`);
       }
       if (!plugin.model_map.includes(model)) {
@@ -601,7 +973,7 @@ export class PluginService {
       const apiKey = this.getApiKey(plugin, userId);
       if (pluginRequiresApiKey(plugin) && !apiKey) {
         throw new Error(
-          `API key not found for plugin ${pluginId} (set via Settings or ${plugin.auth.key_env} env var)`
+          `API key not found for plugin ${pluginId} (save a provider credential in Settings)`
         );
       }
 
@@ -631,9 +1003,7 @@ export class PluginService {
   // Get all currently active plugins
   getActivePlugins(userId?: string): Plugin[] {
     const allPlugins = this.getAllPlugins(userId);
-    const activePlugins = allPlugins.filter(plugin =>
-      this.activePluginIds.has(plugin.id)
-    );
+    const activePlugins = allPlugins.filter(plugin => plugin.active);
     return activePlugins;
   }
 
@@ -644,12 +1014,14 @@ export class PluginService {
   }
 
   // Get plugin status
-  getPluginStatus(): PluginStatus[] {
-    const plugins = this.getAllPlugins();
+  getPluginStatus(userId?: string): PluginStatus[] {
+    const plugins = this.getAllPlugins(userId);
     return plugins.map(plugin => ({
       id: plugin.id,
       active: plugin.active || false,
-      available: true, // Could be enhanced to check endpoint availability
+      available:
+        !pluginRequiresApiKey(plugin) ||
+        this.getApiKey(plugin, userId) !== null,
     }));
   }
 
@@ -677,7 +1049,7 @@ export class PluginService {
     const apiKey = this.getApiKey(activePlugin, userId);
     if (pluginRequiresApiKey(activePlugin) && !apiKey) {
       throw new Error(
-        `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
+        `API key not found for plugin ${activePlugin.id} (save a provider credential in Settings)`
       );
     }
 
@@ -762,7 +1134,7 @@ export class PluginService {
     const apiKey = this.getApiKey(activePlugin, userId);
     if (pluginRequiresApiKey(activePlugin) && !apiKey) {
       throw new Error(
-        `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
+        `API key not found for plugin ${activePlugin.id} (save a provider credential in Settings)`
       );
     }
 
@@ -818,28 +1190,45 @@ export class PluginService {
 
   // Validate plugin structure
   private validatePlugin(plugin: unknown): plugin is Plugin {
+    const pluginRecord =
+      typeof plugin === 'object' && plugin !== null
+        ? (plugin as Record<string, unknown>)
+        : null;
+    const variables = pluginRecord?.variables;
+    const variableNames =
+      variables === undefined
+        ? []
+        : Array.isArray(variables)
+          ? variables.map(variable =>
+              typeof variable === 'object' &&
+              variable !== null &&
+              typeof (variable as Record<string, unknown>).name === 'string'
+                ? ((variable as Record<string, unknown>).name as string)
+                : null
+            )
+          : [null];
+    const hasUniqueVariableNames =
+      !variableNames.includes(null) &&
+      new Set(variableNames).size === variableNames.length;
+
     return (
-      typeof plugin === 'object' &&
-      plugin !== null &&
-      typeof (plugin as Record<string, unknown>).id === 'string' &&
-      typeof (plugin as Record<string, unknown>).name === 'string' &&
-      typeof (plugin as Record<string, unknown>).type === 'string' &&
-      typeof (plugin as Record<string, unknown>).endpoint === 'string' &&
-      typeof (plugin as Record<string, unknown>).auth === 'object' &&
-      (plugin as Record<string, unknown>).auth !== null &&
-      typeof (
-        (plugin as Record<string, unknown>).auth as Record<string, unknown>
-      ).header === 'string' &&
-      typeof (
-        (plugin as Record<string, unknown>).auth as Record<string, unknown>
-      ).key_env === 'string' &&
-      (((plugin as Record<string, unknown>).auth as Record<string, unknown>)
-        .prefix === undefined ||
-        typeof (
-          (plugin as Record<string, unknown>).auth as Record<string, unknown>
-        ).prefix === 'string') &&
-      Array.isArray((plugin as Record<string, unknown>).model_map) &&
-      ((plugin as Record<string, unknown>).model_map as unknown[]).length > 0
+      pluginRecord !== null &&
+      hasUniqueVariableNames &&
+      typeof pluginRecord.id === 'string' &&
+      typeof pluginRecord.name === 'string' &&
+      typeof pluginRecord.type === 'string' &&
+      typeof pluginRecord.endpoint === 'string' &&
+      typeof pluginRecord.auth === 'object' &&
+      pluginRecord.auth !== null &&
+      typeof (pluginRecord.auth as Record<string, unknown>).header ===
+        'string' &&
+      typeof (pluginRecord.auth as Record<string, unknown>).key_env ===
+        'string' &&
+      ((pluginRecord.auth as Record<string, unknown>).prefix === undefined ||
+        typeof (pluginRecord.auth as Record<string, unknown>).prefix ===
+          'string') &&
+      Array.isArray(pluginRecord.model_map) &&
+      pluginRecord.model_map.length > 0
     );
   }
 
@@ -849,19 +1238,41 @@ export class PluginService {
   }
 
   // Import plugin from JSON data
-  importPlugin(pluginData: unknown): Plugin {
+  importPlugin(pluginData: unknown, approvedByUserId: string): Plugin {
     // Validate and clean the plugin data
     if (!this.validatePlugin(pluginData)) {
       throw new Error('Invalid plugin data');
     }
 
     // Check if plugin already exists
-    const existingPlugin = this.getPlugin(pluginData.id);
-    if (existingPlugin) {
-      throw new Error(`Plugin with ID ${pluginData.id} already exists`);
+    const existingPluginPath = this.resolveEffectivePluginFilePath(
+      pluginData.id
+    );
+    if (existingPluginPath) {
+      try {
+        const existingPlugin = JSON.parse(
+          fs.readFileSync(existingPluginPath, 'utf8')
+        ) as Plugin;
+        if (
+          this.validatePlugin(existingPlugin) &&
+          existingPlugin.id === pluginData.id &&
+          this.isPluginDefinitionApproved(existingPlugin, existingPluginPath)
+        ) {
+          throw new Error(`Plugin with ID ${pluginData.id} already exists`);
+        }
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes('already exists')
+        ) {
+          throw error;
+        }
+        // Invalid and unapproved legacy definitions may be replaced by this
+        // authenticated administrator import.
+      }
     }
 
-    return this.installPlugin(pluginData);
+    return this.installPlugin(pluginData, approvedByUserId);
   }
 
   // ============================================
@@ -931,8 +1342,8 @@ export class PluginService {
     return this.ttsService.executeTTSRequest(model, input, options);
   }
 
-  getTTSConfig(pluginId: string): TTSConfig | null {
-    return this.ttsService.getTTSConfig(pluginId);
+  getTTSConfig(pluginId: string, userId?: string): TTSConfig | null {
+    return this.ttsService.getTTSConfig(pluginId, userId);
   }
 
   getPluginForImageGen(model: string, userId?: string): Plugin | null {

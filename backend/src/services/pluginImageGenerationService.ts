@@ -144,7 +144,7 @@ export class PluginImageGenerationService {
     const apiKey = this.deps.getApiKey(plugin, options.userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
-        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
+        `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
 
@@ -233,7 +233,7 @@ export class PluginImageGenerationService {
 
   getImageGenConfig(pluginId: string, userId?: string): ImageGenConfig | null {
     const plugin = this.deps.getPlugin(pluginId, userId);
-    if (!plugin) return null;
+    if (!plugin?.active) return null;
 
     if (plugin.capabilities?.image?.config) {
       return plugin.capabilities.image.config;

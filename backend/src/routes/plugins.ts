@@ -36,12 +36,30 @@ import {
   type MulterRequest,
 } from '../utils/pluginUpload.js';
 import { validatePluginVariables } from '../utils/pluginVariableValidation.js';
-import type { AuthenticatedRequest } from '../middleware/auth.js';
+import { requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
+import { userModel } from '../models/userModel.js';
+import { isPluginConnectionVariableForPlugin } from '../utils/pluginConnectionVariables.js';
 
 const router = express.Router();
 
-const getRequestUserId = (req: Request): string =>
-  (req as AuthenticatedRequest).user?.userId || 'default';
+const getRequestUserId = (req: Request): string => {
+  const userId = (req as AuthenticatedRequest).user?.userId;
+  if (!userId) {
+    throw new Error('Authenticated user context is required');
+  }
+  return userId;
+};
+
+const requestUserIsAdmin = (req: Request): boolean => {
+  const userId = (req as AuthenticatedRequest).user?.userId;
+  if (!userId) return false;
+
+  try {
+    return userModel.getUserById(userId)?.role === 'admin';
+  } catch {
+    return false;
+  }
+};
 
 // Rate limiting for plugin operations
 const pluginRateLimit = rateLimit({
@@ -135,7 +153,7 @@ router.get(
     res: Response<ApiResponse<PluginStatus[]>>
   ): Promise<void> => {
     try {
-      const status = pluginService.getPluginStatus();
+      const status = pluginService.getPluginStatus(getRequestUserId(req));
 
       res.json({
         success: true,
@@ -182,6 +200,7 @@ router.get(
 // Upload and install a plugin
 router.post(
   '/upload',
+  requireAdmin,
   uploadRateLimit,
   upload.single('plugin'),
   async (
@@ -239,7 +258,10 @@ router.post(
       safeCleanupFile(req.file.path, tempDir);
 
       // Install the plugin
-      const plugin = pluginService.importPlugin(pluginData);
+      const plugin = pluginService.importPlugin(
+        pluginData,
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -276,11 +298,15 @@ router.post(
 // Install plugin from JSON data (alternative to file upload)
 router.post(
   '/install',
+  requireAdmin,
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
       const pluginData = req.body;
-      const plugin = pluginService.installPlugin(pluginData);
+      const plugin = pluginService.installPlugin(
+        pluginData,
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -312,6 +338,7 @@ router.post(
 // Update a plugin
 router.put(
   '/:id',
+  requireAdmin,
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
@@ -328,7 +355,10 @@ router.put(
       }
 
       updates.id = id;
-      const plugin = pluginService.installPlugin(updates);
+      const plugin = pluginService.installPlugin(
+        updates,
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -346,6 +376,7 @@ router.put(
 // Delete a plugin
 router.delete(
   '/:id',
+  requireAdmin,
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
@@ -435,7 +466,7 @@ router.post(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const success = pluginService.deactivatePlugin(id);
+      const success = pluginService.deactivatePlugin(id, getRequestUserId(req));
 
       res.json({
         success: true,
@@ -456,7 +487,10 @@ router.post(
   pluginRateLimit,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
-      const success = pluginService.deactivatePlugin();
+      const success = pluginService.deactivatePlugin(
+        undefined,
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -525,7 +559,17 @@ router.get(
     try {
       // Get userId from auth context (defaults to 'default' for single-user mode)
       const userId = getRequestUserId(req);
-      const credentials = pluginCredentialsService.getCredentials(userId);
+      const credentials = pluginCredentialsService
+        .getCredentials(userId)
+        .map(credential => {
+          const plugin = pluginService.getPlugin(credential.plugin_id, userId);
+          return {
+            ...credential,
+            has_api_key:
+              plugin !== null &&
+              pluginService.getApiKey(plugin, userId) !== null,
+          };
+        });
 
       res.json({
         success: true,
@@ -548,6 +592,7 @@ router.post(
     try {
       const id = req.params.id as string;
       const { api_key } = req.body;
+      const userId = getRequestUserId(req);
 
       if (!api_key || typeof api_key !== 'string') {
         res.status(400).json({
@@ -558,7 +603,7 @@ router.post(
       }
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -567,9 +612,12 @@ router.post(
         return;
       }
 
-      // Get userId from auth context
-      const userId = getRequestUserId(req);
-      const success = pluginCredentialsService.setApiKey(id, api_key, userId);
+      const success = pluginCredentialsService.setApiKey(
+        id,
+        api_key,
+        userId,
+        pluginService.getCredentialRoutingAuthFingerprint(plugin, userId)
+      );
 
       if (success) {
         res.json({
@@ -598,9 +646,10 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -609,8 +658,6 @@ router.delete(
         return;
       }
 
-      // Get userId from auth context
-      const userId = getRequestUserId(req);
       const success = pluginCredentialsService.deleteApiKey(id, userId);
 
       res.json({
@@ -632,9 +679,10 @@ router.get(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -643,13 +691,7 @@ router.get(
         return;
       }
 
-      // Get userId from auth context
-      const userId = getRequestUserId(req);
-      const hasKey = pluginCredentialsService.hasApiKey(
-        id,
-        plugin.auth.key_env,
-        userId
-      );
+      const hasKey = pluginService.getApiKey(plugin, userId) !== null;
 
       res.json({
         success: true,
@@ -677,8 +719,9 @@ router.get(
   ): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -689,13 +732,25 @@ router.get(
         return;
       }
 
-      const userId = getRequestUserId(req);
       const variables = pluginVariablesService.getVariables(
         id,
         plugin.variables,
         userId,
         true // forDisplay - mask sensitive values
       );
+      if (!requestUserIsAdmin(req)) {
+        for (const definition of plugin.variables) {
+          if (!isPluginConnectionVariableForPlugin(plugin, definition.name)) {
+            continue;
+          }
+          variables[definition.name] = {
+            name: definition.name,
+            value: definition.sensitive ? '' : (definition.default ?? ''),
+            is_sensitive: definition.sensitive ?? false,
+            has_value: false,
+          };
+        }
+      }
 
       res.json({ success: true, data: variables });
     } catch (error: unknown) {
@@ -715,6 +770,7 @@ router.put(
     try {
       const id = req.params.id as string;
       const { variables } = req.body;
+      const userId = getRequestUserId(req);
 
       if (!variables || typeof variables !== 'object') {
         res
@@ -723,7 +779,7 @@ router.put(
         return;
       }
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -737,13 +793,45 @@ router.put(
         return;
       }
 
-      const validation = validatePluginVariables(plugin.variables, variables);
+      let submittedVariables = variables as Record<string, unknown>;
+      if (!requestUserIsAdmin(req)) {
+        const definitionsByName = new Map(
+          plugin.variables.map(definition => [definition.name, definition])
+        );
+        const changesRouting = Object.entries(submittedVariables).some(
+          ([name, value]) => {
+            if (!isPluginConnectionVariableForPlugin(plugin, name)) {
+              return false;
+            }
+            const definition = definitionsByName.get(name);
+            const trustedDefault = String(definition?.default ?? '').trim();
+            return String(value ?? '').trim() !== trustedDefault;
+          }
+        );
+        if (changesRouting) {
+          res.status(403).json({
+            success: false,
+            error:
+              'Administrator access is required to change provider routing',
+          });
+          return;
+        }
+        submittedVariables = Object.fromEntries(
+          Object.entries(submittedVariables).filter(
+            ([name]) => !isPluginConnectionVariableForPlugin(plugin, name)
+          )
+        );
+      }
+
+      const validation = validatePluginVariables(
+        plugin.variables,
+        submittedVariables
+      );
       if (!validation.success) {
         res.status(400).json({ success: false, error: validation.error });
         return;
       }
 
-      const userId = getRequestUserId(req);
       const success = pluginVariablesService.setVariables(
         id,
         validation.variables,
@@ -752,6 +840,13 @@ router.put(
       );
 
       if (success) {
+        if (
+          Object.keys(validation.variables).some(name =>
+            isPluginConnectionVariableForPlugin(plugin, name)
+          )
+        ) {
+          pluginService.clearDiscoveredModels(id, userId);
+        }
         res.json({ success: true, data: true });
       } else {
         res
@@ -774,15 +869,22 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
       }
 
-      const userId = getRequestUserId(req);
+      // A full account-scoped reset also purges ignored legacy routing rows.
+      // Non-admins still cannot target routing variables through the update
+      // endpoint, but reset must not leave dormant values that a later role
+      // promotion could reactivate.
       const success = pluginVariablesService.deletePluginVariables(id, userId);
+      if (success) {
+        pluginService.clearDiscoveredModels(id, userId);
+      }
 
       res.json({ success: true, data: success });
     } catch (error: unknown) {

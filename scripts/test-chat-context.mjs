@@ -745,11 +745,29 @@ test('plugin model routing requires an active plugin and the current user creden
             `INSERT INTO users (id, username, password_hash, role, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?)`
           ).run('alice', 'alice', 'test-hash', 'user', now, now);
+          db.prepare(
+            `INSERT INTO users (id, username, password_hash, role, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?)`
+          ).run(
+            'plugin-fixture-admin',
+            'plugin-fixture-admin',
+            'test-hash',
+            'admin',
+            now,
+            now
+          );
 
           const credentialsService = (
             await import(
               pathToFileURL(
                 path.join(distRoot, 'services', 'pluginCredentialsService.js')
+              ).href
+            )
+          ).default;
+          const pluginService = (
+            await import(
+              pathToFileURL(
+                path.join(distRoot, 'services', 'pluginService.js')
               ).href
             )
           ).default;
@@ -759,8 +777,31 @@ test('plugin model routing requires an active plugin and the current user creden
             )
           ).default;
 
+          for (const pluginId of ['active-plugin', 'inactive-plugin']) {
+            pluginService.installPlugin(
+              JSON.parse(
+                fs.readFileSync(
+                  path.join(pluginsDir, `${pluginId}.json`),
+                  'utf8'
+                )
+              ),
+              'plugin-fixture-admin'
+            );
+          }
           assert.equal(
-            credentialsService.setApiKey('active-plugin', 'alice-key', 'alice'),
+            await pluginService.activatePlugin('active-plugin', 'alice'),
+            true
+          );
+          assert.equal(
+            credentialsService.setApiKey(
+              'active-plugin',
+              'alice-key',
+              'alice',
+              pluginService.getCredentialRoutingAuthFingerprint(
+                pluginService.getPlugin('active-plugin', 'alice'),
+                'alice'
+              )
+            ),
             true
           );
 

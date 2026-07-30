@@ -47,7 +47,11 @@ import {
   notFoundHandler,
   requestLogger,
 } from './middleware/index.js';
-import { optionalAuth, type AuthenticatedRequest } from './middleware/auth.js';
+import {
+  authenticate,
+  optionalAuth,
+  type AuthenticatedRequest,
+} from './middleware/auth.js';
 import ollamaRoutes from './routes/ollama.js';
 import chatRoutes from './routes/chat.js';
 import preferencesRoutes from './routes/preferences.js';
@@ -422,8 +426,8 @@ const pluginAuthBurstRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Authenticated users receive independent discovery quotas. Guests fall back
-// to a normalized IP key, while writes retain stricter route-specific limits.
+// Authenticated users receive independent discovery quotas, while writes retain
+// stricter route-specific limits.
 const pluginRouteRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 1000,
@@ -455,7 +459,7 @@ app.use(
 app.use(
   '/api/plugins',
   pluginAuthBurstRateLimiter,
-  optionalAuth,
+  authenticate,
   pluginRouteRateLimiter,
   pluginRoutes
 );

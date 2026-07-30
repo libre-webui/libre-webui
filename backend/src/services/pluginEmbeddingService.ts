@@ -150,7 +150,7 @@ export class PluginEmbeddingService {
     const apiKey = this.deps.getApiKey(plugin, userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
-        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
+        `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
 

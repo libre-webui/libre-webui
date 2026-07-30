@@ -36,16 +36,23 @@ interface _PluginCredentialRow {
   user_id: string;
   plugin_id: string;
   api_key: string; // Encrypted API key from DB
+  routing_auth_fingerprint: string | null;
   created_at: number;
   updated_at: number;
 }
 
 class PluginCredentialsService {
   /**
-   * Get API key for a specific plugin and user
-   * Returns null if not found, with optional fallback to environment variable
+   * Get only the API key stored for a specific plugin and user.
    */
-  getApiKey(pluginId: string, keyEnv: string, userId?: string): string | null {
+  getStoredApiKey(
+    pluginId: string,
+    userId: string | undefined,
+    options: {
+      expectedRoutingAuthFingerprint: string;
+      allowLegacyUnboundCredential: boolean;
+    }
+  ): string | null {
     const effectiveUserId = userId || 'default';
     const db = getDatabaseSafe();
 
@@ -53,11 +60,41 @@ class PluginCredentialsService {
       try {
         const row = db
           .prepare(
-            'SELECT api_key FROM plugin_credentials WHERE plugin_id = ? AND user_id = ?'
+            `SELECT id, api_key, routing_auth_fingerprint
+             FROM plugin_credentials
+             WHERE plugin_id = ? AND user_id = ?`
           )
-          .get(pluginId, effectiveUserId) as { api_key: string } | undefined;
+          .get(pluginId, effectiveUserId) as
+          | {
+              id: string;
+              api_key: string;
+              routing_auth_fingerprint: string | null;
+            }
+          | undefined;
 
         if (row?.api_key) {
+          const bindingMatches =
+            row.routing_auth_fingerprint ===
+            options.expectedRoutingAuthFingerprint;
+          const trustedLegacyCredential =
+            row.routing_auth_fingerprint === null &&
+            options.allowLegacyUnboundCredential;
+          if (!bindingMatches && !trustedLegacyCredential) {
+            return null;
+          }
+          if (trustedLegacyCredential) {
+            const result = db
+              .prepare(
+                `UPDATE plugin_credentials
+                 SET routing_auth_fingerprint = ?
+                 WHERE id = ? AND routing_auth_fingerprint IS NULL`
+              )
+              .run(options.expectedRoutingAuthFingerprint, row.id);
+            if (result.changes !== 1) {
+              return null;
+            }
+          }
+
           // Decrypt the API key
           const decryptedKey = encryptionService.decrypt(row.api_key);
           if (decryptedKey) {
@@ -69,7 +106,27 @@ class PluginCredentialsService {
       }
     }
 
-    // Fallback to environment variable
+    return null;
+  }
+
+  /**
+   * Get an API key for a specific plugin and user.
+   * Environment fallback must be disabled when the effective route comes from
+   * a user-stored connection override.
+   */
+  getApiKey(
+    pluginId: string,
+    keyEnv: string,
+    userId: string | undefined,
+    options: {
+      allowEnvironmentFallback: boolean;
+      expectedRoutingAuthFingerprint: string;
+      allowLegacyUnboundCredential: boolean;
+    }
+  ): string | null {
+    const storedApiKey = this.getStoredApiKey(pluginId, userId, options);
+    if (storedApiKey) return storedApiKey;
+    if (!options.allowEnvironmentFallback) return null;
     return process.env[keyEnv] || null;
   }
 
@@ -113,12 +170,21 @@ class PluginCredentialsService {
   /**
    * Set or update API key for a plugin
    */
-  setApiKey(pluginId: string, apiKey: string, userId?: string): boolean {
+  setApiKey(
+    pluginId: string,
+    apiKey: string,
+    userId: string | undefined,
+    routingAuthFingerprint: string
+  ): boolean {
     const effectiveUserId = userId || 'default';
     const db = getDatabaseSafe();
 
     if (!db) {
       logger.error('Database not available for storing plugin credentials');
+      return false;
+    }
+    if (!routingAuthFingerprint) {
+      logger.error('Routing/auth binding is required for plugin credentials');
       return false;
     }
 
@@ -136,14 +202,27 @@ class PluginCredentialsService {
       if (existing) {
         // Update existing credential
         db.prepare(
-          'UPDATE plugin_credentials SET api_key = ?, updated_at = ? WHERE id = ?'
-        ).run(encryptedKey, now, existing.id);
+          `UPDATE plugin_credentials
+           SET api_key = ?, routing_auth_fingerprint = ?, updated_at = ?
+           WHERE id = ?`
+        ).run(encryptedKey, routingAuthFingerprint, now, existing.id);
       } else {
         // Insert new credential
         const id = uuidv4();
         db.prepare(
-          'INSERT INTO plugin_credentials (id, user_id, plugin_id, api_key, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-        ).run(id, effectiveUserId, pluginId, encryptedKey, now, now);
+          `INSERT INTO plugin_credentials
+             (id, user_id, plugin_id, api_key, routing_auth_fingerprint,
+              created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).run(
+          id,
+          effectiveUserId,
+          pluginId,
+          encryptedKey,
+          routingAuthFingerprint,
+          now,
+          now
+        );
       }
 
       logger.debug(
@@ -185,13 +264,6 @@ class PluginCredentialsService {
       logger.error('Failed to delete API key for plugin %s:', pluginId, error);
       return false;
     }
-  }
-
-  /**
-   * Check if a user has an API key set for a plugin
-   */
-  hasApiKey(pluginId: string, keyEnv: string, userId?: string): boolean {
-    return this.getApiKey(pluginId, keyEnv, userId) !== null;
   }
 
   /**

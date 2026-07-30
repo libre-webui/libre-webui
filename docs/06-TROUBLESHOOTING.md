@@ -131,6 +131,9 @@ Administrators can disable model pulls for normal users. Check admin settings if
 
 ### A Custom Provider Uses the Wrong Endpoint or Shows No Models
 
+- Sign in as an administrator to change provider routing. Plugin definitions
+  and connection fields are instance-managed configuration; normal users can
+  still save generation settings, credentials, and their own activation state.
 - In **Settings → Plugins**, enter the full API endpoint URL, including the
   operation path (for example,
   `https://provider.example/v1/chat/completions`). A provider base URL alone is
@@ -141,10 +144,28 @@ Administrators can disable model pulls for normal users. Check admin settings if
 - An empty override uses the endpoint bundled in the plugin definition. An
   explicit malformed or unsafe override is rejected; Libre WebUI does not
   silently send that request to the bundled provider endpoint.
+- A deployment environment key is used only when an unshadowed bundled
+  definition retains its trusted root endpoint, authentication fields,
+  capability endpoints and selectors, and routing-variable defaults. Imported
+  definitions, writable definitions that reuse a bundled ID, and
+  administrator-saved custom routes require a credential saved by the same
+  account. Libre WebUI
+  intentionally reports the provider as unavailable and skips discovery if
+  only the environment key exists.
+- Pre-upgrade custom definitions are quarantined because older releases did not
+  record administrator provenance. Re-import the JSON as an administrator,
+  then have each user activate it again. Editing an approved plugin JSON
+  directly quarantines it again; use the administrator install or update flow
+  so its source path and definition hash are recorded.
+- Saved credentials are bound to the route, authentication contract,
+  definition, and source in effect when they were entered. After changing an
+  endpoint or definition, save that account's credential again. An old unbound
+  credential migrates automatically only on an exact anchored bundled route.
 - Activate the plugin after saving its endpoint and credential. Activation
   derives a `/models` URL from the saved full endpoint and uses the activating
   user's credential for discovery. The activation request waits for discovery
-  before the UI reloads the plugin list.
+  before the UI reloads the plugin list. Activation is account-specific, so
+  another user must activate the same shared plugin separately.
 - Automatic discovery requires an OpenAI-compatible `data` array of model IDs.
   Successful catalogs are stored per user without changing the shared plugin
   JSON. If discovery is unavailable, Libre WebUI keeps that user's previous
@@ -153,8 +174,15 @@ Administrators can disable model pulls for normal users. Check admin settings if
 - Image model availability, endpoint overrides, and API keys are also resolved
   for the current user. If an image request appears to use another account's
   provider settings, verify the request is authenticated as the expected user.
+- If an upgraded non-admin account once stored a routing value, use **Reset**
+  for that plugin. The ignored legacy value is purged so it cannot become active
+  after a later role change. Saving or resetting routing also clears that
+  account's discovered models so a stale catalog cannot follow the old route.
 - Requests originate from the backend. When Libre WebUI runs in a container,
   `localhost` refers to that container, not automatically the host machine.
+- Redirect-hop endpoint validation is completed by the endpoint-isolation
+  hardening tracked in issue #168. Include that change when validating a
+  deployment that follows provider redirects.
 
 ### Chat Uses the Wrong Provider or Shows a Provider as Unavailable
 

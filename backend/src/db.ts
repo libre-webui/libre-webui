@@ -271,6 +271,7 @@ function initializeTables(): void {
       user_id TEXT DEFAULT 'default',
       plugin_id TEXT NOT NULL,
       api_key TEXT NOT NULL, -- Encrypted API key
+      routing_auth_fingerprint TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -304,6 +305,29 @@ function initializeTables(): void {
       updated_at INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       PRIMARY KEY (user_id, plugin_id)
+    )
+  `);
+
+  // Plugin activation is account-scoped. Definitions remain shared files.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plugin_activations (
+      user_id TEXT NOT NULL,
+      plugin_id TEXT NOT NULL,
+      activated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (user_id, plugin_id)
+    )
+  `);
+
+  // Writable definitions are quarantined until an administrator approves
+  // their exact normalized contents.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plugin_definition_approvals (
+      plugin_id TEXT PRIMARY KEY,
+      definition_fingerprint TEXT NOT NULL,
+      source_path TEXT NOT NULL,
+      approved_by_user_id TEXT NOT NULL,
+      approved_at INTEGER NOT NULL
     )
   `);
 
@@ -402,6 +426,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_plugin_variables_user_id ON plugin_variables(user_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_variables_plugin_id ON plugin_variables(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_discovered_models_plugin_id ON plugin_discovered_models(plugin_id);
+    CREATE INDEX IF NOT EXISTS idx_plugin_activations_plugin_id ON plugin_activations(plugin_id);
+    CREATE INDEX IF NOT EXISTS idx_plugin_definition_approvals_approver ON plugin_definition_approvals(approved_by_user_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_user_id ON generated_images(user_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
   `);
@@ -447,6 +473,32 @@ function runMigrations(): void {
   if (!db) return;
 
   try {
+    const pluginCredentialColumns = (
+      db.prepare('PRAGMA table_info(plugin_credentials)').all() as Array<{
+        name: string;
+      }>
+    ).map(column => column.name);
+    if (!pluginCredentialColumns.includes('routing_auth_fingerprint')) {
+      db.exec(
+        'ALTER TABLE plugin_credentials ADD COLUMN routing_auth_fingerprint TEXT'
+      );
+      logger.debug(
+        'Migration: Added routing/auth binding to plugin credentials'
+      );
+    }
+
+    const pluginApprovalColumns = (
+      db
+        .prepare('PRAGMA table_info(plugin_definition_approvals)')
+        .all() as Array<{ name: string }>
+    ).map(column => column.name);
+    if (!pluginApprovalColumns.includes('source_path')) {
+      db.exec(
+        `ALTER TABLE plugin_definition_approvals
+         ADD COLUMN source_path TEXT NOT NULL DEFAULT ''`
+      );
+    }
+
     // Check if we need to add new columns to session_messages
     const sessionMessagesTableInfo = db
       .prepare('PRAGMA table_info(session_messages)')
