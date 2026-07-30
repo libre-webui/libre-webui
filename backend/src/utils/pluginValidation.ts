@@ -243,8 +243,8 @@ export function resolvePluginApiConfig(
   plugin: Pick<Plugin, 'endpoint' | 'api_mode' | 'base_url' | 'api_path'>,
   variables: Record<string, string | number | boolean> = {}
 ): ResolvedPluginApiConfig {
-  const configuredMode =
-    optionalPluginString(variables.api_mode) || plugin.api_mode;
+  const userConfiguredMode = optionalPluginString(variables.api_mode);
+  const configuredMode = userConfiguredMode || plugin.api_mode;
   if (
     configuredMode !== undefined &&
     !PLUGIN_API_MODES.has(configuredMode as PluginApiMode)
@@ -278,8 +278,15 @@ export function resolvePluginApiConfig(
 
   const baseUrl = configuredBaseUrl || optionalPluginString(plugin.base_url);
   if (baseUrl) {
+    const modeOverridesManifest =
+      userConfiguredMode !== undefined &&
+      userConfiguredMode !== plugin.api_mode &&
+      configuredApiPath === undefined;
     const configuredPath =
-      configuredApiPath || optionalPluginString(plugin.api_path);
+      configuredApiPath ||
+      (modeOverridesManifest
+        ? undefined
+        : optionalPluginString(plugin.api_path));
     const defaultPath =
       apiMode === 'responses' ? '/responses' : '/chat/completions';
     const endpoint = combinePluginBaseUrlAndPath(

@@ -146,6 +146,11 @@ settings under **Settings → Plugins**:
   `/chat/completions` or `/responses`, that suffix also determines the request
   format so an override cannot receive the wrong payload.
 
+Imported plugin JSON supports providers that use an OpenAI Chat Completions,
+OpenAI Responses, Anthropic, or Gemini-compatible wire format. If the provider
+uses a proprietary payload, streaming event, tool-call, or response format, it
+needs a backend adapter; changing only the endpoint cannot translate it.
+
 Remote provider URLs must use HTTPS. HTTP is accepted only for localhost and
 private-network addresses. Base URLs cannot contain query strings or fragments,
 and relative API paths cannot contain literal or repeatedly encoded traversal
@@ -159,6 +164,12 @@ resetting connection overrides also refresh the list; unrelated generation
 parameters do not. Discovered IDs are stored per user and never overwrite the
 shared plugin JSON. If the derived route is not supported by the provider,
 configure model IDs manually in the plugin's `model_map`.
+
+Provider requests intentionally do not follow HTTP redirects, including model
+discovery, Chat, Work, image generation, embeddings, and text-to-speech.
+Configure the final destination URL rather than a redirecting URL. This
+fail-closed behavior keeps an authorization header from hopping to a destination
+that was not validated.
 
 HTTP is accepted only for exact loopback hosts or private IPv4 literals.
 Hostnames such as `host.docker.internal` and `10.example.com` are not private

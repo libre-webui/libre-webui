@@ -275,6 +275,7 @@ export const useChat = (sessionId: string) => {
         timestamp: number;
         messageId?: string;
         statistics?: GenerationStatistics; // Generation statistics from Ollama
+        providerMetadata?: Record<string, unknown>;
       };
       logger.debug(
         'Hook: Received assistant_complete for session:',
@@ -304,7 +305,8 @@ export const useChat = (sessionId: string) => {
           sessionId,
           messageId,
           finalContent,
-          completeData.statistics
+          completeData.statistics,
+          completeData.providerMetadata
         );
       }
 
@@ -475,6 +477,7 @@ export const useChat = (sessionId: string) => {
                 role: m.role,
                 content: m.content,
                 images: m.images,
+                providerMetadata: m.providerMetadata,
               }))
           : undefined;
 
@@ -620,6 +623,7 @@ export const useChat = (sessionId: string) => {
               role: message.role,
               content: message.content,
               images: message.images,
+              providerMetadata: message.providerMetadata,
             }))
         : undefined;
       websocketService.send({

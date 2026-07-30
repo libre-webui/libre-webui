@@ -74,6 +74,11 @@ Many providers expose an OpenAI-compatible API. A plugin can define:
 - Optional model map fallback
 
 If a provider does not support live model discovery, Libre WebUI uses the configured model map.
+Imported plugin JSON configures providers that already speak one of Libre
+WebUI's supported wire formats: OpenAI Chat Completions, OpenAI Responses,
+Anthropic Messages, or Gemini. JSON alone does not translate an arbitrary
+proprietary protocol; a provider with a different request, streaming, tool-call,
+or response shape needs a small backend adapter.
 
 ### Chat Completions and Responses API modes
 
@@ -112,13 +117,19 @@ Imported plugin JSON can provide the same defaults:
 ```
 
 Responses requests use `input`, `max_output_tokens`, flattened function tools,
-and `store: false`. Completed and streamed Responses output is normalized back
-to Libre WebUI's chat and Work event formats. During stateless Work tool loops,
-Libre WebUI retains and replays the provider's ordered output Items verbatim,
-including encrypted reasoning and assistant `phase`, before appending function
-results. An incomplete Responses result is not treated as a successful Chat or
-Work turn; its `incomplete_details.reason` is retained and surfaced to the
-caller.
+`store: false`, and request encrypted reasoning content for stateless
+continuation. Completed and streamed Responses output is normalized back to
+Libre WebUI's chat and Work event formats. Libre WebUI retains and replays the
+provider's ordered output Items verbatim across ordinary Chat turns, Work tool
+loops, and resumed Work runs, including encrypted reasoning and assistant
+`phase`, before appending function results. SQLite-backed Chat storage encrypts
+this provider state with the message; Work stores tool-only state in hidden
+context rows that are not returned by message APIs. A hashed scope binds replay
+to the same provider, model, Responses mode, and final configured endpoint. When
+that scope changes, Libre WebUI falls back to normalized message history rather
+than sending provider-specific Items to a different API. An incomplete
+Responses result is not treated as a successful Chat or Work turn; its
+`incomplete_details.reason` is retained and surfaced to the caller.
 
 Model discovery derives `/models` from either operation path. For example,
 `https://api.example.com/v1/responses` discovers from
@@ -130,7 +141,10 @@ explicit refresh, API-key changes, connection-variable changes, and variable
 resets; unrelated generation-variable saves do not trigger a network request.
 The final derived discovery URL is checked before the user's credential is read
 or an authorization header is built, including when the URL originates in an
-imported plugin manifest.
+imported plugin manifest. Discovery and provider capability requests do not
+follow HTTP redirects. Configure the final Chat, Work, model-list, image,
+embedding, or TTS endpoint directly; this prevents credentials from being
+forwarded from a validated URL to an unvalidated redirect destination.
 
 Remote endpoints must use HTTPS. Plain HTTP is accepted only for exact loopback
 hosts (`localhost`, `127.0.0.1`, or `[::1]`) and private IPv4 literals in the

@@ -15,7 +15,10 @@
  * limitations under the License.
  */
 
-import { OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY } from './openAIResponsesAdapter.js';
+import {
+  OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
+  OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
+} from './openAIResponsesAdapter.js';
 
 export interface PluginToolCall {
   id: string;
@@ -316,7 +319,8 @@ function responsesItemKey(
 }
 
 export async function* streamOpenAIResponsesResponse(
-  response: Awaited<ReturnType<typeof fetch>>
+  response: Awaited<ReturnType<typeof fetch>>,
+  stateScope?: string
 ): AsyncGenerator<PluginStreamChunk, void, unknown> {
   if (!response.ok) {
     const errorText = await response.text();
@@ -450,6 +454,11 @@ export async function* streamOpenAIResponsesResponse(
             providerMetadata: {
               [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]:
                 replayableOutputItems,
+              ...(stateScope
+                ? {
+                    [OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+                  }
+                : {}),
             },
           }
         : {}),

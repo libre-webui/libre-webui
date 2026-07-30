@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { createHash } from 'node:crypto';
 import type { PluginResponse } from '../types/index.js';
 
 type JsonObject = Record<string, unknown>;
@@ -23,6 +24,8 @@ export const OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY =
   'openAIResponsesOutputItems';
 export const OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY =
   'openAIResponsesIncompleteReason';
+export const OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY =
+  'openAIResponsesStateScope';
 
 export interface OpenAICompatibleChatMessage {
   role: string;
@@ -31,6 +34,7 @@ export interface OpenAICompatibleChatMessage {
   tool_call_id?: string;
   call_id?: string;
   tool_calls?: unknown;
+  providerMetadata?: Record<string, unknown>;
 }
 
 export interface OpenAIResponsesPayloadOptions {
@@ -40,6 +44,7 @@ export interface OpenAIResponsesPayloadOptions {
   temperature?: number;
   top_p?: number;
   stream?: boolean;
+  stateScope?: string;
 }
 
 export interface OpenAIResponsesPayload extends JsonObject {
@@ -196,9 +201,31 @@ function toResponsesFunctionCalls(
  * their call IDs remain correlated without relying on stored response state.
  */
 export function toOpenAIResponsesInput(
-  messages: readonly OpenAICompatibleChatMessage[]
+  messages: readonly OpenAICompatibleChatMessage[],
+  expectedStateScope?: string
 ): JsonObject[] {
   return messages.flatMap((message, messageIndex) => {
+    if (message.role === 'assistant') {
+      const storedStateScope =
+        message.providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY];
+      const responseOutputItems = Array.isArray(
+        message.providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+      )
+        ? message.providerMetadata[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+        : [];
+      const replayableOutputItems =
+        expectedStateScope === undefined ||
+        storedStateScope === expectedStateScope
+          ? responseOutputItems.flatMap(rawItem => {
+              const item = asObject(rawItem);
+              return item ? [{ ...item }] : [];
+            })
+          : [];
+      if (replayableOutputItems.length > 0) {
+        return replayableOutputItems;
+      }
+    }
+
     if (message.role === 'tool') {
       return [
         {
@@ -277,8 +304,9 @@ export function buildOpenAIResponsesPayload(
 
   return {
     model,
-    input: toOpenAIResponsesInput(messages),
+    input: toOpenAIResponsesInput(messages, options.stateScope),
     store: false,
+    include: ['reasoning.encrypted_content'],
     ...(tools.length > 0 ? { tools } : {}),
     ...(options.tool_choice !== undefined
       ? { tool_choice: options.tool_choice }
@@ -425,7 +453,8 @@ function normalizeResponsesUsage(
  */
 export function normalizeOpenAIResponsesResponse(
   value: unknown,
-  fallbackModel: string
+  fallbackModel: string,
+  stateScope?: string
 ): NormalizedOpenAIResponsesResponse {
   const response = asObject(value) || {};
   if (response.status === 'failed') {
@@ -475,6 +504,25 @@ export function normalizeOpenAIResponsesResponse(
     typeof response.model === 'string' ? response.model : fallbackModel;
   const usage = normalizeResponsesUsage(response.usage);
   const incompleteReason = responsesIncompleteReason(response);
+  const replayableOutputItems = output.flatMap(rawItem => {
+    const item = asObject(rawItem);
+    return item ? [{ ...item }] : [];
+  });
+  const providerMetadata = {
+    ...(replayableOutputItems.length > 0
+      ? {
+          [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: replayableOutputItems,
+        }
+      : {}),
+    ...(incompleteReason
+      ? {
+          [OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY]: incompleteReason,
+        }
+      : {}),
+    ...(stateScope
+      ? { [OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope }
+      : {}),
+  };
 
   return {
     id:
@@ -485,13 +533,7 @@ export function normalizeOpenAIResponsesResponse(
         ? Math.floor(response.created_at)
         : 0,
     model,
-    ...(incompleteReason
-      ? {
-          providerMetadata: {
-            [OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY]: incompleteReason,
-          },
-        }
-      : {}),
+    ...(Object.keys(providerMetadata).length > 0 ? { providerMetadata } : {}),
     choices: [
       {
         index: 0,
@@ -509,4 +551,22 @@ export function normalizeOpenAIResponsesResponse(
     ],
     ...(usage ? { usage } : {}),
   };
+}
+
+export function createOpenAIResponsesStateScope(
+  providerId: string,
+  model: string,
+  endpoint: string
+): string {
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        version: 1,
+        apiMode: 'responses',
+        providerId,
+        model,
+        endpoint,
+      })
+    )
+    .digest('hex');
 }

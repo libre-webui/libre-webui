@@ -85,7 +85,8 @@ interface ChatState {
     sessionId: string,
     messageId: string,
     content: string,
-    statistics?: GenerationStatistics
+    statistics?: GenerationStatistics,
+    providerMetadata?: ChatMessage['providerMetadata']
   ) => void;
 
   // Models
@@ -370,7 +371,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     sessionId: string,
     messageId: string,
     content: string,
-    statistics?: GenerationStatistics
+    statistics?: GenerationStatistics,
+    providerMetadata?: ChatMessage['providerMetadata']
   ) => {
     set(state =>
       updateMessageStatisticsInChatState(
@@ -378,7 +380,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         sessionId,
         messageId,
         content,
-        statistics
+        statistics,
+        providerMetadata
       )
     );
   },

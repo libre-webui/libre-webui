@@ -177,6 +177,7 @@ function initializeTables(): void {
       timestamp INTEGER NOT NULL,
       message_index INTEGER NOT NULL,
       model TEXT, -- Model used for this message (for assistant messages)
+      provider_metadata TEXT, -- Encrypted JSON with provider-specific replay state
       images TEXT, -- JSON array of base64 images (for multimodal support)
       statistics TEXT, -- JSON object with generation statistics
       artifacts TEXT, -- JSON array of artifacts
@@ -467,6 +468,7 @@ function runMigrations(): void {
     // Add missing columns to session_messages table
     const newSessionMessagesColumns = [
       { name: 'model', type: 'TEXT' },
+      { name: 'provider_metadata', type: 'TEXT' },
       { name: 'images', type: 'TEXT' },
       { name: 'statistics', type: 'TEXT' },
       { name: 'artifacts', type: 'TEXT' },

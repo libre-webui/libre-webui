@@ -24,6 +24,7 @@ const [
   { default: workEventService },
   {
     default: workModelProviderService,
+    toOpenAIResponsesWorkInput,
     WORK_TOOL_ARGUMENTS_ERROR_MESSAGE,
     WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY,
   },
@@ -375,4 +376,271 @@ test('incomplete provider responses fail Work with the provider reason', async (
   assert.match(run.error, /incomplete response \(max_output_tokens\)/);
   const errorEvent = events.find(event => event.type === 'error');
   assert.equal(errorEvent?.data.code, 'WORK_PROVIDER_INCOMPLETE_RESPONSE');
+});
+
+test('Responses state and exact tool call IDs survive a persisted Work resume', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-responses-resume-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const stateScope = 'responses-resume-state-scope';
+  const reasoningItem = {
+    id: 'reasoning-resume',
+    type: 'reasoning',
+    encrypted_content: 'opaque-resume-reasoning',
+    summary: [],
+  };
+  const functionItem = {
+    id: 'function-resume',
+    type: 'function_call',
+    call_id: 'call-resume',
+    name: 'list_files',
+    arguments: '{"path":"."}',
+  };
+  const finalMessageItem = {
+    id: 'message-resume-final',
+    type: 'message',
+    role: 'assistant',
+    phase: 'final_answer',
+    content: [{ type: 'output_text', text: 'Initial run complete.' }],
+  };
+  const providerMetadata = outputItems => ({
+    openAIResponsesOutputItems: outputItems,
+    openAIResponsesStateScope: stateScope,
+  });
+
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => stateScope
+  );
+
+  let phase = 'initial';
+  let initialRound = 0;
+  let resumedRequest;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      if (phase === 'resumed') {
+        resumedRequest = request;
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: 'Resumed run complete.',
+            providerMetadata: providerMetadata([
+              {
+                id: 'message-resumed',
+                type: 'message',
+                role: 'assistant',
+                phase: 'final_answer',
+                content: [
+                  { type: 'output_text', text: 'Resumed run complete.' },
+                ],
+              },
+            ]),
+          },
+          done: true,
+        };
+      }
+
+      initialRound += 1;
+      if (initialRound === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            providerMetadata: providerMetadata([reasoningItem, functionItem]),
+            tool_calls: [
+              {
+                id: 'call-resume',
+                function: {
+                  name: 'list_files',
+                  arguments: { path: '.' },
+                },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+
+      assert.equal(initialRound, 2);
+      assert.equal(request.messages.at(-1).tool_call_id, 'call-resume');
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: {
+          role: 'assistant',
+          content: 'Initial run complete.',
+          providerMetadata: providerMetadata([finalMessageItem]),
+        },
+        done: true,
+      };
+    }
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'List the workspace and finish.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const initialRunId = detail.activeRun?.id;
+  assert.ok(initialRunId);
+  await workAgentService.execute(detail.id, initialRunId, userId);
+  assert.equal(workTaskService.getRun(initialRunId).status, 'completed');
+
+  const hiddenRows = getDatabase()
+    .prepare(
+      `SELECT kind
+       FROM work_messages
+       WHERE task_id = ? AND kind = 'provider_state'`
+    )
+    .all(detail.id);
+  assert.equal(hiddenRows.length, 1);
+  assert.equal(
+    workTaskService
+      .getMessages(detail.id)
+      .some(message => message.kind === 'provider_state'),
+    false
+  );
+  assert.equal(
+    workTaskService
+      .getMessagePage(detail.id)
+      .messages.some(message => message.kind === 'provider_state'),
+    false
+  );
+
+  phase = 'resumed';
+  const resumedDetail = workTaskService.createRun(
+    detail.id,
+    userId,
+    'Continue from persisted state.'
+  );
+  const resumedRunId = resumedDetail.activeRun?.id;
+  assert.ok(resumedRunId);
+  await workAgentService.execute(detail.id, resumedRunId, userId);
+  assert.equal(workTaskService.getRun(resumedRunId).status, 'completed');
+  assert.ok(resumedRequest);
+
+  const restoredToolResult = resumedRequest.messages.find(
+    message => message.role === 'tool' && message.tool_call_id === 'call-resume'
+  );
+  assert.equal(restoredToolResult.content, '[]');
+  const replayedInput = toOpenAIResponsesWorkInput(
+    resumedRequest.messages,
+    stateScope
+  );
+  const replayStart = replayedInput.findIndex(
+    item => item.id === reasoningItem.id
+  );
+  assert.ok(replayStart >= 0);
+  assert.deepEqual(replayedInput.slice(replayStart, replayStart + 4), [
+    reasoningItem,
+    functionItem,
+    {
+      type: 'function_call_output',
+      call_id: 'call-resume',
+      output: '[]',
+    },
+    finalMessageItem,
+  ]);
+  assert.deepEqual(replayedInput.at(-1), {
+    role: 'user',
+    content: 'Continue from persisted state.',
+  });
+  assert.equal(
+    toOpenAIResponsesWorkInput(
+      resumedRequest.messages,
+      'different-provider-state-scope'
+    ).some(item => item.id === reasoningItem.id),
+    false
+  );
+});
+
+test('truncated Work context drops orphaned provider state and tool results', () => {
+  const now = Date.now();
+  const userId = 'agent-loop-context-truncation-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Old prompt outside the retained row window.',
+    'test-model',
+    true
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'assistant',
+    'provider_state',
+    '',
+    { workProviderState: { providerMetadata: {} } }
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'tool',
+    'tool_result',
+    'orphaned result',
+    { name: 'list_files', toolCallId: 'orphan-call' }
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'assistant',
+    'message',
+    'Safe retained boundary.'
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'user',
+    'message',
+    'Follow-up one.'
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'assistant',
+    'message',
+    'Answer one.'
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'user',
+    'message',
+    'Follow-up two.'
+  );
+
+  const retained = workTaskService.getRecentModelContextMessages(detail.id, 1);
+  assert.equal(retained[0].content, 'Safe retained boundary.');
+  assert.equal(
+    retained.some(
+      message =>
+        message.kind === 'provider_state' || message.kind === 'tool_result'
+    ),
+    false
+  );
 });

@@ -183,6 +183,7 @@ export class PluginEmbeddingService {
       {
         headers,
         timeout: 60000,
+        maxRedirects: 0,
       }
     );
 

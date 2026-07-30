@@ -151,6 +151,7 @@ test('Responses payload is stateless and maps chat fields to Responses fields', 
     },
   ]);
   assert.equal(payload.store, false);
+  assert.deepEqual(payload.include, ['reasoning.encrypted_content']);
   assert.equal(payload.max_output_tokens, 2048);
   assert.equal(payload.temperature, 0.2);
   assert.equal(payload.top_p, 0.8);
@@ -163,11 +164,44 @@ test('Responses payload is stateless and maps chat fields to Responses fields', 
 });
 
 test('Responses input preserves function-call and tool-result correlation', () => {
-  const input = adapter.toOpenAIResponsesInput([
+  const stateScope = adapter.createOpenAIResponsesStateScope(
+    'provider-a',
+    'gpt-test',
+    'https://gateway.example/v1/responses'
+  );
+  const reasoningItem = {
+    id: 'reasoning-read',
+    type: 'reasoning',
+    encrypted_content: 'opaque-reasoning',
+    summary: [],
+  };
+  const messageItem = {
+    id: 'message-read',
+    type: 'message',
+    role: 'assistant',
+    phase: 'commentary',
+    content: [{ type: 'output_text', text: 'I will inspect it.' }],
+  };
+  const functionItem = {
+    id: 'function-read',
+    type: 'function_call',
+    call_id: 'call-read',
+    name: 'read_file',
+    arguments: '{"path":"plan.txt"}',
+  };
+  const history = [
     { role: 'user', content: 'Read the plan.' },
     {
       role: 'assistant',
       content: 'I will inspect it.',
+      providerMetadata: {
+        [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [
+          reasoningItem,
+          messageItem,
+          functionItem,
+        ],
+        [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+      },
       tool_calls: [
         {
           id: 'call-read',
@@ -184,23 +218,38 @@ test('Responses input preserves function-call and tool-result correlation', () =
       tool_call_id: 'call-read',
       content: 'Plan contents',
     },
-  ]);
+  ];
+  const input = adapter.toOpenAIResponsesInput(history, stateScope);
 
   assert.deepEqual(input, [
     { role: 'user', content: 'Read the plan.' },
-    { role: 'assistant', content: 'I will inspect it.' },
-    {
-      type: 'function_call',
-      call_id: 'call-read',
-      name: 'read_file',
-      arguments: '{"path":"plan.txt"}',
-    },
+    reasoningItem,
+    messageItem,
+    functionItem,
     {
       type: 'function_call_output',
       call_id: 'call-read',
       output: 'Plan contents',
     },
   ]);
+  assert.deepEqual(
+    adapter.toOpenAIResponsesInput(history, 'different-provider-scope'),
+    [
+      { role: 'user', content: 'Read the plan.' },
+      { role: 'assistant', content: 'I will inspect it.' },
+      {
+        type: 'function_call',
+        call_id: 'call-read',
+        name: 'read_file',
+        arguments: '{"path":"plan.txt"}',
+      },
+      {
+        type: 'function_call_output',
+        call_id: 'call-read',
+        output: 'Plan contents',
+      },
+    ]
+  );
 });
 
 test('completed Responses objects normalize text, reasoning, calls, and usage', () => {
@@ -249,6 +298,32 @@ test('completed Responses objects normalize text, reasoning, calls, and usage', 
     object: 'chat.completion',
     created: 1_750_000_000,
     model: 'gpt-test',
+    providerMetadata: {
+      [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [
+        {
+          id: 'reasoning-1',
+          type: 'reasoning',
+          encrypted_content: 'encrypted-reasoning',
+          summary: [
+            { type: 'summary_text', text: 'Inspect the requested file.' },
+            { type: 'summary_text', text: 'Then report its contents.' },
+          ],
+        },
+        {
+          id: 'message-1',
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'I need to read the file.' }],
+        },
+        {
+          id: 'function-1',
+          type: 'function_call',
+          call_id: 'call-read',
+          name: 'read_file',
+          arguments: '{"path":"plan.txt"}',
+        },
+      ],
+    },
     choices: [
       {
         index: 0,
@@ -345,6 +420,11 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
     name: 'read_file',
     arguments: '{"path":"unterminated"',
   };
+  const stateScope = adapter.createOpenAIResponsesStateScope(
+    plugin.id,
+    'gpt-test',
+    plugin.endpoint
+  );
 
   const response = workProvider.normalizePluginWorkResponse(
     plugin,
@@ -360,7 +440,8 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
       },
     },
     'gpt-test',
-    'responses'
+    'responses',
+    stateScope
   );
 
   assert.equal(response.message.content, 'Reading now.');
@@ -372,6 +453,12 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
       adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
     ],
     [reasoningItem, messageItem, functionItem]
+  );
+  assert.equal(
+    response.message.providerMetadata[
+      adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY
+    ],
+    stateScope
   );
   assert.equal(response.message.tool_calls[0].id, 'call-work');
   assert.equal(response.message.tool_calls[0].function.name, 'read_file');
@@ -407,7 +494,8 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
       stream: false,
     },
     { max_tokens: 4096 },
-    'responses'
+    'responses',
+    stateScope
   );
 
   assert.equal(payload.store, false);
@@ -561,6 +649,34 @@ test('provider API configuration resolves modes, base URLs, paths, and model dis
     {
       apiMode: 'responses',
       endpoint: 'https://gateway.example/v2/custom/responses',
+    }
+  );
+  assert.deepEqual(
+    pluginValidation.resolvePluginApiConfig(
+      {
+        ...plugin,
+        endpoint: 'https://api.openai.com/v1/responses',
+        api_mode: 'responses',
+        api_path: '/responses',
+      },
+      { api_mode: 'chat_completions' }
+    ),
+    {
+      apiMode: 'chat_completions',
+      endpoint: 'https://api.openai.com/v1/chat/completions',
+    }
+  );
+  assert.deepEqual(
+    pluginValidation.resolvePluginApiConfig(
+      {
+        ...plugin,
+        api_path: '/chat/completions',
+      },
+      { api_mode: 'responses' }
+    ),
+    {
+      apiMode: 'responses',
+      endpoint: 'https://api.openai.com/v1/responses',
     }
   );
   assert.deepEqual(
@@ -745,11 +861,17 @@ test('Chat adapter sends and normalizes Responses API payloads', () => {
     model: 'gpt-test',
     input: [{ role: 'user', content: 'Hello' }],
     store: false,
+    include: ['reasoning.encrypted_content'],
     max_output_tokens: 512,
     temperature: 0.3,
     stream: false,
   });
 
+  const stateScope = adapter.createOpenAIResponsesStateScope(
+    plugin.id,
+    'gpt-test',
+    plugin.endpoint
+  );
   const converted = chatAdapter.convertProviderResponse(
     plugin,
     {
@@ -765,10 +887,17 @@ test('Chat adapter sends and normalizes Responses API payloads', () => {
       ],
     },
     'gpt-test',
-    'responses'
+    'responses',
+    stateScope
   );
   assert.equal(converted.id, 'resp-chat');
   assert.equal(converted.choices[0].message.content, 'Hello back');
+  assert.equal(
+    converted.providerMetadata[
+      adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY
+    ],
+    stateScope
+  );
 });
 
 test('Responses streaming emits typed content, reasoning, one correlated call, and usage', async () => {
@@ -840,8 +969,10 @@ test('Responses streaming emits typed content, reasoning, one correlated call, a
     }
   );
   const chunks = [];
+  const stateScope = 'stream-state-scope';
   for await (const chunk of streamAdapter.streamOpenAIResponsesResponse(
-    response
+    response,
+    stateScope
   )) {
     chunks.push(chunk);
   }
@@ -877,6 +1008,7 @@ test('Responses streaming emits typed content, reasoning, one correlated call, a
         messageItem,
         functionItem,
       ],
+      [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
     },
   });
 });

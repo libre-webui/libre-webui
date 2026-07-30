@@ -658,7 +658,7 @@ export class WorkTaskService {
         `SELECT id, task_id, run_id, message_index, role, kind, content,
                 metadata, created_at
          FROM work_messages
-         WHERE task_id = ?
+         WHERE task_id = ? AND kind <> 'provider_state'
          ORDER BY message_index ASC`
       )
       .all(taskId) as MessageRow[];
@@ -695,6 +695,49 @@ export class WorkTaskService {
     return selected.reverse().map(mapMessage);
   }
 
+  getRecentModelContextMessages(taskId: string, limit = 30): WorkMessage[] {
+    const boundedLimit = Math.min(30, Math.max(1, Math.trunc(limit)));
+    const rowLimit = boundedLimit * 6;
+    const rows = getDatabase()
+      .prepare(
+        `SELECT id, task_id, run_id, message_index, role, kind, content,
+                metadata, created_at
+         FROM work_messages
+         WHERE task_id = ?
+           AND (
+             (kind = 'message' AND role IN ('user', 'assistant'))
+             OR (kind = 'provider_state' AND role = 'assistant')
+             OR (kind = 'tool_result' AND role = 'tool')
+           )
+         ORDER BY message_index DESC
+         LIMIT ?`
+      )
+      .all(taskId, rowLimit) as MessageRow[];
+    const selected: MessageRow[] = [];
+    let selectedBytes = 0;
+    for (const row of rows) {
+      const bytes =
+        Buffer.byteLength(row.content, 'utf8') +
+        Buffer.byteLength(row.metadata || '', 'utf8');
+      if (
+        selected.length > 0 &&
+        selectedBytes + bytes > WORK_CONTEXT_MAX_BYTES
+      ) {
+        break;
+      }
+      selected.push(row);
+      selectedBytes += Math.min(bytes, WORK_MESSAGE_MAX_BYTES);
+    }
+    const chronological = selected.reverse();
+    while (
+      chronological[0]?.kind === 'provider_state' ||
+      chronological[0]?.kind === 'tool_result'
+    ) {
+      chronological.shift();
+    }
+    return chronological.map(mapMessage);
+  }
+
   getMessagePage(
     taskId: string,
     before?: number,
@@ -711,7 +754,7 @@ export class WorkTaskService {
               `SELECT id, task_id, run_id, message_index, role, kind, content,
                       metadata, created_at
                FROM work_messages
-               WHERE task_id = ?
+               WHERE task_id = ? AND kind <> 'provider_state'
                ORDER BY message_index DESC
                LIMIT ?`
             )
@@ -722,6 +765,7 @@ export class WorkTaskService {
                       metadata, created_at
                FROM work_messages
                WHERE task_id = ? AND message_index < ?
+                 AND kind <> 'provider_state'
                ORDER BY message_index DESC
                LIMIT ?`
             )

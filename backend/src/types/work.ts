@@ -48,7 +48,13 @@ export interface WorkMessage {
   runId?: string;
   messageIndex: number;
   role: 'user' | 'assistant' | 'tool';
-  kind: 'message' | 'reasoning' | 'tool_call' | 'tool_result' | 'error';
+  kind:
+    | 'message'
+    | 'reasoning'
+    | 'tool_call'
+    | 'tool_result'
+    | 'provider_state'
+    | 'error';
   content: string;
   metadata?: Record<string, unknown>;
   createdAt: number;

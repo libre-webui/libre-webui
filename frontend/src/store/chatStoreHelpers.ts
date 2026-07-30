@@ -210,7 +210,8 @@ export function updateMessageStatisticsInChatState<T extends ChatMessageState>(
   sessionId: string,
   messageId: string,
   content: string,
-  statistics?: ChatMessage['statistics']
+  statistics?: ChatMessage['statistics'],
+  providerMetadata?: ChatMessage['providerMetadata']
 ): T | Pick<T, 'sessions' | 'currentSession'> {
   if (state.currentSession?.id !== sessionId) {
     return state;
@@ -223,7 +224,12 @@ export function updateMessageStatisticsInChatState<T extends ChatMessageState>(
         ...state.currentSession,
         messages: state.currentSession.messages.map(message =>
           message.id === messageId
-            ? { ...message, content, statistics }
+            ? {
+                ...message,
+                content,
+                statistics,
+                ...(providerMetadata ? { providerMetadata } : {}),
+              }
             : message
         ),
         updatedAt: Date.now(),
@@ -237,7 +243,12 @@ export function updateMessageStatisticsInChatState<T extends ChatMessageState>(
           ...session,
           messages: session.messages.map(message =>
             message.id === messageId
-              ? { ...message, content, statistics }
+              ? {
+                  ...message,
+                  content,
+                  statistics,
+                  ...(providerMetadata ? { providerMetadata } : {}),
+                }
               : message
           ),
           updatedAt: Date.now(),

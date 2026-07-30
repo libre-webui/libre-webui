@@ -283,6 +283,138 @@ test('Chat and Work requests use a valid custom endpoint instead of the bundled 
       { source: 'work', endpoint: customEndpoint },
     ]
   );
+  assert.ok(
+    requests.every(request => request.config.maxRedirects === 0),
+    'Chat and Work must not follow redirects to unvalidated destinations'
+  );
+});
+
+test('Chat and Work streaming fail closed on redirects', async () => {
+  const plugin = createPlugin({
+    id: 'stream-redirect-provider',
+    auth: {
+      header: 'Authorization',
+      prefix: 'Bearer ',
+      key_env: 'STREAM_REDIRECT_API_KEY',
+    },
+  });
+  const endpoint = 'https://gateway.example.test/openai/v1/chat/completions';
+  const requests = [];
+  const streamResponse = () =>
+    new Response(
+      `data: ${JSON.stringify({
+        choices: [{ delta: { content: 'Streamed' } }],
+      })}\n\ndata: [DONE]\n\n`,
+      {
+        status: 200,
+        headers: { 'Content-Type': 'text/event-stream' },
+      }
+    );
+
+  await withPatchedProperties(
+    pluginService,
+    {
+      getActivePluginForModel: () => plugin,
+      getPluginVariables: () => ({ endpoint }),
+      getApiKey: () => 'stream-secret',
+    },
+    async () =>
+      withPatchedProperties(
+        globalThis,
+        {
+          fetch: async (requestEndpoint, config) => {
+            requests.push({
+              source: 'chat',
+              endpoint: requestEndpoint,
+              config,
+            });
+            return streamResponse();
+          },
+        },
+        async () => {
+          const chunks = [];
+          for await (const chunk of pluginService.executePluginStreamRequest(
+            'chat-model',
+            [{ role: 'user', content: 'Hello' }],
+            {},
+            'user-42',
+            plugin.id
+          )) {
+            chunks.push(chunk);
+          }
+          assert.ok(chunks.some(chunk => chunk.type === 'content'));
+        }
+      )
+  );
+
+  const workService = new WorkModelProviderService({
+    ollama: {
+      isHealthy: async () => false,
+      showModel: async () => ({ capabilities: [] }),
+      generateChatResponse: async () => {
+        throw new Error('Unexpected Ollama request');
+      },
+    },
+    plugins: {
+      getActivePlugins: () => [plugin],
+      getPlugin: id => (id === plugin.id ? plugin : null),
+      getApiKey: () => 'stream-secret',
+      getPluginVariables: () => ({ endpoint }),
+    },
+    post: async () => {
+      throw new Error('Unexpected non-streaming Work request');
+    },
+  });
+
+  await withPatchedProperties(
+    globalThis,
+    {
+      fetch: async (requestEndpoint, config) => {
+        requests.push({
+          source: 'work',
+          endpoint: requestEndpoint,
+          config,
+        });
+        return streamResponse();
+      },
+    },
+    async () => {
+      const response = await workService.generateChatStreamResponse(
+        {
+          model: 'chat-model',
+          messages: [{ role: 'user', content: 'Hello' }],
+          stream: true,
+        },
+        { providerType: 'plugin', providerId: plugin.id },
+        'user-42',
+        {}
+      );
+      assert.equal(response.message.content, 'Streamed');
+    }
+  );
+
+  assert.deepEqual(
+    requests.map(request => ({
+      source: request.source,
+      endpoint: request.endpoint,
+      redirect: request.config.redirect,
+      authorization: request.config.headers.Authorization,
+    })),
+    [
+      {
+        source: 'chat',
+        endpoint,
+        redirect: 'error',
+        authorization: 'Bearer stream-secret',
+      },
+      {
+        source: 'work',
+        endpoint,
+        redirect: 'error',
+        authorization: 'Bearer stream-secret',
+      },
+    ]
+  );
 });
 
 test('endpoint variables reject unsafe URLs when saved and preserve blank fallback', () => {
@@ -376,6 +508,11 @@ test('model discovery uses the user endpoint and credentials without default fal
           assert.equal(
             requests[0].config.headers.Authorization,
             'Bearer user-42-key'
+          );
+          assert.equal(
+            requests[0].config.maxRedirects,
+            0,
+            'discovery must not forward provider credentials across redirects'
           );
 
           currentEndpoint = 'http://api.openai.com/v1/chat/completions';
@@ -491,6 +628,67 @@ test('discovered models persist per user without mutating the shared plugin mani
   assert.deepEqual(
     reloadedService.getPlugin(providerId, 'catalog-user-two').model_map,
     ['model-catalog-user-two']
+  );
+});
+
+test('embedding and TTS requests reject redirects before a credential-bearing hop', async () => {
+  const plugin = createPlugin({ id: 'capability-redirect-provider' });
+  plugin.capabilities.embedding.endpoint =
+    'https://gateway.example.test/v1/embeddings';
+  plugin.capabilities.tts.endpoint =
+    'https://gateway.example.test/v1/audio/speech';
+  const requests = [];
+
+  await withPatchedProperties(
+    pluginService,
+    {
+      getAllPlugins: () => [plugin],
+      getPlugin: id => (id === plugin.id ? plugin : null),
+      getPluginVariables: () => ({}),
+      getApiKey: () => null,
+    },
+    async () =>
+      withPatchedProperties(
+        axios,
+        {
+          post: async (endpoint, payload, config) => {
+            requests.push({ endpoint, payload, config });
+            if (endpoint.endsWith('/embeddings')) {
+              return { data: { data: [{ embedding: [0.1, 0.2] }] } };
+            }
+            if (endpoint.endsWith('/audio/speech')) {
+              return { data: Buffer.from('RIFFtest-audio') };
+            }
+            throw new Error(`Unexpected capability endpoint: ${endpoint}`);
+          },
+        },
+        async () => {
+          assert.deepEqual(
+            await pluginService.executeEmbeddingRequest(
+              'embedding-model',
+              'Hello',
+              plugin.id,
+              'user-42'
+            ),
+            { embeddings: [[0.1, 0.2]] }
+          );
+          const audio = await pluginService.executeTTSRequest(
+            'tts-model',
+            'Hello',
+            {
+              pluginId: plugin.id,
+              userId: 'user-42',
+            }
+          );
+          assert.equal(audio.subarray(0, 4).toString('ascii'), 'RIFF');
+        }
+      )
+  );
+
+  assert.equal(requests.length, 2);
+  assert.ok(
+    requests.every(request => request.config.maxRedirects === 0),
+    'embedding and TTS credentials must never be forwarded through redirects'
   );
 });
 
@@ -672,6 +870,7 @@ test('image discovery and requests use the current user endpoint and credentials
     'https://image-user.example.test/v1/images/generations?custom=true'
   );
   assert.equal(request.config.headers.Authorization, 'Bearer key-image-user');
+  assert.equal(request.config.maxRedirects, 0);
   assert.ok(
     userContexts.length >= 4 &&
       userContexts.every(({ userId }) => userId === 'image-user')

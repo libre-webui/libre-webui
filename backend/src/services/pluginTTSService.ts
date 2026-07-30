@@ -276,6 +276,7 @@ export class PluginTTSService {
         headers,
         timeout: 120000,
         responseType: 'arraybuffer',
+        maxRedirects: 0,
       });
 
       return Buffer.from(response.data);

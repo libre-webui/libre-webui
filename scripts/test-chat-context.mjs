@@ -343,9 +343,20 @@ test('buildAssistantFakeStreamChunks batches non-streaming output like chat stre
 });
 
 test('preparePluginChatContext adds the current private user message unless regenerating', () => {
+  const providerMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        id: 'message-old-answer',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'output_text', text: 'old answer' }],
+      },
+    ],
+    openAIResponsesStateScope: 'private-state-scope',
+  };
   const history = [
     { role: 'user', content: 'old prompt' },
-    { role: 'assistant', content: 'old answer' },
+    { role: 'assistant', content: 'old answer', providerMetadata },
   ];
 
   const normal = pluginChatContext.preparePluginChatContext({
@@ -360,6 +371,7 @@ test('preparePluginChatContext adds the current private user message unless rege
   assert.equal(normal.messages[2].role, 'user');
   assert.equal(normal.messages[2].content, 'new prompt');
   assert.deepEqual(normal.messages[2].images, ['image-1']);
+  assert.deepEqual(normal.messages[1].providerMetadata, providerMetadata);
 
   const regenerated = pluginChatContext.preparePluginChatContext({
     isPrivate: true,
@@ -371,6 +383,7 @@ test('preparePluginChatContext adds the current private user message unless rege
 
   assert.equal(regenerated.messages.length, 2);
   assert.equal(regenerated.messages[1].content, 'old answer');
+  assert.deepEqual(regenerated.messages[1].providerMetadata, providerMetadata);
 });
 
 test('preparePluginChatContext replaces the latest user message with RAG content', () => {
@@ -638,10 +651,23 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
         arguments: '{"ok":true}',
       },
     };
-    yield { type: 'done' };
+    yield {
+      type: 'done',
+      providerMetadata: {
+        openAIResponsesOutputItems: [
+          {
+            id: 'message-stream',
+            type: 'message',
+            role: 'assistant',
+            content: [{ type: 'output_text', text: 'Hello' }],
+          },
+        ],
+        openAIResponsesStateScope: 'stream-state-scope',
+      },
+    };
   }
 
-  const content = await pluginStreaming.streamPluginResponse({
+  const result = await pluginStreaming.streamPluginResponse({
     ws,
     chunks: chunks(),
     messageId: 'assistant-1',
@@ -649,9 +675,20 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
   });
 
   assert.equal(
-    content,
+    result.content,
     'Hello\n\n---\n**🔧 Tool Calls:**\n\n**render** (`call-1`)\n```json\n{\n  "ok": true\n}\n```\n'
   );
+  assert.deepEqual(result.providerMetadata, {
+    openAIResponsesOutputItems: [
+      {
+        id: 'message-stream',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'output_text', text: 'Hello' }],
+      },
+    ],
+    openAIResponsesStateScope: 'stream-state-scope',
+  });
   assert.deepEqual(
     sent.map(message => message.type),
     [
@@ -674,7 +711,7 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
     phase: 'running',
   });
   assert.equal(sent[4].data.done, true);
-  assert.equal(sent[4].data.total, content);
+  assert.equal(sent[4].data.total, result.content);
 });
 
 test('streamPluginResponse rejects incomplete provider streams with their reason', async () => {
@@ -866,6 +903,48 @@ test('plugin model routing requires an active plugin and the current user creden
                 pluginFallbackPolicy: 'disabled',
               }),
               /incomplete response \(max_output_tokens\)/
+            );
+
+            const providerMetadata = {
+              openAIResponsesOutputItems: [
+                {
+                  id: 'message-complete',
+                  type: 'message',
+                  role: 'assistant',
+                  content: [{ type: 'output_text', text: 'Complete answer' }],
+                },
+              ],
+              openAIResponsesStateScope: 'complete-state-scope',
+            };
+            pluginService.executePluginRequest = async () => ({
+              id: 'response-complete',
+              object: 'chat.completion',
+              created: 0,
+              model: 'shared-model',
+              providerMetadata,
+              choices: [
+                {
+                  index: 0,
+                  message: {
+                    role: 'assistant',
+                    content: 'Complete answer',
+                  },
+                  finish_reason: 'stop',
+                },
+              ],
+            });
+            const completed = await chatGenerationService.executeNonStreaming({
+              target: aliceTarget,
+              ollamaMessages: [
+                { role: 'user', content: 'Complete the answer.' },
+              ],
+              pluginMessages: [],
+              userId: 'alice',
+              pluginFallbackPolicy: 'disabled',
+            });
+            assert.deepEqual(
+              completed.response.message.providerMetadata,
+              providerMetadata
             );
           } finally {
             pluginService.executePluginRequest = originalExecutePluginRequest;

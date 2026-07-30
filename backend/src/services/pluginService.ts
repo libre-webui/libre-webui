@@ -66,6 +66,7 @@ import {
 import { createLogger } from '../utils/logger.js';
 import { resolveBundledPluginsDir } from '../utils/packagePaths.js';
 import { getDatabaseSafe } from '../db.js';
+import { createOpenAIResponsesStateScope } from '../utils/openAIResponsesAdapter.js';
 
 const logger = createLogger('plugins');
 
@@ -368,6 +369,7 @@ export class PluginService {
       const response = await axios.get(modelsEndpoint, {
         headers,
         timeout: 5000,
+        maxRedirects: 0,
       });
 
       if (response.data?.data && Array.isArray(response.data.data)) {
@@ -684,6 +686,19 @@ export class PluginService {
       activePlugin,
       pluginVars
     );
+    const processedEndpoint = applyModelEndpointTemplate(
+      effectiveEndpoint,
+      model
+    );
+    assertSafePluginEndpoint(processedEndpoint, 'endpoint URL constructed');
+    const providerStateScope =
+      apiMode === 'responses'
+        ? createOpenAIResponsesStateScope(
+            activePlugin.id,
+            model,
+            processedEndpoint
+          )
+        : undefined;
     const headers = buildPluginAuthHeaders(activePlugin, apiKey);
     const { payload, headers: payloadHeaders } = buildPluginChatPayload(
       activePlugin,
@@ -692,26 +707,24 @@ export class PluginService {
       options,
       pluginVars,
       false,
-      apiMode
+      apiMode,
+      providerStateScope
     );
     Object.assign(headers, payloadHeaders);
-    const processedEndpoint = applyModelEndpointTemplate(
-      effectiveEndpoint,
-      model
-    );
-    assertSafePluginEndpoint(processedEndpoint, 'endpoint URL constructed');
 
     try {
       const response = await axios.post(processedEndpoint, payload, {
         headers,
         timeout: 60000, // 60 second timeout
+        maxRedirects: 0,
       });
 
       return convertProviderResponse(
         activePlugin,
         response.data,
         model,
-        apiMode
+        apiMode,
+        providerStateScope
       );
     } catch (error: unknown) {
       logger.error(`Plugin request failed for ${activePlugin.id}:`, error);
@@ -775,6 +788,19 @@ export class PluginService {
       activePlugin,
       pluginVars
     );
+    const processedEndpoint = applyModelEndpointTemplate(
+      effectiveEndpoint,
+      model
+    );
+    assertSafePluginEndpoint(processedEndpoint);
+    const providerStateScope =
+      apiMode === 'responses'
+        ? createOpenAIResponsesStateScope(
+            activePlugin.id,
+            model,
+            processedEndpoint
+          )
+        : undefined;
     const headers = buildPluginAuthHeaders(activePlugin, apiKey);
     let payload: Record<string, unknown>;
 
@@ -786,7 +812,8 @@ export class PluginService {
         options,
         pluginVars,
         true,
-        apiMode
+        apiMode,
+        providerStateScope
       );
       payload = pluginRequest.payload;
       Object.assign(headers, pluginRequest.headers);
@@ -802,22 +829,17 @@ export class PluginService {
       };
     }
 
-    const processedEndpoint = applyModelEndpointTemplate(
-      effectiveEndpoint,
-      model
-    );
-    assertSafePluginEndpoint(processedEndpoint);
-
     const response = await fetch(processedEndpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
+      redirect: 'error',
     });
 
     if (activePlugin.id === 'anthropic') {
       yield* streamAnthropicResponse(response);
     } else if (apiMode === 'responses') {
-      yield* streamOpenAIResponsesResponse(response);
+      yield* streamOpenAIResponsesResponse(response, providerStateScope);
     } else {
       yield* streamOpenAICompatibleResponse(response);
     }

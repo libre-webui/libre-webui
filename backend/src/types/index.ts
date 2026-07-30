@@ -45,6 +45,7 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   model?: string;
+  providerMetadata?: Record<string, unknown>;
   images?: string[]; // Base64 encoded images for multimodal support
   statistics?: GenerationStatistics; // Generation statistics from Ollama
   artifacts?: Artifact[]; // Artifacts associated with this message
@@ -179,6 +180,7 @@ export interface OllamaChatMessage {
   images?: string[];
   tool_calls?: Record<string, unknown>[];
   tool_name?: string;
+  tool_call_id?: string;
   providerMetadata?: Record<string, unknown>;
 }
 

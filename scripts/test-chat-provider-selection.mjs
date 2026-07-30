@@ -288,6 +288,67 @@ test('Chat session provider columns migrate additively and round-trip nullable s
   assert.equal(loadedQualified.providerId, pluginBId);
 });
 
+test('Responses provider state is encrypted and round-trips with Chat messages', () => {
+  const providerMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        id: 'reasoning-persisted',
+        type: 'reasoning',
+        encrypted_content: 'opaque-provider-reasoning',
+        summary: [],
+      },
+      {
+        id: 'message-persisted',
+        type: 'message',
+        role: 'assistant',
+        phase: 'final_answer',
+        content: [{ type: 'output_text', text: 'Persisted answer' }],
+      },
+    ],
+    openAIResponsesStateScope: 'persisted-state-scope',
+  };
+  const session = {
+    id: 'responses-state-session',
+    title: 'Responses state',
+    model: sharedModel,
+    providerType: 'plugin',
+    providerId: pluginBId,
+    messages: [
+      {
+        id: 'assistant-responses-state',
+        role: 'assistant',
+        content: 'Persisted answer',
+        timestamp: now,
+        model: sharedModel,
+        providerMetadata,
+      },
+    ],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  storageService.saveSession(session, userId);
+
+  const columns = db.prepare('PRAGMA table_info(session_messages)').all();
+  assert.ok(columns.some(column => column.name === 'provider_metadata'));
+  const stored = db
+    .prepare(
+      `SELECT provider_metadata
+       FROM session_messages
+       WHERE session_id = ?`
+    )
+    .get(session.id);
+  assert.equal(typeof stored.provider_metadata, 'string');
+  assert.equal(
+    stored.provider_metadata.includes('opaque-provider-reasoning'),
+    false
+  );
+  assert.deepEqual(
+    storageService.getSession(session.id, userId).messages[0].providerMetadata,
+    providerMetadata
+  );
+});
+
 test('session updates preserve provider metadata until an unqualified model change', async () => {
   const session = await chatService.createSession(
     sharedModel,

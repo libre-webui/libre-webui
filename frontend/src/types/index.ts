@@ -52,6 +52,7 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   model?: string;
+  providerMetadata?: Record<string, unknown>;
   images?: string[]; // Base64 encoded images for multimodal support
   statistics?: GenerationStatistics; // Generation statistics from Ollama
   artifacts?: Artifact[]; // Artifacts associated with this message

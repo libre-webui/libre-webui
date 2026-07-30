@@ -196,6 +196,7 @@ export class PluginImageGenerationService {
       const response = await axios.post(endpoint, payload, {
         headers,
         timeout: 120000,
+        maxRedirects: 0,
       });
 
       if (response.data?.data) {
@@ -433,6 +434,7 @@ async function executeComfyUIRequest(
       {
         headers: { 'Content-Type': 'application/json' },
         timeout: 10000,
+        maxRedirects: 0,
       }
     );
 
@@ -451,7 +453,7 @@ async function executeComfyUIRequest(
 
       const historyResponse = await axios.get(
         `${comfyBaseUrl}/history/${promptId}`,
-        { timeout: 5000 }
+        { timeout: 5000, maxRedirects: 0 }
       );
 
       if (historyResponse.data[promptId]) {
@@ -472,6 +474,7 @@ async function executeComfyUIRequest(
               const imageResponse = await axios.get(imageUrl, {
                 responseType: 'arraybuffer',
                 timeout: 30000,
+                maxRedirects: 0,
               });
 
               const base64Image = Buffer.from(imageResponse.data).toString(

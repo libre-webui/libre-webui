@@ -55,6 +55,7 @@ export interface MessageRow {
   timestamp: number;
   message_index: number;
   model?: string;
+  provider_metadata?: string;
   images?: string;
   statistics?: string;
   artifacts?: string;
@@ -132,6 +133,7 @@ export function mapMessageRow(
     content: encryptionService.decrypt(row.content),
     timestamp: row.timestamp,
     model: row.model,
+    providerMetadata: decryptJson(row.provider_metadata),
     images: decryptJson(row.images),
     statistics: decryptJson(row.statistics),
     artifacts: decryptJson(row.artifacts),

@@ -269,8 +269,8 @@ class StorageService {
         // Insert messages
         if (session.messages && session.messages.length > 0) {
           const insertMessageStmt = db.prepare(`
-            INSERT INTO session_messages (id, session_id, role, content, timestamp, message_index, model, images, statistics, artifacts, parent_id, branch_index, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO session_messages (id, session_id, role, content, timestamp, message_index, model, provider_metadata, images, statistics, artifacts, parent_id, branch_index, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `);
 
           session.messages.forEach((message, index) => {
@@ -278,6 +278,11 @@ class StorageService {
             const encryptedContent = encryptionService.encrypt(message.content);
             const encryptedImages = message.images
               ? encryptionService.encrypt(JSON.stringify(message.images))
+              : null;
+            const encryptedProviderMetadata = message.providerMetadata
+              ? encryptionService.encrypt(
+                  JSON.stringify(message.providerMetadata)
+                )
               : null;
             const encryptedStatistics = message.statistics
               ? encryptionService.encrypt(JSON.stringify(message.statistics))
@@ -297,6 +302,7 @@ class StorageService {
               message.timestamp,
               index,
               message.model || null,
+              encryptedProviderMetadata,
               encryptedImages,
               encryptedStatistics,
               encryptedArtifacts,

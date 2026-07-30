@@ -33,10 +33,21 @@ import workTaskService, {
   WorkNotFoundError,
 } from './workTaskService.js';
 import { OllamaChatMessage, OllamaChatResponse } from '../types/index.js';
-import { WorkTaskDetail, WorkTaskRecord, WorkToolCall } from '../types/work.js';
+import {
+  WorkMessage,
+  WorkRun,
+  WorkTaskDetail,
+  WorkTaskRecord,
+  WorkToolCall,
+} from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
+  OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
+} from '../utils/openAIResponsesAdapter.js';
 
 const logger = createLogger('services:work-agent');
+export const WORK_PROVIDER_STATE_METADATA_KEY = 'workProviderState';
 
 export const WORK_TOOL_SCHEMAS: Record<string, unknown>[] = [
   functionTool('list_files', 'List direct children of a workspace directory.', {
@@ -331,7 +342,20 @@ export class WorkAgentService {
       workTaskService.updateTaskStatus(taskId, 'running');
       const roundLimit = workRuntimeService.limits.maxRounds;
       const toolCallLimit = workToolCallBudget(roundLimit);
-      const messages = this.contextMessages(task, roundLimit);
+      const providerStateScope =
+        workModelProviderService.getResponsesStateScope(
+          run.model,
+          {
+            providerType: run.providerType,
+            providerId: run.providerId,
+          },
+          userId
+        );
+      const messages = this.contextMessages(
+        task,
+        roundLimit,
+        providerStateScope
+      );
       let totalToolCalls = 0;
       let accumulatedInputTokens = 0;
       let accumulatedOutputTokens = 0;
@@ -420,6 +444,10 @@ export class WorkAgentService {
           response.message?.thinking?.trim() || '',
           100_000
         );
+        const providerStateMetadata = toPersistedWorkProviderState(
+          run,
+          response.message.providerMetadata
+        );
         if (reasoningContent) {
           workTaskService.addMessage(
             taskId,
@@ -439,7 +467,8 @@ export class WorkAgentService {
             runId,
             'assistant',
             'message',
-            finalContent
+            finalContent,
+            providerStateMetadata
           );
           // Keep completion hidden until the disposable container has either
           // stopped or been retained for a verified live preview. Consumers
@@ -477,7 +506,17 @@ export class WorkAgentService {
             runId,
             'assistant',
             'message',
-            assistantContent
+            assistantContent,
+            providerStateMetadata
+          );
+        } else if (providerStateMetadata) {
+          workTaskService.addMessage(
+            taskId,
+            runId,
+            'assistant',
+            'provider_state',
+            '',
+            providerStateMetadata
           );
         }
         for (const call of toolCalls) {
@@ -562,6 +601,7 @@ export class WorkAgentService {
             role: 'tool',
             content: toolOutput,
             tool_name: call.function.name,
+            tool_call_id: call.id,
           });
         }
       }
@@ -675,13 +715,21 @@ export class WorkAgentService {
           `The run reached its ${budgetReason} budget. Start a follow-up run to continue in the same workspace.`,
         100_000
       );
+      const handoffProviderStateMetadata = toPersistedWorkProviderState(
+        run,
+        handoffResponse.message.providerMetadata
+      );
       workTaskService.addMessage(
         taskId,
         runId,
         'assistant',
         'message',
         handoffContent,
-        { budgetHandoff: true, budgetReason }
+        {
+          budgetHandoff: true,
+          budgetReason,
+          ...handoffProviderStateMetadata,
+        }
       );
       await settleExecutionContainer();
       this.throwIfCancelled(runId, controller);
@@ -799,14 +847,14 @@ export class WorkAgentService {
 
   private contextMessages(
     task: WorkTaskRecord,
-    roundLimit: number
+    roundLimit: number,
+    providerStateScope?: string
   ): OllamaChatMessage[] {
-    const persisted = workTaskService
-      .getRecentConversationMessages(task.id, 30)
-      .map(message => ({
-        role: message.role,
-        content: message.content,
-      })) satisfies OllamaChatMessage[];
+    const persisted = restorePersistedWorkContext(
+      workTaskService.getRecentModelContextMessages(task.id, 30),
+      task,
+      providerStateScope
+    );
     return [
       {
         role: 'system',
@@ -981,6 +1029,171 @@ export class WorkAgentHttpError extends Error {
     this.status = status;
     this.code = code;
   }
+}
+
+interface PersistedWorkProviderState {
+  providerType: WorkRun['providerType'];
+  providerId?: string;
+  model: string;
+  providerMetadata: Record<string, unknown>;
+}
+
+function toPersistedWorkProviderState(
+  run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
+  providerMetadata: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  if (
+    !Array.isArray(
+      providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+    ) ||
+    typeof providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] !==
+      'string'
+  ) {
+    return undefined;
+  }
+
+  return {
+    [WORK_PROVIDER_STATE_METADATA_KEY]: {
+      providerType: run.providerType,
+      ...(run.providerId ? { providerId: run.providerId } : {}),
+      model: run.model,
+      providerMetadata,
+    } satisfies PersistedWorkProviderState,
+  };
+}
+
+export function restorePersistedWorkContext(
+  messages: WorkMessage[],
+  provider: Pick<WorkTaskRecord, 'providerType' | 'providerId' | 'model'>,
+  expectedStateScope?: string
+): OllamaChatMessage[] {
+  const restored: OllamaChatMessage[] = [];
+  let pendingCalls: Array<{ id: string; name: string }> = [];
+
+  for (const message of messages) {
+    if (message.kind === 'provider_state' || message.role === 'assistant') {
+      const providerMetadata = matchingWorkProviderMetadata(
+        message,
+        provider,
+        expectedStateScope
+      );
+      const responseCalls = providerMetadata
+        ? responseFunctionCalls(providerMetadata)
+        : [];
+      pendingCalls = responseCalls;
+
+      if (message.kind === 'provider_state' && !providerMetadata) {
+        continue;
+      }
+      if (message.kind !== 'message' && message.kind !== 'provider_state') {
+        continue;
+      }
+
+      restored.push({
+        role: 'assistant',
+        content: message.content,
+        ...(responseCalls.length > 0
+          ? {
+              tool_calls: responseCalls.map(call => ({
+                id: call.id,
+                type: 'function',
+                function: {
+                  name: call.name,
+                  arguments: call.arguments,
+                },
+              })),
+            }
+          : {}),
+        ...(providerMetadata ? { providerMetadata } : {}),
+      });
+      continue;
+    }
+
+    if (message.role === 'user' && message.kind === 'message') {
+      pendingCalls = [];
+      restored.push({ role: 'user', content: message.content });
+      continue;
+    }
+
+    if (message.role !== 'tool' || message.kind !== 'tool_result') {
+      continue;
+    }
+
+    const toolCallId =
+      typeof message.metadata?.toolCallId === 'string'
+        ? message.metadata.toolCallId
+        : undefined;
+    if (!toolCallId) continue;
+    const pendingIndex = pendingCalls.findIndex(call => call.id === toolCallId);
+    if (pendingIndex < 0) continue;
+    const [matchingCall] = pendingCalls.splice(pendingIndex, 1);
+    const persistedName =
+      typeof message.metadata?.name === 'string'
+        ? message.metadata.name
+        : undefined;
+    restored.push({
+      role: 'tool',
+      content: message.content,
+      tool_name: persistedName || matchingCall.name,
+      tool_call_id: toolCallId,
+    });
+  }
+
+  return restored;
+}
+
+function matchingWorkProviderMetadata(
+  message: WorkMessage,
+  provider: Pick<WorkTaskRecord, 'providerType' | 'providerId' | 'model'>,
+  expectedStateScope?: string
+): Record<string, unknown> | undefined {
+  const state = objectValue(
+    message.metadata?.[WORK_PROVIDER_STATE_METADATA_KEY]
+  );
+  const providerMetadata = objectValue(state?.providerMetadata);
+  if (
+    state?.providerType !== provider.providerType ||
+    (state.providerId || undefined) !== (provider.providerId || undefined) ||
+    state.model !== provider.model ||
+    !expectedStateScope ||
+    providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] !==
+      expectedStateScope ||
+    !Array.isArray(
+      providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+    )
+  ) {
+    return undefined;
+  }
+  return providerMetadata;
+}
+
+function responseFunctionCalls(
+  providerMetadata: Record<string, unknown>
+): Array<{ id: string; name: string; arguments: unknown }> {
+  const outputItems =
+    providerMetadata[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY];
+  if (!Array.isArray(outputItems)) return [];
+
+  return outputItems.flatMap(itemValue => {
+    const item = objectValue(itemValue);
+    if (item?.type !== 'function_call' || typeof item.name !== 'string') {
+      return [];
+    }
+    const id =
+      typeof item.call_id === 'string'
+        ? item.call_id
+        : typeof item.id === 'string'
+          ? item.id
+          : undefined;
+    if (!id) return [];
+    return [{ id, name: item.name, arguments: item.arguments ?? '' }];
+  });
+}
+
+function objectValue(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
 }
 
 function assertCompleteProviderResponse(response: OllamaChatResponse): void {

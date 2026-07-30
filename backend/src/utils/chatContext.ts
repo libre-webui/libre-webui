@@ -19,7 +19,7 @@ import type { ChatMessage, OllamaChatMessage } from '../types/index.js';
 
 export type ChatContextMessage = Pick<
   ChatMessage,
-  'role' | 'content' | 'images'
+  'role' | 'content' | 'images' | 'providerMetadata'
 >;
 type ContentMessage = {
   role: string;
@@ -120,6 +120,7 @@ export function toChatMessages(
     role: message.role,
     content: message.content,
     images: message.images,
+    providerMetadata: message.providerMetadata,
     timestamp,
   }));
 }
