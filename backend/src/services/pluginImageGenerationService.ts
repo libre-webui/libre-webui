@@ -17,16 +17,19 @@
 
 import axios from 'axios';
 import { ImageGenConfig, ImageGenResponse, Plugin } from '../types/index.js';
-import { validatePluginModel } from '../utils/pluginValidation.js';
+import {
+  assertSafePluginEndpoint,
+  validatePluginModel,
+} from '../utils/pluginValidation.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
 
 export interface PluginImageGenerationServiceDependencies {
-  getAllPlugins(): Plugin[];
-  getPlugin(id: string): Plugin | null;
+  getAllPlugins(userId?: string): Plugin[];
+  getPlugin(id: string, userId?: string): Plugin | null;
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
-  validateEndpointUrl(endpoint: string): string | null;
+  validateEndpointUrl(endpoint: string): string;
 }
 
 export class PluginImageGenerationService {
@@ -34,8 +37,8 @@ export class PluginImageGenerationService {
     private readonly deps: PluginImageGenerationServiceDependencies
   ) {}
 
-  getPluginForImageGen(model: string): Plugin | null {
-    const allPlugins = this.deps.getAllPlugins();
+  getPluginForImageGen(model: string, userId?: string): Plugin | null {
+    const allPlugins = this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       if (plugin.capabilities?.image) {
@@ -53,14 +56,14 @@ export class PluginImageGenerationService {
     return null;
   }
 
-  getAvailableImageGenModels(): {
+  getAvailableImageGenModels(userId?: string): {
     model: string;
     plugin: string;
     config?: ImageGenConfig;
   }[] {
     const models: { model: string; plugin: string; config?: ImageGenConfig }[] =
       [];
-    const allPlugins = this.deps.getAllPlugins();
+    const allPlugins = this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       if (plugin.capabilities?.image) {
@@ -68,7 +71,7 @@ export class PluginImageGenerationService {
         const noAuthRequired =
           (imageCapability.config as Record<string, unknown> | undefined)
             ?.no_auth_required === true;
-        const apiKey = this.deps.getApiKey(plugin);
+        const apiKey = this.deps.getApiKey(plugin, userId);
         if (apiKey || noAuthRequired) {
           for (const model of imageCapability.model_map) {
             models.push({
@@ -81,7 +84,7 @@ export class PluginImageGenerationService {
       }
 
       if (plugin.type === 'image') {
-        const apiKey = this.deps.getApiKey(plugin);
+        const apiKey = this.deps.getApiKey(plugin, userId);
         if (apiKey) {
           for (const model of plugin.model_map) {
             models.push({
@@ -105,6 +108,7 @@ export class PluginImageGenerationService {
       style?: string;
       n?: number;
       response_format?: 'url' | 'b64_json';
+      userId?: string;
     } = {}
   ): Promise<ImageGenResponse> {
     validatePluginModel(model);
@@ -113,7 +117,7 @@ export class PluginImageGenerationService {
       throw new Error('Invalid prompt: must be a non-empty string');
     }
 
-    const plugin = this.getPluginForImageGen(model);
+    const plugin = this.getPluginForImageGen(model, options.userId);
     if (!plugin) {
       throw new Error(`No image generation plugin found for model: ${model}`);
     }
@@ -128,7 +132,7 @@ export class PluginImageGenerationService {
       endpoint = plugin.endpoint;
     }
 
-    const imageVars = this.deps.getPluginVariables(plugin);
+    const imageVars = this.deps.getPluginVariables(plugin, options.userId);
     if (imageVars.endpoint && typeof imageVars.endpoint === 'string') {
       const validated = this.deps.validateEndpointUrl(imageVars.endpoint);
       if (validated) endpoint = validated;
@@ -137,7 +141,7 @@ export class PluginImageGenerationService {
     const noAuthRequired =
       (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
       true;
-    const apiKey = this.deps.getApiKey(plugin);
+    const apiKey = this.deps.getApiKey(plugin, options.userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
@@ -184,7 +188,7 @@ export class PluginImageGenerationService {
       return executeComfyUIRequest(baseUrl, prompt, {
         ...options,
         model,
-        pluginVars: this.deps.getPluginVariables(plugin),
+        pluginVars: imageVars,
       });
     }
 
@@ -227,8 +231,8 @@ export class PluginImageGenerationService {
     }
   }
 
-  getImageGenConfig(pluginId: string): ImageGenConfig | null {
-    const plugin = this.deps.getPlugin(pluginId);
+  getImageGenConfig(pluginId: string, userId?: string): ImageGenConfig | null {
+    const plugin = this.deps.getPlugin(pluginId, userId);
     if (!plugin) return null;
 
     if (plugin.capabilities?.image?.config) {
@@ -240,24 +244,8 @@ export class PluginImageGenerationService {
 }
 
 function parseImageEndpoint(endpoint: string): URL {
-  try {
-    const baseUrl = new URL(endpoint);
-    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-      baseUrl.hostname
-    );
-    const isPrivateNetwork =
-      /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(baseUrl.hostname);
-
-    if (baseUrl.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-      throw new Error(
-        `Insecure endpoint protocol: ${baseUrl.protocol}. Only HTTPS is allowed for remote endpoints.`
-      );
-    }
-
-    return baseUrl;
-  } catch (_error) {
-    throw new Error(`Invalid endpoint URL: ${endpoint}`);
-  }
+  assertSafePluginEndpoint(endpoint, 'image generation endpoint');
+  return new URL(endpoint);
 }
 
 interface FluxModelConfig {

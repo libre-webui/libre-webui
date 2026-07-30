@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 
-import type { ChatSession, DocumentChunk } from './types/index.js';
+import type {
+  ChatProviderType,
+  ChatSession,
+  DocumentChunk,
+} from './types/index.js';
 import { encryptionService } from './services/encryptionService.js';
 
 export interface Document {
@@ -37,6 +41,8 @@ export interface SessionRow {
   title: string;
   model: string;
   persona_id?: string;
+  provider_type?: string | null;
+  provider_id?: string | null;
   created_at: number;
   updated_at: number;
 }
@@ -148,6 +154,8 @@ export function mapSessionRow(
     title: encryptionService.decrypt(row.title),
     model: row.model,
     personaId: row.persona_id || undefined,
+    providerType: (row.provider_type as ChatProviderType | null) || undefined,
+    providerId: row.provider_id || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     messages: messages.map(message => mapMessageRow(message, siblingCountMap)),

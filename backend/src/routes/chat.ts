@@ -34,6 +34,8 @@ import {
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import { buildChatDocumentContext } from '../utils/chatDocumentContext.js';
+import { ChatProviderSelectionError } from '../utils/chatProviderSelection.js';
+import { formatPluginStreamToolCalls } from '../utils/pluginStreaming.js';
 
 const logger = createLogger('routes:chat');
 
@@ -98,7 +100,7 @@ router.post(
     res: Response<ApiResponse<ChatSession>>
   ): Promise<void> => {
     try {
-      const { model, title, personaId } = req.body;
+      const { model, title, personaId, providerType, providerId } = req.body;
 
       if (!model) {
         res.status(400).json({
@@ -120,14 +122,15 @@ router.post(
         model,
         title,
         userId,
-        extractedPersonaId
+        extractedPersonaId,
+        { providerType, providerId }
       );
       res.json({
         success: true,
         data: session,
       });
     } catch (error: unknown) {
-      res.status(500).json({
+      res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to create session'),
       });
@@ -199,7 +202,7 @@ router.put(
         data: updatedSession,
       });
     } catch (error: unknown) {
-      res.status(500).json({
+      res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to update session'),
       });
@@ -351,7 +354,6 @@ router.post(
         });
         return;
       }
-
       res.json({
         success: true,
         data: message,
@@ -383,7 +385,6 @@ router.post(
         });
         return;
       }
-
       const userId = req.user?.userId || 'default';
       const session = chatService.getSession(sessionId, userId);
       if (!session) {
@@ -474,7 +475,7 @@ router.post(
         data: assistantMessage,
       });
     } catch (error: unknown) {
-      res.status(500).json({
+      res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to generate response'),
       });
@@ -497,7 +498,6 @@ router.post(
         });
         return;
       }
-
       const userId = req.user?.userId || 'default';
       const session = chatService.getSession(sessionId, userId);
       if (!session) {
@@ -532,7 +532,7 @@ router.post(
         return;
       }
 
-      const { actualModelName, mergedOptions, ollamaMessages } =
+      const preparedGeneration =
         await chatRequestService.prepareGenerationRequest({
           session,
           userId,
@@ -540,6 +540,15 @@ router.post(
           persistedMessages: session.messages,
           content: message,
         });
+      const {
+        target,
+        actualModelName,
+        mergedOptions,
+        activePlugin,
+        ollamaMessages,
+        pluginMessages,
+        shouldStreamPlugin,
+      } = preparedGeneration;
 
       const chatRequest = {
         model: actualModelName,
@@ -549,6 +558,80 @@ router.post(
       };
 
       let fullResponse = '';
+
+      if (activePlugin) {
+        if (shouldStreamPlugin) {
+          const toolCalls: Array<{
+            id: string;
+            name: string;
+            arguments: string;
+          }> = [];
+          for await (const chunk of pluginService.executePluginStreamRequest(
+            actualModelName,
+            pluginMessages,
+            mergedOptions,
+            userId,
+            activePlugin.id
+          )) {
+            if (chunk.type === 'content' && chunk.content) {
+              fullResponse += chunk.content;
+              res.write(
+                `data: ${JSON.stringify({
+                  type: 'chunk',
+                  content: chunk.content,
+                  done: false,
+                })}\n\n`
+              );
+            } else if (chunk.type === 'tool_call') {
+              toolCalls.push(chunk.toolCall);
+            }
+          }
+
+          const toolContent = formatPluginStreamToolCalls(toolCalls);
+          if (toolContent) {
+            fullResponse += toolContent;
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'chunk',
+                content: toolContent,
+                done: false,
+              })}\n\n`
+            );
+          }
+        } else {
+          const generationResult =
+            await chatGenerationService.executeNonStreaming({
+              target,
+              ollamaMessages,
+              pluginMessages,
+              userId,
+              pluginFallbackPolicy: 'allow',
+            });
+          fullResponse = generationResult.assistantContent;
+          res.write(
+            `data: ${JSON.stringify({
+              type: 'chunk',
+              content: fullResponse,
+              done: false,
+            })}\n\n`
+          );
+        }
+
+        if (fullResponse) {
+          chatService.addMessage(
+            sessionId,
+            {
+              role: 'assistant',
+              content: fullResponse,
+              model: session.model,
+            },
+            userId
+          );
+        }
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        res.end();
+        return;
+      }
 
       // Generate streaming response using Ollama
       await ollamaService.generateChatStreamResponse(
@@ -593,6 +676,15 @@ router.post(
         }
       );
     } catch (error: unknown) {
+      if (!res.headersSent) {
+        res
+          .status(error instanceof ChatProviderSelectionError ? 400 : 500)
+          .json({
+            success: false,
+            error: getErrorMessage(error, 'Failed to generate stream response'),
+          });
+        return;
+      }
       res.write(
         `data: ${JSON.stringify({ type: 'error', error: getErrorMessage(error, 'Failed to generate stream response') })}\n\n`
       );
@@ -616,7 +708,7 @@ router.post(
   ): Promise<void> => {
     try {
       const sessionId = req.params.sessionId as string;
-      const { model, message } = req.body;
+      const { model, message, providerType, providerId } = req.body;
 
       if (!model) {
         res.status(400).json({
@@ -640,6 +732,8 @@ router.post(
         requestedModel: model,
         message,
         userId,
+        providerType,
+        providerId,
       });
 
       if (!titleResult) {
@@ -659,7 +753,7 @@ router.post(
         },
       });
     } catch (error: unknown) {
-      res.status(500).json({
+      res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to generate title'),
       });

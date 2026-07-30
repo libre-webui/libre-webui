@@ -18,6 +18,7 @@
 import {
   ChatSession,
   ChatMessage,
+  ChatProviderSelection,
   Persona,
   MemorySearchResult,
 } from '../types/index.js';
@@ -28,6 +29,7 @@ import { personaService } from './personaService.js';
 import { memoryService } from './memoryService.js';
 import { mutationEngineService } from './mutationEngineService.js';
 import { createLogger } from '../utils/logger.js';
+import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
 
 const logger = createLogger('chat-service');
 
@@ -59,10 +61,13 @@ class ChatService {
     model: string,
     title?: string,
     userId: string = 'default',
-    personaId?: string
+    personaId?: string,
+    providerSelection?: ChatProviderSelection
   ): Promise<ChatSession> {
     const sessionId = uuidv4();
     const now = Date.now();
+    const normalizedProvider =
+      normalizeChatProviderSelection(providerSelection);
 
     const session: ChatSession = {
       id: sessionId,
@@ -72,6 +77,7 @@ class ChatService {
       createdAt: now,
       updatedAt: now,
       personaId,
+      ...normalizedProvider,
     };
 
     // Add system message - prioritize persona system prompt over global preferences
@@ -178,6 +184,20 @@ class ChatService {
       ...updates,
       updatedAt: Date.now(),
     };
+    const hasProviderUpdate =
+      Object.prototype.hasOwnProperty.call(updates, 'providerType') ||
+      Object.prototype.hasOwnProperty.call(updates, 'providerId');
+    const modelChanged = Boolean(
+      updates.model && updates.model !== session.model
+    );
+
+    if (hasProviderUpdate || modelChanged) {
+      const normalizedProvider = hasProviderUpdate
+        ? normalizeChatProviderSelection(updates)
+        : undefined;
+      updatedSession.providerType = normalizedProvider?.providerType;
+      updatedSession.providerId = normalizedProvider?.providerId;
+    }
 
     // If the model is being updated and it's a persona, update the system message and personaId
     if (updates.model && updates.model !== session.model) {

@@ -6,6 +6,7 @@ permissions:
 on:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
   format-and-lint:
@@ -41,6 +42,62 @@ jobs:
 
       - name: TypeScript type checking (Backend)
         run: cd backend && npm run type-check
+
+  package-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.22'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install workspace dependencies
+        run: npm run install:all
+
+      - name: Run package tests
+        run: npm run test:package
+
+  browser-e2e:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.22'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install workspace dependencies
+        run: npm run install:all
+
+      - name: Install Chromium
+        run: cd frontend && npx playwright install --with-deps chromium
+
+      - name: Run browser end-to-end tests
+        run: npm run test:e2e
+
+      - name: Upload browser test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-test-results
+          path: frontend/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
   # auto-format:
   #   runs-on: ubuntu-latest

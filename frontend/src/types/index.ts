@@ -67,10 +67,20 @@ export interface ChatSession {
   title: string;
   messages: ChatMessage[];
   model: string;
+  providerType?: ChatProviderType | null;
+  providerId?: string | null;
   createdAt: number;
   updatedAt: number;
-  personaId?: string;
+  personaId?: string | null;
   isPrivate?: boolean; // Private sessions are not saved to backend
+}
+
+export type ChatProviderType = 'ollama' | 'plugin';
+
+export interface ChatModelSelection {
+  model: string;
+  providerType?: ChatProviderType | null;
+  providerId?: string | null;
 }
 
 export interface OllamaModel {
@@ -97,6 +107,8 @@ export interface OllamaModel {
   isPersona?: boolean;
   personaName?: string;
   personaDescription?: string;
+  isLegacySelection?: boolean;
+  isUnavailable?: boolean;
 }
 
 export interface GenerationOptions {
@@ -203,11 +215,15 @@ export interface GeneratedImage {
 export interface TitleSettings {
   autoTitle: boolean;
   taskModel: string;
+  taskProviderType?: ChatProviderType | null;
+  taskProviderId?: string | null;
 }
 
 export interface UserPreferences {
   theme: Theme;
   defaultModel: string;
+  defaultProviderType?: ChatProviderType | null;
+  defaultProviderId?: string | null;
   systemMessage: string;
   generationOptions: GenerationOptions;
   embeddingSettings: {

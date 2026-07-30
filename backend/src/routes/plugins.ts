@@ -403,14 +403,7 @@ router.post(
     try {
       const id = req.params.id as string;
       const userId = getRequestUserId(req);
-      const plugin = pluginService.getPlugin(id, userId);
-      if (!plugin) {
-        throw new Error('Plugin not found');
-      }
-      const success = pluginService.activatePlugin(id);
-      if (success) {
-        await refreshUserModels(plugin, userId, false);
-      }
+      const success = await pluginService.activatePlugin(id, userId);
 
       res.json({
         success: true,
@@ -508,7 +501,7 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const plugin = pluginService.exportPlugin(id);
+      const plugin = pluginService.exportPlugin(id, getRequestUserId(req));
 
       if (!plugin) {
         res.status(404).json({
@@ -579,6 +572,7 @@ router.post(
     try {
       const id = req.params.id as string;
       const { api_key } = req.body;
+      const userId = getRequestUserId(req);
 
       if (!api_key || typeof api_key !== 'string') {
         res.status(400).json({
@@ -589,7 +583,7 @@ router.post(
       }
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -598,8 +592,6 @@ router.post(
         return;
       }
 
-      // Get userId from auth context
-      const userId = getRequestUserId(req);
       const success = pluginCredentialsService.setApiKey(id, api_key, userId);
 
       if (success) {
@@ -630,9 +622,10 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -641,8 +634,6 @@ router.delete(
         return;
       }
 
-      // Get userId from auth context
-      const userId = getRequestUserId(req);
       const success = pluginCredentialsService.deleteApiKey(id, userId);
       if (success) {
         await refreshUserModels(plugin, userId, true);
@@ -667,9 +658,10 @@ router.get(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -678,8 +670,6 @@ router.get(
         return;
       }
 
-      // Get userId from auth context
-      const userId = getRequestUserId(req);
       const hasKey = pluginCredentialsService.hasApiKey(
         id,
         plugin.auth.key_env,
@@ -712,8 +702,9 @@ router.get(
   ): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -724,7 +715,6 @@ router.get(
         return;
       }
 
-      const userId = getRequestUserId(req);
       const variables = pluginVariablesService.getVariables(
         id,
         plugin.variables,
@@ -750,6 +740,7 @@ router.put(
     try {
       const id = req.params.id as string;
       const { variables } = req.body;
+      const userId = getRequestUserId(req);
 
       if (!variables || typeof variables !== 'object') {
         res
@@ -758,7 +749,7 @@ router.put(
         return;
       }
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -778,7 +769,6 @@ router.put(
         return;
       }
 
-      const userId = getRequestUserId(req);
       const previousVariables = pluginVariablesService.getResolvedVariables(
         id,
         plugin.variables,
@@ -822,14 +812,14 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
       }
 
-      const userId = getRequestUserId(req);
       const success = pluginVariablesService.deletePluginVariables(id, userId);
       if (success) {
         await refreshUserModels(plugin, userId, true);

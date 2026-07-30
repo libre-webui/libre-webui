@@ -1199,11 +1199,6 @@ test('plugin routes and activation keep model discovery scoped to the authentica
         userId: 'route-user',
       },
       {
-        operation: 'discover',
-        pluginId: 'openai',
-        userId: 'route-user',
-      },
-      {
         operation: 'save',
         pluginId: 'openai',
         userId: 'route-user',

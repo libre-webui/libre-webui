@@ -363,7 +363,13 @@ function PluginListItem({
                 {plugin.endpoint && (
                   <>
                     <span>•</span>
-                    <span className='truncate max-w-32'>{plugin.endpoint}</span>
+                    <span className='truncate max-w-48'>
+                      {t(
+                        'settings.plugins.defaultEndpoint',
+                        'Default endpoint'
+                      )}
+                      : {plugin.endpoint}
+                    </span>
                   </>
                 )}
                 {requiresApiKey && hasApiKey && (

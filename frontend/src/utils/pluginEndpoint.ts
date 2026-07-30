@@ -15,18 +15,27 @@
  * limitations under the License.
  */
 
-function isPrivateIpv4Hostname(hostname: string): boolean {
+export type PluginEndpointValidationError =
+  'invalid-url' | 'insecure-url' | 'query-or-fragment';
+
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const MAX_API_PATH_DECODE_PASSES = 8;
+
+function isPrivateIpv4Literal(hostname: string): boolean {
   const octets = hostname.split('.');
   if (octets.length !== 4 || octets.some(octet => !/^\d{1,3}$/.test(octet))) {
     return false;
   }
 
-  const values = octets.map(Number);
-  if (values.some(value => value < 0 || value > 255)) {
+  const [first, second, third, fourth] = octets.map(Number);
+  if (
+    [first, second, third, fourth].some(
+      octet => !Number.isInteger(octet) || octet < 0 || octet > 255
+    )
+  ) {
     return false;
   }
 
-  const [first, second] = values;
   return (
     first === 10 ||
     (first === 172 && second >= 16 && second <= 31) ||
@@ -34,7 +43,45 @@ function isPrivateIpv4Hostname(hostname: string): boolean {
   );
 }
 
-const MAX_API_PATH_DECODE_PASSES = 8;
+/**
+ * Match the backend's endpoint override policy before variables are saved.
+ * Remote endpoints require HTTPS. Plain HTTP is limited to exact loopback
+ * hosts and private IPv4 literals.
+ */
+export function getPluginEndpointValidationError(
+  endpoint: string,
+  variableName?: string
+): PluginEndpointValidationError | null {
+  const normalizedEndpoint = endpoint.trim();
+  if (!normalizedEndpoint) {
+    return null;
+  }
+
+  let url: URL;
+
+  try {
+    url = new URL(normalizedEndpoint);
+  } catch {
+    return 'invalid-url';
+  }
+
+  const safeProtocol =
+    url.protocol === 'https:' ||
+    (url.protocol === 'http:' &&
+      (LOOPBACK_HOSTS.has(url.hostname) || isPrivateIpv4Literal(url.hostname)));
+  if (!safeProtocol) {
+    return 'insecure-url';
+  }
+
+  if (
+    variableName?.toLowerCase().endsWith('base_url') &&
+    (url.search || url.hash)
+  ) {
+    return 'query-or-fragment';
+  }
+
+  return null;
+}
 
 export function isPluginUrlVariable(name: string): boolean {
   const normalized = name.toLowerCase();
@@ -46,29 +93,6 @@ export function isPluginUrlVariable(name: string): boolean {
     normalized.endsWith('_endpoint') ||
     normalized.endsWith('_base_url')
   );
-}
-
-/**
- * Client-side feedback only. The backend repeats URL validation immediately
- * before provider credentials are attached or a network request is made.
- */
-export function isSafePluginUrl(value: string, name: string): boolean {
-  try {
-    const url = new URL(value);
-    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-      url.hostname
-    );
-    const isPrivateNetwork = isPrivateIpv4Hostname(url.hostname);
-    if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-      return false;
-    }
-    return !(
-      name.toLowerCase().endsWith('base_url') &&
-      (url.search || url.hash)
-    );
-  } catch {
-    return false;
-  }
 }
 
 export function isValidPluginApiPath(value: string): boolean {

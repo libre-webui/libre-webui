@@ -24,6 +24,7 @@ import {
   getErrorMessage,
 } from '../types/index.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import { ChatProviderSelectionError } from '../utils/chatProviderSelection.js';
 
 const router = express.Router();
 
@@ -104,7 +105,7 @@ router.put(
         data: updatedPreferences,
       });
     } catch (error: unknown) {
-      res.status(500).json({
+      res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to update preferences'),
       });
@@ -129,7 +130,7 @@ router.put(
         return;
       }
 
-      const { model } = req.body;
+      const { model, providerType, providerId } = req.body;
 
       if (!model) {
         res.status(400).json({
@@ -141,7 +142,8 @@ router.put(
 
       const updatedPreferences = preferencesService.setDefaultModel(
         model,
-        userId
+        userId,
+        { providerType, providerId }
       );
 
       res.json({
@@ -149,7 +151,7 @@ router.put(
         data: updatedPreferences,
       });
     } catch (error: unknown) {
-      res.status(500).json({
+      res.status(error instanceof ChatProviderSelectionError ? 400 : 500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to set default model'),
       });

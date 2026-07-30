@@ -69,9 +69,9 @@ export const pluginApi = {
     return api.delete(`/plugins/${id}`).then(res => res.data);
   },
 
-  activatePlugin: (id: string): Promise<ApiResponse<Plugin>> => {
+  activatePlugin: (id: string): Promise<ApiResponse<boolean>> => {
     if (isDemoMode()) {
-      return createDemoResponse<Plugin>({} as Plugin, false);
+      return createDemoResponse<boolean>(false, false);
     }
     return api.post(`/plugins/activate/${id}`).then(res => res.data);
   },

@@ -1,0 +1,854 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import http from 'node:http';
+import os from 'node:os';
+import path from 'node:path';
+import { after, test } from 'node:test';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import Database from 'better-sqlite3';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const repoRoot = path.resolve(__dirname, '..');
+const distRoot = path.join(repoRoot, 'backend', 'dist');
+const sharedModel = 'chat-provider-collision-model';
+const userId = 'chat-provider-user';
+const pluginAId = 'chat-provider-a';
+const pluginBId = 'chat-provider-b';
+const inactivePluginId = 'chat-provider-inactive';
+const missingCredentialPluginId = 'chat-provider-no-key';
+const tempRoot = fs.mkdtempSync(
+  path.join(os.tmpdir(), 'libre-chat-provider-selection-')
+);
+const dataDir = path.join(tempRoot, 'data');
+const pluginsDir = path.join(tempRoot, 'plugins');
+const requests = [];
+const previousEnv = {
+  DATA_DIR: process.env.DATA_DIR,
+  PLUGINS_DIR: process.env.PLUGINS_DIR,
+  ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+  CHAT_PROVIDER_A_TEST_KEY: process.env.CHAT_PROVIDER_A_TEST_KEY,
+  CHAT_PROVIDER_B_TEST_KEY: process.env.CHAT_PROVIDER_B_TEST_KEY,
+  CHAT_PROVIDER_INACTIVE_TEST_KEY: process.env.CHAT_PROVIDER_INACTIVE_TEST_KEY,
+  CHAT_PROVIDER_NO_KEY_TEST_KEY: process.env.CHAT_PROVIDER_NO_KEY_TEST_KEY,
+};
+
+fs.mkdirSync(dataDir, { recursive: true });
+fs.mkdirSync(pluginsDir, { recursive: true });
+
+const providerServer = http.createServer((request, response) => {
+  let body = '';
+  request.setEncoding('utf8');
+  request.on('data', chunk => {
+    body += chunk;
+  });
+  request.on('end', () => {
+    const parsedBody = body ? JSON.parse(body) : {};
+    const providerId = request.url?.includes(`/${pluginBId}/`)
+      ? pluginBId
+      : pluginAId;
+    requests.push({
+      providerId,
+      url: request.url,
+      authorization: request.headers.authorization,
+      body: parsedBody,
+    });
+
+    if (parsedBody.stream) {
+      response.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        Connection: 'keep-alive',
+      });
+      response.write(
+        `data: ${JSON.stringify({
+          choices: [{ delta: { content: providerId } }],
+        })}\n\n`
+      );
+      response.end('data: [DONE]\n\n');
+      return;
+    }
+
+    response.writeHead(200, { 'Content-Type': 'application/json' });
+    response.end(
+      JSON.stringify({
+        id: `response-${providerId}`,
+        object: 'chat.completion',
+        created: 1,
+        model: sharedModel,
+        choices: [
+          {
+            index: 0,
+            message: { role: 'assistant', content: providerId },
+            finish_reason: 'stop',
+          },
+        ],
+      })
+    );
+  });
+});
+
+await new Promise((resolve, reject) => {
+  providerServer.once('error', reject);
+  providerServer.listen(0, '127.0.0.1', resolve);
+});
+
+const address = providerServer.address();
+if (!address || typeof address === 'string') {
+  throw new Error('Provider test server did not expose a TCP port.');
+}
+
+const pluginDefinition = (id, keyEnv) => ({
+  id,
+  name: id,
+  type: 'completion',
+  endpoint: `http://127.0.0.1:${address.port}/${id}/v1/chat/completions`,
+  auth: {
+    header: 'Authorization',
+    prefix: 'Bearer ',
+    key_env: keyEnv,
+  },
+  model_map: [sharedModel],
+});
+
+for (const plugin of [
+  pluginDefinition(pluginAId, 'CHAT_PROVIDER_A_TEST_KEY'),
+  pluginDefinition(pluginBId, 'CHAT_PROVIDER_B_TEST_KEY'),
+  pluginDefinition(inactivePluginId, 'CHAT_PROVIDER_INACTIVE_TEST_KEY'),
+  pluginDefinition(missingCredentialPluginId, 'CHAT_PROVIDER_NO_KEY_TEST_KEY'),
+]) {
+  fs.writeFileSync(
+    path.join(pluginsDir, `${plugin.id}.json`),
+    JSON.stringify(plugin, null, 2)
+  );
+}
+fs.writeFileSync(
+  path.join(pluginsDir, '.status.json'),
+  JSON.stringify({
+    activePlugins: [pluginAId, pluginBId, missingCredentialPluginId],
+  })
+);
+
+// Start from the pre-provider Chat schema so database initialization exercises
+// the additive migration rather than only the fresh-schema path.
+const legacyDatabase = new Database(path.join(dataDir, 'data.sqlite'));
+legacyDatabase.exec(`
+  CREATE TABLE sessions (
+    id TEXT PRIMARY KEY,
+    user_id TEXT DEFAULT 'default',
+    title TEXT NOT NULL,
+    model TEXT NOT NULL,
+    persona_id TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  )
+`);
+legacyDatabase.close();
+
+process.env.DATA_DIR = dataDir;
+process.env.PLUGINS_DIR = pluginsDir;
+process.env.ENCRYPTION_KEY = '0'.repeat(64);
+delete process.env.CHAT_PROVIDER_A_TEST_KEY;
+delete process.env.CHAT_PROVIDER_B_TEST_KEY;
+delete process.env.CHAT_PROVIDER_INACTIVE_TEST_KEY;
+delete process.env.CHAT_PROVIDER_NO_KEY_TEST_KEY;
+
+const dbModule = await import(pathToFileURL(path.join(distRoot, 'db.js')).href);
+const storageService = (
+  await import(pathToFileURL(path.join(distRoot, 'storage.js')).href)
+).default;
+const chatService = (
+  await import(
+    pathToFileURL(path.join(distRoot, 'services', 'chatService.js')).href
+  )
+).default;
+const preferencesService = (
+  await import(
+    pathToFileURL(path.join(distRoot, 'services', 'preferencesService.js')).href
+  )
+).default;
+const pluginService = (
+  await import(
+    pathToFileURL(path.join(distRoot, 'services', 'pluginService.js')).href
+  )
+).default;
+const credentialsService = (
+  await import(
+    pathToFileURL(
+      path.join(distRoot, 'services', 'pluginCredentialsService.js')
+    ).href
+  )
+).default;
+const chatGenerationService = (
+  await import(
+    pathToFileURL(path.join(distRoot, 'services', 'chatGenerationService.js'))
+      .href
+  )
+).default;
+const ollamaService = (
+  await import(
+    pathToFileURL(path.join(distRoot, 'services', 'ollamaService.js')).href
+  )
+).default;
+const { ChatRequestService } = await import(
+  pathToFileURL(path.join(distRoot, 'services', 'chatRequestService.js')).href
+);
+const { AUTO_TITLE_CURRENT_MODEL, TitleGenerationService, buildFallbackTitle } =
+  await import(
+    pathToFileURL(path.join(distRoot, 'services', 'titleGenerationService.js'))
+      .href
+  );
+const { normalizeChatProviderSelection } = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'chatProviderSelection.js')).href
+);
+
+const db = dbModule.getDatabase();
+const now = Date.now();
+db.prepare(
+  `INSERT INTO users
+     (id, username, password_hash, role, created_at, updated_at)
+   VALUES (?, ?, ?, ?, ?, ?)`
+).run(userId, userId, 'test-password-hash', 'user', now, now);
+assert.equal(
+  credentialsService.setApiKey(pluginAId, 'provider-a-key', userId),
+  true
+);
+assert.equal(
+  credentialsService.setApiKey(pluginBId, 'provider-b-key', userId),
+  true
+);
+
+after(async () => {
+  dbModule.closeDatabase();
+  await new Promise(resolve => providerServer.close(resolve));
+  fs.rmSync(tempRoot, { recursive: true, force: true });
+
+  for (const [key, value] of Object.entries(previousEnv)) {
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+});
+
+test('Chat session provider columns migrate additively and round-trip nullable selections', () => {
+  const columns = db.prepare('PRAGMA table_info(sessions)').all();
+  const columnNames = columns.map(column => column.name);
+  assert.ok(columnNames.includes('provider_type'));
+  assert.ok(columnNames.includes('provider_id'));
+
+  const legacySession = {
+    id: 'legacy-chat-session',
+    title: 'Legacy session',
+    model: sharedModel,
+    messages: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  storageService.saveSession(legacySession, userId);
+
+  assert.deepEqual(
+    db
+      .prepare(
+        `SELECT provider_type, provider_id
+         FROM sessions
+         WHERE id = ?`
+      )
+      .get(legacySession.id),
+    { provider_type: null, provider_id: null }
+  );
+  const loadedLegacy = storageService.getSession(legacySession.id, userId);
+  assert.equal(loadedLegacy.providerType, undefined);
+  assert.equal(loadedLegacy.providerId, undefined);
+
+  const qualifiedSession = {
+    ...legacySession,
+    id: 'qualified-chat-session',
+    title: 'Qualified session',
+    providerType: 'plugin',
+    providerId: pluginBId,
+  };
+  storageService.saveSession(qualifiedSession, userId);
+
+  assert.deepEqual(
+    db
+      .prepare(
+        `SELECT provider_type, provider_id
+         FROM sessions
+         WHERE id = ?`
+      )
+      .get(qualifiedSession.id),
+    { provider_type: 'plugin', provider_id: pluginBId }
+  );
+  const loadedQualified = storageService.getSession(
+    qualifiedSession.id,
+    userId
+  );
+  assert.equal(loadedQualified.providerType, 'plugin');
+  assert.equal(loadedQualified.providerId, pluginBId);
+});
+
+test('session updates preserve provider metadata until an unqualified model change', async () => {
+  const session = await chatService.createSession(
+    sharedModel,
+    'Provider update semantics',
+    userId,
+    undefined,
+    { providerType: 'plugin', providerId: pluginBId }
+  );
+  assert.equal(session.providerType, 'plugin');
+  assert.equal(session.providerId, pluginBId);
+
+  const titleOnly = await chatService.updateSession(
+    session.id,
+    { title: 'Renamed provider session' },
+    userId
+  );
+  assert.equal(titleOnly.providerType, 'plugin');
+  assert.equal(titleOnly.providerId, pluginBId);
+
+  const modelChanged = await chatService.updateSession(
+    session.id,
+    { model: 'chat-provider-new-model' },
+    userId
+  );
+  assert.equal(modelChanged.providerType, undefined);
+  assert.equal(modelChanged.providerId, undefined);
+
+  assert.deepEqual(
+    db
+      .prepare(
+        `SELECT provider_type, provider_id
+         FROM sessions
+         WHERE id = ?`
+      )
+      .get(session.id),
+    { provider_type: null, provider_id: null }
+  );
+});
+
+test('default and title model preferences round-trip and clear provider identity', () => {
+  preferencesService.setDefaultModel(sharedModel, userId, {
+    providerType: 'plugin',
+    providerId: pluginBId,
+  });
+  let preferences = preferencesService.getPreferences(userId);
+  assert.equal(preferences.defaultModel, sharedModel);
+  assert.equal(preferences.defaultProviderType, 'plugin');
+  assert.equal(preferences.defaultProviderId, pluginBId);
+
+  preferences = preferencesService.updatePreferences(
+    { showUsername: true },
+    userId
+  );
+  assert.equal(preferences.defaultProviderType, 'plugin');
+  assert.equal(preferences.defaultProviderId, pluginBId);
+
+  preferences = preferencesService.updatePreferences(
+    {
+      titleSettings: {
+        autoTitle: true,
+        taskModel: sharedModel,
+        taskProviderType: 'plugin',
+        taskProviderId: pluginBId,
+      },
+    },
+    userId
+  );
+  assert.equal(preferences.titleSettings.taskProviderType, 'plugin');
+  assert.equal(preferences.titleSettings.taskProviderId, pluginBId);
+
+  preferences = preferencesService.getPreferences(userId);
+  assert.equal(preferences.titleSettings.taskProviderType, 'plugin');
+  assert.equal(preferences.titleSettings.taskProviderId, pluginBId);
+
+  preferences = preferencesService.setDefaultModel(
+    'chat-provider-default-changed',
+    userId
+  );
+  assert.equal(preferences.defaultProviderType, undefined);
+  assert.equal(preferences.defaultProviderId, undefined);
+
+  preferences = preferencesService.updatePreferences(
+    {
+      titleSettings: {
+        taskModel: 'chat-provider-title-changed',
+      },
+    },
+    userId
+  );
+  assert.equal(preferences.titleSettings.taskProviderType, undefined);
+  assert.equal(preferences.titleSettings.taskProviderId, undefined);
+});
+
+test('malformed provider selections are rejected consistently', () => {
+  for (const [selection, expectedError] of [
+    [{ providerId: pluginBId }, /requires providerType/i],
+    [{ providerType: 'plugin' }, /providerId is required/i],
+    [
+      { providerType: 'ollama', providerId: pluginBId },
+      /only valid when providerType is "plugin"/i,
+    ],
+    [{ providerType: 'unknown' }, /must be "ollama" or "plugin"/i],
+  ]) {
+    assert.throws(
+      () => normalizeChatProviderSelection(selection),
+      expectedError
+    );
+  }
+
+  assert.deepEqual(
+    normalizeChatProviderSelection({
+      providerType: 'plugin',
+      providerId: `  ${pluginBId}  `,
+    }),
+    { providerType: 'plugin', providerId: pluginBId }
+  );
+});
+
+test('provider-qualified targets distinguish Ollama and colliding plugins', async () => {
+  const ollamaTarget = await chatGenerationService.prepareGenerationTarget(
+    sharedModel,
+    userId,
+    {},
+    { providerType: 'ollama' }
+  );
+  assert.equal(ollamaTarget.activePlugin, null);
+  assert.equal(ollamaTarget.providerType, 'ollama');
+  assert.equal(ollamaTarget.providerId, undefined);
+
+  const pluginBTarget = await chatGenerationService.prepareGenerationTarget(
+    sharedModel,
+    userId,
+    {},
+    { providerType: 'plugin', providerId: pluginBId }
+  );
+  assert.equal(pluginBTarget.activePlugin?.id, pluginBId);
+  assert.equal(pluginBTarget.providerType, 'plugin');
+  assert.equal(pluginBTarget.providerId, pluginBId);
+
+  const legacyTarget = await chatGenerationService.prepareGenerationTarget(
+    sharedModel,
+    userId
+  );
+  assert.equal(legacyTarget.activePlugin?.id, pluginAId);
+  assert.equal(legacyTarget.providerType, undefined);
+  assert.equal(legacyTarget.providerId, undefined);
+});
+
+test('persisted legacy sessions ignore unpersisted request provider identity', async () => {
+  const requestService = new ChatRequestService({
+    chatGenerationService,
+  });
+  const legacySession = {
+    model: sharedModel,
+  };
+
+  const ollamaRequest = await requestService.prepareGenerationRequest({
+    session: legacySession,
+    userId,
+    providerType: 'ollama',
+    persistedMessages: [],
+    content: 'Use the exact Ollama provider',
+  });
+  assert.equal(ollamaRequest.providerType, undefined);
+  assert.equal(ollamaRequest.providerId, undefined);
+  assert.equal(ollamaRequest.activePlugin?.id, pluginAId);
+
+  const pluginRequest = await requestService.prepareGenerationRequest({
+    session: legacySession,
+    userId,
+    providerType: 'plugin',
+    providerId: pluginBId,
+    persistedMessages: [],
+    content: 'Use the exact named plugin provider',
+  });
+  assert.equal(pluginRequest.providerType, undefined);
+  assert.equal(pluginRequest.providerId, undefined);
+  assert.equal(pluginRequest.activePlugin?.id, pluginAId);
+});
+
+test('exact plugin routing reaches the selected provider for regular and streaming requests', async () => {
+  requests.length = 0;
+  const messages = [
+    {
+      id: 'provider-routing-message',
+      role: 'user',
+      content: 'Which provider handles this?',
+      timestamp: now,
+    },
+  ];
+
+  const exactResponse = await pluginService.executePluginRequest(
+    sharedModel,
+    messages,
+    {},
+    userId,
+    pluginBId
+  );
+  assert.equal(exactResponse.choices[0].message.content, pluginBId);
+  assert.deepEqual(
+    requests.map(request => request.providerId),
+    [pluginBId]
+  );
+  assert.equal(requests[0].authorization, 'Bearer provider-b-key');
+
+  requests.length = 0;
+  const streamedChunks = [];
+  for await (const chunk of pluginService.executePluginStreamRequest(
+    sharedModel,
+    messages,
+    {},
+    userId,
+    pluginBId
+  )) {
+    streamedChunks.push(chunk);
+  }
+  assert.equal(
+    streamedChunks
+      .filter(chunk => chunk.type === 'content')
+      .map(chunk => chunk.content)
+      .join(''),
+    pluginBId
+  );
+  assert.deepEqual(
+    requests.map(request => request.providerId),
+    [pluginBId]
+  );
+
+  requests.length = 0;
+  const legacyResponse = await pluginService.executePluginRequest(
+    sharedModel,
+    messages,
+    {},
+    userId
+  );
+  assert.equal(legacyResponse.choices[0].message.content, pluginAId);
+  assert.deepEqual(
+    requests.map(request => request.providerId),
+    [pluginAId]
+  );
+});
+
+test('exact plugin selection rejects unavailable providers before any request', async () => {
+  for (const [providerId, expectedError] of [
+    ['chat-provider-missing', /not found|unavailable/i],
+    [inactivePluginId, /not active|unavailable/i],
+    [missingCredentialPluginId, /API key|credential/i],
+  ]) {
+    requests.length = 0;
+    await assert.rejects(
+      chatGenerationService.prepareGenerationTarget(
+        sharedModel,
+        userId,
+        {},
+        { providerType: 'plugin', providerId }
+      ),
+      expectedError
+    );
+    assert.equal(requests.length, 0);
+  }
+});
+
+test('an exact plugin failure cannot fall back to Ollama, while legacy routing remains compatible', async () => {
+  const exactTarget = await chatGenerationService.prepareGenerationTarget(
+    sharedModel,
+    userId,
+    {},
+    { providerType: 'plugin', providerId: pluginBId }
+  );
+  const legacyTarget = await chatGenerationService.prepareGenerationTarget(
+    sharedModel,
+    userId
+  );
+  const originalExecutePluginRequest = pluginService.executePluginRequest;
+  const originalGenerateChatResponse = ollamaService.generateChatResponse;
+  const exactPluginIds = [];
+  let ollamaCalls = 0;
+
+  pluginService.executePluginRequest = async (
+    _model,
+    _messages,
+    _options,
+    _userId,
+    pluginId
+  ) => {
+    exactPluginIds.push(pluginId);
+    throw new Error('Selected provider failed');
+  };
+  ollamaService.generateChatResponse = async request => {
+    ollamaCalls += 1;
+    return {
+      model: request.model,
+      created_at: new Date().toISOString(),
+      message: { role: 'assistant', content: 'legacy Ollama fallback' },
+      done: true,
+    };
+  };
+
+  try {
+    const executionOptions = target => ({
+      target,
+      ollamaMessages: [{ role: 'user', content: 'test' }],
+      pluginMessages: [
+        {
+          id: 'fallback-message',
+          role: 'user',
+          content: 'test',
+          timestamp: now,
+        },
+      ],
+      userId,
+      pluginFallbackPolicy: 'allow',
+    });
+
+    await assert.rejects(
+      chatGenerationService.executeNonStreaming(executionOptions(exactTarget)),
+      /Selected provider failed/
+    );
+    assert.equal(ollamaCalls, 0);
+    assert.deepEqual(exactPluginIds, [pluginBId]);
+
+    const legacyResult = await chatGenerationService.executeNonStreaming(
+      executionOptions(legacyTarget)
+    );
+    assert.equal(legacyResult.source, 'ollama');
+    assert.equal(legacyResult.assistantContent, 'legacy Ollama fallback');
+    assert.equal(ollamaCalls, 1);
+    assert.deepEqual(exactPluginIds, [pluginBId, pluginAId]);
+  } finally {
+    pluginService.executePluginRequest = originalExecutePluginRequest;
+    ollamaService.generateChatResponse = originalGenerateChatResponse;
+  }
+});
+
+test('ChatRequestService prioritizes persisted identity over request identity', async () => {
+  const prepareCalls = [];
+  const requestService = new ChatRequestService({
+    chatGenerationService: {
+      async prepareGenerationTarget(model, targetUserId, options, provider) {
+        prepareCalls.push({ model, userId: targetUserId, options, provider });
+        return {
+          actualModelName: model,
+          mergedOptions: options,
+          activePlugin: { id: pluginBId },
+          pluginVariables: {},
+          providerType: provider?.providerType,
+          providerId: provider?.providerId,
+        };
+      },
+    },
+  });
+  const session = {
+    model: sharedModel,
+    providerType: 'plugin',
+    providerId: pluginBId,
+  };
+
+  await requestService.prepareGenerationRequest({
+    session,
+    userId,
+    providerType: 'ollama',
+    persistedMessages: [],
+    content: 'persisted request',
+  });
+  await requestService.prepareGenerationRequest({
+    session,
+    userId,
+    isPrivate: true,
+    providerType: 'ollama',
+    persistedMessages: [],
+    messageHistory: [{ role: 'user', content: 'private history' }],
+    content: 'private request',
+  });
+
+  assert.deepEqual(prepareCalls, [
+    {
+      model: sharedModel,
+      userId,
+      options: {},
+      provider: { providerType: 'plugin', providerId: pluginBId },
+    },
+    {
+      model: sharedModel,
+      userId,
+      options: {},
+      provider: { providerType: 'plugin', providerId: pluginBId },
+    },
+  ]);
+});
+
+test('current-model title generation ignores conflicting request provider metadata', async () => {
+  const session = {
+    id: 'title-provider-session',
+    title: 'New Chat',
+    model: sharedModel,
+    providerType: 'plugin',
+    providerId: pluginBId,
+    messages: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  const prepareCalls = [];
+  const pluginCalls = [];
+  const service = new TitleGenerationService({
+    chatService: {
+      getSession: () => session,
+      updateSession: async (_sessionId, updates) => ({
+        ...session,
+        ...updates,
+        updatedAt: now + 1,
+      }),
+    },
+    chatGenerationService: {
+      async resolveActualModelName(model) {
+        return model;
+      },
+      async prepareGenerationTarget(model, targetUserId, options, provider) {
+        prepareCalls.push({ model, userId: targetUserId, options, provider });
+        return {
+          actualModelName: model,
+          mergedOptions: options,
+          activePlugin: { id: pluginBId },
+          pluginVariables: {},
+          providerType: provider?.providerType,
+          providerId: provider?.providerId,
+        };
+      },
+      extractPluginAssistantContent: response =>
+        response.choices[0].message.content,
+    },
+    pluginService: {
+      async executePluginRequest(
+        model,
+        messages,
+        options,
+        targetUserId,
+        pluginId
+      ) {
+        pluginCalls.push({
+          model,
+          messages,
+          options,
+          userId: targetUserId,
+          pluginId,
+        });
+        return {
+          choices: [
+            {
+              message: {
+                role: 'assistant',
+                content: 'Provider-qualified title',
+              },
+            },
+          ],
+        };
+      },
+    },
+    ollamaService: {
+      async generateResponse() {
+        throw new Error('Exact plugin title generation used Ollama');
+      },
+    },
+    now: () => now,
+    logger: { error() {} },
+  });
+
+  const result = await service.generateTitleForSession({
+    sessionId: session.id,
+    requestedModel: AUTO_TITLE_CURRENT_MODEL,
+    message: 'Explain provider-qualified Chat routing',
+    userId,
+    providerType: 'ollama',
+  });
+
+  assert.equal(result.source, 'plugin');
+  assert.equal(result.title, 'Provider-qualified title');
+  assert.deepEqual(prepareCalls, [
+    {
+      model: sharedModel,
+      userId,
+      options: { temperature: 0.3, num_predict: 20 },
+      provider: { providerType: 'plugin', providerId: pluginBId },
+    },
+  ]);
+  assert.equal(pluginCalls.length, 1);
+  assert.equal(pluginCalls[0].pluginId, pluginBId);
+});
+
+test('an exact title provider failure uses only the local title fallback', async () => {
+  const message =
+    'Explain why exact title providers must never silently switch providers';
+  const session = {
+    id: 'title-provider-failure-session',
+    title: 'New Chat',
+    model: sharedModel,
+    providerType: 'plugin',
+    providerId: pluginBId,
+    messages: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+  const pluginIds = [];
+  let ollamaCalls = 0;
+  const service = new TitleGenerationService({
+    chatService: {
+      getSession: () => session,
+      updateSession: async (_sessionId, updates) => ({
+        ...session,
+        ...updates,
+        updatedAt: now + 1,
+      }),
+    },
+    chatGenerationService: {
+      async resolveActualModelName(model) {
+        return model;
+      },
+      async prepareGenerationTarget(model, _targetUserId, options, provider) {
+        return {
+          actualModelName: model,
+          mergedOptions: options,
+          activePlugin: { id: pluginBId },
+          pluginVariables: {},
+          providerType: provider?.providerType,
+          providerId: provider?.providerId,
+        };
+      },
+      extractPluginAssistantContent: () => {
+        throw new Error('No plugin response was expected');
+      },
+    },
+    pluginService: {
+      async executePluginRequest(
+        _model,
+        _messages,
+        _options,
+        _targetUserId,
+        pluginId
+      ) {
+        pluginIds.push(pluginId);
+        throw new Error('Selected title provider failed');
+      },
+    },
+    ollamaService: {
+      async generateResponse() {
+        ollamaCalls += 1;
+        throw new Error('Exact title provider failure used Ollama');
+      },
+    },
+    now: () => now,
+    logger: { error() {} },
+  });
+
+  const result = await service.generateTitleForSession({
+    sessionId: session.id,
+    requestedModel: AUTO_TITLE_CURRENT_MODEL,
+    message,
+    userId,
+  });
+
+  assert.equal(result.source, 'fallback');
+  assert.equal(result.title, buildFallbackTitle(message));
+  assert.deepEqual(pluginIds, [pluginBId]);
+  assert.equal(ollamaCalls, 0);
+});

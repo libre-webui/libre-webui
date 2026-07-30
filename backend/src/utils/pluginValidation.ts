@@ -76,7 +76,10 @@ export function isSafePluginEndpoint(endpoint: string): boolean {
   );
   const isPrivateNetwork = isPrivateIpv4Hostname(url.hostname);
 
-  return url.protocol === 'https:' || isLocalhost || isPrivateNetwork;
+  return (
+    url.protocol === 'https:' ||
+    (url.protocol === 'http:' && (isLocalhost || isPrivateNetwork))
+  );
 }
 
 export function validatePluginEndpointOverride(
@@ -122,10 +125,20 @@ export function resolvePluginEndpoint(
   endpoint: string,
   endpointOverride?: string
 ): string {
-  return (
-    (endpointOverride && validatePluginEndpointOverride(endpointOverride)) ||
-    endpoint
-  );
+  const normalizedOverride = endpointOverride?.trim();
+  if (!normalizedOverride) {
+    return endpoint;
+  }
+
+  const validatedOverride = validatePluginEndpointOverride(normalizedOverride);
+  if (!validatedOverride) {
+    throw new Error(
+      'Invalid or unsafe plugin endpoint override. Use HTTPS for remote endpoints, ' +
+        'or HTTP for localhost and private IPv4 addresses.'
+    );
+  }
+
+  return validatedOverride;
 }
 
 function optionalPluginString(value: unknown): string | undefined {
@@ -258,9 +271,9 @@ export function resolvePluginApiConfig(
     endpointOverride &&
     (endpointOverride !== plugin.endpoint || !hasStructuredApiOverride)
   ) {
-    assertSafePluginEndpoint(endpointOverride, 'plugin endpoint override');
-    apiMode = inferKnownPluginApiMode(endpointOverride) || apiMode;
-    return { apiMode, endpoint: endpointOverride };
+    const endpoint = resolvePluginEndpoint(plugin.endpoint, endpointOverride);
+    apiMode = inferKnownPluginApiMode(endpoint) || apiMode;
+    return { apiMode, endpoint };
   }
 
   const baseUrl = configuredBaseUrl || optionalPluginString(plugin.base_url);
@@ -310,12 +323,7 @@ export function resolvePluginModelsEndpoint(endpoint: string): string {
     }
   }
 
-  const basePath =
-    url.pathname === '/'
-      ? ''
-      : url.pathname.endsWith('/')
-        ? url.pathname.slice(0, -1)
-        : url.pathname;
+  const basePath = url.pathname === '/' ? '' : url.pathname;
   url.pathname = `${basePath}/models`;
   return url.toString();
 }

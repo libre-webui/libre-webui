@@ -27,12 +27,14 @@ import {
 import type { GenerationTarget } from './chatGenerationService.js';
 import type {
   ChatMessage,
+  ChatProviderSelection,
   ChatSession,
   GenerationOptions,
   OllamaChatMessage,
   Persona,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
+import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
 
 const logger = createLogger('services:chat-request-service');
 
@@ -40,7 +42,8 @@ export interface ChatGenerationTargetService {
   prepareGenerationTarget(
     sessionModel: string,
     userId: string,
-    options?: GenerationOptions
+    options?: GenerationOptions,
+    providerSelection?: ChatProviderSelection
   ): Promise<GenerationTarget>;
 }
 
@@ -80,9 +83,14 @@ export interface PrepareChatGenerationRequestOptions extends Omit<
   PrepareGenerationMessagesOptions,
   'pluginVariables' | 'personaSystemPrompt'
 > {
-  session: Pick<ChatSession, 'model' | 'personaId'>;
+  session: Pick<
+    ChatSession,
+    'model' | 'personaId' | 'providerType' | 'providerId'
+  >;
   userId: string;
   options?: GenerationOptions;
+  providerType?: ChatProviderSelection['providerType'];
+  providerId?: ChatProviderSelection['providerId'];
   personaSystemPrompt?: string;
   includePersonaPrompt?: boolean;
 }
@@ -200,14 +208,24 @@ export class ChatRequestService {
     session,
     userId,
     options = {},
+    providerType,
+    providerId,
     personaSystemPrompt,
     includePersonaPrompt = true,
     ...messageOptions
   }: PrepareChatGenerationRequestOptions): Promise<PreparedChatGenerationRequest> {
+    const sessionProviderSelection = normalizeChatProviderSelection(session);
+    const requestProviderSelection = messageOptions.isPrivate
+      ? normalizeChatProviderSelection({ providerType, providerId })
+      : undefined;
+    const providerSelection = messageOptions.isPrivate
+      ? (sessionProviderSelection ?? requestProviderSelection)
+      : sessionProviderSelection;
     const target = await this.chatGenerationService.prepareGenerationTarget(
       session.model,
       userId,
-      options
+      options,
+      providerSelection
     );
 
     const resolvedPersonaSystemPrompt =

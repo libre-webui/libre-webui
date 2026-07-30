@@ -59,8 +59,8 @@ import {
   buildPluginModelDiscoveryHeaders,
   pluginRequiresApiKey,
   resolvePluginApiConfig,
+  resolvePluginEndpoint,
   resolvePluginModelsEndpoint,
-  validatePluginEndpointOverride,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 import { createLogger } from '../utils/logger.js';
@@ -110,8 +110,8 @@ export class PluginService {
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
     });
     this.imageGenerationService = new PluginImageGenerationService({
-      getAllPlugins: () => this.getAllPlugins(),
-      getPlugin: id => this.getPlugin(id),
+      getAllPlugins: userId => this.getAllPlugins(userId),
+      getPlugin: (id, userId) => this.getPlugin(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
@@ -338,14 +338,14 @@ export class PluginService {
 
   /**
    * Validate an endpoint URL for safety (SSRF protection).
-   * Returns the URL string if valid, or null if invalid.
+   * Returns the URL string if valid and throws for an unsafe explicit value.
    */
-  private validateEndpointUrl(endpoint: string): string | null {
-    return validatePluginEndpointOverride(endpoint);
+  private validateEndpointUrl(endpoint: string): string {
+    return resolvePluginEndpoint('', endpoint);
   }
 
   /**
-   * Attempt to auto-discover available models from a plugin's base endpoint.
+   * Attempt to auto-discover available models from a plugin's full API endpoint.
    * Resolves the provider's model-list endpoint and updates the plugin's model_map.
    * Falls back silently to the existing model_map if the endpoint is unavailable.
    */
@@ -358,7 +358,6 @@ export class PluginService {
       plugin,
       pluginVars
     );
-
     const modelsEndpoint = resolvePluginModelsEndpoint(effectiveEndpoint);
     assertSafePluginEndpoint(modelsEndpoint, 'model discovery endpoint');
 
@@ -548,8 +547,8 @@ export class PluginService {
   }
 
   // Activate a plugin
-  activatePlugin(id: string): boolean {
-    const plugin = this.getPlugin(id);
+  async activatePlugin(id: string, userId?: string): Promise<boolean> {
+    const plugin = this.getPlugin(id, userId);
 
     if (!plugin) {
       throw new Error('Plugin not found');
@@ -557,6 +556,10 @@ export class PluginService {
 
     this.activePluginIds.add(id);
     this.saveActivePlugins();
+
+    // Wait for discovery so the activation response and the UI's first reload
+    // observe the same user-scoped model catalog.
+    await this.discoverModels(id, userId).catch(() => {});
 
     return true;
   }
@@ -574,7 +577,35 @@ export class PluginService {
   }
 
   // Get the active plugin for a specific model
-  getActivePluginForModel(model: string, userId?: string): Plugin | null {
+  getActivePluginForModel(
+    model: string,
+    userId?: string,
+    pluginId?: string
+  ): Plugin | null {
+    if (pluginId) {
+      const plugin = this.getPlugin(pluginId, userId);
+      if (!plugin) {
+        throw new Error(`Plugin not found: ${pluginId}`);
+      }
+      if (!this.activePluginIds.has(pluginId)) {
+        throw new Error(`Plugin is not active: ${pluginId}`);
+      }
+      if (!plugin.model_map.includes(model)) {
+        throw new Error(
+          `Model ${model} is not supported by plugin ${pluginId}`
+        );
+      }
+
+      const apiKey = this.getApiKey(plugin, userId);
+      if (pluginRequiresApiKey(plugin) && !apiKey) {
+        throw new Error(
+          `API key not found for plugin ${pluginId} (set via Settings or ${plugin.auth.key_env} env var)`
+        );
+      }
+
+      return plugin;
+    }
+
     // Only route through plugins the user explicitly activated.
     const activePlugins = this.getActivePlugins(userId);
 
@@ -625,11 +656,12 @@ export class PluginService {
     model: string,
     messages: ChatMessage[],
     options: GenerationOptions = {},
-    userId?: string
+    userId?: string,
+    pluginId?: string
   ): Promise<PluginResponse> {
     validatePluginModel(model);
 
-    const activePlugin = this.getActivePluginForModel(model, userId);
+    const activePlugin = this.getActivePluginForModel(model, userId, pluginId);
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
@@ -716,11 +748,12 @@ export class PluginService {
     model: string,
     messages: ChatMessage[],
     options: GenerationOptions = {},
-    userId?: string
+    userId?: string,
+    pluginId?: string
   ): AsyncGenerator<PluginStreamChunk, void, unknown> {
     validatePluginModel(model);
 
-    const activePlugin = this.getActivePluginForModel(model, userId);
+    const activePlugin = this.getActivePluginForModel(model, userId, pluginId);
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
@@ -825,8 +858,8 @@ export class PluginService {
   }
 
   // Export plugin to JSON
-  exportPlugin(id: string): Plugin | null {
-    return this.getPlugin(id);
+  exportPlugin(id: string, userId?: string): Plugin | null {
+    return this.getPlugin(id, userId);
   }
 
   // Import plugin from JSON data
@@ -916,16 +949,16 @@ export class PluginService {
     return this.ttsService.getTTSConfig(pluginId);
   }
 
-  getPluginForImageGen(model: string): Plugin | null {
-    return this.imageGenerationService.getPluginForImageGen(model);
+  getPluginForImageGen(model: string, userId?: string): Plugin | null {
+    return this.imageGenerationService.getPluginForImageGen(model, userId);
   }
 
-  getAvailableImageGenModels(): {
+  getAvailableImageGenModels(userId?: string): {
     model: string;
     plugin: string;
     config?: ImageGenConfig;
   }[] {
-    return this.imageGenerationService.getAvailableImageGenModels();
+    return this.imageGenerationService.getAvailableImageGenModels(userId);
   }
 
   async executeImageGenRequest(
@@ -937,6 +970,7 @@ export class PluginService {
       style?: string;
       n?: number;
       response_format?: 'url' | 'b64_json';
+      userId?: string;
     } = {}
   ): Promise<ImageGenResponse> {
     return this.imageGenerationService.executeImageGenRequest(
@@ -946,8 +980,8 @@ export class PluginService {
     );
   }
 
-  getImageGenConfig(pluginId: string): ImageGenConfig | null {
-    return this.imageGenerationService.getImageGenConfig(pluginId);
+  getImageGenConfig(pluginId: string, userId?: string): ImageGenConfig | null {
+    return this.imageGenerationService.getImageGenConfig(pluginId, userId);
   }
 
   getPluginsByCapability(

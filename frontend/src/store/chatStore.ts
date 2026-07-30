@@ -22,6 +22,7 @@ import {
   OllamaModel,
   GenerationStatistics,
   Persona,
+  ChatProviderType,
 } from '@/types';
 import { chatApi, ollamaApi, preferencesApi, personaApi } from '@/utils/api';
 import { pluginApi } from '@/utils/api';
@@ -40,6 +41,10 @@ import {
   updateMessageContentInChatState,
   updateMessageStatisticsInChatState,
 } from '@/store/chatStoreHelpers';
+import {
+  chatModelSelectionFromModel,
+  findChatModelForSelection,
+} from '@/utils/chatModelSelection';
 
 const logger = createLogger('chat-store');
 
@@ -51,7 +56,9 @@ interface ChatState {
   createSession: (
     model: string,
     title?: string,
-    personaId?: string
+    personaId?: string,
+    providerType?: ChatProviderType | null,
+    providerId?: string | null
   ) => Promise<ChatSession | undefined>;
   loadSessions: () => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
@@ -86,8 +93,18 @@ interface ChatState {
   loadModels: () => Promise<void>;
   loadPreferences: () => Promise<void>;
   selectedModel: string;
-  setSelectedModel: (model: string) => void;
-  updateCurrentSessionModel: (model: string) => Promise<void>;
+  selectedProviderType: ChatProviderType | null;
+  selectedProviderId: string | null;
+  setSelectedModel: (
+    model: string,
+    providerType?: ChatProviderType | null,
+    providerId?: string | null
+  ) => void;
+  updateCurrentSessionModel: (
+    model: string,
+    providerType?: ChatProviderType | null,
+    providerId?: string | null
+  ) => Promise<void>;
 
   // Personas
   personas: { [key: string]: Persona };
@@ -116,10 +133,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ currentSession: session });
   },
 
-  createSession: async (model: string, title?: string, personaId?: string) => {
+  createSession: async (
+    model: string,
+    title?: string,
+    personaId?: string,
+    providerType?: ChatProviderType | null,
+    providerId?: string | null
+  ) => {
     try {
       set({ loading: true, error: null });
-      const response = await chatApi.createSession(model, title, personaId);
+      const response = await chatApi.createSession(
+        model,
+        title,
+        personaId,
+        providerType,
+        providerId
+      );
 
       if (response.success && response.data) {
         const newSession = response.data;
@@ -254,6 +283,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
       currentSession: null,
       models: [],
       selectedModel: '',
+      selectedProviderType: null,
+      selectedProviderId: null,
       systemMessage: '',
       loading: false,
       error: null,
@@ -446,22 +477,58 @@ export const useChatStore = create<ChatState>((set, get) => ({
       // Validate that the currently selected model still exists in the models list
       const currentState = get();
       const currentSelectedModel = currentState.selectedModel;
-      const modelExists = allModels.some(m => m.name === currentSelectedModel);
+      const currentSelection = {
+        model: currentSelectedModel,
+        providerType: currentState.selectedProviderType,
+        providerId: currentState.selectedProviderId,
+      };
+      const modelExists = Boolean(
+        findChatModelForSelection(allModels, currentSelection)
+      );
+      const hasExplicitProvider =
+        currentState.selectedProviderType === 'ollama' ||
+        currentState.selectedProviderType === 'plugin';
+
+      if (currentSelectedModel && !modelExists && hasExplicitProvider) {
+        const providerLabel =
+          currentState.selectedProviderType === 'plugin'
+            ? currentState.selectedProviderId || 'plugin'
+            : 'Ollama';
+        const unavailableError = `Selected model "${currentSelectedModel}" is unavailable from ${providerLabel}. Reactivate that provider or select another model.`;
+        set({
+          models: allModels,
+          loading: false,
+          error: unavailableError,
+        });
+        toast.error(unavailableError);
+        return;
+      }
 
       if (currentSelectedModel && !modelExists && allModels.length > 0) {
         // Current model is no longer available, fallback to first available model
-        const fallbackModel = allModels[0].name;
+        const fallbackSelection = chatModelSelectionFromModel(allModels[0]);
         logger.debug(
-          `⚠️ Selected model "${currentSelectedModel}" no longer available, falling back to "${fallbackModel}"`
+          `⚠️ Legacy selected model "${currentSelectedModel}" no longer available, falling back to "${fallbackSelection.model}"`
         );
         set({
           models: allModels,
           loading: false,
-          selectedModel: fallbackModel,
+          selectedModel: fallbackSelection.model,
+          selectedProviderType: fallbackSelection.providerType || null,
+          selectedProviderId: fallbackSelection.providerId || null,
           error: providerLoadError,
         });
+        preferencesApi
+          .setDefaultModel(
+            fallbackSelection.model,
+            fallbackSelection.providerType,
+            fallbackSelection.providerId
+          )
+          .catch(error => {
+            logger.warn('Failed to save fallback default model:', error);
+          });
         toast.success(
-          `Switched to ${fallbackModel} (previous model no longer available)`
+          `Switched to ${fallbackSelection.model} (previous model no longer available)`
         );
       } else {
         set({ models: allModels, loading: false, error: providerLoadError });
@@ -483,10 +550,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const response = await preferencesApi.getPreferences();
 
       if (response.success && response.data) {
-        const { defaultModel, systemMessage } = response.data;
+        const {
+          defaultModel,
+          defaultProviderType,
+          defaultProviderId,
+          systemMessage,
+        } = response.data;
 
         if (defaultModel) {
-          set({ selectedModel: defaultModel });
+          set({
+            selectedModel: defaultModel,
+            selectedProviderType: defaultProviderType || null,
+            selectedProviderId:
+              defaultProviderType === 'plugin'
+                ? defaultProviderId || null
+                : null,
+          });
           logger.debug('✅ Loaded default model from backend:', defaultModel);
         }
 
@@ -501,15 +580,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   selectedModel: '',
-  setSelectedModel: model => {
-    set({ selectedModel: model });
-    // Save to backend preferences when model is selected
-    preferencesApi.setDefaultModel(model).catch(_error => {
-      logger.warn('Failed to save default model to backend:', _error);
+  selectedProviderType: null,
+  selectedProviderId: null,
+  setSelectedModel: (model, providerType = null, providerId = null) => {
+    const normalizedProviderId =
+      providerType === 'plugin' ? providerId || null : null;
+    set({
+      selectedModel: model,
+      selectedProviderType: providerType,
+      selectedProviderId: normalizedProviderId,
     });
+    // Save to backend preferences when model is selected
+    preferencesApi
+      .setDefaultModel(model, providerType, normalizedProviderId)
+      .catch(_error => {
+        logger.warn('Failed to save default model to backend:', _error);
+      });
   },
 
-  updateCurrentSessionModel: async (model: string) => {
+  updateCurrentSessionModel: async (
+    model: string,
+    providerType: ChatProviderType | null = null,
+    providerId: string | null = null
+  ) => {
     const state = get();
     if (!state.currentSession) {
       throw new Error('No current session to update');
@@ -518,6 +611,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     try {
       const response = await chatApi.updateSession(state.currentSession.id, {
         model,
+        providerType,
+        providerId: providerType === 'plugin' ? providerId : null,
       });
 
       if (response.success && response.data) {
@@ -527,6 +622,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
           ),
           currentSession: response.data,
           selectedModel: model,
+          selectedProviderType: providerType,
+          selectedProviderId:
+            providerType === 'plugin' ? providerId || null : null,
         }));
         toast.success('Model updated for current chat');
       }

@@ -99,11 +99,28 @@ export function validatePluginVariables(
     }
 
     if (isUrlVariable(key) && str.length > 0) {
-      const validatedUrl = validatePluginEndpointOverride(str);
+      const normalizedUrl = str.trim();
+      if (normalizedUrl.length === 0) {
+        validated[key] = '';
+        continue;
+      }
+
+      try {
+        new URL(normalizedUrl);
+      } catch {
+        return {
+          success: false,
+          error: `Variable "${key}" must be a valid URL`,
+        };
+      }
+
+      const validatedUrl = validatePluginEndpointOverride(normalizedUrl);
       if (!validatedUrl) {
         return {
           success: false,
-          error: `Variable "${key}" must use HTTPS, localhost, or a private-network URL`,
+          error:
+            `Variable "${key}" must use HTTPS for remote URLs, or HTTP ` +
+            'for localhost and private IPv4 addresses',
         };
       }
       if (key.toLowerCase().endsWith('base_url')) {
@@ -115,13 +132,20 @@ export function validatePluginVariables(
           };
         }
       }
+      validated[key] = validatedUrl;
+      continue;
     }
 
-    if (key === 'api_path' && str.length > 0 && !validatePluginApiPath(str)) {
-      return {
-        success: false,
-        error: 'Variable "api_path" must be an absolute API path',
-      };
+    if (key === 'api_path' && str.length > 0) {
+      const validatedPath = validatePluginApiPath(str);
+      if (!validatedPath) {
+        return {
+          success: false,
+          error: 'Variable "api_path" must be an absolute API path',
+        };
+      }
+      validated[key] = validatedPath;
+      continue;
     }
 
     validated[key] = str;

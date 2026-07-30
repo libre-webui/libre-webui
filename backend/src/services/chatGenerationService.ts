@@ -24,6 +24,8 @@ import pluginService from './pluginService.js';
 import preferencesService from './preferencesService.js';
 import type {
   ChatMessage,
+  ChatProviderSelection,
+  ChatProviderType,
   GenerationOptions,
   OllamaChatMessage,
   OllamaChatResponse,
@@ -31,6 +33,7 @@ import type {
   PluginResponse,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
+import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
 
 const logger = createLogger('services:chat-generation-service');
 
@@ -39,6 +42,8 @@ export interface GenerationTarget {
   mergedOptions: GenerationOptions;
   activePlugin: Plugin | null;
   pluginVariables: Record<string, string | number | boolean>;
+  providerType?: ChatProviderType;
+  providerId?: string;
 }
 
 export type PluginFallbackPolicy = 'allow' | 'disabled';
@@ -99,17 +104,23 @@ class ChatGenerationService {
   async prepareGenerationTarget(
     sessionModel: string,
     userId: string,
-    options: GenerationOptions = {}
+    options: GenerationOptions = {},
+    providerSelection?: ChatProviderSelection
   ): Promise<GenerationTarget> {
     const actualModelName = await this.resolveActualModelName(
       sessionModel,
       userId
     );
     const mergedOptions = this.mergeOptions(options);
-    const activePlugin = pluginService.getActivePluginForModel(
-      actualModelName,
-      userId
-    );
+    const provider = normalizeChatProviderSelection(providerSelection);
+    const activePlugin =
+      provider?.providerType === 'ollama'
+        ? null
+        : pluginService.getActivePluginForModel(
+            actualModelName,
+            userId,
+            provider?.providerId
+          );
     const pluginVariables = activePlugin
       ? pluginService.getPluginVariables(activePlugin, userId)
       : {};
@@ -119,6 +130,7 @@ class ChatGenerationService {
       mergedOptions,
       activePlugin,
       pluginVariables,
+      ...provider,
     };
   }
 
@@ -161,7 +173,8 @@ class ChatGenerationService {
           target.actualModelName,
           pluginMessages,
           target.mergedOptions,
-          userId
+          userId,
+          target.activePlugin.id
         );
         const incompleteReason =
           pluginResponse.providerMetadata?.[
@@ -187,7 +200,10 @@ class ChatGenerationService {
         const pluginError =
           error instanceof Error ? error : new Error(String(error));
 
-        if (pluginFallbackPolicy === 'disabled') {
+        if (
+          pluginFallbackPolicy === 'disabled' ||
+          target.providerType !== undefined
+        ) {
           throw pluginError;
         }
 

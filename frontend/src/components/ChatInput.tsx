@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Send, Square, Paperclip, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -31,6 +31,13 @@ import { toast } from 'react-hot-toast';
 import { cn } from '@/utils';
 import { Persona } from '@/types';
 import { createLogger } from '@/utils/logger';
+import {
+  chatModelOptionKey,
+  isChatModelSelectionAvailable,
+  chatModelSelectionFromKey,
+  chatModelSelectionKeyForModels,
+  withUnavailableChatModel,
+} from '@/utils/chatModelSelection';
 
 const logger = createLogger('components:chat-input');
 
@@ -61,6 +68,32 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const { isGenerating, setBackgroundImage } = useAppStore();
   const { currentSession, models } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const sessionSelection = useMemo(
+    () => ({
+      model: currentSession?.personaId
+        ? `persona:${currentSession.personaId}`
+        : currentSession?.model || '',
+      providerType: currentSession?.providerType,
+      providerId: currentSession?.providerId,
+    }),
+    [
+      currentSession?.model,
+      currentSession?.personaId,
+      currentSession?.providerId,
+      currentSession?.providerType,
+    ]
+  );
+  const selectorModels = useMemo(
+    () => withUnavailableChatModel(models, sessionSelection),
+    [models, sessionSelection]
+  );
+  const sessionModelKey = sessionSelection.model
+    ? chatModelSelectionKeyForModels(selectorModels, sessionSelection)
+    : '';
+  const sessionModelAvailable = isChatModelSelectionAvailable(
+    models,
+    sessionSelection
+  );
 
   // Check if image generation plugins are available
   useEffect(() => {
@@ -81,6 +114,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     e.preventDefault();
 
     if (!message.trim() || isGenerating) return;
+    if (!sessionModelAvailable) {
+      toast.error('Select an available model before sending');
+      return;
+    }
 
     onSendMessage(
       message.trim(),
@@ -157,13 +194,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const handleModelOrPersonaChange = async (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    const value = event.target.value;
+    const selection = chatModelSelectionFromKey(
+      selectorModels,
+      event.target.value
+    );
+    if (!selection) return;
     if (!currentSession) return;
 
     try {
       // Check if the selected value is a persona
-      if (value.startsWith('persona:')) {
-        const personaId = value.replace('persona:', '');
+      if (selection.model.startsWith('persona:')) {
+        const personaId = selection.model.slice('persona:'.length);
 
         // Get persona details to use its model
         const personaResponse = await personaApi.getPersona(personaId);
@@ -177,7 +218,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         // Update session with persona and its model
         const response = await chatApi.updateSession(currentSession.id, {
           personaId: personaId,
-          model: value, // Keep the persona model string (persona:xxx)
+          model: selection.model, // Keep the persona model string (persona:xxx)
+          providerType: 'ollama',
+          providerId: null,
         });
 
         if (response.success && response.data) {
@@ -201,8 +244,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       } else {
         // It's a regular model - update the model and clear persona
         const response = await chatApi.updateSession(currentSession.id, {
-          model: value,
-          personaId: undefined,
+          model: selection.model,
+          providerType: selection.providerType,
+          providerId:
+            selection.providerType === 'plugin'
+              ? selection.providerId || null
+              : null,
+          personaId: null,
         });
 
         if (response.success && response.data) {
@@ -305,16 +353,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               {/* Integrated Controls Row */}
               <div className='flex flex-shrink-0 items-center gap-1 sm:gap-2'>
                 {/* Model Selector - Integrated */}
-                {currentSession && models.length > 0 && (
+                {currentSession && selectorModels.length > 0 && (
                   <div className='hidden sm:block'>
                     <ModelSelector
-                      models={models}
-                      selectedModel={
-                        currentSession.personaId
-                          ? `persona:${currentSession.personaId}`
-                          : currentSession.model
-                      }
+                      models={selectorModels}
+                      selectedModel={sessionModelKey}
                       onModelChange={handleModelOrPersonaChange}
+                      getModelValue={chatModelOptionKey}
                       currentPersona={currentPersona}
                       className='min-w-[150px] max-w-[230px]'
                       compact
@@ -346,14 +391,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     type='submit'
                     variant='ghost'
                     size='sm'
-                    disabled={!message.trim() || disabled}
+                    disabled={
+                      !message.trim() || disabled || !sessionModelAvailable
+                    }
                     className={cn(
                       'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'bg-gray-100 text-gray-400 dark:bg-dark-300 dark:text-dark-500',
                       'disabled:cursor-not-allowed disabled:opacity-70',
                       'transition-colors duration-150 touch-manipulation',
                       message.trim() &&
-                        !disabled && [
+                        !disabled &&
+                        sessionModelAvailable && [
                           'bg-gray-950 text-white hover:bg-gray-800',
                           'dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
                           'shadow-sm',
@@ -369,16 +417,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </form>
 
           {/* Mobile-only Model Selector */}
-          {currentSession && models.length > 0 && (
+          {currentSession && selectorModels.length > 0 && (
             <div className='mt-3 sm:hidden'>
               <ModelSelector
-                models={models}
-                selectedModel={
-                  currentSession.personaId
-                    ? `persona:${currentSession.personaId}`
-                    : currentSession.model
-                }
+                models={selectorModels}
+                selectedModel={sessionModelKey}
                 onModelChange={handleModelOrPersonaChange}
+                getModelValue={chatModelOptionKey}
                 currentPersona={currentPersona}
                 className='w-full'
                 compact

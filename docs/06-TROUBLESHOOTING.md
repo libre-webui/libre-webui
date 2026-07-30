@@ -160,6 +160,37 @@ parameters do not. Discovered IDs are stored per user and never overwrite the
 shared plugin JSON. If the derived route is not supported by the provider,
 configure model IDs manually in the plugin's `model_map`.
 
+HTTP is accepted only for exact loopback hosts or private IPv4 literals.
+Hostnames such as `host.docker.internal` and `10.example.com` are not private
+IP literals and therefore require HTTPS. Requests originate from the backend,
+so `localhost` refers to the Libre WebUI container when the backend runs in a
+container, not automatically to the host machine.
+
+Image model availability, endpoint overrides, and API keys are resolved for
+the current user too. If an image request appears to use another account's
+provider settings, verify that the request is authenticated as the expected
+user.
+
+### Chat Uses the Wrong Provider or Shows a Provider as Unavailable
+
+The same model ID can exist in Ollama and in more than one plugin. Current Chat
+sessions and default-model preferences save the selected provider as well as
+the raw model ID, so similarly named entries are independent choices.
+
+- If the selector says a provider is unavailable, reactivate or reinstall that
+  exact plugin and confirm its model map still contains the saved model ID.
+- If the provider or model was intentionally removed, explicitly select a
+  replacement. Libre WebUI will not redirect an exact saved selection to a
+  same-named model from another provider.
+- Older sessions and preferences may have no provider metadata. Those records
+  continue to use legacy name-only routing because Libre WebUI cannot infer
+  which provider was originally intended. They appear as "provider not
+  recorded" in model selectors. Reselect the desired Ollama or plugin entry to
+  pin future requests to it.
+- Persona entries remain labeled `persona:<id>`. Newly selected personas record
+  Ollama as their backing provider; historical persona sessions without
+  provider metadata remain compatible with legacy routing.
+
 ## Work Problems
 
 ### Work Is Missing or Reports Runtime Unavailable
