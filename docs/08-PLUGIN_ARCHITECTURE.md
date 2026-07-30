@@ -95,7 +95,9 @@ text-to-speech rather than sending those requests to its Chat endpoint.
 The `endpoint` variable is the complete request URL, including the operation
 path. For example, an OpenAI-compatible chat plugin normally uses a URL such as
 `https://provider.example/v1/chat/completions`, not only
-`https://provider.example`.
+`https://provider.example`. Imported legacy plugin configurations may call this
+variable `api_url`; Libre WebUI accepts that alias, but a non-empty `endpoint`
+always takes precedence when both are present.
 
 Remote endpoints must use HTTPS. Plain HTTP is accepted only for exact loopback
 hosts (`localhost`, `127.0.0.1`, or `[::1]`) and private IPv4 literals in the
@@ -120,14 +122,28 @@ derives a model-list URL from the full endpoint:
   `/embeddings`, or `/messages` are replaced with `/models`;
 - otherwise, `/models` is appended to the path.
 
+Plugins that cannot use the derived URL may expose `models_endpoint` as an
+explicit full model-list URL. It takes precedence over derivation, is subject
+to the same outbound URL policy, and is requested without following redirects.
+Saving or resetting `endpoint`, `api_url`, or `models_endpoint` clears and
+refreshes the current user's discovered catalog before the UI reloads it.
+
+All custom routes are resolved and validated before credential selection. The
+credential policy must not fall back to a server environment key for a stored
+custom route; configure a per-user key for that route instead. Environment
+fallback is reserved for the endpoint supplied by the trusted plugin
+definition.
+
 Discovery expects an OpenAI-compatible response containing model IDs in a
 `data` array. Activation waits for that attempt before returning, so the first
 plugin-list refresh can include the discovered catalog. Successful results are
 stored per user and overlaid on that user's plugin view; Libre WebUI does not
 rewrite the shared plugin JSON or expose one user's discovered model IDs to
 another account. If the provider has no compatible model-list endpoint, cannot
-be reached, or returns another response shape, that user keeps their previous
-discovery result or the plugin's `model_map` fallback.
+be reached, or returns another response shape, an ordinary activation keeps
+that user's previous discovery result. An intentional connection-field change
+clears the obsolete catalog first and therefore uses the plugin's `model_map`
+fallback when the new route cannot be discovered.
 
 Plugin capability routes use the same user context. For example, image model
 availability, endpoint variables, and credentials are resolved for the user

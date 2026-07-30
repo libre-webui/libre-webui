@@ -39,7 +39,7 @@ import {
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
   pluginRequiresApiKey,
-  resolvePluginEndpoint,
+  resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 import ollamaService from './ollamaService.js';
@@ -234,6 +234,10 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_MODEL_UNAVAILABLE'
       );
     }
+    resolvePluginOperationEndpoint(
+      plugin.endpoint,
+      this.dependencies.plugins.getPluginVariables(plugin, userId)
+    );
     if (
       pluginRequiresApiKey(plugin) &&
       !this.dependencies.plugins.getApiKey(plugin, userId)
@@ -254,6 +258,15 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
+    const variables = this.dependencies.plugins.getPluginVariables(
+      plugin,
+      userId
+    );
+    const endpoint = applyModelEndpointTemplate(
+      resolvePluginOperationEndpoint(plugin.endpoint, variables),
+      request.model
+    );
+    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
     const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) {
       throw new WorkModelProviderError(
@@ -262,18 +275,6 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_CREDENTIALS_MISSING'
       );
     }
-    const variables = this.dependencies.plugins.getPluginVariables(
-      plugin,
-      userId
-    );
-    const endpoint = applyModelEndpointTemplate(
-      resolvePluginEndpoint(
-        plugin.endpoint,
-        variables.endpoint as string | undefined
-      ),
-      request.model
-    );
-    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
     const headers = buildPluginAuthHeaders(plugin, apiKey);
     const { payload, extraHeaders } = buildPluginWorkPayload(
       plugin,
@@ -403,6 +404,18 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
+    const variables = this.dependencies.plugins.getPluginVariables(
+      plugin,
+      userId
+    );
+    let endpoint = applyModelEndpointTemplate(
+      resolvePluginOperationEndpoint(plugin.endpoint, variables),
+      request.model
+    );
+    if (plugin.id === 'gemini') {
+      endpoint = geminiStreamingEndpoint(endpoint);
+    }
+    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
     const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) {
       throw new WorkModelProviderError(
@@ -411,21 +424,6 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_CREDENTIALS_MISSING'
       );
     }
-    const variables = this.dependencies.plugins.getPluginVariables(
-      plugin,
-      userId
-    );
-    let endpoint = applyModelEndpointTemplate(
-      resolvePluginEndpoint(
-        plugin.endpoint,
-        variables.endpoint as string | undefined
-      ),
-      request.model
-    );
-    if (plugin.id === 'gemini') {
-      endpoint = geminiStreamingEndpoint(endpoint);
-    }
-    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
     const headers = buildPluginAuthHeaders(plugin, apiKey);
     const { payload, extraHeaders } = buildPluginWorkPayload(
       plugin,

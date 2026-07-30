@@ -59,6 +59,7 @@ import {
   pluginRequiresApiKey,
   resolvePluginEndpoint,
   resolvePluginModelsEndpoint,
+  resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 import { createLogger } from '../utils/logger.js';
@@ -346,6 +347,19 @@ export class PluginService {
   }
 
   /**
+   * Resolve and validate routing before credential lookup. The credential
+   * service's custom-route policy is integrated separately; keeping this
+   * boundary ordered prevents a rejected override from ever selecting an
+   * environment credential.
+   */
+  private resolveOperationEndpoint(plugin: Plugin, userId?: string): string {
+    return resolvePluginOperationEndpoint(
+      plugin.endpoint,
+      this.getPluginVariables(plugin, userId)
+    );
+  }
+
+  /**
    * Attempt to auto-discover available models from a plugin's full API endpoint.
    * Resolves the provider's model-list endpoint and updates the plugin's model_map.
    * Falls back silently to the existing model_map if the endpoint is unavailable.
@@ -355,12 +369,16 @@ export class PluginService {
     if (!plugin) return [];
 
     const pluginVars = this.getPluginVariables(plugin, userId);
-    const endpointOverride = pluginVars.endpoint as string | undefined;
-    const effectiveEndpoint = resolvePluginEndpoint(
+    const effectiveEndpoint = resolvePluginOperationEndpoint(
       plugin.endpoint,
-      endpointOverride
+      pluginVars
     );
-    const modelsEndpoint = resolvePluginModelsEndpoint(effectiveEndpoint);
+    const modelsEndpoint = resolvePluginModelsEndpoint(
+      effectiveEndpoint,
+      typeof pluginVars.models_endpoint === 'string'
+        ? pluginVars.models_endpoint
+        : undefined
+    );
     assertSafePluginEndpoint(modelsEndpoint, 'model discovery endpoint');
 
     const apiKey = this.getApiKey(plugin, userId);
@@ -370,6 +388,7 @@ export class PluginService {
       const response = await axios.get(modelsEndpoint, {
         headers,
         timeout: 5000,
+        maxRedirects: 0,
       });
 
       if (response.data?.data && Array.isArray(response.data.data)) {
@@ -598,6 +617,7 @@ export class PluginService {
         );
       }
 
+      this.resolveOperationEndpoint(plugin, userId);
       const apiKey = this.getApiKey(plugin, userId);
       if (pluginRequiresApiKey(plugin) && !apiKey) {
         throw new Error(
@@ -616,6 +636,7 @@ export class PluginService {
       if (plugin.model_map.includes(model)) {
         // Local OpenAI-compatible servers can explicitly opt out of auth by
         // leaving both auth fields empty.
+        this.resolveOperationEndpoint(plugin, userId);
         const apiKey = this.getApiKey(plugin, userId);
         if (pluginRequiresApiKey(plugin) && !apiKey) {
           continue;
@@ -674,18 +695,17 @@ export class PluginService {
       );
     }
 
+    const pluginVars = this.getPluginVariables(activePlugin, userId);
+    const effectiveEndpoint = resolvePluginOperationEndpoint(
+      activePlugin.endpoint,
+      pluginVars
+    );
     const apiKey = this.getApiKey(activePlugin, userId);
     if (pluginRequiresApiKey(activePlugin) && !apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
       );
     }
-
-    const pluginVars = this.getPluginVariables(activePlugin, userId);
-    const effectiveEndpoint = resolvePluginEndpoint(
-      activePlugin.endpoint,
-      pluginVars.endpoint as string | undefined
-    );
     const headers = buildPluginAuthHeaders(activePlugin, apiKey);
     const { payload, headers: payloadHeaders } = buildPluginChatPayload(
       activePlugin,
@@ -759,18 +779,17 @@ export class PluginService {
       );
     }
 
+    const pluginVars = this.getPluginVariables(activePlugin, userId);
+    const effectiveEndpoint = resolvePluginOperationEndpoint(
+      activePlugin.endpoint,
+      pluginVars
+    );
     const apiKey = this.getApiKey(activePlugin, userId);
     if (pluginRequiresApiKey(activePlugin) && !apiKey) {
       throw new Error(
         `API key not found for plugin ${activePlugin.id} (set via Settings or ${activePlugin.auth.key_env} env var)`
       );
     }
-
-    const pluginVars = this.getPluginVariables(activePlugin, userId);
-    const effectiveEndpoint = resolvePluginEndpoint(
-      activePlugin.endpoint,
-      pluginVars.endpoint as string | undefined
-    );
     const headers = buildPluginAuthHeaders(activePlugin, apiKey);
     let payload: Record<string, unknown>;
 

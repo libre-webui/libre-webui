@@ -16,7 +16,10 @@
  */
 
 import type { PluginVariableDefinition } from '../types/index.js';
-import { isSafePluginEndpoint } from './pluginValidation.js';
+import {
+  isPluginConnectionEndpointVariable,
+  isSafePluginEndpoint,
+} from './pluginValidation.js';
 
 export type ValidatedPluginVariables = Record<
   string,
@@ -83,7 +86,7 @@ export function validatePluginVariables(
       };
     }
 
-    if (key === 'endpoint') {
+    if (isPluginConnectionEndpointVariable(key)) {
       const endpoint = str.trim();
       if (endpoint.length === 0) {
         validated[key] = '';
@@ -95,7 +98,7 @@ export function validatePluginVariables(
           return {
             success: false,
             error:
-              'Variable "endpoint" must use HTTPS for remote URLs, or HTTP ' +
+              `Variable "${key}" must use HTTPS for remote URLs, or HTTP ` +
               'for localhost and private IPv4 addresses',
           };
         }

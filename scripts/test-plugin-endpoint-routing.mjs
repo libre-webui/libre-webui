@@ -25,6 +25,12 @@ const pluginVariableValidation = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'pluginVariableValidation.js'))
     .href
 );
+const pluginVariablesService = (
+  await import(
+    pathToFileURL(path.join(distRoot, 'services', 'pluginVariablesService.js'))
+      .href
+  )
+).default;
 const pluginServiceModule = await import(
   pathToFileURL(path.join(distRoot, 'services', 'pluginService.js')).href
 );
@@ -145,6 +151,35 @@ test('custom endpoint resolution is full-URL based and fails closed', () => {
     ),
     'https://gateway.example.test/openai/v1/models'
   );
+  assert.equal(
+    pluginValidation.resolvePluginOperationEndpoint(bundledEndpoint, {
+      api_url: 'https://legacy.example.test/v1/chat/completions',
+    }),
+    'https://legacy.example.test/v1/chat/completions'
+  );
+  assert.equal(
+    pluginValidation.resolvePluginOperationEndpoint(bundledEndpoint, {
+      endpoint: customEndpoint,
+      api_url: 'https://legacy.example.test/v1/chat/completions',
+    }),
+    customEndpoint,
+    'endpoint must take precedence over the legacy api_url alias'
+  );
+  assert.equal(
+    pluginValidation.resolvePluginModelsEndpoint(
+      customEndpoint,
+      ' https://catalog.example.test/custom/models?preview=true '
+    ),
+    'https://catalog.example.test/custom/models?preview=true'
+  );
+  assert.throws(
+    () =>
+      pluginValidation.resolvePluginModelsEndpoint(
+        customEndpoint,
+        'http://catalog.example.test/models'
+      ),
+    /Invalid or unsafe plugin endpoint override/
+  );
 
   for (const unsafeEndpoint of [
     'http://api.openai.com/v1/chat/completions',
@@ -186,7 +221,7 @@ test('Chat and Work requests use a valid custom endpoint instead of the bundled 
       getActivePluginForModel: () => plugin,
       getPluginVariables: (_plugin, userId) => {
         assert.equal(userId, 'user-42');
-        return { endpoint: customEndpoint };
+        return { api_url: customEndpoint };
       },
       getApiKey: () => null,
     },
@@ -242,7 +277,7 @@ test('Chat and Work requests use a valid custom endpoint instead of the bundled 
       getApiKey: () => null,
       getPluginVariables: (_plugin, userId) => {
         assert.equal(userId, 'user-42');
-        return { endpoint: customEndpoint };
+        return { api_url: customEndpoint };
       },
     },
     post: async (endpoint, payload, config) => {
@@ -285,43 +320,50 @@ test('Chat and Work requests use a valid custom endpoint instead of the bundled 
   );
 });
 
-test('endpoint variables reject unsafe URLs when saved and preserve blank fallback', () => {
-  const definitions = [{ name: 'endpoint', type: 'string' }];
+test('connection endpoint aliases reject unsafe URLs and preserve blank fallback', () => {
+  const definitions = ['endpoint', 'api_url', 'models_endpoint'].map(name => ({
+    name,
+    type: 'string',
+  }));
 
-  assert.deepEqual(
-    pluginVariableValidation.validatePluginVariables(definitions, {
-      endpoint: '   ',
-    }),
-    { success: true, variables: { endpoint: '' } }
-  );
-  assert.deepEqual(
-    pluginVariableValidation.validatePluginVariables(definitions, {
-      endpoint: '  https://gateway.example.test/v1/chat/completions  ',
-    }),
-    {
-      success: true,
-      variables: {
-        endpoint: 'https://gateway.example.test/v1/chat/completions',
-      },
-    }
-  );
+  for (const name of ['endpoint', 'api_url', 'models_endpoint']) {
+    assert.deepEqual(
+      pluginVariableValidation.validatePluginVariables(definitions, {
+        [name]: '   ',
+      }),
+      { success: true, variables: { [name]: '' } }
+    );
+    assert.deepEqual(
+      pluginVariableValidation.validatePluginVariables(definitions, {
+        [name]: '  https://gateway.example.test/v1/chat/completions  ',
+      }),
+      {
+        success: true,
+        variables: {
+          [name]: 'https://gateway.example.test/v1/chat/completions',
+        },
+      }
+    );
+  }
 
   for (const endpoint of [
     'http://api.openai.com/v1/chat/completions',
     'ftp://localhost/v1/chat/completions',
     'http://10.example.test/v1/chat/completions',
   ]) {
-    const result = pluginVariableValidation.validatePluginVariables(
-      definitions,
-      { endpoint }
-    );
-    assert.equal(result.success, false);
-    assert.match(result.error, /must use HTTPS for remote URLs/);
+    for (const name of ['endpoint', 'api_url', 'models_endpoint']) {
+      const result = pluginVariableValidation.validatePluginVariables(
+        definitions,
+        { [name]: endpoint }
+      );
+      assert.equal(result.success, false);
+      assert.match(result.error, /must use HTTPS for remote URLs/);
+    }
   }
 
   const malformed = pluginVariableValidation.validatePluginVariables(
     definitions,
-    { endpoint: 'not a URL' }
+    { models_endpoint: 'not a URL' }
   );
   assert.equal(malformed.success, false);
   assert.match(malformed.error, /must be a valid URL/);
@@ -338,8 +380,12 @@ test('model discovery uses the user endpoint and credentials without default fal
   });
   const customEndpoint =
     'https://gateway.example.test/openai/v1/chat/completions';
+  const customModelsEndpoint =
+    'https://catalog.example.test/provider/models?channel=preview';
   const requests = [];
   let currentEndpoint = customEndpoint;
+  let currentModelsEndpoint = customModelsEndpoint;
+  let credentialLookups = 0;
 
   await withPatchedProperties(
     pluginService,
@@ -347,10 +393,14 @@ test('model discovery uses the user endpoint and credentials without default fal
       getPlugin: id => (id === plugin.id ? plugin : null),
       getPluginVariables: (_plugin, userId) => {
         assert.equal(userId, 'user-42');
-        return { endpoint: currentEndpoint };
+        return {
+          api_url: currentEndpoint,
+          models_endpoint: currentModelsEndpoint,
+        };
       },
       getApiKey: (_plugin, userId) => {
         assert.equal(userId, 'user-42');
+        credentialLookups += 1;
         return 'user-42-key';
       },
     },
@@ -369,16 +419,15 @@ test('model discovery uses the user endpoint and credentials without default fal
             ['chat-model']
           );
           assert.equal(requests.length, 1);
-          assert.equal(
-            requests[0].endpoint,
-            'https://gateway.example.test/openai/v1/models'
-          );
+          assert.equal(requests[0].endpoint, customModelsEndpoint);
           assert.equal(
             requests[0].config.headers.Authorization,
             'Bearer user-42-key'
           );
+          assert.equal(requests[0].config.maxRedirects, 0);
+          assert.equal(credentialLookups, 1);
 
-          currentEndpoint = 'http://api.openai.com/v1/chat/completions';
+          currentModelsEndpoint = 'http://api.openai.com/v1/models';
           await assert.rejects(
             pluginService.discoverModels(plugin.id, 'user-42'),
             /Invalid or unsafe plugin endpoint override/
@@ -388,8 +437,134 @@ test('model discovery uses the user endpoint and credentials without default fal
             1,
             'invalid overrides must not request the bundled endpoint'
           );
+          assert.equal(
+            credentialLookups,
+            1,
+            'model discovery must validate its custom route before credential lookup'
+          );
         }
       )
+  );
+});
+
+test('saving and resetting endpoint aliases refreshes the user model catalog', async () => {
+  const variableNames = ['endpoint', 'api_url', 'models_endpoint'];
+  const plugin = {
+    ...createPlugin({ id: 'refresh-alias-provider' }),
+    variables: variableNames.map(name => ({
+      name,
+      type: 'string',
+      default: '',
+    })),
+  };
+  let resolvedVariables = Object.fromEntries(
+    variableNames.map(name => [name, ''])
+  );
+  const refreshCalls = [];
+  const getRouteHandler = method => {
+    const layer = pluginRoutes.stack.find(
+      candidate =>
+        candidate.route?.path === '/:id/variables' &&
+        candidate.route.methods[method]
+    );
+    assert.ok(layer, `Expected ${method} variables route`);
+    return layer.route.stack.at(-1).handle;
+  };
+  const invokeRoute = async (method, body = {}) => {
+    let statusCode = 200;
+    let responseBody;
+    const response = {
+      status(code) {
+        statusCode = code;
+        return this;
+      },
+      json(value) {
+        responseBody = value;
+        return this;
+      },
+    };
+    await getRouteHandler(method)(
+      {
+        params: { id: plugin.id },
+        body,
+        user: { userId: 'alias-route-user' },
+      },
+      response
+    );
+    return { statusCode, responseBody };
+  };
+
+  await withPatchedProperties(
+    pluginService,
+    {
+      getPlugin: (id, userId) => {
+        assert.equal(userId, 'alias-route-user');
+        return id === plugin.id ? plugin : null;
+      },
+      clearDiscoveredModels: (id, userId) => {
+        refreshCalls.push({ operation: 'clear', id, userId });
+      },
+      discoverModels: async (id, userId) => {
+        refreshCalls.push({ operation: 'discover', id, userId });
+        return plugin.model_map;
+      },
+    },
+    async () =>
+      withPatchedProperties(
+        pluginVariablesService,
+        {
+          getResolvedVariables: () => ({ ...resolvedVariables }),
+          setVariables: (_id, variables) => {
+            resolvedVariables = { ...resolvedVariables, ...variables };
+            return true;
+          },
+          deletePluginVariables: () => {
+            resolvedVariables = Object.fromEntries(
+              variableNames.map(name => [name, ''])
+            );
+            return true;
+          },
+        },
+        async () => {
+          for (const name of variableNames) {
+            assert.deepEqual(
+              await invokeRoute('put', {
+                variables: {
+                  [name]: `https://${name.replace('_', '-')}.example.test/v1`,
+                },
+              }),
+              {
+                statusCode: 200,
+                responseBody: { success: true, data: true },
+              }
+            );
+          }
+
+          assert.deepEqual(await invokeRoute('delete'), {
+            statusCode: 200,
+            responseBody: { success: true, data: true },
+          });
+        }
+      )
+  );
+
+  assert.deepEqual(
+    refreshCalls.map(call => call.operation),
+    [
+      'clear',
+      'discover',
+      'clear',
+      'discover',
+      'clear',
+      'discover',
+      'clear',
+      'discover',
+    ]
+  );
+  assert.ok(
+    refreshCalls.every(
+      call => call.id === plugin.id && call.userId === 'alias-route-user'
+    )
   );
 });
 
@@ -498,6 +673,7 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
   const plugin = createPlugin();
   const unsafeEndpoint = 'http://api.openai.com/v1/chat/completions';
   let networkRequests = 0;
+  let credentialLookups = 0;
 
   await withPatchedProperties(
     pluginService,
@@ -505,8 +681,16 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
       getActivePluginForModel: () => plugin,
       getAllPlugins: () => [plugin],
       getPlugin: id => (id === plugin.id ? plugin : null),
-      getPluginVariables: () => ({ endpoint: unsafeEndpoint }),
-      getApiKey: () => null,
+      getPluginVariables: () => ({
+        api_url: unsafeEndpoint,
+        embedding_endpoint: unsafeEndpoint,
+        tts_endpoint: unsafeEndpoint,
+        image_endpoint: unsafeEndpoint,
+      }),
+      getApiKey: () => {
+        credentialLookups += 1;
+        return null;
+      },
     },
     async () =>
       withPatchedProperties(
@@ -526,6 +710,11 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
               'user-42'
             ),
             /Invalid or unsafe plugin endpoint override/
+          );
+          assert.equal(
+            credentialLookups,
+            0,
+            'Chat must validate api_url before selecting credentials'
           );
           await assert.rejects(
             pluginService.executeEmbeddingRequest(
@@ -571,8 +760,11 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
         assert.equal(userId, 'user-42');
         return id === plugin.id ? plugin : null;
       },
-      getApiKey: () => null,
-      getPluginVariables: () => ({ endpoint: unsafeEndpoint }),
+      getApiKey: () => {
+        credentialLookups += 1;
+        return null;
+      },
+      getPluginVariables: () => ({ api_url: unsafeEndpoint }),
     },
     post: async () => {
       networkRequests += 1;
@@ -621,7 +813,7 @@ test('image discovery and requests use the current user endpoint and credentials
     getPluginVariables: (_plugin, userId) => {
       userContexts.push({ operation: 'variables', userId });
       return {
-        endpoint:
+        image_endpoint:
           'https://image-user.example.test/v1/images/generations?custom=true',
       };
     },

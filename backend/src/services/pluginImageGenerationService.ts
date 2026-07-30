@@ -20,6 +20,7 @@ import { ImageGenConfig, ImageGenResponse, Plugin } from '../types/index.js';
 import {
   assertSafePluginEndpoint,
   applyModelEndpointTemplate,
+  resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 
@@ -138,7 +139,9 @@ export class PluginImageGenerationService {
       imageConfig?.endpoint_variable ||
       (plugin.type === 'image' ? 'endpoint' : 'image_endpoint');
     const endpointOverride = imageVars[endpointVariable];
-    if (
+    if (endpointVariable === 'endpoint') {
+      endpoint = resolvePluginOperationEndpoint(endpoint, imageVars);
+    } else if (
       typeof endpointOverride === 'string' &&
       endpointOverride.trim().length > 0
     ) {

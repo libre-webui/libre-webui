@@ -21,6 +21,23 @@ import { createLogger } from './logger.js';
 const logger = createLogger('utils:plugin-validation');
 
 const MODEL_PATTERN = /^[a-zA-Z0-9\-_:./~]+$/;
+export const PLUGIN_MODEL_DISCOVERY_VARIABLES = [
+  'endpoint',
+  'api_url',
+  'models_endpoint',
+] as const;
+
+type PluginVariableValues = Record<string, unknown>;
+
+function optionalPluginVariableString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
+export function isPluginConnectionEndpointVariable(name: string): boolean {
+  return (PLUGIN_MODEL_DISCOVERY_VARIABLES as readonly string[]).includes(name);
+}
 
 function isPrivateIpv4Address(hostname: string): boolean {
   const octets = hostname.split('.');
@@ -134,7 +151,33 @@ export function resolvePluginEndpoint(
   return validatedOverride;
 }
 
-export function resolvePluginModelsEndpoint(endpoint: string): string {
+/**
+ * Resolve a plugin's full operation URL.
+ *
+ * `endpoint` is the canonical variable. Imported legacy plugins may use
+ * `api_url`; it is consulted only when `endpoint` is blank or absent.
+ */
+export function resolvePluginOperationEndpoint(
+  endpoint: string,
+  variables: PluginVariableValues = {}
+): string {
+  const endpointOverride =
+    optionalPluginVariableString(variables.endpoint) ||
+    optionalPluginVariableString(variables.api_url);
+  return resolvePluginEndpoint(endpoint, endpointOverride);
+}
+
+export function resolvePluginModelsEndpoint(
+  endpoint: string,
+  modelsEndpointOverride?: string
+): string {
+  const explicitModelsEndpoint = optionalPluginVariableString(
+    modelsEndpointOverride
+  );
+  if (explicitModelsEndpoint) {
+    return resolvePluginEndpoint('', explicitModelsEndpoint);
+  }
+
   const url = new URL(endpoint);
   url.search = '';
   url.hash = '';

@@ -21,6 +21,7 @@ import { createLogger } from '../utils/logger.js';
 import {
   assertSafePluginEndpoint,
   applyModelEndpointTemplate,
+  resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 
@@ -158,7 +159,9 @@ export class PluginTTSService {
       ttsConfig?.endpoint_variable ||
       (plugin.type === 'tts' ? 'endpoint' : 'tts_endpoint');
     const endpointOverride = ttsVars[endpointVariable];
-    if (
+    if (endpointVariable === 'endpoint') {
+      endpoint = resolvePluginOperationEndpoint(endpoint, ttsVars);
+    } else if (
       typeof endpointOverride === 'string' &&
       endpointOverride.trim().length > 0
     ) {

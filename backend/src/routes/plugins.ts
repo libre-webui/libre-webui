@@ -36,12 +36,33 @@ import {
   type MulterRequest,
 } from '../utils/pluginUpload.js';
 import { validatePluginVariables } from '../utils/pluginVariableValidation.js';
+import { PLUGIN_MODEL_DISCOVERY_VARIABLES } from '../utils/pluginValidation.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = express.Router();
 
 const getRequestUserId = (req: Request): string =>
   (req as AuthenticatedRequest).user?.userId || 'default';
+
+const supportsCompletionModelDiscovery = (plugin: Plugin): boolean =>
+  plugin.type === 'completion' || plugin.type === 'chat';
+
+const modelDiscoveryConnectionChanged = (
+  previousVariables: Record<string, string | number | boolean>,
+  nextVariables: Record<string, string | number | boolean>
+): boolean =>
+  PLUGIN_MODEL_DISCOVERY_VARIABLES.some(
+    name => previousVariables[name] !== nextVariables[name]
+  );
+
+const refreshUserModels = async (
+  plugin: Plugin,
+  userId: string
+): Promise<void> => {
+  if (!supportsCompletionModelDiscovery(plugin)) return;
+  pluginService.clearDiscoveredModels(plugin.id, userId);
+  await pluginService.discoverModels(plugin.id, userId).catch(() => {});
+};
 
 // Rate limiting for plugin operations
 const pluginRateLimit = rateLimit({
@@ -723,7 +744,8 @@ router.put(
         return;
       }
 
-      const plugin = pluginService.getPlugin(id);
+      const userId = getRequestUserId(req);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -743,7 +765,11 @@ router.put(
         return;
       }
 
-      const userId = getRequestUserId(req);
+      const previousVariables = pluginVariablesService.getResolvedVariables(
+        id,
+        plugin.variables,
+        userId
+      );
       const success = pluginVariablesService.setVariables(
         id,
         validation.variables,
@@ -752,6 +778,14 @@ router.put(
       );
 
       if (success) {
+        const nextVariables = pluginVariablesService.getResolvedVariables(
+          id,
+          plugin.variables,
+          userId
+        );
+        if (modelDiscoveryConnectionChanged(previousVariables, nextVariables)) {
+          await refreshUserModels(plugin, userId);
+        }
         res.json({ success: true, data: true });
       } else {
         res
@@ -774,15 +808,32 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
       }
 
-      const userId = getRequestUserId(req);
+      const previousVariables = plugin.variables
+        ? pluginVariablesService.getResolvedVariables(
+            id,
+            plugin.variables,
+            userId
+          )
+        : {};
       const success = pluginVariablesService.deletePluginVariables(id, userId);
+      if (success && plugin.variables) {
+        const nextVariables = pluginVariablesService.getResolvedVariables(
+          id,
+          plugin.variables,
+          userId
+        );
+        if (modelDiscoveryConnectionChanged(previousVariables, nextVariables)) {
+          await refreshUserModels(plugin, userId);
+        }
+      }
 
       res.json({ success: true, data: success });
     } catch (error: unknown) {

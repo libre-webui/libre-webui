@@ -25,6 +25,7 @@ import {
 import {
   assertSafePluginEndpoint,
   applyModelEndpointTemplate,
+  resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 
@@ -149,13 +150,6 @@ export class PluginEmbeddingService {
     const noAuthRequired =
       (embeddingCapability?.config as Record<string, unknown> | undefined)
         ?.no_auth_required === true;
-    const apiKey = this.deps.getApiKey(plugin, userId);
-    if (!apiKey && !noAuthRequired) {
-      throw new Error(
-        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
-      );
-    }
-
     const pluginVars = this.deps.getPluginVariables(plugin, userId);
     const endpointVariable =
       embeddingCapability?.config?.endpoint_variable ||
@@ -164,7 +158,12 @@ export class PluginEmbeddingService {
         : 'endpoint');
     const endpointOverride = pluginVars[endpointVariable];
     let effectiveEndpoint = embeddingCapability?.endpoint || plugin.endpoint;
-    if (
+    if (endpointVariable === 'endpoint') {
+      effectiveEndpoint = resolvePluginOperationEndpoint(
+        effectiveEndpoint,
+        pluginVars
+      );
+    } else if (
       typeof endpointOverride === 'string' &&
       endpointOverride.trim().length > 0
     ) {
@@ -178,6 +177,13 @@ export class PluginEmbeddingService {
         ? applyModelEndpointTemplate(effectiveEndpoint, model)
         : getEmbeddingEndpoint(effectiveEndpoint);
     assertSafePluginEndpoint(processedEndpoint, 'embedding endpoint');
+
+    const apiKey = this.deps.getApiKey(plugin, userId);
+    if (!apiKey && !noAuthRequired) {
+      throw new Error(
+        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
+      );
+    }
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

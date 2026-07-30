@@ -141,15 +141,25 @@ Administrators can disable model pulls for normal users. Check admin settings if
 - An empty override uses the endpoint bundled in the plugin definition. An
   explicit malformed or unsafe override is rejected; Libre WebUI does not
   silently send that request to the bundled provider endpoint.
+- Imported plugins may use `api_url` as a legacy full-operation URL alias.
+  `endpoint` wins when both fields are set. If model discovery lives elsewhere,
+  set the complete model-list URL in `models_endpoint`; it is validated and
+  redirects are not followed.
 - Activate the plugin after saving its endpoint and credential. Activation
   derives a `/models` URL from the saved full endpoint and uses the activating
-  user's credential for discovery. The activation request waits for discovery
-  before the UI reloads the plugin list.
+  user's credential for discovery unless `models_endpoint` is set. Saving or
+  resetting any of these connection fields also refreshes discovery. The
+  request waits for discovery before the UI reloads the plugin list.
+- A stored custom route must have a per-user credential. Server environment
+  keys are fallback credentials for trusted manifest endpoints and are not
+  forwarded to user-configured destinations.
 - Automatic discovery requires an OpenAI-compatible `data` array of model IDs.
   Successful catalogs are stored per user without changing the shared plugin
-  JSON. If discovery is unavailable, Libre WebUI keeps that user's previous
-  catalog or the plugin's existing `model_map`; configure those fallback model
-  IDs in the plugin JSON when necessary.
+  JSON. A normal activation keeps the user's previous catalog when discovery
+  is unavailable. Changing or resetting a connection field clears that
+  obsolete catalog first, so a failed refresh uses the plugin's existing
+  `model_map`; configure those fallback model IDs in the plugin JSON when
+  necessary.
 - Image model availability, endpoint overrides, and API keys are also resolved
   for the current user. If an image request appears to use another account's
   provider settings, verify the request is authenticated as the expected user.

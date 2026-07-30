@@ -17,7 +17,24 @@
 
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getPluginEndpointValidationError } from './pluginEndpoint';
+import {
+  getPluginEndpointValidationError,
+  hasPluginModelDiscoveryVariable,
+  isPluginConnectionEndpointVariable,
+} from './pluginEndpoint';
+
+test('recognizes canonical and legacy model-discovery connection variables', () => {
+  for (const name of ['endpoint', 'api_url', 'models_endpoint']) {
+    assert.equal(isPluginConnectionEndpointVariable(name), true);
+    assert.equal(hasPluginModelDiscoveryVariable({ [name]: 'value' }), true);
+  }
+
+  assert.equal(isPluginConnectionEndpointVariable('image_endpoint'), false);
+  assert.equal(
+    hasPluginModelDiscoveryVariable({ temperature: 0.7, api_path: '/v1' }),
+    false
+  );
+});
 
 test('accepts blank overrides and trims endpoint input', () => {
   assert.equal(getPluginEndpointValidationError('   '), null);

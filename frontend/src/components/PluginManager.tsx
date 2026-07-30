@@ -32,7 +32,11 @@ import {
 } from '@/components/icons';
 import { ChevronDown, RotateCcw, Save, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/utils';
-import { getPluginEndpointValidationError } from '@/utils/pluginEndpoint';
+import {
+  getPluginEndpointValidationError,
+  hasPluginModelDiscoveryVariable,
+  isPluginConnectionEndpointVariable,
+} from '@/utils/pluginEndpoint';
 import toast from 'react-hot-toast';
 import { HuggingFaceModelBrowser } from './HuggingFaceModelBrowser';
 
@@ -46,6 +50,7 @@ export const PluginVariablesEditor: React.FC<{
     fetchPluginVariables,
     updatePluginVariables,
     resetPluginVariables,
+    loadPlugins,
   } = usePluginStore();
   const [localValues, setLocalValues] = useState<
     Record<string, string | number | boolean>
@@ -100,7 +105,7 @@ export const PluginVariablesEditor: React.FC<{
     for (const def of schema) {
       const val = localValues[def.name];
       if (
-        def.name === 'endpoint' &&
+        isPluginConnectionEndpointVariable(def.name) &&
         typeof val === 'string' &&
         val.length > 0
       ) {
@@ -144,6 +149,9 @@ export const PluginVariablesEditor: React.FC<{
     const success = await updatePluginVariables(plugin.id, localValues);
     setSaving(false);
     if (success) {
+      if (hasPluginModelDiscoveryVariable(localValues)) {
+        await loadPlugins();
+      }
       toast.success(t('pluginManager.variables.saved', 'Variables saved'));
     } else {
       toast.error(
@@ -154,6 +162,13 @@ export const PluginVariablesEditor: React.FC<{
 
   const handleReset = async () => {
     await resetPluginVariables(plugin.id);
+    if (
+      schema.some(definition =>
+        isPluginConnectionEndpointVariable(definition.name)
+      )
+    ) {
+      await loadPlugins();
+    }
     // Reset local values to defaults
     const defaults: Record<string, string | number | boolean> = {};
     for (const def of schema) {
@@ -296,7 +311,7 @@ export const PluginVariablesEditor: React.FC<{
           <div key={def.name}>
             {def.type !== 'boolean' && (
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                {def.name === 'endpoint'
+                {def.name === 'endpoint' || def.name === 'api_url'
                   ? t(
                       'pluginManager.variables.fullApiEndpoint',
                       'Full API endpoint URL'
@@ -310,7 +325,7 @@ export const PluginVariablesEditor: React.FC<{
                 {def.description}
               </p>
             )}
-            {def.name === 'endpoint' && (
+            {(def.name === 'endpoint' || def.name === 'api_url') && (
               <p className='text-xs text-gray-500 dark:text-gray-400 mb-1'>
                 {t(
                   'pluginManager.variables.endpointHelp',

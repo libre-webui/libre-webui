@@ -18,6 +18,21 @@
 export type PluginEndpointValidationError = 'invalid-url' | 'insecure-url';
 
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
+const PLUGIN_MODEL_DISCOVERY_VARIABLES = new Set([
+  'endpoint',
+  'api_url',
+  'models_endpoint',
+]);
+
+export function isPluginConnectionEndpointVariable(name: string): boolean {
+  return PLUGIN_MODEL_DISCOVERY_VARIABLES.has(name);
+}
+
+export function hasPluginModelDiscoveryVariable(
+  values: Record<string, unknown>
+): boolean {
+  return Object.keys(values).some(isPluginConnectionEndpointVariable);
+}
 
 function isPrivateIpv4Literal(hostname: string): boolean {
   const octets = hostname.split('.');
