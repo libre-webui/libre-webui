@@ -20,6 +20,7 @@ import { Plugin, PluginStatus } from '@/types';
 import { pluginApi, PluginVariableValue } from '@/utils/api';
 import { createLogger } from '@/utils/logger';
 import { getErrorMessage } from './chatStoreHelpers';
+import { activatePluginAndRefresh } from './pluginActivation';
 
 const logger = createLogger('store:plugin-store');
 
@@ -173,11 +174,12 @@ export const usePluginStore = create<PluginState>((set, get) => ({
   activatePlugin: async (id: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await pluginApi.activatePlugin(id);
-      if (response.success) {
-        // Refresh plugins list
-        await get().loadPlugins();
-      } else {
+      const response = await activatePluginAndRefresh(
+        id,
+        pluginApi.activatePlugin,
+        () => get().loadPlugins()
+      );
+      if (!response.success) {
         set({ error: response.error || 'Failed to activate plugin' });
       }
     } catch (error) {

@@ -192,7 +192,7 @@ export class WorkModelProviderService {
 
   private hasConfiguredPlugin(userId: string): boolean {
     return this.dependencies.plugins
-      .getActivePlugins()
+      .getActivePlugins(userId)
       .filter(isWorkPlugin)
       .some(
         plugin =>
@@ -215,7 +215,10 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_ID_REQUIRED'
       );
     }
-    const plugin = this.dependencies.plugins.getPlugin(cleanedProviderId);
+    const plugin = this.dependencies.plugins.getPlugin(
+      cleanedProviderId,
+      userId
+    );
     if (!plugin || !plugin.active) {
       throw new WorkModelProviderError(
         `Plugin "${cleanedProviderId}" is not active.`,

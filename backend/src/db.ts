@@ -292,6 +292,19 @@ function initializeTables(): void {
     )
   `);
 
+  // Provider endpoints and credentials are user-scoped, so live discovery
+  // results must be scoped the same way instead of rewriting plugin manifests.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plugin_discovered_models (
+      user_id TEXT DEFAULT 'default',
+      plugin_id TEXT NOT NULL,
+      models_json TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (user_id, plugin_id)
+    )
+  `);
+
   // Generated images table - for image gallery
   db.exec(`
     CREATE TABLE IF NOT EXISTS generated_images (
@@ -386,6 +399,7 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_plugin_credentials_plugin_id ON plugin_credentials(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_variables_user_id ON plugin_variables(user_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_variables_plugin_id ON plugin_variables(plugin_id);
+    CREATE INDEX IF NOT EXISTS idx_plugin_discovered_models_plugin_id ON plugin_discovered_models(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_user_id ON generated_images(user_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
   `);

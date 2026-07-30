@@ -143,10 +143,16 @@ Administrators can disable model pulls for normal users. Check admin settings if
   silently send that request to the bundled provider endpoint.
 - Activate the plugin after saving its endpoint and credential. Activation
   derives a `/models` URL from the saved full endpoint and uses the activating
-  user's credential for discovery.
+  user's credential for discovery. The activation request waits for discovery
+  before the UI reloads the plugin list.
 - Automatic discovery requires an OpenAI-compatible `data` array of model IDs.
-  If discovery is unavailable, Libre WebUI keeps the plugin's existing
-  `model_map`; configure those model IDs in the plugin JSON when necessary.
+  Successful catalogs are stored per user without changing the shared plugin
+  JSON. If discovery is unavailable, Libre WebUI keeps that user's previous
+  catalog or the plugin's existing `model_map`; configure those fallback model
+  IDs in the plugin JSON when necessary.
+- Image model availability, endpoint overrides, and API keys are also resolved
+  for the current user. If an image request appears to use another account's
+  provider settings, verify the request is authenticated as the expected user.
 - Requests originate from the backend. When Libre WebUI runs in a container,
   `localhost` refers to that container, not automatically the host machine.
 

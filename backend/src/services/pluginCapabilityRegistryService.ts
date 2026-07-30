@@ -18,7 +18,7 @@
 import { Plugin, PluginType } from '../types/index.js';
 
 export interface PluginCapabilityRegistryDependencies {
-  getAllPlugins(): Plugin[];
+  getAllPlugins(userId?: string): Plugin[];
   getApiKey(plugin: Plugin, userId?: string): string | null;
 }
 
@@ -29,7 +29,7 @@ export class PluginCapabilityRegistryService {
     capabilityType: PluginType,
     userId?: string
   ): Plugin[] {
-    const allPlugins = this.deps.getAllPlugins();
+    const allPlugins = this.deps.getAllPlugins(userId);
     const result: Plugin[] = [];
 
     for (const plugin of allPlugins) {

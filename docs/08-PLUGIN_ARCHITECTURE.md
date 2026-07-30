@@ -106,10 +106,18 @@ derives a model-list URL from the full endpoint:
 - otherwise, `/models` is appended to the path.
 
 Discovery expects an OpenAI-compatible response containing model IDs in a
-`data` array. When discovery succeeds, those IDs update the plugin's model map.
-If the provider has no compatible model-list endpoint, cannot be reached, or
-returns another response shape, activation keeps the plugin's existing
-`model_map` fallback.
+`data` array. Activation waits for that attempt before returning, so the first
+plugin-list refresh can include the discovered catalog. Successful results are
+stored per user and overlaid on that user's plugin view; Libre WebUI does not
+rewrite the shared plugin JSON or expose one user's discovered model IDs to
+another account. If the provider has no compatible model-list endpoint, cannot
+be reached, or returns another response shape, that user keeps their previous
+discovery result or the plugin's `model_map` fallback.
+
+Plugin capability routes use the same user context. For example, image model
+availability, endpoint variables, and credentials are resolved for the user
+making the request. In single-user mode, these values belong to the `default`
+user.
 
 ## Plugins in Work
 
@@ -117,7 +125,8 @@ Work can use active `completion` and `chat` plugins in addition to Ollama and
 Ollama Cloud. A plugin-backed Work run is accepted only when:
 
 - the plugin is active;
-- its model is present in the plugin's configured model map; and
+- its model is present in the current user's discovered catalog or the
+  plugin's configured model map; and
 - credentials are available for the current administrator.
 
 Work keeps the selected provider type and plugin ID with both the task and each

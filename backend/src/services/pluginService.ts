@@ -63,15 +63,17 @@ import {
 } from '../utils/pluginValidation.js';
 import { createLogger } from '../utils/logger.js';
 import { resolveBundledPluginsDir } from '../utils/packagePaths.js';
+import { getDatabaseSafe } from '../db.js';
 
 const logger = createLogger('plugins');
 
-class PluginService {
+export class PluginService {
   private pluginsDir: string;
   private bundledPluginsDir: string;
   private legacyPluginsDir: string;
   private pluginReadDirs: string[];
   private activePluginIds: Set<string> = new Set();
+  private discoveredModelsCache = new Map<string, string[] | null>();
   private embeddingService: PluginEmbeddingService;
   private ttsService: PluginTTSService;
   private imageGenerationService: PluginImageGenerationService;
@@ -91,32 +93,176 @@ class PluginService {
     this.ensurePluginsDirectory();
     this.loadActivePlugins();
     this.embeddingService = new PluginEmbeddingService({
-      getAllPlugins: () => this.getAllPlugins(),
+      getAllPlugins: userId => this.getAllPlugins(userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
     });
     this.ttsService = new PluginTTSService({
-      getAllPlugins: () => this.getAllPlugins(),
-      getPlugin: id => this.getPlugin(id),
+      getAllPlugins: userId => this.getAllPlugins(userId),
+      getPlugin: (id, userId) => this.getPlugin(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
     });
     this.imageGenerationService = new PluginImageGenerationService({
-      getAllPlugins: () => this.getAllPlugins(),
-      getPlugin: id => this.getPlugin(id),
+      getAllPlugins: userId => this.getAllPlugins(userId),
+      getPlugin: (id, userId) => this.getPlugin(id, userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
     });
     this.capabilityRegistryService = new PluginCapabilityRegistryService({
-      getAllPlugins: () => this.getAllPlugins(),
+      getAllPlugins: userId => this.getAllPlugins(userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
     });
+  }
+
+  private discoveredModelsCacheKey(pluginId: string, userId: string): string {
+    return `${userId}:${pluginId}`;
+  }
+
+  private getDiscoveredModels(
+    pluginId: string,
+    userId?: string
+  ): string[] | undefined {
+    const effectiveUserId = userId || 'default';
+    const cacheKey = this.discoveredModelsCacheKey(pluginId, effectiveUserId);
+    if (this.discoveredModelsCache.has(cacheKey)) {
+      return this.discoveredModelsCache.get(cacheKey) || undefined;
+    }
+
+    const db = getDatabaseSafe();
+    if (!db) {
+      this.discoveredModelsCache.set(cacheKey, null);
+      return undefined;
+    }
+
+    try {
+      const row = db
+        .prepare(
+          'SELECT models_json FROM plugin_discovered_models WHERE user_id = ? AND plugin_id = ?'
+        )
+        .get(effectiveUserId, pluginId) as { models_json: string } | undefined;
+      if (!row) {
+        this.discoveredModelsCache.set(cacheKey, null);
+        return undefined;
+      }
+
+      const parsed = JSON.parse(row.models_json) as unknown;
+      const models = Array.isArray(parsed)
+        ? Array.from(
+            new Set(
+              parsed.filter(
+                (model): model is string =>
+                  typeof model === 'string' && model.length > 0
+              )
+            )
+          )
+        : [];
+      if (models.length === 0) {
+        this.discoveredModelsCache.set(cacheKey, null);
+        return undefined;
+      }
+
+      this.discoveredModelsCache.set(cacheKey, models);
+      return models;
+    } catch (error) {
+      logger.warn(
+        'Failed to read discovered models for plugin %s:',
+        pluginId,
+        error
+      );
+      this.discoveredModelsCache.set(cacheKey, null);
+      return undefined;
+    }
+  }
+
+  private storeDiscoveredModels(
+    pluginId: string,
+    models: string[],
+    userId?: string
+  ): void {
+    const effectiveUserId = userId || 'default';
+    const uniqueModels = Array.from(new Set(models));
+    const cacheKey = this.discoveredModelsCacheKey(pluginId, effectiveUserId);
+    this.discoveredModelsCache.set(cacheKey, uniqueModels);
+
+    const db = getDatabaseSafe();
+    if (!db) return;
+
+    try {
+      db.prepare(
+        `INSERT INTO plugin_discovered_models
+          (user_id, plugin_id, models_json, updated_at)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(user_id, plugin_id) DO UPDATE SET
+          models_json = excluded.models_json,
+          updated_at = excluded.updated_at`
+      ).run(
+        effectiveUserId,
+        pluginId,
+        JSON.stringify(uniqueModels),
+        Date.now()
+      );
+    } catch (error) {
+      logger.warn(
+        'Failed to persist discovered models for plugin %s:',
+        pluginId,
+        error
+      );
+    }
+  }
+
+  clearDiscoveredModels(pluginId: string, userId?: string): void {
+    const db = getDatabaseSafe();
+    if (userId) {
+      this.discoveredModelsCache.set(
+        this.discoveredModelsCacheKey(pluginId, userId),
+        null
+      );
+      if (!db) return;
+
+      try {
+        db.prepare(
+          'DELETE FROM plugin_discovered_models WHERE user_id = ? AND plugin_id = ?'
+        ).run(userId, pluginId);
+      } catch (error) {
+        logger.warn(
+          'Failed to clear discovered models for plugin %s:',
+          pluginId,
+          error
+        );
+      }
+      return;
+    }
+
+    for (const key of this.discoveredModelsCache.keys()) {
+      if (key.endsWith(`:${pluginId}`)) {
+        this.discoveredModelsCache.delete(key);
+      }
+    }
+    if (!db) return;
+
+    try {
+      db.prepare(
+        'DELETE FROM plugin_discovered_models WHERE plugin_id = ?'
+      ).run(pluginId);
+    } catch (error) {
+      logger.warn(
+        'Failed to clear discovered models for plugin %s:',
+        pluginId,
+        error
+      );
+    }
+  }
+
+  private applyDiscoveredModels(plugin: Plugin, userId?: string): Plugin {
+    const models = this.getDiscoveredModels(plugin.id, userId);
+    return models ? { ...plugin, model_map: [...models] } : plugin;
   }
 
   private ensurePluginsDirectory(): void {
@@ -205,7 +351,7 @@ class PluginService {
    * Falls back silently to the existing model_map if the endpoint is unavailable.
    */
   async discoverModels(pluginId: string, userId?: string): Promise<string[]> {
-    const plugin = this.getPlugin(pluginId);
+    const plugin = this.getPlugin(pluginId, userId);
     if (!plugin) return [];
 
     const pluginVars = this.getPluginVariables(plugin, userId);
@@ -239,21 +385,7 @@ class PluginService {
             models
           );
 
-          // Update the plugin file with discovered models
-          plugin.model_map = models;
-          const safeId = pluginId.replace(/[^a-zA-Z0-9_.-]/g, '');
-          if (safeId !== pluginId) throw new Error('Invalid plugin ID');
-          const filePath = path.resolve(this.pluginsDir, `${safeId}.json`);
-          if (!filePath.startsWith(path.resolve(this.pluginsDir))) {
-            throw new Error('Path traversal detected');
-          }
-          const pluginData = fs.existsSync(filePath)
-            ? JSON.parse(fs.readFileSync(filePath, 'utf8'))
-            : plugin;
-          pluginData.model_map = models;
-          pluginData.updated_at = Date.now();
-          fs.writeFileSync(filePath, JSON.stringify(pluginData, null, 2));
-
+          this.storeDiscoveredModels(pluginId, models, userId);
           return models;
         }
       }
@@ -267,7 +399,7 @@ class PluginService {
   }
 
   // List all installed plugins
-  getAllPlugins(): Plugin[] {
+  getAllPlugins(userId?: string): Plugin[] {
     const plugins = new Map<string, Plugin>();
 
     for (const pluginsDir of this.pluginReadDirs) {
@@ -288,7 +420,10 @@ class PluginService {
               if (this.validatePlugin(parsedPlugin)) {
                 const plugin = applyPluginDefinitionPolicy(parsedPlugin);
                 plugin.active = this.activePluginIds.has(plugin.id);
-                plugins.set(plugin.id, plugin);
+                plugins.set(
+                  plugin.id,
+                  this.applyDiscoveredModels(plugin, userId)
+                );
               }
             } catch (error) {
               logger.error(`Failed to load plugin ${file}:`, error);
@@ -304,7 +439,7 @@ class PluginService {
   }
 
   // Get a specific plugin by ID
-  getPlugin(id: string): Plugin | null {
+  getPlugin(id: string, userId?: string): Plugin | null {
     // Sanitize the ID to prevent path traversal
     const sanitizedId = sanitize(id);
     if (!sanitizedId || sanitizedId !== id) {
@@ -329,7 +464,7 @@ class PluginService {
         if (this.validatePlugin(parsedPlugin)) {
           const plugin = applyPluginDefinitionPolicy(parsedPlugin);
           plugin.active = this.activePluginIds.has(plugin.id);
-          return plugin;
+          return this.applyDiscoveredModels(plugin, userId);
         }
       } catch (error) {
         logger.error('Failed to load plugin %s:', sanitizedId, error);
@@ -360,6 +495,7 @@ class PluginService {
       throw new Error('Path traversal detected');
     }
     fs.writeFileSync(filePath, JSON.stringify(plugin, null, 2));
+    this.clearDiscoveredModels(plugin.id);
 
     return plugin;
   }
@@ -403,6 +539,7 @@ class PluginService {
 
       // Clean up stored variables
       pluginVariablesService.deletePluginVariables(id);
+      this.clearDiscoveredModels(id);
 
       return true;
     } catch (error) {
@@ -412,8 +549,8 @@ class PluginService {
   }
 
   // Activate a plugin
-  activatePlugin(id: string, userId?: string): boolean {
-    const plugin = this.getPlugin(id);
+  async activatePlugin(id: string, userId?: string): Promise<boolean> {
+    const plugin = this.getPlugin(id, userId);
 
     if (!plugin) {
       throw new Error('Plugin not found');
@@ -422,8 +559,9 @@ class PluginService {
     this.activePluginIds.add(id);
     this.saveActivePlugins();
 
-    // Trigger model discovery in background (non-blocking)
-    this.discoverModels(id, userId).catch(() => {});
+    // Wait for discovery so the activation response and the UI's first reload
+    // observe the same user-scoped model catalog.
+    await this.discoverModels(id, userId).catch(() => {});
 
     return true;
   }
@@ -443,7 +581,7 @@ class PluginService {
   // Get the active plugin for a specific model
   getActivePluginForModel(model: string, userId?: string): Plugin | null {
     // Only route through plugins the user explicitly activated.
-    const activePlugins = this.getActivePlugins();
+    const activePlugins = this.getActivePlugins(userId);
 
     // Find the active plugin that supports this model
     for (const plugin of activePlugins) {
@@ -463,8 +601,8 @@ class PluginService {
   }
 
   // Get all currently active plugins
-  getActivePlugins(): Plugin[] {
-    const allPlugins = this.getAllPlugins();
+  getActivePlugins(userId?: string): Plugin[] {
+    const allPlugins = this.getAllPlugins(userId);
     const activePlugins = allPlugins.filter(plugin =>
       this.activePluginIds.has(plugin.id)
     );
@@ -472,8 +610,8 @@ class PluginService {
   }
 
   // Legacy method for backward compatibility - returns first active plugin
-  getActivePlugin(): Plugin | null {
-    const activePlugins = this.getActivePlugins();
+  getActivePlugin(userId?: string): Plugin | null {
+    const activePlugins = this.getActivePlugins(userId);
     return activePlugins.length > 0 ? activePlugins[0] : null;
   }
 
@@ -676,8 +814,8 @@ class PluginService {
   }
 
   // Export plugin to JSON
-  exportPlugin(id: string): Plugin | null {
-    return this.getPlugin(id);
+  exportPlugin(id: string, userId?: string): Plugin | null {
+    return this.getPlugin(id, userId);
   }
 
   // Import plugin from JSON data
@@ -767,16 +905,16 @@ class PluginService {
     return this.ttsService.getTTSConfig(pluginId);
   }
 
-  getPluginForImageGen(model: string): Plugin | null {
-    return this.imageGenerationService.getPluginForImageGen(model);
+  getPluginForImageGen(model: string, userId?: string): Plugin | null {
+    return this.imageGenerationService.getPluginForImageGen(model, userId);
   }
 
-  getAvailableImageGenModels(): {
+  getAvailableImageGenModels(userId?: string): {
     model: string;
     plugin: string;
     config?: ImageGenConfig;
   }[] {
-    return this.imageGenerationService.getAvailableImageGenModels();
+    return this.imageGenerationService.getAvailableImageGenModels(userId);
   }
 
   async executeImageGenRequest(
@@ -788,6 +926,7 @@ class PluginService {
       style?: string;
       n?: number;
       response_format?: 'url' | 'b64_json';
+      userId?: string;
     } = {}
   ): Promise<ImageGenResponse> {
     return this.imageGenerationService.executeImageGenRequest(
@@ -797,8 +936,8 @@ class PluginService {
     );
   }
 
-  getImageGenConfig(pluginId: string): ImageGenConfig | null {
-    return this.imageGenerationService.getImageGenConfig(pluginId);
+  getImageGenConfig(pluginId: string, userId?: string): ImageGenConfig | null {
+    return this.imageGenerationService.getImageGenConfig(pluginId, userId);
   }
 
   getPluginsByCapability(

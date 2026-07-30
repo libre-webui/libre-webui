@@ -68,7 +68,7 @@ router.get(
   '/',
   async (req: Request, res: Response<ApiResponse<Plugin[]>>): Promise<void> => {
     try {
-      const plugins = pluginService.getAllPlugins();
+      const plugins = pluginService.getAllPlugins(getRequestUserId(req));
       res.json({
         success: true,
         data: plugins,
@@ -87,7 +87,9 @@ router.get(
   '/active',
   async (req: Request, res: Response<ApiResponse<Plugin[]>>): Promise<void> => {
     try {
-      const activePlugins = pluginService.getActivePlugins();
+      const activePlugins = pluginService.getActivePlugins(
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -110,7 +112,7 @@ router.get(
     res: Response<ApiResponse<Plugin | null>>
   ): Promise<void> => {
     try {
-      const activePlugin = pluginService.getActivePlugin();
+      const activePlugin = pluginService.getActivePlugin(getRequestUserId(req));
 
       res.json({
         success: true,
@@ -154,7 +156,7 @@ router.get(
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, getRequestUserId(req));
 
       if (!plugin) {
         res.status(404).json({
@@ -379,7 +381,7 @@ router.post(
     try {
       const id = req.params.id as string;
       const userId = getRequestUserId(req);
-      const success = pluginService.activatePlugin(id, userId);
+      const success = await pluginService.activatePlugin(id, userId);
 
       res.json({
         success: true,
@@ -475,7 +477,7 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const plugin = pluginService.exportPlugin(id);
+      const plugin = pluginService.exportPlugin(id, getRequestUserId(req));
 
       if (!plugin) {
         res.status(404).json({
