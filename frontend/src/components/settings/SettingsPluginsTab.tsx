@@ -380,18 +380,6 @@ function PluginListItem({
                 <span>
                   {plugin.model_map?.length || 0} {t('settings.plugins.models')}
                 </span>
-                {canManagePlugin && plugin.endpoint && (
-                  <>
-                    <span>•</span>
-                    <span className='truncate max-w-48'>
-                      {t(
-                        'settings.plugins.defaultEndpoint',
-                        'Default endpoint'
-                      )}
-                      : {plugin.endpoint}
-                    </span>
-                  </>
-                )}
                 {requiresApiKey && hasApiKey && (
                   <>
                     <span>•</span>

@@ -184,6 +184,7 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   });
   await expect(providerDisclosure).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByText('API Endpoint', { exact: true })).toHaveCount(0);
+  await expect(page.getByText(/Default endpoint/)).toHaveCount(0);
   await providerDisclosure.click();
   await expect(providerDisclosure).toHaveAttribute('aria-expanded', 'true');
 

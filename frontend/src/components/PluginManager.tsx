@@ -878,15 +878,6 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                       <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
                         {t('pluginManager.id')}: {plugin.id}
                       </p>
-                      {canManagePlugins && (
-                        <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
-                          {t(
-                            'pluginManager.defaultEndpoint',
-                            'Default endpoint'
-                          )}
-                          : {plugin.endpoint}
-                        </p>
-                      )}
                       <div className='flex flex-wrap gap-1'>
                         {plugin.model_map.map(model => (
                           <span
