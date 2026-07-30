@@ -30,6 +30,7 @@ import {
   type PluginVariables,
 } from '../utils/pluginChatAdapter.js';
 import {
+  OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
   normalizeOpenAIResponsesResponse,
   toOpenAIResponsesInput,
   toOpenAIResponsesTools,
@@ -650,6 +651,22 @@ export function toOpenAIResponsesWorkInput(
         name: String((call.function as JsonObject).name),
       }));
 
+      const responseOutputItems = Array.isArray(
+        message.providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+      )
+        ? message.providerMetadata[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+        : [];
+      const replayableOutputItems = responseOutputItems.flatMap(rawItem => {
+        const item = asObject(rawItem);
+        return item ? [{ ...item }] : [];
+      });
+      if (replayableOutputItems.length > 0) {
+        input.push(...replayableOutputItems);
+        continue;
+      }
+
+      // Compatibility for Work messages created before full Responses output
+      // items were retained.
       for (const call of toolCalls) {
         const metadata = asObject(call.providerMetadata);
         const reasoningItems = Array.isArray(
@@ -944,8 +961,32 @@ function normalizeOpenAIResponsesWorkResponse(
     };
   }
 
+  const outputItems = Array.isArray(response.output)
+    ? response.output.flatMap(rawItem => {
+        const item = asObject(rawItem);
+        return item ? [{ ...item }] : [];
+      })
+    : [];
+  const incompleteReason =
+    response.status === 'incomplete'
+      ? typeof asObject(response.incomplete_details)?.reason === 'string'
+        ? String(asObject(response.incomplete_details)?.reason)
+        : 'unknown'
+      : undefined;
+
   return {
-    ...workResponse(model, contentText(message.content), toolCalls, reasoning),
+    ...workResponse(model, contentText(message.content), toolCalls, reasoning, {
+      ...(outputItems.length > 0
+        ? {
+            providerMetadata: {
+              [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: outputItems,
+            },
+          }
+        : {}),
+      ...(incompleteReason
+        ? { doneReason: `incomplete:${incompleteReason}` }
+        : {}),
+    }),
     ...(normalized.usage
       ? {
           prompt_eval_count: normalized.usage.prompt_tokens,
@@ -1031,7 +1072,11 @@ function workResponse(
   model: string,
   content: string,
   toolCalls: JsonObject[],
-  reasoning = ''
+  reasoning = '',
+  options: {
+    providerMetadata?: JsonObject;
+    doneReason?: string;
+  } = {}
 ): OllamaChatResponse {
   return {
     model,
@@ -1041,8 +1086,12 @@ function workResponse(
       content,
       ...(reasoning ? { thinking: reasoning } : {}),
       tool_calls: toolCalls,
+      ...(options.providerMetadata
+        ? { providerMetadata: options.providerMetadata }
+        : {}),
     },
     done: true,
+    ...(options.doneReason ? { done_reason: options.doneReason } : {}),
   };
 }
 
@@ -1054,6 +1103,8 @@ async function collectPluginWorkStream(
   let content = '';
   let reasoning = '';
   let usage: PluginStreamUsage = {};
+  let doneReason: string | undefined;
+  let providerMetadata: JsonObject | undefined;
   const toolCalls: JsonObject[] = [];
 
   for await (const chunk of chunks) {
@@ -1104,6 +1155,13 @@ async function collectPluginWorkStream(
           arguments: parsedArguments.arguments,
         },
       });
+      continue;
+    }
+    if (chunk.type === 'done') {
+      doneReason = chunk.doneReason;
+      providerMetadata = chunk.providerMetadata
+        ? { ...providerMetadata, ...chunk.providerMetadata }
+        : providerMetadata;
     }
   }
 
@@ -1121,7 +1179,10 @@ async function collectPluginWorkStream(
   }
 
   return {
-    ...workResponse(model, content, toolCalls, reasoning),
+    ...workResponse(model, content, toolCalls, reasoning, {
+      ...(providerMetadata ? { providerMetadata } : {}),
+      ...(doneReason ? { doneReason } : {}),
+    }),
     prompt_eval_count: usage.promptTokens,
     eval_count: usage.completionTokens,
   };

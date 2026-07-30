@@ -16,6 +16,7 @@
  */
 
 import { mergeGenerationOptions } from '../utils/generationUtils.js';
+import { OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY } from '../utils/openAIResponsesAdapter.js';
 import { extractPluginAssistantContent } from '../utils/pluginResponse.js';
 import ollamaService from './ollamaService.js';
 import { personaService } from './personaService.js';
@@ -162,6 +163,15 @@ class ChatGenerationService {
           target.mergedOptions,
           userId
         );
+        const incompleteReason =
+          pluginResponse.providerMetadata?.[
+            OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY
+          ];
+        if (typeof incompleteReason === 'string') {
+          throw new Error(
+            `Provider returned an incomplete response (${incompleteReason})`
+          );
+        }
         const assistantContent =
           this.extractPluginAssistantContent(pluginResponse);
 

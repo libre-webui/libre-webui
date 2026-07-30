@@ -359,17 +359,17 @@ export class PluginService {
       pluginVars
     );
 
+    const modelsEndpoint = resolvePluginModelsEndpoint(effectiveEndpoint);
+    assertSafePluginEndpoint(modelsEndpoint, 'model discovery endpoint');
+
     const apiKey = this.getApiKey(plugin, userId);
     const headers = buildPluginModelDiscoveryHeaders(plugin, apiKey);
 
     try {
-      const response = await axios.get(
-        resolvePluginModelsEndpoint(effectiveEndpoint),
-        {
-          headers,
-          timeout: 5000,
-        }
-      );
+      const response = await axios.get(modelsEndpoint, {
+        headers,
+        timeout: 5000,
+      });
 
       if (response.data?.data && Array.isArray(response.data.data)) {
         const models = response.data.data

@@ -139,15 +139,18 @@ settings under **Settings → Plugins**:
 - Enter the API root, such as `https://provider.example/v1`, as the base URL.
 - Leave API path empty for the mode's default, or enter a leading-slash path
   supplied by the provider.
-- Clear the legacy full endpoint if you want base URL and API path changes to
-  take effect. A full endpoint intentionally has highest precedence. When it
-  ends in `/chat/completions` or `/responses`, that suffix also determines the
-  request format so a stale override cannot receive the wrong payload.
+- A genuinely custom legacy full endpoint intentionally has highest
+  precedence, so clear it when switching back to Base URL and API Path. Stored
+  values that merely equal the bundled manifest's old default are ignored
+  automatically after an upgrade. When a custom endpoint ends in
+  `/chat/completions` or `/responses`, that suffix also determines the request
+  format so an override cannot receive the wrong payload.
 
 Remote provider URLs must use HTTPS. HTTP is accepted only for localhost and
 private-network addresses. Base URLs cannot contain query strings or fragments,
-and relative API paths cannot contain literal, encoded, or double-encoded
-traversal segments, query strings, or fragments.
+and relative API paths cannot contain literal or repeatedly encoded traversal
+segments, query strings, or fragments. Excessive encoding is rejected when it
+does not stabilize within the validation bound.
 
 Model refresh replaces known operation suffixes, including `/responses`, with
 `/models`. Activation, explicit refresh, and saved connection overrides use the

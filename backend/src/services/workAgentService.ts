@@ -403,6 +403,7 @@ export class WorkAgentService {
           streamedReasoningTotal = reasoningStream.currentTotal;
         }
         this.throwIfCancelled(runId, controller);
+        assertCompleteProviderResponse(response);
         accumulatedInputTokens += roundInputTokens;
         accumulatedOutputTokens += roundOutputTokens;
         const toolCalls = normalizeToolCalls(response);
@@ -466,6 +467,9 @@ export class WorkAgentService {
           role: 'assistant',
           content: assistantContent,
           tool_calls: toolCalls as unknown as Record<string, unknown>[],
+          ...(response.message.providerMetadata
+            ? { providerMetadata: response.message.providerMetadata }
+            : {}),
         });
         if (assistantContent) {
           workTaskService.addMessage(
@@ -630,6 +634,7 @@ export class WorkAgentService {
               },
               controller.signal
             );
+          assertCompleteProviderResponse(handoffResponse);
         } catch (error) {
           if (controller.signal.aborted) throw error;
           const fallback = `The run reached its ${budgetReason} budget. The final provider handoff was unavailable${
@@ -976,6 +981,17 @@ export class WorkAgentHttpError extends Error {
     this.status = status;
     this.code = code;
   }
+}
+
+function assertCompleteProviderResponse(response: OllamaChatResponse): void {
+  if (!response.done_reason?.startsWith('incomplete:')) return;
+
+  const reason = response.done_reason.slice('incomplete:'.length) || 'unknown';
+  throw new WorkAgentHttpError(
+    `The provider returned an incomplete response (${reason}). Retry with a larger output-token limit or a smaller request.`,
+    502,
+    'WORK_PROVIDER_INCOMPLETE_RESPONSE'
+  );
 }
 
 export function normalizeToolCalls(

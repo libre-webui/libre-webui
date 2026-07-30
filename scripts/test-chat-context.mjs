@@ -677,6 +677,40 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
   assert.equal(sent[4].data.total, content);
 });
 
+test('streamPluginResponse rejects incomplete provider streams with their reason', async () => {
+  const sent = [];
+  const ws = {
+    send(payload) {
+      sent.push(JSON.parse(payload));
+    },
+  };
+
+  async function* chunks() {
+    yield { type: 'content', content: 'Partial' };
+    yield {
+      type: 'done',
+      doneReason: 'incomplete:max_output_tokens',
+    };
+  }
+
+  await assert.rejects(
+    pluginStreaming.streamPluginResponse({
+      ws,
+      chunks: chunks(),
+      messageId: 'assistant-incomplete',
+      pauseThresholdMs: 60000,
+    }),
+    /incomplete response \(max_output_tokens\)/
+  );
+  assert.equal(
+    sent.some(
+      message =>
+        message.type === 'assistant_chunk' && message.data?.done === true
+    ),
+    false
+  );
+});
+
 test('plugin model routing requires an active plugin and the current user credentials', async () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'libre-plugin-route-'));
   const pluginsDir = path.join(tempDir, 'plugins');
@@ -758,6 +792,12 @@ test('plugin model routing requires an active plugin and the current user creden
               `${pathToFileURL(path.join(distRoot, 'services', 'chatGenerationService.js')).href}?generationRouteTest=${Date.now()}`
             )
           ).default;
+          const pluginService = (
+            await import(
+              pathToFileURL(path.join(distRoot, 'services', 'pluginService.js'))
+                .href
+            )
+          ).default;
 
           assert.equal(
             credentialsService.setApiKey('active-plugin', 'alice-key', 'alice'),
@@ -792,6 +832,44 @@ test('plugin model routing requires an active plugin and the current user creden
             ).activePlugin,
             null
           );
+
+          const originalExecutePluginRequest =
+            pluginService.executePluginRequest;
+          try {
+            pluginService.executePluginRequest = async () => ({
+              id: 'response-incomplete',
+              object: 'chat.completion',
+              created: 0,
+              model: 'shared-model',
+              providerMetadata: {
+                openAIResponsesIncompleteReason: 'max_output_tokens',
+              },
+              choices: [
+                {
+                  index: 0,
+                  message: {
+                    role: 'assistant',
+                    content: 'Partial answer',
+                  },
+                  finish_reason: 'length',
+                },
+              ],
+            });
+            await assert.rejects(
+              chatGenerationService.executeNonStreaming({
+                target: aliceTarget,
+                ollamaMessages: [
+                  { role: 'user', content: 'Finish the answer.' },
+                ],
+                pluginMessages: [],
+                userId: 'alice',
+                pluginFallbackPolicy: 'disabled',
+              }),
+              /incomplete response \(max_output_tokens\)/
+            );
+          } finally {
+            pluginService.executePluginRequest = originalExecutePluginRequest;
+          }
         } finally {
           db?.close();
           process.chdir(previousCwd);

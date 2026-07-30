@@ -17,7 +17,11 @@
 
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isSafePluginUrl } from './pluginUrlValidation';
+import {
+  isPluginUrlVariable,
+  isSafePluginUrl,
+  isValidPluginApiPath,
+} from './pluginUrlValidation';
 
 test('permits HTTP only for literal local and private-network hosts', () => {
   for (const url of [
@@ -41,4 +45,18 @@ test('permits HTTP only for literal local and private-network hosts', () => {
   }
 
   assert.equal(isSafePluginUrl('https://10.example.com/v1', 'base_url'), true);
+});
+
+test('recognizes provider URL fields and validates API paths until decoding is stable', () => {
+  assert.equal(isPluginUrlVariable('endpoint'), true);
+  assert.equal(isPluginUrlVariable('image_endpoint'), true);
+  assert.equal(isPluginUrlVariable('api_path'), false);
+  assert.equal(isValidPluginApiPath('/responses'), true);
+  assert.equal(isValidPluginApiPath('/%252e%252e/secrets'), false);
+
+  let overEncodedTraversal = '%2e%2e';
+  for (let pass = 0; pass < 10; pass += 1) {
+    overEncodedTraversal = encodeURIComponent(overEncodedTraversal);
+  }
+  assert.equal(isValidPluginApiPath(`/${overEncodedTraversal}/secrets`), false);
 });

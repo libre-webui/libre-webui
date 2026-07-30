@@ -331,6 +331,20 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
     encrypted_content: 'opaque-reasoning',
     summary: [{ type: 'summary_text', text: 'Inspect the file.' }],
   };
+  const messageItem = {
+    id: 'message-work',
+    type: 'message',
+    role: 'assistant',
+    phase: 'commentary',
+    content: [{ type: 'output_text', text: 'Reading now.' }],
+  };
+  const functionItem = {
+    id: 'function-work',
+    type: 'function_call',
+    call_id: 'call-work',
+    name: 'read_file',
+    arguments: '{"path":"unterminated"',
+  };
 
   const response = workProvider.normalizePluginWorkResponse(
     plugin,
@@ -338,21 +352,7 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
       id: 'resp-work',
       model: 'gpt-test',
       status: 'completed',
-      output: [
-        reasoningItem,
-        {
-          type: 'message',
-          role: 'assistant',
-          content: [{ type: 'output_text', text: 'Reading now.' }],
-        },
-        {
-          id: 'function-work',
-          type: 'function_call',
-          call_id: 'call-work',
-          name: 'read_file',
-          arguments: '{"path":"unterminated"',
-        },
-      ],
+      output: [reasoningItem, messageItem, functionItem],
       usage: {
         input_tokens: 31,
         output_tokens: 9,
@@ -367,6 +367,12 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
   assert.equal(response.message.thinking, 'Inspect the file.');
   assert.equal(response.prompt_eval_count, 31);
   assert.equal(response.eval_count, 9);
+  assert.deepEqual(
+    response.message.providerMetadata[
+      adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+    ],
+    [reasoningItem, messageItem, functionItem]
+  );
   assert.equal(response.message.tool_calls[0].id, 'call-work');
   assert.equal(response.message.tool_calls[0].function.name, 'read_file');
   assert.deepEqual(response.message.tool_calls[0].function.arguments, {});
@@ -425,13 +431,8 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
   assert.deepEqual(payload.input, [
     { role: 'user', content: 'Read the plan.' },
     reasoningItem,
-    { role: 'assistant', content: 'Reading now.' },
-    {
-      type: 'function_call',
-      call_id: 'call-work',
-      name: 'read_file',
-      arguments: '{}',
-    },
+    messageItem,
+    functionItem,
     {
       type: 'function_call_output',
       call_id: 'call-work',
@@ -459,11 +460,39 @@ test('Responses normalization derives token totals and incomplete finish reason'
   assert.equal(normalized.model, 'fallback-model');
   assert.equal(normalized.choices[0].message.content, 'Partial answer');
   assert.equal(normalized.choices[0].finish_reason, 'length');
+  assert.deepEqual(normalized.providerMetadata, {
+    [adapter.OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY]:
+      'max_output_tokens',
+  });
   assert.deepEqual(normalized.usage, {
     prompt_tokens: 5,
     completion_tokens: 7,
     total_tokens: 12,
   });
+
+  const workResponse = workProvider.normalizePluginWorkResponse(
+    {
+      id: 'openai',
+      endpoint: 'https://api.openai.com/v1/responses',
+      api_mode: 'responses',
+    },
+    {
+      status: 'incomplete',
+      incomplete_details: { reason: 'max_output_tokens' },
+      output: [
+        {
+          id: 'partial-message',
+          type: 'message',
+          role: 'assistant',
+          phase: 'final_answer',
+          content: [{ type: 'output_text', text: 'Partial answer' }],
+        },
+      ],
+    },
+    'fallback-model',
+    'responses'
+  );
+  assert.equal(workResponse.done_reason, 'incomplete:max_output_tokens');
 
   assert.throws(
     () =>
@@ -493,6 +522,34 @@ test('provider API configuration resolves modes, base URLs, paths, and model dis
     {
       apiMode: 'responses',
       endpoint: 'https://gateway.example/v2/responses',
+    }
+  );
+  assert.deepEqual(
+    pluginValidation.resolvePluginApiConfig(plugin, {
+      api_mode: 'responses',
+      base_url: 'https://upgraded.example/v1',
+      endpoint: plugin.endpoint,
+    }),
+    {
+      apiMode: 'responses',
+      endpoint: 'https://upgraded.example/v1/responses',
+    }
+  );
+  assert.deepEqual(
+    pluginValidation.resolvePluginApiConfig(
+      {
+        ...plugin,
+        endpoint: 'http://127.0.0.1:8080/v1/chat/completions',
+      },
+      {
+        api_mode: plugin.api_mode,
+        base_url: plugin.base_url,
+        endpoint: 'http://127.0.0.1:8080/v1/chat/completions',
+      }
+    ),
+    {
+      apiMode: 'chat_completions',
+      endpoint: 'http://127.0.0.1:8080/v1/chat/completions',
     }
   );
   assert.deepEqual(
@@ -598,6 +655,60 @@ test('provider API configuration resolves modes, base URLs, paths, and model dis
       /Invalid plugin API path/
     );
   }
+  let overEncodedTraversal = '%2e%2e';
+  for (let pass = 0; pass < 10; pass += 1) {
+    overEncodedTraversal = encodeURIComponent(overEncodedTraversal);
+  }
+  assert.equal(
+    pluginValidation.validatePluginApiPath(`/${overEncodedTraversal}/secrets`),
+    null
+  );
+});
+
+test('model discovery rejects an unsafe derived URL before reading credentials', async () => {
+  const service = pluginServiceModule.default;
+  const originalGetPlugin = service.getPlugin;
+  const originalGetPluginVariables = service.getPluginVariables;
+  const originalGetApiKey = service.getApiKey;
+  const originalAxiosGet = axios.get;
+  let credentialsRead = false;
+  let requestMade = false;
+
+  try {
+    service.getPlugin = () => ({
+      id: 'unsafe-provider',
+      name: 'Unsafe provider',
+      type: 'completion',
+      endpoint: 'http://public.example/v1/chat/completions',
+      auth: {
+        header: 'Authorization',
+        prefix: 'Bearer ',
+        key_env: 'UNSAFE_PROVIDER_API_KEY',
+      },
+      model_map: ['fallback-model'],
+    });
+    service.getPluginVariables = () => ({});
+    service.getApiKey = () => {
+      credentialsRead = true;
+      return 'must-not-be-read';
+    };
+    axios.get = async () => {
+      requestMade = true;
+      return { data: { data: [] } };
+    };
+
+    await assert.rejects(
+      service.discoverModels('unsafe-provider', 'unsafe-user'),
+      /Insecure endpoint protocol/
+    );
+    assert.equal(credentialsRead, false);
+    assert.equal(requestMade, false);
+  } finally {
+    service.getPlugin = originalGetPlugin;
+    service.getPluginVariables = originalGetPluginVariables;
+    service.getApiKey = originalGetApiKey;
+    axios.get = originalAxiosGet;
+  }
 });
 
 test('Chat adapter sends and normalizes Responses API payloads', () => {
@@ -674,6 +785,13 @@ test('Responses streaming emits typed content, reasoning, one correlated call, a
     name: 'read_file',
     arguments: '{"path":"plan.txt"}',
   };
+  const messageItem = {
+    id: 'message-stream',
+    type: 'message',
+    role: 'assistant',
+    phase: 'commentary',
+    content: [{ type: 'output_text', text: 'Working' }],
+  };
   const events = [
     {
       type: 'response.output_item.added',
@@ -704,7 +822,8 @@ test('Responses streaming emits typed content, reasoning, one correlated call, a
     {
       type: 'response.completed',
       response: {
-        output: [reasoningItem, functionItem],
+        status: 'completed',
+        output: [reasoningItem, messageItem, functionItem],
         usage: {
           input_tokens: 11,
           output_tokens: 7,
@@ -750,6 +869,57 @@ test('Responses streaming emits typed content, reasoning, one correlated call, a
       },
     },
   });
+  assert.deepEqual(chunks[4], {
+    type: 'done',
+    providerMetadata: {
+      [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [
+        reasoningItem,
+        messageItem,
+        functionItem,
+      ],
+    },
+  });
+});
+
+test('Responses streaming preserves incomplete status and reason', async () => {
+  const partialItem = {
+    id: 'message-incomplete',
+    type: 'message',
+    role: 'assistant',
+    phase: 'final_answer',
+    content: [{ type: 'output_text', text: 'Partial answer' }],
+  };
+  const response = new Response(
+    `data: ${JSON.stringify({
+      type: 'response.incomplete',
+      response: {
+        status: 'incomplete',
+        incomplete_details: { reason: 'max_output_tokens' },
+        output: [partialItem],
+      },
+    })}\n\n`,
+    {
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+    }
+  );
+  const chunks = [];
+  for await (const chunk of streamAdapter.streamOpenAIResponsesResponse(
+    response
+  )) {
+    chunks.push(chunk);
+  }
+
+  assert.deepEqual(chunks, [
+    { type: 'content', content: 'Partial answer' },
+    {
+      type: 'done',
+      doneReason: 'incomplete:max_output_tokens',
+      providerMetadata: {
+        [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [partialItem],
+      },
+    },
+  ]);
 });
 
 test('Responses streaming emits refusals once and falls back to terminal refusal content', async () => {
@@ -790,7 +960,12 @@ test('Responses streaming emits refusals once and falls back to terminal refusal
   }
   assert.deepEqual(deltaChunks, [
     { type: 'content', content: 'I cannot help with that.' },
-    { type: 'done' },
+    {
+      type: 'done',
+      providerMetadata: {
+        [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [refusalItem],
+      },
+    },
   ]);
 
   const terminalResponse = new Response(
@@ -811,7 +986,12 @@ test('Responses streaming emits refusals once and falls back to terminal refusal
   }
   assert.deepEqual(terminalChunks, [
     { type: 'content', content: 'I cannot help with that.' },
-    { type: 'done' },
+    {
+      type: 'done',
+      providerMetadata: {
+        [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [refusalItem],
+      },
+    },
   ]);
 });
 

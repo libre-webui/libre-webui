@@ -32,54 +32,13 @@ import {
 } from '@/components/icons';
 import { ChevronDown, RotateCcw, Save, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/utils';
-import { isSafePluginUrl } from '@/utils/pluginUrlValidation';
+import {
+  isPluginUrlVariable,
+  isSafePluginUrl,
+  isValidPluginApiPath,
+} from '@/utils/pluginUrlValidation';
 import toast from 'react-hot-toast';
 import { HuggingFaceModelBrowser } from './HuggingFaceModelBrowser';
-
-const isPluginUrlVariable = (name: string): boolean => {
-  const normalized = name.toLowerCase();
-  return (
-    normalized === 'endpoint' ||
-    normalized === 'base_url' ||
-    normalized === 'api_url' ||
-    normalized === 'models_endpoint' ||
-    normalized.endsWith('_endpoint') ||
-    normalized.endsWith('_base_url')
-  );
-};
-
-const isValidPluginApiPath = (value: string): boolean => {
-  const trimmed = value.trim();
-  if (
-    !trimmed.startsWith('/') ||
-    trimmed.startsWith('//') ||
-    trimmed.includes('://') ||
-    trimmed.includes('\\') ||
-    trimmed.includes('?') ||
-    trimmed.includes('#')
-  ) {
-    return false;
-  }
-
-  let decoded = trimmed;
-  for (let decodePass = 0; decodePass < 5; decodePass += 1) {
-    let next: string;
-    try {
-      next = decodeURIComponent(decoded);
-    } catch {
-      return false;
-    }
-    if (next === decoded) break;
-    decoded = next;
-  }
-
-  return (
-    !decoded.includes('\\') &&
-    !decoded.includes('?') &&
-    !decoded.includes('#') &&
-    !decoded.split('/').some(segment => segment === '.' || segment === '..')
-  );
-};
 
 // Inline variables editor for a plugin
 export const PluginVariablesEditor: React.FC<{

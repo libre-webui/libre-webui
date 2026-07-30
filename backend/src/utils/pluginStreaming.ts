@@ -51,6 +51,8 @@ export type PluginStreamChunk =
     }
   | {
       type: 'done';
+      doneReason?: string;
+      providerMetadata?: Record<string, unknown>;
     };
 
 export interface StreamPluginResponseOptions {
@@ -157,6 +159,13 @@ export async function streamPluginResponse({
         );
       } else if (chunk.type === 'done') {
         finishToolActivity();
+        if (chunk.doneReason?.startsWith('incomplete:')) {
+          const reason =
+            chunk.doneReason.slice('incomplete:'.length) || 'unknown';
+          throw new Error(
+            `Provider returned an incomplete response (${reason})`
+          );
+        }
         totalContent += formatPluginStreamToolCalls(toolCalls);
 
         sendAssistantChunk(ws, {

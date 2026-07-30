@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY } from './openAIResponsesAdapter.js';
+
 export interface PluginToolCall {
   id: string;
   name: string;
@@ -33,7 +35,11 @@ export type PluginStreamChunk =
   | { type: 'reasoning'; content: string }
   | { type: 'tool_call'; toolCall: PluginToolCall }
   | { type: 'usage'; usage: PluginStreamUsage }
-  | { type: 'done' };
+  | {
+      type: 'done';
+      doneReason?: string;
+      providerMetadata?: Record<string, unknown>;
+    };
 
 interface ToolCallDelta {
   index: number;
@@ -326,9 +332,18 @@ export async function* streamOpenAIResponsesResponse(
   const decoder = new TextDecoder();
   const toolCalls = new Map<string, PluginToolCall>();
   const reasoningItems = new Map<string, Record<string, unknown>>();
+  const outputItems = new Map<
+    string,
+    {
+      item: Record<string, unknown>;
+      order: number;
+      outputIndex?: number;
+    }
+  >();
   let buffer = '';
   let completed = false;
   let emittedAssistantContent = false;
+  let outputItemOrder = 0;
 
   const responseOutputContent = (output: unknown): string => {
     if (!Array.isArray(output)) return '';
@@ -371,13 +386,23 @@ export async function* streamOpenAIResponsesResponse(
       return;
     }
     const item = rawItem as Record<string, unknown>;
+    const key = responsesItemKey(payload, item);
+    const existingOutputItem = outputItems.get(key);
+    outputItems.set(key, {
+      item: { ...item },
+      order: existingOutputItem?.order ?? outputItemOrder++,
+      outputIndex:
+        typeof payload.output_index === 'number'
+          ? payload.output_index
+          : existingOutputItem?.outputIndex,
+    });
+
     if (item.type === 'reasoning') {
-      reasoningItems.set(responsesItemKey(payload, item), { ...item });
+      reasoningItems.set(key, { ...item });
       return;
     }
     if (item.type !== 'function_call') return;
 
-    const key = responsesItemKey(payload, item);
     const existing = toolCalls.get(key);
     toolCalls.set(key, {
       id:
@@ -395,7 +420,8 @@ export async function* streamOpenAIResponsesResponse(
   };
 
   const emitTerminalChunks = function* (
-    usage?: PluginStreamUsage
+    usage?: PluginStreamUsage,
+    doneReason?: string
   ): Generator<PluginStreamChunk> {
     if (usage) yield { type: 'usage', usage };
     const calls = [...toolCalls.values()];
@@ -408,7 +434,26 @@ export async function* streamOpenAIResponsesResponse(
     for (const toolCall of calls) {
       yield { type: 'tool_call', toolCall };
     }
-    yield { type: 'done' };
+    const replayableOutputItems = [...outputItems.values()]
+      .sort(
+        (left, right) =>
+          (left.outputIndex ?? Number.MAX_SAFE_INTEGER) -
+            (right.outputIndex ?? Number.MAX_SAFE_INTEGER) ||
+          left.order - right.order
+      )
+      .map(({ item }) => item);
+    yield {
+      type: 'done',
+      ...(doneReason ? { doneReason } : {}),
+      ...(replayableOutputItems.length > 0
+        ? {
+            providerMetadata: {
+              [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]:
+                replayableOutputItems,
+            },
+          }
+        : {}),
+    };
   };
 
   try {
@@ -519,6 +564,9 @@ export async function* streamOpenAIResponsesResponse(
               ? (payload.response as Record<string, unknown>)
               : undefined;
           if (Array.isArray(responseRecord?.output)) {
+            outputItems.clear();
+            reasoningItems.clear();
+            outputItemOrder = 0;
             for (const [outputIndex, item] of responseRecord.output.entries()) {
               recordOutputItem({ output_index: outputIndex }, item);
             }
@@ -533,14 +581,37 @@ export async function* streamOpenAIResponsesResponse(
             }
           }
           const usage = parseResponsesUsage(responseRecord?.usage);
-          for (const chunk of emitTerminalChunks(usage)) yield chunk;
+          const incompleteDetails =
+            responseRecord?.incomplete_details &&
+            typeof responseRecord.incomplete_details === 'object' &&
+            !Array.isArray(responseRecord.incomplete_details)
+              ? (responseRecord.incomplete_details as Record<string, unknown>)
+              : undefined;
+          const incompleteReason =
+            eventType === 'response.incomplete' ||
+            responseRecord?.status === 'incomplete'
+              ? typeof incompleteDetails?.reason === 'string'
+                ? incompleteDetails.reason
+                : 'unknown'
+              : undefined;
+          for (const chunk of emitTerminalChunks(
+            usage,
+            incompleteReason ? `incomplete:${incompleteReason}` : undefined
+          )) {
+            yield chunk;
+          }
           completed = true;
         }
       }
     }
 
     if (!completed) {
-      for (const chunk of emitTerminalChunks()) yield chunk;
+      for (const chunk of emitTerminalChunks(
+        undefined,
+        'incomplete:stream_ended'
+      )) {
+        yield chunk;
+      }
     }
   } finally {
     reader.releaseLock();

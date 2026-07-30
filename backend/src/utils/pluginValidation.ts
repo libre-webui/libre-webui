@@ -25,6 +25,7 @@ const PLUGIN_API_MODES = new Set<PluginApiMode>([
   'chat_completions',
   'responses',
 ]);
+const MAX_API_PATH_DECODE_PASSES = 8;
 
 export interface ResolvedPluginApiConfig {
   apiMode: PluginApiMode;
@@ -167,18 +168,30 @@ export function validatePluginApiPath(apiPath: string): string | null {
   }
 
   let decoded = trimmed;
-  for (let decodePass = 0; decodePass < 5; decodePass += 1) {
+  let decodingStable = false;
+  for (
+    let decodePass = 0;
+    decodePass <= MAX_API_PATH_DECODE_PASSES;
+    decodePass += 1
+  ) {
     let next: string;
     try {
       next = decodeURIComponent(decoded);
     } catch {
       return null;
     }
-    if (next === decoded) break;
+    if (next === decoded) {
+      decodingStable = true;
+      break;
+    }
+    if (decodePass === MAX_API_PATH_DECODE_PASSES) {
+      return null;
+    }
     decoded = next;
   }
 
   if (
+    !decodingStable ||
     decoded.includes('\\') ||
     decoded.includes('?') ||
     decoded.includes('#') ||
@@ -230,19 +243,30 @@ export function resolvePluginApiConfig(
     (configuredMode as PluginApiMode | undefined) ||
     inferPluginApiMode(plugin.endpoint);
   const endpointOverride = optionalPluginString(variables.endpoint);
-  if (endpointOverride) {
+  const configuredBaseUrl = optionalPluginString(variables.base_url);
+  const configuredApiPath = optionalPluginString(variables.api_path);
+  const hasStructuredApiOverride =
+    (configuredBaseUrl !== undefined &&
+      configuredBaseUrl !== optionalPluginString(plugin.base_url)) ||
+    (configuredApiPath !== undefined &&
+      configuredApiPath !== optionalPluginString(plugin.api_path)) ||
+    (configuredMode !== undefined && configuredMode !== plugin.api_mode);
+  // Older bundled manifests stored their own default endpoint as a user
+  // variable. Treat that exact value as a default rather than an override so
+  // upgraded users can change Base URL without first clearing stale data.
+  if (
+    endpointOverride &&
+    (endpointOverride !== plugin.endpoint || !hasStructuredApiOverride)
+  ) {
     assertSafePluginEndpoint(endpointOverride, 'plugin endpoint override');
     apiMode = inferKnownPluginApiMode(endpointOverride) || apiMode;
     return { apiMode, endpoint: endpointOverride };
   }
 
-  const baseUrl =
-    optionalPluginString(variables.base_url) ||
-    optionalPluginString(plugin.base_url);
+  const baseUrl = configuredBaseUrl || optionalPluginString(plugin.base_url);
   if (baseUrl) {
     const configuredPath =
-      optionalPluginString(variables.api_path) ||
-      optionalPluginString(plugin.api_path);
+      configuredApiPath || optionalPluginString(plugin.api_path);
     const defaultPath =
       apiMode === 'responses' ? '/responses' : '/chat/completions';
     const endpoint = combinePluginBaseUrlAndPath(

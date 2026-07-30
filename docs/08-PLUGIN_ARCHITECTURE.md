@@ -87,6 +87,11 @@ Connection settings are resolved in this order:
 2. `base_url` plus an optional `api_path`.
 3. The plugin's legacy `endpoint`.
 
+An endpoint value that exactly matches the plugin manifest's endpoint is
+treated as the manifest default, not as an override. This keeps legacy stored
+defaults from shadowing a new Base URL after an upgrade. A genuinely custom
+full endpoint still has highest precedence.
+
 The default path is `/chat/completions` in Chat Completions mode and
 `/responses` in Responses mode. `base_url` should be the API root, such as
 `https://api.example.com/v1`; use `api_path` when a compatible provider exposes
@@ -108,9 +113,12 @@ Imported plugin JSON can provide the same defaults:
 
 Responses requests use `input`, `max_output_tokens`, flattened function tools,
 and `store: false`. Completed and streamed Responses output is normalized back
-to Libre WebUI's chat and Work event formats. Work also preserves Responses
-reasoning items while a function call and its result are passed through later
-turns.
+to Libre WebUI's chat and Work event formats. During stateless Work tool loops,
+Libre WebUI retains and replays the provider's ordered output Items verbatim,
+including encrypted reasoning and assistant `phase`, before appending function
+results. An incomplete Responses result is not treated as a successful Chat or
+Work turn; its `incomplete_details.reason` is retained and surfaced to the
+caller.
 
 Model discovery derives `/models` from either operation path. For example,
 `https://api.example.com/v1/responses` discovers from
@@ -120,6 +128,9 @@ user's variables and credentials. Results are persisted per user rather than
 written into the shared plugin manifest. Discovery runs after activation,
 explicit refresh, API-key changes, connection-variable changes, and variable
 resets; unrelated generation-variable saves do not trigger a network request.
+The final derived discovery URL is checked before the user's credential is read
+or an authorization header is built, including when the URL originates in an
+imported plugin manifest.
 
 ## Plugins in Work
 

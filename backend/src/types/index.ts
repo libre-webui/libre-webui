@@ -168,6 +168,7 @@ export interface OllamaChatMessage {
   images?: string[];
   tool_calls?: Record<string, unknown>[];
   tool_name?: string;
+  providerMetadata?: Record<string, unknown>;
 }
 
 export interface OllamaChatRequest {
@@ -190,6 +191,7 @@ export interface OllamaChatResponse {
     thinking?: string;
     images?: string[] | null;
     tool_calls?: Record<string, unknown>[];
+    providerMetadata?: Record<string, unknown>;
   };
   done: boolean;
   done_reason?: string;
@@ -491,6 +493,7 @@ export interface PluginResponse {
   object: string;
   created: number;
   model: string;
+  providerMetadata?: Record<string, unknown>;
   choices: {
     index: number;
     message: {

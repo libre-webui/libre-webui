@@ -19,6 +19,11 @@ import type { PluginResponse } from '../types/index.js';
 
 type JsonObject = Record<string, unknown>;
 
+export const OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY =
+  'openAIResponsesOutputItems';
+export const OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY =
+  'openAIResponsesIncompleteReason';
+
 export interface OpenAICompatibleChatMessage {
   role: string;
   content?: unknown;
@@ -378,6 +383,12 @@ function normalizeResponsesFinishReason(
   return hasToolCalls ? 'tool_calls' : 'stop';
 }
 
+function responsesIncompleteReason(response: JsonObject): string | undefined {
+  if (response.status !== 'incomplete') return undefined;
+  const details = asObject(response.incomplete_details);
+  return typeof details?.reason === 'string' ? details.reason : 'unknown';
+}
+
 function normalizeResponsesUsage(
   value: unknown
 ): PluginResponse['usage'] | undefined {
@@ -463,6 +474,7 @@ export function normalizeOpenAIResponsesResponse(
   const model =
     typeof response.model === 'string' ? response.model : fallbackModel;
   const usage = normalizeResponsesUsage(response.usage);
+  const incompleteReason = responsesIncompleteReason(response);
 
   return {
     id:
@@ -473,6 +485,13 @@ export function normalizeOpenAIResponsesResponse(
         ? Math.floor(response.created_at)
         : 0,
     model,
+    ...(incompleteReason
+      ? {
+          providerMetadata: {
+            [OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY]: incompleteReason,
+          },
+        }
+      : {}),
     choices: [
       {
         index: 0,

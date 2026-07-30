@@ -34,6 +34,24 @@ function isPrivateIpv4Hostname(hostname: string): boolean {
   );
 }
 
+const MAX_API_PATH_DECODE_PASSES = 8;
+
+export function isPluginUrlVariable(name: string): boolean {
+  const normalized = name.toLowerCase();
+  return (
+    normalized === 'endpoint' ||
+    normalized === 'base_url' ||
+    normalized === 'api_url' ||
+    normalized === 'models_endpoint' ||
+    normalized.endsWith('_endpoint') ||
+    normalized.endsWith('_base_url')
+  );
+}
+
+/**
+ * Client-side feedback only. The backend repeats URL validation immediately
+ * before provider credentials are attached or a network request is made.
+ */
 export function isSafePluginUrl(value: string, name: string): boolean {
   try {
     const url = new URL(value);
@@ -51,4 +69,46 @@ export function isSafePluginUrl(value: string, name: string): boolean {
   } catch {
     return false;
   }
+}
+
+export function isValidPluginApiPath(value: string): boolean {
+  const trimmed = value.trim();
+  if (
+    !trimmed.startsWith('/') ||
+    trimmed.startsWith('//') ||
+    trimmed.includes('://') ||
+    trimmed.includes('\\') ||
+    trimmed.includes('?') ||
+    trimmed.includes('#')
+  ) {
+    return false;
+  }
+
+  let decoded = trimmed;
+  for (
+    let decodePass = 0;
+    decodePass <= MAX_API_PATH_DECODE_PASSES;
+    decodePass += 1
+  ) {
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      return false;
+    }
+    if (next === decoded) {
+      return (
+        !decoded.includes('\\') &&
+        !decoded.includes('?') &&
+        !decoded.includes('#') &&
+        !decoded.split('/').some(segment => segment === '.' || segment === '..')
+      );
+    }
+    if (decodePass === MAX_API_PATH_DECODE_PASSES) {
+      return false;
+    }
+    decoded = next;
+  }
+
+  return false;
 }
