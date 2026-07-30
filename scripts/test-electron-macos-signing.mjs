@@ -121,3 +121,41 @@ test('macOS CI verifies the packaged application before upload', () => {
     );
   }
 });
+
+test('macOS pull-request builds retain credential-free ad-hoc signing', () => {
+  const workflowPath = '.github/workflows/electron-dev.yml';
+  const workflow = readRepoFile(workflowPath);
+  const triggerEnd = workflow.indexOf('\njobs:\n');
+  const triggers = workflow.slice(0, triggerEnd);
+  const buildStepStart = workflow.indexOf(
+    '      - name: Build Electron app for macOS'
+  );
+  const verifyStepStart = workflow.indexOf(
+    '      - name: Verify macOS application signature'
+  );
+
+  assert.notEqual(
+    buildStepStart,
+    -1,
+    `${workflowPath} must define the macOS build step`
+  );
+  assert.notEqual(
+    verifyStepStart,
+    -1,
+    `${workflowPath} must define the macOS verification step`
+  );
+  assert.match(triggers, /^  pull_request:\s*$/m);
+  assert.doesNotMatch(
+    triggers,
+    /^  pull_request:\s*\n\s+branches:/m,
+    `${workflowPath} must cover pull requests into intermediate branches`
+  );
+
+  const buildStep = workflow.slice(buildStepStart, verifyStepStart);
+  assert.match(buildStep, /^\s+CSC_FOR_PULL_REQUEST: 'true'$/m);
+  assert.doesNotMatch(
+    workflow,
+    /CSC_LINK|CSC_KEY_PASSWORD|APPLE_API_KEY|APPLE_ID/,
+    `${workflowPath} must not expose signing credentials to pull-request builds`
+  );
+});

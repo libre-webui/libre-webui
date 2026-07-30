@@ -6,6 +6,7 @@ permissions:
 on:
   push:
     branches: [main]
+  pull_request:
 
 jobs:
   format-and-lint:
@@ -41,6 +42,28 @@ jobs:
 
       - name: TypeScript type checking (Backend)
         run: cd backend && npm run type-check
+
+  package-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22.22'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install workspace dependencies
+        run: npm run install:all
+
+      - name: Run package tests
+        run: npm run test:package
 
   # auto-format:
   #   runs-on: ubuntu-latest
