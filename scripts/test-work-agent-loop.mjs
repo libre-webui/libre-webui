@@ -320,3 +320,59 @@ test('invalid provider tool arguments prevent partial writes and guide a smaller
     'Recovered with a smaller write.'
   );
 });
+
+test('incomplete provider responses fail Work with the provider reason', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-incomplete-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async (request, _provider, _requestedUserId, observer) => {
+      observer.onContent?.('Partial response');
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: {
+          role: 'assistant',
+          content: 'Partial response',
+        },
+        done: true,
+        done_reason: 'incomplete:max_output_tokens',
+      };
+    }
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Do not accept truncated provider output.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+
+  const events = [];
+  const unsubscribe = workEventService.subscribe(detail.id, runId, event =>
+    events.push(event)
+  );
+  try {
+    await workAgentService.execute(detail.id, runId, userId);
+  } finally {
+    unsubscribe();
+  }
+
+  const run = workTaskService.getRun(runId);
+  assert.equal(run.status, 'failed');
+  assert.match(run.error, /incomplete response \(max_output_tokens\)/);
+  const errorEvent = events.find(event => event.type === 'error');
+  assert.equal(errorEvent?.data.code, 'WORK_PROVIDER_INCOMPLETE_RESPONSE');
+});

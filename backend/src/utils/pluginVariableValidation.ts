@@ -16,11 +16,27 @@
  */
 
 import type { PluginVariableDefinition } from '../types/index.js';
+import {
+  validatePluginApiPath,
+  validatePluginEndpointOverride,
+} from './pluginValidation.js';
 
 export type ValidatedPluginVariables = Record<
   string,
   string | number | boolean
 >;
+
+function isUrlVariable(name: string): boolean {
+  const normalized = name.toLowerCase();
+  return (
+    normalized === 'endpoint' ||
+    normalized === 'base_url' ||
+    normalized === 'api_url' ||
+    normalized === 'models_endpoint' ||
+    normalized.endsWith('_endpoint') ||
+    normalized.endsWith('_base_url')
+  );
+}
 
 export function validatePluginVariables(
   definitions: PluginVariableDefinition[],
@@ -82,15 +98,54 @@ export function validatePluginVariables(
       };
     }
 
-    if (key === 'endpoint' && str.length > 0) {
+    if (isUrlVariable(key) && str.length > 0) {
+      const normalizedUrl = str.trim();
+      if (normalizedUrl.length === 0) {
+        validated[key] = '';
+        continue;
+      }
+
       try {
-        new URL(str);
+        new URL(normalizedUrl);
       } catch {
         return {
           success: false,
           error: `Variable "${key}" must be a valid URL`,
         };
       }
+
+      const validatedUrl = validatePluginEndpointOverride(normalizedUrl);
+      if (!validatedUrl) {
+        return {
+          success: false,
+          error:
+            `Variable "${key}" must use HTTPS for remote URLs, or HTTP ` +
+            'for localhost and private IPv4 addresses',
+        };
+      }
+      if (key.toLowerCase().endsWith('base_url')) {
+        const url = new URL(validatedUrl);
+        if (url.search || url.hash) {
+          return {
+            success: false,
+            error: `Variable "${key}" cannot contain a query string or fragment`,
+          };
+        }
+      }
+      validated[key] = validatedUrl;
+      continue;
+    }
+
+    if (key === 'api_path' && str.length > 0) {
+      const validatedPath = validatePluginApiPath(str);
+      if (!validatedPath) {
+        return {
+          success: false,
+          error: 'Variable "api_path" must be an absolute API path',
+        };
+      }
+      validated[key] = validatedPath;
+      continue;
     }
 
     validated[key] = str;

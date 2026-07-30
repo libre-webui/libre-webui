@@ -192,6 +192,8 @@ export const useAppStore = create<AppState>()(
           customAccent: DEFAULT_CUSTOM_ACCENT,
         },
         defaultModel: '',
+        defaultProviderType: null,
+        defaultProviderId: null,
         systemMessage: '',
         generationOptions: {
           temperature: 0.7,
@@ -209,6 +211,8 @@ export const useAppStore = create<AppState>()(
         titleSettings: {
           autoTitle: false,
           taskModel: '',
+          taskProviderType: null,
+          taskProviderId: null,
         },
         showUsername: false, // Default to showing "you" instead of username
         workRemoteProviderDisclosureDismissed: false,
@@ -393,6 +397,8 @@ export const useAppStore = create<AppState>()(
           preferences: {
             theme: defaultTheme,
             defaultModel: '',
+            defaultProviderType: null,
+            defaultProviderId: null,
             systemMessage: '',
             generationOptions: {
               temperature: 0.7,
@@ -410,6 +416,8 @@ export const useAppStore = create<AppState>()(
             titleSettings: {
               autoTitle: false,
               taskModel: '',
+              taskProviderType: null,
+              taskProviderId: null,
             },
             showUsername: false,
             workRemoteProviderDisclosureDismissed: false,

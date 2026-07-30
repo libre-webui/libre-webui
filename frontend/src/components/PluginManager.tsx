@@ -32,6 +32,11 @@ import {
 } from '@/components/icons';
 import { ChevronDown, RotateCcw, Save, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/utils';
+import {
+  getPluginEndpointValidationError,
+  isPluginUrlVariable,
+  isValidPluginApiPath,
+} from '@/utils/pluginEndpoint';
 import toast from 'react-hot-toast';
 import { HuggingFaceModelBrowser } from './HuggingFaceModelBrowser';
 
@@ -45,6 +50,7 @@ export const PluginVariablesEditor: React.FC<{
     fetchPluginVariables,
     updatePluginVariables,
     resetPluginVariables,
+    loadPlugins,
   } = usePluginStore();
   const [localValues, setLocalValues] = useState<
     Record<string, string | number | boolean>
@@ -99,18 +105,38 @@ export const PluginVariablesEditor: React.FC<{
     for (const def of schema) {
       const val = localValues[def.name];
       if (
-        def.name === 'endpoint' &&
+        isPluginUrlVariable(def.name) &&
         typeof val === 'string' &&
-        val.length > 0
+        val.trim().length > 0
       ) {
-        try {
-          new URL(val);
-        } catch {
+        const endpointError = getPluginEndpointValidationError(val, def.name);
+        if (endpointError === 'invalid-url') {
           errors[def.name] = t(
             'pluginManager.variables.invalidUrl',
-            'Must be a valid URL'
+            'Enter a valid full API endpoint URL, for example https://provider.example/v1/chat/completions'
+          );
+        } else if (endpointError === 'insecure-url') {
+          errors[def.name] = t(
+            'pluginManager.variables.insecureUrl',
+            'Remote API endpoints must use HTTPS. HTTP is allowed only for localhost and private IPv4 addresses.'
+          );
+        } else if (endpointError === 'query-or-fragment') {
+          errors[def.name] = t(
+            'pluginManager.variables.invalidBaseUrl',
+            'Base URLs cannot contain a query string or fragment.'
           );
         }
+      }
+      if (
+        def.name === 'api_path' &&
+        typeof val === 'string' &&
+        val.length > 0 &&
+        !isValidPluginApiPath(val)
+      ) {
+        errors[def.name] = t(
+          'pluginManager.variables.invalidApiPath',
+          'Must start with / and contain no URL, query, fragment, or .. segment'
+        );
       }
       if (def.type === 'number') {
         const num = Number(val);
@@ -139,6 +165,7 @@ export const PluginVariablesEditor: React.FC<{
     const success = await updatePluginVariables(plugin.id, localValues);
     setSaving(false);
     if (success) {
+      await loadPlugins();
       toast.success(t('pluginManager.variables.saved', 'Variables saved'));
     } else {
       toast.error(
@@ -149,6 +176,7 @@ export const PluginVariablesEditor: React.FC<{
 
   const handleReset = async () => {
     await resetPluginVariables(plugin.id);
+    await loadPlugins();
     // Reset local values to defaults
     const defaults: Record<string, string | number | boolean> = {};
     for (const def of schema) {
@@ -291,13 +319,26 @@ export const PluginVariablesEditor: React.FC<{
           <div key={def.name}>
             {def.type !== 'boolean' && (
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                {def.label}
+                {def.name === 'endpoint'
+                  ? t(
+                      'pluginManager.variables.fullApiEndpoint',
+                      'Full API endpoint URL'
+                    )
+                  : def.label}
                 {def.required && <span className='text-red-500 ml-1'>*</span>}
               </label>
             )}
             {def.description && def.type !== 'boolean' && (
               <p className='text-xs text-gray-500 dark:text-gray-400 mb-1'>
                 {def.description}
+              </p>
+            )}
+            {def.name === 'endpoint' && (
+              <p className='text-xs text-gray-500 dark:text-gray-400 mb-1'>
+                {t(
+                  'pluginManager.variables.endpointHelp',
+                  'Enter the complete request URL, including its operation path (for example, /v1/chat/completions), not only the provider base URL.'
+                )}
               </p>
             )}
             {renderField(def)}
@@ -589,7 +630,8 @@ export const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                         {t('pluginManager.id')}: {plugin.id}
                       </p>
                       <p className='text-sm text-gray-600 dark:text-gray-400 mb-2'>
-                        {t('pluginManager.endpoint')}: {plugin.endpoint}
+                        {t('pluginManager.defaultEndpoint', 'Default endpoint')}
+                        : {plugin.endpoint}
                       </p>
                       <div className='flex flex-wrap gap-1'>
                         {plugin.model_map.map(model => (

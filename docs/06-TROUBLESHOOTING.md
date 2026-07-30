@@ -145,6 +145,68 @@ Image availability is evaluated with the current user's credential. A key saved
 for another account or only in another user's settings does not expose image
 models.
 
+## Provider Endpoint Problems
+
+If an OpenAI-compatible provider receives requests at the wrong path, check its
+settings under **Settings → Plugins**:
+
+- Choose **Chat Completions** for `/chat/completions` payloads or **Responses**
+  for `/responses` payloads.
+- Enter the API root, such as `https://provider.example/v1`, as the base URL.
+- Leave API path empty for the mode's default, or enter a leading-slash path
+  supplied by the provider.
+- A genuinely custom legacy full endpoint intentionally has highest
+  precedence, so clear it when switching back to Base URL and API Path. Stored
+  values that merely equal the bundled manifest's old default are ignored
+  automatically after an upgrade. When a custom endpoint ends in
+  `/chat/completions` or `/responses`, that suffix also determines the request
+  format so an override cannot receive the wrong payload.
+
+Remote provider URLs must use HTTPS. HTTP is accepted only for localhost and
+private-network addresses. Base URLs cannot contain query strings or fragments,
+and relative API paths cannot contain literal or repeatedly encoded traversal
+segments, query strings, or fragments. Excessive encoding is rejected when it
+does not stabilize within the validation bound.
+
+Model refresh replaces known operation suffixes, including `/responses`, with
+`/models`. Activation, explicit refresh, and saved connection overrides use the
+current user's endpoint and API key. Saving or removing that user's API key and
+resetting connection overrides also refresh the list; unrelated generation
+parameters do not. Discovered IDs are stored per user and never overwrite the
+shared plugin JSON. If the derived route is not supported by the provider,
+configure model IDs manually in the plugin's `model_map`.
+
+HTTP is accepted only for exact loopback hosts or private IPv4 literals.
+Hostnames such as `host.docker.internal` and `10.example.com` are not private
+IP literals and therefore require HTTPS. Requests originate from the backend,
+so `localhost` refers to the Libre WebUI container when the backend runs in a
+container, not automatically to the host machine.
+
+Image model availability, endpoint overrides, and API keys are resolved for
+the current user too. If an image request appears to use another account's
+provider settings, verify that the request is authenticated as the expected
+user.
+
+### Chat Uses the Wrong Provider or Shows a Provider as Unavailable
+
+The same model ID can exist in Ollama and in more than one plugin. Current Chat
+sessions and default-model preferences save the selected provider as well as
+the raw model ID, so similarly named entries are independent choices.
+
+- If the selector says a provider is unavailable, reactivate or reinstall that
+  exact plugin and confirm its model map still contains the saved model ID.
+- If the provider or model was intentionally removed, explicitly select a
+  replacement. Libre WebUI will not redirect an exact saved selection to a
+  same-named model from another provider.
+- Older sessions and preferences may have no provider metadata. Those records
+  continue to use legacy name-only routing because Libre WebUI cannot infer
+  which provider was originally intended. They appear as "provider not
+  recorded" in model selectors. Reselect the desired Ollama or plugin entry to
+  pin future requests to it.
+- Persona entries remain labeled `persona:<id>`. Newly selected personas record
+  Ollama as their backing provider; historical persona sessions without
+  provider metadata remain compatible with legacy routing.
+
 ## Work Problems
 
 ### Work Is Missing or Reports Runtime Unavailable

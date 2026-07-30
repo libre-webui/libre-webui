@@ -18,8 +18,20 @@
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select, Textarea } from '@/components/ui';
-import type { OllamaModel, SystemInfo, User, UserPreferences } from '@/types';
+import type {
+  ChatProviderType,
+  OllamaModel,
+  SystemInfo,
+  User,
+  UserPreferences,
+} from '@/types';
 import { SettingsToggle } from './SettingsToggle';
+import {
+  chatModelOptionKey,
+  chatModelSelectionKeyForModels,
+  findChatModelForSelection,
+  withUnavailableChatModel,
+} from '@/utils/chatModelSelection';
 
 interface SelectOption {
   value: string;
@@ -37,6 +49,8 @@ interface UpdateProgress {
 interface SettingsModelsTabProps {
   models: OllamaModel[];
   selectedModel: string;
+  selectedProviderType: ChatProviderType | null;
+  selectedProviderId: string | null;
   systemMessage: string;
   tempSystemMessage: string;
   loading: boolean;
@@ -60,6 +74,8 @@ interface SettingsModelsTabProps {
 export function SettingsModelsTab({
   models,
   selectedModel,
+  selectedProviderType,
+  selectedProviderId,
   systemMessage,
   tempSystemMessage,
   loading,
@@ -80,8 +96,18 @@ export function SettingsModelsTab({
   onUpdateAllModels,
 }: SettingsModelsTabProps) {
   const { t } = useTranslation();
-  const selectedModelDetails = models.find(
-    model => model.name === selectedModel
+  const selectedSelection = {
+    model: selectedModel,
+    providerType: selectedProviderType,
+    providerId: selectedProviderId,
+  };
+  const selectorModels = withUnavailableChatModel(models, selectedSelection);
+  const selectedModelKey = selectedModel
+    ? chatModelSelectionKeyForModels(selectorModels, selectedSelection)
+    : '';
+  const selectedModelDetails = findChatModelForSelection(
+    selectorModels,
+    selectedSelection
   );
 
   return (
@@ -116,15 +142,25 @@ export function SettingsModelsTab({
               {t('settings.model.defaultModel')}
             </label>
             <Select
-              value={selectedModel || ''}
+              value={selectedModelKey}
               onChange={onModelChange}
               options={[
                 { value: '', label: t('settings.model.selectModel') },
-                ...models.map(model => ({
-                  value: model.name,
-                  label: model.isPersona
-                    ? `${model.personaName} (${t('settings.model.persona')})`
-                    : model.name,
+                ...selectorModels.map(model => ({
+                  value: chatModelOptionKey(model),
+                  label: model.isLegacySelection
+                    ? `${model.name} (provider not recorded${
+                        model.isUnavailable ? ', unavailable' : ''
+                      })`
+                    : model.isPersona
+                      ? `${model.personaName} (${t('settings.model.persona')})`
+                      : model.isPlugin
+                        ? `${model.name} (${model.pluginName || model.pluginId}${
+                            model.isUnavailable ? ', unavailable' : ''
+                          })`
+                        : `${model.name} (Ollama${
+                            model.isUnavailable ? ', unavailable' : ''
+                          })`,
                 })),
               ]}
             />

@@ -98,6 +98,12 @@ export default function WorkPage() {
   const [remoteDisclosureSaving, setRemoteDisclosureSaving] = useState(false);
   const chatModels = useChatStore(state => state.models);
   const chatSelectedModel = useChatStore(state => state.selectedModel);
+  const chatSelectedProviderType = useChatStore(
+    state => state.selectedProviderType
+  );
+  const chatSelectedProviderId = useChatStore(
+    state => state.selectedProviderId
+  );
   const loadChatModels = useChatStore(state => state.loadModels);
   const {
     capabilities,
@@ -291,7 +297,11 @@ export default function WorkPage() {
     modelOptions.find(model => model.key === draftModelKey) ||
     modelOptions.find(
       model =>
-        model.providerType === 'ollama' && model.model === chatSelectedModel
+        model.model === chatSelectedModel &&
+        (chatSelectedProviderType === 'plugin'
+          ? model.providerType === 'plugin' &&
+            model.providerId === chatSelectedProviderId
+          : model.providerType === 'ollama')
     ) ||
     modelOptions[0];
 

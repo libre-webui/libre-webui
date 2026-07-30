@@ -17,17 +17,20 @@
 
 import axios from 'axios';
 import { ImageGenConfig, ImageGenResponse, Plugin } from '../types/index.js';
-import { validatePluginModel } from '../utils/pluginValidation.js';
+import {
+  assertSafePluginEndpoint,
+  validatePluginModel,
+} from '../utils/pluginValidation.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
 type ImageGenImage = ImageGenResponse['images'][number];
 
 export interface PluginImageGenerationServiceDependencies {
-  getAllPlugins(): Plugin[];
-  getPlugin(id: string): Plugin | null;
+  getAllPlugins(userId?: string): Plugin[];
+  getPlugin(id: string, userId?: string): Plugin | null;
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
-  validateEndpointUrl(endpoint: string): string | null;
+  validateEndpointUrl(endpoint: string): string;
 }
 
 export class PluginImageGenerationService {
@@ -35,9 +38,13 @@ export class PluginImageGenerationService {
     private readonly deps: PluginImageGenerationServiceDependencies
   ) {}
 
-  getPluginForImageGen(model: string, pluginId?: string): Plugin | null {
+  getPluginForImageGen(
+    model: string,
+    pluginId?: string,
+    userId?: string
+  ): Plugin | null {
     if (pluginId) {
-      const plugin = this.deps.getPlugin(pluginId);
+      const plugin = this.deps.getPlugin(pluginId, userId);
       if (!plugin) return null;
 
       const supportedModels =
@@ -50,7 +57,7 @@ export class PluginImageGenerationService {
       return null;
     }
 
-    const allPlugins = this.deps.getAllPlugins();
+    const allPlugins = this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       const supportedModels =
@@ -71,7 +78,7 @@ export class PluginImageGenerationService {
   }[] {
     const models: { model: string; plugin: string; config?: ImageGenConfig }[] =
       [];
-    const allPlugins = this.deps.getAllPlugins();
+    const allPlugins = this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       const imageCapability = plugin.capabilities?.image;
@@ -119,7 +126,11 @@ export class PluginImageGenerationService {
       throw new Error('Invalid prompt: must be a non-empty string');
     }
 
-    const plugin = this.getPluginForImageGen(model, options.pluginId);
+    const plugin = this.getPluginForImageGen(
+      model,
+      options.pluginId,
+      options.userId
+    );
     if (!plugin) {
       const providerDescription = options.pluginId
         ? ` in plugin ${options.pluginId}`
@@ -146,15 +157,18 @@ export class PluginImageGenerationService {
       typeof endpointOverride === 'string' &&
       endpointOverride.trim().length > 0
     ) {
-      const validated = this.deps.validateEndpointUrl(endpointOverride.trim());
-      if (!validated) {
+      const validatedEndpoint = this.deps.validateEndpointUrl(
+        endpointOverride.trim()
+      );
+      if (!validatedEndpoint) {
         throw new Error(
           `Invalid image endpoint override configured for plugin ${plugin.id}`
         );
       }
-      endpoint = validated;
+      endpoint = validatedEndpoint;
     }
 
+    const baseUrl = parseImageEndpoint(endpoint);
     const noAuthRequired =
       (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
       true;
@@ -205,8 +219,6 @@ export class PluginImageGenerationService {
       payload.style = options.style || imageConfig?.default_style;
     }
 
-    const baseUrl = parseImageEndpoint(endpoint);
-
     if (plugin.id === 'comfyui' || endpoint.includes('/prompt')) {
       return executeComfyUIRequest(baseUrl, prompt, {
         ...options,
@@ -238,8 +250,8 @@ export class PluginImageGenerationService {
     }
   }
 
-  getImageGenConfig(pluginId: string): ImageGenConfig | null {
-    const plugin = this.deps.getPlugin(pluginId);
+  getImageGenConfig(pluginId: string, userId?: string): ImageGenConfig | null {
+    const plugin = this.deps.getPlugin(pluginId, userId);
     if (!plugin) return null;
 
     if (plugin.capabilities?.image?.config) {
@@ -396,24 +408,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function parseImageEndpoint(endpoint: string): URL {
-  try {
-    const baseUrl = new URL(endpoint);
-    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-      baseUrl.hostname
-    );
-    const isPrivateNetwork =
-      /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(baseUrl.hostname);
-
-    if (baseUrl.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-      throw new Error(
-        `Insecure endpoint protocol: ${baseUrl.protocol}. Only HTTPS is allowed for remote endpoints.`
-      );
-    }
-
-    return baseUrl;
-  } catch (_error) {
-    throw new Error(`Invalid endpoint URL: ${endpoint}`);
-  }
+  assertSafePluginEndpoint(endpoint, 'image generation endpoint');
+  return new URL(endpoint);
 }
 
 interface FluxModelConfig {

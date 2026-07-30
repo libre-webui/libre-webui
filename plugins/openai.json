@@ -3,6 +3,8 @@
   "name": "OpenAI GPT",
   "type": "completion",
   "endpoint": "https://api.openai.com/v1/chat/completions",
+  "api_mode": "chat_completions",
+  "base_url": "https://api.openai.com/v1",
   "auth": {
     "header": "Authorization",
     "prefix": "Bearer ",
@@ -54,11 +56,31 @@
   },
   "variables": [
     {
+      "name": "api_mode",
+      "type": "select",
+      "label": "API Mode",
+      "description": "Choose Chat Completions or Responses request semantics.",
+      "default": "chat_completions",
+      "options": ["chat_completions", "responses"]
+    },
+    {
+      "name": "base_url",
+      "type": "string",
+      "label": "Base URL",
+      "description": "API root used with the mode-specific default path.",
+      "default": "https://api.openai.com/v1"
+    },
+    {
+      "name": "api_path",
+      "type": "string",
+      "label": "API Path",
+      "description": "Optional path relative to Base URL. Leave blank to use /chat/completions or /responses."
+    },
+    {
       "name": "endpoint",
       "type": "string",
-      "label": "API Endpoint",
-      "description": "Override the default API endpoint URL.",
-      "default": "https://api.openai.com/v1/chat/completions"
+      "label": "Legacy Full Endpoint",
+      "description": "Optional full endpoint override. When set, this takes precedence over Base URL and API Path."
     },
     {
       "name": "image_endpoint",

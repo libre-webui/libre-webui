@@ -43,6 +43,28 @@ const router = express.Router();
 const getRequestUserId = (req: Request): string =>
   (req as AuthenticatedRequest).user?.userId || 'default';
 
+const MODEL_DISCOVERY_VARIABLES = new Set([
+  'api_mode',
+  'api_path',
+  'base_url',
+  'endpoint',
+]);
+
+const supportsCompletionModelDiscovery = (plugin: Plugin): boolean =>
+  plugin.type === 'completion' || plugin.type === 'chat';
+
+const refreshUserModels = async (
+  plugin: Plugin,
+  userId: string,
+  clearExisting: boolean
+): Promise<void> => {
+  if (!supportsCompletionModelDiscovery(plugin)) return;
+  if (clearExisting) {
+    pluginService.clearDiscoveredModels(plugin.id, userId);
+  }
+  await pluginService.discoverModels(plugin.id, userId).catch(() => {});
+};
+
 // Rate limiting for plugin operations
 const pluginRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -68,7 +90,7 @@ router.get(
   '/',
   async (req: Request, res: Response<ApiResponse<Plugin[]>>): Promise<void> => {
     try {
-      const plugins = pluginService.getAllPlugins();
+      const plugins = pluginService.getAllPlugins(getRequestUserId(req));
       res.json({
         success: true,
         data: plugins,
@@ -87,7 +109,9 @@ router.get(
   '/active',
   async (req: Request, res: Response<ApiResponse<Plugin[]>>): Promise<void> => {
     try {
-      const activePlugins = pluginService.getActivePlugins();
+      const activePlugins = pluginService.getActivePlugins(
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -110,7 +134,7 @@ router.get(
     res: Response<ApiResponse<Plugin | null>>
   ): Promise<void> => {
     try {
-      const activePlugin = pluginService.getActivePlugin();
+      const activePlugin = pluginService.getActivePlugin(getRequestUserId(req));
 
       res.json({
         success: true,
@@ -154,7 +178,7 @@ router.get(
   async (req: Request, res: Response<ApiResponse<Plugin>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, getRequestUserId(req));
 
       if (!plugin) {
         res.status(404).json({
@@ -378,7 +402,8 @@ router.post(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const success = pluginService.activatePlugin(id);
+      const userId = getRequestUserId(req);
+      const success = await pluginService.activatePlugin(id, userId);
 
       res.json({
         success: true,
@@ -409,7 +434,10 @@ router.post(
   async (req: Request, res: Response<ApiResponse<string[]>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const models = await pluginService.discoverModels(id);
+      const models = await pluginService.discoverModels(
+        id,
+        getRequestUserId(req)
+      );
 
       res.json({
         success: true,
@@ -473,7 +501,7 @@ router.get(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const plugin = pluginService.exportPlugin(id);
+      const plugin = pluginService.exportPlugin(id, getRequestUserId(req));
 
       if (!plugin) {
         res.status(404).json({
@@ -544,6 +572,7 @@ router.post(
     try {
       const id = req.params.id as string;
       const { api_key } = req.body;
+      const userId = getRequestUserId(req);
 
       if (!api_key || typeof api_key !== 'string') {
         res.status(400).json({
@@ -554,7 +583,7 @@ router.post(
       }
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -563,11 +592,10 @@ router.post(
         return;
       }
 
-      // Get userId from auth context
-      const userId = getRequestUserId(req);
       const success = pluginCredentialsService.setApiKey(id, api_key, userId);
 
       if (success) {
+        await refreshUserModels(plugin, userId, true);
         res.json({
           success: true,
           data: true,
@@ -594,9 +622,10 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -605,9 +634,10 @@ router.delete(
         return;
       }
 
-      // Get userId from auth context
-      const userId = getRequestUserId(req);
       const success = pluginCredentialsService.deleteApiKey(id, userId);
+      if (success) {
+        await refreshUserModels(plugin, userId, true);
+      }
 
       res.json({
         success: true,
@@ -628,9 +658,10 @@ router.get(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
       // Verify plugin exists
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({
           success: false,
@@ -639,8 +670,6 @@ router.get(
         return;
       }
 
-      // Get userId from auth context
-      const userId = getRequestUserId(req);
       const hasKey = pluginCredentialsService.hasApiKey(
         id,
         plugin.auth.key_env,
@@ -673,8 +702,9 @@ router.get(
   ): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -685,7 +715,6 @@ router.get(
         return;
       }
 
-      const userId = getRequestUserId(req);
       const variables = pluginVariablesService.getVariables(
         id,
         plugin.variables,
@@ -711,6 +740,7 @@ router.put(
     try {
       const id = req.params.id as string;
       const { variables } = req.body;
+      const userId = getRequestUserId(req);
 
       if (!variables || typeof variables !== 'object') {
         res
@@ -719,7 +749,7 @@ router.put(
         return;
       }
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
@@ -739,7 +769,16 @@ router.put(
         return;
       }
 
-      const userId = getRequestUserId(req);
+      const previousVariables = pluginVariablesService.getResolvedVariables(
+        id,
+        plugin.variables,
+        userId
+      );
+      const connectionChanged = Object.entries(validation.variables).some(
+        ([name, value]) =>
+          MODEL_DISCOVERY_VARIABLES.has(name) &&
+          previousVariables[name] !== value
+      );
       const success = pluginVariablesService.setVariables(
         id,
         validation.variables,
@@ -748,6 +787,9 @@ router.put(
       );
 
       if (success) {
+        if (connectionChanged) {
+          await refreshUserModels(plugin, userId, true);
+        }
         res.json({ success: true, data: true });
       } else {
         res
@@ -770,15 +812,18 @@ router.delete(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
+      const userId = getRequestUserId(req);
 
-      const plugin = pluginService.getPlugin(id);
+      const plugin = pluginService.getPlugin(id, userId);
       if (!plugin) {
         res.status(404).json({ success: false, error: 'Plugin not found' });
         return;
       }
 
-      const userId = getRequestUserId(req);
       const success = pluginVariablesService.deletePluginVariables(id, userId);
+      if (success) {
+        await refreshUserModels(plugin, userId, true);
+      }
 
       res.json({ success: true, data: success });
     } catch (error: unknown) {

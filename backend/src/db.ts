@@ -158,6 +158,8 @@ function initializeTables(): void {
       title TEXT NOT NULL,
       model TEXT NOT NULL,
       persona_id TEXT, -- Reference to persona used for this session
+      provider_type TEXT, -- Optional qualified Chat provider (ollama or plugin)
+      provider_id TEXT, -- Plugin ID when provider_type is plugin
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -292,6 +294,20 @@ function initializeTables(): void {
     )
   `);
 
+  // Per-user model discovery results. Provider endpoints and credentials are
+  // user-scoped, so discovered model IDs must not mutate the shared plugin
+  // manifest or leak between accounts.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plugin_discovered_models (
+      user_id TEXT DEFAULT 'default',
+      plugin_id TEXT NOT NULL,
+      models_json TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (user_id, plugin_id)
+    )
+  `);
+
   // Generated images table - for image gallery
   db.exec(`
     CREATE TABLE IF NOT EXISTS generated_images (
@@ -386,6 +402,7 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_plugin_credentials_plugin_id ON plugin_credentials(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_variables_user_id ON plugin_variables(user_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_variables_plugin_id ON plugin_variables(plugin_id);
+    CREATE INDEX IF NOT EXISTS idx_plugin_discovered_models_plugin_id ON plugin_discovered_models(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_user_id ON generated_images(user_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
   `);
@@ -486,6 +503,18 @@ function runMigrations(): void {
     }>;
 
     const existingSessionsColumns = sessionsTableInfo.map(col => col.name);
+
+    for (const column of [
+      { name: 'provider_type', type: 'TEXT' },
+      { name: 'provider_id', type: 'TEXT' },
+    ]) {
+      if (!existingSessionsColumns.includes(column.name)) {
+        logger.debug(`Adding column ${column.name} to sessions table`);
+        db.exec(
+          `ALTER TABLE sessions ADD COLUMN ${column.name} ${column.type}`
+        );
+      }
+    }
 
     // Add persona_id column to sessions table if it doesn't exist
     if (!existingSessionsColumns.includes('persona_id')) {

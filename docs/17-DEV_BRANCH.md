@@ -203,6 +203,28 @@ Our amazing community includes:
 
 See our [Contributing Guidelines](https://github.com/libre-webui/libre-webui/blob/main/CONTRIBUTORS.md#contribution-guidelines) for detailed instructions and our [Community Charter](./CHARTER) for the project's ethical guidelines and governance model.
 
+### Pull Request Checks
+
+Every pull request, including a stacked pull request into an intermediate
+feature or fix branch, runs the `Format & Lint` workflow. Its independent jobs
+check formatting, frontend and backend linting, TypeScript types, package and
+regression tests, and the Playwright browser suite. Failed browser runs upload
+their Playwright results for debugging.
+
+The `Electron Dev Build` workflow also packages macOS, Windows, and Linux
+artifacts. macOS pull-request builds retain the project's credential-free ad-hoc
+signature so the packaged application can be verified before upload. The
+pull-request workflow does not receive Developer ID or notarization credentials.
+
+Run the same application-level checks locally before opening a pull request:
+
+```bash
+npm run format:check
+npm run lint
+npm run test:package
+npm run test:e2e
+```
+
 ## ⚠️ Important Notes
 
 ### Data Safety

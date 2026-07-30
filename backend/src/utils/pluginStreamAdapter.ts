@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY } from './openAIResponsesAdapter.js';
+
 export interface PluginToolCall {
   id: string;
   name: string;
@@ -33,7 +35,11 @@ export type PluginStreamChunk =
   | { type: 'reasoning'; content: string }
   | { type: 'tool_call'; toolCall: PluginToolCall }
   | { type: 'usage'; usage: PluginStreamUsage }
-  | { type: 'done' };
+  | {
+      type: 'done';
+      doneReason?: string;
+      providerMetadata?: Record<string, unknown>;
+    };
 
 interface ToolCallDelta {
   index: number;
@@ -275,6 +281,341 @@ function parseOpenAIUsage(value: unknown): PluginStreamUsage | undefined {
     totalTokens !== undefined
     ? { promptTokens, completionTokens, totalTokens }
     : undefined;
+}
+
+function parseResponsesUsage(value: unknown): PluginStreamUsage | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const usage = value as Record<string, unknown>;
+  const promptTokens =
+    typeof usage.input_tokens === 'number' ? usage.input_tokens : undefined;
+  const completionTokens =
+    typeof usage.output_tokens === 'number' ? usage.output_tokens : undefined;
+  const totalTokens =
+    typeof usage.total_tokens === 'number'
+      ? usage.total_tokens
+      : promptTokens !== undefined || completionTokens !== undefined
+        ? (promptTokens || 0) + (completionTokens || 0)
+        : undefined;
+  return promptTokens !== undefined ||
+    completionTokens !== undefined ||
+    totalTokens !== undefined
+    ? { promptTokens, completionTokens, totalTokens }
+    : undefined;
+}
+
+function responsesItemKey(
+  payload: Record<string, unknown>,
+  item?: Record<string, unknown>
+): string {
+  if (typeof payload.item_id === 'string') return payload.item_id;
+  if (typeof item?.id === 'string') return item.id;
+  if (typeof payload.output_index === 'number') {
+    return `output-${payload.output_index}`;
+  }
+  return `output-${Date.now()}`;
+}
+
+export async function* streamOpenAIResponsesResponse(
+  response: Awaited<ReturnType<typeof fetch>>
+): AsyncGenerator<PluginStreamChunk, void, unknown> {
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Plugin API error: ${response.status} - ${errorText.slice(0, 200)}`
+    );
+  }
+  if (!response.body) {
+    throw new Error('No response body for streaming');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  const toolCalls = new Map<string, PluginToolCall>();
+  const reasoningItems = new Map<string, Record<string, unknown>>();
+  const outputItems = new Map<
+    string,
+    {
+      item: Record<string, unknown>;
+      order: number;
+      outputIndex?: number;
+    }
+  >();
+  let buffer = '';
+  let completed = false;
+  let emittedAssistantContent = false;
+  let outputItemOrder = 0;
+
+  const responseOutputContent = (output: unknown): string => {
+    if (!Array.isArray(output)) return '';
+    return output
+      .flatMap(rawItem => {
+        if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) {
+          return [];
+        }
+        const item = rawItem as Record<string, unknown>;
+        if (item.type !== 'message' || !Array.isArray(item.content)) return [];
+        return item.content.flatMap(rawBlock => {
+          if (
+            !rawBlock ||
+            typeof rawBlock !== 'object' ||
+            Array.isArray(rawBlock)
+          ) {
+            return [];
+          }
+          const block = rawBlock as Record<string, unknown>;
+          if (
+            (block.type === 'output_text' || block.type === 'text') &&
+            typeof block.text === 'string'
+          ) {
+            return [block.text];
+          }
+          if (block.type === 'refusal' && typeof block.refusal === 'string') {
+            return [block.refusal];
+          }
+          return [];
+        });
+      })
+      .join('');
+  };
+
+  const recordOutputItem = (
+    payload: Record<string, unknown>,
+    rawItem: unknown
+  ) => {
+    if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) {
+      return;
+    }
+    const item = rawItem as Record<string, unknown>;
+    const key = responsesItemKey(payload, item);
+    const existingOutputItem = outputItems.get(key);
+    outputItems.set(key, {
+      item: { ...item },
+      order: existingOutputItem?.order ?? outputItemOrder++,
+      outputIndex:
+        typeof payload.output_index === 'number'
+          ? payload.output_index
+          : existingOutputItem?.outputIndex,
+    });
+
+    if (item.type === 'reasoning') {
+      reasoningItems.set(key, { ...item });
+      return;
+    }
+    if (item.type !== 'function_call') return;
+
+    const existing = toolCalls.get(key);
+    toolCalls.set(key, {
+      id:
+        typeof item.call_id === 'string'
+          ? item.call_id
+          : typeof item.id === 'string'
+            ? item.id
+            : existing?.id || key,
+      name: typeof item.name === 'string' ? item.name : existing?.name || '',
+      arguments:
+        typeof item.arguments === 'string'
+          ? item.arguments
+          : existing?.arguments || '',
+    });
+  };
+
+  const emitTerminalChunks = function* (
+    usage?: PluginStreamUsage,
+    doneReason?: string
+  ): Generator<PluginStreamChunk> {
+    if (usage) yield { type: 'usage', usage };
+    const calls = [...toolCalls.values()];
+    if (reasoningItems.size > 0 && calls[0]) {
+      calls[0].providerMetadata = {
+        ...calls[0].providerMetadata,
+        openAIResponsesReasoningItems: [...reasoningItems.values()],
+      };
+    }
+    for (const toolCall of calls) {
+      yield { type: 'tool_call', toolCall };
+    }
+    const replayableOutputItems = [...outputItems.values()]
+      .sort(
+        (left, right) =>
+          (left.outputIndex ?? Number.MAX_SAFE_INTEGER) -
+            (right.outputIndex ?? Number.MAX_SAFE_INTEGER) ||
+          left.order - right.order
+      )
+      .map(({ item }) => item);
+    yield {
+      type: 'done',
+      ...(doneReason ? { doneReason } : {}),
+      ...(replayableOutputItems.length > 0
+        ? {
+            providerMetadata: {
+              [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]:
+                replayableOutputItems,
+            },
+          }
+        : {}),
+    };
+  };
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+
+        let payload: Record<string, unknown>;
+        try {
+          payload = JSON.parse(trimmed.slice(5).trim()) as Record<
+            string,
+            unknown
+          >;
+        } catch {
+          continue;
+        }
+
+        const providerError = pluginStreamError(payload);
+        if (providerError) {
+          throw new Error(`Plugin API error: ${providerError}`);
+        }
+
+        const eventType =
+          typeof payload.type === 'string' ? payload.type : undefined;
+        if (
+          eventType === 'response.failed' ||
+          eventType === 'response.error' ||
+          eventType === 'error'
+        ) {
+          throw new Error('Plugin API error: Responses stream failed');
+        }
+
+        if (
+          (eventType === 'response.output_text.delta' ||
+            eventType === 'response.refusal.delta') &&
+          typeof payload.delta === 'string' &&
+          payload.delta
+        ) {
+          emittedAssistantContent = true;
+          yield { type: 'content', content: payload.delta };
+          continue;
+        }
+
+        if (
+          (eventType === 'response.reasoning_summary_text.delta' ||
+            eventType === 'response.reasoning_summary.delta') &&
+          typeof payload.delta === 'string' &&
+          payload.delta
+        ) {
+          yield { type: 'reasoning', content: payload.delta };
+          continue;
+        }
+
+        if (
+          eventType === 'response.output_item.added' ||
+          eventType === 'response.output_item.done'
+        ) {
+          recordOutputItem(payload, payload.item);
+          continue;
+        }
+
+        if (
+          eventType === 'response.function_call_arguments.delta' &&
+          typeof payload.delta === 'string'
+        ) {
+          const key = responsesItemKey(payload);
+          const existing = toolCalls.get(key) || {
+            id: key,
+            name: '',
+            arguments: '',
+          };
+          existing.arguments += payload.delta;
+          toolCalls.set(key, existing);
+          continue;
+        }
+
+        if (
+          eventType === 'response.function_call_arguments.done' &&
+          typeof payload.arguments === 'string'
+        ) {
+          const key = responsesItemKey(payload);
+          const existing = toolCalls.get(key) || {
+            id: key,
+            name: '',
+            arguments: '',
+          };
+          existing.arguments = payload.arguments;
+          if (typeof payload.name === 'string') existing.name = payload.name;
+          toolCalls.set(key, existing);
+          continue;
+        }
+
+        if (
+          eventType === 'response.completed' ||
+          eventType === 'response.incomplete'
+        ) {
+          const responseRecord =
+            payload.response &&
+            typeof payload.response === 'object' &&
+            !Array.isArray(payload.response)
+              ? (payload.response as Record<string, unknown>)
+              : undefined;
+          if (Array.isArray(responseRecord?.output)) {
+            outputItems.clear();
+            reasoningItems.clear();
+            outputItemOrder = 0;
+            for (const [outputIndex, item] of responseRecord.output.entries()) {
+              recordOutputItem({ output_index: outputIndex }, item);
+            }
+          }
+          if (!emittedAssistantContent) {
+            const terminalContent = responseOutputContent(
+              responseRecord?.output
+            );
+            if (terminalContent) {
+              emittedAssistantContent = true;
+              yield { type: 'content', content: terminalContent };
+            }
+          }
+          const usage = parseResponsesUsage(responseRecord?.usage);
+          const incompleteDetails =
+            responseRecord?.incomplete_details &&
+            typeof responseRecord.incomplete_details === 'object' &&
+            !Array.isArray(responseRecord.incomplete_details)
+              ? (responseRecord.incomplete_details as Record<string, unknown>)
+              : undefined;
+          const incompleteReason =
+            eventType === 'response.incomplete' ||
+            responseRecord?.status === 'incomplete'
+              ? typeof incompleteDetails?.reason === 'string'
+                ? incompleteDetails.reason
+                : 'unknown'
+              : undefined;
+          for (const chunk of emitTerminalChunks(
+            usage,
+            incompleteReason ? `incomplete:${incompleteReason}` : undefined
+          )) {
+            yield chunk;
+          }
+          completed = true;
+        }
+      }
+    }
+
+    if (!completed) {
+      for (const chunk of emitTerminalChunks(
+        undefined,
+        'incomplete:stream_ended'
+      )) {
+        yield chunk;
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
 }
 
 function getAnthropicEventType(payload: unknown): string | null {

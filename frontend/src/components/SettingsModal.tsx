@@ -47,6 +47,12 @@ import { useAuthStore } from '@/store/authStore';
 import { EmbeddingModel, Theme } from '@/types';
 import { normalizeTheme } from '@/utils/theme';
 import {
+  chatModelOptionKey,
+  chatModelSelectionFromKey,
+  chatModelSelectionKeyForModels,
+  withUnavailableChatModel,
+} from '@/utils/chatModelSelection';
+import {
   preferencesApi,
   ollamaApi,
   authApi,
@@ -106,6 +112,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const {
     models,
     selectedModel,
+    selectedProviderType,
+    selectedProviderId,
     setSelectedModel,
     systemMessage,
     setSystemMessage,
@@ -135,7 +143,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const { t } = useTranslation();
   const settingsTitleId = React.useId();
 
-  const currentTaskModel = preferences.titleSettings?.taskModel || '';
+  const defaultSelection = {
+    model: selectedModel,
+    providerType: selectedProviderType,
+    providerId: selectedProviderId,
+  };
+  const defaultSelectorModels = withUnavailableChatModel(
+    models,
+    defaultSelection
+  );
+  const taskSelection = {
+    model: preferences.titleSettings?.taskModel || '',
+    providerType: preferences.titleSettings?.taskProviderType,
+    providerId: preferences.titleSettings?.taskProviderId,
+  };
+  const taskSelectorModels = withUnavailableChatModel(models, taskSelection);
+  const currentTaskModel =
+    taskSelection.model === AUTO_TITLE_CURRENT_MODEL
+      ? AUTO_TITLE_CURRENT_MODEL
+      : taskSelection.model
+        ? chatModelSelectionKeyForModels(taskSelectorModels, taskSelection)
+        : '';
   const autoTitleTaskModelOptions = [
     {
       value: '',
@@ -145,22 +173,22 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       value: AUTO_TITLE_CURRENT_MODEL,
       label: 'Use current running model',
     },
-    ...models.map(model => ({
-      value: model.name,
-      label: model.name,
+    ...taskSelectorModels.map(model => ({
+      value: chatModelOptionKey(model),
+      label: model.isLegacySelection
+        ? `${model.name} · provider not recorded${
+            model.isUnavailable ? ' (unavailable)' : ''
+          }`
+        : model.isPersona
+          ? `${model.personaName || model.name} (persona)`
+          : model.isPlugin
+            ? `${model.name} · ${model.pluginName || model.pluginId}${
+                model.isUnavailable ? ' (unavailable)' : ''
+              }`
+            : `${model.name} · Ollama${
+                model.isUnavailable ? ' (unavailable)' : ''
+              }`,
     })),
-    ...(![
-      '',
-      AUTO_TITLE_CURRENT_MODEL,
-      ...models.map(model => model.name),
-    ].includes(currentTaskModel) && currentTaskModel
-      ? [
-          {
-            value: currentTaskModel,
-            label: `${currentTaskModel} (current)`,
-          },
-        ]
-      : []),
   ];
 
   const [activeTab, setActiveTab] = useState('appearance');
@@ -483,6 +511,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         await queryClient.invalidateQueries({
           queryKey: ['plugin-credentials'],
         });
+        await loadPlugins();
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
         setShowApiKey(prev => ({ ...prev, [pluginId]: false }));
         setExpandedPluginId(null);
@@ -505,6 +534,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         await queryClient.invalidateQueries({
           queryKey: ['plugin-credentials'],
         });
+        await loadPlugins();
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
       } else {
         toast.error(response.error || 'Failed to remove API key');
@@ -800,9 +830,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newModel = event.target.value;
-    setSelectedModel(newModel);
-    handleUpdatePreferences({ defaultModel: newModel });
+    if (!event.target.value) {
+      useChatStore.setState({
+        selectedModel: '',
+        selectedProviderType: null,
+        selectedProviderId: null,
+      });
+      void handleUpdatePreferences({
+        defaultModel: '',
+        defaultProviderType: null,
+        defaultProviderId: null,
+      });
+      return;
+    }
+    const selection = chatModelSelectionFromKey(
+      defaultSelectorModels,
+      event.target.value
+    );
+    if (!selection) return;
+    setSelectedModel(
+      selection.model,
+      selection.providerType,
+      selection.providerId
+    );
+    setPreferences({
+      defaultModel: selection.model,
+      defaultProviderType: selection.providerType,
+      defaultProviderId: selection.providerId,
+    });
     toast.success('Default model updated');
   };
 
@@ -883,10 +938,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleAutoTitleTaskModelChange = (taskModel: string) => {
+    const selection =
+      taskModel && taskModel !== AUTO_TITLE_CURRENT_MODEL
+        ? chatModelSelectionFromKey(taskSelectorModels, taskModel)
+        : null;
     const newTitleSettings = {
       ...preferences.titleSettings,
       autoTitle: preferences.titleSettings?.autoTitle || false,
-      taskModel,
+      taskModel: selection?.model || taskModel,
+      taskProviderType: selection?.providerType || null,
+      taskProviderId:
+        selection?.providerType === 'plugin'
+          ? selection.providerId || null
+          : null,
     };
     setPreferences({ titleSettings: newTitleSettings });
     preferencesApi.updatePreferences({ titleSettings: newTitleSettings });
@@ -1037,6 +1101,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <SettingsModelsTab
             models={models}
             selectedModel={selectedModel}
+            selectedProviderType={selectedProviderType}
+            selectedProviderId={selectedProviderId}
             systemMessage={systemMessage}
             tempSystemMessage={tempSystemMessage}
             loading={loading}

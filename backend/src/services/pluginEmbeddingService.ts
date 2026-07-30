@@ -21,15 +21,18 @@ import {
   OllamaEmbeddingsResponse,
   Plugin,
 } from '../types/index.js';
-import { validatePluginModel } from '../utils/pluginValidation.js';
+import {
+  assertSafePluginEndpoint,
+  validatePluginModel,
+} from '../utils/pluginValidation.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
 
 export interface PluginEmbeddingServiceDependencies {
-  getAllPlugins(): Plugin[];
+  getAllPlugins(userId?: string): Plugin[];
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
-  validateEndpointUrl(endpoint: string): string | null;
+  validateEndpointUrl(endpoint: string): string;
 }
 
 export class PluginEmbeddingService {
@@ -40,7 +43,7 @@ export class PluginEmbeddingService {
     pluginId?: string,
     userId?: string
   ): Plugin | null {
-    const allPlugins = this.deps.getAllPlugins();
+    const allPlugins = this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       if (pluginId && plugin.id !== pluginId) {
@@ -87,7 +90,7 @@ export class PluginEmbeddingService {
       description?: string;
       fromEmbeddingCapability?: boolean;
     }> = [];
-    const allPlugins = this.deps.getAllPlugins();
+    const allPlugins = this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       const embeddingCapability = this.getEmbeddingCapability(plugin);
@@ -168,8 +171,11 @@ export class PluginEmbeddingService {
       headers[plugin.auth.header] = authValue;
     }
 
+    const processedEndpoint = getEmbeddingEndpoint(effectiveEndpoint);
+    assertSafePluginEndpoint(processedEndpoint, 'embedding endpoint');
+
     const response = await axios.post(
-      getEmbeddingEndpoint(effectiveEndpoint),
+      processedEndpoint,
       {
         model,
         input,

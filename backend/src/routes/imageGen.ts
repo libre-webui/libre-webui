@@ -26,6 +26,8 @@ import { createLogger } from '../utils/logger.js';
 const logger = createLogger('routes:image-gen');
 
 const router = express.Router();
+const getRequestUserId = (req: AuthenticatedRequest): string =>
+  req.user?.userId || 'default';
 
 // Rate limiter for image generation routes: 10 requests per minute
 const imageGenRateLimiter = rateLimit({
@@ -57,7 +59,9 @@ const galleryRateLimiter = rateLimit({
  */
 router.get('/models', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
-    const models = pluginService.getAvailableImageGenModels(req.user?.userId);
+    const models = pluginService.getAvailableImageGenModels(
+      getRequestUserId(req)
+    );
     res.json({
       success: true,
       data: models,
@@ -75,10 +79,13 @@ router.get('/models', optionalAuth, async (req: AuthenticatedRequest, res) => {
  * GET /api/image-gen/config/:pluginId
  * Get configuration for a specific image generation plugin
  */
-router.get('/config/:pluginId', async (req, res) => {
+router.get('/config/:pluginId', async (req: AuthenticatedRequest, res) => {
   try {
-    const { pluginId } = req.params;
-    const config = pluginService.getImageGenConfig(pluginId);
+    const pluginId = req.params.pluginId as string;
+    const config = pluginService.getImageGenConfig(
+      pluginId,
+      getRequestUserId(req)
+    );
 
     if (!config) {
       res.status(404).json({
@@ -109,7 +116,7 @@ router.get('/plugins', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
     const plugins = pluginService.getPluginsByCapability(
       'image',
-      req.user?.userId
+      getRequestUserId(req)
     );
     res.json({
       success: true,
@@ -210,6 +217,7 @@ router.post(
       }
 
       // Execute image generation request
+      const userId = getRequestUserId(req);
       const result = await pluginService.executeImageGenRequest(model, prompt, {
         size,
         quality,
@@ -217,11 +225,10 @@ router.post(
         n: normalizedImageCount,
         response_format,
         pluginId,
-        userId: req.user?.userId,
+        userId,
       });
 
       // Auto-save generated images to gallery
-      const userId = req.user?.userId || 'default';
       const savedImages: string[] = [];
 
       if (result.images && result.images.length > 0) {
@@ -290,7 +297,7 @@ router.get(
   optionalAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId || 'default';
+      const userId = getRequestUserId(req);
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
 
@@ -320,7 +327,7 @@ router.get(
   optionalAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId || 'default';
+      const userId = getRequestUserId(req);
       const imageId = req.params.imageId as string;
 
       const image = galleryService.getImage(imageId, userId);
@@ -357,7 +364,7 @@ router.delete(
   optionalAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user?.userId || 'default';
+      const userId = getRequestUserId(req);
       const imageId = req.params.imageId as string;
 
       const deleted = galleryService.deleteImage(imageId, userId);

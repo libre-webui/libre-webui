@@ -241,8 +241,8 @@ class StorageService {
       const transaction = db.transaction((session: ChatSession) => {
         // Insert or update session
         const sessionStmt = db.prepare(`
-          INSERT OR REPLACE INTO sessions (id, user_id, title, model, persona_id, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          INSERT OR REPLACE INTO sessions (id, user_id, title, model, persona_id, provider_type, provider_id, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
 
         // Encrypt sensitive session data
@@ -254,6 +254,8 @@ class StorageService {
           encryptedTitle,
           session.model,
           session.personaId || null,
+          session.providerType || null,
+          session.providerId || null,
           session.createdAt,
           session.updatedAt
         );

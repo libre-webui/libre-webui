@@ -55,7 +55,14 @@ export interface ChatMessage {
   siblingCount?: number; // Total number of variants (including this one)
 }
 
-export interface ChatSession {
+export type ChatProviderType = 'ollama' | 'plugin';
+
+export interface ChatProviderSelection {
+  providerType?: ChatProviderType | null;
+  providerId?: string | null;
+}
+
+export interface ChatSession extends ChatProviderSelection {
   id: string;
   title: string;
   messages: ChatMessage[];
@@ -123,10 +130,14 @@ export interface TTSSettings {
 export interface TitleSettings {
   autoTitle: boolean;
   taskModel: string;
+  taskProviderType?: ChatProviderType | null;
+  taskProviderId?: string | null;
 }
 
 export interface UserPreferences {
   defaultModel: string;
+  defaultProviderType?: ChatProviderType | null;
+  defaultProviderId?: string | null;
   theme: {
     mode: 'light' | 'dark' | 'ophelia';
     adaptToAccent?: boolean;
@@ -168,6 +179,7 @@ export interface OllamaChatMessage {
   images?: string[];
   tool_calls?: Record<string, unknown>[];
   tool_name?: string;
+  providerMetadata?: Record<string, unknown>;
 }
 
 export interface OllamaChatRequest {
@@ -190,6 +202,7 @@ export interface OllamaChatResponse {
     thinking?: string;
     images?: string[] | null;
     tool_calls?: Record<string, unknown>[];
+    providerMetadata?: Record<string, unknown>;
   };
   done: boolean;
   done_reason?: string;
@@ -393,6 +406,8 @@ export interface PluginCapabilities {
   };
 }
 
+export type PluginApiMode = 'chat_completions' | 'responses';
+
 export type PluginVariableType = 'string' | 'number' | 'boolean' | 'select';
 
 export interface PluginVariableDefinition {
@@ -413,6 +428,9 @@ export interface Plugin {
   name: string;
   type: PluginType; // Primary type for backward compatibility
   endpoint: string; // Primary endpoint for backward compatibility
+  api_mode?: PluginApiMode; // Request/response protocol for OpenAI-compatible providers
+  base_url?: string; // Optional API root combined with api_path
+  api_path?: string; // Optional path relative to base_url
   auth: PluginAuthConfig;
   model_map: string[]; // Primary model map for backward compatibility
   capabilities?: PluginCapabilities; // Multi-capability support
@@ -492,11 +510,22 @@ export interface PluginResponse {
   object: string;
   created: number;
   model: string;
+  providerMetadata?: Record<string, unknown>;
   choices: {
     index: number;
     message: {
       role: string;
       content: string;
+      reasoning_content?: string;
+      tool_calls?: Array<{
+        id: string;
+        type: 'function';
+        function: {
+          name: string;
+          arguments: string;
+        };
+        providerMetadata?: Record<string, unknown>;
+      }>;
     };
     finish_reason: string;
   }[];

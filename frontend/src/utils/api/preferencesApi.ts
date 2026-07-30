@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { ApiResponse, UserPreferences } from '@/types';
+import type { ApiResponse, ChatProviderType, UserPreferences } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
 import { api, createDemoResponse } from './client';
 import {
@@ -43,13 +43,23 @@ export const preferencesApi = {
     return api.put('/preferences', updates).then(res => res.data);
   },
 
-  setDefaultModel: (model: string): Promise<ApiResponse<UserPreferences>> => {
+  setDefaultModel: (
+    model: string,
+    providerType?: ChatProviderType | null,
+    providerId?: string | null
+  ): Promise<ApiResponse<UserPreferences>> => {
     if (isDemoMode()) {
-      return createDemoResponse(updateDemoPreferences({ defaultModel: model }));
+      return createDemoResponse(
+        updateDemoPreferences({
+          defaultModel: model,
+          defaultProviderType: providerType,
+          defaultProviderId: providerType === 'plugin' ? providerId : null,
+        })
+      );
     }
 
     return api
-      .put('/preferences/default-model', { model })
+      .put('/preferences/default-model', { model, providerType, providerId })
       .then(res => res.data);
   },
 

@@ -24,6 +24,10 @@ import { UserService } from '@/services/userService';
 import toast from 'react-hot-toast';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
+import {
+  chatModelSelectionFromModel,
+  findChatModelForSelection,
+} from '@/utils/chatModelSelection';
 
 const logger = createLogger('initialize');
 
@@ -111,27 +115,48 @@ export const useInitializeApp = () => {
       const fallback = chatModels[0] || models[0];
 
       // Check if we already have a selected model from backend preferences
-      const { selectedModel: currentSelected } = useChatStore.getState();
+      const {
+        selectedModel: currentSelected,
+        selectedProviderType,
+        selectedProviderId,
+      } = useChatStore.getState();
 
       if (currentSelected) {
-        // Verify the selected model from backend is still available
-        const availableModelNames = models.map(m => m.name);
+        const availableSelection = findChatModelForSelection(models, {
+          model: currentSelected,
+          providerType: selectedProviderType,
+          providerId: selectedProviderId,
+        });
 
-        if (!availableModelNames.includes(currentSelected)) {
-          // Selected model no longer available, use first non-embedding model
+        if (
+          !availableSelection &&
+          selectedProviderType !== 'ollama' &&
+          selectedProviderType !== 'plugin'
+        ) {
+          // Only legacy name-only preferences retain the automatic fallback.
+          const fallbackSelection = chatModelSelectionFromModel(fallback);
           logger.debug(
-            'Selected model not available, falling back to:',
-            fallback.name
+            'Legacy selected model not available, falling back to:',
+            fallbackSelection.model
           );
-          setSelectedModel(fallback.name);
+          setSelectedModel(
+            fallbackSelection.model,
+            fallbackSelection.providerType,
+            fallbackSelection.providerId
+          );
         }
       } else {
         // No model selected, use first non-embedding model
+        const fallbackSelection = chatModelSelectionFromModel(fallback);
         logger.debug(
           'No model selected, using first available:',
-          fallback.name
+          fallbackSelection.model
         );
-        setSelectedModel(fallback.name);
+        setSelectedModel(
+          fallbackSelection.model,
+          fallbackSelection.providerType,
+          fallbackSelection.providerId
+        );
       }
     }
   }, [models, setSelectedModel]);

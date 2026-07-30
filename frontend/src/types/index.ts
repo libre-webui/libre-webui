@@ -67,10 +67,20 @@ export interface ChatSession {
   title: string;
   messages: ChatMessage[];
   model: string;
+  providerType?: ChatProviderType | null;
+  providerId?: string | null;
   createdAt: number;
   updatedAt: number;
-  personaId?: string;
+  personaId?: string | null;
   isPrivate?: boolean; // Private sessions are not saved to backend
+}
+
+export type ChatProviderType = 'ollama' | 'plugin';
+
+export interface ChatModelSelection {
+  model: string;
+  providerType?: ChatProviderType | null;
+  providerId?: string | null;
 }
 
 export interface OllamaModel {
@@ -97,6 +107,8 @@ export interface OllamaModel {
   isPersona?: boolean;
   personaName?: string;
   personaDescription?: string;
+  isLegacySelection?: boolean;
+  isUnavailable?: boolean;
 }
 
 export interface GenerationOptions {
@@ -203,11 +215,15 @@ export interface GeneratedImage {
 export interface TitleSettings {
   autoTitle: boolean;
   taskModel: string;
+  taskProviderType?: ChatProviderType | null;
+  taskProviderId?: string | null;
 }
 
 export interface UserPreferences {
   theme: Theme;
   defaultModel: string;
+  defaultProviderType?: ChatProviderType | null;
+  defaultProviderId?: string | null;
   systemMessage: string;
   generationOptions: GenerationOptions;
   embeddingSettings: {
@@ -295,6 +311,8 @@ export interface PluginAuthConfig {
   key_env: string; // Environment variable name
 }
 
+export type PluginApiMode = 'chat_completions' | 'responses';
+
 export type PluginVariableType = 'string' | 'number' | 'boolean' | 'select';
 
 export interface PluginVariableDefinition {
@@ -315,6 +333,9 @@ export interface Plugin {
   name: string;
   type: 'completion' | 'embedding' | 'chat' | 'tts' | 'image';
   endpoint: string;
+  api_mode?: PluginApiMode;
+  base_url?: string;
+  api_path?: string;
   auth: PluginAuthConfig;
   model_map: string[];
   variables?: PluginVariableDefinition[];

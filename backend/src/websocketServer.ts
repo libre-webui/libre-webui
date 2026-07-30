@@ -41,6 +41,7 @@ import {
 } from './utils/websocketMessages.js';
 import { verifyToken } from './utils/jwt.js';
 import { OllamaChatRequest, ChatSession } from './types/index.js';
+import { normalizeChatProviderSelection } from './utils/chatProviderSelection.js';
 
 const chatRequestService = new ChatRequestService({
   chatGenerationService,
@@ -100,8 +101,13 @@ export function registerWebSocketServer(server: Server): void {
             originalMessageId,
             isPrivate,
             model: privateModel,
+            providerType,
+            providerId,
             messageHistory,
           } = message.data;
+          const requestProviderSelection = isPrivate
+            ? normalizeChatProviderSelection({ providerType, providerId })
+            : undefined;
 
           logger.debug(
             'Backend: Received chat_stream for session:',
@@ -129,6 +135,7 @@ export function registerWebSocketServer(server: Server): void {
               title: 'Private Chat',
               createdAt: Date.now(),
               updatedAt: Date.now(),
+              ...requestProviderSelection,
             };
           } else {
             // Get session with user authentication
@@ -218,6 +225,8 @@ export function registerWebSocketServer(server: Server): void {
               session,
               userId,
               options,
+              providerType: isPrivate ? providerType : undefined,
+              providerId: isPrivate ? providerId : undefined,
               isPrivate,
               persistedMessages,
               messageHistory: messageHistory || [],
@@ -264,7 +273,8 @@ export function registerWebSocketServer(server: Server): void {
                     actualModelName,
                     pluginMessages,
                     mergedOptions,
-                    userId
+                    userId,
+                    activePlugin.id
                   ),
                   messageId: assistantMessageId,
                 });
