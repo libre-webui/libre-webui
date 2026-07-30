@@ -50,8 +50,7 @@
       "name": "endpoint",
       "type": "string",
       "label": "API Endpoint",
-      "description": "Override the default API endpoint URL.",
-      "default": "https://models.inference.ai.azure.com/chat/completions"
+      "description": "Optional full endpoint override. Leave blank to use the bundled GitHub Models endpoint."
     },
     {
       "name": "temperature",

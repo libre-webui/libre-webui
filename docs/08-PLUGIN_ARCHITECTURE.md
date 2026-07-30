@@ -75,6 +75,21 @@ Many providers expose an OpenAI-compatible API. A plugin can define:
 
 If a provider does not support live model discovery, Libre WebUI uses the configured model map.
 
+### Capability-specific endpoints
+
+Chat endpoint overrides are isolated from image, embedding, and text-to-speech
+capabilities. Multi-capability plugins can expose `image_endpoint`,
+`embedding_endpoint`, or `tts_endpoint` variables (or name another variable
+with `config.endpoint_variable`). Leaving those fields blank uses the
+capability endpoint declared by the plugin; a generic Chat `endpoint` is never
+used as a capability override.
+
+The bundled GitHub Models plugin inherits its current
+`models.github.ai/inference/chat/completions` endpoint when its optional
+override is blank. The Hugging Face plugin uses task-specific
+`hf-inference/models/{model}` routes and payloads for embeddings, images, and
+text-to-speech rather than sending those requests to its Chat endpoint.
+
 ### Endpoint Overrides
 
 The `endpoint` variable is the complete request URL, including the operation

@@ -165,7 +165,11 @@ export function applyModelEndpointTemplate(
   endpoint: string,
   model: string
 ): string {
-  return endpoint.replace('{model}', encodeURIComponent(model));
+  const encodedModelPath = model
+    .split('/')
+    .map(segment => encodeURIComponent(segment))
+    .join('/');
+  return endpoint.replace('{model}', encodedModelPath);
 }
 
 export function buildPluginAuthHeaders(

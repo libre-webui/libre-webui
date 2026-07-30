@@ -19,6 +19,7 @@ import axios from 'axios';
 import { ImageGenConfig, ImageGenResponse, Plugin } from '../types/index.js';
 import {
   assertSafePluginEndpoint,
+  applyModelEndpointTemplate,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 
@@ -133,9 +134,15 @@ export class PluginImageGenerationService {
     }
 
     const imageVars = this.deps.getPluginVariables(plugin, options.userId);
-    if (imageVars.endpoint && typeof imageVars.endpoint === 'string') {
-      const validated = this.deps.validateEndpointUrl(imageVars.endpoint);
-      if (validated) endpoint = validated;
+    const endpointVariable =
+      imageConfig?.endpoint_variable ||
+      (plugin.type === 'image' ? 'endpoint' : 'image_endpoint');
+    const endpointOverride = imageVars[endpointVariable];
+    if (
+      typeof endpointOverride === 'string' &&
+      endpointOverride.trim().length > 0
+    ) {
+      endpoint = this.deps.validateEndpointUrl(endpointOverride.trim());
     }
 
     const noAuthRequired =
@@ -182,6 +189,10 @@ export class PluginImageGenerationService {
       payload.style = options.style || imageConfig?.default_style;
     }
 
+    endpoint =
+      plugin.id === 'huggingface'
+        ? applyModelEndpointTemplate(endpoint, model)
+        : endpoint;
     const baseUrl = parseImageEndpoint(endpoint);
 
     if (plugin.id === 'comfyui' || endpoint.includes('/prompt')) {
@@ -193,6 +204,30 @@ export class PluginImageGenerationService {
     }
 
     try {
+      if (plugin.id === 'huggingface') {
+        const [width, height] = String(payload.size)
+          .split('x')
+          .map(value => Number.parseInt(value, 10));
+        const response = await axios.post(
+          endpoint,
+          {
+            inputs: prompt,
+            ...(Number.isInteger(width) && Number.isInteger(height)
+              ? { parameters: { width, height } }
+              : {}),
+          },
+          {
+            headers,
+            timeout: 120000,
+            responseType: 'arraybuffer',
+          }
+        );
+        return {
+          images: [{ b64_json: Buffer.from(response.data).toString('base64') }],
+          model,
+        };
+      }
+
       const response = await axios.post(endpoint, payload, {
         headers,
         timeout: 120000,
