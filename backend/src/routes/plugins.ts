@@ -35,7 +35,10 @@ import {
   safeCleanupFile,
   type MulterRequest,
 } from '../utils/pluginUpload.js';
-import { validatePluginVariables } from '../utils/pluginVariableValidation.js';
+import {
+  validatePluginVariables,
+  validatePluginVariablesToUnset,
+} from '../utils/pluginVariableValidation.js';
 import type { AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -710,9 +713,13 @@ router.put(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const { variables } = req.body;
+      const { variables, unset } = req.body ?? {};
 
-      if (!variables || typeof variables !== 'object') {
+      if (
+        !variables ||
+        typeof variables !== 'object' ||
+        Array.isArray(variables)
+      ) {
         res
           .status(400)
           .json({ success: false, error: 'Variables object is required' });
@@ -739,12 +746,22 @@ router.put(
         return;
       }
 
+      const unsetValidation = validatePluginVariablesToUnset(
+        plugin.variables,
+        unset
+      );
+      if (!unsetValidation.success) {
+        res.status(400).json({ success: false, error: unsetValidation.error });
+        return;
+      }
+
       const userId = getRequestUserId(req);
       const success = pluginVariablesService.setVariables(
         id,
         validation.variables,
         plugin.variables,
-        userId
+        userId,
+        unsetValidation.variables
       );
 
       if (success) {

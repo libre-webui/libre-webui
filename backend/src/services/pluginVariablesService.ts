@@ -176,7 +176,8 @@ class PluginVariablesService {
     pluginId: string,
     variables: Record<string, string | number | boolean>,
     schema: PluginVariableDefinition[],
-    userId?: string
+    userId?: string,
+    variablesToUnset: string[] = []
   ): boolean {
     const effectiveUserId = userId || 'default';
     const db = getDatabaseSafe();
@@ -188,8 +189,17 @@ class PluginVariablesService {
 
     try {
       const now = Date.now();
+      const schemaNames = new Set(schema.map(definition => definition.name));
 
       const transaction = db.transaction(() => {
+        for (const name of new Set(variablesToUnset)) {
+          if (!schemaNames.has(name)) continue;
+
+          db.prepare(
+            'DELETE FROM plugin_variables WHERE plugin_id = ? AND user_id = ? AND variable_name = ?'
+          ).run(pluginId, effectiveUserId, name);
+        }
+
         for (const [name, value] of Object.entries(variables)) {
           const def = schema.find(d => d.name === name);
           if (!def) continue;

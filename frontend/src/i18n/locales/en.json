@@ -453,6 +453,10 @@
       "apiKeyConfigured": "API key configured",
       "apiKeyPlaceholder": "Enter your API key...",
       "saveApiKey": "Save API Key",
+      "showApiKey": "Show API key",
+      "hideApiKey": "Hide API key",
+      "configure": "Configure",
+      "providerSettings": "Provider settings",
       "apiKey": {
         "title": "API Key",
         "placeholder": "Enter API key",
@@ -471,6 +475,8 @@
     "generation": {
       "title": "Generation Options",
       "description": "Configure how the AI generates responses",
+      "advancedSettings": "Advanced generation settings",
+      "advancedSettingsDescription": "Sampling, token limits, context, penalties, and stop sequences",
       "coreParameters": "Core Parameters",
       "temperature": "Temperature",
       "temperatureDescription": "Controls randomness. Lower values are more focused, higher values more creative.",
@@ -1288,7 +1294,17 @@
       "saveFailed": "Failed to save variables",
       "resetDefaults": "Reset to Defaults",
       "reset": "Variables reset to defaults",
-      "sensitiveSet": "Value is set (enter new value to change)"
+      "resetFailed": "Failed to reset variables",
+      "sensitiveSet": "Value is set (enter new value to change)",
+      "showValue": "Show {{label}} value",
+      "hideValue": "Hide {{label}} value",
+      "connection": "Connection",
+      "advanced": "Advanced parameters",
+      "inherited": "Use provider default",
+      "inheritedValue": "Use provider default ({{value}})",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "required": "A value is required"
     }
   },
   "huggingface": {

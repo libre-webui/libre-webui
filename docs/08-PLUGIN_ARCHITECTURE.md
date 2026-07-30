@@ -75,6 +75,23 @@ Many providers expose an OpenAI-compatible API. A plugin can define:
 
 If a provider does not support live model discovery, Libre WebUI uses the configured model map.
 
+## Provider Settings and Inheritance
+
+Open **Settings → Plugins** and choose **Configure** for a provider. Provider
+panels are closed by default. Connection overrides appear first, while sampling
+and other specialist controls remain under **Advanced parameters**.
+
+An empty field means “use the provider default.” Libre WebUI does not copy
+manifest defaults into a user's saved settings merely because the panel was
+opened. Saving a value creates a user-scoped override; clearing a saved
+non-sensitive value removes that override and restores the bundled default.
+**Reset to Defaults** removes all user-scoped variable overrides for that
+provider. A blank masked sensitive field is left unchanged.
+
+This distinction is important for custom endpoints: leave the endpoint blank to
+inherit the plugin's bundled URL, or enter a complete compatible URL to override
+it for the current user.
+
 ## Plugins in Work
 
 Work can use active `completion` and `chat` plugins in addition to Ollama and

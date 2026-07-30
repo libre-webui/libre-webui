@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { ChangeEvent, RefObject } from 'react';
+import { useId, type ChangeEvent, type RefObject } from 'react';
 import {
   Check,
   ChevronDown,
@@ -341,6 +341,9 @@ function PluginListItem({
 }: PluginListItemProps) {
   const { t } = useTranslation();
   const requiresApiKey = Boolean(plugin.auth?.header || plugin.auth?.key_env);
+  const hasVariables = Boolean(plugin.variables?.length);
+  const hasConfiguration = requiresApiKey || hasVariables;
+  const configurationPanelId = useId();
 
   return (
     <div className='p-4'>
@@ -380,15 +383,24 @@ function PluginListItem({
         </div>
 
         <div className='flex items-center space-x-1 flex-shrink-0'>
-          {requiresApiKey && (
+          {hasConfiguration && (
             <Button
               variant='ghost'
               size='sm'
               onClick={onExpand}
-              title='Configure API key'
+              aria-expanded={expanded}
+              aria-controls={configurationPanelId}
+              title={t('settings.plugins.configure')}
               className={hasApiKey ? 'text-green-600' : 'text-ink'}
             >
-              <Key className='h-4 w-4' />
+              {requiresApiKey ? (
+                <Key className='h-4 w-4' />
+              ) : (
+                <Sliders className='h-4 w-4' />
+              )}
+              <span className='hidden sm:inline'>
+                {t('settings.plugins.configure')}
+              </span>
               {expanded ? (
                 <ChevronUp className='h-3 w-3' />
               ) : (
@@ -437,30 +449,34 @@ function PluginListItem({
         </div>
       </div>
 
-      {requiresApiKey && expanded && (
-        <ApiKeyPanel
-          plugin={plugin}
-          hasApiKey={hasApiKey}
-          apiKey={apiKey}
-          showApiKey={showApiKey}
-          savingApiKey={savingApiKey}
-          onApiKeyChange={onApiKeyChange}
-          onShowApiKeyChange={onShowApiKeyChange}
-          onSaveApiKey={onSaveApiKey}
-          onDeleteApiKey={onDeleteApiKey}
-        />
-      )}
+      {expanded && hasConfiguration && (
+        <div id={configurationPanelId}>
+          {requiresApiKey && (
+            <ApiKeyPanel
+              plugin={plugin}
+              hasApiKey={hasApiKey}
+              apiKey={apiKey}
+              showApiKey={showApiKey}
+              savingApiKey={savingApiKey}
+              onApiKeyChange={onApiKeyChange}
+              onShowApiKeyChange={onShowApiKeyChange}
+              onSaveApiKey={onSaveApiKey}
+              onDeleteApiKey={onDeleteApiKey}
+            />
+          )}
 
-      {plugin.variables && plugin.variables.length > 0 && (
-        <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-50 rounded-lg border border-gray-200 dark:border-dark-300'>
-          <div className='flex items-center gap-2 mb-2'>
-            <Sliders className='h-4 w-4 text-gray-500' />
-            <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-              {t('settings.plugins.variables', 'Variables')} (
-              {plugin.variables.length})
-            </h6>
-          </div>
-          <PluginVariablesEditor plugin={plugin} />
+          {hasVariables && (
+            <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-50 rounded-lg border border-gray-200 dark:border-dark-300'>
+              <div className='flex items-center gap-2 mb-2'>
+                <Sliders className='h-4 w-4 text-gray-500' />
+                <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  {t('settings.plugins.providerSettings')} (
+                  {plugin.variables?.length})
+                </h6>
+              </div>
+              <PluginVariablesEditor plugin={plugin} />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -491,6 +507,7 @@ function ApiKeyPanel({
   onDeleteApiKey,
 }: ApiKeyPanelProps) {
   const { t } = useTranslation();
+  const apiKeyInputId = useId();
 
   return (
     <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-50 rounded-lg border border-gray-200 dark:border-dark-300'>
@@ -540,7 +557,11 @@ function ApiKeyPanel({
       ) : (
         <div className='space-y-3'>
           <div className='relative'>
+            <label htmlFor={apiKeyInputId} className='sr-only'>
+              {t('settings.plugins.apiKey.title')}
+            </label>
             <input
+              id={apiKeyInputId}
               type={showApiKey ? 'text' : 'password'}
               value={apiKey}
               onChange={event => onApiKeyChange(event.target.value)}
@@ -550,7 +571,14 @@ function ApiKeyPanel({
             <button
               type='button'
               onClick={() => onShowApiKeyChange(!showApiKey)}
-              className='absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
+              aria-controls={apiKeyInputId}
+              aria-label={
+                showApiKey
+                  ? t('settings.plugins.hideApiKey')
+                  : t('settings.plugins.showApiKey')
+              }
+              disabled={savingApiKey}
+              className='absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50'
             >
               {showApiKey ? (
                 <EyeOff className='h-4 w-4' />

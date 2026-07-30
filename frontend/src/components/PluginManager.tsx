@@ -32,6 +32,14 @@ import {
 } from '@/components/icons';
 import { ChevronDown, RotateCcw, Save, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/utils';
+import {
+  buildPluginVariableUpdate,
+  getInheritedPluginVariableValue,
+  initializePluginVariableInputs,
+  isUrlPluginVariable,
+  splitPluginVariableDefinitions,
+  type PluginVariableInput,
+} from '@/utils/pluginVariableOverrides';
 import toast from 'react-hot-toast';
 import { HuggingFaceModelBrowser } from './HuggingFaceModelBrowser';
 
@@ -47,17 +55,26 @@ export const PluginVariablesEditor: React.FC<{
     resetPluginVariables,
   } = usePluginStore();
   const [localValues, setLocalValues] = useState<
-    Record<string, string | number | boolean>
+    Record<string, PluginVariableInput>
   >({});
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const [revealedFields, setRevealedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [dirtyFields, setDirtyFields] = useState<Set<string>>(new Set());
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const advancedPanelId = React.useId();
+  const fieldIdPrefix = React.useId();
 
   const schema = useMemo(() => plugin.variables || [], [plugin.variables]);
   const storedVars = useMemo(
     () => pluginVariables[plugin.id] || {},
     [pluginVariables, plugin.id]
+  );
+  const variableSections = useMemo(
+    () => splitPluginVariableDefinitions(schema),
+    [schema]
   );
 
   // Load variables on mount
@@ -76,18 +93,8 @@ export const PluginVariablesEditor: React.FC<{
       PluginVariableValue
     >;
     if (!(Object.keys(vars).length === 0 && initialized)) {
-      const values: Record<string, string | number | boolean> = {};
-      for (const def of schema) {
-        const stored = vars[def.name];
-        if (stored?.has_value && !stored.is_sensitive) {
-          values[def.name] = stored.value;
-        } else {
-          values[def.name] =
-            def.default ??
-            (def.type === 'boolean' ? false : def.type === 'number' ? 0 : '');
-        }
-      }
-      setLocalValues(values);
+      setLocalValues(initializePluginVariableInputs(schema, vars));
+      setDirtyFields(new Set());
       setInitialized(true);
     }
     setPrevStoredVarsJson(storedVarsJson);
@@ -97,11 +104,33 @@ export const PluginVariablesEditor: React.FC<{
     // Validate fields before saving
     const errors: Record<string, string> = {};
     for (const def of schema) {
+      if (!dirtyFields.has(def.name)) continue;
+
       const val = localValues[def.name];
+      const isBlank = typeof val === 'string' && val.trim().length === 0;
+      const storedVar = storedVars[def.name] as PluginVariableValue | undefined;
+      const inheritedValue = getInheritedPluginVariableValue(
+        def,
+        plugin.endpoint
+      );
+
       if (
-        def.name === 'endpoint' &&
+        isBlank &&
+        def.required &&
+        inheritedValue === undefined &&
+        !(def.sensitive && storedVar?.has_value)
+      ) {
+        errors[def.name] = t(
+          'pluginManager.variables.required',
+          'A value is required'
+        );
+        continue;
+      }
+
+      if (
+        isUrlPluginVariable(def.name) &&
         typeof val === 'string' &&
-        val.length > 0
+        !isBlank
       ) {
         try {
           new URL(val);
@@ -112,7 +141,7 @@ export const PluginVariablesEditor: React.FC<{
           );
         }
       }
-      if (def.type === 'number') {
+      if (def.type === 'number' && !isBlank) {
         const num = Number(val);
         if (def.min !== undefined && num < def.min) {
           errors[def.name] = `Min: ${def.min}`;
@@ -135,10 +164,42 @@ export const PluginVariablesEditor: React.FC<{
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
+    const update = buildPluginVariableUpdate(
+      schema,
+      localValues,
+      dirtyFields,
+      storedVars
+    );
+    const submittedDirtyFields = new Set(dirtyFields);
+
     setSaving(true);
-    const success = await updatePluginVariables(plugin.id, localValues);
+    const success = await updatePluginVariables(
+      plugin.id,
+      update.variables,
+      update.unset
+    );
     setSaving(false);
     if (success) {
+      setLocalValues(current => {
+        const next = { ...current };
+        for (const def of schema) {
+          if (def.sensitive && submittedDirtyFields.has(def.name)) {
+            next[def.name] = '';
+          }
+        }
+        return next;
+      });
+      setRevealedFields(current => {
+        const next = new Set(current);
+        for (const def of schema) {
+          if (def.sensitive && submittedDirtyFields.has(def.name)) {
+            next.delete(def.name);
+          }
+        }
+        return next;
+      });
+      setDirtyFields(new Set());
+      setFieldErrors({});
       toast.success(t('pluginManager.variables.saved', 'Variables saved'));
     } else {
       toast.error(
@@ -148,18 +209,34 @@ export const PluginVariablesEditor: React.FC<{
   };
 
   const handleReset = async () => {
-    await resetPluginVariables(plugin.id);
-    // Reset local values to defaults
-    const defaults: Record<string, string | number | boolean> = {};
-    for (const def of schema) {
-      defaults[def.name] =
-        def.default ??
-        (def.type === 'boolean' ? false : def.type === 'number' ? 0 : '');
+    setResetting(true);
+    const success = await resetPluginVariables(plugin.id);
+    setResetting(false);
+    if (!success) {
+      toast.error(
+        t('pluginManager.variables.resetFailed', 'Failed to reset variables')
+      );
+      return;
     }
-    setLocalValues(defaults);
+
+    setLocalValues(initializePluginVariableInputs(schema, {}));
+    setDirtyFields(new Set());
+    setFieldErrors({});
+    setRevealedFields(new Set());
     toast.success(
       t('pluginManager.variables.reset', 'Variables reset to defaults')
     );
+  };
+
+  const updateLocalValue = (name: string, value: PluginVariableInput) => {
+    setLocalValues(prev => ({ ...prev, [name]: value }));
+    setDirtyFields(prev => new Set(prev).add(name));
+    setFieldErrors(prev => {
+      if (!prev[name]) return prev;
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
   };
 
   const toggleReveal = (name: string) => {
@@ -171,11 +248,41 @@ export const PluginVariablesEditor: React.FC<{
     });
   };
 
+  const getFieldIds = (def: PluginVariableDefinition) => {
+    const fieldIndex = schema.indexOf(def);
+    const controlId = `${fieldIdPrefix}-${fieldIndex}`;
+    return {
+      controlId,
+      descriptionId: `${controlId}-description`,
+      errorId: `${controlId}-error`,
+    };
+  };
+
   const renderField = (def: PluginVariableDefinition) => {
     const value = localValues[def.name];
     const isSensitive = def.sensitive ?? false;
     const isRevealed = revealedFields.has(def.name);
     const storedVar = storedVars[def.name] as PluginVariableValue | undefined;
+    const { controlId, descriptionId, errorId } = getFieldIds(def);
+    const hasError = Boolean(fieldErrors[def.name]);
+    const describedBy =
+      [
+        def.description ? descriptionId : undefined,
+        hasError ? errorId : undefined,
+      ]
+        .filter(Boolean)
+        .join(' ') || undefined;
+    const inheritedDefault = getInheritedPluginVariableValue(
+      def,
+      plugin.endpoint
+    );
+    const inheritedLabel =
+      inheritedDefault !== undefined
+        ? t('pluginManager.variables.inheritedValue', {
+            defaultValue: 'Use provider default ({{value}})',
+            value: String(inheritedDefault),
+          })
+        : t('pluginManager.variables.inherited', 'Use provider default');
 
     const inputClasses = cn(
       'w-full px-3 py-2 rounded-lg border text-sm',
@@ -188,33 +295,42 @@ export const PluginVariablesEditor: React.FC<{
     switch (def.type) {
       case 'boolean':
         return (
-          <label className='flex items-center gap-2 cursor-pointer'>
-            <input
-              type='checkbox'
-              checked={Boolean(value ?? false)}
-              onChange={e =>
-                setLocalValues(prev => ({
-                  ...prev,
-                  [def.name]: e.target.checked,
-                }))
-              }
-              className='rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500'
-            />
-            <span className='text-sm text-gray-700 dark:text-gray-300'>
-              {def.label}
-            </span>
-          </label>
+          <select
+            id={controlId}
+            value={value === '' ? '' : String(Boolean(value))}
+            onChange={event =>
+              updateLocalValue(
+                def.name,
+                event.target.value === '' ? '' : event.target.value === 'true'
+              )
+            }
+            className={inputClasses}
+            aria-invalid={hasError}
+            aria-describedby={describedBy}
+            disabled={saving || resetting}
+          >
+            <option value=''>{inheritedLabel}</option>
+            <option value='true'>
+              {t('pluginManager.variables.enabled', 'Enabled')}
+            </option>
+            <option value='false'>
+              {t('pluginManager.variables.disabled', 'Disabled')}
+            </option>
+          </select>
         );
 
       case 'select':
         return (
           <select
+            id={controlId}
             value={String(value ?? '')}
-            onChange={e =>
-              setLocalValues(prev => ({ ...prev, [def.name]: e.target.value }))
-            }
+            onChange={event => updateLocalValue(def.name, event.target.value)}
             className={inputClasses}
+            aria-invalid={hasError}
+            aria-describedby={describedBy}
+            disabled={saving || resetting}
           >
+            <option value=''>{inheritedLabel}</option>
             {(def.options || []).map(opt => (
               <option key={opt} value={opt}>
                 {opt}
@@ -226,17 +342,22 @@ export const PluginVariablesEditor: React.FC<{
       case 'number':
         return (
           <input
+            id={controlId}
             type='number'
-            value={(value as number) ?? 0}
+            value={value === '' ? '' : Number(value)}
             min={def.min}
             max={def.max}
-            onChange={e =>
-              setLocalValues(prev => ({
-                ...prev,
-                [def.name]: e.target.value === '' ? 0 : Number(e.target.value),
-              }))
+            placeholder={inheritedLabel}
+            onChange={event =>
+              updateLocalValue(
+                def.name,
+                event.target.value === '' ? '' : Number(event.target.value)
+              )
             }
             className={inputClasses}
+            aria-invalid={hasError}
+            aria-describedby={describedBy}
+            disabled={saving || resetting}
           />
         );
 
@@ -244,6 +365,7 @@ export const PluginVariablesEditor: React.FC<{
         return (
           <div className='relative'>
             <input
+              id={controlId}
               type={isSensitive && !isRevealed ? 'password' : 'text'}
               value={
                 isSensitive && storedVar?.has_value && value === ''
@@ -256,21 +378,32 @@ export const PluginVariablesEditor: React.FC<{
                       'pluginManager.variables.sensitiveSet',
                       'Value is set (enter new value to change)'
                     )
-                  : undefined
+                  : inheritedLabel
               }
-              onChange={e =>
-                setLocalValues(prev => ({
-                  ...prev,
-                  [def.name]: e.target.value,
-                }))
-              }
+              onChange={event => updateLocalValue(def.name, event.target.value)}
               className={cn(inputClasses, isSensitive && 'pr-10')}
+              aria-invalid={hasError}
+              aria-describedby={describedBy}
+              disabled={saving || resetting}
             />
             {isSensitive && (
               <button
                 type='button'
                 onClick={() => toggleReveal(def.name)}
-                className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                aria-controls={controlId}
+                aria-label={
+                  isRevealed
+                    ? t('pluginManager.variables.hideValue', {
+                        defaultValue: 'Hide {{label}} value',
+                        label: def.label,
+                      })
+                    : t('pluginManager.variables.showValue', {
+                        defaultValue: 'Show {{label}} value',
+                        label: def.label,
+                      })
+                }
+                disabled={saving || resetting}
+                className='absolute end-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:text-gray-300'
               >
                 {isRevealed ? (
                   <EyeOff className='w-4 h-4' />
@@ -284,36 +417,89 @@ export const PluginVariablesEditor: React.FC<{
     }
   };
 
+  const renderDefinition = (def: PluginVariableDefinition) => {
+    const { controlId, descriptionId, errorId } = getFieldIds(def);
+
+    return (
+      <div key={def.name}>
+        <label
+          htmlFor={controlId}
+          className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'
+        >
+          {def.label}
+          {def.required && (
+            <span aria-hidden='true' className='text-red-500 ml-1'>
+              *
+            </span>
+          )}
+        </label>
+        {def.description && (
+          <p
+            id={descriptionId}
+            className='text-xs text-gray-500 dark:text-gray-400 mb-1'
+          >
+            {def.description}
+          </p>
+        )}
+        {renderField(def)}
+        {fieldErrors[def.name] && (
+          <p id={errorId} role='alert' className='text-xs text-red-500 mt-1'>
+            {fieldErrors[def.name]}
+          </p>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className='mt-3 pt-3 border-t border-gray-200 dark:border-gray-700'>
-      <div className='space-y-3'>
-        {schema.map(def => (
-          <div key={def.name}>
-            {def.type !== 'boolean' && (
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                {def.label}
-                {def.required && <span className='text-red-500 ml-1'>*</span>}
-              </label>
-            )}
-            {def.description && def.type !== 'boolean' && (
-              <p className='text-xs text-gray-500 dark:text-gray-400 mb-1'>
-                {def.description}
-              </p>
-            )}
-            {renderField(def)}
-            {fieldErrors[def.name] && (
-              <p className='text-xs text-red-500 mt-1'>
-                {fieldErrors[def.name]}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
+      {variableSections.connection.length > 0 && (
+        <div className='space-y-3'>
+          <p className='text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
+            {t('pluginManager.variables.connection', 'Connection')}
+          </p>
+          {variableSections.connection.map(renderDefinition)}
+        </div>
+      )}
+
+      {variableSections.advanced.length > 0 && (
+        <div
+          className={cn(
+            variableSections.connection.length > 0 && 'mt-4 border-t pt-4',
+            'border-gray-200 dark:border-gray-700'
+          )}
+        >
+          <button
+            type='button'
+            aria-expanded={advancedOpen}
+            aria-controls={advancedPanelId}
+            onClick={() => setAdvancedOpen(open => !open)}
+            className='flex w-full items-center justify-between rounded-md py-1 text-left text-sm font-medium text-gray-700 hover:text-gray-950 dark:text-gray-300 dark:hover:text-white'
+          >
+            <span>
+              {t('pluginManager.variables.advanced', 'Advanced parameters')} (
+              {variableSections.advanced.length})
+            </span>
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 transition-transform',
+                advancedOpen && 'rotate-180'
+              )}
+            />
+          </button>
+          {advancedOpen && (
+            <div id={advancedPanelId} className='mt-3 space-y-3'>
+              {variableSections.advanced.map(renderDefinition)}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className='flex items-center gap-2 mt-4'>
         <Button
           size='sm'
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || resetting || dirtyFields.size === 0}
           className='gap-1.5'
         >
           <Save className='w-3.5 h-3.5' />
@@ -325,6 +511,7 @@ export const PluginVariablesEditor: React.FC<{
           variant='outline'
           size='sm'
           onClick={handleReset}
+          disabled={saving || resetting}
           className='gap-1.5'
         >
           <RotateCcw className='w-3.5 h-3.5' />

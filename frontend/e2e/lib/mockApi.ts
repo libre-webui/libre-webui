@@ -90,6 +90,25 @@ type MockPlugin = {
   };
   model_map: string[];
   active: boolean;
+  variables?: Array<{
+    name: string;
+    type: 'string' | 'number' | 'boolean' | 'select';
+    label: string;
+    description?: string;
+    default?: string | number | boolean;
+    required?: boolean;
+    sensitive?: boolean;
+    options?: string[];
+    min?: number;
+    max?: number;
+  }>;
+};
+
+type MockPluginVariableValue = {
+  name: string;
+  value: string | number | boolean;
+  is_sensitive: boolean;
+  has_value: boolean;
 };
 
 type MockTTSGenerationRequest = {
@@ -241,6 +260,8 @@ type MockOptions = {
   models?: MockModel[];
   ollamaHealthy?: boolean;
   plugins?: MockPlugin[];
+  pluginVariables?: Record<string, Record<string, MockPluginVariableValue>>;
+  pluginVariableResetFailures?: number;
   libraryModels?: MockLibraryModel[];
   cloudLibraryModels?: MockLibraryModel[];
   ttsModels?: MockTTSModel[];
@@ -401,6 +422,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const models = options.models ?? defaultModels;
   const ollamaHealthy = options.ollamaHealthy ?? true;
   const plugins = options.plugins ?? [];
+  const pluginVariables = structuredClone(options.pluginVariables ?? {});
   const libraryModels = options.libraryModels ?? defaultLibraryModels;
   const cloudLibraryModels =
     options.cloudLibraryModels ?? defaultCloudLibraryModels;
@@ -429,6 +451,13 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   );
   const preferenceUpdateRequests: Array<Partial<typeof defaultPreferences>> =
     [];
+  const pluginVariableUpdateRequests: Array<{
+    pluginId: string;
+    variables: Record<string, string | number | boolean>;
+    unset: string[];
+  }> = [];
+  let pluginVariableResetFailures = options.pluginVariableResetFailures ?? 0;
+  let pluginVariableResetRequests = 0;
   const preferenceUpdateUserIds: Array<string | null> = [];
   const pendingPreferenceUpdateReleases: Array<() => void> = [];
   let preferenceUpdateFailures = options.preferenceUpdateFailures ?? 0;
@@ -1350,6 +1379,43 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      const pluginVariablesMatch = path.match(
+        /^\/plugins\/([^/]+)\/variables$/
+      );
+      if (pluginVariablesMatch && method === 'GET') {
+        const pluginId = decodeURIComponent(pluginVariablesMatch[1]);
+        await fulfillJson(route, pluginVariables[pluginId] ?? {});
+        return;
+      }
+
+      if (pluginVariablesMatch && method === 'PUT') {
+        const pluginId = decodeURIComponent(pluginVariablesMatch[1]);
+        const update = route.request().postDataJSON() as {
+          variables?: Record<string, string | number | boolean>;
+          unset?: string[];
+        };
+        pluginVariableUpdateRequests.push({
+          pluginId,
+          variables: update.variables ?? {},
+          unset: update.unset ?? [],
+        });
+        await fulfillJson(route, true);
+        return;
+      }
+
+      if (pluginVariablesMatch && method === 'DELETE') {
+        const pluginId = decodeURIComponent(pluginVariablesMatch[1]);
+        pluginVariableResetRequests += 1;
+        if (pluginVariableResetFailures > 0) {
+          pluginVariableResetFailures -= 1;
+          await fulfillJson(route, false);
+          return;
+        }
+        pluginVariables[pluginId] = {};
+        await fulfillJson(route, true);
+        return;
+      }
+
       if (
         (path === '/plugins/active' ||
           path === '/plugins/status' ||
@@ -1402,6 +1468,10 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   return {
     pullStreamUrls,
     preferenceUpdateRequests,
+    pluginVariableUpdateRequests,
+    get pluginVariableResetRequests() {
+      return pluginVariableResetRequests;
+    },
     preferenceUpdateUserIds,
     releasePreferenceUpdates: () => {
       pendingPreferenceUpdateReleases
