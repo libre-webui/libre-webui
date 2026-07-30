@@ -135,6 +135,8 @@ Administrators can disable model pulls for normal users. Check admin settings if
   well when you also want to use its models in Chat or Work.
 - Open Image Generation settings and select one of the advertised GPT Image
   models.
+- Prefer `gpt-image-2`. The older GPT Image IDs remain available only for
+  compatibility with existing configurations and are deprecated upstream.
 - Leave the OpenAI `image_endpoint` override blank unless you operate a
   compatible image endpoint. A Chat `/responses` or `/chat/completions`
   endpoint cannot process Image API requests.

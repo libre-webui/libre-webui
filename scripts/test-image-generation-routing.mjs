@@ -65,7 +65,7 @@ function startServer(server) {
   });
 }
 
-test('the bundled OpenAI provider declares current GPT Image support', () => {
+test('the bundled OpenAI provider declares GPT Image 2 and legacy compatibility', () => {
   const manifest = JSON.parse(
     fs.readFileSync(path.join(repoRoot, 'plugins', 'openai.json'), 'utf8')
   );

@@ -78,8 +78,10 @@ If a provider does not support live model discovery, Libre WebUI uses the config
 ### OpenAI Image Generation
 
 The bundled OpenAI provider exposes the Image API at
-`https://api.openai.com/v1/images/generations`. Its image catalog includes
-`gpt-image-2`, `gpt-image-1.5`, `gpt-image-1`, and `gpt-image-1-mini`.
+`https://api.openai.com/v1/images/generations`. `gpt-image-2` is the current
+model. The catalog also retains the deprecated `gpt-image-1.5`, `gpt-image-1`,
+and `gpt-image-1-mini` IDs for existing compatible deployments; new
+configurations should select `gpt-image-2`.
 
 Image generation uses the same user-scoped OpenAI API key as Chat, but it has a
 separate optional `image_endpoint` override. This prevents a custom Chat
