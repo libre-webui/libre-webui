@@ -54,6 +54,12 @@ const replaceMethod = (target, key, replacement) => {
   });
 };
 
+replaceMethod(
+  workModelProviderService,
+  'getRoutingFingerprint',
+  () => 'stable-work-routing'
+);
+
 after(async () => {
   for (const restore of restorers.reverse()) restore();
   workEventService.reset();
@@ -663,12 +669,14 @@ test('persisted Responses batches synthesize exact outputs for interrupted tools
         openAIResponsesStateScope: scope,
         openAIResponsesOutputItems: [
           {
+            id: 'function-call-a',
             type: 'function_call',
             call_id: 'call-a',
             name: 'list_files',
             arguments: '{"path":"."}',
           },
           {
+            id: 'function-call-b',
             type: 'function_call',
             call_id: 'call-b',
             name: 'read_file',
@@ -914,5 +922,250 @@ test('oversized Responses tool state fails before Work performs a side effect', 
   assert.equal(
     events.find(event => event.type === 'error')?.data.code,
     'WORK_PROVIDER_INVALID_TOOL_CALLS'
+  );
+});
+
+test('Responses metadata cannot execute tools after a chat-completions scope race', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-mode-race-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  let sideEffects = 0;
+  replaceMethod(workRuntimeService, 'prepare', async () => () => undefined);
+  replaceMethod(workRuntimeService, 'isPreviewRunning', async () => false);
+  replaceMethod(workRuntimeService, 'stopContainer', async () => undefined);
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    sideEffects += 1;
+    return { entries: [] };
+  });
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => undefined
+  );
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => ({
+      model: request.model,
+      created_at: new Date().toISOString(),
+      message: {
+        role: 'assistant',
+        content: '',
+        providerMetadata: {
+          openAIResponsesStateScope: 'new-responses-scope',
+          openAIResponsesOutputItems: [
+            {
+              id: 'mode-race-function',
+              type: 'function_call',
+              call_id: 'mode-race-call',
+              name: 'list_files',
+              arguments: '{"path":"."}',
+            },
+          ],
+        },
+        tool_calls: [
+          {
+            id: 'mode-race-call',
+            function: { name: 'list_files', arguments: { path: '.' } },
+          },
+        ],
+      },
+      done: true,
+    })
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Reject tool calls from a newly selected Responses route.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(sideEffects, 0);
+  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal(
+    workEventService
+      .replay(detail.id, runId, 0)
+      .events.find(event => event.type === 'error')?.data.code,
+    'WORK_PROVIDER_INVALID_TOOL_CALLS'
+  );
+});
+
+test('Responses tool state must fit the exact persisted metadata wrapper', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-wrapper-limit-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const stateScope = 'wrapper-limit-scope';
+  let sideEffects = 0;
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    sideEffects += 1;
+    return { entries: [] };
+  });
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => stateScope
+  );
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => ({
+      model: request.model,
+      created_at: new Date().toISOString(),
+      message: {
+        role: 'assistant',
+        content: '',
+        providerMetadata: {
+          openAIResponsesStateScope: stateScope,
+          openAIResponsesOutputItems: [
+            {
+              id: 'wrapper-limit-function',
+              type: 'function_call',
+              call_id: 'wrapper-limit-call',
+              name: 'list_files',
+              arguments: '{"path":"."}',
+            },
+            {
+              id: 'wrapper-limit-message',
+              type: 'message',
+              role: 'assistant',
+              content: [{ type: 'output_text', text: 'x'.repeat(88_000) }],
+            },
+          ],
+        },
+        tool_calls: [
+          {
+            id: 'wrapper-limit-call',
+            function: { name: 'list_files', arguments: { path: '.' } },
+          },
+        ],
+      },
+      done: true,
+    })
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Do not execute state that the database cannot preserve.',
+    `model-${'m'.repeat(15_000)}`,
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(sideEffects, 0);
+  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal(
+    workEventService
+      .replay(detail.id, runId, 0)
+      .events.find(event => event.type === 'error')?.data.code,
+    'WORK_PROVIDER_INVALID_TOOL_CALLS'
+  );
+});
+
+test('Work stops before a second provider request after credential rotation', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-routing-freeze-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const stateScope = 'routing-freeze-scope';
+  let credentialRevision = 'old-credential';
+  let requests = 0;
+  let sideEffects = 0;
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    sideEffects += 1;
+    return { entries: [] };
+  });
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => stateScope
+  );
+  replaceMethod(
+    workModelProviderService,
+    'getRoutingFingerprint',
+    () => `routing:${credentialRevision}`
+  );
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests += 1;
+      credentialRevision = 'new-credential';
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: {
+          role: 'assistant',
+          content: '',
+          providerMetadata: {
+            openAIResponsesStateScope: stateScope,
+            openAIResponsesOutputItems: [
+              {
+                id: 'routing-freeze-function',
+                type: 'function_call',
+                call_id: 'routing-freeze-call',
+                name: 'list_files',
+                arguments: '{"path":"."}',
+              },
+            ],
+          },
+          tool_calls: [
+            {
+              id: 'routing-freeze-call',
+              function: { name: 'list_files', arguments: { path: '.' } },
+            },
+          ],
+        },
+        done: true,
+      };
+    }
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Stop before sending state to changed provider routing.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(requests, 1);
+  assert.equal(sideEffects, 1);
+  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal(
+    workEventService
+      .replay(detail.id, runId, 0)
+      .events.find(event => event.type === 'error')?.data.code,
+    'WORK_PROVIDER_ROUTING_CHANGED'
   );
 });

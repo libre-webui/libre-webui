@@ -112,7 +112,7 @@ class EmbeddingService {
     }
 
     const plugins = pluginService
-      .getAllPlugins(userId)
+      .getActivePlugins(userId)
       .filter(
         plugin =>
           (plugin.capabilities?.embedding ||

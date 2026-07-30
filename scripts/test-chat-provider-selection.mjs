@@ -110,12 +110,13 @@ const pluginDefinition = (id, keyEnv) => ({
   model_map: [sharedModel],
 });
 
-for (const plugin of [
+const pluginDefinitions = [
   pluginDefinition(pluginAId, 'CHAT_PROVIDER_A_TEST_KEY'),
   pluginDefinition(pluginBId, 'CHAT_PROVIDER_B_TEST_KEY'),
   pluginDefinition(inactivePluginId, 'CHAT_PROVIDER_INACTIVE_TEST_KEY'),
   pluginDefinition(missingCredentialPluginId, 'CHAT_PROVIDER_NO_KEY_TEST_KEY'),
-]) {
+];
+for (const plugin of pluginDefinitions) {
   fs.writeFileSync(
     path.join(pluginsDir, `${plugin.id}.json`),
     JSON.stringify(plugin, null, 2)
@@ -208,12 +209,50 @@ db.prepare(
      (id, username, password_hash, role, created_at, updated_at)
    VALUES (?, ?, ?, ?, ?, ?)`
 ).run(userId, userId, 'test-password-hash', 'user', now, now);
+db.prepare(
+  `INSERT INTO users
+     (id, username, password_hash, role, created_at, updated_at)
+   VALUES (?, ?, ?, ?, ?, ?)`
+).run(
+  'chat-provider-fixture-admin',
+  'chat-provider-fixture-admin',
+  'test-password-hash',
+  'admin',
+  now,
+  now
+);
+for (const plugin of pluginDefinitions) {
+  pluginService.installPlugin(plugin, 'chat-provider-fixture-admin');
+}
+const activatePlugin = db.prepare(
+  `INSERT INTO plugin_activations (user_id, plugin_id, activated_at)
+   VALUES (?, ?, ?)`
+);
+for (const pluginId of [pluginAId, pluginBId, missingCredentialPluginId]) {
+  activatePlugin.run(userId, pluginId, now);
+}
 assert.equal(
-  credentialsService.setApiKey(pluginAId, 'provider-a-key', userId),
+  credentialsService.setApiKey(
+    pluginAId,
+    'provider-a-key',
+    userId,
+    pluginService.getCredentialRoutingAuthFingerprint(
+      pluginService.getPlugin(pluginAId, userId),
+      userId
+    )
+  ),
   true
 );
 assert.equal(
-  credentialsService.setApiKey(pluginBId, 'provider-b-key', userId),
+  credentialsService.setApiKey(
+    pluginBId,
+    'provider-b-key',
+    userId,
+    pluginService.getCredentialRoutingAuthFingerprint(
+      pluginService.getPlugin(pluginBId, userId),
+      userId
+    )
+  ),
   true
 );
 

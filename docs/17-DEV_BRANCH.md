@@ -216,6 +216,11 @@ artifacts. macOS pull-request builds retain the project's credential-free ad-hoc
 signature so the packaged application can be verified before upload. The
 pull-request workflow does not receive Developer ID or notarization credentials.
 
+The `Docker Build Test and Push` workflow builds both amd64 and arm64 images for
+every pull request, including stacked pull requests into intermediate branches.
+Pull-request builds do not log in to a container registry, push image digests, or
+publish a multi-architecture manifest.
+
 Run the same application-level checks locally before opening a pull request:
 
 ```bash

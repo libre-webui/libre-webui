@@ -20,6 +20,7 @@ import { getDatabaseSafe } from '../db.js';
 import { encryptionService } from './encryptionService.js';
 import { PluginVariableDefinition } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
+import { PLUGIN_CONNECTION_VARIABLE_NAMES } from '../utils/pluginConnectionVariables.js';
 
 const logger = createLogger('services:plugin-variables-service');
 
@@ -167,6 +168,63 @@ class PluginVariablesService {
     });
 
     return result;
+  }
+
+  /**
+   * Whether this user stored a non-empty connection-routing override.
+   * Schema defaults are manifest-owned and intentionally do not count.
+   */
+  hasStoredConnectionOverride(
+    pluginId: string,
+    userId?: string,
+    schema?: PluginVariableDefinition[],
+    connectionVariableNames: ReadonlySet<string> = PLUGIN_CONNECTION_VARIABLE_NAMES
+  ): boolean {
+    const effectiveUserId = userId || 'default';
+    const db = getDatabaseSafe();
+    if (!db) return false;
+    const configuredConnectionNames = schema
+      ? new Set(
+          schema
+            .map(definition => definition.name)
+            .filter(name => connectionVariableNames.has(name))
+        )
+      : undefined;
+
+    try {
+      const rows = db
+        .prepare(
+          `SELECT variable_name, variable_value, is_encrypted
+           FROM plugin_variables
+           WHERE plugin_id = ? AND user_id = ?`
+        )
+        .all(pluginId, effectiveUserId) as Array<
+        Pick<VariableRow, 'variable_name' | 'variable_value' | 'is_encrypted'>
+      >;
+
+      return rows.some(row => {
+        if (!connectionVariableNames.has(row.variable_name)) return false;
+        if (
+          configuredConnectionNames &&
+          !configuredConnectionNames.has(row.variable_name)
+        ) {
+          return false;
+        }
+        const value = row.is_encrypted
+          ? encryptionService.decrypt(row.variable_value)
+          : row.variable_value;
+        return typeof value === 'string' && value.trim().length > 0;
+      });
+    } catch (error) {
+      logger.error(
+        'Failed to inspect connection overrides for plugin %s:',
+        pluginId,
+        error
+      );
+      // Credential fallback is the sensitive operation. Fail closed if the
+      // stored routing state cannot be inspected.
+      return true;
+    }
   }
 
   /**

@@ -26,6 +26,26 @@ const PLUGIN_API_MODES = new Set<PluginApiMode>([
   'responses',
 ]);
 const MAX_API_PATH_DECODE_PASSES = 8;
+export const PLUGIN_MODEL_DISCOVERY_VARIABLES = [
+  'endpoint',
+  'api_url',
+  'models_endpoint',
+  'base_url',
+  'api_path',
+  'api_mode',
+] as const;
+
+type PluginVariableValues = Record<string, unknown>;
+
+function optionalPluginVariableString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
+export function isPluginConnectionEndpointVariable(name: string): boolean {
+  return (PLUGIN_MODEL_DISCOVERY_VARIABLES as readonly string[]).includes(name);
+}
 
 export interface ResolvedPluginApiConfig {
   apiMode: PluginApiMode;
@@ -255,7 +275,9 @@ export function resolvePluginApiConfig(
   let apiMode =
     (configuredMode as PluginApiMode | undefined) ||
     inferPluginApiMode(plugin.endpoint);
-  const endpointOverride = optionalPluginString(variables.endpoint);
+  const endpointOverride =
+    optionalPluginString(variables.endpoint) ||
+    optionalPluginString(variables.api_url);
   const configuredBaseUrl = optionalPluginString(variables.base_url);
   const configuredApiPath = optionalPluginString(variables.api_path);
   const hasStructuredApiOverride =
@@ -307,7 +329,33 @@ export function resolvePluginApiConfig(
   return { apiMode, endpoint: plugin.endpoint };
 }
 
-export function resolvePluginModelsEndpoint(endpoint: string): string {
+/**
+ * Resolve a plugin's full operation URL.
+ *
+ * `endpoint` is the canonical variable. Imported legacy plugins may use
+ * `api_url`; it is consulted only when `endpoint` is blank or absent.
+ */
+export function resolvePluginOperationEndpoint(
+  endpoint: string,
+  variables: PluginVariableValues = {}
+): string {
+  const endpointOverride =
+    optionalPluginVariableString(variables.endpoint) ||
+    optionalPluginVariableString(variables.api_url);
+  return resolvePluginEndpoint(endpoint, endpointOverride);
+}
+
+export function resolvePluginModelsEndpoint(
+  endpoint: string,
+  modelsEndpointOverride?: string
+): string {
+  const explicitModelsEndpoint = optionalPluginVariableString(
+    modelsEndpointOverride
+  );
+  if (explicitModelsEndpoint) {
+    return resolvePluginEndpoint('', explicitModelsEndpoint);
+  }
+
   const url = new URL(endpoint);
   url.search = '';
   url.hash = '';
@@ -339,7 +387,11 @@ export function applyModelEndpointTemplate(
   endpoint: string,
   model: string
 ): string {
-  return endpoint.replace('{model}', encodeURIComponent(model));
+  const encodedModelPath = model
+    .split('/')
+    .map(segment => encodeURIComponent(segment))
+    .join('/');
+  return endpoint.replace('{model}', encodedModelPath);
 }
 
 export function buildPluginAuthHeaders(

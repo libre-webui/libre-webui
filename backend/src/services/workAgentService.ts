@@ -29,6 +29,7 @@ import {
 } from './workAgentGuidance.js';
 import workRuntimeService, { WorkCommandResult } from './workRuntimeService.js';
 import workTaskService, {
+  WORK_MESSAGE_METADATA_MAX_BYTES,
   WorkConflictError,
   WorkNotFoundError,
 } from './workTaskService.js';
@@ -344,13 +345,20 @@ export class WorkAgentService {
       workTaskService.updateTaskStatus(taskId, 'running');
       const roundLimit = workRuntimeService.limits.maxRounds;
       const toolCallLimit = workToolCallBudget(roundLimit);
+      const providerSelection = {
+        providerType: run.providerType,
+        providerId: run.providerId,
+      } as const;
+      const providerRoutingFingerprint =
+        workModelProviderService.getRoutingFingerprint(
+          run.model,
+          providerSelection,
+          userId
+        );
       const providerStateScope =
         workModelProviderService.getResponsesStateScope(
           run.model,
-          {
-            providerType: run.providerType,
-            providerId: run.providerId,
-          },
+          providerSelection,
           userId
         );
       const messages = this.contextMessages(
@@ -391,6 +399,11 @@ export class WorkAgentService {
         const roundStartedAt = Date.now();
         let response: OllamaChatResponse;
         try {
+          this.assertStableProviderRouting(
+            run,
+            userId,
+            providerRoutingFingerprint
+          );
           response = await workModelProviderService.generateChatStreamResponse(
             {
               model: run.model,
@@ -398,10 +411,7 @@ export class WorkAgentService {
               tools: WORK_TOOL_SCHEMAS,
               stream: true,
             },
-            {
-              providerType: run.providerType,
-              providerId: run.providerId,
-            },
+            providerSelection,
             userId,
             {
               onContent: delta => contentStream.push(delta),
@@ -439,16 +449,28 @@ export class WorkAgentService {
             OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
           ]
         );
+        const providerMetadata = response.message.providerMetadata;
+        const hasResponsesStateMetadata =
+          providerMetadata?.[OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY] ===
+            true ||
+          providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY] !==
+            undefined ||
+          providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] !==
+            undefined;
+        const providerStateMetadata = toPersistedWorkProviderState(
+          run,
+          providerMetadata
+        );
         if (
           toolCalls.length > 0 &&
-          providerStateScope &&
-          (response.message.providerMetadata?.[
-            OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY
-          ] === true ||
-            response.message.providerMetadata?.[
-              OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY
-            ] !== providerStateScope ||
-            !boundedProviderOutput.items)
+          (providerStateScope || hasResponsesStateMetadata) &&
+          (providerMetadata?.[OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY] ===
+            true ||
+            !providerStateScope ||
+            providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] !==
+              providerStateScope ||
+            !boundedProviderOutput.items ||
+            !providerStateMetadata)
         ) {
           throw new WorkAgentHttpError(
             'The provider returned tool calls without bounded durable replay state.',
@@ -468,10 +490,6 @@ export class WorkAgentService {
         const reasoningContent = boundUtf8(
           response.message?.thinking?.trim() || '',
           100_000
-        );
-        const providerStateMetadata = toPersistedWorkProviderState(
-          run,
-          response.message.providerMetadata
         );
         if (reasoningContent) {
           workTaskService.addMessage(
@@ -655,6 +673,11 @@ export class WorkAgentService {
       let handoffResponse: OllamaChatResponse;
       try {
         try {
+          this.assertStableProviderRouting(
+            run,
+            userId,
+            providerRoutingFingerprint
+          );
           handoffResponse =
             await workModelProviderService.generateChatStreamResponse(
               {
@@ -673,10 +696,7 @@ export class WorkAgentService {
                     : undefined,
                 stream: true,
               },
-              {
-                providerType: run.providerType,
-                providerId: run.providerId,
-              },
+              providerSelection,
               userId,
               {
                 onContent: delta => handoffContentStream.push(delta),
@@ -866,6 +886,28 @@ export class WorkAgentService {
       logger.error(
         `Could not stop idle Work container ${task.containerName}:`,
         error
+      );
+    }
+  }
+
+  private assertStableProviderRouting(
+    run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
+    userId: string,
+    expectedFingerprint: string
+  ): void {
+    const currentFingerprint = workModelProviderService.getRoutingFingerprint(
+      run.model,
+      {
+        providerType: run.providerType,
+        providerId: run.providerId,
+      },
+      userId
+    );
+    if (currentFingerprint !== expectedFingerprint) {
+      throw new WorkAgentHttpError(
+        'The provider routing changed while this Work run was active. Start a new run with the updated provider configuration.',
+        409,
+        'WORK_PROVIDER_ROUTING_CHANGED'
       );
     }
   }
@@ -1080,7 +1122,7 @@ function toPersistedWorkProviderState(
     return undefined;
   }
 
-  return {
+  const persisted = {
     [WORK_PROVIDER_STATE_METADATA_KEY]: {
       providerType: run.providerType,
       ...(run.providerId ? { providerId: run.providerId } : {}),
@@ -1091,6 +1133,14 @@ function toPersistedWorkProviderState(
       },
     } satisfies PersistedWorkProviderState,
   };
+  try {
+    return Buffer.byteLength(JSON.stringify(persisted), 'utf8') <=
+      WORK_MESSAGE_METADATA_MAX_BYTES
+      ? persisted
+      : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function restorePersistedWorkContext(
@@ -1134,7 +1184,10 @@ export function restorePersistedWorkContext(
   };
 
   for (const message of messages) {
-    if (message.kind === 'provider_state' || message.role === 'assistant') {
+    if (
+      message.kind === 'provider_state' ||
+      (message.role === 'assistant' && message.kind === 'message')
+    ) {
       flushPendingGroup();
       const providerMetadata = matchingWorkProviderMetadata(
         message,

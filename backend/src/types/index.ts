@@ -363,6 +363,7 @@ export interface TTSConfig {
   default_format?: string; // Default audio format
   max_characters?: number; // Maximum text length
   supports_streaming?: boolean; // Whether streaming is supported
+  endpoint_variable?: string; // Capability-specific endpoint override variable
 }
 
 // Image Generation-specific configuration
@@ -376,6 +377,16 @@ export interface ImageGenConfig {
   max_prompt_length?: number; // Maximum prompt length
   supports_n?: boolean; // Whether multiple images can be requested
   max_n?: number; // Maximum number of images per request
+  endpoint_variable?: string; // Capability-specific endpoint override variable
+}
+
+// Embedding-specific configuration
+export interface EmbeddingConfig {
+  [key: string]: unknown;
+  max_tokens?: number;
+  dimensions?: Record<string, number>;
+  no_auth_required?: boolean;
+  endpoint_variable?: string; // Capability-specific endpoint override variable
 }
 
 // Plugin capabilities for multi-capability plugins
@@ -396,6 +407,7 @@ export interface PluginCapabilities {
   embedding?: {
     endpoint: string;
     model_map: string[];
+    config?: EmbeddingConfig;
   };
   image?: {
     endpoint: string;

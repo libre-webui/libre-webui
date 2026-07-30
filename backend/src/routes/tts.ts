@@ -61,10 +61,10 @@ router.get('/models', async (req: AuthenticatedRequest, res) => {
  * GET /api/tts/voices/:pluginId
  * Get available voices for a specific TTS plugin
  */
-router.get('/voices/:pluginId', async (req, res) => {
+router.get('/voices/:pluginId', async (req: AuthenticatedRequest, res) => {
   try {
-    const { pluginId } = req.params;
-    const config = pluginService.getTTSConfig(pluginId);
+    const pluginId = req.params.pluginId as string;
+    const config = pluginService.getTTSConfig(pluginId, req.user?.userId);
 
     if (!config) {
       res.status(404).json({

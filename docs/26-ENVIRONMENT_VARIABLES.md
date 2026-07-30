@@ -133,7 +133,21 @@ Provider plugins can use environment keys as deployment-wide defaults:
 | `ELEVENLABS_API_KEY`  | ElevenLabs TTS                              |
 | `COMFYUI_API_KEY`     | ComfyUI deployments that require an API key |
 
-Users can also store provider credentials in the UI when per-user keys are preferred.
+Users can also store provider credentials in the UI when per-user keys are
+preferred. Environment keys are used only with the routing and authentication
+projection of an unshadowed bundled definition. Imported definitions, writable
+definitions that reuse a bundled ID, and administrator-saved custom routes
+require a credential stored by that account. Libre WebUI will not attach an
+environment key to those routes or expose it through discovery and availability
+checks. Trust comes from a compiled hash of each shipped manifest, so container
+layouts where the legacy and bundled plugin directories share a path remain
+supported without treating a modified manifest as bundled.
+
+User-saved keys are bound to the effective provider definition, source,
+authentication contract, and routing values. Users must save a key again after
+an administrator changes that destination. Pre-upgrade unbound keys are
+accepted and bound on first use only for an exact shipped definition using its
+bundled route.
 
 ## Frontend
 

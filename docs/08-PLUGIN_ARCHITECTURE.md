@@ -42,6 +42,45 @@ Libre WebUI includes provider definitions for common services:
 
 Provider catalogs change frequently. The UI should be treated as the source of truth for live model discovery when a plugin supports it.
 
+## Ownership and Authorization
+
+Plugin definitions are shared instance configuration. Every `/api/plugins`
+route requires authentication, and only administrators can upload, install,
+update, or delete a definition. Activation is different: each authenticated
+user can activate or deactivate a shared plugin only for their own account.
+That state is stored in SQLite and survives backend restarts without affecting
+another user's active providers.
+
+During upgrade, the legacy global `.status.json` activation list is copied once
+to the accounts that already exist, but only for definitions that exactly match
+Libre WebUI's compiled trust anchors. Legacy custom or shadow definitions stay
+quarantined and inactive. Accounts created after that migration start with no
+plugins activated.
+
+Bundled definitions are trusted only when their normalized contents match a
+hash compiled into the backend. Writable definitions are approved in SQLite by
+normalized source path and full definition hash. An administrator install,
+update, or re-import records that approval; direct file changes invalidate it.
+Approval and updates clear every account's activation before replacing the
+file, so each user must reactivate the reviewed definition. Pre-upgrade custom
+definitions must be re-imported by an administrator before they can appear in
+catalogs, discover models, accept credentials, or execute any capability.
+
+Plugin variables are split by purpose. Only administrators can store recognized
+connection-routing variables:
+
+`endpoint`, `base_url`, `api_path`, `models_endpoint`, `api_url`,
+`image_endpoint`, `embedding_endpoint`, `tts_endpoint`, `api_mode`, `model`,
+and `model_id`. A capability's declared
+`config.endpoint_variable` is also connection routing, even when it uses a
+different name.
+
+Non-administrators can continue to save generation controls such as temperature
+and streaming preferences. Old routing rows belonging to a non-administrator
+are ignored, are not returned as configured values, and are removed by that
+account's full plugin-variable reset. This prevents a later role promotion from
+silently reviving a dormant route.
+
 ## Credentials
 
 Credentials can come from environment variables or from user settings.
@@ -61,6 +100,29 @@ ELEVENLABS_API_KEY=...
 ```
 
 For shared deployments, user-level credentials are usually better because each user controls their own provider billing and limits. Environment keys are useful for single-user installs, demos, or managed deployments.
+
+An environment key is a fallback only while the request uses the routing and
+authentication projection from an unshadowed bundled plugin definition. An
+imported definition, a writable definition that shadows a bundled ID, or an
+administrator's stored connection-routing override requires a credential saved
+by the same account. Libre WebUI compares the root endpoint, authentication
+fields, capability endpoints and endpoint-variable selectors, and recognized
+routing-variable definitions and defaults before allowing environment fallback.
+The compiled manifest hash remains authoritative even when the legacy and
+bundled plugin directories share a path, as in the standard container layout;
+an overwritten package manifest cannot establish its own trust.
+
+This rule applies to discovery, Chat, Work, availability checks, and capability
+catalogs. It prevents a custom endpoint or a pre-upgrade custom manifest from
+receiving an operator-managed secret.
+
+User-stored credentials are bound to the effective definition source, complete
+definition hash, authentication contract, capability endpoints and selectors,
+and effective routing values at the moment the user saves them. A route or
+definition change makes the old credential unavailable until the user reviews
+the new destination and saves the credential again. Legacy credentials without
+a binding are accepted only on an exact anchored bundled route; their first
+successful use writes the binding before returning the decrypted key.
 
 ## OpenAI-Compatible Providers
 
@@ -121,22 +183,31 @@ Responses requests use `input`, `max_output_tokens`, flattened function tools,
 continuation. Completed and streamed Responses output is normalized back to
 Libre WebUI's chat and Work event formats. Replay state is retained only when
 the complete ordered output Item array is at most 64 Items and 90 KB; Items are
-kept exact and are never field-truncated. Oversized Chat state falls back to
-normalized visible history. Chat also discards raw function-call Items because
-Chat does not persist corresponding tool outputs. Tool-bearing Work responses
-without bounded, exact replay state are rejected before any tool side effect.
+kept exact and are never field-truncated. Replayable Items require unique,
+non-empty IDs and types, and message, reasoning, and function-call structures
+are validated before any tool call is emitted. Oversized Chat state falls back
+to normalized visible history. Chat also discards raw function-call Items
+because Chat does not persist corresponding tool outputs. Tool-bearing Work
+responses without bounded, exact replay state are rejected before any tool side
+effect.
 
 SQLite-backed Chat storage encrypts retained provider state with the message;
 Work stores tool-only state in hidden context rows that are not returned by
 message APIs. A hashed scope binds replay to the same provider, model, Responses
-mode, and final configured endpoint. When that scope changes, Libre WebUI falls
-back to normalized message history rather than sending provider-specific Items
-to a different API. If a persisted Work batch was interrupted, every missing
-tool result is restored with its exact call ID and an outcome-unknown warning so
-the provider can inspect the workspace instead of blindly repeating a possible
-side effect. An incomplete Responses result is not treated as a successful Chat
-or Work turn; its `incomplete_details.reason` is retained and surfaced to the
-caller.
+mode, final configured endpoint, and an opaque one-way fingerprint of the
+selected credential. When that scope changes, including after API-key rotation,
+Libre WebUI falls back to normalized message history rather than sending
+provider-specific Items across an authentication boundary. An active Work run
+also fingerprints its routing and credential and revalidates them immediately
+before every provider round; changing the mode, endpoint, or API key stops the
+run before another request can receive prior tool state.
+Tool-bearing state must fit both the replay limit and the complete 100 KB
+persisted metadata wrapper before Work performs a side effect. If a persisted
+Work batch was interrupted, every missing tool result is restored with its
+exact call ID and an outcome-unknown warning so the provider can inspect the
+workspace instead of blindly repeating a possible side effect. An incomplete
+Responses result is not treated as a successful Chat or Work turn; its
+`incomplete_details.reason` is retained and surfaced to the caller.
 
 Model discovery derives `/models` from either operation path. For example,
 `https://api.example.com/v1/responses` discovers from
@@ -160,6 +231,92 @@ from the backend, so `localhost` identifies the Libre WebUI container when the
 backend runs in a container. Plugin capability routes, including image
 generation, resolve endpoint variables and credentials for the requesting
 user. Single-user mode uses the `default` user.
+
+### Capability-specific endpoints
+
+Chat endpoint overrides are isolated from image, embedding, and text-to-speech
+capabilities. Multi-capability plugins can expose `image_endpoint`,
+`embedding_endpoint`, or `tts_endpoint` variables (or name another variable
+with `config.endpoint_variable`). Leaving those fields blank uses the
+capability endpoint declared by the plugin; a generic Chat `endpoint` is never
+used as a capability override.
+
+The bundled GitHub Models plugin inherits its current
+`models.github.ai/inference/chat/completions` endpoint when its optional
+override is blank. The Hugging Face plugin uses task-specific
+`hf-inference/models/{model}` routes and payloads for embeddings, images, and
+text-to-speech rather than sending those requests to its Chat endpoint.
+
+### Endpoint Overrides
+
+The `endpoint` variable is the complete request URL, including the operation
+path. For example, an OpenAI-compatible chat plugin normally uses a URL such as
+`https://provider.example/v1/chat/completions`, not only
+`https://provider.example`. Imported legacy plugin configurations may call this
+variable `api_url`; Libre WebUI accepts that alias, but a non-empty `endpoint`
+always takes precedence when both are present.
+
+Remote endpoints must use HTTPS. Plain HTTP is accepted only for exact loopback
+hosts (`localhost`, `127.0.0.1`, or `[::1]`) and private IPv4 literals in the
+`10.0.0.0/8`, `172.16.0.0/12`, or `192.168.0.0/16` ranges. A hostname that
+merely looks private, such as `10.example.com`, is still a remote hostname and
+requires HTTPS. Other protocols are rejected. Leaving the override empty uses
+the full endpoint from the plugin definition; an explicit invalid or unsafe
+override is rejected instead of silently routing to that default.
+
+Provider requests do not follow redirects. Configure the final validated
+operation URL directly; a redirect response is reported as a provider error
+instead of forwarding credentials or request content to another hop.
+
+Remember that requests originate from the Libre WebUI backend. In a container,
+`localhost` identifies the container itself, not automatically the container
+host or another service.
+
+### Model Discovery
+
+When a plugin is activated, Libre WebUI attempts model discovery with that
+account's effective endpoint and credential. An administrator's custom route
+requires a credential stored by the same account; an environment fallback is
+used only with the trusted manifest route. For compatible APIs, Libre WebUI
+derives a model-list URL from the full endpoint:
+
+- a URL ending in `/models` is used as-is;
+- known operation suffixes such as `/chat/completions`, `/completions`,
+  `/responses`, `/embeddings`, or `/messages` are replaced with `/models`;
+- otherwise, `/models` is appended to the path.
+
+Plugins that cannot use the derived URL may expose `models_endpoint` as an
+explicit full model-list URL. It takes precedence over derivation, is subject
+to the same outbound URL policy, and is requested without following redirects.
+Saving or resetting `endpoint`, `api_url`, `models_endpoint`, `base_url`,
+`api_path`, or `api_mode` clears and refreshes the current user's discovered
+catalog before the UI reloads it.
+
+All custom routes are resolved and validated before credential selection. The
+credential policy must not fall back to a server environment key for a stored
+custom route; configure a per-user key for that route instead. Environment
+fallback is reserved for the endpoint supplied by the trusted plugin
+definition.
+
+Discovery expects an OpenAI-compatible response containing model IDs in a
+`data` array. Activation waits for that attempt before returning, so the first
+plugin-list refresh can include the discovered catalog. Successful results are
+stored per user and overlaid on that user's plugin view; Libre WebUI does not
+rewrite the shared plugin JSON or expose one user's discovered model IDs to
+another account. If the provider has no compatible model-list endpoint, cannot
+be reached, or returns another response shape, an ordinary activation keeps
+that user's previous discovery result. An intentional connection-field change
+clears the obsolete catalog first and therefore uses the plugin's `model_map`
+fallback when the new route cannot be discovered.
+
+Saving or resetting connection routing clears that account's previous
+discovered catalog before the next discovery attempt, so models learned from
+one destination cannot remain selectable after a route change.
+
+Plugin status, Work availability, model catalogs, and capability routes use the
+same user context and credential boundary. For example, image model
+availability, endpoint variables, and credentials are resolved for the user
+making the request.
 
 ## Exact Provider Selection in Chat
 

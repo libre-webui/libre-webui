@@ -20,6 +20,24 @@ export type PluginEndpointValidationError =
 
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 const MAX_API_PATH_DECODE_PASSES = 8;
+const PLUGIN_MODEL_DISCOVERY_VARIABLES = new Set([
+  'endpoint',
+  'api_url',
+  'models_endpoint',
+  'base_url',
+  'api_path',
+  'api_mode',
+]);
+
+export function isPluginConnectionEndpointVariable(name: string): boolean {
+  return PLUGIN_MODEL_DISCOVERY_VARIABLES.has(name);
+}
+
+export function hasPluginModelDiscoveryVariable(
+  values: Record<string, unknown>
+): boolean {
+  return Object.keys(values).some(isPluginConnectionEndpointVariable);
+}
 
 function isPrivateIpv4Literal(hostname: string): boolean {
   const octets = hostname.split('.');

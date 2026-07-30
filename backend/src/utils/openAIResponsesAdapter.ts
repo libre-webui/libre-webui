@@ -90,6 +90,93 @@ function asObject(value: unknown): JsonObject | undefined {
     : undefined;
 }
 
+function nonEmptyString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function outputContentBlocksAreValid(
+  value: unknown,
+  allowedTypes: ReadonlySet<string>
+): boolean {
+  return (
+    Array.isArray(value) &&
+    value.every(rawBlock => {
+      const block = asObject(rawBlock);
+      const type = nonEmptyString(block?.type);
+      if (!block || !type || !allowedTypes.has(type)) return false;
+      if (type === 'refusal') return typeof block.refusal === 'string';
+      return typeof block.text === 'string';
+    })
+  );
+}
+
+export function openAIResponsesOutputItemsValidationError(
+  value: unknown
+): string | undefined {
+  if (!Array.isArray(value)) {
+    return 'output must be an array';
+  }
+
+  const itemIds = new Set<string>();
+  for (const [index, rawItem] of value.entries()) {
+    const item = asObject(rawItem);
+    if (!item) return `output item ${index} must be an object`;
+
+    const itemId = nonEmptyString(item.id);
+    if (!itemId) {
+      return `output item ${index} is missing a non-empty id`;
+    }
+    if (itemIds.has(itemId)) {
+      return `duplicate output item id "${itemId}"`;
+    }
+    itemIds.add(itemId);
+
+    const type = nonEmptyString(item.type);
+    if (!type) {
+      return `output item ${index} is missing a non-empty type`;
+    }
+    if (type === 'function_call') {
+      if (
+        !nonEmptyString(item.call_id) ||
+        !nonEmptyString(item.name) ||
+        typeof item.arguments !== 'string'
+      ) {
+        return `function call ${index} is missing an exact call_id or name, or string arguments`;
+      }
+      continue;
+    }
+    if (type === 'message') {
+      if (
+        item.role !== 'assistant' ||
+        !outputContentBlocksAreValid(
+          item.content,
+          new Set(['output_text', 'text', 'refusal'])
+        )
+      ) {
+        return `message output item ${index} has invalid role or content`;
+      }
+      continue;
+    }
+    if (type === 'reasoning') {
+      if (
+        (item.summary !== undefined &&
+          !outputContentBlocksAreValid(
+            item.summary,
+            new Set(['summary_text'])
+          )) ||
+        (item.content !== undefined &&
+          !outputContentBlocksAreValid(
+            item.content,
+            new Set(['reasoning_text', 'text'])
+          ))
+      ) {
+        return `reasoning output item ${index} has invalid summary or content`;
+      }
+    }
+  }
+  return undefined;
+}
+
 export function boundedOpenAIResponsesOutputItems(value: unknown): {
   items?: JsonObject[];
   dropped: boolean;
@@ -98,6 +185,9 @@ export function boundedOpenAIResponsesOutputItems(value: unknown): {
     return { dropped: false };
   }
   if (value.length > OPENAI_RESPONSES_REPLAY_MAX_ITEMS) {
+    return { dropped: true };
+  }
+  if (openAIResponsesOutputItemsValidationError(value)) {
     return { dropped: true };
   }
 
@@ -121,10 +211,6 @@ export function boundedOpenAIResponsesOutputItems(value: unknown): {
     return { dropped: true };
   }
   return { items, dropped: false };
-}
-
-function nonEmptyString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
 function stringifyJsonValue(value: unknown): string {
@@ -494,7 +580,10 @@ export function normalizeOpenAIResponsesResponse(
   fallbackModel: string,
   stateScope?: string
 ): NormalizedOpenAIResponsesResponse {
-  const response = asObject(value) || {};
+  const response = asObject(value);
+  if (!response) {
+    throw new Error('Responses API error: response must be an object');
+  }
   if (response.status === 'failed') {
     const error = asObject(response.error);
     const message =
@@ -513,7 +602,13 @@ export function normalizeOpenAIResponsesResponse(
     );
   }
 
-  const output = Array.isArray(response.output) ? response.output : [];
+  const outputValidationError = openAIResponsesOutputItemsValidationError(
+    response.output
+  );
+  if (outputValidationError) {
+    throw new Error(`Responses API error: ${outputValidationError}`);
+  }
+  const output = response.output as unknown[];
   const text: string[] = [];
   const reasoning: string[] = [];
   const reasoningItems: JsonObject[] = [];
@@ -619,17 +714,33 @@ export function normalizeOpenAIResponsesResponse(
 export function createOpenAIResponsesStateScope(
   providerId: string,
   model: string,
-  endpoint: string
+  endpoint: string,
+  credentialFingerprint: string
 ): string {
   return createHash('sha256')
     .update(
       JSON.stringify({
-        version: 1,
+        version: 2,
         apiMode: 'responses',
         providerId,
         model,
         endpoint,
+        credentialFingerprint,
       })
     )
+    .digest('hex');
+}
+
+/**
+ * Produce a one-way, domain-separated identity for the credential selected by
+ * a provider request. Only this digest is included in replay/routing scopes;
+ * the credential itself is never persisted or returned to clients.
+ */
+export function createPluginCredentialFingerprint(
+  apiKey: string | null
+): string {
+  return createHash('sha256')
+    .update('libre-webui:plugin-credential:v1\0')
+    .update(apiKey || '')
     .digest('hex');
 }

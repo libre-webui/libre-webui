@@ -34,6 +34,8 @@ import { ChevronDown, RotateCcw, Save, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/utils';
 import {
   getPluginEndpointValidationError,
+  hasPluginModelDiscoveryVariable,
+  isPluginConnectionEndpointVariable,
   isPluginUrlVariable,
   isValidPluginApiPath,
 } from '@/utils/pluginEndpoint';
@@ -165,7 +167,9 @@ export const PluginVariablesEditor: React.FC<{
     const success = await updatePluginVariables(plugin.id, localValues);
     setSaving(false);
     if (success) {
-      await loadPlugins();
+      if (hasPluginModelDiscoveryVariable(localValues)) {
+        await loadPlugins();
+      }
       toast.success(t('pluginManager.variables.saved', 'Variables saved'));
     } else {
       toast.error(
@@ -176,7 +180,13 @@ export const PluginVariablesEditor: React.FC<{
 
   const handleReset = async () => {
     await resetPluginVariables(plugin.id);
-    await loadPlugins();
+    if (
+      schema.some(definition =>
+        isPluginConnectionEndpointVariable(definition.name)
+      )
+    ) {
+      await loadPlugins();
+    }
     // Reset local values to defaults
     const defaults: Record<string, string | number | boolean> = {};
     for (const def of schema) {
@@ -319,7 +329,7 @@ export const PluginVariablesEditor: React.FC<{
           <div key={def.name}>
             {def.type !== 'boolean' && (
               <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                {def.name === 'endpoint'
+                {def.name === 'endpoint' || def.name === 'api_url'
                   ? t(
                       'pluginManager.variables.fullApiEndpoint',
                       'Full API endpoint URL'
@@ -333,7 +343,7 @@ export const PluginVariablesEditor: React.FC<{
                 {def.description}
               </p>
             )}
-            {def.name === 'endpoint' && (
+            {(def.name === 'endpoint' || def.name === 'api_url') && (
               <p className='text-xs text-gray-500 dark:text-gray-400 mb-1'>
                 {t(
                   'pluginManager.variables.endpointHelp',

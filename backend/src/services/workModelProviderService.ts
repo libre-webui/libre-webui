@@ -16,6 +16,7 @@
  */
 
 import axios from 'axios';
+import { createHash } from 'crypto';
 import type {
   GenerationOptions,
   OllamaChatMessage,
@@ -33,6 +34,7 @@ import {
   OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
   OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
   createOpenAIResponsesStateScope,
+  createPluginCredentialFingerprint,
   normalizeOpenAIResponsesResponse,
   toOpenAIResponsesInput,
   toOpenAIResponsesTools,
@@ -176,7 +178,56 @@ export class WorkModelProviderService {
     const apiConfig = resolvePluginApiConfig(plugin, variables);
     if (apiConfig.apiMode !== 'responses') return undefined;
     const endpoint = applyModelEndpointTemplate(apiConfig.endpoint, model);
-    return createOpenAIResponsesStateScope(plugin.id, model, endpoint);
+    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    if (pluginRequiresApiKey(plugin) && !apiKey) return undefined;
+    return createOpenAIResponsesStateScope(
+      plugin.id,
+      model,
+      endpoint,
+      createPluginCredentialFingerprint(apiKey)
+    );
+  }
+
+  getRoutingFingerprint(
+    model: string,
+    provider: WorkProviderSelection,
+    userId: string
+  ): string {
+    if (provider.providerType === 'ollama') {
+      assertOllamaProvider(provider);
+      return createHash('sha256')
+        .update(
+          JSON.stringify({
+            version: 1,
+            providerType: 'ollama',
+            model,
+          })
+        )
+        .digest('hex');
+    }
+
+    const plugin = this.requireExactPlugin(provider.providerId, model, userId);
+    const variables = this.dependencies.plugins.getPluginVariables(
+      plugin,
+      userId
+    );
+    const apiConfig = resolvePluginApiConfig(plugin, variables);
+    const endpoint = applyModelEndpointTemplate(apiConfig.endpoint, model);
+    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
+    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    return createHash('sha256')
+      .update(
+        JSON.stringify({
+          version: 2,
+          providerType: 'plugin',
+          providerId: plugin.id,
+          model,
+          apiMode: apiConfig.apiMode,
+          endpoint,
+          credentialFingerprint: createPluginCredentialFingerprint(apiKey),
+        })
+      )
+      .digest('hex');
   }
 
   async generateChatResponse(
@@ -267,6 +318,10 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_MODEL_UNAVAILABLE'
       );
     }
+    resolvePluginApiConfig(
+      plugin,
+      this.dependencies.plugins.getPluginVariables(plugin, userId)
+    );
     if (
       pluginRequiresApiKey(plugin) &&
       !this.dependencies.plugins.getApiKey(plugin, userId)
@@ -287,14 +342,6 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
-    if (pluginRequiresApiKey(plugin) && !apiKey) {
-      throw new WorkModelProviderError(
-        `API key not found for plugin ${plugin.id}.`,
-        422,
-        'WORK_PLUGIN_CREDENTIALS_MISSING'
-      );
-    }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
@@ -304,11 +351,24 @@ export class WorkModelProviderService {
       apiConfig.endpoint,
       request.model
     );
+    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
+    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    if (pluginRequiresApiKey(plugin) && !apiKey) {
+      throw new WorkModelProviderError(
+        `API key not found for plugin ${plugin.id}.`,
+        422,
+        'WORK_PLUGIN_CREDENTIALS_MISSING'
+      );
+    }
     const providerStateScope =
       apiConfig.apiMode === 'responses'
-        ? createOpenAIResponsesStateScope(plugin.id, request.model, endpoint)
+        ? createOpenAIResponsesStateScope(
+            plugin.id,
+            request.model,
+            endpoint,
+            createPluginCredentialFingerprint(apiKey)
+          )
         : undefined;
-    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
     const headers = buildPluginAuthHeaders(plugin, apiKey);
     const { payload, extraHeaders } = buildPluginWorkPayload(
       plugin,
@@ -447,14 +507,6 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
-    if (pluginRequiresApiKey(plugin) && !apiKey) {
-      throw new WorkModelProviderError(
-        `API key not found for plugin ${plugin.id}.`,
-        422,
-        'WORK_PLUGIN_CREDENTIALS_MISSING'
-      );
-    }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
@@ -464,9 +516,23 @@ export class WorkModelProviderService {
       apiConfig.endpoint,
       request.model
     );
+    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
+    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    if (pluginRequiresApiKey(plugin) && !apiKey) {
+      throw new WorkModelProviderError(
+        `API key not found for plugin ${plugin.id}.`,
+        422,
+        'WORK_PLUGIN_CREDENTIALS_MISSING'
+      );
+    }
     const providerStateScope =
       apiConfig.apiMode === 'responses'
-        ? createOpenAIResponsesStateScope(plugin.id, request.model, endpoint)
+        ? createOpenAIResponsesStateScope(
+            plugin.id,
+            request.model,
+            endpoint,
+            createPluginCredentialFingerprint(apiKey)
+          )
         : undefined;
     if (plugin.id === 'gemini') {
       endpoint = geminiStreamingEndpoint(endpoint);

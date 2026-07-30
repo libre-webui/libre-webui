@@ -515,6 +515,51 @@ test('Chat drops oversized Responses replay state before storage or private repl
   });
 });
 
+test('Chat drops Responses replay state after provider credential rotation', () => {
+  const oldCredentialFingerprint =
+    openAIResponsesAdapter.createPluginCredentialFingerprint('old-api-key');
+  const newCredentialFingerprint =
+    openAIResponsesAdapter.createPluginCredentialFingerprint('new-api-key');
+  const oldStateScope = openAIResponsesAdapter.createOpenAIResponsesStateScope(
+    'openai',
+    'gpt-test',
+    'https://api.openai.com/v1/responses',
+    oldCredentialFingerprint
+  );
+  const newStateScope = openAIResponsesAdapter.createOpenAIResponsesStateScope(
+    'openai',
+    'gpt-test',
+    'https://api.openai.com/v1/responses',
+    newCredentialFingerprint
+  );
+
+  assert.notEqual(oldCredentialFingerprint, newCredentialFingerprint);
+  assert.notEqual(oldStateScope, newStateScope);
+  assert.deepEqual(
+    openAIResponsesAdapter.toOpenAIResponsesInput(
+      [
+        {
+          role: 'assistant',
+          content: 'Visible answer.',
+          providerMetadata: {
+            openAIResponsesOutputItems: [
+              {
+                id: 'reasoning-old-credential',
+                type: 'reasoning',
+                encrypted_content: 'opaque-old-credential-state',
+                summary: [],
+              },
+            ],
+            openAIResponsesStateScope: oldStateScope,
+          },
+        },
+      ],
+      newStateScope
+    ),
+    [{ role: 'assistant', content: 'Visible answer.' }]
+  );
+});
+
 test('preparePluginChatContext replaces the latest user message with RAG content', () => {
   const result = pluginChatContext.preparePluginChatContext({
     isPrivate: false,
@@ -945,6 +990,17 @@ test('plugin model routing requires an active plugin and the current user creden
             `INSERT INTO users (id, username, password_hash, role, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?)`
           ).run('alice', 'alice', 'test-hash', 'user', now, now);
+          db.prepare(
+            `INSERT INTO users (id, username, password_hash, role, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?)`
+          ).run(
+            'plugin-fixture-admin',
+            'plugin-fixture-admin',
+            'test-hash',
+            'admin',
+            now,
+            now
+          );
 
           const credentialsService = (
             await import(
@@ -953,20 +1009,43 @@ test('plugin model routing requires an active plugin and the current user creden
               ).href
             )
           ).default;
-          const chatGenerationService = (
-            await import(
-              `${pathToFileURL(path.join(distRoot, 'services', 'chatGenerationService.js')).href}?generationRouteTest=${Date.now()}`
-            )
-          ).default;
           const pluginService = (
             await import(
               pathToFileURL(path.join(distRoot, 'services', 'pluginService.js'))
                 .href
             )
           ).default;
+          const chatGenerationService = (
+            await import(
+              `${pathToFileURL(path.join(distRoot, 'services', 'chatGenerationService.js')).href}?generationRouteTest=${Date.now()}`
+            )
+          ).default;
 
+          for (const pluginId of ['active-plugin', 'inactive-plugin']) {
+            pluginService.installPlugin(
+              JSON.parse(
+                fs.readFileSync(
+                  path.join(pluginsDir, `${pluginId}.json`),
+                  'utf8'
+                )
+              ),
+              'plugin-fixture-admin'
+            );
+          }
           assert.equal(
-            credentialsService.setApiKey('active-plugin', 'alice-key', 'alice'),
+            await pluginService.activatePlugin('active-plugin', 'alice'),
+            true
+          );
+          assert.equal(
+            credentialsService.setApiKey(
+              'active-plugin',
+              'alice-key',
+              'alice',
+              pluginService.getCredentialRoutingAuthFingerprint(
+                pluginService.getPlugin('active-plugin', 'alice'),
+                'alice'
+              )
+            ),
             true
           );
 
