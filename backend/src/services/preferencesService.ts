@@ -17,11 +17,13 @@
 
 import storageService from '../storage.js';
 import {
+  ChatProviderSelection,
   UserPreferences,
   GenerationOptions,
   EmbeddingSettings,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
+import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
 
 const logger = createLogger('services:preferences-service');
 
@@ -160,31 +162,86 @@ class PreferencesService {
     userId?: string
   ): UserPreferences {
     const currentPreferences = this.getPreferences(userId);
+    const normalizedUpdates = { ...updates };
+    const hasDefaultProviderUpdate =
+      Object.prototype.hasOwnProperty.call(updates, 'defaultProviderType') ||
+      Object.prototype.hasOwnProperty.call(updates, 'defaultProviderId');
+
+    if (
+      hasDefaultProviderUpdate ||
+      Object.prototype.hasOwnProperty.call(updates, 'defaultModel')
+    ) {
+      const provider = hasDefaultProviderUpdate
+        ? normalizeChatProviderSelection({
+            providerType: updates.defaultProviderType,
+            providerId: updates.defaultProviderId,
+          })
+        : undefined;
+      normalizedUpdates.defaultProviderType = provider?.providerType;
+      normalizedUpdates.defaultProviderId = provider?.providerId;
+    }
+
+    if (updates.titleSettings) {
+      const currentTitleSettings = currentPreferences.titleSettings;
+      const titleSettings = {
+        ...currentTitleSettings,
+        ...updates.titleSettings,
+      };
+      const hasTaskProviderUpdate =
+        Object.prototype.hasOwnProperty.call(
+          updates.titleSettings,
+          'taskProviderType'
+        ) ||
+        Object.prototype.hasOwnProperty.call(
+          updates.titleSettings,
+          'taskProviderId'
+        );
+
+      if (
+        hasTaskProviderUpdate ||
+        Object.prototype.hasOwnProperty.call(updates.titleSettings, 'taskModel')
+      ) {
+        const provider = hasTaskProviderUpdate
+          ? normalizeChatProviderSelection({
+              providerType: updates.titleSettings.taskProviderType,
+              providerId: updates.titleSettings.taskProviderId,
+            })
+          : undefined;
+        titleSettings.taskProviderType = provider?.providerType;
+        titleSettings.taskProviderId = provider?.providerId;
+      }
+
+      normalizedUpdates.titleSettings = titleSettings;
+    }
+
     const updatedPreferences: UserPreferences = {
       ...currentPreferences,
-      ...updates,
+      ...normalizedUpdates,
       theme: {
         ...currentPreferences.theme,
-        ...updates.theme,
+        ...normalizedUpdates.theme,
       },
       generationOptions: {
         ...currentPreferences.generationOptions,
-        ...updates.generationOptions,
+        ...normalizedUpdates.generationOptions,
       },
       embeddingSettings: {
         ...currentPreferences.embeddingSettings,
-        ...updates.embeddingSettings,
+        ...normalizedUpdates.embeddingSettings,
       },
       // Properly merge backgroundSettings
-      backgroundSettings: updates.backgroundSettings
+      backgroundSettings: normalizedUpdates.backgroundSettings
         ? {
             ...currentPreferences.backgroundSettings,
-            ...updates.backgroundSettings,
+            ...normalizedUpdates.backgroundSettings,
           }
         : currentPreferences.backgroundSettings,
       // Properly merge ttsSettings
-      ttsSettings: updates.ttsSettings
-        ? { ...currentPreferences.ttsSettings, ...updates.ttsSettings }
+      ttsSettings: normalizedUpdates.ttsSettings
+        ? {
+            ...currentPreferences.ttsSettings,
+            ...normalizedUpdates.ttsSettings,
+          }
         : currentPreferences.ttsSettings,
     };
 
@@ -197,8 +254,20 @@ class PreferencesService {
     }
   }
 
-  setDefaultModel(model: string, userId?: string): UserPreferences {
-    return this.updatePreferences({ defaultModel: model }, userId);
+  setDefaultModel(
+    model: string,
+    userId?: string,
+    providerSelection?: ChatProviderSelection
+  ): UserPreferences {
+    const provider = normalizeChatProviderSelection(providerSelection);
+    return this.updatePreferences(
+      {
+        defaultModel: model,
+        defaultProviderType: provider?.providerType,
+        defaultProviderId: provider?.providerId,
+      },
+      userId
+    );
   }
 
   setTheme(

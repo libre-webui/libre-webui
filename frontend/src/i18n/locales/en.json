@@ -1612,7 +1612,7 @@
     "searchInstalled": "Search installed models...",
     "searchOllama": "Search Ollama library...",
     "searchHuggingFace": "Search HuggingFace...",
-    "selectModel": "Select Model",
+    "selectModel": "Select a model",
     "personas": "Personas",
     "ollamaModels": "Ollama Models",
     "pluginModels": "Plugin Models",

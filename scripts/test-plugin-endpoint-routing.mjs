@@ -439,6 +439,10 @@ test('discovered models persist per user without mutating the shared plugin mani
         await service.discoverModels(providerId, 'catalog-user-two'),
         ['model-catalog-user-two']
       );
+      assert.equal(
+        await service.activatePlugin(providerId, 'catalog-user-one'),
+        true
+      );
     }
   );
 
@@ -453,6 +457,23 @@ test('discovered models persist per user without mutating the shared plugin mani
   assert.deepEqual(service.getPlugin(providerId, 'default').model_map, [
     'chat-model',
   ]);
+  assert.equal(
+    service.getActivePluginForModel(
+      'model-catalog-user-one',
+      'catalog-user-one',
+      providerId
+    )?.id,
+    providerId
+  );
+  assert.throws(
+    () =>
+      service.getActivePluginForModel(
+        'model-catalog-user-one',
+        'catalog-user-two',
+        providerId
+      ),
+    /not supported/
+  );
 
   const manifest = JSON.parse(
     fs.readFileSync(

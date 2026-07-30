@@ -19,7 +19,7 @@ import type { ChangeEvent, ReactNode, Ref } from 'react';
 import type { OllamaModel, Persona } from '@/types';
 
 export interface ModelGroup {
-  type: 'personas' | 'ollama' | 'plugins';
+  type: 'legacy' | 'unavailable' | 'personas' | 'ollama' | 'plugins';
   label: string;
   icon: ReactNode;
   models: OllamaModel[];

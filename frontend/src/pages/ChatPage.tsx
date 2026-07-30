@@ -29,10 +29,19 @@ import { ImageUpload } from '@/components/ImageUpload';
 import { useChatStore } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
 import { useChat } from '@/hooks/useChat';
-import { imageGenApi } from '@/utils/api';
+import { chatApi, imageGenApi } from '@/utils/api';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 import { isRTL } from '@/i18n';
+import {
+  chatModelOptionKey,
+  chatModelSelectionFromKey,
+  chatModelSelectionFromModel,
+  chatModelSelectionKeyForModels,
+  isChatModelSelectionAvailable,
+  withUnavailableChatModel,
+} from '@/utils/chatModelSelection';
+import toast from 'react-hot-toast';
 import {
   getWelcomePromptId,
   getWelcomePromptIndex,
@@ -122,6 +131,8 @@ export const ChatPage: React.FC = () => {
     sessions,
     models,
     selectedModel,
+    selectedProviderType,
+    selectedProviderId,
     setSelectedModel,
     createSession,
     setCurrentSession,
@@ -140,6 +151,25 @@ export const ChatPage: React.FC = () => {
     toolActivities,
   } = useChat(currentSession?.id || '');
   const currentPersona = getCurrentPersona();
+  const selectedModelState = useMemo(
+    () => ({
+      model: selectedModel,
+      providerType: selectedProviderType,
+      providerId: selectedProviderId,
+    }),
+    [selectedModel, selectedProviderId, selectedProviderType]
+  );
+  const welcomeModels = useMemo(
+    () => withUnavailableChatModel(models, selectedModelState),
+    [models, selectedModelState]
+  );
+  const selectedModelKey = selectedModel
+    ? chatModelSelectionKeyForModels(welcomeModels, selectedModelState)
+    : '';
+  const selectedModelAvailable = isChatModelSelectionAvailable(
+    models,
+    selectedModelState
+  );
 
   const [welcomePromptIndex, setWelcomePromptIndex] = useState(
     getWelcomePromptIndex
@@ -297,7 +327,15 @@ export const ChatPage: React.FC = () => {
 
   const _handleCreateSession = async () => {
     if (selectedModel) {
-      const newSession = await createSession(selectedModel);
+      const newSession = await createSession(
+        selectedModel,
+        undefined,
+        selectedModel.startsWith('persona:')
+          ? selectedModel.slice('persona:'.length)
+          : undefined,
+        selectedProviderType,
+        selectedProviderId
+      );
       if (newSession) {
         navigate(`/c/${newSession.id}`, { replace: true });
       }
@@ -308,6 +346,10 @@ export const ChatPage: React.FC = () => {
   const handleWelcomeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!welcomeMessage.trim() || !selectedModel) return;
+    if (!selectedModelAvailable) {
+      toast.error('Select an available model before sending');
+      return;
+    }
 
     // Store the pending message in sessionStorage before creating session
     // This allows the new session page to pick it up and send it
@@ -322,7 +364,15 @@ export const ChatPage: React.FC = () => {
     setWelcomeImages([]);
 
     // Create a new session and navigate to it
-    const newSession = await createSession(selectedModel);
+    const newSession = await createSession(
+      selectedModel,
+      undefined,
+      selectedModel.startsWith('persona:')
+        ? selectedModel.slice('persona:'.length)
+        : undefined,
+      selectedProviderType,
+      selectedProviderId
+    );
     if (newSession) {
       navigate(`/c/${newSession.id}`, { replace: true });
     }
@@ -338,8 +388,16 @@ export const ChatPage: React.FC = () => {
   const handleModelChange = async (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    const model = event.target.value;
-    setSelectedModel(model);
+    const selection = chatModelSelectionFromKey(
+      welcomeModels,
+      event.target.value
+    );
+    if (!selection) return;
+    setSelectedModel(
+      selection.model,
+      selection.providerType,
+      selection.providerId
+    );
     // Don't auto-create session on model change, let user click "New Chat"
   };
 
@@ -375,10 +433,26 @@ export const ChatPage: React.FC = () => {
             // Create a private session that won't be saved
             // Don't navigate - just set the session and it will show the chat UI
             const now = Date.now();
+            const privateSelection = selectedModel
+              ? selectedModelState
+              : models[0]
+                ? chatModelSelectionFromModel(models[0])
+                : null;
+            if (
+              !privateSelection ||
+              !isChatModelSelectionAvailable(models, privateSelection)
+            ) {
+              toast.error(
+                'Select an available model before starting private chat'
+              );
+              return;
+            }
             const privateSession = {
               id: `private-${now}`,
               title: t('chat.session.private'),
-              model: selectedModel || models[0]?.name || '',
+              model: privateSelection.model,
+              providerType: privateSelection.providerType,
+              providerId: privateSelection.providerId,
               messages: [],
               createdAt: now,
               updatedAt: now,
@@ -386,7 +460,10 @@ export const ChatPage: React.FC = () => {
             };
             setCurrentSession(privateSession);
           }}
-          disabled={!selectedModel && models.length === 0}
+          disabled={
+            (!selectedModel && models.length === 0) ||
+            (Boolean(selectedModel) && !selectedModelAvailable)
+          }
           className='absolute end-4 top-4 z-10 flex items-center gap-2 rounded-full border border-black/[0.07] bg-surface/65 px-3 py-2 text-xs font-medium text-gray-500 backdrop-blur-md transition-colors duration-150 hover:bg-surface-raised hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.08] dark:bg-dark-200/65 dark:text-dark-600 dark:hover:bg-dark-200 dark:hover:text-dark-950 sm:end-6 sm:top-6'
           title={t('chat.session.privateTooltip')}
         >
@@ -408,7 +485,7 @@ export const ChatPage: React.FC = () => {
             </p>
           </div>
 
-          {models.length > 0 ? (
+          {welcomeModels.length > 0 ? (
             <div className='w-full'>
               {/* Advanced Features Panel */}
               {showWelcomeAdvanced && (
@@ -476,9 +553,10 @@ export const ChatPage: React.FC = () => {
                   {/* Model selector (compact) */}
                   <div className='hidden sm:block'>
                     <ModelSelector
-                      models={models}
-                      selectedModel={selectedModel}
+                      models={welcomeModels}
+                      selectedModel={selectedModelKey}
                       onModelChange={handleModelChange}
+                      getModelValue={chatModelOptionKey}
                       className='min-w-[140px] max-w-[210px]'
                       compact
                       showImageGen={hasImageGenPlugins}
@@ -490,7 +568,11 @@ export const ChatPage: React.FC = () => {
                     type='submit'
                     variant='ghost'
                     size='sm'
-                    disabled={!welcomeMessage.trim() || !selectedModel}
+                    disabled={
+                      !welcomeMessage.trim() ||
+                      !selectedModel ||
+                      !selectedModelAvailable
+                    }
                     className={cn(
                       'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'bg-gray-950 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
@@ -508,9 +590,10 @@ export const ChatPage: React.FC = () => {
               {/* Mobile model selector */}
               <div className='sm:hidden mt-4'>
                 <ModelSelector
-                  models={models}
-                  selectedModel={selectedModel}
+                  models={welcomeModels}
+                  selectedModel={selectedModelKey}
                   onModelChange={handleModelChange}
+                  getModelValue={chatModelOptionKey}
                   className='w-full'
                   compact
                   showImageGen={hasImageGenPlugins}
@@ -578,23 +661,33 @@ export const ChatPage: React.FC = () => {
             <PersonaIndicator
               persona={currentPersona}
               onClear={() => {
-                // Clear persona from session
-                if (currentSession) {
-                  const { sessions } = useChatStore.getState();
-                  const updatedSession = {
-                    ...currentSession,
+                if (!currentSession) return;
+                void chatApi
+                  .updateSession(currentSession.id, {
                     model: currentPersona.model,
-                    personaId: undefined,
-                  };
-                  const updatedSessions = sessions.map(s =>
-                    s.id === currentSession.id ? updatedSession : s
-                  );
-                  useChatStore.setState({
-                    sessions: updatedSessions,
-                    currentSession: updatedSession,
+                    providerType: 'ollama',
+                    providerId: null,
+                    personaId: null,
+                  })
+                  .then(response => {
+                    if (!response.success || !response.data) {
+                      throw new Error(
+                        response.error || 'Failed to remove persona'
+                      );
+                    }
+                    useChatStore.setState(state => ({
+                      sessions: state.sessions.map(session =>
+                        session.id === currentSession.id
+                          ? response.data!
+                          : session
+                      ),
+                      currentSession: response.data!,
+                    }));
+                  })
+                  .catch(error => {
+                    logger.error('Failed to remove persona:', error);
+                    toast.error('Failed to remove persona');
                   });
-                  // Persona background is handled locally - clearing personaId removes the background
-                }
               }}
             />
           </div>

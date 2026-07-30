@@ -49,6 +49,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import toast from 'react-hot-toast';
 import { createLogger } from '@/utils/logger';
+import { isAvailableOllamaModel } from '@/utils/chatModelSelection';
 import { HuggingFaceModelsTab } from '@/components/model-selector/HuggingFaceModelsTab';
 import { InstalledModelsTab } from '@/components/model-selector/InstalledModelsTab';
 import { OllamaLibraryTab } from '@/components/model-selector/OllamaLibraryTab';
@@ -123,10 +124,26 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
   const groupedModels: ModelGroup[] = [
     {
+      type: 'legacy' as const,
+      label: t('modelSelector.providerNotRecorded', 'Provider not recorded'),
+      icon: <Brain className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
+      models: models.filter(model => model.isLegacySelection),
+      color: 'gray',
+    },
+    {
+      type: 'unavailable' as const,
+      label: t('modelSelector.unavailableSelections', 'Unavailable selections'),
+      icon: <X className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
+      models: models.filter(
+        model => model.isUnavailable && !model.isLegacySelection
+      ),
+      color: 'gray',
+    },
+    {
       type: 'personas' as const,
       label: t('modelSelector.personas'),
       icon: <User className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
-      models: models.filter(model => model.isPersona),
+      models: models.filter(model => model.isPersona && !model.isUnavailable),
       color: 'purple',
     },
     {
@@ -134,8 +151,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       label: t('modelSelector.ollamaModels'),
       icon: <Bot className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
       models: models.filter(
-        model =>
-          !model.isPersona && !model.isPlugin && !model.name.includes('embed')
+        model => isAvailableOllamaModel(model) && !model.name.includes('embed')
       ),
       color: 'green',
     },
@@ -143,7 +159,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       type: 'plugins' as const,
       label: t('modelSelector.pluginModels'),
       icon: <Zap className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
-      models: models.filter(model => model.isPlugin),
+      models: models.filter(model => model.isPlugin && !model.isUnavailable),
       color: 'green',
     },
   ].filter(group => group.models.length > 0);
@@ -360,9 +376,15 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   }, [isOpen]);
 
   const handleModelSelect = async (modelValue: string) => {
-    const selectedOption = models.find(
-      model => getModelValue(model) === modelValue
-    );
+    const selectedOption =
+      models.find(model => getModelValue(model) === modelValue) ??
+      models.find(
+        model =>
+          !model.isPlugin && !model.isPersona && model.name === modelValue
+      );
+    const selectedValue = selectedOption
+      ? getModelValue(selectedOption)
+      : modelValue;
     const runtimeModelName = selectedOption?.name ?? modelValue;
     closeSelector();
 
@@ -388,7 +410,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     }
 
     const syntheticEvent = {
-      target: { value: modelValue },
+      target: { value: selectedValue },
     } as React.ChangeEvent<HTMLSelectElement>;
 
     onModelChange(syntheticEvent);
@@ -443,10 +465,17 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   };
 
   const isModelInstalled = (name: string) => {
-    return models.some(m => m.name === name || m.name.startsWith(name + ':'));
+    return models.some(
+      model =>
+        isAvailableOllamaModel(model) &&
+        (model.name === name || model.name.startsWith(name + ':'))
+    );
   };
 
   const getModelIcon = (model: OllamaModel) => {
+    if (model.isLegacySelection) {
+      return <Brain className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
+    }
     if (model.isPersona) {
       return <User className='h-4 w-4 text-gray-500 dark:text-dark-600' />;
     }
@@ -460,21 +489,47 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     if (getModelLabelOverride) {
       return getModelLabelOverride(model);
     }
+    if (model.isLegacySelection) {
+      return `${model.name} (${t(
+        'modelSelector.legacyProvider',
+        'provider not recorded'
+      )})`;
+    }
     if (model.isPersona) {
       return model.personaName || model.name;
     }
     if (model.isPlugin) {
-      return `${model.name}`;
+      return model.isUnavailable
+        ? `${model.name} (${t('modelSelector.unavailable', 'unavailable')})`
+        : model.name;
     }
-    return model.name;
+    return model.isUnavailable
+      ? `${model.name} (${t('modelSelector.unavailable', 'unavailable')})`
+      : model.name;
   };
 
   const getModelSubLabel = (model: OllamaModel) => {
+    if (model.isLegacySelection) {
+      return model.isUnavailable
+        ? t('modelSelector.providerUnavailable', 'provider unavailable')
+        : t(
+            'modelSelector.reselectProvider',
+            'reselect a provider to pin this model'
+          );
+    }
     if (model.isPersona) {
       return `via ${model.model}`;
     }
     if (model.isPlugin) {
-      return `via ${model.pluginName}`;
+      return model.isUnavailable
+        ? `via ${model.pluginName || model.pluginId} · ${t(
+            'modelSelector.providerUnavailable',
+            'provider unavailable'
+          )}`
+        : `via ${model.pluginName}`;
+    }
+    if (model.isUnavailable) {
+      return t('modelSelector.providerUnavailable', 'provider unavailable');
     }
     return null;
   };
@@ -759,6 +814,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
 
       <select
         data-testid={selectTestId}
+        aria-label={ariaLabel}
         aria-hidden='true'
         dir='ltr'
         value={selectedModel}
@@ -768,7 +824,7 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       >
         {models.map(model => (
           <option
-            key={`${model.isPersona ? 'persona' : model.isPlugin ? 'plugin' : 'ollama'}:${model.pluginId || ''}:${getModelValue(model)}`}
+            key={`${model.isLegacySelection ? 'legacy' : model.isPersona ? 'persona' : model.isPlugin ? 'plugin' : 'ollama'}:${model.pluginId || ''}:${getModelValue(model)}`}
             value={getModelValue(model)}
           >
             {getModelLabel(model)}

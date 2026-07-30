@@ -55,7 +55,14 @@ export interface ChatMessage {
   siblingCount?: number; // Total number of variants (including this one)
 }
 
-export interface ChatSession {
+export type ChatProviderType = 'ollama' | 'plugin';
+
+export interface ChatProviderSelection {
+  providerType?: ChatProviderType | null;
+  providerId?: string | null;
+}
+
+export interface ChatSession extends ChatProviderSelection {
   id: string;
   title: string;
   messages: ChatMessage[];
@@ -123,10 +130,14 @@ export interface TTSSettings {
 export interface TitleSettings {
   autoTitle: boolean;
   taskModel: string;
+  taskProviderType?: ChatProviderType | null;
+  taskProviderId?: string | null;
 }
 
 export interface UserPreferences {
   defaultModel: string;
+  defaultProviderType?: ChatProviderType | null;
+  defaultProviderId?: string | null;
   theme: {
     mode: 'light' | 'dark' | 'ophelia';
     adaptToAccent?: boolean;

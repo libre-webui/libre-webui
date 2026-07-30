@@ -25,6 +25,7 @@ import { chatApi } from '@/utils/api';
 import { isDemoMode } from '@/utils/demoMode';
 import { createLogger } from '@/utils/logger';
 import toast from 'react-hot-toast';
+import { isChatModelSelectionAvailable } from '@/utils/chatModelSelection';
 
 const logger = createLogger('use-chat');
 const DEFAULT_SESSION_TITLES = new Set(['New Chat', 'New Demo Session']);
@@ -138,7 +139,9 @@ export const useChat = (sessionId: string) => {
         const response = await chatApi.generateTitle(
           targetSessionId,
           titleSettings.taskModel,
-          firstMessage
+          firstMessage,
+          titleSettings.taskProviderType,
+          titleSettings.taskProviderId
         );
         logger.debug('Title generation response:', response);
 
@@ -380,6 +383,20 @@ export const useChat = (sessionId: string) => {
         return;
 
       try {
+        const chatState = useChatStore.getState();
+        const session = chatState.currentSession;
+        const selection = {
+          model: session?.personaId
+            ? `persona:${session.personaId}`
+            : session?.model || '',
+          providerType: session?.providerType,
+          providerId: session?.providerId,
+        };
+        if (!isChatModelSelectionAvailable(chatState.models, selection)) {
+          toast.error('Select an available model before sending');
+          return;
+        }
+
         setIsGenerating(true);
         setIsStreaming(true);
         resetVisibleStreamingMessage();
@@ -392,7 +409,6 @@ export const useChat = (sessionId: string) => {
 
         // Track the first user message for auto-title generation BEFORE adding message
         // Only set if it's the first message in this session (no existing user messages)
-        const session = useChatStore.getState().currentSession;
         const isPrivateSession = session?.isPrivate === true;
         const hasExistingUserMessages = session?.messages?.some(
           m => m.role === 'user'
@@ -473,8 +489,14 @@ export const useChat = (sessionId: string) => {
             options: preferences.generationOptions,
             assistantMessageId, // Send the message ID to backend
             isPrivate: isPrivateSession, // Private sessions don't persist to DB
-            model: isPrivateSession ? session?.model : undefined, // Include model for private sessions
-            messageHistory, // Send history for private sessions
+            ...(isPrivateSession
+              ? {
+                  model: session?.model,
+                  providerType: session?.providerType,
+                  providerId: session?.providerId,
+                  messageHistory,
+                }
+              : {}),
           },
         });
       } catch (error: unknown) {
@@ -510,8 +532,21 @@ export const useChat = (sessionId: string) => {
 
   // Regenerate the last assistant message (creates a new branch)
   const regenerateLastMessage = useCallback(async () => {
-    const session = useChatStore.getState().currentSession;
+    const chatState = useChatStore.getState();
+    const session = chatState.currentSession;
     if (!session || !sessionId) return;
+    if (
+      !isChatModelSelectionAvailable(chatState.models, {
+        model: session.personaId
+          ? `persona:${session.personaId}`
+          : session.model,
+        providerType: session.providerType,
+        providerId: session.providerId,
+      })
+    ) {
+      toast.error('Select an available model before regenerating');
+      return;
+    }
 
     // Find the last user message (before the last assistant message)
     const messages = session.messages;
@@ -577,6 +612,16 @@ export const useChat = (sessionId: string) => {
       }
 
       // Send chat stream request to regenerate with branching
+      const isPrivateSession = session.isPrivate === true;
+      const messageHistory = isPrivateSession
+        ? messages
+            .filter(message => message.role !== 'system')
+            .map(message => ({
+              role: message.role,
+              content: message.content,
+              images: message.images,
+            }))
+        : undefined;
       websocketService.send({
         type: 'chat_stream',
         data: {
@@ -587,6 +632,15 @@ export const useChat = (sessionId: string) => {
           assistantMessageId: newBranchMessageId,
           regenerate: true,
           originalMessageId: lastAssistantMessage.id, // For branching
+          isPrivate: isPrivateSession,
+          ...(isPrivateSession
+            ? {
+                model: session.model,
+                providerType: session.providerType,
+                providerId: session.providerId,
+                messageHistory,
+              }
+            : {}),
         },
       });
     } catch (error: unknown) {
