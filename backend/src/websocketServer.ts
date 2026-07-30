@@ -211,6 +211,7 @@ export function registerWebSocketServer(server: Server): void {
           }
 
           let assistantContent = '';
+          let assistantProviderMetadata: Record<string, unknown> | undefined;
 
           logger.debug(
             'Backend: Using assistantMessageId:',
@@ -267,7 +268,7 @@ export function registerWebSocketServer(server: Server): void {
 
             try {
               if (shouldStreamPlugin) {
-                assistantContent = await streamPluginResponse({
+                const streamResult = await streamPluginResponse({
                   ws,
                   chunks: pluginService.executePluginStreamRequest(
                     actualModelName,
@@ -278,6 +279,8 @@ export function registerWebSocketServer(server: Server): void {
                   ),
                   messageId: assistantMessageId,
                 });
+                assistantContent = streamResult.content;
+                assistantProviderMetadata = streamResult.providerMetadata;
               } else {
                 const generationResult =
                   await chatGenerationService.executeNonStreaming({
@@ -289,6 +292,8 @@ export function registerWebSocketServer(server: Server): void {
                   });
 
                 assistantContent = generationResult.assistantContent;
+                assistantProviderMetadata =
+                  generationResult.response.message.providerMetadata;
 
                 await streamAssistantFakeChunks(
                   ws,
@@ -310,6 +315,7 @@ export function registerWebSocketServer(server: Server): void {
                     isPrivate,
                     regenerate,
                     originalMessageId,
+                    providerMetadata: assistantProviderMetadata,
                   });
 
                 if (isPrivate) {

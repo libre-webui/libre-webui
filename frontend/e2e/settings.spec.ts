@@ -410,3 +410,178 @@ test('TTS keeps the selected provider for shared model aliases and generation', 
     'kyutai-tts-1.6b::tts-1-hd'
   );
 });
+
+test('image generation keeps duplicate model providers distinct through save and generation', async ({
+  page,
+}) => {
+  const sharedModel = 'shared-image-model';
+  const mockApi = await mockLibreWebUiApi(page, {
+    preferences: {
+      imageGenSettings: {
+        enabled: true,
+        model: sharedModel,
+        size: '1024x1024',
+        quality: 'standard',
+        style: 'vivid',
+        pluginId: 'image-provider-one',
+      },
+    },
+    imageGenModels: [
+      {
+        model: sharedModel,
+        plugin: 'image-provider-one',
+        config: {
+          sizes: ['1024x1024'],
+          default_size: '1024x1024',
+          qualities: ['standard'],
+          default_quality: 'standard',
+          styles: ['natural', 'vivid'],
+          default_style: 'natural',
+        },
+      },
+      {
+        model: sharedModel,
+        plugin: 'image-provider-two',
+        config: {
+          sizes: ['1024x1024'],
+          default_size: '1024x1024',
+          qualities: ['standard'],
+          default_quality: 'standard',
+          styles: ['natural', 'vivid'],
+          default_style: 'natural',
+        },
+      },
+    ],
+    imageGenPlugins: [
+      {
+        id: 'image-provider-one',
+        name: 'Image Provider One',
+        models: [sharedModel],
+        config: {
+          sizes: ['1024x1024'],
+          default_size: '1024x1024',
+          qualities: ['standard'],
+          default_quality: 'standard',
+          styles: ['natural', 'vivid'],
+          default_style: 'natural',
+        },
+      },
+      {
+        id: 'image-provider-two',
+        name: 'Image Provider Two',
+        models: [sharedModel],
+        config: {
+          sizes: ['1024x1024'],
+          default_size: '1024x1024',
+          qualities: ['standard'],
+          default_quality: 'standard',
+          styles: ['natural', 'vivid'],
+          default_style: 'natural',
+        },
+      },
+    ],
+  });
+
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Image Generation' }).click();
+
+  const imageSettingsPanel = page.getByRole('tabpanel');
+  const modelSelect = imageSettingsPanel.locator('select').first();
+  await expect(modelSelect.locator('option')).toHaveText([
+    'Select a model',
+    `${sharedModel} (image-provider-one)`,
+    `${sharedModel} (image-provider-two)`,
+  ]);
+  await expect(modelSelect).toHaveValue(`image-provider-one::${sharedModel}`);
+
+  await modelSelect.selectOption(`image-provider-two::${sharedModel}`);
+  await page.getByRole('button', { name: 'Save Settings' }).click();
+
+  await expect
+    .poll(() =>
+      mockApi.preferenceUpdateRequests.find(
+        request => request.imageGenSettings !== undefined
+      )
+    )
+    .toMatchObject({
+      imageGenSettings: {
+        enabled: true,
+        model: sharedModel,
+        pluginId: 'image-provider-two',
+      },
+    });
+
+  await page.reload();
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Image Generation' }).click();
+  await expect(
+    page.getByRole('tabpanel').locator('select').first()
+  ).toHaveValue(`image-provider-two::${sharedModel}`);
+
+  await page.keyboard.press('Escape');
+  await expect(imageSettingsPanel).toBeHidden();
+  await page.goto('/gallery');
+  await expect(page).toHaveURL(/\/gallery$/);
+  await page
+    .getByRole('button', { name: 'Generate Image', exact: true })
+    .click();
+
+  const imageDialog = page.getByRole('dialog', { name: 'Generate Image' });
+  const imageDialogSelects = imageDialog.locator('select');
+  await expect(imageDialogSelects.nth(0)).toHaveValue('image-provider-two');
+  await expect(imageDialogSelects.nth(1)).toHaveValue(sharedModel);
+  await imageDialog
+    .getByPlaceholder('Describe the image you want to create...')
+    .fill('A provider-qualified image');
+  await imageDialog
+    .getByRole('button', { name: 'Generate', exact: true })
+    .click();
+
+  await expect.poll(() => mockApi.imageGenerationRequests.length).toBe(1);
+  expect(mockApi.imageGenerationRequests[0]).toMatchObject({
+    model: sharedModel,
+    pluginId: 'image-provider-two',
+    prompt: 'A provider-qualified image',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+  });
+});
+
+test('disabled image generation prevents the gallery action', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    preferences: {
+      imageGenSettings: {
+        enabled: false,
+        model: 'disabled-image-model',
+        size: '1024x1024',
+        quality: 'standard',
+        style: 'vivid',
+        pluginId: 'disabled-image-provider',
+      },
+    },
+    imageGenPlugins: [
+      {
+        id: 'disabled-image-provider',
+        name: 'Disabled Image Provider',
+        models: ['disabled-image-model'],
+      },
+    ],
+  });
+
+  await page.goto('/gallery');
+
+  const generateImageButton = page.getByRole('button', {
+    name: 'Generate Image',
+    exact: true,
+  });
+  await expect(generateImageButton).toBeDisabled();
+  await expect(
+    page.getByRole('dialog', { name: 'Generate Image' })
+  ).toHaveCount(0);
+});

@@ -15,28 +15,88 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { X, ImageIcon, Loader2, Download, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn } from '@/utils';
-import { imageGenApi } from '@/utils/api';
+import {
+  findPreferredImagePlugin,
+  getImageGenImageFileExtension,
+  getImageGenImageSource,
+  imageGenApi,
+  resolveImageGenOption,
+  type ImageGenPlugin,
+} from '@/utils/api';
 import { toast } from 'react-hot-toast';
 import { createLogger } from '@/utils/logger';
+import { useAppStore } from '@/store/appStore';
+import type { ImageGenSettings } from '@/types';
 
 const logger = createLogger('components:image-generation-panel');
 
-interface ImageGenPlugin {
-  id: string;
-  name: string;
-  models: string[];
-  config?: {
-    sizes?: string[];
-    default_size?: string;
-    qualities?: string[];
-    default_quality?: string;
-    max_prompt_length?: number;
+type PreferredImageSettings = Partial<
+  Pick<ImageGenSettings, 'model' | 'pluginId' | 'quality' | 'size' | 'style'>
+>;
+
+interface ImagePanelSelection {
+  pluginId: string;
+  model: string;
+  size: string;
+  quality: string;
+  style: string;
+  sizes: string[];
+  qualities: string[];
+  styles: string[];
+  maxPromptLength: number | null;
+}
+
+function getImagePanelSelection(
+  plugin: ImageGenPlugin,
+  preferred: PreferredImageSettings = {}
+): ImagePanelSelection {
+  const sizes =
+    plugin.config?.sizes && plugin.config.sizes.length > 0
+      ? plugin.config.sizes
+      : [preferred.size || plugin.config?.default_size || '1024x1024'];
+  const qualities =
+    plugin.config?.qualities && plugin.config.qualities.length > 0
+      ? plugin.config.qualities
+      : [preferred.quality || plugin.config?.default_quality || 'standard'];
+  const styles =
+    plugin.config?.styles && plugin.config.styles.length > 0
+      ? plugin.config.styles
+      : [];
+
+  return {
+    pluginId: plugin.id,
+    model: resolveImageGenOption(plugin.models, preferred.model, undefined, ''),
+    size: resolveImageGenOption(
+      sizes,
+      preferred.size,
+      plugin.config?.default_size,
+      '1024x1024'
+    ),
+    quality: resolveImageGenOption(
+      qualities,
+      preferred.quality,
+      plugin.config?.default_quality,
+      'standard'
+    ),
+    style:
+      styles.length > 0
+        ? resolveImageGenOption(
+            styles,
+            preferred.style,
+            plugin.config?.default_style,
+            styles[0]
+          )
+        : '',
+    sizes,
+    qualities,
+    styles,
+    maxPromptLength: plugin.config?.max_prompt_length ?? null,
   };
 }
 
@@ -52,12 +112,17 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
   onImageGenerated,
 }) => {
   const { t } = useTranslation();
+  const savedImageGenSettings = useAppStore(
+    state => state.preferences.imageGenSettings
+  );
+  const imageGenerationEnabled = savedImageGenSettings?.enabled === true;
   const [plugins, setPlugins] = useState<ImageGenPlugin[]>([]);
   const [selectedPlugin, setSelectedPlugin] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [prompt, setPrompt] = useState('');
   const [size, setSize] = useState('1024x1024');
   const [quality, setQuality] = useState('standard');
+  const [style, setStyle] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [availableSizes, setAvailableSizes] = useState<string[]>([
@@ -69,51 +134,73 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
     'standard',
     'high',
   ]);
+  const [availableStyles, setAvailableStyles] = useState<string[]>([]);
   const [maxPromptLength, setMaxPromptLength] = useState<number | null>(null);
   const titleId = React.useId();
 
-  // Load available plugins on mount
+  const applyPluginSelection = useCallback(
+    (plugin: ImageGenPlugin, preferred?: PreferredImageSettings) => {
+      const selection = getImagePanelSelection(plugin, preferred);
+      setSelectedPlugin(selection.pluginId);
+      setSelectedModel(selection.model);
+      setSize(selection.size);
+      setQuality(selection.quality);
+      setStyle(selection.style);
+      setAvailableSizes(selection.sizes);
+      setAvailableQualities(selection.qualities);
+      setAvailableStyles(selection.styles);
+      setMaxPromptLength(selection.maxPromptLength);
+    },
+    []
+  );
+
+  // Load available plugins and restore the exact saved provider/model.
   useEffect(() => {
+    let cancelled = false;
+
     const loadPlugins = async () => {
       try {
         const response = await imageGenApi.getPlugins();
-        if (response.success && response.data) {
-          setPlugins(response.data);
-          // Auto-select first plugin if available
-          if (response.data.length > 0) {
-            const firstPlugin = response.data[0];
-            setSelectedPlugin(firstPlugin.id);
-            if (firstPlugin.models.length > 0) {
-              setSelectedModel(firstPlugin.models[0]);
-            }
-            if (firstPlugin.config?.sizes) {
-              setAvailableSizes(firstPlugin.config.sizes);
-              setSize(
-                firstPlugin.config.default_size ||
-                  firstPlugin.config.sizes[0] ||
-                  '1024x1024'
-              );
-            }
-            if (firstPlugin.config?.qualities) {
-              setAvailableQualities(firstPlugin.config.qualities);
-              setQuality(
-                firstPlugin.config.default_quality ||
-                  firstPlugin.config.qualities[0] ||
-                  'standard'
-              );
-            }
-            setMaxPromptLength(firstPlugin.config?.max_prompt_length ?? null);
-          }
+        if (cancelled) return;
+
+        const availablePlugins =
+          response.success && response.data
+            ? response.data.filter(plugin => plugin.models.length > 0)
+            : [];
+        setPlugins(availablePlugins);
+
+        const preferredPlugin = findPreferredImagePlugin(
+          availablePlugins,
+          savedImageGenSettings
+        );
+        if (preferredPlugin) {
+          applyPluginSelection(preferredPlugin, savedImageGenSettings);
+        } else {
+          setSelectedPlugin('');
+          setSelectedModel('');
         }
       } catch (error) {
+        if (cancelled) return;
+        setPlugins([]);
+        setSelectedPlugin('');
+        setSelectedModel('');
         logger.error('Failed to load image generation plugins:', error);
       }
     };
 
-    if (isOpen) {
-      loadPlugins();
+    if (isOpen && imageGenerationEnabled) {
+      void loadPlugins();
     }
-  }, [isOpen]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    applyPluginSelection,
+    imageGenerationEnabled,
+    isOpen,
+    savedImageGenSettings,
+  ]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -132,35 +219,25 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
     };
   }, [isOpen, onClose]);
 
-  // Update config when plugin changes — adjust state during render rather than effect
-  const [prevSelectedPlugin, setPrevSelectedPlugin] = useState(selectedPlugin);
-  if (selectedPlugin !== prevSelectedPlugin) {
-    setPrevSelectedPlugin(selectedPlugin);
-    const plugin = plugins.find(p => p.id === selectedPlugin);
-    if (plugin) {
-      if (plugin.models.length > 0 && !plugin.models.includes(selectedModel)) {
-        setSelectedModel(plugin.models[0]);
-      }
-      if (plugin.config?.sizes) {
-        setAvailableSizes(plugin.config.sizes);
-        if (!plugin.config.sizes.includes(size)) {
-          setSize(plugin.config.default_size || plugin.config.sizes[0]);
-        }
-      }
-      if (plugin.config?.qualities) {
-        setAvailableQualities(plugin.config.qualities);
-        if (!plugin.config.qualities.includes(quality)) {
-          setQuality(
-            plugin.config.default_quality || plugin.config.qualities[0]
-          );
-        }
-      }
-      setMaxPromptLength(plugin.config?.max_prompt_length ?? null);
-    }
-  }
+  const handlePluginChange = (pluginId: string) => {
+    const plugin = plugins.find(candidate => candidate.id === pluginId);
+    if (!plugin) return;
+
+    applyPluginSelection(plugin, {
+      model: selectedModel,
+      size,
+      quality,
+      style,
+    });
+  };
 
   const handleGenerate = async () => {
-    if (!selectedModel || !prompt.trim()) {
+    if (
+      !imageGenerationEnabled ||
+      !selectedPlugin ||
+      !selectedModel ||
+      !prompt.trim()
+    ) {
       toast.error(t('imageGeneration.enterPrompt'));
       return;
     }
@@ -184,6 +261,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         prompt: prompt.trim(),
         size,
         quality,
+        ...(style ? { style } : {}),
       });
 
       if (
@@ -191,14 +269,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         response.data?.images &&
         response.data.images.length > 0
       ) {
-        const image = response.data.images[0];
-        let imageData: string | null = null;
-
-        if (image.b64_json) {
-          imageData = `data:image/png;base64,${image.b64_json}`;
-        } else if (image.url) {
-          imageData = image.url;
-        }
+        const imageData = getImageGenImageSource(response.data.images[0]);
 
         if (imageData) {
           toast.success(t('imageGeneration.success'));
@@ -232,13 +303,15 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
     const link = document.createElement('a');
     link.href = generatedImage;
-    link.download = `generated-image-${Date.now()}.png`;
+    link.download = `generated-image-${Date.now()}.${getImageGenImageFileExtension(
+      generatedImage
+    )}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !imageGenerationEnabled) return null;
 
   const currentPlugin = plugins.find(p => p.id === selectedPlugin);
 
@@ -286,7 +359,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
 
         {/* Content */}
         <div className='scroll-region min-h-0 flex-1 space-y-5 p-5 scrollbar-thin sm:p-6'>
-          {plugins.length === 0 ? (
+          {!currentPlugin ? (
             <div className='text-center py-8'>
               <ImageIcon className='h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600' />
               <p className='text-gray-500 dark:text-gray-400'>
@@ -306,7 +379,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                   </label>
                   <select
                     value={selectedPlugin}
-                    onChange={e => setSelectedPlugin(e.target.value)}
+                    onChange={e => handlePluginChange(e.target.value)}
                     className={cn(
                       'w-full rounded-xl px-3 py-2.5 text-sm',
                       'bg-white/70 dark:bg-white/[0.035]',
@@ -345,6 +418,31 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                     ))}
                   </select>
                 </div>
+
+                {availableStyles.length > 0 && (
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      {t('imageGeneration.style')}
+                    </label>
+                    <select
+                      value={style}
+                      onChange={e => setStyle(e.target.value)}
+                      className={cn(
+                        'w-full rounded-xl px-3 py-2.5 text-sm',
+                        'bg-white/70 dark:bg-white/[0.035]',
+                        'border border-gray-200/80 dark:border-white/10',
+                        'text-gray-900 dark:text-gray-100',
+                        'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                      )}
+                    >
+                      {availableStyles.map(option => (
+                        <option key={option} value={option}>
+                          {option.charAt(0).toUpperCase() + option.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Size & Quality */}
@@ -461,11 +559,17 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
         </div>
 
         {/* Footer */}
-        {plugins.length > 0 && (
+        {currentPlugin && (
           <div className='border-t border-gray-200/70 p-4 dark:border-white/[0.08] sm:px-6 sm:py-5'>
             <Button
               onClick={handleGenerate}
-              disabled={isGenerating || !prompt.trim() || !selectedModel}
+              disabled={
+                isGenerating ||
+                !imageGenerationEnabled ||
+                !prompt.trim() ||
+                !selectedPlugin ||
+                !selectedModel
+              }
               className={cn(
                 'w-full py-2.5 rounded-xl font-medium',
                 'bg-primary-600 dark:bg-primary-600',

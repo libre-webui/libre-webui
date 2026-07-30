@@ -2,10 +2,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import test from 'node:test';
+import test, { after } from 'node:test';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 process.env.ENCRYPTION_KEY ||= '0'.repeat(64);
+const testDataDirectory = fs.mkdtempSync(
+  path.join(os.tmpdir(), 'libre-provider-api-modes-')
+);
+process.env.DATA_DIR = testDataDirectory;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,6 +80,46 @@ const pluginRoutesModule = await import(
     .href
 );
 const { default: axios } = await import('axios');
+
+after(() => {
+  databaseModule.closeDatabase();
+  fs.rmSync(testDataDirectory, { recursive: true, force: true });
+});
+
+const responsesStream = events =>
+  new Response(
+    events.map(event => `data: ${JSON.stringify(event)}\n\n`).join(''),
+    {
+      status: 200,
+      headers: { 'Content-Type': 'text/event-stream' },
+    }
+  );
+
+const collectResponsesStream = async (events, stateScope) => {
+  const chunks = [];
+  for await (const chunk of streamAdapter.streamOpenAIResponsesResponse(
+    responsesStream(events),
+    stateScope
+  )) {
+    chunks.push(chunk);
+  }
+  return chunks;
+};
+
+const collectResponsesStreamError = async events => {
+  const chunks = [];
+  let error;
+  try {
+    for await (const chunk of streamAdapter.streamOpenAIResponsesResponse(
+      responsesStream(events)
+    )) {
+      chunks.push(chunk);
+    }
+  } catch (caught) {
+    error = caught;
+  }
+  return { chunks, error };
+};
 
 test('Responses payload is stateless and maps chat fields to Responses fields', () => {
   const payload = adapter.buildOpenAIResponsesPayload(
@@ -151,6 +195,7 @@ test('Responses payload is stateless and maps chat fields to Responses fields', 
     },
   ]);
   assert.equal(payload.store, false);
+  assert.deepEqual(payload.include, ['reasoning.encrypted_content']);
   assert.equal(payload.max_output_tokens, 2048);
   assert.equal(payload.temperature, 0.2);
   assert.equal(payload.top_p, 0.8);
@@ -163,11 +208,45 @@ test('Responses payload is stateless and maps chat fields to Responses fields', 
 });
 
 test('Responses input preserves function-call and tool-result correlation', () => {
-  const input = adapter.toOpenAIResponsesInput([
+  const stateScope = adapter.createOpenAIResponsesStateScope(
+    'provider-a',
+    'gpt-test',
+    'https://gateway.example/v1/responses',
+    'credential-fingerprint-a'
+  );
+  const reasoningItem = {
+    id: 'reasoning-read',
+    type: 'reasoning',
+    encrypted_content: 'opaque-reasoning',
+    summary: [],
+  };
+  const messageItem = {
+    id: 'message-read',
+    type: 'message',
+    role: 'assistant',
+    phase: 'commentary',
+    content: [{ type: 'output_text', text: 'I will inspect it.' }],
+  };
+  const functionItem = {
+    id: 'function-read',
+    type: 'function_call',
+    call_id: 'call-read',
+    name: 'read_file',
+    arguments: '{"path":"plan.txt"}',
+  };
+  const history = [
     { role: 'user', content: 'Read the plan.' },
     {
       role: 'assistant',
       content: 'I will inspect it.',
+      providerMetadata: {
+        [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [
+          reasoningItem,
+          messageItem,
+          functionItem,
+        ],
+        [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+      },
       tool_calls: [
         {
           id: 'call-read',
@@ -184,23 +263,38 @@ test('Responses input preserves function-call and tool-result correlation', () =
       tool_call_id: 'call-read',
       content: 'Plan contents',
     },
-  ]);
+  ];
+  const input = adapter.toOpenAIResponsesInput(history, stateScope);
 
   assert.deepEqual(input, [
     { role: 'user', content: 'Read the plan.' },
-    { role: 'assistant', content: 'I will inspect it.' },
-    {
-      type: 'function_call',
-      call_id: 'call-read',
-      name: 'read_file',
-      arguments: '{"path":"plan.txt"}',
-    },
+    reasoningItem,
+    messageItem,
+    functionItem,
     {
       type: 'function_call_output',
       call_id: 'call-read',
       output: 'Plan contents',
     },
   ]);
+  assert.deepEqual(
+    adapter.toOpenAIResponsesInput(history, 'different-provider-scope'),
+    [
+      { role: 'user', content: 'Read the plan.' },
+      { role: 'assistant', content: 'I will inspect it.' },
+      {
+        type: 'function_call',
+        call_id: 'call-read',
+        name: 'read_file',
+        arguments: '{"path":"plan.txt"}',
+      },
+      {
+        type: 'function_call_output',
+        call_id: 'call-read',
+        output: 'Plan contents',
+      },
+    ]
+  );
 });
 
 test('completed Responses objects normalize text, reasoning, calls, and usage', () => {
@@ -249,6 +343,32 @@ test('completed Responses objects normalize text, reasoning, calls, and usage', 
     object: 'chat.completion',
     created: 1_750_000_000,
     model: 'gpt-test',
+    providerMetadata: {
+      [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [
+        {
+          id: 'reasoning-1',
+          type: 'reasoning',
+          encrypted_content: 'encrypted-reasoning',
+          summary: [
+            { type: 'summary_text', text: 'Inspect the requested file.' },
+            { type: 'summary_text', text: 'Then report its contents.' },
+          ],
+        },
+        {
+          id: 'message-1',
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'I need to read the file.' }],
+        },
+        {
+          id: 'function-1',
+          type: 'function_call',
+          call_id: 'call-read',
+          name: 'read_file',
+          arguments: '{"path":"plan.txt"}',
+        },
+      ],
+    },
     choices: [
       {
         index: 0,
@@ -345,6 +465,12 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
     name: 'read_file',
     arguments: '{"path":"unterminated"',
   };
+  const stateScope = adapter.createOpenAIResponsesStateScope(
+    plugin.id,
+    'gpt-test',
+    plugin.endpoint,
+    'credential-fingerprint-work'
+  );
 
   const response = workProvider.normalizePluginWorkResponse(
     plugin,
@@ -360,7 +486,8 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
       },
     },
     'gpt-test',
-    'responses'
+    'responses',
+    stateScope
   );
 
   assert.equal(response.message.content, 'Reading now.');
@@ -372,6 +499,12 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
       adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
     ],
     [reasoningItem, messageItem, functionItem]
+  );
+  assert.equal(
+    response.message.providerMetadata[
+      adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY
+    ],
+    stateScope
   );
   assert.equal(response.message.tool_calls[0].id, 'call-work');
   assert.equal(response.message.tool_calls[0].function.name, 'read_file');
@@ -407,7 +540,8 @@ test('Responses Work payload and result preserve stateless tool reasoning round 
       stream: false,
     },
     { max_tokens: 4096 },
-    'responses'
+    'responses',
+    stateScope
   );
 
   assert.equal(payload.store, false);
@@ -446,6 +580,7 @@ test('Responses normalization derives token totals and incomplete finish reason'
     {
       status: 'incomplete',
       incomplete_details: { reason: 'max_output_tokens' },
+      output: [],
       output_text: 'Partial answer',
       usage: {
         input_tokens: 5,
@@ -564,6 +699,34 @@ test('provider API configuration resolves modes, base URLs, paths, and model dis
     }
   );
   assert.deepEqual(
+    pluginValidation.resolvePluginApiConfig(
+      {
+        ...plugin,
+        endpoint: 'https://api.openai.com/v1/responses',
+        api_mode: 'responses',
+        api_path: '/responses',
+      },
+      { api_mode: 'chat_completions' }
+    ),
+    {
+      apiMode: 'chat_completions',
+      endpoint: 'https://api.openai.com/v1/chat/completions',
+    }
+  );
+  assert.deepEqual(
+    pluginValidation.resolvePluginApiConfig(
+      {
+        ...plugin,
+        api_path: '/chat/completions',
+      },
+      { api_mode: 'responses' }
+    ),
+    {
+      apiMode: 'responses',
+      endpoint: 'https://api.openai.com/v1/responses',
+    }
+  );
+  assert.deepEqual(
     pluginValidation.resolvePluginApiConfig(plugin, {
       api_mode: 'chat_completions',
       base_url: 'https://ignored.example/v1',
@@ -665,6 +828,65 @@ test('provider API configuration resolves modes, base URLs, paths, and model dis
   );
 });
 
+test('Responses replay and Work routing change when provider credentials rotate', () => {
+  const plugin = {
+    id: 'credential-rotation-provider',
+    name: 'Credential rotation provider',
+    type: 'completion',
+    active: true,
+    endpoint: 'https://gateway.example/v1/responses',
+    api_mode: 'responses',
+    auth: {
+      header: 'Authorization',
+      prefix: 'Bearer ',
+      key_env: 'CREDENTIAL_ROTATION_API_KEY',
+    },
+    model_map: ['gpt-test'],
+  };
+  let apiKey = 'old-api-key';
+  const service = new workProvider.WorkModelProviderService({
+    ollama: {},
+    plugins: {
+      getActivePlugins: () => [plugin],
+      getPlugin: () => plugin,
+      getPluginVariables: () => ({}),
+      getApiKey: () => apiKey,
+    },
+    post: async () => {
+      throw new Error('provider request was not expected');
+    },
+  });
+  const provider = {
+    providerType: 'plugin',
+    providerId: plugin.id,
+  };
+
+  const oldStateScope = service.getResponsesStateScope(
+    'gpt-test',
+    provider,
+    'credential-rotation-user'
+  );
+  const oldRoutingFingerprint = service.getRoutingFingerprint(
+    'gpt-test',
+    provider,
+    'credential-rotation-user'
+  );
+  apiKey = 'new-api-key';
+  const newStateScope = service.getResponsesStateScope(
+    'gpt-test',
+    provider,
+    'credential-rotation-user'
+  );
+  const newRoutingFingerprint = service.getRoutingFingerprint(
+    'gpt-test',
+    provider,
+    'credential-rotation-user'
+  );
+
+  assert.notEqual(oldStateScope, newStateScope);
+  assert.notEqual(oldRoutingFingerprint, newRoutingFingerprint);
+});
+
 test('model discovery rejects an unsafe derived URL before reading credentials', async () => {
   const service = pluginServiceModule.default;
   const originalGetPlugin = service.getPlugin;
@@ -745,11 +967,18 @@ test('Chat adapter sends and normalizes Responses API payloads', () => {
     model: 'gpt-test',
     input: [{ role: 'user', content: 'Hello' }],
     store: false,
+    include: ['reasoning.encrypted_content'],
     max_output_tokens: 512,
     temperature: 0.3,
     stream: false,
   });
 
+  const stateScope = adapter.createOpenAIResponsesStateScope(
+    plugin.id,
+    'gpt-test',
+    plugin.endpoint,
+    'credential-fingerprint-chat'
+  );
   const converted = chatAdapter.convertProviderResponse(
     plugin,
     {
@@ -758,6 +987,7 @@ test('Chat adapter sends and normalizes Responses API payloads', () => {
       status: 'completed',
       output: [
         {
+          id: 'message-chat-response',
           type: 'message',
           role: 'assistant',
           content: [{ type: 'output_text', text: 'Hello back' }],
@@ -765,10 +995,94 @@ test('Chat adapter sends and normalizes Responses API payloads', () => {
       ],
     },
     'gpt-test',
-    'responses'
+    'responses',
+    stateScope
   );
   assert.equal(converted.id, 'resp-chat');
   assert.equal(converted.choices[0].message.content, 'Hello back');
+  assert.equal(
+    converted.providerMetadata[
+      adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY
+    ],
+    stateScope
+  );
+});
+
+test('Chat Responses streaming accepts compatible JSON fallback responses', async () => {
+  const service = pluginServiceModule.default;
+  const plugin = {
+    id: 'json-responses-provider',
+    name: 'JSON Responses provider',
+    type: 'completion',
+    endpoint: 'https://provider.example/v1/responses',
+    api_mode: 'responses',
+    auth: {
+      header: 'Authorization',
+      prefix: 'Bearer ',
+      key_env: 'JSON_RESPONSES_API_KEY',
+    },
+    model_map: ['gpt-json'],
+  };
+  const messageItem = {
+    id: 'message-json-fallback',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'JSON fallback works.' }],
+  };
+  const originals = {
+    getActivePluginForModel: service.getActivePluginForModel,
+    getApiKey: service.getApiKey,
+    getPluginVariables: service.getPluginVariables,
+    fetch: globalThis.fetch,
+  };
+
+  try {
+    service.getActivePluginForModel = () => plugin;
+    service.getApiKey = () => 'json-key';
+    service.getPluginVariables = () => ({});
+    globalThis.fetch = async () =>
+      new Response(
+        JSON.stringify({
+          id: 'response-json-fallback',
+          status: 'completed',
+          model: 'gpt-json',
+          output: [messageItem],
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+    const chunks = [];
+    for await (const chunk of service.executePluginStreamRequest(
+      'gpt-json',
+      [{ role: 'user', content: 'Hello' }],
+      {},
+      'json-user',
+      plugin.id
+    )) {
+      chunks.push(chunk);
+    }
+    assert.equal(
+      chunks
+        .filter(chunk => chunk.type === 'content')
+        .map(chunk => chunk.content)
+        .join(''),
+      'JSON fallback works.'
+    );
+    assert.deepEqual(
+      chunks.at(-1).providerMetadata[
+        adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+      ],
+      [messageItem]
+    );
+  } finally {
+    service.getActivePluginForModel = originals.getActivePluginForModel;
+    service.getApiKey = originals.getApiKey;
+    service.getPluginVariables = originals.getPluginVariables;
+    globalThis.fetch = originals.fetch;
+  }
 });
 
 test('Responses streaming emits typed content, reasoning, one correlated call, and usage', async () => {
@@ -840,8 +1154,10 @@ test('Responses streaming emits typed content, reasoning, one correlated call, a
     }
   );
   const chunks = [];
+  const stateScope = 'stream-state-scope';
   for await (const chunk of streamAdapter.streamOpenAIResponsesResponse(
-    response
+    response,
+    stateScope
   )) {
     chunks.push(chunk);
   }
@@ -877,6 +1193,7 @@ test('Responses streaming emits typed content, reasoning, one correlated call, a
         messageItem,
         functionItem,
       ],
+      [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
     },
   });
 });
@@ -995,6 +1312,770 @@ test('Responses streaming emits refusals once and falls back to terminal refusal
   ]);
 });
 
+test('Responses nonstream rejects nonterminal statuses and invalid call IDs', () => {
+  for (const status of ['queued', 'in_progress', 'cancelled']) {
+    assert.throws(
+      () =>
+        adapter.normalizeOpenAIResponsesResponse(
+          { status, output: [] },
+          'gpt-test'
+        ),
+      new RegExp(`unexpected response status "${status}"`)
+    );
+  }
+
+  const invalidOutputs = [
+    {
+      label: 'missing call_id',
+      output: [
+        {
+          id: 'function-missing',
+          type: 'function_call',
+          name: 'read_file',
+          arguments: '{}',
+        },
+      ],
+      pattern: /missing an exact call_id or name/,
+    },
+    {
+      label: 'malformed call_id',
+      output: [
+        {
+          id: 'function-malformed',
+          type: 'function_call',
+          call_id: 42,
+          name: 'read_file',
+          arguments: '{}',
+        },
+      ],
+      pattern: /missing an exact call_id or name/,
+    },
+    {
+      label: 'duplicate call_id',
+      output: [
+        {
+          id: 'function-duplicate-a',
+          type: 'function_call',
+          call_id: 'call-duplicate',
+          name: 'read_file',
+          arguments: '{"path":"a.txt"}',
+        },
+        {
+          id: 'function-duplicate-b',
+          type: 'function_call',
+          call_id: 'call-duplicate',
+          name: 'read_file',
+          arguments: '{"path":"b.txt"}',
+        },
+      ],
+      pattern: /duplicate function call_id "call-duplicate"/,
+    },
+    {
+      label: 'missing arguments',
+      output: [
+        {
+          id: 'function-missing-arguments',
+          type: 'function_call',
+          call_id: 'call-missing-arguments',
+          name: 'read_file',
+        },
+      ],
+      pattern: /or string arguments/,
+    },
+    {
+      label: 'object arguments',
+      output: [
+        {
+          id: 'function-object-arguments',
+          type: 'function_call',
+          call_id: 'call-object-arguments',
+          name: 'read_file',
+          arguments: { path: 'README.md' },
+        },
+      ],
+      pattern: /or string arguments/,
+    },
+    {
+      label: 'non-object output item',
+      output: [
+        {
+          id: 'function-valid-peer',
+          type: 'function_call',
+          call_id: 'call-valid-peer',
+          name: 'read_file',
+          arguments: '{}',
+        },
+        42,
+      ],
+      pattern: /output item 1 must be an object/,
+    },
+    {
+      label: 'missing item type',
+      output: [{ id: 'missing-type' }],
+      pattern: /missing a non-empty type/,
+    },
+    {
+      label: 'malformed message content',
+      output: [
+        {
+          id: 'message-malformed',
+          type: 'message',
+          role: 'assistant',
+          content: [{}],
+        },
+      ],
+      pattern: /invalid role or content/,
+    },
+    {
+      label: 'malformed reasoning summary',
+      output: [
+        {
+          id: 'reasoning-malformed',
+          type: 'reasoning',
+          summary: [{}],
+        },
+      ],
+      pattern: /invalid summary or content/,
+    },
+    {
+      label: 'duplicate output item ID',
+      output: [
+        {
+          id: 'duplicate-item',
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'First.' }],
+        },
+        {
+          id: 'duplicate-item',
+          type: 'message',
+          role: 'assistant',
+          content: [{ type: 'output_text', text: 'Second.' }],
+        },
+      ],
+      pattern: /duplicate output item id "duplicate-item"/,
+    },
+  ];
+
+  for (const { label, output, pattern } of invalidOutputs) {
+    assert.throws(
+      () =>
+        adapter.normalizeOpenAIResponsesResponse(
+          { status: 'completed', output },
+          'gpt-test'
+        ),
+      pattern,
+      label
+    );
+  }
+});
+
+test('Responses replay bounds preserve visible text and reject oversized matching state', () => {
+  const stateScope = 'matching-state-scope';
+  const visibleItem = {
+    id: 'message-visible',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'The visible answer survives.' }],
+  };
+  const oversizedReasoningItem = {
+    id: 'reasoning-oversized',
+    type: 'reasoning',
+    encrypted_content: 'r'.repeat(adapter.OPENAI_RESPONSES_REPLAY_MAX_BYTES),
+    summary: [],
+  };
+  const normalized = adapter.normalizeOpenAIResponsesResponse(
+    {
+      status: 'completed',
+      output: [visibleItem, oversizedReasoningItem],
+    },
+    'gpt-test',
+    stateScope
+  );
+
+  assert.equal(
+    normalized.choices[0].message.content,
+    'The visible answer survives.'
+  );
+  assert.deepEqual(normalized.providerMetadata, {
+    [adapter.OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY]: true,
+    [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+  });
+  assert.equal(
+    adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY in
+      normalized.providerMetadata,
+    false
+  );
+
+  const replayInput = adapter.toOpenAIResponsesInput(
+    [
+      { role: 'user', content: 'Continue.' },
+      {
+        role: 'assistant',
+        content: 'Use only this normalized answer.',
+        providerMetadata: {
+          [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [
+            oversizedReasoningItem,
+          ],
+          [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+        },
+      },
+    ],
+    stateScope
+  );
+  assert.deepEqual(replayInput, [
+    { role: 'user', content: 'Continue.' },
+    {
+      role: 'assistant',
+      content: 'Use only this normalized answer.',
+    },
+  ]);
+});
+
+test('Responses terminal output replaces transient streamed function calls', async () => {
+  const transientCall = {
+    id: 'function-transient',
+    type: 'function_call',
+    call_id: 'call-transient',
+    name: 'delete_file',
+    arguments: '{"path":"wrong.txt"}',
+  };
+  const terminalMessage = {
+    id: 'message-terminal',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'Use the terminal result.' }],
+  };
+  const terminalCall = {
+    id: 'function-terminal',
+    type: 'function_call',
+    call_id: 'call-terminal',
+    name: 'read_file',
+    arguments: '{"path":"right.txt"}',
+  };
+  const chunks = await collectResponsesStream([
+    {
+      type: 'response.output_item.added',
+      output_index: 0,
+      item: transientCall,
+    },
+    {
+      type: 'response.completed',
+      response: {
+        status: 'completed',
+        output: [terminalMessage, terminalCall],
+      },
+    },
+  ]);
+
+  assert.deepEqual(
+    chunks.filter(chunk => chunk.type === 'content'),
+    [{ type: 'content', content: 'Use the terminal result.' }]
+  );
+  assert.deepEqual(
+    chunks.filter(chunk => chunk.type === 'tool_call'),
+    [
+      {
+        type: 'tool_call',
+        toolCall: {
+          id: 'call-terminal',
+          name: 'read_file',
+          arguments: '{"path":"right.txt"}',
+        },
+      },
+    ]
+  );
+  assert.deepEqual(chunks.at(-1), {
+    type: 'done',
+    providerMetadata: {
+      [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [
+        terminalMessage,
+        terminalCall,
+      ],
+    },
+  });
+});
+
+test('Responses streaming accepts only the first terminal event', async () => {
+  const firstItem = {
+    id: 'message-first-terminal',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'First terminal wins.' }],
+  };
+  const laterItem = {
+    id: 'message-later-terminal',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'This must be ignored.' }],
+  };
+  const firstTerminal = {
+    type: 'response.completed',
+    response: { status: 'completed', output: [firstItem] },
+  };
+  const trailingEvents = [
+    {
+      type: 'response.completed',
+      response: { status: 'completed', output: [laterItem] },
+    },
+    {
+      type: 'response.error',
+      error: { message: 'Error after completion must be ignored.' },
+    },
+  ];
+
+  for (const trailingEvent of trailingEvents) {
+    const chunks = await collectResponsesStream([firstTerminal, trailingEvent]);
+    assert.deepEqual(chunks, [
+      { type: 'content', content: 'First terminal wins.' },
+      {
+        type: 'done',
+        providerMetadata: {
+          [adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: [firstItem],
+        },
+      },
+    ]);
+  }
+});
+
+test('Responses streaming reconciles partial text with terminal output', async () => {
+  const terminalItem = {
+    id: 'message-reconciled-terminal',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'Hello world' }],
+  };
+  const chunks = await collectResponsesStream([
+    {
+      type: 'response.output_text.delta',
+      delta: 'Hello ',
+    },
+    {
+      type: 'response.completed',
+      response: { status: 'completed', output: [terminalItem] },
+    },
+  ]);
+
+  assert.deepEqual(
+    chunks.filter(chunk => chunk.type === 'content'),
+    [
+      { type: 'content', content: 'Hello ' },
+      { type: 'content', content: 'world' },
+    ]
+  );
+});
+
+test('Responses streaming orders transient calls by output_index', async () => {
+  const firstCall = {
+    id: 'function-first',
+    type: 'function_call',
+    call_id: 'call-first',
+    name: 'read_file',
+    arguments: '{"path":"first.txt"}',
+  };
+  const secondCall = {
+    id: 'function-second',
+    type: 'function_call',
+    call_id: 'call-second',
+    name: 'read_file',
+    arguments: '{"path":"second.txt"}',
+  };
+  const chunks = await collectResponsesStream([
+    {
+      type: 'response.output_item.added',
+      output_index: 1,
+      item: secondCall,
+    },
+    {
+      type: 'response.output_item.added',
+      output_index: 0,
+      item: firstCall,
+    },
+    {
+      type: 'response.completed',
+      response: { status: 'completed', output: [firstCall, secondCall] },
+    },
+  ]);
+
+  assert.deepEqual(
+    chunks
+      .filter(chunk => chunk.type === 'tool_call')
+      .map(chunk => chunk.toolCall.id),
+    ['call-first', 'call-second']
+  );
+  assert.deepEqual(
+    chunks.at(-1).providerMetadata[
+      adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+    ],
+    [firstCall, secondCall]
+  );
+});
+
+test('Responses argument deltas persist the exact emitted function call', async () => {
+  const finalArguments = '{"path":"README.md","line":12}';
+  const chunks = await collectResponsesStream([
+    {
+      type: 'response.output_item.added',
+      output_index: 0,
+      item: {
+        id: 'function-arguments',
+        type: 'function_call',
+        call_id: 'call-arguments',
+        name: 'read_file',
+        arguments: '',
+      },
+    },
+    {
+      type: 'response.function_call_arguments.delta',
+      item_id: 'function-arguments',
+      output_index: 0,
+      delta: '{"path":"README.md",',
+    },
+    {
+      type: 'response.function_call_arguments.delta',
+      item_id: 'function-arguments',
+      output_index: 0,
+      delta: '"line":12}',
+    },
+    {
+      type: 'response.function_call_arguments.done',
+      item_id: 'function-arguments',
+      output_index: 0,
+      name: 'read_file',
+      arguments: finalArguments,
+    },
+    {
+      type: 'response.completed',
+      response: {
+        status: 'completed',
+        output: [
+          {
+            id: 'function-arguments',
+            type: 'function_call',
+            call_id: 'call-arguments',
+            name: 'read_file',
+            arguments: finalArguments,
+          },
+        ],
+      },
+    },
+  ]);
+
+  const emittedCall = chunks.find(chunk => chunk.type === 'tool_call').toolCall;
+  const persistedCall =
+    chunks.at(-1).providerMetadata[
+      adapter.OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+    ][0];
+  assert.equal(emittedCall.arguments, finalArguments);
+  assert.equal(persistedCall.arguments, emittedCall.arguments);
+  assert.equal(persistedCall.call_id, emittedCall.id);
+  assert.equal(persistedCall.name, emittedCall.name);
+});
+
+test('Responses streaming marks oversized replay state as dropped', async () => {
+  const stateScope = 'oversized-stream-scope';
+  const oversizedReasoningItem = {
+    id: 'reasoning-stream-oversized',
+    type: 'reasoning',
+    encrypted_content: 's'.repeat(adapter.OPENAI_RESPONSES_REPLAY_MAX_BYTES),
+    summary: [],
+  };
+  const visibleItem = {
+    id: 'message-stream-visible',
+    type: 'message',
+    role: 'assistant',
+    content: [{ type: 'output_text', text: 'Visible stream result.' }],
+  };
+  const chunks = await collectResponsesStream(
+    [
+      {
+        type: 'response.completed',
+        response: {
+          status: 'completed',
+          output: [oversizedReasoningItem, visibleItem],
+        },
+      },
+    ],
+    stateScope
+  );
+
+  assert.deepEqual(chunks, [
+    { type: 'content', content: 'Visible stream result.' },
+    {
+      type: 'done',
+      providerMetadata: {
+        [adapter.OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY]: true,
+        [adapter.OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+      },
+    },
+  ]);
+});
+
+test('Responses invalid streams fail before emitting any tool call', async () => {
+  const validCall = index => ({
+    id: `function-${index}`,
+    type: 'function_call',
+    call_id: `call-${index}`,
+    name: 'read_file',
+    arguments: `{"path":"${index}.txt"}`,
+  });
+  const invalidOutputs = [
+    {
+      label: 'missing call_id',
+      output: [{ ...validCall('missing'), call_id: undefined }],
+    },
+    {
+      label: 'malformed call_id',
+      output: [{ ...validCall('malformed'), call_id: 42 }],
+    },
+    {
+      label: 'duplicate call_id',
+      output: [
+        validCall('duplicate'),
+        { ...validCall('other'), call_id: 'call-duplicate' },
+      ],
+    },
+    {
+      label: 'seventeen calls',
+      output: Array.from({ length: 17 }, (_, index) => validCall(index)),
+    },
+    {
+      label: 'missing arguments',
+      output: [{ ...validCall('missing-arguments'), arguments: undefined }],
+    },
+    {
+      label: 'object arguments',
+      output: [
+        {
+          ...validCall('object-arguments'),
+          arguments: { path: 'README.md' },
+        },
+      ],
+    },
+    {
+      label: 'non-object output item',
+      output: [validCall('valid-peer'), 42],
+    },
+    {
+      label: 'malformed object output item',
+      output: [
+        validCall('valid-structural-peer'),
+        {
+          id: 'message-malformed-peer',
+          type: 'message',
+          role: 'assistant',
+          content: [{}],
+        },
+      ],
+    },
+  ];
+
+  for (const { label, output } of invalidOutputs) {
+    const { chunks, error } = await collectResponsesStreamError([
+      {
+        type: 'response.completed',
+        response: { status: 'completed', output },
+      },
+    ]);
+    assert.ok(error, `${label} should reject the stream`);
+    assert.match(error.message, /Plugin API error:/, label);
+    assert.equal(
+      chunks.some(chunk => chunk.type === 'tool_call'),
+      false,
+      label
+    );
+  }
+});
+
+test('Responses streaming rejects nonterminal response statuses', async () => {
+  for (const status of ['queued', 'in_progress', 'cancelled']) {
+    const { chunks, error } = await collectResponsesStreamError([
+      {
+        type: 'response.completed',
+        response: { status, output: [] },
+      },
+    ]);
+    assert.equal(chunks.length, 0);
+    assert.match(error?.message || '', /unexpected Responses status/);
+  }
+});
+
+test('Responses terminal output rejects duplicate item IDs before tool calls', async () => {
+  const firstCall = {
+    id: 'shared-item-id',
+    type: 'function_call',
+    call_id: 'call-shared-first',
+    name: 'read_file',
+    arguments: '{"path":"first.txt"}',
+  };
+  const secondCall = {
+    id: 'shared-item-id',
+    type: 'function_call',
+    call_id: 'call-shared-second',
+    name: 'read_file',
+    arguments: '{"path":"second.txt"}',
+  };
+  const { chunks, error } = await collectResponsesStreamError([
+    {
+      type: 'response.completed',
+      response: {
+        status: 'completed',
+        output: [firstCall, secondCall],
+      },
+    },
+  ]);
+
+  assert.equal(
+    chunks.some(chunk => chunk.type === 'tool_call'),
+    false
+  );
+  assert.match(error?.message || '', /duplicate output item id/);
+});
+
+test('Responses terminal output rejects transient text absent from the authoritative output', async () => {
+  const { chunks, error } = await collectResponsesStreamError([
+    {
+      type: 'response.output_text.delta',
+      delta: 'Transient text',
+    },
+    {
+      type: 'response.completed',
+      response: { status: 'completed', output: [] },
+    },
+  ]);
+
+  assert.deepEqual(chunks, [{ type: 'content', content: 'Transient text' }]);
+  assert.match(error?.message || '', /terminal output/);
+});
+
+test('Responses streaming rejects malformed argument delta and done events', async () => {
+  for (const event of [
+    {
+      type: 'response.function_call_arguments.delta',
+      item_id: 'function-malformed-delta',
+      output_index: 0,
+      delta: { path: 'README.md' },
+    },
+    {
+      type: 'response.function_call_arguments.done',
+      item_id: 'function-malformed-done',
+      output_index: 0,
+      arguments: { path: 'README.md' },
+    },
+  ]) {
+    const { chunks, error } = await collectResponsesStreamError([event]);
+    assert.equal(chunks.length, 0);
+    assert.match(error?.message || '', /invalid function-call arguments/);
+  }
+
+  const { chunks, error } = await collectResponsesStreamError([
+    {
+      type: 'response.output_item.added',
+      output_index: 0,
+      item: {
+        id: 'function-malformed-name',
+        type: 'function_call',
+        call_id: 'call-malformed-name',
+        name: 'read_file',
+        arguments: '',
+      },
+    },
+    {
+      type: 'response.function_call_arguments.done',
+      item_id: 'function-malformed-name',
+      output_index: 0,
+      name: { invalid: true },
+      arguments: '{}',
+    },
+  ]);
+  assert.equal(chunks.length, 0);
+  assert.match(error?.message || '', /invalid function-call name/);
+});
+
+test('Responses streaming bounds incomplete SSE events and accumulated text', async () => {
+  const oversizedEvent = new Response(`data: ${'x'.repeat(2_000_001)}`, {
+    status: 200,
+    headers: { 'Content-Type': 'text/event-stream' },
+  });
+  let oversizedEventError;
+  try {
+    for await (const _chunk of streamAdapter.streamOpenAIResponsesResponse(
+      oversizedEvent
+    )) {
+      // No chunk may be emitted for an oversized incomplete event.
+    }
+  } catch (error) {
+    oversizedEventError = error;
+  }
+  assert.match(
+    oversizedEventError?.message || '',
+    /event exceeds the size limit/
+  );
+
+  const events = Array.from({ length: 11 }, () => ({
+    type: 'response.output_text.delta',
+    delta: 'x'.repeat(100_000),
+  }));
+  const { error: textError } = await collectResponsesStreamError(events);
+  assert.match(textError?.message || '', /text exceeds the size limit/);
+
+  const reasoningEvents = Array.from({ length: 11 }, () => ({
+    type: 'response.reasoning_summary_text.delta',
+    delta: 'r'.repeat(100_000),
+  }));
+  const { error: reasoningError } =
+    await collectResponsesStreamError(reasoningEvents);
+  assert.match(
+    reasoningError?.message || '',
+    /reasoning exceeds the size limit/
+  );
+
+  const { error: terminalTextError } = await collectResponsesStreamError([
+    {
+      type: 'response.completed',
+      response: {
+        status: 'completed',
+        output: [
+          {
+            id: 'oversized-terminal-message',
+            type: 'message',
+            role: 'assistant',
+            content: [{ type: 'output_text', text: 't'.repeat(1_000_001) }],
+          },
+        ],
+      },
+    },
+  ]);
+  assert.match(
+    terminalTextError?.message || '',
+    /terminal text exceeds the size limit/
+  );
+});
+
+test('Responses streaming rejects malformed and non-object SSE payloads', async () => {
+  for (const event of [null, [], 'not-an-object']) {
+    const { chunks, error } = await collectResponsesStreamError([event]);
+    assert.equal(chunks.length, 0);
+    assert.match(error?.message || '', /event must be an object/);
+  }
+
+  const malformedJsonResponse = new Response('data: {not-json}\n\n', {
+    status: 200,
+    headers: { 'Content-Type': 'text/event-stream' },
+  });
+  let malformedJsonError;
+  try {
+    for await (const _chunk of streamAdapter.streamOpenAIResponsesResponse(
+      malformedJsonResponse
+    )) {
+      // Malformed events must not emit chunks.
+    }
+  } catch (error) {
+    malformedJsonError = error;
+  }
+  assert.match(malformedJsonError?.message || '', /malformed JSON/);
+});
+
 test('plugin routes and activation keep model discovery scoped to the authenticated user', async () => {
   const pluginService = pluginServiceModule.default;
   const pluginVariablesService = pluginVariablesServiceModule.default;
@@ -1030,6 +2111,15 @@ test('plugin routes and activation keep model discovery scoped to the authentica
       },
     ],
   };
+  const routeNow = Date.now();
+  databaseModule
+    .getDatabase()
+    .prepare(
+      `INSERT OR IGNORE INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run('route-user', 'route-user', routeNow, routeNow);
 
   const originals = {
     activatePlugin: pluginService.activatePlugin,
@@ -1080,6 +2170,11 @@ test('plugin routes and activation keep model discovery scoped to the authentica
   try {
     pluginService.getPlugin = () => plugin;
     const routeCalls = [];
+    let resolvedVariables = {
+      base_url: 'https://old.example/v1',
+      api_path: '',
+      temperature: 0.7,
+    };
     pluginService.activatePlugin = pluginId => {
       routeCalls.push({ operation: 'activate', pluginId });
       return true;
@@ -1092,9 +2187,7 @@ test('plugin routes and activation keep model discovery scoped to the authentica
       return plugin.model_map;
     };
     pluginVariablesService.getResolvedVariables = () => ({
-      base_url: 'https://old.example/v1',
-      api_path: '',
-      temperature: 0.7,
+      ...resolvedVariables,
     });
     pluginVariablesService.setVariables = (
       pluginId,
@@ -1102,6 +2195,7 @@ test('plugin routes and activation keep model discovery scoped to the authentica
       _schema,
       userId
     ) => {
+      resolvedVariables = { ...resolvedVariables, ...variables };
       routeCalls.push({
         operation: 'save',
         pluginId,
@@ -1111,6 +2205,11 @@ test('plugin routes and activation keep model discovery scoped to the authentica
       return true;
     };
     pluginVariablesService.deletePluginVariables = (pluginId, userId) => {
+      resolvedVariables = {
+        base_url: '',
+        api_path: '',
+        temperature: 0.7,
+      };
       routeCalls.push({ operation: 'reset', pluginId, userId });
       return true;
     };
@@ -1283,24 +2382,42 @@ test('discovered model maps persist per user without mutating the plugin manifes
     const insertUser = database.prepare(`
       INSERT INTO users
         (id, username, email, password_hash, role, created_at, updated_at)
-      VALUES (?, ?, NULL, ?, 'user', ?, ?)
+      VALUES (?, ?, NULL, ?, ?, ?, ?)
     `);
-    insertUser.run('model-user-one', 'model-user-one', 'test', now, now);
-    insertUser.run('model-user-two', 'model-user-two', 'test', now, now);
+    insertUser.run(
+      'model-user-one',
+      'model-user-one',
+      'test',
+      'user',
+      now,
+      now
+    );
+    insertUser.run(
+      'model-user-two',
+      'model-user-two',
+      'test',
+      'user',
+      now,
+      now
+    );
+    insertUser.run('model-admin', 'model-admin', 'test', 'admin', now, now);
 
     const service = new pluginServiceModule.PluginService();
-    service.installPlugin({
-      id: 'model-isolation-provider',
-      name: 'Model isolation provider',
-      type: 'completion',
-      endpoint: 'https://fallback.example/v1/chat/completions',
-      auth: {
-        header: 'Authorization',
-        prefix: 'Bearer ',
-        key_env: 'MODEL_ISOLATION_API_KEY',
+    service.installPlugin(
+      {
+        id: 'model-isolation-provider',
+        name: 'Model isolation provider',
+        type: 'completion',
+        endpoint: 'https://fallback.example/v1/chat/completions',
+        auth: {
+          header: 'Authorization',
+          prefix: 'Bearer ',
+          key_env: 'MODEL_ISOLATION_API_KEY',
+        },
+        model_map: ['manifest-model'],
       },
-      model_map: ['manifest-model'],
-    });
+      'model-admin'
+    );
     service.getPluginVariables = (_plugin, userId) => ({
       base_url: `https://${userId}.example/v1`,
     });

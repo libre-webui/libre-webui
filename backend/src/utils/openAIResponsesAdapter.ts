@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { createHash } from 'node:crypto';
 import type { PluginResponse } from '../types/index.js';
 
 type JsonObject = Record<string, unknown>;
@@ -23,6 +24,12 @@ export const OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY =
   'openAIResponsesOutputItems';
 export const OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY =
   'openAIResponsesIncompleteReason';
+export const OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY =
+  'openAIResponsesStateScope';
+export const OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY =
+  'openAIResponsesStateDropped';
+export const OPENAI_RESPONSES_REPLAY_MAX_ITEMS = 64;
+export const OPENAI_RESPONSES_REPLAY_MAX_BYTES = 90_000;
 
 export interface OpenAICompatibleChatMessage {
   role: string;
@@ -31,6 +38,7 @@ export interface OpenAICompatibleChatMessage {
   tool_call_id?: string;
   call_id?: string;
   tool_calls?: unknown;
+  providerMetadata?: Record<string, unknown>;
 }
 
 export interface OpenAIResponsesPayloadOptions {
@@ -40,6 +48,7 @@ export interface OpenAIResponsesPayloadOptions {
   temperature?: number;
   top_p?: number;
   stream?: boolean;
+  stateScope?: string;
 }
 
 export interface OpenAIResponsesPayload extends JsonObject {
@@ -83,6 +92,125 @@ function asObject(value: unknown): JsonObject | undefined {
 
 function nonEmptyString(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function outputContentBlocksAreValid(
+  value: unknown,
+  allowedTypes: ReadonlySet<string>
+): boolean {
+  return (
+    Array.isArray(value) &&
+    value.every(rawBlock => {
+      const block = asObject(rawBlock);
+      const type = nonEmptyString(block?.type);
+      if (!block || !type || !allowedTypes.has(type)) return false;
+      if (type === 'refusal') return typeof block.refusal === 'string';
+      return typeof block.text === 'string';
+    })
+  );
+}
+
+export function openAIResponsesOutputItemsValidationError(
+  value: unknown
+): string | undefined {
+  if (!Array.isArray(value)) {
+    return 'output must be an array';
+  }
+
+  const itemIds = new Set<string>();
+  for (const [index, rawItem] of value.entries()) {
+    const item = asObject(rawItem);
+    if (!item) return `output item ${index} must be an object`;
+
+    const itemId = nonEmptyString(item.id);
+    if (!itemId) {
+      return `output item ${index} is missing a non-empty id`;
+    }
+    if (itemIds.has(itemId)) {
+      return `duplicate output item id "${itemId}"`;
+    }
+    itemIds.add(itemId);
+
+    const type = nonEmptyString(item.type);
+    if (!type) {
+      return `output item ${index} is missing a non-empty type`;
+    }
+    if (type === 'function_call') {
+      if (
+        !nonEmptyString(item.call_id) ||
+        !nonEmptyString(item.name) ||
+        typeof item.arguments !== 'string'
+      ) {
+        return `function call ${index} is missing an exact call_id or name, or string arguments`;
+      }
+      continue;
+    }
+    if (type === 'message') {
+      if (
+        item.role !== 'assistant' ||
+        !outputContentBlocksAreValid(
+          item.content,
+          new Set(['output_text', 'text', 'refusal'])
+        )
+      ) {
+        return `message output item ${index} has invalid role or content`;
+      }
+      continue;
+    }
+    if (type === 'reasoning') {
+      if (
+        (item.summary !== undefined &&
+          !outputContentBlocksAreValid(
+            item.summary,
+            new Set(['summary_text'])
+          )) ||
+        (item.content !== undefined &&
+          !outputContentBlocksAreValid(
+            item.content,
+            new Set(['reasoning_text', 'text'])
+          ))
+      ) {
+        return `reasoning output item ${index} has invalid summary or content`;
+      }
+    }
+  }
+  return undefined;
+}
+
+export function boundedOpenAIResponsesOutputItems(value: unknown): {
+  items?: JsonObject[];
+  dropped: boolean;
+} {
+  if (!Array.isArray(value) || value.length === 0) {
+    return { dropped: false };
+  }
+  if (value.length > OPENAI_RESPONSES_REPLAY_MAX_ITEMS) {
+    return { dropped: true };
+  }
+  if (openAIResponsesOutputItemsValidationError(value)) {
+    return { dropped: true };
+  }
+
+  const items: JsonObject[] = [];
+  for (const rawItem of value) {
+    const item = asObject(rawItem);
+    if (!item) {
+      return { dropped: true };
+    }
+    items.push({ ...item });
+  }
+
+  try {
+    if (
+      Buffer.byteLength(JSON.stringify(items), 'utf8') >
+      OPENAI_RESPONSES_REPLAY_MAX_BYTES
+    ) {
+      return { dropped: true };
+    }
+  } catch {
+    return { dropped: true };
+  }
+  return { items, dropped: false };
 }
 
 function stringifyJsonValue(value: unknown): string {
@@ -172,10 +300,12 @@ function toResponsesFunctionCalls(
       return [];
     }
 
-    const callId =
-      nonEmptyString(call.call_id) ||
-      nonEmptyString(call.id) ||
-      `call-${messageIndex}-${callIndex}`;
+    const callId = nonEmptyString(call.call_id) || nonEmptyString(call.id);
+    if (!callId) {
+      throw new Error(
+        `Responses history function call ${messageIndex}:${callIndex} is missing an exact call_id`
+      );
+    }
     const args =
       fn && 'arguments' in fn ? fn.arguments : (call.arguments ?? undefined);
 
@@ -196,17 +326,39 @@ function toResponsesFunctionCalls(
  * their call IDs remain correlated without relying on stored response state.
  */
 export function toOpenAIResponsesInput(
-  messages: readonly OpenAICompatibleChatMessage[]
+  messages: readonly OpenAICompatibleChatMessage[],
+  expectedStateScope?: string
 ): JsonObject[] {
   return messages.flatMap((message, messageIndex) => {
+    if (message.role === 'assistant') {
+      const storedStateScope =
+        message.providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY];
+      const responseOutputItems = boundedOpenAIResponsesOutputItems(
+        message.providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+      ).items;
+      const replayableOutputItems =
+        responseOutputItems &&
+        (expectedStateScope === undefined ||
+          storedStateScope === expectedStateScope)
+          ? responseOutputItems
+          : [];
+      if (replayableOutputItems.length > 0) {
+        return replayableOutputItems;
+      }
+    }
+
     if (message.role === 'tool') {
+      const callId =
+        nonEmptyString(message.call_id) || nonEmptyString(message.tool_call_id);
+      if (!callId) {
+        throw new Error(
+          `Responses history tool result ${messageIndex} is missing an exact call_id`
+        );
+      }
       return [
         {
           type: 'function_call_output',
-          call_id:
-            nonEmptyString(message.call_id) ||
-            nonEmptyString(message.tool_call_id) ||
-            `call-${messageIndex}`,
+          call_id: callId,
           output: stringifyJsonValue(message.content),
         },
       ];
@@ -277,8 +429,9 @@ export function buildOpenAIResponsesPayload(
 
   return {
     model,
-    input: toOpenAIResponsesInput(messages),
+    input: toOpenAIResponsesInput(messages, options.stateScope),
     store: false,
+    include: ['reasoning.encrypted_content'],
     ...(tools.length > 0 ? { tools } : {}),
     ...(options.tool_choice !== undefined
       ? { tool_choice: options.tool_choice }
@@ -338,22 +491,21 @@ function reasoningSummaryFromItem(item: JsonObject): string[] {
 }
 
 function functionCallFromItem(
-  item: JsonObject,
-  index: number
+  item: JsonObject
 ): NormalizedOpenAIResponsesToolCall | undefined {
   if (item.type !== 'function_call') {
     return undefined;
   }
 
   const name = nonEmptyString(item.name);
-  if (!name) {
+  if (!name || typeof item.arguments !== 'string') {
     return undefined;
   }
 
-  const callId =
-    nonEmptyString(item.call_id) ||
-    nonEmptyString(item.id) ||
-    `response-call-${index}`;
+  const callId = nonEmptyString(item.call_id);
+  if (!callId) {
+    return undefined;
+  }
 
   return {
     id: callId,
@@ -361,7 +513,7 @@ function functionCallFromItem(
     type: 'function',
     function: {
       name,
-      arguments: stringifyJsonValue(item.arguments),
+      arguments: item.arguments,
     },
   };
 }
@@ -425,9 +577,13 @@ function normalizeResponsesUsage(
  */
 export function normalizeOpenAIResponsesResponse(
   value: unknown,
-  fallbackModel: string
+  fallbackModel: string,
+  stateScope?: string
 ): NormalizedOpenAIResponsesResponse {
-  const response = asObject(value) || {};
+  const response = asObject(value);
+  if (!response) {
+    throw new Error('Responses API error: response must be an object');
+  }
   if (response.status === 'failed') {
     const error = asObject(response.error);
     const message =
@@ -436,8 +592,23 @@ export function normalizeOpenAIResponsesResponse(
       'Responses request failed';
     throw new Error(`Responses API error: ${message.slice(0, 500)}`);
   }
+  if (
+    typeof response.status === 'string' &&
+    response.status !== 'completed' &&
+    response.status !== 'incomplete'
+  ) {
+    throw new Error(
+      `Responses API error: unexpected response status "${response.status.slice(0, 100)}"`
+    );
+  }
 
-  const output = Array.isArray(response.output) ? response.output : [];
+  const outputValidationError = openAIResponsesOutputItemsValidationError(
+    response.output
+  );
+  if (outputValidationError) {
+    throw new Error(`Responses API error: ${outputValidationError}`);
+  }
+  const output = response.output as unknown[];
   const text: string[] = [];
   const reasoning: string[] = [];
   const reasoningItems: JsonObject[] = [];
@@ -454,13 +625,30 @@ export function normalizeOpenAIResponsesResponse(
     if (item.type === 'reasoning') {
       reasoningItems.push({ ...item });
     }
-    const functionCall = functionCallFromItem(item, index);
+    const functionCall = functionCallFromItem(item);
+    if (item.type === 'function_call' && !functionCall) {
+      throw new Error(
+        `Responses API error: function call ${index} is missing an exact call_id or name, or string arguments`
+      );
+    }
     if (functionCall) {
+      if (toolCalls.some(call => call.id === functionCall.id)) {
+        throw new Error(
+          `Responses API error: duplicate function call_id "${functionCall.id}"`
+        );
+      }
       toolCalls.push(functionCall);
     }
   }
 
-  if (reasoningItems.length > 0 && toolCalls[0]) {
+  if (toolCalls.length > 16) {
+    throw new Error(
+      'Responses API error: more than 16 function calls returned'
+    );
+  }
+
+  const boundedOutput = boundedOpenAIResponsesOutputItems(output);
+  if (!boundedOutput.dropped && reasoningItems.length > 0 && toolCalls[0]) {
     toolCalls[0].providerMetadata = {
       openAIResponsesReasoningItems: reasoningItems,
     };
@@ -475,6 +663,24 @@ export function normalizeOpenAIResponsesResponse(
     typeof response.model === 'string' ? response.model : fallbackModel;
   const usage = normalizeResponsesUsage(response.usage);
   const incompleteReason = responsesIncompleteReason(response);
+  const providerMetadata = {
+    ...(boundedOutput.items
+      ? {
+          [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: boundedOutput.items,
+        }
+      : {}),
+    ...(boundedOutput.dropped
+      ? { [OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY]: true }
+      : {}),
+    ...(incompleteReason
+      ? {
+          [OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY]: incompleteReason,
+        }
+      : {}),
+    ...(stateScope
+      ? { [OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope }
+      : {}),
+  };
 
   return {
     id:
@@ -485,13 +691,7 @@ export function normalizeOpenAIResponsesResponse(
         ? Math.floor(response.created_at)
         : 0,
     model,
-    ...(incompleteReason
-      ? {
-          providerMetadata: {
-            [OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY]: incompleteReason,
-          },
-        }
-      : {}),
+    ...(Object.keys(providerMetadata).length > 0 ? { providerMetadata } : {}),
     choices: [
       {
         index: 0,
@@ -509,4 +709,38 @@ export function normalizeOpenAIResponsesResponse(
     ],
     ...(usage ? { usage } : {}),
   };
+}
+
+export function createOpenAIResponsesStateScope(
+  providerId: string,
+  model: string,
+  endpoint: string,
+  credentialFingerprint: string
+): string {
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        version: 2,
+        apiMode: 'responses',
+        providerId,
+        model,
+        endpoint,
+        credentialFingerprint,
+      })
+    )
+    .digest('hex');
+}
+
+/**
+ * Produce a one-way, domain-separated identity for the credential selected by
+ * a provider request. Only this digest is included in replay/routing scopes;
+ * the credential itself is never persisted or returned to clients.
+ */
+export function createPluginCredentialFingerprint(
+  apiKey: string | null
+): string {
+  return createHash('sha256')
+    .update('libre-webui:plugin-credential:v1\0')
+    .update(apiKey || '')
+    .digest('hex');
 }

@@ -37,6 +37,7 @@ export interface AssistantCompletionInput {
   regenerate?: boolean;
   originalMessageId?: string;
   statistics?: GenerationStatistics;
+  providerMetadata?: Record<string, unknown>;
 }
 
 export interface AssistantCompletionResult {
@@ -69,6 +70,7 @@ class AssistantCompletionService {
     regenerate,
     originalMessageId,
     statistics,
+    providerMetadata,
   }: AssistantCompletionInput): AssistantCompletionResult {
     const branchingFields = this.buildBranchingFields(
       session,
@@ -85,6 +87,7 @@ class AssistantCompletionService {
           model,
           timestamp: Date.now(),
           statistics,
+          providerMetadata,
         },
         branchingFields,
       };
@@ -98,6 +101,7 @@ class AssistantCompletionService {
         model,
         id: messageId,
         statistics,
+        providerMetadata,
         ...branchingFields,
       },
       userId

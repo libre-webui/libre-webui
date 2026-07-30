@@ -15,7 +15,14 @@
  * limitations under the License.
  */
 
-import { OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY } from './openAIResponsesAdapter.js';
+import {
+  boundedOpenAIResponsesOutputItems,
+  openAIResponsesOutputItemsValidationError,
+  OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
+  OPENAI_RESPONSES_REPLAY_MAX_BYTES,
+  OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY,
+  OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
+} from './openAIResponsesAdapter.js';
 
 export interface PluginToolCall {
   id: string;
@@ -49,6 +56,10 @@ interface ToolCallDelta {
     arguments?: string;
   };
 }
+
+const OPENAI_RESPONSES_STREAM_MAX_BUFFER_BYTES = 2_000_000;
+const OPENAI_RESPONSES_STREAM_MAX_TEXT_BYTES = 1_000_000;
+const OPENAI_RESPONSES_STREAM_MAX_TOOL_CALLS = 16;
 
 function getChoiceDelta(payload: unknown): Record<string, unknown> | null {
   if (!payload || typeof payload !== 'object') {
@@ -307,16 +318,17 @@ function responsesItemKey(
   payload: Record<string, unknown>,
   item?: Record<string, unknown>
 ): string {
-  if (typeof payload.item_id === 'string') return payload.item_id;
-  if (typeof item?.id === 'string') return item.id;
   if (typeof payload.output_index === 'number') {
     return `output-${payload.output_index}`;
   }
+  if (typeof payload.item_id === 'string') return payload.item_id;
+  if (typeof item?.id === 'string') return item.id;
   return `output-${Date.now()}`;
 }
 
 export async function* streamOpenAIResponsesResponse(
-  response: Awaited<ReturnType<typeof fetch>>
+  response: Awaited<ReturnType<typeof fetch>>,
+  stateScope?: string
 ): AsyncGenerator<PluginStreamChunk, void, unknown> {
   if (!response.ok) {
     const errorText = await response.text();
@@ -330,7 +342,10 @@ export async function* streamOpenAIResponsesResponse(
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
-  const toolCalls = new Map<string, PluginToolCall>();
+  const toolCalls = new Map<
+    string,
+    PluginToolCall & { order: number; outputIndex?: number }
+  >();
   const reasoningItems = new Map<string, Record<string, unknown>>();
   const outputItems = new Map<
     string,
@@ -342,8 +357,12 @@ export async function* streamOpenAIResponsesResponse(
   >();
   let buffer = '';
   let completed = false;
-  let emittedAssistantContent = false;
+  let emittedAssistantText = '';
+  let emittedReasoningBytes = 0;
   let outputItemOrder = 0;
+  let toolCallOrder = 0;
+  let responseStateDropped = false;
+  let invalidToolCallState = false;
 
   const responseOutputContent = (output: unknown): string => {
     if (!Array.isArray(output)) return '';
@@ -383,40 +402,124 @@ export async function* streamOpenAIResponsesResponse(
     rawItem: unknown
   ) => {
     if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) {
+      responseStateDropped = true;
+      invalidToolCallState = true;
+      outputItems.clear();
+      reasoningItems.clear();
       return;
     }
     const item = rawItem as Record<string, unknown>;
     const key = responsesItemKey(payload, item);
     const existingOutputItem = outputItems.get(key);
-    outputItems.set(key, {
-      item: { ...item },
-      order: existingOutputItem?.order ?? outputItemOrder++,
-      outputIndex:
-        typeof payload.output_index === 'number'
-          ? payload.output_index
-          : existingOutputItem?.outputIndex,
-    });
+    const outputIndex =
+      typeof payload.output_index === 'number'
+        ? payload.output_index
+        : existingOutputItem?.outputIndex;
+    if (!responseStateDropped) {
+      outputItems.set(key, {
+        item: { ...item },
+        order: existingOutputItem?.order ?? outputItemOrder++,
+        outputIndex,
+      });
+      const bounded = boundedOpenAIResponsesOutputItems(
+        [...outputItems.values()].map(entry => entry.item)
+      );
+      if (bounded.dropped) {
+        responseStateDropped = true;
+        outputItems.clear();
+        reasoningItems.clear();
+      }
+    }
 
     if (item.type === 'reasoning') {
-      reasoningItems.set(key, { ...item });
+      if (!responseStateDropped) reasoningItems.set(key, { ...item });
       return;
     }
     if (item.type !== 'function_call') return;
 
     const existing = toolCalls.get(key);
+    if (!existing && toolCalls.size >= OPENAI_RESPONSES_STREAM_MAX_TOOL_CALLS) {
+      responseStateDropped = true;
+      invalidToolCallState = true;
+      outputItems.clear();
+      reasoningItems.clear();
+      return;
+    }
+    const callId =
+      typeof item.call_id === 'string' && item.call_id.length > 0
+        ? item.call_id
+        : undefined;
+    const name =
+      typeof item.name === 'string' && item.name.length > 0
+        ? item.name
+        : undefined;
+    if (!callId || !name || typeof item.arguments !== 'string') {
+      invalidToolCallState = true;
+    }
     toolCalls.set(key, {
-      id:
-        typeof item.call_id === 'string'
-          ? item.call_id
-          : typeof item.id === 'string'
-            ? item.id
-            : existing?.id || key,
-      name: typeof item.name === 'string' ? item.name : existing?.name || '',
+      id: callId || existing?.id || '',
+      name: name || existing?.name || '',
       arguments:
         typeof item.arguments === 'string'
           ? item.arguments
           : existing?.arguments || '',
+      order: existing?.order ?? toolCallOrder++,
+      outputIndex,
     });
+  };
+
+  const updateFunctionCallArguments = (
+    key: string,
+    argumentsValue: string,
+    append: boolean,
+    name?: string
+  ): void => {
+    const existing = toolCalls.get(key);
+    if (!existing) {
+      invalidToolCallState = true;
+      return;
+    }
+    const nextArguments = append
+      ? existing.arguments + argumentsValue
+      : argumentsValue;
+    if (
+      Buffer.byteLength(nextArguments, 'utf8') >
+      OPENAI_RESPONSES_REPLAY_MAX_BYTES
+    ) {
+      invalidToolCallState = true;
+      existing.arguments = '';
+      toolCalls.set(key, existing);
+      responseStateDropped = true;
+      outputItems.clear();
+      reasoningItems.clear();
+      return;
+    }
+    existing.arguments = nextArguments;
+    if (name !== undefined) {
+      if (!name) invalidToolCallState = true;
+      existing.name = name;
+    }
+    toolCalls.set(key, existing);
+
+    const outputEntry = outputItems.get(key);
+    if (!outputEntry || outputEntry.item.type !== 'function_call') {
+      if (!responseStateDropped) invalidToolCallState = true;
+      return;
+    }
+    outputEntry.item = {
+      ...outputEntry.item,
+      arguments: existing.arguments,
+      ...(name !== undefined ? { name } : {}),
+    };
+    outputItems.set(key, outputEntry);
+    const bounded = boundedOpenAIResponsesOutputItems(
+      [...outputItems.values()].map(entry => entry.item)
+    );
+    if (bounded.dropped) {
+      responseStateDropped = true;
+      outputItems.clear();
+      reasoningItems.clear();
+    }
   };
 
   const emitTerminalChunks = function* (
@@ -424,35 +527,68 @@ export async function* streamOpenAIResponsesResponse(
     doneReason?: string
   ): Generator<PluginStreamChunk> {
     if (usage) yield { type: 'usage', usage };
-    const calls = [...toolCalls.values()];
+    const calls = [...toolCalls.values()].sort(
+      (left, right) =>
+        (left.outputIndex ?? Number.MAX_SAFE_INTEGER) -
+          (right.outputIndex ?? Number.MAX_SAFE_INTEGER) ||
+        left.order - right.order
+    );
+    if (
+      invalidToolCallState ||
+      calls.length > OPENAI_RESPONSES_STREAM_MAX_TOOL_CALLS ||
+      calls.some(call => !call.id || !call.name) ||
+      new Set(calls.map(call => call.id)).size !== calls.length
+    ) {
+      throw new Error(
+        'Plugin API error: Responses stream returned invalid function calls'
+      );
+    }
     if (reasoningItems.size > 0 && calls[0]) {
       calls[0].providerMetadata = {
         ...calls[0].providerMetadata,
         openAIResponsesReasoningItems: [...reasoningItems.values()],
       };
     }
-    for (const toolCall of calls) {
-      yield { type: 'tool_call', toolCall };
+    for (const { id, name, arguments: args, providerMetadata } of calls) {
+      yield {
+        type: 'tool_call',
+        toolCall: {
+          id,
+          name,
+          arguments: args,
+          ...(providerMetadata ? { providerMetadata } : {}),
+        },
+      };
     }
-    const replayableOutputItems = [...outputItems.values()]
-      .sort(
-        (left, right) =>
-          (left.outputIndex ?? Number.MAX_SAFE_INTEGER) -
-            (right.outputIndex ?? Number.MAX_SAFE_INTEGER) ||
-          left.order - right.order
-      )
-      .map(({ item }) => item);
+    const replayableOutputItems = responseStateDropped
+      ? []
+      : [...outputItems.values()]
+          .sort(
+            (left, right) =>
+              (left.outputIndex ?? Number.MAX_SAFE_INTEGER) -
+                (right.outputIndex ?? Number.MAX_SAFE_INTEGER) ||
+              left.order - right.order
+          )
+          .map(({ item }) => item);
+    const providerMetadata = {
+      ...(replayableOutputItems.length > 0
+        ? {
+            [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: replayableOutputItems,
+          }
+        : {}),
+      ...(responseStateDropped
+        ? { [OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY]: true }
+        : {}),
+      ...(stateScope
+        ? {
+            [OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY]: stateScope,
+          }
+        : {}),
+    };
     yield {
       type: 'done',
       ...(doneReason ? { doneReason } : {}),
-      ...(replayableOutputItems.length > 0
-        ? {
-            providerMetadata: {
-              [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]:
-                replayableOutputItems,
-            },
-          }
-        : {}),
+      ...(Object.keys(providerMetadata).length > 0 ? { providerMetadata } : {}),
     };
   };
 
@@ -463,20 +599,45 @@ export async function* streamOpenAIResponsesResponse(
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
+      if (
+        Buffer.byteLength(buffer, 'utf8') >
+        OPENAI_RESPONSES_STREAM_MAX_BUFFER_BYTES
+      ) {
+        throw new Error(
+          'Plugin API error: Responses stream event exceeds the size limit'
+        );
+      }
 
       for (const line of lines) {
+        if (
+          Buffer.byteLength(line, 'utf8') >
+          OPENAI_RESPONSES_STREAM_MAX_BUFFER_BYTES
+        ) {
+          throw new Error(
+            'Plugin API error: Responses stream event exceeds the size limit'
+          );
+        }
         const trimmed = line.trim();
         if (!trimmed.startsWith('data:')) continue;
 
-        let payload: Record<string, unknown>;
+        let parsedPayload: unknown;
         try {
-          payload = JSON.parse(trimmed.slice(5).trim()) as Record<
-            string,
-            unknown
-          >;
+          parsedPayload = JSON.parse(trimmed.slice(5).trim());
         } catch {
-          continue;
+          throw new Error(
+            'Plugin API error: Responses stream returned malformed JSON'
+          );
         }
+        if (
+          !parsedPayload ||
+          typeof parsedPayload !== 'object' ||
+          Array.isArray(parsedPayload)
+        ) {
+          throw new Error(
+            'Plugin API error: Responses stream event must be an object'
+          );
+        }
+        const payload = parsedPayload as Record<string, unknown>;
 
         const providerError = pluginStreamError(payload);
         if (providerError) {
@@ -499,7 +660,16 @@ export async function* streamOpenAIResponsesResponse(
           typeof payload.delta === 'string' &&
           payload.delta
         ) {
-          emittedAssistantContent = true;
+          const nextAssistantText = emittedAssistantText + payload.delta;
+          if (
+            Buffer.byteLength(nextAssistantText, 'utf8') >
+            OPENAI_RESPONSES_STREAM_MAX_TEXT_BYTES
+          ) {
+            throw new Error(
+              'Plugin API error: Responses stream text exceeds the size limit'
+            );
+          }
+          emittedAssistantText = nextAssistantText;
           yield { type: 'content', content: payload.delta };
           continue;
         }
@@ -510,6 +680,12 @@ export async function* streamOpenAIResponsesResponse(
           typeof payload.delta === 'string' &&
           payload.delta
         ) {
+          emittedReasoningBytes += Buffer.byteLength(payload.delta, 'utf8');
+          if (emittedReasoningBytes > OPENAI_RESPONSES_STREAM_MAX_TEXT_BYTES) {
+            throw new Error(
+              'Plugin API error: Responses stream reasoning exceeds the size limit'
+            );
+          }
           yield { type: 'reasoning', content: payload.delta };
           continue;
         }
@@ -522,34 +698,38 @@ export async function* streamOpenAIResponsesResponse(
           continue;
         }
 
-        if (
-          eventType === 'response.function_call_arguments.delta' &&
-          typeof payload.delta === 'string'
-        ) {
+        if (eventType === 'response.function_call_arguments.delta') {
+          if (typeof payload.delta !== 'string') {
+            throw new Error(
+              'Plugin API error: Responses stream returned invalid function-call arguments'
+            );
+          }
           const key = responsesItemKey(payload);
-          const existing = toolCalls.get(key) || {
-            id: key,
-            name: '',
-            arguments: '',
-          };
-          existing.arguments += payload.delta;
-          toolCalls.set(key, existing);
+          updateFunctionCallArguments(key, payload.delta, true);
           continue;
         }
 
-        if (
-          eventType === 'response.function_call_arguments.done' &&
-          typeof payload.arguments === 'string'
-        ) {
+        if (eventType === 'response.function_call_arguments.done') {
+          if (typeof payload.arguments !== 'string') {
+            throw new Error(
+              'Plugin API error: Responses stream returned invalid function-call arguments'
+            );
+          }
+          if (
+            payload.name !== undefined &&
+            (typeof payload.name !== 'string' || payload.name.length === 0)
+          ) {
+            throw new Error(
+              'Plugin API error: Responses stream returned an invalid function-call name'
+            );
+          }
           const key = responsesItemKey(payload);
-          const existing = toolCalls.get(key) || {
-            id: key,
-            name: '',
-            arguments: '',
-          };
-          existing.arguments = payload.arguments;
-          if (typeof payload.name === 'string') existing.name = payload.name;
-          toolCalls.set(key, existing);
+          updateFunctionCallArguments(
+            key,
+            payload.arguments,
+            false,
+            typeof payload.name === 'string' ? payload.name : undefined
+          );
           continue;
         }
 
@@ -563,22 +743,53 @@ export async function* streamOpenAIResponsesResponse(
             !Array.isArray(payload.response)
               ? (payload.response as Record<string, unknown>)
               : undefined;
-          if (Array.isArray(responseRecord?.output)) {
-            outputItems.clear();
-            reasoningItems.clear();
-            outputItemOrder = 0;
-            for (const [outputIndex, item] of responseRecord.output.entries()) {
-              recordOutputItem({ output_index: outputIndex }, item);
-            }
-          }
-          if (!emittedAssistantContent) {
-            const terminalContent = responseOutputContent(
-              responseRecord?.output
+          if (!responseRecord || !Array.isArray(responseRecord.output)) {
+            throw new Error(
+              'Plugin API error: Responses stream returned invalid terminal output'
             );
-            if (terminalContent) {
-              emittedAssistantContent = true;
-              yield { type: 'content', content: terminalContent };
+          }
+          const outputValidationError =
+            openAIResponsesOutputItemsValidationError(responseRecord.output);
+          if (outputValidationError) {
+            throw new Error(`Plugin API error: ${outputValidationError}`);
+          }
+          if (
+            typeof responseRecord?.status === 'string' &&
+            responseRecord.status !== 'completed' &&
+            responseRecord.status !== 'incomplete'
+          ) {
+            throw new Error(
+              `Plugin API error: unexpected Responses status "${responseRecord.status.slice(0, 100)}"`
+            );
+          }
+          outputItems.clear();
+          reasoningItems.clear();
+          toolCalls.clear();
+          outputItemOrder = 0;
+          toolCallOrder = 0;
+          responseStateDropped = false;
+          invalidToolCallState = false;
+          for (const [outputIndex, item] of responseRecord.output.entries()) {
+            recordOutputItem({ output_index: outputIndex }, item);
+          }
+          const terminalContent = responseOutputContent(responseRecord?.output);
+          if (
+            Buffer.byteLength(terminalContent, 'utf8') >
+            OPENAI_RESPONSES_STREAM_MAX_TEXT_BYTES
+          ) {
+            throw new Error(
+              'Plugin API error: Responses terminal text exceeds the size limit'
+            );
+          }
+          if (terminalContent !== emittedAssistantText) {
+            if (!terminalContent.startsWith(emittedAssistantText)) {
+              throw new Error(
+                'Plugin API error: Responses stream content diverged from its terminal output'
+              );
             }
+            const suffix = terminalContent.slice(emittedAssistantText.length);
+            emittedAssistantText = terminalContent;
+            if (suffix) yield { type: 'content', content: suffix };
           }
           const usage = parseResponsesUsage(responseRecord?.usage);
           const incompleteDetails =
@@ -601,6 +812,7 @@ export async function* streamOpenAIResponsesResponse(
             yield chunk;
           }
           completed = true;
+          return;
         }
       }
     }

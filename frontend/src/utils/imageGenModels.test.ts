@@ -19,7 +19,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   findImageGenModel,
+  findPreferredImagePlugin,
+  getImageGenImageFileExtension,
+  getImageGenImageSource,
   getImageGenModelOptionValue,
+  resolveImageGenOption,
   resolveImageGenModel,
   type ImageGenModel,
 } from './imageGenModels';
@@ -43,9 +47,96 @@ test('encodes provider-qualified values for duplicate model IDs', () => {
   );
 });
 
-test('falls back to the first available image model for a stale selection', () => {
+test('fails closed when an explicitly saved provider is unavailable', () => {
   assert.equal(
-    resolveImageGenModel(models, 'removed-model', 'removed-provider'),
-    models[0]
+    resolveImageGenModel(models, 'shared-model', 'removed-provider'),
+    undefined
+  );
+  assert.equal(
+    findPreferredImagePlugin(
+      [
+        { id: 'provider-one', models: ['shared-model'] },
+        { id: 'provider-two', models: ['shared-model'] },
+      ],
+      { model: 'shared-model', pluginId: 'removed-provider' }
+    ),
+    undefined
+  );
+});
+
+test('keeps legacy fallback behavior when no provider was saved', () => {
+  assert.equal(resolveImageGenModel(models, 'removed-model'), models[0]);
+  assert.equal(
+    findPreferredImagePlugin(
+      [
+        { id: 'provider-one', models: ['other-model'] },
+        { id: 'provider-two', models: ['shared-model'] },
+      ],
+      { model: 'shared-model' }
+    )?.id,
+    'provider-two'
+  );
+});
+
+test('resolves image options only to advertised values', () => {
+  assert.equal(
+    resolveImageGenOption(
+      ['auto', 'low', 'high'],
+      'standard',
+      'auto',
+      'standard'
+    ),
+    'auto'
+  );
+  assert.equal(
+    resolveImageGenOption(['low', 'high'], 'standard', 'invalid', 'standard'),
+    'low'
+  );
+  assert.equal(
+    resolveImageGenOption(undefined, 'provider-default', undefined, 'fallback'),
+    'provider-default'
+  );
+});
+
+test('preserves safe image MIME types in generated data URLs', () => {
+  assert.equal(
+    getImageGenImageSource({
+      b64_json: 'UklGRg==',
+      mime_type: 'image/webp',
+    }),
+    'data:image/webp;base64,UklGRg=='
+  );
+  assert.equal(
+    getImageGenImageSource({
+      b64_json: 'iVBORw0KGgo=',
+      mime_type: 'text/html',
+    }),
+    'data:image/png;base64,iVBORw0KGgo='
+  );
+  assert.equal(
+    getImageGenImageSource({
+      url: 'data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=',
+    }),
+    null
+  );
+  assert.equal(getImageGenImageSource({ url: 'javascript:alert(1)' }), null);
+});
+
+test('uses safe download extensions for generated image data URLs', () => {
+  assert.equal(
+    getImageGenImageFileExtension('data:image/jpeg;base64,/9j/4AAQ'),
+    'jpg'
+  );
+  assert.equal(
+    getImageGenImageFileExtension('data:image/webp;base64,UklGRg=='),
+    'webp'
+  );
+  assert.equal(
+    getImageGenImageFileExtension('data:text/html;base64,PHNjcmlwdD4='),
+    'png'
+  );
+  assert.equal(
+    getImageGenImageFileExtension('https://example.com/generated-image'),
+    'png'
   );
 });

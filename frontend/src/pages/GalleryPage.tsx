@@ -21,12 +21,16 @@ import { Plus } from 'lucide-react';
 import ImageGallery from '@/components/ImageGallery';
 import { ImageGenerationPanel } from '@/components/ImageGenerationPanel';
 import { Button, PageHeader, PageShell } from '@/components/ui';
+import { useAppStore } from '@/store/appStore';
 
 export const GalleryPage: React.FC = () => {
   const { t } = useTranslation();
   const [imageCount, setImageCount] = useState<number | null>(null);
   const [showImageGen, setShowImageGen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const imageGenerationEnabled = useAppStore(
+    state => state.preferences.imageGenSettings?.enabled === true
+  );
 
   const handleImageGenerated = useCallback(() => {
     // Refresh the gallery when a new image is generated
@@ -46,7 +50,13 @@ export const GalleryPage: React.FC = () => {
           ) : null
         }
         actions={
-          <Button onClick={() => setShowImageGen(true)} className='gap-2 px-5'>
+          <Button
+            onClick={() => {
+              if (imageGenerationEnabled) setShowImageGen(true);
+            }}
+            disabled={!imageGenerationEnabled}
+            className='gap-2 px-5'
+          >
             <Plus className='h-4 w-4' aria-hidden='true' />
             {t('gallery.generate')}
           </Button>
@@ -56,7 +66,7 @@ export const GalleryPage: React.FC = () => {
       <ImageGallery key={refreshKey} onImageCountChange={setImageCount} />
 
       <ImageGenerationPanel
-        isOpen={showImageGen}
+        isOpen={showImageGen && imageGenerationEnabled}
         onClose={() => setShowImageGen(false)}
         onImageGenerated={handleImageGenerated}
       />

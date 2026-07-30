@@ -20,7 +20,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { Trash2, Download, Loader2, ImageOff } from 'lucide-react';
 import { cn } from '@/utils';
-import { imageGenApi } from '@/utils/api';
+import { getImageGenImageFileExtension, imageGenApi } from '@/utils/api';
 import { GeneratedImage } from '@/types';
 import { toast } from 'react-hot-toast';
 import ImageLightbox from './ImageLightbox';
@@ -112,7 +112,9 @@ export const ImageGallery: React.FC<ImageGalleryProps> = ({
 
     const link = document.createElement('a');
     link.href = image.imageData;
-    link.download = `generated-${image.id}.png`;
+    link.download = `generated-${
+      image.id
+    }.${getImageGenImageFileExtension(image.imageData)}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

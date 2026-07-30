@@ -145,7 +145,10 @@ function splitDataUrlImage(image: string): {
   };
 }
 
-export function toOpenAICompatibleMessages(messages: ChatMessage[]): Array<{
+export function toOpenAICompatibleMessages(
+  messages: ChatMessage[],
+  options: { preserveProviderMetadata?: boolean } = {}
+): Array<{
   role: string;
   content:
     | string
@@ -153,8 +156,12 @@ export function toOpenAICompatibleMessages(messages: ChatMessage[]): Array<{
         | { type: 'text'; text: string }
         | { type: 'image_url'; image_url: { url: string } }
       >;
+  providerMetadata?: Record<string, unknown>;
 }> {
   return messages.map(message => {
+    const providerMetadata = options.preserveProviderMetadata
+      ? message.providerMetadata
+      : undefined;
     if (message.images && message.images.length > 0) {
       const content: Array<
         | { type: 'text'; text: string }
@@ -172,10 +179,18 @@ export function toOpenAICompatibleMessages(messages: ChatMessage[]): Array<{
         content.push({ type: 'text', text: message.content });
       }
 
-      return { role: message.role, content };
+      return {
+        role: message.role,
+        content,
+        ...(providerMetadata ? { providerMetadata } : {}),
+      };
     }
 
-    return { role: message.role, content: message.content };
+    return {
+      role: message.role,
+      content: message.content,
+      ...(providerMetadata ? { providerMetadata } : {}),
+    };
   });
 }
 
@@ -342,7 +357,8 @@ export function buildPluginChatPayload(
   options: GenerationOptions = {},
   pluginVars: PluginVariables = {},
   streamOverride?: boolean,
-  apiMode: PluginApiMode = 'chat_completions'
+  apiMode: PluginApiMode = 'chat_completions',
+  providerStateScope?: string
 ): PluginChatPayloadResult {
   const params = resolvePluginChatParameters(options, pluginVars);
   if (streamOverride !== undefined) {
@@ -361,12 +377,15 @@ export function buildPluginChatPayload(
     return {
       payload: buildOpenAIResponsesPayload(
         model,
-        toOpenAICompatibleMessages(messages),
+        toOpenAICompatibleMessages(messages, {
+          preserveProviderMetadata: true,
+        }),
         {
           max_tokens: params.maxTokens,
           temperature: params.temperature,
           top_p: params.topP,
           stream: params.shouldStream,
+          stateScope: providerStateScope,
         }
       ),
     };
@@ -544,7 +563,8 @@ export function convertProviderResponse(
   plugin: Plugin,
   response: Record<string, unknown>,
   model: string,
-  apiMode: PluginApiMode = 'chat_completions'
+  apiMode: PluginApiMode = 'chat_completions',
+  providerStateScope?: string
 ): PluginResponse {
   if (plugin.id === 'anthropic') {
     return convertAnthropicResponse(response, model);
@@ -555,7 +575,11 @@ export function convertProviderResponse(
   }
 
   if (apiMode === 'responses') {
-    return normalizeOpenAIResponsesResponse(response, model);
+    return normalizeOpenAIResponsesResponse(
+      response,
+      model,
+      providerStateScope
+    );
   }
 
   return response as unknown as PluginResponse;

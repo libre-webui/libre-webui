@@ -16,6 +16,7 @@
  */
 
 import axios from 'axios';
+import { createHash } from 'crypto';
 import type {
   GenerationOptions,
   OllamaChatMessage,
@@ -31,6 +32,9 @@ import {
 } from '../utils/pluginChatAdapter.js';
 import {
   OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
+  OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
+  createOpenAIResponsesStateScope,
+  createPluginCredentialFingerprint,
   normalizeOpenAIResponsesResponse,
   toOpenAIResponsesInput,
   toOpenAIResponsesTools,
@@ -155,6 +159,77 @@ export class WorkModelProviderService {
     }
   }
 
+  getResponsesStateScope(
+    model: string,
+    provider: WorkProviderSelection,
+    userId: string
+  ): string | undefined {
+    if (provider.providerType !== 'plugin') return undefined;
+    const providerId = provider.providerId?.trim();
+    if (!providerId) return undefined;
+    const plugin = this.dependencies.plugins.getPlugin(providerId, userId);
+    if (!plugin || !plugin.active || !plugin.model_map.includes(model)) {
+      return undefined;
+    }
+    const variables = this.dependencies.plugins.getPluginVariables(
+      plugin,
+      userId
+    );
+    const apiConfig = resolvePluginApiConfig(plugin, variables);
+    if (apiConfig.apiMode !== 'responses') return undefined;
+    const endpoint = applyModelEndpointTemplate(apiConfig.endpoint, model);
+    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    if (pluginRequiresApiKey(plugin) && !apiKey) return undefined;
+    return createOpenAIResponsesStateScope(
+      plugin.id,
+      model,
+      endpoint,
+      createPluginCredentialFingerprint(apiKey)
+    );
+  }
+
+  getRoutingFingerprint(
+    model: string,
+    provider: WorkProviderSelection,
+    userId: string
+  ): string {
+    if (provider.providerType === 'ollama') {
+      assertOllamaProvider(provider);
+      return createHash('sha256')
+        .update(
+          JSON.stringify({
+            version: 1,
+            providerType: 'ollama',
+            model,
+          })
+        )
+        .digest('hex');
+    }
+
+    const plugin = this.requireExactPlugin(provider.providerId, model, userId);
+    const variables = this.dependencies.plugins.getPluginVariables(
+      plugin,
+      userId
+    );
+    const apiConfig = resolvePluginApiConfig(plugin, variables);
+    const endpoint = applyModelEndpointTemplate(apiConfig.endpoint, model);
+    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
+    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    return createHash('sha256')
+      .update(
+        JSON.stringify({
+          version: 2,
+          providerType: 'plugin',
+          providerId: plugin.id,
+          model,
+          apiMode: apiConfig.apiMode,
+          endpoint,
+          credentialFingerprint: createPluginCredentialFingerprint(apiKey),
+        })
+      )
+      .digest('hex');
+  }
+
   async generateChatResponse(
     request: OllamaChatRequest,
     provider: WorkProviderSelection,
@@ -243,6 +318,10 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_MODEL_UNAVAILABLE'
       );
     }
+    resolvePluginApiConfig(
+      plugin,
+      this.dependencies.plugins.getPluginVariables(plugin, userId)
+    );
     if (
       pluginRequiresApiKey(plugin) &&
       !this.dependencies.plugins.getApiKey(plugin, userId)
@@ -263,14 +342,6 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
-    if (pluginRequiresApiKey(plugin) && !apiKey) {
-      throw new WorkModelProviderError(
-        `API key not found for plugin ${plugin.id}.`,
-        422,
-        'WORK_PLUGIN_CREDENTIALS_MISSING'
-      );
-    }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
@@ -281,12 +352,30 @@ export class WorkModelProviderService {
       request.model
     );
     assertSafePluginEndpoint(endpoint, 'Work model endpoint');
+    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    if (pluginRequiresApiKey(plugin) && !apiKey) {
+      throw new WorkModelProviderError(
+        `API key not found for plugin ${plugin.id}.`,
+        422,
+        'WORK_PLUGIN_CREDENTIALS_MISSING'
+      );
+    }
+    const providerStateScope =
+      apiConfig.apiMode === 'responses'
+        ? createOpenAIResponsesStateScope(
+            plugin.id,
+            request.model,
+            endpoint,
+            createPluginCredentialFingerprint(apiKey)
+          )
+        : undefined;
     const headers = buildPluginAuthHeaders(plugin, apiKey);
     const { payload, extraHeaders } = buildPluginWorkPayload(
       plugin,
       request,
       variables,
-      apiConfig.apiMode
+      apiConfig.apiMode,
+      providerStateScope
     );
     Object.assign(headers, extraHeaders);
 
@@ -298,13 +387,15 @@ export class WorkModelProviderService {
           headers,
           signal,
           timeout: 300_000,
+          maxRedirects: 0,
         }
       );
       return normalizePluginWorkResponse(
         plugin,
         response.data,
         request.model,
-        apiConfig.apiMode
+        apiConfig.apiMode,
+        providerStateScope
       );
     } catch (error) {
       if (signal?.aborted) throw error;
@@ -416,14 +507,6 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
-    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
-    if (pluginRequiresApiKey(plugin) && !apiKey) {
-      throw new WorkModelProviderError(
-        `API key not found for plugin ${plugin.id}.`,
-        422,
-        'WORK_PLUGIN_CREDENTIALS_MISSING'
-      );
-    }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
@@ -433,6 +516,24 @@ export class WorkModelProviderService {
       apiConfig.endpoint,
       request.model
     );
+    assertSafePluginEndpoint(endpoint, 'Work model endpoint');
+    const apiKey = this.dependencies.plugins.getApiKey(plugin, userId);
+    if (pluginRequiresApiKey(plugin) && !apiKey) {
+      throw new WorkModelProviderError(
+        `API key not found for plugin ${plugin.id}.`,
+        422,
+        'WORK_PLUGIN_CREDENTIALS_MISSING'
+      );
+    }
+    const providerStateScope =
+      apiConfig.apiMode === 'responses'
+        ? createOpenAIResponsesStateScope(
+            plugin.id,
+            request.model,
+            endpoint,
+            createPluginCredentialFingerprint(apiKey)
+          )
+        : undefined;
     if (plugin.id === 'gemini') {
       endpoint = geminiStreamingEndpoint(endpoint);
     }
@@ -442,7 +543,8 @@ export class WorkModelProviderService {
       plugin,
       { ...request, stream: true },
       variables,
-      apiConfig.apiMode
+      apiConfig.apiMode,
+      providerStateScope
     );
     Object.assign(headers, extraHeaders);
     const timeoutSignal = AbortSignal.timeout(300_000);
@@ -456,6 +558,7 @@ export class WorkModelProviderService {
         headers,
         body: JSON.stringify(payload),
         signal: requestSignal,
+        redirect: 'error',
       });
       const contentType = response.headers.get('content-type') || '';
       if (
@@ -468,7 +571,8 @@ export class WorkModelProviderService {
           plugin,
           data,
           request.model,
-          apiConfig.apiMode
+          apiConfig.apiMode,
+          providerStateScope
         );
         if (normalized.message.thinking) {
           observer.onReasoning?.(normalized.message.thinking);
@@ -484,7 +588,7 @@ export class WorkModelProviderService {
           : plugin.id === 'gemini'
             ? streamGeminiWorkResponse(response)
             : apiConfig.apiMode === 'responses'
-              ? streamOpenAIResponsesResponse(response)
+              ? streamOpenAIResponsesResponse(response, providerStateScope)
               : streamOpenAICompatibleResponse(response);
       return await collectPluginWorkStream(chunks, request.model, observer);
     } catch (error) {
@@ -510,7 +614,8 @@ export function buildPluginWorkPayload(
   plugin: Plugin,
   request: OllamaChatRequest,
   variables: PluginVariables = {},
-  apiMode: PluginApiMode = resolvePluginApiConfig(plugin, variables).apiMode
+  apiMode: PluginApiMode = resolvePluginApiConfig(plugin, variables).apiMode,
+  providerStateScope?: string
 ): { payload: JsonObject; extraHeaders: Record<string, string> } {
   const options = (request.options || {}) as GenerationOptions;
   const params = resolvePluginChatParameters(options, variables);
@@ -542,7 +647,7 @@ export function buildPluginWorkPayload(
     return {
       payload: {
         model: request.model,
-        input: toOpenAIResponsesWorkInput(request.messages),
+        input: toOpenAIResponsesWorkInput(request.messages, providerStateScope),
         ...(tools.length ? { tools, tool_choice: 'auto' } : {}),
         temperature: sampling.temperature,
         top_p: sampling.top_p,
@@ -573,7 +678,8 @@ export function normalizePluginWorkResponse(
   response: JsonObject,
   model: string,
   apiMode: PluginApiMode = plugin.api_mode ||
-    inferPluginApiMode(plugin.endpoint)
+    inferPluginApiMode(plugin.endpoint),
+  providerStateScope?: string
 ): OllamaChatResponse {
   if (plugin.id === 'anthropic') {
     return normalizeAnthropicWorkResponse(response, model);
@@ -582,7 +688,11 @@ export function normalizePluginWorkResponse(
     return normalizeGeminiWorkResponse(response, model);
   }
   if (apiMode === 'responses') {
-    return normalizeOpenAIResponsesWorkResponse(response, model);
+    return normalizeOpenAIResponsesWorkResponse(
+      response,
+      model,
+      providerStateScope
+    );
   }
   return normalizeOpenAIWorkResponse(response, model);
 }
@@ -630,7 +740,8 @@ export function toOpenAIWorkMessages(
         role: 'tool',
         content: message.content,
         name: message.tool_name,
-        tool_call_id: matching?.id || `work-tool-${messageIndex}`,
+        tool_call_id:
+          message.tool_call_id || matching?.id || `work-tool-${messageIndex}`,
       };
     }
     return { role: message.role, content: message.content };
@@ -638,7 +749,8 @@ export function toOpenAIWorkMessages(
 }
 
 export function toOpenAIResponsesWorkInput(
-  messages: OllamaChatMessage[]
+  messages: OllamaChatMessage[],
+  expectedStateScope?: string
 ): JsonObject[] {
   const input: JsonObject[] = [];
   let pendingCalls: Array<{ id: string; name: string }> = [];
@@ -646,24 +758,43 @@ export function toOpenAIResponsesWorkInput(
   for (const [messageIndex, message] of messages.entries()) {
     if (message.role === 'assistant') {
       const toolCalls = normalizeOutboundToolCalls(message.tool_calls);
-      pendingCalls = toolCalls.map(call => ({
-        id: String(call.id),
-        name: String((call.function as JsonObject).name),
-      }));
 
       const responseOutputItems = Array.isArray(
         message.providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
       )
         ? message.providerMetadata[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
         : [];
-      const replayableOutputItems = responseOutputItems.flatMap(rawItem => {
-        const item = asObject(rawItem);
-        return item ? [{ ...item }] : [];
-      });
+      const replayableOutputItems =
+        expectedStateScope === undefined ||
+        message.providerMetadata?.[
+          OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY
+        ] === expectedStateScope
+          ? responseOutputItems.flatMap(rawItem => {
+              const item = asObject(rawItem);
+              return item ? [{ ...item }] : [];
+            })
+          : [];
       if (replayableOutputItems.length > 0) {
+        pendingCalls = replayableOutputItems.flatMap(item => {
+          if (item.type !== 'function_call') return [];
+          const id =
+            typeof item.call_id === 'string'
+              ? item.call_id
+              : typeof item.id === 'string'
+                ? item.id
+                : undefined;
+          return id && typeof item.name === 'string'
+            ? [{ id, name: item.name }]
+            : [];
+        });
         input.push(...replayableOutputItems);
         continue;
       }
+
+      pendingCalls = toolCalls.map(call => ({
+        id: String(call.id),
+        name: String((call.function as JsonObject).name),
+      }));
 
       // Compatibility for Work messages created before full Responses output
       // items were retained.
@@ -708,7 +839,10 @@ export function toOpenAIResponsesWorkInput(
             role: 'tool',
             content: message.content,
             name: message.tool_name,
-            tool_call_id: matching?.id || `work-tool-${messageIndex}`,
+            tool_call_id:
+              message.tool_call_id ||
+              matching?.id ||
+              `work-tool-${messageIndex}`,
           },
         ])
       );
@@ -936,9 +1070,14 @@ function normalizeOpenAIWorkResponse(
 
 function normalizeOpenAIResponsesWorkResponse(
   response: JsonObject,
-  model: string
+  model: string,
+  providerStateScope?: string
 ): OllamaChatResponse {
-  const normalized = normalizeOpenAIResponsesResponse(response, model);
+  const normalized = normalizeOpenAIResponsesResponse(
+    response,
+    model,
+    providerStateScope
+  );
   const choice = normalized.choices[0];
   const message = asObject(choice?.message);
   if (!message) {
@@ -961,12 +1100,6 @@ function normalizeOpenAIResponsesWorkResponse(
     };
   }
 
-  const outputItems = Array.isArray(response.output)
-    ? response.output.flatMap(rawItem => {
-        const item = asObject(rawItem);
-        return item ? [{ ...item }] : [];
-      })
-    : [];
   const incompleteReason =
     response.status === 'incomplete'
       ? typeof asObject(response.incomplete_details)?.reason === 'string'
@@ -976,12 +1109,8 @@ function normalizeOpenAIResponsesWorkResponse(
 
   return {
     ...workResponse(model, contentText(message.content), toolCalls, reasoning, {
-      ...(outputItems.length > 0
-        ? {
-            providerMetadata: {
-              [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: outputItems,
-            },
-          }
+      ...(normalized.providerMetadata
+        ? { providerMetadata: normalized.providerMetadata }
         : {}),
       ...(incompleteReason
         ? { doneReason: `incomplete:${incompleteReason}` }

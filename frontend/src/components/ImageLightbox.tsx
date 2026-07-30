@@ -21,6 +21,7 @@ import { createPortal } from 'react-dom';
 import { X, Download, Trash2, Clock, Cpu, Maximize2 } from 'lucide-react';
 import { cn } from '@/utils';
 import { GeneratedImage } from '@/types';
+import { getImageGenImageFileExtension } from '@/utils/api';
 
 interface ImageLightboxProps {
   image: GeneratedImage;
@@ -71,7 +72,9 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
     } else {
       const link = document.createElement('a');
       link.href = image.imageData;
-      link.download = `generated-${image.id}.png`;
+      link.download = `generated-${
+        image.id
+      }.${getImageGenImageFileExtension(image.imageData)}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

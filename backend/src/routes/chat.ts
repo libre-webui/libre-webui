@@ -428,7 +428,7 @@ router.post(
           session,
           userId,
           options,
-          persistedMessages: session.messages,
+          persistedMessages: chatService.getMessagesForContext(sessionId),
           content: message,
           hasRelevantContext: documentContext.hasRelevantContext,
           enhancedContent: documentContext.enhancedContent,
@@ -458,6 +458,7 @@ router.post(
           content: generationResult.assistantContent,
           model: session.model,
           statistics,
+          providerMetadata: generationResult.response.message.providerMetadata,
         },
         userId
       );
@@ -537,7 +538,7 @@ router.post(
           session,
           userId,
           options,
-          persistedMessages: session.messages,
+          persistedMessages: chatService.getMessagesForContext(sessionId),
           content: message,
         });
       const {
@@ -558,6 +559,7 @@ router.post(
       };
 
       let fullResponse = '';
+      let assistantProviderMetadata: Record<string, unknown> | undefined;
 
       if (activePlugin) {
         if (shouldStreamPlugin) {
@@ -582,8 +584,22 @@ router.post(
                   done: false,
                 })}\n\n`
               );
-            } else if (chunk.type === 'tool_call') {
+            } else if (chunk.type === 'tool_call' && chunk.toolCall) {
               toolCalls.push(chunk.toolCall);
+            } else if (chunk.type === 'done') {
+              if (chunk.doneReason?.startsWith('incomplete:')) {
+                const reason =
+                  chunk.doneReason.slice('incomplete:'.length) || 'unknown';
+                throw new Error(
+                  `Provider returned an incomplete response (${reason})`
+                );
+              }
+              assistantProviderMetadata = chunk.providerMetadata
+                ? {
+                    ...assistantProviderMetadata,
+                    ...chunk.providerMetadata,
+                  }
+                : assistantProviderMetadata;
             }
           }
 
@@ -608,6 +624,8 @@ router.post(
               pluginFallbackPolicy: 'allow',
             });
           fullResponse = generationResult.assistantContent;
+          assistantProviderMetadata =
+            generationResult.response.message.providerMetadata;
           res.write(
             `data: ${JSON.stringify({
               type: 'chunk',
@@ -624,6 +642,7 @@ router.post(
               role: 'assistant',
               content: fullResponse,
               model: session.model,
+              providerMetadata: assistantProviderMetadata,
             },
             userId
           );

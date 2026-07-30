@@ -23,11 +23,16 @@ export { huggingfaceHubApi } from './api/huggingfaceHubApi';
 export type { GgufFileInfo, HuggingFaceModel } from './api/huggingfaceHubApi';
 export {
   findImageGenModel,
+  findPreferredImagePlugin,
+  getImageGenImageFileExtension,
+  getImageGenImageSource,
   getImageGenModelOptionValue,
   imageGenApi,
+  resolveImageGenOption,
   resolveImageGenModel,
 } from './api/imageGenApi';
 export type {
+  ImageGenImage,
   ImageGenModel,
   ImageGenPlugin,
   ImageGenRequest,

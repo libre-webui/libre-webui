@@ -462,6 +462,7 @@ const AppContent: React.FC = () => {
                     <Route path='/c/:sessionId' element={<ChatPage />} />
                     <Route path='/models' element={<ModelsPage />} />
                     <Route path='/personas' element={<PersonasPage />} />
+                    <Route path='/gallery' element={<GalleryPage />} />
                     <Route
                       path='/work'
                       element={

@@ -18,7 +18,13 @@
 import axios from 'axios';
 import { ImageGenConfig, ImageGenResponse, Plugin } from '../types/index.js';
 import {
+  normalizeImageGenerationCount,
+  normalizeImageMediaType,
+} from '../utils/imageGenerationValidation.js';
+import {
   assertSafePluginEndpoint,
+  applyModelEndpointTemplate,
+  resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 
@@ -40,32 +46,17 @@ export class PluginImageGenerationService {
 
   getPluginForImageGen(
     model: string,
-    pluginId?: string,
+    pluginId: string,
     userId?: string
   ): Plugin | null {
-    if (pluginId) {
-      const plugin = this.deps.getPlugin(pluginId, userId);
-      if (!plugin) return null;
+    const plugin = this.deps.getPlugin(pluginId, userId);
+    if (!plugin?.active) return null;
 
-      const supportedModels =
-        plugin.capabilities?.image?.model_map ??
-        (plugin.type === 'image' ? plugin.model_map : []);
-      if (supportedModels.includes(model)) {
-        return plugin;
-      }
-
-      return null;
-    }
-
-    const allPlugins = this.deps.getAllPlugins(userId);
-
-    for (const plugin of allPlugins) {
-      const supportedModels =
-        plugin.capabilities?.image?.model_map ??
-        (plugin.type === 'image' ? plugin.model_map : []);
-      if (supportedModels.includes(model)) {
-        return plugin;
-      }
+    const supportedModels =
+      plugin.capabilities?.image?.model_map ??
+      (plugin.type === 'image' ? plugin.model_map : []);
+    if (supportedModels.includes(model)) {
+      return plugin;
     }
 
     return null;
@@ -81,6 +72,7 @@ export class PluginImageGenerationService {
     const allPlugins = this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
+      if (!plugin.active) continue;
       const imageCapability = plugin.capabilities?.image;
       const supportedModels =
         imageCapability?.model_map ??
@@ -116,9 +108,9 @@ export class PluginImageGenerationService {
       style?: string;
       n?: number;
       response_format?: 'url' | 'b64_json';
-      pluginId?: string;
+      pluginId: string;
       userId?: string;
-    } = {}
+    }
   ): Promise<ImageGenResponse> {
     validatePluginModel(model);
 
@@ -132,11 +124,8 @@ export class PluginImageGenerationService {
       options.userId
     );
     if (!plugin) {
-      const providerDescription = options.pluginId
-        ? ` in plugin ${options.pluginId}`
-        : '';
       throw new Error(
-        `No image generation plugin found for model: ${model}${providerDescription}`
+        `No image generation plugin found for model: ${model} in plugin ${options.pluginId}`
       );
     }
 
@@ -151,9 +140,14 @@ export class PluginImageGenerationService {
     }
 
     const imageVars = this.deps.getPluginVariables(plugin, options.userId);
-    const endpointVariable = imageConfig?.endpoint_variable ?? 'endpoint';
+    const imageCount = normalizeImageGenerationCount(options.n);
+    const endpointVariable =
+      imageConfig?.endpoint_variable ||
+      (plugin.type === 'image' ? 'endpoint' : 'image_endpoint');
     const endpointOverride = imageVars[endpointVariable];
-    if (
+    if (endpointVariable === 'endpoint') {
+      endpoint = resolvePluginOperationEndpoint(endpoint, imageVars);
+    } else if (
       typeof endpointOverride === 'string' &&
       endpointOverride.trim().length > 0
     ) {
@@ -168,6 +162,10 @@ export class PluginImageGenerationService {
       endpoint = validatedEndpoint;
     }
 
+    endpoint =
+      plugin.id === 'huggingface'
+        ? applyModelEndpointTemplate(endpoint, model)
+        : endpoint;
     const baseUrl = parseImageEndpoint(endpoint);
     const noAuthRequired =
       (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
@@ -175,7 +173,7 @@ export class PluginImageGenerationService {
     const apiKey = this.deps.getApiKey(plugin, options.userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
-        `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
+        `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
 
@@ -186,6 +184,19 @@ export class PluginImageGenerationService {
       throw new Error(
         `Prompt exceeds maximum length of ${imageConfig.max_prompt_length} characters`
       );
+    }
+
+    if (imageCount !== undefined) {
+      if (imageConfig?.supports_n === false && imageCount !== 1) {
+        throw new Error(
+          `Plugin ${plugin.id} supports only one image per request`
+        );
+      }
+      if (imageConfig?.max_n && imageCount > imageConfig.max_n) {
+        throw new Error(
+          `Image count exceeds maximum of ${imageConfig.max_n} for plugin ${plugin.id}`
+        );
+      }
     }
 
     const headers: Record<string, string> = {
@@ -205,8 +216,11 @@ export class PluginImageGenerationService {
       prompt,
       size: options.size || imageConfig?.default_size || '1024x1024',
       quality: options.quality || imageConfig?.default_quality || 'standard',
-      n: options.n || 1,
     };
+
+    if (imageConfig?.supports_n !== false) {
+      payload.n = imageCount ?? 1;
+    }
 
     if (imageConfig?.supports_response_format !== false) {
       payload.response_format =
@@ -219,18 +233,55 @@ export class PluginImageGenerationService {
       payload.style = options.style || imageConfig?.default_style;
     }
 
-    if (plugin.id === 'comfyui' || endpoint.includes('/prompt')) {
+    if (plugin.id === 'comfyui') {
       return executeComfyUIRequest(baseUrl, prompt, {
         ...options,
+        headers,
         model,
+        pluginId: plugin.id,
         pluginVars: imageVars,
       });
     }
 
     try {
+      if (plugin.id === 'huggingface') {
+        const [width, height] = String(payload.size)
+          .split('x')
+          .map(value => Number.parseInt(value, 10));
+        const response = await axios.post(
+          endpoint,
+          {
+            inputs: prompt,
+            ...(Number.isInteger(width) && Number.isInteger(height)
+              ? { parameters: { width, height } }
+              : {}),
+          },
+          {
+            headers,
+            timeout: 120000,
+            responseType: 'arraybuffer',
+            maxRedirects: 0,
+          }
+        );
+        const mimeType = normalizeImageMediaType(
+          response.headers['content-type']
+        );
+        return {
+          images: [
+            {
+              b64_json: Buffer.from(response.data).toString('base64'),
+              ...(mimeType ? { mime_type: mimeType } : {}),
+            },
+          ],
+          model,
+          pluginId: plugin.id,
+        };
+      }
+
       const response = await axios.post(endpoint, payload, {
         headers,
         timeout: 120000,
+        maxRedirects: 0,
       });
 
       return {
@@ -252,7 +303,7 @@ export class PluginImageGenerationService {
 
   getImageGenConfig(pluginId: string, userId?: string): ImageGenConfig | null {
     const plugin = this.deps.getPlugin(pluginId, userId);
-    if (!plugin) return null;
+    if (!plugin?.active) return null;
 
     if (plugin.capabilities?.image?.config) {
       return plugin.capabilities.image.config;
@@ -304,9 +355,12 @@ function getImageCandidates(responseData: unknown): unknown[] {
 
 function normalizeImageCandidate(candidate: unknown): ImageGenImage | null {
   if (typeof candidate === 'string') {
-    const dataUrlBase64 = normalizeImageDataUrl(candidate);
-    if (dataUrlBase64) {
-      return { b64_json: dataUrlBase64 };
+    const dataUrl = normalizeImageDataUrl(candidate);
+    if (dataUrl) {
+      return {
+        b64_json: dataUrl.b64Json,
+        mime_type: dataUrl.mimeType,
+      };
     }
 
     const url = normalizeHttpImageUrl(candidate);
@@ -323,16 +377,22 @@ function normalizeImageCandidate(candidate: unknown): ImageGenImage | null {
   }
 
   const normalized: ImageGenImage = {};
+  const b64DataUrl = normalizeImageDataUrl(candidate.b64_json);
   const b64Json =
-    normalizeImageDataUrl(candidate.b64_json) ||
-    normalizeCanonicalBase64(candidate.b64_json);
+    b64DataUrl?.b64Json || normalizeCanonicalBase64(candidate.b64_json);
   if (b64Json) {
     normalized.b64_json = b64Json;
+    const mimeType =
+      b64DataUrl?.mimeType || normalizeImageMediaType(candidate.mime_type);
+    if (mimeType) {
+      normalized.mime_type = mimeType;
+    }
   }
 
   const urlData = normalizeImageDataUrl(candidate.url);
   if (urlData && !normalized.b64_json) {
-    normalized.b64_json = urlData;
+    normalized.b64_json = urlData.b64Json;
+    normalized.mime_type = urlData.mimeType;
   } else if (!urlData) {
     const url = normalizeHttpImageUrl(candidate.url);
     if (url) {
@@ -351,16 +411,24 @@ function normalizeImageCandidate(candidate: unknown): ImageGenImage | null {
   return normalized;
 }
 
-function normalizeImageDataUrl(value: unknown): string | null {
+function normalizeImageDataUrl(
+  value: unknown
+): { b64Json: string; mimeType: string } | null {
   if (typeof value !== 'string') {
     return null;
   }
 
   const match =
-    /^data:image\/[a-z0-9.+-]+(?:;[a-z0-9!#$&^_.+-]+=[^;,]*)*;base64,([a-z0-9+/]+={0,2})$/i.exec(
+    /^data:(image\/[a-z0-9.+-]+)(?:;[a-z0-9!#$&^_.+-]+=[^;,]*)*;base64,([a-z0-9+/]+={0,2})$/i.exec(
       value.trim()
     );
-  return match ? normalizeCanonicalBase64(match[1]) : null;
+  if (!match) {
+    return null;
+  }
+
+  const b64Json = normalizeCanonicalBase64(match[2]);
+  const mimeType = normalizeImageMediaType(match[1]);
+  return b64Json && mimeType ? { b64Json, mimeType } : null;
 }
 
 function normalizeCanonicalBase64(value: unknown): string | null {
@@ -451,10 +519,28 @@ async function executeComfyUIRequest(
     size?: string;
     quality?: string;
     model?: string;
+    pluginId?: string;
     pluginVars?: PluginVariables;
+    headers?: Record<string, string>;
   } = {}
 ): Promise<ImageGenResponse> {
-  const comfyBaseUrl = `${baseUrl.protocol}//${baseUrl.host}`;
+  const promptEndpoint = new URL(baseUrl);
+  promptEndpoint.hash = '';
+  const configuredPath = promptEndpoint.pathname.replace(/\/+$/, '');
+  const apiRootPath = configuredPath.endsWith('/prompt')
+    ? configuredPath.slice(0, -'/prompt'.length)
+    : configuredPath;
+  promptEndpoint.pathname = `${apiRootPath}/prompt`;
+  const createOperationUrl = (operationPath: string): URL => {
+    const operationUrl = new URL(promptEndpoint);
+    operationUrl.search = '';
+    operationUrl.hash = '';
+    operationUrl.pathname = `${apiRootPath}/${operationPath}`;
+    return operationUrl;
+  };
+  const requestHeaders = options.headers || {
+    'Content-Type': 'application/json',
+  };
   const size = options.size || '1024x1024';
   const [width, height] = size.split('x').map(Number);
   const model = options.model || 'flux1-dev';
@@ -589,14 +675,15 @@ async function executeComfyUIRequest(
   try {
     const clientId = `libre-webui-${Date.now()}`;
     const promptResponse = await axios.post(
-      `${comfyBaseUrl}/prompt`,
+      promptEndpoint.toString(),
       {
         prompt: workflow,
         client_id: clientId,
       },
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: requestHeaders,
         timeout: 10000,
+        maxRedirects: 0,
       }
     );
 
@@ -614,8 +701,14 @@ async function executeComfyUIRequest(
       attempts++;
 
       const historyResponse = await axios.get(
-        `${comfyBaseUrl}/history/${promptId}`,
-        { timeout: 5000 }
+        createOperationUrl(
+          `history/${encodeURIComponent(String(promptId))}`
+        ).toString(),
+        {
+          headers: requestHeaders,
+          timeout: 5000,
+          maxRedirects: 0,
+        }
       );
 
       if (historyResponse.data[promptId]) {
@@ -627,29 +720,35 @@ async function executeComfyUIRequest(
             const nodeOutput = outputs[nodeId];
             if (nodeOutput.images && nodeOutput.images.length > 0) {
               const imageInfo = nodeOutput.images[0];
-              const imageUrl = `${comfyBaseUrl}/view?filename=${encodeURIComponent(
-                imageInfo.filename
-              )}&subfolder=${encodeURIComponent(
-                imageInfo.subfolder || ''
-              )}&type=${encodeURIComponent(imageInfo.type || 'output')}`;
+              const imageUrl = createOperationUrl('view');
+              imageUrl.searchParams.set('filename', imageInfo.filename);
+              imageUrl.searchParams.set('subfolder', imageInfo.subfolder || '');
+              imageUrl.searchParams.set('type', imageInfo.type || 'output');
 
-              const imageResponse = await axios.get(imageUrl, {
+              const imageResponse = await axios.get(imageUrl.toString(), {
+                headers: requestHeaders,
                 responseType: 'arraybuffer',
                 timeout: 30000,
+                maxRedirects: 0,
               });
 
               const base64Image = Buffer.from(imageResponse.data).toString(
                 'base64'
+              );
+              const mimeType = normalizeImageMediaType(
+                imageResponse.headers['content-type']
               );
 
               return {
                 images: [
                   {
                     b64_json: base64Image,
+                    ...(mimeType ? { mime_type: mimeType } : {}),
                     revised_prompt: prompt,
                   },
                 ],
                 model,
+                pluginId: options.pluginId,
               };
             }
           }

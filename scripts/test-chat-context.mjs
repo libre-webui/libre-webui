@@ -37,6 +37,9 @@ const pluginValidation = await import(
 const pluginStreamAdapter = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'pluginStreamAdapter.js')).href
 );
+const openAIResponsesAdapter = await import(
+  pathToFileURL(path.join(distRoot, 'utils', 'openAIResponsesAdapter.js')).href
+);
 const ollamaStreaming = await import(
   pathToFileURL(path.join(distRoot, 'utils', 'ollamaStreaming.js')).href
 );
@@ -227,6 +230,45 @@ test('toOllamaMessages replaces latest user content and normalizes image payload
   ]);
 });
 
+test('Chat context keeps complete user-led turns when the message limit cuts through a turn', () => {
+  const providerMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        id: 'message-leading',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'output_text', text: 'answer 0' }],
+      },
+    ],
+    openAIResponsesStateScope: 'leading-state',
+  };
+  const messages = [
+    { role: 'system', content: 'system' },
+    { role: 'user', content: 'prompt 0' },
+    { role: 'assistant', content: 'answer 0', providerMetadata },
+    { role: 'user', content: 'prompt 1' },
+    { role: 'assistant', content: 'answer 1' },
+    { role: 'user', content: 'prompt 2' },
+    { role: 'assistant', content: 'answer 2' },
+    { role: 'user', content: 'prompt 3' },
+    { role: 'assistant', content: 'answer 3' },
+    { role: 'user', content: 'prompt 4' },
+    { role: 'assistant', content: 'answer 4' },
+    { role: 'user', content: 'prompt 5' },
+  ];
+
+  const selected = chatContext.selectChatMessagesForContext(messages, 10);
+
+  assert.equal(selected.length, 10);
+  assert.equal(selected[0].role, 'system');
+  assert.equal(selected[1].role, 'user');
+  assert.equal(selected[1].content, 'prompt 1');
+  assert.equal(
+    selected.some(message => message.providerMetadata === providerMetadata),
+    false
+  );
+});
+
 test('withSystemPrompt replaces stale system messages with the persona prompt', () => {
   const result = chatContext.withSystemPrompt(
     [
@@ -343,9 +385,20 @@ test('buildAssistantFakeStreamChunks batches non-streaming output like chat stre
 });
 
 test('preparePluginChatContext adds the current private user message unless regenerating', () => {
+  const providerMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        id: 'message-old-answer',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'output_text', text: 'old answer' }],
+      },
+    ],
+    openAIResponsesStateScope: 'private-state-scope',
+  };
   const history = [
     { role: 'user', content: 'old prompt' },
-    { role: 'assistant', content: 'old answer' },
+    { role: 'assistant', content: 'old answer', providerMetadata },
   ];
 
   const normal = pluginChatContext.preparePluginChatContext({
@@ -360,6 +413,7 @@ test('preparePluginChatContext adds the current private user message unless rege
   assert.equal(normal.messages[2].role, 'user');
   assert.equal(normal.messages[2].content, 'new prompt');
   assert.deepEqual(normal.messages[2].images, ['image-1']);
+  assert.deepEqual(normal.messages[1].providerMetadata, providerMetadata);
 
   const regenerated = pluginChatContext.preparePluginChatContext({
     isPrivate: true,
@@ -371,6 +425,139 @@ test('preparePluginChatContext adds the current private user message unless rege
 
   assert.equal(regenerated.messages.length, 2);
   assert.equal(regenerated.messages[1].content, 'old answer');
+  assert.deepEqual(regenerated.messages[1].providerMetadata, providerMetadata);
+});
+
+test('preparePluginChatContext never replays Responses function calls without Chat tool results', () => {
+  const result = pluginChatContext.preparePluginChatContext({
+    isPrivate: false,
+    persistedMessages: [
+      {
+        id: 'user-1',
+        role: 'user',
+        content: 'Inspect the project',
+        timestamp: 1,
+      },
+      {
+        id: 'assistant-1',
+        role: 'assistant',
+        content: 'I requested a project scan.',
+        timestamp: 2,
+        providerMetadata: {
+          openAIResponsesOutputItems: [
+            {
+              id: 'reasoning-1',
+              type: 'reasoning',
+              encrypted_content: 'opaque',
+            },
+            {
+              id: 'call-1',
+              type: 'function_call',
+              call_id: 'call-1',
+              name: 'scan_project',
+              arguments: '{}',
+            },
+          ],
+          openAIResponsesStateScope: 'chat-state',
+        },
+      },
+      {
+        id: 'user-2',
+        role: 'user',
+        content: 'What happened?',
+        timestamp: 3,
+      },
+    ],
+    content: 'What happened?',
+  });
+
+  assert.equal(result.messages[1].content, 'I requested a project scan.');
+  assert.equal(result.messages[1].providerMetadata, undefined);
+});
+
+test('Chat drops oversized Responses replay state before storage or private replay', () => {
+  const oversizedMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        id: 'reasoning-oversized-chat',
+        type: 'reasoning',
+        encrypted_content: 'x'.repeat(
+          openAIResponsesAdapter.OPENAI_RESPONSES_REPLAY_MAX_BYTES
+        ),
+      },
+    ],
+    openAIResponsesStateScope: 'oversized-chat-scope',
+  };
+  const sanitized = chatContext.sanitizeChatMessageProviderState({
+    role: 'assistant',
+    content: 'Visible answer.',
+    providerMetadata: oversizedMetadata,
+  });
+  assert.deepEqual(sanitized.providerMetadata, {
+    openAIResponsesStateDropped: true,
+  });
+
+  const prepared = pluginChatContext.preparePluginChatContext({
+    isPrivate: true,
+    persistedMessages: [],
+    messageHistory: [
+      { role: 'user', content: 'Earlier prompt.' },
+      {
+        role: 'assistant',
+        content: 'Visible answer.',
+        providerMetadata: oversizedMetadata,
+      },
+    ],
+    content: 'Continue.',
+  });
+  assert.deepEqual(prepared.messages[1].providerMetadata, {
+    openAIResponsesStateDropped: true,
+  });
+});
+
+test('Chat drops Responses replay state after provider credential rotation', () => {
+  const oldCredentialFingerprint =
+    openAIResponsesAdapter.createPluginCredentialFingerprint('old-api-key');
+  const newCredentialFingerprint =
+    openAIResponsesAdapter.createPluginCredentialFingerprint('new-api-key');
+  const oldStateScope = openAIResponsesAdapter.createOpenAIResponsesStateScope(
+    'openai',
+    'gpt-test',
+    'https://api.openai.com/v1/responses',
+    oldCredentialFingerprint
+  );
+  const newStateScope = openAIResponsesAdapter.createOpenAIResponsesStateScope(
+    'openai',
+    'gpt-test',
+    'https://api.openai.com/v1/responses',
+    newCredentialFingerprint
+  );
+
+  assert.notEqual(oldCredentialFingerprint, newCredentialFingerprint);
+  assert.notEqual(oldStateScope, newStateScope);
+  assert.deepEqual(
+    openAIResponsesAdapter.toOpenAIResponsesInput(
+      [
+        {
+          role: 'assistant',
+          content: 'Visible answer.',
+          providerMetadata: {
+            openAIResponsesOutputItems: [
+              {
+                id: 'reasoning-old-credential',
+                type: 'reasoning',
+                encrypted_content: 'opaque-old-credential-state',
+                summary: [],
+              },
+            ],
+            openAIResponsesStateScope: oldStateScope,
+          },
+        },
+      ],
+      newStateScope
+    ),
+    [{ role: 'assistant', content: 'Visible answer.' }]
+  );
 });
 
 test('preparePluginChatContext replaces the latest user message with RAG content', () => {
@@ -638,10 +825,23 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
         arguments: '{"ok":true}',
       },
     };
-    yield { type: 'done' };
+    yield {
+      type: 'done',
+      providerMetadata: {
+        openAIResponsesOutputItems: [
+          {
+            id: 'message-stream',
+            type: 'message',
+            role: 'assistant',
+            content: [{ type: 'output_text', text: 'Hello' }],
+          },
+        ],
+        openAIResponsesStateScope: 'stream-state-scope',
+      },
+    };
   }
 
-  const content = await pluginStreaming.streamPluginResponse({
+  const result = await pluginStreaming.streamPluginResponse({
     ws,
     chunks: chunks(),
     messageId: 'assistant-1',
@@ -649,9 +849,20 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
   });
 
   assert.equal(
-    content,
+    result.content,
     'Hello\n\n---\n**🔧 Tool Calls:**\n\n**render** (`call-1`)\n```json\n{\n  "ok": true\n}\n```\n'
   );
+  assert.deepEqual(result.providerMetadata, {
+    openAIResponsesOutputItems: [
+      {
+        id: 'message-stream',
+        type: 'message',
+        role: 'assistant',
+        content: [{ type: 'output_text', text: 'Hello' }],
+      },
+    ],
+    openAIResponsesStateScope: 'stream-state-scope',
+  });
   assert.deepEqual(
     sent.map(message => message.type),
     [
@@ -674,7 +885,7 @@ test('streamPluginResponse emits chunks and appends formatted tool calls', async
     phase: 'running',
   });
   assert.equal(sent[4].data.done, true);
-  assert.equal(sent[4].data.total, content);
+  assert.equal(sent[4].data.total, result.content);
 });
 
 test('streamPluginResponse rejects incomplete provider streams with their reason', async () => {
@@ -779,6 +990,17 @@ test('plugin model routing requires an active plugin and the current user creden
             `INSERT INTO users (id, username, password_hash, role, created_at, updated_at)
              VALUES (?, ?, ?, ?, ?, ?)`
           ).run('alice', 'alice', 'test-hash', 'user', now, now);
+          db.prepare(
+            `INSERT INTO users (id, username, password_hash, role, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?)`
+          ).run(
+            'plugin-fixture-admin',
+            'plugin-fixture-admin',
+            'test-hash',
+            'admin',
+            now,
+            now
+          );
 
           const credentialsService = (
             await import(
@@ -787,20 +1009,43 @@ test('plugin model routing requires an active plugin and the current user creden
               ).href
             )
           ).default;
-          const chatGenerationService = (
-            await import(
-              `${pathToFileURL(path.join(distRoot, 'services', 'chatGenerationService.js')).href}?generationRouteTest=${Date.now()}`
-            )
-          ).default;
           const pluginService = (
             await import(
               pathToFileURL(path.join(distRoot, 'services', 'pluginService.js'))
                 .href
             )
           ).default;
+          const chatGenerationService = (
+            await import(
+              `${pathToFileURL(path.join(distRoot, 'services', 'chatGenerationService.js')).href}?generationRouteTest=${Date.now()}`
+            )
+          ).default;
 
+          for (const pluginId of ['active-plugin', 'inactive-plugin']) {
+            pluginService.installPlugin(
+              JSON.parse(
+                fs.readFileSync(
+                  path.join(pluginsDir, `${pluginId}.json`),
+                  'utf8'
+                )
+              ),
+              'plugin-fixture-admin'
+            );
+          }
           assert.equal(
-            credentialsService.setApiKey('active-plugin', 'alice-key', 'alice'),
+            await pluginService.activatePlugin('active-plugin', 'alice'),
+            true
+          );
+          assert.equal(
+            credentialsService.setApiKey(
+              'active-plugin',
+              'alice-key',
+              'alice',
+              pluginService.getCredentialRoutingAuthFingerprint(
+                pluginService.getPlugin('active-plugin', 'alice'),
+                'alice'
+              )
+            ),
             true
           );
 
@@ -866,6 +1111,48 @@ test('plugin model routing requires an active plugin and the current user creden
                 pluginFallbackPolicy: 'disabled',
               }),
               /incomplete response \(max_output_tokens\)/
+            );
+
+            const providerMetadata = {
+              openAIResponsesOutputItems: [
+                {
+                  id: 'message-complete',
+                  type: 'message',
+                  role: 'assistant',
+                  content: [{ type: 'output_text', text: 'Complete answer' }],
+                },
+              ],
+              openAIResponsesStateScope: 'complete-state-scope',
+            };
+            pluginService.executePluginRequest = async () => ({
+              id: 'response-complete',
+              object: 'chat.completion',
+              created: 0,
+              model: 'shared-model',
+              providerMetadata,
+              choices: [
+                {
+                  index: 0,
+                  message: {
+                    role: 'assistant',
+                    content: 'Complete answer',
+                  },
+                  finish_reason: 'stop',
+                },
+              ],
+            });
+            const completed = await chatGenerationService.executeNonStreaming({
+              target: aliceTarget,
+              ollamaMessages: [
+                { role: 'user', content: 'Complete the answer.' },
+              ],
+              pluginMessages: [],
+              userId: 'alice',
+              pluginFallbackPolicy: 'disabled',
+            });
+            assert.deepEqual(
+              completed.response.message.providerMetadata,
+              providerMetadata
             );
           } finally {
             pluginService.executePluginRequest = originalExecutePluginRequest;

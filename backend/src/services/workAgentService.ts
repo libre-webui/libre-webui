@@ -29,14 +29,28 @@ import {
 } from './workAgentGuidance.js';
 import workRuntimeService, { WorkCommandResult } from './workRuntimeService.js';
 import workTaskService, {
+  WORK_MESSAGE_METADATA_MAX_BYTES,
   WorkConflictError,
   WorkNotFoundError,
 } from './workTaskService.js';
 import { OllamaChatMessage, OllamaChatResponse } from '../types/index.js';
-import { WorkTaskDetail, WorkTaskRecord, WorkToolCall } from '../types/work.js';
+import {
+  WorkMessage,
+  WorkRun,
+  WorkTaskDetail,
+  WorkTaskRecord,
+  WorkToolCall,
+} from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  boundedOpenAIResponsesOutputItems,
+  OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
+  OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY,
+  OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
+} from '../utils/openAIResponsesAdapter.js';
 
 const logger = createLogger('services:work-agent');
+export const WORK_PROVIDER_STATE_METADATA_KEY = 'workProviderState';
 
 export const WORK_TOOL_SCHEMAS: Record<string, unknown>[] = [
   functionTool('list_files', 'List direct children of a workspace directory.', {
@@ -331,7 +345,28 @@ export class WorkAgentService {
       workTaskService.updateTaskStatus(taskId, 'running');
       const roundLimit = workRuntimeService.limits.maxRounds;
       const toolCallLimit = workToolCallBudget(roundLimit);
-      const messages = this.contextMessages(task, roundLimit);
+      const providerSelection = {
+        providerType: run.providerType,
+        providerId: run.providerId,
+      } as const;
+      const providerRoutingFingerprint =
+        workModelProviderService.getRoutingFingerprint(
+          run.model,
+          providerSelection,
+          userId
+        );
+      const providerStateScope =
+        workModelProviderService.getResponsesStateScope(
+          run.model,
+          providerSelection,
+          userId
+        );
+      const messages = this.contextMessages(
+        task,
+        roundLimit,
+        providerStateScope,
+        run
+      );
       let totalToolCalls = 0;
       let accumulatedInputTokens = 0;
       let accumulatedOutputTokens = 0;
@@ -364,6 +399,11 @@ export class WorkAgentService {
         const roundStartedAt = Date.now();
         let response: OllamaChatResponse;
         try {
+          this.assertStableProviderRouting(
+            run,
+            userId,
+            providerRoutingFingerprint
+          );
           response = await workModelProviderService.generateChatStreamResponse(
             {
               model: run.model,
@@ -371,10 +411,7 @@ export class WorkAgentService {
               tools: WORK_TOOL_SCHEMAS,
               stream: true,
             },
-            {
-              providerType: run.providerType,
-              providerId: run.providerId,
-            },
+            providerSelection,
             userId,
             {
               onContent: delta => contentStream.push(delta),
@@ -407,6 +444,40 @@ export class WorkAgentService {
         accumulatedInputTokens += roundInputTokens;
         accumulatedOutputTokens += roundOutputTokens;
         const toolCalls = normalizeToolCalls(response);
+        const boundedProviderOutput = boundedOpenAIResponsesOutputItems(
+          response.message.providerMetadata?.[
+            OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+          ]
+        );
+        const providerMetadata = response.message.providerMetadata;
+        const hasResponsesStateMetadata =
+          providerMetadata?.[OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY] ===
+            true ||
+          providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY] !==
+            undefined ||
+          providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] !==
+            undefined;
+        const providerStateMetadata = toPersistedWorkProviderState(
+          run,
+          providerMetadata
+        );
+        if (
+          toolCalls.length > 0 &&
+          (providerStateScope || hasResponsesStateMetadata) &&
+          (providerMetadata?.[OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY] ===
+            true ||
+            !providerStateScope ||
+            providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] !==
+              providerStateScope ||
+            !boundedProviderOutput.items ||
+            !providerStateMetadata)
+        ) {
+          throw new WorkAgentHttpError(
+            'The provider returned tool calls without bounded durable replay state.',
+            502,
+            'WORK_PROVIDER_INVALID_TOOL_CALLS'
+          );
+        }
         totalToolCalls += toolCalls.length;
         if (totalToolCalls > toolCallLimit) {
           budgetReason = 'tool-call';
@@ -439,7 +510,8 @@ export class WorkAgentService {
             runId,
             'assistant',
             'message',
-            finalContent
+            finalContent,
+            providerStateMetadata
           );
           // Keep completion hidden until the disposable container has either
           // stopped or been retained for a verified live preview. Consumers
@@ -477,7 +549,17 @@ export class WorkAgentService {
             runId,
             'assistant',
             'message',
-            assistantContent
+            assistantContent,
+            providerStateMetadata
+          );
+        } else if (providerStateMetadata) {
+          workTaskService.addMessage(
+            taskId,
+            runId,
+            'assistant',
+            'provider_state',
+            '',
+            providerStateMetadata
           );
         }
         for (const call of toolCalls) {
@@ -562,6 +644,7 @@ export class WorkAgentService {
             role: 'tool',
             content: toolOutput,
             tool_name: call.function.name,
+            tool_call_id: call.id,
           });
         }
       }
@@ -590,6 +673,11 @@ export class WorkAgentService {
       let handoffResponse: OllamaChatResponse;
       try {
         try {
+          this.assertStableProviderRouting(
+            run,
+            userId,
+            providerRoutingFingerprint
+          );
           handoffResponse =
             await workModelProviderService.generateChatStreamResponse(
               {
@@ -608,10 +696,7 @@ export class WorkAgentService {
                     : undefined,
                 stream: true,
               },
-              {
-                providerType: run.providerType,
-                providerId: run.providerId,
-              },
+              providerSelection,
               userId,
               {
                 onContent: delta => handoffContentStream.push(delta),
@@ -675,13 +760,21 @@ export class WorkAgentService {
           `The run reached its ${budgetReason} budget. Start a follow-up run to continue in the same workspace.`,
         100_000
       );
+      const handoffProviderStateMetadata = toPersistedWorkProviderState(
+        run,
+        handoffResponse.message.providerMetadata
+      );
       workTaskService.addMessage(
         taskId,
         runId,
         'assistant',
         'message',
         handoffContent,
-        { budgetHandoff: true, budgetReason }
+        {
+          budgetHandoff: true,
+          budgetReason,
+          ...handoffProviderStateMetadata,
+        }
       );
       await settleExecutionContainer();
       this.throwIfCancelled(runId, controller);
@@ -797,16 +890,39 @@ export class WorkAgentService {
     }
   }
 
+  private assertStableProviderRouting(
+    run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
+    userId: string,
+    expectedFingerprint: string
+  ): void {
+    const currentFingerprint = workModelProviderService.getRoutingFingerprint(
+      run.model,
+      {
+        providerType: run.providerType,
+        providerId: run.providerId,
+      },
+      userId
+    );
+    if (currentFingerprint !== expectedFingerprint) {
+      throw new WorkAgentHttpError(
+        'The provider routing changed while this Work run was active. Start a new run with the updated provider configuration.',
+        409,
+        'WORK_PROVIDER_ROUTING_CHANGED'
+      );
+    }
+  }
+
   private contextMessages(
     task: WorkTaskRecord,
-    roundLimit: number
+    roundLimit: number,
+    providerStateScope?: string,
+    provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'> = task
   ): OllamaChatMessage[] {
-    const persisted = workTaskService
-      .getRecentConversationMessages(task.id, 30)
-      .map(message => ({
-        role: message.role,
-        content: message.content,
-      })) satisfies OllamaChatMessage[];
+    const persisted = restorePersistedWorkContext(
+      workTaskService.getRecentModelContextMessages(task.id, 30),
+      provider,
+      providerStateScope
+    );
     return [
       {
         role: 'system',
@@ -983,6 +1099,281 @@ export class WorkAgentHttpError extends Error {
   }
 }
 
+interface PersistedWorkProviderState {
+  providerType: WorkRun['providerType'];
+  providerId?: string;
+  model: string;
+  providerMetadata: Record<string, unknown>;
+}
+
+function toPersistedWorkProviderState(
+  run: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
+  providerMetadata: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  const boundedOutput = boundedOpenAIResponsesOutputItems(
+    providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+  );
+  if (
+    providerMetadata?.[OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY] === true ||
+    !boundedOutput.items ||
+    typeof providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] !==
+      'string'
+  ) {
+    return undefined;
+  }
+
+  const persisted = {
+    [WORK_PROVIDER_STATE_METADATA_KEY]: {
+      providerType: run.providerType,
+      ...(run.providerId ? { providerId: run.providerId } : {}),
+      model: run.model,
+      providerMetadata: {
+        ...providerMetadata,
+        [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: boundedOutput.items,
+      },
+    } satisfies PersistedWorkProviderState,
+  };
+  try {
+    return Buffer.byteLength(JSON.stringify(persisted), 'utf8') <=
+      WORK_MESSAGE_METADATA_MAX_BYTES
+      ? persisted
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function restorePersistedWorkContext(
+  messages: WorkMessage[],
+  provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
+  expectedStateScope?: string
+): OllamaChatMessage[] {
+  const restored: OllamaChatMessage[] = [];
+  let pendingGroup:
+    | {
+        assistant: OllamaChatMessage;
+        fallback?: OllamaChatMessage;
+        calls: Array<{ id: string; name: string }>;
+        expectedCallIds: Set<string>;
+        results: OllamaChatMessage[];
+        resultIds: Set<string>;
+        invalid: boolean;
+      }
+    | undefined;
+
+  const flushPendingGroup = (): void => {
+    if (!pendingGroup) return;
+    if (pendingGroup.invalid) {
+      if (pendingGroup.fallback) restored.push(pendingGroup.fallback);
+      pendingGroup = undefined;
+      return;
+    }
+
+    restored.push(pendingGroup.assistant, ...pendingGroup.results);
+    for (const call of pendingGroup.calls) {
+      if (pendingGroup.resultIds.has(call.id)) continue;
+      restored.push({
+        role: 'tool',
+        content:
+          'Tool execution was interrupted; outcome unknown. Inspect the workspace before retrying.',
+        tool_name: call.name,
+        tool_call_id: call.id,
+      });
+    }
+    pendingGroup = undefined;
+  };
+
+  for (const message of messages) {
+    if (
+      message.kind === 'provider_state' ||
+      (message.role === 'assistant' && message.kind === 'message')
+    ) {
+      flushPendingGroup();
+      const providerMetadata = matchingWorkProviderMetadata(
+        message,
+        provider,
+        expectedStateScope
+      );
+      const responseCalls = providerMetadata
+        ? responseFunctionCalls(providerMetadata)
+        : [];
+      const rawFunctionCallCount = Array.isArray(
+        providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+      )
+        ? (
+            providerMetadata[
+              OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY
+            ] as unknown[]
+          ).filter(item => objectValue(item)?.type === 'function_call').length
+        : 0;
+      const expectedCallIds = new Set(responseCalls.map(call => call.id));
+
+      if (message.kind === 'provider_state' && !providerMetadata) {
+        continue;
+      }
+      if (message.kind !== 'message' && message.kind !== 'provider_state') {
+        continue;
+      }
+      if (
+        expectedCallIds.size !== responseCalls.length ||
+        rawFunctionCallCount !== responseCalls.length
+      ) {
+        if (message.kind === 'message') {
+          restored.push({ role: 'assistant', content: message.content });
+        }
+        continue;
+      }
+
+      const assistant: OllamaChatMessage = {
+        role: 'assistant',
+        content: message.content,
+        ...(responseCalls.length > 0
+          ? {
+              tool_calls: responseCalls.map(call => ({
+                id: call.id,
+                type: 'function',
+                function: {
+                  name: call.name,
+                  arguments: call.arguments,
+                },
+              })),
+            }
+          : {}),
+        ...(providerMetadata ? { providerMetadata } : {}),
+      };
+      if (responseCalls.length === 0) {
+        restored.push(assistant);
+        continue;
+      }
+
+      pendingGroup = {
+        assistant,
+        ...(message.kind === 'message'
+          ? {
+              fallback: {
+                role: 'assistant',
+                content: message.content,
+              },
+            }
+          : {}),
+        calls: responseCalls,
+        expectedCallIds,
+        results: [],
+        resultIds: new Set(),
+        invalid: false,
+      };
+      continue;
+    }
+
+    if (message.role === 'user' && message.kind === 'message') {
+      flushPendingGroup();
+      restored.push({ role: 'user', content: message.content });
+      continue;
+    }
+
+    if (message.role !== 'tool' || message.kind !== 'tool_result') {
+      continue;
+    }
+
+    const toolCallId =
+      typeof message.metadata?.toolCallId === 'string'
+        ? message.metadata.toolCallId
+        : undefined;
+    if (!toolCallId || !pendingGroup) continue;
+    if (
+      !pendingGroup.expectedCallIds.has(toolCallId) ||
+      pendingGroup.resultIds.has(toolCallId)
+    ) {
+      pendingGroup.invalid = true;
+      continue;
+    }
+    const matchingCall = pendingGroup.calls.find(
+      call => call.id === toolCallId
+    );
+    if (!matchingCall) {
+      pendingGroup.invalid = true;
+      continue;
+    }
+    const persistedName =
+      typeof message.metadata?.name === 'string'
+        ? message.metadata.name
+        : undefined;
+    pendingGroup.results.push({
+      role: 'tool',
+      content: message.content,
+      tool_name: persistedName || matchingCall.name,
+      tool_call_id: toolCallId,
+    });
+    pendingGroup.resultIds.add(toolCallId);
+  }
+
+  flushPendingGroup();
+  return restored;
+}
+
+function matchingWorkProviderMetadata(
+  message: WorkMessage,
+  provider: Pick<WorkRun, 'providerType' | 'providerId' | 'model'>,
+  expectedStateScope?: string
+): Record<string, unknown> | undefined {
+  const state = objectValue(
+    message.metadata?.[WORK_PROVIDER_STATE_METADATA_KEY]
+  );
+  const providerMetadata = objectValue(state?.providerMetadata);
+  const boundedOutput = boundedOpenAIResponsesOutputItems(
+    providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+  );
+  if (
+    state?.providerType !== provider.providerType ||
+    (state.providerId || undefined) !== (provider.providerId || undefined) ||
+    state.model !== provider.model ||
+    !expectedStateScope ||
+    providerMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] !==
+      expectedStateScope ||
+    !boundedOutput.items
+  ) {
+    return undefined;
+  }
+  return {
+    ...providerMetadata,
+    [OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]: boundedOutput.items,
+  };
+}
+
+function responseFunctionCalls(
+  providerMetadata: Record<string, unknown>
+): Array<{ id: string; name: string; arguments: unknown }> {
+  const outputItems =
+    providerMetadata[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY];
+  if (!Array.isArray(outputItems)) return [];
+
+  return outputItems.flatMap(itemValue => {
+    const item = objectValue(itemValue);
+    if (
+      item?.type !== 'function_call' ||
+      typeof item.name !== 'string' ||
+      item.name.length === 0 ||
+      typeof item.call_id !== 'string' ||
+      item.call_id.length === 0
+    ) {
+      return [];
+    }
+    return [
+      {
+        id: item.call_id,
+        name: item.name,
+        arguments: item.arguments ?? '',
+      },
+    ];
+  });
+}
+
+function objectValue(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
 function assertCompleteProviderResponse(response: OllamaChatResponse): void {
   if (!response.done_reason?.startsWith('incomplete:')) return;
 
@@ -999,63 +1390,114 @@ export function normalizeToolCalls(
 ): WorkToolCall[] {
   const raw = response.message?.tool_calls;
   if (!Array.isArray(raw)) return [];
-  return raw
-    .flatMap((value, index) => {
-      if (!value || typeof value !== 'object') return [];
-      const record = value as Record<string, unknown>;
-      const fn =
-        record.function && typeof record.function === 'object'
-          ? (record.function as Record<string, unknown>)
-          : undefined;
-      if (!fn || typeof fn.name !== 'string') return [];
-      let args: Record<string, unknown> = {};
-      let argumentError: string | undefined;
-      if (fn.arguments && typeof fn.arguments === 'object') {
-        args = fn.arguments as Record<string, unknown>;
-      } else if (typeof fn.arguments === 'string') {
-        try {
-          const parsed = JSON.parse(fn.arguments);
-          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-            args = parsed as Record<string, unknown>;
-          } else if (fn.arguments.trim()) {
-            argumentError = WORK_TOOL_ARGUMENTS_ERROR_MESSAGE;
-          }
-        } catch {
-          args = {};
-          if (fn.arguments.trim()) {
-            argumentError = WORK_TOOL_ARGUMENTS_ERROR_MESSAGE;
-          }
+  const responsesMetadata = response.message?.providerMetadata;
+  const isResponsesCallBatch =
+    typeof responsesMetadata?.[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY] ===
+      'string' ||
+    responsesMetadata?.[OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY] === true ||
+    Array.isArray(
+      responsesMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY]
+    );
+  const calls: WorkToolCall[] = [];
+  for (const [index, value] of raw.entries()) {
+    if (!value || typeof value !== 'object') {
+      if (isResponsesCallBatch) {
+        throw new WorkAgentHttpError(
+          'The provider returned a malformed tool call.',
+          502,
+          'WORK_PROVIDER_INVALID_TOOL_CALLS'
+        );
+      }
+      continue;
+    }
+    const record = value as Record<string, unknown>;
+    const fn =
+      record.function && typeof record.function === 'object'
+        ? (record.function as Record<string, unknown>)
+        : undefined;
+    if (!fn || typeof fn.name !== 'string' || !fn.name) {
+      if (isResponsesCallBatch) {
+        throw new WorkAgentHttpError(
+          'The provider returned a tool call without a function name.',
+          502,
+          'WORK_PROVIDER_INVALID_TOOL_CALLS'
+        );
+      }
+      continue;
+    }
+    let args: Record<string, unknown> = {};
+    let argumentError: string | undefined;
+    if (fn.arguments && typeof fn.arguments === 'object') {
+      args = fn.arguments as Record<string, unknown>;
+    } else if (typeof fn.arguments === 'string') {
+      try {
+        const parsed = JSON.parse(fn.arguments);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          args = parsed as Record<string, unknown>;
+        } else if (fn.arguments.trim()) {
+          argumentError = WORK_TOOL_ARGUMENTS_ERROR_MESSAGE;
+        }
+      } catch {
+        args = {};
+        if (fn.arguments.trim()) {
+          argumentError = WORK_TOOL_ARGUMENTS_ERROR_MESSAGE;
         }
       }
-      const providerMetadata =
-        record.providerMetadata &&
-        typeof record.providerMetadata === 'object' &&
-        !Array.isArray(record.providerMetadata)
-          ? {
-              ...(record.providerMetadata as Record<string, unknown>),
-            }
-          : {};
-      if (argumentError) {
-        providerMetadata[WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY] =
-          argumentError;
-      }
-      return [
-        {
-          id:
-            typeof record.id === 'string'
-              ? record.id
-              : `tool-${Date.now()}-${index}`,
-          ...(typeof record.thoughtSignature === 'string'
-            ? { thoughtSignature: record.thoughtSignature }
-            : {}),
-          ...(Object.keys(providerMetadata).length > 0
-            ? { providerMetadata }
-            : {}),
-          function: { name: fn.name, arguments: args },
-        },
-      ];
-    })
-    .slice(0, 16);
+    }
+    const providerMetadata =
+      record.providerMetadata &&
+      typeof record.providerMetadata === 'object' &&
+      !Array.isArray(record.providerMetadata)
+        ? {
+            ...(record.providerMetadata as Record<string, unknown>),
+          }
+        : {};
+    if (argumentError) {
+      providerMetadata[WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY] = argumentError;
+    }
+    const explicitId = typeof record.id === 'string' ? record.id : undefined;
+    if (explicitId !== undefined && !explicitId.trim()) {
+      throw new WorkAgentHttpError(
+        'The provider returned a tool call with an empty ID.',
+        502,
+        'WORK_PROVIDER_INVALID_TOOL_CALLS'
+      );
+    }
+    if (isResponsesCallBatch && explicitId === undefined) {
+      throw new WorkAgentHttpError(
+        'The Responses provider returned a tool call without an exact call_id.',
+        502,
+        'WORK_PROVIDER_INVALID_TOOL_CALLS'
+      );
+    }
+    calls.push({
+      id: explicitId ?? `tool-${Date.now()}-${index}`,
+      ...(typeof record.thoughtSignature === 'string'
+        ? { thoughtSignature: record.thoughtSignature }
+        : {}),
+      ...(Object.keys(providerMetadata).length > 0 ? { providerMetadata } : {}),
+      function: { name: fn.name, arguments: args },
+    });
+  }
+  if (calls.length > 16) {
+    throw new WorkAgentHttpError(
+      'The provider returned more than 16 tool calls in one response.',
+      502,
+      'WORK_PROVIDER_INVALID_TOOL_CALLS'
+    );
+  }
+  const callIds = new Set<string>();
+  for (const call of calls) {
+    if (callIds.has(call.id)) {
+      throw new WorkAgentHttpError(
+        `The provider returned duplicate tool call ID "${call.id}".`,
+        502,
+        'WORK_PROVIDER_INVALID_TOOL_CALLS'
+      );
+    }
+    callIds.add(call.id);
+  }
+  return calls;
 }
 
 function functionTool(

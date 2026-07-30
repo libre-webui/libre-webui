@@ -66,6 +66,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
   const { isGenerating, setBackgroundImage } = useAppStore();
+  const imageGenerationEnabled = useAppStore(
+    state => state.preferences.imageGenSettings?.enabled === true
+  );
+  const showImageGeneration = imageGenerationEnabled && hasImageGenPlugins;
   const { currentSession, models } = useChatStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sessionSelection = useMemo(
@@ -97,18 +101,29 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   // Check if image generation plugins are available
   useEffect(() => {
+    let cancelled = false;
+
     const checkImageGenPlugins = async () => {
       try {
         const response = await imageGenApi.getPlugins();
+        if (cancelled) return;
         setHasImageGenPlugins(
           !!(response.success && response.data && response.data.length > 0)
         );
       } catch {
+        if (cancelled) return;
         setHasImageGenPlugins(false);
       }
     };
-    checkImageGenPlugins();
-  }, []);
+
+    if (imageGenerationEnabled) {
+      void checkImageGenPlugins();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [imageGenerationEnabled]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -363,7 +378,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       currentPersona={currentPersona}
                       className='min-w-[150px] max-w-[230px]'
                       compact
-                      showImageGen={hasImageGenPlugins}
+                      showImageGen={showImageGeneration}
                     />
                   </div>
                 )}
@@ -427,7 +442,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 currentPersona={currentPersona}
                 className='w-full'
                 compact
-                showImageGen={hasImageGenPlugins}
+                showImageGen={showImageGeneration}
               />
             </div>
           )}

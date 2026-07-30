@@ -28,6 +28,7 @@ import { Button } from '@/components/ui';
 import { ImageUpload } from '@/components/ImageUpload';
 import { useChatStore } from '@/store/chatStore';
 import { useAuthStore } from '@/store/authStore';
+import { useAppStore } from '@/store/appStore';
 import { useChat } from '@/hooks/useChat';
 import { chatApi, imageGenApi } from '@/utils/api';
 import { cn } from '@/utils';
@@ -140,6 +141,9 @@ export const ChatPage: React.FC = () => {
     getCurrentPersona,
   } = useChatStore();
   const { user } = useAuthStore();
+  const imageGenerationEnabled = useAppStore(
+    state => state.preferences.imageGenSettings?.enabled === true
+  );
   const {
     sendMessage,
     stopGeneration,
@@ -209,6 +213,7 @@ export const ChatPage: React.FC = () => {
 
   // Image generation state
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
+  const showImageGeneration = imageGenerationEnabled && hasImageGenPlugins;
 
   // Load sessions on mount
   useEffect(() => {
@@ -219,18 +224,29 @@ export const ChatPage: React.FC = () => {
 
   // Check for available image generation plugins
   useEffect(() => {
+    let cancelled = false;
+
     const checkImageGenPlugins = async () => {
       try {
         const response = await imageGenApi.getPlugins();
+        if (cancelled) return;
         setHasImageGenPlugins(
           !!(response.success && response.data && response.data.length > 0)
         );
       } catch {
+        if (cancelled) return;
         setHasImageGenPlugins(false);
       }
     };
-    checkImageGenPlugins();
-  }, []);
+
+    if (imageGenerationEnabled) {
+      void checkImageGenPlugins();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [imageGenerationEnabled]);
 
   // Handle URL session parameter
   useEffect(() => {
@@ -559,7 +575,7 @@ export const ChatPage: React.FC = () => {
                       getModelValue={chatModelOptionKey}
                       className='min-w-[140px] max-w-[210px]'
                       compact
-                      showImageGen={hasImageGenPlugins}
+                      showImageGen={showImageGeneration}
                     />
                   </div>
 
@@ -596,7 +612,7 @@ export const ChatPage: React.FC = () => {
                   getModelValue={chatModelOptionKey}
                   className='w-full'
                   compact
-                  showImageGen={hasImageGenPlugins}
+                  showImageGen={showImageGeneration}
                 />
               </div>
 

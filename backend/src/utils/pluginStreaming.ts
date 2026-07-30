@@ -62,6 +62,11 @@ export interface StreamPluginResponseOptions {
   pauseThresholdMs?: number;
 }
 
+export interface PluginStreamResponseResult {
+  content: string;
+  providerMetadata?: Record<string, unknown>;
+}
+
 const PAUSE_TOOL_ID = 'tool-activity';
 
 export function formatPluginStreamToolCalls(
@@ -86,8 +91,9 @@ export async function streamPluginResponse({
   chunks,
   messageId,
   pauseThresholdMs = 2000,
-}: StreamPluginResponseOptions): Promise<string> {
+}: StreamPluginResponseOptions): Promise<PluginStreamResponseResult> {
   let totalContent = '';
+  let providerMetadata: Record<string, unknown> | undefined;
   const toolCalls: PluginStreamToolCall[] = [];
   let pauseTimer: ReturnType<typeof setTimeout> | null = null;
   let toolActivitySent = false;
@@ -166,6 +172,9 @@ export async function streamPluginResponse({
             `Provider returned an incomplete response (${reason})`
           );
         }
+        providerMetadata = chunk.providerMetadata
+          ? { ...providerMetadata, ...chunk.providerMetadata }
+          : providerMetadata;
         totalContent += formatPluginStreamToolCalls(toolCalls);
 
         sendAssistantChunk(ws, {
@@ -180,5 +189,8 @@ export async function streamPluginResponse({
     clearPauseTimer();
   }
 
-  return totalContent;
+  return {
+    content: totalContent,
+    ...(providerMetadata ? { providerMetadata } : {}),
+  };
 }

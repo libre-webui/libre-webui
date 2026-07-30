@@ -33,3 +33,33 @@ export function normalizeImageGenerationCount(
 
   return value;
 }
+
+const IMAGE_MEDIA_TYPE_ALIASES: Readonly<Record<string, string>> = {
+  'image/jpg': 'image/jpeg',
+  'image/x-png': 'image/png',
+};
+
+const SAFE_IMAGE_MEDIA_TYPES = new Set([
+  'image/apng',
+  'image/avif',
+  'image/bmp',
+  'image/gif',
+  'image/heic',
+  'image/heif',
+  'image/jpeg',
+  'image/png',
+  'image/tiff',
+  'image/vnd.microsoft.icon',
+  'image/webp',
+  'image/x-icon',
+]);
+
+export function normalizeImageMediaType(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const mediaType = value.split(';', 1)[0].trim().toLowerCase();
+  const normalized = IMAGE_MEDIA_TYPE_ALIASES[mediaType] || mediaType;
+  return SAFE_IMAGE_MEDIA_TYPES.has(normalized) ? normalized : undefined;
+}

@@ -140,7 +140,8 @@ class ChatGenerationService {
 
   createPluginChatResponse(
     model: string,
-    assistantContent: string
+    assistantContent: string,
+    providerMetadata?: Record<string, unknown>
   ): OllamaChatResponse {
     return {
       model,
@@ -148,6 +149,7 @@ class ChatGenerationService {
       message: {
         role: 'assistant',
         content: assistantContent,
+        ...(providerMetadata ? { providerMetadata } : {}),
       },
       done: true,
     } as OllamaChatResponse;
@@ -191,7 +193,8 @@ class ChatGenerationService {
         return {
           response: this.createPluginChatResponse(
             target.actualModelName,
-            assistantContent
+            assistantContent,
+            pluginResponse.providerMetadata
           ),
           assistantContent,
           source: 'plugin',

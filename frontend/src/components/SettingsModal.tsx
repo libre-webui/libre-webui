@@ -68,6 +68,7 @@ import {
   ImageGenModel,
   ImageGenPlugin,
   findImageGenModel,
+  resolveImageGenOption,
   resolveImageGenModel,
 } from '@/utils/api';
 import toast from 'react-hot-toast';
@@ -420,9 +421,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       ...imageGenSettings,
       model: selectedImageGenModel.model,
       pluginId: selectedImageGenModel.plugin,
-      size: selectedImageGenModel.config?.default_size || '1024x1024',
-      quality: selectedImageGenModel.config?.default_quality || 'standard',
-      style: selectedImageGenModel.config?.default_style || 'vivid',
+      size: resolveImageGenOption(
+        selectedImageGenModel.config?.sizes,
+        imageGenSettings.size,
+        selectedImageGenModel.config?.default_size,
+        '1024x1024'
+      ),
+      quality: resolveImageGenOption(
+        selectedImageGenModel.config?.qualities,
+        imageGenSettings.quality,
+        selectedImageGenModel.config?.default_quality,
+        'standard'
+      ),
+      style: resolveImageGenOption(
+        selectedImageGenModel.config?.styles,
+        imageGenSettings.style,
+        selectedImageGenModel.config?.default_style,
+        'vivid'
+      ),
     };
   }, [imageGenModels, imageGenSettings, selectedImageGenModel]);
   const imageGenSizes = selectedImageGenModel?.config?.sizes ?? [];
@@ -512,6 +528,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           queryKey: ['plugin-credentials'],
         });
         await loadPlugins();
+        await queryClient.invalidateQueries({
+          queryKey: ['image-gen-data'],
+        });
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
         setShowApiKey(prev => ({ ...prev, [pluginId]: false }));
         setExpandedPluginId(null);
@@ -535,6 +554,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           queryKey: ['plugin-credentials'],
         });
         await loadPlugins();
+        await queryClient.invalidateQueries({
+          queryKey: ['image-gen-data'],
+        });
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
       } else {
         toast.error(response.error || 'Failed to remove API key');
@@ -569,9 +591,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         ...prev,
         model: modelName,
         pluginId: selectedModel.plugin,
-        size: selectedModel.config?.default_size || prev.size,
-        quality: selectedModel.config?.default_quality || prev.quality,
-        style: selectedModel.config?.default_style || prev.style,
+        size: resolveImageGenOption(
+          selectedModel.config?.sizes,
+          prev.size,
+          selectedModel.config?.default_size,
+          '1024x1024'
+        ),
+        quality: resolveImageGenOption(
+          selectedModel.config?.qualities,
+          prev.quality,
+          selectedModel.config?.default_quality,
+          'standard'
+        ),
+        style: resolveImageGenOption(
+          selectedModel.config?.styles,
+          prev.style,
+          selectedModel.config?.default_style,
+          'vivid'
+        ),
       }));
     }
   };
@@ -750,6 +787,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       }
       // Reload models after uploading a plugin
       await loadModels();
+      await queryClient.invalidateQueries({ queryKey: ['image-gen-data'] });
     }
   };
 
@@ -761,6 +799,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setJsonInput('');
       // Reload models after installing a plugin
       await loadModels();
+      await queryClient.invalidateQueries({ queryKey: ['image-gen-data'] });
     } catch (_error) {
       clearPluginError();
       toast.error('Invalid JSON format');
@@ -776,6 +815,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
     // Reload models to include/exclude plugin models
     await loadModels();
+    await queryClient.invalidateQueries({ queryKey: ['image-gen-data'] });
   };
 
   const handleDeletePlugin = async (id: string) => {
@@ -783,6 +823,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       await deletePlugin(id);
       // Reload models after deleting a plugin
       await loadModels();
+      await queryClient.invalidateQueries({ queryKey: ['image-gen-data'] });
     }
   };
 

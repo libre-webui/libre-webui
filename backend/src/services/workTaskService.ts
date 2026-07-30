@@ -37,6 +37,7 @@ const ACTIVE_RUN_STATUSES: WorkRunStatus[] = ['queued', 'preparing', 'running'];
 const ACTIVE_PREVIEW_STATUSES: WorkPreviewStatus[] = ['starting', 'running'];
 export const WORK_MESSAGE_PAGE_SIZE = 200;
 export const WORK_MESSAGE_MAX_BYTES = 100_000;
+export const WORK_MESSAGE_METADATA_MAX_BYTES = 100_000;
 const WORK_MESSAGE_PAGE_MAX_BYTES = 1_000_000;
 const WORK_CONTEXT_MAX_BYTES = 256_000;
 export const WORK_ADMISSION_DEFAULTS = {
@@ -622,6 +623,7 @@ export class WorkTaskService {
     const createdAt = Date.now();
     const messageIndex = this.nextMessageIndex(taskId);
     const boundedContent = boundUtf8(content, WORK_MESSAGE_MAX_BYTES);
+    const serializedMetadata = serializeMetadata(metadata);
     db.prepare(
       `INSERT INTO work_messages (
         id, task_id, run_id, role, kind, content, metadata,
@@ -634,7 +636,7 @@ export class WorkTaskService {
       role,
       kind,
       boundedContent,
-      metadata ? JSON.stringify(metadata) : null,
+      serializedMetadata || null,
       messageIndex,
       createdAt
     );
@@ -647,7 +649,7 @@ export class WorkTaskService {
       role,
       kind,
       content: boundedContent,
-      metadata,
+      metadata: serializedMetadata ? metadata : undefined,
       createdAt,
     };
   }
@@ -658,7 +660,7 @@ export class WorkTaskService {
         `SELECT id, task_id, run_id, message_index, role, kind, content,
                 metadata, created_at
          FROM work_messages
-         WHERE task_id = ?
+         WHERE task_id = ? AND kind <> 'provider_state'
          ORDER BY message_index ASC`
       )
       .all(taskId) as MessageRow[];
@@ -682,17 +684,58 @@ export class WorkTaskService {
     const selected: MessageRow[] = [];
     let selectedBytes = 0;
     for (const row of rows) {
-      const bytes = Buffer.byteLength(row.content, 'utf8');
-      if (
-        selected.length > 0 &&
-        selectedBytes + bytes > WORK_CONTEXT_MAX_BYTES
-      ) {
+      const bytes = contextRowBytes(row);
+      if (bytes === undefined) {
+        continue;
+      }
+      if (selectedBytes + bytes > WORK_CONTEXT_MAX_BYTES) {
         break;
       }
       selected.push(row);
-      selectedBytes += Math.min(bytes, WORK_MESSAGE_MAX_BYTES);
+      selectedBytes += bytes;
     }
     return selected.reverse().map(mapMessage);
+  }
+
+  getRecentModelContextMessages(taskId: string, limit = 30): WorkMessage[] {
+    const boundedLimit = Math.min(30, Math.max(1, Math.trunc(limit)));
+    const rowLimit = boundedLimit * 6;
+    const rows = getDatabase()
+      .prepare(
+        `SELECT id, task_id, run_id, message_index, role, kind, content,
+                metadata, created_at
+         FROM work_messages
+         WHERE task_id = ?
+           AND (
+             (kind = 'message' AND role IN ('user', 'assistant'))
+             OR (kind = 'provider_state' AND role = 'assistant')
+             OR (kind = 'tool_result' AND role = 'tool')
+           )
+         ORDER BY message_index DESC
+         LIMIT ?`
+      )
+      .all(taskId, rowLimit) as MessageRow[];
+    const selected: MessageRow[] = [];
+    let selectedBytes = 0;
+    for (const row of rows) {
+      const bytes = contextRowBytes(row);
+      if (bytes === undefined) {
+        continue;
+      }
+      if (selectedBytes + bytes > WORK_CONTEXT_MAX_BYTES) {
+        break;
+      }
+      selected.push(row);
+      selectedBytes += bytes;
+    }
+    const chronological = selected.reverse();
+    while (
+      chronological[0]?.kind === 'provider_state' ||
+      chronological[0]?.kind === 'tool_result'
+    ) {
+      chronological.shift();
+    }
+    return chronological.map(mapMessage);
   }
 
   getMessagePage(
@@ -711,7 +754,7 @@ export class WorkTaskService {
               `SELECT id, task_id, run_id, message_index, role, kind, content,
                       metadata, created_at
                FROM work_messages
-               WHERE task_id = ?
+               WHERE task_id = ? AND kind <> 'provider_state'
                ORDER BY message_index DESC
                LIMIT ?`
             )
@@ -722,6 +765,7 @@ export class WorkTaskService {
                       metadata, created_at
                FROM work_messages
                WHERE task_id = ? AND message_index < ?
+                 AND kind <> 'provider_state'
                ORDER BY message_index DESC
                LIMIT ?`
             )
@@ -729,25 +773,28 @@ export class WorkTaskService {
     ) as MessageRow[];
     const selectedRows: MessageRow[] = [];
     let selectedBytes = 0;
+    let examinedRows = 0;
+    let lastExaminedIndex: number | undefined;
     for (const row of rows.slice(0, pageSize)) {
-      const bytes = Math.min(
-        Buffer.byteLength(row.content, 'utf8'),
-        WORK_MESSAGE_MAX_BYTES
-      );
-      if (
-        selectedRows.length > 0 &&
-        selectedBytes + bytes > WORK_MESSAGE_PAGE_MAX_BYTES
-      ) {
+      const bytes = messageRowBytes(row);
+      if (bytes === undefined) {
+        examinedRows += 1;
+        lastExaminedIndex = row.message_index;
+        continue;
+      }
+      if (selectedBytes + bytes > WORK_MESSAGE_PAGE_MAX_BYTES) {
         break;
       }
       selectedRows.push(row);
       selectedBytes += bytes;
+      examinedRows += 1;
+      lastExaminedIndex = row.message_index;
     }
-    const hasMore = rows.length > selectedRows.length || rows.length > pageSize;
+    const hasMore = rows.length > examinedRows;
     const pageRows = selectedRows.reverse();
     return {
       messages: pageRows.map(mapMessage),
-      cursor: hasMore ? pageRows[0]?.message_index : undefined,
+      cursor: hasMore ? lastExaminedIndex : undefined,
       hasMore,
     };
   }
@@ -1040,7 +1087,12 @@ const mapMessage = (row: MessageRow): WorkMessage => ({
 const parseMetadata = (
   value: string | null
 ): Record<string, unknown> | undefined => {
-  if (!value) return undefined;
+  if (
+    !value ||
+    Buffer.byteLength(value, 'utf8') > WORK_MESSAGE_METADATA_MAX_BYTES
+  ) {
+    return undefined;
+  }
   try {
     const parsed = JSON.parse(value);
     return parsed && typeof parsed === 'object'
@@ -1049,6 +1101,36 @@ const parseMetadata = (
   } catch {
     return undefined;
   }
+};
+
+const serializeMetadata = (
+  metadata?: Record<string, unknown>
+): string | undefined => {
+  if (!metadata) return undefined;
+  const serialized = JSON.stringify(metadata);
+  return Buffer.byteLength(serialized, 'utf8') <=
+    WORK_MESSAGE_METADATA_MAX_BYTES
+    ? serialized
+    : undefined;
+};
+
+const contextRowBytes = (row: MessageRow): number | undefined => {
+  const totalBytes = messageRowBytes(row);
+  return totalBytes !== undefined && totalBytes <= WORK_CONTEXT_MAX_BYTES
+    ? totalBytes
+    : undefined;
+};
+
+const messageRowBytes = (row: MessageRow): number | undefined => {
+  const contentBytes = Buffer.byteLength(row.content, 'utf8');
+  const metadataBytes = Buffer.byteLength(row.metadata || '', 'utf8');
+  if (
+    contentBytes > WORK_MESSAGE_MAX_BYTES ||
+    metadataBytes > WORK_MESSAGE_METADATA_MAX_BYTES
+  ) {
+    return undefined;
+  }
+  return contentBytes + metadataBytes;
 };
 
 const deriveTitle = (message: string): string => {

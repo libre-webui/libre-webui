@@ -90,6 +90,14 @@ class PreferencesService {
       chunkOverlap: 200,
       similarityThreshold: 0.3,
     },
+    imageGenSettings: {
+      enabled: false,
+      model: '',
+      size: '1024x1024',
+      quality: 'standard',
+      style: 'vivid',
+      pluginId: '',
+    },
     showUsername: false, // Default to showing "you" instead of username
     workRemoteProviderDisclosureDismissed: false,
   };
@@ -154,6 +162,10 @@ class PreferencesService {
       ...(preferences.ttsSettings && {
         ttsSettings: preferences.ttsSettings,
       }),
+      imageGenSettings: {
+        ...this.defaultPreferences.imageGenSettings!,
+        ...preferences.imageGenSettings,
+      },
     };
   }
 
@@ -243,6 +255,12 @@ class PreferencesService {
             ...normalizedUpdates.ttsSettings,
           }
         : currentPreferences.ttsSettings,
+      imageGenSettings: normalizedUpdates.imageGenSettings
+        ? {
+            ...currentPreferences.imageGenSettings,
+            ...normalizedUpdates.imageGenSettings,
+          }
+        : currentPreferences.imageGenSettings,
     };
 
     try {
@@ -410,6 +428,12 @@ class PreferencesService {
             ...currentPreferences.embeddingSettings,
             ...data.preferences.embeddingSettings,
           },
+          imageGenSettings: data.preferences.imageGenSettings
+            ? {
+                ...currentPreferences.imageGenSettings,
+                ...data.preferences.imageGenSettings,
+              }
+            : currentPreferences.imageGenSettings,
         };
       }
 

@@ -21,7 +21,7 @@ const imageServiceModule = await import(
 );
 const { PluginImageGenerationService, normalizeImageGenerationResponse } =
   imageServiceModule;
-const { normalizeImageGenerationCount } = await import(
+const { normalizeImageGenerationCount, normalizeImageMediaType } = await import(
   pathToFileURL(
     path.join(
       repoRoot,
@@ -38,6 +38,7 @@ function imagePlugin(id, endpoint, config = {}) {
     id,
     name: id,
     type: 'completion',
+    active: true,
     endpoint: `https://example.com/${id}/v1/chat/completions`,
     auth: {
       header: 'Authorization',
@@ -106,6 +107,75 @@ test('image counts accept only JSON integers from 1 through 10', () => {
       /n must be an integer between 1 and 10/
     );
   }
+});
+
+test('image media types preserve safe raster formats and reject active content', () => {
+  assert.equal(
+    normalizeImageMediaType(' IMAGE/WEBP; charset=binary '),
+    'image/webp'
+  );
+  assert.equal(normalizeImageMediaType('image/jpg'), 'image/jpeg');
+  assert.equal(normalizeImageMediaType('image/x-png'), 'image/png');
+  assert.equal(normalizeImageMediaType('image/svg+xml'), undefined);
+  assert.equal(normalizeImageMediaType('text/html'), undefined);
+});
+
+test('image counts respect each provider capability', async () => {
+  const createService = config => {
+    const plugin = imagePlugin(
+      'count-provider',
+      'https://example.com/images',
+      config
+    );
+    return new PluginImageGenerationService({
+      getAllPlugins: () => [plugin],
+      getPlugin: () => plugin,
+      getApiKey: () => 'key',
+      getPluginVariables: () => ({}),
+      validateEndpointUrl: endpoint => endpoint,
+    });
+  };
+
+  await assert.rejects(
+    createService({ supports_n: false }).executeImageGenRequest(
+      'shared-image-model',
+      'Draw two images',
+      { pluginId: 'count-provider', n: 2 }
+    ),
+    /supports only one image/
+  );
+  await assert.rejects(
+    createService({ supports_n: true, max_n: 2 }).executeImageGenRequest(
+      'shared-image-model',
+      'Draw three images',
+      { pluginId: 'count-provider', n: 3 }
+    ),
+    /exceeds maximum of 2/
+  );
+});
+
+test('inactive image providers are excluded from selection and generation', async () => {
+  const inactive = {
+    ...imagePlugin('inactive-provider', 'https://example.com/images'),
+    active: false,
+  };
+  const service = new PluginImageGenerationService({
+    getAllPlugins: () => [inactive],
+    getPlugin: () => inactive,
+    getApiKey: () => 'unused-key',
+    getPluginVariables: () => ({}),
+    validateEndpointUrl: endpoint => endpoint,
+  });
+
+  assert.deepEqual(service.getAvailableImageGenModels('user-42'), []);
+  await assert.rejects(
+    service.executeImageGenRequest(
+      'shared-image-model',
+      'Do not generate this image',
+      { pluginId: inactive.id, userId: 'user-42' }
+    ),
+    /No image generation plugin found/
+  );
 });
 
 test('image generation uses the selected provider and user-scoped OpenAI settings', async () => {
@@ -205,6 +275,232 @@ test('image generation uses the selected provider and user-scoped OpenAI setting
   }
 });
 
+test('third-party multi-capability plugins default to the image_endpoint selector', async () => {
+  const requests = [];
+  const providerServer = http.createServer(async (req, res) => {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    requests.push({ url: req.url, body });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        data: [
+          { b64_json: Buffer.from('third-party-image').toString('base64') },
+        ],
+      })
+    );
+  });
+  const providerPort = await startServer(providerServer);
+  const origin = `http://127.0.0.1:${providerPort}`;
+  const plugin = imagePlugin(
+    'third-party-provider',
+    `${origin}/manifest-images`,
+    { supports_response_format: false }
+  );
+  const service = new PluginImageGenerationService({
+    getAllPlugins: () => [plugin],
+    getPlugin: id => (id === plugin.id ? plugin : null),
+    getApiKey: () => 'third-party-key',
+    getPluginVariables: () => ({
+      endpoint: `${origin}/must-not-receive-images`,
+      image_endpoint: `${origin}/custom-images`,
+    }),
+    validateEndpointUrl: endpoint => endpoint,
+  });
+
+  try {
+    const result = await service.executeImageGenRequest(
+      'shared-image-model',
+      'Draw a third-party image',
+      { pluginId: plugin.id, userId: 'third-party-user' }
+    );
+
+    assert.equal(result.pluginId, plugin.id);
+    assert.equal(
+      result.images[0].b64_json,
+      Buffer.from('third-party-image').toString('base64')
+    );
+    assert.equal(requests.length, 1);
+    assert.equal(requests[0].url, '/custom-images');
+    assert.equal(JSON.parse(requests[0].body).model, 'shared-image-model');
+  } finally {
+    await new Promise(resolve => providerServer.close(resolve));
+  }
+});
+
+test('generic image endpoints containing /prompt keep OpenAI-compatible routing', async () => {
+  const requests = [];
+  const providerServer = http.createServer(async (req, res) => {
+    let body = '';
+    for await (const chunk of req) body += chunk;
+    requests.push({
+      authorization: req.headers.authorization,
+      method: req.method,
+      url: req.url,
+      body: JSON.parse(body),
+    });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(
+      JSON.stringify({
+        data: [
+          {
+            b64_json: Buffer.from('generic-prompt-image').toString('base64'),
+          },
+        ],
+      })
+    );
+  });
+  const providerPort = await startServer(providerServer);
+  const origin = `http://127.0.0.1:${providerPort}`;
+  const plugin = imagePlugin('generic-prompt-provider', `${origin}/v1/prompt`, {
+    supports_response_format: false,
+  });
+  const service = new PluginImageGenerationService({
+    getAllPlugins: () => [plugin],
+    getPlugin: id => (id === plugin.id ? plugin : null),
+    getApiKey: () => 'generic-prompt-key',
+    getPluginVariables: () => ({}),
+    validateEndpointUrl: endpoint => endpoint,
+  });
+
+  try {
+    const result = await service.executeImageGenRequest(
+      'shared-image-model',
+      'Draw through a generic prompt endpoint',
+      { pluginId: plugin.id, userId: 'generic-prompt-user' }
+    );
+
+    assert.equal(
+      result.images[0].b64_json,
+      Buffer.from('generic-prompt-image').toString('base64')
+    );
+    assert.equal(result.pluginId, plugin.id);
+  } finally {
+    await new Promise(resolve => providerServer.close(resolve));
+  }
+
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].method, 'POST');
+  assert.equal(requests[0].url, '/v1/prompt');
+  assert.equal(requests[0].authorization, 'Bearer generic-prompt-key');
+  assert.equal(requests[0].body.model, 'shared-image-model');
+  assert.equal(
+    requests[0].body.prompt,
+    'Draw through a generic prompt endpoint'
+  );
+  assert.equal(
+    typeof requests[0].body.prompt,
+    'string',
+    'generic /prompt endpoints must not receive a ComfyUI workflow'
+  );
+});
+
+test('ComfyUI preserves endpoint prefixes and authenticates every request', async () => {
+  const requests = [];
+  const imageBytes = Buffer.from('authenticated-comfy-image');
+  const providerServer = http.createServer(async (req, res) => {
+    const requestUrl = new URL(req.url, 'http://localhost');
+    requests.push({
+      authorization: req.headers.authorization,
+      method: req.method,
+      pathname: requestUrl.pathname,
+      searchParams: Object.fromEntries(requestUrl.searchParams),
+    });
+
+    if (
+      req.method === 'POST' &&
+      requestUrl.pathname === '/tenant/comfy/prompt'
+    ) {
+      for await (const _chunk of req) {
+        // Drain the request before replying.
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ prompt_id: 'prompt-123' }));
+      return;
+    }
+
+    if (
+      req.method === 'GET' &&
+      requestUrl.pathname === '/tenant/comfy/history/prompt-123'
+    ) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(
+        JSON.stringify({
+          'prompt-123': {
+            outputs: {
+              9: {
+                images: [
+                  {
+                    filename: 'result image.png',
+                    subfolder: 'nested outputs',
+                    type: 'output',
+                  },
+                ],
+              },
+            },
+          },
+        })
+      );
+      return;
+    }
+
+    if (req.method === 'GET' && requestUrl.pathname === '/tenant/comfy/view') {
+      res.writeHead(200, { 'Content-Type': 'image/webp; charset=binary' });
+      res.end(imageBytes);
+      return;
+    }
+
+    res.writeHead(404);
+    res.end();
+  });
+  const providerPort = await startServer(providerServer);
+  const origin = `http://127.0.0.1:${providerPort}`;
+  const plugin = imagePlugin('comfyui', `${origin}/tenant/comfy/prompt`, {
+    supports_response_format: false,
+  });
+  const service = new PluginImageGenerationService({
+    getAllPlugins: () => [plugin],
+    getPlugin: id => (id === plugin.id ? plugin : null),
+    getApiKey: () => 'comfy-proxy-key',
+    getPluginVariables: () => ({}),
+    validateEndpointUrl: endpoint => endpoint,
+  });
+
+  try {
+    const result = await service.executeImageGenRequest(
+      'shared-image-model',
+      'Draw behind an authenticated ComfyUI proxy',
+      { pluginId: plugin.id, userId: 'comfy-user' }
+    );
+
+    assert.equal(result.images[0].b64_json, imageBytes.toString('base64'));
+    assert.equal(result.images[0].mime_type, 'image/webp');
+    assert.equal(result.pluginId, plugin.id);
+  } finally {
+    await new Promise(resolve => providerServer.close(resolve));
+  }
+
+  assert.deepEqual(
+    requests.map(request => [request.method, request.pathname]),
+    [
+      ['POST', '/tenant/comfy/prompt'],
+      ['GET', '/tenant/comfy/history/prompt-123'],
+      ['GET', '/tenant/comfy/view'],
+    ]
+  );
+  assert.ok(
+    requests.every(
+      request => request.authorization === 'Bearer comfy-proxy-key'
+    ),
+    'ComfyUI auth must be sent to prompt, history, and image endpoints'
+  );
+  assert.deepEqual(requests[2].searchParams, {
+    filename: 'result image.png',
+    subfolder: 'nested outputs',
+    type: 'output',
+  });
+});
+
 test('an explicit image provider cannot fall through to a same-named plugin', async () => {
   const plugins = [
     imagePlugin('available-provider', 'https://example.com/images'),
@@ -299,6 +595,8 @@ test('invalid capability-specific image endpoint overrides fail closed', async (
 test('image responses normalize raw and data-URL base64 payloads', () => {
   const rawBase64 = Buffer.from('raw image bytes').toString('base64');
   const dataUrlBase64 = Buffer.from('data URL image bytes').toString('base64');
+  const typedBase64 = Buffer.from('typed image bytes').toString('base64');
+  const unsafeBase64 = Buffer.from('unsafe image bytes').toString('base64');
 
   assert.deepEqual(
     normalizeImageGenerationResponse({
@@ -311,6 +609,16 @@ test('image responses normalize raw and data-URL base64 payloads', () => {
           url: `data:image/webp;base64,${dataUrlBase64}`,
           revised_prompt: 'Data URL image prompt',
         },
+        {
+          b64_json: typedBase64,
+          mime_type: 'IMAGE/JPEG; charset=binary',
+          revised_prompt: 'Typed image prompt',
+        },
+        {
+          b64_json: unsafeBase64,
+          mime_type: 'image/svg+xml',
+          revised_prompt: 'Unsafe image prompt',
+        },
       ],
     }),
     [
@@ -320,7 +628,17 @@ test('image responses normalize raw and data-URL base64 payloads', () => {
       },
       {
         b64_json: dataUrlBase64,
+        mime_type: 'image/webp',
         revised_prompt: 'Data URL image prompt',
+      },
+      {
+        b64_json: typedBase64,
+        mime_type: 'image/jpeg',
+        revised_prompt: 'Typed image prompt',
+      },
+      {
+        b64_json: unsafeBase64,
+        revised_prompt: 'Unsafe image prompt',
       },
     ]
   );

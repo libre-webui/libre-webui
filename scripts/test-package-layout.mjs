@@ -6,7 +6,6 @@ import path from 'node:path';
 import { execFileSync, spawn } from 'node:child_process';
 import test from 'node:test';
 import { pathToFileURL, fileURLToPath } from 'node:url';
-import jwt from 'jsonwebtoken';
 import { x as extractTarball } from 'tar';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -103,6 +102,22 @@ function startServer(server) {
       resolve(address.port);
     });
   });
+}
+
+async function signupPackedUser(baseUrl, username) {
+  const response = await fetch(`${baseUrl}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username,
+      password: 'packed-test-password',
+    }),
+  });
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.success, true);
+  assert.equal(typeof payload.data?.token, 'string');
+  return payload.data;
 }
 
 async function waitForServer(url, child, timeoutMs = 15000) {
@@ -286,7 +301,7 @@ test('packed npm artifact resolves package metadata and frontend dist', async ()
 });
 
 test('packed npm artifact exposes provider-backed embedding models and requests', async () => {
-  await withTempPackedProject(async ({ packedRoot }) => {
+  await withTempPackedProject(async ({ tempDir, packedRoot }) => {
     linkInstalledDependencies(packedRoot);
 
     const providerRequests = [];
@@ -332,30 +347,26 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
 
     const providerPort = await startServer(providerServer);
     const providerEndpoint = `http://127.0.0.1:${providerPort}/openai/v1/chat/completions`;
-    const openAiPluginPath = path.join(packedRoot, 'plugins', 'openai.json');
-    const openAiPlugin = JSON.parse(fs.readFileSync(openAiPluginPath, 'utf8'));
-    openAiPlugin.endpoint = providerEndpoint;
-    const endpointVariable = openAiPlugin.variables?.find(
-      variable => variable.name === 'endpoint'
-    );
-    if (endpointVariable) {
-      endpointVariable.default = providerEndpoint;
-    }
-    fs.writeFileSync(openAiPluginPath, JSON.stringify(openAiPlugin, null, 2));
 
     const backendPortServer = http.createServer();
     const backendPort = await startServer(backendPortServer);
     await new Promise(resolve => backendPortServer.close(resolve));
 
+    const callerDir = path.join(tempDir, 'embedding-caller');
+    const dataDir = path.join(tempDir, 'embedding-runtime-data');
+    fs.mkdirSync(callerDir, { recursive: true });
     const backendEntry = path.join(packedRoot, 'backend', 'dist', 'index.js');
     const backendProcess = spawn(process.execPath, [backendEntry], {
-      cwd: packedRoot,
+      cwd: callerDir,
       env: {
         ...process.env,
         PORT: String(backendPort),
+        DATA_DIR: dataDir,
         OPENAI_API_KEY: 'test-openai-key',
         OLLAMA_BASE_URL: 'http://127.0.0.1:9',
         JWT_SECRET: 'test-jwt-secret',
+        TURNSTILE_SITE_KEY: '',
+        TURNSTILE_SECRET_KEY: '',
         ENCRYPTION_KEY:
           '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
       },
@@ -376,22 +387,71 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         backendProcess
       );
 
+      const backendBaseUrl = `http://127.0.0.1:${backendPort}`;
+      const unauthenticatedPluginRead = await fetch(
+        `${backendBaseUrl}/api/plugins`,
+        { method: 'HEAD' }
+      );
+      assert.equal(unauthenticatedPluginRead.status, 401);
+
+      const firstUser = await signupPackedUser(
+        backendBaseUrl,
+        'packed-plugin-admin'
+      );
+      assert.equal(firstUser.user.role, 'admin');
+      const pluginHeaders = {
+        Authorization: `Bearer ${firstUser.token}`,
+      };
+      const pluginJsonHeaders = {
+        ...pluginHeaders,
+        'Content-Type': 'application/json',
+      };
+      const endpointResponse = await fetch(
+        `${backendBaseUrl}/api/plugins/openai/variables`,
+        {
+          method: 'PUT',
+          headers: pluginJsonHeaders,
+          body: JSON.stringify({
+            variables: { endpoint: providerEndpoint },
+          }),
+        }
+      );
+      assert.equal(endpointResponse.status, 200);
+      const credentialResponse = await fetch(
+        `${backendBaseUrl}/api/plugins/openai/credentials`,
+        {
+          method: 'POST',
+          headers: pluginJsonHeaders,
+          body: JSON.stringify({ api_key: 'test-openai-key' }),
+        }
+      );
+      assert.equal(credentialResponse.status, 200);
+      const activationResponse = await fetch(
+        `${backendBaseUrl}/api/plugins/activate/openai`,
+        {
+          method: 'POST',
+          headers: pluginHeaders,
+        }
+      );
+      assert.equal(activationResponse.status, 200);
+
       const pluginReadStatuses = [];
       for (let request = 0; request < 205; request++) {
         const pluginReadResponse = await fetch(
-          `http://127.0.0.1:${backendPort}/api/plugins`,
-          { method: 'HEAD' }
+          `${backendBaseUrl}/api/plugins`,
+          { method: 'HEAD', headers: pluginHeaders }
         );
         pluginReadStatuses.push(pluginReadResponse.status);
       }
       assert.deepEqual(
         [...new Set(pluginReadStatuses)],
         [200],
-        'read-only plugin discovery must not exhaust an IP-wide limiter'
+        'read-only plugin discovery must not exhaust the normal user quota'
       );
 
       const modelsResponse = await fetch(
-        `http://127.0.0.1:${backendPort}/api/embeddings/models`
+        `${backendBaseUrl}/api/embeddings/models`,
+        { headers: pluginHeaders }
       );
       assert.equal(modelsResponse.status, 200);
       const modelsPayload = await modelsResponse.json();
@@ -406,7 +466,10 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         `http://127.0.0.1:${backendPort}/api/ollama/embed`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            ...pluginHeaders,
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             model: 'plugin:openai:text-embedding-3-small',
             input: 'hello from packed npx',
@@ -428,16 +491,18 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         )
       );
 
-      for (let request = pluginReadStatuses.length; request < 1000; request++) {
+      // Endpoint, credential, and activation setup consumed three requests
+      // from this authenticated user's 1000-request plugin-router quota.
+      for (let request = pluginReadStatuses.length; request < 997; request++) {
         const pluginReadResponse = await fetch(
-          `http://127.0.0.1:${backendPort}/api/plugins`,
-          { method: 'HEAD' }
+          `${backendBaseUrl}/api/plugins`,
+          { method: 'HEAD', headers: pluginHeaders }
         );
         assert.equal(pluginReadResponse.status, 200);
       }
-      const limitedPluginRead = await fetch(
-        `http://127.0.0.1:${backendPort}/api/plugins`
-      );
+      const limitedPluginRead = await fetch(`${backendBaseUrl}/api/plugins`, {
+        headers: pluginHeaders,
+      });
       assert.equal(
         limitedPluginRead.status,
         429,
@@ -449,24 +514,20 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         error: 'Too many plugin requests, please try again later.',
       });
 
-      const authenticatedToken = jwt.sign(
-        {
-          userId: 'packed-plugin-user',
-          username: 'packed-plugin-user',
-          role: 'admin',
-        },
-        'test-jwt-secret'
+      const secondUser = await signupPackedUser(
+        backendBaseUrl,
+        'packed-plugin-user'
       );
       const authenticatedPluginRead = await fetch(
-        `http://127.0.0.1:${backendPort}/api/plugins`,
+        `${backendBaseUrl}/api/plugins`,
         {
-          headers: { Authorization: `Bearer ${authenticatedToken}` },
+          headers: { Authorization: `Bearer ${secondUser.token}` },
         }
       );
       assert.equal(
         authenticatedPluginRead.status,
         200,
-        'authenticated users must not share the exhausted guest IP quota'
+        'authenticated users must not share another account’s exhausted quota'
       );
     } catch (error) {
       throw new Error(
@@ -550,6 +611,8 @@ test('packed npm artifact routes TTS through the selected plugin valve from any 
         DATA_DIR: dataDir,
         OLLAMA_BASE_URL: 'http://127.0.0.1:9',
         JWT_SECRET: 'test-jwt-secret',
+        TURNSTILE_SITE_KEY: '',
+        TURNSTILE_SECRET_KEY: '',
         ENCRYPTION_KEY:
           '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
       },
@@ -569,10 +632,24 @@ test('packed npm artifact routes TTS through the selected plugin valve from any 
         `http://127.0.0.1:${backendPort}/health`,
         backendProcess
       );
-
-      const modelsResponse = await fetch(
-        `http://127.0.0.1:${backendPort}/api/tts/models`
+      const backendBaseUrl = `http://127.0.0.1:${backendPort}`;
+      const admin = await signupPackedUser(backendBaseUrl, 'packed-tts-admin');
+      assert.equal(admin.user.role, 'admin');
+      const authenticatedHeaders = {
+        Authorization: `Bearer ${admin.token}`,
+      };
+      const activationResponse = await fetch(
+        `${backendBaseUrl}/api/plugins/activate/kyutai-tts-1.6b`,
+        {
+          method: 'POST',
+          headers: authenticatedHeaders,
+        }
       );
+      assert.equal(activationResponse.status, 200);
+
+      const modelsResponse = await fetch(`${backendBaseUrl}/api/tts/models`, {
+        headers: authenticatedHeaders,
+      });
       assert.equal(modelsResponse.status, 200);
       const modelsPayload = await modelsResponse.json();
       const kyutaiModels = modelsPayload.data
@@ -581,9 +658,9 @@ test('packed npm artifact routes TTS through the selected plugin valve from any 
         .sort();
       assert.deepEqual(kyutaiModels, ['kyutai-tts-1.6b', 'tts-1-hd']);
 
-      const pluginsResponse = await fetch(
-        `http://127.0.0.1:${backendPort}/api/tts/plugins`
-      );
+      const pluginsResponse = await fetch(`${backendBaseUrl}/api/tts/plugins`, {
+        headers: authenticatedHeaders,
+      });
       assert.equal(pluginsResponse.status, 200);
       const pluginsPayload = await pluginsResponse.json();
       assert.ok(
@@ -594,7 +671,10 @@ test('packed npm artifact routes TTS through the selected plugin valve from any 
         `http://127.0.0.1:${backendPort}/api/plugins/kyutai-tts-1.6b/variables`,
         {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            ...authenticatedHeaders,
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             variables: { endpoint: targetEndpoint, speed: 1 },
           }),
@@ -606,7 +686,10 @@ test('packed npm artifact routes TTS through the selected plugin valve from any 
         `http://127.0.0.1:${backendPort}/api/tts/generate-base64`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            ...authenticatedHeaders,
+            'Content-Type': 'application/json',
+          },
           body: JSON.stringify({
             model: 'tts-1-hd',
             pluginId: 'kyutai-tts-1.6b',

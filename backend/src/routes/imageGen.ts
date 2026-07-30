@@ -19,15 +19,22 @@ import express from 'express';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
 import galleryService from '../services/galleryService.js';
-import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
-import { normalizeImageGenerationCount } from '../utils/imageGenerationValidation.js';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
+import {
+  normalizeImageGenerationCount,
+  normalizeImageMediaType,
+} from '../utils/imageGenerationValidation.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('routes:image-gen');
 
 const router = express.Router();
-const getRequestUserId = (req: AuthenticatedRequest): string =>
-  req.user?.userId || 'default';
+const getRequestUserId = (req: AuthenticatedRequest): string => {
+  if (!req.user) {
+    throw new Error('Authenticated user context is required');
+  }
+  return req.user.userId;
+};
 
 // Rate limiter for image generation routes: 10 requests per minute
 const imageGenRateLimiter = rateLimit({
@@ -53,11 +60,15 @@ const galleryRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Image generation can consume paid provider credentials and gallery data is
+// user-scoped, so every route requires an authenticated account.
+router.use(authenticate);
+
 /**
  * GET /api/image-gen/models
  * Get all available image generation models from plugins
  */
-router.get('/models', optionalAuth, async (req: AuthenticatedRequest, res) => {
+router.get('/models', async (req: AuthenticatedRequest, res) => {
   try {
     const models = pluginService.getAvailableImageGenModels(
       getRequestUserId(req)
@@ -112,12 +123,11 @@ router.get('/config/:pluginId', async (req: AuthenticatedRequest, res) => {
  * GET /api/image-gen/plugins
  * Get all plugins that support image generation capability
  */
-router.get('/plugins', optionalAuth, async (req: AuthenticatedRequest, res) => {
+router.get('/plugins', async (req: AuthenticatedRequest, res) => {
   try {
-    const plugins = pluginService.getPluginsByCapability(
-      'image',
-      getRequestUserId(req)
-    );
+    const plugins = pluginService
+      .getPluginsByCapability('image', getRequestUserId(req))
+      .filter(plugin => plugin.active);
     res.json({
       success: true,
       data: plugins.map(p => ({
@@ -145,7 +155,6 @@ router.get('/plugins', optionalAuth, async (req: AuthenticatedRequest, res) => {
  */
 router.post(
   '/generate',
-  optionalAuth,
   imageGenRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -177,13 +186,10 @@ router.post(
         return;
       }
 
-      if (
-        pluginId !== undefined &&
-        (typeof pluginId !== 'string' || pluginId.trim().length === 0)
-      ) {
+      if (typeof pluginId !== 'string' || pluginId.trim().length === 0) {
         res.status(400).json({
           success: false,
-          message: 'pluginId must be a non-empty string when provided',
+          message: 'pluginId is required and must be a non-empty string',
         });
         return;
       }
@@ -236,7 +242,9 @@ router.post(
           // Get the image data as base64 data URL
           let imageData: string | null = null;
           if (image.b64_json) {
-            imageData = `data:image/png;base64,${image.b64_json}`;
+            const mediaType =
+              normalizeImageMediaType(image.mime_type) || 'image/png';
+            imageData = `data:${mediaType};base64,${image.b64_json}`;
           } else if (image.url) {
             imageData = image.url;
           }
@@ -275,7 +283,10 @@ router.post(
         statusCode = 404;
       } else if (errorMessage.includes('API key not found')) {
         statusCode = 503; // Service unavailable
-      } else if (errorMessage.includes('exceeds maximum')) {
+      } else if (
+        errorMessage.includes('exceeds maximum') ||
+        errorMessage.includes('supports only one image')
+      ) {
         statusCode = 400;
       }
 
@@ -294,7 +305,6 @@ router.post(
 router.get(
   '/gallery',
   galleryRateLimiter,
-  optionalAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
       const userId = getRequestUserId(req);
@@ -324,7 +334,6 @@ router.get(
 router.get(
   '/gallery/:imageId',
   galleryRateLimiter,
-  optionalAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
       const userId = getRequestUserId(req);
@@ -361,7 +370,6 @@ router.get(
 router.delete(
   '/gallery/:imageId',
   galleryRateLimiter,
-  optionalAuth,
   async (req: AuthenticatedRequest, res) => {
     try {
       const userId = getRequestUserId(req);

@@ -45,6 +45,7 @@ export interface ChatMessage {
   content: string;
   timestamp: number;
   model?: string;
+  providerMetadata?: Record<string, unknown>;
   images?: string[]; // Base64 encoded images for multimodal support
   statistics?: GenerationStatistics; // Generation statistics from Ollama
   artifacts?: Artifact[]; // Artifacts associated with this message
@@ -127,6 +128,15 @@ export interface TTSSettings {
   streamSentences?: boolean; // Play sentence by sentence instead of full message
 }
 
+export interface ImageGenSettings {
+  enabled: boolean;
+  model: string;
+  size: string;
+  quality: string;
+  style: string;
+  pluginId?: string;
+}
+
 export interface TitleSettings {
   autoTitle: boolean;
   taskModel: string;
@@ -159,6 +169,8 @@ export interface UserPreferences {
   embeddingSettings: EmbeddingSettings;
   // Text-to-speech settings
   ttsSettings?: TTSSettings;
+  // Image-generation settings
+  imageGenSettings?: ImageGenSettings;
   // Auto-title settings
   titleSettings?: TitleSettings;
   showUsername: boolean; // If true, show username in chat; if false, show "you"
@@ -179,6 +191,7 @@ export interface OllamaChatMessage {
   images?: string[];
   tool_calls?: Record<string, unknown>[];
   tool_name?: string;
+  tool_call_id?: string;
   providerMetadata?: Record<string, unknown>;
 }
 
@@ -361,6 +374,7 @@ export interface TTSConfig {
   default_format?: string; // Default audio format
   max_characters?: number; // Maximum text length
   supports_streaming?: boolean; // Whether streaming is supported
+  endpoint_variable?: string; // Capability-specific endpoint override variable
 }
 
 // Image Generation-specific configuration
@@ -378,6 +392,15 @@ export interface ImageGenConfig {
   endpoint_variable?: string; // Capability-specific endpoint override variable
   supports_response_format?: boolean; // Whether the API accepts response_format
   default_response_format?: 'url' | 'b64_json';
+}
+
+// Embedding-specific configuration
+export interface EmbeddingConfig {
+  [key: string]: unknown;
+  max_tokens?: number;
+  dimensions?: Record<string, number>;
+  no_auth_required?: boolean;
+  endpoint_variable?: string; // Capability-specific endpoint override variable
 }
 
 // Plugin capabilities for multi-capability plugins
@@ -398,6 +421,7 @@ export interface PluginCapabilities {
   embedding?: {
     endpoint: string;
     model_map: string[];
+    config?: EmbeddingConfig;
   };
   image?: {
     endpoint: string;
@@ -460,7 +484,7 @@ export interface TTSResponse {
 // Image Generation Request/Response types
 export interface ImageGenRequest {
   model: string;
-  pluginId?: string;
+  pluginId: string;
   prompt: string;
   size?: string;
   quality?: string;
@@ -473,6 +497,7 @@ export interface ImageGenResponse {
   images: Array<{
     url?: string;
     b64_json?: string;
+    mime_type?: string;
     revised_prompt?: string;
   }>;
   model: string;

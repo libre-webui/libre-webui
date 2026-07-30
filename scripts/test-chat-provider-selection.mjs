@@ -110,12 +110,13 @@ const pluginDefinition = (id, keyEnv) => ({
   model_map: [sharedModel],
 });
 
-for (const plugin of [
+const pluginDefinitions = [
   pluginDefinition(pluginAId, 'CHAT_PROVIDER_A_TEST_KEY'),
   pluginDefinition(pluginBId, 'CHAT_PROVIDER_B_TEST_KEY'),
   pluginDefinition(inactivePluginId, 'CHAT_PROVIDER_INACTIVE_TEST_KEY'),
   pluginDefinition(missingCredentialPluginId, 'CHAT_PROVIDER_NO_KEY_TEST_KEY'),
-]) {
+];
+for (const plugin of pluginDefinitions) {
   fs.writeFileSync(
     path.join(pluginsDir, `${plugin.id}.json`),
     JSON.stringify(plugin, null, 2)
@@ -208,12 +209,50 @@ db.prepare(
      (id, username, password_hash, role, created_at, updated_at)
    VALUES (?, ?, ?, ?, ?, ?)`
 ).run(userId, userId, 'test-password-hash', 'user', now, now);
+db.prepare(
+  `INSERT INTO users
+     (id, username, password_hash, role, created_at, updated_at)
+   VALUES (?, ?, ?, ?, ?, ?)`
+).run(
+  'chat-provider-fixture-admin',
+  'chat-provider-fixture-admin',
+  'test-password-hash',
+  'admin',
+  now,
+  now
+);
+for (const plugin of pluginDefinitions) {
+  pluginService.installPlugin(plugin, 'chat-provider-fixture-admin');
+}
+const activatePlugin = db.prepare(
+  `INSERT INTO plugin_activations (user_id, plugin_id, activated_at)
+   VALUES (?, ?, ?)`
+);
+for (const pluginId of [pluginAId, pluginBId, missingCredentialPluginId]) {
+  activatePlugin.run(userId, pluginId, now);
+}
 assert.equal(
-  credentialsService.setApiKey(pluginAId, 'provider-a-key', userId),
+  credentialsService.setApiKey(
+    pluginAId,
+    'provider-a-key',
+    userId,
+    pluginService.getCredentialRoutingAuthFingerprint(
+      pluginService.getPlugin(pluginAId, userId),
+      userId
+    )
+  ),
   true
 );
 assert.equal(
-  credentialsService.setApiKey(pluginBId, 'provider-b-key', userId),
+  credentialsService.setApiKey(
+    pluginBId,
+    'provider-b-key',
+    userId,
+    pluginService.getCredentialRoutingAuthFingerprint(
+      pluginService.getPlugin(pluginBId, userId),
+      userId
+    )
+  ),
   true
 );
 
@@ -286,6 +325,67 @@ test('Chat session provider columns migrate additively and round-trip nullable s
   );
   assert.equal(loadedQualified.providerType, 'plugin');
   assert.equal(loadedQualified.providerId, pluginBId);
+});
+
+test('Responses provider state is encrypted and round-trips with Chat messages', () => {
+  const providerMetadata = {
+    openAIResponsesOutputItems: [
+      {
+        id: 'reasoning-persisted',
+        type: 'reasoning',
+        encrypted_content: 'opaque-provider-reasoning',
+        summary: [],
+      },
+      {
+        id: 'message-persisted',
+        type: 'message',
+        role: 'assistant',
+        phase: 'final_answer',
+        content: [{ type: 'output_text', text: 'Persisted answer' }],
+      },
+    ],
+    openAIResponsesStateScope: 'persisted-state-scope',
+  };
+  const session = {
+    id: 'responses-state-session',
+    title: 'Responses state',
+    model: sharedModel,
+    providerType: 'plugin',
+    providerId: pluginBId,
+    messages: [
+      {
+        id: 'assistant-responses-state',
+        role: 'assistant',
+        content: 'Persisted answer',
+        timestamp: now,
+        model: sharedModel,
+        providerMetadata,
+      },
+    ],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  storageService.saveSession(session, userId);
+
+  const columns = db.prepare('PRAGMA table_info(session_messages)').all();
+  assert.ok(columns.some(column => column.name === 'provider_metadata'));
+  const stored = db
+    .prepare(
+      `SELECT provider_metadata
+       FROM session_messages
+       WHERE session_id = ?`
+    )
+    .get(session.id);
+  assert.equal(typeof stored.provider_metadata, 'string');
+  assert.equal(
+    stored.provider_metadata.includes('opaque-provider-reasoning'),
+    false
+  );
+  assert.deepEqual(
+    storageService.getSession(session.id, userId).messages[0].providerMetadata,
+    providerMetadata
+  );
 });
 
 test('session updates preserve provider metadata until an unqualified model change', async () => {
@@ -379,6 +479,33 @@ test('default and title model preferences round-trip and clear provider identity
   );
   assert.equal(preferences.titleSettings.taskProviderType, undefined);
   assert.equal(preferences.titleSettings.taskProviderId, undefined);
+});
+
+test('provider-qualified image preferences persist across unrelated updates', () => {
+  const imageSettings = {
+    enabled: true,
+    model: sharedModel,
+    pluginId: pluginBId,
+    size: '1024x1024',
+    quality: 'high',
+    style: 'vivid',
+  };
+
+  let preferences = preferencesService.updatePreferences(
+    { imageGenSettings: imageSettings },
+    userId
+  );
+  assert.deepEqual(preferences.imageGenSettings, imageSettings);
+
+  preferences = preferencesService.updatePreferences(
+    { showUsername: !preferences.showUsername },
+    userId
+  );
+  assert.deepEqual(preferences.imageGenSettings, imageSettings);
+  assert.deepEqual(
+    preferencesService.getPreferences(userId).imageGenSettings,
+    imageSettings
+  );
 });
 
 test('malformed provider selections are rejected consistently', () => {

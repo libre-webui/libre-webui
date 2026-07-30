@@ -78,6 +78,37 @@ type MockTTSPlugin = {
   config?: MockTTSModel['config'];
 };
 
+type MockImageGenModel = {
+  model: string;
+  plugin: string;
+  config?: {
+    sizes?: string[];
+    default_size?: string;
+    qualities?: string[];
+    default_quality?: string;
+    styles?: string[];
+    default_style?: string;
+    max_prompt_length?: number;
+  };
+};
+
+type MockImageGenPlugin = {
+  id: string;
+  name: string;
+  models: string[];
+  config?: MockImageGenModel['config'];
+};
+
+type MockImageGenerationRequest = {
+  model: string;
+  pluginId: string;
+  prompt: string;
+  size?: string;
+  quality?: string;
+  style?: string;
+  n?: number;
+};
+
 type MockPlugin = {
   id: string;
   name: string;
@@ -245,6 +276,8 @@ type MockOptions = {
   cloudLibraryModels?: MockLibraryModel[];
   ttsModels?: MockTTSModel[];
   ttsPlugins?: MockTTSPlugin[];
+  imageGenModels?: MockImageGenModel[];
+  imageGenPlugins?: MockImageGenPlugin[];
   preferences?: Partial<typeof defaultPreferences>;
   preferenceUpdateFailures?: number;
   deferPreferenceUpdates?: boolean;
@@ -321,6 +354,14 @@ const defaultPreferences = {
     speed: 1,
     pluginId: '',
     streamSentences: false,
+  },
+  imageGenSettings: {
+    enabled: false,
+    model: '',
+    size: '1024x1024',
+    quality: 'standard',
+    style: 'vivid',
+    pluginId: '',
   },
   titleSettings: {
     autoTitle: false,
@@ -406,6 +447,8 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     options.cloudLibraryModels ?? defaultCloudLibraryModels;
   const ttsModels = options.ttsModels ?? [];
   const ttsPlugins = options.ttsPlugins ?? [];
+  const imageGenModels = options.imageGenModels ?? [];
+  const imageGenPlugins = options.imageGenPlugins ?? [];
   const workCapabilities = options.workCapabilities ?? defaultWorkCapabilities;
   const workTaskTransition = options.workTaskTransition;
   const workTasks = structuredClone(options.workTasks ?? []);
@@ -442,6 +485,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     : null;
   const pullStreamUrls: string[] = [];
   const ttsGenerationRequests: MockTTSGenerationRequest[] = [];
+  const imageGenerationRequests: MockImageGenerationRequest[] = [];
   const titleGenerationRequests: Array<{
     sessionId: string;
     model: string;
@@ -1361,7 +1405,30 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path === '/image-gen/plugins' && method === 'GET') {
-        await fulfillJson(route, []);
+        await fulfillJson(route, imageGenPlugins);
+        return;
+      }
+
+      if (path === '/image-gen/models' && method === 'GET') {
+        await fulfillJson(route, imageGenModels);
+        return;
+      }
+
+      if (path === '/image-gen/gallery' && method === 'GET') {
+        await fulfillJson(route, { images: [], total: 0 });
+        return;
+      }
+
+      if (path === '/image-gen/generate' && method === 'POST') {
+        const request = route
+          .request()
+          .postDataJSON() as MockImageGenerationRequest;
+        imageGenerationRequests.push(request);
+        await fulfillJson(route, {
+          images: [{ b64_json: 'iVBORw0KGgo=' }],
+          model: request.model,
+          pluginId: request.pluginId,
+        });
         return;
       }
 
@@ -1409,6 +1476,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         .forEach(releasePreferenceUpdate => releasePreferenceUpdate());
     },
     ttsGenerationRequests,
+    imageGenerationRequests,
     titleGenerationRequests,
     sessionUpdateRequests,
     workTaskCreateRequests,

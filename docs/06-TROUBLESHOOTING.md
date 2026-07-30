@@ -131,10 +131,11 @@ Administrators can disable model pulls for normal users. Check admin settings if
 
 ## OpenAI Image Generation Is Unavailable
 
-- Save an OpenAI API key for the current user. Activate the bundled provider as
-  well when you also want to use its models in Chat or Work.
-- Open Image Generation settings and select one of the advertised GPT Image
-  models.
+- Activate the bundled OpenAI provider. Save an API key for the current user,
+  or configure the trusted bundled provider's `OPENAI_API_KEY` environment
+  fallback.
+- Open Image Generation settings, enable image generation, and select one of
+  the advertised GPT Image models.
 - Prefer `gpt-image-2`. The older GPT Image IDs remain available only for
   compatibility with existing configurations and are deprecated upstream.
 - Leave the OpenAI `image_endpoint` override blank unless you operate a
@@ -143,9 +144,9 @@ Administrators can disable model pulls for normal users. Check admin settings if
 - If OpenAI rejects a GPT Image request despite a valid key and quota, confirm
   that the API organization is eligible to use GPT Image models.
 
-Image availability is evaluated with the current user's credential. A key saved
-for another account or only in another user's settings does not expose image
-models.
+Image availability is evaluated with the current user's saved credential or the
+trusted bundled provider's environment fallback. A key saved only in another
+user's settings does not expose image models.
 
 ## Provider Endpoint Problems
 
@@ -164,6 +165,11 @@ settings under **Settings → Plugins**:
   `/chat/completions` or `/responses`, that suffix also determines the request
   format so an override cannot receive the wrong payload.
 
+Imported plugin JSON supports providers that use an OpenAI Chat Completions,
+OpenAI Responses, Anthropic, or Gemini-compatible wire format. If the provider
+uses a proprietary payload, streaming event, tool-call, or response format, it
+needs a backend adapter; changing only the endpoint cannot translate it.
+
 Remote provider URLs must use HTTPS. HTTP is accepted only for localhost and
 private-network addresses. Base URLs cannot contain query strings or fragments,
 and relative API paths cannot contain literal or repeatedly encoded traversal
@@ -178,6 +184,17 @@ parameters do not. Discovered IDs are stored per user and never overwrite the
 shared plugin JSON. If the derived route is not supported by the provider,
 configure model IDs manually in the plugin's `model_map`.
 
+Provider requests intentionally do not follow HTTP redirects, including model
+discovery, Chat, Work, image generation, embeddings, and text-to-speech.
+Configure the final destination URL rather than a redirecting URL. This
+fail-closed behavior keeps an authorization header from hopping to a destination
+that was not validated.
+
+If Work reports that provider routing changed during a run, start a new run
+after finishing the provider settings update. Work intentionally stops before
+its next provider request so prior tool state cannot be replayed to a different
+mode, endpoint, or API-key authentication boundary.
+
 HTTP is accepted only for exact loopback hosts or private IPv4 literals.
 Hostnames such as `host.docker.internal` and `10.example.com` are not private
 IP literals and therefore require HTTPS. Requests originate from the backend,
@@ -188,6 +205,68 @@ Image model availability, endpoint overrides, and API keys are resolved for
 the current user too. If an image request appears to use another account's
 provider settings, verify that the request is authenticated as the expected
 user.
+
+The following security and ownership rules also apply:
+
+- Sign in as an administrator to change provider routing. Plugin definitions
+  and connection fields are instance-managed configuration; normal users can
+  still save generation settings, credentials, and their own activation state.
+- When using the legacy `endpoint` or `api_url` override, enter the full API
+  endpoint URL, including the operation path (for example,
+  `https://provider.example/v1/chat/completions`). Enter an API root only in
+  `base_url`, paired with `api_mode` and an optional `api_path`.
+- Remote endpoints require HTTPS. HTTP is accepted only for exact loopback
+  hosts or private IPv4 literals. Hostnames such as `host.docker.internal` and
+  `10.example.com` are not private IP literals and therefore require HTTPS.
+- An empty override uses the endpoint bundled in the plugin definition. An
+  explicit malformed or unsafe override is rejected; Libre WebUI does not
+  silently send that request to the bundled provider endpoint.
+- A deployment environment key is used only when an unshadowed bundled
+  definition retains its trusted root endpoint, authentication fields,
+  capability endpoints and selectors, and routing-variable defaults. Imported
+  definitions, writable definitions that reuse a bundled ID, and
+  administrator-saved custom routes require a credential saved by the same
+  account. Libre WebUI
+  intentionally reports the provider as unavailable and skips discovery if
+  only the environment key exists.
+- Pre-upgrade custom definitions are quarantined because older releases did not
+  record administrator provenance. Re-import the JSON as an administrator,
+  then have each user activate it again. Editing an approved plugin JSON
+  directly quarantines it again; use the administrator install or update flow
+  so its source path and definition hash are recorded.
+- Saved credentials are bound to the route, authentication contract,
+  definition, and source in effect when they were entered. After changing an
+  endpoint or definition, save that account's credential again. An old unbound
+  credential migrates automatically only on an exact anchored bundled route.
+- Imported plugins may use `api_url` as a legacy full-operation URL alias.
+  `endpoint` wins when both fields are set. If model discovery lives elsewhere,
+  set the complete model-list URL in `models_endpoint`; it is validated and
+  redirects are not followed.
+- Activate the plugin after saving its endpoint and credential. Activation
+  derives a `/models` URL from the saved full endpoint and uses the activating
+  user's credential for discovery unless `models_endpoint` is set. Saving or
+  resetting any of these connection fields also refreshes discovery. The
+  request waits for discovery before the UI reloads the plugin list.
+  Activation is account-specific, so another user must activate the same
+  shared plugin separately.
+- Automatic discovery requires an OpenAI-compatible `data` array of model IDs.
+  Successful catalogs are stored per user without changing the shared plugin
+  JSON. A normal activation keeps the user's previous catalog when discovery
+  is unavailable. Changing or resetting a connection field clears that
+  obsolete catalog first, so a failed refresh uses the plugin's existing
+  `model_map`; configure those fallback model IDs in the plugin JSON when
+  necessary.
+- Image model availability, endpoint overrides, and API keys are also resolved
+  for the current user. If an image request appears to use another account's
+  provider settings, verify the request is authenticated as the expected user.
+- If an upgraded non-admin account once stored a routing value, use **Reset**
+  for that plugin. The ignored legacy value is purged so it cannot become active
+  after a later role change. Saving or resetting routing also clears that
+  account's discovered models so a stale catalog cannot follow the old route.
+- Requests originate from the backend. When Libre WebUI runs in a container,
+  `localhost` refers to that container, not automatically the host machine.
+- Provider requests do not follow redirects. Configure the final validated
+  operation URL directly.
 
 ### Chat Uses the Wrong Provider or Shows a Provider as Unavailable
 

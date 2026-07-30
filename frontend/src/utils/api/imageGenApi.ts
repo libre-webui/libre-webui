@@ -17,14 +17,18 @@
 
 import type { ApiResponse, GeneratedImage } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
-import type { ImageGenModel } from '@/utils/imageGenModels';
+import type { ImageGenImage, ImageGenModel } from '@/utils/imageGenModels';
 import { api, createDemoResponse } from './client';
 
 // Image Generation API
-export type { ImageGenModel } from '@/utils/imageGenModels';
+export type { ImageGenImage, ImageGenModel } from '@/utils/imageGenModels';
 export {
   findImageGenModel,
+  findPreferredImagePlugin,
+  getImageGenImageFileExtension,
+  getImageGenImageSource,
   getImageGenModelOptionValue,
+  resolveImageGenOption,
   resolveImageGenModel,
 } from '@/utils/imageGenModels';
 
@@ -46,11 +50,7 @@ export interface ImageGenRequest {
 }
 
 export interface ImageGenResponse {
-  images: Array<{
-    url?: string;
-    b64_json?: string;
-    revised_prompt?: string;
-  }>;
+  images: ImageGenImage[];
   model: string;
   pluginId?: string;
 }

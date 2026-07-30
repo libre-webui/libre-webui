@@ -16,15 +16,97 @@
  */
 
 import type { ChatMessage, OllamaChatMessage } from '../types/index.js';
+import {
+  boundedOpenAIResponsesOutputItems,
+  OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY,
+  OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY,
+  OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY,
+} from './openAIResponsesAdapter.js';
 
 export type ChatContextMessage = Pick<
   ChatMessage,
-  'role' | 'content' | 'images'
+  'role' | 'content' | 'images' | 'providerMetadata'
 >;
 type ContentMessage = {
   role: string;
   content: string;
 };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Chat does not persist tool results, so replaying a Responses API
+ * `function_call` item on the next turn would create an orphaned call. Keep the
+ * visible assistant content, but discard the raw replay state and its scope.
+ */
+export function sanitizeChatProviderMetadata(
+  providerMetadata: Record<string, unknown> | undefined
+): Record<string, unknown> | undefined {
+  const outputItems =
+    providerMetadata?.[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY];
+  const containsFunctionCall =
+    Array.isArray(outputItems) &&
+    outputItems.some(item => isRecord(item) && item.type === 'function_call');
+  const boundedOutput = boundedOpenAIResponsesOutputItems(outputItems);
+  const dropsReplayState = containsFunctionCall || boundedOutput.dropped;
+
+  if (!providerMetadata || !dropsReplayState) {
+    return providerMetadata;
+  }
+
+  const sanitized = { ...providerMetadata };
+  delete sanitized[OPENAI_RESPONSES_OUTPUT_ITEMS_METADATA_KEY];
+  delete sanitized[OPENAI_RESPONSES_STATE_SCOPE_METADATA_KEY];
+  if (boundedOutput.dropped) {
+    sanitized[OPENAI_RESPONSES_STATE_DROPPED_METADATA_KEY] = true;
+  }
+
+  return Object.keys(sanitized).length > 0 ? sanitized : undefined;
+}
+
+export function sanitizeChatMessageProviderState<T extends ChatContextMessage>(
+  message: T
+): T {
+  const providerMetadata = sanitizeChatProviderMetadata(
+    message.providerMetadata
+  );
+
+  if (providerMetadata === message.providerMetadata) {
+    return message;
+  }
+
+  const sanitized = { ...message };
+  delete sanitized.providerMetadata;
+  return {
+    ...sanitized,
+    ...(providerMetadata ? { providerMetadata } : {}),
+  };
+}
+
+/**
+ * Retain complete user-led turns. A plain `slice(-N)` can begin with an
+ * assistant message whose provider state depends on an omitted user turn.
+ */
+export function selectChatMessagesForContext<
+  T extends Pick<ChatMessage, 'role' | 'isActive'>,
+>(messages: readonly T[], maxMessages = 10): T[] {
+  const systemMessages = messages.filter(message => message.role === 'system');
+  const conversationMessages = messages.filter(
+    message => message.role !== 'system' && message.isActive !== false
+  );
+  const limit = Math.max(0, Math.floor(maxMessages));
+  const recentConversation =
+    limit > 0 ? conversationMessages.slice(-limit) : [];
+  const firstUserIndex = recentConversation.findIndex(
+    message => message.role === 'user'
+  );
+  const alignedConversation =
+    firstUserIndex >= 0 ? recentConversation.slice(firstUserIndex) : [];
+
+  return [...systemMessages, ...alignedConversation];
+}
 
 export function getLatestUserMessageIndex(
   messages: readonly Pick<ContentMessage, 'role'>[]
@@ -120,6 +202,7 @@ export function toChatMessages(
     role: message.role,
     content: message.content,
     images: message.images,
+    providerMetadata: message.providerMetadata,
     timestamp,
   }));
 }

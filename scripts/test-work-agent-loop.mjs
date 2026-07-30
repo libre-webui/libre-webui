@@ -20,10 +20,15 @@ const distModule = relativePath =>
   );
 const [
   { closeDatabase, getDatabase },
-  { default: workAgentService },
+  {
+    default: workAgentService,
+    normalizeToolCalls,
+    restorePersistedWorkContext,
+  },
   { default: workEventService },
   {
     default: workModelProviderService,
+    toOpenAIResponsesWorkInput,
     WORK_TOOL_ARGUMENTS_ERROR_MESSAGE,
     WORK_TOOL_ARGUMENTS_ERROR_METADATA_KEY,
   },
@@ -48,6 +53,12 @@ const replaceMethod = (target, key, replacement) => {
     else delete target[key];
   });
 };
+
+replaceMethod(
+  workModelProviderService,
+  'getRoutingFingerprint',
+  () => 'stable-work-routing'
+);
 
 after(async () => {
   for (const restore of restorers.reverse()) restore();
@@ -375,4 +386,786 @@ test('incomplete provider responses fail Work with the provider reason', async (
   assert.match(run.error, /incomplete response \(max_output_tokens\)/);
   const errorEvent = events.find(event => event.type === 'error');
   assert.equal(errorEvent?.data.code, 'WORK_PROVIDER_INCOMPLETE_RESPONSE');
+});
+
+test('Responses state and exact tool call IDs survive a persisted Work resume', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-responses-resume-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const stateScope = 'responses-resume-state-scope';
+  const reasoningItem = {
+    id: 'reasoning-resume',
+    type: 'reasoning',
+    encrypted_content: 'opaque-resume-reasoning',
+    summary: [],
+  };
+  const functionItem = {
+    id: 'function-resume',
+    type: 'function_call',
+    call_id: 'call-resume',
+    name: 'list_files',
+    arguments: '{"path":"."}',
+  };
+  const finalMessageItem = {
+    id: 'message-resume-final',
+    type: 'message',
+    role: 'assistant',
+    phase: 'final_answer',
+    content: [{ type: 'output_text', text: 'Initial run complete.' }],
+  };
+  const providerMetadata = outputItems => ({
+    openAIResponsesOutputItems: outputItems,
+    openAIResponsesStateScope: stateScope,
+  });
+
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => stateScope
+  );
+
+  let phase = 'initial';
+  let initialRound = 0;
+  let resumedRequest;
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      if (phase === 'resumed') {
+        resumedRequest = request;
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: 'Resumed run complete.',
+            providerMetadata: providerMetadata([
+              {
+                id: 'message-resumed',
+                type: 'message',
+                role: 'assistant',
+                phase: 'final_answer',
+                content: [
+                  { type: 'output_text', text: 'Resumed run complete.' },
+                ],
+              },
+            ]),
+          },
+          done: true,
+        };
+      }
+
+      initialRound += 1;
+      if (initialRound === 1) {
+        return {
+          model: request.model,
+          created_at: new Date().toISOString(),
+          message: {
+            role: 'assistant',
+            content: '',
+            providerMetadata: providerMetadata([reasoningItem, functionItem]),
+            tool_calls: [
+              {
+                id: 'call-resume',
+                function: {
+                  name: 'list_files',
+                  arguments: { path: '.' },
+                },
+              },
+            ],
+          },
+          done: true,
+        };
+      }
+
+      assert.equal(initialRound, 2);
+      assert.equal(request.messages.at(-1).tool_call_id, 'call-resume');
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: {
+          role: 'assistant',
+          content: 'Initial run complete.',
+          providerMetadata: providerMetadata([finalMessageItem]),
+        },
+        done: true,
+      };
+    }
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'List the workspace and finish.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const initialRunId = detail.activeRun?.id;
+  assert.ok(initialRunId);
+  await workAgentService.execute(detail.id, initialRunId, userId);
+  assert.equal(workTaskService.getRun(initialRunId).status, 'completed');
+
+  const hiddenRows = getDatabase()
+    .prepare(
+      `SELECT kind
+       FROM work_messages
+       WHERE task_id = ? AND kind = 'provider_state'`
+    )
+    .all(detail.id);
+  assert.equal(hiddenRows.length, 1);
+  assert.equal(
+    workTaskService
+      .getMessages(detail.id)
+      .some(message => message.kind === 'provider_state'),
+    false
+  );
+  assert.equal(
+    workTaskService
+      .getMessagePage(detail.id)
+      .messages.some(message => message.kind === 'provider_state'),
+    false
+  );
+
+  phase = 'resumed';
+  const resumedDetail = workTaskService.createRun(
+    detail.id,
+    userId,
+    'Continue from persisted state.'
+  );
+  const resumedRunId = resumedDetail.activeRun?.id;
+  assert.ok(resumedRunId);
+  await workAgentService.execute(detail.id, resumedRunId, userId);
+  assert.equal(workTaskService.getRun(resumedRunId).status, 'completed');
+  assert.ok(resumedRequest);
+
+  const restoredToolResult = resumedRequest.messages.find(
+    message => message.role === 'tool' && message.tool_call_id === 'call-resume'
+  );
+  assert.equal(restoredToolResult.content, '[]');
+  const replayedInput = toOpenAIResponsesWorkInput(
+    resumedRequest.messages,
+    stateScope
+  );
+  const replayStart = replayedInput.findIndex(
+    item => item.id === reasoningItem.id
+  );
+  assert.ok(replayStart >= 0);
+  assert.deepEqual(replayedInput.slice(replayStart, replayStart + 4), [
+    reasoningItem,
+    functionItem,
+    {
+      type: 'function_call_output',
+      call_id: 'call-resume',
+      output: '[]',
+    },
+    finalMessageItem,
+  ]);
+  assert.deepEqual(replayedInput.at(-1), {
+    role: 'user',
+    content: 'Continue from persisted state.',
+  });
+  assert.equal(
+    toOpenAIResponsesWorkInput(
+      resumedRequest.messages,
+      'different-provider-state-scope'
+    ).some(item => item.id === reasoningItem.id),
+    false
+  );
+});
+
+test('truncated Work context drops orphaned provider state and tool results', () => {
+  const now = Date.now();
+  const userId = 'agent-loop-context-truncation-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Old prompt outside the retained row window.',
+    'test-model',
+    true
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'assistant',
+    'provider_state',
+    '',
+    { workProviderState: { providerMetadata: {} } }
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'tool',
+    'tool_result',
+    'orphaned result',
+    { name: 'list_files', toolCallId: 'orphan-call' }
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'assistant',
+    'message',
+    'Safe retained boundary.'
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'user',
+    'message',
+    'Follow-up one.'
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'assistant',
+    'message',
+    'Answer one.'
+  );
+  workTaskService.addMessage(
+    detail.id,
+    runId,
+    'user',
+    'message',
+    'Follow-up two.'
+  );
+
+  const retained = workTaskService.getRecentModelContextMessages(detail.id, 1);
+  assert.equal(retained[0].content, 'Safe retained boundary.');
+  assert.equal(
+    retained.some(
+      message =>
+        message.kind === 'provider_state' || message.kind === 'tool_result'
+    ),
+    false
+  );
+});
+
+test('persisted Responses batches synthesize exact outputs for interrupted tools', () => {
+  const scope = 'persisted-partial-batch-scope';
+  const provider = {
+    providerType: 'plugin',
+    providerId: 'responses-provider',
+    model: 'responses-model',
+  };
+  const metadata = {
+    workProviderState: {
+      ...provider,
+      providerMetadata: {
+        openAIResponsesStateScope: scope,
+        openAIResponsesOutputItems: [
+          {
+            id: 'function-call-a',
+            type: 'function_call',
+            call_id: 'call-a',
+            name: 'list_files',
+            arguments: '{"path":"."}',
+          },
+          {
+            id: 'function-call-b',
+            type: 'function_call',
+            call_id: 'call-b',
+            name: 'read_file',
+            arguments: '{"path":"README.md"}',
+          },
+        ],
+      },
+    },
+  };
+
+  const restored = restorePersistedWorkContext(
+    [
+      {
+        role: 'assistant',
+        kind: 'provider_state',
+        content: '',
+        metadata,
+      },
+      {
+        role: 'tool',
+        kind: 'tool_result',
+        content: 'README contents',
+        metadata: { name: 'read_file', toolCallId: 'call-b' },
+      },
+      {
+        role: 'user',
+        kind: 'message',
+        content: 'Continue safely.',
+      },
+    ],
+    provider,
+    scope
+  );
+
+  assert.deepEqual(
+    restored.slice(0, 4).map(message => ({
+      role: message.role,
+      toolCallId: message.tool_call_id,
+      content: message.content,
+    })),
+    [
+      { role: 'assistant', toolCallId: undefined, content: '' },
+      {
+        role: 'tool',
+        toolCallId: 'call-b',
+        content: 'README contents',
+      },
+      {
+        role: 'tool',
+        toolCallId: 'call-a',
+        content:
+          'Tool execution was interrupted; outcome unknown. Inspect the workspace before retrying.',
+      },
+      {
+        role: 'user',
+        toolCallId: undefined,
+        content: 'Continue safely.',
+      },
+    ]
+  );
+});
+
+test('malformed persisted Responses calls fail closed to visible assistant text', () => {
+  const scope = 'malformed-persisted-state-scope';
+  const provider = {
+    providerType: 'plugin',
+    providerId: 'responses-provider',
+    model: 'responses-model',
+  };
+  const providerState = outputItems => ({
+    workProviderState: {
+      ...provider,
+      providerMetadata: {
+        openAIResponsesStateScope: scope,
+        openAIResponsesOutputItems: outputItems,
+      },
+    },
+  });
+  const malformedBatches = [
+    [{ type: 'function_call', name: 'list_files', arguments: '{}' }],
+    [
+      {
+        type: 'function_call',
+        call_id: '',
+        name: 'list_files',
+        arguments: '{}',
+      },
+    ],
+    [
+      {
+        type: 'function_call',
+        call_id: 'duplicate',
+        name: 'list_files',
+        arguments: '{}',
+      },
+      {
+        type: 'function_call',
+        call_id: 'duplicate',
+        name: 'read_file',
+        arguments: '{}',
+      },
+    ],
+  ];
+
+  for (const outputItems of malformedBatches) {
+    assert.deepEqual(
+      restorePersistedWorkContext(
+        [
+          {
+            role: 'assistant',
+            kind: 'message',
+            content: 'Visible safe answer.',
+            metadata: providerState(outputItems),
+          },
+        ],
+        provider,
+        scope
+      ),
+      [{ role: 'assistant', content: 'Visible safe answer.' }]
+    );
+    assert.deepEqual(
+      restorePersistedWorkContext(
+        [
+          {
+            role: 'assistant',
+            kind: 'provider_state',
+            content: '',
+            metadata: providerState(outputItems),
+          },
+        ],
+        provider,
+        scope
+      ),
+      []
+    );
+  }
+});
+
+test('Responses tool batches reject missing, blank, duplicate, and excessive IDs', () => {
+  const response = toolCalls => ({
+    message: {
+      role: 'assistant',
+      content: '',
+      providerMetadata: {
+        openAIResponsesStateScope: 'normalize-call-scope',
+        openAIResponsesOutputItems: toolCalls.map(call => ({
+          type: 'function_call',
+          call_id: call.id,
+          name: call.function?.name,
+          arguments: '{}',
+        })),
+      },
+      tool_calls: toolCalls,
+    },
+  });
+  const call = id => ({
+    ...(id === undefined ? {} : { id }),
+    function: { name: 'list_files', arguments: {} },
+  });
+
+  for (const calls of [
+    [call(undefined)],
+    [call('')],
+    [call('duplicate'), call('duplicate')],
+    Array.from({ length: 17 }, (_, index) => call(`call-${index}`)),
+  ]) {
+    assert.throws(
+      () => normalizeToolCalls(response(calls)),
+      error =>
+        error?.code === 'WORK_PROVIDER_INVALID_TOOL_CALLS' &&
+        error?.status === 502
+    );
+  }
+
+  assert.equal(
+    normalizeToolCalls(response([call(' exact-id ')])).at(0).id,
+    ' exact-id '
+  );
+});
+
+test('oversized Responses tool state fails before Work performs a side effect', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-oversized-state-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  let sideEffects = 0;
+  replaceMethod(workRuntimeService, 'prepare', async () => () => undefined);
+  replaceMethod(workRuntimeService, 'isPreviewRunning', async () => false);
+  replaceMethod(workRuntimeService, 'stopContainer', async () => undefined);
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    sideEffects += 1;
+    return { entries: [] };
+  });
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => 'oversized-state-scope'
+  );
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => ({
+      model: request.model,
+      created_at: new Date().toISOString(),
+      message: {
+        role: 'assistant',
+        content: '',
+        providerMetadata: {
+          openAIResponsesStateScope: 'oversized-state-scope',
+          openAIResponsesStateDropped: true,
+        },
+        tool_calls: [
+          {
+            id: 'oversized-call',
+            function: { name: 'list_files', arguments: { path: '.' } },
+          },
+        ],
+      },
+      done: true,
+    })
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Do not execute an unpersistable call.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(sideEffects, 0);
+  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  const events = workEventService.replay(detail.id, runId, 0).events;
+  assert.equal(
+    events.find(event => event.type === 'error')?.data.code,
+    'WORK_PROVIDER_INVALID_TOOL_CALLS'
+  );
+});
+
+test('Responses metadata cannot execute tools after a chat-completions scope race', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-mode-race-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  let sideEffects = 0;
+  replaceMethod(workRuntimeService, 'prepare', async () => () => undefined);
+  replaceMethod(workRuntimeService, 'isPreviewRunning', async () => false);
+  replaceMethod(workRuntimeService, 'stopContainer', async () => undefined);
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    sideEffects += 1;
+    return { entries: [] };
+  });
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => undefined
+  );
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => ({
+      model: request.model,
+      created_at: new Date().toISOString(),
+      message: {
+        role: 'assistant',
+        content: '',
+        providerMetadata: {
+          openAIResponsesStateScope: 'new-responses-scope',
+          openAIResponsesOutputItems: [
+            {
+              id: 'mode-race-function',
+              type: 'function_call',
+              call_id: 'mode-race-call',
+              name: 'list_files',
+              arguments: '{"path":"."}',
+            },
+          ],
+        },
+        tool_calls: [
+          {
+            id: 'mode-race-call',
+            function: { name: 'list_files', arguments: { path: '.' } },
+          },
+        ],
+      },
+      done: true,
+    })
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Reject tool calls from a newly selected Responses route.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(sideEffects, 0);
+  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal(
+    workEventService
+      .replay(detail.id, runId, 0)
+      .events.find(event => event.type === 'error')?.data.code,
+    'WORK_PROVIDER_INVALID_TOOL_CALLS'
+  );
+});
+
+test('Responses tool state must fit the exact persisted metadata wrapper', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-wrapper-limit-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const stateScope = 'wrapper-limit-scope';
+  let sideEffects = 0;
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    sideEffects += 1;
+    return { entries: [] };
+  });
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => stateScope
+  );
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => ({
+      model: request.model,
+      created_at: new Date().toISOString(),
+      message: {
+        role: 'assistant',
+        content: '',
+        providerMetadata: {
+          openAIResponsesStateScope: stateScope,
+          openAIResponsesOutputItems: [
+            {
+              id: 'wrapper-limit-function',
+              type: 'function_call',
+              call_id: 'wrapper-limit-call',
+              name: 'list_files',
+              arguments: '{"path":"."}',
+            },
+            {
+              id: 'wrapper-limit-message',
+              type: 'message',
+              role: 'assistant',
+              content: [{ type: 'output_text', text: 'x'.repeat(88_000) }],
+            },
+          ],
+        },
+        tool_calls: [
+          {
+            id: 'wrapper-limit-call',
+            function: { name: 'list_files', arguments: { path: '.' } },
+          },
+        ],
+      },
+      done: true,
+    })
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Do not execute state that the database cannot preserve.',
+    `model-${'m'.repeat(15_000)}`,
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(sideEffects, 0);
+  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal(
+    workEventService
+      .replay(detail.id, runId, 0)
+      .events.find(event => event.type === 'error')?.data.code,
+    'WORK_PROVIDER_INVALID_TOOL_CALLS'
+  );
+});
+
+test('Work stops before a second provider request after credential rotation', async () => {
+  const now = Date.now();
+  const userId = 'agent-loop-routing-freeze-admin';
+  getDatabase()
+    .prepare(
+      `INSERT INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
+    )
+    .run(userId, userId, now, now);
+
+  const stateScope = 'routing-freeze-scope';
+  let credentialRevision = 'old-credential';
+  let requests = 0;
+  let sideEffects = 0;
+  replaceMethod(workRuntimeService, 'listFiles', async () => {
+    sideEffects += 1;
+    return { entries: [] };
+  });
+  replaceMethod(
+    workModelProviderService,
+    'getResponsesStateScope',
+    () => stateScope
+  );
+  replaceMethod(
+    workModelProviderService,
+    'getRoutingFingerprint',
+    () => `routing:${credentialRevision}`
+  );
+  replaceMethod(
+    workModelProviderService,
+    'generateChatStreamResponse',
+    async request => {
+      requests += 1;
+      credentialRevision = 'new-credential';
+      return {
+        model: request.model,
+        created_at: new Date().toISOString(),
+        message: {
+          role: 'assistant',
+          content: '',
+          providerMetadata: {
+            openAIResponsesStateScope: stateScope,
+            openAIResponsesOutputItems: [
+              {
+                id: 'routing-freeze-function',
+                type: 'function_call',
+                call_id: 'routing-freeze-call',
+                name: 'list_files',
+                arguments: '{"path":"."}',
+              },
+            ],
+          },
+          tool_calls: [
+            {
+              id: 'routing-freeze-call',
+              function: { name: 'list_files', arguments: { path: '.' } },
+            },
+          ],
+        },
+        done: true,
+      };
+    }
+  );
+
+  const detail = workTaskService.createTaskWithRun(
+    userId,
+    'Stop before sending state to changed provider routing.',
+    'test-model',
+    true,
+    { providerType: 'plugin', providerId: 'test-plugin' }
+  );
+  const runId = detail.activeRun?.id;
+  assert.ok(runId);
+  await workAgentService.execute(detail.id, runId, userId);
+
+  assert.equal(requests, 1);
+  assert.equal(sideEffects, 1);
+  assert.equal(workTaskService.getRun(runId).status, 'failed');
+  assert.equal(
+    workEventService
+      .replay(detail.id, runId, 0)
+      .events.find(event => event.type === 'error')?.data.code,
+    'WORK_PROVIDER_ROUTING_CHANGED'
+  );
 });
