@@ -137,12 +137,29 @@ Many providers expose an OpenAI-compatible API. A plugin can define:
 
 If a provider does not support live model discovery, Libre WebUI uses the configured model map.
 
+### Capability-specific endpoints
+
+Chat endpoint overrides are isolated from image, embedding, and text-to-speech
+capabilities. Multi-capability plugins can expose `image_endpoint`,
+`embedding_endpoint`, or `tts_endpoint` variables (or name another variable
+with `config.endpoint_variable`). Leaving those fields blank uses the
+capability endpoint declared by the plugin; a generic Chat `endpoint` is never
+used as a capability override.
+
+The bundled GitHub Models plugin inherits its current
+`models.github.ai/inference/chat/completions` endpoint when its optional
+override is blank. The Hugging Face plugin uses task-specific
+`hf-inference/models/{model}` routes and payloads for embeddings, images, and
+text-to-speech rather than sending those requests to its Chat endpoint.
+
 ### Endpoint Overrides
 
 The `endpoint` variable is the complete request URL, including the operation
 path. For example, an OpenAI-compatible chat plugin normally uses a URL such as
 `https://provider.example/v1/chat/completions`, not only
-`https://provider.example`.
+`https://provider.example`. Imported legacy plugin configurations may call this
+variable `api_url`; Libre WebUI accepts that alias, but a non-empty `endpoint`
+always takes precedence when both are present.
 
 Remote endpoints must use HTTPS. Plain HTTP is accepted only for exact loopback
 hosts (`localhost`, `127.0.0.1`, or `[::1]`) and private IPv4 literals in the
@@ -152,10 +169,9 @@ requires HTTPS. Other protocols are rejected. Leaving the override empty uses
 the full endpoint from the plugin definition; an explicit invalid or unsafe
 override is rejected instead of silently routing to that default.
 
-Endpoint redirects require the redirect-hop validation delivered by the
-endpoint-isolation hardening tracked in issue #168. This change enforces the
-initial custom-route and credential boundary; deployments should include #168
-before treating provider redirects as fully covered by that boundary.
+Provider requests do not follow redirects. Configure the final validated
+operation URL directly; a redirect response is reported as a provider error
+instead of forwarding credentials or request content to another hop.
 
 Remember that requests originate from the Libre WebUI backend. In a container,
 `localhost` identifies the container itself, not automatically the container
@@ -174,14 +190,28 @@ derives a model-list URL from the full endpoint:
   `/embeddings`, or `/messages` are replaced with `/models`;
 - otherwise, `/models` is appended to the path.
 
+Plugins that cannot use the derived URL may expose `models_endpoint` as an
+explicit full model-list URL. It takes precedence over derivation, is subject
+to the same outbound URL policy, and is requested without following redirects.
+Saving or resetting `endpoint`, `api_url`, or `models_endpoint` clears and
+refreshes the current user's discovered catalog before the UI reloads it.
+
+All custom routes are resolved and validated before credential selection. The
+credential policy must not fall back to a server environment key for a stored
+custom route; configure a per-user key for that route instead. Environment
+fallback is reserved for the endpoint supplied by the trusted plugin
+definition.
+
 Discovery expects an OpenAI-compatible response containing model IDs in a
 `data` array. Activation waits for that attempt before returning, so the first
 plugin-list refresh can include the discovered catalog. Successful results are
 stored per user and overlaid on that user's plugin view; Libre WebUI does not
 rewrite the shared plugin JSON or expose one user's discovered model IDs to
 another account. If the provider has no compatible model-list endpoint, cannot
-be reached, or returns another response shape, that user keeps their previous
-discovery result or the plugin's `model_map` fallback.
+be reached, or returns another response shape, an ordinary activation keeps
+that user's previous discovery result. An intentional connection-field change
+clears the obsolete catalog first and therefore uses the plugin's `model_map`
+fallback when the new route cannot be discovered.
 
 Saving or resetting connection routing clears that account's previous
 discovered catalog before the next discovery attempt, so models learned from

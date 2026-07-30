@@ -39,6 +39,7 @@ import { validatePluginVariables } from '../utils/pluginVariableValidation.js';
 import { requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
 import { userModel } from '../models/userModel.js';
 import { isPluginConnectionVariableForPlugin } from '../utils/pluginConnectionVariables.js';
+import { PLUGIN_MODEL_DISCOVERY_VARIABLES } from '../utils/pluginValidation.js';
 
 const router = express.Router();
 
@@ -59,6 +60,26 @@ const requestUserIsAdmin = (req: Request): boolean => {
   } catch {
     return false;
   }
+};
+
+const supportsCompletionModelDiscovery = (plugin: Plugin): boolean =>
+  plugin.type === 'completion' || plugin.type === 'chat';
+
+const modelDiscoveryConnectionChanged = (
+  previousVariables: Record<string, string | number | boolean>,
+  nextVariables: Record<string, string | number | boolean>
+): boolean =>
+  PLUGIN_MODEL_DISCOVERY_VARIABLES.some(
+    name => previousVariables[name] !== nextVariables[name]
+  );
+
+const refreshUserModels = async (
+  plugin: Plugin,
+  userId: string
+): Promise<void> => {
+  if (!supportsCompletionModelDiscovery(plugin)) return;
+  pluginService.clearDiscoveredModels(plugin.id, userId);
+  await pluginService.discoverModels(plugin.id, userId).catch(() => {});
 };
 
 // Rate limiting for plugin operations
@@ -832,6 +853,11 @@ router.put(
         return;
       }
 
+      const previousVariables = pluginVariablesService.getResolvedVariables(
+        id,
+        plugin.variables,
+        userId
+      );
       const success = pluginVariablesService.setVariables(
         id,
         validation.variables,
@@ -840,12 +866,13 @@ router.put(
       );
 
       if (success) {
-        if (
-          Object.keys(validation.variables).some(name =>
-            isPluginConnectionVariableForPlugin(plugin, name)
-          )
-        ) {
-          pluginService.clearDiscoveredModels(id, userId);
+        const nextVariables = pluginVariablesService.getResolvedVariables(
+          id,
+          plugin.variables,
+          userId
+        );
+        if (modelDiscoveryConnectionChanged(previousVariables, nextVariables)) {
+          await refreshUserModels(plugin, userId);
         }
         res.json({ success: true, data: true });
       } else {
@@ -881,9 +908,23 @@ router.delete(
       // Non-admins still cannot target routing variables through the update
       // endpoint, but reset must not leave dormant values that a later role
       // promotion could reactivate.
+      const previousVariables = plugin.variables
+        ? pluginVariablesService.getResolvedVariables(
+            id,
+            plugin.variables,
+            userId
+          )
+        : {};
       const success = pluginVariablesService.deletePluginVariables(id, userId);
-      if (success) {
-        pluginService.clearDiscoveredModels(id, userId);
+      if (success && plugin.variables) {
+        const nextVariables = pluginVariablesService.getResolvedVariables(
+          id,
+          plugin.variables,
+          userId
+        );
+        if (modelDiscoveryConnectionChanged(previousVariables, nextVariables)) {
+          await refreshUserModels(plugin, userId);
+        }
       }
 
       res.json({ success: true, data: success });

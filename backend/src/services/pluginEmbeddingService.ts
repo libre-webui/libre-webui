@@ -17,12 +17,15 @@
 
 import axios from 'axios';
 import {
+  EmbeddingConfig,
   EmbeddingModel,
   OllamaEmbeddingsResponse,
   Plugin,
 } from '../types/index.js';
 import {
   assertSafePluginEndpoint,
+  applyModelEndpointTemplate,
+  resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 
@@ -147,19 +150,40 @@ export class PluginEmbeddingService {
     const noAuthRequired =
       (embeddingCapability?.config as Record<string, unknown> | undefined)
         ?.no_auth_required === true;
+    const pluginVars = this.deps.getPluginVariables(plugin, userId);
+    const endpointVariable =
+      embeddingCapability?.config?.endpoint_variable ||
+      (embeddingCapability && plugin.type !== 'embedding'
+        ? 'embedding_endpoint'
+        : 'endpoint');
+    const endpointOverride = pluginVars[endpointVariable];
+    let effectiveEndpoint = embeddingCapability?.endpoint || plugin.endpoint;
+    if (endpointVariable === 'endpoint') {
+      effectiveEndpoint = resolvePluginOperationEndpoint(
+        effectiveEndpoint,
+        pluginVars
+      );
+    } else if (
+      typeof endpointOverride === 'string' &&
+      endpointOverride.trim().length > 0
+    ) {
+      effectiveEndpoint = this.deps.validateEndpointUrl(
+        endpointOverride.trim()
+      );
+    }
+
+    const processedEndpoint =
+      plugin.id === 'huggingface'
+        ? applyModelEndpointTemplate(effectiveEndpoint, model)
+        : getEmbeddingEndpoint(effectiveEndpoint);
+    assertSafePluginEndpoint(processedEndpoint, 'embedding endpoint');
+
     const apiKey = this.deps.getApiKey(plugin, userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (save a provider credential in Settings)`
       );
     }
-
-    const pluginVars = this.deps.getPluginVariables(plugin, userId);
-    const endpointOverride = pluginVars.endpoint as string | undefined;
-    const effectiveEndpoint =
-      (endpointOverride && this.deps.validateEndpointUrl(endpointOverride)) ||
-      embeddingCapability?.endpoint ||
-      plugin.endpoint;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -171,20 +195,33 @@ export class PluginEmbeddingService {
       headers[plugin.auth.header] = authValue;
     }
 
-    const processedEndpoint = getEmbeddingEndpoint(effectiveEndpoint);
-    assertSafePluginEndpoint(processedEndpoint, 'embedding endpoint');
-
     const response = await axios.post(
       processedEndpoint,
-      {
-        model,
-        input,
-      },
+      plugin.id === 'huggingface' ? { inputs: input } : { model, input },
       {
         headers,
         timeout: 60000,
+        maxRedirects: 0,
       }
     );
+
+    if (
+      Array.isArray(response.data) &&
+      response.data.every(value => typeof value === 'number')
+    ) {
+      return { embeddings: [response.data as number[]] };
+    }
+
+    if (
+      Array.isArray(response.data) &&
+      response.data.every(
+        value =>
+          Array.isArray(value) &&
+          value.every(component => typeof component === 'number')
+      )
+    ) {
+      return { embeddings: response.data as number[][] };
+    }
 
     if (Array.isArray(response.data?.embeddings)) {
       return {
@@ -209,7 +246,7 @@ export class PluginEmbeddingService {
     | {
         endpoint: string;
         model_map: string[];
-        config?: Record<string, unknown>;
+        config?: EmbeddingConfig;
       }
     | undefined {
     return plugin.capabilities?.embedding;

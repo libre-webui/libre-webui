@@ -161,16 +161,24 @@ Administrators can disable model pulls for normal users. Check admin settings if
   definition, and source in effect when they were entered. After changing an
   endpoint or definition, save that account's credential again. An old unbound
   credential migrates automatically only on an exact anchored bundled route.
+- Imported plugins may use `api_url` as a legacy full-operation URL alias.
+  `endpoint` wins when both fields are set. If model discovery lives elsewhere,
+  set the complete model-list URL in `models_endpoint`; it is validated and
+  redirects are not followed.
 - Activate the plugin after saving its endpoint and credential. Activation
   derives a `/models` URL from the saved full endpoint and uses the activating
-  user's credential for discovery. The activation request waits for discovery
-  before the UI reloads the plugin list. Activation is account-specific, so
-  another user must activate the same shared plugin separately.
+  user's credential for discovery unless `models_endpoint` is set. Saving or
+  resetting any of these connection fields also refreshes discovery. The
+  request waits for discovery before the UI reloads the plugin list.
+  Activation is account-specific, so another user must activate the same
+  shared plugin separately.
 - Automatic discovery requires an OpenAI-compatible `data` array of model IDs.
   Successful catalogs are stored per user without changing the shared plugin
-  JSON. If discovery is unavailable, Libre WebUI keeps that user's previous
-  catalog or the plugin's existing `model_map`; configure those fallback model
-  IDs in the plugin JSON when necessary.
+  JSON. A normal activation keeps the user's previous catalog when discovery
+  is unavailable. Changing or resetting a connection field clears that
+  obsolete catalog first, so a failed refresh uses the plugin's existing
+  `model_map`; configure those fallback model IDs in the plugin JSON when
+  necessary.
 - Image model availability, endpoint overrides, and API keys are also resolved
   for the current user. If an image request appears to use another account's
   provider settings, verify the request is authenticated as the expected user.
@@ -180,9 +188,8 @@ Administrators can disable model pulls for normal users. Check admin settings if
   account's discovered models so a stale catalog cannot follow the old route.
 - Requests originate from the backend. When Libre WebUI runs in a container,
   `localhost` refers to that container, not automatically the host machine.
-- Redirect-hop endpoint validation is completed by the endpoint-isolation
-  hardening tracked in issue #168. Include that change when validating a
-  deployment that follows provider redirects.
+- Provider requests do not follow redirects. Configure the final validated
+  operation URL directly.
 
 ### Chat Uses the Wrong Provider or Shows a Provider as Unavailable
 

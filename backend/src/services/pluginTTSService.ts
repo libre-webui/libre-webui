@@ -20,6 +20,8 @@ import { Plugin, TTSConfig } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
 import {
   assertSafePluginEndpoint,
+  applyModelEndpointTemplate,
+  resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 
@@ -152,6 +154,20 @@ export class PluginTTSService {
       endpoint = plugin.endpoint;
     }
 
+    const ttsVars = this.deps.getPluginVariables(plugin, options.userId);
+    const endpointVariable =
+      ttsConfig?.endpoint_variable ||
+      (plugin.type === 'tts' ? 'endpoint' : 'tts_endpoint');
+    const endpointOverride = ttsVars[endpointVariable];
+    if (endpointVariable === 'endpoint') {
+      endpoint = resolvePluginOperationEndpoint(endpoint, ttsVars);
+    } else if (
+      typeof endpointOverride === 'string' &&
+      endpointOverride.trim().length > 0
+    ) {
+      endpoint = this.deps.validateEndpointUrl(endpointOverride.trim());
+    }
+
     const noAuthRequired =
       (ttsConfig as Record<string, unknown> | undefined)?.no_auth_required ===
       true;
@@ -172,13 +188,6 @@ export class PluginTTSService {
         ? `${plugin.auth.prefix}${apiKey}`
         : apiKey;
       headers[plugin.auth.header] = authValue;
-    }
-
-    const ttsVars = this.deps.getPluginVariables(plugin, options.userId);
-
-    if (ttsVars.endpoint && typeof ttsVars.endpoint === 'string') {
-      const validated = this.deps.validateEndpointUrl(ttsVars.endpoint);
-      if (validated) endpoint = validated;
     }
 
     const voice = options.voice || ttsConfig?.default_voice || 'alloy';
@@ -256,6 +265,9 @@ export class PluginTTSService {
             (ttsVars.similarity_boost as number | undefined) ?? 0.75,
         },
       };
+    } else if (plugin.id === 'huggingface') {
+      payload = { inputs: input };
+      processedEndpoint = applyModelEndpointTemplate(endpoint, model);
     } else {
       payload = {
         model,
@@ -276,6 +288,7 @@ export class PluginTTSService {
         headers,
         timeout: 120000,
         responseType: 'arraybuffer',
+        maxRedirects: 0,
       });
 
       return Buffer.from(response.data);

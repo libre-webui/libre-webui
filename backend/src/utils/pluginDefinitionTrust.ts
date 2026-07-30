@@ -30,10 +30,10 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
   elevenlabs:
     'de6afcbd123600f484a078227618b5c9687bc56f6e2637b57514349fbcea63d6',
   gemini: '400de79b1d5b4b876c5ed14d177bd01b7eecbf9d6ce856ae031d98b1c7c8a5ce',
-  github: '3f89cd3a94615ce69c3d226b02138557fad08b485e0a78b7266b89bdb4921a65',
+  github: '482f22da003d73fe0d6684572dc2d959b46d7f8dbecf0f92205c2b4ef2f03817',
   groq: 'd03908e9caddae5ad838de9967fdc0b5dfb249d13f24391af1c9822fcf28e823',
   huggingface:
-    '49f954c687f89e489287e5bd58bc1c7ec680945c5f3cc55c7af7c5d423c16300',
+    '6130d437e3d8b25b5de3e9f3b30eda617edd44703dd4c9dd2c1fb061df2642ca',
   'kimi-code':
     '0b861caf086e5fdeeb029b6053447e673f2f8e121246d79b8102b157c109b557',
   'kyutai-tts-1.6b':
