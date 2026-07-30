@@ -21,8 +21,28 @@ import { createLogger } from './logger.js';
 const logger = createLogger('utils:plugin-validation');
 
 const MODEL_PATTERN = /^[a-zA-Z0-9\-_:./~]+$/;
-const PRIVATE_NETWORK_PATTERN =
-  /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/;
+
+function isPrivateIpv4Address(hostname: string): boolean {
+  const octets = hostname.split('.');
+  if (octets.length !== 4 || octets.some(octet => !/^\d{1,3}$/.test(octet))) {
+    return false;
+  }
+
+  const [first, second, third, fourth] = octets.map(Number);
+  if (
+    [first, second, third, fourth].some(
+      octet => !Number.isInteger(octet) || octet < 0 || octet > 255
+    )
+  ) {
+    return false;
+  }
+
+  return (
+    first === 10 ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  );
+}
 
 export function validatePluginModel(model: string): void {
   if (!model || typeof model !== 'string') {
@@ -47,9 +67,12 @@ export function isSafePluginEndpoint(endpoint: string): boolean {
   const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
     url.hostname
   );
-  const isPrivateNetwork = PRIVATE_NETWORK_PATTERN.test(url.hostname);
+  const isPrivateNetwork = isPrivateIpv4Address(url.hostname);
 
-  return url.protocol === 'https:' || isLocalhost || isPrivateNetwork;
+  return (
+    url.protocol === 'https:' ||
+    (url.protocol === 'http:' && (isLocalhost || isPrivateNetwork))
+  );
 }
 
 export function validatePluginEndpointOverride(
@@ -95,15 +118,27 @@ export function resolvePluginEndpoint(
   endpoint: string,
   endpointOverride?: string
 ): string {
-  return (
-    (endpointOverride && validatePluginEndpointOverride(endpointOverride)) ||
-    endpoint
-  );
+  const normalizedOverride = endpointOverride?.trim();
+  if (!normalizedOverride) {
+    return endpoint;
+  }
+
+  const validatedOverride = validatePluginEndpointOverride(normalizedOverride);
+  if (!validatedOverride) {
+    throw new Error(
+      'Invalid or unsafe plugin endpoint override. Use HTTPS for remote endpoints, ' +
+        'or HTTP for localhost and private IPv4 addresses.'
+    );
+  }
+
+  return validatedOverride;
 }
 
 export function resolvePluginModelsEndpoint(endpoint: string): string {
   const url = new URL(endpoint);
   url.search = '';
+  url.hash = '';
+  url.pathname = url.pathname === '/' ? '/' : url.pathname.replace(/\/+$/, '');
 
   if (url.pathname.endsWith('/models')) {
     return url.toString();
@@ -121,12 +156,7 @@ export function resolvePluginModelsEndpoint(endpoint: string): string {
     }
   }
 
-  const basePath =
-    url.pathname === '/'
-      ? ''
-      : url.pathname.endsWith('/')
-        ? url.pathname.slice(0, -1)
-        : url.pathname;
+  const basePath = url.pathname === '/' ? '' : url.pathname;
   url.pathname = `${basePath}/models`;
   return url.toString();
 }

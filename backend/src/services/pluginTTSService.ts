@@ -18,7 +18,10 @@
 import axios from 'axios';
 import { Plugin, TTSConfig } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
-import { validatePluginModel } from '../utils/pluginValidation.js';
+import {
+  assertSafePluginEndpoint,
+  validatePluginModel,
+} from '../utils/pluginValidation.js';
 
 const logger = createLogger('plugin-tts');
 
@@ -29,7 +32,7 @@ export interface PluginTTSServiceDependencies {
   getPlugin(id: string): Plugin | null;
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
-  validateEndpointUrl(endpoint: string): string | null;
+  validateEndpointUrl(endpoint: string): string;
 }
 
 export class PluginTTSService {
@@ -266,7 +269,7 @@ export class PluginTTSService {
       processedEndpoint = endpoint.replace('{model}', sanitizedModel);
     }
 
-    assertTTSPluginEndpoint(processedEndpoint);
+    assertSafePluginEndpoint(processedEndpoint, 'TTS endpoint URL constructed');
 
     try {
       const response = await axios.post(processedEndpoint, payload, {
@@ -373,24 +376,4 @@ export function splitTextForTTS(text: string, maxChars: number): string[] {
   }
 
   return chunks.filter(chunk => chunk.length > 0);
-}
-
-function assertTTSPluginEndpoint(processedEndpoint: string): void {
-  try {
-    const url = new URL(processedEndpoint);
-    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-      url.hostname
-    );
-    const isPrivateNetwork =
-      /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(url.hostname);
-
-    if (url.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-      throw new Error(
-        `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints. ` +
-          `(HTTP is permitted for localhost and private network IPs)`
-      );
-    }
-  } catch (_error) {
-    throw new Error(`Invalid endpoint URL constructed: ${processedEndpoint}`);
-  }
 }

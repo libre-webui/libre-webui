@@ -16,6 +16,7 @@
  */
 
 import type { PluginVariableDefinition } from '../types/index.js';
+import { isSafePluginEndpoint } from './pluginValidation.js';
 
 export type ValidatedPluginVariables = Record<
   string,
@@ -82,15 +83,31 @@ export function validatePluginVariables(
       };
     }
 
-    if (key === 'endpoint' && str.length > 0) {
+    if (key === 'endpoint') {
+      const endpoint = str.trim();
+      if (endpoint.length === 0) {
+        validated[key] = '';
+        continue;
+      }
+
       try {
-        new URL(str);
+        if (!isSafePluginEndpoint(endpoint)) {
+          return {
+            success: false,
+            error:
+              'Variable "endpoint" must use HTTPS for remote URLs, or HTTP ' +
+              'for localhost and private IPv4 addresses',
+          };
+        }
       } catch {
         return {
           success: false,
           error: `Variable "${key}" must be a valid URL`,
         };
       }
+
+      validated[key] = endpoint;
+      continue;
     }
 
     validated[key] = str;

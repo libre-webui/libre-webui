@@ -129,6 +129,27 @@ Administrators can disable model pulls for normal users. Check admin settings if
 - Confirm the model fits in RAM/VRAM.
 - For provider plugins, confirm the API key and provider quota.
 
+### A Custom Provider Uses the Wrong Endpoint or Shows No Models
+
+- In **Settings → Plugins**, enter the full API endpoint URL, including the
+  operation path (for example,
+  `https://provider.example/v1/chat/completions`). A provider base URL alone is
+  not the chat endpoint.
+- Remote endpoints require HTTPS. HTTP is accepted only for exact loopback
+  hosts or private IPv4 literals. Hostnames such as `host.docker.internal` and
+  `10.example.com` are not private IP literals and therefore require HTTPS.
+- An empty override uses the endpoint bundled in the plugin definition. An
+  explicit malformed or unsafe override is rejected; Libre WebUI does not
+  silently send that request to the bundled provider endpoint.
+- Activate the plugin after saving its endpoint and credential. Activation
+  derives a `/models` URL from the saved full endpoint and uses the activating
+  user's credential for discovery.
+- Automatic discovery requires an OpenAI-compatible `data` array of model IDs.
+  If discovery is unavailable, Libre WebUI keeps the plugin's existing
+  `model_map`; configure those model IDs in the plugin JSON when necessary.
+- Requests originate from the backend. When Libre WebUI runs in a container,
+  `localhost` refers to that container, not automatically the host machine.
+
 ## Work Problems
 
 ### Work Is Missing or Reports Runtime Unavailable

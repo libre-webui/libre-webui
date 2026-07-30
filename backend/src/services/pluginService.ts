@@ -59,7 +59,6 @@ import {
   pluginRequiresApiKey,
   resolvePluginEndpoint,
   resolvePluginModelsEndpoint,
-  validatePluginEndpointOverride,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 import { createLogger } from '../utils/logger.js';
@@ -194,14 +193,14 @@ class PluginService {
 
   /**
    * Validate an endpoint URL for safety (SSRF protection).
-   * Returns the URL string if valid, or null if invalid.
+   * Returns the URL string if valid and throws for an unsafe explicit value.
    */
-  private validateEndpointUrl(endpoint: string): string | null {
-    return validatePluginEndpointOverride(endpoint);
+  private validateEndpointUrl(endpoint: string): string {
+    return resolvePluginEndpoint('', endpoint);
   }
 
   /**
-   * Attempt to auto-discover available models from a plugin's base endpoint.
+   * Attempt to auto-discover available models from a plugin's full API endpoint.
    * Resolves the provider's model-list endpoint and updates the plugin's model_map.
    * Falls back silently to the existing model_map if the endpoint is unavailable.
    */
@@ -211,21 +210,21 @@ class PluginService {
 
     const pluginVars = this.getPluginVariables(plugin, userId);
     const endpointOverride = pluginVars.endpoint as string | undefined;
-    const effectiveEndpoint =
-      (endpointOverride && this.validateEndpointUrl(endpointOverride)) ||
-      plugin.endpoint;
+    const effectiveEndpoint = resolvePluginEndpoint(
+      plugin.endpoint,
+      endpointOverride
+    );
+    const modelsEndpoint = resolvePluginModelsEndpoint(effectiveEndpoint);
+    assertSafePluginEndpoint(modelsEndpoint, 'model discovery endpoint');
 
     const apiKey = this.getApiKey(plugin, userId);
     const headers = buildPluginModelDiscoveryHeaders(plugin, apiKey);
 
     try {
-      const response = await axios.get(
-        resolvePluginModelsEndpoint(effectiveEndpoint),
-        {
-          headers,
-          timeout: 5000,
-        }
-      );
+      const response = await axios.get(modelsEndpoint, {
+        headers,
+        timeout: 5000,
+      });
 
       if (response.data?.data && Array.isArray(response.data.data)) {
         const models = response.data.data
@@ -413,7 +412,7 @@ class PluginService {
   }
 
   // Activate a plugin
-  activatePlugin(id: string): boolean {
+  activatePlugin(id: string, userId?: string): boolean {
     const plugin = this.getPlugin(id);
 
     if (!plugin) {
@@ -424,7 +423,7 @@ class PluginService {
     this.saveActivePlugins();
 
     // Trigger model discovery in background (non-blocking)
-    this.discoverModels(id).catch(() => {});
+    this.discoverModels(id, userId).catch(() => {});
 
     return true;
   }

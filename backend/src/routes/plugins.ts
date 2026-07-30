@@ -378,7 +378,8 @@ router.post(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const success = pluginService.activatePlugin(id);
+      const userId = getRequestUserId(req);
+      const success = pluginService.activatePlugin(id, userId);
 
       res.json({
         success: true,
@@ -409,7 +410,8 @@ router.post(
   async (req: Request, res: Response<ApiResponse<string[]>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const models = await pluginService.discoverModels(id);
+      const userId = getRequestUserId(req);
+      const models = await pluginService.discoverModels(id, userId);
 
       res.json({
         success: true,

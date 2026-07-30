@@ -66,7 +66,7 @@ For shared deployments, user-level credentials are usually better because each u
 
 Many providers expose an OpenAI-compatible API. A plugin can define:
 
-- Base URL
+- Full API endpoint URL
 - API key environment variable
 - Chat endpoint behavior
 - Embedding support
@@ -74,6 +74,42 @@ Many providers expose an OpenAI-compatible API. A plugin can define:
 - Optional model map fallback
 
 If a provider does not support live model discovery, Libre WebUI uses the configured model map.
+
+### Endpoint Overrides
+
+The `endpoint` variable is the complete request URL, including the operation
+path. For example, an OpenAI-compatible chat plugin normally uses a URL such as
+`https://provider.example/v1/chat/completions`, not only
+`https://provider.example`.
+
+Remote endpoints must use HTTPS. Plain HTTP is accepted only for exact loopback
+hosts (`localhost`, `127.0.0.1`, or `[::1]`) and private IPv4 literals in the
+`10.0.0.0/8`, `172.16.0.0/12`, or `192.168.0.0/16` ranges. A hostname that
+merely looks private, such as `10.example.com`, is still a remote hostname and
+requires HTTPS. Other protocols are rejected. Leaving the override empty uses
+the full endpoint from the plugin definition; an explicit invalid or unsafe
+override is rejected instead of silently routing to that default.
+
+Remember that requests originate from the Libre WebUI backend. In a container,
+`localhost` identifies the container itself, not automatically the container
+host or another service.
+
+### Model Discovery
+
+When a plugin is activated, Libre WebUI attempts model discovery with the
+activating user's saved endpoint override and API key. For compatible APIs, it
+derives a model-list URL from the full endpoint:
+
+- a URL ending in `/models` is used as-is;
+- known operation suffixes such as `/chat/completions`, `/completions`,
+  `/embeddings`, or `/messages` are replaced with `/models`;
+- otherwise, `/models` is appended to the path.
+
+Discovery expects an OpenAI-compatible response containing model IDs in a
+`data` array. When discovery succeeds, those IDs update the plugin's model map.
+If the provider has no compatible model-list endpoint, cannot be reached, or
+returns another response shape, activation keeps the plugin's existing
+`model_map` fallback.
 
 ## Plugins in Work
 

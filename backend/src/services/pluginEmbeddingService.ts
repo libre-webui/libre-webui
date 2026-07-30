@@ -21,7 +21,10 @@ import {
   OllamaEmbeddingsResponse,
   Plugin,
 } from '../types/index.js';
-import { validatePluginModel } from '../utils/pluginValidation.js';
+import {
+  assertSafePluginEndpoint,
+  validatePluginModel,
+} from '../utils/pluginValidation.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
 
@@ -29,7 +32,7 @@ export interface PluginEmbeddingServiceDependencies {
   getAllPlugins(): Plugin[];
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
-  validateEndpointUrl(endpoint: string): string | null;
+  validateEndpointUrl(endpoint: string): string;
 }
 
 export class PluginEmbeddingService {
@@ -168,8 +171,11 @@ export class PluginEmbeddingService {
       headers[plugin.auth.header] = authValue;
     }
 
+    const processedEndpoint = getEmbeddingEndpoint(effectiveEndpoint);
+    assertSafePluginEndpoint(processedEndpoint, 'embedding endpoint');
+
     const response = await axios.post(
-      getEmbeddingEndpoint(effectiveEndpoint),
+      processedEndpoint,
       {
         model,
         input,

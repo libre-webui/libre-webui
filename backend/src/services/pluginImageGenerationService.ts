@@ -17,7 +17,10 @@
 
 import axios from 'axios';
 import { ImageGenConfig, ImageGenResponse, Plugin } from '../types/index.js';
-import { validatePluginModel } from '../utils/pluginValidation.js';
+import {
+  assertSafePluginEndpoint,
+  validatePluginModel,
+} from '../utils/pluginValidation.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
 
@@ -26,7 +29,7 @@ export interface PluginImageGenerationServiceDependencies {
   getPlugin(id: string): Plugin | null;
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
-  validateEndpointUrl(endpoint: string): string | null;
+  validateEndpointUrl(endpoint: string): string;
 }
 
 export class PluginImageGenerationService {
@@ -240,24 +243,8 @@ export class PluginImageGenerationService {
 }
 
 function parseImageEndpoint(endpoint: string): URL {
-  try {
-    const baseUrl = new URL(endpoint);
-    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-      baseUrl.hostname
-    );
-    const isPrivateNetwork =
-      /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(baseUrl.hostname);
-
-    if (baseUrl.protocol !== 'https:' && !isLocalhost && !isPrivateNetwork) {
-      throw new Error(
-        `Insecure endpoint protocol: ${baseUrl.protocol}. Only HTTPS is allowed for remote endpoints.`
-      );
-    }
-
-    return baseUrl;
-  } catch (_error) {
-    throw new Error(`Invalid endpoint URL: ${endpoint}`);
-  }
+  assertSafePluginEndpoint(endpoint, 'image generation endpoint');
+  return new URL(endpoint);
 }
 
 interface FluxModelConfig {
