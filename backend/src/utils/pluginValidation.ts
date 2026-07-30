@@ -15,14 +15,21 @@
  * limitations under the License.
  */
 
-import type { Plugin } from '../types/index.js';
+import type { Plugin, PluginApiMode } from '../types/index.js';
 import { createLogger } from './logger.js';
 
 const logger = createLogger('utils:plugin-validation');
 
 const MODEL_PATTERN = /^[a-zA-Z0-9\-_:./~]+$/;
-const PRIVATE_NETWORK_PATTERN =
-  /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/;
+const PLUGIN_API_MODES = new Set<PluginApiMode>([
+  'chat_completions',
+  'responses',
+]);
+
+export interface ResolvedPluginApiConfig {
+  apiMode: PluginApiMode;
+  endpoint: string;
+}
 
 export function validatePluginModel(model: string): void {
   if (!model || typeof model !== 'string') {
@@ -42,12 +49,31 @@ export function validatePluginModel(model: string): void {
   }
 }
 
+function isPrivateIpv4Hostname(hostname: string): boolean {
+  const octets = hostname.split('.');
+  if (octets.length !== 4 || octets.some(octet => !/^\d{1,3}$/.test(octet))) {
+    return false;
+  }
+
+  const values = octets.map(Number);
+  if (values.some(value => value < 0 || value > 255)) {
+    return false;
+  }
+
+  const [first, second] = values;
+  return (
+    first === 10 ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  );
+}
+
 export function isSafePluginEndpoint(endpoint: string): boolean {
   const url = new URL(endpoint);
   const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
     url.hostname
   );
-  const isPrivateNetwork = PRIVATE_NETWORK_PATTERN.test(url.hostname);
+  const isPrivateNetwork = isPrivateIpv4Hostname(url.hostname);
 
   return url.protocol === 'https:' || isLocalhost || isPrivateNetwork;
 }
@@ -101,9 +127,147 @@ export function resolvePluginEndpoint(
   );
 }
 
+function optionalPluginString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
+function inferKnownPluginApiMode(endpoint: string): PluginApiMode | undefined {
+  try {
+    const pathname = new URL(endpoint).pathname.replace(/\/+$/, '');
+    if (pathname.endsWith('/responses')) return 'responses';
+    if (
+      pathname.endsWith('/chat/completions') ||
+      pathname.endsWith('/completions')
+    ) {
+      return 'chat_completions';
+    }
+    return undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export function inferPluginApiMode(endpoint: string): PluginApiMode {
+  return inferKnownPluginApiMode(endpoint) || 'chat_completions';
+}
+
+export function validatePluginApiPath(apiPath: string): string | null {
+  const trimmed = apiPath.trim();
+  if (
+    !trimmed.startsWith('/') ||
+    trimmed.startsWith('//') ||
+    trimmed.includes('://') ||
+    trimmed.includes('\\') ||
+    trimmed.includes('?') ||
+    trimmed.includes('#')
+  ) {
+    return null;
+  }
+
+  let decoded = trimmed;
+  for (let decodePass = 0; decodePass < 5; decodePass += 1) {
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      return null;
+    }
+    if (next === decoded) break;
+    decoded = next;
+  }
+
+  if (
+    decoded.includes('\\') ||
+    decoded.includes('?') ||
+    decoded.includes('#') ||
+    decoded.split('/').some(segment => segment === '.' || segment === '..')
+  ) {
+    return null;
+  }
+
+  return `/${trimmed.replace(/^\/+|\/+$/g, '')}`;
+}
+
+function combinePluginBaseUrlAndPath(baseUrl: string, apiPath: string): string {
+  assertSafePluginEndpoint(baseUrl, 'plugin base URL');
+  const base = new URL(baseUrl);
+  if (base.search || base.hash) {
+    throw new Error(
+      'Invalid plugin base URL: query strings and fragments are not supported'
+    );
+  }
+
+  const validatedPath = validatePluginApiPath(apiPath);
+  if (!validatedPath) {
+    throw new Error(`Invalid plugin API path: ${apiPath}`);
+  }
+
+  const basePath = base.pathname.replace(/\/+$/, '');
+  base.pathname = `${basePath}${validatedPath}`;
+  const requiredPrefix = basePath ? `${basePath}/` : '/';
+  if (base.pathname !== basePath && !base.pathname.startsWith(requiredPrefix)) {
+    throw new Error(`Invalid plugin API path: ${apiPath}`);
+  }
+  return base.toString();
+}
+
+export function resolvePluginApiConfig(
+  plugin: Pick<Plugin, 'endpoint' | 'api_mode' | 'base_url' | 'api_path'>,
+  variables: Record<string, string | number | boolean> = {}
+): ResolvedPluginApiConfig {
+  const configuredMode =
+    optionalPluginString(variables.api_mode) || plugin.api_mode;
+  if (
+    configuredMode !== undefined &&
+    !PLUGIN_API_MODES.has(configuredMode as PluginApiMode)
+  ) {
+    throw new Error(`Invalid plugin API mode: ${configuredMode}`);
+  }
+
+  let apiMode =
+    (configuredMode as PluginApiMode | undefined) ||
+    inferPluginApiMode(plugin.endpoint);
+  const endpointOverride = optionalPluginString(variables.endpoint);
+  if (endpointOverride) {
+    assertSafePluginEndpoint(endpointOverride, 'plugin endpoint override');
+    apiMode = inferKnownPluginApiMode(endpointOverride) || apiMode;
+    return { apiMode, endpoint: endpointOverride };
+  }
+
+  const baseUrl =
+    optionalPluginString(variables.base_url) ||
+    optionalPluginString(plugin.base_url);
+  if (baseUrl) {
+    const configuredPath =
+      optionalPluginString(variables.api_path) ||
+      optionalPluginString(plugin.api_path);
+    const defaultPath =
+      apiMode === 'responses' ? '/responses' : '/chat/completions';
+    const endpoint = combinePluginBaseUrlAndPath(
+      baseUrl,
+      configuredPath || defaultPath
+    );
+    return {
+      apiMode: inferKnownPluginApiMode(endpoint) || apiMode,
+      endpoint,
+    };
+  }
+
+  if (optionalPluginString(variables.api_path)) {
+    throw new Error('A plugin base URL is required when API path is set');
+  }
+
+  apiMode = inferKnownPluginApiMode(plugin.endpoint) || apiMode;
+  return { apiMode, endpoint: plugin.endpoint };
+}
+
 export function resolvePluginModelsEndpoint(endpoint: string): string {
   const url = new URL(endpoint);
   url.search = '';
+  url.hash = '';
+  url.pathname = url.pathname.replace(/\/+$/, '') || '/';
 
   if (url.pathname.endsWith('/models')) {
     return url.toString();
@@ -112,6 +276,7 @@ export function resolvePluginModelsEndpoint(endpoint: string): string {
   for (const suffix of [
     '/chat/completions',
     '/completions',
+    '/responses',
     '/embeddings',
     '/messages',
   ]) {

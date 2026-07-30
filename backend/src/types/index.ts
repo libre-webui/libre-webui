@@ -389,6 +389,8 @@ export interface PluginCapabilities {
   };
 }
 
+export type PluginApiMode = 'chat_completions' | 'responses';
+
 export type PluginVariableType = 'string' | 'number' | 'boolean' | 'select';
 
 export interface PluginVariableDefinition {
@@ -409,6 +411,9 @@ export interface Plugin {
   name: string;
   type: PluginType; // Primary type for backward compatibility
   endpoint: string; // Primary endpoint for backward compatibility
+  api_mode?: PluginApiMode; // Request/response protocol for OpenAI-compatible providers
+  base_url?: string; // Optional API root combined with api_path
+  api_path?: string; // Optional path relative to base_url
   auth: PluginAuthConfig;
   model_map: string[]; // Primary model map for backward compatibility
   capabilities?: PluginCapabilities; // Multi-capability support
@@ -491,6 +496,16 @@ export interface PluginResponse {
     message: {
       role: string;
       content: string;
+      reasoning_content?: string;
+      tool_calls?: Array<{
+        id: string;
+        type: 'function';
+        function: {
+          name: string;
+          arguments: string;
+        };
+        providerMetadata?: Record<string, unknown>;
+      }>;
     };
     finish_reason: string;
   }[];

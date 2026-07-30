@@ -16,11 +16,27 @@
  */
 
 import type { PluginVariableDefinition } from '../types/index.js';
+import {
+  validatePluginApiPath,
+  validatePluginEndpointOverride,
+} from './pluginValidation.js';
 
 export type ValidatedPluginVariables = Record<
   string,
   string | number | boolean
 >;
+
+function isUrlVariable(name: string): boolean {
+  const normalized = name.toLowerCase();
+  return (
+    normalized === 'endpoint' ||
+    normalized === 'base_url' ||
+    normalized === 'api_url' ||
+    normalized === 'models_endpoint' ||
+    normalized.endsWith('_endpoint') ||
+    normalized.endsWith('_base_url')
+  );
+}
 
 export function validatePluginVariables(
   definitions: PluginVariableDefinition[],
@@ -82,15 +98,30 @@ export function validatePluginVariables(
       };
     }
 
-    if (key === 'endpoint' && str.length > 0) {
-      try {
-        new URL(str);
-      } catch {
+    if (isUrlVariable(key) && str.length > 0) {
+      const validatedUrl = validatePluginEndpointOverride(str);
+      if (!validatedUrl) {
         return {
           success: false,
-          error: `Variable "${key}" must be a valid URL`,
+          error: `Variable "${key}" must use HTTPS, localhost, or a private-network URL`,
         };
       }
+      if (key.toLowerCase().endsWith('base_url')) {
+        const url = new URL(validatedUrl);
+        if (url.search || url.hash) {
+          return {
+            success: false,
+            error: `Variable "${key}" cannot contain a query string or fragment`,
+          };
+        }
+      }
+    }
+
+    if (key === 'api_path' && str.length > 0 && !validatePluginApiPath(str)) {
+      return {
+        success: false,
+        error: 'Variable "api_path" must be an absolute API path',
+      };
     }
 
     validated[key] = str;

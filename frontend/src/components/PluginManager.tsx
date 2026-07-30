@@ -32,8 +32,54 @@ import {
 } from '@/components/icons';
 import { ChevronDown, RotateCcw, Save, Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/utils';
+import { isSafePluginUrl } from '@/utils/pluginUrlValidation';
 import toast from 'react-hot-toast';
 import { HuggingFaceModelBrowser } from './HuggingFaceModelBrowser';
+
+const isPluginUrlVariable = (name: string): boolean => {
+  const normalized = name.toLowerCase();
+  return (
+    normalized === 'endpoint' ||
+    normalized === 'base_url' ||
+    normalized === 'api_url' ||
+    normalized === 'models_endpoint' ||
+    normalized.endsWith('_endpoint') ||
+    normalized.endsWith('_base_url')
+  );
+};
+
+const isValidPluginApiPath = (value: string): boolean => {
+  const trimmed = value.trim();
+  if (
+    !trimmed.startsWith('/') ||
+    trimmed.startsWith('//') ||
+    trimmed.includes('://') ||
+    trimmed.includes('\\') ||
+    trimmed.includes('?') ||
+    trimmed.includes('#')
+  ) {
+    return false;
+  }
+
+  let decoded = trimmed;
+  for (let decodePass = 0; decodePass < 5; decodePass += 1) {
+    let next: string;
+    try {
+      next = decodeURIComponent(decoded);
+    } catch {
+      return false;
+    }
+    if (next === decoded) break;
+    decoded = next;
+  }
+
+  return (
+    !decoded.includes('\\') &&
+    !decoded.includes('?') &&
+    !decoded.includes('#') &&
+    !decoded.split('/').some(segment => segment === '.' || segment === '..')
+  );
+};
 
 // Inline variables editor for a plugin
 export const PluginVariablesEditor: React.FC<{
@@ -45,6 +91,7 @@ export const PluginVariablesEditor: React.FC<{
     fetchPluginVariables,
     updatePluginVariables,
     resetPluginVariables,
+    loadPlugins,
   } = usePluginStore();
   const [localValues, setLocalValues] = useState<
     Record<string, string | number | boolean>
@@ -99,18 +146,26 @@ export const PluginVariablesEditor: React.FC<{
     for (const def of schema) {
       const val = localValues[def.name];
       if (
-        def.name === 'endpoint' &&
+        isPluginUrlVariable(def.name) &&
         typeof val === 'string' &&
-        val.length > 0
+        val.length > 0 &&
+        !isSafePluginUrl(val, def.name)
       ) {
-        try {
-          new URL(val);
-        } catch {
-          errors[def.name] = t(
-            'pluginManager.variables.invalidUrl',
-            'Must be a valid URL'
-          );
-        }
+        errors[def.name] = t(
+          'pluginManager.variables.invalidUrl',
+          'Must use HTTPS, localhost, or a private-network URL'
+        );
+      }
+      if (
+        def.name === 'api_path' &&
+        typeof val === 'string' &&
+        val.length > 0 &&
+        !isValidPluginApiPath(val)
+      ) {
+        errors[def.name] = t(
+          'pluginManager.variables.invalidApiPath',
+          'Must start with / and contain no URL, query, fragment, or .. segment'
+        );
       }
       if (def.type === 'number') {
         const num = Number(val);
@@ -139,6 +194,7 @@ export const PluginVariablesEditor: React.FC<{
     const success = await updatePluginVariables(plugin.id, localValues);
     setSaving(false);
     if (success) {
+      await loadPlugins();
       toast.success(t('pluginManager.variables.saved', 'Variables saved'));
     } else {
       toast.error(
@@ -149,6 +205,7 @@ export const PluginVariablesEditor: React.FC<{
 
   const handleReset = async () => {
     await resetPluginVariables(plugin.id);
+    await loadPlugins();
     // Reset local values to defaults
     const defaults: Record<string, string | number | boolean> = {};
     for (const def of schema) {

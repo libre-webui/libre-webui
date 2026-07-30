@@ -25,8 +25,8 @@ const logger = createLogger('plugin-tts');
 type PluginVariables = Record<string, string | number | boolean>;
 
 export interface PluginTTSServiceDependencies {
-  getAllPlugins(): Plugin[];
-  getPlugin(id: string): Plugin | null;
+  getAllPlugins(userId?: string): Plugin[];
+  getPlugin(id: string, userId?: string): Plugin | null;
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
   validateEndpointUrl(endpoint: string): string | null;
@@ -40,7 +40,7 @@ export class PluginTTSService {
     pluginId?: string,
     userId?: string
   ): Plugin | null {
-    const allPlugins = this.deps.getAllPlugins();
+    const allPlugins = this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       if (pluginId && plugin.id !== pluginId) {
@@ -88,7 +88,7 @@ export class PluginTTSService {
     config?: TTSConfig;
   }[] {
     const models: { model: string; plugin: string; config?: TTSConfig }[] = [];
-    const allPlugins = this.deps.getAllPlugins();
+    const allPlugins = this.deps.getAllPlugins(userId);
 
     for (const plugin of allPlugins) {
       const ttsCapability = plugin.capabilities?.tts;

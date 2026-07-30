@@ -129,6 +129,34 @@ Administrators can disable model pulls for normal users. Check admin settings if
 - Confirm the model fits in RAM/VRAM.
 - For provider plugins, confirm the API key and provider quota.
 
+## Provider Endpoint Problems
+
+If an OpenAI-compatible provider receives requests at the wrong path, check its
+settings under **Settings → Plugins**:
+
+- Choose **Chat Completions** for `/chat/completions` payloads or **Responses**
+  for `/responses` payloads.
+- Enter the API root, such as `https://provider.example/v1`, as the base URL.
+- Leave API path empty for the mode's default, or enter a leading-slash path
+  supplied by the provider.
+- Clear the legacy full endpoint if you want base URL and API path changes to
+  take effect. A full endpoint intentionally has highest precedence. When it
+  ends in `/chat/completions` or `/responses`, that suffix also determines the
+  request format so a stale override cannot receive the wrong payload.
+
+Remote provider URLs must use HTTPS. HTTP is accepted only for localhost and
+private-network addresses. Base URLs cannot contain query strings or fragments,
+and relative API paths cannot contain literal, encoded, or double-encoded
+traversal segments, query strings, or fragments.
+
+Model refresh replaces known operation suffixes, including `/responses`, with
+`/models`. Activation, explicit refresh, and saved connection overrides use the
+current user's endpoint and API key. Saving or removing that user's API key and
+resetting connection overrides also refresh the list; unrelated generation
+parameters do not. Discovered IDs are stored per user and never overwrite the
+shared plugin JSON. If the derived route is not supported by the provider,
+configure model IDs manually in the plugin's `model_map`.
+
 ## Work Problems
 
 ### Work Is Missing or Reports Runtime Unavailable

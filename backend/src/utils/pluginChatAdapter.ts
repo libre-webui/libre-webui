@@ -19,8 +19,13 @@ import type {
   ChatMessage,
   GenerationOptions,
   Plugin,
+  PluginApiMode,
   PluginResponse,
 } from '../types/index.js';
+import {
+  buildOpenAIResponsesPayload,
+  normalizeOpenAIResponsesResponse,
+} from './openAIResponsesAdapter.js';
 
 export type PluginVariables = Record<string, string | number | boolean>;
 
@@ -336,7 +341,8 @@ export function buildPluginChatPayload(
   messages: ChatMessage[],
   options: GenerationOptions = {},
   pluginVars: PluginVariables = {},
-  streamOverride?: boolean
+  streamOverride?: boolean,
+  apiMode: PluginApiMode = 'chat_completions'
 ): PluginChatPayloadResult {
   const params = resolvePluginChatParameters(options, pluginVars);
   if (streamOverride !== undefined) {
@@ -349,6 +355,21 @@ export function buildPluginChatPayload(
 
   if (plugin.id === 'gemini') {
     return buildGeminiChatPayload(model, messages, options, params);
+  }
+
+  if (apiMode === 'responses') {
+    return {
+      payload: buildOpenAIResponsesPayload(
+        model,
+        toOpenAICompatibleMessages(messages),
+        {
+          max_tokens: params.maxTokens,
+          temperature: params.temperature,
+          top_p: params.topP,
+          stream: params.shouldStream,
+        }
+      ),
+    };
   }
 
   return buildOpenAICompatibleChatPayload(
@@ -522,7 +543,8 @@ export function convertGeminiResponse(
 export function convertProviderResponse(
   plugin: Plugin,
   response: Record<string, unknown>,
-  model: string
+  model: string,
+  apiMode: PluginApiMode = 'chat_completions'
 ): PluginResponse {
   if (plugin.id === 'anthropic') {
     return convertAnthropicResponse(response, model);
@@ -530,6 +552,10 @@ export function convertProviderResponse(
 
   if (plugin.id === 'gemini') {
     return convertGeminiResponse(response, model);
+  }
+
+  if (apiMode === 'responses') {
+    return normalizeOpenAIResponsesResponse(response, model);
   }
 
   return response as unknown as PluginResponse;

@@ -75,6 +75,52 @@ Many providers expose an OpenAI-compatible API. A plugin can define:
 
 If a provider does not support live model discovery, Libre WebUI uses the configured model map.
 
+### Chat Completions and Responses API modes
+
+OpenAI-compatible completion plugins can use either `chat_completions` or
+`responses` request semantics. The bundled OpenAI plugin exposes this choice in
+**Settings → Plugins**.
+
+Connection settings are resolved in this order:
+
+1. A full `endpoint` override, when configured.
+2. `base_url` plus an optional `api_path`.
+3. The plugin's legacy `endpoint`.
+
+The default path is `/chat/completions` in Chat Completions mode and
+`/responses` in Responses mode. `base_url` should be the API root, such as
+`https://api.example.com/v1`; use `api_path` when a compatible provider exposes
+the operation at a different relative path. A full endpoint must include the
+complete operation path and takes precedence over both fields. A known
+`/chat/completions`, `/completions`, or `/responses` suffix is authoritative for
+request semantics; custom endpoint paths retain the selected `api_mode`.
+
+Imported plugin JSON can provide the same defaults:
+
+```json
+{
+  "endpoint": "https://api.example.com/v1/chat/completions",
+  "api_mode": "responses",
+  "base_url": "https://api.example.com/v1",
+  "api_path": "/responses"
+}
+```
+
+Responses requests use `input`, `max_output_tokens`, flattened function tools,
+and `store: false`. Completed and streamed Responses output is normalized back
+to Libre WebUI's chat and Work event formats. Work also preserves Responses
+reasoning items while a function call and its result are passed through later
+turns.
+
+Model discovery derives `/models` from either operation path. For example,
+`https://api.example.com/v1/responses` discovers from
+`https://api.example.com/v1/models`. Providers without a compatible model-list
+endpoint can still use a manual `model_map`. Discovery is scoped to the current
+user's variables and credentials. Results are persisted per user rather than
+written into the shared plugin manifest. Discovery runs after activation,
+explicit refresh, API-key changes, connection-variable changes, and variable
+resets; unrelated generation-variable saves do not trigger a network request.
+
 ## Plugins in Work
 
 Work can use active `completion` and `chat` plugins in addition to Ollama and

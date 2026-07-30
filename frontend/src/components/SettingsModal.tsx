@@ -469,6 +469,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         await queryClient.invalidateQueries({
           queryKey: ['plugin-credentials'],
         });
+        await loadPlugins();
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
         setShowApiKey(prev => ({ ...prev, [pluginId]: false }));
         setExpandedPluginId(null);
@@ -491,6 +492,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         await queryClient.invalidateQueries({
           queryKey: ['plugin-credentials'],
         });
+        await loadPlugins();
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
       } else {
         toast.error(response.error || 'Failed to remove API key');

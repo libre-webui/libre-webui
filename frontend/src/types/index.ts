@@ -295,6 +295,8 @@ export interface PluginAuthConfig {
   key_env: string; // Environment variable name
 }
 
+export type PluginApiMode = 'chat_completions' | 'responses';
+
 export type PluginVariableType = 'string' | 'number' | 'boolean' | 'select';
 
 export interface PluginVariableDefinition {
@@ -315,6 +317,9 @@ export interface Plugin {
   name: string;
   type: 'completion' | 'embedding' | 'chat' | 'tts' | 'image';
   endpoint: string;
+  api_mode?: PluginApiMode;
+  base_url?: string;
+  api_path?: string;
   auth: PluginAuthConfig;
   model_map: string[];
   variables?: PluginVariableDefinition[];

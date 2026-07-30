@@ -22,6 +22,7 @@ import type {
   OllamaChatRequest,
   OllamaChatResponse,
   Plugin,
+  PluginApiMode,
 } from '../types/index.js';
 import {
   getOpenAICompatibleSamplingParameters,
@@ -29,8 +30,14 @@ import {
   type PluginVariables,
 } from '../utils/pluginChatAdapter.js';
 import {
+  normalizeOpenAIResponsesResponse,
+  toOpenAIResponsesInput,
+  toOpenAIResponsesTools,
+} from '../utils/openAIResponsesAdapter.js';
+import {
   streamAnthropicResponse,
   streamOpenAICompatibleResponse,
+  streamOpenAIResponsesResponse,
   type PluginStreamChunk,
   type PluginStreamUsage,
 } from '../utils/pluginStreamAdapter.js';
@@ -38,8 +45,9 @@ import {
   applyModelEndpointTemplate,
   assertSafePluginEndpoint,
   buildPluginAuthHeaders,
+  inferPluginApiMode,
   pluginRequiresApiKey,
-  resolvePluginEndpoint,
+  resolvePluginApiConfig,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 import ollamaService from './ollamaService.js';
@@ -192,7 +200,7 @@ export class WorkModelProviderService {
 
   private hasConfiguredPlugin(userId: string): boolean {
     return this.dependencies.plugins
-      .getActivePlugins()
+      .getActivePlugins(userId)
       .filter(isWorkPlugin)
       .some(
         plugin =>
@@ -215,7 +223,10 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_ID_REQUIRED'
       );
     }
-    const plugin = this.dependencies.plugins.getPlugin(cleanedProviderId);
+    const plugin = this.dependencies.plugins.getPlugin(
+      cleanedProviderId,
+      userId
+    );
     if (!plugin || !plugin.active) {
       throw new WorkModelProviderError(
         `Plugin "${cleanedProviderId}" is not active.`,
@@ -263,11 +274,9 @@ export class WorkModelProviderService {
       plugin,
       userId
     );
+    const apiConfig = resolvePluginApiConfig(plugin, variables);
     const endpoint = applyModelEndpointTemplate(
-      resolvePluginEndpoint(
-        plugin.endpoint,
-        variables.endpoint as string | undefined
-      ),
+      apiConfig.endpoint,
       request.model
     );
     assertSafePluginEndpoint(endpoint, 'Work model endpoint');
@@ -275,7 +284,8 @@ export class WorkModelProviderService {
     const { payload, extraHeaders } = buildPluginWorkPayload(
       plugin,
       request,
-      variables
+      variables,
+      apiConfig.apiMode
     );
     Object.assign(headers, extraHeaders);
 
@@ -289,7 +299,12 @@ export class WorkModelProviderService {
           timeout: 300_000,
         }
       );
-      return normalizePluginWorkResponse(plugin, response.data, request.model);
+      return normalizePluginWorkResponse(
+        plugin,
+        response.data,
+        request.model,
+        apiConfig.apiMode
+      );
     } catch (error) {
       if (signal?.aborted) throw error;
       const message =
@@ -412,11 +427,9 @@ export class WorkModelProviderService {
       plugin,
       userId
     );
+    const apiConfig = resolvePluginApiConfig(plugin, variables);
     let endpoint = applyModelEndpointTemplate(
-      resolvePluginEndpoint(
-        plugin.endpoint,
-        variables.endpoint as string | undefined
-      ),
+      apiConfig.endpoint,
       request.model
     );
     if (plugin.id === 'gemini') {
@@ -427,7 +440,8 @@ export class WorkModelProviderService {
     const { payload, extraHeaders } = buildPluginWorkPayload(
       plugin,
       { ...request, stream: true },
-      variables
+      variables,
+      apiConfig.apiMode
     );
     Object.assign(headers, extraHeaders);
     const timeoutSignal = AbortSignal.timeout(300_000);
@@ -452,7 +466,8 @@ export class WorkModelProviderService {
         const normalized = normalizePluginWorkResponse(
           plugin,
           data,
-          request.model
+          request.model,
+          apiConfig.apiMode
         );
         if (normalized.message.thinking) {
           observer.onReasoning?.(normalized.message.thinking);
@@ -467,7 +482,9 @@ export class WorkModelProviderService {
           ? streamAnthropicResponse(response)
           : plugin.id === 'gemini'
             ? streamGeminiWorkResponse(response)
-            : streamOpenAICompatibleResponse(response);
+            : apiConfig.apiMode === 'responses'
+              ? streamOpenAIResponsesResponse(response)
+              : streamOpenAICompatibleResponse(response);
       return await collectPluginWorkStream(chunks, request.model, observer);
     } catch (error) {
       if (signal?.aborted) throw error;
@@ -491,7 +508,8 @@ export class WorkModelProviderService {
 export function buildPluginWorkPayload(
   plugin: Plugin,
   request: OllamaChatRequest,
-  variables: PluginVariables = {}
+  variables: PluginVariables = {},
+  apiMode: PluginApiMode = resolvePluginApiConfig(plugin, variables).apiMode
 ): { payload: JsonObject; extraHeaders: Record<string, string> } {
   const options = (request.options || {}) as GenerationOptions;
   const params = resolvePluginChatParameters(options, variables);
@@ -517,6 +535,24 @@ export function buildPluginWorkPayload(
       extraHeaders: {},
     };
   }
+  if (apiMode === 'responses') {
+    const sampling = getOpenAICompatibleSamplingParameters(plugin, params);
+    const tools = toOpenAIResponsesTools(request.tools || []);
+    return {
+      payload: {
+        model: request.model,
+        input: toOpenAIResponsesWorkInput(request.messages),
+        ...(tools.length ? { tools, tool_choice: 'auto' } : {}),
+        temperature: sampling.temperature,
+        top_p: sampling.top_p,
+        max_output_tokens: params.maxTokens,
+        stream: Boolean(request.stream),
+        store: false,
+        include: ['reasoning.encrypted_content'],
+      },
+      extraHeaders: {},
+    };
+  }
   return {
     payload: {
       model: request.model,
@@ -534,13 +570,18 @@ export function buildPluginWorkPayload(
 export function normalizePluginWorkResponse(
   plugin: Plugin,
   response: JsonObject,
-  model: string
+  model: string,
+  apiMode: PluginApiMode = plugin.api_mode ||
+    inferPluginApiMode(plugin.endpoint)
 ): OllamaChatResponse {
   if (plugin.id === 'anthropic') {
     return normalizeAnthropicWorkResponse(response, model);
   }
   if (plugin.id === 'gemini') {
     return normalizeGeminiWorkResponse(response, model);
+  }
+  if (apiMode === 'responses') {
+    return normalizeOpenAIResponsesWorkResponse(response, model);
   }
   return normalizeOpenAIWorkResponse(response, model);
 }
@@ -593,6 +634,78 @@ export function toOpenAIWorkMessages(
     }
     return { role: message.role, content: message.content };
   });
+}
+
+export function toOpenAIResponsesWorkInput(
+  messages: OllamaChatMessage[]
+): JsonObject[] {
+  const input: JsonObject[] = [];
+  let pendingCalls: Array<{ id: string; name: string }> = [];
+
+  for (const [messageIndex, message] of messages.entries()) {
+    if (message.role === 'assistant') {
+      const toolCalls = normalizeOutboundToolCalls(message.tool_calls);
+      pendingCalls = toolCalls.map(call => ({
+        id: String(call.id),
+        name: String((call.function as JsonObject).name),
+      }));
+
+      for (const call of toolCalls) {
+        const metadata = asObject(call.providerMetadata);
+        const reasoningItems = Array.isArray(
+          metadata?.openAIResponsesReasoningItems
+        )
+          ? metadata.openAIResponsesReasoningItems
+          : [];
+        for (const rawItem of reasoningItems) {
+          const item = asObject(rawItem);
+          if (item?.type === 'reasoning') {
+            input.push({ ...item });
+          }
+        }
+      }
+
+      input.push(
+        ...toOpenAIResponsesInput([
+          {
+            role: 'assistant',
+            content: message.content,
+            tool_calls: toolCalls,
+          },
+        ])
+      );
+      continue;
+    }
+
+    if (message.role === 'tool') {
+      const matchingIndex = pendingCalls.findIndex(
+        call => !message.tool_name || call.name === message.tool_name
+      );
+      const matching =
+        matchingIndex >= 0
+          ? pendingCalls.splice(matchingIndex, 1)[0]
+          : undefined;
+      input.push(
+        ...toOpenAIResponsesInput([
+          {
+            role: 'tool',
+            content: message.content,
+            name: message.tool_name,
+            tool_call_id: matching?.id || `work-tool-${messageIndex}`,
+          },
+        ])
+      );
+      continue;
+    }
+
+    input.push(
+      ...toOpenAIResponsesInput([
+        { role: message.role, content: message.content },
+      ])
+    );
+  }
+
+  return input;
 }
 
 function buildAnthropicWorkPayload(
@@ -802,6 +915,44 @@ function normalizeOpenAIWorkResponse(
       ? message.reasoning_content
       : ''
   );
+}
+
+function normalizeOpenAIResponsesWorkResponse(
+  response: JsonObject,
+  model: string
+): OllamaChatResponse {
+  const normalized = normalizeOpenAIResponsesResponse(response, model);
+  const choice = normalized.choices[0];
+  const message = asObject(choice?.message);
+  if (!message) {
+    throw new WorkModelProviderError(
+      'Plugin returned an invalid Responses API response.',
+      502,
+      'WORK_PLUGIN_INVALID_RESPONSE'
+    );
+  }
+
+  const reasoning =
+    typeof message.reasoning_content === 'string'
+      ? message.reasoning_content
+      : '';
+  const toolCalls = normalizeInboundToolCalls(message.tool_calls);
+  if (reasoning && toolCalls[0]) {
+    toolCalls[0].providerMetadata = {
+      ...asObject(toolCalls[0].providerMetadata),
+      openAIReasoningContent: reasoning,
+    };
+  }
+
+  return {
+    ...workResponse(model, contentText(message.content), toolCalls, reasoning),
+    ...(normalized.usage
+      ? {
+          prompt_eval_count: normalized.usage.prompt_tokens,
+          eval_count: normalized.usage.completion_tokens,
+        }
+      : {}),
+  };
 }
 
 function normalizeAnthropicWorkResponse(
