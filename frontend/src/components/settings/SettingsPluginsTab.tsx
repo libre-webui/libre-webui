@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import type { ChangeEvent, RefObject } from 'react';
+import { useId, type ChangeEvent, type RefObject } from 'react';
 import {
   Check,
   ChevronDown,
@@ -34,7 +34,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import { PluginVariablesEditor } from '@/components/PluginManager';
 import { Button } from '@/components/ui';
+import { useAuthStore } from '@/store/authStore';
 import type { Plugin } from '@/types';
+import { getPluginConnectionVariableNames } from '@/utils/pluginVariableOverrides';
 
 interface SettingsPluginsTabProps {
   plugins: Plugin[];
@@ -96,6 +98,10 @@ export function SettingsPluginsTab({
   onDeleteApiKey,
 }: SettingsPluginsTabProps) {
   const { t } = useTranslation();
+  const user = useAuthStore(state => state.user);
+  const systemInfo = useAuthStore(state => state.systemInfo);
+  const canManagePlugins =
+    systemInfo?.requiresAuth === false || user?.role === 'admin';
   const activePlugins = plugins.filter(plugin => plugin.active);
 
   return (
@@ -121,93 +127,95 @@ export function SettingsPluginsTab({
           </div>
         )}
 
-        <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300 mb-6'>
-          <div className='flex items-center justify-between mb-4'>
-            <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-              {t('settings.plugins.addNew')}
-            </h4>
-            <div className='flex items-center space-x-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => onShowUploadFormChange(!showUploadForm)}
-                disabled={loading || uploading}
-              >
-                <Upload className='h-4 w-4 me-2' />
-                {t('settings.plugins.upload')}
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => onShowJsonFormChange(!showJsonForm)}
-                disabled={loading}
-              >
-                {t('settings.plugins.addJson')}
-              </Button>
-            </div>
-          </div>
-
-          {showUploadForm && (
-            <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300 mb-4'>
-              <div className='flex items-center space-x-4'>
-                <input
-                  ref={fileInputRef}
-                  type='file'
-                  accept='.json,.zip'
-                  onChange={onFileUpload}
-                  className='flex-1 p-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 file:me-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 dark:file:bg-dark-200 dark:file:text-dark-700 hover:file:bg-gray-200 dark:hover:file:bg-dark-300'
-                  disabled={uploading}
-                />
+        {canManagePlugins && (
+          <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300 mb-6'>
+            <div className='flex items-center justify-between mb-4'>
+              <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                {t('settings.plugins.addNew')}
+              </h4>
+              <div className='flex items-center space-x-2'>
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => onShowUploadFormChange(false)}
-                  disabled={uploading}
+                  onClick={() => onShowUploadFormChange(!showUploadForm)}
+                  disabled={loading || uploading}
                 >
-                  {t('common.cancel')}
+                  <Upload className='h-4 w-4 me-2' />
+                  {t('settings.plugins.upload')}
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => onShowJsonFormChange(!showJsonForm)}
+                  disabled={loading}
+                >
+                  {t('settings.plugins.addJson')}
                 </Button>
               </div>
-              {uploading && (
-                <p className='text-sm text-gray-600 dark:text-gray-400 mt-2'>
-                  {t('settings.plugins.uploading')}
-                </p>
-              )}
             </div>
-          )}
 
-          {showJsonForm && (
-            <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-              <div className='space-y-3'>
-                <textarea
-                  value={jsonInput}
-                  onChange={event => onJsonInputChange(event.target.value)}
-                  placeholder={t('settings.plugins.jsonPlaceholder')}
-                  className='w-full h-32 p-3 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 font-mono text-sm'
-                  disabled={loading}
-                />
-                <div className='flex items-center justify-end space-x-2'>
+            {showUploadForm && (
+              <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300 mb-4'>
+                <div className='flex items-center space-x-4'>
+                  <input
+                    ref={fileInputRef}
+                    type='file'
+                    accept='.json,.zip'
+                    onChange={onFileUpload}
+                    className='flex-1 p-2 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 file:me-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 dark:file:bg-dark-200 dark:file:text-dark-700 hover:file:bg-gray-200 dark:hover:file:bg-dark-300'
+                    disabled={uploading}
+                  />
                   <Button
                     variant='outline'
                     size='sm'
-                    onClick={() => {
-                      onShowJsonFormChange(false);
-                      onJsonInputChange('');
-                    }}
+                    onClick={() => onShowUploadFormChange(false)}
+                    disabled={uploading}
                   >
                     {t('common.cancel')}
                   </Button>
-                  <Button
-                    size='sm'
-                    onClick={onJsonSubmit}
-                    disabled={!jsonInput.trim() || loading}
-                  >
-                    {t('settings.plugins.install')}
-                  </Button>
+                </div>
+                {uploading && (
+                  <p className='text-sm text-gray-600 dark:text-gray-400 mt-2'>
+                    {t('settings.plugins.uploading')}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {showJsonForm && (
+              <div className='bg-gray-50 dark:bg-dark-50 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
+                <div className='space-y-3'>
+                  <textarea
+                    value={jsonInput}
+                    onChange={event => onJsonInputChange(event.target.value)}
+                    placeholder={t('settings.plugins.jsonPlaceholder')}
+                    className='w-full h-32 p-3 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500 font-mono text-sm'
+                    disabled={loading}
+                  />
+                  <div className='flex items-center justify-end space-x-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => {
+                        onShowJsonFormChange(false);
+                        onJsonInputChange('');
+                      }}
+                    >
+                      {t('common.cancel')}
+                    </Button>
+                    <Button
+                      size='sm'
+                      onClick={onJsonSubmit}
+                      disabled={!jsonInput.trim() || loading}
+                    >
+                      {t('settings.plugins.install')}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         {activePlugins.length > 0 && (
           <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300 mb-6'>
@@ -278,6 +286,7 @@ export function SettingsPluginsTab({
                   apiKey={pluginApiKeys[plugin.id] || ''}
                   showApiKey={showApiKey[plugin.id] || false}
                   savingApiKey={savingApiKey === plugin.id}
+                  canManagePlugin={canManagePlugins}
                   onExpand={() =>
                     onExpandedPluginChange(
                       expandedPluginId === plugin.id ? null : plugin.id
@@ -312,6 +321,7 @@ interface PluginListItemProps {
   apiKey: string;
   showApiKey: boolean;
   savingApiKey: boolean;
+  canManagePlugin: boolean;
   onExpand: () => void;
   onActivate: () => void;
   onExport: () => void;
@@ -330,6 +340,7 @@ function PluginListItem({
   apiKey,
   showApiKey,
   savingApiKey,
+  canManagePlugin,
   onExpand,
   onActivate,
   onExport,
@@ -341,6 +352,15 @@ function PluginListItem({
 }: PluginListItemProps) {
   const { t } = useTranslation();
   const requiresApiKey = Boolean(plugin.auth?.header || plugin.auth?.key_env);
+  const connectionVariables = getPluginConnectionVariableNames(plugin);
+  const visibleVariables = canManagePlugin
+    ? plugin.variables || []
+    : (plugin.variables || []).filter(
+        definition => !connectionVariables.has(definition.name)
+      );
+  const hasVariables = visibleVariables.length > 0;
+  const hasConfiguration = requiresApiKey || hasVariables;
+  const configurationPanelId = useId();
 
   return (
     <div className='p-4'>
@@ -360,7 +380,7 @@ function PluginListItem({
                 <span>
                   {plugin.model_map?.length || 0} {t('settings.plugins.models')}
                 </span>
-                {plugin.endpoint && (
+                {canManagePlugin && plugin.endpoint && (
                   <>
                     <span>•</span>
                     <span className='truncate max-w-48'>
@@ -386,15 +406,24 @@ function PluginListItem({
         </div>
 
         <div className='flex items-center space-x-1 flex-shrink-0'>
-          {requiresApiKey && (
+          {hasConfiguration && (
             <Button
               variant='ghost'
               size='sm'
               onClick={onExpand}
-              title='Configure API key'
+              aria-expanded={expanded}
+              aria-controls={configurationPanelId}
+              title={t('settings.plugins.configure')}
               className={hasApiKey ? 'text-green-600' : 'text-ink'}
             >
-              <Key className='h-4 w-4' />
+              {requiresApiKey ? (
+                <Key className='h-4 w-4' />
+              ) : (
+                <Sliders className='h-4 w-4' />
+              )}
+              <span className='hidden sm:inline'>
+                {t('settings.plugins.configure')}
+              </span>
               {expanded ? (
                 <ChevronUp className='h-3 w-3' />
               ) : (
@@ -420,53 +449,61 @@ function PluginListItem({
             )}
           </Button>
 
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={onExport}
-            disabled={loading}
-            title='Export plugin'
-          >
-            <Download className='h-4 w-4' />
-          </Button>
+          {canManagePlugin && (
+            <>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={onExport}
+                disabled={loading}
+                title={t('settings.plugins.exportPlugin', 'Export plugin')}
+              >
+                <Download className='h-4 w-4' />
+              </Button>
 
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={onDelete}
-            disabled={loading}
-            className='text-red-600 hover:text-red-700 hover:bg-red-50'
-            title='Delete plugin'
-          >
-            <Trash2 className='h-4 w-4' />
-          </Button>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={onDelete}
+                disabled={loading}
+                className='text-red-600 hover:text-red-700 hover:bg-red-50'
+                title={t('settings.plugins.deletePlugin', 'Delete plugin')}
+              >
+                <Trash2 className='h-4 w-4' />
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      {requiresApiKey && expanded && (
-        <ApiKeyPanel
-          plugin={plugin}
-          hasApiKey={hasApiKey}
-          apiKey={apiKey}
-          showApiKey={showApiKey}
-          savingApiKey={savingApiKey}
-          onApiKeyChange={onApiKeyChange}
-          onShowApiKeyChange={onShowApiKeyChange}
-          onSaveApiKey={onSaveApiKey}
-          onDeleteApiKey={onDeleteApiKey}
-        />
-      )}
+      {expanded && hasConfiguration && (
+        <div id={configurationPanelId}>
+          {requiresApiKey && (
+            <ApiKeyPanel
+              plugin={plugin}
+              hasApiKey={hasApiKey}
+              apiKey={apiKey}
+              showApiKey={showApiKey}
+              savingApiKey={savingApiKey}
+              onApiKeyChange={onApiKeyChange}
+              onShowApiKeyChange={onShowApiKeyChange}
+              onSaveApiKey={onSaveApiKey}
+              onDeleteApiKey={onDeleteApiKey}
+            />
+          )}
 
-      {plugin.variables && plugin.variables.length > 0 && (
-        <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-50 rounded-lg border border-gray-200 dark:border-dark-300'>
-          <div className='flex items-center gap-2 mb-2'>
-            <Sliders className='h-4 w-4 text-gray-500' />
-            <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-              {t('settings.plugins.variables', 'Variables')} (
-              {plugin.variables.length})
-            </h6>
-          </div>
-          <PluginVariablesEditor plugin={plugin} />
+          {hasVariables && (
+            <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-50 rounded-lg border border-gray-200 dark:border-dark-300'>
+              <div className='flex items-center gap-2 mb-2'>
+                <Sliders className='h-4 w-4 text-gray-500' />
+                <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  {t('settings.plugins.providerSettings')} (
+                  {visibleVariables.length})
+                </h6>
+              </div>
+              <PluginVariablesEditor plugin={plugin} />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -497,6 +534,7 @@ function ApiKeyPanel({
   onDeleteApiKey,
 }: ApiKeyPanelProps) {
   const { t } = useTranslation();
+  const apiKeyInputId = useId();
 
   return (
     <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-50 rounded-lg border border-gray-200 dark:border-dark-300'>
@@ -546,7 +584,11 @@ function ApiKeyPanel({
       ) : (
         <div className='space-y-3'>
           <div className='relative'>
+            <label htmlFor={apiKeyInputId} className='sr-only'>
+              {t('settings.plugins.apiKey.title')}
+            </label>
             <input
+              id={apiKeyInputId}
               type={showApiKey ? 'text' : 'password'}
               value={apiKey}
               onChange={event => onApiKeyChange(event.target.value)}
@@ -556,7 +598,14 @@ function ApiKeyPanel({
             <button
               type='button'
               onClick={() => onShowApiKeyChange(!showApiKey)}
-              className='absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600'
+              aria-controls={apiKeyInputId}
+              aria-label={
+                showApiKey
+                  ? t('settings.plugins.hideApiKey')
+                  : t('settings.plugins.showApiKey')
+              }
+              disabled={savingApiKey}
+              className='absolute end-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50'
             >
               {showApiKey ? (
                 <EyeOff className='h-4 w-4' />

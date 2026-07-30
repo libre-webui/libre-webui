@@ -115,6 +115,9 @@ Provider model names change frequently. In Libre WebUI, use the provider’s mod
 
 ## Prompting and Settings
 
+- Generation controls such as temperature, token limits, context length, and
+  penalties are grouped under **Advanced generation settings** and remain
+  closed by default.
 - Lower temperature (`0.1-0.3`) for factual, repeatable answers.
 - Medium temperature (`0.5-0.7`) for normal assistant work.
 - Higher temperature (`0.8+`) for brainstorming and creative writing.

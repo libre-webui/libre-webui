@@ -19,6 +19,7 @@ import { create } from 'zustand';
 import { Plugin, PluginStatus } from '@/types';
 import { pluginApi, PluginVariableValue } from '@/utils/api';
 import { createLogger } from '@/utils/logger';
+import type { PluginVariableInput } from '@/utils/pluginVariableOverrides';
 import { getErrorMessage } from './chatStoreHelpers';
 import { activatePluginAndRefresh } from './pluginActivation';
 
@@ -54,9 +55,10 @@ interface PluginState {
   fetchPluginVariables: (pluginId: string) => Promise<void>;
   updatePluginVariables: (
     pluginId: string,
-    variables: Record<string, string | number | boolean>
+    variables: Record<string, PluginVariableInput>,
+    unset?: string[]
   ) => Promise<boolean>;
-  resetPluginVariables: (pluginId: string) => Promise<void>;
+  resetPluginVariables: (pluginId: string) => Promise<boolean>;
 
   // UI state
   clearError: () => void;
@@ -268,10 +270,11 @@ export const usePluginStore = create<PluginState>((set, get) => ({
 
   updatePluginVariables: async (
     pluginId: string,
-    variables: Record<string, string | number | boolean>
+    variables: Record<string, PluginVariableInput>,
+    unset: string[] = []
   ): Promise<boolean> => {
     try {
-      const response = await pluginApi.setVariables(pluginId, variables);
+      const response = await pluginApi.setVariables(pluginId, variables, unset);
       if (response.success) {
         await get().fetchPluginVariables(pluginId);
         return true;
@@ -283,18 +286,21 @@ export const usePluginStore = create<PluginState>((set, get) => ({
     }
   },
 
-  resetPluginVariables: async (pluginId: string) => {
+  resetPluginVariables: async (pluginId: string): Promise<boolean> => {
     try {
       const response = await pluginApi.resetVariables(pluginId);
-      if (response.success) {
+      if (response.success && response.data === true) {
         set(state => {
           const newVars = { ...state.pluginVariables };
           delete newVars[pluginId];
           return { pluginVariables: newVars };
         });
+        return true;
       }
+      return false;
     } catch (error) {
       logger.error('Failed to reset plugin variables:', error);
+      return false;
     }
   },
 

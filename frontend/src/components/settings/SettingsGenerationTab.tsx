@@ -15,10 +15,11 @@
  * limitations under the License.
  */
 
-import { Check, RotateCcw } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { Check, ChevronDown, RotateCcw } from 'lucide-react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select } from '@/components/ui';
+import { cn } from '@/utils';
 import type {
   EmbeddingStatus,
   GenerationOptions,
@@ -67,6 +68,8 @@ export function SettingsGenerationTab({
   onSaveEmbeddingSettings,
 }: SettingsGenerationTabProps) {
   const { t } = useTranslation();
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const advancedPanelId = useId();
 
   return (
     <div className='space-y-6'>
@@ -78,175 +81,223 @@ export function SettingsGenerationTab({
           {t('settings.generation.description')}
         </p>
 
-        <div className='space-y-6'>
-          <GenerationSection title={t('settings.generation.coreParameters')}>
-            <NumberSetting
-              label={t('settings.generation.temperature')}
-              hint='(0.0-2.0)'
-              min={0}
-              max={2}
-              step={0.1}
-              value={generationOptions.temperature}
-              placeholder='0.8'
-              description={t('settings.generation.temperatureDescription')}
-              onChange={value => onGenerationOptionChange('temperature', value)}
+        <div className='rounded-lg border border-gray-200 bg-white dark:border-dark-300 dark:bg-dark-100'>
+          <button
+            type='button'
+            aria-expanded={advancedOpen}
+            aria-controls={advancedPanelId}
+            onClick={() => setAdvancedOpen(open => !open)}
+            className='flex w-full items-center justify-between gap-4 p-4 text-left'
+          >
+            <span>
+              <span className='block text-sm font-medium text-gray-900 dark:text-gray-100'>
+                {t('settings.generation.advancedSettings')}
+              </span>
+              <span className='mt-1 block text-xs text-gray-500 dark:text-gray-400'>
+                {t('settings.generation.advancedSettingsDescription')}
+              </span>
+            </span>
+            <ChevronDown
+              className={cn(
+                'h-4 w-4 flex-shrink-0 text-gray-500 transition-transform',
+                advancedOpen && 'rotate-180'
+              )}
             />
-            <NumberSetting
-              label={t('settings.generation.topP')}
-              hint='(0.0-1.0)'
-              min={0}
-              max={1}
-              step={0.05}
-              value={generationOptions.top_p}
-              placeholder='0.9'
-              description={t('settings.generation.topPDescription')}
-              onChange={value => onGenerationOptionChange('top_p', value)}
-            />
-            <NumberSetting
-              label={t('settings.generation.topK')}
-              hint='(1-100)'
-              min={1}
-              max={100}
-              value={generationOptions.top_k}
-              placeholder='40'
-              integer
-              description={t('settings.generation.topKDescription')}
-              onChange={value => onGenerationOptionChange('top_k', value)}
-            />
-            <NumberSetting
-              label={t('settings.generation.minP')}
-              hint='(0.0-1.0)'
-              min={0}
-              max={1}
-              step={0.05}
-              value={generationOptions.min_p}
-              placeholder='0.0'
-              description={t('settings.generation.minPDescription')}
-              onChange={value => onGenerationOptionChange('min_p', value)}
-            />
-          </GenerationSection>
+          </button>
 
-          <GenerationSection title={t('settings.generation.generationControl')}>
-            <NumberSetting
-              label={t('settings.generation.maxTokens')}
-              min={-1}
-              max={4096}
-              value={generationOptions.num_predict}
-              placeholder='128'
-              integer
-              description={t('settings.generation.maxTokensDescription')}
-              onChange={value => onGenerationOptionChange('num_predict', value)}
-            />
-            <NumberSetting
-              label={t('settings.generation.repeatPenalty')}
-              hint='(0.0-2.0)'
-              min={0}
-              max={2}
-              step={0.1}
-              value={generationOptions.repeat_penalty}
-              placeholder='1.1'
-              description={t('settings.generation.repeatPenaltyDescription')}
-              onChange={value =>
-                onGenerationOptionChange('repeat_penalty', value)
-              }
-            />
-            <NumberSetting
-              label={t('settings.generation.contextLength')}
-              min={512}
-              max={32768}
-              step={512}
-              value={generationOptions.num_ctx}
-              placeholder='2048'
-              integer
-              description={t('settings.generation.contextLengthDescription')}
-              onChange={value => onGenerationOptionChange('num_ctx', value)}
-            />
-            <NumberSetting
-              label={t('settings.generation.seed')}
-              hint={`(${t('settings.generation.optional')})`}
-              value={generationOptions.seed}
-              placeholder={t('settings.generation.random')}
-              integer
-              description={t('settings.generation.seedDescription')}
-              onChange={value => onGenerationOptionChange('seed', value)}
-            />
-          </GenerationSection>
+          {advancedOpen && (
+            <div
+              id={advancedPanelId}
+              className='space-y-6 border-t border-gray-200 p-4 dark:border-dark-300'
+            >
+              <GenerationSection
+                title={t('settings.generation.coreParameters')}
+              >
+                <NumberSetting
+                  label={t('settings.generation.temperature')}
+                  hint='(0.0-2.0)'
+                  min={0}
+                  max={2}
+                  step={0.1}
+                  value={generationOptions.temperature}
+                  placeholder='0.8'
+                  description={t('settings.generation.temperatureDescription')}
+                  onChange={value =>
+                    onGenerationOptionChange('temperature', value)
+                  }
+                />
+                <NumberSetting
+                  label={t('settings.generation.topP')}
+                  hint='(0.0-1.0)'
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={generationOptions.top_p}
+                  placeholder='0.9'
+                  description={t('settings.generation.topPDescription')}
+                  onChange={value => onGenerationOptionChange('top_p', value)}
+                />
+                <NumberSetting
+                  label={t('settings.generation.topK')}
+                  hint='(1-100)'
+                  min={1}
+                  max={100}
+                  value={generationOptions.top_k}
+                  placeholder='40'
+                  integer
+                  description={t('settings.generation.topKDescription')}
+                  onChange={value => onGenerationOptionChange('top_k', value)}
+                />
+                <NumberSetting
+                  label={t('settings.generation.minP')}
+                  hint='(0.0-1.0)'
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={generationOptions.min_p}
+                  placeholder='0.0'
+                  description={t('settings.generation.minPDescription')}
+                  onChange={value => onGenerationOptionChange('min_p', value)}
+                />
+              </GenerationSection>
 
-          <GenerationSection title={t('settings.generation.advancedOptions')}>
-            <NumberSetting
-              label={t('settings.generation.presencePenalty')}
-              hint='(-2.0-2.0)'
-              min={-2}
-              max={2}
-              step={0.1}
-              value={generationOptions.presence_penalty}
-              placeholder='0.0'
-              description={t('settings.generation.presencePenaltyDescription')}
-              onChange={value =>
-                onGenerationOptionChange('presence_penalty', value)
-              }
-            />
-            <NumberSetting
-              label={t('settings.generation.frequencyPenalty')}
-              hint='(-2.0-2.0)'
-              min={-2}
-              max={2}
-              step={0.1}
-              value={generationOptions.frequency_penalty}
-              placeholder='0.0'
-              description={t('settings.generation.frequencyPenaltyDescription')}
-              onChange={value =>
-                onGenerationOptionChange('frequency_penalty', value)
-              }
-            />
+              <GenerationSection
+                title={t('settings.generation.generationControl')}
+              >
+                <NumberSetting
+                  label={t('settings.generation.maxTokens')}
+                  min={-1}
+                  max={4096}
+                  value={generationOptions.num_predict}
+                  placeholder='128'
+                  integer
+                  description={t('settings.generation.maxTokensDescription')}
+                  onChange={value =>
+                    onGenerationOptionChange('num_predict', value)
+                  }
+                />
+                <NumberSetting
+                  label={t('settings.generation.repeatPenalty')}
+                  hint='(0.0-2.0)'
+                  min={0}
+                  max={2}
+                  step={0.1}
+                  value={generationOptions.repeat_penalty}
+                  placeholder='1.1'
+                  description={t(
+                    'settings.generation.repeatPenaltyDescription'
+                  )}
+                  onChange={value =>
+                    onGenerationOptionChange('repeat_penalty', value)
+                  }
+                />
+                <NumberSetting
+                  label={t('settings.generation.contextLength')}
+                  min={512}
+                  max={32768}
+                  step={512}
+                  value={generationOptions.num_ctx}
+                  placeholder='2048'
+                  integer
+                  description={t(
+                    'settings.generation.contextLengthDescription'
+                  )}
+                  onChange={value => onGenerationOptionChange('num_ctx', value)}
+                />
+                <NumberSetting
+                  label={t('settings.generation.seed')}
+                  hint={`(${t('settings.generation.optional')})`}
+                  value={generationOptions.seed}
+                  placeholder={t('settings.generation.random')}
+                  integer
+                  description={t('settings.generation.seedDescription')}
+                  onChange={value => onGenerationOptionChange('seed', value)}
+                />
+              </GenerationSection>
 
-            <div className='md:col-span-2'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                {t('settings.generation.stopSequences')}
-                <span className='text-xs text-gray-500 ms-1'>
-                  ({t('settings.generation.commaSeparated')})
-                </span>
-              </label>
-              <input
-                type='text'
-                value={generationOptions.stop?.join(', ') ?? ''}
-                onChange={event =>
-                  onGenerationOptionChange(
-                    'stop',
-                    event.target.value
-                      ? event.target.value
-                          .split(',')
-                          .map(sequence => sequence.trim())
-                          .filter(Boolean)
-                      : undefined
-                  )
-                }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
-                placeholder='\\n, ###, STOP'
-              />
-              <p className='text-xs text-gray-500 mt-1'>
-                {t('settings.generation.stopSequencesDescription')}
-              </p>
+              <GenerationSection
+                title={t('settings.generation.advancedOptions')}
+              >
+                <NumberSetting
+                  label={t('settings.generation.presencePenalty')}
+                  hint='(-2.0-2.0)'
+                  min={-2}
+                  max={2}
+                  step={0.1}
+                  value={generationOptions.presence_penalty}
+                  placeholder='0.0'
+                  description={t(
+                    'settings.generation.presencePenaltyDescription'
+                  )}
+                  onChange={value =>
+                    onGenerationOptionChange('presence_penalty', value)
+                  }
+                />
+                <NumberSetting
+                  label={t('settings.generation.frequencyPenalty')}
+                  hint='(-2.0-2.0)'
+                  min={-2}
+                  max={2}
+                  step={0.1}
+                  value={generationOptions.frequency_penalty}
+                  placeholder='0.0'
+                  description={t(
+                    'settings.generation.frequencyPenaltyDescription'
+                  )}
+                  onChange={value =>
+                    onGenerationOptionChange('frequency_penalty', value)
+                  }
+                />
+
+                <div className='md:col-span-2'>
+                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    {t('settings.generation.stopSequences')}
+                    <span className='text-xs text-gray-500 ms-1'>
+                      ({t('settings.generation.commaSeparated')})
+                    </span>
+                  </label>
+                  <input
+                    type='text'
+                    value={generationOptions.stop?.join(', ') ?? ''}
+                    onChange={event =>
+                      onGenerationOptionChange(
+                        'stop',
+                        event.target.value
+                          ? event.target.value
+                              .split(',')
+                              .map(sequence => sequence.trim())
+                              .filter(Boolean)
+                          : undefined
+                      )
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 dark:border-dark-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-dark-200 text-gray-900 dark:text-gray-100'
+                    placeholder='\\n, ###, STOP'
+                  />
+                  <p className='text-xs text-gray-500 mt-1'>
+                    {t('settings.generation.stopSequencesDescription')}
+                  </p>
+                </div>
+              </GenerationSection>
+
+              <div className='flex justify-between items-center pt-4 border-t border-gray-200 dark:border-dark-300'>
+                <Button
+                  onClick={onResetGenerationOptions}
+                  variant='outline'
+                  className='flex items-center gap-2'
+                >
+                  <RotateCcw size={16} />
+                  {t('settings.generation.resetDefaults')}
+                </Button>
+                <Button
+                  onClick={onSaveGenerationOptions}
+                  className='flex items-center gap-2'
+                >
+                  <Check size={16} />
+                  {t('settings.generation.saveOptions')}
+                </Button>
+              </div>
             </div>
-          </GenerationSection>
-
-          <div className='flex justify-between items-center pt-4 border-t border-gray-200 dark:border-dark-300'>
-            <Button
-              onClick={onResetGenerationOptions}
-              variant='outline'
-              className='flex items-center gap-2'
-            >
-              <RotateCcw size={16} />
-              {t('settings.generation.resetDefaults')}
-            </Button>
-            <Button
-              onClick={onSaveGenerationOptions}
-              className='flex items-center gap-2'
-            >
-              <Check size={16} />
-              {t('settings.generation.saveOptions')}
-            </Button>
-          </div>
+          )}
         </div>
 
         <div className='mt-6'>

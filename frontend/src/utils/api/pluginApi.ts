@@ -17,6 +17,7 @@
 
 import type { ApiResponse, Plugin, PluginStatus } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
+import type { PluginVariableInput } from '@/utils/pluginVariableOverrides';
 import { api, createDemoResponse } from './client';
 
 export interface PluginVariableValue {
@@ -163,13 +164,14 @@ export const pluginApi = {
 
   setVariables: (
     pluginId: string,
-    variables: Record<string, string | number | boolean>
+    variables: Record<string, PluginVariableInput>,
+    unset: string[] = []
   ): Promise<ApiResponse<boolean>> => {
     if (isDemoMode()) {
       return createDemoResponse<boolean>(true);
     }
     return api
-      .put(`/plugins/${pluginId}/variables`, { variables })
+      .put(`/plugins/${pluginId}/variables`, { variables, unset })
       .then(res => res.data);
   },
 

@@ -370,6 +370,32 @@ Selecting a concrete provider entry records an exact provider for subsequent
 requests. New persona selections keep their `persona:<id>` UI identity and are
 recorded as Ollama-backed.
 
+## Provider Settings and Inheritance
+
+Open **Settings → Plugins** and choose **Configure** for a provider. Provider
+panels are closed by default. Administrators can manage shared definitions and
+connection-routing values. Other authenticated users can activate providers,
+save their own API keys, and change their own generation controls, but the UI
+does not expose plugin upload, install, export, delete, or routing controls to
+them.
+
+For administrators, connection overrides appear first. Sampling and other
+specialist controls remain under **Advanced parameters**, which is also closed
+by default. Inherited connection and generation values render as blank inputs
+with a provider-default hint. Libre WebUI does not copy manifest defaults into
+an account's saved settings merely because the panel was opened.
+
+Saving sends only fields changed in the current editor session. Clearing a
+saved non-sensitive value removes that account's override and restores the
+provider default; a blank masked sensitive field is left unchanged. **Reset to
+Defaults** removes every variable override that the account is allowed to
+manage. If a save or reset fails, the editor keeps the unsaved values visible
+so the user can retry.
+
+This distinction is important for custom endpoints: an administrator leaves
+the endpoint blank to inherit the plugin's bundled URL, or enters a complete
+compatible URL to override it for that administrator's provider connection.
+
 ## Plugins in Work
 
 Work can use active `completion` and `chat` plugins in addition to Ollama and

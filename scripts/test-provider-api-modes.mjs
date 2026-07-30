@@ -2093,6 +2093,21 @@ test('plugin routes and activation keep model discovery scoped to the authentica
     model_map: ['gpt-test'],
     variables: [
       {
+        name: 'endpoint',
+        type: 'string',
+        label: 'Endpoint',
+      },
+      {
+        name: 'api_url',
+        type: 'string',
+        label: 'API URL',
+      },
+      {
+        name: 'models_endpoint',
+        type: 'string',
+        label: 'Models endpoint',
+      },
+      {
         name: 'base_url',
         type: 'string',
         label: 'Base URL',
@@ -2103,6 +2118,18 @@ test('plugin routes and activation keep model discovery scoped to the authentica
         label: 'API Path',
       },
       {
+        name: 'api_mode',
+        type: 'select',
+        label: 'API mode',
+        default: 'chat_completions',
+        options: ['chat_completions', 'responses'],
+      },
+      {
+        name: 'image_route',
+        type: 'string',
+        label: 'Image route',
+      },
+      {
         name: 'temperature',
         type: 'number',
         label: 'Temperature',
@@ -2110,6 +2137,15 @@ test('plugin routes and activation keep model discovery scoped to the authentica
         max: 2,
       },
     ],
+    capabilities: {
+      image: {
+        endpoint: 'https://api.openai.com/v1/images/generations',
+        model_map: ['gpt-image-test'],
+        config: {
+          endpoint_variable: 'image_route',
+        },
+      },
+    },
   };
   const routeNow = Date.now();
   databaseModule
@@ -2120,6 +2156,14 @@ test('plugin routes and activation keep model discovery scoped to the authentica
       ) VALUES (?, ?, NULL, 'unused', 'admin', NULL, ?, ?)`
     )
     .run('route-user', 'route-user', routeNow, routeNow);
+  databaseModule
+    .getDatabase()
+    .prepare(
+      `INSERT OR IGNORE INTO users (
+        id, username, email, password_hash, role, avatar, created_at, updated_at
+      ) VALUES (?, ?, NULL, 'unused', 'user', NULL, ?, ?)`
+    )
+    .run('route-standard-user', 'route-standard-user', routeNow, routeNow);
 
   const originals = {
     activatePlugin: pluginService.activatePlugin,
@@ -2143,7 +2187,11 @@ test('plugin routes and activation keep model discovery scoped to the authentica
     assert.ok(routeLayers.length > 0);
     return routeLayers[routeLayers.length - 1].handle;
   };
-  const invokeRoute = async (routePath, method, { body = {}, params = {} }) => {
+  const invokeRoute = async (
+    routePath,
+    method,
+    { body = {}, params = {}, userId = 'route-user' }
+  ) => {
     let statusCode = 200;
     let payload;
     const response = {
@@ -2160,7 +2208,7 @@ test('plugin routes and activation keep model discovery scoped to the authentica
       {
         body,
         params,
-        user: { userId: 'route-user' },
+        user: { userId },
       },
       response
     );
@@ -2171,8 +2219,13 @@ test('plugin routes and activation keep model discovery scoped to the authentica
     pluginService.getPlugin = () => plugin;
     const routeCalls = [];
     let resolvedVariables = {
+      endpoint: plugin.endpoint,
+      api_url: plugin.endpoint,
+      models_endpoint: '',
       base_url: 'https://old.example/v1',
       api_path: '',
+      api_mode: 'chat_completions',
+      image_route: plugin.capabilities.image.endpoint,
       temperature: 0.7,
     };
     pluginService.activatePlugin = pluginId => {
@@ -2193,21 +2246,44 @@ test('plugin routes and activation keep model discovery scoped to the authentica
       pluginId,
       variables,
       _schema,
-      userId
+      userId,
+      variablesToUnset = []
     ) => {
+      const inherited = {
+        endpoint: plugin.endpoint,
+        api_url: plugin.endpoint,
+        models_endpoint: '',
+        base_url: '',
+        api_path: '',
+        api_mode: 'chat_completions',
+        image_route: plugin.capabilities.image.endpoint,
+        temperature: 0.7,
+      };
       resolvedVariables = { ...resolvedVariables, ...variables };
-      routeCalls.push({
+      for (const name of variablesToUnset) {
+        resolvedVariables[name] = inherited[name] ?? '';
+      }
+      const call = {
         operation: 'save',
         pluginId,
         userId,
         variables,
-      });
+      };
+      if (variablesToUnset.length > 0) {
+        call.unset = variablesToUnset;
+      }
+      routeCalls.push(call);
       return true;
     };
     pluginVariablesService.deletePluginVariables = (pluginId, userId) => {
       resolvedVariables = {
+        endpoint: plugin.endpoint,
+        api_url: plugin.endpoint,
+        models_endpoint: '',
         base_url: '',
         api_path: '',
+        api_mode: 'chat_completions',
+        image_route: plugin.capabilities.image.endpoint,
         temperature: 0.7,
       };
       routeCalls.push({ operation: 'reset', pluginId, userId });
@@ -2350,6 +2426,118 @@ test('plugin routes and activation keep model discovery scoped to the authentica
         userId: 'route-user',
       },
     ]);
+
+    routeCalls.length = 0;
+
+    for (const body of [
+      {},
+      { variables: [] },
+      { variables: { unknown: true } },
+      { variables: {}, unset: 'endpoint' },
+      { variables: {}, unset: ['unknown'] },
+      { variables: { temperature: 0.6 }, unset: ['temperature'] },
+    ]) {
+      const invalid = await invokeRoute('/:id/variables', 'PUT', {
+        params: { id: 'openai' },
+        body,
+      });
+      assert.equal(invalid.statusCode, 400);
+    }
+
+    for (const body of [
+      { variables: { base_url: 'https://user-route.example/v1' } },
+      { variables: {}, unset: ['api_path'] },
+      {
+        variables: {
+          image_route: 'https://user-route.example/v1/images/generations',
+        },
+      },
+    ]) {
+      const forbidden = await invokeRoute('/:id/variables', 'PUT', {
+        params: { id: 'openai' },
+        body,
+        userId: 'route-standard-user',
+      });
+      assert.equal(forbidden.statusCode, 403);
+      assert.match(forbidden.payload.error, /Administrator access/);
+    }
+
+    assert.equal(
+      (
+        await invokeRoute('/:id/variables', 'PUT', {
+          params: { id: 'openai' },
+          body: { variables: { temperature: 0.3 } },
+          userId: 'route-standard-user',
+        })
+      ).statusCode,
+      200
+    );
+    assert.deepEqual(routeCalls, [
+      {
+        operation: 'save',
+        pluginId: 'openai',
+        userId: 'route-standard-user',
+        variables: { temperature: 0.3 },
+      },
+    ]);
+
+    routeCalls.length = 0;
+    assert.equal(
+      (
+        await invokeRoute('/:id/variables', 'PUT', {
+          params: { id: 'openai' },
+          body: { variables: { endpoint: plugin.endpoint } },
+        })
+      ).statusCode,
+      200
+    );
+    assert.deepEqual(routeCalls, [
+      {
+        operation: 'save',
+        pluginId: 'openai',
+        userId: 'route-user',
+        variables: {},
+        unset: ['endpoint'],
+      },
+    ]);
+
+    routeCalls.length = 0;
+    const discoveryChanges = [
+      ['endpoint', 'https://gateway.example/v1/chat/completions'],
+      ['api_url', 'https://alias.example/v1/chat/completions'],
+      ['models_endpoint', 'https://catalog.example/v1/models'],
+      ['base_url', 'https://base.example/v1'],
+      ['api_path', '/responses'],
+      ['api_mode', 'responses'],
+      ['image_route', 'https://images.example/v1/generations'],
+    ];
+    for (const [name, value] of discoveryChanges) {
+      const changed = await invokeRoute('/:id/variables', 'PUT', {
+        params: { id: 'openai' },
+        body: { variables: { [name]: value } },
+      });
+      assert.equal(changed.statusCode, 200);
+    }
+    assert.equal(
+      routeCalls.filter(call => call.operation === 'save').length,
+      discoveryChanges.length
+    );
+    assert.equal(
+      routeCalls.filter(call => call.operation === 'clear').length,
+      discoveryChanges.length
+    );
+    assert.equal(
+      routeCalls.filter(call => call.operation === 'discover').length,
+      discoveryChanges.length
+    );
+
+    routeCalls.length = 0;
+    pluginVariablesService.deletePluginVariables = () => false;
+    const failedReset = await invokeRoute('/:id/variables', 'DELETE', {
+      params: { id: 'openai' },
+    });
+    assert.equal(failedReset.statusCode, 500);
+    assert.deepEqual(routeCalls, []);
   } finally {
     pluginService.activatePlugin = originals.activatePlugin;
     pluginService.clearDiscoveredModels = originals.clearDiscoveredModels;

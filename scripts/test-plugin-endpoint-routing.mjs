@@ -715,7 +715,6 @@ test('plugin routes require authentication and preserve non-admin generation set
         headers: normalHeaders,
         body: JSON.stringify({
           variables: {
-            endpoint: '',
             temperature: 0.25,
             stream: false,
           },

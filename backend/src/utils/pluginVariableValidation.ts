@@ -38,6 +38,42 @@ function isUrlVariable(name: string): boolean {
   );
 }
 
+export function validatePluginVariablesToUnset(
+  definitions: PluginVariableDefinition[],
+  value: unknown
+): { success: true; variables: string[] } | { success: false; error: string } {
+  if (value === undefined) {
+    return { success: true, variables: [] };
+  }
+
+  if (!Array.isArray(value)) {
+    return {
+      success: false,
+      error: 'Variable names to unset must be an array',
+    };
+  }
+
+  const schemaNames = new Set(definitions.map(definition => definition.name));
+  const variables: string[] = [];
+  const seen = new Set<string>();
+
+  for (const name of value) {
+    if (typeof name !== 'string' || !schemaNames.has(name)) {
+      return {
+        success: false,
+        error: `Cannot unset unknown plugin variable "${String(name)}"`,
+      };
+    }
+
+    if (!seen.has(name)) {
+      seen.add(name);
+      variables.push(name);
+    }
+  }
+
+  return { success: true, variables };
+}
+
 export function validatePluginVariables(
   definitions: PluginVariableDefinition[],
   values: Record<string, unknown>
@@ -51,7 +87,12 @@ export function validatePluginVariables(
 
   for (const [key, value] of Object.entries(values)) {
     const definition = schemaMap.get(key);
-    if (!definition) continue;
+    if (!definition) {
+      return {
+        success: false,
+        error: `Unknown plugin variable "${key}"`,
+      };
+    }
 
     if (definition.type === 'number') {
       const num = Number(value);

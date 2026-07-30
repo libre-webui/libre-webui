@@ -35,11 +35,18 @@ import {
   safeCleanupFile,
   type MulterRequest,
 } from '../utils/pluginUpload.js';
-import { validatePluginVariables } from '../utils/pluginVariableValidation.js';
+import {
+  validatePluginVariables,
+  validatePluginVariablesToUnset,
+} from '../utils/pluginVariableValidation.js';
 import { requireAdmin, type AuthenticatedRequest } from '../middleware/auth.js';
 import { userModel } from '../models/userModel.js';
 import { isPluginConnectionVariableForPlugin } from '../utils/pluginConnectionVariables.js';
-import { PLUGIN_MODEL_DISCOVERY_VARIABLES } from '../utils/pluginValidation.js';
+import {
+  inferPluginApiMode,
+  PLUGIN_MODEL_DISCOVERY_VARIABLES,
+} from '../utils/pluginValidation.js';
+import type { PluginVariableDefinition } from '../types/index.js';
 
 const router = express.Router();
 
@@ -65,13 +72,85 @@ const requestUserIsAdmin = (req: Request): boolean => {
 const supportsCompletionModelDiscovery = (plugin: Plugin): boolean =>
   plugin.type === 'completion' || plugin.type === 'chat';
 
+const getModelDiscoveryVariableNames = (
+  plugin: Plugin
+): ReadonlySet<string> => {
+  const names = new Set<string>(PLUGIN_MODEL_DISCOVERY_VARIABLES);
+
+  for (const capability of Object.values(
+    (plugin.capabilities || {}) as Record<string, unknown>
+  )) {
+    if (!capability || typeof capability !== 'object') continue;
+    const capabilityRecord = capability as Record<string, unknown>;
+    const config =
+      capabilityRecord.config && typeof capabilityRecord.config === 'object'
+        ? (capabilityRecord.config as Record<string, unknown>)
+        : {};
+    const selector =
+      config.endpoint_variable ?? capabilityRecord.endpoint_variable;
+    if (typeof selector === 'string' && selector.trim()) {
+      names.add(selector.trim());
+    }
+  }
+
+  return names;
+};
+
 const modelDiscoveryConnectionChanged = (
+  plugin: Plugin,
   previousVariables: Record<string, string | number | boolean>,
   nextVariables: Record<string, string | number | boolean>
 ): boolean =>
-  PLUGIN_MODEL_DISCOVERY_VARIABLES.some(
+  [...getModelDiscoveryVariableNames(plugin)].some(
     name => previousVariables[name] !== nextVariables[name]
   );
+
+const matchesInheritedDefault = (
+  plugin: Plugin,
+  definition: PluginVariableDefinition,
+  value: string | number | boolean
+): boolean => {
+  let inheritedValue = definition.default;
+  if (inheritedValue === undefined) {
+    if (definition.name === 'endpoint' || definition.name === 'api_url') {
+      inheritedValue = plugin.endpoint;
+    } else if (definition.name === 'base_url') {
+      inheritedValue = plugin.base_url;
+    } else if (definition.name === 'api_path') {
+      inheritedValue = plugin.api_path;
+    } else if (definition.name === 'api_mode') {
+      inheritedValue = plugin.api_mode ?? inferPluginApiMode(plugin.endpoint);
+    } else {
+      for (const capability of Object.values(
+        (plugin.capabilities || {}) as Record<string, unknown>
+      )) {
+        if (!capability || typeof capability !== 'object') continue;
+        const capabilityRecord = capability as Record<string, unknown>;
+        const config =
+          capabilityRecord.config && typeof capabilityRecord.config === 'object'
+            ? (capabilityRecord.config as Record<string, unknown>)
+            : {};
+        const selector =
+          config.endpoint_variable ?? capabilityRecord.endpoint_variable;
+        if (
+          selector === definition.name &&
+          typeof capabilityRecord.endpoint === 'string'
+        ) {
+          inheritedValue = capabilityRecord.endpoint;
+          break;
+        }
+      }
+    }
+  }
+
+  const defaultValidation = validatePluginVariables([definition], {
+    [definition.name]: inheritedValue ?? '',
+  });
+  return (
+    defaultValidation.success &&
+    Object.is(defaultValidation.variables[definition.name], value)
+  );
+};
 
 const refreshUserModels = async (
   plugin: Plugin,
@@ -799,10 +878,14 @@ router.put(
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const { variables } = req.body;
+      const { variables, unset } = req.body ?? {};
       const userId = getRequestUserId(req);
 
-      if (!variables || typeof variables !== 'object') {
+      if (
+        !variables ||
+        typeof variables !== 'object' ||
+        Array.isArray(variables)
+      ) {
         res
           .status(400)
           .json({ success: false, error: 'Variables object is required' });
@@ -823,43 +906,74 @@ router.put(
         return;
       }
 
-      let submittedVariables = variables as Record<string, unknown>;
-      if (!requestUserIsAdmin(req)) {
-        const definitionsByName = new Map(
-          plugin.variables.map(definition => [definition.name, definition])
-        );
-        const changesRouting = Object.entries(submittedVariables).some(
-          ([name, value]) => {
-            if (!isPluginConnectionVariableForPlugin(plugin, name)) {
-              return false;
-            }
-            const definition = definitionsByName.get(name);
-            const trustedDefault = String(definition?.default ?? '').trim();
-            return String(value ?? '').trim() !== trustedDefault;
-          }
-        );
-        if (changesRouting) {
-          res.status(403).json({
-            success: false,
-            error:
-              'Administrator access is required to change provider routing',
-          });
-          return;
-        }
-        submittedVariables = Object.fromEntries(
-          Object.entries(submittedVariables).filter(
-            ([name]) => !isPluginConnectionVariableForPlugin(plugin, name)
-          )
-        );
+      const submittedNames = Object.keys(variables);
+      const requestedUnsetNames = Array.isArray(unset)
+        ? unset.filter((name): name is string => typeof name === 'string')
+        : [];
+      if (
+        !requestUserIsAdmin(req) &&
+        [...submittedNames, ...requestedUnsetNames].some(name =>
+          isPluginConnectionVariableForPlugin(plugin, name)
+        )
+      ) {
+        res.status(403).json({
+          success: false,
+          error: 'Administrator access is required to change provider routing',
+        });
+        return;
       }
 
       const validation = validatePluginVariables(
         plugin.variables,
-        submittedVariables
+        variables as Record<string, unknown>
       );
       if (!validation.success) {
         res.status(400).json({ success: false, error: validation.error });
         return;
+      }
+
+      const unsetValidation = validatePluginVariablesToUnset(
+        plugin.variables,
+        unset
+      );
+      if (!unsetValidation.success) {
+        res.status(400).json({ success: false, error: unsetValidation.error });
+        return;
+      }
+
+      const validatedSubmittedNames = new Set(
+        Object.keys(validation.variables)
+      );
+      const overlap = unsetValidation.variables.find(name =>
+        validatedSubmittedNames.has(name)
+      );
+      if (overlap) {
+        res.status(400).json({
+          success: false,
+          error: `Variable "${overlap}" cannot be both set and unset`,
+        });
+        return;
+      }
+
+      const definitionsByName = new Map(
+        plugin.variables.map(definition => [definition.name, definition])
+      );
+      const variablesToSet = { ...validation.variables };
+      const variablesToUnset = new Set(unsetValidation.variables);
+
+      // A submitted manifest default is inherited state, not a user override.
+      // Keep it sparse so trusted environment credentials do not become bound
+      // to a redundant stored routing row.
+      for (const [name, value] of Object.entries(variablesToSet)) {
+        const definition = definitionsByName.get(name);
+        if (
+          definition &&
+          isPluginConnectionVariableForPlugin(plugin, name) &&
+          matchesInheritedDefault(plugin, definition, value)
+        ) {
+          delete variablesToSet[name];
+          variablesToUnset.add(name);
+        }
       }
 
       const previousVariables = pluginVariablesService.getResolvedVariables(
@@ -869,9 +983,10 @@ router.put(
       );
       const success = pluginVariablesService.setVariables(
         id,
-        validation.variables,
+        variablesToSet,
         plugin.variables,
-        userId
+        userId,
+        [...variablesToUnset]
       );
 
       if (success) {
@@ -880,7 +995,13 @@ router.put(
           plugin.variables,
           userId
         );
-        if (modelDiscoveryConnectionChanged(previousVariables, nextVariables)) {
+        if (
+          modelDiscoveryConnectionChanged(
+            plugin,
+            previousVariables,
+            nextVariables
+          )
+        ) {
           await refreshUserModels(plugin, userId);
         }
         res.json({ success: true, data: true });
@@ -925,18 +1046,32 @@ router.delete(
           )
         : {};
       const success = pluginVariablesService.deletePluginVariables(id, userId);
-      if (success && plugin.variables) {
+      if (!success) {
+        res.status(500).json({
+          success: false,
+          error: 'Failed to reset plugin variables',
+        });
+        return;
+      }
+
+      if (plugin.variables) {
         const nextVariables = pluginVariablesService.getResolvedVariables(
           id,
           plugin.variables,
           userId
         );
-        if (modelDiscoveryConnectionChanged(previousVariables, nextVariables)) {
+        if (
+          modelDiscoveryConnectionChanged(
+            plugin,
+            previousVariables,
+            nextVariables
+          )
+        ) {
           await refreshUserModels(plugin, userId);
         }
       }
 
-      res.json({ success: true, data: success });
+      res.json({ success: true, data: true });
     } catch (error: unknown) {
       res.status(500).json({
         success: false,

@@ -43,6 +43,359 @@ test('settings modal lazy-loads and switches languages from async locale chunks'
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 });
 
+test('admin provider settings are collapsed, inherited, sparse, and retryable', async ({
+  page,
+}) => {
+  const mockApi = await mockLibreWebUiApi(page, {
+    authRole: 'admin',
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 2,
+      allowUserModelPull: true,
+      version: '0.10.0-e2e',
+      turnstile: { enabled: false },
+    },
+    plugins: [
+      {
+        id: 'custom-provider',
+        name: 'Custom Provider',
+        type: 'completion',
+        endpoint: 'https://provider.example/v1/chat/completions',
+        auth: {
+          header: 'Authorization',
+          prefix: 'Bearer ',
+          key_env: 'CUSTOM_PROVIDER_API_KEY',
+        },
+        model_map: ['custom-model'],
+        active: true,
+        variables: [
+          {
+            name: 'endpoint',
+            type: 'string',
+            label: 'API Endpoint',
+            required: true,
+          },
+          {
+            name: 'base_url',
+            type: 'string',
+            label: 'Base URL',
+            default: 'https://provider.example/v1',
+          },
+          {
+            name: 'model_id',
+            type: 'string',
+            label: 'Model ID',
+            default: 'custom-model',
+          },
+          {
+            name: 'temperature',
+            type: 'number',
+            label: 'Temperature',
+            default: 0.7,
+            min: 0,
+            max: 2,
+          },
+          {
+            name: 'stream',
+            type: 'boolean',
+            label: 'Stream Response',
+            default: true,
+          },
+          {
+            name: 'secret_header',
+            type: 'string',
+            label: 'Secret Header',
+            sensitive: true,
+          },
+        ],
+      },
+    ],
+    pluginVariables: {
+      'custom-provider': {
+        endpoint: {
+          name: 'endpoint',
+          value: 'https://custom.example/v1/chat/completions',
+          is_sensitive: false,
+          has_value: true,
+        },
+        base_url: {
+          name: 'base_url',
+          value: 'https://provider.example/v1',
+          is_sensitive: false,
+          has_value: false,
+        },
+        model_id: {
+          name: 'model_id',
+          value: 'custom-model',
+          is_sensitive: false,
+          has_value: false,
+        },
+        temperature: {
+          name: 'temperature',
+          value: 0.7,
+          is_sensitive: false,
+          has_value: false,
+        },
+        stream: {
+          name: 'stream',
+          value: true,
+          is_sensitive: false,
+          has_value: false,
+        },
+        secret_header: {
+          name: 'secret_header',
+          value: '••••••••',
+          is_sensitive: true,
+          has_value: true,
+        },
+      },
+    },
+    pluginVariableResetFailures: 1,
+  });
+
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+
+  await page.getByRole('tab', { name: 'Generation', exact: true }).click();
+  const generationDisclosure = page.getByRole('button', {
+    name: /Advanced generation settings/,
+  });
+  await expect(generationDisclosure).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByText(/^Temperature/)).toHaveCount(0);
+  await generationDisclosure.click();
+  await expect(generationDisclosure).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByText(/^Temperature/)).toBeVisible();
+
+  await page.getByRole('tab', { name: 'Plugins' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Upload Plugin', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Add JSON', exact: true })
+  ).toBeVisible();
+  const providerDisclosure = page.getByRole('button', {
+    name: 'Configure',
+    exact: true,
+  });
+  await expect(providerDisclosure).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByText('API Endpoint', { exact: true })).toHaveCount(0);
+  await providerDisclosure.click();
+  await expect(providerDisclosure).toHaveAttribute('aria-expanded', 'true');
+
+  const apiKeyInput = page.getByLabel('API Key', { exact: true });
+  await expect(apiKeyInput).toHaveAttribute('type', 'password');
+  await page.getByRole('button', { name: 'Show API key' }).click();
+  await expect(apiKeyInput).toHaveAttribute('type', 'text');
+  await expect(
+    page.getByRole('button', { name: 'Hide API key' })
+  ).toBeVisible();
+
+  const endpointInput = page.getByLabel('API Endpoint');
+  await expect(endpointInput).toHaveValue(
+    'https://custom.example/v1/chat/completions'
+  );
+  const baseUrlInput = page.getByLabel('Base URL', { exact: true });
+  await expect(baseUrlInput).toHaveValue('');
+  await expect(baseUrlInput).toHaveAttribute(
+    'placeholder',
+    'Use provider default (https://provider.example/v1)'
+  );
+  const modelIdInput = page.getByLabel('Model ID', { exact: true });
+  await expect(modelIdInput).toHaveValue('');
+  await expect(modelIdInput).toHaveAttribute(
+    'placeholder',
+    'Use provider default (custom-model)'
+  );
+
+  const providerAdvancedDisclosure = page.getByRole('button', {
+    name: /Advanced parameters/,
+  });
+  await expect(providerAdvancedDisclosure).toHaveAttribute(
+    'aria-expanded',
+    'false'
+  );
+  await expect(page.getByText(/^Temperature/)).toHaveCount(0);
+  await providerAdvancedDisclosure.click();
+
+  const temperatureInput = page.getByLabel('Temperature', { exact: true });
+  await expect(temperatureInput).toHaveValue('');
+  await expect(temperatureInput).toHaveAttribute(
+    'placeholder',
+    'Use provider default (0.7)'
+  );
+
+  await endpointInput.fill('');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect.poll(() => mockApi.pluginVariableUpdateRequests.length).toBe(1);
+  expect(mockApi.pluginVariableUpdateRequests[0]).toEqual({
+    pluginId: 'custom-provider',
+    variables: {},
+    unset: ['endpoint'],
+  });
+
+  const secretInput = page.getByLabel('Secret Header', { exact: true });
+  await expect(secretInput).toHaveAttribute('type', 'password');
+  await secretInput.fill('temporary-plaintext-secret');
+  await page.getByRole('button', { name: 'Show Secret Header value' }).click();
+  await expect(secretInput).toHaveAttribute('type', 'text');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect.poll(() => mockApi.pluginVariableUpdateRequests.length).toBe(2);
+  expect(mockApi.pluginVariableUpdateRequests[1]).toEqual({
+    pluginId: 'custom-provider',
+    variables: { secret_header: 'temporary-plaintext-secret' },
+    unset: [],
+  });
+  await expect(secretInput).toHaveValue('');
+  await expect(secretInput).toHaveAttribute('type', 'password');
+  await expect(
+    page.getByRole('button', { name: 'Show Secret Header value' })
+  ).toBeVisible();
+
+  await temperatureInput.fill('1.2');
+  await page
+    .getByRole('button', { name: 'Reset to Defaults', exact: true })
+    .click();
+  await expect.poll(() => mockApi.pluginVariableResetRequests).toBe(1);
+  await expect(page.getByText('Failed to reset variables')).toBeVisible();
+  await expect(temperatureInput).toHaveValue('1.2');
+});
+
+test('users can activate providers and save keys and generation overrides without routing controls', async ({
+  page,
+}) => {
+  const mockApi = await mockLibreWebUiApi(page, {
+    authRole: 'user',
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 2,
+      allowUserModelPull: true,
+      version: '0.10.0-e2e',
+      turnstile: { enabled: false },
+    },
+    plugins: [
+      {
+        id: 'user-provider',
+        name: 'User Provider',
+        type: 'completion',
+        endpoint: 'https://provider.example/v1/chat/completions',
+        auth: {
+          header: 'Authorization',
+          prefix: 'Bearer ',
+          key_env: 'USER_PROVIDER_API_KEY',
+        },
+        model_map: ['user-model'],
+        active: false,
+        variables: [
+          {
+            name: 'endpoint',
+            type: 'string',
+            label: 'API Endpoint',
+            required: true,
+          },
+          {
+            name: 'base_url',
+            type: 'string',
+            label: 'Base URL',
+            default: 'https://provider.example/v1',
+          },
+          {
+            name: 'model_id',
+            type: 'string',
+            label: 'Model ID',
+            default: 'user-model',
+          },
+          {
+            name: 'temperature',
+            type: 'number',
+            label: 'Temperature',
+            default: 0.7,
+            min: 0,
+            max: 2,
+          },
+        ],
+      },
+    ],
+    pluginVariables: {
+      'user-provider': {
+        temperature: {
+          name: 'temperature',
+          value: 0.7,
+          is_sensitive: false,
+          has_value: false,
+        },
+      },
+    },
+  });
+
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Plugins' }).click();
+
+  await expect(
+    page.getByRole('button', { name: 'Upload Plugin', exact: true })
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Add JSON', exact: true })
+  ).toHaveCount(0);
+  await expect(page.getByTitle('Export plugin')).toHaveCount(0);
+  await expect(page.getByTitle('Delete plugin')).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Activate', exact: true })
+  ).toBeVisible();
+
+  const configure = page.getByRole('button', {
+    name: 'Configure',
+    exact: true,
+  });
+  await expect(configure).toHaveAttribute('aria-expanded', 'false');
+  await configure.click();
+
+  await expect(page.getByLabel('API Key', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('API Endpoint')).toHaveCount(0);
+  await expect(page.getByLabel('Base URL', { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel('Model ID', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Connection', { exact: true })).toHaveCount(0);
+
+  const apiKeyInput = page.getByLabel('API Key', { exact: true });
+  await apiKeyInput.fill('user-owned-key');
+  await page.getByRole('button', { name: 'Save API Key', exact: true }).click();
+  await expect
+    .poll(() => mockApi.pluginCredentialUpdateRequests.length)
+    .toBe(1);
+  expect(mockApi.pluginCredentialUpdateRequests[0]).toEqual({
+    pluginId: 'user-provider',
+    apiKey: 'user-owned-key',
+  });
+
+  const advanced = page.getByRole('button', {
+    name: /Advanced parameters/,
+  });
+  await expect(advanced).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByLabel('Temperature', { exact: true })).toHaveCount(0);
+  await advanced.click();
+
+  const temperatureInput = page.getByLabel('Temperature', { exact: true });
+  await expect(temperatureInput).toHaveValue('');
+  await temperatureInput.fill('0.4');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect.poll(() => mockApi.pluginVariableUpdateRequests.length).toBe(1);
+  expect(mockApi.pluginVariableUpdateRequests[0]).toEqual({
+    pluginId: 'user-provider',
+    variables: { temperature: 0.4 },
+    unset: [],
+  });
+});
+
 test('theme preference survives refresh and retries a failed save', async ({
   page,
 }) => {

@@ -453,6 +453,12 @@
       "apiKeyConfigured": "API key configured",
       "apiKeyPlaceholder": "Enter your API key...",
       "saveApiKey": "Save API Key",
+      "showApiKey": "Show API key",
+      "hideApiKey": "Hide API key",
+      "configure": "Configure",
+      "providerSettings": "Provider settings",
+      "exportPlugin": "Export plugin",
+      "deletePlugin": "Delete plugin",
       "apiKey": {
         "title": "API Key",
         "placeholder": "Enter API key",
@@ -471,6 +477,8 @@
     "generation": {
       "title": "Generation Options",
       "description": "Configure how the AI generates responses",
+      "advancedSettings": "Advanced generation settings",
+      "advancedSettingsDescription": "Sampling, token limits, context, penalties, and stop sequences",
       "coreParameters": "Core Parameters",
       "temperature": "Temperature",
       "temperatureDescription": "Controls randomness. Lower values are more focused, higher values more creative.",
@@ -1288,7 +1296,24 @@
       "saveFailed": "Failed to save variables",
       "resetDefaults": "Reset to Defaults",
       "reset": "Variables reset to defaults",
-      "sensitiveSet": "Value is set (enter new value to change)"
+      "resetFailed": "Failed to reset variables",
+      "sensitiveSet": "Value is set (enter new value to change)",
+      "showValue": "Show {{label}} value",
+      "hideValue": "Hide {{label}} value",
+      "connection": "Connection",
+      "advanced": "Advanced parameters",
+      "inherited": "Use provider default",
+      "inheritedValue": "Use provider default ({{value}})",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "required": "A value is required",
+      "fullApiEndpoint": "Full API endpoint URL",
+      "endpointHelp": "Enter the complete request URL, including its operation path (for example, /v1/chat/completions), not only the provider base URL.",
+      "invalidUrl": "Enter a valid full API endpoint URL, for example https://provider.example/v1/chat/completions",
+      "insecureUrl": "Remote API endpoints must use HTTPS. HTTP is allowed only for localhost and private IPv4 addresses.",
+      "invalidBaseUrl": "Base URLs cannot contain a query string or fragment.",
+      "invalidApiPath": "Must start with / and contain no URL, query, fragment, or .. segment",
+      "tooLong": "Value is too long"
     }
   },
   "huggingface": {
