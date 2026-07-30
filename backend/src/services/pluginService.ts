@@ -442,7 +442,35 @@ class PluginService {
   }
 
   // Get the active plugin for a specific model
-  getActivePluginForModel(model: string, userId?: string): Plugin | null {
+  getActivePluginForModel(
+    model: string,
+    userId?: string,
+    pluginId?: string
+  ): Plugin | null {
+    if (pluginId) {
+      const plugin = this.getPlugin(pluginId);
+      if (!plugin) {
+        throw new Error(`Plugin not found: ${pluginId}`);
+      }
+      if (!this.activePluginIds.has(pluginId)) {
+        throw new Error(`Plugin is not active: ${pluginId}`);
+      }
+      if (!plugin.model_map.includes(model)) {
+        throw new Error(
+          `Model ${model} is not supported by plugin ${pluginId}`
+        );
+      }
+
+      const apiKey = this.getApiKey(plugin, userId);
+      if (pluginRequiresApiKey(plugin) && !apiKey) {
+        throw new Error(
+          `API key not found for plugin ${pluginId} (set via Settings or ${plugin.auth.key_env} env var)`
+        );
+      }
+
+      return plugin;
+    }
+
     // Only route through plugins the user explicitly activated.
     const activePlugins = this.getActivePlugins();
 
@@ -493,11 +521,12 @@ class PluginService {
     model: string,
     messages: ChatMessage[],
     options: GenerationOptions = {},
-    userId?: string
+    userId?: string,
+    pluginId?: string
   ): Promise<PluginResponse> {
     validatePluginModel(model);
 
-    const activePlugin = this.getActivePluginForModel(model, userId);
+    const activePlugin = this.getActivePluginForModel(model, userId, pluginId);
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }
@@ -578,11 +607,12 @@ class PluginService {
     model: string,
     messages: ChatMessage[],
     options: GenerationOptions = {},
-    userId?: string
+    userId?: string,
+    pluginId?: string
   ): AsyncGenerator<PluginStreamChunk, void, unknown> {
     validatePluginModel(model);
 
-    const activePlugin = this.getActivePluginForModel(model, userId);
+    const activePlugin = this.getActivePluginForModel(model, userId, pluginId);
     if (!activePlugin) {
       throw new Error(`No active plugin found for model: ${model}`);
     }

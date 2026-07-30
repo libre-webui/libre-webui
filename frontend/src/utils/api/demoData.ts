@@ -52,6 +52,8 @@ export const getDemoSessions = (): ChatSession[] => {
       id: 'demo-session-1',
       title: 'Demo Chat Session',
       model: DEMO_MODELS[0].name,
+      providerType: 'ollama',
+      providerId: null,
       messages: [
         {
           id: 'demo-msg-1',
@@ -83,6 +85,8 @@ export const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
     customAccent: '#2563eb',
   },
   defaultModel: 'llama3.2:3b',
+  defaultProviderType: 'ollama',
+  defaultProviderId: null,
   systemMessage: 'You are a helpful assistant.',
   generationOptions: {
     temperature: 0.7,
@@ -100,6 +104,8 @@ export const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
   titleSettings: {
     autoTitle: false,
     taskModel: '',
+    taskProviderType: null,
+    taskProviderId: null,
   },
   showUsername: false,
   workRemoteProviderDisclosureDismissed: false,

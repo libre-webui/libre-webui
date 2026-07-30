@@ -158,6 +158,8 @@ function initializeTables(): void {
       title TEXT NOT NULL,
       model TEXT NOT NULL,
       persona_id TEXT, -- Reference to persona used for this session
+      provider_type TEXT, -- Optional qualified Chat provider (ollama or plugin)
+      provider_id TEXT, -- Plugin ID when provider_type is plugin
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
@@ -486,6 +488,18 @@ function runMigrations(): void {
     }>;
 
     const existingSessionsColumns = sessionsTableInfo.map(col => col.name);
+
+    for (const column of [
+      { name: 'provider_type', type: 'TEXT' },
+      { name: 'provider_id', type: 'TEXT' },
+    ]) {
+      if (!existingSessionsColumns.includes(column.name)) {
+        logger.debug(`Adding column ${column.name} to sessions table`);
+        db.exec(
+          `ALTER TABLE sessions ADD COLUMN ${column.name} ${column.type}`
+        );
+      }
+    }
 
     // Add persona_id column to sessions table if it doesn't exist
     if (!existingSessionsColumns.includes('persona_id')) {

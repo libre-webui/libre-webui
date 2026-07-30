@@ -75,6 +75,35 @@ Many providers expose an OpenAI-compatible API. A plugin can define:
 
 If a provider does not support live model discovery, Libre WebUI uses the configured model map.
 
+## Exact Provider Selection in Chat
+
+Model IDs are not globally unique. An Ollama model and multiple active plugins
+can all expose a model named `example-model`. Chat therefore stores the raw
+model ID together with optional provider identity:
+
+- `providerType: "ollama"` identifies the local or configured Ollama route;
+- `providerType: "plugin"` plus `providerId` identifies one exact plugin.
+
+Provider-qualified, URL-encoded values are used only as collision-safe keys in
+model selectors. Requests continue to send the provider's raw model ID.
+Duplicate Ollama/plugin and plugin/plugin model names remain separate choices,
+and reopening a chat restores the exact choice that was saved.
+
+Explicit provider identity fails closed. If a selected plugin is deactivated,
+removed, or no longer advertises that model, Libre WebUI keeps the saved
+selection visible as unavailable and does not silently switch to another
+provider with the same model name. Reactivate the provider or explicitly choose
+another model before generating again.
+
+Sessions and preferences created before provider identity was stored can have
+`providerType` and `providerId` unset or `null`. These legacy records retain
+their historical name-only routing for compatibility because the original
+provider cannot be reconstructed reliably. The selector shows these records as
+"provider not recorded" rather than guessing an Ollama or plugin label.
+Selecting a concrete provider entry records an exact provider for subsequent
+requests. New persona selections keep their `persona:<id>` UI identity and are
+recorded as Ollama-backed.
+
 ## Plugins in Work
 
 Work can use active `completion` and `chat` plugins in addition to Ollama and

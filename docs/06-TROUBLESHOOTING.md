@@ -129,6 +129,26 @@ Administrators can disable model pulls for normal users. Check admin settings if
 - Confirm the model fits in RAM/VRAM.
 - For provider plugins, confirm the API key and provider quota.
 
+### Chat Uses the Wrong Provider or Shows a Provider as Unavailable
+
+The same model ID can exist in Ollama and in more than one plugin. Current Chat
+sessions and default-model preferences save the selected provider as well as
+the raw model ID, so similarly named entries are independent choices.
+
+- If the selector says a provider is unavailable, reactivate or reinstall that
+  exact plugin and confirm its model map still contains the saved model ID.
+- If the provider or model was intentionally removed, explicitly select a
+  replacement. Libre WebUI will not redirect an exact saved selection to a
+  same-named model from another provider.
+- Older sessions and preferences may have no provider metadata. Those records
+  continue to use legacy name-only routing because Libre WebUI cannot infer
+  which provider was originally intended. They appear as "provider not
+  recorded" in model selectors. Reselect the desired Ollama or plugin entry to
+  pin future requests to it.
+- Persona entries remain labeled `persona:<id>`. Newly selected personas record
+  Ollama as their backing provider; historical persona sessions without
+  provider metadata remain compatible with legacy routing.
+
 ## Work Problems
 
 ### Work Is Missing or Reports Runtime Unavailable

@@ -18,12 +18,17 @@
 import type { GenerationTarget } from './chatGenerationService.js';
 import type {
   ChatMessage,
+  ChatProviderSelection,
   ChatSession,
   GenerationOptions,
   OllamaGenerateRequest,
   OllamaGenerateResponse,
   PluginResponse,
 } from '../types/index.js';
+import {
+  normalizeChatProviderSelection,
+  type QualifiedChatProviderSelection,
+} from '../utils/chatProviderSelection.js';
 
 export const AUTO_TITLE_CURRENT_MODEL = '__current_running_model__';
 
@@ -39,6 +44,8 @@ export interface GenerateTitleForSessionOptions {
   requestedModel: string;
   message: string;
   userId?: string;
+  providerType?: ChatProviderSelection['providerType'];
+  providerId?: ChatProviderSelection['providerId'];
 }
 
 export interface GenerateTitleForSessionResult {
@@ -70,7 +77,8 @@ interface ChatGenerationServiceDependency {
   prepareGenerationTarget(
     sessionModel: string,
     userId: string,
-    options?: GenerationOptions
+    options?: GenerationOptions,
+    providerSelection?: ChatProviderSelection
   ): Promise<GenerationTarget>;
   extractPluginAssistantContent(response: PluginResponse): string;
 }
@@ -80,7 +88,8 @@ interface PluginServiceDependency {
     model: string,
     messages: ChatMessage[],
     options?: GenerationOptions,
-    userId?: string
+    userId?: string,
+    pluginId?: string
   ): Promise<PluginResponse>;
 }
 
@@ -204,6 +213,8 @@ export class TitleGenerationService {
     requestedModel,
     message,
     userId = 'default',
+    providerType,
+    providerId,
   }: GenerateTitleForSessionOptions): Promise<GenerateTitleForSessionResult | null> {
     const session = this.chatService.getSession(sessionId, userId);
     if (!session) {
@@ -215,6 +226,10 @@ export class TitleGenerationService {
       session,
       userId
     );
+    const providerSelection =
+      requestedModel === AUTO_TITLE_CURRENT_MODEL
+        ? normalizeChatProviderSelection(session)
+        : normalizeChatProviderSelection({ providerType, providerId });
 
     let title = buildFallbackTitle(message);
     let source: GenerateTitleForSessionResult['source'] = 'fallback';
@@ -224,7 +239,8 @@ export class TitleGenerationService {
         sessionId,
         model,
         message,
-        userId
+        userId,
+        providerSelection
       );
       const sanitizedTitle = sanitizeGeneratedTitleResult(
         generation.title,
@@ -258,12 +274,14 @@ export class TitleGenerationService {
     sessionId: string,
     model: string,
     message: string,
-    userId: string
+    userId: string,
+    providerSelection?: QualifiedChatProviderSelection
   ): Promise<{ title: string; source: 'plugin' | 'ollama' }> {
     const target = await this.chatGenerationService.prepareGenerationTarget(
       model,
       userId,
-      TITLE_GENERATION_OPTIONS
+      TITLE_GENERATION_OPTIONS,
+      providerSelection
     );
     const prompt = buildTitlePrompt(message);
 
@@ -279,7 +297,8 @@ export class TitleGenerationService {
           },
         ],
         target.mergedOptions,
-        userId
+        userId,
+        target.activePlugin.id
       );
 
       return {

@@ -19,6 +19,7 @@ import type {
   ApiResponse,
   ChatGenerationOptions,
   ChatMessage,
+  ChatProviderType,
   ChatSession,
 } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
@@ -39,13 +40,17 @@ export const chatApi = {
   createSession: (
     model: string,
     title?: string,
-    personaId?: string
+    personaId?: string,
+    providerType?: ChatProviderType | null,
+    providerId?: string | null
   ): Promise<ApiResponse<ChatSession>> => {
     if (import.meta.env.VITE_DEMO_MODE === 'true') {
       const newSession: ChatSession = {
         id: `demo-session-${Date.now()}`,
         title: title || 'New Chat',
         model,
+        providerType,
+        providerId: providerType === 'plugin' ? providerId : null,
         messages: [],
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -55,7 +60,13 @@ export const chatApi = {
       return createDemoResponse(newSession);
     }
     return api
-      .post('/chat/sessions', { model, title, personaId })
+      .post('/chat/sessions', {
+        model,
+        title,
+        personaId,
+        providerType,
+        providerId,
+      })
       .then(res => res.data);
   },
 
@@ -112,7 +123,9 @@ export const chatApi = {
   generateTitle: (
     sessionId: string,
     model: string,
-    message: string
+    message: string,
+    providerType?: ChatProviderType | null,
+    providerId?: string | null
   ): Promise<
     ApiResponse<{
       title: string;
@@ -130,7 +143,12 @@ export const chatApi = {
       });
     }
     return api
-      .post(`/chat/sessions/${sessionId}/generate-title`, { model, message })
+      .post(`/chat/sessions/${sessionId}/generate-title`, {
+        model,
+        message,
+        providerType,
+        providerId,
+      })
       .then(res => res.data);
   },
 
