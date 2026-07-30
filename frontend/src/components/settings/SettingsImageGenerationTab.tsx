@@ -18,7 +18,12 @@
 import { Check, ImageIcon, Loader2, RotateCcw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select } from '@/components/ui';
-import type { ImageGenModel, ImageGenPlugin } from '@/utils/api';
+import {
+  findImageGenModel,
+  getImageGenModelOptionValue,
+  type ImageGenModel,
+  type ImageGenPlugin,
+} from '@/utils/api';
 import type { ImageGenSettings } from '@/types';
 import { SettingsToggle } from './SettingsToggle';
 
@@ -35,7 +40,7 @@ interface SettingsImageGenerationTabProps {
     key: keyof ImageGenSettings,
     value: string | boolean
   ) => void;
-  onModelChange: (modelName: string) => void;
+  onModelChange: (modelName: string, pluginId: string) => void;
   onReset: () => void;
   onSave: () => void;
 }
@@ -55,6 +60,11 @@ export function SettingsImageGenerationTab({
   onSave,
 }: SettingsImageGenerationTabProps) {
   const { t } = useTranslation();
+  const selectedModel = findImageGenModel(
+    models,
+    effectiveSettings.model,
+    effectiveSettings.pluginId
+  );
 
   return (
     <div className='space-y-6'>
@@ -116,8 +126,19 @@ export function SettingsImageGenerationTab({
                     {t('settings.imageGen.model')}
                   </label>
                   <Select
-                    value={effectiveSettings.model}
-                    onChange={event => onModelChange(event.target.value)}
+                    value={
+                      selectedModel
+                        ? getImageGenModelOptionValue(selectedModel)
+                        : ''
+                    }
+                    onChange={event => {
+                      const model = models.find(
+                        candidate =>
+                          getImageGenModelOptionValue(candidate) ===
+                          event.target.value
+                      );
+                      if (model) onModelChange(model.model, model.plugin);
+                    }}
                     disabled={!settings.enabled}
                     options={[
                       {
@@ -125,8 +146,9 @@ export function SettingsImageGenerationTab({
                         label: t('settings.model.selectModel'),
                       },
                       ...models.map(model => ({
-                        value: model.model,
+                        value: getImageGenModelOptionValue(model),
                         label: `${model.model} (${model.plugin})`,
+                        key: `${model.plugin}:${model.model}`,
                       })),
                     ]}
                   />

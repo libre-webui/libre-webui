@@ -54,9 +54,9 @@ const galleryRateLimiter = rateLimit({
  * GET /api/image-gen/models
  * Get all available image generation models from plugins
  */
-router.get('/models', async (_req, res) => {
+router.get('/models', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
-    const models = pluginService.getAvailableImageGenModels();
+    const models = pluginService.getAvailableImageGenModels(req.user?.userId);
     res.json({
       success: true,
       data: models,
@@ -104,9 +104,12 @@ router.get('/config/:pluginId', async (req, res) => {
  * GET /api/image-gen/plugins
  * Get all plugins that support image generation capability
  */
-router.get('/plugins', async (_req, res) => {
+router.get('/plugins', optionalAuth, async (req: AuthenticatedRequest, res) => {
   try {
-    const plugins = pluginService.getPluginsByCapability('image');
+    const plugins = pluginService.getPluginsByCapability(
+      'image',
+      req.user?.userId
+    );
     res.json({
       success: true,
       data: plugins.map(p => ({
@@ -138,8 +141,16 @@ router.post(
   imageGenRateLimiter,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const { model, prompt, size, quality, style, n, response_format } =
-        req.body;
+      const {
+        model,
+        pluginId,
+        prompt,
+        size,
+        quality,
+        style,
+        n,
+        response_format,
+      } = req.body;
 
       // Validate required fields
       if (!model || typeof model !== 'string') {
@@ -154,6 +165,17 @@ router.post(
         res.status(400).json({
           success: false,
           message: 'Prompt is required and must be a string',
+        });
+        return;
+      }
+
+      if (
+        pluginId !== undefined &&
+        (typeof pluginId !== 'string' || pluginId.trim().length === 0)
+      ) {
+        res.status(400).json({
+          success: false,
+          message: 'pluginId must be a non-empty string when provided',
         });
         return;
       }
@@ -194,6 +216,8 @@ router.post(
         style,
         n,
         response_format,
+        pluginId,
+        userId: req.user?.userId,
       });
 
       // Auto-save generated images to gallery

@@ -129,6 +129,22 @@ Administrators can disable model pulls for normal users. Check admin settings if
 - Confirm the model fits in RAM/VRAM.
 - For provider plugins, confirm the API key and provider quota.
 
+## OpenAI Image Generation Is Unavailable
+
+- Save an OpenAI API key for the current user. Activate the bundled provider as
+  well when you also want to use its models in Chat or Work.
+- Open Image Generation settings and select one of the advertised GPT Image
+  models.
+- Leave the OpenAI `image_endpoint` override blank unless you operate a
+  compatible image endpoint. A Chat `/responses` or `/chat/completions`
+  endpoint cannot process Image API requests.
+- If OpenAI rejects a GPT Image request despite a valid key and quota, confirm
+  that the API organization is eligible to use GPT Image models.
+
+Image availability is evaluated with the current user's credential. A key saved
+for another account or only in another user's settings does not expose image
+models.
+
 ## Work Problems
 
 ### Work Is Missing or Reports Runtime Unavailable

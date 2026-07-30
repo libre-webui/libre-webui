@@ -361,6 +361,10 @@ export interface ImageGenConfig {
   max_prompt_length?: number; // Maximum prompt length
   supports_n?: boolean; // Whether multiple images can be requested
   max_n?: number; // Maximum number of images per request
+  no_auth_required?: boolean; // Whether the capability can run without an API key
+  endpoint_variable?: string; // Capability-specific endpoint override variable
+  supports_response_format?: boolean; // Whether the API accepts response_format
+  default_response_format?: 'url' | 'b64_json';
 }
 
 // Plugin capabilities for multi-capability plugins
@@ -438,6 +442,7 @@ export interface TTSResponse {
 // Image Generation Request/Response types
 export interface ImageGenRequest {
   model: string;
+  pluginId?: string;
   prompt: string;
   size?: string;
   quality?: string;
@@ -453,6 +458,7 @@ export interface ImageGenResponse {
     revised_prompt?: string;
   }>;
   model: string;
+  pluginId?: string;
 }
 
 // Generated image for gallery

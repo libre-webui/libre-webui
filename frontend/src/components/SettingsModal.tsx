@@ -61,6 +61,8 @@ import {
   TTSPlugin,
   ImageGenModel,
   ImageGenPlugin,
+  findImageGenModel,
+  resolveImageGenModel,
 } from '@/utils/api';
 import toast from 'react-hot-toast';
 
@@ -365,12 +367,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   );
   const selectedImageGenModel = useMemo(
     () =>
-      imageGenModels.find(m => m.model === imageGenSettings.model) ||
-      imageGenModels[0],
-    [imageGenModels, imageGenSettings.model]
+      resolveImageGenModel(
+        imageGenModels,
+        imageGenSettings.model,
+        imageGenSettings.pluginId
+      ),
+    [imageGenModels, imageGenSettings.model, imageGenSettings.pluginId]
   );
   const effectiveImageGenSettings = useMemo(() => {
-    if (imageGenSettings.model || !selectedImageGenModel) {
+    if (!selectedImageGenModel) {
+      return imageGenSettings;
+    }
+
+    const savedModel = findImageGenModel(
+      imageGenModels,
+      imageGenSettings.model,
+      imageGenSettings.pluginId
+    );
+    if (savedModel && imageGenSettings.pluginId === savedModel.plugin) {
       return imageGenSettings;
     }
 
@@ -382,7 +396,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       quality: selectedImageGenModel.config?.default_quality || 'standard',
       style: selectedImageGenModel.config?.default_style || 'vivid',
     };
-  }, [imageGenSettings, selectedImageGenModel]);
+  }, [imageGenModels, imageGenSettings, selectedImageGenModel]);
   const imageGenSizes = selectedImageGenModel?.config?.sizes ?? [];
   const imageGenQualities = selectedImageGenModel?.config?.qualities ?? [];
   const imageGenStyles = selectedImageGenModel?.config?.styles ?? [];
@@ -514,8 +528,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
-  const handleImageGenModelChange = async (modelName: string) => {
-    const selectedModel = imageGenModels.find(m => m.model === modelName);
+  const handleImageGenModelChange = (modelName: string, pluginId: string) => {
+    const selectedModel = findImageGenModel(
+      imageGenModels,
+      modelName,
+      pluginId
+    );
     if (selectedModel) {
       setImageGenSettings(prev => ({
         ...prev,

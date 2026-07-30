@@ -75,6 +75,22 @@ Many providers expose an OpenAI-compatible API. A plugin can define:
 
 If a provider does not support live model discovery, Libre WebUI uses the configured model map.
 
+## OpenAI Image Generation
+
+The bundled OpenAI provider exposes the Image API at
+`https://api.openai.com/v1/images/generations`. Its image catalog includes
+`gpt-image-2`, `gpt-image-1.5`, `gpt-image-1`, and `gpt-image-1-mini`.
+
+Image generation uses the same user-scoped OpenAI API key as Chat, but it has a
+separate optional `image_endpoint` override. This prevents a custom Chat
+endpoint from accidentally receiving image requests. Leave `image_endpoint`
+blank to inherit the bundled Image API endpoint.
+
+Image selections are provider-qualified. When two image plugins expose the same
+model ID, Libre WebUI sends the request only to the provider selected in the
+image panel. GPT Image responses use base64 image data; Libre WebUI converts
+that data to an in-app image and saves it to the current user's gallery.
+
 ## Plugins in Work
 
 Work can use active `completion` and `chat` plugins in addition to Ollama and

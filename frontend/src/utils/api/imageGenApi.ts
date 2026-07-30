@@ -17,22 +17,16 @@
 
 import type { ApiResponse, GeneratedImage } from '@/types';
 import { isDemoMode } from '@/utils/demoMode';
+import type { ImageGenModel } from '@/utils/imageGenModels';
 import { api, createDemoResponse } from './client';
 
 // Image Generation API
-export interface ImageGenModel {
-  model: string;
-  plugin: string;
-  config?: {
-    sizes?: string[];
-    default_size?: string;
-    qualities?: string[];
-    default_quality?: string;
-    styles?: string[];
-    default_style?: string;
-    max_prompt_length?: number;
-  };
-}
+export type { ImageGenModel } from '@/utils/imageGenModels';
+export {
+  findImageGenModel,
+  getImageGenModelOptionValue,
+  resolveImageGenModel,
+} from '@/utils/imageGenModels';
 
 export interface ImageGenPlugin {
   id: string;
@@ -43,6 +37,7 @@ export interface ImageGenPlugin {
 
 export interface ImageGenRequest {
   model: string;
+  pluginId: string;
   prompt: string;
   size?: string;
   quality?: string;
@@ -56,6 +51,8 @@ export interface ImageGenResponse {
     b64_json?: string;
     revised_prompt?: string;
   }>;
+  model: string;
+  pluginId?: string;
 }
 
 export const imageGenApi = {
@@ -64,16 +61,13 @@ export const imageGenApi = {
     if (isDemoMode()) {
       return createDemoResponse<ImageGenModel[]>([
         {
-          model: 'dall-e-3',
+          model: 'gpt-image-2',
           plugin: 'openai',
           config: {
-            sizes: ['1024x1024', '1792x1024', '1024x1792'],
+            sizes: ['1024x1024', '1536x1024', '1024x1536'],
             default_size: '1024x1024',
-            qualities: ['standard', 'hd'],
-            default_quality: 'standard',
-            styles: ['vivid', 'natural'],
-            default_style: 'vivid',
-            max_prompt_length: 4000,
+            qualities: ['auto', 'low', 'medium', 'high'],
+            default_quality: 'auto',
           },
         },
       ]);
@@ -88,13 +82,18 @@ export const imageGenApi = {
       return createDemoResponse<ImageGenPlugin[]>([
         {
           id: 'openai',
-          name: 'OpenAI DALL-E',
-          models: ['dall-e-3', 'dall-e-2'],
+          name: 'OpenAI GPT Image',
+          models: [
+            'gpt-image-2',
+            'gpt-image-1.5',
+            'gpt-image-1',
+            'gpt-image-1-mini',
+          ],
           config: {
-            sizes: ['1024x1024', '1792x1024', '1024x1792'],
+            sizes: ['1024x1024', '1536x1024', '1024x1536'],
             default_size: '1024x1024',
-            qualities: ['standard', 'hd'],
-            default_quality: 'standard',
+            qualities: ['auto', 'low', 'medium', 'high'],
+            default_quality: 'auto',
           },
         },
       ]);
@@ -109,13 +108,10 @@ export const imageGenApi = {
   ): Promise<ApiResponse<ImageGenModel['config']>> => {
     if (isDemoMode()) {
       return createDemoResponse({
-        sizes: ['1024x1024', '1792x1024', '1024x1792'],
+        sizes: ['1024x1024', '1536x1024', '1024x1536'],
         default_size: '1024x1024',
-        qualities: ['standard', 'hd'],
-        default_quality: 'standard',
-        styles: ['vivid', 'natural'],
-        default_style: 'vivid',
-        max_prompt_length: 4000,
+        qualities: ['auto', 'low', 'medium', 'high'],
+        default_quality: 'auto',
       });
     }
 
@@ -134,6 +130,8 @@ export const imageGenApi = {
             revised_prompt: request.prompt,
           },
         ],
+        model: request.model,
+        pluginId: request.pluginId,
       });
     }
 

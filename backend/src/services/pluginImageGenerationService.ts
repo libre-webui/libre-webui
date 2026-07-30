@@ -20,6 +20,7 @@ import { ImageGenConfig, ImageGenResponse, Plugin } from '../types/index.js';
 import { validatePluginModel } from '../utils/pluginValidation.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
+type ImageGenImage = ImageGenResponse['images'][number];
 
 export interface PluginImageGenerationServiceDependencies {
   getAllPlugins(): Plugin[];
@@ -34,18 +35,28 @@ export class PluginImageGenerationService {
     private readonly deps: PluginImageGenerationServiceDependencies
   ) {}
 
-  getPluginForImageGen(model: string): Plugin | null {
+  getPluginForImageGen(model: string, pluginId?: string): Plugin | null {
+    if (pluginId) {
+      const plugin = this.deps.getPlugin(pluginId);
+      if (!plugin) return null;
+
+      const supportedModels =
+        plugin.capabilities?.image?.model_map ??
+        (plugin.type === 'image' ? plugin.model_map : []);
+      if (supportedModels.includes(model)) {
+        return plugin;
+      }
+
+      return null;
+    }
+
     const allPlugins = this.deps.getAllPlugins();
 
     for (const plugin of allPlugins) {
-      if (plugin.capabilities?.image) {
-        const imageCapability = plugin.capabilities.image;
-        if (imageCapability.model_map.includes(model)) {
-          return plugin;
-        }
-      }
-
-      if (plugin.type === 'image' && plugin.model_map.includes(model)) {
+      const supportedModels =
+        plugin.capabilities?.image?.model_map ??
+        (plugin.type === 'image' ? plugin.model_map : []);
+      if (supportedModels.includes(model)) {
         return plugin;
       }
     }
@@ -53,7 +64,7 @@ export class PluginImageGenerationService {
     return null;
   }
 
-  getAvailableImageGenModels(): {
+  getAvailableImageGenModels(userId?: string): {
     model: string;
     plugin: string;
     config?: ImageGenConfig;
@@ -63,32 +74,25 @@ export class PluginImageGenerationService {
     const allPlugins = this.deps.getAllPlugins();
 
     for (const plugin of allPlugins) {
-      if (plugin.capabilities?.image) {
-        const imageCapability = plugin.capabilities.image;
-        const noAuthRequired =
-          (imageCapability.config as Record<string, unknown> | undefined)
-            ?.no_auth_required === true;
-        const apiKey = this.deps.getApiKey(plugin);
-        if (apiKey || noAuthRequired) {
-          for (const model of imageCapability.model_map) {
-            models.push({
-              model,
-              plugin: plugin.id,
-              config: imageCapability.config,
-            });
-          }
-        }
+      const imageCapability = plugin.capabilities?.image;
+      const supportedModels =
+        imageCapability?.model_map ??
+        (plugin.type === 'image' ? plugin.model_map : []);
+      if (supportedModels.length === 0) {
+        continue;
       }
 
-      if (plugin.type === 'image') {
-        const apiKey = this.deps.getApiKey(plugin);
-        if (apiKey) {
-          for (const model of plugin.model_map) {
-            models.push({
-              model,
-              plugin: plugin.id,
-            });
-          }
+      const noAuthRequired =
+        (imageCapability?.config as Record<string, unknown> | undefined)
+          ?.no_auth_required === true;
+      const apiKey = this.deps.getApiKey(plugin, userId);
+      if (apiKey || noAuthRequired) {
+        for (const model of supportedModels) {
+          models.push({
+            model,
+            plugin: plugin.id,
+            config: imageCapability?.config,
+          });
         }
       }
     }
@@ -105,6 +109,8 @@ export class PluginImageGenerationService {
       style?: string;
       n?: number;
       response_format?: 'url' | 'b64_json';
+      pluginId?: string;
+      userId?: string;
     } = {}
   ): Promise<ImageGenResponse> {
     validatePluginModel(model);
@@ -113,9 +119,14 @@ export class PluginImageGenerationService {
       throw new Error('Invalid prompt: must be a non-empty string');
     }
 
-    const plugin = this.getPluginForImageGen(model);
+    const plugin = this.getPluginForImageGen(model, options.pluginId);
     if (!plugin) {
-      throw new Error(`No image generation plugin found for model: ${model}`);
+      const providerDescription = options.pluginId
+        ? ` in plugin ${options.pluginId}`
+        : '';
+      throw new Error(
+        `No image generation plugin found for model: ${model}${providerDescription}`
+      );
     }
 
     let endpoint: string;
@@ -128,16 +139,26 @@ export class PluginImageGenerationService {
       endpoint = plugin.endpoint;
     }
 
-    const imageVars = this.deps.getPluginVariables(plugin);
-    if (imageVars.endpoint && typeof imageVars.endpoint === 'string') {
-      const validated = this.deps.validateEndpointUrl(imageVars.endpoint);
-      if (validated) endpoint = validated;
+    const imageVars = this.deps.getPluginVariables(plugin, options.userId);
+    const endpointVariable = imageConfig?.endpoint_variable ?? 'endpoint';
+    const endpointOverride = imageVars[endpointVariable];
+    if (
+      typeof endpointOverride === 'string' &&
+      endpointOverride.trim().length > 0
+    ) {
+      const validated = this.deps.validateEndpointUrl(endpointOverride.trim());
+      if (!validated) {
+        throw new Error(
+          `Invalid image endpoint override configured for plugin ${plugin.id}`
+        );
+      }
+      endpoint = validated;
     }
 
     const noAuthRequired =
       (imageConfig as Record<string, unknown> | undefined)?.no_auth_required ===
       true;
-    const apiKey = this.deps.getApiKey(plugin);
+    const apiKey = this.deps.getApiKey(plugin, options.userId);
     if (!apiKey && !noAuthRequired) {
       throw new Error(
         `API key not found for plugin ${plugin.id} (set via Settings or ${plugin.auth.key_env} env var)`
@@ -171,8 +192,14 @@ export class PluginImageGenerationService {
       size: options.size || imageConfig?.default_size || '1024x1024',
       quality: options.quality || imageConfig?.default_quality || 'standard',
       n: options.n || 1,
-      response_format: options.response_format || 'url',
     };
+
+    if (imageConfig?.supports_response_format !== false) {
+      payload.response_format =
+        options.response_format ||
+        imageConfig?.default_response_format ||
+        'url';
+    }
 
     if (options.style || imageConfig?.default_style) {
       payload.style = options.style || imageConfig?.default_style;
@@ -184,7 +211,7 @@ export class PluginImageGenerationService {
       return executeComfyUIRequest(baseUrl, prompt, {
         ...options,
         model,
-        pluginVars: this.deps.getPluginVariables(plugin),
+        pluginVars: imageVars,
       });
     }
 
@@ -194,26 +221,10 @@ export class PluginImageGenerationService {
         timeout: 120000,
       });
 
-      if (response.data?.data) {
-        return {
-          images: response.data.data.map(
-            (img: {
-              url?: string;
-              b64_json?: string;
-              revised_prompt?: string;
-            }) => ({
-              url: img.url,
-              b64_json: img.b64_json,
-              revised_prompt: img.revised_prompt,
-            })
-          ),
-          model,
-        };
-      }
-
       return {
-        images: Array.isArray(response.data) ? response.data : [response.data],
+        images: normalizeImageGenerationResponse(response.data),
         model,
+        pluginId: plugin.id,
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -237,6 +248,151 @@ export class PluginImageGenerationService {
 
     return null;
   }
+}
+
+export function normalizeImageGenerationResponse(
+  responseData: unknown
+): ImageGenImage[] {
+  const candidates = getImageCandidates(responseData);
+  const images = candidates.flatMap(candidate => {
+    const image = normalizeImageCandidate(candidate);
+    return image ? [image] : [];
+  });
+
+  if (images.length === 0) {
+    throw new Error('Image provider returned no usable image data');
+  }
+
+  return images;
+}
+
+function getImageCandidates(responseData: unknown): unknown[] {
+  if (Array.isArray(responseData)) {
+    return responseData;
+  }
+
+  if (!isRecord(responseData)) {
+    return [responseData];
+  }
+
+  if ('data' in responseData) {
+    return Array.isArray(responseData.data)
+      ? responseData.data
+      : [responseData.data];
+  }
+
+  if ('images' in responseData) {
+    return Array.isArray(responseData.images)
+      ? responseData.images
+      : [responseData.images];
+  }
+
+  return [responseData];
+}
+
+function normalizeImageCandidate(candidate: unknown): ImageGenImage | null {
+  if (typeof candidate === 'string') {
+    const dataUrlBase64 = normalizeImageDataUrl(candidate);
+    if (dataUrlBase64) {
+      return { b64_json: dataUrlBase64 };
+    }
+
+    const url = normalizeHttpImageUrl(candidate);
+    if (url) {
+      return { url };
+    }
+
+    const b64Json = normalizeCanonicalBase64(candidate);
+    return b64Json ? { b64_json: b64Json } : null;
+  }
+
+  if (!isRecord(candidate)) {
+    return null;
+  }
+
+  const normalized: ImageGenImage = {};
+  const b64Json =
+    normalizeImageDataUrl(candidate.b64_json) ||
+    normalizeCanonicalBase64(candidate.b64_json);
+  if (b64Json) {
+    normalized.b64_json = b64Json;
+  }
+
+  const urlData = normalizeImageDataUrl(candidate.url);
+  if (urlData && !normalized.b64_json) {
+    normalized.b64_json = urlData;
+  } else if (!urlData) {
+    const url = normalizeHttpImageUrl(candidate.url);
+    if (url) {
+      normalized.url = url;
+    }
+  }
+
+  if (!normalized.url && !normalized.b64_json) {
+    return null;
+  }
+
+  if (typeof candidate.revised_prompt === 'string') {
+    normalized.revised_prompt = candidate.revised_prompt;
+  }
+
+  return normalized;
+}
+
+function normalizeImageDataUrl(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const match =
+    /^data:image\/[a-z0-9.+-]+(?:;[a-z0-9!#$&^_.+-]+=[^;,]*)*;base64,([a-z0-9+/]+={0,2})$/i.exec(
+      value.trim()
+    );
+  return match ? normalizeCanonicalBase64(match[1]) : null;
+}
+
+function normalizeCanonicalBase64(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const normalized = value.trim();
+  if (
+    normalized.length === 0 ||
+    normalized.length % 4 !== 0 ||
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
+      normalized
+    )
+  ) {
+    return null;
+  }
+
+  const decoded = Buffer.from(normalized, 'base64');
+  if (decoded.length === 0 || decoded.toString('base64') !== normalized) {
+    return null;
+  }
+
+  return normalized;
+}
+
+function normalizeHttpImageUrl(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  try {
+    const url = new URL(value.trim());
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return null;
+    }
+    return url.toString();
+  } catch (_error) {
+    return null;
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function parseImageEndpoint(endpoint: string): URL {

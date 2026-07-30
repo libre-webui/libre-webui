@@ -768,16 +768,16 @@ class PluginService {
     return this.ttsService.getTTSConfig(pluginId);
   }
 
-  getPluginForImageGen(model: string): Plugin | null {
-    return this.imageGenerationService.getPluginForImageGen(model);
+  getPluginForImageGen(model: string, pluginId?: string): Plugin | null {
+    return this.imageGenerationService.getPluginForImageGen(model, pluginId);
   }
 
-  getAvailableImageGenModels(): {
+  getAvailableImageGenModels(userId?: string): {
     model: string;
     plugin: string;
     config?: ImageGenConfig;
   }[] {
-    return this.imageGenerationService.getAvailableImageGenModels();
+    return this.imageGenerationService.getAvailableImageGenModels(userId);
   }
 
   async executeImageGenRequest(
@@ -789,6 +789,8 @@ class PluginService {
       style?: string;
       n?: number;
       response_format?: 'url' | 'b64_json';
+      pluginId?: string;
+      userId?: string;
     } = {}
   ): Promise<ImageGenResponse> {
     return this.imageGenerationService.executeImageGenRequest(

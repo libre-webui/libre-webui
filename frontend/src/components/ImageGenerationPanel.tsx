@@ -180,6 +180,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
     try {
       const response = await imageGenApi.generate({
         model: selectedModel,
+        pluginId: selectedPlugin,
         prompt: prompt.trim(),
         size,
         quality,

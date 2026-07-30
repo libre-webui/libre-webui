@@ -8,20 +8,11 @@
     "prefix": "Bearer ",
     "key_env": "OPENAI_API_KEY"
   },
-  "model_map": [
-    "gpt-5.4",
-    "gpt-5.4-mini",
-    "gpt-5.4-nano",
-    "gpt-5.5"
-  ],
+  "model_map": ["gpt-5.4", "gpt-5.4-mini", "gpt-5.4-nano", "gpt-5.5"],
   "capabilities": {
     "tts": {
       "endpoint": "https://api.openai.com/v1/audio/speech",
-      "model_map": [
-        "gpt-4o-mini-tts",
-        "tts-1",
-        "tts-1-hd"
-      ],
+      "model_map": ["gpt-4o-mini-tts", "tts-1", "tts-1-hd"],
       "config": {
         "voices": [
           "alloy",
@@ -35,17 +26,29 @@
           "shimmer"
         ],
         "default_voice": "alloy",
-        "formats": [
-          "mp3",
-          "opus",
-          "aac",
-          "flac",
-          "wav",
-          "pcm"
-        ],
+        "formats": ["mp3", "opus", "aac", "flac", "wav", "pcm"],
         "default_format": "mp3",
         "max_characters": 4096,
         "supports_streaming": true
+      }
+    },
+    "image": {
+      "endpoint": "https://api.openai.com/v1/images/generations",
+      "model_map": [
+        "gpt-image-2",
+        "gpt-image-1.5",
+        "gpt-image-1",
+        "gpt-image-1-mini"
+      ],
+      "config": {
+        "sizes": ["1024x1024", "1536x1024", "1024x1536"],
+        "default_size": "1024x1024",
+        "qualities": ["auto", "low", "medium", "high"],
+        "default_quality": "auto",
+        "supports_n": true,
+        "max_n": 10,
+        "endpoint_variable": "image_endpoint",
+        "supports_response_format": false
       }
     }
   },
@@ -56,6 +59,12 @@
       "label": "API Endpoint",
       "description": "Override the default API endpoint URL.",
       "default": "https://api.openai.com/v1/chat/completions"
+    },
+    {
+      "name": "image_endpoint",
+      "type": "string",
+      "label": "Image API Endpoint",
+      "description": "Optional full Image API generation endpoint. Leave blank to use the bundled OpenAI endpoint."
     },
     {
       "name": "temperature",

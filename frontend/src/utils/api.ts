@@ -21,7 +21,12 @@ export { chatApi } from './api/chatApi';
 export { documentsApi, embeddingApi } from './api/documentsApi';
 export { huggingfaceHubApi } from './api/huggingfaceHubApi';
 export type { GgufFileInfo, HuggingFaceModel } from './api/huggingfaceHubApi';
-export { imageGenApi } from './api/imageGenApi';
+export {
+  findImageGenModel,
+  getImageGenModelOptionValue,
+  imageGenApi,
+  resolveImageGenModel,
+} from './api/imageGenApi';
 export type {
   ImageGenModel,
   ImageGenPlugin,
