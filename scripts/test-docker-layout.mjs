@@ -43,3 +43,34 @@ test('Docker workflow publishes semantic version tags from release tags', () => 
   );
   assert.match(dockerWorkflow, /Release tag .* does not match package version/);
 });
+
+test('Docker builds gate pull requests into every branch without publishing', () => {
+  const triggerStart = dockerWorkflow.indexOf('\non:\n');
+  const environmentStart = dockerWorkflow.indexOf('\nenv:\n');
+  assert.notEqual(triggerStart, -1);
+  assert.notEqual(environmentStart, -1);
+
+  const triggers = dockerWorkflow.slice(triggerStart, environmentStart);
+  const pullRequestStart = triggers.indexOf('  pull_request:\n');
+  assert.notEqual(pullRequestStart, -1);
+  assert.match(triggers.slice(pullRequestStart), /^  pull_request:\s*$/m);
+  assert.doesNotMatch(
+    triggers.slice(pullRequestStart),
+    /^\s+branches:/m,
+    'Docker builds must cover stacked pull requests'
+  );
+
+  assert.match(
+    dockerWorkflow,
+    /name: Log in to GitHub Container Registry\s+if: github\.event_name != 'pull_request'/
+  );
+  assert.match(
+    dockerWorkflow,
+    /push=\$\{\{ github\.event_name != 'pull_request' \}\}/
+  );
+  assert.match(
+    dockerWorkflow,
+    /merge:\s+if: github\.event_name != 'pull_request'/
+  );
+  assert.doesNotMatch(dockerWorkflow, /pull_request_target:/);
+});
