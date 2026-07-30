@@ -90,6 +90,8 @@ Image selections are provider-qualified. When two image plugins expose the same
 model ID, Libre WebUI sends the request only to the provider selected in the
 image panel. GPT Image responses use base64 image data; Libre WebUI converts
 that data to an in-app image and saves it to the current user's gallery.
+Direct Image API requests may set `n` to a JSON integer from 1 through 10;
+numeric strings and fractional values are rejected before reaching the provider.
 
 ## Plugins in Work
 

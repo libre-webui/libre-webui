@@ -20,6 +20,7 @@ import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
 import galleryService from '../services/galleryService.js';
 import { optionalAuth, AuthenticatedRequest } from '../middleware/auth.js';
+import { normalizeImageGenerationCount } from '../utils/imageGenerationValidation.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('routes:image-gen');
@@ -188,16 +189,15 @@ router.post(
         return;
       }
 
-      // Validate optional parameters
-      if (n !== undefined) {
-        const nNum = Number(n);
-        if (isNaN(nNum) || nNum < 1 || nNum > 10) {
-          res.status(400).json({
-            success: false,
-            message: 'n must be a number between 1 and 10',
-          });
-          return;
-        }
+      let normalizedImageCount: number | undefined;
+      try {
+        normalizedImageCount = normalizeImageGenerationCount(n);
+      } catch {
+        res.status(400).json({
+          success: false,
+          message: 'n must be an integer between 1 and 10',
+        });
+        return;
       }
 
       const validFormats = ['url', 'b64_json'];
@@ -214,7 +214,7 @@ router.post(
         size,
         quality,
         style,
-        n,
+        n: normalizedImageCount,
         response_format,
         pluginId,
         userId: req.user?.userId,

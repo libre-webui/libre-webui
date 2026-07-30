@@ -21,6 +21,17 @@ const imageServiceModule = await import(
 );
 const { PluginImageGenerationService, normalizeImageGenerationResponse } =
   imageServiceModule;
+const { normalizeImageGenerationCount } = await import(
+  pathToFileURL(
+    path.join(
+      repoRoot,
+      'backend',
+      'dist',
+      'utils',
+      'imageGenerationValidation.js'
+    )
+  ).href
+);
 
 function imagePlugin(id, endpoint, config = {}) {
   return {
@@ -82,6 +93,19 @@ test('the bundled OpenAI provider declares current GPT Image support', () => {
       ?.default,
     undefined
   );
+});
+
+test('image counts accept only JSON integers from 1 through 10', () => {
+  assert.equal(normalizeImageGenerationCount(undefined), undefined);
+  assert.equal(normalizeImageGenerationCount(1), 1);
+  assert.equal(normalizeImageGenerationCount(10), 10);
+
+  for (const invalid of [0, 11, 1.5, '1', '1.5', null, NaN]) {
+    assert.throws(
+      () => normalizeImageGenerationCount(invalid),
+      /n must be an integer between 1 and 10/
+    );
+  }
 });
 
 test('image generation uses the selected provider and user-scoped OpenAI settings', async () => {
