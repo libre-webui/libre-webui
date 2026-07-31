@@ -147,8 +147,11 @@ RUN cd backend && npm run build
 FROM base AS runner
 WORKDIR /app
 
-# Install security updates
-RUN apk update && apk upgrade && apk add --no-cache wget
+# Install security updates.
+# docker-cli lets the Work runtime drive the host daemon when this image is
+# given the Docker socket. The socket is never mounted by default; without it
+# the CLI is inert and Work simply reports that no daemon is reachable.
+RUN apk update && apk upgrade && apk add --no-cache wget docker-cli
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs

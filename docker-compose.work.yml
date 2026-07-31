@@ -1,0 +1,47 @@
+# Opt-in overlay that lets the Work runtime create task containers while Libre
+# WebUI itself runs in Docker.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.work.yml up -d
+#
+# Mounting the Docker socket gives this container root-equivalent control of the
+# host daemon. Enable it only on a host where every Libre WebUI administrator is
+# already trusted with that access. It is deliberately not part of the default
+# Compose file.
+#
+# DOCKER_GID must be the group that owns the socket AS SEEN INSIDE A CONTAINER.
+# Reading it from a macOS host gives the wrong value, because Docker Desktop
+# proxies the socket through a VM. Read it through a container instead:
+#
+#   DOCKER_GID=$(docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+#     alpine stat -c '%g' /var/run/docker.sock)
+#
+# Docker Desktop reports 0; a Linux host reports its docker group. Put the value
+# in .env next to this file.
+#
+# Work task containers are siblings on the host daemon, not children of this
+# container. They are published on the daemon host's loopback, so the preview URL
+# is reachable from a browser on that host. For a remote host, set
+# WORK_PREVIEW_BIND / WORK_PREVIEW_HOST below to an address that browser can
+# reach, and firewall the published range.
+
+services:
+  libre-webui:
+    volumes:
+      - libre_webui_data:/app/backend/data
+      - libre_webui_temp:/app/backend/temp
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
+    group_add:
+      - '${DOCKER_GID:-0}'
+    environment:
+      - WORK_DOCKER_COMMAND=${WORK_DOCKER_COMMAND:-docker}
+      - WORK_RUNTIME_IMAGE=${WORK_RUNTIME_IMAGE:-}
+      - WORK_MAX_ACTIVE_RUNTIMES_GLOBAL=${WORK_MAX_ACTIVE_RUNTIMES_GLOBAL:-2}
+      - WORK_MAX_ACTIVE_RUNTIMES_PER_USER=${WORK_MAX_ACTIVE_RUNTIMES_PER_USER:-1}
+      - WORK_MEMORY_LIMIT=${WORK_MEMORY_LIMIT:-2g}
+      - WORK_CPU_LIMIT=${WORK_CPU_LIMIT:-2}
+      - WORK_PIDS_LIMIT=${WORK_PIDS_LIMIT:-256}
+      - WORK_PREVIEW_PORT=${WORK_PREVIEW_PORT:-4173}
+      - WORK_PREVIEW_BIND=${WORK_PREVIEW_BIND:-127.0.0.1}
+      - WORK_PREVIEW_HOST=${WORK_PREVIEW_HOST:-}
+      - WORK_COMMAND_TIMEOUT_MS=${WORK_COMMAND_TIMEOUT_MS:-120000}
+      - WORK_MAX_AGENT_ROUNDS=${WORK_MAX_AGENT_ROUNDS:-48}

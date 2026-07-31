@@ -66,7 +66,8 @@ router.get(
     const reason = recoveryPending
       ? `Work is safely retrying ${workRuntimeService.recoveryPendingCount} container cleanup(s). New operations remain blocked until Docker proves they are stopped.`
       : !dockerAvailable
-        ? 'Docker is not available to the Libre WebUI backend.'
+        ? workRuntimeService.dockerUnavailableReason ||
+          'Docker is not available to the Libre WebUI backend.'
         : !providerAvailable
           ? 'No Ollama or configured plugin model provider is available.'
           : undefined;

@@ -496,14 +496,52 @@ backend, not merely the browser or desktop interface.
 | Source development on a local computer    | Supported under the same Docker and provider requirements.                                                | Supported when the development browser and backend share the host.                          |
 | Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.  | Supported only when that backend's loopback is also local to the desktop client.            |
 | Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                               | Not reachable from an ordinary remote browser because the returned URL is backend loopback. |
-| Standard repository Docker Compose        | Unavailable by default: the Libre WebUI image has no Docker CLI and is not given the host socket.         | Unavailable with the default runtime configuration.                                         |
+| Standard repository Docker Compose        | Unavailable by default: the image ships the Docker CLI, but no socket is mounted. Opt in with `docker-compose.work.yml`. | Reachable from a browser on the Docker host once the overlay is enabled.                    |
 | Current Kubernetes/Helm deployment        | Unavailable: the chart does not create a Work runtime driver, per-task Pods, RBAC, or persistent volumes. | Unavailable.                                                                                |
 
 Mounting `/var/run/docker.sock` into a web application container gives that
 container root-equivalent control over the Docker host. Libre WebUI does not
-enable this in its Compose or Helm configuration. An operator who builds a
-custom Docker-backed deployment owns the daemon-security, network, lifecycle,
-backup, and access-control consequences.
+enable this in its default Compose or Helm configuration. An operator who turns
+it on owns the daemon-security, network, lifecycle, backup, and access-control
+consequences.
+
+### Running Work when Libre WebUI is itself in Docker
+
+Work drives the host daemon through a mounted socket and creates task
+containers as *siblings* of the Libre WebUI container, not as children. Three
+things must all hold, and each fails with its own message in the Work
+capabilities panel:
+
+1. **The Docker CLI must exist in the image.** It ships in the Libre WebUI
+   image; a custom image needs `docker-cli` or `WORK_DOCKER_COMMAND` pointing
+   at one. Missing, it reports `The "docker" CLI is not installed…`.
+2. **The socket must be mounted.** Missing, it reports
+   `No Docker daemon is reachable…`.
+3. **The backend user must be in the socket's group.** The image runs as
+   `nodejs` (uid 1001), and the socket is typically `root`-owned, so the
+   container needs `group_add`. Missing, it reports
+   `The Docker socket is mounted but the Libre WebUI user cannot open it…`.
+
+The bundled overlay wires all three:
+
+```bash
+# Read the socket's group as seen INSIDE a container. A macOS host reports a
+# different value, because Docker Desktop proxies the socket through a VM.
+echo "DOCKER_GID=$(docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  alpine stat -c '%g' /var/run/docker.sock)" >> .env
+
+docker compose -f docker-compose.yml -f docker-compose.work.yml up -d
+```
+
+Task previews are published on the Docker **host**, so a browser on that host
+reaches them at the returned `127.0.0.1:<port>` URL. When the host is remote,
+set `WORK_PREVIEW_BIND` to an interface that browser can route to and
+`WORK_PREVIEW_HOST` to the name it uses, then firewall the published range.
+
+Concurrency is capped separately from all of this:
+`WORK_MAX_ACTIVE_RUNTIMES_PER_USER` defaults to `1`, so one administrator's
+second task waits until the first runtime stops. Raise it in the overlay if
+your host has the memory and CPU for more.
 
 Kubernetes support would require a separate runtime implementation with
 tightly scoped RBAC, a Pod and persistent volume design for each task, cleanup
@@ -525,6 +563,8 @@ Work reads these variables in the backend process:
 | `WORK_CPU_LIMIT`                    | `2`                                                                                           | Per-container CPU limit                                    |
 | `WORK_PIDS_LIMIT`                   | `256`                                                                                         | Per-container process limit                                |
 | `WORK_PREVIEW_PORT`                 | `4173`                                                                                        | Port the app must listen on inside the container           |
+| `WORK_PREVIEW_BIND`                 | `127.0.0.1`                                                                                   | Host interface the preview port is published on            |
+| `WORK_PREVIEW_HOST`                 | value of `WORK_PREVIEW_BIND`                                                                  | Host advertised in the preview URL                         |
 | `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`   | `2`                                                                                           | Concurrent container-backed tasks per Libre WebUI instance |
 | `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` | `1`                                                                                           | Concurrent container-backed tasks per administrator        |
 | `WORK_MAX_TASKS_GLOBAL`             | `500`                                                                                         | Persisted Work task limit per Libre WebUI instance         |

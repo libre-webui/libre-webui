@@ -36,6 +36,7 @@ export const WORK_RUNTIME_DEFAULTS = {
   cpuLimit: '2',
   pidsLimit: 256,
   previewPort: 4173,
+  previewBind: '127.0.0.1',
 } as const;
 
 export const WORK_RUNTIME_ADMISSION_DEFAULTS = {
@@ -70,6 +71,16 @@ const config = {
     process.env.WORK_PREVIEW_PORT,
     WORK_RUNTIME_DEFAULTS.previewPort
   ),
+  // Interface the daemon publishes a task preview on. Loopback keeps a preview
+  // private to the Docker host, which is correct when the browser runs there.
+  previewBind:
+    process.env.WORK_PREVIEW_BIND || WORK_RUNTIME_DEFAULTS.previewBind,
+  // Host advertised in the preview URL. It differs from the bind address when
+  // the browser reaches the Docker host by another name.
+  previewHost:
+    process.env.WORK_PREVIEW_HOST ||
+    process.env.WORK_PREVIEW_BIND ||
+    WORK_RUNTIME_DEFAULTS.previewBind,
   maxActiveRuntimesGlobal: positiveInteger(
     process.env.WORK_MAX_ACTIVE_RUNTIMES_GLOBAL,
     WORK_RUNTIME_ADMISSION_DEFAULTS.maxActiveRuntimesGlobal
@@ -89,6 +100,7 @@ const runtimePolicyFingerprint = createHash('sha256')
       cpuLimit: config.cpuLimit,
       pidsLimit: config.pidsLimit,
       previewPort: config.previewPort,
+      previewBind: config.previewBind,
     })
   )
   .digest('hex');
@@ -171,6 +183,7 @@ export class WorkRuntimeService {
   private retiringTasks = new Set<string>();
   private networkPolicies = new Map<string, boolean>();
   private activeCommands = new Set<string>();
+  private lastDockerUnavailableReason: string | null = null;
   private runtimeLeases = new Map<string, RuntimeLease>();
   private previewLeaseReleases = new Map<string, () => void>();
   private recoveryTasks = new Map<string, WorkTaskRecord>();
@@ -207,10 +220,24 @@ export class WorkRuntimeService {
       await this.docker(['info', '--format', '{{.ServerVersion}}'], {
         timeoutMs: 5_000,
       });
+      this.lastDockerUnavailableReason = null;
       return true;
-    } catch {
+    } catch (error) {
+      this.lastDockerUnavailableReason = describeDockerUnavailable(
+        error,
+        config.dockerCommand
+      );
       return false;
     }
+  }
+
+  /**
+   * Why the last availability probe failed. "Docker is not available" cannot be
+   * acted on: a containerized deployment fails for a missing CLI, an unreadable
+   * socket, or a stopped daemon, and each needs a different change.
+   */
+  get dockerUnavailableReason(): string | null {
+    return this.lastDockerUnavailableReason;
   }
 
   async beginRecovery(
@@ -1189,7 +1216,7 @@ export class WorkRuntimeService {
           'WORK_PREVIEW_PORT_UNAVAILABLE'
         );
       }
-      return `http://127.0.0.1:${publishedPort}`;
+      return `http://${formatPreviewHost(config.previewHost)}:${publishedPort}`;
     } catch (error) {
       try {
         await this.stopPreviewPrepared(task);
@@ -1490,7 +1517,7 @@ export class WorkRuntimeService {
     const portPolicyMatches = task.networkEnabled
       ? Object.keys(portBindings).length === 1 &&
         previewBindings.length === 1 &&
-        previewBindings[0]?.HostIp === '127.0.0.1'
+        previewBindings[0]?.HostIp === config.previewBind
       : Object.keys(portBindings).length === 0;
     return (
       labels['ai.libre-webui.managed'] === 'true' &&
@@ -1657,6 +1684,40 @@ export class WorkRuntimeService {
   }
 }
 
+/** Bracket a bare IPv6 literal so it can carry a port in a URL. */
+export function formatPreviewHost(host: string): string {
+  return host.includes(':') && !host.startsWith('[') ? `[${host}]` : host;
+}
+
+/**
+ * Turn a failed `docker info` into the change an operator has to make. These
+ * are the three ways a containerized Libre WebUI fails to reach the daemon:
+ * the image has no CLI, the bind-mounted socket is owned by a group the
+ * backend user is not in, or no daemon is listening.
+ */
+export function describeDockerUnavailable(
+  error: unknown,
+  dockerCommand = config.dockerCommand
+): string {
+  const message = error instanceof Error ? error.message : String(error);
+
+  if (/ENOENT/.test(message)) {
+    return `The "${dockerCommand}" CLI is not installed in the Libre WebUI runtime. Run an image that ships the Docker CLI and mount the host Docker socket, or point WORK_DOCKER_COMMAND at the CLI path.`;
+  }
+  if (/EACCES/.test(message) || /permission denied/i.test(message)) {
+    return 'The Docker socket is mounted but the Libre WebUI user cannot open it. Add the backend user to the group that owns /var/run/docker.sock (Compose: group_add with the socket GID).';
+  }
+  if (
+    /cannot connect to the docker daemon/i.test(message) ||
+    /is the docker daemon running/i.test(message) ||
+    /no such file or directory/i.test(message)
+  ) {
+    return 'No Docker daemon is reachable. Start Docker, or mount the host socket into the Libre WebUI container with -v /var/run/docker.sock:/var/run/docker.sock.';
+  }
+
+  return message;
+}
+
 export function buildWorkContainerRunArgs(
   task: WorkTaskRecord,
   image = config.image
@@ -1698,7 +1759,7 @@ export function buildWorkContainerRunArgs(
     task.networkEnabled ? 'bridge' : 'none',
   ];
   if (task.networkEnabled) {
-    args.push('--publish', `127.0.0.1::${config.previewPort}`);
+    args.push('--publish', `${config.previewBind}::${config.previewPort}`);
   }
   args.push(
     '--mount',
@@ -1741,14 +1802,22 @@ export function validateWorkspacePath(input: string, allowRoot = true): string {
 
 export function parsePublishedPort(
   output: string,
-  _containerPort = config.previewPort
+  _containerPort = config.previewPort,
+  bindAddress = config.previewBind
 ): number | undefined {
+  // Only a binding on the interface this deployment asked for counts. The
+  // default stays loopback, so a stray wildcard binding is still rejected.
+  const allowed = new Set(
+    bindAddress === WORK_RUNTIME_DEFAULTS.previewBind
+      ? ['127.0.0.1', '[::1]']
+      : [bindAddress, formatPreviewHost(bindAddress)]
+  );
+
   for (const line of output.trim().split(/\r?\n/)) {
-    const match = line.match(/^(?:127\.0\.0\.1|\[::1\]):(\d+)$/);
-    if (match) {
-      const port = Number(match[1]);
-      if (Number.isInteger(port) && port > 0 && port <= 65535) return port;
-    }
+    const match = line.match(/^(.*):(\d+)$/);
+    if (!match || !allowed.has(match[1])) continue;
+    const port = Number(match[2]);
+    if (Number.isInteger(port) && port > 0 && port <= 65535) return port;
   }
   return undefined;
 }

@@ -30,6 +30,8 @@ const {
   WORK_RUNTIME_DEFAULTS,
   WorkRuntimeService,
   buildWorkContainerRunArgs,
+  describeDockerUnavailable,
+  formatPreviewHost,
   parsePublishedPort,
   validateWorkspacePath,
 } = runtimeModule;
@@ -95,6 +97,7 @@ test('Work runtime defaults pin the image and bound resource use', () => {
     cpuLimit: '2',
     pidsLimit: 256,
     previewPort: 4173,
+    previewBind: '127.0.0.1',
   });
   assert.match(WORK_RUNTIME_DEFAULTS.image, /@sha256:[a-f0-9]{64}$/);
   assert.doesNotMatch(WORK_RUNTIME_DEFAULTS.image, /:latest(?:@|$)/);
@@ -156,6 +159,53 @@ test('network-enabled containers publish only a dynamic loopback preview port', 
   );
   assert.doesNotMatch(optionValue(args, '--publish'), /^0\.0\.0\.0:/);
   assert.doesNotMatch(optionValue(args, '--publish'), /^\d+:/);
+});
+
+test('an unreachable Docker daemon names the deployment change to make', () => {
+  // A containerized backend fails one of exactly these three ways; each needs a
+  // different fix, so none of them may collapse into "Docker is not available".
+  const noCli = describeDockerUnavailable(
+    new Error('spawn docker ENOENT'),
+    'docker'
+  );
+  assert.match(noCli, /CLI is not installed/);
+  assert.match(noCli, /"docker"/);
+
+  const noPermission = describeDockerUnavailable(
+    new Error(
+      'permission denied while trying to connect to the docker API at unix:///var/run/docker.sock'
+    )
+  );
+  assert.match(noPermission, /cannot open it/);
+  assert.match(noPermission, /group_add/);
+
+  const noDaemon = describeDockerUnavailable(
+    new Error('Cannot connect to the Docker daemon at unix:///var/run/docker.sock')
+  );
+  assert.match(noDaemon, /No Docker daemon is reachable/);
+  assert.match(noDaemon, /docker\.sock:\/var\/run\/docker\.sock/);
+
+  assert.equal(
+    describeDockerUnavailable(new Error('some other docker failure')),
+    'some other docker failure'
+  );
+});
+
+test('preview publishing follows the configured bind address', () => {
+  // Default deployments stay on loopback; only an explicit bind opens it up.
+  assert.equal(WORK_RUNTIME_DEFAULTS.previewBind, '127.0.0.1');
+  assert.equal(parsePublishedPort('127.0.0.1:49173', 4173, '127.0.0.1'), 49173);
+  assert.equal(parsePublishedPort('[::1]:49174', 4173, '127.0.0.1'), 49174);
+  assert.equal(parsePublishedPort('0.0.0.0:49173', 4173, '127.0.0.1'), undefined);
+
+  // A deployment that binds elsewhere accepts that address and nothing else.
+  assert.equal(parsePublishedPort('0.0.0.0:49173', 4173, '0.0.0.0'), 49173);
+  assert.equal(parsePublishedPort('127.0.0.1:49173', 4173, '0.0.0.0'), undefined);
+
+  assert.equal(formatPreviewHost('127.0.0.1'), '127.0.0.1');
+  assert.equal(formatPreviewHost('work.example.test'), 'work.example.test');
+  assert.equal(formatPreviewHost('::1'), '[::1]');
+  assert.equal(formatPreviewHost('[::1]'), '[::1]');
 });
 
 test('workspace path validation normalizes contained paths', () => {

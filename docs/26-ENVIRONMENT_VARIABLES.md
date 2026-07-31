@@ -90,6 +90,8 @@ Libre WebUI backend:
 | `WORK_CPU_LIMIT`                    | `2`                                                                                           | CPU limit passed to each Work container                  |
 | `WORK_PIDS_LIMIT`                   | `256`                                                                                         | Process limit passed to each Work container              |
 | `WORK_PREVIEW_PORT`                 | `4173`                                                                                        | Port a preview server must use inside the task container |
+| `WORK_PREVIEW_BIND`                 | `127.0.0.1`                                                                                   | Host interface a task preview port is published on       |
+| `WORK_PREVIEW_HOST`                 | value of `WORK_PREVIEW_BIND`                                                                  | Host advertised in the preview URL                       |
 | `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`   | `2`                                                                                           | Concurrent container-backed tasks for the whole instance |
 | `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` | `1`                                                                                           | Concurrent container-backed tasks for one administrator  |
 | `WORK_MAX_TASKS_GLOBAL`             | `500`                                                                                         | Maximum persisted Work tasks for the whole instance      |
