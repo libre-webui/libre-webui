@@ -87,6 +87,9 @@ Provider plugin files in the repository are the fallback source of truth, while
 live provider discovery can populate newer models when a provider exposes a
 compatible model-list endpoint.
 
+[Connect a third-party or self-hosted provider](./PROVIDER_CONNECTIONS) with
+the Provider connections workspace introduced in Libre WebUI 0.16.0.
+
 ## Documentation
 
 ### Getting Started
@@ -108,6 +111,7 @@ compatible model-list endpoint.
 ### Features
 
 - [Work: Isolated Workspaces](./WORKSPACES)
+- [Connect Third-Party and Self-Hosted Providers](./PROVIDER_CONNECTIONS)
 - [Plugin Architecture](./PLUGIN_ARCHITECTURE)
 - [Kimi Code](./KIMI_CODE)
 - [Hugging Face Hub](./HUGGINGFACE_HUB)
