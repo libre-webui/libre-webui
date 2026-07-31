@@ -158,6 +158,25 @@ fallback is reserved for the trusted bundled route.
 Select an active chat provider and use **Refresh models** to run discovery.
 Libre WebUI reloads both the selected provider's catalog and Chat's model list.
 
+Discovery also runs without being asked: an active provider's catalog is
+rediscovered when it is missing or has aged past
+`PLUGIN_MODEL_DISCOVERY_TTL_MS`, so the models you see follow the provider
+rather than the moment you activated it. **Refresh models** forces a check
+immediately and reports what happened:
+
+| Result                      | Meaning                                                                     |
+| --------------------------- | --------------------------------------------------------------------------- |
+| Catalog updated             | The provider answered and its model list differs from the stored one        |
+| Catalog already up to date  | The provider answered with the same list                                    |
+| API key needed              | No usable key, so no request was made — the previous catalog is still shown |
+| Catalog could not be loaded | The provider was unreachable or returned nothing usable                     |
+
+A key set only in the environment is not used for a provider that runs an
+installed definition instead of the bundled one; the message says so when that
+applies. Speech, image, and embedding models found in a provider's catalog are
+listed here with their capability labels, but are kept out of the chat model
+picker.
+
 For an OpenAI-compatible route, discovery chooses the model-list URL as
 follows:
 

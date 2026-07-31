@@ -240,6 +240,14 @@ user's variables and credentials. Results are persisted per user rather than
 written into the shared plugin manifest. Discovery runs after activation,
 explicit refresh, API-key changes, connection-variable changes, and variable
 resets; unrelated generation-variable saves do not trigger a network request.
+
+Discovery also runs on its own. Reading the plugin list rediscovers any active
+completion provider whose catalog is missing or older than
+`PLUGIN_MODEL_DISCOVERY_TTL_MS`, so reloading the application reflects the
+provider's current models rather than the catalog captured at activation. A
+per-provider backoff keeps an unreachable provider from being probed on every
+request, and a deadline stops a slow provider from delaying the response; a
+refresh that outruns it is served on the following request.
 The final derived discovery URL is checked before the user's credential is read
 or an authorization header is built, including when the URL originates in an
 imported plugin manifest. Discovery and provider capability requests do not

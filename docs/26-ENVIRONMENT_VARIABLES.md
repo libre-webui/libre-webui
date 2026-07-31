@@ -117,14 +117,30 @@ deployment reaches one by default: the image ships the Docker CLI and every
 repository Compose file mounts the host Docker socket. Two Compose-level
 variables control that wiring:
 
-| Variable        | Default               | Purpose                                                          |
-| --------------- | --------------------- | ---------------------------------------------------------------- |
-| `DOCKER_GID`    | `0`                   | Group id of the host Docker socket, added to the container user   |
-| `DOCKER_SOCKET` | `/var/run/docker.sock`| Host path of the Docker socket to mount                           |
+| Variable        | Default                | Purpose                                                         |
+| --------------- | ---------------------- | --------------------------------------------------------------- |
+| `DOCKER_GID`    | `0`                    | Group id of the host Docker socket, added to the container user |
+| `DOCKER_SOCKET` | `/var/run/docker.sock` | Host path of the Docker socket to mount                         |
 
 `DOCKER_GID` must be the socket's group **as seen inside a container**; a macOS
 host reports a different value. The Helm chart mounts no runtime socket, so Work
 remains unavailable on Kubernetes.
+
+## Provider Model Discovery
+
+A provider's model catalog is rediscovered on its own when it is missing or
+stale, so a reload reflects the models the provider currently serves. These
+variables tune that cycle:
+
+| Variable                                     | Default           | Purpose                                                                 |
+| -------------------------------------------- | ----------------- | ----------------------------------------------------------------------- |
+| `PLUGIN_MODEL_DISCOVERY_TTL_MS`              | `21600000` (6 h)  | Age at which a stored catalog is refreshed on the next plugin-list read |
+| `PLUGIN_MODEL_DISCOVERY_RETRY_MS`            | `600000` (10 min) | Minimum gap between attempts, so a failing provider is not probed often |
+| `PLUGIN_MODEL_DISCOVERY_REFRESH_DEADLINE_MS` | `3000`            | How long a plugin-list response waits for refreshes before answering    |
+
+A refresh that outruns the deadline still completes and is served on the next
+request. An explicit **Refresh models** always contacts the provider and
+ignores the interval.
 
 ## Provider Plugin Keys
 
