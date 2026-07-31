@@ -37,11 +37,10 @@ The development branch (`dev`) is where new features are tested before being mer
 
 ### Docker Setup (Recommended)
 
-The standard development image is suitable for Chat and the rest of Libre
-WebUI, but it does not include the Docker CLI or mount the host Docker socket.
-It therefore cannot exercise the new Work runtime by default. Use the
-from-source setup below when testing Work, with Docker available to the native
-backend process.
+The development Compose files mount the host Docker socket, so the dev image
+exercises the Work runtime the same way a native backend does. Task containers
+run on the host daemon and show up in `docker ps`. On Linux, set `DOCKER_GID` in
+`.env` to the group that owns the socket; remove the mount to disable Work.
 
 **With External Ollama:**
 

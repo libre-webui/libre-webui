@@ -40,8 +40,8 @@ the app continues to work and the Work page reports **Runtime unavailable**.
 | Method                      | Command                                                                   | Work availability                                                  |
 | --------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | npx                         | `npx libre-webui`                                                         | Available when Docker is installed on the same machine             |
-| Docker                      | `docker compose up -d`                                                    | Unavailable in the standard image; no Docker CLI or socket         |
-| Docker with external Ollama | `docker compose -f docker-compose.external-ollama.yml up -d`              | Same standard-container limitation                                 |
+| Docker                      | `docker compose up -d`                                                    | Enabled: the Compose file mounts the host Docker socket            |
+| Docker with external Ollama | `docker compose -f docker-compose.external-ollama.yml up -d`              | Enabled the same way                                               |
 | Kubernetes                  | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui`   | Unavailable in the current chart; no per-task runtime driver       |
 | Source                      | `npm install && npm run dev`                                              | Available when the native backend process can use Docker           |
 | Electron                    | [Download a release](https://github.com/libre-webui/libre-webui/releases) | Uses Docker on its separately managed backend host, when available |

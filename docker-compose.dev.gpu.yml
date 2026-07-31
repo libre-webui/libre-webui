@@ -35,6 +35,15 @@ services:
     volumes:
       - libre_webui_dev_data:/app/backend/data
       - libre_webui_dev_temp:/app/backend/temp
+      # Work runs isolated task containers on this host's Docker daemon.
+      # Removing this mount disables Work; it does not otherwise affect the app.
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
+    # Group that owns the Docker socket, so the non-root app user can open it.
+    # Docker Desktop uses 0. On Linux set DOCKER_GID in .env to the docker group:
+    #   DOCKER_GID=$(docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+    #     alpine stat -c '%g' /var/run/docker.sock)
+    group_add:
+      - '${DOCKER_GID:-0}'
     depends_on:
       - ollama
     restart: unless-stopped

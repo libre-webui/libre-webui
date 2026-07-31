@@ -12,23 +12,35 @@ Docker is the easiest production-style deployment for a single server.
 
 ## Work Availability
 
-The standard Libre WebUI image supports Chat and the rest of the normal
-application, but it does not provide the native Work runtime. The image
-deliberately contains neither the Docker CLI nor the host Docker socket, so the
-Work page reports **Runtime unavailable**.
+Work is enabled in every repository Compose file. The image ships the Docker
+CLI, and the Compose files mount `/var/run/docker.sock`, so the backend drives
+the same daemon that runs Libre WebUI. Work task containers are therefore
+**siblings** of the Libre WebUI container, not children of it, and they appear
+in `docker ps` on the host.
 
-Running Libre WebUI in Docker is different from letting a native Libre WebUI
-backend create isolated Work containers. Installing Docker on the host does not
-make its daemon available inside the WebUI container.
+A process with access to that socket has root-equivalent control of the Docker
+host. Enabling Work by default is a deliberate choice: Work is a core feature,
+and it cannot function without daemon access. The consequence is that **every
+Libre WebUI administrator is effectively a host administrator**. Plan for it:
 
-Do not add `/var/run/docker.sock` as a casual workaround. A process with access
-to that socket has root-equivalent control of the Docker host. Operators who
-design a separate runtime integration must isolate the daemon, restrict trusted
-administrators, and back up the task volumes independently.
+- Keep the stack on a host whose administrators you already trust.
+- Do not expose the published port to an untrusted network.
+- Remove the `/var/run/docker.sock` mount from your Compose file to disable
+  Work. Nothing else in Libre WebUI depends on it, and the Work page then
+  reports **Runtime unavailable**.
 
-For the currently supported local Work path, run Libre WebUI natively with
-`npx libre-webui` or from source on a machine whose backend process can invoke
-Docker. See [Work: Isolated Workspaces](./WORKSPACES).
+On Linux the socket belongs to the `docker` group instead of root, so the
+non-root app user needs that group id. Set it once:
+
+```bash
+echo "DOCKER_GID=$(docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  alpine stat -c '%g' /var/run/docker.sock)" >> .env
+```
+
+Read it through a container as shown. A macOS host reports a different value
+than the container sees, because Docker Desktop proxies the socket through a
+VM. If the group is wrong, the Work page names the problem instead of failing
+silently. See [Work: Isolated Workspaces](./WORKSPACES).
 
 ## Bundled Ollama
 

@@ -12,11 +12,11 @@ Libre WebUI ships a Helm chart under `helm/libre-webui`.
 
 ## Work Availability
 
-The current Helm chart does not create a Work runtime. Kubernetes pods do not
-normally expose Docker, and the standard Libre WebUI image contains neither the
-Docker CLI nor a container-runtime socket. Work therefore reports
-**Runtime unavailable** in a normal chart installation; Chat and the other
-application features continue to work.
+The current Helm chart does not create a Work runtime. The image ships the
+Docker CLI and the repository Compose files mount the host Docker socket, but
+the chart mounts no container-runtime socket and Kubernetes nodes do not
+normally expose one. Work therefore reports **Runtime unavailable** in a normal
+chart installation; Chat and the other application features continue to work.
 
 Do not mount a node's container-runtime socket into the WebUI pod. Supporting
 Work safely in Kubernetes requires a separate runtime driver with tightly

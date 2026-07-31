@@ -13,16 +13,15 @@ Use this setup when Ollama already runs on your host, another server, or a Tails
 
 ## Work Availability
 
-This Compose setup changes where Ollama runs; it does not give the Libre WebUI
-container access to a Work runtime. The standard image has no Docker CLI and
-does not mount the host Docker socket, so Work reports **Runtime unavailable**
-while Chat and the rest of the application continue normally.
+This Compose setup changes where Ollama runs; Work is unaffected and stays
+enabled. Like every repository Compose file, it mounts `/var/run/docker.sock`,
+so the backend creates Work task containers on the host daemon while Ollama runs
+wherever `OLLAMA_BASE_URL` points.
 
-To use the currently supported Work runtime with the same external Ollama
-endpoint, run the Libre WebUI backend natively with `npx libre-webui` or from
-source on a host where that backend process can invoke Docker. Mounting the host
-Docker socket into the WebUI container grants root-equivalent host control and
-is not a safe drop-in configuration.
+That socket grants root-equivalent control of the Docker host, so keep the stack
+on a host whose administrators you already trust, and remove the mount if you do
+not want Work. On Linux, set `DOCKER_GID` in `.env` to the group owning the
+socket. See [Work: Isolated Workspaces](./WORKSPACES).
 
 ## Prerequisites
 

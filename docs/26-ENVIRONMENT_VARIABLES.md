@@ -112,10 +112,19 @@ round-limit error or claiming successful completion. A follow-up run continues
 in the same durable workspace. Persisted tool output has a separate bound of
 approximately 20,000 source characters plus a truncation marker.
 
-These variables do not make Work available inside the standard Libre WebUI
-Docker image or Helm chart. Those deployments do not include a Docker CLI,
-runtime socket, or Kubernetes Work driver. The currently supported path is a
-native backend process that can successfully run the configured Docker command.
+These variables tune a Work runtime that is already reachable. A Compose
+deployment reaches one by default: the image ships the Docker CLI and every
+repository Compose file mounts the host Docker socket. Two Compose-level
+variables control that wiring:
+
+| Variable        | Default               | Purpose                                                          |
+| --------------- | --------------------- | ---------------------------------------------------------------- |
+| `DOCKER_GID`    | `0`                   | Group id of the host Docker socket, added to the container user   |
+| `DOCKER_SOCKET` | `/var/run/docker.sock`| Host path of the Docker socket to mount                           |
+
+`DOCKER_GID` must be the socket's group **as seen inside a container**; a macOS
+host reports a different value. The Helm chart mounts no runtime socket, so Work
+remains unavailable on Kubernetes.
 
 ## Provider Plugin Keys
 

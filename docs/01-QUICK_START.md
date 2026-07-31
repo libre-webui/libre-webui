@@ -111,10 +111,12 @@ docker compose -f docker-compose.external-ollama.yml up -d
 
 For NVIDIA GPU acceleration, use the GPU compose file provided by the repository.
 
-The standard Libre WebUI Compose containers do not include the Docker CLI or
-mount the host Docker socket, so they do not provide a Work runtime by default.
-Do not add a Docker socket mount without reviewing the security implications in
-the [Work guide](./WORKSPACES).
+Every repository Compose file mounts the host Docker socket, so Work is enabled
+out of the box: task containers run on the same daemon that runs Libre WebUI.
+That access is root-equivalent on the Docker host, so read
+[Work: Isolated Workspaces](./WORKSPACES) before exposing the stack beyond a
+machine whose administrators you already trust. On Linux, set `DOCKER_GID` in
+`.env` to the group that owns the socket.
 
 ## Keyboard Shortcuts
 

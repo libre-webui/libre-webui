@@ -496,41 +496,47 @@ backend, not merely the browser or desktop interface.
 | Source development on a local computer    | Supported under the same Docker and provider requirements.                                                | Supported when the development browser and backend share the host.                          |
 | Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.  | Supported only when that backend's loopback is also local to the desktop client.            |
 | Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                               | Not reachable from an ordinary remote browser because the returned URL is backend loopback. |
-| Standard repository Docker Compose        | Unavailable by default: the image ships the Docker CLI, but no socket is mounted. Opt in with `docker-compose.work.yml`. | Reachable from a browser on the Docker host once the overlay is enabled.                    |
+| Standard repository Docker Compose        | Supported by default: the image ships the Docker CLI and the Compose file mounts the host Docker socket.  | Reachable from a browser on the Docker host.                                                |
 | Current Kubernetes/Helm deployment        | Unavailable: the chart does not create a Work runtime driver, per-task Pods, RBAC, or persistent volumes. | Unavailable.                                                                                |
-
-Mounting `/var/run/docker.sock` into a web application container gives that
-container root-equivalent control over the Docker host. Libre WebUI does not
-enable this in its default Compose or Helm configuration. An operator who turns
-it on owns the daemon-security, network, lifecycle, backup, and access-control
-consequences.
 
 ### Running Work when Libre WebUI is itself in Docker
 
-Work drives the host daemon through a mounted socket and creates task
-containers as *siblings* of the Libre WebUI container, not as children. Three
-things must all hold, and each fails with its own message in the Work
-capabilities panel:
+Every repository Compose file enables Work: the image ships the Docker CLI and
+the Compose file mounts `/var/run/docker.sock`. `docker compose up -d` is all
+that is required.
 
-1. **The Docker CLI must exist in the image.** It ships in the Libre WebUI
-   image; a custom image needs `docker-cli` or `WORK_DOCKER_COMMAND` pointing
-   at one. Missing, it reports `The "docker" CLI is not installed…`.
-2. **The socket must be mounted.** Missing, it reports
-   `No Docker daemon is reachable…`.
+Work drives the host daemon through that socket, so task containers are
+**siblings** of the Libre WebUI container rather than children. They appear in
+`docker ps` on the host and are cleaned up by the same lifecycle rules as a
+native install.
+
+Mounting the Docker socket into a web application gives that container
+root-equivalent control over the Docker host. Work cannot function without it,
+so Libre WebUI enables it rather than shipping a feature that silently does
+nothing. The consequence is explicit: **every Libre WebUI administrator is
+effectively an administrator of the Docker host.** Operators own the
+daemon-security, network, lifecycle, backup, and access-control consequences.
+Delete the `/var/run/docker.sock` line from your Compose file to turn Work off;
+nothing else depends on it.
+
+Three conditions must hold, and the Work panel names whichever one fails:
+
+1. **The Docker CLI must exist in the image.** It ships in the official image; a
+   custom image needs `docker-cli`, or `WORK_DOCKER_COMMAND` pointing at one.
+   Otherwise: `The "docker" CLI is not installed…`.
+2. **The socket must be mounted.** Otherwise: `No Docker daemon is reachable…`.
 3. **The backend user must be in the socket's group.** The image runs as
-   `nodejs` (uid 1001), and the socket is typically `root`-owned, so the
-   container needs `group_add`. Missing, it reports
-   `The Docker socket is mounted but the Libre WebUI user cannot open it…`.
-
-The bundled overlay wires all three:
+   `nodejs` (uid 1001) and the socket is typically owned by `root` or `docker`,
+   so Compose passes `group_add: ['${DOCKER_GID:-0}']`. The default suits Docker
+   Desktop; a Linux host needs its own group id. Otherwise: `The Docker socket
+   is mounted but the Libre WebUI user cannot open it…`.
 
 ```bash
 # Read the socket's group as seen INSIDE a container. A macOS host reports a
 # different value, because Docker Desktop proxies the socket through a VM.
 echo "DOCKER_GID=$(docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
   alpine stat -c '%g' /var/run/docker.sock)" >> .env
-
-docker compose -f docker-compose.yml -f docker-compose.work.yml up -d
+docker compose up -d --force-recreate
 ```
 
 Task previews are published on the Docker **host**, so a browser on that host
@@ -538,10 +544,9 @@ reaches them at the returned `127.0.0.1:<port>` URL. When the host is remote,
 set `WORK_PREVIEW_BIND` to an interface that browser can route to and
 `WORK_PREVIEW_HOST` to the name it uses, then firewall the published range.
 
-Concurrency is capped separately from all of this:
-`WORK_MAX_ACTIVE_RUNTIMES_PER_USER` defaults to `1`, so one administrator's
-second task waits until the first runtime stops. Raise it in the overlay if
-your host has the memory and CPU for more.
+Concurrency is capped separately: `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` defaults
+to `1`, so one administrator's second task waits for the first runtime to stop.
+Raise it if the host has memory and CPU to spare.
 
 Kubernetes support would require a separate runtime implementation with
 tightly scoped RBAC, a Pod and persistent volume design for each task, cleanup
@@ -739,10 +744,16 @@ administrator.
 
 ### Runtime unavailable in Docker or Kubernetes
 
-This is expected with the repository's standard Compose and Helm deployment.
-They do not provide a Docker CLI/socket or a Kubernetes Work runtime. Do not
-mount the host Docker socket merely to clear the status without first
-understanding its root-equivalent host privileges.
+A repository Compose deployment should not report this: the image ships the
+Docker CLI and the Compose file mounts the host socket. When it does, the panel
+names the cause — a missing CLI in a custom image, a removed or absent socket
+mount, or a socket group the container user is not in. For the last one, set
+`DOCKER_GID` and recreate the container. See
+[Running Work when Libre WebUI is itself in Docker](#running-work-when-libre-webui-is-itself-in-docker).
+
+Kubernetes is different: the Helm chart provides no Work runtime, so
+**Runtime unavailable** is expected there. Do not mount a node's
+container-runtime socket to clear the status.
 
 ### No Work-compatible models
 

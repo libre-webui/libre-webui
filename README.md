@@ -204,20 +204,30 @@ The WebUI backend does not execute Libre Claw's shell or browser tools itself. I
 | Path                | Command or link                                                         | Best for                                                              |
 | ------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | **npm**             | `npx libre-webui`                                                       | Fast local start; Work is available when local Docker is installed    |
-| **Docker + Ollama** | `docker compose up -d`                                                  | Persistent chat stack; Work is unavailable in the standard image      |
-| **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | Existing Ollama; same standard-container Work limitation              |
-| **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference; same standard-container Work limitation          |
+| **Docker + Ollama** | `docker compose up -d`                                                  | Persistent chat stack; Work enabled through the host Docker socket    |
+| **External Ollama** | `docker compose -f docker-compose.external-ollama.yml up -d`            | Existing Ollama; Work enabled the same way                            |
+| **NVIDIA Docker**   | `docker compose -f docker-compose.gpu.yml up -d`                        | Local GPU inference; Work enabled the same way                        |
 | **Kubernetes**      | `helm install libre-webui oci://ghcr.io/libre-webui/charts/libre-webui` | Cluster deployment; the current chart has no Work runtime driver      |
 | **Desktop client**  | [GitHub Releases](https://github.com/libre-webui/libre-webui/releases)  | Electron UI; Work runs wherever its separately managed backend runs   |
 | **Source**          | `npm install && npm run dev`                                            | Development; Work uses Docker available to the native backend process |
 
 Docker commands assume you have cloned this repository. Production deployments should set stable `JWT_SECRET` and `ENCRYPTION_KEY` values, persist the data directory, back up the database and key together, and terminate public traffic with HTTPS.
 
-The standard Libre WebUI container deliberately does not include the Docker CLI
-or mount the host Docker socket, so it reports Work as unavailable. Mounting
-`/var/run/docker.sock` into a web application grants root-equivalent control of
-the Docker host and is not enabled or recommended as a casual workaround. See
-the Work guide before designing a separate runtime integration.
+Every Compose file above ships the Docker CLI and mounts the host Docker socket,
+so Work runs task containers as siblings of the Libre WebUI container with no
+extra flags. That socket grants root-equivalent control of the Docker host:
+treat every Libre WebUI administrator as a host administrator, and remove the
+`/var/run/docker.sock` mount from your Compose file if you do not want Work.
+
+On Linux the socket is owned by the `docker` group rather than root, so set the
+group id once in `.env`:
+
+```bash
+echo "DOCKER_GID=$(docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  alpine stat -c '%g' /var/run/docker.sock)" >> .env
+```
+
+See the Work guide for the full security discussion.
 
 [Work](https://docs.librewebui.org/WORKSPACES) · [Docker](https://docs.librewebui.org/DOCKER) · [Kubernetes](https://docs.librewebui.org/KUBERNETES) · [Environment variables](https://docs.librewebui.org/ENVIRONMENT_VARIABLES) · [Hardware guide](https://docs.librewebui.org/HARDWARE_REQUIREMENTS)
 
