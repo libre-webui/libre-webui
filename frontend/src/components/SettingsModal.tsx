@@ -826,7 +826,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setRefreshingPluginIds(current => ({ ...current, [id]: true }));
     try {
       const response = await pluginApi.discoverModels(id);
-      if (!response.success) {
+      if (!response.success || !response.data) {
         toast.error(
           response.error || t('settings.plugins.modelCatalogRefreshFailed')
         );
@@ -834,7 +834,26 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       }
 
       await Promise.all([loadPlugins(), loadModels()]);
-      toast.success(t('settings.plugins.modelCatalogChecked'));
+
+      // The provider is not always reachable, and the returned catalog is then
+      // the previous one. Say which of those happened instead of always
+      // confirming a refresh.
+      const { outcome, models, reason } = response.data;
+      if (outcome === 'updated') {
+        toast.success(
+          t('settings.plugins.modelCatalogUpdated', { count: models.length })
+        );
+      } else if (outcome === 'unchanged') {
+        toast.success(t('settings.plugins.modelCatalogUnchanged'));
+      } else if (outcome === 'missing_credentials') {
+        toast.error(t('settings.plugins.modelCatalogNeedsApiKey'));
+      } else {
+        toast.error(
+          reason
+            ? `${t('settings.plugins.modelCatalogUnavailable')} ${reason}`
+            : t('settings.plugins.modelCatalogUnavailable')
+        );
+      }
     } catch (error) {
       toast.error(
         getErrorMessage(error, t('settings.plugins.modelCatalogRefreshFailed'))

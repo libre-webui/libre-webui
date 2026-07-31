@@ -271,6 +271,59 @@ test('an unreachable provider keeps the last known catalog and backs off', async
   }
 });
 
+test('a refresh reports what actually happened instead of a bare success', async () => {
+  const provider = await startProvider();
+  const service = new PluginService();
+  const admin = upsertTestUser('model-refresh-outcome-admin', 'admin');
+  const user = upsertTestUser('model-refresh-outcome-user', 'user');
+  const openId = 'refresh-outcome-open-provider';
+  const keyedId = 'refresh-outcome-keyed-provider';
+  installProvider(service, openId, provider.baseUrl, admin.id);
+  service.installPlugin(
+    {
+      id: keyedId,
+      name: 'Keyed provider',
+      type: 'completion',
+      endpoint: `${provider.baseUrl}/v1/chat/completions`,
+      auth: {
+        header: 'Authorization',
+        prefix: 'Bearer ',
+        key_env: 'REFRESH_OUTCOME_MISSING_KEY',
+      },
+      model_map: ['bundled-stale-model'],
+    },
+    admin.id
+  );
+
+  try {
+    // A provider that needs a key it does not have never reaches the network,
+    // so the returned catalog is the bundled one.
+    const keyless = await service.discoverModelsResult(keyedId, user.id);
+    assert.equal(keyless.outcome, 'missing_credentials');
+    assert.deepEqual(keyless.models, ['bundled-stale-model']);
+
+    const firstRefresh = await service.discoverModelsResult(openId, user.id);
+    assert.equal(firstRefresh.outcome, 'updated');
+    assert.deepEqual(firstRefresh.models, ['model-a']);
+
+    const repeatRefresh = await service.discoverModelsResult(openId, user.id);
+    assert.equal(repeatRefresh.outcome, 'unchanged');
+
+    await provider.close();
+    const offlineRefresh = await service.discoverModelsResult(openId, user.id);
+    assert.equal(offlineRefresh.outcome, 'unavailable');
+    assert.match(offlineRefresh.reason, /provider/i);
+    assert.deepEqual(
+      offlineRefresh.models,
+      ['model-a'],
+      'the last known catalog is still returned'
+    );
+  } finally {
+    service.deletePlugin(openId);
+    service.deletePlugin(keyedId);
+  }
+});
+
 test('a slow provider cannot stall the plugin list past the refresh deadline', async () => {
   const provider = await startProvider();
   const service = new PluginService();

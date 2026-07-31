@@ -2171,6 +2171,7 @@ test('plugin routes and activation keep model discovery scoped to the authentica
     activatePlugin: pluginService.activatePlugin,
     clearDiscoveredModels: pluginService.clearDiscoveredModels,
     discoverModels: pluginService.discoverModels,
+    discoverModelsResult: pluginService.discoverModelsResult,
     getPlugin: pluginService.getPlugin,
     getResolvedVariables: pluginVariablesService.getResolvedVariables,
     deletePluginVariables: pluginVariablesService.deletePluginVariables,
@@ -2240,6 +2241,10 @@ test('plugin routes and activation keep model discovery scoped to the authentica
     pluginService.discoverModels = async (pluginId, userId) => {
       routeCalls.push({ operation: 'discover', pluginId, userId });
       return plugin.model_map;
+    };
+    pluginService.discoverModelsResult = async (pluginId, userId) => {
+      routeCalls.push({ operation: 'discover', pluginId, userId });
+      return { models: plugin.model_map, outcome: 'updated' };
     };
     pluginVariablesService.getResolvedVariables = () => ({
       ...resolvedVariables,
@@ -2566,6 +2571,7 @@ test('plugin routes and activation keep model discovery scoped to the authentica
     pluginService.activatePlugin = originals.activatePlugin;
     pluginService.clearDiscoveredModels = originals.clearDiscoveredModels;
     pluginService.discoverModels = originals.discoverModels;
+    pluginService.discoverModelsResult = originals.discoverModelsResult;
     pluginService.getPlugin = originals.getPlugin;
     pluginVariablesService.getResolvedVariables =
       originals.getResolvedVariables;

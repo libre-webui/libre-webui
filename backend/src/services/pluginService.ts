@@ -103,6 +103,35 @@ const modelDiscoveryRefreshDeadlineMs = (): number =>
 
 const MODEL_DISCOVERY_REQUEST_TIMEOUT_MS = 5000;
 
+/**
+ * Why a refresh did or did not change the catalog. Reported to the caller so a
+ * silent fallback to the bundled catalog is never presented as a live update.
+ */
+export type PluginModelDiscoveryOutcome =
+  'updated' | 'unchanged' | 'missing_credentials' | 'unavailable';
+
+export interface PluginModelDiscoveryResult {
+  models: string[];
+  outcome: PluginModelDiscoveryOutcome;
+  reason?: string;
+}
+
+function describeModelDiscoveryFailure(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    if (error.response) {
+      return `The provider responded with HTTP ${error.response.status}`;
+    }
+    if (error.code === 'ECONNABORTED') {
+      return 'The provider did not respond in time';
+    }
+    return error.code
+      ? `Could not reach the provider (${error.code})`
+      : 'Could not reach the provider';
+  }
+
+  return error instanceof Error ? error.message : 'Unknown error';
+}
+
 function getPluginRoutingAuthProjection(plugin: Plugin): string {
   const capabilityEndpoints = Object.entries(
     (plugin.capabilities || {}) as Record<string, unknown>
@@ -170,7 +199,10 @@ export class PluginService {
   private discoveredModelsCache = new Map<string, string[] | null>();
   private discoveredModelsUpdatedAt = new Map<string, number>();
   private discoveryAttemptedAt = new Map<string, number>();
-  private inflightDiscovery = new Map<string, Promise<string[]>>();
+  private inflightDiscovery = new Map<
+    string,
+    Promise<PluginModelDiscoveryResult>
+  >();
   private embeddingService: PluginEmbeddingService;
   private ttsService: PluginTTSService;
   private imageGenerationService: PluginImageGenerationService;
@@ -733,9 +765,23 @@ export class PluginService {
   /**
    * Attempt to auto-discover available models from a plugin's full API endpoint.
    * Resolves the provider's model-list endpoint and updates the plugin's model_map.
-   * Falls back silently to the existing model_map if the endpoint is unavailable.
+   * Falls back to the existing model_map if the endpoint is unavailable; callers
+   * that need to tell a real update from a fallback use discoverModelsResult.
    */
   async discoverModels(pluginId: string, userId?: string): Promise<string[]> {
+    const { models } = await this.discoverModelsResult(pluginId, userId);
+    return models;
+  }
+
+  /**
+   * Model discovery with the outcome attached, so a caller can report whether
+   * the provider was actually reached instead of assuming the returned catalog
+   * is fresh.
+   */
+  async discoverModelsResult(
+    pluginId: string,
+    userId?: string
+  ): Promise<PluginModelDiscoveryResult> {
     const cacheKey = this.discoveredModelsCacheKey(
       pluginId,
       userId || 'default'
@@ -803,9 +849,11 @@ export class PluginService {
   private async runModelDiscovery(
     pluginId: string,
     userId?: string
-  ): Promise<string[]> {
+  ): Promise<PluginModelDiscoveryResult> {
     const plugin = this.getPlugin(pluginId, userId);
-    if (!plugin) return [];
+    if (!plugin) {
+      return { models: [], outcome: 'unavailable', reason: 'Plugin not found' };
+    }
 
     this.discoveryAttemptedAt.set(
       this.discoveredModelsCacheKey(pluginId, userId || 'default'),
@@ -827,7 +875,14 @@ export class PluginService {
 
     const apiKey = this.getApiKey(plugin, userId);
     if (pluginRequiresApiKey(plugin) && !apiKey) {
-      return plugin.model_map;
+      logger.debug(
+        '[Plugin] Model discovery for %s has no usable API key; keeping the existing catalog',
+        pluginId
+      );
+      return {
+        models: plugin.model_map,
+        outcome: 'missing_credentials',
+      };
     }
     const headers = buildPluginModelDiscoveryHeaders(plugin, apiKey);
 
@@ -851,17 +906,33 @@ export class PluginService {
             models
           );
 
+          const previousModels = plugin.model_map;
           this.storeDiscoveredModels(pluginId, models, userId);
-          return models;
+          const stored = this.getDiscoveredModels(pluginId, userId) || models;
+          return {
+            models: stored,
+            outcome:
+              JSON.stringify(stored) === JSON.stringify(previousModels)
+                ? 'unchanged'
+                : 'updated',
+          };
         }
       }
-    } catch (_error) {
-      logger.debug(
-        `[Plugin] Model discovery unavailable for ${pluginId}, using existing model_map`
-      );
-    }
 
-    return plugin.model_map;
+      return {
+        models: plugin.model_map,
+        outcome: 'unavailable',
+        reason: 'The provider returned no models',
+      };
+    } catch (error) {
+      const reason = describeModelDiscoveryFailure(error);
+      logger.debug(
+        '[Plugin] Model discovery unavailable for %s (%s), using existing model_map',
+        pluginId,
+        reason
+      );
+      return { models: plugin.model_map, outcome: 'unavailable', reason };
+    }
   }
 
   // List all installed plugins

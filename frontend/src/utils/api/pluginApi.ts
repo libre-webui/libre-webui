@@ -27,6 +27,15 @@ export interface PluginVariableValue {
   has_value: boolean;
 }
 
+export type PluginModelDiscoveryOutcome =
+  'updated' | 'unchanged' | 'missing_credentials' | 'unavailable';
+
+export interface PluginModelDiscoveryResult {
+  models: string[];
+  outcome: PluginModelDiscoveryOutcome;
+  reason?: string;
+}
+
 export const pluginApi = {
   getAllPlugins: (): Promise<ApiResponse<Plugin[]>> => {
     if (isDemoMode()) {
@@ -35,9 +44,14 @@ export const pluginApi = {
     return api.get('/plugins').then(res => res.data);
   },
 
-  discoverModels: (id: string): Promise<ApiResponse<string[]>> => {
+  discoverModels: (
+    id: string
+  ): Promise<ApiResponse<PluginModelDiscoveryResult>> => {
     if (isDemoMode()) {
-      return createDemoResponse<string[]>([]);
+      return createDemoResponse<PluginModelDiscoveryResult>({
+        models: [],
+        outcome: 'unavailable',
+      });
     }
     return api
       .post(`/plugins/discover/${encodeURIComponent(id)}`)

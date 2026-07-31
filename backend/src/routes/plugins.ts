@@ -19,7 +19,9 @@ import express, { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
 import rateLimit from 'express-rate-limit';
-import pluginService from '../services/pluginService.js';
+import pluginService, {
+  type PluginModelDiscoveryResult,
+} from '../services/pluginService.js';
 import pluginCredentialsService from '../services/pluginCredentialsService.js';
 import pluginVariablesService, {
   PluginVariableValue,
@@ -547,17 +549,23 @@ router.post(
 router.post(
   '/discover/:id',
   pluginRateLimit,
-  async (req: Request, res: Response<ApiResponse<string[]>>): Promise<void> => {
+  async (
+    req: Request,
+    res: Response<ApiResponse<PluginModelDiscoveryResult>>
+  ): Promise<void> => {
     try {
       const id = req.params.id as string;
-      const models = await pluginService.discoverModels(
+      // Report the outcome rather than only the catalog: without a usable API
+      // key or a reachable provider the returned models are the previous ones,
+      // and the caller must not present that as a refresh.
+      const result = await pluginService.discoverModelsResult(
         id,
         getRequestUserId(req)
       );
 
       res.json({
         success: true,
-        data: models,
+        data: result,
       });
     } catch (error: unknown) {
       res.status(500).json({

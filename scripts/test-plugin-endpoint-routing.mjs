@@ -3495,6 +3495,10 @@ test('activation and discovery routes forward the authenticated user ID', async 
         calls.push({ operation: 'discover', id, userId });
         return ['custom-model'];
       },
+      discoverModelsResult: async (id, userId) => {
+        calls.push({ operation: 'discover', id, userId });
+        return { models: ['custom-model'], outcome: 'updated' };
+      },
     },
     async () => {
       assert.deepEqual(await invokeRoute('/activate/:id', 'custom-provider'), {
@@ -3515,7 +3519,7 @@ test('activation and discovery routes forward the authenticated user ID', async 
         statusCode: 200,
         responseBody: {
           success: true,
-          data: ['custom-model'],
+          data: { models: ['custom-model'], outcome: 'updated' },
         },
       });
     }

@@ -473,7 +473,10 @@
       "noModelsConfigured": "No models are configured for this provider.",
       "modelId": "Model ID",
       "capabilities": "Capabilities",
-      "modelCatalogChecked": "Model catalog checked.",
+      "modelCatalogUpdated": "Model catalog updated: {{count}} models.",
+      "modelCatalogUnchanged": "Model catalog is already up to date.",
+      "modelCatalogNeedsApiKey": "Add a valid API key for this provider to load its live model list.",
+      "modelCatalogUnavailable": "Could not load the provider's model list.",
       "modelCatalogRefreshFailed": "Failed to refresh the model catalog",
       "capability": {
         "chat": "Chat",
