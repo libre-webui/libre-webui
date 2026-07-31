@@ -262,7 +262,7 @@ test('shows a readable LTR model name without changing its identifier', async ({
   await trigger.click();
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
   await expect(
-    page.getByRole('dialog', { name: 'Select Model' })
+    page.getByRole('dialog', { name: 'Select a model' })
   ).toBeVisible();
   const modelOption = page.locator(
     '[data-testid="model-selector-option"][data-model-value="ollama:hf.co%2Fprism-ml%2FTernary-Bonsai-27B"]'
@@ -270,9 +270,9 @@ test('shows a readable LTR model name without changing its identifier', async ({
   await expect(modelOption).toContainText('Ternary Bonsai 27B');
   await expect(modelOption).toHaveAttribute('aria-pressed', 'true');
   await modelOption.press('Enter');
-  await expect(page.getByRole('dialog', { name: 'Select Model' })).toHaveCount(
-    0
-  );
+  await expect(
+    page.getByRole('dialog', { name: 'Select a model' })
+  ).toHaveCount(0);
   await expect(trigger).toBeFocused();
 });
 
