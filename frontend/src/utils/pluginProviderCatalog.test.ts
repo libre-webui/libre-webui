@@ -20,6 +20,7 @@ import test from 'node:test';
 import type { Plugin } from '@/types';
 import {
   buildPluginProviderCatalog,
+  getPluginChatModels,
   pluginMatchesProviderSearch,
   pluginSupportsModelRefresh,
 } from './pluginProviderCatalog';
@@ -90,6 +91,30 @@ test('limits live model refresh to primary chat providers', () => {
         capabilities: ['Transcription'],
       },
     ]
+  );
+});
+
+test('keeps declared non-chat capability models out of the chat list', () => {
+  assert.deepEqual(getPluginChatModels(plugin), ['chat-model']);
+});
+
+test('drops discovered non-chat model families from the chat list', () => {
+  assert.deepEqual(
+    getPluginChatModels({
+      model_map: [
+        'gpt-5.4',
+        'gpt-4o-mini-tts',
+        'tts-1-hd',
+        'whisper-1',
+        'text-embedding-3-large',
+        'dall-e-3',
+        'gpt-image-1',
+        'omni-moderation-latest',
+        'claude-opus-5',
+      ],
+      capabilities: undefined,
+    }),
+    ['gpt-5.4', 'claude-opus-5']
   );
 });
 

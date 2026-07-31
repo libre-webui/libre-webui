@@ -3527,6 +3527,17 @@ test('activation and discovery routes forward the authenticated user ID', async 
       id: 'custom-provider',
       userId: 'route-user-42',
     },
+    // Listing plugins refreshes stale catalogs for the same authenticated user
+    // before it answers, so a reload reflects the provider's current models.
+    {
+      operation: 'list',
+      userId: 'route-user-42',
+    },
+    {
+      operation: 'discover',
+      id: 'custom-provider',
+      userId: 'route-user-42',
+    },
     {
       operation: 'list',
       userId: 'route-user-42',

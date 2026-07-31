@@ -189,7 +189,11 @@ router.get(
   '/',
   async (req: Request, res: Response<ApiResponse<Plugin[]>>): Promise<void> => {
     try {
-      const plugins = pluginService.getAllPlugins(getRequestUserId(req));
+      const userId = getRequestUserId(req);
+      // Keep provider catalogs current: a stale or never-discovered model list
+      // is refreshed here so a browser reload reflects the provider's models.
+      await pluginService.refreshStaleModels(userId).catch(() => {});
+      const plugins = pluginService.getAllPlugins(userId);
       res.json({
         success: true,
         data: plugins,

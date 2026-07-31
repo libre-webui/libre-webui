@@ -91,6 +91,55 @@ export function pluginSupportsModelRefresh(plugin: Plugin): boolean {
   return plugin.type === 'chat' || plugin.type === 'completion';
 }
 
+// A provider's model listing covers every modality it sells, so an
+// auto-discovered catalog also carries speech, image and embedding models.
+// They stay in the plugin's catalog for the pickers that want them; only the
+// chat model list filters them out.
+const NON_CHAT_MODEL_PATTERNS = [
+  'dall-e',
+  'embed',
+  'gpt-image',
+  'moderation',
+  'rerank',
+  'sora',
+  'stable-diffusion',
+  'text-to-speech',
+  'tts',
+  'whisper',
+];
+
+export function isChatCapableModelId(modelId: string): boolean {
+  const normalized = modelId.toLocaleLowerCase();
+  return !NON_CHAT_MODEL_PATTERNS.some(pattern => normalized.includes(pattern));
+}
+
+/**
+ * Models a plugin can answer chat requests with: its catalog minus anything it
+ * declares under another capability, minus well-known non-chat model families.
+ */
+export function getPluginChatModels(plugin: {
+  model_map?: string[];
+  capabilities?: Plugin['capabilities'];
+}): string[] {
+  const capabilityModels = new Set<string>();
+  for (const [capabilityType, capability] of Object.entries(
+    plugin.capabilities || {}
+  ) as [PluginCapabilityType, { model_map?: string[] } | undefined][]) {
+    if (capabilityType === 'completion') continue;
+    for (const modelId of capability?.model_map || []) {
+      capabilityModels.add(modelId.trim());
+    }
+  }
+
+  return (plugin.model_map || []).filter(
+    modelId =>
+      typeof modelId === 'string' &&
+      modelId.trim().length > 0 &&
+      !capabilityModels.has(modelId.trim()) &&
+      isChatCapableModelId(modelId)
+  );
+}
+
 export function pluginMatchesProviderSearch(
   plugin: Plugin,
   query: string

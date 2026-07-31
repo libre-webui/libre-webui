@@ -15,8 +15,15 @@
  * limitations under the License.
  */
 
-import type { ChatMessage, ChatSession, OllamaModel, Persona } from '@/types';
+import type {
+  ChatMessage,
+  ChatSession,
+  OllamaModel,
+  Persona,
+  Plugin,
+} from '@/types';
 import { generateId } from '@/utils';
+import { getPluginChatModels } from '@/utils/pluginProviderCatalog';
 
 interface ChatMessageState {
   sessions: ChatSession[];
@@ -29,6 +36,7 @@ interface PluginModelSource {
   type?: string;
   name: string;
   model_map?: string[];
+  capabilities?: Plugin['capabilities'];
 }
 
 export const getErrorMessage = (error: unknown, fallback: string): string => {
@@ -306,7 +314,7 @@ export function buildPluginModels(plugins: PluginModelSource[]): OllamaModel[] {
         plugin.active && plugin.type !== 'tts' && plugin.type !== 'image'
     )
     .flatMap(plugin =>
-      (plugin.model_map || []).map(modelName => ({
+      getPluginChatModels(plugin).map(modelName => ({
         name: modelName,
         model: modelName,
         size: 0,

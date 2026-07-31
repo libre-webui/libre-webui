@@ -81,6 +81,28 @@ import {
 
 const logger = createLogger('plugins');
 
+const readPositiveIntEnv = (name: string, fallback: number): number => {
+  const parsed = Number(process.env[name]);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+// A discovered catalog older than this is refreshed the next time the plugin
+// list is requested, so a browser reload picks up provider-side model changes.
+const modelDiscoveryTtlMs = (): number =>
+  readPositiveIntEnv('PLUGIN_MODEL_DISCOVERY_TTL_MS', 6 * 60 * 60 * 1000);
+
+// Backoff between attempts. Applies to failures too, so an unreachable provider
+// is retried periodically instead of on every request.
+const modelDiscoveryRetryMs = (): number =>
+  readPositiveIntEnv('PLUGIN_MODEL_DISCOVERY_RETRY_MS', 10 * 60 * 1000);
+
+// Upper bound on how long a plugin-list request waits for background refreshes.
+// Slower providers keep resolving and land in the next response.
+const modelDiscoveryRefreshDeadlineMs = (): number =>
+  readPositiveIntEnv('PLUGIN_MODEL_DISCOVERY_REFRESH_DEADLINE_MS', 3000);
+
+const MODEL_DISCOVERY_REQUEST_TIMEOUT_MS = 5000;
+
 function getPluginRoutingAuthProjection(plugin: Plugin): string {
   const capabilityEndpoints = Object.entries(
     (plugin.capabilities || {}) as Record<string, unknown>
@@ -146,6 +168,9 @@ export class PluginService {
   private legacyPluginsDir: string;
   private pluginReadDirs: string[];
   private discoveredModelsCache = new Map<string, string[] | null>();
+  private discoveredModelsUpdatedAt = new Map<string, number>();
+  private discoveryAttemptedAt = new Map<string, number>();
+  private inflightDiscovery = new Map<string, Promise<string[]>>();
   private embeddingService: PluginEmbeddingService;
   private ttsService: PluginTTSService;
   private imageGenerationService: PluginImageGenerationService;
@@ -220,9 +245,10 @@ export class PluginService {
     try {
       const row = db
         .prepare(
-          'SELECT models_json FROM plugin_discovered_models WHERE user_id = ? AND plugin_id = ?'
+          'SELECT models_json, updated_at FROM plugin_discovered_models WHERE user_id = ? AND plugin_id = ?'
         )
-        .get(effectiveUserId, pluginId) as { models_json: string } | undefined;
+        .get(effectiveUserId, pluginId) as
+        { models_json: string; updated_at: number } | undefined;
       if (!row) {
         this.discoveredModelsCache.set(cacheKey, null);
         return undefined;
@@ -244,6 +270,9 @@ export class PluginService {
         return undefined;
       }
       this.discoveredModelsCache.set(cacheKey, models);
+      if (typeof row.updated_at === 'number') {
+        this.discoveredModelsUpdatedAt.set(cacheKey, row.updated_at);
+      }
       return models;
     } catch (error) {
       logger.warn(
@@ -264,7 +293,9 @@ export class PluginService {
     const effectiveUserId = userId || 'default';
     const uniqueModels = Array.from(new Set(models));
     const cacheKey = this.discoveredModelsCacheKey(pluginId, effectiveUserId);
+    const discoveredAt = Date.now();
     this.discoveredModelsCache.set(cacheKey, uniqueModels);
+    this.discoveredModelsUpdatedAt.set(cacheKey, discoveredAt);
 
     const db = getDatabaseSafe();
     if (!db) return;
@@ -281,7 +312,7 @@ export class PluginService {
         effectiveUserId,
         pluginId,
         JSON.stringify(uniqueModels),
-        Date.now()
+        discoveredAt
       );
     } catch (error) {
       logger.warn(
@@ -295,10 +326,10 @@ export class PluginService {
   clearDiscoveredModels(pluginId: string, userId?: string): void {
     const db = getDatabaseSafe();
     if (userId) {
-      this.discoveredModelsCache.set(
-        this.discoveredModelsCacheKey(pluginId, userId),
-        null
-      );
+      const cacheKey = this.discoveredModelsCacheKey(pluginId, userId);
+      this.discoveredModelsCache.set(cacheKey, null);
+      this.discoveredModelsUpdatedAt.delete(cacheKey);
+      this.discoveryAttemptedAt.delete(cacheKey);
       if (!db) return;
       try {
         db.prepare(
@@ -317,6 +348,8 @@ export class PluginService {
     for (const key of this.discoveredModelsCache.keys()) {
       if (key.endsWith(`:${pluginId}`)) {
         this.discoveredModelsCache.delete(key);
+        this.discoveredModelsUpdatedAt.delete(key);
+        this.discoveryAttemptedAt.delete(key);
       }
     }
     if (!db) return;
@@ -703,8 +736,81 @@ export class PluginService {
    * Falls back silently to the existing model_map if the endpoint is unavailable.
    */
   async discoverModels(pluginId: string, userId?: string): Promise<string[]> {
+    const cacheKey = this.discoveredModelsCacheKey(
+      pluginId,
+      userId || 'default'
+    );
+    const inflight = this.inflightDiscovery.get(cacheKey);
+    if (inflight) return inflight;
+
+    const attempt = this.runModelDiscovery(pluginId, userId).finally(() => {
+      this.inflightDiscovery.delete(cacheKey);
+    });
+    this.inflightDiscovery.set(cacheKey, attempt);
+    return attempt;
+  }
+
+  /**
+   * Whether a plugin's catalog should be re-fetched. Missing catalogs are due
+   * immediately; stored ones age out after the TTL. Both cases are gated by a
+   * per-plugin backoff so a failing provider is not probed on every request.
+   */
+  private isModelDiscoveryDue(pluginId: string, userId?: string): boolean {
+    const cacheKey = this.discoveredModelsCacheKey(
+      pluginId,
+      userId || 'default'
+    );
+    const attemptedAt = this.discoveryAttemptedAt.get(cacheKey);
+    if (attemptedAt && Date.now() - attemptedAt < modelDiscoveryRetryMs()) {
+      return false;
+    }
+
+    const models = this.getDiscoveredModels(pluginId, userId);
+    const updatedAt = this.discoveredModelsUpdatedAt.get(cacheKey);
+    if (!models || !updatedAt) return true;
+
+    return Date.now() - updatedAt >= modelDiscoveryTtlMs();
+  }
+
+  /**
+   * Re-discover models for every active completion plugin whose catalog is
+   * missing or stale. Bounded by a deadline so a slow provider cannot stall the
+   * plugin-list response; refreshes that outrun it still persist and surface on
+   * the next request.
+   */
+  async refreshStaleModels(userId?: string): Promise<void> {
+    const due = this.getActivePlugins(userId).filter(
+      plugin =>
+        (plugin.type === 'completion' || plugin.type === 'chat') &&
+        this.isModelDiscoveryDue(plugin.id, userId)
+    );
+    if (due.length === 0) return;
+
+    const refreshes = Promise.all(
+      due.map(plugin =>
+        this.discoverModels(plugin.id, userId).catch(() => [] as string[])
+      )
+    );
+
+    await Promise.race([
+      refreshes,
+      new Promise(resolve =>
+        setTimeout(resolve, modelDiscoveryRefreshDeadlineMs()).unref?.()
+      ),
+    ]);
+  }
+
+  private async runModelDiscovery(
+    pluginId: string,
+    userId?: string
+  ): Promise<string[]> {
     const plugin = this.getPlugin(pluginId, userId);
     if (!plugin) return [];
+
+    this.discoveryAttemptedAt.set(
+      this.discoveredModelsCacheKey(pluginId, userId || 'default'),
+      Date.now()
+    );
 
     const pluginVars = this.getPluginVariables(plugin, userId);
     const { endpoint: effectiveEndpoint } = resolvePluginApiConfig(
@@ -728,7 +834,7 @@ export class PluginService {
     try {
       const response = await axios.get(modelsEndpoint, {
         headers,
-        timeout: 5000,
+        timeout: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
         maxRedirects: 0,
       });
 
