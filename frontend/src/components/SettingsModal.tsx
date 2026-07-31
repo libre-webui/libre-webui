@@ -846,7 +846,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       } else if (outcome === 'unchanged') {
         toast.success(t('settings.plugins.modelCatalogUnchanged'));
       } else if (outcome === 'missing_credentials') {
-        toast.error(t('settings.plugins.modelCatalogNeedsApiKey'));
+        toast.error(reason || t('settings.plugins.modelCatalogNeedsApiKey'));
       } else {
         toast.error(
           reason

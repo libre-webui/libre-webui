@@ -846,6 +846,25 @@ export class PluginService {
     ]);
   }
 
+  /**
+   * Say why no key was usable. An environment key is deliberately ignored for a
+   * provider whose definition was installed into the writable plugins directory,
+   * because that file can be edited to point the credential somewhere else — a
+   * silent "no API key" hides that distinction from whoever set the variable.
+   */
+  private describeMissingCredential(plugin: Plugin): string {
+    const keyEnv = plugin.auth.key_env;
+    if (
+      keyEnv &&
+      process.env[keyEnv] &&
+      !this.usesTrustedBundledRouting(plugin)
+    ) {
+      return `${keyEnv} is set but is not used for this provider because it runs an installed definition instead of the bundled one. Save the key in the provider's settings, or remove the installed copy to fall back to the bundled provider.`;
+    }
+
+    return 'No API key is configured for this provider.';
+  }
+
   private async runModelDiscovery(
     pluginId: string,
     userId?: string
@@ -882,6 +901,7 @@ export class PluginService {
       return {
         models: plugin.model_map,
         outcome: 'missing_credentials',
+        reason: this.describeMissingCredential(plugin),
       };
     }
     const headers = buildPluginModelDiscoveryHeaders(plugin, apiKey);
