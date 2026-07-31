@@ -41,8 +41,10 @@ export const WORK_MESSAGE_METADATA_MAX_BYTES = 100_000;
 const WORK_MESSAGE_PAGE_MAX_BYTES = 1_000_000;
 const WORK_CONTEXT_MAX_BYTES = 256_000;
 export const WORK_ADMISSION_DEFAULTS = {
-  maxActiveRuntimesGlobal: 2,
-  maxActiveRuntimesPerUser: 1,
+  // Keep these in step with WORK_RUNTIME_ADMISSION_DEFAULTS: two concurrent
+  // runtimes per administrator, three per instance.
+  maxActiveRuntimesGlobal: 3,
+  maxActiveRuntimesPerUser: 2,
   maxTasksGlobal: 500,
   maxTasksPerUser: 100,
 } as const;

@@ -102,9 +102,27 @@ test('Work runtime defaults pin the image and bound resource use', () => {
   assert.match(WORK_RUNTIME_DEFAULTS.image, /@sha256:[a-f0-9]{64}$/);
   assert.doesNotMatch(WORK_RUNTIME_DEFAULTS.image, /:latest(?:@|$)/);
   assert.deepEqual(WORK_RUNTIME_ADMISSION_DEFAULTS, {
-    maxActiveRuntimesGlobal: 2,
-    maxActiveRuntimesPerUser: 1,
+    maxActiveRuntimesGlobal: 3,
+    maxActiveRuntimesPerUser: 2,
   });
+});
+
+test('runtime limits expose admission capacity and live occupancy', () => {
+  const service = new WorkRuntimeService();
+  assert.equal(
+    service.limits.maxActiveRuntimesGlobal,
+    WORK_RUNTIME_ADMISSION_DEFAULTS.maxActiveRuntimesGlobal
+  );
+  assert.equal(
+    service.limits.maxActiveRuntimesPerUser,
+    WORK_RUNTIME_ADMISSION_DEFAULTS.maxActiveRuntimesPerUser
+  );
+  // With no leases held, occupancy reports zero for the instance and the user.
+  assert.deepEqual(service.activeRuntimeCounts('some-admin'), {
+    global: 0,
+    user: 0,
+  });
+  assert.deepEqual(service.activeRuntimeCounts(), { global: 0, user: 0 });
 });
 
 test('network-disabled containers use a non-root, least-privilege policy', () => {
@@ -779,9 +797,16 @@ test('task retirement gates every new mutation before cleanup', async t => {
   insertAdmin(capacityUserTwo);
   insertAdmin(capacityUserThree);
 
+  // Two concurrent runtimes per administrator are admitted; the third is not.
   const capacityTaskOne = service.createTaskWithRun(
     userId,
-    'Occupy the per-user Work runtime slot',
+    'Occupy the first per-user Work runtime slot',
+    'local-tools-model',
+    false
+  );
+  const capacityTaskOneB = service.createTaskWithRun(
+    userId,
+    'Occupy the second per-user Work runtime slot',
     'local-tools-model',
     false
   );
@@ -789,15 +814,16 @@ test('task retirement gates every new mutation before cleanup', async t => {
     () =>
       service.createTaskWithRun(
         userId,
-        'This second runtime must be rejected',
+        'This third per-user runtime must be rejected',
         'local-tools-model',
         false
       ),
     error => error?.status === 429 && error?.code === 'WORK_USER_RUNTIME_LIMIT'
   );
+  // A third administrator is refused once three runtimes are active globally.
   const capacityTaskTwo = service.createTaskWithRun(
     capacityUserTwo,
-    'Occupy the global Work runtime slot',
+    'Occupy the last global Work runtime slot',
     'local-tools-model',
     false
   );
@@ -812,7 +838,7 @@ test('task retirement gates every new mutation before cleanup', async t => {
     error =>
       error?.status === 429 && error?.code === 'WORK_GLOBAL_RUNTIME_LIMIT'
   );
-  for (const detail of [capacityTaskOne, capacityTaskTwo]) {
+  for (const detail of [capacityTaskOne, capacityTaskOneB, capacityTaskTwo]) {
     service.updateRun(detail.activeRun.id, 'completed', { finished: true });
     service.updateTaskStatus(detail.id, 'completed');
   }
@@ -937,22 +963,48 @@ test('task retirement gates every new mutation before cleanup', async t => {
     capacityUserThree
   );
 
+  const extraUserTask = service.createTaskWithRun(
+    userId,
+    'Provide a third task for lease-capacity checks',
+    'local-tools-model',
+    false
+  );
+  service.updateRun(extraUserTask.activeRun.id, 'completed', {
+    finished: true,
+  });
+  service.updateTaskStatus(extraUserTask.id, 'completed');
+  const extraUserRecord = service.requireTaskRecord(extraUserTask.id, userId);
+
+  // Two leases for one administrator are admitted; the third is refused.
   const releaseUserSlot = await capacityRuntime.prepare(taskOneRecord);
+  const releaseUserSlotTwo = await capacityRuntime.prepare(
+    service.requireTaskRecord(created.id, userId)
+  );
   await assert.rejects(
-    capacityRuntime.prepare(service.requireTaskRecord(created.id, userId)),
+    capacityRuntime.prepare(extraUserRecord),
     error => error?.status === 429 && error?.code === 'WORK_USER_RUNTIME_LIMIT'
   );
-  releaseUserSlot();
+  assert.deepEqual(capacityRuntime.activeRuntimeCounts(userId), {
+    global: 2,
+    user: 2,
+  });
+  releaseUserSlotTwo();
 
-  const releaseGlobalOne = await capacityRuntime.prepare(taskOneRecord);
+  // A third distinct lease fills the instance; the fourth is refused globally.
   const releaseGlobalTwo = await capacityRuntime.prepare(taskTwoRecord);
+  const releaseGlobalThree = await capacityRuntime.prepare(taskThreeRecord);
   await assert.rejects(
-    capacityRuntime.prepare(taskThreeRecord),
+    capacityRuntime.prepare(extraUserRecord),
     error =>
       error?.status === 429 && error?.code === 'WORK_GLOBAL_RUNTIME_LIMIT'
   );
-  releaseGlobalOne();
+  releaseUserSlot();
   releaseGlobalTwo();
+  releaseGlobalThree();
+  assert.deepEqual(capacityRuntime.activeRuntimeCounts(userId), {
+    global: 0,
+    user: 0,
+  });
 
   const missingDocker = async args => {
     const kind = args[0] === 'volume' ? 'volume' : 'container';

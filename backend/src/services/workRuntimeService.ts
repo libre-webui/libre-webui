@@ -39,9 +39,12 @@ export const WORK_RUNTIME_DEFAULTS = {
   previewBind: '127.0.0.1',
 } as const;
 
+// Two runtimes per administrator so a second task does not have to wait for
+// the first, three per instance to bound the worst case at three containers'
+// resource caps. Both remain tunable through WORK_MAX_ACTIVE_RUNTIMES_*.
 export const WORK_RUNTIME_ADMISSION_DEFAULTS = {
-  maxActiveRuntimesGlobal: 2,
-  maxActiveRuntimesPerUser: 1,
+  maxActiveRuntimesGlobal: 3,
+  maxActiveRuntimesPerUser: 2,
 } as const;
 
 const config = {
@@ -176,6 +179,8 @@ export class WorkRuntimeService {
     maxRounds: config.maxAgentRounds,
     commandTimeoutMs: config.commandTimeoutMs,
     maxOutputChars: config.maxOutputChars,
+    maxActiveRuntimesGlobal: config.maxActiveRuntimesGlobal,
+    maxActiveRuntimesPerUser: config.maxActiveRuntimesPerUser,
   };
   private imagePreparation?: Promise<void>;
   private lifecycleTails = new Map<string, Promise<void>>();
@@ -238,6 +243,20 @@ export class WorkRuntimeService {
    */
   get dockerUnavailableReason(): string | null {
     return this.lastDockerUnavailableReason;
+  }
+
+  /**
+   * Live runtime occupancy, so the interface can say "1 of 2 runtimes in use"
+   * instead of surprising the administrator with a 429 at submit time.
+   */
+  activeRuntimeCounts(userId?: string): { global: number; user: number } {
+    let user = 0;
+    if (userId) {
+      for (const lease of this.runtimeLeases.values()) {
+        if (lease.userId === userId) user += 1;
+      }
+    }
+    return { global: this.runtimeLeases.size, user };
   }
 
   async beginRecovery(
@@ -844,6 +863,103 @@ export class WorkRuntimeService {
         ...payload,
         modifiedAt: payload.updatedAt,
       };
+    });
+  }
+
+  /**
+   * Delete a workspace file, symlink, or directory. Directories require an
+   * explicit recursive flag, and the workspace root is never deletable. Runs
+   * through the helper container, so it also works while a preview holds the
+   * task container.
+   */
+  async deletePath(
+    task: WorkTaskRecord,
+    requestedPath: string,
+    recursive = false
+  ): Promise<{ path: string; type: 'file' | 'directory' | 'symlink' }> {
+    const workspacePath = validateWorkspacePath(requestedPath, false);
+    return this.withWorkspaceHelperContainer(task, async () => {
+      const result = await this.exec(
+        task,
+        [
+          'node',
+          '-e',
+          DELETE_PATH_SCRIPT,
+          '--',
+          workspacePath,
+          recursive ? 'recursive' : '',
+        ],
+        { maxOutputChars: 10_000, acceptFailure: true }
+      );
+      if (result.exitCode === 21) {
+        throw new WorkRuntimeError(
+          `No file or directory exists at ${workspacePath}.`,
+          404,
+          'WORK_FILE_NOT_FOUND'
+        );
+      }
+      if (result.exitCode === 22) {
+        throw new WorkRuntimeError(
+          `${workspacePath} is a directory. Pass recursive: true to delete it with its contents.`,
+          409,
+          'WORK_DELETE_REQUIRES_RECURSIVE'
+        );
+      }
+      if (result.exitCode !== 0) {
+        throw new WorkRuntimeError(
+          result.stderr.trim() || 'Could not delete the workspace path.',
+          503,
+          'WORK_FILE_DELETE_FAILED'
+        );
+      }
+      const payload = parseJsonOutput<{
+        type: 'file' | 'directory' | 'symlink';
+      }>(result.stdout);
+      return { path: workspacePath, type: payload.type };
+    });
+  }
+
+  /**
+   * Move or rename a workspace file or directory. Destination parents are
+   * created inside the workspace, an existing destination is never
+   * overwritten, and like deletePath this works while a preview is running.
+   */
+  async movePath(
+    task: WorkTaskRecord,
+    requestedFrom: string,
+    requestedTo: string
+  ): Promise<{ from: string; to: string }> {
+    const fromPath = validateWorkspacePath(requestedFrom, false);
+    const toPath = validateWorkspacePath(requestedTo, false);
+    return this.withWorkspaceHelperContainer(task, async () => {
+      const result = await this.exec(
+        task,
+        ['node', '-e', MOVE_PATH_SCRIPT, '--', fromPath, toPath],
+        { maxOutputChars: 10_000, acceptFailure: true }
+      );
+      if (result.exitCode === 21) {
+        throw new WorkRuntimeError(
+          `No file or directory exists at ${fromPath}.`,
+          404,
+          'WORK_FILE_NOT_FOUND'
+        );
+      }
+      if (result.exitCode === 24) {
+        throw new WorkRuntimeError(
+          `${toPath} already exists. Delete it first or choose another destination.`,
+          409,
+          'WORK_DESTINATION_EXISTS'
+        );
+      }
+      if (result.exitCode !== 0) {
+        throw new WorkRuntimeError(
+          result.stderr.trim() || 'Could not move the workspace path.',
+          503,
+          'WORK_FILE_MOVE_FAILED'
+        );
+      }
+      parseJsonOutput<{ moved: boolean }>(result.stdout);
+      return { from: fromPath, to: toPath };
     });
   }
 
@@ -2431,6 +2547,66 @@ process.stdin.on('end', () => {
   const stat = fs.statSync(safeTarget);
   console.log(JSON.stringify({size:stat.size, updatedAt:stat.mtimeMs}));
 });
+`;
+
+const DELETE_PATH_SCRIPT = `${COMMON_PATH_GUARD}
+if (target === rootReal) throw new Error('Refusing to delete the workspace root');
+const parentReal = fs.realpathSync(path.dirname(target));
+if (!inside(parentReal)) throw new Error('Path escapes workspace');
+const safeTarget = path.join(parentReal, path.basename(target));
+let stat;
+try { stat = fs.lstatSync(safeTarget); } catch { process.exit(21); }
+const recursive = process.argv[2] === 'recursive';
+let type;
+if (stat.isSymbolicLink()) {
+  type = 'symlink';
+  fs.unlinkSync(safeTarget);
+} else if (stat.isDirectory()) {
+  if (!recursive) process.exit(22);
+  type = 'directory';
+  fs.rmSync(safeTarget, {recursive: true});
+} else {
+  type = 'file';
+  fs.unlinkSync(safeTarget);
+}
+process.stdout.write(JSON.stringify({type}));
+`;
+
+const MOVE_PATH_SCRIPT = `${COMMON_PATH_GUARD}
+const destRel = process.argv[2] || '';
+if (!destRel) throw new Error('Destination path is required');
+const destTarget = path.resolve(root, destRel);
+if (!inside(destTarget)) throw new Error('Path escapes workspace');
+if (target === rootReal || destTarget === rootReal) {
+  throw new Error('Refusing to move the workspace root');
+}
+const sourceParentReal = fs.realpathSync(path.dirname(target));
+if (!inside(sourceParentReal)) throw new Error('Path escapes workspace');
+const safeSource = path.join(sourceParentReal, path.basename(target));
+let sourceStat;
+try { sourceStat = fs.lstatSync(safeSource); } catch { process.exit(21); }
+const destParent = path.dirname(destTarget);
+const destParts = path.relative(root, destParent).split(path.sep).filter(Boolean);
+let destParentReal = rootReal;
+for (const part of destParts) {
+  const next = path.join(destParentReal, part);
+  if (!fs.existsSync(next)) fs.mkdirSync(next, {mode:0o755});
+  if (fs.lstatSync(next).isSymbolicLink()) throw new Error('Refusing to traverse symlink');
+  destParentReal = fs.realpathSync(next);
+  if (!inside(destParentReal) || !fs.statSync(destParentReal).isDirectory()) {
+    throw new Error('Path escapes workspace');
+  }
+}
+const safeDest = path.join(destParentReal, path.basename(destTarget));
+let destTaken = false;
+try { fs.lstatSync(safeDest); destTaken = true; } catch {}
+if (destTaken) process.exit(24);
+if (safeSource === safeDest) throw new Error('Source and destination are the same path');
+if (sourceStat.isDirectory() && safeDest.startsWith(safeSource + path.sep)) {
+  throw new Error('Cannot move a directory inside itself');
+}
+fs.renameSync(safeSource, safeDest);
+process.stdout.write(JSON.stringify({moved: true}));
 `;
 
 const SEARCH_FILES_SCRIPT = `${COMMON_PATH_GUARD}

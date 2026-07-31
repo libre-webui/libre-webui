@@ -140,6 +140,17 @@ export interface WorkCapabilities {
   ollamaAvailable?: boolean;
   pluginAvailable?: boolean;
   reason?: string;
+  limits?: {
+    maxRounds?: number;
+    commandTimeoutMs?: number;
+    maxOutputChars?: number;
+    maxActiveRuntimesGlobal?: number;
+    maxActiveRuntimesPerUser?: number;
+  };
+  activeRuntimes?: {
+    global: number;
+    user: number;
+  };
 }
 
 export interface WorkMessage {

@@ -81,6 +81,7 @@ router.get(
       runtimeImage: workRuntimeService.image,
       reason,
       limits: workRuntimeService.limits,
+      activeRuntimes: workRuntimeService.activeRuntimeCounts(userId),
     });
   }
 );

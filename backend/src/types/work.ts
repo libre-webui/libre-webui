@@ -251,6 +251,12 @@ export interface WorkCapabilities {
     maxRounds: number;
     commandTimeoutMs: number;
     maxOutputChars: number;
+    maxActiveRuntimesGlobal: number;
+    maxActiveRuntimesPerUser: number;
+  };
+  activeRuntimes: {
+    global: number;
+    user: number;
   };
 }
 

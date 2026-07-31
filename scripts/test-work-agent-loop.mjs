@@ -24,6 +24,7 @@ const [
     default: workAgentService,
     normalizeToolCalls,
     restorePersistedWorkContext,
+    WORK_TOOL_SCHEMAS,
   },
   { default: workEventService },
   {
@@ -65,6 +66,33 @@ after(async () => {
   workEventService.reset();
   closeDatabase();
   await rm(dataDir, { recursive: true, force: true });
+});
+
+test('the tool registry covers full file management inside the sandbox', () => {
+  const byName = new Map(
+    WORK_TOOL_SCHEMAS.map(schema => [schema.function?.name ?? schema.name, schema])
+  );
+  for (const name of [
+    'list_files',
+    'read_file',
+    'write_file',
+    'delete_file',
+    'move_file',
+    'search_files',
+    'run_command',
+    'start_preview',
+    'stop_preview',
+  ]) {
+    assert.ok(byName.has(name), `missing tool ${name}`);
+  }
+
+  const definition = schema => schema.function ?? schema;
+  const deleteTool = definition(byName.get('delete_file'));
+  assert.deepEqual(deleteTool.parameters.required, ['path']);
+  assert.equal(deleteTool.parameters.properties.recursive.type, 'boolean');
+
+  const moveTool = definition(byName.get('move_file'));
+  assert.deepEqual(moveTool.parameters.required, ['from', 'to']);
 });
 
 test('plugin Work runs use the configured round budget and finish with a no-tools handoff', async () => {

@@ -102,10 +102,19 @@ model receives only these tools:
 - `list_files`
 - `read_file`
 - `write_file`
+- `delete_file`
+- `move_file`
 - `search_files`
 - `run_command`
 - `start_preview`
 - `stop_preview`
+
+`delete_file` and `move_file` are path-guarded like the other file tools:
+they refuse to leave the workspace, never traverse symlinks, require an
+explicit recursive flag before removing a directory, and never overwrite a
+move destination. Because they run through the file-helper path rather than a
+shell, they also work while a preview is running, when `run_command` is
+blocked.
 
 Model requests are made by the Libre WebUI backend. They do not originate from
 the Work container and do not depend on the container's network policy.
@@ -545,8 +554,10 @@ set `WORK_PREVIEW_BIND` to an interface that browser can route to and
 `WORK_PREVIEW_HOST` to the name it uses, then firewall the published range.
 
 Concurrency is capped separately: `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` defaults
-to `1`, so one administrator's second task waits for the first runtime to stop.
-Raise it if the host has memory and CPU to spare.
+to `2` and `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL` to `3`, so an administrator can
+run a second task while the first is busy. The capabilities response reports
+both limits and the live occupancy. Raise them if the host has memory and CPU
+to spare.
 
 Kubernetes support would require a separate runtime implementation with
 tightly scoped RBAC, a Pod and persistent volume design for each task, cleanup
@@ -570,8 +581,8 @@ Work reads these variables in the backend process:
 | `WORK_PREVIEW_PORT`                 | `4173`                                                                                        | Port the app must listen on inside the container           |
 | `WORK_PREVIEW_BIND`                 | `127.0.0.1`                                                                                   | Host interface the preview port is published on            |
 | `WORK_PREVIEW_HOST`                 | value of `WORK_PREVIEW_BIND`                                                                  | Host advertised in the preview URL                         |
-| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`   | `2`                                                                                           | Concurrent container-backed tasks per Libre WebUI instance |
-| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` | `1`                                                                                           | Concurrent container-backed tasks per administrator        |
+| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`   | `3`                                                                                           | Concurrent container-backed tasks per Libre WebUI instance |
+| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` | `2`                                                                                           | Concurrent container-backed tasks per administrator        |
 | `WORK_MAX_TASKS_GLOBAL`             | `500`                                                                                         | Persisted Work task limit per Libre WebUI instance         |
 | `WORK_MAX_TASKS_PER_USER`           | `100`                                                                                         | Persisted Work task limit per administrator                |
 

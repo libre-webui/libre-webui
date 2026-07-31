@@ -76,6 +76,28 @@ export const WORK_TOOL_SCHEMAS: Record<string, unknown>[] = [
     ['path', 'content']
   ),
   functionTool(
+    'delete_file',
+    'Delete a workspace file or directory. Directories require recursive: true. Works while a preview is running.',
+    {
+      path: stringProperty('Relative file or directory path.'),
+      recursive: {
+        type: 'boolean',
+        description:
+          'Required as true to delete a directory with its contents.',
+      },
+    },
+    ['path']
+  ),
+  functionTool(
+    'move_file',
+    'Move or rename a workspace file or directory. Destination parents are created; an existing destination is never overwritten. Works while a preview is running.',
+    {
+      from: stringProperty('Relative source path.'),
+      to: stringProperty('Relative destination path.'),
+    },
+    ['from', 'to']
+  ),
+  functionTool(
     'search_files',
     'Search text recursively in workspace files.',
     {
@@ -980,6 +1002,28 @@ export class WorkAgentService {
           metadata: { path: result.path, size: result.size },
         };
       }
+      case 'delete_file': {
+        const result = await workRuntimeService.deletePath(
+          task,
+          requiredString(args.path, 'path'),
+          args.recursive === true
+        );
+        return {
+          content: `Deleted ${result.type} ${result.path}.`,
+          metadata: { path: result.path, type: result.type },
+        };
+      }
+      case 'move_file': {
+        const result = await workRuntimeService.movePath(
+          task,
+          requiredString(args.from, 'from'),
+          requiredString(args.to, 'to')
+        );
+        return {
+          content: `Moved ${result.from} to ${result.to}.`,
+          metadata: { from: result.from, to: result.to },
+        };
+      }
       case 'search_files': {
         const result = await workRuntimeService.searchFiles(
           task,
@@ -1574,11 +1618,14 @@ function validateToolCallArguments(call: WorkToolCall): string | undefined {
     case 'stop_preview':
       return undefined;
     case 'read_file':
+    case 'delete_file':
       return invalidRequiredString('path');
     case 'write_file':
       return (
         invalidRequiredString('path') || invalidRequiredString('content', true)
       );
+    case 'move_file':
+      return invalidRequiredString('from') || invalidRequiredString('to');
     case 'search_files':
       return invalidRequiredString('query');
     case 'run_command':
@@ -1617,6 +1664,14 @@ function summarizeToolCall(call: WorkToolCall): Record<string, unknown> {
     case 'read_file':
     case 'list_files':
       includeString('path', args.path);
+      break;
+    case 'delete_file':
+      includeString('path', args.path);
+      if (args.recursive === true) metadata.recursive = true;
+      break;
+    case 'move_file':
+      includeString('from', args.from);
+      includeString('to', args.to);
       break;
     case 'search_files':
       includeString('path', args.path);
