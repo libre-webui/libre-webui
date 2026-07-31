@@ -15,6 +15,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.16.1] - 2026-07-31
+
+Libre WebUI 0.16.1 makes Work usable when Libre WebUI itself runs in Docker,
+and makes provider model catalogs keep themselves current. A model refresh now
+reports what actually happened instead of always confirming success.
+
+### ✨ New Features
+
+- Work now runs when Libre WebUI itself runs in Docker. The image ships the
+  Docker CLI and every repository Compose file mounts the host Docker socket
+  with its group, so `docker compose up -d` provides a working Work runtime.
+  Task containers run as siblings of the Libre WebUI container on the same
+  daemon. This gives every Libre WebUI administrator root-equivalent control
+  of the Docker host; remove the `/var/run/docker.sock` mount from the Compose
+  file to disable Work.
+- Added `DOCKER_GID` and `DOCKER_SOCKET` Compose variables for hosts whose
+  Docker socket is not owned by group `0`, and `WORK_PREVIEW_BIND` and
+  `WORK_PREVIEW_HOST` for deployments where the browser reaches the Docker
+  host at another address.
+
+### 🔧 Improvements
+
+- Plugin model catalogs now refresh on their own. A catalog that is missing or
+  older than the refresh interval is rediscovered when the plugin list is
+  read, so reloading the app reflects the provider's current models. A
+  per-plugin backoff avoids probing an unreachable provider on every request,
+  and a deadline keeps a slow provider from stalling the response.
+- **Refresh models** now reports its outcome: whether the catalog was updated,
+  was already current, could not be loaded, or was never fetched because no
+  usable API key was configured. A key set only in the environment is ignored
+  for a provider that runs an installed definition instead of the bundled one,
+  and the message now says so.
+- An unreachable Docker daemon now names the deployment change to make — a
+  missing Docker CLI, an unmounted socket, or a socket group the backend user
+  does not belong to — instead of reporting only that Docker is unavailable.
+- Speech, image, and embedding models discovered from a provider's catalog no
+  longer appear in the chat model picker. They remain available to the
+  pickers that use them.
+
+### 🐛 Bug Fixes
+
+- Fixed discovered model catalogs never expiring. Models were fetched once at
+  activation and then reused indefinitely, so a provider's newer models never
+  appeared after a reload.
+- Fixed a model catalog refresh reporting success when it never reached the
+  provider. A missing API key, an unreachable endpoint, or an empty response
+  silently returned the previous catalog and still showed a confirmation.
+
+### 📚 Documentation
+
+- Added a Provider connections guide for the workspace introduced in 0.16.0.
+- Documented running Work when Libre WebUI is itself in Docker, including the
+  socket requirement, its security consequence, how to read the socket group
+  id, and how to disable Work, across the README, quick start, Docker,
+  external Ollama, GPU, dev branch, Kubernetes, troubleshooting, environment
+  variable, and Work guides.
+
 ## [0.16.0] - 2026-07-31
 
 Libre WebUI 0.16.0 makes third-party and self-hosted model services a
