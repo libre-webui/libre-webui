@@ -15,6 +15,97 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.16.0] - 2026-07-31
+
+Libre WebUI 0.16.0 makes third-party and self-hosted model services a
+first-class provider workflow. It adds a dedicated Provider connections
+workspace, OpenAI Responses and Image API support, reliable custom endpoint
+and model discovery routing, and safer provider-scoped configuration across
+Chat and Work.
+
+### ✨ New Features
+
+- Added a searchable **Provider connections** workspace under
+  **Settings → Plugins**, with a provider list, selected-provider details,
+  activation state, a read-only capability-aware model catalog, and explicit
+  per-user **Refresh models** discovery.
+  ([#173](https://github.com/libre-webui/libre-webui/pull/173))
+- Added selectable **Chat Completions** and **Responses** API modes for
+  OpenAI-compatible providers in Chat and Work. Completed and streamed
+  Responses output now covers text, reasoning, refusals, tool calls, usage,
+  and incomplete results.
+  ([#168](https://github.com/libre-webui/libre-webui/pull/168))
+- Added OpenAI Image API support with GPT Image models, provider-qualified
+  image selection, an independent image endpoint, and authenticated generation
+  and gallery flows.
+  ([#167](https://github.com/libre-webui/libre-webui/pull/167))
+
+### 🔧 Improvements
+
+- Kept provider configuration and advanced generation controls collapsed by
+  default. Inherited values now appear as blank provider defaults, only
+  changed overrides are saved, clearing an override restores inheritance, and
+  in-flight saves or model refreshes no longer overwrite newer edits.
+  ([#171](https://github.com/libre-webui/libre-webui/pull/171))
+- Allowed absolute HTTP endpoints for self-hosted gateways on trusted
+  networks, including container and service hostnames, while warning that
+  credentials and traffic are unencrypted and continuing to prefer HTTPS.
+  ([#172](https://github.com/libre-webui/libre-webui/pull/172))
+- Expanded pull-request gates to cover formatting, linting, TypeScript,
+  package regressions, Playwright, cross-platform Electron packaging, and
+  non-publishing amd64/arm64 Docker builds, including stacked pull requests.
+  ([#170](https://github.com/libre-webui/libre-webui/pull/170))
+
+### 🐛 Bug Fixes
+
+- Fixed custom endpoint and Base URL overrides so the selected route is
+  honored consistently across Chat, Work, model discovery, image generation,
+  embeddings, and text-to-speech. Invalid explicit routes now fail instead of
+  silently falling back to a bundled provider endpoint.
+  ([#165](https://github.com/libre-webui/libre-webui/pull/165),
+  [#168](https://github.com/libre-webui/libre-webui/pull/168))
+- Made discovered model catalogs persistent and per-user, derived `/models`
+  routes from the effective provider endpoint, and waited for activation-time
+  discovery so the first refreshed catalog is current.
+  ([#165](https://github.com/libre-webui/libre-webui/pull/165))
+- Preserved exact provider identity in Chat when Ollama or multiple plugins
+  expose the same model ID. Missing or inactive providers now remain visibly
+  unavailable instead of silently routing to a different provider with the
+  same model name.
+  ([#165](https://github.com/libre-webui/libre-webui/pull/165))
+- Bound Responses replay state to the same provider, model, endpoint, and
+  credential, and stopped active Work runs before replaying tool state after a
+  provider route or credential change.
+  ([#168](https://github.com/libre-webui/libre-webui/pull/168))
+
+### 🔒 Security & Privacy
+
+- Isolated provider endpoints, credentials, discovered catalogs, and
+  capability routes by user; custom routes cannot borrow a bundled environment
+  credential, image and gallery routes require authentication, redirects are
+  not followed, and malformed or non-HTTP(S) routes remain rejected.
+  ([#165](https://github.com/libre-webui/libre-webui/pull/165),
+  [#167](https://github.com/libre-webui/libre-webui/pull/167),
+  [#168](https://github.com/libre-webui/libre-webui/pull/168))
+
+### 📚 Documentation
+
+- Expanded the model, plugin architecture, troubleshooting, environment,
+  migration, self-hosted gateway, and Kimi Code guidance for provider
+  configuration, URL precedence, Responses mode, image generation, model
+  discovery, inherited settings, and container networking.
+
+### 🙏 Thanks
+
+- Special thanks to
+  [ZhengJin (@fangzhengjin)](https://github.com/fangzhengjin) for the detailed
+  third-party-provider feedback and AI-assisted UX concept shared in
+  [#163](https://github.com/libre-webui/libre-webui/issues/163). That feedback
+  directly shaped Responses API support, reliable custom Base URL routing and
+  model discovery, OpenAI image generation, simpler collapsed provider
+  settings, hostname-based HTTP gateways for trusted self-hosted networks, and
+  the new Provider connections workspace inside **Settings → Plugins**.
+
 ## [0.15.1] - 2026-07-29
 
 Libre WebUI 0.15.1 makes Work feel native to Chat, adds an efficient local
