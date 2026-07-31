@@ -533,7 +533,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         });
         setPluginApiKeys(prev => ({ ...prev, [pluginId]: '' }));
         setShowApiKey(prev => ({ ...prev, [pluginId]: false }));
-        setExpandedPluginId(null);
       } else {
         toast.error(response.error || 'Failed to save API key');
       }

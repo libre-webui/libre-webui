@@ -258,7 +258,7 @@ export function SettingsPluginsTab({
             </h4>
           </div>
 
-          {loading ? (
+          {loading && plugins.length === 0 ? (
             <div className='p-8 text-center'>
               <p className='text-gray-500 dark:text-gray-400'>
                 {t('settings.plugins.loading')}

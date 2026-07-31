@@ -377,6 +377,7 @@ test('users can activate providers and save keys and generation overrides withou
     pluginId: 'user-provider',
     apiKey: 'user-owned-key',
   });
+  await expect(configure).toHaveAttribute('aria-expanded', 'true');
 
   const advanced = page.getByRole('button', {
     name: /Advanced parameters/,
