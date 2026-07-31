@@ -70,7 +70,6 @@ export const PluginVariablesEditor: React.FC<{
   >({});
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [initialized, setInitialized] = useState(false);
   const [revealedFields, setRevealedFields] = useState<Set<string>>(new Set());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [dirtyFields, setDirtyFields] = useState<Set<string>>(new Set());
@@ -106,23 +105,30 @@ export const PluginVariablesEditor: React.FC<{
     fetchPluginVariables(plugin.id);
   }, [fetchPluginVariables, plugin.id]);
 
-  // Initialize local values from store once available — adjust state during render
+  // Merge refreshed server values without discarding edits made while an
+  // earlier save or model-discovery refresh was still in flight.
   const storedVarsJson = JSON.stringify(storedVars);
-  const [prevStoredVarsJson, setPrevStoredVarsJson] = useState<string | null>(
-    null
-  );
-  if (prevStoredVarsJson !== storedVarsJson) {
+  const lastSyncedVariablesRef = useRef<string | null>(null);
+  useEffect(() => {
+    const schemaKey = schema
+      .map(definition => `${definition.name}:${definition.type}`)
+      .join('|');
+    const syncKey = `${plugin.id}:${schemaKey}:${storedVarsJson}`;
+    if (lastSyncedVariablesRef.current === syncKey) return;
+    lastSyncedVariablesRef.current = syncKey;
+
     const vars = JSON.parse(storedVarsJson) as Record<
       string,
       PluginVariableValue
     >;
-    if (!(Object.keys(vars).length === 0 && initialized)) {
-      setLocalValues(initializePluginVariableInputs(schema, vars));
-      setDirtyFields(new Set());
-      setInitialized(true);
-    }
-    setPrevStoredVarsJson(storedVarsJson);
-  }
+    setLocalValues(current => {
+      const next = initializePluginVariableInputs(schema, vars);
+      for (const name of dirtyFields) {
+        if (name in current) next[name] = current[name];
+      }
+      return next;
+    });
+  }, [dirtyFields, plugin.id, schema, storedVarsJson]);
 
   const handleSave = async () => {
     // Validate fields before saving
@@ -225,8 +231,16 @@ export const PluginVariablesEditor: React.FC<{
       Object.keys(update.variables).length === 0 &&
       update.unset.length === 0
     ) {
-      setDirtyFields(new Set());
-      setFieldErrors({});
+      setDirtyFields(current => {
+        const next = new Set(current);
+        for (const name of submittedDirtyFields) next.delete(name);
+        return next;
+      });
+      setFieldErrors(current => {
+        const next = { ...current };
+        for (const name of submittedDirtyFields) delete next[name];
+        return next;
+      });
       toast.success(t('pluginManager.variables.saved', 'Variables saved'));
       return;
     }
@@ -264,8 +278,16 @@ export const PluginVariablesEditor: React.FC<{
         }
         return next;
       });
-      setDirtyFields(new Set());
-      setFieldErrors({});
+      setDirtyFields(current => {
+        const next = new Set(current);
+        for (const name of submittedDirtyFields) next.delete(name);
+        return next;
+      });
+      setFieldErrors(current => {
+        const next = { ...current };
+        for (const name of submittedDirtyFields) delete next[name];
+        return next;
+      });
       toast.success(t('pluginManager.variables.saved', 'Variables saved'));
     } else {
       toast.error(
