@@ -299,6 +299,20 @@ provides it.
 
 ### Model Discovery
 
+Settings → Plugins includes a **Provider connections** workspace for this
+flow. Search for a provider in the left pane, select it, and use the right pane
+to review its active state and effective model catalog. Provider configuration
+remains collapsed until **Configure** is selected. This keeps endpoint,
+credential, and advanced generation controls out of the default view.
+
+For chat and completion providers, **Refresh models** runs discovery for the
+selected provider and then reloads both the plugin catalog and Chat's model
+list. The catalog is read-only: its rows come from the current user's
+discovered IDs plus the plugin definition's capability model maps. Capability
+labels describe which plugin route lists a model; they are not health checks.
+Add fallback or manually maintained model IDs through the plugin JSON
+`model_map`, not by editing a discovered row.
+
 When a plugin is activated, Libre WebUI attempts model discovery with that
 account's effective endpoint and credential. An administrator's custom route
 requires a credential stored by the same account; an environment fallback is

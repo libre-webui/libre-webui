@@ -303,6 +303,9 @@ type MockOptions = {
   ollamaHealthy?: boolean;
   plugins?: MockPlugin[];
   pluginVariables?: Record<string, Record<string, MockPluginVariableValue>>;
+  pluginDiscoveryResults?: Record<string, string[]>;
+  pluginDiscoveryDelayMs?: number;
+  pluginDiscoveryFailures?: Record<string, string>;
   pluginVariableResetFailures?: number;
   pluginMutationRefreshDelayMs?: number;
   libraryModels?: MockLibraryModel[];
@@ -474,7 +477,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const sessions = structuredClone(options.sessions ?? []);
   const models = options.models ?? defaultModels;
   const ollamaHealthy = options.ollamaHealthy ?? true;
-  const plugins = options.plugins ?? [];
+  const plugins = structuredClone(options.plugins ?? []);
   const pluginVariables = structuredClone(options.pluginVariables ?? {});
   const libraryModels = options.libraryModels ?? defaultLibraryModels;
   const cloudLibraryModels =
@@ -515,6 +518,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     pluginId: string;
     apiKey: string;
   }> = [];
+  const pluginDiscoveryRequests: string[] = [];
   let pluginVariableResetFailures = options.pluginVariableResetFailures ?? 0;
   let pluginVariableResetRequests = 0;
   let pendingPluginListDelayMs = 0;
@@ -1445,6 +1449,35 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      const pluginDiscoveryMatch = path.match(/^\/plugins\/discover\/([^/]+)$/);
+      if (pluginDiscoveryMatch && method === 'POST') {
+        const pluginId = decodeURIComponent(pluginDiscoveryMatch[1]);
+        pluginDiscoveryRequests.push(pluginId);
+
+        const delayMs = options.pluginDiscoveryDelayMs ?? 0;
+        if (delayMs > 0) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+
+        const failure = options.pluginDiscoveryFailures?.[pluginId];
+        if (failure) {
+          await fulfillApiError(route, 500, failure);
+          return;
+        }
+
+        const plugin = plugins.find(candidate => candidate.id === pluginId);
+        if (!plugin) {
+          await fulfillApiError(route, 404, 'Plugin not found');
+          return;
+        }
+
+        const discoveredModels =
+          options.pluginDiscoveryResults?.[pluginId] ?? plugin.model_map;
+        plugin.model_map = [...discoveredModels];
+        await fulfillJson(route, discoveredModels);
+        return;
+      }
+
       const pluginVariablesMatch = path.match(
         /^\/plugins\/([^/]+)\/variables$/
       );
@@ -1575,6 +1608,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     pullStreamUrls,
     preferenceUpdateRequests,
     pluginCredentialUpdateRequests,
+    pluginDiscoveryRequests,
     pluginVariableUpdateRequests,
     get pluginVariableResetRequests() {
       return pluginVariableResetRequests;

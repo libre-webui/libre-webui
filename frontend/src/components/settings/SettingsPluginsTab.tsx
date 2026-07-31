@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import { useId, type ChangeEvent, type RefObject } from 'react';
+import {
+  useId,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type RefObject,
+} from 'react';
 import {
   Check,
   ChevronDown,
@@ -26,6 +32,8 @@ import {
   Key,
   Loader2,
   Puzzle,
+  RefreshCw,
+  Search,
   Sliders,
   Trash2,
   Upload,
@@ -36,6 +44,12 @@ import { PluginVariablesEditor } from '@/components/PluginManager';
 import { Button } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
 import type { Plugin } from '@/types';
+import {
+  buildPluginProviderCatalog,
+  pluginMatchesProviderSearch,
+  pluginSupportsModelRefresh,
+  type PluginProviderCatalogEntry,
+} from '@/utils/pluginProviderCatalog';
 import { getPluginConnectionVariableNames } from '@/utils/pluginVariableOverrides';
 
 interface SettingsPluginsTabProps {
@@ -52,6 +66,7 @@ interface SettingsPluginsTabProps {
   pluginApiKeys: Record<string, string>;
   showApiKey: Record<string, boolean>;
   savingApiKey: string | null;
+  refreshingPluginIds: Record<string, boolean>;
   onClearError: () => void;
   onShowUploadFormChange: (show: boolean) => void;
   onShowJsonFormChange: (show: boolean) => void;
@@ -66,6 +81,7 @@ interface SettingsPluginsTabProps {
   onExportPlugin: (pluginId: string) => void;
   onSaveApiKey: (pluginId: string) => void;
   onDeleteApiKey: (pluginId: string) => void;
+  onRefreshModels: (pluginId: string) => void;
 }
 
 export function SettingsPluginsTab({
@@ -82,6 +98,7 @@ export function SettingsPluginsTab({
   pluginApiKeys,
   showApiKey,
   savingApiKey,
+  refreshingPluginIds,
   onClearError,
   onShowUploadFormChange,
   onShowJsonFormChange,
@@ -96,20 +113,52 @@ export function SettingsPluginsTab({
   onExportPlugin,
   onSaveApiKey,
   onDeleteApiKey,
+  onRefreshModels,
 }: SettingsPluginsTabProps) {
   const { t } = useTranslation();
   const user = useAuthStore(state => state.user);
   const systemInfo = useAuthStore(state => state.systemInfo);
   const canManagePlugins =
     systemInfo?.requiresAuth === false || user?.role === 'admin';
-  const activePlugins = plugins.filter(plugin => plugin.active);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPluginId, setSelectedPluginId] = useState<string | null>(null);
+  const searchInputId = useId();
+  const filteredPlugins = useMemo(
+    () =>
+      plugins.filter(plugin =>
+        pluginMatchesProviderSearch(plugin, searchQuery)
+      ),
+    [plugins, searchQuery]
+  );
+  const effectiveSelectedPluginId =
+    selectedPluginId && plugins.some(plugin => plugin.id === selectedPluginId)
+      ? selectedPluginId
+      : (plugins[0]?.id ?? null);
+  const selectedPlugin =
+    plugins.find(plugin => plugin.id === effectiveSelectedPluginId) ?? null;
+
+  const selectProvider = (pluginId: string) => {
+    if (pluginId === effectiveSelectedPluginId) return;
+    onExpandedPluginChange(null);
+    setSelectedPluginId(pluginId);
+  };
 
   return (
     <div className='space-y-6'>
       <div>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
-          {t('settings.plugins.title')}
-        </h3>
+        <div className='mb-4'>
+          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+            {t('settings.plugins.providerConnections', {
+              defaultValue: 'Provider connections',
+            })}
+          </h3>
+          <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
+            {t('settings.plugins.providerConnectionsDescription', {
+              defaultValue:
+                'Connect, configure, and inspect model providers through plugins.',
+            })}
+          </p>
+        </div>
 
         {error && (
           <div className='p-4 bg-primary-50/80 dark:bg-primary-950/25 border border-primary-200 dark:border-primary-800/50 rounded-lg mb-4'>
@@ -217,103 +266,188 @@ export function SettingsPluginsTab({
           </div>
         )}
 
-        {activePlugins.length > 0 && (
-          <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300 mb-6'>
-            <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-              {t('settings.plugins.active')} ({activePlugins.length})
-            </h4>
-            <div className='space-y-2'>
-              {activePlugins.map(plugin => (
-                <div
-                  key={plugin.id}
-                  className='flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg'
-                >
-                  <div>
-                    <p className='font-medium text-green-800 dark:text-green-200'>
-                      {plugin.name}
+        <div
+          data-testid='provider-workspace'
+          className='overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-dark-300 dark:bg-dark-100'
+        >
+          <div className='grid min-h-[30rem] grid-cols-1 lg:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.6fr)]'>
+            <section
+              data-testid='provider-list'
+              aria-label={t('settings.plugins.providers', {
+                defaultValue: 'Providers',
+              })}
+              className='border-b border-gray-200 dark:border-dark-300 lg:border-b-0 lg:border-e'
+            >
+              <div className='border-b border-gray-200 p-4 dark:border-dark-300'>
+                <div className='mb-3 flex items-center justify-between gap-2'>
+                  <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+                    {t('settings.plugins.providers', {
+                      defaultValue: 'Providers',
+                    })}
+                  </h4>
+                  <span className='rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-dark-200 dark:text-gray-300'>
+                    {plugins.length}
+                  </span>
+                </div>
+                <label htmlFor={searchInputId} className='sr-only'>
+                  {t('settings.plugins.searchProviders', {
+                    defaultValue: 'Search providers',
+                  })}
+                </label>
+                <div className='relative'>
+                  <Search
+                    aria-hidden='true'
+                    className='absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400'
+                  />
+                  <input
+                    id={searchInputId}
+                    type='search'
+                    value={searchQuery}
+                    onChange={event => setSearchQuery(event.target.value)}
+                    placeholder={t('settings.plugins.searchProviders', {
+                      defaultValue: 'Search providers',
+                    })}
+                    className='w-full rounded-lg border border-gray-300 bg-white py-2 pe-3 ps-9 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-dark-300 dark:bg-dark-50 dark:text-gray-100'
+                  />
+                </div>
+              </div>
+
+              <div className='max-h-[32rem] space-y-2 overflow-y-auto p-3'>
+                {loading && plugins.length === 0 ? (
+                  <div className='p-6 text-center text-sm text-gray-500 dark:text-gray-400'>
+                    <Loader2 className='mx-auto mb-2 h-5 w-5 animate-spin' />
+                    {t('settings.plugins.loading')}
+                  </div>
+                ) : plugins.length === 0 ? (
+                  <div className='p-6 text-center'>
+                    <Puzzle className='mx-auto mb-3 h-9 w-9 text-gray-400' />
+                    <p className='text-sm text-gray-500 dark:text-gray-400'>
+                      {t('settings.plugins.noPlugins')}
                     </p>
-                    <p className='text-xs text-green-600 dark:text-green-300'>
-                      {plugin.type} • {plugin.model_map?.length || 0}{' '}
-                      {t('settings.plugins.models')}
+                    <p className='mt-1 text-xs text-gray-400 dark:text-gray-500'>
+                      {t('settings.plugins.noPluginsDescription')}
                     </p>
                   </div>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={() => onActivatePlugin(plugin.id)}
-                    className='text-green-600 border-green-300 hover:bg-green-100'
-                  >
-                    {t('settings.plugins.deactivate')}
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+                ) : filteredPlugins.length === 0 ? (
+                  <p className='p-6 text-center text-sm text-gray-500 dark:text-gray-400'>
+                    {t('settings.plugins.noProvidersFound', {
+                      defaultValue: 'No providers match your search.',
+                    })}
+                  </p>
+                ) : (
+                  filteredPlugins.map(plugin => {
+                    const selected = effectiveSelectedPluginId === plugin.id;
+                    const modelCount =
+                      buildPluginProviderCatalog(plugin).length;
 
-        <div className='bg-white dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-300'>
-          <div className='p-4 border-b border-gray-200 dark:border-dark-300'>
-            <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-              {t('settings.plugins.installed')} ({plugins.length})
-            </h4>
-          </div>
+                    return (
+                      <button
+                        key={plugin.id}
+                        type='button'
+                        aria-current={selected ? 'true' : undefined}
+                        onClick={() => selectProvider(plugin.id)}
+                        className={`w-full rounded-xl border p-3 text-start transition-colors ${
+                          selected
+                            ? 'border-blue-500 bg-blue-50/70 dark:border-blue-500 dark:bg-blue-950/20'
+                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-dark-300 dark:hover:border-dark-400 dark:hover:bg-dark-50'
+                        }`}
+                      >
+                        <div className='flex items-start gap-3'>
+                          <span
+                            aria-hidden='true'
+                            className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
+                              plugin.active
+                                ? 'bg-green-500'
+                                : 'bg-gray-400 dark:bg-gray-500'
+                            }`}
+                          />
+                          <span className='min-w-0 flex-1'>
+                            <span className='sr-only'>
+                              {plugin.active
+                                ? t('settings.plugins.activeLabel')
+                                : t('settings.plugins.inactive')}
+                              .{' '}
+                            </span>
+                            <span className='block truncate text-sm font-medium text-gray-900 dark:text-gray-100'>
+                              {plugin.name}
+                            </span>
+                            <span className='mt-0.5 block text-xs capitalize text-gray-500 dark:text-gray-400'>
+                              {plugin.type} · {modelCount}{' '}
+                              {t('settings.plugins.models')}
+                            </span>
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </section>
 
-          {loading && plugins.length === 0 ? (
-            <div className='p-8 text-center'>
-              <p className='text-gray-500 dark:text-gray-400'>
-                {t('settings.plugins.loading')}
-              </p>
-            </div>
-          ) : plugins.length === 0 ? (
-            <div className='p-8 text-center'>
-              <Puzzle className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-              <p className='text-gray-500 dark:text-gray-400 mb-2'>
-                {t('settings.plugins.noPlugins')}
-              </p>
-              <p className='text-xs text-gray-400 dark:text-gray-500'>
-                {t('settings.plugins.noPluginsDescription')}
-              </p>
-            </div>
-          ) : (
-            <div className='divide-y divide-gray-200 dark:divide-dark-300'>
-              {plugins.map(plugin => (
-                <PluginListItem
-                  key={plugin.id}
-                  plugin={plugin}
+            <section
+              data-testid='provider-detail'
+              className='min-w-0 p-4 sm:p-5'
+            >
+              {selectedPlugin ? (
+                <ProviderDetail
+                  plugin={selectedPlugin}
                   loading={loading}
-                  hasApiKey={hasKeys[plugin.id] || false}
-                  expanded={expandedPluginId === plugin.id}
-                  apiKey={pluginApiKeys[plugin.id] || ''}
-                  showApiKey={showApiKey[plugin.id] || false}
-                  savingApiKey={savingApiKey === plugin.id}
+                  hasApiKey={hasKeys[selectedPlugin.id] || false}
+                  expanded={expandedPluginId === selectedPlugin.id}
+                  apiKey={pluginApiKeys[selectedPlugin.id] || ''}
+                  showApiKey={showApiKey[selectedPlugin.id] || false}
+                  savingApiKey={savingApiKey === selectedPlugin.id}
+                  refreshingModels={Boolean(
+                    refreshingPluginIds[selectedPlugin.id]
+                  )}
                   canManagePlugin={canManagePlugins}
                   onExpand={() =>
                     onExpandedPluginChange(
-                      expandedPluginId === plugin.id ? null : plugin.id
+                      expandedPluginId === selectedPlugin.id
+                        ? null
+                        : selectedPlugin.id
                     )
                   }
-                  onActivate={() => onActivatePlugin(plugin.id)}
-                  onExport={() => onExportPlugin(plugin.id)}
-                  onDelete={() => onDeletePlugin(plugin.id)}
+                  onActivate={() => onActivatePlugin(selectedPlugin.id)}
+                  onExport={() => onExportPlugin(selectedPlugin.id)}
+                  onDelete={() => onDeletePlugin(selectedPlugin.id)}
+                  onRefreshModels={() => onRefreshModels(selectedPlugin.id)}
                   onApiKeyChange={apiKey =>
-                    onPluginApiKeyChange(plugin.id, apiKey)
+                    onPluginApiKeyChange(selectedPlugin.id, apiKey)
                   }
                   onShowApiKeyChange={show =>
-                    onShowApiKeyChange(plugin.id, show)
+                    onShowApiKeyChange(selectedPlugin.id, show)
                   }
-                  onSaveApiKey={() => onSaveApiKey(plugin.id)}
-                  onDeleteApiKey={() => onDeleteApiKey(plugin.id)}
+                  onSaveApiKey={() => onSaveApiKey(selectedPlugin.id)}
+                  onDeleteApiKey={() => onDeleteApiKey(selectedPlugin.id)}
                 />
-              ))}
-            </div>
-          )}
+              ) : (
+                <div className='flex min-h-[24rem] items-center justify-center text-center'>
+                  <div>
+                    <Puzzle className='mx-auto mb-3 h-10 w-10 text-gray-400' />
+                    <p className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                      {t('settings.plugins.selectProvider', {
+                        defaultValue: 'Select a provider',
+                      })}
+                    </p>
+                    <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                      {t('settings.plugins.selectProviderDescription', {
+                        defaultValue:
+                          'Choose a provider to inspect its connection and model catalog.',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </section>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-interface PluginListItemProps {
+interface ProviderDetailProps {
   plugin: Plugin;
   loading: boolean;
   hasApiKey: boolean;
@@ -321,18 +455,20 @@ interface PluginListItemProps {
   apiKey: string;
   showApiKey: boolean;
   savingApiKey: boolean;
+  refreshingModels: boolean;
   canManagePlugin: boolean;
   onExpand: () => void;
   onActivate: () => void;
   onExport: () => void;
   onDelete: () => void;
+  onRefreshModels: () => void;
   onApiKeyChange: (apiKey: string) => void;
   onShowApiKeyChange: (show: boolean) => void;
   onSaveApiKey: () => void;
   onDeleteApiKey: () => void;
 }
 
-function PluginListItem({
+function ProviderDetail({
   plugin,
   loading,
   hasApiKey,
@@ -340,16 +476,18 @@ function PluginListItem({
   apiKey,
   showApiKey,
   savingApiKey,
+  refreshingModels,
   canManagePlugin,
   onExpand,
   onActivate,
   onExport,
   onDelete,
+  onRefreshModels,
   onApiKeyChange,
   onShowApiKeyChange,
   onSaveApiKey,
   onDeleteApiKey,
-}: PluginListItemProps) {
+}: ProviderDetailProps) {
   const { t } = useTranslation();
   const requiresApiKey = Boolean(plugin.auth?.header || plugin.auth?.key_env);
   const connectionVariables = getPluginConnectionVariableNames(plugin);
@@ -361,106 +499,138 @@ function PluginListItem({
   const hasVariables = visibleVariables.length > 0;
   const hasConfiguration = requiresApiKey || hasVariables;
   const configurationPanelId = useId();
+  const catalog = buildPluginProviderCatalog(plugin);
+  const defaultEndpoint = plugin.base_url || plugin.endpoint;
 
   return (
-    <div className='p-4'>
-      <div className='flex items-center justify-between gap-2'>
-        <div className='flex-1 min-w-0'>
-          <div className='flex items-center space-x-3'>
-            <div
-              className={`w-3 h-3 rounded-full flex-shrink-0 ${plugin.active ? 'bg-green-500' : 'bg-gray-400 dark:bg-gray-500'}`}
-            />
-            <div>
-              <h5 className='font-medium text-gray-900 dark:text-gray-100'>
+    <div>
+      <div className='flex flex-col gap-4 border-b border-gray-200 pb-4 dark:border-dark-300'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div className='min-w-0'>
+            <div className='flex items-center gap-2'>
+              <span
+                className={`h-2.5 w-2.5 shrink-0 rounded-full ${
+                  plugin.active
+                    ? 'bg-green-500'
+                    : 'bg-gray-400 dark:bg-gray-500'
+                }`}
+              />
+              <h4 className='truncate text-lg font-semibold text-gray-900 dark:text-gray-100'>
                 {plugin.name}
-              </h5>
-              <div className='flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400'>
-                <span>{plugin.type}</span>
-                <span>•</span>
-                <span>
-                  {plugin.model_map?.length || 0} {t('settings.plugins.models')}
-                </span>
-                {requiresApiKey && hasApiKey && (
-                  <>
-                    <span>•</span>
-                    <span className='text-green-600'>
-                      {t('settings.plugins.apiKeySet')}
-                    </span>
-                  </>
-                )}
-              </div>
+              </h4>
             </div>
+            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              {plugin.id} · <span className='capitalize'>{plugin.type}</span>
+              {requiresApiKey && hasApiKey && (
+                <span className='text-green-600'>
+                  {' '}
+                  · {t('settings.plugins.apiKeySet')}
+                </span>
+              )}
+            </p>
+          </div>
+
+          <div className='flex flex-wrap items-center gap-1.5'>
+            {hasConfiguration && (
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={onExpand}
+                aria-expanded={expanded}
+                aria-controls={configurationPanelId}
+                title={t('settings.plugins.configure')}
+                className={hasApiKey ? 'text-green-600' : ''}
+              >
+                {requiresApiKey ? (
+                  <Key className='h-4 w-4' />
+                ) : (
+                  <Sliders className='h-4 w-4' />
+                )}
+                {t('settings.plugins.configure')}
+                {expanded ? (
+                  <ChevronUp className='h-3 w-3' />
+                ) : (
+                  <ChevronDown className='h-3 w-3' />
+                )}
+              </Button>
+            )}
+
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={onActivate}
+              disabled={loading}
+              className={plugin.active ? 'border-green-300 text-green-600' : ''}
+            >
+              {plugin.active ? (
+                <>
+                  <Check className='h-4 w-4' />
+                  {t('settings.plugins.deactivate')}
+                </>
+              ) : (
+                t('settings.plugins.activate')
+              )}
+            </Button>
+
+            {canManagePlugin && (
+              <>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={onExport}
+                  disabled={loading}
+                  title={t('settings.plugins.exportPlugin', 'Export plugin')}
+                  className='px-2'
+                >
+                  <Download className='h-4 w-4' />
+                </Button>
+                <Button
+                  variant='ghost'
+                  size='sm'
+                  onClick={onDelete}
+                  disabled={loading}
+                  className='px-2 text-red-600 hover:bg-red-50 hover:text-red-700'
+                  title={t('settings.plugins.deletePlugin', 'Delete plugin')}
+                >
+                  <Trash2 className='h-4 w-4' />
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
-        <div className='flex items-center space-x-1 flex-shrink-0'>
-          {hasConfiguration && (
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={onExpand}
-              aria-expanded={expanded}
-              aria-controls={configurationPanelId}
-              title={t('settings.plugins.configure')}
-              className={hasApiKey ? 'text-green-600' : 'text-ink'}
+        <div className='grid gap-3 sm:grid-cols-3'>
+          <div className='rounded-lg bg-gray-50 p-3 dark:bg-dark-50'>
+            <p className='text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
+              {t('settings.plugins.status', { defaultValue: 'Status' })}
+            </p>
+            <p className='mt-1 text-sm text-gray-900 dark:text-gray-100'>
+              {plugin.active
+                ? t('settings.plugins.activeLabel')
+                : t('settings.plugins.inactive')}
+            </p>
+          </div>
+          <div className='rounded-lg bg-gray-50 p-3 dark:bg-dark-50'>
+            <p className='text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
+              {t('settings.plugins.models')}
+            </p>
+            <p className='mt-1 text-sm text-gray-900 dark:text-gray-100'>
+              {catalog.length}
+            </p>
+          </div>
+          <div className='min-w-0 rounded-lg bg-gray-50 p-3 dark:bg-dark-50'>
+            <p className='text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
+              {t('settings.plugins.defaultEndpoint', {
+                defaultValue: 'Default endpoint',
+              })}
+            </p>
+            <p
+              className='mt-1 truncate text-sm text-gray-900 dark:text-gray-100'
+              title={defaultEndpoint}
             >
-              {requiresApiKey ? (
-                <Key className='h-4 w-4' />
-              ) : (
-                <Sliders className='h-4 w-4' />
-              )}
-              <span className='hidden sm:inline'>
-                {t('settings.plugins.configure')}
-              </span>
-              {expanded ? (
-                <ChevronUp className='h-3 w-3' />
-              ) : (
-                <ChevronDown className='h-3 w-3' />
-              )}
-            </Button>
-          )}
-
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={onActivate}
-            disabled={loading}
-            className={plugin.active ? 'text-green-600 border-green-300' : ''}
-          >
-            {plugin.active ? (
-              <>
-                <Check className='h-4 w-4 me-1' />
-                {t('settings.plugins.activeLabel')}
-              </>
-            ) : (
-              t('settings.plugins.activate')
-            )}
-          </Button>
-
-          {canManagePlugin && (
-            <>
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={onExport}
-                disabled={loading}
-                title={t('settings.plugins.exportPlugin', 'Export plugin')}
-              >
-                <Download className='h-4 w-4' />
-              </Button>
-
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={onDelete}
-                disabled={loading}
-                className='text-red-600 hover:text-red-700 hover:bg-red-50'
-                title={t('settings.plugins.deletePlugin', 'Delete plugin')}
-              >
-                <Trash2 className='h-4 w-4' />
-              </Button>
-            </>
-          )}
+              {defaultEndpoint}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -481,20 +651,132 @@ function PluginListItem({
           )}
 
           {hasVariables && (
-            <div className='mt-4 p-4 bg-gray-50 dark:bg-dark-50 rounded-lg border border-gray-200 dark:border-dark-300'>
-              <div className='flex items-center gap-2 mb-2'>
+            <div className='mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-dark-300 dark:bg-dark-50'>
+              <div className='mb-2 flex items-center gap-2'>
                 <Sliders className='h-4 w-4 text-gray-500' />
-                <h6 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <h5 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
                   {t('settings.plugins.providerSettings')} (
                   {visibleVariables.length})
-                </h6>
+                </h5>
               </div>
-              <PluginVariablesEditor plugin={plugin} />
+              <PluginVariablesEditor key={plugin.id} plugin={plugin} />
             </div>
           )}
         </div>
       )}
+
+      <ProviderModelCatalog
+        catalog={catalog}
+        canRefresh={pluginSupportsModelRefresh(plugin)}
+        refreshing={refreshingModels}
+        onRefresh={onRefreshModels}
+      />
     </div>
+  );
+}
+
+interface ProviderModelCatalogProps {
+  catalog: PluginProviderCatalogEntry[];
+  canRefresh: boolean;
+  refreshing: boolean;
+  onRefresh: () => void;
+}
+
+function ProviderModelCatalog({
+  catalog,
+  canRefresh,
+  refreshing,
+  onRefresh,
+}: ProviderModelCatalogProps) {
+  const { t } = useTranslation();
+
+  return (
+    <section data-testid='provider-model-catalog' className='mt-5'>
+      <div className='mb-3 flex flex-wrap items-center justify-between gap-2'>
+        <div>
+          <h5 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+            {t('settings.plugins.modelCatalog', {
+              defaultValue: 'Model catalog',
+            })}
+          </h5>
+          <p className='mt-0.5 text-xs text-gray-500 dark:text-gray-400'>
+            {t('settings.plugins.modelCatalogDescription', {
+              defaultValue:
+                'Discovered and configured models for this provider and its capabilities.',
+            })}
+          </p>
+        </div>
+        {canRefresh && (
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={onRefresh}
+            disabled={refreshing}
+            aria-busy={refreshing}
+          >
+            {refreshing ? (
+              <Loader2 className='h-4 w-4 animate-spin' />
+            ) : (
+              <RefreshCw className='h-4 w-4' />
+            )}
+            {t('settings.plugins.refreshModels', {
+              defaultValue: 'Refresh models',
+            })}
+          </Button>
+        )}
+      </div>
+
+      {catalog.length === 0 ? (
+        <div className='rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-500 dark:border-dark-300 dark:text-gray-400'>
+          {t('settings.plugins.noModelsConfigured', {
+            defaultValue: 'No models are configured for this provider.',
+          })}
+        </div>
+      ) : (
+        <div className='max-h-[26rem] overflow-auto rounded-lg border border-gray-200 dark:border-dark-300'>
+          <table className='w-full min-w-[24rem] text-start text-sm'>
+            <thead className='sticky top-0 z-10 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-dark-50 dark:text-gray-400'>
+              <tr>
+                <th scope='col' className='px-3 py-2 text-start font-medium'>
+                  {t('settings.plugins.modelId', {
+                    defaultValue: 'Model ID',
+                  })}
+                </th>
+                <th scope='col' className='px-3 py-2 text-start font-medium'>
+                  {t('settings.plugins.capabilities', {
+                    defaultValue: 'Capabilities',
+                  })}
+                </th>
+              </tr>
+            </thead>
+            <tbody className='divide-y divide-gray-200 dark:divide-dark-300'>
+              {catalog.map(model => (
+                <tr key={model.id}>
+                  <td className='px-3 py-2.5 font-mono text-xs text-gray-900 dark:text-gray-100'>
+                    {model.id}
+                  </td>
+                  <td className='px-3 py-2.5'>
+                    <div className='flex flex-wrap gap-1.5'>
+                      {model.capabilities.map(capability => (
+                        <span
+                          key={capability}
+                          className='rounded-md bg-blue-50 px-2 py-0.5 text-xs text-blue-700 dark:bg-blue-950/30 dark:text-blue-300'
+                        >
+                          {t(
+                            `settings.plugins.capability.${capability.toLowerCase()}`,
+                            { defaultValue: capability }
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -535,6 +817,7 @@ function ApiKeyPanel({
       <p className='text-xs text-gray-500 dark:text-gray-400 mb-3'>
         {t('settings.plugins.apiKeyDescription', {
           name: plugin.name,
+          defaultValue: 'Store a personal API key for {{name}}.',
         })}
         {plugin.auth?.key_env && (
           <span className='block mt-1'>

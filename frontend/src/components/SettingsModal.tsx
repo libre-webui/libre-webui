@@ -41,6 +41,7 @@ import { SettingsTtsTab } from '@/components/settings/SettingsTtsTab';
 import { useSettingsDataImport } from '@/components/settings/useSettingsDataImport';
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
+import { getErrorMessage } from '@/store/chatStoreHelpers';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAuthStore } from '@/store/authStore';
@@ -218,6 +219,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   );
   const [showApiKey, setShowApiKey] = useState<Record<string, boolean>>({});
   const [savingApiKey, setSavingApiKey] = useState<string | null>(null);
+  const [refreshingPluginIds, setRefreshingPluginIds] = useState<
+    Record<string, boolean>
+  >({});
 
   // Generation options state
   const [tempGenerationOptions, setTempGenerationOptions] = useState(
@@ -817,6 +821,33 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     await queryClient.invalidateQueries({ queryKey: ['image-gen-data'] });
   };
 
+  const handleRefreshPluginModels = async (id: string) => {
+    if (refreshingPluginIds[id]) return;
+    setRefreshingPluginIds(current => ({ ...current, [id]: true }));
+    try {
+      const response = await pluginApi.discoverModels(id);
+      if (!response.success) {
+        toast.error(
+          response.error || t('settings.plugins.modelCatalogRefreshFailed')
+        );
+        return;
+      }
+
+      await Promise.all([loadPlugins(), loadModels()]);
+      toast.success(t('settings.plugins.modelCatalogChecked'));
+    } catch (error) {
+      toast.error(
+        getErrorMessage(error, t('settings.plugins.modelCatalogRefreshFailed'))
+      );
+    } finally {
+      setRefreshingPluginIds(current => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
+    }
+  };
+
   const handleDeletePlugin = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this plugin?')) {
       await deletePlugin(id);
@@ -1231,6 +1262,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             pluginApiKeys={pluginApiKeys}
             showApiKey={showApiKey}
             savingApiKey={savingApiKey}
+            refreshingPluginIds={refreshingPluginIds}
             onClearError={clearPluginError}
             onShowUploadFormChange={setShowUploadForm}
             onShowJsonFormChange={setShowJsonForm}
@@ -1241,6 +1273,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onPluginApiKeyChange={handlePluginApiKeyChange}
             onShowApiKeyChange={handleShowApiKeyChange}
             onActivatePlugin={handleActivatePlugin}
+            onRefreshModels={handleRefreshPluginModels}
             onDeletePlugin={handleDeletePlugin}
             onExportPlugin={handleExportPlugin}
             onSaveApiKey={handleSaveApiKey}

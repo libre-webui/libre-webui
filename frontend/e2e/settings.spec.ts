@@ -15,8 +15,87 @@
  * limitations under the License.
  */
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
+
+const providerWorkspaceSystemInfo = {
+  requiresAuth: true,
+  hasUsers: true,
+  userCount: 2,
+  allowUserModelPull: true,
+  version: '0.15.0-e2e',
+  turnstile: { enabled: false },
+};
+
+const createProviderWorkspacePlugins = () => [
+  {
+    id: 'openai-cloud',
+    name: 'OpenAI Cloud',
+    type: 'completion' as const,
+    endpoint: 'https://api.openai.com/v1/responses',
+    api_mode: 'responses' as const,
+    auth: {
+      header: 'Authorization',
+      prefix: 'Bearer ',
+      key_env: 'OPENAI_API_KEY',
+    },
+    model_map: ['gpt-cloud'],
+    active: true,
+  },
+  {
+    id: 'local-gateway',
+    name: 'Local AI Gateway',
+    type: 'completion' as const,
+    endpoint: 'http://ai-gateway:8080/v1/chat/completions',
+    api_mode: 'chat_completions' as const,
+    auth: {
+      header: 'Authorization',
+      prefix: 'Bearer ',
+      key_env: 'LOCAL_GATEWAY_API_KEY',
+    },
+    model_map: ['legacy-model'],
+    active: false,
+    variables: [
+      {
+        name: 'endpoint',
+        type: 'string' as const,
+        label: 'API Endpoint',
+        required: true,
+      },
+      {
+        name: 'temperature',
+        type: 'number' as const,
+        label: 'Temperature',
+        default: 0.7,
+        min: 0,
+        max: 2,
+      },
+    ],
+  },
+  {
+    id: 'anthropic-cloud',
+    name: 'Anthropic Cloud',
+    type: 'completion' as const,
+    endpoint: 'https://api.anthropic.com/v1/messages',
+    auth: {
+      header: 'x-api-key',
+      key_env: 'ANTHROPIC_API_KEY',
+    },
+    model_map: ['claude-cloud'],
+    active: false,
+  },
+];
+
+async function openPluginSettings(page: Page) {
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Plugins' }).click();
+  await expect(page.getByTestId('provider-workspace')).toBeVisible();
+}
 
 test('settings modal lazy-loads and switches languages from async locale chunks', async ({
   page,
@@ -41,6 +120,295 @@ test('settings modal lazy-loads and switches languages from async locale chunks'
   await page.getByTestId('language-switcher-select').selectOption('en');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
+});
+
+test('provider workspace searches, selects, and collapses configuration on provider change', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    authRole: 'admin',
+    systemInfo: providerWorkspaceSystemInfo,
+    plugins: createProviderWorkspacePlugins(),
+  });
+  await openPluginSettings(page);
+
+  const providerList = page.getByTestId('provider-list');
+  const providerDetail = page.getByTestId('provider-detail');
+  const search = page.getByRole('searchbox', { name: 'Search providers' });
+  const openAiProvider = providerList.getByRole('button', {
+    name: /OpenAI Cloud/,
+  });
+
+  await expect(openAiProvider).toHaveAttribute('aria-current', 'true');
+  await expect(
+    providerDetail.getByText('OpenAI Cloud', { exact: true }).first()
+  ).toBeVisible();
+  await expect(
+    providerDetail.getByRole('button', {
+      name: 'Configure',
+      exact: true,
+    })
+  ).toHaveAttribute('aria-expanded', 'false');
+  await expect(providerDetail.getByLabel(/API endpoint/i)).toHaveCount(0);
+
+  await search.fill('gateway');
+  await expect(openAiProvider).toHaveCount(0);
+  const localProvider = providerList.getByRole('button', {
+    name: /Local AI Gateway/,
+  });
+  await expect(localProvider).toBeVisible();
+  await localProvider.click();
+  await expect(localProvider).toHaveAttribute('aria-current', 'true');
+  await expect(
+    providerDetail.getByText('Local AI Gateway', { exact: true }).first()
+  ).toBeVisible();
+
+  const configure = providerDetail.getByRole('button', {
+    name: 'Configure',
+    exact: true,
+  });
+  await expect(configure).toHaveAttribute('aria-expanded', 'false');
+  await configure.click();
+  await expect(configure).toHaveAttribute('aria-expanded', 'true');
+  await expect(providerDetail.getByLabel(/API endpoint/i)).toBeVisible();
+  await expect(
+    providerDetail.getByRole('button', { name: /Advanced parameters/ })
+  ).toHaveAttribute('aria-expanded', 'false');
+  await expect(
+    providerDetail.getByLabel('Temperature', { exact: true })
+  ).toHaveCount(0);
+
+  await search.fill('anthropic');
+  const anthropicProvider = providerList.getByRole('button', {
+    name: /Anthropic Cloud/,
+  });
+  await anthropicProvider.click();
+  await expect(anthropicProvider).toHaveAttribute('aria-current', 'true');
+  await expect(
+    providerDetail.getByText('Anthropic Cloud', { exact: true }).first()
+  ).toBeVisible();
+  await expect(
+    providerDetail.getByRole('button', {
+      name: 'Configure',
+      exact: true,
+    })
+  ).toHaveAttribute('aria-expanded', 'false');
+  await expect(providerDetail.getByLabel(/API endpoint/i)).toHaveCount(0);
+});
+
+test('provider model refresh targets the selection and replaces its catalog', async ({
+  page,
+}) => {
+  const localGateway = createProviderWorkspacePlugins()[1];
+  localGateway.active = true;
+  const mockApi = await mockLibreWebUiApi(page, {
+    authRole: 'admin',
+    systemInfo: providerWorkspaceSystemInfo,
+    plugins: [localGateway],
+    pluginDiscoveryResults: {
+      'local-gateway': ['gateway-chat', 'gateway-code'],
+    },
+    pluginDiscoveryDelayMs: 700,
+  });
+  await openPluginSettings(page);
+
+  const providerList = page.getByTestId('provider-list');
+  const providerDetail = page.getByTestId('provider-detail');
+  const catalog = page.getByTestId('provider-model-catalog');
+  const localProvider = providerList.getByRole('button', {
+    name: /Local AI Gateway/,
+  });
+  const refreshModels = providerDetail.getByRole('button', {
+    name: /Refresh(?:ing)? models/,
+  });
+
+  await expect(localProvider).toHaveAttribute('aria-current', 'true');
+  await expect(
+    providerDetail.getByRole('button', {
+      name: 'Deactivate',
+      exact: true,
+    })
+  ).toBeVisible();
+  await expect(
+    catalog.getByText('legacy-model', { exact: true })
+  ).toBeVisible();
+
+  await refreshModels.click();
+  await expect
+    .poll(() => mockApi.pluginDiscoveryRequests)
+    .toEqual(['local-gateway']);
+  await expect(refreshModels).toBeDisabled();
+  await expect(refreshModels).toHaveAttribute('aria-busy', 'true');
+
+  await expect(
+    catalog.getByText('gateway-chat', { exact: true })
+  ).toBeVisible();
+  await expect(
+    catalog.getByText('gateway-code', { exact: true })
+  ).toBeVisible();
+  await expect(catalog.getByText('legacy-model', { exact: true })).toHaveCount(
+    0
+  );
+  await expect(refreshModels).toBeEnabled();
+  await expect(refreshModels).toHaveAttribute('aria-busy', 'false');
+  await expect(localProvider).toHaveAttribute('aria-current', 'true');
+});
+
+test('provider model refresh failure preserves the catalog and unlocks retry', async ({
+  page,
+}) => {
+  const localGateway = createProviderWorkspacePlugins()[1];
+  const mockApi = await mockLibreWebUiApi(page, {
+    authRole: 'admin',
+    systemInfo: providerWorkspaceSystemInfo,
+    plugins: [localGateway],
+    pluginDiscoveryFailures: {
+      'local-gateway': 'Provider catalog unavailable',
+    },
+  });
+  await openPluginSettings(page);
+
+  const catalog = page.getByTestId('provider-model-catalog');
+  const refreshModels = page
+    .getByTestId('provider-detail')
+    .getByRole('button', { name: 'Refresh models', exact: true });
+
+  await refreshModels.click();
+  await expect
+    .poll(() => mockApi.pluginDiscoveryRequests)
+    .toEqual(['local-gateway']);
+  await expect(
+    page.getByText('Provider catalog unavailable', { exact: true })
+  ).toBeVisible();
+  await expect(
+    catalog.getByText('legacy-model', { exact: true })
+  ).toBeVisible();
+  await expect(refreshModels).toBeEnabled();
+  await expect(refreshModels).toHaveAttribute('aria-busy', 'false');
+});
+
+test('parallel provider refreshes retain independent busy state', async ({
+  page,
+}) => {
+  const [openAiCloud, localGateway] = createProviderWorkspacePlugins();
+  localGateway.active = true;
+  const mockApi = await mockLibreWebUiApi(page, {
+    authRole: 'admin',
+    systemInfo: providerWorkspaceSystemInfo,
+    plugins: [openAiCloud, localGateway],
+    pluginDiscoveryResults: {
+      'openai-cloud': ['gpt-refreshed'],
+      'local-gateway': ['gateway-refreshed'],
+    },
+    pluginDiscoveryDelayMs: 1_800,
+  });
+  await openPluginSettings(page);
+
+  const providerList = page.getByTestId('provider-list');
+  const providerDetail = page.getByTestId('provider-detail');
+  const catalog = page.getByTestId('provider-model-catalog');
+  const openAiProvider = providerList.getByRole('button', {
+    name: /OpenAI Cloud/,
+  });
+  const localProvider = providerList.getByRole('button', {
+    name: /Local AI Gateway/,
+  });
+
+  await providerDetail
+    .getByRole('button', { name: 'Refresh models', exact: true })
+    .click();
+  await page.waitForTimeout(500);
+  await localProvider.click();
+  await providerDetail
+    .getByRole('button', { name: 'Refresh models', exact: true })
+    .click();
+  await expect
+    .poll(() => mockApi.pluginDiscoveryRequests)
+    .toEqual(['openai-cloud', 'local-gateway']);
+
+  await openAiProvider.click();
+  await expect(
+    catalog.getByText('gpt-refreshed', { exact: true })
+  ).toBeVisible();
+
+  await localProvider.click();
+  const localRefresh = providerDetail.getByRole('button', {
+    name: 'Refresh models',
+    exact: true,
+  });
+  await expect(localRefresh).toBeDisabled();
+  await expect(localRefresh).toHaveAttribute('aria-busy', 'true');
+  await expect(
+    catalog.getByText('gateway-refreshed', { exact: true })
+  ).toBeVisible();
+  await expect(localRefresh).toBeEnabled();
+  await expect(localRefresh).toHaveAttribute('aria-busy', 'false');
+});
+
+test('provider workspace is two-pane on desktop and stacked without overflow on mobile', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await mockLibreWebUiApi(page, {
+    authRole: 'admin',
+    systemInfo: providerWorkspaceSystemInfo,
+    plugins: createProviderWorkspacePlugins(),
+  });
+  await openPluginSettings(page);
+
+  const readLayout = () =>
+    page.evaluate(() => {
+      const workspace = document.querySelector(
+        '[data-testid="provider-workspace"]'
+      );
+      const list = document.querySelector('[data-testid="provider-list"]');
+      const detail = document.querySelector('[data-testid="provider-detail"]');
+      if (!workspace || !list || !detail) {
+        throw new Error('Provider workspace layout is incomplete');
+      }
+
+      const workspaceRect = workspace.getBoundingClientRect();
+      const listRect = list.getBoundingClientRect();
+      const detailRect = detail.getBoundingClientRect();
+      return {
+        workspace: {
+          left: workspaceRect.left,
+          right: workspaceRect.right,
+          width: workspaceRect.width,
+        },
+        list: {
+          left: listRect.left,
+          right: listRect.right,
+          top: listRect.top,
+          bottom: listRect.bottom,
+          width: listRect.width,
+        },
+        detail: {
+          left: detailRect.left,
+          right: detailRect.right,
+          top: detailRect.top,
+          bottom: detailRect.bottom,
+          width: detailRect.width,
+        },
+        viewportWidth: window.innerWidth,
+        documentWidth: document.documentElement.scrollWidth,
+      };
+    });
+
+  const desktop = await readLayout();
+  expect(desktop.list.right).toBeLessThanOrEqual(desktop.detail.left + 1);
+  expect(
+    Math.min(desktop.list.bottom, desktop.detail.bottom) -
+      Math.max(desktop.list.top, desktop.detail.top)
+  ).toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByTestId('provider-workspace')).toBeVisible();
+  const mobile = await readLayout();
+  expect(mobile.detail.top).toBeGreaterThanOrEqual(mobile.list.bottom - 1);
+  expect(mobile.list.width).toBeLessThanOrEqual(mobile.workspace.width + 1);
+  expect(mobile.detail.width).toBeLessThanOrEqual(mobile.workspace.width + 1);
+  expect(mobile.documentWidth).toBeLessThanOrEqual(mobile.viewportWidth + 1);
 });
 
 test('admin provider settings are collapsed, inherited, sparse, and retryable', async ({
@@ -215,7 +583,6 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   });
   await expect(providerDisclosure).toHaveAttribute('aria-expanded', 'false');
   await expect(page.getByText('API Endpoint', { exact: true })).toHaveCount(0);
-  await expect(page.getByText(/Default endpoint/)).toHaveCount(0);
   await providerDisclosure.click();
   await expect(providerDisclosure).toHaveAttribute('aria-expanded', 'true');
 

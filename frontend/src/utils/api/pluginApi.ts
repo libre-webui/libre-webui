@@ -35,6 +35,15 @@ export const pluginApi = {
     return api.get('/plugins').then(res => res.data);
   },
 
+  discoverModels: (id: string): Promise<ApiResponse<string[]>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<string[]>([]);
+    }
+    return api
+      .post(`/plugins/discover/${encodeURIComponent(id)}`)
+      .then(res => res.data);
+  },
+
   uploadPlugin: (file: File): Promise<ApiResponse<Plugin>> => {
     if (isDemoMode()) {
       return createDemoResponse<Plugin>({} as Plugin, false);

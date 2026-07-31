@@ -253,6 +253,12 @@ The following security and ownership rules also apply:
   request waits for discovery before the UI reloads the plugin list.
   Activation is account-specific, so another user must activate the same
   shared plugin separately.
+- In **Settings → Plugins**, select the provider and choose **Refresh models**
+  to check its catalog explicitly. The model table is read-only and shows the
+  IDs configured or discovered for the current account. A transient discovery
+  failure keeps the previous discovered catalog, or the plugin's fallback
+  `model_map` when no previous result exists, so a completed check does not by
+  itself prove the remote endpoint is healthy.
 - Automatic discovery requires an OpenAI-compatible `data` array of model IDs.
   Successful catalogs are stored per user without changing the shared plugin
   JSON. A normal activation keeps the user's previous catalog when discovery

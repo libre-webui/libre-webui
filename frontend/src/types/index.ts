@@ -329,16 +329,37 @@ export interface PluginVariableDefinition {
   max?: number; // for 'number' type
 }
 
+export type PluginType =
+  'completion' | 'embedding' | 'chat' | 'stt' | 'tts' | 'image';
+
+export type PluginCapabilityType =
+  'completion' | 'embedding' | 'image' | 'stt' | 'tts';
+
+export interface PluginCapability {
+  endpoint?: string;
+  endpoint_variable?: string;
+  model_map?: string[];
+  config?: {
+    endpoint_variable?: string;
+    [key: string]: unknown;
+  };
+}
+
+export type PluginCapabilities = Partial<
+  Record<PluginCapabilityType, PluginCapability>
+>;
+
 export interface Plugin {
   id: string;
   name: string;
-  type: 'completion' | 'embedding' | 'chat' | 'tts' | 'image';
+  type: PluginType;
   endpoint: string;
   api_mode?: PluginApiMode;
   base_url?: string;
   api_path?: string;
   auth: PluginAuthConfig;
   model_map: string[];
+  capabilities?: PluginCapabilities;
   variables?: PluginVariableDefinition[];
   active?: boolean;
   created_at?: number;
