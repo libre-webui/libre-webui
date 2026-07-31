@@ -581,6 +581,7 @@ function ApiKeyPanel({
               value={apiKey}
               onChange={event => onApiKeyChange(event.target.value)}
               placeholder={t('settings.plugins.apiKeyPlaceholder')}
+              disabled={savingApiKey}
               className='w-full p-2 pe-10 border border-gray-300 dark:border-dark-300 rounded-md bg-white dark:bg-dark-100 text-gray-900 dark:text-dark-800 placeholder:text-gray-400 dark:placeholder:text-dark-500'
             />
             <button

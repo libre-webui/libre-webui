@@ -139,10 +139,7 @@ export const PluginVariablesEditor: React.FC<{
       const val = localValues[def.name];
       const isBlank = typeof val === 'string' && val.trim().length === 0;
       const storedVar = storedVars[def.name] as PluginVariableValue | undefined;
-      const inheritedValue = getInheritedPluginVariableValue(
-        def,
-        plugin.endpoint
-      );
+      const inheritedValue = getInheritedPluginVariableValue(def, plugin);
 
       if (
         isBlank &&
@@ -219,7 +216,7 @@ export const PluginVariablesEditor: React.FC<{
       localValues,
       dirtyFields,
       storedVars,
-      plugin.endpoint
+      plugin
     );
     const submittedDirtyFields = new Set(dirtyFields);
     const changedVariables = Object.fromEntries([
@@ -246,80 +243,86 @@ export const PluginVariablesEditor: React.FC<{
     }
 
     setSaving(true);
-    const success = await updatePluginVariables(
-      plugin.id,
-      update.variables,
-      update.unset
-    );
-    setSaving(false);
-    if (success) {
-      if (
-        Object.keys(changedVariables).some(name =>
-          connectionVariableNames.has(name)
-        )
-      ) {
-        await loadPlugins();
-      }
-      setLocalValues(current => {
-        const next = { ...current };
-        for (const def of schema) {
-          if (def.sensitive && submittedDirtyFields.has(def.name)) {
-            next[def.name] = '';
-          }
-        }
-        return next;
-      });
-      setRevealedFields(current => {
-        const next = new Set(current);
-        for (const def of schema) {
-          if (def.sensitive && submittedDirtyFields.has(def.name)) {
-            next.delete(def.name);
-          }
-        }
-        return next;
-      });
-      setDirtyFields(current => {
-        const next = new Set(current);
-        for (const name of submittedDirtyFields) next.delete(name);
-        return next;
-      });
-      setFieldErrors(current => {
-        const next = { ...current };
-        for (const name of submittedDirtyFields) delete next[name];
-        return next;
-      });
-      toast.success(t('pluginManager.variables.saved', 'Variables saved'));
-    } else {
-      toast.error(
-        t('pluginManager.variables.saveFailed', 'Failed to save variables')
+    try {
+      const success = await updatePluginVariables(
+        plugin.id,
+        update.variables,
+        update.unset
       );
+      if (success) {
+        if (
+          Object.keys(changedVariables).some(name =>
+            connectionVariableNames.has(name)
+          )
+        ) {
+          await loadPlugins();
+        }
+        setLocalValues(current => {
+          const next = { ...current };
+          for (const def of schema) {
+            if (def.sensitive && submittedDirtyFields.has(def.name)) {
+              next[def.name] = '';
+            }
+          }
+          return next;
+        });
+        setRevealedFields(current => {
+          const next = new Set(current);
+          for (const def of schema) {
+            if (def.sensitive && submittedDirtyFields.has(def.name)) {
+              next.delete(def.name);
+            }
+          }
+          return next;
+        });
+        setDirtyFields(current => {
+          const next = new Set(current);
+          for (const name of submittedDirtyFields) next.delete(name);
+          return next;
+        });
+        setFieldErrors(current => {
+          const next = { ...current };
+          for (const name of submittedDirtyFields) delete next[name];
+          return next;
+        });
+        toast.success(t('pluginManager.variables.saved', 'Variables saved'));
+      } else {
+        toast.error(
+          t('pluginManager.variables.saveFailed', 'Failed to save variables')
+        );
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleReset = async () => {
     setResetting(true);
-    const success = await resetPluginVariables(plugin.id);
-    setResetting(false);
-    if (!success) {
-      toast.error(
-        t('pluginManager.variables.resetFailed', 'Failed to reset variables')
+    try {
+      const success = await resetPluginVariables(plugin.id);
+      if (!success) {
+        toast.error(
+          t('pluginManager.variables.resetFailed', 'Failed to reset variables')
+        );
+        return;
+      }
+
+      if (
+        schema.some(definition => connectionVariableNames.has(definition.name))
+      ) {
+        await loadPlugins();
+      }
+
+      setLocalValues(initializePluginVariableInputs(schema, {}));
+      setDirtyFields(new Set());
+      setFieldErrors({});
+      setRevealedFields(new Set());
+      toast.success(
+        t('pluginManager.variables.reset', 'Variables reset to defaults')
       );
-      return;
+    } finally {
+      setResetting(false);
     }
-
-    if (
-      schema.some(definition => connectionVariableNames.has(definition.name))
-    ) {
-      await loadPlugins();
-    }
-
-    setLocalValues(initializePluginVariableInputs(schema, {}));
-    setDirtyFields(new Set());
-    setFieldErrors({});
-    setRevealedFields(new Set());
-    toast.success(
-      t('pluginManager.variables.reset', 'Variables reset to defaults')
-    );
   };
 
   const updateLocalValue = (name: string, value: PluginVariableInput) => {
@@ -367,10 +370,7 @@ export const PluginVariablesEditor: React.FC<{
       ]
         .filter(Boolean)
         .join(' ') || undefined;
-    const inheritedDefault = getInheritedPluginVariableValue(
-      def,
-      plugin.endpoint
-    );
+    const inheritedDefault = getInheritedPluginVariableValue(def, plugin);
     const inheritedLabel =
       inheritedDefault !== undefined
         ? t('pluginManager.variables.inheritedValue', {

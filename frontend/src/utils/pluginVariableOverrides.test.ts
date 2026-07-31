@@ -17,7 +17,7 @@
 
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import type { PluginVariableDefinition } from '@/types';
+import type { Plugin, PluginVariableDefinition } from '@/types';
 import {
   buildPluginVariableUpdate,
   getPluginConnectionVariableNames,
@@ -53,6 +53,38 @@ const definitions: PluginVariableDefinition[] = [
     sensitive: true,
   },
 ];
+
+const providerPlugin = {
+  id: 'custom-provider',
+  name: 'Custom provider',
+  type: 'completion',
+  endpoint: 'https://provider.example/v1/responses',
+  base_url: 'https://provider.example/v1',
+  api_path: '/responses',
+  auth: { header: 'Authorization', key_env: 'CUSTOM_API_KEY' },
+  model_map: ['custom-model'],
+  capabilities: {
+    image: {
+      endpoint: 'https://provider.example/v1/images/generations',
+      config: {
+        endpoint_variable: 'custom_image_url',
+      },
+    },
+    embedding: {
+      endpoint: 'https://provider.example/v1/embeddings',
+      endpoint_variable: 'custom_embedding_url',
+    },
+  },
+} as Plugin & {
+  capabilities: Record<
+    string,
+    {
+      endpoint: string;
+      endpoint_variable?: string;
+      config?: { endpoint_variable?: string };
+    }
+  >;
+};
 
 test('separates connection fields from advanced provider parameters', () => {
   assert.equal(isConnectionPluginVariable('endpoint'), true);
@@ -143,7 +175,7 @@ test('shows inherited fields as blank instead of copying manifest defaults', () 
   );
 });
 
-test('uses the top-level plugin endpoint as an inherited endpoint fallback', () => {
+test('resolves manifest and top-level provider defaults consistently', () => {
   assert.equal(
     getInheritedPluginVariableValue(
       {
@@ -152,9 +184,53 @@ test('uses the top-level plugin endpoint as an inherited endpoint fallback', () 
         label: 'Endpoint',
         required: true,
       },
-      'https://provider.example/v1/chat/completions'
+      providerPlugin
     ),
-    'https://provider.example/v1/chat/completions'
+    'https://provider.example/v1/responses'
+  );
+  assert.equal(
+    getInheritedPluginVariableValue(
+      {
+        name: 'api_url',
+        type: 'string',
+        label: 'API URL',
+      },
+      providerPlugin
+    ),
+    'https://provider.example/v1/responses'
+  );
+  assert.equal(
+    getInheritedPluginVariableValue(
+      {
+        name: 'base_url',
+        type: 'string',
+        label: 'Base URL',
+      },
+      providerPlugin
+    ),
+    'https://provider.example/v1'
+  );
+  assert.equal(
+    getInheritedPluginVariableValue(
+      {
+        name: 'api_path',
+        type: 'string',
+        label: 'API path',
+      },
+      providerPlugin
+    ),
+    '/responses'
+  );
+  assert.equal(
+    getInheritedPluginVariableValue(
+      {
+        name: 'api_mode',
+        type: 'select',
+        label: 'API mode',
+      },
+      providerPlugin
+    ),
+    'responses'
   );
   assert.equal(
     getInheritedPluginVariableValue(
@@ -164,9 +240,65 @@ test('uses the top-level plugin endpoint as an inherited endpoint fallback', () 
         label: 'Temperature',
         default: 0.7,
       },
-      'https://provider.example/v1/chat/completions'
+      providerPlugin
     ),
     0.7
+  );
+});
+
+test('prefers an explicit API mode and otherwise uses chat completions', () => {
+  assert.equal(
+    getInheritedPluginVariableValue(
+      {
+        name: 'api_mode',
+        type: 'select',
+        label: 'API mode',
+      },
+      {
+        ...providerPlugin,
+        api_mode: 'chat_completions',
+      }
+    ),
+    'chat_completions'
+  );
+  assert.equal(
+    getInheritedPluginVariableValue(
+      {
+        name: 'api_mode',
+        type: 'select',
+        label: 'API mode',
+      },
+      {
+        ...providerPlugin,
+        endpoint: 'https://provider.example/v1/custom-operation',
+      }
+    ),
+    'chat_completions'
+  );
+});
+
+test('resolves capability-defined endpoint defaults', () => {
+  assert.equal(
+    getInheritedPluginVariableValue(
+      {
+        name: 'custom_image_url',
+        type: 'string',
+        label: 'Custom image URL',
+      },
+      providerPlugin
+    ),
+    'https://provider.example/v1/images/generations'
+  );
+  assert.equal(
+    getInheritedPluginVariableValue(
+      {
+        name: 'custom_embedding_url',
+        type: 'string',
+        label: 'Custom embedding URL',
+      },
+      providerPlugin
+    ),
+    'https://provider.example/v1/embeddings'
   );
 });
 
@@ -213,7 +345,10 @@ test('does not persist values that only repeat inherited provider defaults', () 
       },
       new Set(['endpoint', 'temperature']),
       {},
-      'https://provider.example/v1/chat/completions'
+      {
+        ...providerPlugin,
+        endpoint: 'https://provider.example/v1/chat/completions',
+      }
     ),
     {
       variables: {},
@@ -243,7 +378,10 @@ test('unsets stored overrides when changed back to inherited defaults', () => {
           has_value: true,
         },
       },
-      'https://provider.example/v1/chat/completions'
+      {
+        ...providerPlugin,
+        endpoint: 'https://provider.example/v1/chat/completions',
+      }
     ),
     {
       variables: {},

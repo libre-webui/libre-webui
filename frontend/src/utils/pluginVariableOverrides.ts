@@ -48,6 +48,7 @@ type PluginWithCapabilities = Plugin & {
   capabilities?: Record<
     string,
     {
+      endpoint?: unknown;
       endpoint_variable?: unknown;
       config?: {
         endpoint_variable?: unknown;
@@ -95,14 +96,51 @@ export function isUrlPluginVariable(name: string): boolean {
 
 export function getInheritedPluginVariableValue(
   definition: PluginVariableDefinition,
-  pluginEndpoint: string
+  plugin?: Plugin
 ): PluginVariableInput | undefined {
   if (definition.default !== undefined) {
     return definition.default;
   }
 
-  if (definition.name === 'endpoint' && pluginEndpoint) {
-    return pluginEndpoint;
+  if (!plugin) {
+    return undefined;
+  }
+
+  if (definition.name === 'endpoint' || definition.name === 'api_url') {
+    return plugin.endpoint || undefined;
+  }
+
+  if (definition.name === 'base_url') {
+    return plugin.base_url;
+  }
+
+  if (definition.name === 'api_path') {
+    return plugin.api_path;
+  }
+
+  if (definition.name === 'api_mode') {
+    if (plugin.api_mode) {
+      return plugin.api_mode;
+    }
+
+    try {
+      const pathname = new URL(plugin.endpoint).pathname.replace(/\/+$/, '');
+      return pathname.endsWith('/responses') ? 'responses' : 'chat_completions';
+    } catch {
+      return 'chat_completions';
+    }
+  }
+
+  const capabilities = (plugin as PluginWithCapabilities).capabilities;
+  for (const capability of Object.values(capabilities || {})) {
+    const selector =
+      capability?.config?.endpoint_variable ?? capability?.endpoint_variable;
+    if (
+      selector === definition.name &&
+      typeof capability.endpoint === 'string'
+    ) {
+      return capability.endpoint;
+    }
   }
 
   return undefined;
@@ -148,7 +186,7 @@ export function buildPluginVariableUpdate(
   inputs: Record<string, PluginVariableInput>,
   dirtyFields: ReadonlySet<string>,
   storedVariables: Record<string, StoredPluginVariable>,
-  pluginEndpoint = ''
+  plugin?: Plugin
 ): PluginVariableUpdate {
   const schemaNames = new Set(definitions.map(definition => definition.name));
   const variables: Record<string, PluginVariableInput> = {};
@@ -163,10 +201,7 @@ export function buildPluginVariableUpdate(
     const value = inputs[name];
     const stored = storedVariables[name];
     const isBlank = typeof value === 'string' && value.trim().length === 0;
-    const inheritedValue = getInheritedPluginVariableValue(
-      definition,
-      pluginEndpoint
-    );
+    const inheritedValue = getInheritedPluginVariableValue(definition, plugin);
     const matchesInherited =
       inheritedValue !== undefined &&
       (typeof value === 'string' && typeof inheritedValue === 'string'

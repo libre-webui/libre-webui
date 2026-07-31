@@ -62,6 +62,9 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
         name: 'Custom Provider',
         type: 'completion',
         endpoint: 'https://provider.example/v1/chat/completions',
+        api_mode: 'responses',
+        base_url: 'https://provider.example/v1',
+        api_path: '/responses',
         auth: {
           header: 'Authorization',
           prefix: 'Bearer ',
@@ -69,6 +72,14 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
         },
         model_map: ['custom-model'],
         active: true,
+        capabilities: {
+          image: {
+            endpoint: 'https://provider.example/v1/images/generations',
+            config: {
+              endpoint_variable: 'custom_image_endpoint',
+            },
+          },
+        },
         variables: [
           {
             name: 'endpoint',
@@ -80,7 +91,26 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
             name: 'base_url',
             type: 'string',
             label: 'Base URL',
-            default: 'https://provider.example/v1',
+            required: true,
+          },
+          {
+            name: 'api_path',
+            type: 'string',
+            label: 'API Path',
+            required: true,
+          },
+          {
+            name: 'api_mode',
+            type: 'select',
+            label: 'API Mode',
+            required: true,
+            options: ['chat_completions', 'responses'],
+          },
+          {
+            name: 'custom_image_endpoint',
+            type: 'string',
+            label: 'Custom Image Endpoint',
+            required: true,
           },
           {
             name: 'model_id',
@@ -152,6 +182,7 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
       },
     },
     pluginVariableResetFailures: 1,
+    pluginMutationRefreshDelayMs: 300,
   });
 
   await page.addInitScript(() => {
@@ -200,11 +231,28 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   await expect(endpointInput).toHaveValue(
     'https://custom.example/v1/chat/completions'
   );
-  const baseUrlInput = page.getByLabel('Base URL', { exact: true });
+  const baseUrlInput = page.getByLabel('Base URL');
   await expect(baseUrlInput).toHaveValue('');
   await expect(baseUrlInput).toHaveAttribute(
     'placeholder',
     'Use provider default (https://provider.example/v1)'
+  );
+  const apiPathInput = page.getByLabel('API Path');
+  await expect(apiPathInput).toHaveValue('');
+  await expect(apiPathInput).toHaveAttribute(
+    'placeholder',
+    'Use provider default (/responses)'
+  );
+  const apiModeInput = page.getByLabel('API Mode');
+  await expect(apiModeInput).toHaveValue('');
+  await expect(apiModeInput.locator('option:checked')).toHaveText(
+    'Use provider default (responses)'
+  );
+  const customImageEndpointInput = page.getByLabel('Custom Image Endpoint');
+  await expect(customImageEndpointInput).toHaveValue('');
+  await expect(customImageEndpointInput).toHaveAttribute(
+    'placeholder',
+    'Use provider default (https://provider.example/v1/images/generations)'
   );
   const modelIdInput = page.getByLabel('Model ID', { exact: true });
   await expect(modelIdInput).toHaveValue('');
@@ -231,6 +279,16 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   );
 
   await endpointInput.fill('');
+  await baseUrlInput.fill('https://temporary.example/v1');
+  await baseUrlInput.fill('');
+  await apiPathInput.fill('/chat/completions');
+  await apiPathInput.fill('');
+  await apiModeInput.selectOption('chat_completions');
+  await apiModeInput.selectOption('');
+  await customImageEndpointInput.fill(
+    'https://temporary.example/v1/images/generations'
+  );
+  await customImageEndpointInput.fill('');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   await expect.poll(() => mockApi.pluginVariableUpdateRequests.length).toBe(1);
   expect(mockApi.pluginVariableUpdateRequests[0]).toEqual({
@@ -241,6 +299,7 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
 
   const secretInput = page.getByLabel('Secret Header', { exact: true });
   await expect(secretInput).toHaveAttribute('type', 'password');
+  await expect(secretInput).toBeDisabled();
   await secretInput.fill('temporary-plaintext-secret');
   await page.getByRole('button', { name: 'Show Secret Header value' }).click();
   await expect(secretInput).toHaveAttribute('type', 'text');
@@ -264,6 +323,14 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   await expect.poll(() => mockApi.pluginVariableResetRequests).toBe(1);
   await expect(page.getByText('Failed to reset variables')).toBeVisible();
   await expect(temperatureInput).toHaveValue('1.2');
+
+  await page
+    .getByRole('button', { name: 'Reset to Defaults', exact: true })
+    .click();
+  await expect.poll(() => mockApi.pluginVariableResetRequests).toBe(2);
+  await expect(temperatureInput).toBeDisabled();
+  await expect(temperatureInput).toBeEnabled();
+  await expect(temperatureInput).toHaveValue('');
 });
 
 test('users can activate providers and save keys and generation overrides without routing controls', async ({
@@ -332,6 +399,7 @@ test('users can activate providers and save keys and generation overrides withou
         },
       },
     },
+    pluginMutationRefreshDelayMs: 300,
   });
 
   await page.addInitScript(() => {
@@ -377,6 +445,8 @@ test('users can activate providers and save keys and generation overrides withou
     pluginId: 'user-provider',
     apiKey: 'user-owned-key',
   });
+  await expect(apiKeyInput).toBeDisabled();
+  await expect(apiKeyInput).toBeEnabled();
   await expect(configure).toHaveAttribute('aria-expanded', 'true');
 
   const advanced = page.getByRole('button', {

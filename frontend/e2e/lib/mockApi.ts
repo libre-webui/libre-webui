@@ -114,6 +114,9 @@ type MockPlugin = {
   name: string;
   type: 'completion' | 'chat';
   endpoint: string;
+  api_mode?: 'chat_completions' | 'responses';
+  base_url?: string;
+  api_path?: string;
   auth: {
     header: string;
     key_env: string;
@@ -121,6 +124,14 @@ type MockPlugin = {
   };
   model_map: string[];
   active: boolean;
+  capabilities?: Record<
+    string,
+    {
+      endpoint?: string;
+      endpoint_variable?: string;
+      config?: { endpoint_variable?: string };
+    }
+  >;
   variables?: Array<{
     name: string;
     type: 'string' | 'number' | 'boolean' | 'select';
@@ -293,6 +304,7 @@ type MockOptions = {
   plugins?: MockPlugin[];
   pluginVariables?: Record<string, Record<string, MockPluginVariableValue>>;
   pluginVariableResetFailures?: number;
+  pluginMutationRefreshDelayMs?: number;
   libraryModels?: MockLibraryModel[];
   cloudLibraryModels?: MockLibraryModel[];
   ttsModels?: MockTTSModel[];
@@ -505,6 +517,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   }> = [];
   let pluginVariableResetFailures = options.pluginVariableResetFailures ?? 0;
   let pluginVariableResetRequests = 0;
+  let pendingPluginListDelayMs = 0;
   const preferenceUpdateUserIds: Array<string | null> = [];
   const pendingPreferenceUpdateReleases: Array<() => void> = [];
   let preferenceUpdateFailures = options.preferenceUpdateFailures ?? 0;
@@ -1423,6 +1436,11 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       }
 
       if (path === '/plugins' && method === 'GET') {
+        const delayMs = pendingPluginListDelayMs;
+        pendingPluginListDelayMs = 0;
+        if (delayMs > 0) {
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
         await fulfillJson(route, plugins);
         return;
       }
@@ -1447,6 +1465,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           variables: update.variables ?? {},
           unset: update.unset ?? [],
         });
+        pendingPluginListDelayMs = options.pluginMutationRefreshDelayMs ?? 0;
         await fulfillJson(route, true);
         return;
       }
@@ -1460,6 +1479,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           return;
         }
         pluginVariables[pluginId] = {};
+        pendingPluginListDelayMs = options.pluginMutationRefreshDelayMs ?? 0;
         await fulfillJson(route, true);
         return;
       }
@@ -1474,6 +1494,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
           pluginId,
           apiKey: request.api_key ?? '',
         });
+        pendingPluginListDelayMs = options.pluginMutationRefreshDelayMs ?? 0;
         await fulfillJson(route, true);
         return;
       }
