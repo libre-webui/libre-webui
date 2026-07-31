@@ -60,7 +60,7 @@ docker compose -f docker-compose.dev.external-ollama.yml up -d
 
 ```bash
 # Use the dev branch image
-docker run -d -p 3000:8080 -v libre-webui:/app/backend/data --name libre-webui-dev --restart always ghcr.io/libre-webui/libre-webui:dev
+docker run -d -p 3000:3001 -v libre-webui:/app/backend/data --name libre-webui-dev --restart always ghcr.io/libre-webui/libre-webui:dev
 ```
 
 ### From Source
@@ -112,7 +112,7 @@ docker compose -f docker-compose.dev.external-ollama.yml up -d
 # Or restart simple Docker
 docker pull ghcr.io/libre-webui/libre-webui:dev
 docker stop libre-webui-dev && docker rm libre-webui-dev
-docker run -d -p 3000:8080 -v libre-webui:/app/backend/data --name libre-webui-dev --restart always ghcr.io/libre-webui/libre-webui:dev
+docker run -d -p 3000:3001 -v libre-webui:/app/backend/data --name libre-webui-dev --restart always ghcr.io/libre-webui/libre-webui:dev
 ```
 
 ## 🐛 Found a Bug? Help Us Improve!
@@ -240,7 +240,7 @@ npm run test:e2e
 - **Use a separate Docker volume** for dev testing:
   ```bash
   # Use different volume name for dev
-  docker run -d -p 3000:8080 -v libre-webui-dev:/app/backend/data --name libre-webui-dev ghcr.io/libre-webui/libre-webui:dev
+  docker run -d -p 3000:3001 -v libre-webui-dev:/app/backend/data --name libre-webui-dev ghcr.io/libre-webui/libre-webui:dev
   ```
 
 ### Potential Issues
