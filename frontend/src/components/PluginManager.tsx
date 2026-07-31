@@ -31,10 +31,18 @@ import {
   X,
   Zap,
 } from '@/components/icons';
-import { ChevronDown, RotateCcw, Save, Eye, EyeOff } from 'lucide-react';
+import {
+  AlertTriangle,
+  ChevronDown,
+  RotateCcw,
+  Save,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { cn } from '@/utils';
 import {
   getPluginEndpointValidationError,
+  isPluginHttpEndpoint,
   isPluginUrlVariable,
   isValidPluginApiPath,
 } from '@/utils/pluginEndpoint';
@@ -168,7 +176,7 @@ export const PluginVariablesEditor: React.FC<{
         } else if (endpointError === 'insecure-url') {
           errors[def.name] = t(
             'pluginManager.variables.insecureUrl',
-            'Remote API endpoints must use HTTPS. HTTP is allowed only for localhost and private IPv4 addresses.'
+            'API endpoints must use HTTP or HTTPS.'
           );
         } else if (endpointError === 'query-or-fragment') {
           errors[def.name] = t(
@@ -352,7 +360,23 @@ export const PluginVariablesEditor: React.FC<{
       controlId,
       descriptionId: `${controlId}-description`,
       errorId: `${controlId}-error`,
+      warningId: `${controlId}-http-warning`,
     };
+  };
+
+  const hasHttpEndpointWarning = (def: PluginVariableDefinition): boolean => {
+    if (!isPluginUrlVariable(def.name)) return false;
+
+    const localValue = localValues[def.name];
+    const inheritedValue = getInheritedPluginVariableValue(def, plugin);
+    const endpointValue =
+      typeof localValue === 'string' && localValue.trim()
+        ? localValue
+        : inheritedValue;
+
+    return (
+      typeof endpointValue === 'string' && isPluginHttpEndpoint(endpointValue)
+    );
   };
 
   const renderField = (def: PluginVariableDefinition) => {
@@ -360,12 +384,14 @@ export const PluginVariablesEditor: React.FC<{
     const isSensitive = def.sensitive ?? false;
     const isRevealed = revealedFields.has(def.name);
     const storedVar = storedVars[def.name] as PluginVariableValue | undefined;
-    const { controlId, descriptionId, errorId } = getFieldIds(def);
+    const { controlId, descriptionId, errorId, warningId } = getFieldIds(def);
     const hasError = Boolean(fieldErrors[def.name]);
+    const hasHttpWarning = hasHttpEndpointWarning(def);
     const hasEndpointHelp = def.name === 'endpoint' || def.name === 'api_url';
     const describedBy =
       [
         def.description || hasEndpointHelp ? descriptionId : undefined,
+        hasHttpWarning ? warningId : undefined,
         hasError ? errorId : undefined,
       ]
         .filter(Boolean)
@@ -513,8 +539,9 @@ export const PluginVariablesEditor: React.FC<{
   };
 
   const renderDefinition = (def: PluginVariableDefinition) => {
-    const { controlId, descriptionId, errorId } = getFieldIds(def);
+    const { controlId, descriptionId, errorId, warningId } = getFieldIds(def);
     const hasEndpointHelp = def.name === 'endpoint' || def.name === 'api_url';
+    const hasHttpWarning = hasHttpEndpointWarning(def);
 
     return (
       <div key={def.name}>
@@ -549,6 +576,24 @@ export const PluginVariablesEditor: React.FC<{
           </p>
         )}
         {renderField(def)}
+        {hasHttpWarning && (
+          <p
+            id={warningId}
+            role='status'
+            className='mt-1 flex items-start gap-1 text-xs text-amber-700 dark:text-amber-400'
+          >
+            <AlertTriangle
+              aria-hidden='true'
+              className='mt-0.5 h-3.5 w-3.5 shrink-0'
+            />
+            <span>
+              {t(
+                'pluginManager.variables.httpWarning',
+                'HTTP does not encrypt credentials or traffic. Use it only on a trusted network.'
+              )}
+            </span>
+          </p>
+        )}
         {fieldErrors[def.name] && (
           <p id={errorId} role='alert' className='text-xs text-red-500 mt-1'>
             {fieldErrors[def.name]}

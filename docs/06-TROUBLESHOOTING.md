@@ -170,11 +170,13 @@ OpenAI Responses, Anthropic, or Gemini-compatible wire format. If the provider
 uses a proprietary payload, streaming event, tool-call, or response format, it
 needs a backend adapter; changing only the endpoint cannot translate it.
 
-Remote provider URLs must use HTTPS. HTTP is accepted only for localhost and
-private-network addresses. Base URLs cannot contain query strings or fragments,
-and relative API paths cannot contain literal or repeatedly encoded traversal
-segments, query strings, or fragments. Excessive encoding is rejected when it
-does not stabilize within the validation bound.
+Provider URLs may use HTTP or HTTPS. HTTP sends credentials and provider traffic
+without transport encryption, so reserve it for a self-hosted gateway on a
+trusted network and prefer HTTPS whenever TLS is available. Base URLs cannot
+contain query strings or fragments, and relative API paths cannot contain
+literal or repeatedly encoded traversal segments, query strings, or fragments.
+Excessive encoding is rejected when it does not stabilize within the validation
+bound.
 
 Model refresh replaces known operation suffixes, including `/responses`, with
 `/models`. Activation, explicit refresh, and saved connection overrides use the
@@ -195,11 +197,13 @@ after finishing the provider settings update. Work intentionally stops before
 its next provider request so prior tool state cannot be replayed to a different
 mode, endpoint, or API-key authentication boundary.
 
-HTTP is accepted only for exact loopback hosts or private IPv4 literals.
-Hostnames such as `host.docker.internal` and `10.example.com` are not private
-IP literals and therefore require HTTPS. Requests originate from the backend,
-so `localhost` refers to the Libre WebUI container when the backend runs in a
-container, not automatically to the host machine.
+Requests originate from the backend, so `localhost` refers to the Libre WebUI
+container when the backend runs in a container, not automatically to the host
+machine. For a Compose or Kubernetes deployment, use the gateway's service DNS
+name, for example `http://ai-gateway:8080/v1`. Use
+`http://host.docker.internal:8080/v1` only when the container runtime exposes
+that host alias. HTTP traffic is plaintext even when the name resolves
+privately.
 
 Image model availability, endpoint overrides, and API keys are resolved for
 the current user too. If an image request appears to use another account's
@@ -215,9 +219,9 @@ The following security and ownership rules also apply:
   endpoint URL, including the operation path (for example,
   `https://provider.example/v1/chat/completions`). Enter an API root only in
   `base_url`, paired with `api_mode` and an optional `api_path`.
-- Remote endpoints require HTTPS. HTTP is accepted only for exact loopback
-  hosts or private IPv4 literals. Hostnames such as `host.docker.internal` and
-  `10.example.com` are not private IP literals and therefore require HTTPS.
+- Absolute HTTP and HTTPS endpoint URLs are accepted. Use HTTP only for a
+  self-hosted gateway on a trusted network because API keys, prompts, and
+  responses are otherwise sent without transport encryption.
 - An empty override uses the endpoint bundled in the plugin definition. An
   explicit malformed or unsafe override is rejected; Libre WebUI does not
   silently send that request to the bundled provider endpoint.

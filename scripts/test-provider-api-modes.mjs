@@ -774,19 +774,21 @@ test('provider API configuration resolves modes, base URLs, paths, and model dis
     ),
     'https://gateway.example/v2/models'
   );
-  assert.throws(
-    () =>
-      pluginValidation.resolvePluginApiConfig(plugin, {
-        base_url: 'http://public.example/v1',
-      }),
-    /Insecure endpoint protocol/
+  assert.deepEqual(
+    pluginValidation.resolvePluginApiConfig(plugin, {
+      base_url: 'http://gateway.internal:8080/v1',
+    }),
+    {
+      apiMode: 'chat_completions',
+      endpoint: 'http://gateway.internal:8080/v1/chat/completions',
+    }
   );
   for (const endpoint of [
     'http://10.example.com/v1',
     'http://172.16.example.com/v1',
     'http://192.168.example.com/v1',
   ]) {
-    assert.equal(pluginValidation.isSafePluginEndpoint(endpoint), false);
+    assert.equal(pluginValidation.isSafePluginEndpoint(endpoint), true);
   }
   for (const endpoint of [
     'http://10.0.0.8/v1',
@@ -887,7 +889,7 @@ test('Responses replay and Work routing change when provider credentials rotate'
   assert.notEqual(oldRoutingFingerprint, newRoutingFingerprint);
 });
 
-test('model discovery rejects an unsafe derived URL before reading credentials', async () => {
+test('model discovery rejects an unsupported derived URL before reading credentials', async () => {
   const service = pluginServiceModule.default;
   const originalGetPlugin = service.getPlugin;
   const originalGetPluginVariables = service.getPluginVariables;
@@ -898,10 +900,10 @@ test('model discovery rejects an unsafe derived URL before reading credentials',
 
   try {
     service.getPlugin = () => ({
-      id: 'unsafe-provider',
-      name: 'Unsafe provider',
+      id: 'unsupported-provider',
+      name: 'Unsupported provider',
       type: 'completion',
-      endpoint: 'http://public.example/v1/chat/completions',
+      endpoint: 'ftp://public.example/v1/chat/completions',
       auth: {
         header: 'Authorization',
         prefix: 'Bearer ',
@@ -920,8 +922,8 @@ test('model discovery rejects an unsafe derived URL before reading credentials',
     };
 
     await assert.rejects(
-      service.discoverModels('unsafe-provider', 'unsafe-user'),
-      /Insecure endpoint protocol/
+      service.discoverModels('unsupported-provider', 'unsafe-user'),
+      /Unsupported endpoint protocol/
     );
     assert.equal(credentialsRead, false);
     assert.equal(requestMade, false);
@@ -2311,12 +2313,18 @@ test('plugin routes and activation keep model discovery scoped to the authentica
       200
     );
 
-    const insecureSave = await invokeRoute('/:id/variables', 'PUT', {
+    const httpSave = await invokeRoute('/:id/variables', 'PUT', {
       params: { id: 'openai' },
       body: { variables: { base_url: 'http://public.example/v1' } },
     });
-    assert.equal(insecureSave.statusCode, 400);
-    assert.match(insecureSave.payload.error, /HTTPS/);
+    assert.equal(httpSave.statusCode, 200);
+
+    const unsupportedSchemeSave = await invokeRoute('/:id/variables', 'PUT', {
+      params: { id: 'openai' },
+      body: { variables: { base_url: 'ftp://public.example/v1' } },
+    });
+    assert.equal(unsupportedSchemeSave.statusCode, 400);
+    assert.match(unsupportedSchemeSave.payload.error, /HTTP or HTTPS/);
 
     const traversalSave = await invokeRoute('/:id/variables', 'PUT', {
       params: { id: 'openai' },
@@ -2367,6 +2375,22 @@ test('plugin routes and activation keep model discovery scoped to the authentica
       {
         operation: 'activate',
         pluginId: 'openai',
+      },
+      {
+        operation: 'discover',
+        pluginId: 'openai',
+        userId: 'route-user',
+      },
+      {
+        operation: 'save',
+        pluginId: 'openai',
+        userId: 'route-user',
+        variables: { base_url: 'http://public.example/v1' },
+      },
+      {
+        operation: 'clear',
+        pluginId: 'openai',
+        userId: 'route-user',
       },
       {
         operation: 'discover',

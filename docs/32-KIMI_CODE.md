@@ -52,7 +52,9 @@ https://api.kimi.com/coding/v1/chat/completions
 ```
 
 The endpoint can be overridden in the plugin variables for compatible gateways
-or proxies. Remote overrides must use HTTPS.
+or proxies. HTTP overrides are supported for self-hosted gateways, but send the
+API key and request content without transport encryption. Use HTTP only on a
+trusted network and prefer HTTPS whenever the gateway supports TLS.
 
 ## Privacy and Usage
 

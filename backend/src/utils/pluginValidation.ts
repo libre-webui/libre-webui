@@ -70,36 +70,9 @@ export function validatePluginModel(model: string): void {
   }
 }
 
-function isPrivateIpv4Hostname(hostname: string): boolean {
-  const octets = hostname.split('.');
-  if (octets.length !== 4 || octets.some(octet => !/^\d{1,3}$/.test(octet))) {
-    return false;
-  }
-
-  const values = octets.map(Number);
-  if (values.some(value => value < 0 || value > 255)) {
-    return false;
-  }
-
-  const [first, second] = values;
-  return (
-    first === 10 ||
-    (first === 172 && second >= 16 && second <= 31) ||
-    (first === 192 && second === 168)
-  );
-}
-
 export function isSafePluginEndpoint(endpoint: string): boolean {
   const url = new URL(endpoint);
-  const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(
-    url.hostname
-  );
-  const isPrivateNetwork = isPrivateIpv4Hostname(url.hostname);
-
-  return (
-    url.protocol === 'https:' ||
-    (url.protocol === 'http:' && (isLocalhost || isPrivateNetwork))
-  );
+  return url.protocol === 'https:' || url.protocol === 'http:';
 }
 
 export function validatePluginEndpointOverride(
@@ -108,7 +81,7 @@ export function validatePluginEndpointOverride(
   try {
     if (!isSafePluginEndpoint(endpoint)) {
       logger.warn(
-        `Rejected insecure endpoint override: ${endpoint} (only HTTPS or localhost/private IPs allowed)`
+        `Rejected unsupported endpoint override: ${endpoint} (only HTTP and HTTPS URLs are allowed)`
       );
       return null;
     }
@@ -128,12 +101,11 @@ export function assertSafePluginEndpoint(
     if (!isSafePluginEndpoint(endpoint)) {
       const url = new URL(endpoint);
       throw new Error(
-        `Insecure endpoint protocol: ${url.protocol}. Only HTTPS is allowed for remote endpoints. ` +
-          `(HTTP is permitted for localhost and private network IPs)`
+        `Unsupported endpoint protocol: ${url.protocol}. Only HTTP and HTTPS URLs are allowed.`
       );
     }
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith('Insecure')) {
+    if (error instanceof Error && error.message.startsWith('Unsupported')) {
       throw error;
     }
 
@@ -153,8 +125,7 @@ export function resolvePluginEndpoint(
   const validatedOverride = validatePluginEndpointOverride(normalizedOverride);
   if (!validatedOverride) {
     throw new Error(
-      'Invalid or unsafe plugin endpoint override. Use HTTPS for remote endpoints, ' +
-        'or HTTP for localhost and private IPv4 addresses.'
+      'Invalid plugin endpoint override. Use an absolute HTTP or HTTPS URL.'
     );
   }
 

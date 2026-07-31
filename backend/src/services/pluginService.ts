@@ -677,8 +677,8 @@ export class PluginService {
   }
 
   /**
-   * Validate an endpoint URL for safety (SSRF protection).
-   * Returns the URL string if valid and throws for an unsafe explicit value.
+   * Validate an endpoint override as an absolute HTTP or HTTPS URL.
+   * Returns the URL string if valid and throws for an invalid explicit value.
    */
   private validateEndpointUrl(endpoint: string): string {
     return resolvePluginEndpoint('', endpoint);

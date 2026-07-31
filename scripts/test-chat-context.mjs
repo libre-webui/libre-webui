@@ -1169,7 +1169,7 @@ test('plugin model routing requires an active plugin and the current user creden
   }
 });
 
-test('plugin validation rejects unsafe models and remote HTTP endpoints', () => {
+test('plugin validation rejects unsafe models and non-HTTP provider endpoints', () => {
   assert.doesNotThrow(() =>
     pluginValidation.validatePluginModel('kimi-k2.7-code:cloud')
   );
@@ -1180,9 +1180,14 @@ test('plugin validation rejects unsafe models and remote HTTP endpoints', () => 
     () => pluginValidation.validatePluginModel('../secret'),
     /invalid patterns/
   );
+  assert.doesNotThrow(() =>
+    pluginValidation.assertSafePluginEndpoint(
+      'http://ai-gateway:8080/v1/chat/completions'
+    )
+  );
   assert.throws(
-    () => pluginValidation.assertSafePluginEndpoint('http://example.com/v1'),
-    /Insecure endpoint protocol/
+    () => pluginValidation.assertSafePluginEndpoint('ftp://example.com/v1'),
+    /Unsupported endpoint protocol/
   );
   assert.doesNotThrow(() =>
     pluginValidation.assertSafePluginEndpoint(

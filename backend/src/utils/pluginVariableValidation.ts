@@ -159,9 +159,7 @@ export function validatePluginVariables(
       if (!validatedUrl) {
         return {
           success: false,
-          error:
-            `Variable "${key}" must use HTTPS for remote URLs, or HTTP ` +
-            'for localhost and private IPv4 addresses',
+          error: `Variable "${key}" must use an absolute HTTP or HTTPS URL`,
         };
       }
       if (key.toLowerCase().endsWith('base_url')) {

@@ -18,7 +18,6 @@
 export type PluginEndpointValidationError =
   'invalid-url' | 'insecure-url' | 'query-or-fragment';
 
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 const MAX_API_PATH_DECODE_PASSES = 8;
 const PLUGIN_MODEL_DISCOVERY_VARIABLES = new Set([
   'endpoint',
@@ -39,32 +38,9 @@ export function hasPluginModelDiscoveryVariable(
   return Object.keys(values).some(isPluginConnectionEndpointVariable);
 }
 
-function isPrivateIpv4Literal(hostname: string): boolean {
-  const octets = hostname.split('.');
-  if (octets.length !== 4 || octets.some(octet => !/^\d{1,3}$/.test(octet))) {
-    return false;
-  }
-
-  const [first, second, third, fourth] = octets.map(Number);
-  if (
-    [first, second, third, fourth].some(
-      octet => !Number.isInteger(octet) || octet < 0 || octet > 255
-    )
-  ) {
-    return false;
-  }
-
-  return (
-    first === 10 ||
-    (first === 172 && second >= 16 && second <= 31) ||
-    (first === 192 && second === 168)
-  );
-}
-
 /**
  * Match the backend's endpoint override policy before variables are saved.
- * Remote endpoints require HTTPS. Plain HTTP is limited to exact loopback
- * hosts and private IPv4 literals.
+ * Endpoint overrides must be absolute HTTP or HTTPS URLs.
  */
 export function getPluginEndpointValidationError(
   endpoint: string,
@@ -83,11 +59,7 @@ export function getPluginEndpointValidationError(
     return 'invalid-url';
   }
 
-  const safeProtocol =
-    url.protocol === 'https:' ||
-    (url.protocol === 'http:' &&
-      (LOOPBACK_HOSTS.has(url.hostname) || isPrivateIpv4Literal(url.hostname)));
-  if (!safeProtocol) {
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     return 'insecure-url';
   }
 
@@ -99,6 +71,14 @@ export function getPluginEndpointValidationError(
   }
 
   return null;
+}
+
+export function isPluginHttpEndpoint(endpoint: string): boolean {
+  try {
+    return new URL(endpoint.trim()).protocol === 'http:';
+  } catch {
+    return false;
+  }
 }
 
 export function isPluginUrlVariable(name: string): boolean {

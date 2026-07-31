@@ -1197,29 +1197,31 @@ test('custom endpoint resolution is full-URL based and fails closed', () => {
     ),
     'https://catalog.example.test/custom/models?preview=true'
   );
-  assert.throws(
-    () =>
-      pluginValidation.resolvePluginModelsEndpoint(
-        customEndpoint,
-        'http://catalog.example.test/models'
-      ),
-    /Invalid or unsafe plugin endpoint override/
+  assert.equal(
+    pluginValidation.resolvePluginModelsEndpoint(
+      customEndpoint,
+      'http://catalog.example.test/models'
+    ),
+    'http://catalog.example.test/models'
   );
 
   for (const unsafeEndpoint of [
-    'http://api.openai.com/v1/chat/completions',
     'ftp://localhost/v1/chat/completions',
-    'http://10.example.test/v1/chat/completions',
+    'file:///v1/chat/completions',
     'not a URL',
   ]) {
     assert.throws(
       () =>
         pluginValidation.resolvePluginEndpoint(bundledEndpoint, unsafeEndpoint),
-      /Invalid or unsafe plugin endpoint override/
+      /Invalid plugin endpoint override/
     );
   }
 
-  for (const localEndpoint of [
+  for (const httpEndpoint of [
+    'http://ai-gateway:8080/v1/chat/completions',
+    'http://host.docker.internal:8080/v1/chat/completions',
+    'http://gateway.internal:8080/v1/chat/completions',
+    'http://api.openai.com/v1/chat/completions',
     'http://localhost:8080/v1/chat/completions',
     'http://127.0.0.1:8080/v1/chat/completions',
     'http://[::1]:8080/v1/chat/completions',
@@ -1228,8 +1230,8 @@ test('custom endpoint resolution is full-URL based and fails closed', () => {
     'http://192.168.0.8:8080/v1/chat/completions',
   ]) {
     assert.equal(
-      pluginValidation.resolvePluginEndpoint(bundledEndpoint, localEndpoint),
-      localEndpoint
+      pluginValidation.resolvePluginEndpoint(bundledEndpoint, httpEndpoint),
+      httpEndpoint
     );
   }
 });
@@ -1237,7 +1239,7 @@ test('custom endpoint resolution is full-URL based and fails closed', () => {
 test('Chat and Work requests use a valid custom endpoint instead of the bundled endpoint', async () => {
   const plugin = createPlugin();
   const customEndpoint =
-    'https://gateway.example.test/openai/v1/chat/completions';
+    'http://ai-gateway:8080/openai/v1/chat/completions';
   const requests = [];
 
   await withPatchedProperties(
@@ -1358,7 +1360,7 @@ test('Chat and Work streaming fail closed on redirects', async () => {
       key_env: 'STREAM_REDIRECT_API_KEY',
     },
   });
-  const endpoint = 'https://gateway.example.test/openai/v1/chat/completions';
+  const endpoint = 'http://ai-gateway:8080/openai/v1/chat/completions';
   const requests = [];
   const streamResponse = () =>
     new Response(
@@ -2451,7 +2453,7 @@ test('environment fallback fails closed when bundled and writable directories al
   }
 });
 
-test('connection endpoint aliases reject unsafe URLs and preserve blank fallback', () => {
+test('connection endpoint aliases accept HTTP URLs and preserve blank fallback', () => {
   const definitions = ['endpoint', 'api_url', 'models_endpoint'].map(name => ({
     name,
     type: 'string',
@@ -2475,12 +2477,22 @@ test('connection endpoint aliases reject unsafe URLs and preserve blank fallback
         },
       }
     );
+    assert.deepEqual(
+      pluginVariableValidation.validatePluginVariables(definitions, {
+        [name]: '  http://ai-gateway:8080/v1/chat/completions  ',
+      }),
+      {
+        success: true,
+        variables: {
+          [name]: 'http://ai-gateway:8080/v1/chat/completions',
+        },
+      }
+    );
   }
 
   for (const endpoint of [
-    'http://api.openai.com/v1/chat/completions',
     'ftp://localhost/v1/chat/completions',
-    'http://10.example.test/v1/chat/completions',
+    'file:///v1/chat/completions',
   ]) {
     for (const name of ['endpoint', 'api_url', 'models_endpoint']) {
       const result = pluginVariableValidation.validatePluginVariables(
@@ -2488,7 +2500,7 @@ test('connection endpoint aliases reject unsafe URLs and preserve blank fallback
         { [name]: endpoint }
       );
       assert.equal(result.success, false);
-      assert.match(result.error, /must use HTTPS for remote URLs/);
+      assert.match(result.error, /absolute HTTP or HTTPS URL/);
     }
   }
 
@@ -2510,9 +2522,9 @@ test('model discovery uses the user endpoint and credentials without default fal
     },
   });
   const customEndpoint =
-    'https://gateway.example.test/openai/v1/chat/completions';
+    'http://ai-gateway:8080/openai/v1/chat/completions';
   const customModelsEndpoint =
-    'https://catalog.example.test/provider/models?channel=preview';
+    'http://model-catalog:8080/provider/models?channel=preview';
   const requests = [];
   let currentEndpoint = customEndpoint;
   let currentModelsEndpoint = customModelsEndpoint;
@@ -2562,10 +2574,10 @@ test('model discovery uses the user endpoint and credentials without default fal
           );
           assert.equal(credentialLookups, 1);
 
-          currentModelsEndpoint = 'http://api.openai.com/v1/models';
+          currentModelsEndpoint = 'ftp://api.openai.com/v1/models';
           await assert.rejects(
             pluginService.discoverModels(plugin.id, 'user-42'),
-            /Invalid or unsafe plugin endpoint override/
+            /Invalid plugin endpoint override/
           );
           assert.equal(
             requests.length,
@@ -2835,12 +2847,12 @@ test('discovered models persist per user without mutating the shared plugin mani
   );
 });
 
-test('embedding and TTS requests reject redirects before a credential-bearing hop', async () => {
+test('embedding and TTS HTTP requests reject redirects before a credential-bearing hop', async () => {
   const plugin = createPlugin({ id: 'capability-redirect-provider' });
   plugin.capabilities.embedding.endpoint =
-    'https://gateway.example.test/v1/embeddings';
+    'http://ai-gateway:8080/v1/embeddings';
   plugin.capabilities.tts.endpoint =
-    'https://gateway.example.test/v1/audio/speech';
+    'http://ai-gateway:8080/v1/audio/speech';
   const requests = [];
 
   await withPatchedProperties(
@@ -2898,7 +2910,7 @@ test('embedding and TTS requests reject redirects before a credential-bearing ho
 
 test('Chat, Work, embedding, TTS, and image overrides fail before network access', async () => {
   const plugin = createPlugin();
-  const unsafeEndpoint = 'http://api.openai.com/v1/chat/completions';
+  const unsafeEndpoint = 'ftp://api.openai.com/v1/chat/completions';
   let networkRequests = 0;
   let credentialLookups = 0;
 
@@ -2936,7 +2948,7 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
               {},
               'user-42'
             ),
-            /Invalid or unsafe plugin endpoint override/
+            /Invalid plugin endpoint override/
           );
           assert.equal(
             credentialLookups,
@@ -2950,14 +2962,14 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
               plugin.id,
               'user-42'
             ),
-            /Invalid or unsafe plugin endpoint override/
+            /Invalid plugin endpoint override/
           );
           await assert.rejects(
             pluginService.executeTTSRequest('tts-model', 'Hello', {
               pluginId: plugin.id,
               userId: 'user-42',
             }),
-            /Invalid or unsafe plugin endpoint override/
+            /Invalid plugin endpoint override/
           );
           await assert.rejects(
             pluginService.executeImageGenRequest(
@@ -2968,7 +2980,7 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
                 userId: 'user-42',
               }
             ),
-            /Invalid or unsafe plugin endpoint override/
+            /Invalid plugin endpoint override/
           );
         }
       )
@@ -3010,7 +3022,7 @@ test('Chat, Work, embedding, TTS, and image overrides fail before network access
       { providerType: 'plugin', providerId: plugin.id },
       'user-42'
     ),
-    /Invalid or unsafe plugin endpoint override/
+    /Invalid plugin endpoint override/
   );
   assert.equal(networkRequests, 0);
 });
@@ -3042,7 +3054,7 @@ test('image discovery and requests use the current user endpoint and credentials
       userContexts.push({ operation: 'variables', userId });
       return {
         image_endpoint:
-          'https://image-user.example.test/v1/images/generations?custom=true',
+          'http://image-gateway:8080/v1/images/generations?custom=true',
       };
     },
     validateEndpointUrl: endpoint =>
@@ -3089,7 +3101,7 @@ test('image discovery and requests use the current user endpoint and credentials
 
   assert.equal(
     request.endpoint,
-    'https://image-user.example.test/v1/images/generations?custom=true'
+    'http://image-gateway:8080/v1/images/generations?custom=true'
   );
   assert.equal(request.config.headers.Authorization, 'Bearer key-image-user');
   assert.equal(request.config.maxRedirects, 0);

@@ -247,12 +247,13 @@ follow HTTP redirects. Configure the final Chat, Work, model-list, image,
 embedding, or TTS endpoint directly; this prevents credentials from being
 forwarded from a validated URL to an unvalidated redirect destination.
 
-Remote endpoints must use HTTPS. Plain HTTP is accepted only for exact loopback
-hosts (`localhost`, `127.0.0.1`, or `[::1]`) and private IPv4 literals in the
-`10.0.0.0/8`, `172.16.0.0/12`, or `192.168.0.0/16` ranges. Requests originate
-from the backend, so `localhost` identifies the Libre WebUI container when the
-backend runs in a container. Plugin capability routes, including image
-generation, resolve endpoint variables and credentials for the requesting
+Provider endpoints may use HTTP or HTTPS. HTTP sends API keys, prompts, tool
+results, and generated content without transport encryption, so use it only for
+a self-hosted gateway on a network you trust; prefer HTTPS whenever the gateway
+supports TLS. Requests originate from the backend. In container deployments,
+that means a service URL such as `http://ai-gateway:8080/v1`, while `localhost`
+identifies the Libre WebUI container itself. Plugin capability routes, including
+image generation, resolve endpoint variables and credentials for the requesting
 user. Single-user mode uses the `default` user.
 
 ### Capability-specific endpoints
@@ -279,13 +280,12 @@ path. For example, an OpenAI-compatible chat plugin normally uses a URL such as
 variable `api_url`; Libre WebUI accepts that alias, but a non-empty `endpoint`
 always takes precedence when both are present.
 
-Remote endpoints must use HTTPS. Plain HTTP is accepted only for exact loopback
-hosts (`localhost`, `127.0.0.1`, or `[::1]`) and private IPv4 literals in the
-`10.0.0.0/8`, `172.16.0.0/12`, or `192.168.0.0/16` ranges. A hostname that
-merely looks private, such as `10.example.com`, is still a remote hostname and
-requires HTTPS. Other protocols are rejected. Leaving the override empty uses
-the full endpoint from the plugin definition; an explicit invalid or unsafe
-override is rejected instead of silently routing to that default.
+Absolute HTTP and HTTPS endpoint URLs are accepted; other protocols are
+rejected. HTTP is intended for self-hosted gateways on trusted networks because
+it sends credentials and request content without transport encryption. Prefer
+HTTPS for any route that leaves a private deployment boundary. Leaving the
+override empty uses the full endpoint from the plugin definition; an explicit
+invalid override is rejected instead of silently routing to that default.
 
 Provider requests do not follow redirects. Configure the final validated
 operation URL directly; a redirect response is reported as a provider error
@@ -293,7 +293,9 @@ instead of forwarding credentials or request content to another hop.
 
 Remember that requests originate from the Libre WebUI backend. In a container,
 `localhost` identifies the container itself, not automatically the container
-host or another service.
+host or another service. Use the gateway's container service name, or a
+host-reachable name such as `host.docker.internal` where the container runtime
+provides it.
 
 ### Model Discovery
 

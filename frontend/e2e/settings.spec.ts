@@ -261,6 +261,30 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
     'Use provider default (custom-model)'
   );
 
+  const httpWarning = page.getByText(
+    'HTTP does not encrypt credentials or traffic. Use it only on a trusted network.',
+    { exact: true }
+  );
+  await expect(httpWarning).toHaveCount(0);
+  await endpointInput.fill('ftp://ai-gateway:8080/v1/chat/completions');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(
+    page.getByText('API endpoints must use HTTP or HTTPS.', { exact: true })
+  ).toBeVisible();
+  expect(mockApi.pluginVariableUpdateRequests).toHaveLength(0);
+
+  await endpointInput.fill('http://ai-gateway:8080/v1/chat/completions');
+  await expect(httpWarning).toBeVisible();
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect.poll(() => mockApi.pluginVariableUpdateRequests.length).toBe(1);
+  expect(mockApi.pluginVariableUpdateRequests[0]).toEqual({
+    pluginId: 'custom-provider',
+    variables: {
+      endpoint: 'http://ai-gateway:8080/v1/chat/completions',
+    },
+    unset: [],
+  });
+
   const providerAdvancedDisclosure = page.getByRole('button', {
     name: /Advanced parameters/,
   });
@@ -286,12 +310,14 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   await apiModeInput.selectOption('chat_completions');
   await apiModeInput.selectOption('');
   await customImageEndpointInput.fill(
-    'https://temporary.example/v1/images/generations'
+    'http://image-gateway:8080/v1/images/generations'
   );
+  await expect(httpWarning).toBeVisible();
   await customImageEndpointInput.fill('');
+  await expect(httpWarning).toHaveCount(0);
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect.poll(() => mockApi.pluginVariableUpdateRequests.length).toBe(1);
-  expect(mockApi.pluginVariableUpdateRequests[0]).toEqual({
+  await expect.poll(() => mockApi.pluginVariableUpdateRequests.length).toBe(2);
+  expect(mockApi.pluginVariableUpdateRequests[1]).toEqual({
     pluginId: 'custom-provider',
     variables: {},
     unset: ['endpoint'],
@@ -304,8 +330,8 @@ test('admin provider settings are collapsed, inherited, sparse, and retryable', 
   await page.getByRole('button', { name: 'Show Secret Header value' }).click();
   await expect(secretInput).toHaveAttribute('type', 'text');
   await page.getByRole('button', { name: 'Save', exact: true }).click();
-  await expect.poll(() => mockApi.pluginVariableUpdateRequests.length).toBe(2);
-  expect(mockApi.pluginVariableUpdateRequests[1]).toEqual({
+  await expect.poll(() => mockApi.pluginVariableUpdateRequests.length).toBe(3);
+  expect(mockApi.pluginVariableUpdateRequests[2]).toEqual({
     pluginId: 'custom-provider',
     variables: { secret_header: 'temporary-plaintext-secret' },
     unset: [],
