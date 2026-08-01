@@ -72,6 +72,7 @@ import toast from 'react-hot-toast';
 const logger = createLogger('app');
 
 // Lazy load pages for code splitting
+const HomePage = React.lazy(() => import('@/pages/HomePage'));
 const ChatPage = React.lazy(() => import('@/pages/ChatPage'));
 const ModelsPage = React.lazy(() => import('@/pages/ModelsPage'));
 const PersonasPage = React.lazy(() => import('@/pages/PersonasPage'));
@@ -197,11 +198,9 @@ const ConditionalKeyboardShortcutsIndicator: React.FC<{
 }> = ({ onClick }) => {
   const location = useLocation();
 
-  // Check if we're on a chat page (root, /chat, or /c/sessionId)
+  // Check if we're on a chat page (/chat or /c/sessionId)
   const isChatPage =
-    location.pathname === '/' ||
-    location.pathname === '/chat' ||
-    location.pathname.startsWith('/c/');
+    location.pathname === '/chat' || location.pathname.startsWith('/c/');
 
   if (!isChatPage) return null;
 
@@ -511,7 +510,7 @@ const AppContent: React.FC = () => {
           demoMessage={demoConfig.message}
         >
           <Routes>
-            <Route path='/' element={<ChatPage />} />
+            <Route path='/' element={<HomePage />} />
             <Route path='/chat' element={<ChatPage />} />
             <Route path='/c/:sessionId' element={<ChatPage />} />
             <Route path='/models' element={<ModelsPage />} />
@@ -554,7 +553,7 @@ const AppContent: React.FC = () => {
                   demoMessage={demoConfig.message}
                 >
                   <Routes>
-                    <Route path='/' element={<ChatPage />} />
+                    <Route path='/' element={<HomePage />} />
                     <Route path='/chat' element={<ChatPage />} />
                     <Route path='/c/:sessionId' element={<ChatPage />} />
                     <Route path='/models' element={<ModelsPage />} />
