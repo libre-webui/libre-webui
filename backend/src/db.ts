@@ -362,6 +362,8 @@ function initializeTables(): void {
       network_enabled INTEGER NOT NULL DEFAULT 1,
       volume_name TEXT NOT NULL UNIQUE,
       container_name TEXT NOT NULL UNIQUE,
+      -- Set when the task is bound to a host folder instead of its volume.
+      host_path TEXT,
       preview_url TEXT,
       preview_status TEXT NOT NULL DEFAULT 'stopped',
       created_at INTEGER NOT NULL,
@@ -629,6 +631,9 @@ function runMigrations(): void {
       }
       if (!columns.includes('provider_id')) {
         db.exec(`ALTER TABLE ${table} ADD COLUMN provider_id TEXT`);
+      }
+      if (table === 'work_tasks' && !columns.includes('host_path')) {
+        db.exec(`ALTER TABLE work_tasks ADD COLUMN host_path TEXT`);
       }
       db.prepare(
         `UPDATE ${table}

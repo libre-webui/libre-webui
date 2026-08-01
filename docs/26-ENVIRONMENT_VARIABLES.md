@@ -101,6 +101,24 @@ Libre WebUI backend:
 | `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://`, else `/var/run/docker.sock`                                       | Docker Engine socket used for interactive terminals      |
 | `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous browser terminals attached to one task      |
 | `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session is closed         |
+| `WORK_HOST_WORKSPACES_ENABLED`        | `false`                                                                                       | Allow a task to use a host folder instead of a volume    |
+| `WORK_HOST_WORKSPACE_ROOTS`           | the server user's home directory                                                              | `:`-separated roots a host workspace must live inside    |
+| `AGENT_CLI_MODELS_ENABLED`            | `true`                                                                                        | Offer installed agent CLIs as chat models to admins      |
+| `AGENT_CLI_TIMEOUT_MS`                | `600000`                                                                                      | Time an agent CLI may run before it is killed            |
+
+A host workspace bind-mounts a real directory at `/workspace`, so the task can
+read and write those files directly instead of working in its own Docker volume.
+That is a deliberate reduction of the sandbox: keep `WORK_HOST_WORKSPACES_ENABLED`
+off unless you want it, and keep `WORK_HOST_WORKSPACE_ROOTS` as narrow as
+possible. Requested paths are resolved through symlinks before they are checked
+against the roots, and folders such as `.ssh`, `.gnupg`, `.aws`, and `.config`
+are rejected outright.
+
+Agent CLI models expose coding agents already installed on the server (`claude`,
+`codex`) as selectable chat models, so a subscription agent can answer without an
+API key. Only administrators see them, the CLI runs as the Libre WebUI server
+user, and it inherits that user's agent credentials — treat it as equivalent to
+granting shell access to those agents.
 
 Networked Work tasks attach to the managed `WORK_NETWORK_NAME` bridge, created
 with inter-container communication disabled so one sandbox cannot reach another

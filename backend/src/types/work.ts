@@ -96,6 +96,8 @@ export interface WorkTaskDetail {
   previewUrl?: string;
   previewStatus: WorkPreviewStatus;
   workspacePath: '/workspace';
+  /** Host folder mounted at /workspace, when this task is bound to one. */
+  hostPath?: string;
 }
 
 export type WorkLiveEventType =
@@ -259,6 +261,12 @@ export interface WorkCapabilities {
     user: number;
   };
   terminal?: WorkTerminalCapability;
+  hostWorkspaces?: WorkHostWorkspaceCapability;
+}
+
+export interface WorkHostWorkspaceCapability {
+  enabled: boolean;
+  roots: string[];
 }
 
 export interface WorkTerminalCapability {
@@ -279,6 +287,8 @@ export interface WorkTaskRecord {
   networkEnabled: boolean;
   volumeName: string;
   containerName: string;
+  /** Host folder bound to /workspace, when this task uses one. */
+  hostPath?: string;
   previewUrl?: string;
   previewStatus: WorkPreviewStatus;
   createdAt: number;

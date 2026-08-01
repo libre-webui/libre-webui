@@ -163,6 +163,10 @@ export interface WorkCapabilities {
     global: number;
     user: number;
   };
+  hostWorkspaces?: {
+    enabled: boolean;
+    roots: string[];
+  };
 }
 
 export interface WorkMessage {
@@ -210,6 +214,8 @@ export interface WorkTaskSummary {
   previewUrl?: string | null;
   previewStatus: WorkPreviewStatus;
   workspacePath: '/workspace';
+  /** Host folder mounted at /workspace, when this task is bound to one. */
+  hostPath?: string | null;
 }
 
 export interface WorkTask extends WorkTaskSummary {
@@ -241,6 +247,8 @@ export interface CreateWorkTaskRequest {
   providerType: WorkProviderType;
   providerId?: string;
   networkEnabled: boolean;
+  /** Absolute host folder to bind as the workspace, when enabled server-side. */
+  hostPath?: string;
 }
 
 export interface StartWorkRunRequest {

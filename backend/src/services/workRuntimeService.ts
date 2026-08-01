@@ -1996,7 +1996,11 @@ export function buildWorkContainerRunArgs(
   }
   args.push(
     '--mount',
-    `type=volume,src=${task.volumeName},dst=/workspace,volume-nocopy`,
+    task.hostPath
+      ? // Host-folder workspaces are opt-in per deployment and validated
+        // against an allowlist before ever reaching this point.
+        `type=bind,src=${task.hostPath},dst=/workspace`
+      : `type=volume,src=${task.volumeName},dst=/workspace,volume-nocopy`,
     image,
     'tail',
     '-f',

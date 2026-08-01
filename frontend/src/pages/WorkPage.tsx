@@ -19,6 +19,7 @@ import {
   Boxes,
   ChevronLeft,
   CircleAlert,
+  FolderOpen,
   HardDrive,
   MessageSquare,
   Monitor,
@@ -193,6 +194,9 @@ export default function WorkPage() {
   const setMobileSurface = (value: MobileSurface) =>
     setMobileSurfaceState({ locationKey: location.key, value });
   const [workspaceDirty, setWorkspaceDirty] = useState(false);
+  const [hostPath, setHostPath] = useState('');
+  const hostWorkspacesEnabled = capabilities?.hostWorkspaces?.enabled === true;
+  const hostWorkspaceRoots = capabilities?.hostWorkspaces?.roots ?? [];
   const [taskActionsState, setTaskActionsState] = useState<{
     taskId: string | null;
     open: boolean;
@@ -589,6 +593,9 @@ export default function WorkPage() {
           providerType: freshModel.providerType,
           providerId: freshModel.providerId,
           networkEnabled: true,
+          ...(hostWorkspacesEnabled && hostPath.trim()
+            ? { hostPath: hostPath.trim() }
+            : {}),
         });
         navigate(`/work/${task.id}`);
       }
@@ -892,6 +899,19 @@ export default function WorkPage() {
             </div>
           )}
 
+          {selectedTask?.hostPath && (
+            <span
+              data-testid='work-host-path-chip'
+              title={selectedTask.hostPath}
+              className='hidden h-7 shrink-0 items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 font-mono text-[11px] text-ink-muted sm:inline-flex'
+            >
+              <FolderOpen aria-hidden='true' className='h-3.5 w-3.5' />
+              <span className='max-w-[16rem] truncate'>
+                {selectedTask.hostPath}
+              </span>
+            </span>
+          )}
+
           {selectedTask && (
             <span
               data-testid='work-compact-status'
@@ -1151,6 +1171,42 @@ export default function WorkPage() {
                   })}
                 </p>
               </div>
+              {hostWorkspacesEnabled && (
+                <div className='mt-8 w-full max-w-2xl'>
+                  <label
+                    htmlFor='work-host-path'
+                    className='mb-1.5 block text-xs font-medium text-ink-muted'
+                  >
+                    {t('work.hostWorkspace.label', {
+                      defaultValue: 'Workspace folder (optional)',
+                    })}
+                  </label>
+                  <input
+                    id='work-host-path'
+                    data-testid='work-host-path'
+                    value={hostPath}
+                    onChange={event => setHostPath(event.target.value)}
+                    spellCheck={false}
+                    placeholder={
+                      hostWorkspaceRoots[0]
+                        ? `${hostWorkspaceRoots[0]}/my-project`
+                        : '/path/to/folder'
+                    }
+                    className='w-full rounded-xl border border-line bg-surface px-3 py-2 font-mono text-[13px] text-ink outline-none transition-colors placeholder:text-ink-subtle focus:border-line-strong focus-visible:ring-2 focus-visible:ring-primary-500/30'
+                  />
+                  <p className='mt-1.5 text-[11px] leading-relaxed text-ink-subtle'>
+                    {hostPath.trim()
+                      ? t('work.hostWorkspace.warning', {
+                          defaultValue:
+                            'The task can read and write this folder directly. Leave blank to use an isolated workspace instead.',
+                        })
+                      : t('work.hostWorkspace.hint', {
+                          defaultValue:
+                            'Leave blank for an isolated workspace, or point the task at a folder on this machine.',
+                        })}
+                  </p>
+                </div>
+              )}
               <WorkComposer
                 variant='landing'
                 models={modelOptions}

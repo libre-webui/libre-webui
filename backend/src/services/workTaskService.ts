@@ -79,6 +79,7 @@ interface TaskRow {
   network_enabled: number;
   volume_name: string;
   container_name: string;
+  host_path: string | null;
   preview_url: string | null;
   preview_status: WorkPreviewStatus;
   created_at: number;
@@ -120,7 +121,8 @@ export class WorkTaskService {
     message: string,
     model: string,
     networkEnabled: boolean,
-    provider: WorkProviderSelection = { providerType: 'ollama' }
+    provider: WorkProviderSelection = { providerType: 'ollama' },
+    hostPath?: string
   ): WorkTaskDetail {
     this.assertUserIsActive(userId);
     const selectedProvider = normalizeProvider(provider);
@@ -137,9 +139,9 @@ export class WorkTaskService {
       db.prepare(
         `INSERT INTO work_tasks (
           id, user_id, title, model, provider_type, provider_id, status,
-          network_enabled, volume_name, container_name, preview_status,
-          created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, 'preparing', ?, ?, ?, 'stopped', ?, ?)`
+          network_enabled, volume_name, container_name, host_path,
+          preview_status, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, 'preparing', ?, ?, ?, ?, 'stopped', ?, ?)`
       ).run(
         taskId,
         userId,
@@ -150,6 +152,7 @@ export class WorkTaskService {
         networkEnabled ? 1 : 0,
         `libre-work-${compactId}`,
         `libre-work-${compactId}`,
+        hostPath || null,
         now,
         now
       );
@@ -986,6 +989,7 @@ export class WorkTaskService {
       previewUrl: row.preview_url || undefined,
       previewStatus: row.preview_status,
       workspacePath: '/workspace',
+      hostPath: row.host_path || undefined,
     };
   }
 
@@ -1055,6 +1059,7 @@ const mapTaskRecord = (row: TaskRow): WorkTaskRecord => ({
   networkEnabled: Boolean(row.network_enabled),
   volumeName: row.volume_name,
   containerName: row.container_name,
+  hostPath: row.host_path || undefined,
   previewUrl: row.preview_url || undefined,
   previewStatus: row.preview_status,
   createdAt: row.created_at,

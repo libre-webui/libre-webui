@@ -28,6 +28,9 @@ import workEventService, {
 import workModelProviderService from '../services/workModelProviderService.js';
 import workRuntimeService from '../services/workRuntimeService.js';
 import workTerminalService from '../services/workTerminalService.js';
+import workHostWorkspaceService, {
+  WorkHostWorkspaceError,
+} from '../services/workHostWorkspaceService.js';
 import workTaskService, {
   WorkNotFoundError,
 } from '../services/workTaskService.js';
@@ -88,6 +91,10 @@ router.get(
         reason: workTerminalService.unavailableReason() ?? undefined,
         maxSessionsPerTask: workTerminalService.maxSessionsPerTask,
         idleTimeoutMs: workTerminalService.idleTimeoutMs,
+      },
+      hostWorkspaces: {
+        enabled: workHostWorkspaceService.isEnabled(),
+        roots: workHostWorkspaceService.listRoots(),
       },
     });
   }
@@ -162,6 +169,11 @@ router.post(
       const model = requireBodyString(req.body?.model, 'model', 500);
       const userId = requireUserId(req);
       const provider = readProviderSelection(req.body);
+      const requestedHostPath =
+        typeof req.body?.hostPath === 'string' ? req.body.hostPath.trim() : '';
+      const hostPath = requestedHostPath
+        ? workHostWorkspaceService.resolveWorkspacePath(requestedHostPath)
+        : undefined;
       await workModelProviderService.assertModelSupportsTools(
         model,
         provider,
@@ -172,7 +184,8 @@ router.post(
         message,
         model,
         true,
-        provider
+        provider,
+        hostPath
       );
       const runId = detail.activeRun?.id;
       if (!runId) {
@@ -869,7 +882,12 @@ function sendError<T>(res: Response<ApiResponse<T>>, error: unknown): void {
     code?: unknown;
     message?: unknown;
   };
-  const status = typeof candidate?.status === 'number' ? candidate.status : 500;
+  const status =
+    error instanceof WorkHostWorkspaceError
+      ? 400
+      : typeof candidate?.status === 'number'
+        ? candidate.status
+        : 500;
   const message =
     typeof candidate?.message === 'string'
       ? candidate.message

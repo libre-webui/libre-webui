@@ -166,6 +166,14 @@ export const HomePage: React.FC = () => {
                     <span className='min-w-0 flex-1 truncate'>
                       {task.title || t('work.tasks.untitled', 'Untitled task')}
                     </span>
+                    {task.hostPath && (
+                      <span
+                        className='hidden max-w-[14rem] shrink-0 truncate font-mono text-[10px] text-gray-400 sm:inline dark:text-dark-500'
+                        title={task.hostPath}
+                      >
+                        {task.hostPath}
+                      </span>
+                    )}
                     <span className='shrink-0 font-mono text-[10px] text-gray-400 dark:text-dark-500'>
                       {isWorkTaskActive(task)
                         ? t(status.labelKey, status.label)

@@ -514,9 +514,10 @@ test('malformed provider selections are rejected consistently', () => {
     [{ providerType: 'plugin' }, /providerId is required/i],
     [
       { providerType: 'ollama', providerId: pluginBId },
-      /only valid when providerType is "plugin"/i,
+      /only valid when providerType is "plugin" or "agent"/i,
     ],
-    [{ providerType: 'unknown' }, /must be "ollama" or "plugin"/i],
+    [{ providerType: 'agent' }, /providerId is required/i],
+    [{ providerType: 'unknown' }, /must be "ollama", "plugin", or "agent"/i],
   ]) {
     assert.throws(
       () => normalizeChatProviderSelection(selection),
@@ -530,6 +531,14 @@ test('malformed provider selections are rejected consistently', () => {
       providerId: `  ${pluginBId}  `,
     }),
     { providerType: 'plugin', providerId: pluginBId }
+  );
+
+  assert.deepEqual(
+    normalizeChatProviderSelection({
+      providerType: 'agent',
+      providerId: '  claude-code  ',
+    }),
+    { providerType: 'agent', providerId: 'claude-code' }
   );
 });
 
