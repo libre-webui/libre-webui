@@ -263,7 +263,7 @@ export function SidebarSessions({
                             <span
                               dir='ltr'
                               className={cn(
-                                'text-[11px] font-medium truncate max-w-[108px]',
+                                'font-mono text-[10px] truncate max-w-[108px]',
                                 isActive
                                   ? 'text-gray-700 dark:text-gray-300'
                                   : 'text-gray-600 dark:text-gray-400'

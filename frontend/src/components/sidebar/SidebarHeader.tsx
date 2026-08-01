@@ -21,11 +21,12 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageSquare,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Logo } from '@/components/Logo';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { cn } from '@/utils';
+import { cn, isMac } from '@/utils';
 
 interface SidebarHeaderProps {
   sidebarCompact: boolean;
@@ -153,6 +154,32 @@ export function SidebarHeader({
           {!sidebarCompact && t('chat.session.chat')}
         </Button>
       </div>
+
+      <button
+        type='button'
+        data-testid='sidebar-search-button'
+        onClick={() => window.dispatchEvent(new Event('libre:open-palette'))}
+        title={t('palette.search', 'Search')}
+        aria-label={t('palette.search', 'Search')}
+        className={cn(
+          'mt-2 flex items-center gap-2.5 rounded-xl text-[13px] text-gray-500 transition-colors hover:bg-white/60 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-950 outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30 touch-manipulation',
+          sidebarCompact
+            ? 'h-11 w-11 justify-center p-0 mx-auto'
+            : 'w-full px-2.5 py-2'
+        )}
+      >
+        <Search className='h-4 w-4 shrink-0' />
+        {!sidebarCompact && (
+          <>
+            <span className='flex-1 text-start'>
+              {t('palette.search', 'Search')}
+            </span>
+            <span className='font-mono text-[10px] tracking-wide text-gray-400 dark:text-dark-500'>
+              {isMac() ? '⌘' : 'Ctrl'}K
+            </span>
+          </>
+        )}
+      </button>
     </div>
   );
 }
