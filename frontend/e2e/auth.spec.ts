@@ -18,6 +18,18 @@
 import { expect, test } from '@playwright/test';
 import { mockLibreWebUiApi } from './lib/mockApi';
 
+type TurnstileTestWindow = Window & {
+  completeTurnstile: (token: string) => void;
+  turnstile: {
+    render: (
+      element: HTMLElement,
+      options: { callback: (token: string) => void }
+    ) => string;
+    reset: () => void;
+    remove: () => void;
+  };
+};
+
 test('demo mode login is click-only with disabled demo credentials', async ({
   page,
 }) => {
@@ -71,4 +83,63 @@ test('one-user mode bypasses login and renders the app shell', async ({
   await expect(page.getByRole('heading', { name: 'Sign In' })).toHaveCount(0);
   await expect(page.getByTestId('home-page')).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
+});
+
+test('password login requires and submits a Turnstile token', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const testWindow = window as unknown as TurnstileTestWindow;
+    let completeVerification = (_token: string) => {};
+
+    testWindow.completeTurnstile = token => completeVerification(token);
+    testWindow.turnstile = {
+      render: (_element, options) => {
+        completeVerification = options.callback;
+        return 'login-turnstile-widget';
+      },
+      reset: () => {},
+      remove: () => {},
+    };
+  });
+
+  await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      allowUserModelPull: true,
+      version: '0.17.0-e2e',
+      turnstile: {
+        enabled: true,
+        siteKey: '1x00000000000000000000AA',
+      },
+    },
+  });
+
+  await page.goto('/login');
+
+  const signInButton = page.getByRole('button', { name: /sign in/i });
+  await expect(page.getByLabel('Security verification')).toBeVisible();
+  await expect(signInButton).toBeDisabled();
+
+  await page.getByLabel('Username').fill('e2e');
+  await page.getByLabel('Password').fill('password');
+  await page.evaluate(() => {
+    (window as unknown as TurnstileTestWindow).completeTurnstile(
+      'verified-login-token'
+    );
+  });
+
+  await expect(signInButton).toBeEnabled();
+  const loginRequest = page.waitForRequest(request =>
+    request.url().endsWith('/api/auth/login')
+  );
+  await signInButton.click();
+
+  expect((await loginRequest).postDataJSON()).toEqual({
+    username: 'e2e',
+    password: 'password',
+    turnstileToken: 'verified-login-token',
+  });
 });

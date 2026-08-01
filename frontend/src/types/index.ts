@@ -431,6 +431,7 @@ export interface UserUpdateRequest {
 export interface LoginRequest {
   username: string;
   password: string;
+  turnstileToken?: string;
 }
 
 export interface LoginResponse {
