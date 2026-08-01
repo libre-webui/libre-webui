@@ -34,6 +34,7 @@ import {
   HardDrive,
   Search,
   Sparkles,
+  Terminal,
   User,
   X,
   Zap,
@@ -145,6 +146,13 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
       icon: <User className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
       models: models.filter(model => model.isPersona && !model.isUnavailable),
       color: 'purple',
+    },
+    {
+      type: 'agents' as const,
+      label: t('modelSelector.agentModels', 'Agents'),
+      icon: <Terminal className='h-4 w-4 text-gray-500 dark:text-dark-600' />,
+      models: models.filter(model => model.isAgent && !model.isUnavailable),
+      color: 'green',
     },
     {
       type: 'ollama' as const,

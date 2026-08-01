@@ -452,6 +452,28 @@ export const useChatStore = create<ChatState>((set, get) => ({
         // Continue without plugin models
       }
 
+      // Installed agent CLIs (admin-only; the endpoint returns [] otherwise)
+      try {
+        const { agentCliApi } = await import('@/utils/api');
+        const agentResponse = await agentCliApi.getModels();
+        if (agentResponse.success && agentResponse.data) {
+          const agentModels: OllamaModel[] = agentResponse.data.map(agent => ({
+            name: agent.id,
+            model: agent.id,
+            size: 0,
+            digest: '',
+            modified_at: '',
+            details: {},
+            isAgent: true,
+            agentName: agent.name,
+          }));
+          allModels.push(...agentModels);
+          logger.debug('Agent CLI models added:', agentModels.length);
+        }
+      } catch (agentError) {
+        logger.warn('Agent CLI models unavailable:', agentError);
+      }
+
       const providerModelCount = allModels.length;
 
       // Load personas and add them as special models

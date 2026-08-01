@@ -22,6 +22,7 @@ import ollamaService from './services/ollamaService.js';
 import chatService from './services/chatService.js';
 import pluginService from './services/pluginService.js';
 import documentService from './services/documentService.js';
+import agentCliService from './services/agentCliService.js';
 import chatGenerationService from './services/chatGenerationService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
 import { personaService } from './services/personaService.js';
@@ -259,26 +260,42 @@ export function registerWebSocketServer(server: Server): void {
             activePlugin ? activePlugin.id : 'none'
           );
 
-          if (activePlugin) {
+          const agentProviderId =
+            generationTarget.providerType === 'agent'
+              ? generationTarget.providerId
+              : undefined;
+
+          if (activePlugin || agentProviderId) {
             logger.debug(
-              `[WebSocket] Using plugin ${activePlugin.id} for model ${actualModelName}`
+              `[WebSocket] Using ${
+                agentProviderId
+                  ? `agent CLI ${agentProviderId}`
+                  : `plugin ${activePlugin?.id}`
+              } for model ${actualModelName}`
             );
 
             // ---------------------------------------------------------------
-            // Standard plugin path (stateless HTTP completions)
+            // Standard plugin path (stateless HTTP completions) — agent CLI
+            // targets reuse it by yielding the same stream chunk shape.
             // ---------------------------------------------------------------
 
             try {
-              if (shouldStreamPlugin) {
+              if (agentProviderId || shouldStreamPlugin) {
                 const streamResult = await streamPluginResponse({
                   ws,
-                  chunks: pluginService.executePluginStreamRequest(
-                    actualModelName,
-                    pluginMessages,
-                    mergedOptions,
-                    userId,
-                    activePlugin.id
-                  ),
+                  chunks: agentProviderId
+                    ? agentCliService.executeAgentStreamRequest(
+                        agentProviderId,
+                        pluginMessages,
+                        userId
+                      )
+                    : pluginService.executePluginStreamRequest(
+                        actualModelName,
+                        pluginMessages,
+                        mergedOptions,
+                        userId,
+                        (activePlugin as NonNullable<typeof activePlugin>).id
+                      ),
                   messageId: assistantMessageId,
                 });
                 assistantContent = streamResult.content;
@@ -385,13 +402,20 @@ export function registerWebSocketServer(server: Server): void {
                   (err as { cause: unknown }).cause
                 );
               }
-              // If a plugin was found but failed, don't fall through to Ollama
-              if (activePlugin) {
+              // If a plugin/agent was matched but failed, don't fall through
+              // to Ollama with a model name it cannot serve.
+              if (activePlugin || agentProviderId) {
                 logger.error(
-                  `[WebSocket] Plugin "${activePlugin.name}" failed for model ${actualModelName}, not falling back to Ollama`
+                  `[WebSocket] ${
+                    agentProviderId
+                      ? `Agent CLI "${agentProviderId}"`
+                      : `Plugin "${activePlugin?.name}"`
+                  } failed for model ${actualModelName}, not falling back to Ollama`
                 );
                 sendError(ws, {
-                  error: `Plugin request failed: ${err.message}`,
+                  error: agentProviderId
+                    ? `Agent request failed: ${err.message}`
+                    : `Plugin request failed: ${err.message}`,
                 });
                 return;
               }

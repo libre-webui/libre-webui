@@ -64,16 +64,20 @@ export function normalizeChatProviderSelection(
     return undefined;
   }
 
-  if (rawProviderType !== 'ollama' && rawProviderType !== 'plugin') {
+  if (
+    rawProviderType !== 'ollama' &&
+    rawProviderType !== 'plugin' &&
+    rawProviderType !== 'agent'
+  ) {
     throw new ChatProviderSelectionError(
-      'providerType must be "ollama" or "plugin".'
+      'providerType must be "ollama", "plugin", or "agent".'
     );
   }
 
   if (rawProviderType === 'ollama') {
     if (hasProviderId) {
       throw new ChatProviderSelectionError(
-        'providerId is only valid when providerType is "plugin".'
+        'providerId is only valid when providerType is "plugin" or "agent".'
       );
     }
     return { providerType: 'ollama' };
@@ -81,7 +85,7 @@ export function normalizeChatProviderSelection(
 
   if (typeof rawProviderId !== 'string' || !rawProviderId.trim()) {
     throw new ChatProviderSelectionError(
-      'providerId is required when providerType is "plugin".'
+      `providerId is required when providerType is "${rawProviderType}".`
     );
   }
 
@@ -92,5 +96,5 @@ export function normalizeChatProviderSelection(
     );
   }
 
-  return { providerType: 'plugin', providerId };
+  return { providerType: rawProviderType, providerId };
 }

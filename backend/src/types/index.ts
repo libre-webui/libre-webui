@@ -56,7 +56,7 @@ export interface ChatMessage {
   siblingCount?: number; // Total number of variants (including this one)
 }
 
-export type ChatProviderType = 'ollama' | 'plugin';
+export type ChatProviderType = 'ollama' | 'plugin' | 'agent';
 
 export interface ChatProviderSelection {
   providerType?: ChatProviderType | null;

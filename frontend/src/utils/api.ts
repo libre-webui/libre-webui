@@ -16,6 +16,8 @@
  */
 
 export { default, api } from './api/client';
+export { agentCliApi } from './api/agentCliApi';
+export type { AgentCliModel } from './api/agentCliApi';
 export { authApi, usersApi } from './api/authApi';
 export { chatApi } from './api/chatApi';
 export { documentsApi, embeddingApi } from './api/documentsApi';

@@ -18,6 +18,7 @@
 import { mergeGenerationOptions } from '../utils/generationUtils.js';
 import { OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY } from '../utils/openAIResponsesAdapter.js';
 import { extractPluginAssistantContent } from '../utils/pluginResponse.js';
+import agentCliService from './agentCliService.js';
 import ollamaService from './ollamaService.js';
 import { personaService } from './personaService.js';
 import pluginService from './pluginService.js';
@@ -114,7 +115,7 @@ class ChatGenerationService {
     const mergedOptions = this.mergeOptions(options);
     const provider = normalizeChatProviderSelection(providerSelection);
     const activePlugin =
-      provider?.providerType === 'ollama'
+      provider?.providerType === 'ollama' || provider?.providerType === 'agent'
         ? null
         : pluginService.getActivePluginForModel(
             actualModelName,
@@ -168,6 +169,31 @@ class ChatGenerationService {
       stream: false,
       options: target.mergedOptions as Record<string, unknown>,
     };
+
+    if (target.providerType === 'agent' && target.providerId) {
+      let assistantContent = '';
+      let providerMetadata: Record<string, unknown> | undefined;
+      for await (const chunk of agentCliService.executeAgentStreamRequest(
+        target.providerId,
+        pluginMessages,
+        userId
+      )) {
+        if (chunk.type === 'content' && chunk.content) {
+          assistantContent += chunk.content;
+        } else if (chunk.type === 'done' && chunk.providerMetadata) {
+          providerMetadata = chunk.providerMetadata;
+        }
+      }
+      return {
+        response: this.createPluginChatResponse(
+          target.actualModelName,
+          assistantContent,
+          providerMetadata
+        ),
+        assistantContent,
+        source: 'plugin',
+      };
+    }
 
     if (target.activePlugin) {
       try {

@@ -54,6 +54,7 @@ import {
 } from './middleware/auth.js';
 import ollamaRoutes from './routes/ollama.js';
 import chatRoutes from './routes/chat.js';
+import agentCliRoutes from './routes/agentCli.js';
 import preferencesRoutes from './routes/preferences.js';
 import pluginRoutes from './routes/plugins.js';
 import documentRoutes from './routes/documents.js';
@@ -450,6 +451,7 @@ app.use('/api/auth', authRateLimiter, optionalAuth, authRoutes);
 app.use('/api/users', usersRateLimiter, optionalAuth, usersRoutes);
 app.use('/api/ollama', ollamaRateLimiter, ollamaRoutes);
 app.use('/api/chat', chatRateLimiter, optionalAuth, chatRoutes);
+app.use('/api/agent-clis', chatRateLimiter, optionalAuth, agentCliRoutes);
 app.use(
   '/api/preferences',
   preferencesRateLimiter,

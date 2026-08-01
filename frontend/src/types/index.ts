@@ -76,7 +76,7 @@ export interface ChatSession {
   isPrivate?: boolean; // Private sessions are not saved to backend
 }
 
-export type ChatProviderType = 'ollama' | 'plugin';
+export type ChatProviderType = 'ollama' | 'plugin' | 'agent';
 
 export interface ChatModelSelection {
   model: string;
@@ -108,6 +108,9 @@ export interface OllamaModel {
   isPersona?: boolean;
   personaName?: string;
   personaDescription?: string;
+  // Agent-CLI fields (installed coding agents exposed as chat models)
+  isAgent?: boolean;
+  agentName?: string;
   isLegacySelection?: boolean;
   isUnavailable?: boolean;
 }

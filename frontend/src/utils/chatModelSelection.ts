@@ -25,6 +25,7 @@ const PERSONA_PREFIX = 'persona:';
 const PLUGIN_PREFIX = 'plugin:';
 const OLLAMA_PREFIX = 'ollama:';
 const LEGACY_PREFIX = 'legacy:';
+const AGENT_PREFIX = 'agent:';
 
 const decode = (value: string): string | null => {
   try {
@@ -61,6 +62,14 @@ export function chatModelSelectionFromModel(
     };
   }
 
+  if (model.isAgent) {
+    return {
+      model: model.name,
+      providerType: 'agent',
+      providerId: model.name,
+    };
+  }
+
   return {
     model: model.name,
     providerType: 'ollama',
@@ -75,6 +84,12 @@ export function chatModelSelectionKey(selection: ChatModelSelection): string {
 
   if (selection.providerType === 'plugin' && selection.providerId) {
     return `${PLUGIN_PREFIX}${encodeURIComponent(
+      selection.providerId
+    )}:${encodeURIComponent(selection.model)}`;
+  }
+
+  if (selection.providerType === 'agent' && selection.providerId) {
+    return `${AGENT_PREFIX}${encodeURIComponent(
       selection.providerId
     )}:${encodeURIComponent(selection.model)}`;
   }
@@ -125,6 +140,18 @@ export function decodeChatModelSelectionKey(
       : null;
   }
 
+  if (key.startsWith(AGENT_PREFIX)) {
+    const encoded = key.slice(AGENT_PREFIX.length);
+    const separatorIndex = encoded.indexOf(':');
+    if (separatorIndex < 1) return null;
+
+    const providerId = decode(encoded.slice(0, separatorIndex));
+    const model = decode(encoded.slice(separatorIndex + 1));
+    return providerId && model
+      ? { model, providerType: 'agent', providerId }
+      : null;
+  }
+
   if (key.startsWith(OLLAMA_PREFIX)) {
     const model = decode(key.slice(OLLAMA_PREFIX.length));
     return model ? { model, providerType: 'ollama', providerId: null } : null;
@@ -148,6 +175,12 @@ export function findChatModelForSelection(
         model.isPlugin &&
         model.pluginId === selection.providerId &&
         model.name === selection.model
+    );
+  }
+
+  if (selection.providerType === 'agent') {
+    return models.find(
+      model => model.isAgent && model.name === selection.model
     );
   }
 
@@ -199,6 +232,7 @@ export function isAvailableOllamaModel(model: OllamaModel): boolean {
   return (
     !model.isPlugin &&
     !model.isPersona &&
+    !model.isAgent &&
     !model.isLegacySelection &&
     !model.isUnavailable
   );
@@ -271,6 +305,7 @@ export function withUnavailableChatModel(
       isPlugin: providerType === 'plugin',
       pluginId: providerId,
       pluginName: providerId,
+      isAgent: providerType === 'agent',
       isPersona,
       personaName: isPersona
         ? selection.model.slice(PERSONA_PREFIX.length)

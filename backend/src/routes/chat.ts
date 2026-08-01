@@ -23,6 +23,7 @@ import pluginService from '../services/pluginService.js';
 import { personaService } from '../services/personaService.js';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import { extractStatistics } from '../utils/generationUtils.js';
+import agentCliService from '../services/agentCliService.js';
 import chatGenerationService from '../services/chatGenerationService.js';
 import { ChatRequestService } from '../services/chatRequestService.js';
 import { TitleGenerationService } from '../services/titleGenerationService.js';
@@ -560,6 +561,43 @@ router.post(
 
       let fullResponse = '';
       let assistantProviderMetadata: Record<string, unknown> | undefined;
+
+      if (target.providerType === 'agent' && target.providerId) {
+        for await (const chunk of agentCliService.executeAgentStreamRequest(
+          target.providerId,
+          pluginMessages,
+          userId
+        )) {
+          if (chunk.type === 'content' && chunk.content) {
+            fullResponse += chunk.content;
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'chunk',
+                content: chunk.content,
+                done: false,
+              })}\n\n`
+            );
+          } else if (chunk.type === 'done' && chunk.providerMetadata) {
+            assistantProviderMetadata = chunk.providerMetadata;
+          }
+        }
+
+        if (fullResponse) {
+          chatService.addMessage(
+            sessionId,
+            {
+              role: 'assistant',
+              content: fullResponse,
+              model: session.model,
+              providerMetadata: assistantProviderMetadata,
+            },
+            userId
+          );
+        }
+        res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+        res.end();
+        return;
+      }
 
       if (activePlugin) {
         if (shouldStreamPlugin) {
