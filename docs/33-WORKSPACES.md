@@ -234,6 +234,13 @@ responsive. Formatting is available up to 100,000 characters and 4,000 lines
 for JavaScript/JSX, TypeScript/TSX, JSON variants, CSS/SCSS/Less, HTML,
 Markdown/MDX, and YAML.
 
+When the model changes a file you had open, the Files tab opens a red/green
+Changes view showing exactly what was added and removed since the turn
+started, with long unchanged runs folded away. A toolbar toggle switches
+between the diff and the editor, and the `+added −removed` counters summarize
+the turn at a glance. The comparison baseline is the last content your browser
+saw before the turn, so files first opened after the turn show no diff.
+
 Browser drafts are convenience state, not a backup. They are cleared after a
 successful save or task deletion and normally disappear when the browser
 session ends.
