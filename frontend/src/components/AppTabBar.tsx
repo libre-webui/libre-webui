@@ -36,7 +36,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
 import { useAuthStore } from '@/store/authStore';
 import { cn, isMac } from '@/utils';
-import { advanceWelcomePrompt } from '@/utils/welcomePrompts';
+import { startNewChat, startNewWork } from '@/utils/appNavigation';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 
@@ -57,18 +57,6 @@ const tabIcon = (tab: AppTab): IconComponent => {
 };
 
 const modKey = () => (isMac() ? '⌘' : 'Ctrl');
-
-export const startNewChat = (navigate: (path: string) => void) => {
-  advanceWelcomePrompt();
-  useChatStore.getState().setCurrentSession(null);
-  sessionStorage.setItem('forceWelcomeScreen', 'true');
-  navigate('/chat');
-};
-
-export const startNewWork = (navigate: (path: string) => void) => {
-  useWorkStore.getState().clearError();
-  navigate('/work');
-};
 
 interface NewTabMenuItem {
   key: string;

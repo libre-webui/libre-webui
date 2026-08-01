@@ -106,3 +106,33 @@ test('the sidebar search entry opens the palette and escape closes it', async ({
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('command-palette')).toHaveCount(0);
 });
+
+test('reopening the palette starts from an empty, focused query', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await page.goto('/');
+  await expect(page.getByTestId('home-page')).toBeVisible();
+
+  const input = page.getByTestId('command-palette-input');
+
+  // Type, close with Escape, reopen with the keyboard.
+  await page.keyboard.press('ControlOrMeta+k');
+  await input.fill('personas');
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('command-palette')).toHaveCount(0);
+
+  await page.keyboard.press('ControlOrMeta+k');
+  await expect(input).toHaveValue('');
+
+  // Same again, closing via the shortcut and reopening from the sidebar.
+  await input.fill('models');
+  await page.keyboard.press('ControlOrMeta+k');
+  await expect(page.getByTestId('command-palette')).toHaveCount(0);
+  await page.getByTestId('sidebar-search-button').click();
+  await expect(input).toHaveValue('');
+
+  // The input takes focus on open, so typing goes straight into it.
+  await page.keyboard.type('imag');
+  await expect(input).toHaveValue('imag');
+});

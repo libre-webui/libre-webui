@@ -29,7 +29,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
-import { startNewChat, startNewWork } from '@/components/AppTabBar';
+import { startNewChat, startNewWork } from '@/utils/appNavigation';
 import { workStatusPresentation } from '@/utils/workStatus';
 import { isWorkTaskActive } from '@/types/work';
 import { cn, formatTimestamp, isMac } from '@/utils';

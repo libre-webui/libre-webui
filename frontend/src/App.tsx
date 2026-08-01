@@ -54,7 +54,8 @@ import {
 } from '@/components/KeyboardShortcuts';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
-import { AppTabBar, startNewChat, startNewWork } from '@/components/AppTabBar';
+import { AppTabBar } from '@/components/AppTabBar';
+import { startNewChat, startNewWork } from '@/utils/appNavigation';
 import { CommandPalette } from '@/components/CommandPalette';
 import { Logo } from '@/components/Logo';
 import { useAppStore } from '@/store/appStore';

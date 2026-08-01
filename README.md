@@ -68,7 +68,7 @@ For private local inference, install [Ollama](https://ollama.com) and pull a
 model:
 
 ```bash
-ollama pull gemma3:4b
+ollama pull gemma4:12b
 ```
 
 That is enough to start. No cloud account is required. When you do want a remote

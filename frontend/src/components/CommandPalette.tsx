@@ -41,7 +41,7 @@ import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
-import { startNewChat, startNewWork } from '@/components/AppTabBar';
+import { startNewChat, startNewWork } from '@/utils/appNavigation';
 import { cn, formatTimestamp, isMac } from '@/utils';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
@@ -86,10 +86,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
+        // Resetting on both edges keeps every open starting from a clean query.
+        setQuery('');
+        setSelectedIndex(0);
         setOpen(current => !current);
       }
     };
-    const onOpenEvent = () => setOpen(true);
+    const onOpenEvent = () => {
+      setQuery('');
+      setSelectedIndex(0);
+      setOpen(true);
+    };
     document.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('libre:open-palette', onOpenEvent);
     return () => {
@@ -98,12 +105,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     };
   }, []);
 
+  // Moving focus is a DOM side effect, so it belongs in an effect.
   useEffect(() => {
-    if (open) {
-      setQuery('');
-      setSelectedIndex(0);
-      window.requestAnimationFrame(() => inputRef.current?.focus());
-    }
+    if (!open) return;
+    const frame = window.requestAnimationFrame(() => inputRef.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
   }, [open]);
 
   const close = useCallback(() => setOpen(false), []);
@@ -246,10 +252,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   }, [items, query]);
 
   useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
-  useEffect(() => {
     const selected = listRef.current?.querySelector<HTMLElement>(
       '[data-selected="true"]'
     );
@@ -281,7 +283,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             ref={inputRef}
             data-testid='command-palette-input'
             value={query}
-            onChange={event => setQuery(event.target.value)}
+            onChange={event => {
+              setQuery(event.target.value);
+              // A new query means the previous highlight no longer applies.
+              setSelectedIndex(0);
+            }}
             onKeyDown={event => {
               if (event.key === 'Escape') {
                 event.preventDefault();
