@@ -590,43 +590,43 @@ apply host-level storage limits where needed.
 
 For each task, Docker publishes the configured container preview port to a
 dynamically assigned port on `127.0.0.1`. The model and browser cannot choose
-an arbitrary host port. Libre WebUI accepts only loopback HTTP/HTTPS preview
-URLs and embeds the application in an iframe sandbox that allows scripts,
-forms, modals, and downloads, but does not grant same-origin access to Libre
-WebUI.
+an arbitrary host port. Libre WebUI signs a capability URL for that exact task
+and port, verifies that the preview is still running on every request, and
+proxies HTTP and WebSocket traffic through `/api/work/previews`. Stopping or
+restarting the preview revokes the old URL.
 
-The preview has a different origin and does not receive Libre WebUI's
-authentication token. Generated application code remains untrusted and can use
-the task's network egress to transmit anything it can read from its own
-workspace or browser inputs.
+Preview responses strip Libre WebUI credentials and upstream cookies. HTML is
+constrained by both an iframe sandbox and response CSP that allow scripts,
+forms, modals, and downloads without granting same-origin access. The CSP also
+protects a preview opened in a separate tab. Generated application code
+remains untrusted and can use network egress to transmit anything it can read
+from its own workspace or browser inputs. Treat a running preview URL as a
+short-lived secret and do not share it.
 
-The embedded preview is intentionally local to the backend host:
+Because the browser loads the proxy on Libre WebUI's own public origin, remote
+browsers and HTTPS reverse proxies work without exposing dynamic Docker ports
+or triggering mixed-content blocking. Reverse proxies must preserve WebSocket
+upgrades for `/api/work/previews/`; the provided Nginx configuration does so.
 
-- It works when the browser and backend run on the same computer.
-- A browser connecting to a Libre WebUI backend on another machine resolves
-  `127.0.0.1` to the browser's own computer, not the backend.
-- An HTTPS-hosted Libre WebUI can have its plain-HTTP loopback preview blocked
-  by browser mixed-content policy.
-
-To allow local previews, Libre WebUI's response policy permits loopback frame
-sources, disables cross-origin embedder policy, and does not automatically
-upgrade HTTP previews to HTTPS. Those header choices apply to the whole WebUI
-origin. Operators requiring stricter cross-origin isolation should disable or
-remove embedded previews and restore their preferred headers.
+The main application permits only its own origin and Cloudflare Turnstile as
+frame sources. Preview responses bypass the main Helmet policy so they can
+stream request bodies and apply the narrower sandbox policy described above.
+Cross-origin embedder policy remains disabled because generated dev servers do
+not normally emit compatible resource headers.
 
 ## Deployment Matrix
 
 Work availability follows the machine and process running the Libre WebUI
 backend, not merely the browser or desktop interface.
 
-| Deployment                                | Work runs and files                                                                                       | Embedded preview                                                                            |
-| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `npx libre-webui` on a local computer     | Supported when Docker is installed, running, and callable by the backend user.                            | Supported when the browser is on that same computer.                                        |
-| Source development on a local computer    | Supported under the same Docker and provider requirements.                                                | Supported when the development browser and backend share the host.                          |
-| Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.  | Supported only when that backend's loopback is also local to the desktop client.            |
-| Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                               | Not reachable from an ordinary remote browser because the returned URL is backend loopback. |
-| Standard repository Docker Compose        | Supported by default: the image ships the Docker CLI and the Compose file mounts the host Docker socket.  | Reachable from a browser on the Docker host.                                                |
-| Current Kubernetes/Helm deployment        | Unavailable: the chart does not create a Work runtime driver, per-task Pods, RBAC, or persistent volumes. | Unavailable.                                                                                |
+| Deployment                                | Work runs and files                                                                                       | Embedded preview                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `npx libre-webui` on a local computer     | Supported when Docker is installed, running, and callable by the backend user.                            | Supported through the signed application-origin proxy.                        |
+| Source development on a local computer    | Supported under the same Docker and provider requirements.                                                | Supported through the development API origin on port 3001.                    |
+| Electron desktop client                   | Conditional. Electron uses an external Libre WebUI backend and does not provide a separate Work runtime.  | Supported through that backend's signed proxy URL.                            |
+| Bare-metal or VM backend on a remote host | Runs, files, and provider calls work when Docker is available on that host.                               | Supported when the public reverse proxy preserves HTTP and WebSocket traffic. |
+| Standard repository Docker Compose        | Supported by default: the image ships the Docker CLI and the Compose file mounts the host Docker socket.  | Supported through the same public Libre WebUI origin.                         |
+| Current Kubernetes/Helm deployment        | Unavailable: the chart does not create a Work runtime driver, per-task Pods, RBAC, or persistent volumes. | Unavailable.                                                                  |
 
 ### Running Work when Libre WebUI is itself in Docker
 
@@ -668,10 +668,12 @@ echo "DOCKER_GID=$(docker run --rm -v /var/run/docker.sock:/var/run/docker.sock 
 docker compose up -d --force-recreate
 ```
 
-Task previews are published on the Docker **host**, so a browser on that host
-reaches them at the returned `127.0.0.1:<port>` URL. When the host is remote,
-set `WORK_PREVIEW_BIND` to an interface that browser can route to and
-`WORK_PREVIEW_HOST` to the name it uses, then firewall the published range.
+Task preview ports remain bound to Docker host loopback. Libre WebUI exposes
+each running preview through a signed same-origin proxy URL, including HTTP
+assets and WebSocket upgrades. This works behind HTTPS and remote tunnels
+without opening the ephemeral Docker ports to the network. Preview documents
+receive a restrictive browser sandbox policy, and stopping or restarting a
+preview revokes its previous URL.
 
 Concurrency is capped separately: `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` defaults
 to `2` and `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL` to `3`, so an administrator can
@@ -700,7 +702,6 @@ Work reads these variables in the backend process:
 | `WORK_PIDS_LIMIT`                     | `256`                                                                                         | Per-container process limit                                |
 | `WORK_PREVIEW_PORT`                   | `4173`                                                                                        | Port the app must listen on inside the container           |
 | `WORK_PREVIEW_BIND`                   | `127.0.0.1`                                                                                   | Host interface the preview port is published on            |
-| `WORK_PREVIEW_HOST`                   | value of `WORK_PREVIEW_BIND`                                                                  | Host advertised in the preview URL                         |
 | `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`     | `3`                                                                                           | Concurrent container-backed tasks per Libre WebUI instance |
 | `WORK_MAX_ACTIVE_RUNTIMES_PER_USER`   | `2`                                                                                           | Concurrent container-backed tasks per administrator        |
 | `WORK_MAX_TASKS_GLOBAL`               | `500`                                                                                         | Persisted Work task limit per Libre WebUI instance         |
@@ -939,10 +940,11 @@ start in `/workspace`, so use `cd <app-directory> && ...` for a nested app.
 
 ### The preview works on the server but not in a remote browser
 
-The preview URL is intentionally published on backend loopback. It is not a
-remote preview proxy. Run the browser on the backend host or implement a
-separate authenticated preview-routing design. On HTTPS sites, also check for
-mixed-content blocking.
+Confirm that the deployment is running a build with the signed Work preview
+proxy, then restart the preview to replace any legacy loopback URL. If ordinary
+pages load but hot reload does not, confirm the reverse proxy and tunnel allow
+WebSocket upgrades on `/api/work/previews/`. The Docker-published port should
+remain on backend loopback and does not need a firewall opening.
 
 ### Files remain but the preview stopped
 
@@ -985,7 +987,8 @@ Before enabling Work for an installation, remember:
 - Work volumes have no independent disk quota.
 - Remote providers receive requested tool results and can incur multiple calls
   per run.
-- Embedded preview URLs are backend-loopback only.
+- Preview ports stay on backend loopback and are exposed only through signed,
+  revocable proxy URLs.
 - Standard Docker Compose and current Kubernetes/Helm deployments do not
   provide the Work runtime.
 - A complete backup requires both the Libre WebUI database and Work volumes.

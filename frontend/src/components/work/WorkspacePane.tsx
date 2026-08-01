@@ -56,6 +56,7 @@ import type {
   WorkTask,
 } from '@/types/work';
 import { cn } from '@/utils';
+import { API_BASE_URL } from '@/utils/config';
 import {
   clearWorkDraft,
   loadWorkDraft,
@@ -93,18 +94,20 @@ interface WorkspacePaneProps {
 
 const safePreviewUrl = (value?: string | null): string | null => {
   if (!value) return null;
-  try {
-    const url = new URL(value);
-    const loopback =
-      url.hostname === 'localhost' ||
-      url.hostname === '127.0.0.1' ||
-      url.hostname === '[::1]';
-    return loopback && (url.protocol === 'http:' || url.protocol === 'https:')
-      ? url.toString()
-      : null;
-  } catch {
-    return null;
+
+  if (
+    /^\/api\/work\/previews\/[A-Za-z0-9-]{1,100}\/\d{1,5}\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\//.test(
+      value
+    )
+  ) {
+    try {
+      const apiOrigin = new URL(API_BASE_URL, window.location.origin).origin;
+      return new URL(value, `${apiOrigin}/`).toString();
+    } catch {
+      return null;
+    }
   }
+  return null;
 };
 
 const parentPath = (path: string): string => {

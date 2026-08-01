@@ -550,7 +550,12 @@ test('preview startup wires detected targets into safe Docker launch arguments',
     };
 
     const previewUrl = await service.startPreview(detectedTask);
-    assert.equal(previewUrl, 'http://127.0.0.1:49173');
+    assert.match(
+      previewUrl,
+      new RegExp(
+        `^/api/work/previews/${detectedTask.id}/49173\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{43}/$`
+      )
+    );
     assert.equal(releaseCalls, 0);
     service.finalizeTaskRemoval(detectedTask.id);
     assert.equal(releaseCalls, 1);
