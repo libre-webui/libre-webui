@@ -232,17 +232,19 @@ export const LoginForm: React.FC<LoginFormProps> = ({
             </div>
           )}
 
-          <div className='mt-6 text-center'>
-            <p className='text-sm text-ink-muted'>
-              {t('auth.login.noAccount')}{' '}
-              <button
-                onClick={() => onShowSignup?.()}
-                className='font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300'
-              >
-                {t('auth.login.signUpHere')}
-              </button>
-            </p>
-          </div>
+          {onShowSignup && (
+            <div className='mt-6 text-center'>
+              <p className='text-sm text-ink-muted'>
+                {t('auth.login.noAccount')}{' '}
+                <button
+                  onClick={onShowSignup}
+                  className='font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300'
+                >
+                  {t('auth.login.signUpHere')}
+                </button>
+              </p>
+            </div>
+          )}
         </>
       )}
     </div>

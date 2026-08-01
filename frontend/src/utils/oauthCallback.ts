@@ -50,6 +50,7 @@ const _handleTokenLogin = async (token: string): Promise<boolean> => {
           requiresAuth: true,
           hasUsers: true,
           userCount: 1,
+          signupEnabled: true,
         });
         // Don't show success toast here since App.tsx handles it
         return true;

@@ -23,6 +23,10 @@ import { dirname, join } from 'path';
 import { randomBytes } from 'crypto';
 import { systemSettingsService } from './systemSettingsService.js';
 import { turnstileService, TurnstilePublicConfig } from './turnstileService.js';
+import {
+  canCreateLocalAccount,
+  isPublicRegistrationEnabled,
+} from './registrationPolicy.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('services:auth-service');
@@ -64,6 +68,7 @@ export interface SystemInfo {
   requiresAuth: boolean;
   hasUsers: boolean;
   userCount: number;
+  signupEnabled: boolean;
   allowUserModelPull: boolean;
   version?: string;
   turnstile: TurnstilePublicConfig;
@@ -137,10 +142,21 @@ export class AuthService {
       requiresAuth: true, // For now, always require auth
       hasUsers: userCount > 0,
       userCount,
+      signupEnabled: canCreateLocalAccount(userCount),
       allowUserModelPull: systemSettingsService.getAllowUserModelPull(),
       version: packageVersion,
       turnstile: turnstileService.getPublicConfig(),
     };
+  }
+
+  /** Whether public registration is enabled by configuration. */
+  isPublicRegistrationEnabled(): boolean {
+    return isPublicRegistrationEnabled();
+  }
+
+  /** Whether the local signup endpoint may create an account right now. */
+  canCreateLocalAccount(): boolean {
+    return canCreateLocalAccount(userModel.getUserCount());
   }
 
   /**
@@ -180,6 +196,13 @@ export class AuthService {
     email?: string
   ): Promise<{ user: UserPublic; token: string } | null> {
     try {
+      if (!this.canCreateLocalAccount()) {
+        logger.warn(
+          'Blocked account creation because registration is disabled'
+        );
+        return null;
+      }
+
       const userCount = userModel.getUserCount();
 
       // Only the very first real user (excluding the default system user) becomes admin

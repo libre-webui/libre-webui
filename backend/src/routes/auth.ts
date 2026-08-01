@@ -272,6 +272,14 @@ router.get('/encryption-key', generalAuthRateLimiter, async (req, res) => {
  */
 router.post('/signup', authRateLimiter, async (req, res) => {
   try {
+    if (!authService.canCreateLocalAccount()) {
+      res.status(403).json({
+        success: false,
+        message: 'Registration is disabled',
+      });
+      return;
+    }
+
     const { username, password, email, turnstileToken } = req.body;
 
     if (!username || !password) {

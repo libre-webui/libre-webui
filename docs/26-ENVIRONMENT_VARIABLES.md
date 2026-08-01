@@ -37,6 +37,7 @@ This page lists the environment variables read by the current Libre WebUI backen
 
 | Variable               | Default                           | Purpose                                                  |
 | ---------------------- | --------------------------------- | -------------------------------------------------------- |
+| `ENABLE_SIGNUP`        | `true`                            | Set to `false` to disable public account registration    |
 | `JWT_SECRET`           | generated/fallback in development | JWT signing secret; set explicitly in production         |
 | `JWT_EXPIRES_IN`       | `7d`                              | Session-token lifetime                                   |
 | `ENCRYPTION_KEY`       | auto-generated                    | 64-character hex key for encrypted values                |
@@ -45,6 +46,10 @@ This page lists the environment variables read by the current Libre WebUI backen
 | `TURNSTILE_SECRET_KEY` | unset                             | Cloudflare Turnstile secret key for backend verification |
 
 Turnstile is enabled only when both Turnstile keys are present.
+
+`ENABLE_SIGNUP=false` blocks new local and OAuth accounts after the first
+administrator exists. First-time administrator setup remains available on an
+empty database so a new instance cannot be locked before it is configured.
 
 ## OAuth
 
@@ -252,6 +257,7 @@ BASE_URL=https://librewebui.example
 
 JWT_SECRET=replace-with-a-long-random-secret
 ENCRYPTION_KEY=replace-with-64-hex-characters
+ENABLE_SIGNUP=false
 
 OLLAMA_BASE_URL=http://ollama:11434
 OLLAMA_TIMEOUT=300000
