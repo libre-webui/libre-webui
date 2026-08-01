@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Không hỗ trợ định dạng loại tệp này.",
       "saveShortcut": "Lưu (⌘/Ctrl+S)",
       "highlightPaused": "Tính năng tô sáng trực tiếp bị tạm dừng với tệp lớn để duy trì tốc độ chỉnh sửa.",
-      "plainTextLarge": "Văn bản thuần · tệp lớn"
+      "plainTextLarge": "Văn bản thuần · tệp lớn",
+      "changes": "Thay đổi",
+      "changesSince": "Những gì đã thay đổi kể từ lượt trước",
+      "diffLabel": "Thay đổi kể từ lượt trước: {{path}}",
+      "diffFolded": "{{count}} dòng không thay đổi"
     },
     "activity": {
       "empty": "Lệnh, thao tác tệp và kết quả công cụ sẽ xuất hiện ở đây.",

@@ -1604,7 +1604,11 @@
       "formatUnsupported": "Formatting is not available for this file type.",
       "saveShortcut": "Save (⌘/Ctrl+S)",
       "highlightPaused": "Live highlighting is paused for large files to keep editing responsive.",
-      "plainTextLarge": "Plain text · large file"
+      "plainTextLarge": "Plain text · large file",
+      "changes": "Changes",
+      "changesSince": "What changed since the last turn",
+      "diffLabel": "Changes since the last turn: {{path}}",
+      "diffFolded": "{{count}} unchanged lines"
     },
     "activity": {
       "empty": "Commands, file operations, and tool results will appear here.",

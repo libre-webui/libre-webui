@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Formatering er ikke tilgængelig for denne filtype.",
       "saveShortcut": "Gem (⌘/Ctrl+S)",
       "highlightPaused": "Syntaksfremhævning i realtid er sat på pause for store filer, så redigeringen forbliver responsiv.",
-      "plainTextLarge": "Almindelig tekst · stor fil"
+      "plainTextLarge": "Almindelig tekst · stor fil",
+      "changes": "Ændringer",
+      "changesSince": "Hvad der er ændret siden sidste tur",
+      "diffLabel": "Ændringer siden sidste tur: {{path}}",
+      "diffFolded": "{{count}} uændrede linjer"
     },
     "activity": {
       "empty": "Kommandoer, filhandlinger og værktøjsresultater vises her.",

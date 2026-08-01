@@ -1582,7 +1582,11 @@
       "formatUnsupported": "La formattazione non è disponibile per questo tipo di file.",
       "saveShortcut": "Salva (⌘/Ctrl+S)",
       "highlightPaused": "L'evidenziazione in tempo reale è sospesa per i file di grandi dimensioni, per mantenere fluida la modifica.",
-      "plainTextLarge": "Testo normale · file di grandi dimensioni"
+      "plainTextLarge": "Testo normale · file di grandi dimensioni",
+      "changes": "Modifiche",
+      "changesSince": "Cosa è cambiato dall'ultimo turno",
+      "diffLabel": "Modifiche dall'ultimo turno: {{path}}",
+      "diffFolded": "{{count}} righe invariate"
     },
     "activity": {
       "empty": "I comandi, le operazioni sui file e i risultati degli strumenti appariranno qui.",

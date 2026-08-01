@@ -29,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { StreamingMessageContent } from '@/components/ui/StreamingMessageContent';
 import type {
   WorkLiveRun,
+  WorkLiveSegment,
   WorkLiveToolActivity,
   WorkLiveRunPhase,
 } from '@/types/work';
@@ -83,7 +84,7 @@ function ElapsedTime({ run }: { run: WorkLiveRun }) {
   );
 }
 
-function ToolActivityRow({
+export function ToolActivityRow({
   tool,
   expandedByDefault,
 }: {
@@ -193,7 +194,16 @@ function ToolActivityRow({
   );
 }
 
-function ReasoningDisclosure({
+const lastThoughtLine = (content: string): string => {
+  const lines = content.split('\n');
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = lines[index].trim();
+    if (line) return line;
+  }
+  return '';
+};
+
+function ThinkingBlock({
   content,
   streaming,
 }: {
@@ -201,25 +211,50 @@ function ReasoningDisclosure({
   streaming: boolean;
 }) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
+  const preview = streaming && !expanded ? lastThoughtLine(content) : '';
   return (
     <details
       data-testid='work-live-reasoning'
       open={expanded}
       onToggle={event => setExpanded(event.currentTarget.open)}
-      className='group mb-3 overflow-hidden rounded-xl border border-line bg-surface-subtle/70'
+      className='group overflow-hidden rounded-xl border border-line bg-surface-subtle/70'
     >
-      <summary className='flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-medium text-ink-muted marker:hidden [&::-webkit-details-marker]:hidden'>
-        <span className='flex min-w-0 items-center gap-2'>
-          <Brain className='h-3.5 w-3.5 shrink-0 text-[rgb(48,121,255)]' />
-          <span className='truncate'>
-            {t('libreClaw.metrics.provider', { defaultValue: 'Provider' })} ·{' '}
-            {t('libreClaw.metrics.reasoning', {
-              defaultValue: 'Reasoning',
-            })}
+      <summary className='flex cursor-pointer list-none flex-col gap-1 px-3 py-2 marker:hidden [&::-webkit-details-marker]:hidden'>
+        <span className='flex items-center justify-between gap-3 text-xs font-medium text-ink-muted'>
+          <span className='flex min-w-0 items-center gap-2'>
+            <Brain
+              className={cn(
+                'h-3.5 w-3.5 shrink-0 text-[rgb(48,121,255)]',
+                streaming && 'animate-pulse-subtle motion-reduce:animate-none'
+              )}
+            />
+            {streaming ? (
+              <span className='animate-shimmer truncate bg-gradient-to-r from-ink-subtle via-ink to-ink-subtle bg-[length:200%_100%] bg-clip-text text-transparent motion-reduce:animate-none motion-reduce:bg-none motion-reduce:text-ink-muted'>
+                {t('work.statusLabels.thinking', {
+                  defaultValue: 'Thinking',
+                })}
+                …
+              </span>
+            ) : (
+              <span className='truncate'>
+                {t('libreClaw.metrics.reasoning', {
+                  defaultValue: 'Reasoning',
+                })}
+              </span>
+            )}
           </span>
+          <ChevronDown className='h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180' />
         </span>
-        <ChevronDown className='h-3.5 w-3.5 shrink-0 transition-transform group-open:rotate-180' />
+        {preview && (
+          <span
+            dir='auto'
+            data-testid='work-live-reasoning-preview'
+            className='block truncate text-[11px] leading-relaxed text-ink-subtle'
+          >
+            {preview}
+          </span>
+        )}
       </summary>
       <div className='border-t border-line px-3 py-2.5'>
         <StreamingMessageContent
@@ -391,37 +426,57 @@ export function WorkLiveRunSurface({
         </div>
       )}
 
-      {run.reasoning && (
-        <ReasoningDisclosure
-          content={run.reasoning}
-          streaming={active && run.phase !== 'responding'}
-        />
-      )}
-
-      {run.tools.length > 0 && (
-        <div
-          data-testid='work-live-tools'
-          className={cn('mb-3 space-y-1.5', variant === 'activity' && 'mb-0')}
-        >
-          {run.tools.map(tool => (
-            <ToolActivityRow
-              key={tool.id}
-              tool={tool}
-              expandedByDefault={
-                tool.status === 'running' || tool.status === 'error'
-              }
-            />
-          ))}
-        </div>
-      )}
-
-      {variant === 'conversation' && run.response && (
-        <StreamingMessageContent
-          content={run.response}
-          isStreaming={active}
-          className='text-ink'
-        />
-      )}
+      {variant === 'conversation'
+        ? run.timeline.length > 0 && (
+            <div data-testid='work-live-timeline' className='space-y-2'>
+              {run.timeline.map((segment: WorkLiveSegment, index) => {
+                const isLast = index === run.timeline.length - 1;
+                if (segment.kind === 'reasoning') {
+                  return (
+                    <ThinkingBlock
+                      key={`segment-${index}`}
+                      content={segment.text}
+                      streaming={active && isLast}
+                    />
+                  );
+                }
+                if (segment.kind === 'tool') {
+                  const tool = run.tools.find(
+                    candidate => candidate.id === segment.toolId
+                  );
+                  if (!tool) return null;
+                  return (
+                    <ToolActivityRow
+                      key={tool.id}
+                      tool={tool}
+                      expandedByDefault={tool.status === 'error'}
+                    />
+                  );
+                }
+                return (
+                  <StreamingMessageContent
+                    key={`segment-${index}`}
+                    content={segment.text}
+                    isStreaming={active && isLast}
+                    className='text-ink'
+                  />
+                );
+              })}
+            </div>
+          )
+        : run.tools.length > 0 && (
+            <div data-testid='work-live-tools' className='space-y-1.5'>
+              {run.tools.map(tool => (
+                <ToolActivityRow
+                  key={tool.id}
+                  tool={tool}
+                  expandedByDefault={
+                    tool.status === 'running' || tool.status === 'error'
+                  }
+                />
+              ))}
+            </div>
+          )}
 
       {run.error && (
         <div

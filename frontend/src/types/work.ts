@@ -84,6 +84,11 @@ export interface WorkLiveToolActivity {
   durationMs?: number;
 }
 
+export type WorkLiveSegment =
+  | { kind: 'reasoning'; text: string }
+  | { kind: 'response'; text: string }
+  | { kind: 'tool'; toolId: string };
+
 export interface WorkRunUsage {
   inputTokens?: number;
   outputTokens?: number;
@@ -109,6 +114,7 @@ export interface WorkLiveRun {
   lastEventId: number;
   reasoning: string;
   response: string;
+  timeline: WorkLiveSegment[];
   tools: WorkLiveToolActivity[];
   usage?: WorkRunUsage;
   skills: WorkRunSkill[];

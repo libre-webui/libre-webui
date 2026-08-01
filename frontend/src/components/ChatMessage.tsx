@@ -90,41 +90,47 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   // Derive thinking content, parsed content, and artifacts from message content
-  const { thinkingContent, parsedContent, artifacts } = useMemo(() => {
-    if (isUser || isSystem || !message.content) {
-      return {
-        thinkingContent: null as string | null,
-        parsedContent: message.content,
-        artifacts: message.artifacts || [],
-      };
-    }
+  const { thinkingContent, thinkingStreaming, parsedContent, artifacts } =
+    useMemo(() => {
+      if (isUser || isSystem || !message.content) {
+        return {
+          thinkingContent: null as string | null,
+          thinkingStreaming: false,
+          parsedContent: message.content,
+          artifacts: message.artifacts || [],
+        };
+      }
 
-    const thinkingParsed = parseThinkingContent(message.content);
-    const contentAfterThinking = thinkingParsed.content;
+      const thinkingParsed = parseThinkingContent(message.content);
+      const contentAfterThinking = thinkingParsed.content;
+      const thinkingStreaming = isStreaming && !thinkingParsed.thinkingComplete;
 
-    if (message.artifacts && message.artifacts.length > 0) {
+      if (message.artifacts && message.artifacts.length > 0) {
+        return {
+          thinkingContent: thinkingParsed.thinking,
+          thinkingStreaming,
+          parsedContent: contentAfterThinking,
+          artifacts: message.artifacts,
+        };
+      }
+
+      if (!isStreaming) {
+        const parsed = parseArtifacts(contentAfterThinking);
+        return {
+          thinkingContent: thinkingParsed.thinking,
+          thinkingStreaming,
+          parsedContent: parsed.content,
+          artifacts: parsed.artifacts,
+        };
+      }
+
       return {
         thinkingContent: thinkingParsed.thinking,
+        thinkingStreaming,
         parsedContent: contentAfterThinking,
-        artifacts: message.artifacts,
+        artifacts: [],
       };
-    }
-
-    if (!isStreaming) {
-      const parsed = parseArtifacts(contentAfterThinking);
-      return {
-        thinkingContent: thinkingParsed.thinking,
-        parsedContent: parsed.content,
-        artifacts: parsed.artifacts,
-      };
-    }
-
-    return {
-      thinkingContent: thinkingParsed.thinking,
-      parsedContent: contentAfterThinking,
-      artifacts: [],
-    };
-  }, [message.content, message.artifacts, isUser, isSystem, isStreaming]);
+    }, [message.content, message.artifacts, isUser, isSystem, isStreaming]);
 
   // Auto-play TTS when streaming completes (if enabled)
   useEffect(() => {
@@ -437,23 +443,35 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             ) : (
               <div className='relative'>
                 {/* Collapsible Thinking/CoT Section */}
-                {thinkingContent && (
+                {(thinkingContent || thinkingStreaming) && (
                   <div className='mb-4 border-s border-gray-200 ps-3 dark:border-dark-300'>
                     <button
                       onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
                       className='flex items-center gap-2 text-xs text-gray-500 transition-colors hover:text-gray-900 dark:text-dark-600 dark:hover:text-dark-900'
                     >
-                      <Brain className='h-4 w-4' />
-                      <span className='font-medium'>
-                        {t('chatMessage.thinking')}
-                      </span>
+                      <Brain
+                        className={cn(
+                          'h-4 w-4',
+                          thinkingStreaming &&
+                            'animate-pulse-subtle motion-reduce:animate-none'
+                        )}
+                      />
+                      {thinkingStreaming ? (
+                        <span className='animate-shimmer bg-gradient-to-r from-gray-400 via-gray-900 to-gray-400 bg-[length:200%_100%] bg-clip-text font-medium text-transparent motion-reduce:animate-none motion-reduce:bg-none motion-reduce:text-gray-500 dark:from-dark-500 dark:via-dark-900 dark:to-dark-500 motion-reduce:dark:text-dark-600'>
+                          {t('chatMessage.thinking')}…
+                        </span>
+                      ) : (
+                        <span className='font-medium'>
+                          {t('chatMessage.thinking')}
+                        </span>
+                      )}
                       {isThinkingExpanded ? (
                         <ChevronUp className='h-4 w-4' />
                       ) : (
                         <ChevronDown className='h-4 w-4' />
                       )}
                     </button>
-                    {isThinkingExpanded && (
+                    {isThinkingExpanded && thinkingContent && (
                       <div className='mt-3 rounded-xl bg-gray-100/60 p-3 dark:bg-dark-200/60'>
                         <p
                           dir='auto'

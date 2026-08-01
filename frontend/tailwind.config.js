@@ -174,8 +174,13 @@ export default {
         'slide-up': 'slideUp 0.18s cubic-bezier(0.22, 1, 0.36, 1)',
         'scale-in': 'scaleIn 0.16s cubic-bezier(0.22, 1, 0.36, 1)',
         'pulse-subtle': 'pulseSubtle 2.4s ease-in-out infinite',
+        shimmer: 'shimmer 2s linear infinite',
       },
       keyframes: {
+        shimmer: {
+          '0%': { backgroundPosition: '200% 0' },
+          '100%': { backgroundPosition: '-200% 0' },
+        },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },

@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Pemformatan tidak tersedia untuk jenis fail ini.",
       "saveShortcut": "Simpan (⌘/Ctrl+S)",
       "highlightPaused": "Penyerlahan langsung dijeda untuk fail besar agar penyuntingan kekal responsif.",
-      "plainTextLarge": "Teks biasa · fail besar"
+      "plainTextLarge": "Teks biasa · fail besar",
+      "changes": "Perubahan",
+      "changesSince": "Apa yang berubah sejak giliran terakhir",
+      "diffLabel": "Perubahan sejak giliran terakhir: {{path}}",
+      "diffFolded": "{{count}} baris tidak berubah"
     },
     "activity": {
       "empty": "Perintah, operasi fail dan hasil alat akan dipaparkan di sini.",

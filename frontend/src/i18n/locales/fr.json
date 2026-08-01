@@ -1550,7 +1550,11 @@
       "formatUnsupported": "Le formatage n'est pas disponible pour ce type de fichier.",
       "saveShortcut": "Enregistrer (⌘/Ctrl+S)",
       "highlightPaused": "La coloration en direct est suspendue pour les fichiers volumineux afin de préserver la fluidité de l'édition.",
-      "plainTextLarge": "Texte brut · fichier volumineux"
+      "plainTextLarge": "Texte brut · fichier volumineux",
+      "changes": "Modifications",
+      "changesSince": "Ce qui a changé depuis le dernier tour",
+      "diffLabel": "Modifications depuis le dernier tour : {{path}}",
+      "diffFolded": "{{count}} lignes inchangées"
     },
     "activity": {
       "empty": "Les commandes, les opérations sur les fichiers et les résultats des outils apparaîtront ici.",

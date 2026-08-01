@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Pro tento typ souboru není formátování dostupné.",
       "saveShortcut": "Uložit (⌘/Ctrl+S)",
       "highlightPaused": "U velkých souborů je živé zvýrazňování pozastaveno, aby editor zůstal plynulý.",
-      "plainTextLarge": "Prostý text · velký soubor"
+      "plainTextLarge": "Prostý text · velký soubor",
+      "changes": "Změny",
+      "changesSince": "Co se změnilo od posledního tahu",
+      "diffLabel": "Změny od posledního tahu: {{path}}",
+      "diffFolded": "{{count}} nezměněných řádků"
     },
     "activity": {
       "empty": "Zde se zobrazí příkazy, operace se soubory a výsledky nástrojů.",

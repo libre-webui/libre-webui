@@ -1582,7 +1582,11 @@
       "formatUnsupported": "이 파일 형식은 서식 정리를 지원하지 않습니다.",
       "saveShortcut": "저장(⌘/Ctrl+S)",
       "highlightPaused": "편집 반응성을 유지하기 위해 큰 파일의 실시간 강조 표시를 일시 중지했습니다.",
-      "plainTextLarge": "일반 텍스트 · 큰 파일"
+      "plainTextLarge": "일반 텍스트 · 큰 파일",
+      "changes": "변경 사항",
+      "changesSince": "마지막 턴 이후 변경된 내용",
+      "diffLabel": "마지막 턴 이후 변경 사항: {{path}}",
+      "diffFolded": "변경되지 않은 줄 {{count}}개"
     },
     "activity": {
       "empty": "명령, 파일 작업 및 도구 결과가 여기에 표시됩니다.",

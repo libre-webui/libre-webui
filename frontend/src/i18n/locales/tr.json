@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Bu dosya türü için biçimlendirme kullanılamıyor.",
       "saveShortcut": "Kaydet (⌘/Ctrl+S)",
       "highlightPaused": "Düzenlemeyi akıcı tutmak için büyük dosyalarda canlı vurgulama duraklatıldı.",
-      "plainTextLarge": "Düz metin · büyük dosya"
+      "plainTextLarge": "Düz metin · büyük dosya",
+      "changes": "Değişiklikler",
+      "changesSince": "Son turdan bu yana nelerin değiştiği",
+      "diffLabel": "Son turdan bu yana değişiklikler: {{path}}",
+      "diffFolded": "{{count}} değişmemiş satır"
     },
     "activity": {
       "empty": "Komutlar, dosya işlemleri ve araç sonuçları burada görünür.",

@@ -19,18 +19,24 @@ import {
   ArrowDown,
   Brain,
   ChevronDown,
-  CircleAlert,
   Loader2,
-  TerminalSquare,
   User as UserIcon,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RichMessageContent } from '@/components/ui/RichMessageContent';
 import { StreamingMessageContent } from '@/components/ui/StreamingMessageContent';
-import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
+import {
+  ToolActivityRow,
+  WorkLiveRunSurface,
+} from '@/components/work/WorkLiveRunSurface';
 import type { User } from '@/types';
-import type { WorkLiveRun, WorkMessage, WorkTask } from '@/types/work';
+import type {
+  WorkLiveRun,
+  WorkLiveToolActivity,
+  WorkMessage,
+  WorkTask,
+} from '@/types/work';
 import { cn } from '@/utils';
 
 interface WorkConversationProps {
@@ -113,22 +119,112 @@ function WorkAvatar({ role, user, size = 'message' }: WorkAvatarProps) {
   );
 }
 
-const metadataText = (
-  metadata: Record<string, unknown> | null | undefined
-): string | null => {
-  if (!metadata || Object.keys(metadata).length === 0) return null;
-  try {
-    return JSON.stringify(metadata, null, 2);
-  } catch {
-    return null;
-  }
-};
-
 const toolTitle = (message: WorkMessage, fallback: string): string => {
   const metadata = message.metadata;
   const name =
     metadata?.name ?? metadata?.toolName ?? metadata?.tool ?? metadata?.command;
   return typeof name === 'string' && name ? name : fallback;
+};
+
+const toolCallIdOf = (message: WorkMessage): string | null => {
+  const value = message.metadata?.toolCallId;
+  return typeof value === 'string' && value ? value : null;
+};
+
+type ConversationItem =
+  | { type: 'message'; message: WorkMessage }
+  | { type: 'reasoning'; message: WorkMessage }
+  | { type: 'tools'; tools: WorkLiveToolActivity[] };
+
+const toToolActivity = (
+  call: WorkMessage | undefined,
+  result: WorkMessage | undefined,
+  fallbackName: string
+): WorkLiveToolActivity => {
+  const source = call ?? result;
+  const failed =
+    result?.kind === 'error' ||
+    result?.metadata?.isError === true ||
+    (!result && source?.kind === 'error');
+  const durationMs = result?.metadata?.durationMs;
+  return {
+    id: (call ?? result)?.id ?? 'tool',
+    name: source ? toolTitle(source, fallbackName) : fallbackName,
+    status: failed ? 'error' : 'completed',
+    arguments: call?.metadata,
+    output: result?.content || (!result && call ? call.content : undefined),
+    durationMs: typeof durationMs === 'number' ? durationMs : undefined,
+  };
+};
+
+const buildConversationItems = (
+  messages: WorkMessage[],
+  fallbackName: string
+): Array<{ key: string; item: ConversationItem }> => {
+  const items: Array<{ key: string; item: ConversationItem }> = [];
+  const pendingCalls = new Map<
+    string,
+    { itemIndex: number; toolIndex: number; call: WorkMessage }
+  >();
+
+  const pushTool = (activity: WorkLiveToolActivity, key: string): number => {
+    const last = items[items.length - 1];
+    if (last?.item.type === 'tools') {
+      last.item.tools.push(activity);
+      return last.item.tools.length - 1;
+    }
+    items.push({ key, item: { type: 'tools', tools: [activity] } });
+    return 0;
+  };
+
+  for (const message of messages) {
+    if (message.kind === 'reasoning') {
+      items.push({ key: message.id, item: { type: 'reasoning', message } });
+      continue;
+    }
+    if (message.role !== 'tool' && message.kind === 'message') {
+      items.push({ key: message.id, item: { type: 'message', message } });
+      continue;
+    }
+    const toolCallId = toolCallIdOf(message);
+    if (message.kind === 'tool_call' && toolCallId) {
+      const toolIndex = pushTool(
+        toToolActivity(message, undefined, fallbackName),
+        message.id
+      );
+      pendingCalls.set(toolCallId, {
+        itemIndex: items.length - 1,
+        toolIndex,
+        call: message,
+      });
+      continue;
+    }
+    if (message.kind === 'tool_result' && toolCallId) {
+      const pending = pendingCalls.get(toolCallId);
+      if (pending) {
+        const entry = items[pending.itemIndex];
+        if (entry.item.type === 'tools') {
+          entry.item.tools[pending.toolIndex] = toToolActivity(
+            pending.call,
+            message,
+            fallbackName
+          );
+          pendingCalls.delete(toolCallId);
+          continue;
+        }
+      }
+    }
+    pushTool(
+      toToolActivity(
+        message.kind === 'tool_call' ? message : undefined,
+        message.kind === 'tool_call' ? undefined : message,
+        fallbackName
+      ),
+      message.id
+    );
+  }
+
+  return items;
 };
 
 function ProviderReasoningMessage({ message }: { message: WorkMessage }) {
@@ -142,7 +238,6 @@ function ProviderReasoningMessage({ message }: { message: WorkMessage }) {
         <span className='flex min-w-0 items-center gap-2'>
           <Brain className='h-3.5 w-3.5 shrink-0 text-[rgb(48,121,255)]' />
           <span className='truncate'>
-            {t('libreClaw.metrics.provider', { defaultValue: 'Provider' })} ·{' '}
             {t('libreClaw.metrics.reasoning', {
               defaultValue: 'Reasoning',
             })}
@@ -157,80 +252,6 @@ function ProviderReasoningMessage({ message }: { message: WorkMessage }) {
         {message.content}
       </p>
     </details>
-  );
-}
-
-function ToolMessage({ message }: { message: WorkMessage }) {
-  const { t } = useTranslation();
-  const details = metadataText(message.metadata);
-  const error = message.kind === 'error';
-  const kindLabel = {
-    message: t('work.activity.kinds.message', {
-      defaultValue: 'Message',
-    }),
-    reasoning: t('libreClaw.metrics.reasoning', {
-      defaultValue: 'Reasoning',
-    }),
-    tool_call: t('work.activity.kinds.toolCall', {
-      defaultValue: 'Tool call',
-    }),
-    tool_result: t('work.activity.kinds.toolResult', {
-      defaultValue: 'Tool result',
-    }),
-    error: t('work.activity.kinds.error', {
-      defaultValue: 'Error',
-    }),
-  }[message.kind];
-  return (
-    <div
-      className={cn(
-        'rounded-xl border bg-surface-subtle',
-        error ? 'border-error-500/30' : 'border-line'
-      )}
-    >
-      <div className='flex items-center gap-2 border-b border-line px-3 py-2'>
-        {error ? (
-          <CircleAlert className='h-4 w-4 text-error-500' />
-        ) : (
-          <TerminalSquare className='h-4 w-4 text-ink-muted' />
-        )}
-        <span
-          dir='auto'
-          className='min-w-0 flex-1 truncate font-mono text-xs font-medium text-ink'
-        >
-          {toolTitle(
-            message,
-            t('work.activity.toolActivity', {
-              defaultValue: 'Tool activity',
-            })
-          )}
-        </span>
-        <span className='rounded-md bg-surface-raised px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-ink-muted rtl:tracking-normal'>
-          {kindLabel}
-        </span>
-      </div>
-      {message.content && (
-        <pre
-          dir='ltr'
-          className='max-h-56 overflow-auto whitespace-pre-wrap break-words px-3 py-2.5 text-left font-mono text-xs leading-relaxed text-ink-muted'
-        >
-          {message.content}
-        </pre>
-      )}
-      {details && (
-        <details className='border-t border-line px-3 py-2'>
-          <summary className='cursor-pointer text-[11px] font-medium text-ink-muted'>
-            {t('work.activity.details', { defaultValue: 'Details' })}
-          </summary>
-          <pre
-            dir='ltr'
-            className='mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-all text-left font-mono text-[11px] text-ink-muted'
-          >
-            {details}
-          </pre>
-        </details>
-      )}
-    </div>
   );
 }
 
@@ -255,6 +276,24 @@ export function WorkConversation({
           a.id.localeCompare(b.id)
       ),
     [task.messages]
+  );
+  const liveRunId = liveRun?.runId;
+  const conversationItems = useMemo(
+    () =>
+      buildConversationItems(
+        messages.filter(
+          message =>
+            !(
+              liveRunId &&
+              message.runId === liveRunId &&
+              message.role !== 'user'
+            )
+        ),
+        t('work.activity.toolActivity', {
+          defaultValue: 'Tool activity',
+        })
+      ),
+    [liveRunId, messages, t]
   );
   const lastAssistantId = [...messages]
     .reverse()
@@ -360,25 +399,29 @@ export function WorkConversation({
                   </button>
                 </div>
               )}
-              {messages.map(message => {
-                if (
-                  liveRun &&
-                  message.runId === liveRun.runId &&
-                  message.role !== 'user'
-                ) {
-                  return null;
-                }
-                if (message.kind === 'reasoning') {
+              {conversationItems.map(({ key, item }) => {
+                if (item.type === 'reasoning') {
                   return (
                     <ProviderReasoningMessage
-                      key={message.id}
-                      message={message}
+                      key={key}
+                      message={item.message}
                     />
                   );
                 }
-                if (message.role === 'tool' || message.kind !== 'message') {
-                  return <ToolMessage key={message.id} message={message} />;
+                if (item.type === 'tools') {
+                  return (
+                    <div key={key} className='ms-14 space-y-1.5'>
+                      {item.tools.map(tool => (
+                        <ToolActivityRow
+                          key={tool.id}
+                          tool={tool}
+                          expandedByDefault={false}
+                        />
+                      ))}
+                    </div>
+                  );
                 }
+                const message = item.message;
                 const isUserMessage = message.role === 'user';
                 const streaming =
                   !isUserMessage &&

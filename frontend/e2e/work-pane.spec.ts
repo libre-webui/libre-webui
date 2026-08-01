@@ -1268,9 +1268,30 @@ test('renders live reasoning, tokens, skills, and tool activity from the Work ev
   await expect(liveRun).toContainText('1/48');
   await expect(liveRun).toContainText('Workspace skills · 1');
   await expect(liveRun).not.toContainText('Web app workflow');
-  await expect(liveRun).toContainText('I will inspect the project structure.');
   await expect(liveRun).toContainText('I am building the calm city now.');
   await expect(liveRun).toContainText(/Generated tokens:\s*≈\d+/);
+
+  const timelineEntries = liveRun
+    .getByTestId('work-live-timeline')
+    .locator('> *');
+  await expect(timelineEntries.nth(0)).toHaveAttribute(
+    'data-testid',
+    'work-live-reasoning'
+  );
+  await expect(timelineEntries.nth(1)).toHaveAttribute(
+    'data-testid',
+    'work-live-tool'
+  );
+  await expect(timelineEntries.nth(2)).toContainText(
+    'I am building the calm city now.'
+  );
+
+  const liveReasoning = liveRun.getByTestId('work-live-reasoning');
+  await expect(liveReasoning).not.toHaveAttribute('open');
+  await liveReasoning.locator('summary').click();
+  await expect(liveReasoning).toContainText(
+    'I will inspect the project structure.'
+  );
 
   const liveTool = liveRun.getByTestId('work-live-tool');
   await expect(liveTool).toContainText('read_file');

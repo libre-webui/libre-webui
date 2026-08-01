@@ -18,6 +18,7 @@
 import type {
   WorkLiveRun,
   WorkLiveRunPhase,
+  WorkLiveSegment,
   WorkLiveToolActivity,
   WorkRunEvent,
   WorkRunSkill,
@@ -135,6 +136,38 @@ const capLiveText = (value: string): string => {
 
   return LIVE_TEXT_OMISSION_PREFIX + content.slice(-availableCharacters);
 };
+
+const appendTimelineText = (
+  timeline: WorkLiveSegment[],
+  kind: 'reasoning' | 'response',
+  aggregateBefore: string,
+  aggregateAfter: string
+): WorkLiveSegment[] => {
+  if (aggregateAfter === aggregateBefore) return timeline;
+  if (aggregateAfter.startsWith(aggregateBefore)) {
+    const delta = aggregateAfter.slice(aggregateBefore.length);
+    const last = timeline[timeline.length - 1];
+    if (last && last.kind === kind) {
+      return [
+        ...timeline.slice(0, -1),
+        { kind, text: capLiveText(last.text + delta) },
+      ];
+    }
+    return [...timeline, { kind, text: capLiveText(delta) }];
+  }
+  // A cumulative total rewrote earlier text (or the cap trimmed the head).
+  // Collapse this kind into a single segment holding the authoritative total.
+  const kept = timeline.filter(segment => segment.kind !== kind);
+  return [...kept, { kind, text: aggregateAfter }];
+};
+
+const appendTimelineTool = (
+  timeline: WorkLiveSegment[],
+  toolId: string
+): WorkLiveSegment[] =>
+  timeline.some(segment => segment.kind === 'tool' && segment.toolId === toolId)
+    ? timeline
+    : [...timeline, { kind: 'tool', toolId }];
 
 const usageFrom = (
   data: Record<string, unknown>,
@@ -260,6 +293,7 @@ export const createWorkLiveRun = (
   lastEventId: 0,
   reasoning: '',
   response: '',
+  timeline: [],
   tools: [],
   skills: [],
   startedAt,
@@ -309,13 +343,33 @@ const applySnapshot = (
     phase === 'needs_input' ||
     phase === 'failed' ||
     phase === 'cancelled';
+  const nextReasoning =
+    reasoning === undefined ? current.reasoning : capLiveText(reasoning);
+  const nextResponse =
+    response === undefined ? current.response : capLiveText(response);
+  const nextTools = tools.length > 0 ? tools : current.tools;
+  let timeline = appendTimelineText(
+    current.timeline,
+    'reasoning',
+    current.reasoning,
+    nextReasoning
+  );
+  for (const tool of nextTools) {
+    timeline = appendTimelineTool(timeline, tool.id);
+  }
+  timeline = appendTimelineText(
+    timeline,
+    'response',
+    current.response,
+    nextResponse
+  );
   return {
     ...current,
     phase,
-    reasoning:
-      reasoning === undefined ? current.reasoning : capLiveText(reasoning),
-    response: response === undefined ? current.response : capLiveText(response),
-    tools: tools.length > 0 ? tools : current.tools,
+    reasoning: nextReasoning,
+    response: nextResponse,
+    timeline,
+    tools: nextTools,
     skills,
     usage: asRecord(live.usage)
       ? usageFrom(live, current.usage)
@@ -391,25 +445,38 @@ export const applyWorkRunEvent = (
         phase === 'cancelled',
     };
   } else if (event.type === 'reasoning_delta') {
+    const reasoning = appendDelta(next.reasoning, event.data);
     next = {
       ...next,
       phase: 'thinking',
-      reasoning: appendDelta(next.reasoning, event.data),
+      reasoning,
+      timeline: appendTimelineText(
+        next.timeline,
+        'reasoning',
+        next.reasoning,
+        reasoning
+      ),
     };
   } else if (event.type === 'assistant_delta') {
+    const response = appendDelta(next.response, event.data);
     next = {
       ...next,
       phase: 'responding',
-      response: appendDelta(next.response, event.data),
+      response,
+      timeline: appendTimelineText(
+        next.timeline,
+        'response',
+        next.response,
+        response
+      ),
     };
   } else if (event.type === 'tool_call') {
+    const tool = toolFrom(event.data, event.timestamp, next.tools.length);
     next = {
       ...next,
       phase: 'using_tool',
-      tools: upsertTool(
-        next.tools,
-        toolFrom(event.data, event.timestamp, next.tools.length)
-      ),
+      tools: upsertTool(next.tools, tool),
+      timeline: appendTimelineTool(next.timeline, tool.id),
     };
   } else if (event.type === 'tool_result') {
     const result = toolFrom(event.data, event.timestamp, next.tools.length);

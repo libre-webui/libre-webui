@@ -117,11 +117,15 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 
 /**
  * Parse thinking/chain-of-thought content from assistant messages.
- * Supports formats like [Thinking: ...] or <thinking>...</thinking>
+ * Supports [Thinking: ...], <thinking>...</thinking>, and <think>...</think>.
+ * While a message is still streaming, an opening marker without its closing
+ * counterpart yields the partial thought with `thinkingComplete: false` so the
+ * raw chain of thought never renders as answer text.
  */
 export interface ParsedThinking {
   thinking: string | null;
   content: string;
+  thinkingComplete: boolean;
 }
 
 export function parseThinkingContent(content: string): ParsedThinking {
@@ -129,30 +133,43 @@ export function parseThinkingContent(content: string): ParsedThinking {
   // Need to handle nested brackets and multi-line content
   const bracketPattern = /^\[Thinking:\s*([\s\S]*?)\]\s*/i;
 
-  // Pattern 2: <thinking>...</thinking> - XML-style tags
+  // Patterns 2 and 3: <thinking>...</thinking> and <think>...</think>
   const xmlPattern = /^<thinking>([\s\S]*?)<\/thinking>\s*/i;
+  const shortXmlPattern = /^<think>([\s\S]*?)<\/think>\s*/i;
 
-  // Try bracket pattern first
-  const bracketMatch = content.match(bracketPattern);
-  if (bracketMatch) {
-    return {
-      thinking: bracketMatch[1].trim(),
-      content: content.slice(bracketMatch[0].length).trim(),
-    };
+  for (const pattern of [bracketPattern, xmlPattern, shortXmlPattern]) {
+    const match = content.match(pattern);
+    if (match) {
+      return {
+        thinking: match[1].trim(),
+        content: content.slice(match[0].length).trim(),
+        thinkingComplete: true,
+      };
+    }
   }
 
-  // Try XML pattern
-  const xmlMatch = content.match(xmlPattern);
-  if (xmlMatch) {
-    return {
-      thinking: xmlMatch[1].trim(),
-      content: content.slice(xmlMatch[0].length).trim(),
-    };
+  // An opening marker whose closing counterpart has not streamed in yet:
+  // everything so far is chain of thought, not answer text.
+  const openMarkers: Array<[RegExp, string]> = [
+    [/^\[Thinking:\s*/i, ']'],
+    [/^<thinking>\s*/i, '</thinking>'],
+    [/^<think>\s*/i, '</think>'],
+  ];
+  for (const [openPattern, closeMarker] of openMarkers) {
+    const openMatch = content.match(openPattern);
+    if (openMatch && !content.toLowerCase().includes(closeMarker)) {
+      return {
+        thinking: content.slice(openMatch[0].length).trim() || null,
+        content: '',
+        thinkingComplete: false,
+      };
+    }
   }
 
   // No thinking content found
   return {
     thinking: null,
     content,
+    thinkingComplete: true,
   };
 }

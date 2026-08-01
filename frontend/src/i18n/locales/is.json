@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Forsníðing er ekki tiltæk fyrir þessa skráartegund.",
       "saveShortcut": "Vista (⌘/Ctrl+S)",
       "highlightPaused": "Lifandi auðkenning er stöðvuð fyrir stórar skrár svo breytingar haldist liprar.",
-      "plainTextLarge": "Venjulegur texti · stór skrá"
+      "plainTextLarge": "Venjulegur texti · stór skrá",
+      "changes": "Breytingar",
+      "changesSince": "Það sem breyttist frá síðustu umferð",
+      "diffLabel": "Breytingar frá síðustu umferð: {{path}}",
+      "diffFolded": "{{count}} óbreyttar línur"
     },
     "activity": {
       "empty": "Skipanir, skráaraðgerðir og niðurstöður verkfæra birtast hér.",

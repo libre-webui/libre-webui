@@ -198,6 +198,88 @@ test('reduces reasoning, tools, skills, usage, and terminal state in order', () 
   assert.equal(reduced.terminal, true);
 });
 
+test('keeps a chronological timeline across interleaved thinking, tools, and text', () => {
+  const events: WorkRunEvent[] = [
+    event(1, 'reasoning_delta', { text: 'Planning the change.' }),
+    event(2, 'assistant_delta', { text: 'Inspecting the project first.' }),
+    event(3, 'tool_call', { toolCallId: 'call-1', name: 'read_file' }),
+    event(4, 'tool_result', {
+      toolCallId: 'call-1',
+      name: 'read_file',
+      output: '{}',
+    }),
+    event(5, 'assistant_delta', { text: 'Now writing the file.' }),
+    event(6, 'tool_call', { toolCallId: 'call-2', name: 'write_file' }),
+    event(7, 'tool_result', {
+      toolCallId: 'call-2',
+      name: 'write_file',
+      output: 'ok',
+    }),
+    event(8, 'assistant_delta', { text: ' Done.' }),
+  ];
+
+  const reduced = events.reduce(
+    (state, next) => applyWorkRunEvent(state, next),
+    createWorkLiveRun('task-1', 'run-1')
+  );
+
+  assert.deepEqual(reduced.timeline, [
+    { kind: 'reasoning', text: 'Planning the change.' },
+    { kind: 'response', text: 'Inspecting the project first.' },
+    { kind: 'tool', toolId: 'call-1' },
+    { kind: 'response', text: 'Now writing the file.' },
+    { kind: 'tool', toolId: 'call-2' },
+    { kind: 'response', text: ' Done.' },
+  ]);
+  assert.equal(
+    reduced.response,
+    'Inspecting the project first.Now writing the file. Done.'
+  );
+});
+
+test('rebuilds a canonical timeline from a reconnect snapshot', () => {
+  const snapshot = applyWorkRunEvent(
+    createWorkLiveRun('task-1', 'run-1'),
+    event(9, 'snapshot', {
+      run: {
+        phase: 'responding',
+        reasoning: 'Earlier thinking.',
+        response: 'Earlier answer.',
+        tools: [
+          { id: 'call-1', name: 'read_file', status: 'completed', output: '' },
+        ],
+      },
+    })
+  );
+
+  assert.deepEqual(snapshot.timeline, [
+    { kind: 'reasoning', text: 'Earlier thinking.' },
+    { kind: 'tool', toolId: 'call-1' },
+    { kind: 'response', text: 'Earlier answer.' },
+  ]);
+});
+
+test('collapses a timeline text kind when a cumulative total rewrites it', () => {
+  const first = applyWorkRunEvent(
+    createWorkLiveRun('task-1', 'run-1'),
+    event(1, 'assistant_delta', { text: 'Round one text.' })
+  );
+  const withTool = applyWorkRunEvent(
+    first,
+    event(2, 'tool_call', { toolCallId: 'call-1', name: 'read_file' })
+  );
+  const rewritten = applyWorkRunEvent(
+    withTool,
+    event(3, 'assistant_delta', { total: 'A different final answer.' })
+  );
+
+  assert.deepEqual(rewritten.timeline, [
+    { kind: 'tool', toolId: 'call-1' },
+    { kind: 'response', text: 'A different final answer.' },
+  ]);
+  assert.equal(rewritten.response, 'A different final answer.');
+});
+
 test('treats needs-input completion as a terminal yellow state', () => {
   const reduced = applyWorkRunEvent(
     createWorkLiveRun('task-1', 'run-1'),

@@ -1582,7 +1582,11 @@
       "formatUnsupported": "このファイル形式は整形できません。",
       "saveShortcut": "保存（⌘/Ctrl+S）",
       "highlightPaused": "編集の応答性を保つため、大きなファイルではリアルタイムハイライトを一時停止しています。",
-      "plainTextLarge": "プレーンテキスト・大きなファイル"
+      "plainTextLarge": "プレーンテキスト・大きなファイル",
+      "changes": "変更",
+      "changesSince": "前のターン以降の変更点",
+      "diffLabel": "前のターン以降の変更: {{path}}",
+      "diffFolded": "変更のない行 {{count}} 行"
     },
     "activity": {
       "empty": "コマンド、ファイル操作、ツールの結果がここに表示されます。",

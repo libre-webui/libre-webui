@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Pemformatan tidak tersedia untuk jenis file ini.",
       "saveShortcut": "Simpan (⌘/Ctrl+S)",
       "highlightPaused": "Penyorotan langsung dijeda untuk file besar agar pengeditan tetap responsif.",
-      "plainTextLarge": "Teks biasa · file besar"
+      "plainTextLarge": "Teks biasa · file besar",
+      "changes": "Perubahan",
+      "changesSince": "Apa yang berubah sejak giliran terakhir",
+      "diffLabel": "Perubahan sejak giliran terakhir: {{path}}",
+      "diffFolded": "{{count}} baris tidak berubah"
     },
     "activity": {
       "empty": "Perintah, operasi file, dan hasil alat akan muncul di sini.",

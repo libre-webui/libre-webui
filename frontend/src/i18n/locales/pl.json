@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Formatowanie nie jest dostępne dla tego typu pliku.",
       "saveShortcut": "Zapisz (⌘/Ctrl+S)",
       "highlightPaused": "Wyróżnianie na żywo jest wstrzymane dla dużych plików, aby edycja pozostała płynna.",
-      "plainTextLarge": "Zwykły tekst · duży plik"
+      "plainTextLarge": "Zwykły tekst · duży plik",
+      "changes": "Zmiany",
+      "changesSince": "Co się zmieniło od ostatniej tury",
+      "diffLabel": "Zmiany od ostatniej tury: {{path}}",
+      "diffFolded": "{{count}} niezmienionych wierszy"
     },
     "activity": {
       "empty": "Tutaj pojawią się polecenia, operacje na plikach i wyniki narzędzi.",

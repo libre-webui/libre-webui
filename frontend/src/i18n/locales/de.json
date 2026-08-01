@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Für diesen Dateityp ist keine Formatierung verfügbar.",
       "saveShortcut": "Speichern (⌘/Strg+S)",
       "highlightPaused": "Die Live-Syntaxhervorhebung ist bei großen Dateien pausiert, damit die Bearbeitung flüssig bleibt.",
-      "plainTextLarge": "Klartext · große Datei"
+      "plainTextLarge": "Klartext · große Datei",
+      "changes": "Änderungen",
+      "changesSince": "Was sich seit dem letzten Zug geändert hat",
+      "diffLabel": "Änderungen seit dem letzten Zug: {{path}}",
+      "diffFolded": "{{count}} unveränderte Zeilen"
     },
     "activity": {
       "empty": "Befehle, Dateioperationen und Werkzeugergebnisse werden hier angezeigt.",

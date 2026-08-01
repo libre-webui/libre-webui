@@ -1582,7 +1582,11 @@
       "formatUnsupported": "El formato no está disponible para este tipo de archivo.",
       "saveShortcut": "Guardar (⌘/Ctrl+S)",
       "highlightPaused": "El resaltado en tiempo real está pausado para archivos grandes, a fin de mantener una edición fluida.",
-      "plainTextLarge": "Texto sin formato · archivo grande"
+      "plainTextLarge": "Texto sin formato · archivo grande",
+      "changes": "Cambios",
+      "changesSince": "Qué cambió desde el último turno",
+      "diffLabel": "Cambios desde el último turno: {{path}}",
+      "diffFolded": "{{count}} líneas sin cambios"
     },
     "activity": {
       "empty": "Los comandos, las operaciones de archivos y los resultados de las herramientas aparecerán aquí.",

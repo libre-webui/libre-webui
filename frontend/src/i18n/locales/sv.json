@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Formatering är inte tillgänglig för den här filtypen.",
       "saveShortcut": "Spara (⌘/Ctrl+S)",
       "highlightPaused": "Syntaxmarkering i realtid har pausats för stora filer så att redigeringen förblir responsiv.",
-      "plainTextLarge": "Oformaterad text · stor fil"
+      "plainTextLarge": "Oformaterad text · stor fil",
+      "changes": "Ändringar",
+      "changesSince": "Vad som ändrats sedan senaste turen",
+      "diffLabel": "Ändringar sedan senaste turen: {{path}}",
+      "diffFolded": "{{count}} oförändrade rader"
     },
     "activity": {
       "empty": "Kommandon, filåtgärder och verktygsresultat visas här.",

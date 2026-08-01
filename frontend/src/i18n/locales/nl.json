@@ -1582,7 +1582,11 @@
       "formatUnsupported": "Formattering is niet beschikbaar voor dit bestandstype.",
       "saveShortcut": "Opslaan (⌘/Ctrl+S)",
       "highlightPaused": "Live-syntaxmarkering is gepauzeerd voor grote bestanden om de editor responsief te houden.",
-      "plainTextLarge": "Platte tekst · groot bestand"
+      "plainTextLarge": "Platte tekst · groot bestand",
+      "changes": "Wijzigingen",
+      "changesSince": "Wat er is veranderd sinds de laatste beurt",
+      "diffLabel": "Wijzigingen sinds de laatste beurt: {{path}}",
+      "diffFolded": "{{count}} ongewijzigde regels"
     },
     "activity": {
       "empty": "Opdrachten, bestandsbewerkingen en toolresultaten verschijnen hier.",

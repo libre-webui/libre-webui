@@ -22,6 +22,7 @@ import {
   File,
   Files as FilesIcon,
   Folder,
+  GitCompareArrows,
   Loader2,
   Monitor,
   Play,
@@ -43,6 +44,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui';
 import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
 import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
+import { WorkspaceDiffView } from '@/components/work/WorkspaceDiffView';
 import { isRTL } from '@/i18n';
 import type {
   WorkFile,
@@ -62,6 +64,7 @@ import {
   formatWorkCode,
   isWorkCodeFormatSizeSupported,
 } from '@/utils/workCode';
+import { diffWorkLines, workDiffStats } from '@/utils/workDiff';
 
 type WorkspaceTab = 'files' | 'activity' | 'preview';
 
@@ -141,6 +144,13 @@ export function WorkspacePane({
   >();
   const [previewCommand, setPreviewCommand] = useState('');
   const [formatting, setFormatting] = useState(false);
+  const [showDiff, setShowDiff] = useState(false);
+  // Server-side content the client has seen, and its frozen copy from the
+  // moment the current/most recent model turn started.
+  const knownContentsRef = useRef(new Map<string, string>());
+  const [turnBaseline, setTurnBaseline] = useState(
+    () => new Map<string, string>()
+  );
   const previewUrl = safePreviewUrl(task.previewUrl);
   const liveRunId = liveRun?.runId;
   const liveRunError = liveRun?.error;
@@ -174,6 +184,25 @@ export function WorkspacePane({
   const onLoadFileRef = useRef(onLoadFile);
   const onDirtyChangeRef = useRef(onDirtyChange);
   const aliveRef = useRef(true);
+  const diffBaseline = selectedFile
+    ? turnBaseline.get(selectedFile.path)
+    : undefined;
+  const diffLines = useMemo(
+    () =>
+      selectedFile &&
+      diffBaseline !== undefined &&
+      diffBaseline !== selectedFile.content
+        ? diffWorkLines(diffBaseline, selectedFile.content)
+        : null,
+    [diffBaseline, selectedFile]
+  );
+  const diffStats = useMemo(
+    () => (diffLines ? workDiffStats(diffLines) : null),
+    [diffLines]
+  );
+  const diffAvailable = Boolean(
+    diffStats && (diffStats.added > 0 || diffStats.removed > 0)
+  );
   const formatTypeSupported = selectedFile
     ? canFormatWorkFile(selectedFile.path)
     : false;
@@ -209,7 +238,12 @@ export function WorkspacePane({
     };
   }, []);
 
+  // WorkPage mounts one WorkspacePane per task (keyed by task id), so the
+  // content maps below start fresh for every workspace.
   useEffect(() => {
+    if (!wasTaskActive.current && taskActive) {
+      setTurnBaseline(new Map(knownContentsRef.current));
+    }
     if (wasTaskActive.current && !taskActive) {
       void onLoadFilesRef.current(currentPath);
       if (selectedFile && !dirty) {
@@ -229,6 +263,11 @@ export function WorkspacePane({
             ) {
               return;
             }
+            knownContentsRef.current.set(file.path, file.content);
+            const baseline = turnBaseline.get(file.path);
+            if (baseline !== undefined && baseline !== file.content) {
+              setShowDiff(true);
+            }
             editorContentRef.current = file.content;
             editorBaseUpdatedAtRef.current = file.updatedAt ?? file.modifiedAt;
             setEditorContent(file.content);
@@ -238,7 +277,7 @@ export function WorkspacePane({
       }
     }
     wasTaskActive.current = taskActive;
-  }, [currentPath, dirty, selectedFile, taskActive]);
+  }, [currentPath, dirty, selectedFile, taskActive, turnBaseline]);
 
   const confirmDiscard = (): boolean =>
     !dirty ||
@@ -258,6 +297,7 @@ export function WorkspacePane({
     discardCurrentDraft();
     onClearSelectedFile();
     onDirtyChange(false);
+    setShowDiff(false);
     setCurrentPath(path);
     await onLoadFiles(path).catch(() => undefined);
   };
@@ -269,6 +309,9 @@ export function WorkspacePane({
     const file = await onLoadFile(path).catch(() => undefined);
     if (!aliveRef.current || !file || generation !== openFileGeneration.current)
       return;
+    knownContentsRef.current.set(file.path, file.content);
+    const baseline = turnBaseline.get(file.path);
+    setShowDiff(baseline !== undefined && baseline !== file.content);
     const draft = loadWorkDraft(task.id, file.path);
     const content = draft?.content ?? file.content;
     const baseUpdatedAt =
@@ -286,6 +329,7 @@ export function WorkspacePane({
     discardCurrentDraft();
     onClearSelectedFile();
     onDirtyChange(false);
+    setShowDiff(false);
   };
 
   const updateEditorContent = (content: string) => {
@@ -327,6 +371,10 @@ export function WorkspacePane({
       return;
 
     const updatedAt = result.updatedAt ?? result.modifiedAt;
+    knownContentsRef.current.set(
+      submittedPath,
+      typeof result.content === 'string' ? result.content : submittedContent
+    );
     editorBaseUpdatedAtRef.current = updatedAt;
     setEditorBaseUpdatedAt(updatedAt);
     const currentContent = editorContentRef.current;
@@ -552,7 +600,43 @@ export function WorkspacePane({
                   className={cn('h-3.5 w-3.5', loadingFiles && 'animate-spin')}
                 />
               </button>
-              {selectedFile && (
+              {selectedFile && diffAvailable && diffStats && (
+                <button
+                  type='button'
+                  data-testid='work-diff-toggle-button'
+                  aria-pressed={showDiff}
+                  onClick={() => setShowDiff(current => !current)}
+                  title={t('work.files.changesSince', {
+                    defaultValue: 'What changed since the last turn',
+                  })}
+                  className={cn(
+                    'inline-flex h-8 items-center gap-1.5 rounded-lg border px-2 text-[11px] font-medium transition-colors',
+                    showDiff
+                      ? 'border-transparent bg-ink text-ink-inverse'
+                      : 'border-line text-ink-muted hover:bg-surface-subtle hover:text-ink'
+                  )}
+                >
+                  <GitCompareArrows className='h-3.5 w-3.5 shrink-0' />
+                  <span className='hidden sm:inline'>
+                    {t('work.files.changes', { defaultValue: 'Changes' })}
+                  </span>
+                  <span dir='ltr' className='tabular-nums'>
+                    <span
+                      className={showDiff ? undefined : 'text-[rgb(46,164,79)]'}
+                    >
+                      +{diffStats.added}
+                    </span>{' '}
+                    <span
+                      className={
+                        showDiff ? undefined : 'text-[rgb(255,61,129)]'
+                      }
+                    >
+                      −{diffStats.removed}
+                    </span>
+                  </span>
+                </button>
+              )}
+              {selectedFile && !showDiff && (
                 <>
                   <Button
                     data-testid='work-format-file-button'
@@ -773,7 +857,15 @@ export function WorkspacePane({
               selectedFile ? 'flex' : 'hidden sm:flex'
             )}
           >
-            {selectedFile ? (
+            {selectedFile && showDiff && diffLines ? (
+              <WorkspaceDiffView
+                lines={diffLines}
+                ariaLabel={t('work.files.diffLabel', {
+                  path: selectedFile.path,
+                  defaultValue: 'Changes since the last turn: {{path}}',
+                })}
+              />
+            ) : selectedFile ? (
               <WorkspaceCodeEditor
                 path={selectedFile.path}
                 value={editorContent}

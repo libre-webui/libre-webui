@@ -1582,7 +1582,11 @@
       "formatUnsupported": "此文件类型不支持格式化。",
       "saveShortcut": "保存 (⌘/Ctrl+S)",
       "highlightPaused": "为保持编辑流畅，大文件的实时高亮已暂停。",
-      "plainTextLarge": "纯文本 · 大文件"
+      "plainTextLarge": "纯文本 · 大文件",
+      "changes": "更改",
+      "changesSince": "自上一轮以来的更改",
+      "diffLabel": "自上一轮以来的更改：{{path}}",
+      "diffFolded": "{{count}} 行未更改"
     },
     "activity": {
       "empty": "命令、文件操作和工具结果将显示在这里。",
