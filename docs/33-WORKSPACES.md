@@ -418,6 +418,41 @@ round-limit exception or marking incomplete work complete. A follow-up run
 continues in the same durable workspace. A single Work run can still make many
 billable provider requests.
 
+## Host Folder Workspaces (Opt-In)
+
+By default a task's `/workspace` is a Docker named volume that exists only for
+that task, so the model can never reach your real files. A deployment can
+instead allow a task to be bound to an actual folder on the host.
+
+Set both variables, then restart the backend:
+
+```bash
+WORK_HOST_WORKSPACES_ENABLED=true
+WORK_HOST_WORKSPACE_ROOTS=/Users/you/Projects
+```
+
+`WORK_HOST_WORKSPACE_ROOTS` is a `:`-separated list of roots; it defaults to the
+server user's home directory. When the feature is on, the Work landing screen
+gains an optional **Workspace folder** field. Leave it blank and the task
+behaves exactly as before, with its own isolated volume.
+
+Before a path is accepted it must be absolute, exist, be a directory, and
+resolve — through any symlinks — to a location inside one of the configured
+roots. Directories named `.ssh`, `.gnupg`, `.aws`, `.config`, `.kube`,
+`.docker`, `.claude`, `.libre-webui`, or `node_modules` are refused outright.
+The resolved path is stored with the task and shown in the task header, so it is
+always visible which folder a task is operating on.
+
+:::caution This narrows the sandbox
+
+A host workspace means the model reads and writes your real files, and the
+container's other protections — non-root user, dropped capabilities, resource
+limits — no longer stand between it and that directory. Keep the feature
+disabled unless you want it, keep the roots as narrow as possible, and prefer
+directories that are under version control.
+
+:::
+
 ## Persistence and Runtime Lifecycle
 
 Libre WebUI separates durable state from execution state:

@@ -51,15 +51,25 @@ test('Arabic mirrors the desktop shell and preserves content direction', async (
     localStorage.setItem('i18nextLng', 'ar');
 
     const observer = new MutationObserver(() => {
-      const navigation = document.querySelector('nav');
+      const navigation = document.querySelector(
+        '[data-testid="sidebar-navigation"]'
+      );
       if (!navigation) return;
 
       document.documentElement.dataset.firstNavDir =
         document.documentElement.dir;
       document.documentElement.dataset.firstNavLang =
         document.documentElement.lang;
+      // The destinations render as icons, so the translated strings live in
+      // their accessible names rather than in text nodes.
+      const navigationText = [
+        navigation.textContent || '',
+        ...Array.from(navigation.querySelectorAll('[aria-label]')).map(
+          element => element.getAttribute('aria-label') || ''
+        ),
+      ].join(' ');
       document.documentElement.dataset.firstNavArabic = String(
-        /[\u0600-\u06ff]/.test(navigation.textContent || '')
+        /[\u0600-\u06ff]/.test(navigationText)
       );
       observer.disconnect();
     });

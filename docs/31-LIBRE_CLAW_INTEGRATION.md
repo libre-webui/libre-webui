@@ -27,6 +27,11 @@ Libre Claw remains the runtime that owns the powerful agent behavior:
 Libre WebUI talks to the Libre Claw daemon over HTTP and exposes those features
 inside the normal authenticated WebUI shell.
 
+In the interface this surface is called **Agents** — the icon in the sidebar,
+the `/agents` route, and the command palette entry all use that name. Libre Claw
+is the runtime behind it, so the daemon, its command, and its environment
+variables keep their own name throughout this guide.
+
 ## Libre Claw And Work Are Different
 
 Libre Claw remains an optional external runtime. It is not required for

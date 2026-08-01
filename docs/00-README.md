@@ -46,6 +46,24 @@ the app continues to work and the Work page reports **Runtime unavailable**.
 | Source                      | `npm install && npm run dev`                                              | Available when the native backend process can use Docker           |
 | Electron                    | [Download a release](https://github.com/libre-webui/libre-webui/releases) | Uses Docker on its separately managed backend host, when available |
 
+## Getting Around
+
+The interface is organized as tabs, like a browser. **Home** is always the first
+tab: it greets you, offers what to start, and lists recent chats and Work
+sessions so you can pick one back up. Opening a chat, a Work session, or a page
+adds a tab beside it; the `+` button starts a new one and lists the shortcut for
+each.
+
+Press `Cmd/Ctrl + K` anywhere to search your chats, Work sessions, and actions.
+It works even while you are typing a message, so you can jump elsewhere without
+losing a draft. `Cmd/Ctrl + Shift + O` starts a chat and `Cmd/Ctrl + Shift + U`
+starts a Work session.
+
+The sidebar keeps your conversation list, a search entry, and a compact row of
+icons for Models, Personas, Imagine, and Agents. Every one of those is also in
+the command palette and on Home, so you never have to remember which surface
+something lives on.
+
 ## Core Features
 
 - Streaming chat with local and plugin-backed models
@@ -90,6 +108,10 @@ compatible model-list endpoint.
 [Connect a third-party or self-hosted provider](./PROVIDER_CONNECTIONS) with
 the Provider connections workspace introduced in Libre WebUI 0.16.0.
 
+A coding-agent CLI already installed on the server, such as Claude Code or
+Codex, can also be used as a chat model without an API key.
+[Use an installed coding agent](./AGENT_CLI_MODELS).
+
 ## Documentation
 
 ### Getting Started
@@ -112,6 +134,7 @@ the Provider connections workspace introduced in Libre WebUI 0.16.0.
 
 - [Work: Isolated Workspaces](./WORKSPACES)
 - [Connect Third-Party and Self-Hosted Providers](./PROVIDER_CONNECTIONS)
+- [Use an Installed Coding Agent as a Chat Model](./AGENT_CLI_MODELS)
 - [Plugin Architecture](./PLUGIN_ARCHITECTURE)
 - [Kimi Code](./KIMI_CODE)
 - [Hugging Face Hub](./HUGGINGFACE_HUB)

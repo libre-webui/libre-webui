@@ -82,16 +82,18 @@ instead of running commands on the host.
 
 Libre WebUI turns a model endpoint into a complete working environment without taking ownership of the stack around it.
 
-|                                 | What you can do                                                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Talk to the model you want**  | Stream conversations through local Ollama, Ollama Cloud, bundled providers, or compatible endpoints. Discover and manage models from the UI. |
-| **Give every task a workspace** | Let a tool-capable model inspect files, edit code, run commands, and preview an app in a persistent, task-scoped Docker workspace.           |
-| **Bring your own context**      | Chat with PDF and plain-text documents using keyword retrieval or optional semantic embeddings.                                              |
-| **Turn answers into artifacts** | Preview sandboxed HTML, SVG, JSON, code, and multi-file artifacts beside a normal chat.                                                      |
-| **Create with more than text**  | Generate images, use provider-backed speech, and build reusable personas with prompts, parameters, and memory.                               |
-| **Make the interface yours**    | Keep light or dark mode across refreshes, apply an adaptive accent theme, and work in 25 languages/locales including Arabic RTL.             |
-| **Operate it your way**         | Use local accounts, roles, optional OAuth, Docker, Kubernetes, npm, or the Electron desktop client.                                          |
-| **Extend without lock-in**      | Configure chat, embeddings, image generation, and text-to-speech providers through the plugin layer.                                         |
+|                                    | What you can do                                                                                                                              |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Work the way you browse**        | Keep chats, Work sessions, and pages open side by side as tabs, start from a Home launcher, and jump anywhere with `⌘K`.                     |
+| **Talk to the model you want**     | Stream conversations through local Ollama, Ollama Cloud, bundled providers, or compatible endpoints. Discover and manage models from the UI. |
+| **Use the agent you subscribe to** | Expose an installed coding-agent CLI, such as Claude Code or Codex, as a selectable chat model without adding an API key.                    |
+| **Give every task a workspace**    | Let a tool-capable model inspect files, edit code, run commands, and preview an app in a persistent, task-scoped Docker workspace.           |
+| **Bring your own context**         | Chat with PDF and plain-text documents using keyword retrieval or optional semantic embeddings.                                              |
+| **Turn answers into artifacts**    | Preview sandboxed HTML, SVG, JSON, code, and multi-file artifacts beside a normal chat.                                                      |
+| **Create with more than text**     | Generate images, use provider-backed speech, and build reusable personas with prompts, parameters, and memory.                               |
+| **Make the interface yours**       | Keep light or dark mode across refreshes, apply an adaptive accent theme, and work in 25 languages/locales including Arabic RTL.             |
+| **Operate it your way**            | Use local accounts, roles, optional OAuth, Docker, Kubernetes, npm, or the Electron desktop client.                                          |
+| **Extend without lock-in**         | Configure chat, embeddings, image generation, and text-to-speech providers through the plugin layer.                                         |
 
 ## Local-first is a real boundary
 
@@ -117,6 +119,14 @@ Moonshot AI, Mistral, OpenRouter, Hugging Face, GitHub Models, ComfyUI,
 ElevenLabs, Qwen3-TTS, and Kyutai TTS.
 
 Credentials can come from deployment-wide environment variables or encrypted, user-scoped settings. Plugins can define static model fallbacks and use live discovery when a provider exposes a compatible model-list endpoint.
+
+Coding-agent CLIs already installed on the server can also appear as chat
+models. If `claude` or `codex` is on the server's `PATH`, administrators see an
+**Agents** group in the model selector and can hold a normal conversation with
+that agent using the subscription it is already signed in with, no API key
+involved. The CLI runs as the Libre WebUI server user and inherits that user's
+agent credentials, so treat it as equivalent to granting those agents shell
+access; set `AGENT_CLI_MODELS_ENABLED=false` to turn the feature off.
 
 [Explore the plugin system →](https://docs.librewebui.org/PLUGIN_ARCHITECTURE)
 
@@ -180,6 +190,13 @@ egress policy. The whole policy is hashed into a container label and
 re-verified against `docker inspect` before reuse, so a container predating a
 hardening change is recreated rather than reused.
 
+A task can instead be bound to a real folder on the host when a deployment opts
+in with `WORK_HOST_WORKSPACES_ENABLED`. That folder is bind-mounted at
+`/workspace`, so the model reads and writes your actual files; requested paths
+are resolved through symlinks and checked against an allowlist of roots, and
+credential directories are refused. It is off by default because it is a
+deliberate reduction of the sandbox.
+
 Containers are still not virtual machines. Work tasks still have outbound
 internet egress by design, DNS filtering does not constrain direct-IP egress,
 and task volumes need their own backup and storage policy.
@@ -188,7 +205,11 @@ and task volumes need their own backup and storage policy.
 
 ## Optional broader agents, with the runtime kept separate
 
-[Libre Claw](https://github.com/kroonen-ai/libre-claw) is an optional, admin-controlled local agent runtime. Libre WebUI provides the authenticated control surface for durable runs, timelines, approvals, schedules, usage, and configuration; Libre Claw owns the tools, memory, permission model, and execution.
+The **Agents** section of the interface is the control surface for
+[Libre Claw](https://github.com/kroonen-ai/libre-claw), an optional,
+admin-controlled local agent runtime. Libre WebUI provides the authenticated
+view of durable runs, timelines, approvals, schedules, usage, and configuration;
+Libre Claw owns the tools, memory, permission model, and execution.
 
 Libre Claw is separate from Work. Work is native to Libre WebUI and focused on
 one isolated project workspace; Libre Claw is the optional daemon for broader

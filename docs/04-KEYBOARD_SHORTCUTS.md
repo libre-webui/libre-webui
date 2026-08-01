@@ -12,13 +12,20 @@ Libre WebUI includes app-level shortcuts for navigation and message composition.
 
 ## Global Shortcuts
 
-| Shortcut           | Action                         |
-| ------------------ | ------------------------------ |
-| `Cmd/Ctrl + B`     | Toggle the sidebar             |
-| `Cmd/Ctrl + ,`     | Open Settings                  |
-| `Cmd/Ctrl + D`     | Toggle light/dark theme        |
-| `?` or `Shift + /` | Open keyboard shortcuts        |
-| `Esc`              | Close open modals and overlays |
+| Shortcut               | Action                                     |
+| ---------------------- | ------------------------------------------ |
+| `Cmd/Ctrl + K`         | Open the command palette                   |
+| `Cmd/Ctrl + Shift + O` | Start a new chat in a tab                  |
+| `Cmd/Ctrl + Shift + U` | Start a new Work session in a tab (admins) |
+| `Cmd/Ctrl + B`         | Toggle the sidebar                         |
+| `Cmd/Ctrl + ,`         | Open Settings                              |
+| `Cmd/Ctrl + D`         | Toggle light/dark theme                    |
+| `?` or `Shift + /`     | Open keyboard shortcuts                    |
+| `Esc`                  | Close open modals and overlays             |
+
+The command palette searches your chats, Work sessions, and app actions. Unlike
+the other shortcuts it also works while a message composer has focus, so you can
+jump somewhere else without clearing what you were typing.
 
 ## Chat Input
 
