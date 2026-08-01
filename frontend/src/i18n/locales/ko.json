@@ -292,8 +292,9 @@
       "settings": "설정",
       "userManagement": "사용자 관리",
       "signOut": "로그아웃",
-      "agents": "Libre Claw",
-      "work": "작업"
+      "agents": "에이전트",
+      "work": "작업",
+      "exploreLabel": "둘러보기"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "관리자만"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "에이전트",
     "subtitle": "로컬 에이전트 실행, 승인, 일정, 메모리, 도구 및 사용량입니다.",
     "dashboard": "대시보드",
     "connection": {

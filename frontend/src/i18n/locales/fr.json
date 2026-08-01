@@ -289,11 +289,12 @@
       "models": "Modèles",
       "personas": "Personas",
       "imagine": "Imaginer",
-      "agents": "Libre Claw",
+      "agents": "Agents",
       "work": "Travail",
       "settings": "Paramètres",
       "userManagement": "Gestion des utilisateurs",
-      "signOut": "Déconnexion"
+      "signOut": "Déconnexion",
+      "exploreLabel": "Explorer"
     },
     "toggleSize": "Basculer la taille de la barre latérale",
     "expandSidebar": "Agrandir la barre latérale"
@@ -1311,7 +1312,7 @@
     "github": "GitHub"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Agents",
     "subtitle": "Exécutions d'agents locales, approbations, planifications, mémoire, outils et usage.",
     "dashboard": "Tableau de bord",
     "connection": {

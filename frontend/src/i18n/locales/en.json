@@ -289,11 +289,12 @@
       "models": "Models",
       "personas": "Personas",
       "imagine": "Imagine",
-      "agents": "Libre Claw",
+      "agents": "Agents",
       "work": "Work",
       "settings": "Settings",
       "userManagement": "User Management",
-      "signOut": "Sign Out"
+      "signOut": "Sign Out",
+      "exploreLabel": "Explore"
     },
     "toggleSize": "Toggle sidebar size",
     "expandSidebar": "Expand sidebar"
@@ -1365,7 +1366,7 @@
     "github": "GitHub"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Agents",
     "subtitle": "Local agent runs, approvals, schedules, memory, tools, and usage.",
     "dashboard": "Dashboard",
     "connection": {

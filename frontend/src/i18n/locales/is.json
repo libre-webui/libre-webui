@@ -292,8 +292,9 @@
       "settings": "Stillingar",
       "userManagement": "Notendastjórnun",
       "signOut": "Skrá út",
-      "agents": "Libre Claw",
-      "work": "Vinna"
+      "agents": "Fulltrúar",
+      "work": "Vinna",
+      "exploreLabel": "Kanna"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Aðeins stjórnendur"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Fulltrúar",
     "subtitle": "Staðbundin umboðsmaður keyrir, samþykki, áætlanir, minni, verkfæri og notkun.",
     "dashboard": "Stjórnborð",
     "connection": {

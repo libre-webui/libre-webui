@@ -292,8 +292,9 @@
       "settings": "设置",
       "userManagement": "用户管理",
       "signOut": "退出登录",
-      "agents": "Libre Claw",
-      "work": "工作"
+      "agents": "智能体",
+      "work": "工作",
+      "exploreLabel": "探索"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "仅管理员"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "智能体",
     "subtitle": "本地代理运行、批准、计划、内存、工具和使用情况。",
     "dashboard": "仪表板",
     "connection": {

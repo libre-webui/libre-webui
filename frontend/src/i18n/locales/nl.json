@@ -292,8 +292,9 @@
       "settings": "Instellingen",
       "userManagement": "Gebruikersbeheer",
       "signOut": "Uitloggen",
-      "agents": "Libre Claw",
-      "work": "Werk"
+      "agents": "Agents",
+      "work": "Werk",
+      "exploreLabel": "Verkennen"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Alleen beheerders"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Agents",
     "subtitle": "Lokale agentuitvoeringen, goedkeuringen, planningen, geheugen, tools en gebruik.",
     "dashboard": "Dashboard",
     "connection": {

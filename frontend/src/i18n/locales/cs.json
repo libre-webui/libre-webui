@@ -292,8 +292,9 @@
       "settings": "Nastavení",
       "userManagement": "Správa uživatelů",
       "signOut": "Odhlásit se",
-      "agents": "Libre Claw",
-      "work": "Práce"
+      "agents": "Agenti",
+      "work": "Práce",
+      "exploreLabel": "Prozkoumat"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Pouze administrátoři"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Agenti",
     "subtitle": "Spuštění místního agenta, schvalování, plány, paměť, nástroje a využití.",
     "dashboard": "Řídicí panel",
     "connection": {

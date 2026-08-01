@@ -292,8 +292,9 @@
       "settings": "Ayarlar",
       "userManagement": "Kullanıcı Yönetimi",
       "signOut": "Çıkış Yap",
-      "agents": "Libre Claw",
-      "work": "Çalışma"
+      "agents": "Ajanlar",
+      "work": "Çalışma",
+      "exploreLabel": "Keşfet"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Yalnızca yöneticiler"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Ajanlar",
     "subtitle": "Yerel aracı çalıştırmaları, onaylar, programlar, bellek, araçlar ve kullanım.",
     "dashboard": "Kontrol paneli",
     "connection": {

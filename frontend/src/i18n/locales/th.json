@@ -292,8 +292,9 @@
       "settings": "การตั้งค่า",
       "userManagement": "จัดการผู้ใช้",
       "signOut": "ออกจากระบบ",
-      "agents": "Libre Claw",
-      "work": "งาน"
+      "agents": "เอเจนต์",
+      "work": "งาน",
+      "exploreLabel": "สำรวจ"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
     "expandSidebar": "ขยายแถบด้านข้าง"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "ผู้ดูแลระบบเท่านั้น"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "เอเจนต์",
     "subtitle": "การเรียกใช้ตัวแทนในพื้นที่ การอนุมัติ กำหนดการ หน่วยความจำ เครื่องมือ และการใช้งาน",
     "dashboard": "แดชบอร์ด",
     "connection": {

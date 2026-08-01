@@ -292,8 +292,9 @@
       "settings": "Pengaturan",
       "userManagement": "Manajemen Pengguna",
       "signOut": "Keluar",
-      "agents": "Libre Claw",
-      "work": "Kerja"
+      "agents": "Agen",
+      "work": "Kerja",
+      "exploreLabel": "Jelajahi"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Hanya admin"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Agen",
     "subtitle": "Agen lokal dijalankan, persetujuan, jadwal, memori, alat, dan penggunaan.",
     "dashboard": "Dasbor",
     "connection": {

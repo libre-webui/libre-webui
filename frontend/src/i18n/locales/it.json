@@ -292,8 +292,9 @@
       "settings": "Impostazioni",
       "userManagement": "Gestione utenti",
       "signOut": "Esci",
-      "agents": "Libre Claw",
-      "work": "Lavoro"
+      "agents": "Agenti",
+      "work": "Lavoro",
+      "exploreLabel": "Esplora"
     },
     "toggleSize": "Cambia dimensione barra laterale",
     "expandSidebar": "Espandi barra laterale"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Solo amministratori"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Agenti",
     "subtitle": "Esecuzioni, approvazioni, pianificazioni, memoria, strumenti e utilizzo dell'agente locale.",
     "dashboard": "Dashboard",
     "connection": {

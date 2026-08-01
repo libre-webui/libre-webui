@@ -292,8 +292,9 @@
       "settings": "Настройки",
       "userManagement": "Управление пользователями",
       "signOut": "Выйти",
-      "agents": "Libre Claw",
-      "work": "Работа"
+      "agents": "Агенты",
+      "work": "Работа",
+      "exploreLabel": "Обзор"
     },
     "toggleSize": "Переключить размер боковой панели",
     "expandSidebar": "Развернуть боковую панель"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Только администраторы"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Агенты",
     "subtitle": "Запуск локального агента, утверждения, расписания, память, инструменты и использование.",
     "dashboard": "Панель управления",
     "connection": {

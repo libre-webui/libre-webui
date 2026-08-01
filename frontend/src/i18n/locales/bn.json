@@ -292,8 +292,9 @@
       "settings": "সেটিংস",
       "userManagement": "ব্যবহারকারী ব্যবস্থাপনা",
       "signOut": "সাইন আউট",
-      "agents": "Libre Claw",
-      "work": "কাজ"
+      "agents": "এজেন্ট",
+      "work": "কাজ",
+      "exploreLabel": "অন্বেষণ"
     },
     "toggleSize": "সাইডবার সাইজ টগল করুন",
     "expandSidebar": "সাইডবার প্রসারিত করুন"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "শুধু অ্যাডমিন"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "এজেন্ট",
     "subtitle": "স্থানীয় এজেন্ট রান, অনুমোদন, সময়সূচী, মেমরি, সরঞ্জাম, এবং ব্যবহার.",
     "dashboard": "ড্যাশবোর্ড",
     "connection": {

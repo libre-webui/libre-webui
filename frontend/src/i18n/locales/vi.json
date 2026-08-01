@@ -292,8 +292,9 @@
       "settings": "Cài đặt",
       "userManagement": "Quản lý người dùng",
       "signOut": "Đăng xuất",
-      "agents": "Libre Claw",
-      "work": "Công việc"
+      "agents": "Tác nhân",
+      "work": "Công việc",
+      "exploreLabel": "Khám phá"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Chỉ quản trị viên"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Tác nhân",
     "subtitle": "Tác nhân cục bộ chạy, phê duyệt, lịch trình, bộ nhớ, công cụ và cách sử dụng.",
     "dashboard": "Bảng điều khiển",
     "connection": {

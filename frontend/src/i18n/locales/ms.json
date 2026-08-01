@@ -292,8 +292,9 @@
       "settings": "Tetapan",
       "userManagement": "Pengurusan Pengguna",
       "signOut": "Log Keluar",
-      "agents": "Libre Claw",
-      "work": "Kerja"
+      "agents": "Ejen",
+      "work": "Kerja",
+      "exploreLabel": "Terokai"
     },
     "toggleSize": "Togol saiz bar sisi",
     "expandSidebar": "Kembangkan bar sisi"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Pentadbir sahaja"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Ejen",
     "subtitle": "Ejen tempatan menjalankan, kelulusan, jadual, ingatan, alatan dan penggunaan.",
     "dashboard": "Papan pemuka",
     "connection": {

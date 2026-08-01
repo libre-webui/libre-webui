@@ -293,7 +293,8 @@
       "settings": "الإعدادات",
       "userManagement": "إدارة المستخدمين",
       "signOut": "تسجيل الخروج",
-      "agents": "Libre Claw"
+      "agents": "الوكلاء",
+      "exploreLabel": "استكشاف"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
     "expandSidebar": "توسيع الشريط الجانبي"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "للمسؤولين فقط"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "الوكلاء",
     "subtitle": "يعمل الوكيل المحلي والموافقات والجداول الزمنية والذاكرة والأدوات والاستخدام.",
     "dashboard": "لوحة المعلومات",
     "connection": {

@@ -292,8 +292,9 @@
       "settings": "設定",
       "userManagement": "ユーザー管理",
       "signOut": "サインアウト",
-      "agents": "Libre Claw",
-      "work": "作業"
+      "agents": "エージェント",
+      "work": "作業",
+      "exploreLabel": "探索"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "管理者のみ"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "エージェント",
     "subtitle": "ローカル エージェントの実行、承認、スケジュール、メモリ、ツール、および使用状況。",
     "dashboard": "ダッシュボード",
     "connection": {

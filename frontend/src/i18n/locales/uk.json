@@ -292,8 +292,9 @@
       "settings": "Налаштування",
       "userManagement": "Керування користувачами",
       "signOut": "Вийти",
-      "agents": "Libre Claw",
-      "work": "Робота"
+      "agents": "Агенти",
+      "work": "Робота",
+      "exploreLabel": "Огляд"
     },
     "toggleSize": "Змінити розмір бічної панелі",
     "expandSidebar": "Розгорнути бічну панель"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Лише адміністратори"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Агенти",
     "subtitle": "Запуски локального агента, затвердження, графіки, пам’ять, інструменти та використання.",
     "dashboard": "Панель керування",
     "connection": {

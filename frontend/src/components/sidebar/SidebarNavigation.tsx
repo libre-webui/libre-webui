@@ -26,73 +26,62 @@ interface SidebarNavigationProps {
   onMobileNavigate: () => void;
 }
 
+const DESTINATIONS = [
+  { path: '/models', icon: Database, labelKey: 'sidebar.navigation.models' },
+  {
+    path: '/personas',
+    icon: UserIcon,
+    labelKey: 'sidebar.navigation.personas',
+  },
+  { path: '/gallery', icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
+  { path: '/agents', icon: Bot, labelKey: 'sidebar.navigation.agents' },
+] as const;
+
+/**
+ * Secondary destinations. They are also reachable from the tab bar's new-tab
+ * menu, Home, and the command palette, so the sidebar keeps them to a single
+ * icon row and gives the space back to the session list.
+ */
 export function SidebarNavigation({
   sidebarCompact,
   activePath,
   onMobileNavigate,
 }: SidebarNavigationProps) {
   const { t } = useTranslation();
-  const itemClass = (active: boolean) =>
-    cn(
-      'flex items-center gap-3 rounded-xl text-[13px] font-medium transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
-      sidebarCompact ? 'w-11 h-11 justify-center p-0' : 'w-full px-2.5 py-2',
-      active
-        ? 'bg-white text-gray-950 ring-1 ring-black/[0.04] dark:bg-dark-200 dark:text-dark-950 dark:ring-white/[0.06]'
-        : 'text-gray-600 dark:text-dark-600 hover:bg-white/60 dark:hover:bg-dark-200/60 hover:text-gray-950 dark:hover:text-dark-950 active:bg-white dark:active:bg-dark-200'
-    );
 
   return (
     <div className={cn('pb-3', sidebarCompact ? 'px-2' : 'px-3')}>
       <nav
         data-testid='sidebar-navigation'
+        aria-label={t('sidebar.navigation.exploreLabel', 'Explore')}
         className={cn(
-          'space-y-0.5',
-          sidebarCompact && 'flex flex-col items-center'
+          'flex gap-1',
+          sidebarCompact ? 'flex-col items-center' : 'items-center'
         )}
       >
-        <Link
-          to='/models'
-          onClick={onMobileNavigate}
-          className={itemClass(activePath === '/models')}
-          title={sidebarCompact ? t('sidebar.navigation.models') : undefined}
-          aria-current={activePath === '/models' ? 'page' : undefined}
-        >
-          <Database className='h-[18px] w-[18px] shrink-0' />
-          {!sidebarCompact && t('sidebar.navigation.models')}
-        </Link>
-
-        <Link
-          to='/personas'
-          onClick={onMobileNavigate}
-          className={itemClass(activePath === '/personas')}
-          title={sidebarCompact ? t('sidebar.navigation.personas') : undefined}
-          aria-current={activePath === '/personas' ? 'page' : undefined}
-        >
-          <UserIcon className='h-[18px] w-[18px] shrink-0' />
-          {!sidebarCompact && t('sidebar.navigation.personas')}
-        </Link>
-
-        <Link
-          to='/gallery'
-          onClick={onMobileNavigate}
-          className={itemClass(activePath === '/gallery')}
-          title={sidebarCompact ? t('sidebar.navigation.imagine') : undefined}
-          aria-current={activePath === '/gallery' ? 'page' : undefined}
-        >
-          <Sparkles className='h-[18px] w-[18px] shrink-0' />
-          {!sidebarCompact && t('sidebar.navigation.imagine')}
-        </Link>
-
-        <Link
-          to='/agents'
-          onClick={onMobileNavigate}
-          className={itemClass(activePath === '/agents')}
-          title={sidebarCompact ? t('sidebar.navigation.agents') : undefined}
-          aria-current={activePath === '/agents' ? 'page' : undefined}
-        >
-          <Bot className='h-[18px] w-[18px] shrink-0' />
-          {!sidebarCompact && t('sidebar.navigation.agents')}
-        </Link>
+        {DESTINATIONS.map(({ path, icon: Icon, labelKey }) => {
+          const active = activePath === path;
+          const label = t(labelKey);
+          return (
+            <Link
+              key={path}
+              to={path}
+              onClick={onMobileNavigate}
+              title={label}
+              aria-label={label}
+              aria-current={active ? 'page' : undefined}
+              className={cn(
+                'flex items-center justify-center rounded-xl transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
+                sidebarCompact ? 'h-11 w-11' : 'h-9 flex-1',
+                active
+                  ? 'bg-white text-gray-950 ring-1 ring-black/[0.04] dark:bg-dark-200 dark:text-dark-950 dark:ring-white/[0.06]'
+                  : 'text-gray-500 hover:bg-white/60 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-dark-200/60 dark:hover:text-dark-950'
+              )}
+            >
+              <Icon className='h-[18px] w-[18px] shrink-0' />
+            </Link>
+          );
+        })}
       </nav>
     </div>
   );

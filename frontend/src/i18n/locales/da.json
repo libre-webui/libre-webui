@@ -292,8 +292,9 @@
       "settings": "Indstillinger",
       "userManagement": "Brugeradministration",
       "signOut": "Log ud",
-      "agents": "Libre Claw",
-      "work": "Arbejde"
+      "agents": "Agenter",
+      "work": "Arbejde",
+      "exploreLabel": "Udforsk"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Kun administratorer"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Agenter",
     "subtitle": "Lokale agentkørsler, godkendelser, tidsplaner, hukommelse, værktøjer og brug.",
     "dashboard": "Dashboard",
     "connection": {

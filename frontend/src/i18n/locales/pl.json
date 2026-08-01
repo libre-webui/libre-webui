@@ -292,8 +292,9 @@
       "settings": "Ustawienia",
       "userManagement": "Zarządzanie użytkownikami",
       "signOut": "Wyloguj się",
-      "agents": "Libre Claw",
-      "work": "Praca"
+      "agents": "Agenci",
+      "work": "Praca",
+      "exploreLabel": "Odkrywaj"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
     "expandSidebar": "Rozwiń panel boczny"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Tylko administratorzy"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Agenci",
     "subtitle": "Uruchomienia agenta lokalnego, zatwierdzenia, harmonogramy, pamięć, narzędzia i wykorzystanie.",
     "dashboard": "Panel",
     "connection": {

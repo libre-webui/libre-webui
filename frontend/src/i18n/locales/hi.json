@@ -292,8 +292,9 @@
       "settings": "सेटिंग्स",
       "userManagement": "उपयोगकर्ता प्रबंधन",
       "signOut": "साइन आउट",
-      "agents": "Libre Claw",
-      "work": "काम"
+      "agents": "एजेंट",
+      "work": "काम",
+      "exploreLabel": "एक्सप्लोर"
     },
     "toggleSize": "साइडबार का आकार बदलें",
     "expandSidebar": "साइडबार विस्तारित करें"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "केवल एडमिन"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "एजेंट",
     "subtitle": "स्थानीय एजेंट चलाता है, अनुमोदन, शेड्यूल, मेमोरी, उपकरण और उपयोग।",
     "dashboard": "डैशबोर्ड",
     "connection": {

@@ -292,8 +292,9 @@
       "settings": "Inställningar",
       "userManagement": "Användarhantering",
       "signOut": "Logga ut",
-      "agents": "Libre Claw",
-      "work": "Arbete"
+      "agents": "Agenter",
+      "work": "Arbete",
+      "exploreLabel": "Utforska"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -1343,7 +1344,7 @@
     "adminOnlyPull": "Endast administratörer"
   },
   "libreClaw": {
-    "title": "Libre Claw",
+    "title": "Agenter",
     "subtitle": "Lokala agentkörningar, godkännanden, scheman, minne, verktyg och användning.",
     "dashboard": "Översikt",
     "connection": {
