@@ -443,6 +443,7 @@ export interface SystemInfo {
   requiresAuth: boolean;
   hasUsers: boolean;
   userCount: number;
+  signupEnabled: boolean;
   allowUserModelPull?: boolean;
   version?: string;
   turnstile?: {

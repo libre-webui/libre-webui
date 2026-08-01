@@ -33,6 +33,7 @@ export const LoginPage: React.FC = () => {
   const { isAuthenticated, requiresAuth, systemInfo } = useAuthStore();
   const [isSignupMode, setIsSignupMode] = useState(false);
   const authRequired = requiresAuth();
+  const signupEnabled = systemInfo?.signupEnabled ?? true;
 
   useEffect(() => {
     // If already authenticated or auth is disabled, redirect to home.
@@ -119,14 +120,19 @@ export const LoginPage: React.FC = () => {
 
         <section className='flex items-center justify-center px-5 pb-12 pt-24 sm:px-8 lg:px-12 lg:py-12'>
           <div className='w-full max-w-sm'>
-            {isSignupMode ? (
+            {isSignupMode && signupEnabled ? (
               <SignupForm
                 bare
                 onBackToLogin={() => setIsSignupMode(false)}
                 onSignup={() => setIsSignupMode(false)}
               />
             ) : (
-              <LoginForm bare onShowSignup={() => setIsSignupMode(true)} />
+              <LoginForm
+                bare
+                onShowSignup={
+                  signupEnabled ? () => setIsSignupMode(true) : undefined
+                }
+              />
             )}
           </div>
         </section>

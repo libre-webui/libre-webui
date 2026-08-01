@@ -16,6 +16,7 @@
  */
 
 import { userModel, UserPublic } from '../models/userModel.js';
+import { authService } from './authService.js';
 import * as crypto from 'crypto';
 import { createLogger } from '../utils/logger.js';
 
@@ -178,6 +179,13 @@ export class HuggingFaceOAuthService {
           createdAt: new Date(existingUser.created_at).toISOString(),
           updatedAt: new Date(existingUser.updated_at).toISOString(),
         };
+      }
+
+      if (!authService.isPublicRegistrationEnabled()) {
+        logger.warn(
+          'Blocked Hugging Face OAuth account creation because registration is disabled'
+        );
+        return null;
       }
 
       // Create new user

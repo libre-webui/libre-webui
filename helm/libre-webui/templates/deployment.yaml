@@ -62,6 +62,8 @@ spec:
               value: {{ .Values.env.CORS_ORIGIN | quote }}
             - name: SINGLE_USER_MODE
               value: {{ .Values.env.SINGLE_USER_MODE | quote }}
+            - name: ENABLE_SIGNUP
+              value: {{ .Values.env.ENABLE_SIGNUP | quote }}
             - name: JWT_EXPIRES_IN
               value: {{ .Values.env.JWT_EXPIRES_IN | quote }}
             - name: OLLAMA_TIMEOUT

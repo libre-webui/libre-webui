@@ -33,6 +33,23 @@ Local signup requires:
 
 Passwords are hashed with bcrypt before storage. Login and signup routes are rate-limited.
 
+### Disable public registration
+
+Set the backend environment variable below to close public registration:
+
+```env
+ENABLE_SIGNUP=false
+```
+
+Existing local and OAuth users can still sign in, and administrators can still
+create accounts from user management. New local signups and new accounts from
+OAuth providers are blocked. Libre WebUI also removes the signup link from the
+login page.
+
+On an empty database, first-time setup remains available even when registration
+is disabled. This permits creation of the initial administrator; registration
+closes as soon as that account exists.
+
 ## Roles
 
 | Role    | Purpose                                                                                       |

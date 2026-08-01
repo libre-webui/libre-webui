@@ -282,6 +282,7 @@ const AppContent: React.FC = () => {
                   requiresAuth: true,
                   hasUsers: true,
                   userCount: 1,
+                  signupEnabled: true,
                   version: '0.1.6',
                 }
               );

@@ -225,6 +225,13 @@ export class GitHubOAuthService {
         };
       }
 
+      if (!authService.isPublicRegistrationEnabled()) {
+        logger.warn(
+          'Blocked GitHub OAuth account creation because registration is disabled'
+        );
+        return null;
+      }
+
       // Ensure the username is unique
       let uniqueUsername = githubUsername;
       let counter = 1;
