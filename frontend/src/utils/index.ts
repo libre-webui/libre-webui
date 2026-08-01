@@ -22,6 +22,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function isMac(): boolean {
+  return (
+    typeof navigator !== 'undefined' &&
+    /Mac|iPhone|iPad/.test(navigator.platform)
+  );
+}
+
 // Export demo mode utilities
 export * from './demoMode';
 

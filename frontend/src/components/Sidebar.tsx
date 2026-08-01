@@ -20,6 +20,7 @@ import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
+import { useTabStore } from '@/store/tabStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
 import type { ChatSession } from '@/types';
@@ -200,6 +201,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     try {
       await deleteWorkTask(task.id);
       clearWorkTaskDrafts(task.id);
+      useTabStore.getState().closeTab(`work:${task.id}`);
       if (currentWorkTaskId === task.id) {
         navigate('/work', {
           replace: true,
@@ -230,6 +232,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         await deleteSession(sessionId);
         logger.debug('Session deleted successfully');
+        useTabStore.getState().closeTab(`chat:${sessionId}`);
 
         if (isCurrentSession) {
           const remainingSessions = sessions.filter(s => s.id !== sessionId);

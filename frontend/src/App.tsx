@@ -23,6 +23,7 @@ import {
   Routes,
   Route,
   useLocation,
+  useNavigate,
 } from 'react-router';
 
 // Initialize i18n
@@ -53,6 +54,7 @@ import {
 } from '@/components/KeyboardShortcuts';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
+import { AppTabBar, startNewChat, startNewWork } from '@/components/AppTabBar';
 import { Logo } from '@/components/Logo';
 import { useAppStore } from '@/store/appStore';
 import { useAuthStore } from '@/store/authStore';
@@ -127,6 +129,68 @@ const SidebarLayoutSpacer: React.FC<{ isOpen: boolean; compact: boolean }> = ({
   />
 );
 
+interface ShellLayoutProps {
+  hasBackground: boolean;
+  sidebarOpen: boolean;
+  sidebarCompact: boolean;
+  onCloseSidebar: () => void;
+  showDemoBanner: boolean;
+  demoMessage?: string;
+  children: React.ReactNode;
+}
+
+// The single app frame: sidebar + tab strip + routed content card.
+const ShellLayout: React.FC<ShellLayoutProps> = ({
+  hasBackground,
+  sidebarOpen,
+  sidebarCompact,
+  onCloseSidebar,
+  showDemoBanner,
+  demoMessage,
+  children,
+}) => (
+  <div
+    className={cn(
+      'flex h-dvh min-h-0 text-gray-950 dark:text-dark-900 relative overflow-hidden',
+      hasBackground
+        ? 'bg-gray-100/60 dark:bg-dark-50/60'
+        : 'bg-gray-100 dark:bg-dark-50'
+    )}
+  >
+    <ElectronTitleBar />
+    <BackgroundRenderer />
+    <Sidebar isOpen={sidebarOpen} onClose={onCloseSidebar} />
+    <SidebarLayoutSpacer isOpen={sidebarOpen} compact={sidebarCompact} />
+    <div
+      data-testid='app-shell-content'
+      className={cn(
+        'flex-1 basis-0 flex min-h-0 flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:pb-2 lg:pe-2',
+        isElectron ? 'pt-8' : 'lg:pt-1.5',
+        // Mobile behavior:
+        // - Compact sidebar: push content away to avoid overlap
+        // - Expanded sidebar: overlay (no transform)
+        sidebarOpen && sidebarCompact ? 'max-lg:ms-18' : 'max-lg:ms-0',
+        hasBackground ? 'bg-white/10 dark:bg-dark-50/10' : 'bg-transparent'
+      )}
+    >
+      {showDemoBanner && <DemoModeBanner message={demoMessage} />}
+      <AppTabBar />
+      <main
+        className={cn(
+          'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
+          hasBackground
+            ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
+            : 'bg-gray-50 dark:bg-dark-100'
+        )}
+      >
+        <ErrorBoundary>
+          <Suspense fallback={<PageLoader />}>{children}</Suspense>
+        </ErrorBoundary>
+      </main>
+    </div>
+  </div>
+);
+
 // Conditional keyboard shortcuts indicator - only shows on chat pages and desktop
 const ConditionalKeyboardShortcutsIndicator: React.FC<{
   onClick: () => void;
@@ -150,6 +214,7 @@ const ConditionalKeyboardShortcutsIndicator: React.FC<{
 
 const AppContent: React.FC = () => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -297,6 +362,25 @@ const AppContent: React.FC = () => {
       description: t('keyboard.openSettings'),
     },
     {
+      key: 'o',
+      metaKey: true,
+      shiftKey: true,
+      action: () => startNewChat(navigate),
+      description: t('keyboard.newChat', 'New chat'),
+    },
+    {
+      key: 'u',
+      metaKey: true,
+      shiftKey: true,
+      action: () => {
+        const { systemInfo: info, isAdmin } = useAuthStore.getState();
+        if (info?.requiresAuth === false || isAdmin()) {
+          startNewWork(navigate);
+        }
+      },
+      description: t('keyboard.newWork', 'New Work session'),
+    },
+    {
       key: 'd',
       metaKey: true,
       action: toggleTheme,
@@ -418,44 +502,57 @@ const AppContent: React.FC = () => {
       {/* Show full layout only if system doesn't require auth or user is authenticated */}
       {systemInfo && !systemInfo.requiresAuth ? (
         // No auth required - show full layout
-        <div
-          className={cn(
-            'flex h-dvh min-h-0 text-gray-950 dark:text-dark-900 relative overflow-hidden',
-            hasActiveBackground()
-              ? 'bg-gray-100/60 dark:bg-dark-50/60'
-              : 'bg-gray-100 dark:bg-dark-50'
-          )}
+        <ShellLayout
+          hasBackground={!!hasActiveBackground()}
+          sidebarOpen={sidebarOpen}
+          sidebarCompact={sidebarCompact}
+          onCloseSidebar={() => setSidebarOpen(false)}
+          showDemoBanner={isDemoMode && demoConfig.showBanner}
+          demoMessage={demoConfig.message}
         >
-          <ElectronTitleBar />
-          <BackgroundRenderer />
-          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          <SidebarLayoutSpacer isOpen={sidebarOpen} compact={sidebarCompact} />
-          <div
-            data-testid='app-shell-content'
-            className={cn(
-              'flex-1 basis-0 flex min-h-0 flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pe-2',
-              // Mobile behavior:
-              // - Compact sidebar: push content away to avoid overlap
-              // - Expanded sidebar: overlay (no transform)
-              sidebarOpen && sidebarCompact ? 'max-lg:ms-18' : 'max-lg:ms-0',
-              hasActiveBackground()
-                ? 'bg-white/10 dark:bg-dark-50/10'
-                : 'bg-transparent'
-            )}
-          >
-            {isDemoMode && demoConfig.showBanner && (
-              <DemoModeBanner message={demoConfig.message} />
-            )}
-            <main
-              className={cn(
-                'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
-                hasActiveBackground()
-                  ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
-                  : 'bg-gray-50 dark:bg-dark-100'
-              )}
-            >
-              <ErrorBoundary>
-                <Suspense fallback={<PageLoader />}>
+          <Routes>
+            <Route path='/' element={<ChatPage />} />
+            <Route path='/chat' element={<ChatPage />} />
+            <Route path='/c/:sessionId' element={<ChatPage />} />
+            <Route path='/models' element={<ModelsPage />} />
+            <Route path='/personas' element={<PersonasPage />} />
+            <Route path='/gallery' element={<GalleryPage />} />
+            <Route
+              path='/work'
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <WorkPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/work/:taskId'
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <WorkPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path='/agents' element={<LibreClawPage />} />
+            <Route path='/login' element={<LoginPage />} />
+          </Routes>
+        </ShellLayout>
+      ) : (
+        // Auth required - show routes without main layout constraining login
+        <Routes>
+          <Route path='/login' element={<LoginPage />} />
+          <Route
+            path='/*'
+            element={
+              <ProtectedRoute>
+                <ShellLayout
+                  hasBackground={!!hasActiveBackground()}
+                  sidebarOpen={sidebarOpen}
+                  sidebarCompact={sidebarCompact}
+                  onCloseSidebar={() => setSidebarOpen(false)}
+                  showDemoBanner={isDemoMode && demoConfig.showBanner}
+                  demoMessage={demoConfig.message}
+                >
                   <Routes>
                     <Route path='/' element={<ChatPage />} />
                     <Route path='/chat' element={<ChatPage />} />
@@ -480,115 +577,17 @@ const AppContent: React.FC = () => {
                       }
                     />
                     <Route path='/agents' element={<LibreClawPage />} />
-                    <Route path='/login' element={<LoginPage />} />
+                    <Route path='/artifacts' element={<ArtifactDemoPage />} />
+                    <Route
+                      path='/users'
+                      element={
+                        <ProtectedRoute requireAdmin={true}>
+                          <UserManagementPage />
+                        </ProtectedRoute>
+                      }
+                    />
                   </Routes>
-                </Suspense>
-              </ErrorBoundary>
-            </main>
-          </div>
-        </div>
-      ) : (
-        // Auth required - show routes without main layout constraining login
-        <Routes>
-          <Route path='/login' element={<LoginPage />} />
-          <Route
-            path='/*'
-            element={
-              <ProtectedRoute>
-                <div
-                  className={cn(
-                    'flex h-dvh min-h-0 text-gray-950 dark:text-dark-900 relative overflow-hidden',
-                    hasActiveBackground()
-                      ? 'bg-gray-100/60 dark:bg-dark-50/60'
-                      : 'bg-gray-100 dark:bg-dark-50'
-                  )}
-                >
-                  <ElectronTitleBar />
-                  <BackgroundRenderer />
-                  <Sidebar
-                    isOpen={sidebarOpen}
-                    onClose={() => setSidebarOpen(false)}
-                  />
-                  <SidebarLayoutSpacer
-                    isOpen={sidebarOpen}
-                    compact={sidebarCompact}
-                  />
-                  <div
-                    data-testid='app-shell-content'
-                    className={cn(
-                      'flex-1 basis-0 flex min-h-0 flex-col min-w-0 transition-[margin,background-color] duration-200 ease-out relative z-10 lg:py-2 lg:pe-2',
-                      // Mobile behavior:
-                      // - Compact sidebar: push content away to avoid overlap
-                      // - Expanded sidebar: overlay (no transform)
-                      sidebarOpen && sidebarCompact
-                        ? 'max-lg:ms-18'
-                        : 'max-lg:ms-0',
-                      hasActiveBackground()
-                        ? 'bg-white/10 dark:bg-dark-50/10'
-                        : 'bg-transparent'
-                    )}
-                  >
-                    {isDemoMode && demoConfig.showBanner && (
-                      <DemoModeBanner message={demoConfig.message} />
-                    )}
-                    <main
-                      className={cn(
-                        'min-h-0 flex-1 overflow-hidden lg:rounded-[1.5rem] lg:border lg:border-black/[0.06] dark:lg:border-white/[0.07] lg:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_60px_rgba(15,23,42,0.04)]',
-                        hasActiveBackground()
-                          ? 'bg-white/30 dark:bg-dark-100/35 backdrop-blur-sm'
-                          : 'bg-gray-50 dark:bg-dark-100'
-                      )}
-                    >
-                      <ErrorBoundary>
-                        <Suspense fallback={<PageLoader />}>
-                          <Routes>
-                            <Route path='/' element={<ChatPage />} />
-                            <Route path='/chat' element={<ChatPage />} />
-                            <Route
-                              path='/c/:sessionId'
-                              element={<ChatPage />}
-                            />
-                            <Route path='/models' element={<ModelsPage />} />
-                            <Route
-                              path='/personas'
-                              element={<PersonasPage />}
-                            />
-                            <Route path='/gallery' element={<GalleryPage />} />
-                            <Route
-                              path='/work'
-                              element={
-                                <ProtectedRoute requireAdmin={true}>
-                                  <WorkPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route
-                              path='/work/:taskId'
-                              element={
-                                <ProtectedRoute requireAdmin={true}>
-                                  <WorkPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                            <Route path='/agents' element={<LibreClawPage />} />
-                            <Route
-                              path='/artifacts'
-                              element={<ArtifactDemoPage />}
-                            />
-                            <Route
-                              path='/users'
-                              element={
-                                <ProtectedRoute requireAdmin={true}>
-                                  <UserManagementPage />
-                                </ProtectedRoute>
-                              }
-                            />
-                          </Routes>
-                        </Suspense>
-                      </ErrorBoundary>
-                    </main>
-                  </div>
-                </div>
+                </ShellLayout>
               </ProtectedRoute>
             }
           />
