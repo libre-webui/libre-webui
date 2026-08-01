@@ -88,6 +88,9 @@ test('the command palette opens with the keyboard and jumps to a chat', async ({
   await expect(palette).toBeVisible();
 
   await page.getByTestId('command-palette-input').fill('garden');
+  await expect(
+    palette.getByRole('button', { name: /Garden planning notes/ })
+  ).toBeVisible();
   await page.keyboard.press('Enter');
 
   await expect(palette).toHaveCount(0);
