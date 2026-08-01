@@ -47,6 +47,7 @@ import {
 } from './workTerminalServer.js';
 import { OllamaChatRequest, ChatSession } from './types/index.js';
 import { normalizeChatProviderSelection } from './utils/chatProviderSelection.js';
+import workPreviewProxyService from './services/workPreviewProxyService.js';
 
 const chatRequestService = new ChatRequestService({
   chatGenerationService,
@@ -553,6 +554,10 @@ export function registerWebSocketServer(server: Server): void {
   const terminalServer = createWorkTerminalServer();
 
   server.on('upgrade', (request, socket, head) => {
+    if (workPreviewProxyService.tryHandleUpgrade(request, socket, head)) {
+      return;
+    }
+
     let pathname: string;
     try {
       pathname = new URL(request.url || '', 'http://localhost').pathname;

@@ -1432,7 +1432,10 @@ test('shows tool activity, saves files, and isolates preview content', async ({
   await expect(startPreviewButton).toHaveCSS('color', 'rgb(61, 18, 12)');
   await startPreviewButton.click();
   const frame = page.getByTestId('work-preview-frame');
-  await expect(frame).toHaveAttribute('src', 'http://127.0.0.1:49173/');
+  await expect(frame).toHaveAttribute(
+    'src',
+    `http://127.0.0.1:3001/api/work/previews/preview-workspace/49173.${'N'.repeat(22)}.${'S'.repeat(43)}/`
+  );
   await expect(frame).toHaveAttribute(
     'sandbox',
     'allow-scripts allow-forms allow-modals allow-downloads'
@@ -1440,6 +1443,16 @@ test('shows tool activity, saves files, and isolates preview content', async ({
   await expect(frame).not.toHaveAttribute('sandbox', /allow-same-origin/);
   await expect(frame).not.toHaveAttribute('sandbox', /allow-popups/);
   await expect(frame).toHaveAttribute('referrerpolicy', 'no-referrer');
+  await expect(
+    page
+      .frameLocator('[data-testid="work-preview-frame"]')
+      .getByTestId('mock-work-preview')
+  ).toHaveText('Isolated Work preview');
+  await expect(
+    page
+      .frameLocator('[data-testid="work-preview-frame"]')
+      .getByTestId('mock-work-preview')
+  ).toHaveAttribute('data-module-loaded', 'true');
   expect(new URL((await frame.getAttribute('src')) || '').origin).not.toBe(
     new URL(page.url()).origin
   );

@@ -896,24 +896,44 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     });
   }, chatStream);
 
-  await page.route('http://127.0.0.1:49173/**', async route => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'text/html',
-      body: `<!doctype html>
-<html>
-  <head><title>Work preview</title></head>
-  <body><main data-testid="mock-work-preview">Isolated Work preview</main></body>
-</html>`,
-    });
-  });
-
   await page.route(
     /^http:\/\/(?:127\.0\.0\.1|localhost|demo\.localhost):3001\/api\/.*$/,
     async route => {
       const url = new URL(route.request().url());
       const path = url.pathname.replace(/^\/api/, '');
       const method = route.request().method();
+
+      if (
+        method === 'GET' &&
+        /^\/work\/previews\/preview-workspace\/49173\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\//.test(
+          path
+        )
+      ) {
+        if (path.endsWith('/preview-module.js')) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'text/javascript',
+            headers: { 'Access-Control-Allow-Origin': '*' },
+            body: `document.querySelector('[data-testid="mock-work-preview"]').dataset.moduleLoaded = 'true';`,
+          });
+          return;
+        }
+        await route.fulfill({
+          status: 200,
+          contentType: 'text/html',
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Security-Policy':
+              "sandbox allow-scripts allow-forms allow-modals allow-downloads; frame-ancestors 'self' http://127.0.0.1:4173",
+          },
+          body: `<!doctype html>
+<html>
+  <head><title>Work preview</title><script type="module" src="preview-module.js"></script></head>
+  <body><main data-testid="mock-work-preview">Isolated Work preview</main></body>
+</html>`,
+        });
+        return;
+      }
 
       if (path === '/auth/system-info' && method === 'GET') {
         await fulfillJson(route, systemInfo);
@@ -1280,7 +1300,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
             command: request.command,
           });
           task.previewStatus = 'running';
-          task.previewUrl = 'http://127.0.0.1:49173/';
+          task.previewUrl = `/api/work/previews/preview-workspace/49173.${'N'.repeat(22)}.${'S'.repeat(43)}/`;
         } else {
           workPreviewRequests.push({ taskId, action });
           task.previewStatus = 'stopped';

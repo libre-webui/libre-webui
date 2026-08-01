@@ -21,6 +21,7 @@ import path from 'node:path';
 import { getDatabase } from '../db.js';
 import { WorkFileEntry, WorkTaskRecord } from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
+import workPreviewProxyService from './workPreviewProxyService.js';
 
 const logger = createLogger('services:work-runtime');
 const activeDockerProcesses = new Set<ReturnType<typeof spawn>>();
@@ -79,12 +80,6 @@ const config = {
   // private to the Docker host, which is correct when the browser runs there.
   previewBind:
     process.env.WORK_PREVIEW_BIND || WORK_RUNTIME_DEFAULTS.previewBind,
-  // Host advertised in the preview URL. It differs from the bind address when
-  // the browser reaches the Docker host by another name.
-  previewHost:
-    process.env.WORK_PREVIEW_HOST ||
-    process.env.WORK_PREVIEW_BIND ||
-    WORK_RUNTIME_DEFAULTS.previewBind,
   maxActiveRuntimesGlobal: positiveInteger(
     process.env.WORK_MAX_ACTIVE_RUNTIMES_GLOBAL,
     WORK_RUNTIME_ADMISSION_DEFAULTS.maxActiveRuntimesGlobal
@@ -1442,7 +1437,7 @@ export class WorkRuntimeService {
           'WORK_PREVIEW_PORT_UNAVAILABLE'
         );
       }
-      return `http://${formatPreviewHost(config.previewHost)}:${publishedPort}`;
+      return workPreviewProxyService.createPreviewUrl(task.id, publishedPort);
     } catch (error) {
       try {
         await this.stopPreviewPrepared(task);
