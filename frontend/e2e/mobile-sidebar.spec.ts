@@ -74,8 +74,9 @@ test('Arabic mobile navigation mirrors the sidebar and content offset', async ({
   await page.waitForURL('**/models');
 
   await expect
+    // Compact sidebar is w-18 (4.5rem) against the app's 15px root font.
     .poll(async () => (await sidebar.boundingBox())?.width ?? 0)
-    .toBeCloseTo(72, 0);
+    .toBeCloseTo(67.5, 0);
 
   await expect
     .poll(async () => {

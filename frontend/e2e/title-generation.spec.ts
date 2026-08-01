@@ -53,7 +53,9 @@ test('generated title immediately replaces the sidebar preview without a duplica
   await messageInput.press('Enter');
 
   await expect(
-    page.getByText('Persistent Sidebar Summary', { exact: true })
+    page
+      .getByTestId('sidebar-session-scroll-region')
+      .getByText('Persistent Sidebar Summary', { exact: true })
   ).toBeVisible();
   await expect(
     page.getByText('Chat title generated', { exact: true })
@@ -93,7 +95,9 @@ test('fallback title is applied without falsely reporting generation success', a
   await messageInput.press('Enter');
 
   await expect(
-    page.getByText('Explain why fallback text is', { exact: true })
+    page
+      .getByTestId('sidebar-session-scroll-region')
+      .getByText('Explain why fallback text is', { exact: true })
   ).toBeVisible();
   await expect(
     page.getByText('Could not generate a title; using the message preview', {

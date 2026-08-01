@@ -173,14 +173,16 @@ test('creates a persistent Work task without exposing network controls', async (
   await expect(
     page.getByText('Every task gets its own container and files.')
   ).toHaveCount(0);
+  // rounded-[1.6rem] against the app's 15px root font.
   await expect(page.getByTestId('work-composer-surface')).toHaveCSS(
     'border-radius',
-    '25.6px'
+    '24px'
   );
   const modelTrigger = page.getByTestId('work-model-selector-trigger');
   await expect(modelTrigger).toBeVisible();
   await expect(modelTrigger).toHaveAttribute('aria-haspopup', 'dialog');
-  await expect(modelTrigger).toHaveCSS('border-radius', '12px');
+  // rounded-xl (0.75rem) against the app's 15px root font.
+  await expect(modelTrigger).toHaveCSS('border-radius', '11.25px');
   const runtimeStatus = page.getByTestId('work-runtime-status');
   await expect(runtimeStatus).toContainText('Runtime ready');
   await expect(runtimeStatus).toHaveAttribute('title', /Docker ready/);

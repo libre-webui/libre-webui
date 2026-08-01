@@ -45,11 +45,9 @@ test('demo mode login is click-only with disabled demo credentials', async ({
   await page.getByRole('button', { name: /sign in/i }).click();
 
   await expect(page.getByText('Demo Mode')).toBeVisible();
-  await expect(
-    page.getByText(
-      /What can I help with (today|tonight)\?|This is a demo of Libre WebUI!/
-    )
-  ).toBeVisible();
+  // Signing in lands on the Home launcher tab, not straight into a chat.
+  await expect(page.getByTestId('home-page')).toBeVisible();
+  await expect(page.getByTestId('home-new-chat')).toBeVisible();
   await expect(page).not.toHaveURL(/\/login$/);
 });
 
@@ -71,8 +69,6 @@ test('one-user mode bypasses login and renders the app shell', async ({
 
   await expect(page.getByTestId('app-shell-content')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Sign In' })).toHaveCount(0);
-  await expect(
-    page.getByText(/What can I help with (today|tonight)\?/)
-  ).toBeVisible();
+  await expect(page.getByTestId('home-page')).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
 });
