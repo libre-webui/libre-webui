@@ -105,7 +105,23 @@
     "jwtActive": "JWT Authentication Active",
     "jwtDescription": "JWT-based authentication with GitHub OAuth",
     "github": "GitHub",
-    "provider": "Provider"
+    "provider": "Provider",
+    "tagline": "Your AI stack should answer to you.",
+    "selfHosted": "Self-hosted · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "Local first",
+        "body": "Your conversations and files stay on the machine you run this on."
+      },
+      "providers": {
+        "title": "Any provider",
+        "body": "Local models through Ollama, plus the remote providers you choose to add."
+      },
+      "work": {
+        "title": "Isolated Work",
+        "body": "Give a model a sandboxed workspace with files, a terminal, and a preview."
+      }
+    }
   },
   "setup": {
     "welcome": {

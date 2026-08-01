@@ -24,6 +24,7 @@ import { authApi } from '@/utils/api';
 import { Eye, EyeOff, UserPlus } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
+import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('components:signup-form');
@@ -31,11 +32,14 @@ const logger = createLogger('components:signup-form');
 interface SignupFormProps {
   onSignup?: () => void;
   onBackToLogin?: () => void;
+  /** Drops the card chrome so a page can supply its own framing. */
+  bare?: boolean;
 }
 
 export const SignupForm: React.FC<SignupFormProps> = ({
   onSignup,
   onBackToLogin,
+  bare = false,
 }) => {
   const { t } = useTranslation();
   const [username, setUsername] = useState('');
@@ -124,8 +128,14 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   };
 
   return (
-    <div className='mx-auto w-full max-w-md rounded-3xl border border-line bg-surface-raised p-6 shadow-card sm:p-8'>
-      <div className='mb-8 text-center'>
+    <div
+      className={cn(
+        'mx-auto w-full max-w-md',
+        !bare &&
+          'rounded-3xl border border-line bg-surface-raised p-6 shadow-card sm:p-8'
+      )}
+    >
+      <div className={cn('mb-8', bare ? 'text-start' : 'text-center')}>
         <h1 className='mb-2 text-3xl font-light tracking-[-0.04em] text-ink'>
           {t('auth.signup.title')}
         </h1>

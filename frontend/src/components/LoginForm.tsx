@@ -25,6 +25,8 @@ import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { HuggingFaceAuthButton } from '@/components/HuggingFaceAuthButton';
 import { isDemoMode } from '@/utils/demoMode';
+import { useOAuthProviders } from '@/hooks/useOAuthProviders';
+import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('components:login-form');
@@ -32,6 +34,8 @@ const logger = createLogger('components:login-form');
 interface LoginFormProps {
   onLogin?: () => void;
   onShowSignup?: () => void;
+  /** Drops the card chrome so a page can supply its own framing. */
+  bare?: boolean;
 }
 
 const DEMO_CREDENTIALS = {
@@ -42,9 +46,11 @@ const DEMO_CREDENTIALS = {
 export const LoginForm: React.FC<LoginFormProps> = ({
   onLogin,
   onShowSignup,
+  bare = false,
 }) => {
   const { t } = useTranslation();
   const isDemo = isDemoMode();
+  const oauth = useOAuthProviders();
   const [username, setUsername] = useState(
     isDemo ? DEMO_CREDENTIALS.username : ''
   );
@@ -109,8 +115,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   };
 
   return (
-    <div className='mx-auto w-full max-w-md rounded-3xl border border-line bg-surface-raised p-6 shadow-card sm:p-8'>
-      <div className='mb-8 text-center'>
+    <div
+      className={cn(
+        'mx-auto w-full max-w-md',
+        !bare &&
+          'rounded-3xl border border-line bg-surface-raised p-6 shadow-card sm:p-8'
+      )}
+    >
+      <div className={cn('mb-8', bare ? 'text-start' : 'text-center')}>
         <h1 className='mb-2 text-3xl font-light tracking-[-0.04em] text-ink'>
           {t('auth.login.title')}
         </h1>
@@ -194,24 +206,31 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
       {!isDemo && (
         <>
-          {/* OAuth Section */}
-          <div className='mt-6'>
-            <div className='relative'>
-              <div className='absolute inset-0 flex items-center'>
-                <div className='w-full border-t border-line' />
+          {/* Social sign-in, only when the backend has a provider configured */}
+          {oauth.hasAny && (
+            <div className='mt-6'>
+              <div className='relative'>
+                <div className='absolute inset-0 flex items-center'>
+                  <div className='w-full border-t border-line' />
+                </div>
+                <div className='relative flex justify-center text-sm'>
+                  <span
+                    className={cn(
+                      'px-2 text-ink-muted',
+                      bare ? 'bg-canvas' : 'bg-surface-raised'
+                    )}
+                  >
+                    {t('common.or')}
+                  </span>
+                </div>
               </div>
-              <div className='relative flex justify-center text-sm'>
-                <span className='bg-surface-raised px-2 text-ink-muted'>
-                  {t('common.or')}
-                </span>
-              </div>
-            </div>
 
-            <div className='mt-6 space-y-3'>
-              <GitHubAuthButton />
-              <HuggingFaceAuthButton />
+              <div className='mt-6 space-y-3'>
+                {oauth.github && <GitHubAuthButton />}
+                {oauth.huggingface && <HuggingFaceAuthButton />}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className='mt-6 text-center'>
             <p className='text-sm text-ink-muted'>
