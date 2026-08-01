@@ -649,6 +649,12 @@
         "documentationDescription": "คู่มือ บทช่วยสอน และข้อมูลอ้างอิง API"
       },
       "version": "เวอร์ชัน {{version}}"
+    },
+    "groups": {
+      "general": "ทั่วไป",
+      "chat": "แชท",
+      "media": "เสียงและรูปภาพ",
+      "connections": "การเชื่อมต่อ"
     }
   },
   "models": {

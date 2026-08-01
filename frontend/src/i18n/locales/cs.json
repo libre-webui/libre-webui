@@ -340,8 +340,8 @@
       "plugins": "Pluginy",
       "generation": "Generování",
       "documents": "Dokumenty",
-      "tts": "Text na řeč",
-      "imageGen": "Generování obrázků",
+      "tts": "Řeč",
+      "imageGen": "Obrázky",
       "data": "Data",
       "about": "O aplikaci"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Průvodci, tutoriály a reference API"
       },
       "version": "Verze {{version}}"
+    },
+    "groups": {
+      "general": "Obecné",
+      "chat": "Chat",
+      "media": "Řeč a obrázky",
+      "connections": "Připojení"
     }
   },
   "models": {

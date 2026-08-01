@@ -649,6 +649,12 @@
         "documentationDescription": "Посібники, навчальні матеріали та довідник API"
       },
       "version": "Версія {{version}}"
+    },
+    "groups": {
+      "general": "Загальні",
+      "chat": "Чат",
+      "media": "Мовлення та зображення",
+      "connections": "З'єднання"
     }
   },
   "models": {

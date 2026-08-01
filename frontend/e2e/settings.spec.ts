@@ -1184,7 +1184,7 @@ test('TTS keeps the selected provider for shared model aliases and generation', 
   await page.goto('/chat');
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
   await page.keyboard.press('Control+,');
-  await page.getByRole('tab', { name: 'Text-to-Speech' }).click();
+  await page.getByRole('tab', { name: 'Speech' }).click();
 
   const modelSelect = page.getByRole('combobox', { name: 'TTS Model' });
   await expect(modelSelect).toHaveValue('openai-tts::tts-1-hd');
@@ -1223,7 +1223,7 @@ test('TTS keeps the selected provider for shared model aliases and generation', 
   await page.reload();
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
   await page.keyboard.press('Control+,');
-  await page.getByRole('tab', { name: 'Text-to-Speech' }).click();
+  await page.getByRole('tab', { name: 'Speech' }).click();
   await expect(page.getByRole('combobox', { name: 'TTS Model' })).toHaveValue(
     'kyutai-tts-1.6b::tts-1-hd'
   );
@@ -1303,7 +1303,7 @@ test('image generation keeps duplicate model providers distinct through save and
   await page.goto('/chat');
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
   await page.keyboard.press('Control+,');
-  await page.getByRole('tab', { name: 'Image Generation' }).click();
+  await page.getByRole('tab', { name: 'Images' }).click();
 
   const imageSettingsPanel = page.getByRole('tabpanel');
   const modelSelect = imageSettingsPanel.locator('select').first();
@@ -1334,7 +1334,7 @@ test('image generation keeps duplicate model providers distinct through save and
   await page.reload();
   await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
   await page.keyboard.press('Control+,');
-  await page.getByRole('tab', { name: 'Image Generation' }).click();
+  await page.getByRole('tab', { name: 'Images' }).click();
   await expect(
     page.getByRole('tabpanel').locator('select').first()
   ).toHaveValue(`image-provider-two::${sharedModel}`);

@@ -340,8 +340,8 @@
       "plugins": "Plugin",
       "generation": "Pembuatan",
       "documents": "Dokumen",
-      "tts": "Text-to-Speech",
-      "imageGen": "Pembuatan Gambar",
+      "tts": "Suara",
+      "imageGen": "Gambar",
       "data": "Data",
       "about": "Tentang"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Panduan, tutorial, dan referensi API"
       },
       "version": "Versi {{version}}"
+    },
+    "groups": {
+      "general": "Umum",
+      "chat": "Chat",
+      "media": "Suara & gambar",
+      "connections": "Koneksi"
     }
   },
   "models": {

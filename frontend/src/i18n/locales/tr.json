@@ -340,8 +340,8 @@
       "plugins": "Eklentiler",
       "generation": "Üretim",
       "documents": "Belgeler",
-      "tts": "Metin-Konuşma",
-      "imageGen": "Görsel Üretimi",
+      "tts": "Ses",
+      "imageGen": "Görseller",
       "data": "Veri",
       "about": "Hakkında"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Kılavuzlar, öğreticiler ve API referansı"
       },
       "version": "Sürüm {{version}}"
+    },
+    "groups": {
+      "general": "Genel",
+      "chat": "Sohbet",
+      "media": "Ses ve görseller",
+      "connections": "Bağlantılar"
     }
   },
   "models": {

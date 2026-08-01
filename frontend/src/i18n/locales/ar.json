@@ -649,6 +649,12 @@
         "documentationDescription": "أدلة ودروس ومرجع API"
       },
       "version": "الإصدار {{version}}"
+    },
+    "groups": {
+      "general": "عام",
+      "chat": "الدردشة",
+      "media": "الصوت والصور",
+      "connections": "الاتصالات"
     }
   },
   "models": {

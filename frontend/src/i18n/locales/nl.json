@@ -340,8 +340,8 @@
       "plugins": "Plugins",
       "generation": "Generatie",
       "documents": "Documenten",
-      "tts": "Tekst-naar-spraak",
-      "imageGen": "Beeldgeneratie",
+      "tts": "Spraak",
+      "imageGen": "Beelden",
       "data": "Gegevens",
       "about": "Over"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Handleidingen, tutorials en API-referentie"
       },
       "version": "Versie {{version}}"
+    },
+    "groups": {
+      "general": "Algemeen",
+      "chat": "Chat",
+      "media": "Spraak en beelden",
+      "connections": "Verbindingen"
     }
   },
   "models": {

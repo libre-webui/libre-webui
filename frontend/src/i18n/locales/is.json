@@ -340,8 +340,8 @@
       "plugins": "Viðbætur",
       "generation": "Myndun",
       "documents": "Skjöl",
-      "tts": "Talgerving",
-      "imageGen": "Myndsköpun",
+      "tts": "Tal",
+      "imageGen": "Myndir",
       "data": "Gögn",
       "about": "Um"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Guides, tutorials and API reference"
       },
       "version": "Útgáfa {{version}}"
+    },
+    "groups": {
+      "general": "Almennt",
+      "chat": "Spjall",
+      "media": "Tal og myndir",
+      "connections": "Tengingar"
     }
   },
   "models": {

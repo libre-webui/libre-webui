@@ -649,6 +649,12 @@
         "documentationDescription": "가이드, 튜토리얼 및 API 레퍼런스"
       },
       "version": "버전 {{version}}"
+    },
+    "groups": {
+      "general": "일반",
+      "chat": "채팅",
+      "media": "음성 및 이미지",
+      "connections": "연결"
     }
   },
   "models": {

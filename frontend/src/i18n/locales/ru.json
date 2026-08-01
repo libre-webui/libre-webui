@@ -649,6 +649,12 @@
         "documentationDescription": "Руководства, учебники и справочник API"
       },
       "version": "Версия {{version}}"
+    },
+    "groups": {
+      "general": "Основные",
+      "chat": "Чат",
+      "media": "Речь и изображения",
+      "connections": "Подключения"
     }
   },
   "models": {

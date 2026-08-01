@@ -340,8 +340,8 @@
       "plugins": "Plugins",
       "generation": "Generierung",
       "documents": "Dokumente",
-      "tts": "Text-zu-Sprache",
-      "imageGen": "Bildgenerierung",
+      "tts": "Sprache",
+      "imageGen": "Bilder",
       "data": "Daten",
       "about": "Über"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Anleitungen, Tutorials und API-Referenz"
       },
       "version": "Version {{version}}"
+    },
+    "groups": {
+      "general": "Allgemein",
+      "chat": "Chat",
+      "media": "Sprache & Bilder",
+      "connections": "Verbindungen"
     }
   },
   "models": {

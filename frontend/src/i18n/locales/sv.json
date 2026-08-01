@@ -340,8 +340,8 @@
       "plugins": "Tillägg",
       "generation": "Generering",
       "documents": "Dokument",
-      "tts": "Text-till-tal",
-      "imageGen": "Bildgenerering",
+      "tts": "Tal",
+      "imageGen": "Bilder",
       "data": "Data",
       "about": "Om"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Guider, handledningar och API-referens"
       },
       "version": "Version {{version}}"
+    },
+    "groups": {
+      "general": "Allmänt",
+      "chat": "Chatt",
+      "media": "Tal och bilder",
+      "connections": "Anslutningar"
     }
   },
   "models": {

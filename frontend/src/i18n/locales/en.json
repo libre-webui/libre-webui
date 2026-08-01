@@ -340,8 +340,8 @@
       "plugins": "Plugins",
       "generation": "Generation",
       "documents": "Documents",
-      "tts": "Text-to-Speech",
-      "imageGen": "Image Generation",
+      "tts": "Speech",
+      "imageGen": "Images",
       "data": "Data",
       "about": "About"
     },
@@ -685,6 +685,12 @@
         "documentationDescription": "Guides, tutorials and API reference"
       },
       "version": "Version {{version}}"
+    },
+    "groups": {
+      "general": "General",
+      "chat": "Chat",
+      "media": "Speech & images",
+      "connections": "Connections"
     }
   },
   "models": {

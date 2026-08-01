@@ -340,8 +340,8 @@
       "plugins": "Wtyczki",
       "generation": "Generowanie",
       "documents": "Dokumenty",
-      "tts": "Tekst na mowę",
-      "imageGen": "Generowanie obrazów",
+      "tts": "Mowa",
+      "imageGen": "Obrazy",
       "data": "Dane",
       "about": "O programie"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Przewodniki, samouczki i dokumentacja API"
       },
       "version": "Wersja {{version}}"
+    },
+    "groups": {
+      "general": "Ogólne",
+      "chat": "Czat",
+      "media": "Mowa i obrazy",
+      "connections": "Połączenia"
     }
   },
   "models": {

@@ -21,6 +21,7 @@ import {
   X,
   Bot,
   Database,
+  HardDrive,
   Palette,
   Info,
   Puzzle,
@@ -29,6 +30,7 @@ import {
   ImageIcon,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { cn } from '@/utils';
 import { SettingsAboutTab } from '@/components/settings/SettingsAboutTab';
 import { SettingsAppearanceTab } from '@/components/settings/SettingsAppearanceTab';
 import { SettingsDataTab } from '@/components/settings/SettingsDataTab';
@@ -1155,20 +1157,57 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     }
   };
 
-  const tabs = [
-    { id: 'appearance', label: t('settings.tabs.appearance'), icon: Palette },
-    { id: 'models', label: t('settings.tabs.model'), icon: Bot },
-    { id: 'generation', label: t('settings.tabs.generation'), icon: Sliders },
-    { id: 'tts', label: t('settings.tabs.tts'), icon: Volume2 },
-    { id: 'image-gen', label: t('settings.tabs.imageGen'), icon: ImageIcon },
+  // Grouped so the nav reads as four short lists instead of one long one.
+  const tabGroups = [
     {
-      id: 'documents',
-      label: t('settings.tabs.documents'),
-      icon: Database,
+      id: 'general',
+      label: t('settings.groups.general', 'General'),
+      tabs: [
+        {
+          id: 'appearance',
+          label: t('settings.tabs.appearance'),
+          icon: Palette,
+        },
+        { id: 'data', label: t('settings.tabs.data'), icon: HardDrive },
+        { id: 'about', label: t('settings.tabs.about'), icon: Info },
+      ],
     },
-    { id: 'plugins', label: t('settings.tabs.plugins'), icon: Puzzle },
-    { id: 'data', label: t('settings.tabs.data'), icon: Database },
-    { id: 'about', label: t('settings.tabs.about'), icon: Info },
+    {
+      id: 'chat',
+      label: t('settings.groups.chat', 'Chat'),
+      tabs: [
+        { id: 'models', label: t('settings.tabs.model'), icon: Bot },
+        {
+          id: 'generation',
+          label: t('settings.tabs.generation'),
+          icon: Sliders,
+        },
+        {
+          id: 'documents',
+          label: t('settings.tabs.documents'),
+          icon: Database,
+        },
+      ],
+    },
+    {
+      id: 'media',
+      label: t('settings.groups.media', 'Speech & images'),
+      tabs: [
+        { id: 'tts', label: t('settings.tabs.tts'), icon: Volume2 },
+        {
+          id: 'image-gen',
+          label: t('settings.tabs.imageGen'),
+          icon: ImageIcon,
+        },
+      ],
+    },
+    {
+      id: 'connections',
+      label: t('settings.groups.connections', 'Connections'),
+      tabs: [
+        { id: 'plugins', label: t('settings.tabs.plugins'), icon: Puzzle },
+      ],
+    },
   ];
 
   const renderTabContent = () => {
@@ -1395,37 +1434,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 WebkitOverflowScrolling: 'touch',
               }}
             >
-              <nav className='flex gap-1 sm:flex-col' role='tablist'>
-                {tabs.map(tab => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === tab.id;
-
-                  let buttonClass =
-                    'flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2.5 text-start text-sm transition-colors duration-200 touch-manipulation sm:w-full';
-
-                  buttonClass += isActive
-                    ? ' border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white dark:text-gray-950'
-                    : ' border-transparent text-gray-600 hover:bg-gray-100/70 hover:text-gray-950 dark:text-dark-600 dark:hover:bg-white/[0.05] dark:hover:text-dark-900';
-
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={buttonClass}
-                      role='tab'
-                      aria-selected={isActive}
-                      aria-controls='settings-tab-panel'
+              <nav
+                className='flex gap-1 sm:flex-col sm:gap-0'
+                role='tablist'
+                aria-label={t('settings.title', 'Settings')}
+              >
+                {tabGroups.map(group => (
+                  <div
+                    key={group.id}
+                    className='flex shrink-0 gap-1 sm:flex-col sm:gap-0.5 sm:pb-2'
+                  >
+                    <p
+                      aria-hidden='true'
+                      className='hidden px-2.5 pb-1 pt-2 text-[10px] font-medium uppercase tracking-[0.08em] text-ink-subtle sm:block'
                     >
-                      <Icon
-                        className='h-4 w-4 flex-shrink-0'
-                        aria-hidden='true'
-                      />
-                      <span className='truncate whitespace-nowrap text-xs font-medium sm:text-sm'>
-                        {tab.label}
-                      </span>
-                    </button>
-                  );
-                })}
+                      {group.label}
+                    </p>
+                    {group.tabs.map(tab => {
+                      const Icon = tab.icon;
+                      const isActive = activeTab === tab.id;
+
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={cn(
+                            'flex shrink-0 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-start transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 sm:w-full',
+                            isActive
+                              ? 'bg-black/[0.06] text-ink dark:bg-white/[0.08]'
+                              : 'text-ink-muted hover:bg-black/[0.04] hover:text-ink dark:hover:bg-white/[0.05]'
+                          )}
+                          role='tab'
+                          aria-selected={isActive}
+                          aria-controls='settings-tab-panel'
+                        >
+                          <Icon
+                            className='h-4 w-4 flex-shrink-0'
+                            aria-hidden='true'
+                          />
+                          <span className='truncate whitespace-nowrap text-[13px]'>
+                            {tab.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
               </nav>
             </div>
 

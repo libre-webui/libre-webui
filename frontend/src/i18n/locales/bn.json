@@ -649,6 +649,12 @@
         "documentationDescription": "Guides, tutorials and API reference"
       },
       "version": "সংস্করণ {{version}}"
+    },
+    "groups": {
+      "general": "সাধারণ",
+      "chat": "চ্যাট",
+      "media": "কণ্ঠ ও ছবি",
+      "connections": "সংযোগ"
     }
   },
   "models": {

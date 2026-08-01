@@ -649,6 +649,12 @@
         "documentationDescription": "ガイド、チュートリアル、APIリファレンス"
       },
       "version": "バージョン {{version}}"
+    },
+    "groups": {
+      "general": "一般",
+      "chat": "チャット",
+      "media": "音声と画像",
+      "connections": "接続"
     }
   },
   "models": {

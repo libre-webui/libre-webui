@@ -340,8 +340,8 @@
       "plugins": "Plugin",
       "generation": "Penjanaan",
       "documents": "Dokumen",
-      "tts": "Teks ke Pertuturan",
-      "imageGen": "Penjanaan Imej",
+      "tts": "Suara",
+      "imageGen": "Imej",
       "data": "Data",
       "about": "Perihal"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Guides, tutorials and API reference"
       },
       "version": "Versi {{version}}"
+    },
+    "groups": {
+      "general": "Umum",
+      "chat": "Sembang",
+      "media": "Suara & imej",
+      "connections": "Sambungan"
     }
   },
   "models": {

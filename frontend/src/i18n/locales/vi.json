@@ -340,8 +340,8 @@
       "plugins": "Plugin",
       "generation": "Tạo nội dung",
       "documents": "Tài liệu",
-      "tts": "Chuyển văn bản thành giọng nói",
-      "imageGen": "Tạo hình ảnh",
+      "tts": "Giọng nói",
+      "imageGen": "Hình ảnh",
       "data": "Dữ liệu",
       "about": "Giới thiệu"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Hướng dẫn, bài học và tham khảo API"
       },
       "version": "Phiên bản {{version}}"
+    },
+    "groups": {
+      "general": "Chung",
+      "chat": "Trò chuyện",
+      "media": "Giọng nói & hình ảnh",
+      "connections": "Kết nối"
     }
   },
   "models": {

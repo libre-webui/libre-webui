@@ -340,8 +340,8 @@
       "plugins": "Plugins",
       "generation": "Génération",
       "documents": "Documents",
-      "tts": "Synthèse vocale",
-      "imageGen": "Génération d'images",
+      "tts": "Voix",
+      "imageGen": "Images",
       "data": "Données",
       "about": "À propos"
     },
@@ -649,6 +649,12 @@
         "documentationDescription": "Guides, tutoriels et référence API"
       },
       "version": "Version {{version}}"
+    },
+    "groups": {
+      "general": "Général",
+      "chat": "Chat",
+      "media": "Voix et images",
+      "connections": "Connexions"
     }
   },
   "models": {
