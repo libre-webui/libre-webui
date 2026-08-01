@@ -139,7 +139,7 @@ export const ConversationHistoryRail = React.memo(
         data-testid='conversation-history-rail'
         aria-label={t('chatHistory.label')}
         className='pointer-events-none absolute top-1/2 z-20 hidden h-[min(58vh,30rem)] w-7 -translate-y-1/2 lg:block xl:w-9'
-        style={{ insetInlineStart: 'max(0.25rem, calc(50% - 30rem))' }}
+        style={{ insetInlineStart: 'max(0.25rem, calc(50% - 27rem))' }}
         onPointerLeave={() => {
           if (!navRef.current?.contains(document.activeElement)) {
             setPreviewId(null);
@@ -148,18 +148,16 @@ export const ConversationHistoryRail = React.memo(
       >
         <ol
           ref={listRef}
-          className='pointer-events-auto grid h-full min-h-0 overflow-y-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
-          style={{
-            gridTemplateRows: `repeat(${items.length}, minmax(1.5rem, 1fr))`,
-          }}
+          className='pointer-events-auto flex h-full min-h-0 flex-col overflow-y-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&>li:first-child]:mt-auto [&>li:last-child]:mb-auto'
         >
           {items.map((item, index) => {
             const isActive = item.id === resolvedActiveId;
+            const distance = Math.abs(index - activeIndex);
             const tooltipId =
               previewId === item.id ? previewIdValue : undefined;
 
             return (
-              <li key={item.id} className='flex min-h-6 items-center'>
+              <li key={item.id} className='flex h-4 flex-none items-center'>
                 <button
                   ref={element => {
                     if (element) buttonRefs.current.set(item.id, element);
@@ -175,7 +173,7 @@ export const ConversationHistoryRail = React.memo(
                   })}
                   tabIndex={index === activeIndex ? 0 : -1}
                   className={cn(
-                    'group flex h-6 w-7 items-center outline-none xl:w-9',
+                    'group flex h-4 w-7 items-center outline-none xl:w-9',
                     'focus-visible:ring-2 focus-visible:ring-primary-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas',
                     'rounded-sm'
                   )}
@@ -217,10 +215,12 @@ export const ConversationHistoryRail = React.memo(
                   <span
                     aria-hidden='true'
                     className={cn(
-                      'block rounded-full transition-[width,background-color,opacity] duration-150 motion-reduce:transition-none',
+                      'block h-0.5 rounded-full transition-[width,background-color,opacity] duration-150 motion-reduce:transition-none',
                       isActive
-                        ? 'h-0.5 w-6 bg-ink opacity-90 xl:w-7'
-                        : 'h-px w-3 bg-line-strong opacity-75 group-hover:w-5 group-hover:bg-ink-muted group-hover:opacity-100 group-focus-visible:w-5'
+                        ? 'w-6 bg-ink xl:w-7'
+                        : distance === 1
+                          ? 'w-3.5 bg-ink-subtle opacity-80 group-hover:w-5 group-hover:bg-ink-muted group-hover:opacity-100 group-focus-visible:w-5'
+                          : 'w-2.5 bg-line-strong opacity-70 group-hover:w-5 group-hover:bg-ink-muted group-hover:opacity-100 group-focus-visible:w-5'
                     )}
                   />
                 </button>
@@ -234,48 +234,28 @@ export const ConversationHistoryRail = React.memo(
             id={previewIdValue}
             role='tooltip'
             className={cn(
-              'pointer-events-none absolute start-full ms-3 w-72 -translate-y-1/2',
-              'rounded-2xl border border-line bg-surface-overlay/95 p-4 shadow-overlay backdrop-blur-xl',
+              'pointer-events-none absolute start-full ms-2 w-72 -translate-y-1/2',
+              'overflow-hidden rounded-xl border border-line bg-surface-overlay/95 shadow-overlay backdrop-blur-xl',
               'animate-fade-in motion-reduce:animate-none'
             )}
             style={{
-              top: `clamp(6.5rem, ${previewTop}px, calc(100% - 6.5rem))`,
+              top: `clamp(3.5rem, ${previewTop}px, calc(100% - 3.5rem))`,
             }}
           >
-            <div className='mb-3 flex items-center justify-between gap-3'>
-              <span
-                dir='ltr'
-                className='text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-subtle'
+            <div className='px-3.5 py-3'>
+              <p
+                dir='auto'
+                className='truncate text-[13px] font-semibold leading-5 text-ink'
               >
-                {String(previewIndex + 1).padStart(2, '0')} /{' '}
-                {String(items.length).padStart(2, '0')}
-              </span>
-              <span className='h-px flex-1 bg-line' aria-hidden='true' />
-            </div>
-            <div className='space-y-3'>
-              <div>
-                <p className='mb-1 text-[10px] font-medium uppercase tracking-[0.12em] text-ink-subtle'>
-                  {t('chatMessage.you')}
-                </p>
+                {previewText(previewItem.prompt)}
+              </p>
+              {previewItem.response && (
                 <p
                   dir='auto'
-                  className='line-clamp-2 text-sm font-medium leading-5 text-ink'
+                  className='mt-1 line-clamp-3 text-xs leading-5 text-ink-muted'
                 >
-                  {previewText(previewItem.prompt)}
+                  {previewText(previewItem.response)}
                 </p>
-              </div>
-              {previewItem.response && (
-                <div className='border-t border-line pt-3'>
-                  <p className='mb-1 text-[10px] font-medium uppercase tracking-[0.12em] text-ink-subtle'>
-                    {t('chatMessage.assistant')}
-                  </p>
-                  <p
-                    dir='auto'
-                    className='line-clamp-2 text-xs leading-5 text-ink-muted'
-                  >
-                    {previewText(previewItem.response)}
-                  </p>
-                </div>
               )}
             </div>
           </div>
