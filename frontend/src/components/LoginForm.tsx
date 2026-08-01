@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
@@ -28,6 +28,7 @@ import { isDemoMode } from '@/utils/demoMode';
 import { useOAuthProviders } from '@/hooks/useOAuthProviders';
 import { cn } from '@/utils';
 import { createLogger } from '@/utils/logger';
+import { TurnstileWidget } from '@/components/TurnstileWidget';
 
 const logger = createLogger('components:login-form');
 
@@ -59,8 +60,20 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   );
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const { login, systemInfo } = useAuthStore();
+  const turnstileSiteKey = systemInfo?.turnstile?.siteKey;
+  const isTurnstileEnabled = Boolean(
+    systemInfo?.turnstile?.enabled && turnstileSiteKey && !isDemo
+  );
+  const handleTurnstileTokenChange = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+  const submitDisabled = useMemo(
+    () => isLoading || (isTurnstileEnabled && !turnstileToken),
+    [isLoading, isTurnstileEnabled, turnstileToken]
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -73,6 +86,16 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       return;
     }
 
+    if (isTurnstileEnabled && !turnstileToken) {
+      toast.error(
+        t(
+          'auth.login.verificationFailed',
+          'Security verification failed. Please refresh and try again.'
+        )
+      );
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -82,6 +105,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       const response = await authApi.login({
         username: loginUsername,
         password: loginPassword,
+        turnstileToken,
       });
 
       if (response.success && response.data) {
@@ -100,6 +124,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       logger.error('Login error:', error);
       toast.error(t('auth.login.checkCredentials'));
     } finally {
+      setTurnstileToken('');
       setIsLoading(false);
     }
   };
@@ -185,9 +210,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({
           </div>
         </div>
 
+        {isTurnstileEnabled && turnstileSiteKey && (
+          <TurnstileWidget
+            siteKey={turnstileSiteKey}
+            disabled={isLoading}
+            errorMessage={t(
+              'auth.login.verificationFailed',
+              'Security verification failed. Please refresh and try again.'
+            )}
+            onTokenChange={handleTurnstileTokenChange}
+          />
+        )}
+
         <button
           type='submit'
-          disabled={isLoading}
+          disabled={submitDisabled}
           className='flex h-11 w-full items-center justify-center rounded-xl border border-transparent bg-ink px-4 text-sm font-medium text-ink-inverse shadow-subtle transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transition-none'
         >
           {isLoading ? (

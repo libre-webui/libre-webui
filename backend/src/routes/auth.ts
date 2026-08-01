@@ -79,12 +79,25 @@ const generalAuthRateLimiter = rateLimit({
  */
 router.post('/login', authRateLimiter, async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, turnstileToken } = req.body;
 
     if (!username || !password) {
       res.status(400).json({
         success: false,
         message: 'Username and password are required',
+      });
+      return;
+    }
+
+    const turnstileValid = await turnstileService.verify(
+      turnstileToken,
+      getClientIp(req)
+    );
+
+    if (!turnstileValid) {
+      res.status(400).json({
+        success: false,
+        message: 'Verification failed. Please try again.',
       });
       return;
     }
