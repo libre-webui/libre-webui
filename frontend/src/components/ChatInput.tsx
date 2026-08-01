@@ -293,7 +293,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className='pointer-events-none'>
       {/* Centered container matching chat messages width */}
-      <div className='pointer-events-auto mx-auto w-full max-w-4xl px-4 sm:px-6 md:px-8'>
+      <div className='pointer-events-auto mx-auto w-full max-w-3xl px-4 sm:px-6 md:px-8'>
         {/* Advanced Features Panel */}
         {showAdvanced && (
           <div className='mb-2 animate-slide-up rounded-2xl border border-black/[0.07] bg-surface/90 p-4 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-white/[0.08] dark:bg-dark-200/90'>
@@ -309,12 +309,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         )}
 
         {/* Main Input Area - Unified Input Bar */}
-        <div className='pb-3 pt-2 sm:pb-4'>
+        <div className='pb-2.5 pt-1.5 sm:pb-3'>
           <form onSubmit={handleSubmit}>
             {/* Unified Input Container */}
             <div
               className={cn(
-                'flex items-end gap-2 rounded-[1.55rem] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200 sm:p-3',
+                'flex items-end gap-2 rounded-[1.35rem] border p-2 transition-[border-color,box-shadow,background-color] duration-200',
                 'bg-surface/[0.92] dark:bg-dark-200/[0.92] backdrop-blur-xl',
                 'border-black/[0.08] dark:border-white/[0.09]',
                 'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_14px_42px_rgba(15,23,42,0.08)]',
@@ -328,7 +328,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 size='sm'
                 onClick={() => setShowAdvanced(!showAdvanced)}
                 className={cn(
-                  'h-9 w-9 sm:h-10 sm:w-10 !p-0 rounded-full flex-shrink-0',
+                  'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
                   'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300',
                   'transition-colors duration-150 touch-manipulation',
                   hasAdvancedFeatures &&
@@ -360,7 +360,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   onKeyDown={handleKeyDown}
                   placeholder={t('chat.input.placeholder')}
                   disabled={disabled}
-                  className='!m-0 min-h-[40px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-2 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-base leading-relaxed touch-manipulation'
+                  className='!m-0 min-h-[36px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-1.5 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
                   rows={1}
                 />
               </div>
@@ -391,7 +391,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                     size='sm'
                     onClick={handleStopGeneration}
                     className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'bg-red-50 dark:bg-red-900/20',
                       'text-red-500 dark:text-red-400',
                       'hover:bg-red-100 dark:hover:bg-red-900/30',
@@ -410,7 +410,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                       !message.trim() || disabled || !sessionModelAvailable
                     }
                     className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'bg-gray-100 text-gray-400 dark:bg-dark-300 dark:text-dark-500',
                       'disabled:cursor-not-allowed disabled:opacity-70',
                       'transition-colors duration-150 touch-manipulation',
@@ -447,7 +447,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             </div>
           )}
 
-          <div className='mt-2 flex min-h-4 items-center justify-center gap-2 text-[10px] text-gray-400 dark:text-dark-500'>
+          <div className='mt-1.5 flex min-h-4 items-center justify-center gap-2 text-[10px] text-gray-400 dark:text-dark-500'>
             <DocumentIndicator sessionId={currentSession?.id} />
             <div className='text-center leading-relaxed'>
               <span>{t('chat.footer.disclaimer')}</span>

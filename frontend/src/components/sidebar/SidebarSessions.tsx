@@ -115,7 +115,7 @@ export function SidebarSessions({
                     'group relative cursor-pointer transition-colors duration-150 touch-manipulation outline-none',
                     sidebarCompact
                       ? 'rounded-xl p-1 flex items-center justify-center'
-                      : 'rounded-xl px-3 py-2.5',
+                      : 'rounded-lg px-2.5 py-2',
                     isActive
                       ? 'bg-white ring-1 ring-black/[0.04] dark:bg-dark-200 dark:ring-white/[0.05]'
                       : 'hover:bg-white/60 dark:hover:bg-dark-200/60'

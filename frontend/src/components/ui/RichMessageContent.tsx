@@ -118,8 +118,8 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
         <code
           dir='ltr'
           className={cn(
-            'px-2 py-1 rounded-md bg-gray-100 dark:bg-dark-200 text-gray-800 dark:text-dark-800',
-            'font-mono text-sm border border-gray-200 dark:border-dark-300',
+            'px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-dark-200 text-gray-800 dark:text-dark-800',
+            'font-mono text-[0.85em] border border-gray-200 dark:border-dark-300',
             className
           )}
           {...props}
@@ -133,7 +133,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
     },
     p({ children, ...props }) {
       return (
-        <div dir='auto' className='mb-4 last:mb-0 leading-relaxed' {...props}>
+        <div dir='auto' className='mb-2.5 last:mb-0 leading-relaxed' {...props}>
           {children}
         </div>
       );
@@ -142,7 +142,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
       return (
         <ul
           dir='auto'
-          className='list-disc list-inside mb-4 space-y-2 ps-4'
+          className='list-disc list-inside mb-2.5 space-y-1 ps-4'
           {...props}
         >
           {children}
@@ -153,7 +153,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
       return (
         <ol
           dir='auto'
-          className='list-decimal list-inside mb-4 space-y-2 ps-4'
+          className='list-decimal list-inside mb-2.5 space-y-1 ps-4'
           {...props}
         >
           {children}
@@ -175,7 +175,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
       return (
         <blockquote
           dir='auto'
-          className='border-s-4 border-primary-400 dark:border-primary-500 bg-primary-25 dark:bg-primary-950/30 ps-4 py-3 my-4 rounded-e-lg italic text-gray-700 dark:text-dark-700'
+          className='border-s-2 border-primary-400 dark:border-primary-500 bg-primary-25 dark:bg-primary-950/30 ps-3 py-2 my-3 rounded-e-lg italic text-gray-700 dark:text-dark-700'
           {...props}
         >
           {children}
@@ -186,7 +186,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
       return (
         <h1
           dir='auto'
-          className='text-2xl font-bold mb-4 mt-6 first:mt-0 text-gray-900 dark:text-dark-800 border-b border-gray-200 dark:border-dark-300 pb-2'
+          className='text-xl font-bold mb-3 mt-5 first:mt-0 text-gray-900 dark:text-dark-800 border-b border-gray-200 dark:border-dark-300 pb-1.5'
           {...props}
         >
           {children}
@@ -197,7 +197,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
       return (
         <h2
           dir='auto'
-          className='text-xl font-semibold mb-3 mt-6 first:mt-0 text-gray-900 dark:text-dark-800'
+          className='text-lg font-semibold mb-2 mt-5 first:mt-0 text-gray-900 dark:text-dark-800'
           {...props}
         >
           {children}
@@ -208,7 +208,7 @@ export const RichMessageContent: React.FC<RichMessageContentProps> = ({
       return (
         <h3
           dir='auto'
-          className='text-lg font-medium mb-3 mt-4 first:mt-0 text-gray-900 dark:text-dark-800'
+          className='text-base font-medium mb-2 mt-4 first:mt-0 text-gray-900 dark:text-dark-800'
           {...props}
         >
           {children}

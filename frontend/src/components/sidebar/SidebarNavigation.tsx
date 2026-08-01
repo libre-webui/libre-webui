@@ -35,7 +35,7 @@ export function SidebarNavigation({
   const itemClass = (active: boolean) =>
     cn(
       'flex items-center gap-3 rounded-xl text-[13px] font-medium transition-colors duration-150 touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30',
-      sidebarCompact ? 'w-11 h-11 justify-center p-0' : 'w-full px-3 py-2.5',
+      sidebarCompact ? 'w-11 h-11 justify-center p-0' : 'w-full px-2.5 py-2',
       active
         ? 'bg-white text-gray-950 ring-1 ring-black/[0.04] dark:bg-dark-200 dark:text-dark-950 dark:ring-white/[0.06]'
         : 'text-gray-600 dark:text-dark-600 hover:bg-white/60 dark:hover:bg-dark-200/60 hover:text-gray-950 dark:hover:text-dark-950 active:bg-white dark:active:bg-dark-200'

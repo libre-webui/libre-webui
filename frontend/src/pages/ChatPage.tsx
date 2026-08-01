@@ -518,7 +518,7 @@ export const ChatPage: React.FC = () => {
               <form onSubmit={handleWelcomeSubmit}>
                 <div
                   className={cn(
-                    'flex items-end gap-2 rounded-[1.6rem] border p-2.5 transition-[border-color,box-shadow,background-color] duration-200 sm:p-3',
+                    'flex items-end gap-2 rounded-[1.35rem] border p-2 transition-[border-color,box-shadow,background-color] duration-200',
                     'border-black/[0.08] bg-surface/90 dark:border-white/[0.09] dark:bg-dark-200/90',
                     'shadow-[0_1px_2px_rgba(0,0,0,0.03),0_18px_50px_rgba(15,23,42,0.08)] backdrop-blur-xl',
                     'focus-within:border-primary-500/35 focus-within:shadow-[0_1px_2px_rgba(0,0,0,0.03),0_22px_65px_rgba(15,23,42,0.12)]'
@@ -531,7 +531,7 @@ export const ChatPage: React.FC = () => {
                     size='sm'
                     onClick={() => setShowWelcomeAdvanced(!showWelcomeAdvanced)}
                     className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 !p-0 rounded-full flex-shrink-0',
+                      'h-8 w-8 sm:h-9 sm:w-9 !p-0 rounded-full flex-shrink-0',
                       'text-gray-500 dark:text-dark-600 hover:bg-gray-100 dark:hover:bg-dark-300 transition-colors touch-manipulation',
                       hasAdvancedFeatures &&
                         'text-primary-600 dark:text-primary-400',
@@ -561,7 +561,7 @@ export const ChatPage: React.FC = () => {
                       }
                       onKeyDown={handleWelcomeKeyDown}
                       placeholder={t('chat.input.messagePlaceholder')}
-                      className='!m-0 min-h-[40px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-2 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-base leading-relaxed touch-manipulation'
+                      className='!m-0 min-h-[36px] max-h-[160px] resize-none !rounded-none !border-0 !bg-transparent !p-1.5 !shadow-none scrollbar-thin scrollbar-thumb-gray-300 placeholder:text-gray-400 focus:!border-0 focus:!bg-transparent focus:!shadow-none focus:!ring-0 dark:scrollbar-thumb-dark-400 dark:placeholder:text-dark-500 text-[0.9375rem] leading-relaxed touch-manipulation'
                       rows={1}
                     />
                   </div>
@@ -590,7 +590,7 @@ export const ChatPage: React.FC = () => {
                       !selectedModelAvailable
                     }
                     className={cn(
-                      'h-9 w-9 sm:h-10 sm:w-10 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
+                      'h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full flex-shrink-0 flex items-center justify-center',
                       'bg-gray-950 text-white hover:bg-gray-800 dark:bg-white dark:text-gray-950 dark:hover:bg-gray-100',
                       'disabled:bg-gray-100 disabled:text-gray-400 dark:disabled:bg-dark-300 dark:disabled:text-dark-500 disabled:hover:bg-gray-100 dark:disabled:hover:bg-dark-300',
                       'transition-colors duration-150 touch-manipulation',

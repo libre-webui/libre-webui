@@ -518,7 +518,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
       >
         <div
           ref={messagesContentRef}
-          className='mx-auto w-full min-w-0 max-w-4xl px-4 sm:px-6 md:px-8'
+          className='mx-auto w-full min-w-0 max-w-3xl px-4 sm:px-6 md:px-8'
         >
           {messageGroups.map((group, groupIndex) => {
             const isLastAssistantGroup = groupIndex === lastAssistantGroupIndex;
@@ -546,7 +546,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                   isStreaming={isThisMessageStreaming}
                   isLastAssistantMessage={isLastAssistantGroup}
                   onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
-                  className={groupIndex === 0 ? 'mt-5 sm:mt-7' : ''}
+                  className={groupIndex === 0 ? 'mt-3 sm:mt-4' : ''}
                 />
               );
             } else {
@@ -560,7 +560,7 @@ export const ChatMessages: React.FC<ChatMessagesProps> = ({
                   isLastAssistantMessage={isLastAssistantGroup}
                   onRegenerate={isLastAssistantGroup ? onRegenerate : undefined}
                   onSelectBranch={onSelectBranch}
-                  className={groupIndex === 0 ? 'mt-5 sm:mt-7' : ''}
+                  className={groupIndex === 0 ? 'mt-3 sm:mt-4' : ''}
                 />
               );
             }

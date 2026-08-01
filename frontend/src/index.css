@@ -350,6 +350,8 @@ button {
 html {
   min-height: 100%;
   background: rgb(var(--color-canvas));
+  /* Compact global density: rem-based type and spacing scale from here. */
+  font-size: 15px;
 }
 
 body,
