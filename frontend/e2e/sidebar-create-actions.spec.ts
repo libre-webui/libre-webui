@@ -51,8 +51,8 @@ test('sidebar Work and Chat actions navigate to their fresh start screens', asyn
   await page.goto(`/c/${session.id}`);
   await expect(page.getByPlaceholder('Send a message')).toBeVisible();
   const navigation = page.getByTestId('sidebar-navigation');
-  const chatNavigation = navigation.getByRole('button', { name: 'Chat' });
-  const workNavigation = navigation.getByRole('link', { name: 'Work' });
+  await expect(navigation.getByText('Chat')).toHaveCount(0);
+  await expect(navigation.getByText('Work')).toHaveCount(0);
   await expect(page.getByTestId('sidebar-chat-button')).toHaveAttribute(
     'aria-pressed',
     'true'
@@ -61,8 +61,6 @@ test('sidebar Work and Chat actions navigate to their fresh start screens', asyn
     'aria-pressed',
     'false'
   );
-  await expect(chatNavigation).toHaveAttribute('aria-current', 'page');
-  await expect(workNavigation).not.toHaveAttribute('aria-current', 'page');
 
   await page.getByTestId('sidebar-work-button').click();
   await expect(page).toHaveURL(/\/work$/);
@@ -74,8 +72,6 @@ test('sidebar Work and Chat actions navigate to their fresh start screens', asyn
     'aria-pressed',
     'false'
   );
-  await expect(workNavigation).toHaveAttribute('aria-current', 'page');
-  await expect(chatNavigation).not.toHaveAttribute('aria-current', 'page');
 
   await page.getByTestId('sidebar-chat-button').click();
   await expect(page).toHaveURL(/\/chat$/);

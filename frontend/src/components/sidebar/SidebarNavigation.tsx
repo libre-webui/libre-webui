@@ -17,29 +17,18 @@
 
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import {
-  Bot,
-  Briefcase,
-  Database,
-  MessageSquare,
-  Sparkles,
-  User as UserIcon,
-} from 'lucide-react';
+import { Bot, Database, Sparkles, User as UserIcon } from 'lucide-react';
 import { cn } from '@/utils';
 
 interface SidebarNavigationProps {
   sidebarCompact: boolean;
   activePath: string;
-  showWork: boolean;
-  onChatClick: () => void;
   onMobileNavigate: () => void;
 }
 
 export function SidebarNavigation({
   sidebarCompact,
   activePath,
-  showWork,
-  onChatClick,
   onMobileNavigate,
 }: SidebarNavigationProps) {
   const { t } = useTranslation();
@@ -52,11 +41,6 @@ export function SidebarNavigation({
         : 'text-gray-600 dark:text-dark-600 hover:bg-white/60 dark:hover:bg-dark-200/60 hover:text-gray-950 dark:hover:text-dark-950 active:bg-white dark:active:bg-dark-200'
     );
 
-  const chatActive =
-    activePath === '/chat' ||
-    activePath === '/' ||
-    activePath.startsWith('/c/');
-
   return (
     <div className={cn('pb-3', sidebarCompact ? 'px-2' : 'px-3')}>
       <nav
@@ -66,16 +50,6 @@ export function SidebarNavigation({
           sidebarCompact && 'flex flex-col items-center'
         )}
       >
-        <button
-          onClick={onChatClick}
-          className={cn(itemClass(chatActive), 'text-start')}
-          title={sidebarCompact ? t('sidebar.navigation.chat') : undefined}
-          aria-current={chatActive ? 'page' : undefined}
-        >
-          <MessageSquare className='h-[18px] w-[18px] shrink-0' />
-          {!sidebarCompact && t('sidebar.navigation.chat')}
-        </button>
-
         <Link
           to='/models'
           onClick={onMobileNavigate}
@@ -108,30 +82,6 @@ export function SidebarNavigation({
           <Sparkles className='h-[18px] w-[18px] shrink-0' />
           {!sidebarCompact && t('sidebar.navigation.imagine')}
         </Link>
-
-        {showWork && (
-          <Link
-            to='/work'
-            onClick={onMobileNavigate}
-            className={itemClass(
-              activePath === '/work' || activePath.startsWith('/work/')
-            )}
-            title={
-              sidebarCompact
-                ? t('sidebar.navigation.work', { defaultValue: 'Work' })
-                : undefined
-            }
-            aria-current={
-              activePath === '/work' || activePath.startsWith('/work/')
-                ? 'page'
-                : undefined
-            }
-          >
-            <Briefcase className='h-[18px] w-[18px] shrink-0' />
-            {!sidebarCompact &&
-              t('sidebar.navigation.work', { defaultValue: 'Work' })}
-          </Link>
-        )}
 
         <Link
           to='/agents'

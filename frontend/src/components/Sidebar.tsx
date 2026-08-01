@@ -171,12 +171,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     compactOnMobile();
   };
 
-  const handleChatNavigation = () => {
-    forceWelcomeScreen();
-    navigate('/chat', { replace: true });
-    compactOnMobile();
-  };
-
   const handleSelectSession = (session: ChatSession) => {
     navigate(`/c/${session.id}`, { replace: true });
     compactOnMobile();
@@ -351,8 +345,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <SidebarNavigation
             sidebarCompact={sidebarCompact}
             activePath={location.pathname}
-            showWork={showWork}
-            onChatClick={handleChatNavigation}
             onMobileNavigate={compactOnMobile}
           />
 

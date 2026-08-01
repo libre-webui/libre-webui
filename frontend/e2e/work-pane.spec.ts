@@ -1561,9 +1561,9 @@ test('mirrors the translated Work workspace and resize controls in Arabic', asyn
     'aria-hidden',
     'true'
   );
-  await expect(
-    page.getByRole('link', { name: 'العمل', exact: true })
-  ).toBeVisible();
+  await expect(page.getByTestId('sidebar-work-button')).toHaveAccessibleName(
+    'العمل'
+  );
 
   const conversation = page.getByTestId('work-conversation-panel');
   const workspace = page.getByTestId('work-workspace-panel');
