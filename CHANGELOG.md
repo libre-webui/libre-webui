@@ -15,6 +15,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.17.0] - 2026-08-01
+
+Libre WebUI 0.17.0 reorganizes the interface around tabs. Home is a launcher,
+chats and Work sessions open beside it, and `Cmd/Ctrl + K` reaches anything you
+have. Work gains an in-browser terminal and an optional host folder workspace,
+and a coding-agent CLI already installed on the server can now answer in chat
+without an API key.
+
+### ✨ New Features
+
+- **Tabbed workspace.** Chats, Work sessions, and pages open as tabs in a
+  browser-style strip. The `+` menu creates each kind and shows its shortcut,
+  tabs survive a reload, and closing a session closes its tab.
+- **Home launcher.** A new Home tab greets you, offers what to start, and lists
+  recent chats and Work sessions to continue, with a live badge for Work
+  runtimes that are currently active.
+- **Command palette.** `Cmd/Ctrl + K` searches chats, Work sessions, and app
+  actions from anywhere, including while a message composer has focus, so a
+  draft is never lost to navigation. `Cmd/Ctrl + Shift + O` starts a chat and
+  `Cmd/Ctrl + Shift + U` starts a Work session.
+- **Installed agent CLIs as chat models.** When `claude` or `codex` is on the
+  server's `PATH`, administrators see an **Agents** group in the model selector
+  and can hold a normal conversation using the subscription that CLI is already
+  signed in with. The CLI runs as the Libre WebUI server user and inherits its
+  agent credentials, so it is admin-only and can be disabled entirely with
+  `AGENT_CLI_MODELS_ENABLED=false`.
+- **Work terminal.** A real interactive shell attaches to the task's sandboxed
+  container under the identical container policy as the model's own tools, so
+  it is a human-facing view of the sandbox rather than a way around it.
+- **Host folder workspaces for Work (opt-in).** A task can be bound to a real
+  directory instead of its Docker volume. Requested paths are resolved through
+  symlinks, checked against an allowlist of roots, and credential directories
+  are refused. Off by default behind `WORK_HOST_WORKSPACES_ENABLED`, because it
+  deliberately narrows the sandbox.
+- **Concurrent Work runtimes** with complete file tools, plus a workspace diff
+  view showing what the model changed in its last turn.
+
+### 🔧 Improvements
+
+- **Denser interface.** A compact pass across chat, the composer, and the
+  sidebar: slimmer message bubbles with hover-revealed actions, a tighter type
+  scale, and a narrower reading column.
+- **Redesigned chat history rail** with a dense tick timeline and a compact
+  hover preview of each turn.
+- **Reorganized settings.** Nine flat tabs became four labelled groups —
+  General, Chat, Speech & images, and Connections — with quieter navigation.
+- **Compact sidebar.** Models, Personas, Imagine, and Agents collapsed from four
+  stacked rows into a single icon row, giving the space back to the conversation
+  list. All four remain reachable from Home, the tab menu, and the palette.
+- **Renamed the Libre Claw surface to Agents** in the interface and translated
+  it across all 25 locales. The daemon keeps its own name where the daemon
+  itself is meant.
+- **Redesigned sign-in page** with a brand pane that states what the project is,
+  and social sign-in that no longer renders an empty divider when no OAuth
+  provider is configured.
+- **Stronger Work container isolation**, including a policy fingerprint that is
+  re-verified before a container is reused so one predating a hardening change
+  is recreated rather than reused.
+- Removed the duplicate Chat and Work entries from the sidebar navigation.
+
+### 🐛 Bug Fixes
+
+- The sign-in form no longer shows an "or" divider when neither GitHub nor
+  Hugging Face OAuth is configured.
+- Deleting a chat or Work session now also closes its tab instead of leaving a
+  tab pointing at a missing session.
+- Resolved React `set-state-in-effect` and fast-refresh warnings in the new tab
+  bar and command palette.
+
+### 📚 Documentation
+
+- Restructured the README around what the project is, how to run it, and then
+  depth, with a documentation index and deduplicated deployment guidance.
+- Added a guide for using an installed coding agent as a chat model.
+- Documented host folder workspaces, the browser terminal, the tabbed
+  interface, and the new keyboard shortcuts.
+- Documented the workspace Changes diff view.
+
 ## [0.16.1] - 2026-07-31
 
 Libre WebUI 0.16.1 makes Work usable when Libre WebUI itself runs in Docker,
