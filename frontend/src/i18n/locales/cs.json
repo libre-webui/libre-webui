@@ -1564,7 +1564,8 @@
       "preview": "Náhled",
       "resize": "Změnit velikost konverzace a pracovního prostoru",
       "resizeHint": "Velikost změníte přetažením. Pro přesné nastavení použijte klávesy se šipkami. Dvojitým kliknutím nebo klávesou Enter obnovíte výchozí velikost.",
-      "splitSize": "Konverzace {{conversation}} %, pracovní prostor {{workspace}} %"
+      "splitSize": "Konverzace {{conversation}} %, pracovní prostor {{workspace}} %",
+      "terminal": "Terminál"
     },
     "files": {
       "discard": "Zahodit neuložené změny souboru?",
@@ -1625,6 +1626,15 @@
       "saved": "Soubor byl uložen.",
       "previewFailed": "Náhled se nepodařilo spustit.",
       "previewStopFailed": "Náhled se nepodařilo zastavit."
+    },
+    "terminal": {
+      "connecting": "Otevírá se shell v sandboxu…",
+      "closed": "Relace terminálu skončila.",
+      "failed": "Relaci terminálu se nepodařilo spustit.",
+      "reconnect": "Znovu připojit",
+      "unavailable": "Interaktivní terminál není v tomto nasazení dostupný.",
+      "blockedByRun": "Model používá tento kontejner. Terminál se otevře po dokončení tahu.",
+      "taskRunning": "Probíhá tah modelu"
     }
   }
 }

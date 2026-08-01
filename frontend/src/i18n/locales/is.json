@@ -1564,7 +1564,8 @@
       "preview": "Forskoðun",
       "resize": "Breyta stærð samtals og vinnusvæðis",
       "resizeHint": "Dragðu til að breyta stærð. Notaðu örvatakkana til að fínstilla. Tvísmelltu eða ýttu á Enter til að endurstilla.",
-      "splitSize": "Samtal {{conversation}}%, vinnusvæði {{workspace}}%"
+      "splitSize": "Samtal {{conversation}}%, vinnusvæði {{workspace}}%",
+      "terminal": "Skjáhermir"
     },
     "files": {
       "discard": "Fleygja óvistuðum breytingum á skrá?",
@@ -1625,6 +1626,15 @@
       "saved": "Skrá vistuð.",
       "previewFailed": "Ekki tókst að hefja forskoðun.",
       "previewStopFailed": "Ekki tókst að stöðva forskoðun."
+    },
+    "terminal": {
+      "connecting": "Opna skel í sandkassanum…",
+      "closed": "Skjáhermislotu lokið.",
+      "failed": "Ekki tókst að ræsa skjáhermislotuna.",
+      "reconnect": "Tengjast aftur",
+      "unavailable": "Gagnvirki skjáhermirinn er ekki í boði í þessari uppsetningu.",
+      "blockedByRun": "Líkanið notar þennan gám. Skjáhermirinn opnast þegar umferðinni lýkur.",
+      "taskRunning": "Umferð líkans í gangi"
     }
   }
 }

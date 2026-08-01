@@ -1586,7 +1586,8 @@
       "preview": "Preview",
       "resize": "Resize conversation and workspace",
       "resizeHint": "Drag to resize. Use arrow keys for precise control. Double-click or press Enter to reset.",
-      "splitSize": "Conversation {{conversation}}%, workspace {{workspace}}%"
+      "splitSize": "Conversation {{conversation}}%, workspace {{workspace}}%",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Discard unsaved file changes?",
@@ -1647,6 +1648,15 @@
       "saved": "File saved.",
       "previewFailed": "Could not start the preview.",
       "previewStopFailed": "Could not stop the preview."
+    },
+    "terminal": {
+      "connecting": "Opening a shell in the sandbox…",
+      "closed": "Terminal session ended.",
+      "failed": "The terminal session could not start.",
+      "reconnect": "Reconnect",
+      "unavailable": "The interactive terminal is not available in this deployment.",
+      "blockedByRun": "The model is using this container. The terminal opens when the turn finishes.",
+      "taskRunning": "Model turn in progress"
     }
   },
   "personaBackground": {

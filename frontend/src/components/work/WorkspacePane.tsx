@@ -45,8 +45,10 @@ import { Button } from '@/components/ui';
 import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
 import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
 import { WorkspaceDiffView } from '@/components/work/WorkspaceDiffView';
+import { WorkspaceTerminal } from '@/components/work/WorkspaceTerminal';
 import { isRTL } from '@/i18n';
 import type {
+  WorkCapabilities,
   WorkFile,
   WorkFileEntry,
   WorkLiveRun,
@@ -66,7 +68,7 @@ import {
 } from '@/utils/workCode';
 import { diffWorkLines, workDiffStats } from '@/utils/workDiff';
 
-type WorkspaceTab = 'files' | 'activity' | 'preview';
+type WorkspaceTab = 'files' | 'activity' | 'terminal' | 'preview';
 
 interface WorkspacePaneProps {
   task: WorkTask;
@@ -86,6 +88,7 @@ interface WorkspacePaneProps {
   onStartPreview: (command?: string) => Promise<unknown>;
   onStopPreview: () => Promise<unknown>;
   onDirtyChange: (dirty: boolean) => void;
+  terminal?: WorkCapabilities['terminal'];
 }
 
 const safePreviewUrl = (value?: string | null): string | null => {
@@ -133,6 +136,7 @@ export function WorkspacePane({
   onStartPreview,
   onStopPreview,
   onDirtyChange,
+  terminal,
 }: WorkspacePaneProps) {
   const { t, i18n } = useTranslation();
   const rtl = isRTL(i18n.language);
@@ -456,6 +460,12 @@ export function WorkspacePane({
       testId: 'work-activity-tab',
     },
     {
+      id: 'terminal',
+      label: t('work.workspace.terminal', { defaultValue: 'Terminal' }),
+      icon: TerminalSquare,
+      testId: 'work-terminal-tab',
+    },
+    {
       id: 'preview',
       label: t('work.workspace.preview', { defaultValue: 'Preview' }),
       icon: Monitor,
@@ -498,7 +508,7 @@ export function WorkspacePane({
           aria-label={t('work.workspace.label', {
             defaultValue: 'Workspace views',
           })}
-          className='flex shrink-0 items-center rounded-xl border border-line bg-surface-subtle p-0.5'
+          className='flex min-w-0 items-center overflow-x-auto rounded-xl border border-line bg-surface-subtle p-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
         >
           {tabs.map((item, index) => {
             const Icon = item.icon;
@@ -704,6 +714,24 @@ export function WorkspacePane({
         )}
 
         {tab === 'activity' && <div className='min-w-0 flex-1' />}
+
+        {tab === 'terminal' && (
+          <div className='flex min-w-0 flex-1 items-center gap-2'>
+            <span
+              dir='ltr'
+              className='min-w-0 flex-1 truncate font-mono text-[11px] text-ink-muted'
+            >
+              /workspace
+            </span>
+            {taskActive && (
+              <span className='shrink-0 text-[10px] text-ink-subtle'>
+                {t('work.terminal.taskRunning', {
+                  defaultValue: 'Model turn in progress',
+                })}
+              </span>
+            )}
+          </div>
+        )}
 
         {tab === 'preview' && (
           <>
@@ -967,6 +995,34 @@ export function WorkspacePane({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {tab === 'terminal' && (
+        <div
+          id='work-workspace-panel-terminal'
+          role='tabpanel'
+          aria-labelledby='work-workspace-tab-terminal'
+          className='flex min-h-0 flex-1 flex-col'
+        >
+          <WorkspaceTerminal
+            taskId={task.id}
+            active={tab === 'terminal'}
+            disabledReason={
+              terminal && !terminal.available
+                ? (terminal.reason ??
+                  t('work.terminal.unavailable', {
+                    defaultValue:
+                      'The interactive terminal is not available in this deployment.',
+                  }))
+                : taskActive
+                  ? t('work.terminal.blockedByRun', {
+                      defaultValue:
+                        'The model is using this container. The terminal opens when the turn finishes.',
+                    })
+                  : undefined
+            }
+          />
         </div>
       )}
 

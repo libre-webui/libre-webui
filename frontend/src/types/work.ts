@@ -153,6 +153,12 @@ export interface WorkCapabilities {
     maxActiveRuntimesGlobal?: number;
     maxActiveRuntimesPerUser?: number;
   };
+  terminal?: {
+    available: boolean;
+    reason?: string;
+    maxSessionsPerTask: number;
+    idleTimeoutMs: number;
+  };
   activeRuntimes?: {
     global: number;
     user: number;

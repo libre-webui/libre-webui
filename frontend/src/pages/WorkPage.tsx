@@ -1249,6 +1249,7 @@ export default function WorkPage() {
                     )
                   }
                   onDirtyChange={setWorkspaceDirty}
+                  terminal={capabilities?.terminal}
                 />
               </div>
             }

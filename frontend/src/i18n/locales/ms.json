@@ -1564,7 +1564,8 @@
       "preview": "Pratonton",
       "resize": "Ubah saiz perbualan dan ruang kerja",
       "resizeHint": "Seret untuk mengubah saiz. Gunakan kekunci anak panah untuk kawalan tepat. Klik dua kali atau tekan Enter untuk menetapkan semula.",
-      "splitSize": "Perbualan {{conversation}}%, ruang kerja {{workspace}}%"
+      "splitSize": "Perbualan {{conversation}}%, ruang kerja {{workspace}}%",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Buang perubahan fail yang belum disimpan?",
@@ -1625,6 +1626,15 @@
       "saved": "Fail disimpan.",
       "previewFailed": "Tidak dapat memulakan pratonton.",
       "previewStopFailed": "Tidak dapat menghentikan pratonton."
+    },
+    "terminal": {
+      "connecting": "Membuka shell dalam kotak pasir…",
+      "closed": "Sesi terminal tamat.",
+      "failed": "Sesi terminal tidak dapat dimulakan.",
+      "reconnect": "Sambung semula",
+      "unavailable": "Terminal interaktif tidak tersedia dalam penggunaan ini.",
+      "blockedByRun": "Model sedang menggunakan bekas ini. Terminal dibuka apabila giliran selesai.",
+      "taskRunning": "Giliran model sedang berjalan"
     }
   }
 }

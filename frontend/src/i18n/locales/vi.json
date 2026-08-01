@@ -1564,7 +1564,8 @@
       "preview": "Xem trước",
       "resize": "Đổi kích thước cuộc trò chuyện và không gian làm việc",
       "resizeHint": "Kéo để đổi kích thước. Dùng phím mũi tên để điều chỉnh chính xác. Nhấp đúp hoặc nhấn Enter để đặt lại.",
-      "splitSize": "Cuộc trò chuyện {{conversation}}%, không gian làm việc {{workspace}}%"
+      "splitSize": "Cuộc trò chuyện {{conversation}}%, không gian làm việc {{workspace}}%",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Bỏ các thay đổi tệp chưa lưu?",
@@ -1625,6 +1626,15 @@
       "saved": "Đã lưu tệp.",
       "previewFailed": "Không thể bắt đầu bản xem trước.",
       "previewStopFailed": "Không thể dừng bản xem trước."
+    },
+    "terminal": {
+      "connecting": "Đang mở shell trong hộp cát…",
+      "closed": "Phiên terminal đã kết thúc.",
+      "failed": "Không thể bắt đầu phiên terminal.",
+      "reconnect": "Kết nối lại",
+      "unavailable": "Terminal tương tác không khả dụng trong bản triển khai này.",
+      "blockedByRun": "Mô hình đang dùng vùng chứa này. Terminal sẽ mở khi lượt kết thúc.",
+      "taskRunning": "Lượt của mô hình đang chạy"
     }
   }
 }

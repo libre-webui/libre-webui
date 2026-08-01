@@ -1564,7 +1564,8 @@
       "preview": "Podgląd",
       "resize": "Zmień rozmiar rozmowy i obszaru roboczego",
       "resizeHint": "Przeciągnij, aby zmienić rozmiar. Użyj klawiszy strzałek do precyzyjnej regulacji. Kliknij dwukrotnie lub naciśnij Enter, aby zresetować.",
-      "splitSize": "Rozmowa {{conversation}}%, obszar roboczy {{workspace}}%"
+      "splitSize": "Rozmowa {{conversation}}%, obszar roboczy {{workspace}}%",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Odrzucić niezapisane zmiany w pliku?",
@@ -1625,6 +1626,15 @@
       "saved": "Plik zapisany.",
       "previewFailed": "Nie udało się uruchomić podglądu.",
       "previewStopFailed": "Nie udało się zatrzymać podglądu."
+    },
+    "terminal": {
+      "connecting": "Otwieranie powłoki w piaskownicy…",
+      "closed": "Sesja terminala zakończona.",
+      "failed": "Nie udało się uruchomić sesji terminala.",
+      "reconnect": "Połącz ponownie",
+      "unavailable": "Terminal interaktywny nie jest dostępny w tym wdrożeniu.",
+      "blockedByRun": "Model używa tego kontenera. Terminal otworzy się po zakończeniu tury.",
+      "taskRunning": "Trwa tura modelu"
     }
   }
 }

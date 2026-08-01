@@ -2469,3 +2469,129 @@ test('explains when the local container runtime is unavailable', async ({
   await expect(page.getByTestId('work-composer-input')).toBeDisabled();
   await expect(page.getByTestId('work-submit-button')).toBeDisabled();
 });
+
+test('the terminal tab opens a shell session and reports deployment limits', async ({
+  page,
+}) => {
+  const terminalTask = task(
+    'terminal-workspace',
+    'Terminal workspace',
+    'The workspace is ready.'
+  );
+  await mockLibreWebUiApi(page, { workTasks: [terminalTask] });
+
+  const socketUrls: string[] = [];
+  await page.exposeFunction('recordTerminalSocket', (url: string) => {
+    socketUrls.push(url);
+  });
+  // The terminal talks to a WebSocket the mock API cannot serve; stub the
+  // constructor so the tab's connect/ready path is still exercised end to end.
+  await page.addInitScript(() => {
+    type RealWebSocket = typeof window.WebSocket;
+    class StubSocket extends EventTarget {
+      static readonly OPEN = 1;
+      readonly OPEN = 1;
+      readyState = 1;
+      binaryType = 'arraybuffer';
+      onmessage: ((event: MessageEvent) => void) | null = null;
+      onclose: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      sent: string[] = [];
+      constructor(url: string) {
+        super();
+        (
+          window as unknown as {
+            recordTerminalSocket: (value: string) => void;
+          }
+        ).recordTerminalSocket(url);
+        setTimeout(() => {
+          this.onmessage?.(
+            new MessageEvent('message', {
+              data: JSON.stringify({ type: 'ready' }),
+            })
+          );
+          const encoder = new TextEncoder();
+          this.onmessage?.(
+            new MessageEvent('message', {
+              data: encoder.encode('libre@sandbox:/workspace$ ').buffer,
+            })
+          );
+        }, 10);
+      }
+      send(payload: string) {
+        this.sent.push(payload);
+      }
+      close() {
+        this.readyState = 3;
+        this.onclose?.();
+      }
+    }
+    Object.defineProperty(window, 'WebSocket', {
+      configurable: true,
+      writable: true,
+      value: StubSocket as unknown as RealWebSocket,
+    });
+  });
+
+  await page.goto('/work/terminal-workspace');
+
+  await page.getByTestId('work-terminal-tab').click();
+  const panel = page.getByTestId('work-terminal-panel');
+  await expect(panel).toHaveAttribute('data-status', 'connected');
+  await expect(page.getByTestId('work-terminal-surface')).toBeVisible();
+  await expect(panel).toContainText('libre@sandbox:/workspace$');
+
+  // Exactly one terminal socket, scoped to this task.
+  const terminalSockets = socketUrls.filter(url =>
+    url.includes('/ws/work-terminal')
+  );
+  expect(terminalSockets).toHaveLength(1);
+  const socketUrl = new URL(terminalSockets[0]);
+  expect(socketUrl.pathname).toBe('/ws/work-terminal');
+  expect(socketUrl.searchParams.get('taskId')).toBe('terminal-workspace');
+  expect(socketUrl.protocol).toMatch(/^wss?:$/);
+});
+
+test('the terminal explains when a deployment cannot offer it', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    workTasks: [
+      task('no-terminal-workspace', 'No terminal', 'The workspace is ready.'),
+    ],
+    workCapabilities: {
+      available: true,
+      runtime: 'docker',
+      image: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
+      dockerAvailable: true,
+      ollamaAvailable: true,
+      runtimeImage: 'ghcr.io/libre-webui/work-runtime:0.1.0-e2e',
+      limits: {
+        maxRounds: 48,
+        commandTimeoutMs: 120_000,
+        maxOutputChars: 50_000,
+      },
+      terminal: {
+        available: false,
+        reason: 'The Work terminal needs the Docker Engine socket.',
+        maxSessionsPerTask: 2,
+        idleTimeoutMs: 900_000,
+      },
+    },
+  });
+
+  await page.goto('/work/no-terminal-workspace');
+  await page.getByTestId('work-terminal-tab').click();
+
+  await expect(page.getByTestId('work-terminal-panel')).toHaveAttribute(
+    'data-status',
+    'unavailable'
+  );
+  await expect(page.getByTestId('work-terminal-status')).toContainText(
+    'needs the Docker Engine socket'
+  );
+  await expect(page.getByTestId('work-terminal-surface')).toHaveCount(0);
+  await expect(page.getByTestId('work-terminal-reconnect-button')).toHaveCount(
+    0
+  );
+});

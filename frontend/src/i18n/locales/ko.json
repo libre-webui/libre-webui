@@ -1564,7 +1564,8 @@
       "preview": "미리보기",
       "resize": "대화 및 워크스페이스 크기 조절",
       "resizeHint": "드래그하여 크기를 조절하세요. 세밀하게 조절하려면 화살표 키를 사용하세요. 재설정하려면 두 번 클릭하거나 Enter를 누르세요.",
-      "splitSize": "대화 {{conversation}}%, 워크스페이스 {{workspace}}%"
+      "splitSize": "대화 {{conversation}}%, 워크스페이스 {{workspace}}%",
+      "terminal": "터미널"
     },
     "files": {
       "discard": "저장하지 않은 파일 변경 사항을 버릴까요?",
@@ -1625,6 +1626,15 @@
       "saved": "파일을 저장했습니다.",
       "previewFailed": "미리보기를 시작할 수 없습니다.",
       "previewStopFailed": "미리보기를 중지할 수 없습니다."
+    },
+    "terminal": {
+      "connecting": "샌드박스에서 셸을 여는 중…",
+      "closed": "터미널 세션이 종료되었습니다.",
+      "failed": "터미널 세션을 시작할 수 없습니다.",
+      "reconnect": "다시 연결",
+      "unavailable": "이 배포에서는 대화형 터미널을 사용할 수 없습니다.",
+      "blockedByRun": "모델이 이 컨테이너를 사용 중입니다. 턴이 끝나면 터미널이 열립니다.",
+      "taskRunning": "모델 턴 진행 중"
     }
   }
 }

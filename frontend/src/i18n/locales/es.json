@@ -1564,7 +1564,8 @@
       "preview": "Vista previa",
       "resize": "Cambiar el tamaño de la conversación y el espacio de trabajo",
       "resizeHint": "Arrastra para cambiar el tamaño. Usa las teclas de flecha para un control preciso. Haz doble clic o pulsa Intro para restablecer.",
-      "splitSize": "Conversación {{conversation}} %, espacio de trabajo {{workspace}} %"
+      "splitSize": "Conversación {{conversation}} %, espacio de trabajo {{workspace}} %",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "¿Descartar los cambios no guardados del archivo?",
@@ -1625,6 +1626,15 @@
       "saved": "Archivo guardado.",
       "previewFailed": "No se pudo iniciar la vista previa.",
       "previewStopFailed": "No se pudo detener la vista previa."
+    },
+    "terminal": {
+      "connecting": "Abriendo un shell en el entorno aislado…",
+      "closed": "La sesión de terminal ha terminado.",
+      "failed": "No se pudo iniciar la sesión de terminal.",
+      "reconnect": "Reconectar",
+      "unavailable": "La terminal interactiva no está disponible en esta instalación.",
+      "blockedByRun": "El modelo está usando este contenedor. La terminal se abrirá al terminar el turno.",
+      "taskRunning": "Turno del modelo en curso"
     }
   }
 }

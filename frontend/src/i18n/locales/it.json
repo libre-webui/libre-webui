@@ -1564,7 +1564,8 @@
       "preview": "Anteprima",
       "resize": "Ridimensiona conversazione e spazio di lavoro",
       "resizeHint": "Trascina per ridimensionare. Usa i tasti freccia per un controllo preciso. Fai doppio clic o premi Invio per ripristinare.",
-      "splitSize": "Conversazione {{conversation}}%, spazio di lavoro {{workspace}}%"
+      "splitSize": "Conversazione {{conversation}}%, spazio di lavoro {{workspace}}%",
+      "terminal": "Terminale"
     },
     "files": {
       "discard": "Ignorare le modifiche al file non salvate?",
@@ -1625,6 +1626,15 @@
       "saved": "File salvato.",
       "previewFailed": "Impossibile avviare l'anteprima.",
       "previewStopFailed": "Impossibile interrompere l'anteprima."
+    },
+    "terminal": {
+      "connecting": "Apertura di una shell nella sandbox…",
+      "closed": "Sessione del terminale terminata.",
+      "failed": "Impossibile avviare la sessione del terminale.",
+      "reconnect": "Riconnetti",
+      "unavailable": "Il terminale interattivo non è disponibile in questa installazione.",
+      "blockedByRun": "Il modello sta usando questo container. Il terminale si apre a fine turno.",
+      "taskRunning": "Turno del modello in corso"
     }
   }
 }

@@ -217,6 +217,12 @@ type MockWorkCapabilities = {
     commandTimeoutMs: number;
     maxOutputChars: number;
   };
+  terminal?: {
+    available: boolean;
+    reason?: string;
+    maxSessionsPerTask: number;
+    idleTimeoutMs: number;
+  };
 };
 
 type MockWorkMessage = {
@@ -446,6 +452,11 @@ const defaultWorkCapabilities: MockWorkCapabilities = {
     maxRounds: 48,
     commandTimeoutMs: 120_000,
     maxOutputChars: 50_000,
+  },
+  terminal: {
+    available: true,
+    maxSessionsPerTask: 2,
+    idleTimeoutMs: 900_000,
   },
 };
 

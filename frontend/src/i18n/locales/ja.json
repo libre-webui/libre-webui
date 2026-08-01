@@ -1564,7 +1564,8 @@
       "preview": "プレビュー",
       "resize": "会話とワークスペースのサイズを変更",
       "resizeHint": "ドラッグしてサイズを変更します。細かく調整するには矢印キーを使用します。ダブルクリックまたは Enter キーでリセットします。",
-      "splitSize": "会話 {{conversation}}%、ワークスペース {{workspace}}%"
+      "splitSize": "会話 {{conversation}}%、ワークスペース {{workspace}}%",
+      "terminal": "ターミナル"
     },
     "files": {
       "discard": "未保存のファイル変更を破棄しますか？",
@@ -1625,6 +1626,15 @@
       "saved": "ファイルを保存しました。",
       "previewFailed": "プレビューを開始できませんでした。",
       "previewStopFailed": "プレビューを停止できませんでした。"
+    },
+    "terminal": {
+      "connecting": "サンドボックスでシェルを開いています…",
+      "closed": "ターミナルセッションが終了しました。",
+      "failed": "ターミナルセッションを開始できませんでした。",
+      "reconnect": "再接続",
+      "unavailable": "この環境では対話型ターミナルを利用できません。",
+      "blockedByRun": "モデルがこのコンテナを使用中です。ターンの終了後にターミナルが開きます。",
+      "taskRunning": "モデルのターンを実行中"
     }
   }
 }

@@ -258,6 +258,14 @@ export interface WorkCapabilities {
     global: number;
     user: number;
   };
+  terminal?: WorkTerminalCapability;
+}
+
+export interface WorkTerminalCapability {
+  available: boolean;
+  reason?: string;
+  maxSessionsPerTask: number;
+  idleTimeoutMs: number;
 }
 
 export interface WorkTaskRecord {

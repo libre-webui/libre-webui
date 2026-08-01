@@ -79,23 +79,40 @@ If callback URLs are not set, Libre WebUI builds defaults from `BASE_URL`.
 These variables configure native Work execution on the machine running the
 Libre WebUI backend:
 
-| Variable                            | Default                                                                                       | Purpose                                                  |
-| ----------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `WORK_RUNTIME_IMAGE`                | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Pinned image used for Work task containers               |
-| `WORK_DOCKER_COMMAND`               | `docker`                                                                                      | Docker CLI executable available to the backend process   |
-| `WORK_COMMAND_TIMEOUT_MS`           | `120000`                                                                                      | Default timeout; a tool can request up to `600000` ms    |
-| `WORK_MAX_OUTPUT_CHARS`             | `50000`                                                                                       | Captured stdout/stderr limit, applied to each stream     |
-| `WORK_MAX_AGENT_ROUNDS`             | `48`                                                                                          | Provider-agnostic model/tool round budget for one run    |
-| `WORK_MEMORY_LIMIT`                 | `2g`                                                                                          | Memory limit passed to each Work container               |
-| `WORK_CPU_LIMIT`                    | `2`                                                                                           | CPU limit passed to each Work container                  |
-| `WORK_PIDS_LIMIT`                   | `256`                                                                                         | Process limit passed to each Work container              |
-| `WORK_PREVIEW_PORT`                 | `4173`                                                                                        | Port a preview server must use inside the task container |
-| `WORK_PREVIEW_BIND`                 | `127.0.0.1`                                                                                   | Host interface a task preview port is published on       |
-| `WORK_PREVIEW_HOST`                 | value of `WORK_PREVIEW_BIND`                                                                  | Host advertised in the preview URL                       |
-| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`   | `3`                                                                                           | Concurrent container-backed tasks for the whole instance |
-| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` | `2`                                                                                           | Concurrent container-backed tasks for one administrator  |
-| `WORK_MAX_TASKS_GLOBAL`             | `500`                                                                                         | Maximum persisted Work tasks for the whole instance      |
-| `WORK_MAX_TASKS_PER_USER`           | `100`                                                                                         | Maximum persisted Work tasks for one administrator       |
+| Variable                              | Default                                                                                       | Purpose                                                  |
+| ------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `WORK_RUNTIME_IMAGE`                  | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Pinned image used for Work task containers               |
+| `WORK_DOCKER_COMMAND`                 | `docker`                                                                                      | Docker CLI executable available to the backend process   |
+| `WORK_COMMAND_TIMEOUT_MS`             | `120000`                                                                                      | Default timeout; a tool can request up to `600000` ms    |
+| `WORK_MAX_OUTPUT_CHARS`               | `50000`                                                                                       | Captured stdout/stderr limit, applied to each stream     |
+| `WORK_MAX_AGENT_ROUNDS`               | `48`                                                                                          | Provider-agnostic model/tool round budget for one run    |
+| `WORK_MEMORY_LIMIT`                   | `2g`                                                                                          | Memory limit passed to each Work container               |
+| `WORK_CPU_LIMIT`                      | `2`                                                                                           | CPU limit passed to each Work container                  |
+| `WORK_PIDS_LIMIT`                     | `256`                                                                                         | Process limit passed to each Work container              |
+| `WORK_PREVIEW_PORT`                   | `4173`                                                                                        | Port a preview server must use inside the task container |
+| `WORK_PREVIEW_BIND`                   | `127.0.0.1`                                                                                   | Host interface a task preview port is published on       |
+| `WORK_PREVIEW_HOST`                   | value of `WORK_PREVIEW_BIND`                                                                  | Host advertised in the preview URL                       |
+| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`     | `3`                                                                                           | Concurrent container-backed tasks for the whole instance |
+| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER`   | `2`                                                                                           | Concurrent container-backed tasks for one administrator  |
+| `WORK_MAX_TASKS_GLOBAL`               | `500`                                                                                         | Maximum persisted Work tasks for the whole instance      |
+| `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Maximum persisted Work tasks for one administrator       |
+| `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks       |
+| `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks |
+| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://`, else `/var/run/docker.sock`                                       | Docker Engine socket used for interactive terminals      |
+| `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous browser terminals attached to one task      |
+| `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session is closed         |
+
+Networked Work tasks attach to the managed `WORK_NETWORK_NAME` bridge, created
+with inter-container communication disabled so one sandbox cannot reach another
+sandbox or the deployment's own containers. `WORK_RUNTIME_DNS` is the supported
+egress-policy hook: point it at a filtering resolver to apply name-based
+allow/deny lists. Entries that are not IPv4/IPv6 addresses are rejected and
+logged. DNS filtering does not constrain direct-IP egress; add host firewall
+rules when a deployment requires that.
+
+The interactive terminal needs the Docker Engine Unix socket. When `DOCKER_HOST`
+points at a remote TCP endpoint and `WORK_DOCKER_SOCKET` is unset, Libre WebUI
+reports the terminal as unavailable and the rest of Work continues to run.
 
 Work reads these values when the backend starts. The preview port is internal to
 the task container; Libre WebUI publishes it to a dynamically assigned loopback

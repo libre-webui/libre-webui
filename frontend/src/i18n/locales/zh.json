@@ -1564,7 +1564,8 @@
       "preview": "预览",
       "resize": "调整对话和工作区大小",
       "resizeHint": "拖动以调整大小。使用方向键精确控制。双击或按 Enter 重置。",
-      "splitSize": "对话 {{conversation}}%，工作区 {{workspace}}%"
+      "splitSize": "对话 {{conversation}}%，工作区 {{workspace}}%",
+      "terminal": "终端"
     },
     "files": {
       "discard": "放弃未保存的文件更改？",
@@ -1625,6 +1626,15 @@
       "saved": "文件已保存。",
       "previewFailed": "无法启动预览。",
       "previewStopFailed": "无法停止预览。"
+    },
+    "terminal": {
+      "connecting": "正在沙箱中打开 Shell…",
+      "closed": "终端会话已结束。",
+      "failed": "无法启动终端会话。",
+      "reconnect": "重新连接",
+      "unavailable": "此部署不支持交互式终端。",
+      "blockedByRun": "模型正在使用该容器。回合结束后终端将打开。",
+      "taskRunning": "模型回合进行中"
     }
   }
 }

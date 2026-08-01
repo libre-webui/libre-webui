@@ -1564,7 +1564,8 @@
       "preview": "Önizleme",
       "resize": "Konuşmayı ve çalışma alanını yeniden boyutlandır",
       "resizeHint": "Yeniden boyutlandırmak için sürükleyin. Hassas ayar için ok tuşlarını kullanın. Sıfırlamak için çift tıklayın veya Enter tuşuna basın.",
-      "splitSize": "Konuşma %{{conversation}}, çalışma alanı %{{workspace}}"
+      "splitSize": "Konuşma %{{conversation}}, çalışma alanı %{{workspace}}",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Kaydedilmemiş dosya değişiklikleri silinsin mi?",
@@ -1625,6 +1626,15 @@
       "saved": "Dosya kaydedildi.",
       "previewFailed": "Önizleme başlatılamadı.",
       "previewStopFailed": "Önizleme durdurulamadı."
+    },
+    "terminal": {
+      "connecting": "Yalıtılmış ortamda kabuk açılıyor…",
+      "closed": "Terminal oturumu sona erdi.",
+      "failed": "Terminal oturumu başlatılamadı.",
+      "reconnect": "Yeniden bağlan",
+      "unavailable": "Etkileşimli terminal bu kurulumda kullanılamıyor.",
+      "blockedByRun": "Model bu kapsayıcıyı kullanıyor. Tur bitince terminal açılır.",
+      "taskRunning": "Model turu sürüyor"
     }
   }
 }

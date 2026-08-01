@@ -27,6 +27,7 @@ import workEventService, {
 } from '../services/workEventService.js';
 import workModelProviderService from '../services/workModelProviderService.js';
 import workRuntimeService from '../services/workRuntimeService.js';
+import workTerminalService from '../services/workTerminalService.js';
 import workTaskService, {
   WorkNotFoundError,
 } from '../services/workTaskService.js';
@@ -82,6 +83,12 @@ router.get(
       reason,
       limits: workRuntimeService.limits,
       activeRuntimes: workRuntimeService.activeRuntimeCounts(userId),
+      terminal: {
+        available: dockerAvailable && !workTerminalService.unavailableReason(),
+        reason: workTerminalService.unavailableReason() ?? undefined,
+        maxSessionsPerTask: workTerminalService.maxSessionsPerTask,
+        idleTimeoutMs: workTerminalService.idleTimeoutMs,
+      },
     });
   }
 );

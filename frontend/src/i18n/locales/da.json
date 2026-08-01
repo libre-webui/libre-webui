@@ -1564,7 +1564,8 @@
       "preview": "Forhåndsvisning",
       "resize": "Tilpas størrelsen på samtalen og arbejdsområdet",
       "resizeHint": "Træk for at ændre størrelsen. Brug piletasterne til præcis styring. Dobbeltklik eller tryk på Enter for at nulstille.",
-      "splitSize": "Samtale {{conversation}} %, arbejdsområde {{workspace}} %"
+      "splitSize": "Samtale {{conversation}} %, arbejdsområde {{workspace}} %",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Kassér ændringer i filen, der ikke er gemt?",
@@ -1625,6 +1626,15 @@
       "saved": "Filen er gemt.",
       "previewFailed": "Forhåndsvisningen kunne ikke startes.",
       "previewStopFailed": "Forhåndsvisningen kunne ikke stoppes."
+    },
+    "terminal": {
+      "connecting": "Åbner en shell i sandkassen…",
+      "closed": "Terminalsessionen er afsluttet.",
+      "failed": "Terminalsessionen kunne ikke startes.",
+      "reconnect": "Forbind igen",
+      "unavailable": "Den interaktive terminal er ikke tilgængelig i denne installation.",
+      "blockedByRun": "Modellen bruger denne container. Terminalen åbner, når turen er færdig.",
+      "taskRunning": "Modeltur i gang"
     }
   }
 }

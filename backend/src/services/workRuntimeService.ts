@@ -37,6 +37,7 @@ export const WORK_RUNTIME_DEFAULTS = {
   pidsLimit: 256,
   previewPort: 4173,
   previewBind: '127.0.0.1',
+  networkName: 'libre-webui-work',
 } as const;
 
 // Two runtimes per administrator so a second task does not have to wait for
@@ -92,18 +93,29 @@ const config = {
     process.env.WORK_MAX_ACTIVE_RUNTIMES_PER_USER,
     WORK_RUNTIME_ADMISSION_DEFAULTS.maxActiveRuntimesPerUser
   ),
+  // Dedicated bridge network for networked Work tasks. It is created with
+  // inter-container communication disabled, so a sandbox cannot reach other
+  // Work sandboxes or the deployment's own containers on the default bridge.
+  networkName:
+    process.env.WORK_NETWORK_NAME || WORK_RUNTIME_DEFAULTS.networkName,
+  // Optional resolvers forced onto every networked sandbox. Pointing this at
+  // a filtering resolver is the supported egress-policy hook.
+  dnsServers: parseDnsServers(process.env.WORK_RUNTIME_DNS),
 };
 const PREVIEW_READY_TIMEOUT_MS = 15_000;
 const PREVIEW_POLL_INTERVAL_MS = 250;
 const runtimePolicyFingerprint = createHash('sha256')
   .update(
     JSON.stringify({
-      version: 1,
+      version: 2,
       memoryLimit: config.memoryLimit,
       cpuLimit: config.cpuLimit,
       pidsLimit: config.pidsLimit,
       previewPort: config.previewPort,
       previewBind: config.previewBind,
+      networkName: config.networkName,
+      dnsServers: config.dnsServers,
+      memorySwapPinned: true,
     })
   )
   .digest('hex');
@@ -191,6 +203,7 @@ export class WorkRuntimeService {
   private lastDockerUnavailableReason: string | null = null;
   private runtimeLeases = new Map<string, RuntimeLease>();
   private previewLeaseReleases = new Map<string, () => void>();
+  private terminalHolds = new Map<string, number>();
   private recoveryTasks = new Map<string, WorkTaskRecord>();
   private recoveryTimer?: NodeJS.Timeout;
   private shuttingDown = false;
@@ -376,6 +389,55 @@ export class WorkRuntimeService {
     }
   }
 
+  /**
+   * Hold the task container up for an interactive terminal session. The hold
+   * goes through the same admission (runtime lease), policy verification, and
+   * container preparation as every other runtime operation, and keeps the
+   * idle-stop path from tearing the container down while a shell is attached.
+   */
+  async acquireTerminalHold(
+    task: WorkTaskRecord
+  ): Promise<() => Promise<void>> {
+    if (this.activeCommands.has(task.id)) {
+      throw new WorkRuntimeError(
+        'A Work command is running in this container. Wait for it to finish, then reconnect the terminal.',
+        409,
+        'WORK_TERMINAL_COMMAND_ACTIVE'
+      );
+    }
+    const releaseLease = await this.prepare(task);
+    this.terminalHolds.set(task.id, (this.terminalHolds.get(task.id) ?? 0) + 1);
+    let released = false;
+    return async () => {
+      if (released) return;
+      released = true;
+      const remaining = (this.terminalHolds.get(task.id) ?? 1) - 1;
+      if (remaining <= 0) {
+        this.terminalHolds.delete(task.id);
+      } else {
+        this.terminalHolds.set(task.id, remaining);
+      }
+      try {
+        if (remaining <= 0 && !this.shuttingDown) {
+          await this.withLifecycleLock(task.id, () =>
+            this.stopContainerIfIdleWithLock(task)
+          );
+        }
+      } catch (error) {
+        logger.warn(
+          `Could not idle Work container ${task.containerName} after terminal session:`,
+          error
+        );
+      } finally {
+        releaseLease();
+      }
+    };
+  }
+
+  terminalSessionCount(taskId: string): number {
+    return this.terminalHolds.get(taskId) ?? 0;
+  }
+
   beginShutdown(): void {
     this.shuttingDown = true;
     if (this.recoveryTimer) {
@@ -502,8 +564,53 @@ export class WorkRuntimeService {
     }
   }
 
+  private async ensureWorkNetwork(task: WorkTaskRecord): Promise<void> {
+    if (!task.networkEnabled) return;
+    const inspect = await this.docker(
+      [
+        'network',
+        'inspect',
+        '--format',
+        '{{index .Labels "ai.libre-webui.managed"}} {{index .Options "com.docker.network.bridge.enable_icc"}}',
+        config.networkName,
+      ],
+      { acceptFailure: true }
+    );
+    if (inspect.exitCode === 0) {
+      const [managed, icc] = inspect.stdout.trim().split(' ');
+      if (managed !== 'true' || icc !== 'false') {
+        throw new WorkRuntimeError(
+          `Docker network "${config.networkName}" exists but is not the managed Work sandbox network (label ai.libre-webui.managed=true with inter-container communication disabled). Remove it or point WORK_NETWORK_NAME at an unused name.`,
+          503,
+          'WORK_NETWORK_CONFLICT'
+        );
+      }
+      return;
+    }
+    const created = await this.docker(
+      [
+        'network',
+        'create',
+        '--label',
+        'ai.libre-webui.managed=true',
+        '--opt',
+        'com.docker.network.bridge.enable_icc=false',
+        config.networkName,
+      ],
+      { acceptFailure: true }
+    );
+    if (created.exitCode !== 0 && !/already exists/i.test(created.stderr)) {
+      throw new WorkRuntimeError(
+        `Could not create the Work sandbox network "${config.networkName}": ${created.stderr.trim()}`,
+        503,
+        'WORK_NETWORK_UNAVAILABLE'
+      );
+    }
+  }
+
   private async ensureContainer(task: WorkTaskRecord): Promise<void> {
     this.assertRuntimeLease(task);
+    await this.ensureWorkNetwork(task);
     if (await this.containerExists(task.containerName)) {
       await this.assertManagedContainer(task);
       if (!(await this.containerMatchesTaskPolicy(task))) {
@@ -747,6 +854,9 @@ export class WorkRuntimeService {
     task: WorkTaskRecord
   ): Promise<void> {
     if (this.activeCommands.has(task.id)) return;
+    // An attached terminal session owns the running container exactly like a
+    // ready preview does.
+    if ((this.terminalHolds.get(task.id) ?? 0) > 0) return;
     try {
       if (
         (await this.previewProcessCheckWithLock(task)) === 'ready' &&
@@ -1621,7 +1731,7 @@ export class WorkRuntimeService {
     const workspaceMount = mounts.find(
       mount => mount.Destination === '/workspace'
     );
-    const expectedNetwork = task.networkEnabled ? 'bridge' : 'none';
+    const expectedNetwork = task.networkEnabled ? config.networkName : 'none';
     const portBindings = objectRecord(hostConfig.PortBindings);
     const previewBindings = Array.isArray(
       portBindings[`${config.previewPort}/tcp`]
@@ -1651,6 +1761,7 @@ export class WorkRuntimeService {
       securityOpt.includes('no-new-privileges') &&
       Number(hostConfig.PidsLimit) === config.pidsLimit &&
       Number(hostConfig.Memory) > 0 &&
+      Number(hostConfig.MemorySwap) === Number(hostConfig.Memory) &&
       Number(hostConfig.NanoCpus) > 0 &&
       hostConfig.NetworkMode === expectedNetwork &&
       portPolicyMatches &&
@@ -1869,13 +1980,19 @@ export function buildWorkContainerRunArgs(
     String(config.pidsLimit),
     '--memory',
     config.memoryLimit,
+    // Same value as --memory: the memory cap cannot be sidestepped via swap.
+    '--memory-swap',
+    config.memoryLimit,
     '--cpus',
     config.cpuLimit,
     '--network',
-    task.networkEnabled ? 'bridge' : 'none',
+    task.networkEnabled ? config.networkName : 'none',
   ];
   if (task.networkEnabled) {
     args.push('--publish', `${config.previewBind}::${config.previewPort}`);
+    for (const server of config.dnsServers) {
+      args.push('--dns', server);
+    }
   }
   args.push(
     '--mount',
@@ -2097,6 +2214,21 @@ function parseJsonOutput<T>(output: string): T {
 function positiveInteger(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+export function parseDnsServers(value: string | undefined): string[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map(server => server.trim())
+    .filter(server => {
+      if (!server) return false;
+      if (/^[0-9a-fA-F:.]+$/.test(server)) return true;
+      logger.warn(
+        `Ignoring WORK_RUNTIME_DNS entry "${server}": not an IPv4/IPv6 address.`
+      );
+      return false;
+    });
 }
 
 function objectRecord(value: unknown): Record<string, unknown> {

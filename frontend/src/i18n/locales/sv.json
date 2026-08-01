@@ -1564,7 +1564,8 @@
       "preview": "Förhandsgranskning",
       "resize": "Ändra storlek på konversationen och arbetsytan",
       "resizeHint": "Dra för att ändra storleken. Använd piltangenterna för exakt kontroll. Dubbelklicka eller tryck på Retur för att återställa.",
-      "splitSize": "Konversation {{conversation}} %, arbetsyta {{workspace}} %"
+      "splitSize": "Konversation {{conversation}} %, arbetsyta {{workspace}} %",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Kassera osparade filändringar?",
@@ -1625,6 +1626,15 @@
       "saved": "Filen har sparats.",
       "previewFailed": "Det gick inte att starta förhandsgranskningen.",
       "previewStopFailed": "Det gick inte att stoppa förhandsgranskningen."
+    },
+    "terminal": {
+      "connecting": "Öppnar ett skal i sandlådan…",
+      "closed": "Terminalsessionen avslutades.",
+      "failed": "Terminalsessionen kunde inte startas.",
+      "reconnect": "Anslut igen",
+      "unavailable": "Den interaktiva terminalen är inte tillgänglig i den här installationen.",
+      "blockedByRun": "Modellen använder den här containern. Terminalen öppnas när turen är klar.",
+      "taskRunning": "Modelltur pågår"
     }
   }
 }

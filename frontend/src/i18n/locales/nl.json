@@ -1564,7 +1564,8 @@
       "preview": "Voorbeeld",
       "resize": "Conversatie en werkruimte groter of kleiner maken",
       "resizeHint": "Sleep om het formaat te wijzigen. Gebruik de pijltoetsen voor nauwkeurige bediening. Dubbelklik of druk op Enter om te herstellen.",
-      "splitSize": "Conversatie {{conversation}}%, werkruimte {{workspace}}%"
+      "splitSize": "Conversatie {{conversation}}%, werkruimte {{workspace}}%",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Niet-opgeslagen bestandswijzigingen negeren?",
@@ -1625,6 +1626,15 @@
       "saved": "Bestand opgeslagen.",
       "previewFailed": "Het voorbeeld kon niet worden gestart.",
       "previewStopFailed": "Het voorbeeld kon niet worden gestopt."
+    },
+    "terminal": {
+      "connecting": "Een shell in de sandbox openen…",
+      "closed": "Terminalsessie beëindigd.",
+      "failed": "De terminalsessie kon niet starten.",
+      "reconnect": "Opnieuw verbinden",
+      "unavailable": "De interactieve terminal is niet beschikbaar in deze installatie.",
+      "blockedByRun": "Het model gebruikt deze container. De terminal opent na de beurt.",
+      "taskRunning": "Modelbeurt bezig"
     }
   }
 }

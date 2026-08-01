@@ -40,6 +40,10 @@ import {
   streamAssistantFakeChunks,
 } from './utils/websocketMessages.js';
 import { verifyToken } from './utils/jwt.js';
+import {
+  createWorkTerminalServer,
+  WORK_TERMINAL_WS_PATH,
+} from './workTerminalServer.js';
 import { OllamaChatRequest, ChatSession } from './types/index.js';
 import { normalizeChatProviderSelection } from './utils/chatProviderSelection.js';
 
@@ -50,11 +54,9 @@ const chatRequestService = new ChatRequestService({
 const logger = createLogger('websocket');
 
 export function registerWebSocketServer(server: Server): void {
-  // WebSocket server for real-time chat streaming
-  const wss = new WebSocketServer({
-    server,
-    path: '/ws',
-  });
+  // WebSocket server for real-time chat streaming. Upgrades are dispatched by
+  // path in index.ts so the Work terminal can share the same HTTP server.
+  const wss = new WebSocketServer({ noServer: true });
 
   wss.on('connection', (ws, req) => {
     logger.debug('WebSocket client connected');
@@ -522,5 +524,30 @@ export function registerWebSocketServer(server: Server): void {
 
     // Send initial connection confirmation
     sendConnected(ws);
+  });
+
+  const terminalServer = createWorkTerminalServer();
+
+  server.on('upgrade', (request, socket, head) => {
+    let pathname: string;
+    try {
+      pathname = new URL(request.url || '', 'http://localhost').pathname;
+    } catch {
+      socket.destroy();
+      return;
+    }
+    if (pathname === WORK_TERMINAL_WS_PATH) {
+      terminalServer.handleUpgrade(request, socket, head, ws => {
+        terminalServer.emit('connection', ws, request);
+      });
+      return;
+    }
+    if (pathname === '/ws') {
+      wss.handleUpgrade(request, socket, head, ws => {
+        wss.emit('connection', ws, request);
+      });
+      return;
+    }
+    socket.destroy();
   });
 }

@@ -32,6 +32,7 @@ const {
   buildWorkContainerRunArgs,
   describeDockerUnavailable,
   formatPreviewHost,
+  parseDnsServers,
   parsePublishedPort,
   validateWorkspacePath,
 } = runtimeModule;
@@ -98,6 +99,7 @@ test('Work runtime defaults pin the image and bound resource use', () => {
     pidsLimit: 256,
     previewPort: 4173,
     previewBind: '127.0.0.1',
+    networkName: 'libre-webui-work',
   });
   assert.match(WORK_RUNTIME_DEFAULTS.image, /@sha256:[a-f0-9]{64}$/);
   assert.doesNotMatch(WORK_RUNTIME_DEFAULTS.image, /:latest(?:@|$)/);
@@ -152,6 +154,11 @@ test('network-disabled containers use a non-root, least-privilege policy', () =>
   assert.ok(args.includes('--read-only'));
   assert.ok(Number(optionValue(args, '--pids-limit')) > 0);
   assert.ok(optionValue(args, '--memory'));
+  // Swap is pinned to the memory cap so the limit cannot be sidestepped.
+  assert.equal(
+    optionValue(args, '--memory-swap'),
+    optionValue(args, '--memory')
+  );
   assert.ok(optionValue(args, '--cpus'));
   assert.equal(
     optionValue(args, '--mount'),
@@ -170,13 +177,34 @@ test('network-enabled containers publish only a dynamic loopback preview port', 
     'example.invalid/work-runtime@sha256:test-only'
   );
 
-  assert.equal(optionValue(args, '--network'), 'bridge');
+  // A dedicated managed bridge, never Docker's shared default bridge: task
+  // containers must not be able to reach each other or the deployment's own
+  // containers.
+  assert.equal(
+    optionValue(args, '--network'),
+    WORK_RUNTIME_DEFAULTS.networkName
+  );
+  assert.notEqual(optionValue(args, '--network'), 'bridge');
   assert.equal(
     optionValue(args, '--publish'),
     `127.0.0.1::${WORK_RUNTIME_DEFAULTS.previewPort}`
   );
   assert.doesNotMatch(optionValue(args, '--publish'), /^0\.0\.0\.0:/);
   assert.doesNotMatch(optionValue(args, '--publish'), /^\d+:/);
+});
+
+test('egress resolvers are pinned only from validated WORK_RUNTIME_DNS entries', () => {
+  assert.deepEqual(parseDnsServers(undefined), []);
+  assert.deepEqual(parseDnsServers(''), []);
+  assert.deepEqual(parseDnsServers('10.0.0.53, 10.0.0.54'), [
+    '10.0.0.53',
+    '10.0.0.54',
+  ]);
+  assert.deepEqual(parseDnsServers('fd00::53'), ['fd00::53']);
+  // A hostname or injected flag never reaches the docker argument list.
+  assert.deepEqual(parseDnsServers('resolver.example.com'), []);
+  assert.deepEqual(parseDnsServers('--privileged'), []);
+  assert.deepEqual(parseDnsServers('10.0.0.53,bad host'), ['10.0.0.53']);
 });
 
 test('an unreachable Docker daemon names the deployment change to make', () => {
@@ -198,7 +226,9 @@ test('an unreachable Docker daemon names the deployment change to make', () => {
   assert.match(noPermission, /group_add/);
 
   const noDaemon = describeDockerUnavailable(
-    new Error('Cannot connect to the Docker daemon at unix:///var/run/docker.sock')
+    new Error(
+      'Cannot connect to the Docker daemon at unix:///var/run/docker.sock'
+    )
   );
   assert.match(noDaemon, /No Docker daemon is reachable/);
   assert.match(noDaemon, /docker\.sock:\/var\/run\/docker\.sock/);
@@ -214,11 +244,17 @@ test('preview publishing follows the configured bind address', () => {
   assert.equal(WORK_RUNTIME_DEFAULTS.previewBind, '127.0.0.1');
   assert.equal(parsePublishedPort('127.0.0.1:49173', 4173, '127.0.0.1'), 49173);
   assert.equal(parsePublishedPort('[::1]:49174', 4173, '127.0.0.1'), 49174);
-  assert.equal(parsePublishedPort('0.0.0.0:49173', 4173, '127.0.0.1'), undefined);
+  assert.equal(
+    parsePublishedPort('0.0.0.0:49173', 4173, '127.0.0.1'),
+    undefined
+  );
 
   // A deployment that binds elsewhere accepts that address and nothing else.
   assert.equal(parsePublishedPort('0.0.0.0:49173', 4173, '0.0.0.0'), 49173);
-  assert.equal(parsePublishedPort('127.0.0.1:49173', 4173, '0.0.0.0'), undefined);
+  assert.equal(
+    parsePublishedPort('127.0.0.1:49173', 4173, '0.0.0.0'),
+    undefined
+  );
 
   assert.equal(formatPreviewHost('127.0.0.1'), '127.0.0.1');
   assert.equal(formatPreviewHost('work.example.test'), 'work.example.test');

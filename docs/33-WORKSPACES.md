@@ -181,13 +181,13 @@ against the same conversation and filesystem.
 
 The interface maps durable backend states to a smaller user-facing set:
 
-| Interface status | Backend state                 | Indicator color      |
-| ---------------- | ----------------------------- | -------------------- |
-| Idle             | `idle`                        | `rgb(255, 255, 255)` |
-| Thinking         | `preparing` or `running`      | `rgb(48, 121, 255)`  |
-| Complete         | `completed`                   | `rgb(76, 212, 117)`  |
-| Needs input      | `needs_input` or `cancelled`  | `rgb(255, 204, 0)`   |
-| Error            | `failed`                      | `rgb(255, 61, 129)`  |
+| Interface status | Backend state                | Indicator color      |
+| ---------------- | ---------------------------- | -------------------- |
+| Idle             | `idle`                       | `rgb(255, 255, 255)` |
+| Thinking         | `preparing` or `running`     | `rgb(48, 121, 255)`  |
+| Complete         | `completed`                  | `rgb(76, 212, 117)`  |
+| Needs input      | `needs_input` or `cancelled` | `rgb(255, 204, 0)`   |
+| Error            | `failed`                     | `rgb(255, 61, 129)`  |
 
 Stopping an active run changes it to **Needs input** and preserves its files.
 Exhausting the round or tool-call safety budget also ends in **Needs input**
@@ -293,6 +293,46 @@ The guide exists in model context only. Libre WebUI does not create an
 `AGENTS.md`, skill directory, or other control file in the user's workspace.
 Project-provided instructions remain project guidance and cannot override the
 container or tool security boundary.
+
+### Terminal
+
+The Terminal tab attaches an interactive shell to the same sandboxed container
+the model works in, so an administrator can inspect state, run a build by
+hand, or debug what a run left behind without leaving the browser.
+
+The shell runs under the identical container policy as every model tool: the
+unprivileged `1000:1000` user, working directory `/workspace`, inside the
+already-hardened, capability-dropped container. A terminal grants no privilege
+the model's `run_command` tool does not already have — it is a human-facing
+interface to the same boundary, not a way around it.
+
+Operational behavior:
+
+- **Authentication** — the WebSocket at `/ws/work-terminal` requires a valid
+  token and re-checks the administrator role against the database on every
+  connection, so a demotion takes effect immediately. The task must belong to
+  the authenticated administrator.
+- **Admission** — an open terminal takes a runtime lease exactly like a
+  command or preview, and counts against `WORK_MAX_ACTIVE_RUNTIMES_*`.
+- **Container lifetime** — an attached terminal keeps the container running
+  and prevents the idle-stop path from removing it mid-session.
+- **Concurrency** — `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` (default 2) bounds
+  simultaneous shells per task.
+- **Idle timeout** — `WORK_TERMINAL_IDLE_TIMEOUT_MS` (default 15 minutes)
+  closes an untouched session and releases its lease.
+- **While a run is active** — the tab explains that the model owns the
+  container and opens the shell once the turn finishes.
+
+The terminal needs the Docker Engine **Unix socket**, because a TTY session
+requires a hijacked bidirectional stream that the Docker CLI only provides to
+a real controlling terminal. It uses `WORK_DOCKER_SOCKET`, otherwise a
+`unix://` `DOCKER_HOST`, otherwise `/var/run/docker.sock`. A deployment whose
+`DOCKER_HOST` is a remote TCP endpoint reports the terminal as unavailable
+with that reason rather than silently attaching elsewhere; the rest of Work
+keeps working.
+
+Terminal sessions are interactive, not recorded. Commands typed there do not
+appear in the task's Activity timeline.
 
 ### Preview
 
@@ -419,21 +459,50 @@ network on/off control in the Work interface.
 
 :::
 
-Bridge egress allows package downloads, remote Git operations, external APIs,
-and any other connection permitted by the Docker host's network policy. It is
-not an outbound firewall. Generated code may be able to reach:
+Networked tasks attach to a dedicated managed Docker bridge network
+(`libre-webui-work` by default, `WORK_NETWORK_NAME`) created with
+inter-container communication disabled
+(`com.docker.network.bridge.enable_icc=false`). Two consequences follow:
 
-- other services or containers reachable through Docker networking;
+- one Work sandbox cannot open connections to another Work sandbox; and
+- a Work sandbox cannot reach the deployment's own containers on Docker's
+  shared default bridge, including a co-located database or Ollama container
+  that is not deliberately published.
+
+Libre WebUI refuses to start a networked task if a network with the configured
+name already exists but is not the managed one, rather than silently attaching
+sandboxes to an operator's network.
+
+Egress to the outside world is still permitted, because package downloads,
+remote Git operations, and external APIs are what makes Work useful. This is
+not an outbound firewall. Generated code may still be able to reach:
+
 - services on the Docker host;
 - systems on the host's local network;
 - internet services; and
 - infrastructure metadata endpoints, depending on the deployment.
 
+### Egress policy hooks
+
+For a stricter boundary, use these in combination:
+
+- **`WORK_RUNTIME_DNS`** — comma-separated IPv4/IPv6 resolver addresses forced
+  onto every networked sandbox (`--dns`). Pointing this at a filtering
+  resolver gives you name-based allow/deny lists without patching Libre WebUI.
+  Non-address entries are rejected and logged, so the value can never inject
+  additional Docker flags.
+- **Host or upstream firewall rules** on the managed bridge's subnet, which is
+  stable because the network is named and managed.
+- **`WORK_NETWORK_NAME`** pointed at a network you pre-create yourself with
+  your own driver options — Libre WebUI verifies it carries the managed label
+  and ICC-disabled option, so create it with both.
+
+DNS filtering constrains name resolution, not raw IP egress. A deployment that
+must guarantee no direct-IP egress needs host-level firewall rules as well.
+
 Do not assume that placing code in Work prevents it from transmitting data.
-Use Work only for trusted administrators and apply host, Docker, or upstream
-egress controls when the deployment requires a stricter network boundary.
-There is no Work environment variable that changes the UI-created task default
-to offline mode.
+Use Work only for trusted administrators. There is no Work environment
+variable that changes the UI-created task default to offline mode.
 
 Network access does not add credentials. Libre WebUI does not mount SSH keys,
 cloud credentials, browser profiles, the host home directory, or the Docker
@@ -456,9 +525,18 @@ A current UI-created Work container:
 - enables `no-new-privileges`;
 - is non-privileged and uses an init process;
 - applies CPU, memory, process, command-time, and output limits;
-- uses Docker bridge networking; and
+- pins swap to the memory limit (`--memory-swap` equals `--memory`), so the
+  memory cap cannot be sidestepped by swapping;
+- attaches to the managed sandbox network with inter-container communication
+  disabled, or to no network at all; and
 - publishes only the configured preview port to a Docker-assigned loopback
   host port.
+
+Every one of these is re-verified against `docker inspect` before a container
+is reused, and the whole set is hashed into the `ai.libre-webui.policy`
+container label. A container whose policy predates a Libre WebUI upgrade is
+destroyed and recreated rather than reused, so a hardening change reaches
+existing tasks automatically.
 
 Path validation rejects absolute paths, traversal segments, backslashes, NUL
 characters, and overlong paths. File helpers resolve real paths and reject
@@ -545,7 +623,7 @@ Three conditions must hold, and the Work panel names whichever one fails:
    `nodejs` (uid 1001) and the socket is typically owned by `root` or `docker`,
    so Compose passes `group_add: ['${DOCKER_GID:-0}']`. The default suits Docker
    Desktop; a Linux host needs its own group id. Otherwise: `The Docker socket
-   is mounted but the Libre WebUI user cannot open it…`.
+is mounted but the Libre WebUI user cannot open it…`.
 
 ```bash
 # Read the socket's group as seen INSIDE a container. A macOS host reports a
@@ -575,23 +653,28 @@ not be described as Kubernetes-native.
 
 Work reads these variables in the backend process:
 
-| Variable                            | Default                                                                                       | Purpose                                                    |
-| ----------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| `WORK_RUNTIME_IMAGE`                | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Image used for task containers                             |
-| `WORK_DOCKER_COMMAND`               | `docker`                                                                                      | Docker CLI executable                                      |
-| `WORK_COMMAND_TIMEOUT_MS`           | `120000`                                                                                      | Default command timeout                                    |
-| `WORK_MAX_OUTPUT_CHARS`             | `50000`                                                                                       | Maximum captured command/search output                     |
-| `WORK_MAX_AGENT_ROUNDS`             | `48`                                                                                          | Provider-agnostic model/tool round budget per run          |
-| `WORK_MEMORY_LIMIT`                 | `2g`                                                                                          | Per-container memory limit                                 |
-| `WORK_CPU_LIMIT`                    | `2`                                                                                           | Per-container CPU limit                                    |
-| `WORK_PIDS_LIMIT`                   | `256`                                                                                         | Per-container process limit                                |
-| `WORK_PREVIEW_PORT`                 | `4173`                                                                                        | Port the app must listen on inside the container           |
-| `WORK_PREVIEW_BIND`                 | `127.0.0.1`                                                                                   | Host interface the preview port is published on            |
-| `WORK_PREVIEW_HOST`                 | value of `WORK_PREVIEW_BIND`                                                                  | Host advertised in the preview URL                         |
-| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`   | `3`                                                                                           | Concurrent container-backed tasks per Libre WebUI instance |
-| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER` | `2`                                                                                           | Concurrent container-backed tasks per administrator        |
-| `WORK_MAX_TASKS_GLOBAL`             | `500`                                                                                         | Persisted Work task limit per Libre WebUI instance         |
-| `WORK_MAX_TASKS_PER_USER`           | `100`                                                                                         | Persisted Work task limit per administrator                |
+| Variable                              | Default                                                                                       | Purpose                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `WORK_RUNTIME_IMAGE`                  | `node:22.22-bookworm@sha256:2d178f2785b96dfbf62a416ca2e40f50e30150b4ff3320d706f0d96e90600eb3` | Image used for task containers                             |
+| `WORK_DOCKER_COMMAND`                 | `docker`                                                                                      | Docker CLI executable                                      |
+| `WORK_COMMAND_TIMEOUT_MS`             | `120000`                                                                                      | Default command timeout                                    |
+| `WORK_MAX_OUTPUT_CHARS`               | `50000`                                                                                       | Maximum captured command/search output                     |
+| `WORK_MAX_AGENT_ROUNDS`               | `48`                                                                                          | Provider-agnostic model/tool round budget per run          |
+| `WORK_MEMORY_LIMIT`                   | `2g`                                                                                          | Per-container memory limit                                 |
+| `WORK_CPU_LIMIT`                      | `2`                                                                                           | Per-container CPU limit                                    |
+| `WORK_PIDS_LIMIT`                     | `256`                                                                                         | Per-container process limit                                |
+| `WORK_PREVIEW_PORT`                   | `4173`                                                                                        | Port the app must listen on inside the container           |
+| `WORK_PREVIEW_BIND`                   | `127.0.0.1`                                                                                   | Host interface the preview port is published on            |
+| `WORK_PREVIEW_HOST`                   | value of `WORK_PREVIEW_BIND`                                                                  | Host advertised in the preview URL                         |
+| `WORK_MAX_ACTIVE_RUNTIMES_GLOBAL`     | `3`                                                                                           | Concurrent container-backed tasks per Libre WebUI instance |
+| `WORK_MAX_ACTIVE_RUNTIMES_PER_USER`   | `2`                                                                                           | Concurrent container-backed tasks per administrator        |
+| `WORK_MAX_TASKS_GLOBAL`               | `500`                                                                                         | Persisted Work task limit per Libre WebUI instance         |
+| `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Persisted Work task limit per administrator                |
+| `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks         |
+| `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks   |
+| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://`, else `/var/run/docker.sock`                                       | Docker Engine socket used for interactive terminals        |
+| `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous interactive terminals per task                |
+| `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session closes              |
 
 Use a fixed image version or digest in production. A mutable image tag can
 change both the available command-line tools and the security boundary without

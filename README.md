@@ -132,15 +132,22 @@ Work task
    ├── durable conversation and run history in SQLite
    ├── dedicated Docker named volume mounted at /workspace
    ├── disposable, policy-checked container for commands
-   └── Files · Activity · Preview workspace pane
+   └── Files · Activity · Terminal · Preview workspace pane
 ```
 
-The model can list, read, write, and search task files, run bounded shell
-commands, and start or stop a browser preview. The workspace includes a
-light/dark syntax-highlighted editor, supported-file formatting, browser drafts,
+The model can list, read, write, move, delete, and search task files, run
+bounded shell commands, and start or stop a browser preview. The workspace
+includes a light/dark syntax-highlighted editor, a red/green diff of what the
+model changed during its last turn, supported-file formatting, browser drafts,
 conflict-aware saves, and a draggable responsive split between conversation and
 workspace. Tasks remain in the main sidebar so returning to an older task also
 returns to its existing files and history.
+
+The **Terminal** tab attaches a real interactive shell to the same sandboxed
+container, so you can inspect state or run a build by hand without leaving the
+browser. It runs under the identical container policy as the model's own
+tools—same unprivileged user, same workspace, same dropped capabilities—so it
+is a human-facing view of the sandbox, never a way around it.
 
 Active runs stream assistant text, provider-exposed reasoning, tool calls,
 results, usage, and state changes into the interface. Reasoning appears only
@@ -164,9 +171,18 @@ in the same durable workspace.
 
 Work is admin-only and never falls back to host command execution. Containers
 run as a non-root user with a read-only root filesystem, dropped capabilities,
-resource limits, and only the task volume mounted. Containers are still not
-virtual machines, current Work tasks have Docker bridge egress, and task volumes
-need their own backup and storage policy.
+`no-new-privileges`, resource limits with swap pinned to the memory cap, and
+only the task volume mounted. Networked tasks attach to a dedicated managed
+bridge with inter-container communication disabled, so one sandbox cannot reach
+another sandbox or the deployment's own containers; `WORK_RUNTIME_DNS` pins
+sandbox resolvers at a filtering resolver when a deployment needs name-based
+egress policy. The whole policy is hashed into a container label and
+re-verified against `docker inspect` before reuse, so a container predating a
+hardening change is recreated rather than reused.
+
+Containers are still not virtual machines. Work tasks still have outbound
+internet egress by design, DNS filtering does not constrain direct-IP egress,
+and task volumes need their own backup and storage policy.
 
 [Read the Work workspace guide →](https://docs.librewebui.org/WORKSPACES)
 

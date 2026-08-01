@@ -1532,7 +1532,8 @@
       "preview": "Aperçu",
       "resize": "Redimensionner la conversation et l'espace de travail",
       "resizeHint": "Faites glisser pour redimensionner. Utilisez les touches fléchées pour un réglage précis. Double-cliquez ou appuyez sur Entrée pour réinitialiser.",
-      "splitSize": "Conversation {{conversation}} %, espace de travail {{workspace}} %"
+      "splitSize": "Conversation {{conversation}} %, espace de travail {{workspace}} %",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Ignorer les modifications de fichier non enregistrées ?",
@@ -1593,6 +1594,15 @@
       "saved": "Fichier enregistré.",
       "previewFailed": "Impossible de démarrer l'aperçu.",
       "previewStopFailed": "Impossible d'arrêter l'aperçu."
+    },
+    "terminal": {
+      "connecting": "Ouverture d’un shell dans le bac à sable…",
+      "closed": "Session de terminal terminée.",
+      "failed": "La session de terminal n’a pas pu démarrer.",
+      "reconnect": "Se reconnecter",
+      "unavailable": "Le terminal interactif n’est pas disponible dans ce déploiement.",
+      "blockedByRun": "Le modèle utilise ce conteneur. Le terminal s’ouvrira à la fin du tour.",
+      "taskRunning": "Tour du modèle en cours"
     }
   },
   "personaBackground": {

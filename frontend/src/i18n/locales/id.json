@@ -1564,7 +1564,8 @@
       "preview": "Pratinjau",
       "resize": "Ubah ukuran percakapan dan ruang kerja",
       "resizeHint": "Seret untuk mengubah ukuran. Gunakan tombol panah untuk kontrol presisi. Klik dua kali atau tekan Enter untuk mereset.",
-      "splitSize": "Percakapan {{conversation}}%, ruang kerja {{workspace}}%"
+      "splitSize": "Percakapan {{conversation}}%, ruang kerja {{workspace}}%",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Buang perubahan file yang belum disimpan?",
@@ -1625,6 +1626,15 @@
       "saved": "File disimpan.",
       "previewFailed": "Tidak dapat memulai pratinjau.",
       "previewStopFailed": "Tidak dapat menghentikan pratinjau."
+    },
+    "terminal": {
+      "connecting": "Membuka shell di sandbox…",
+      "closed": "Sesi terminal berakhir.",
+      "failed": "Sesi terminal tidak dapat dimulai.",
+      "reconnect": "Sambungkan ulang",
+      "unavailable": "Terminal interaktif tidak tersedia pada penerapan ini.",
+      "blockedByRun": "Model sedang memakai kontainer ini. Terminal terbuka setelah giliran selesai.",
+      "taskRunning": "Giliran model berlangsung"
     }
   }
 }

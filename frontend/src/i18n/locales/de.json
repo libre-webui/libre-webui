@@ -1564,7 +1564,8 @@
       "preview": "Vorschau",
       "resize": "Größe von Unterhaltung und Arbeitsbereich ändern",
       "resizeHint": "Ziehen Sie zum Ändern der Größe. Verwenden Sie die Pfeiltasten zur präzisen Steuerung. Doppelklicken Sie oder drücken Sie die Eingabetaste zum Zurücksetzen.",
-      "splitSize": "Unterhaltung {{conversation}} %, Arbeitsbereich {{workspace}} %"
+      "splitSize": "Unterhaltung {{conversation}} %, Arbeitsbereich {{workspace}} %",
+      "terminal": "Terminal"
     },
     "files": {
       "discard": "Ungespeicherte Dateiänderungen verwerfen?",
@@ -1625,6 +1626,15 @@
       "saved": "Datei gespeichert.",
       "previewFailed": "Die Vorschau konnte nicht gestartet werden.",
       "previewStopFailed": "Die Vorschau konnte nicht gestoppt werden."
+    },
+    "terminal": {
+      "connecting": "Shell in der Sandbox wird geöffnet…",
+      "closed": "Terminalsitzung beendet.",
+      "failed": "Die Terminalsitzung konnte nicht gestartet werden.",
+      "reconnect": "Erneut verbinden",
+      "unavailable": "Das interaktive Terminal ist in dieser Installation nicht verfügbar.",
+      "blockedByRun": "Das Modell nutzt diesen Container. Das Terminal öffnet nach dem Zug.",
+      "taskRunning": "Modellzug läuft"
     }
   }
 }
