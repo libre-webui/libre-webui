@@ -148,6 +148,9 @@ export interface UserPreferences {
   defaultModel: string;
   defaultProviderType?: ChatProviderType | null;
   defaultProviderId?: string | null;
+  visionModel?: string;
+  visionProviderType?: ChatProviderType | null;
+  visionProviderId?: string | null;
   theme: {
     mode: 'light' | 'dark' | 'ophelia';
     adaptToAccent?: boolean;

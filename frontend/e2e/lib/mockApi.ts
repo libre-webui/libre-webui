@@ -407,6 +407,9 @@ const defaultPreferences = {
     customAccent: '#2563eb',
   },
   defaultModel: 'llama3.2:3b',
+  visionModel: '',
+  visionProviderType: null,
+  visionProviderId: null,
   systemMessage: 'You are a helpful assistant.',
   generationOptions: {
     temperature: 0.7,

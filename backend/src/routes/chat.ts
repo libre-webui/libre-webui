@@ -25,6 +25,7 @@ import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import { extractStatistics } from '../utils/generationUtils.js';
 import agentCliService from '../services/agentCliService.js';
 import chatGenerationService from '../services/chatGenerationService.js';
+import preferencesService from '../services/preferencesService.js';
 import { ChatRequestService } from '../services/chatRequestService.js';
 import { TitleGenerationService } from '../services/titleGenerationService.js';
 import {
@@ -50,6 +51,7 @@ const titleGenerationService = new TitleGenerationService({
 const chatRequestService = new ChatRequestService({
   chatGenerationService,
   personaService,
+  preferencesService,
 });
 
 // Rate limiter for chat routes: 60 requests per minute (reasonable for chat)

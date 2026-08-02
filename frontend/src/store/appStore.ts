@@ -183,6 +183,9 @@ export const useAppStore = create<AppState>()(
         defaultModel: '',
         defaultProviderType: null,
         defaultProviderId: null,
+        visionModel: '',
+        visionProviderType: null,
+        visionProviderId: null,
         systemMessage: '',
         generationOptions: {
           temperature: 0.7,
@@ -383,6 +386,9 @@ export const useAppStore = create<AppState>()(
             defaultModel: '',
             defaultProviderType: null,
             defaultProviderId: null,
+            visionModel: '',
+            visionProviderType: null,
+            visionProviderId: null,
             systemMessage: '',
             generationOptions: {
               temperature: 0.7,

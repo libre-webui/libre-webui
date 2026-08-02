@@ -57,6 +57,8 @@ interface SettingsModelsTabProps {
   user: User | null;
   systemInfo: SystemInfo | null;
   preferences: UserPreferences;
+  currentVisionModel: string;
+  visionModelOptions: SelectOption[];
   currentTaskModel: string;
   autoTitleTaskModelOptions: SelectOption[];
   updatingModelPullAccess: boolean;
@@ -68,6 +70,7 @@ interface SettingsModelsTabProps {
   onSystemMessageSave: () => void;
   onAutoTitleChange: (autoTitle: boolean) => void;
   onAutoTitleTaskModelChange: (taskModel: string) => void;
+  onVisionModelChange: (visionModel: string) => void;
   onUpdateAllModels: () => void;
 }
 
@@ -82,6 +85,8 @@ export function SettingsModelsTab({
   user,
   systemInfo,
   preferences,
+  currentVisionModel,
+  visionModelOptions,
   currentTaskModel,
   autoTitleTaskModelOptions,
   updatingModelPullAccess,
@@ -93,6 +98,7 @@ export function SettingsModelsTab({
   onSystemMessageSave,
   onAutoTitleChange,
   onAutoTitleTaskModelChange,
+  onVisionModelChange,
   onUpdateAllModels,
 }: SettingsModelsTabProps) {
   const { t } = useTranslation();
@@ -231,41 +237,65 @@ export function SettingsModelsTab({
         <div className='mt-6'>
           <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-              {t('settings.model.autoTitle.title')}
+              {t('settings.model.specializedModels', {
+                defaultValue: 'Specialized Models',
+              })}
             </label>
-            <div className='space-y-4'>
-              <div className='flex items-center justify-between'>
-                <div className='flex flex-col'>
-                  <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    {t('settings.model.autoTitle.enable')}
-                  </span>
-                  <span className='text-xs text-gray-500 dark:text-gray-400'>
-                    {t('settings.model.autoTitle.enableDescription')}
-                  </span>
-                </div>
-                <SettingsToggle
-                  checked={preferences.titleSettings?.autoTitle || false}
-                  onChange={onAutoTitleChange}
+            <div className='grid grid-cols-1 gap-5 lg:grid-cols-2'>
+              <div>
+                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  {t('settings.model.visionModel', {
+                    defaultValue: 'Vision Model',
+                  })}
+                </label>
+                <Select
+                  data-testid='vision-model-select'
+                  value={currentVisionModel}
+                  onChange={event => onVisionModelChange(event.target.value)}
+                  options={visionModelOptions}
                 />
+                <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
+                  {t('settings.model.visionModelDescription', {
+                    defaultValue:
+                      'Used automatically whenever the outgoing chat context contains images. Choose a model that supports image input.',
+                  })}
+                </p>
               </div>
 
-              {preferences.titleSettings?.autoTitle && (
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                    {t('settings.model.autoTitle.taskModel')}
-                  </label>
-                  <Select
-                    value={currentTaskModel}
-                    onChange={event =>
-                      onAutoTitleTaskModelChange(event.target.value)
-                    }
-                    options={autoTitleTaskModelOptions}
+              <div className='lg:border-s lg:border-gray-200 lg:ps-5 dark:lg:border-dark-300'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex flex-col pe-4'>
+                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                      {t('settings.model.autoTitle.enable')}
+                    </span>
+                    <span className='text-xs text-gray-500 dark:text-gray-400'>
+                      {t('settings.model.autoTitle.enableDescription')}
+                    </span>
+                  </div>
+                  <SettingsToggle
+                    checked={preferences.titleSettings?.autoTitle || false}
+                    onChange={onAutoTitleChange}
                   />
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
-                    {t('settings.model.autoTitle.taskModelDescription')}
-                  </p>
                 </div>
-              )}
+
+                {preferences.titleSettings?.autoTitle && (
+                  <div className='mt-4'>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                      {t('settings.model.autoTitle.taskModel')}
+                    </label>
+                    <Select
+                      value={currentTaskModel}
+                      onChange={event =>
+                        onAutoTitleTaskModelChange(event.target.value)
+                      }
+                      options={autoTitleTaskModelOptions}
+                    />
+                    <p className='text-xs text-gray-500 dark:text-gray-400 mt-2'>
+                      {t('settings.model.autoTitle.taskModelDescription')}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

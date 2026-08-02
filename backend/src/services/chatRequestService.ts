@@ -32,9 +32,13 @@ import type {
   GenerationOptions,
   OllamaChatMessage,
   Persona,
+  UserPreferences,
 } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
-import { normalizeChatProviderSelection } from '../utils/chatProviderSelection.js';
+import {
+  ChatProviderSelectionError,
+  normalizeChatProviderSelection,
+} from '../utils/chatProviderSelection.js';
 
 const logger = createLogger('services:chat-request-service');
 
@@ -51,9 +55,19 @@ export interface ChatPersonaLookupService {
   getPersonaById(id: string, userId?: string): Promise<Persona | null>;
 }
 
+export interface ChatPreferencesLookupService {
+  getPreferences(
+    userId?: string
+  ): Pick<
+    UserPreferences,
+    'visionModel' | 'visionProviderType' | 'visionProviderId'
+  >;
+}
+
 export interface ChatRequestServiceDependencies {
   chatGenerationService: ChatGenerationTargetService;
   personaService?: ChatPersonaLookupService;
+  preferencesService?: ChatPreferencesLookupService;
 }
 
 export interface PrepareGenerationMessagesOptions {
@@ -98,6 +112,27 @@ export interface PrepareChatGenerationRequestOptions extends Omit<
 export interface PreparedChatGenerationRequest
   extends PreparedGenerationMessages, GenerationTarget {
   target: GenerationTarget;
+}
+
+function messagesContainImages(
+  messages: readonly { images?: readonly string[] | null }[]
+): boolean {
+  return messages.some(message => (message.images?.length ?? 0) > 0);
+}
+
+export function generationContextContainsImages({
+  images,
+  persistedMessages,
+  messageHistory = [],
+}: Pick<
+  PrepareGenerationMessagesOptions,
+  'images' | 'persistedMessages' | 'messageHistory'
+>): boolean {
+  return (
+    (images?.length ?? 0) > 0 ||
+    messagesContainImages(persistedMessages) ||
+    messagesContainImages(messageHistory)
+  );
 }
 
 export function buildDocumentEnhancedContent(
@@ -175,13 +210,16 @@ export function prepareGenerationMessages({
 export class ChatRequestService {
   private readonly chatGenerationService: ChatGenerationTargetService;
   private readonly personaService?: ChatPersonaLookupService;
+  private readonly preferencesService?: ChatPreferencesLookupService;
 
   constructor({
     chatGenerationService,
     personaService,
+    preferencesService,
   }: ChatRequestServiceDependencies) {
     this.chatGenerationService = chatGenerationService;
     this.personaService = personaService;
+    this.preferencesService = preferencesService;
   }
 
   async resolvePersonaSystemPrompt(
@@ -221,11 +259,38 @@ export class ChatRequestService {
     const providerSelection = messageOptions.isPrivate
       ? (sessionProviderSelection ?? requestProviderSelection)
       : sessionProviderSelection;
+    let generationModel = session.model;
+    let generationProviderSelection = providerSelection;
+
+    if (
+      this.preferencesService &&
+      generationContextContainsImages(messageOptions)
+    ) {
+      const preferences = this.preferencesService.getPreferences(userId);
+      const visionModel = preferences.visionModel?.trim();
+
+      if (visionModel) {
+        const visionProviderSelection = normalizeChatProviderSelection({
+          providerType: preferences.visionProviderType,
+          providerId: preferences.visionProviderId,
+        });
+
+        if (!visionProviderSelection) {
+          throw new ChatProviderSelectionError(
+            'The configured vision model has no provider identity. Re-select it in Settings > Model > Vision Model.'
+          );
+        }
+
+        generationModel = visionModel;
+        generationProviderSelection = visionProviderSelection;
+      }
+    }
+
     const target = await this.chatGenerationService.prepareGenerationTarget(
-      session.model,
+      generationModel,
       userId,
       options,
-      providerSelection
+      generationProviderSelection
     );
 
     const resolvedPersonaSystemPrompt =

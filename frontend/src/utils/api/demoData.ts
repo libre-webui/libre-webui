@@ -87,6 +87,9 @@ export const DEFAULT_DEMO_PREFERENCES: UserPreferences = {
   defaultModel: 'llama3.2:3b',
   defaultProviderType: 'ollama',
   defaultProviderId: null,
+  visionModel: '',
+  visionProviderType: null,
+  visionProviderId: null,
   systemMessage: 'You are a helpful assistant.',
   generationOptions: {
     temperature: 0.7,

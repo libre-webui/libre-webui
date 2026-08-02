@@ -229,6 +229,9 @@ export interface UserPreferences {
   defaultModel: string;
   defaultProviderType?: ChatProviderType | null;
   defaultProviderId?: string | null;
+  visionModel?: string;
+  visionProviderType?: ChatProviderType | null;
+  visionProviderId?: string | null;
   systemMessage: string;
   generationOptions: GenerationOptions;
   embeddingSettings: {

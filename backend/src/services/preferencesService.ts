@@ -40,6 +40,7 @@ interface ExportData {
 class PreferencesService {
   private defaultPreferences: UserPreferences = {
     defaultModel: '',
+    visionModel: '',
     theme: {
       mode: 'dark',
       adaptToAccent: false,
@@ -191,6 +192,24 @@ class PreferencesService {
         : undefined;
       normalizedUpdates.defaultProviderType = provider?.providerType;
       normalizedUpdates.defaultProviderId = provider?.providerId;
+    }
+
+    const hasVisionProviderUpdate =
+      Object.prototype.hasOwnProperty.call(updates, 'visionProviderType') ||
+      Object.prototype.hasOwnProperty.call(updates, 'visionProviderId');
+
+    if (
+      hasVisionProviderUpdate ||
+      Object.prototype.hasOwnProperty.call(updates, 'visionModel')
+    ) {
+      const provider = hasVisionProviderUpdate
+        ? normalizeChatProviderSelection({
+            providerType: updates.visionProviderType,
+            providerId: updates.visionProviderId,
+          })
+        : undefined;
+      normalizedUpdates.visionProviderType = provider?.providerType;
+      normalizedUpdates.visionProviderId = provider?.providerId;
     }
 
     if (updates.titleSettings) {

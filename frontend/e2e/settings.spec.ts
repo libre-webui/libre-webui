@@ -122,6 +122,45 @@ test('settings modal lazy-loads and switches languages from async locale chunks'
   await expect(page.locator('html')).toHaveAttribute('dir', 'ltr');
 });
 
+test('vision model selection persists the exact provider-qualified model', async ({
+  page,
+}) => {
+  const mockApi = await mockLibreWebUiApi(page, {
+    plugins: createProviderWorkspacePlugins(),
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'e2e-token');
+  });
+  await page.goto('/chat');
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Model' }).click();
+
+  const visionModel = page.getByTestId('vision-model-select');
+  await visionModel.selectOption({ label: 'gpt-cloud · OpenAI Cloud' });
+
+  await expect
+    .poll(() =>
+      mockApi.preferenceUpdateRequests.find(
+        request => request.visionModel === 'gpt-cloud'
+      )
+    )
+    .toEqual({
+      visionModel: 'gpt-cloud',
+      visionProviderType: 'plugin',
+      visionProviderId: 'openai-cloud',
+    });
+
+  await page.reload();
+  await expect(page.getByRole('textbox', { name: 'Message...' })).toBeVisible();
+  await page.keyboard.press('Control+,');
+  await page.getByRole('tab', { name: 'Model' }).click();
+  await expect(page.getByTestId('vision-model-select')).toHaveValue(
+    'plugin:openai-cloud:gpt-cloud'
+  );
+});
+
 test('provider workspace searches, selects, and collapses configuration on provider change', async ({
   page,
 }) => {

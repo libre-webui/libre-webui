@@ -442,7 +442,7 @@ test('session updates preserve provider metadata until an unqualified model chan
   );
 });
 
-test('default and title model preferences round-trip and clear provider identity', () => {
+test('default, vision, and title model preferences round-trip and clear provider identity', () => {
   preferencesService.setDefaultModel(sharedModel, userId, {
     providerType: 'plugin',
     providerId: pluginBId,
@@ -453,11 +453,25 @@ test('default and title model preferences round-trip and clear provider identity
   assert.equal(preferences.defaultProviderId, pluginBId);
 
   preferences = preferencesService.updatePreferences(
+    {
+      visionModel: sharedModel,
+      visionProviderType: 'plugin',
+      visionProviderId: pluginBId,
+    },
+    userId
+  );
+  assert.equal(preferences.visionModel, sharedModel);
+  assert.equal(preferences.visionProviderType, 'plugin');
+  assert.equal(preferences.visionProviderId, pluginBId);
+
+  preferences = preferencesService.updatePreferences(
     { showUsername: true },
     userId
   );
   assert.equal(preferences.defaultProviderType, 'plugin');
   assert.equal(preferences.defaultProviderId, pluginBId);
+  assert.equal(preferences.visionProviderType, 'plugin');
+  assert.equal(preferences.visionProviderId, pluginBId);
 
   preferences = preferencesService.updatePreferences(
     {
@@ -494,6 +508,13 @@ test('default and title model preferences round-trip and clear provider identity
   );
   assert.equal(preferences.titleSettings.taskProviderType, undefined);
   assert.equal(preferences.titleSettings.taskProviderId, undefined);
+
+  preferences = preferencesService.updatePreferences(
+    { visionModel: 'chat-provider-vision-changed' },
+    userId
+  );
+  assert.equal(preferences.visionProviderType, undefined);
+  assert.equal(preferences.visionProviderId, undefined);
 });
 
 test('provider-qualified image preferences persist across unrelated updates', () => {
@@ -841,6 +862,125 @@ test('ChatRequestService prioritizes persisted identity over request identity', 
       provider: { providerType: 'plugin', providerId: pluginBId },
     },
   ]);
+});
+
+test('ChatRequestService routes every image-bearing context through the configured vision provider', async () => {
+  const visionModel = 'chat-provider-vision-model';
+  const prepareCalls = [];
+  const requestService = new ChatRequestService({
+    chatGenerationService: {
+      async prepareGenerationTarget(model, targetUserId, options, provider) {
+        prepareCalls.push({ model, userId: targetUserId, options, provider });
+        return {
+          actualModelName: model,
+          mergedOptions: options,
+          activePlugin: null,
+          pluginVariables: {},
+          providerType: provider?.providerType,
+          providerId: provider?.providerId,
+        };
+      },
+    },
+    preferencesService: {
+      getPreferences() {
+        return {
+          visionModel,
+          visionProviderType: 'plugin',
+          visionProviderId: pluginBId,
+        };
+      },
+    },
+  });
+  const session = {
+    model: sharedModel,
+    providerType: 'ollama',
+  };
+
+  await requestService.prepareGenerationRequest({
+    session,
+    userId,
+    persistedMessages: [],
+    content: 'Text only',
+  });
+  await requestService.prepareGenerationRequest({
+    session,
+    userId,
+    persistedMessages: [],
+    content: 'Inspect this image',
+    images: ['data:image/png;base64,current'],
+  });
+  await requestService.prepareGenerationRequest({
+    session,
+    userId,
+    persistedMessages: [
+      {
+        id: 'historic-image',
+        role: 'user',
+        content: 'Earlier image',
+        images: ['data:image/png;base64,history'],
+        timestamp: now,
+      },
+    ],
+    content: 'Follow-up without a new attachment',
+  });
+  await requestService.prepareGenerationRequest({
+    session,
+    userId,
+    isPrivate: true,
+    persistedMessages: [],
+    messageHistory: [
+      {
+        role: 'user',
+        content: 'Private image',
+        images: ['data:image/png;base64,private'],
+      },
+    ],
+    content: 'Private follow-up',
+  });
+
+  assert.deepEqual(prepareCalls, [
+    {
+      model: sharedModel,
+      userId,
+      options: {},
+      provider: { providerType: 'ollama' },
+    },
+    ...Array.from({ length: 3 }, () => ({
+      model: visionModel,
+      userId,
+      options: {},
+      provider: { providerType: 'plugin', providerId: pluginBId },
+    })),
+  ]);
+});
+
+test('ChatRequestService rejects an unqualified configured vision model', async () => {
+  let targetCalls = 0;
+  const requestService = new ChatRequestService({
+    chatGenerationService: {
+      async prepareGenerationTarget() {
+        targetCalls += 1;
+        throw new Error('generation target must not be prepared');
+      },
+    },
+    preferencesService: {
+      getPreferences() {
+        return { visionModel: 'legacy-unqualified-vision-model' };
+      },
+    },
+  });
+
+  await assert.rejects(
+    requestService.prepareGenerationRequest({
+      session: { model: sharedModel, providerType: 'ollama' },
+      userId,
+      persistedMessages: [],
+      content: 'Inspect',
+      images: ['data:image/png;base64,invalid'],
+    }),
+    /vision model has no provider identity/i
+  );
+  assert.equal(targetCalls, 0);
 });
 
 test('current-model title generation ignores conflicting request provider metadata', async () => {

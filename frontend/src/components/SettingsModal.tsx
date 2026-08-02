@@ -168,6 +168,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       : taskSelection.model
         ? chatModelSelectionKeyForModels(taskSelectorModels, taskSelection)
         : '';
+  const visionSelection = {
+    model: preferences.visionModel || '',
+    providerType: preferences.visionProviderType,
+    providerId: preferences.visionProviderId,
+  };
+  const visionSelectorModels = withUnavailableChatModel(
+    models,
+    visionSelection
+  );
+  const currentVisionModel = visionSelection.model
+    ? chatModelSelectionKeyForModels(visionSelectorModels, visionSelection)
+    : '';
+  const visionModelOptions = [
+    {
+      value: '',
+      label: t('settings.model.selectVisionModel', {
+        defaultValue: 'Use the current chat model',
+      }),
+    },
+    ...visionSelectorModels.map(model => ({
+      value: chatModelOptionKey(model),
+      label: model.isLegacySelection
+        ? `${model.name} · provider not recorded${
+            model.isUnavailable ? ' (unavailable)' : ''
+          }`
+        : model.isPersona
+          ? `${model.personaName || model.name} (persona)`
+          : model.isPlugin
+            ? `${model.name} · ${model.pluginName || model.pluginId}${
+                model.isUnavailable ? ' (unavailable)' : ''
+              }`
+            : model.isAgent
+              ? `${model.name} · ${model.agentName || 'Agent'}${
+                  model.isUnavailable ? ' (unavailable)' : ''
+                }`
+              : `${model.name} · Ollama${
+                  model.isUnavailable ? ' (unavailable)' : ''
+                }`,
+    })),
+  ];
   const autoTitleTaskModelOptions = [
     {
       value: '',
@@ -1029,6 +1069,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     preferencesApi.updatePreferences({ titleSettings: newTitleSettings });
   };
 
+  const handleVisionModelChange = (visionModel: string) => {
+    if (!visionModel) {
+      const updates = {
+        visionModel: '',
+        visionProviderType: null,
+        visionProviderId: null,
+      };
+      setPreferences(updates);
+      void preferencesApi.updatePreferences(updates);
+      return;
+    }
+
+    const selection = chatModelSelectionFromKey(
+      visionSelectorModels,
+      visionModel
+    );
+    if (!selection?.providerType) {
+      toast.error(
+        'This vision model has no provider identity. Select an available model.'
+      );
+      return;
+    }
+
+    const updates = {
+      visionModel: selection.model,
+      visionProviderType: selection.providerType,
+      visionProviderId: selection.providerId || null,
+    };
+    setPreferences(updates);
+    void preferencesApi.updatePreferences(updates).catch(error => {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error('Failed to update vision model: ' + errorMessage);
+    });
+  };
+
   const handleAutoTitleTaskModelChange = (taskModel: string) => {
     const selection =
       taskModel && taskModel !== AUTO_TITLE_CURRENT_MODEL
@@ -1238,6 +1314,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             user={user}
             systemInfo={systemInfo}
             preferences={preferences}
+            currentVisionModel={currentVisionModel}
+            visionModelOptions={visionModelOptions}
             currentTaskModel={currentTaskModel}
             autoTitleTaskModelOptions={autoTitleTaskModelOptions}
             updatingModelPullAccess={updatingModelPullAccess}
@@ -1249,6 +1327,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             onSystemMessageSave={handleSystemMessageSave}
             onAutoTitleChange={handleAutoTitleChange}
             onAutoTitleTaskModelChange={handleAutoTitleTaskModelChange}
+            onVisionModelChange={handleVisionModelChange}
             onUpdateAllModels={handleUpdateAllModels}
           />
         );

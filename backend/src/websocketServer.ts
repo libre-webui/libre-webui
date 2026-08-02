@@ -25,6 +25,7 @@ import pluginService from './services/pluginService.js';
 import documentService from './services/documentService.js';
 import agentCliService from './services/agentCliService.js';
 import chatGenerationService from './services/chatGenerationService.js';
+import preferencesService from './services/preferencesService.js';
 import assistantCompletionService from './services/assistantCompletionService.js';
 import { personaService } from './services/personaService.js';
 import {
@@ -54,6 +55,7 @@ import { userModel } from './models/userModel.js';
 const chatRequestService = new ChatRequestService({
   chatGenerationService,
   personaService,
+  preferencesService,
 });
 const logger = createLogger('websocket');
 const CHAT_WS_MAX_PAYLOAD_BYTES = positiveInteger(
