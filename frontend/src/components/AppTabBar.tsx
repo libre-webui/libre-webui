@@ -23,9 +23,12 @@ import {
   Briefcase,
   Database,
   Home,
+  ListX,
   MessageSquare,
   Package,
+  PanelRightClose,
   Plus,
+  SquareX,
   Sparkles,
   User as UserIcon,
   Users,
@@ -66,6 +69,12 @@ interface NewTabMenuItem {
   action: () => void;
 }
 
+interface TabContextMenuState {
+  tabId: string;
+  x: number;
+  y: number;
+}
+
 export const AppTabBar: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -74,11 +83,16 @@ export const AppTabBar: React.FC = () => {
   const activeTabId = useTabStore(state => state.activeTabId);
   const syncWithPath = useTabStore(state => state.syncWithPath);
   const closeTab = useTabStore(state => state.closeTab);
+  const closeTabs = useTabStore(state => state.closeTabs);
   const sessions = useChatStore(state => state.sessions);
   const workTasks = useWorkStore(state => state.tasks);
   const { systemInfo, isAdmin } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [contextMenu, setContextMenu] = useState<TabContextMenuState | null>(
+    null
+  );
   const menuRef = useRef<HTMLDivElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
 
   const showWork = systemInfo?.requiresAuth === false || isAdmin();
@@ -95,14 +109,22 @@ export const AppTabBar: React.FC = () => {
   }, [activeTabId, tabs.length]);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen && !contextMenu) return;
     const onPointerDown = (event: MouseEvent) => {
-      if (!menuRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        !menuRef.current?.contains(target) &&
+        !contextMenuRef.current?.contains(target)
+      ) {
         setMenuOpen(false);
+        setContextMenu(null);
       }
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuOpen(false);
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        setContextMenu(null);
+      }
     };
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
@@ -110,7 +132,14 @@ export const AppTabBar: React.FC = () => {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [menuOpen]);
+  }, [contextMenu, menuOpen]);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    contextMenuRef.current
+      ?.querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
+      ?.focus();
+  }, [contextMenu]);
 
   const tabTitle = (tab: AppTab): string => {
     if (tab.kind === 'home') return t('tabs.home', 'Home');
@@ -141,6 +170,82 @@ export const AppTabBar: React.FC = () => {
     if (fallback) navigate(fallback.path);
   };
 
+  const openContextMenu = (tab: AppTab, x: number, y: number) => {
+    const viewportPadding = 8;
+    const menuWidth = 224;
+    const menuHeight = 176;
+    setMenuOpen(false);
+    setContextMenu({
+      tabId: tab.id,
+      x: Math.max(
+        viewportPadding,
+        Math.min(x, window.innerWidth - menuWidth - viewportPadding)
+      ),
+      y: Math.max(
+        viewportPadding,
+        Math.min(y, window.innerHeight - menuHeight - viewportPadding)
+      ),
+    });
+  };
+
+  const handleTabContextMenu = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    tab: AppTab
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openContextMenu(tab, event.clientX, event.clientY);
+  };
+
+  const handleTabContextKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    tab: AppTab
+  ) => {
+    if (
+      event.key !== 'ContextMenu' &&
+      !(event.shiftKey && event.key === 'F10')
+    ) {
+      return;
+    }
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    openContextMenu(tab, rect.left + 12, rect.bottom + 4);
+  };
+
+  const handleContextMenuKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>
+  ) => {
+    const items = Array.from(
+      contextMenuRef.current?.querySelectorAll<HTMLButtonElement>(
+        '[role="menuitem"]:not(:disabled)'
+      ) ?? []
+    );
+    if (items.length === 0) return;
+    const currentIndex = items.indexOf(
+      document.activeElement as HTMLButtonElement
+    );
+    let nextIndex = currentIndex;
+    if (event.key === 'ArrowDown') {
+      nextIndex = (currentIndex + 1 + items.length) % items.length;
+    } else if (event.key === 'ArrowUp') {
+      nextIndex = (currentIndex - 1 + items.length) % items.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = items.length - 1;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    items[nextIndex]?.focus();
+  };
+
+  const closeTabSet = (ids: string[], preferredTabId?: string) => {
+    const fallback = closeTabs(ids, preferredTabId);
+    setContextMenu(null);
+    if (fallback) navigate(fallback.path);
+  };
+
   const menuItems: NewTabMenuItem[] = [
     {
       key: 'chat',
@@ -168,6 +273,28 @@ export const AppTabBar: React.FC = () => {
     })),
   ];
 
+  const contextTab = contextMenu
+    ? tabs.find(tab => tab.id === contextMenu.tabId)
+    : undefined;
+  const contextTabIndex = contextTab
+    ? tabs.findIndex(tab => tab.id === contextTab.id)
+    : -1;
+  const otherTabIds = contextTab
+    ? tabs
+        .filter(tab => tab.id !== 'home' && tab.id !== contextTab.id)
+        .map(tab => tab.id)
+    : [];
+  const rightTabIds =
+    contextTabIndex >= 0
+      ? tabs
+          .slice(contextTabIndex + 1)
+          .filter(tab => tab.id !== 'home')
+          .map(tab => tab.id)
+      : [];
+  const allClosableTabIds = tabs
+    .filter(tab => tab.id !== 'home')
+    .map(tab => tab.id);
+
   return (
     <div
       data-testid='app-tab-bar'
@@ -189,9 +316,12 @@ export const AppTabBar: React.FC = () => {
               role='tab'
               aria-selected={isActive}
               data-active={isActive || undefined}
+              data-tab-id={tab.id}
               data-testid='app-tab'
               title={tabTitle(tab)}
               onClick={() => navigate(tab.path)}
+              onContextMenu={event => handleTabContextMenu(event, tab)}
+              onKeyDown={event => handleTabContextKeyDown(event, tab)}
               onAuxClick={event => {
                 if (event.button === 1 && tab.id !== 'home') {
                   handleClose(event, tab);
@@ -228,6 +358,69 @@ export const AppTabBar: React.FC = () => {
           );
         })}
       </div>
+
+      {contextMenu && contextTab && (
+        <div
+          ref={contextMenuRef}
+          role='menu'
+          aria-label={t('tabs.actions', 'Tab actions')}
+          data-testid='app-tab-context-menu'
+          onContextMenu={event => event.preventDefault()}
+          onKeyDown={handleContextMenuKeyDown}
+          className='fixed z-[100] w-56 rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+        >
+          <button
+            type='button'
+            role='menuitem'
+            data-testid='app-tab-context-close'
+            disabled={contextTab.id === 'home'}
+            onClick={() => {
+              const fallback = closeTab(contextTab.id);
+              setContextMenu(null);
+              if (fallback) navigate(fallback.path);
+            }}
+            className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+          >
+            <X className='h-4 w-4 shrink-0' />
+            <span>{t('tabs.close', 'Close tab')}</span>
+          </button>
+          <button
+            type='button'
+            role='menuitem'
+            data-testid='app-tab-context-close-others'
+            disabled={otherTabIds.length === 0}
+            onClick={() => closeTabSet(otherTabIds, contextTab.id)}
+            className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+          >
+            <SquareX className='h-4 w-4 shrink-0' />
+            <span>{t('tabs.closeOthers', 'Close other tabs')}</span>
+          </button>
+          <button
+            type='button'
+            role='menuitem'
+            data-testid='app-tab-context-close-right'
+            disabled={rightTabIds.length === 0}
+            onClick={() => closeTabSet(rightTabIds, contextTab.id)}
+            className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+          >
+            <PanelRightClose className='h-4 w-4 shrink-0' />
+            <span>{t('tabs.closeRight', 'Close tabs to the right')}</span>
+          </button>
+          <div className='mx-2 my-1 h-px bg-line' role='separator' />
+          <button
+            type='button'
+            role='menuitem'
+            data-testid='app-tab-context-close-all'
+            disabled={allClosableTabIds.length === 0}
+            onClick={() => closeTabSet(allClosableTabIds, 'home')}
+            className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-white/[0.06]'
+          >
+            <ListX className='h-4 w-4 shrink-0' />
+            <span>{t('tabs.closeAll', 'Close all tabs')}</span>
+          </button>
+        </div>
+      )}
 
       <div className='relative flex-none' ref={menuRef}>
         <button

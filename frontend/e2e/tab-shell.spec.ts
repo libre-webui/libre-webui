@@ -75,6 +75,53 @@ test('the new-tab menu opens pages as tabs and shows their shortcuts', async ({
   await expect(page.getByTestId('app-tab')).toHaveCount(2);
 });
 
+test('the tab context menu closes other, right-side, or all non-Home tabs', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page);
+  await page.goto('/');
+
+  const tabs = page.getByTestId('app-tab');
+  const openTab = async (name: string, expectedCount: number) => {
+    await page.getByTestId('app-tab-new').click();
+    await page
+      .getByTestId('app-tab-new-menu')
+      .getByRole('menuitem', { name })
+      .click();
+    await expect(tabs).toHaveCount(expectedCount);
+  };
+
+  await openTab('Models', 2);
+  await openTab('Personas', 3);
+  await openTab('Imagine', 4);
+
+  await tabs.filter({ hasText: 'Models' }).click({ button: 'right' });
+  const contextMenu = page.getByTestId('app-tab-context-menu');
+  await expect(contextMenu).toBeVisible();
+  await page.getByTestId('app-tab-context-close-right').click();
+  await expect(tabs).toHaveCount(2);
+  await expect(page).toHaveURL(/\/models$/);
+
+  await openTab('Personas', 3);
+  await openTab('Imagine', 4);
+  await tabs.filter({ hasText: 'Personas' }).click({ button: 'right' });
+  await page.getByTestId('app-tab-context-close-others').click();
+  await expect(tabs).toHaveCount(2);
+  await expect(tabs.nth(1)).toHaveText(/Personas/);
+  await expect(page).toHaveURL(/\/personas$/);
+
+  await openTab('Imagine', 3);
+  await tabs.filter({ hasText: 'Imagine' }).click({ button: 'right' });
+  await page.getByTestId('app-tab-context-close-all').click();
+  await expect(tabs).toHaveCount(1);
+  await expect(tabs.first()).toHaveText(/Home/);
+  await expect(page).toHaveURL(/\/$/);
+
+  await tabs.first().click({ button: 'right' });
+  await expect(page.getByTestId('app-tab-context-close')).toBeDisabled();
+  await expect(page.getByTestId('app-tab-context-close-all')).toBeDisabled();
+});
+
 test('the command palette opens with the keyboard and jumps to a chat', async ({
   page,
 }) => {

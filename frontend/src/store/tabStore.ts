@@ -78,6 +78,12 @@ interface TabState {
    * active, otherwise null. The Home tab cannot be closed.
    */
   closeTab: (id: string) => AppTab | null;
+  /**
+   * Removes several tabs in one state update. When the active tab is removed,
+   * preferredTabId is used when it still exists; otherwise the nearest tab to
+   * the left becomes active. The Home tab cannot be closed.
+   */
+  closeTabs: (ids: string[], preferredTabId?: string) => AppTab | null;
   reset: () => void;
 }
 
@@ -115,18 +121,33 @@ export const useTabStore = create<TabState>()(
         });
       },
 
-      closeTab: id => {
-        if (id === HOME_TAB.id) return null;
+      closeTab: id => get().closeTabs([id]),
+
+      closeTabs: (ids, preferredTabId) => {
         const state = get();
         const tabs = withHomeFirst(state.tabs);
-        const index = tabs.findIndex(tab => tab.id === id);
-        if (index === -1) return null;
-        const remaining = tabs.filter(tab => tab.id !== id);
-        if (state.activeTabId !== id) {
+        const closingIds = new Set(
+          ids.filter(
+            id => id !== HOME_TAB.id && tabs.some(tab => tab.id === id)
+          )
+        );
+        if (closingIds.size === 0) return null;
+
+        const activeIndex = tabs.findIndex(tab => tab.id === state.activeTabId);
+        const remaining = tabs.filter(tab => !closingIds.has(tab.id));
+        if (!closingIds.has(state.activeTabId)) {
           set({ tabs: remaining });
           return null;
         }
-        const fallback = remaining[Math.max(0, index - 1)] ?? HOME_TAB;
+
+        const preferred = preferredTabId
+          ? remaining.find(tab => tab.id === preferredTabId)
+          : undefined;
+        const nearestLeft = tabs
+          .slice(0, Math.max(0, activeIndex))
+          .reverse()
+          .find(tab => !closingIds.has(tab.id));
+        const fallback = preferred ?? nearestLeft ?? remaining[0] ?? HOME_TAB;
         set({ tabs: remaining, activeTabId: fallback.id });
         return fallback;
       },
