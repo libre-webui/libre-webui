@@ -22,6 +22,7 @@ import {
   File,
   Files as FilesIcon,
   Folder,
+  GitBranch,
   GitCompareArrows,
   Loader2,
   Monitor,
@@ -45,6 +46,7 @@ import { Button } from '@/components/ui';
 import { WorkLiveRunSurface } from '@/components/work/WorkLiveRunSurface';
 import { WorkspaceCodeEditor } from '@/components/work/WorkspaceCodeEditor';
 import { WorkspaceDiffView } from '@/components/work/WorkspaceDiffView';
+import { WorkspaceGitPanel } from '@/components/work/WorkspaceGitPanel';
 import { WorkspaceTerminal } from '@/components/work/WorkspaceTerminal';
 import { isRTL } from '@/i18n';
 import type {
@@ -69,7 +71,7 @@ import {
 } from '@/utils/workCode';
 import { diffWorkLines, workDiffStats } from '@/utils/workDiff';
 
-type WorkspaceTab = 'files' | 'activity' | 'terminal' | 'preview';
+type WorkspaceTab = 'files' | 'activity' | 'git' | 'terminal' | 'preview';
 
 interface WorkspacePaneProps {
   task: WorkTask;
@@ -463,6 +465,12 @@ export function WorkspacePane({
       testId: 'work-activity-tab',
     },
     {
+      id: 'git',
+      label: t('work.workspace.git', { defaultValue: 'Git' }),
+      icon: GitBranch,
+      testId: 'work-git-tab',
+    },
+    {
       id: 'terminal',
       label: t('work.workspace.terminal', { defaultValue: 'Terminal' }),
       icon: TerminalSquare,
@@ -716,7 +724,9 @@ export function WorkspacePane({
           </>
         )}
 
-        {tab === 'activity' && <div className='min-w-0 flex-1' />}
+        {(tab === 'activity' || tab === 'git') && (
+          <div className='min-w-0 flex-1' />
+        )}
 
         {tab === 'terminal' && (
           <div className='flex min-w-0 flex-1 items-center gap-2'>
@@ -998,6 +1008,38 @@ export function WorkspacePane({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {tab === 'git' && (
+        <div
+          id='work-workspace-panel-git'
+          role='tabpanel'
+          aria-labelledby='work-workspace-tab-git'
+          className='min-h-0 flex-1'
+        >
+          <WorkspaceGitPanel
+            taskId={task.id}
+            mutationsDisabled={
+              taskActive ||
+              task.previewStatus === 'starting' ||
+              task.previewStatus === 'running'
+            }
+            disabledReason={
+              taskActive
+                ? t('work.git.blockedByRun', {
+                    defaultValue:
+                      'Git write actions unlock when the model turn finishes.',
+                  })
+                : task.previewStatus === 'starting' ||
+                    task.previewStatus === 'running'
+                  ? t('work.git.blockedByPreview', {
+                      defaultValue:
+                        'Stop the preview before changing Git state.',
+                    })
+                  : undefined
+            }
+          />
         </div>
       )}
 

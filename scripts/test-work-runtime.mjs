@@ -22,6 +22,10 @@ const runtimeModule = await import(
     path.join(repoRoot, 'backend', 'dist', 'services', 'workRuntimeService.js')
   ).href
 );
+const gitModule = await import(
+  pathToFileURL(path.join(repoRoot, 'backend', 'dist', 'utils', 'workGit.js'))
+    .href
+);
 
 const {
   PREVIEW_TARGET_SCRIPT,
@@ -36,6 +40,13 @@ const {
   parsePublishedPort,
   validateWorkspacePath,
 } = runtimeModule;
+const {
+  buildWorkGitCommand,
+  parseWorkGitLog,
+  parseWorkGitStatus,
+  validateWorkGitBranchName,
+  validateWorkGitRepositoryPaths,
+} = gitModule;
 
 const detectPreview = workspace =>
   JSON.parse(
@@ -85,6 +96,103 @@ const optionValues = (args, option) =>
   args.flatMap((value, index) =>
     value === option && index + 1 < args.length ? [args[index + 1]] : []
   );
+
+test('Work Git commands disable ambient config, prompts, hooks, and protocols', () => {
+  const command = buildWorkGitCommand(['status', '--short']);
+  assert.equal(command[0], 'env');
+  assert.ok(command.includes('GIT_CONFIG_NOSYSTEM=1'));
+  assert.ok(command.includes('GIT_CONFIG_GLOBAL=/dev/null'));
+  assert.ok(command.includes('GIT_TERMINAL_PROMPT=0'));
+  assert.ok(command.includes('core.hooksPath=/dev/null'));
+  assert.ok(command.includes('credential.helper='));
+  assert.ok(command.includes('protocol.allow=never'));
+  assert.deepEqual(command.slice(-2), ['status', '--short']);
+});
+
+test('Work Git repository metadata must remain inside /workspace', () => {
+  assert.doesNotThrow(() =>
+    validateWorkGitRepositoryPaths(
+      '/workspace\n/workspace/.git\n/workspace/.git\n'
+    )
+  );
+  assert.throws(
+    () =>
+      validateWorkGitRepositoryPaths(
+        '/workspace\n/tmp/borrowed.git\n/tmp/borrowed.git\n'
+      ),
+    /metadata must stay inside/
+  );
+  assert.throws(
+    () =>
+      validateWorkGitRepositoryPaths(
+        '/workspace/project\n/workspace/.git\n/workspace/.git\n'
+      ),
+    /exactly \/workspace/
+  );
+});
+
+test('Work Git parses porcelain status and bounded history without a shell', () => {
+  const status = parseWorkGitStatus(
+    [
+      '# branch.oid abcdef123456',
+      '# branch.head main',
+      '# branch.upstream origin/main',
+      '# branch.ab +2 -1',
+      '1 M. N... 100644 100644 100644 aaaaaa bbbbbb staged.txt',
+      '2 R. N... 100644 100644 100644 aaaaaa bbbbbb R100 renamed file.txt',
+      'old file.txt',
+      '? new file.txt',
+      '',
+    ].join('\0')
+  );
+  assert.equal(status.branch, 'main');
+  assert.equal(status.ahead, 2);
+  assert.equal(status.behind, 1);
+  assert.deepEqual(
+    status.changes.map(change => ({
+      path: change.path,
+      originalPath: change.originalPath,
+      staged: change.staged,
+    })),
+    [
+      { path: 'new file.txt', originalPath: undefined, staged: false },
+      {
+        path: 'renamed file.txt',
+        originalPath: 'old file.txt',
+        staged: true,
+      },
+      { path: 'staged.txt', originalPath: undefined, staged: true },
+    ]
+  );
+
+  assert.deepEqual(
+    parseWorkGitLog(
+      [
+        'abcdef',
+        'abc123',
+        'Robin',
+        '2026-08-02T12:00:00Z',
+        'Safe commit',
+        '',
+      ].join('\0')
+    ),
+    [
+      {
+        hash: 'abcdef',
+        shortHash: 'abc123',
+        author: 'Robin',
+        authoredAt: '2026-08-02T12:00:00Z',
+        subject: 'Safe commit',
+      },
+    ]
+  );
+});
+
+test('Work Git rejects branch names that can be parsed as options', () => {
+  assert.equal(validateWorkGitBranchName('feature/git-ui'), 'feature/git-ui');
+  assert.throws(() => validateWorkGitBranchName('-force'), /invalid/);
+  assert.throws(() => validateWorkGitBranchName('bad\nbranch'), /invalid/);
+});
 
 test('Work runtime defaults pin the image and bound resource use', () => {
   assert.deepEqual(WORK_RUNTIME_DEFAULTS, {

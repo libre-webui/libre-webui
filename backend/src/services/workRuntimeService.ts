@@ -19,8 +19,21 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { getDatabase } from '../db.js';
-import { WorkFileEntry, WorkTaskRecord } from '../types/work.js';
+import {
+  WorkFileEntry,
+  WorkGitDiff,
+  WorkGitStatus,
+  WorkTaskRecord,
+} from '../types/work.js';
 import { createLogger } from '../utils/logger.js';
+import {
+  buildWorkGitCommand,
+  parseWorkGitBranches,
+  parseWorkGitLog,
+  parseWorkGitStatus,
+  validateWorkGitBranchName,
+  validateWorkGitRepositoryPaths,
+} from '../utils/workGit.js';
 import workPreviewProxyService from './workPreviewProxyService.js';
 
 const logger = createLogger('services:work-runtime');
@@ -887,7 +900,19 @@ export class WorkRuntimeService {
         task,
         ['node', '-e', READ_FILE_SCRIPT, '--', workspacePath],
         // JSON may escape each input byte as a six-character Unicode sequence.
-        { maxOutputChars: 12_100_000 }
+        { maxOutputChars: 12_100_000, acceptFailure: true }
+      );
+      if (result.exitCode === 24) {
+        throw new WorkRuntimeError(
+          'This file is not valid UTF-8 and cannot be opened in the text editor.',
+          415,
+          'WORK_FILE_NOT_UTF8'
+        );
+      }
+      this.assertSuccessfulHelperCommand(
+        result,
+        'The workspace file could not be read.',
+        'WORK_FILE_READ_FAILED'
       );
       const payload = parseJsonOutput<{
         content: string;
@@ -899,6 +924,198 @@ export class WorkRuntimeService {
         ...payload,
         modifiedAt: payload.updatedAt,
       };
+    });
+  }
+
+  async getGitStatus(task: WorkTaskRecord): Promise<WorkGitStatus> {
+    return this.withWorkspaceHelperContainer(task, () =>
+      this.loadGitStatus(task)
+    );
+  }
+
+  async getGitDiff(
+    task: WorkTaskRecord,
+    requestedPath?: string
+  ): Promise<WorkGitDiff> {
+    const workspacePath = requestedPath
+      ? validateWorkspacePath(requestedPath, false)
+      : undefined;
+    return this.withWorkspaceHelperContainer(task, async () => {
+      const status = await this.loadGitStatus(task);
+      if (!status.initialized) {
+        throw new WorkRuntimeError(
+          'Initialize Git before requesting a diff.',
+          409,
+          'WORK_GIT_NOT_INITIALIZED'
+        );
+      }
+      const revisionArgs = status.head ? ['HEAD'] : ['--cached'];
+      const result = await this.execGit(
+        task,
+        [
+          'diff',
+          ...revisionArgs,
+          '--no-ext-diff',
+          '--no-textconv',
+          '--',
+          ...(workspacePath ? [workspacePath] : []),
+        ],
+        { maxOutputChars: 600_000 }
+      );
+      return {
+        ...(workspacePath ? { path: workspacePath } : {}),
+        patch: result.stdout,
+        truncated: result.truncated,
+      };
+    });
+  }
+
+  async initializeGit(task: WorkTaskRecord): Promise<WorkGitStatus> {
+    return this.withGitMutation(task, async () => {
+      const current = await this.loadGitStatus(task);
+      if (current.initialized) return current;
+      await this.requireGitSuccess(
+        task,
+        ['init', '--initial-branch=main', '--template=', '.'],
+        'Git could not initialize this workspace.'
+      );
+      return this.loadGitStatus(task);
+    });
+  }
+
+  async stageGitPaths(
+    task: WorkTaskRecord,
+    requestedPaths: string[]
+  ): Promise<WorkGitStatus> {
+    if (requestedPaths.length < 1 || requestedPaths.length > 200) {
+      throw new WorkRuntimeError(
+        'Choose between 1 and 200 workspace paths to stage.',
+        400,
+        'WORK_GIT_INVALID_PATHS'
+      );
+    }
+    const workspacePaths = [
+      ...new Set(
+        requestedPaths.map(value => validateWorkspacePath(value, false))
+      ),
+    ];
+    return this.withGitMutation(task, async () => {
+      await this.requireGitRepository(task);
+      await this.assertNoExecutableGitFilters(task);
+      await this.requireGitSuccess(
+        task,
+        ['add', '--all', '--', ...workspacePaths],
+        'Git could not stage the selected paths.'
+      );
+      return this.loadGitStatus(task);
+    });
+  }
+
+  async commitGit(
+    task: WorkTaskRecord,
+    message: string,
+    identity: { name: string; email: string }
+  ): Promise<WorkGitStatus> {
+    const commitMessage = message.trim();
+    if (
+      !commitMessage ||
+      commitMessage.length > 4_000 ||
+      commitMessage.includes('\0')
+    ) {
+      throw new WorkRuntimeError(
+        'Commit message must contain between 1 and 4,000 characters.',
+        400,
+        'WORK_GIT_INVALID_COMMIT_MESSAGE'
+      );
+    }
+    const name = validateGitIdentity(identity.name, 'name');
+    const email = validateGitIdentity(identity.email, 'email');
+    return this.withGitMutation(task, async () => {
+      await this.requireGitRepository(task);
+      await this.requireGitSuccess(
+        task,
+        [
+          '-c',
+          `user.name=${name}`,
+          '-c',
+          `user.email=${email}`,
+          'commit',
+          '--no-verify',
+          '-m',
+          commitMessage,
+        ],
+        'Git could not create the commit.'
+      );
+      return this.loadGitStatus(task);
+    });
+  }
+
+  async createGitBranch(
+    task: WorkTaskRecord,
+    requestedName: string
+  ): Promise<WorkGitStatus> {
+    const branchName = validateGitBranchInput(requestedName);
+    return this.withGitMutation(task, async () => {
+      const status = await this.loadGitStatus(task);
+      if (!status.initialized) {
+        throw new WorkRuntimeError(
+          'Initialize Git before creating a branch.',
+          409,
+          'WORK_GIT_NOT_INITIALIZED'
+        );
+      }
+      if (!status.head) {
+        throw new WorkRuntimeError(
+          'Create the first commit before creating another branch.',
+          409,
+          'WORK_GIT_UNBORN_BRANCH'
+        );
+      }
+      await this.requireValidGitBranch(task, branchName);
+      await this.requireGitSuccess(
+        task,
+        ['branch', branchName],
+        'Git could not create the branch.'
+      );
+      return this.loadGitStatus(task);
+    });
+  }
+
+  async switchGitBranch(
+    task: WorkTaskRecord,
+    requestedName: string
+  ): Promise<WorkGitStatus> {
+    const branchName = validateGitBranchInput(requestedName);
+    return this.withGitMutation(task, async () => {
+      const status = await this.loadGitStatus(task);
+      if (!status.initialized) {
+        throw new WorkRuntimeError(
+          'Initialize Git before switching branches.',
+          409,
+          'WORK_GIT_NOT_INITIALIZED'
+        );
+      }
+      if (status.changes.length > 0) {
+        throw new WorkRuntimeError(
+          'Commit or discard workspace changes before switching branches.',
+          409,
+          'WORK_GIT_DIRTY_WORKTREE'
+        );
+      }
+      if (!status.branches.includes(branchName)) {
+        throw new WorkRuntimeError(
+          'Only an existing local branch can be selected.',
+          400,
+          'WORK_GIT_UNKNOWN_BRANCH'
+        );
+      }
+      await this.assertNoExecutableGitFilters(task);
+      await this.requireGitSuccess(
+        task,
+        ['switch', '--no-guess', branchName],
+        'Git could not switch branches.'
+      );
+      return this.loadGitStatus(task);
     });
   }
 
@@ -1873,6 +2090,243 @@ export class WorkRuntimeService {
     }
   }
 
+  private async withGitMutation<T>(
+    task: WorkTaskRecord,
+    operation: () => Promise<T>
+  ): Promise<T> {
+    this.assertGitMutationIdle(task.id);
+    return this.withWorkspaceHelperContainer(task, async () => {
+      this.assertGitMutationIdle(task.id);
+      return operation();
+    });
+  }
+
+  private assertGitMutationIdle(taskId: string): void {
+    if (
+      this.activeCommands.has(taskId) ||
+      (this.terminalHolds.get(taskId) ?? 0) > 0 ||
+      this.previewLeaseReleases.has(taskId)
+    ) {
+      throw new WorkRuntimeError(
+        'Stop the active Work run, terminal, and preview before changing Git state.',
+        409,
+        'WORK_GIT_RUNTIME_BUSY'
+      );
+    }
+  }
+
+  private async loadGitStatus(task: WorkTaskRecord): Promise<WorkGitStatus> {
+    if (!(await this.probeGitRepository(task))) {
+      return {
+        initialized: false,
+        detached: false,
+        ahead: 0,
+        behind: 0,
+        changes: [],
+        branches: [],
+        commits: [],
+      };
+    }
+    const statusResult = await this.execGit(
+      task,
+      ['status', '--porcelain=v2', '--branch', '-z', '--untracked-files=all'],
+      { maxOutputChars: 2_000_000 }
+    );
+    if (statusResult.truncated) {
+      throw new WorkRuntimeError(
+        'Git status is too large to display safely.',
+        413,
+        'WORK_GIT_STATUS_TOO_LARGE'
+      );
+    }
+    const status = parseWorkGitStatus(statusResult.stdout);
+    const branchesResult = await this.execGit(
+      task,
+      ['for-each-ref', '--format=%(refname:short)', 'refs/heads'],
+      { maxOutputChars: 100_000 }
+    );
+    if (branchesResult.truncated) {
+      throw new WorkRuntimeError(
+        'The local branch list is too large to display safely.',
+        413,
+        'WORK_GIT_BRANCHES_TOO_LARGE'
+      );
+    }
+    status.branches = parseWorkGitBranches(branchesResult.stdout);
+    if (status.branch && !status.branches.includes(status.branch)) {
+      status.branches.unshift(status.branch);
+    }
+    if (status.head) {
+      const logResult = await this.execGit(
+        task,
+        ['log', '-n', '20', '--format=format:%H%x00%h%x00%an%x00%aI%x00%s%x00'],
+        { maxOutputChars: 200_000 }
+      );
+      if (logResult.truncated) {
+        throw new WorkRuntimeError(
+          'Git history is too large to display safely.',
+          413,
+          'WORK_GIT_HISTORY_TOO_LARGE'
+        );
+      }
+      status.commits = parseWorkGitLog(logResult.stdout);
+    }
+    return status;
+  }
+
+  private async probeGitRepository(task: WorkTaskRecord): Promise<boolean> {
+    const result = await this.execGit(
+      task,
+      [
+        'rev-parse',
+        '--path-format=absolute',
+        '--show-toplevel',
+        '--git-dir',
+        '--git-common-dir',
+      ],
+      { acceptFailure: true, maxOutputChars: 20_000 }
+    );
+    if (result.exitCode === 127) {
+      throw new WorkRuntimeError(
+        'Git is not installed in the configured Work runtime image.',
+        503,
+        'WORK_GIT_UNAVAILABLE'
+      );
+    }
+    if (result.exitCode !== 0) return false;
+    try {
+      validateWorkGitRepositoryPaths(result.stdout);
+    } catch (error) {
+      throw new WorkRuntimeError(
+        error instanceof Error
+          ? error.message
+          : 'Git repository layout is unsafe.',
+        409,
+        'WORK_GIT_UNSAFE_REPOSITORY'
+      );
+    }
+    const [, gitDirectory, commonDirectory] = result.stdout
+      .trimEnd()
+      .split('\n');
+    const realPathCheck = await this.exec(
+      task,
+      [
+        'node',
+        '-e',
+        VALIDATE_GIT_REPOSITORY_PATHS_SCRIPT,
+        '--',
+        gitDirectory,
+        commonDirectory,
+      ],
+      { acceptFailure: true, maxOutputChars: 10_000 }
+    );
+    if (realPathCheck.exitCode !== 0) {
+      throw new WorkRuntimeError(
+        'Git metadata must resolve inside /workspace.',
+        409,
+        'WORK_GIT_UNSAFE_REPOSITORY'
+      );
+    }
+    return true;
+  }
+
+  private async requireGitRepository(task: WorkTaskRecord): Promise<void> {
+    if (await this.probeGitRepository(task)) return;
+    throw new WorkRuntimeError(
+      'Initialize Git before changing repository state.',
+      409,
+      'WORK_GIT_NOT_INITIALIZED'
+    );
+  }
+
+  private async assertNoExecutableGitFilters(
+    task: WorkTaskRecord
+  ): Promise<void> {
+    const result = await this.execGit(
+      task,
+      [
+        'config',
+        '--includes',
+        '--get-regexp',
+        '^filter\\..*\\.(clean|smudge|process)$',
+      ],
+      { acceptFailure: true, maxOutputChars: 20_000 }
+    );
+    if (result.exitCode > 1) {
+      this.throwGitFailure(result, 'Git configuration could not be inspected.');
+    }
+    if (result.stdout.trim()) {
+      throw new WorkRuntimeError(
+        'This repository configures executable Git filters. Remove them before using Git write actions in Work.',
+        409,
+        'WORK_GIT_EXECUTABLE_FILTER_BLOCKED'
+      );
+    }
+  }
+
+  private async requireValidGitBranch(
+    task: WorkTaskRecord,
+    branchName: string
+  ): Promise<void> {
+    const result = await this.execGit(
+      task,
+      ['check-ref-format', '--branch', branchName],
+      { acceptFailure: true, maxOutputChars: 10_000 }
+    );
+    if (result.exitCode !== 0) {
+      throw new WorkRuntimeError(
+        'Branch name is invalid.',
+        400,
+        'WORK_GIT_INVALID_BRANCH'
+      );
+    }
+  }
+
+  private async requireGitSuccess(
+    task: WorkTaskRecord,
+    args: string[],
+    fallbackMessage: string
+  ): Promise<ProcessResult> {
+    const result = await this.execGit(task, args, {
+      acceptFailure: true,
+      maxOutputChars: 100_000,
+    });
+    if (result.exitCode !== 0) this.throwGitFailure(result, fallbackMessage);
+    return result;
+  }
+
+  private throwGitFailure(
+    result: ProcessResult,
+    fallbackMessage: string
+  ): never {
+    throw new WorkRuntimeError(
+      result.stderr.trim() || result.stdout.trim() || fallbackMessage,
+      409,
+      'WORK_GIT_COMMAND_FAILED'
+    );
+  }
+
+  private assertSuccessfulHelperCommand(
+    result: ProcessResult,
+    fallbackMessage: string,
+    code: string
+  ): void {
+    if (result.exitCode === 0) return;
+    throw new WorkRuntimeError(
+      result.stderr.trim() || result.stdout.trim() || fallbackMessage,
+      503,
+      code
+    );
+  }
+
+  private async execGit(
+    task: WorkTaskRecord,
+    args: string[],
+    options: ProcessOptions = {}
+  ): Promise<ProcessResult> {
+    return this.exec(task, buildWorkGitCommand(args), options);
+  }
+
   private async exec(
     task: WorkTaskRecord,
     command: string[],
@@ -2030,6 +2484,34 @@ export function validateWorkspacePath(input: string, allowRoot = true): string {
     );
   }
   return canonical;
+}
+
+function validateGitBranchInput(input: string): string {
+  try {
+    return validateWorkGitBranchName(input);
+  } catch {
+    throw new WorkRuntimeError(
+      'Branch name is invalid.',
+      400,
+      'WORK_GIT_INVALID_BRANCH'
+    );
+  }
+}
+
+function validateGitIdentity(value: string, field: 'name' | 'email'): string {
+  const maximum = field === 'name' ? 200 : 320;
+  const hasControlCharacter = [...value].some(character => {
+    const code = character.charCodeAt(0);
+    return code <= 31 || code === 127;
+  });
+  if (!value || value.length > maximum || hasControlCharacter) {
+    throw new WorkRuntimeError(
+      `Git ${field} is invalid.`,
+      400,
+      'WORK_GIT_INVALID_IDENTITY'
+    );
+  }
+  return value;
 }
 
 export function parsePublishedPort(
@@ -2283,6 +2765,22 @@ const inside = candidate => candidate === rootReal || candidate.startsWith(rootR
 const rel = process.argv[1] || '.';
 const target = path.resolve(root, rel);
 if (!inside(target)) throw new Error('Path escapes workspace');
+`;
+
+const VALIDATE_GIT_REPOSITORY_PATHS_SCRIPT = String.raw`
+const fs = require('node:fs');
+const path = require('node:path');
+const root = fs.realpathSync('/workspace');
+const inside = candidate => candidate === root || candidate.startsWith(root + path.sep);
+for (const candidate of process.argv.slice(1)) {
+  let resolved;
+  try {
+    resolved = fs.realpathSync(candidate);
+  } catch {
+    process.exit(25);
+  }
+  if (!inside(resolved) || !fs.statSync(resolved).isDirectory()) process.exit(25);
+}
 `;
 
 const PREVIEW_READY_SCRIPT = String.raw`
@@ -2597,8 +3095,14 @@ if (!inside(targetReal)) throw new Error('Path escapes workspace');
 const stat = fs.statSync(targetReal);
 if (!stat.isFile()) throw new Error('Path is not a file');
 if (stat.size > 2000000) throw new Error('File exceeds 2 MB limit');
+let content;
+try {
+  content = new TextDecoder('utf-8', {fatal:true}).decode(fs.readFileSync(targetReal));
+} catch {
+  process.exit(24);
+}
 console.log(JSON.stringify({
-  content: fs.readFileSync(targetReal, 'utf8'),
+  content,
   size: stat.size,
   updatedAt: stat.mtimeMs
 }));

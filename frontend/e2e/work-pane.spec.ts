@@ -2610,3 +2610,90 @@ test('the terminal explains when a deployment cannot offer it', async ({
     0
   );
 });
+
+test('manages local workspace Git without exposing remote credentials', async ({
+  page,
+}) => {
+  const gitTask = task(
+    'git-workspace',
+    'Git workspace',
+    'The local repository is ready.'
+  );
+  const mock = await mockLibreWebUiApi(page, {
+    workTasks: [gitTask],
+    workGitStatuses: {
+      'git-workspace': {
+        initialized: true,
+        branch: 'main',
+        detached: false,
+        head: 'abc123456789',
+        ahead: 0,
+        behind: 0,
+        changes: [
+          {
+            path: 'src/app.ts',
+            indexStatus: '.',
+            workingTreeStatus: 'M',
+            staged: false,
+          },
+        ],
+        branches: ['main'],
+        commits: [
+          {
+            hash: 'abc123456789',
+            shortHash: 'abc1234',
+            author: 'Robin',
+            authoredAt: '2026-08-02T12:00:00.000Z',
+            subject: 'Initial workspace',
+          },
+        ],
+      },
+    },
+    workGitDiffs: {
+      'git-workspace:src/app.ts':
+        'diff --git a/src/app.ts b/src/app.ts\n+export const ready = true;\n',
+    },
+  });
+
+  await page.goto('/work/git-workspace');
+  await page.getByTestId('work-git-tab').click();
+
+  await expect(page.getByTestId('work-git-panel')).toBeVisible();
+  await expect(page.getByText('Initial workspace')).toBeVisible();
+  await expect(page.getByText(/Local Git only/)).toBeVisible();
+  await expect(page.getByRole('button', { name: /push/i })).toHaveCount(0);
+
+  await page.getByTestId('work-git-change').click();
+  await expect(page.getByTestId('work-git-diff')).toContainText(
+    'export const ready = true;'
+  );
+
+  await page.getByRole('checkbox', { name: 'Select src/app.ts' }).check();
+  await page.getByTestId('work-git-stage-button').click();
+  await expect(page.getByTestId('work-git-commit-button')).toBeDisabled();
+  await page.getByTestId('work-git-commit-input').fill('Save app changes');
+  await expect(page.getByTestId('work-git-commit-button')).toBeEnabled();
+  await page.getByTestId('work-git-commit-button').click();
+  await expect(page.getByText('Save app changes')).toBeVisible();
+
+  await page.getByTestId('work-git-branch-input').fill('feature/local-ui');
+  await page.getByTestId('work-git-create-branch-button').click();
+  await expect(
+    page
+      .getByTestId('work-git-branch-select')
+      .locator('option[value="feature/local-ui"]')
+  ).toHaveCount(1);
+  await page
+    .getByTestId('work-git-branch-select')
+    .selectOption('feature/local-ui');
+
+  await expect
+    .poll(() => mock.workGitRequests.map(request => request.action))
+    .toEqual(['status', 'diff', 'stage', 'commit', 'branch', 'switch']);
+  expect(
+    mock.workGitRequests.find(request => request.action === 'stage')
+  ).toMatchObject({ paths: ['src/app.ts'] });
+  expect(
+    mock.workGitRequests.find(request => request.action === 'commit')
+  ).toMatchObject({ message: 'Save app changes' });
+});

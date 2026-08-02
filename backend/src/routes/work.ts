@@ -21,6 +21,7 @@ import {
   requireAdmin,
   AuthenticatedRequest,
 } from '../middleware/auth.js';
+import { userModel } from '../models/userModel.js';
 import workAgentService from '../services/workAgentService.js';
 import workEventService, {
   WORK_EVENT_MAX_RESUME_CURSOR,
@@ -36,6 +37,8 @@ import workTaskService, {
 } from '../services/workTaskService.js';
 import {
   WorkCapabilities,
+  WorkGitDiff,
+  WorkGitStatus,
   WorkLiveEvent,
   WorkMessagePage,
   WorkProviderSelection,
@@ -695,6 +698,156 @@ router.put(
   }
 );
 
+router.get(
+  '/tasks/:id/git',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkGitStatus>>
+  ): Promise<void> => {
+    try {
+      const task = workTaskService.requireMutableTaskRecord(
+        readTaskId(req),
+        requireUserId(req)
+      );
+      sendSuccess(res, await workRuntimeService.getGitStatus(task));
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.get(
+  '/tasks/:id/git/diff',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkGitDiff>>
+  ): Promise<void> => {
+    try {
+      const task = workTaskService.requireMutableTaskRecord(
+        readTaskId(req),
+        requireUserId(req)
+      );
+      const requestedPath =
+        typeof req.query.path === 'string' ? req.query.path : undefined;
+      sendSuccess(
+        res,
+        await workRuntimeService.getGitDiff(task, requestedPath)
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
+  '/tasks/:id/git/init',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkGitStatus>>
+  ): Promise<void> => {
+    try {
+      const task = requireIdleGitTask(req);
+      sendSuccess(res, await workRuntimeService.initializeGit(task));
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
+  '/tasks/:id/git/stage',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkGitStatus>>
+  ): Promise<void> => {
+    try {
+      if (
+        !Array.isArray(req.body?.paths) ||
+        req.body.paths.some((value: unknown) => typeof value !== 'string')
+      ) {
+        throw new WorkRouteError('Field "paths" must be a string array.', 400);
+      }
+      const task = requireIdleGitTask(req);
+      sendSuccess(
+        res,
+        await workRuntimeService.stageGitPaths(task, req.body.paths)
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
+  '/tasks/:id/git/commit',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkGitStatus>>
+  ): Promise<void> => {
+    try {
+      const userId = requireUserId(req);
+      const task = requireIdleGitTask(req);
+      const user = userModel.getUserById(userId);
+      if (!user) throw new WorkRouteError('User account was not found.', 404);
+      sendSuccess(
+        res,
+        await workRuntimeService.commitGit(
+          task,
+          requireBodyString(req.body?.message, 'message', 4_000),
+          {
+            name: user.username,
+            email: user.email || `${user.id}@users.noreply.libre-webui.local`,
+          }
+        )
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
+  '/tasks/:id/git/branches',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkGitStatus>>
+  ): Promise<void> => {
+    try {
+      const task = requireIdleGitTask(req);
+      sendSuccess(
+        res,
+        await workRuntimeService.createGitBranch(
+          task,
+          requireBodyString(req.body?.name, 'name', 200)
+        )
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
+router.post(
+  '/tasks/:id/git/switch',
+  async (
+    req: AuthenticatedRequest,
+    res: Response<ApiResponse<WorkGitStatus>>
+  ): Promise<void> => {
+    try {
+      const task = requireIdleGitTask(req);
+      sendSuccess(
+        res,
+        await workRuntimeService.switchGitBranch(
+          task,
+          requireBodyString(req.body?.name, 'name', 200)
+        )
+      );
+    } catch (error) {
+      sendError(res, error);
+    }
+  }
+);
+
 router.post(
   '/tasks/:id/preview/start',
   async (
@@ -760,6 +913,21 @@ function requireUserId(req: AuthenticatedRequest): string {
 
 function readTaskId(req: AuthenticatedRequest): string {
   return String(req.params.id || '').trim();
+}
+
+function requireIdleGitTask(req: AuthenticatedRequest): WorkTaskRecord {
+  const taskId = readTaskId(req);
+  const task = workTaskService.requireMutableTaskRecord(
+    taskId,
+    requireUserId(req)
+  );
+  if (workTaskService.getActiveRun(taskId)) {
+    throw new WorkRouteError(
+      'Stop the active Work run before changing Git state.',
+      409
+    );
+  }
+  return task;
 }
 
 function readProviderSelection(

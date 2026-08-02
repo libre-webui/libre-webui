@@ -279,6 +279,31 @@ type MockWorkFile = {
   updatedAt?: number;
 };
 
+type MockWorkGitStatus = {
+  initialized: boolean;
+  branch?: string;
+  detached: boolean;
+  head?: string;
+  upstream?: string;
+  ahead: number;
+  behind: number;
+  changes: Array<{
+    path: string;
+    originalPath?: string;
+    indexStatus: string;
+    workingTreeStatus: string;
+    staged: boolean;
+  }>;
+  branches: string[];
+  commits: Array<{
+    hash: string;
+    shortHash: string;
+    author: string;
+    authoredAt: string;
+    subject: string;
+  }>;
+};
+
 type MockWorkRunResult = {
   assistantMessage?: string;
   messages?: MockWorkMessage[];
@@ -336,6 +361,8 @@ type MockOptions = {
   workTaskDetailUpdates?: Record<string, Partial<MockWorkTask>>;
   workFiles?: Record<string, MockWorkFile[]>;
   workFileContents?: Record<string, string>;
+  workGitStatuses?: Record<string, MockWorkGitStatus>;
+  workGitDiffs?: Record<string, string>;
   deferWorkFileUpdates?: boolean;
   workFileUpdateFailure?: string;
   workRunResult?: MockWorkRunResult;
@@ -505,6 +532,8 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const workFileContents = {
     ...(options.workFileContents ?? {}),
   };
+  const workGitStatuses = structuredClone(options.workGitStatuses ?? {});
+  const workGitDiffs = { ...(options.workGitDiffs ?? {}) };
   const createPreferences = (
     overrides: Partial<typeof defaultPreferences> | undefined
   ) => ({
@@ -592,6 +621,14 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     action: 'start' | 'stop';
     command?: string;
   }> = [];
+  const workGitRequests: Array<{
+    taskId: string;
+    action:
+      'status' | 'diff' | 'init' | 'stage' | 'commit' | 'branch' | 'switch';
+    paths?: string[];
+    message?: string;
+    name?: string;
+  }> = [];
   let nextWorkTaskId = workTasks.length + 1;
   let nextWorkMessageId = 1;
 
@@ -658,6 +695,17 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       hasMoreMessages: page.hasMore,
     };
   };
+
+  const workGitStatus = (taskId: string): MockWorkGitStatus =>
+    (workGitStatuses[taskId] ??= {
+      initialized: false,
+      detached: false,
+      ahead: 0,
+      behind: 0,
+      changes: [],
+      branches: [],
+      commits: [],
+    });
 
   let workTaskTransitionApplied = false;
   const applyWorkTaskTransition = () => {
@@ -1271,6 +1319,112 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         }
       }
 
+      const workGitDiffMatch = path.match(
+        /^\/work\/tasks\/([^/]+)\/git\/diff$/
+      );
+      if (workGitDiffMatch && method === 'GET') {
+        const taskId = decodeURIComponent(workGitDiffMatch[1]);
+        if (!workTasks.some(item => item.id === taskId)) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        const filePath = url.searchParams.get('path') || undefined;
+        workGitRequests.push({ taskId, action: 'diff' });
+        await fulfillJson(route, {
+          ...(filePath ? { path: filePath } : {}),
+          patch:
+            workGitDiffs[`${taskId}:${filePath || ''}`] ||
+            (filePath
+              ? `diff --git a/${filePath} b/${filePath}\n+mock change\n`
+              : ''),
+          truncated: false,
+        });
+        return;
+      }
+
+      const workGitStatusMatch = path.match(/^\/work\/tasks\/([^/]+)\/git$/);
+      if (workGitStatusMatch && method === 'GET') {
+        const taskId = decodeURIComponent(workGitStatusMatch[1]);
+        if (!workTasks.some(item => item.id === taskId)) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        workGitRequests.push({ taskId, action: 'status' });
+        await fulfillJson(route, workGitStatus(taskId));
+        return;
+      }
+
+      const workGitMutationMatch = path.match(
+        /^\/work\/tasks\/([^/]+)\/git\/(init|stage|commit|branches|switch)$/
+      );
+      if (workGitMutationMatch && method === 'POST') {
+        const taskId = decodeURIComponent(workGitMutationMatch[1]);
+        if (!workTasks.some(item => item.id === taskId)) {
+          await fulfillApiError(route, 404, 'Work task not found');
+          return;
+        }
+        const action = workGitMutationMatch[2];
+        const request = (route.request().postDataJSON() || {}) as {
+          paths?: string[];
+          message?: string;
+          name?: string;
+        };
+        const status = workGitStatus(taskId);
+
+        if (action === 'init') {
+          workGitRequests.push({ taskId, action: 'init' });
+          Object.assign(status, {
+            initialized: true,
+            branch: 'main',
+            detached: false,
+            branches: ['main'],
+          });
+        } else if (action === 'stage') {
+          const paths = request.paths ?? [];
+          workGitRequests.push({ taskId, action: 'stage', paths });
+          status.changes = status.changes.map(change =>
+            paths.includes(change.path)
+              ? {
+                  ...change,
+                  indexStatus:
+                    change.indexStatus === '?'
+                      ? 'A'
+                      : change.workingTreeStatus === '.'
+                        ? change.indexStatus
+                        : change.workingTreeStatus,
+                  workingTreeStatus: '.',
+                  staged: true,
+                }
+              : change
+          );
+        } else if (action === 'commit') {
+          const message = request.message || 'Mock commit';
+          workGitRequests.push({ taskId, action: 'commit', message });
+          const hash = `mock${Date.now()}`;
+          status.head = hash;
+          status.commits.unshift({
+            hash,
+            shortHash: hash.slice(0, 7),
+            author: 'E2E User',
+            authoredAt: new Date().toISOString(),
+            subject: message,
+          });
+          status.changes = status.changes.filter(change => !change.staged);
+        } else if (action === 'branches') {
+          const name = request.name || 'new-branch';
+          workGitRequests.push({ taskId, action: 'branch', name });
+          if (!status.branches.includes(name)) status.branches.push(name);
+        } else {
+          const name = request.name || status.branch || 'main';
+          workGitRequests.push({ taskId, action: 'switch', name });
+          status.branch = name;
+          status.detached = false;
+        }
+
+        await fulfillJson(route, status);
+        return;
+      }
+
       const workPreviewMatch = path.match(
         /^\/work\/tasks\/([^/]+)\/preview\/(start|stop)$/
       );
@@ -1670,5 +1824,6 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         .forEach(releaseWorkFileUpdate => releaseWorkFileUpdate());
     },
     workPreviewRequests,
+    workGitRequests,
   };
 }

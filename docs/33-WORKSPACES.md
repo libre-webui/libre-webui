@@ -60,7 +60,7 @@ This release introduces Work as a complete task workflow:
 - A responsive Conversation/Workspace split with draggable, keyboard
   accessible sizing on desktop and a focused surface switcher on smaller
   screens.
-- Integrated Files, Activity, and Preview views.
+- Integrated Files, Activity, Git, Terminal, and Preview views.
 - Dark- and light-mode syntax highlighting, browser-side code formatting,
   save conflict detection, and temporary unsaved drafts.
 - A dismissible, per-user disclosure when a remote model provider is selected.
@@ -215,8 +215,10 @@ to switch surfaces.
 
 ### Files
 
-The Files tab browses direct children of `/workspace`, opens UTF-8 text files,
-and saves changes back to the task volume.
+The Files tab browses direct children of `/workspace`, opens strictly valid
+UTF-8 text files, and saves changes back to the task volume. Invalid byte
+sequences are rejected instead of being replaced with lossy placeholder
+characters.
 
 The editor provides:
 
@@ -272,6 +274,48 @@ supported independently of reasoning.
 Output is deliberately bounded. A truncated result is not proof that a command
 produced no additional output; ask the model to inspect a narrower result or
 run a more focused command.
+
+### Git
+
+The Git tab provides local source-control operations for the task's own
+`/workspace`:
+
+- initialize a repository with a `main` branch;
+- inspect porcelain status, ahead/behind counts, and up to 20 recent commits;
+- inspect a bounded textual diff for a changed path;
+- stage up to 200 explicitly selected paths at a time;
+- commit staged changes using the signed-in administrator's username and
+  email, or an instance-local no-reply address when the account has no email;
+- create a local branch after the first commit; and
+- switch to an existing local branch when the worktree is clean.
+
+This surface is intentionally **local-only**. It has no clone, fetch, pull,
+push, remote-management, arbitrary Git-command, token, SSH-key, or pull-request
+control. Those operations need a separate trusted credential broker, ideally a
+GitHub App or equivalent installation token scoped to one repository and one
+operation. Do not put long-lived Git credentials in `/workspace`, the task
+container environment, or repository configuration.
+
+Git reads can run while the task is otherwise idle or active. Git writes are
+rejected while a model run, interactive terminal, or preview owns the task
+container. Branch switching additionally requires a clean worktree. This
+prevents the UI from racing the model or a long-lived process over the same
+files.
+
+Every UI Git command is a fixed argument array executed as UID/GID `1000:1000`
+inside the task container; user input is never evaluated by a shell. The
+runtime disables system/global Git configuration, prompts, hooks, credential
+helpers, commit signing, submodule recursion, external diff drivers, textconv,
+and network protocols for this surface. It refuses repositories whose
+worktree is not exactly `/workspace` or whose Git/common directory resolves
+outside `/workspace`. Git write actions that could process file content are
+also blocked when repository configuration defines an executable clean,
+smudge, or process filter.
+
+These controls protect the Libre WebUI Git API. An administrator can still use
+the Terminal, and the model can still use `run_command`, to run ordinary Git
+commands inside the sandbox. The sandbox and deployment boundary therefore
+remain the security controls for arbitrary commands.
 
 ### Built-in worker skills
 
@@ -586,6 +630,87 @@ Work volumes do not have an independent disk quota. A generated project or
 package installation can exhaust Docker storage. Monitor volume growth and
 apply host-level storage limits where needed.
 
+## Production Hardening Checklist
+
+The application can set container flags, validate workspace paths, and guard
+its own API. It cannot enforce host firewall policy, storage-driver quotas, or
+the privilege level of the Docker daemon it is given. Treat these as explicit
+deployment work for a private client instance.
+
+### 1. Isolate Docker control
+
+The main Libre WebUI container needs daemon control to create and inspect Work
+containers. A mounted Docker socket is therefore a control-plane credential,
+not an ordinary data mount: compromising the web application can become a
+Docker-host compromise.
+
+For a stronger production boundary, run Libre WebUI and its Work daemon on a
+dedicated VM with no unrelated workloads. Stronger still, give Work a
+dedicated rootless Docker daemon or a separate runtime host and expose only
+that daemon to Libre WebUI. Verify file ownership, preview routing, cleanup,
+and terminal support against that daemon before rollout. Merely mounting the
+same rootful host socket read-only does not make the Docker API read-only.
+
+### 2. Block sandbox-to-host management access
+
+Disabling inter-container communication prevents Work sandboxes from reaching
+one another; it does not prevent them from reaching services bound on the
+Docker host. Inspect the actual managed bridge and subnet rather than assuming
+an address:
+
+```bash
+docker network inspect libre-webui-work \
+  --format 'id={{.Id}} subnets={{range .IPAM.Config}}{{.Subnet}} {{end}}'
+ss -lntup
+```
+
+Use the host's persistent firewall manager to reject traffic arriving from
+that bridge to host management services, especially SSH, the Docker API,
+databases, and monitoring/admin ports. Test the rule from a disposable
+container attached to `libre-webui-work`, test allowed package downloads, then
+make the rule persistent. Docker's `DOCKER-USER` chain controls forwarded
+traffic; traffic whose destination is the Docker host itself may need an
+`INPUT`/input-hook rule on the bridge interface as well.
+
+### 3. Constrain outbound destinations
+
+Block cloud metadata endpoints, private infrastructure ranges, and client LAN
+ranges from the Work subnet unless a project explicitly needs them. Combine a
+filtering resolver through `WORK_RUNTIME_DNS` with host or upstream firewall
+rules. DNS filtering alone is bypassable with a literal IP address. An HTTP
+proxy alone is also insufficient while arbitrary commands can open direct
+network connections; enforce the routing policy outside the container.
+
+Maintain separate profiles when clients need different behavior, for example
+an offline/no-network runtime, a package-registry-only runtime, and an open
+egress runtime. Libre WebUI currently creates networked UI tasks, so those
+profiles require operator-owned network policy rather than a cosmetic UI
+toggle.
+
+### 4. Enforce real storage quotas
+
+CPU, memory, swap, and PID limits do not limit the named volume. Before serving
+multiple clients, choose a storage backend with enforceable per-workspace
+quotas: for example XFS project quotas, quota-backed logical volumes, or a
+volume/PVC driver with a size limit. The default Docker `local` driver on an
+ordinary ext4 filesystem does not gain a reliable per-volume quota merely by
+documenting a size value.
+
+Monitor both each `ai.libre-webui.managed=true` volume and the Docker data root,
+alert before the filesystem is full, and test the failure mode. A UI counter or
+periodic `du` check can warn, but it is not an enforcement boundary because a
+container can consume the remaining disk between checks.
+
+### 5. Verify the deployed policy
+
+After every image or daemon-policy change, create a disposable Work task and
+verify the effective state with `docker inspect`: non-root UID, read-only root,
+all capabilities dropped, `no-new-privileges`, memory/swap/CPU/PID limits,
+only the task volume mounted, and the expected network. Also verify that the
+main Libre WebUI container has only the intended mounts and that public ingress
+reaches the app through the authenticated reverse proxy or tunnel—not through
+an accidentally published Docker or preview port.
+
 ## Preview Security and Reachability
 
 For each task, Docker publishes the configured container preview port to a
@@ -740,6 +865,11 @@ admission limit return HTTP 429.
 | Persisted tool output                  | About 20,000 source characters plus a marker                |
 | Live editor highlighting               | 8,000 characters and 400 lines                              |
 | Browser-side formatting                | 100,000 characters and 4,000 lines                          |
+| Git status output                      | 2,000,000 captured characters                               |
+| Git diff output                        | 600,000 captured characters                                 |
+| Git history                            | 20 local commits                                            |
+| Paths in one Git stage request         | 200                                                         |
+| Git commit message                     | 4,000 characters                                            |
 | Agent loop, every provider route       | 48 rounds by default, configured by `WORK_MAX_AGENT_ROUNDS` |
 | Tool-call safety budget                | `max(128, configured rounds × 8)` calls                     |
 
@@ -766,6 +896,13 @@ current database role to be `admin`.
 | `GET`    | `/tasks/:id/files`                  | List a workspace directory                     |
 | `GET`    | `/tasks/:id/file`                   | Read a workspace text file                     |
 | `PUT`    | `/tasks/:id/file`                   | Save a workspace text file                     |
+| `GET`    | `/tasks/:id/git`                    | Read guarded local Git status and history      |
+| `GET`    | `/tasks/:id/git/diff`               | Read a bounded local diff                      |
+| `POST`   | `/tasks/:id/git/init`               | Initialize local Git                           |
+| `POST`   | `/tasks/:id/git/stage`              | Stage explicit workspace paths                 |
+| `POST`   | `/tasks/:id/git/commit`             | Commit staged changes                          |
+| `POST`   | `/tasks/:id/git/branches`           | Create a local branch                          |
+| `POST`   | `/tasks/:id/git/switch`             | Switch to an existing clean local branch       |
 | `POST`   | `/tasks/:id/preview/start`          | Start the managed preview                      |
 | `POST`   | `/tasks/:id/preview/stop`           | Stop the managed preview                       |
 
@@ -912,6 +1049,11 @@ toggle to enable. Inspect DNS, proxy, firewall, registry, certificate, Docker
 daemon, and upstream service configuration. Also confirm that the selected
 runtime image contains the command being invoked.
 
+The Git tab is local-only and never performs a remote operation. Use the
+Terminal or model command surface only when the task's network and credential
+policy deliberately permits remote Git. Do not paste a long-lived access token
+into a task workspace.
+
 ### A run stops at an agent limit
 
 The model may have exhausted the configured round or derived tool-call safety
@@ -985,6 +1127,10 @@ Before enabling Work for an installation, remember:
 - Current UI-created Work tasks have bridge network egress and no UI network
   switch.
 - Work volumes have no independent disk quota.
+- The Git tab is local-only; remote credentials are never mounted or accepted
+  by its API.
+- Host firewall policy, daemon isolation, outbound restrictions, and real
+  volume quotas remain operator-enforced controls.
 - Remote providers receive requested tool results and can incur multiple calls
   per run.
 - Preview ports stay on backend loopback and are exposed only through signed,
