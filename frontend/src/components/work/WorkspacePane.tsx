@@ -508,10 +508,10 @@ export function WorkspacePane({
   };
 
   return (
-    <section className='flex h-full min-h-0 flex-col bg-surface-raised'>
+    <section className='flex h-full min-h-0 flex-col bg-transparent'>
       <div
         data-testid='work-workspace-toolbar'
-        className='flex h-12 shrink-0 items-center gap-2 border-b border-line bg-surface-raised px-2'
+        className='flex h-12 shrink-0 items-center gap-2 border-b border-line bg-surface-raised/75 px-2 backdrop-blur-xl'
       >
         <div
           role='tablist'

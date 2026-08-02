@@ -362,7 +362,7 @@ export function WorkSplitPane({
         id='work-conversation-panel'
         data-testid='work-conversation-panel'
         className={cn(
-          'min-h-0 min-w-0 flex-1 flex-col bg-surface xl:flex',
+          'min-h-0 min-w-0 flex-1 flex-col bg-transparent xl:flex',
           mobileSurface === 'conversation' ? 'flex' : 'hidden'
         )}
       >
@@ -423,7 +423,7 @@ export function WorkSplitPane({
         id='work-workspace-panel'
         data-testid='work-workspace-panel'
         className={cn(
-          'min-h-0 min-w-0 flex-1 flex-col bg-surface-raised xl:flex',
+          'min-h-0 min-w-0 flex-1 flex-col bg-surface-raised/85 backdrop-blur-xl xl:flex',
           mobileSurface === 'workspace' ? 'flex' : 'hidden'
         )}
       >

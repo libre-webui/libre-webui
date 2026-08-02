@@ -60,6 +60,69 @@ const task = (
   workspacePath: '/workspace' as const,
 });
 
+test('keeps the configured user wallpaper visible behind Work', async ({
+  page,
+}) => {
+  const wallpaper = `data:image/svg+xml,${encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#315b65"/></svg>'
+  )}`;
+  await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      allowUserModelPull: true,
+      version: '0.15.0-e2e',
+      turnstile: { enabled: false },
+    },
+    authUsers: [
+      {
+        id: 'wallpaper-user',
+        username: 'robin',
+        email: 'robin@example.test',
+        role: 'admin',
+        token: 'wallpaper-token',
+        preferences: {
+          backgroundSettings: {
+            enabled: true,
+            imageUrl: wallpaper,
+            blurAmount: 0,
+            opacity: 0.8,
+          },
+        },
+      },
+    ],
+    workTasks: [
+      task(
+        'wallpaper-workspace',
+        'Wallpaper workspace',
+        'The wallpaper stays visible behind Work.'
+      ),
+    ],
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('auth-token', 'wallpaper-token');
+  });
+
+  await page.goto('/work/wallpaper-workspace');
+
+  await expect(page.getByTestId('app-background')).toHaveCSS(
+    'background-image',
+    /data:image\/svg\+xml/
+  );
+  await expect(page.getByTestId('work-page')).toHaveCSS(
+    'background-color',
+    'rgba(0, 0, 0, 0)'
+  );
+  await expect(page.getByTestId('work-conversation-panel')).toHaveCSS(
+    'background-color',
+    'rgba(0, 0, 0, 0)'
+  );
+  await expect(
+    page.getByText('The wallpaper stays visible behind Work.')
+  ).toBeVisible();
+});
+
 test('uses the Libre identity and authenticated user avatar in Work', async ({
   page,
 }) => {

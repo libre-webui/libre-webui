@@ -37,6 +37,7 @@ export const BackgroundRenderer: React.FC = () => {
 
   return (
     <div
+      data-testid='app-background'
       className='fixed inset-0 pointer-events-none z-0'
       style={{
         backgroundImage: `url(${activeImageUrl})`,
