@@ -145,6 +145,9 @@ export default function WorkPage() {
       chatModels.filter(
         model =>
           !model.isPersona &&
+          // Agent CLIs run on the host as the server user; Work only offers
+          // models that stay inside its sandboxed runtime.
+          !model.isAgent &&
           workModel(model.name) &&
           (!model.isPlugin || Boolean(model.pluginId))
       ),

@@ -55,6 +55,7 @@ import {
   resolvePluginApiConfig,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import { AGENT_CLI_DEFINITIONS } from './agentCliService.js';
 import ollamaService from './ollamaService.js';
 import pluginService from './pluginService.js';
 import pluginUsageService, {
@@ -142,6 +143,18 @@ export class WorkModelProviderService {
     if (provider.providerType === 'plugin') {
       this.requireExactPlugin(provider.providerId, cleaned, userId);
       return;
+    }
+    if (
+      AGENT_CLI_DEFINITIONS.some(
+        definition =>
+          cleaned === definition.id || cleaned.startsWith(`${definition.id}:`)
+      )
+    ) {
+      throw new WorkModelProviderError(
+        'Agent CLI models are chat-only: they run on the host, outside the Work sandbox. Pick an Ollama or provider model for Work.',
+        422,
+        'WORK_MODEL_TOOLS_UNSUPPORTED'
+      );
     }
     assertOllamaProvider(provider);
 
