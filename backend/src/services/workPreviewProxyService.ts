@@ -262,12 +262,12 @@ export const rewritePreviewText = (
         )}${close}`
     );
     rewritten = rewritten.replace(
-      /(<script\b[^>]*>)([\s\S]*?)(<\/script\s*>)/gi,
+      /(<script\b[^>]*>)([\s\S]*?)(<\/script\b[^>]*>)/gi,
       (_match, open: string, script: string, close: string) =>
         `${open}${rewriteQuotedRootPaths(script, proxyBasePath)}${close}`
     );
     rewritten = rewritten.replace(
-      /(<style\b[^>]*>)([\s\S]*?)(<\/style\s*>)/gi,
+      /(<style\b[^>]*>)([\s\S]*?)(<\/style\b[^>]*>)/gi,
       (_match, open: string, style: string, close: string) =>
         `${open}${rewritePreviewText(style, 'text/css', proxyBasePath)}${close}`
     );
