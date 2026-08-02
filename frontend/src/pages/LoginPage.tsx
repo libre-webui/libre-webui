@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Boxes, HardDrive, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -30,10 +30,13 @@ const appVersion = import.meta.env.VITE_APP_VERSION || '';
 export const LoginPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, requiresAuth, systemInfo } = useAuthStore();
   const [isSignupMode, setIsSignupMode] = useState(false);
   const authRequired = requiresAuth();
   const signupEnabled = systemInfo?.signupEnabled ?? true;
+  const oauthApprovalPending =
+    new URLSearchParams(location.search).get('approval') === 'pending';
 
   useEffect(() => {
     // If already authenticated or auth is disabled, redirect to home.
@@ -129,6 +132,7 @@ export const LoginPage: React.FC = () => {
             ) : (
               <LoginForm
                 bare
+                initialApprovalPending={oauthApprovalPending}
                 onShowSignup={
                   signupEnabled ? () => setIsSignupMode(true) : undefined
                 }

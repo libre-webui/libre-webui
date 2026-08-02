@@ -37,6 +37,7 @@ import { SidebarNavigation } from '@/components/sidebar/SidebarNavigation';
 import { SidebarSessions } from '@/components/sidebar/SidebarSessions';
 import { SidebarUserSection } from '@/components/sidebar/SidebarUserSection';
 import { SidebarWorkTasks } from '@/components/sidebar/SidebarWorkTasks';
+import { usePendingUserApprovals } from '@/hooks/usePendingUserApprovals';
 
 const logger = createLogger('components:sidebar');
 const SettingsModal = React.lazy(() =>
@@ -76,6 +77,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { user, isAdmin, systemInfo, setUser } = useAuthStore();
   const { backgroundImage, sidebarCompact, toggleSidebarCompact } =
     useAppStore();
+  const admin = isAdmin();
+  const { pendingApprovalCount } = usePendingUserApprovals(
+    Boolean(user && admin && systemInfo?.requiresAuth)
+  );
 
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState('');
@@ -382,7 +387,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <SidebarUserSection
             requiresAuth={systemInfo?.requiresAuth}
             user={user}
-            isAdmin={isAdmin()}
+            isAdmin={admin}
+            pendingApprovalCount={pendingApprovalCount}
             sidebarCompact={sidebarCompact}
             userMenuOpen={userMenuOpen}
             userMenuRef={userMenuRef}

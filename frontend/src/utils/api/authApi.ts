@@ -19,6 +19,8 @@ import type {
   ApiResponse,
   LoginRequest,
   LoginResponse,
+  PendingApprovalSummary,
+  SignupResponse,
   SystemInfo,
   User,
   UserCreateRequest,
@@ -40,6 +42,7 @@ export const authApi = {
           username: 'demo',
           email: 'demo@example.com',
           role: 'admin',
+          status: 'active',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
@@ -63,7 +66,7 @@ export const authApi = {
     password: string;
     email?: string;
     turnstileToken?: string;
-  }): Promise<ApiResponse<LoginResponse>> => {
+  }): Promise<ApiResponse<SignupResponse>> => {
     if (isDemoMode()) {
       return createDemoResponse<LoginResponse>({
         user: {
@@ -71,6 +74,7 @@ export const authApi = {
           username: credentials.username,
           email: credentials.email || '',
           role: 'user',
+          status: 'active',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
@@ -148,6 +152,7 @@ export const authApi = {
         username: 'demo',
         email: 'demo@example.com',
         role: 'admin',
+        status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -197,6 +202,7 @@ export const usersApi = {
           username: 'demo',
           email: 'demo@example.com',
           role: 'admin',
+          status: 'active',
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
@@ -213,6 +219,7 @@ export const usersApi = {
         username: userData.username,
         email: userData.email,
         role: userData.role,
+        status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -231,6 +238,7 @@ export const usersApi = {
         username: userData.username || 'demo',
         email: userData.email || 'demo@example.com',
         role: userData.role || 'user',
+        status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -247,6 +255,30 @@ export const usersApi = {
     return api.delete(`/users/${id}`).then(res => res.data);
   },
 
+  getPendingApprovals: (): Promise<ApiResponse<PendingApprovalSummary>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({ count: 0, latestCreatedAt: null });
+    }
+
+    return api.get('/users/pending-approvals').then(res => res.data);
+  },
+
+  approveUser: (id: string): Promise<ApiResponse<User>> => {
+    if (isDemoMode()) {
+      return createDemoResponse({
+        id,
+        username: 'demo-user',
+        email: 'demo@example.com',
+        role: 'user',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    return api.patch(`/users/${id}/approve`).then(res => res.data);
+  },
+
   updateMyAvatar: (avatar: string | null): Promise<ApiResponse<User>> => {
     if (isDemoMode()) {
       return createDemoResponse({
@@ -254,6 +286,7 @@ export const usersApi = {
         username: 'demo',
         email: 'demo@example.com',
         role: 'admin' as const,
+        status: 'active' as const,
         avatar,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

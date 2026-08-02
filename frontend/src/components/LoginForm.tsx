@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Clock3, Eye, EyeOff, LogIn } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { HuggingFaceAuthButton } from '@/components/HuggingFaceAuthButton';
 import { isDemoMode } from '@/utils/demoMode';
@@ -35,6 +35,7 @@ const logger = createLogger('components:login-form');
 interface LoginFormProps {
   onLogin?: () => void;
   onShowSignup?: () => void;
+  initialApprovalPending?: boolean;
   /** Drops the card chrome so a page can supply its own framing. */
   bare?: boolean;
 }
@@ -47,6 +48,7 @@ const DEMO_CREDENTIALS = {
 export const LoginForm: React.FC<LoginFormProps> = ({
   onLogin,
   onShowSignup,
+  initialApprovalPending = false,
   bare = false,
 }) => {
   const { t } = useTranslation();
@@ -60,6 +62,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   );
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [approvalPending, setApprovalPending] = useState(
+    initialApprovalPending
+  );
   const [turnstileToken, setTurnstileToken] = useState('');
   const navigate = useNavigate();
   const { login, systemInfo } = useAuthStore();
@@ -97,6 +102,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
     }
 
     setIsLoading(true);
+    setApprovalPending(false);
 
     try {
       // Clear any existing auth data before login
@@ -120,9 +126,23 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       } else {
         toast.error(response.message || t('auth.login.loginFailed'));
       }
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Login error:', error);
-      toast.error(t('auth.login.checkCredentials'));
+      const apiError = error as {
+        response?: { data?: { code?: string; message?: string } };
+      };
+      if (apiError.response?.data?.code === 'ACCOUNT_PENDING') {
+        setApprovalPending(true);
+        toast.error(
+          apiError.response.data.message ||
+            t(
+              'auth.login.approvalPending',
+              'Your account is waiting for administrator approval.'
+            )
+        );
+      } else {
+        toast.error(t('auth.login.checkCredentials'));
+      }
     } finally {
       setTurnstileToken('');
       setIsLoading(false);
@@ -157,6 +177,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       </div>
 
       <form onSubmit={handleSubmit} className='space-y-5'>
+        {approvalPending && (
+          <div
+            data-testid='login-approval-pending'
+            role='status'
+            className='flex gap-3 rounded-xl border border-warning-500/30 bg-warning-500/10 p-3 text-start'
+          >
+            <Clock3
+              aria-hidden='true'
+              className='mt-0.5 h-4 w-4 shrink-0 text-warning-700 dark:text-warning-400'
+            />
+            <p className='text-xs leading-5 text-ink-muted'>
+              {t(
+                'auth.login.approvalPending',
+                'Your account is waiting for administrator approval.'
+              )}
+            </p>
+          </div>
+        )}
         <div>
           <label
             htmlFor='username'

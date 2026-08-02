@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/utils/api';
-import { Eye, EyeOff, UserPlus } from 'lucide-react';
+import { Clock3, Eye, EyeOff, UserPlus } from 'lucide-react';
 import { GitHubAuthButton } from '@/components/GitHubAuthButton';
 import { TurnstileWidget } from '@/components/TurnstileWidget';
 import { cn } from '@/utils';
@@ -49,6 +49,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [approvalPending, setApprovalPending] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState('');
   const navigate = useNavigate();
   const { login, systemInfo } = useAuthStore();
@@ -98,6 +99,16 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       });
 
       if (response.success && response.data) {
+        if (!('token' in response.data)) {
+          setApprovalPending(true);
+          toast.success(
+            t(
+              'auth.signup.approvalPending',
+              'Registration received. An administrator must approve your account.'
+            )
+          );
+          return;
+        }
         login(
           response.data.user,
           response.data.token,
@@ -126,6 +137,39 @@ export const SignupForm: React.FC<SignupFormProps> = ({
       }
     }
   };
+
+  if (approvalPending) {
+    return (
+      <div
+        data-testid='signup-approval-pending'
+        className={cn(
+          'mx-auto w-full max-w-md text-center',
+          !bare &&
+            'rounded-3xl border border-line bg-surface-raised p-6 shadow-card sm:p-8'
+        )}
+      >
+        <div className='mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-warning-500/15 text-warning-700 dark:text-warning-400'>
+          <Clock3 aria-hidden='true' className='h-6 w-6' />
+        </div>
+        <h1 className='mt-5 text-3xl font-light tracking-[-0.04em] text-ink'>
+          {t('auth.signup.awaitingApproval', 'Awaiting approval')}
+        </h1>
+        <p className='mt-3 text-sm leading-6 text-ink-muted'>
+          {t(
+            'auth.signup.awaitingApprovalDescription',
+            'Your account has been created, but an administrator must activate it before you can sign in.'
+          )}
+        </p>
+        <button
+          type='button'
+          onClick={onBackToLogin}
+          className='mt-6 inline-flex h-11 w-full items-center justify-center rounded-xl border border-line bg-surface px-4 text-sm font-medium text-ink shadow-subtle transition-colors hover:bg-surface-raised'
+        >
+          {t('auth.signup.backToSignIn', 'Back to sign in')}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div

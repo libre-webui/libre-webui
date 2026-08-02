@@ -180,6 +180,7 @@ export class GitHubOAuthService {
       // Create or find user
       const user = await this.createOrFindUser(profile);
       if (!user) return null;
+      if (user.status !== 'active') return null;
 
       // Generate JWT token
       const jwtToken = authService.generateToken(user);
@@ -213,16 +214,7 @@ export class GitHubOAuthService {
 
       if (existingUser) {
         logger.debug('Found existing GitHub user:', existingUser.username);
-        // Convert User to UserPublic format
-        return {
-          id: existingUser.id,
-          username: existingUser.username,
-          email: existingUser.email,
-          role: existingUser.role,
-          avatar: existingUser.avatar,
-          createdAt: new Date(existingUser.created_at).toISOString(),
-          updatedAt: new Date(existingUser.updated_at).toISOString(),
-        };
+        return userModel.getUserById(existingUser.id);
       }
 
       if (!authService.isPublicRegistrationEnabled()) {
@@ -243,13 +235,12 @@ export class GitHubOAuthService {
       // Create new user
       logger.debug('Creating new GitHub user:', uniqueUsername);
 
-      const newUser = await userModel.createUser({
+      const newUser = await userModel.createPublicUser({
         username: uniqueUsername,
         email: profile.email || null,
         // Set a cryptographically secure random password since OAuth users don't use password login
         // The password is prefixed with 'oauth:' to mark this account as OAuth-only
         password: 'oauth:' + crypto.randomBytes(24).toString('base64'),
-        role: 'user', // Default role
       });
 
       logger.debug('Created new GitHub user:', newUser.username);

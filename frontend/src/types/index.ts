@@ -156,6 +156,7 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
   message?: string;
+  code?: string;
 }
 
 export interface WebSocketMessage {
@@ -402,11 +403,16 @@ export interface DocumentChunk {
 }
 
 // User and Authentication types
+export type AccountStatus = 'pending' | 'active';
+
 export interface User {
   id: string;
   username: string;
   email: string | null;
   role: 'admin' | 'user';
+  status: AccountStatus;
+  approvedAt?: string | null;
+  approvedBy?: string | null;
   avatar?: string | null;
   createdAt: string;
   updatedAt: string;
@@ -438,6 +444,19 @@ export interface LoginResponse {
   user: User;
   token: string;
   systemInfo: SystemInfo;
+}
+
+export interface PendingSignupResponse {
+  user: User;
+  approvalRequired: true;
+  systemInfo: SystemInfo;
+}
+
+export type SignupResponse = LoginResponse | PendingSignupResponse;
+
+export interface PendingApprovalSummary {
+  count: number;
+  latestCreatedAt: string | null;
 }
 
 export interface SystemInfo {

@@ -68,6 +68,30 @@ router.get(
 );
 
 /**
+ * Get the pending-account summary used by administrator notifications.
+ */
+router.get(
+  '/pending-approvals',
+  userRateLimiter,
+  authenticate,
+  requireAdmin,
+  async (_req: AuthenticatedRequest, res) => {
+    try {
+      res.json({
+        success: true,
+        data: userModel.getPendingApprovalSummary(),
+      });
+    } catch (error) {
+      logger.error('Get pending user approvals error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
+);
+
+/**
  * Create a new user (admin only)
  */
 router.post(
@@ -175,6 +199,56 @@ router.patch(
       });
     } catch (error) {
       logger.error('Update avatar error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
+    }
+  }
+);
+
+/**
+ * Approve a pending public registration (admin only).
+ */
+router.patch(
+  '/:id/approve',
+  userRateLimiter,
+  authenticate,
+  requireAdmin,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const id = req.params.id as string;
+      const existingUser = userModel.getUserById(id);
+      if (!existingUser) {
+        res.status(404).json({
+          success: false,
+          message: 'User not found',
+        });
+        return;
+      }
+      if (existingUser.status !== 'pending') {
+        res.status(409).json({
+          success: false,
+          message: 'This account is already active',
+        });
+        return;
+      }
+
+      const user = userModel.approveUser(id, req.user!.userId);
+      if (!user) {
+        res.status(409).json({
+          success: false,
+          message: 'The account could not be approved',
+        });
+        return;
+      }
+
+      logger.info(
+        `Administrator ${req.user!.username} approved account ${user.username}`
+      );
+      res.json({ success: true, data: user });
+    } catch (error) {
+      logger.error('Approve user error:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error',

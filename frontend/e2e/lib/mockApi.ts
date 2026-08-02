@@ -324,8 +324,9 @@ type MockOptions = {
   authUsers?: Array<{
     id: string;
     username: string;
-    email: string;
+    email: string | null;
     role: 'admin' | 'user';
+    status?: 'pending' | 'active';
     token: string;
     avatar?: string | null;
     preferences?: Partial<typeof defaultPreferences>;
@@ -644,8 +645,9 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
       | {
           id: string;
           username: string;
-          email: string;
+          email: string | null;
           role: 'admin' | 'user';
+          status?: 'pending' | 'active';
           avatar?: string | null;
         }
   ) => ({
@@ -653,10 +655,12 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     username: user.username,
     email: user.email,
     role: user.role,
+    status: user.status ?? 'active',
     avatar: user.avatar ?? null,
     createdAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
     updatedAt: new Date('2026-06-21T00:00:00.000Z').toISOString(),
   });
+  let managedUsers = authUsers.map(publicAuthUser);
 
   const preferencesForRoute = (route: Route) => {
     const user = authUserForRoute(route);
@@ -1012,6 +1016,18 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         const authenticatedUser = authUsers.find(
           user => user.username === credentials.username
         );
+        if (authenticatedUser?.status === 'pending') {
+          await route.fulfill({
+            status: 403,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: false,
+              code: 'ACCOUNT_PENDING',
+              message: 'Your account is waiting for administrator approval',
+            }),
+          });
+          return;
+        }
         const user = publicAuthUser(
           authenticatedUser ?? {
             id: 'e2e-user',
@@ -1028,7 +1044,79 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/auth/signup' && method === 'POST') {
+        const credentials = route.request().postDataJSON() as {
+          username: string;
+          email?: string;
+        };
+        const approvalRequired = systemInfo.userCount > 0;
+        const user = {
+          id: `signup-${credentials.username}`,
+          username: credentials.username,
+          email: credentials.email || null,
+          role: approvalRequired ? ('user' as const) : ('admin' as const),
+          status: approvalRequired ? ('pending' as const) : ('active' as const),
+          avatar: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        authUsers.push({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          token: 'signup-token',
+        });
+        managedUsers = [user, ...managedUsers];
+        await fulfillJson(
+          route,
+          approvalRequired
+            ? { user, approvalRequired: true, systemInfo }
+            : { user, token: 'signup-token', systemInfo }
+        );
+        return;
+      }
+
       if (path === '/auth/logout' && method === 'POST') {
+        await fulfillJson(route, undefined);
+        return;
+      }
+
+      if (path === '/users' && method === 'GET') {
+        await fulfillJson(route, managedUsers);
+        return;
+      }
+
+      if (path === '/users/pending-approvals' && method === 'GET') {
+        const pendingUsers = managedUsers.filter(
+          user => user.status === 'pending'
+        );
+        await fulfillJson(route, {
+          count: pendingUsers.length,
+          latestCreatedAt: pendingUsers[0]?.createdAt ?? null,
+        });
+        return;
+      }
+
+      const approveUserMatch = path.match(/^\/users\/([^/]+)\/approve$/);
+      if (approveUserMatch && method === 'PATCH') {
+        const user = managedUsers.find(item => item.id === approveUserMatch[1]);
+        if (!user) {
+          await fulfillApiError(route, 404, 'User not found');
+          return;
+        }
+        user.status = 'active';
+        user.updatedAt = new Date().toISOString();
+        await fulfillJson(route, user);
+        return;
+      }
+
+      const deleteUserMatch = path.match(/^\/users\/([^/]+)$/);
+      if (deleteUserMatch && method === 'DELETE') {
+        managedUsers = managedUsers.filter(
+          user => user.id !== deleteUserMatch[1]
+        );
         await fulfillJson(route, undefined);
         return;
       }

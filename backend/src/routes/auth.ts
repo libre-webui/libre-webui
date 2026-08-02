@@ -35,6 +35,8 @@ const logger = createLogger('auth-routes');
 
 // Fallback frontend URL for OAuth redirects
 const FALLBACK_FRONTEND_URL = 'http://localhost:5173';
+const pendingApprovalRedirect = (): string =>
+  `${(process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL).replace(/\/$/, '')}/login?approval=pending`;
 
 const getClientIp = (req: express.Request): string | undefined => {
   const cfConnectingIp = req.headers['cf-connecting-ip'];
@@ -108,6 +110,14 @@ router.post('/login', authRateLimiter, async (req, res) => {
       res.status(401).json({
         success: false,
         message: 'Invalid credentials',
+      });
+      return;
+    }
+    if (result.status === 'pending') {
+      res.status(403).json({
+        success: false,
+        code: 'ACCOUNT_PENDING',
+        message: 'Your account is waiting for administrator approval',
       });
       return;
     }
@@ -346,6 +356,18 @@ router.post('/signup', authRateLimiter, async (req, res) => {
 
     const systemInfo = authService.getSystemInfo();
 
+    if (result.status === 'pending') {
+      res.status(202).json({
+        success: true,
+        data: {
+          user: result.user,
+          approvalRequired: true,
+          systemInfo,
+        },
+      });
+      return;
+    }
+
     res.json({
       success: true,
       data: {
@@ -428,6 +450,10 @@ router.get(
         return res.redirect(
           `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
         );
+      }
+
+      if (user.status !== 'active') {
+        return res.redirect(pendingApprovalRedirect());
       }
 
       // Generate JWT token using existing auth service
@@ -521,6 +547,10 @@ router.get(
         return res.redirect(
           `${process.env.CORS_ORIGIN || FALLBACK_FRONTEND_URL}?error=oauth_failed`
         );
+      }
+
+      if (user.status !== 'active') {
+        return res.redirect(pendingApprovalRedirect());
       }
 
       // Generate JWT token

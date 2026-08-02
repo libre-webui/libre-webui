@@ -96,7 +96,11 @@ function authorizeTerminalRequest(req: IncomingMessage): TerminalAuthResult {
     );
   }
   const currentUser = userModel.getUserById(payload.userId);
-  if (!currentUser || currentUser.role !== 'admin') {
+  if (
+    !currentUser ||
+    currentUser.status !== 'active' ||
+    currentUser.role !== 'admin'
+  ) {
     throw new WorkRuntimeError(
       'Admin access required.',
       403,

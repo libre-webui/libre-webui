@@ -64,6 +64,10 @@ export interface AuthTokenPayload {
   role: 'admin' | 'user';
 }
 
+export type AuthResult =
+  | { status: 'authenticated'; user: UserPublic; token: string }
+  | { status: 'pending'; user: UserPublic };
+
 export interface SystemInfo {
   requiresAuth: boolean;
   hasUsers: boolean;
@@ -79,6 +83,10 @@ export class AuthService {
    * Generate JWT token for user
    */
   generateToken(user: UserPublic): string {
+    if (user.status !== 'active') {
+      throw new Error('Cannot create a session for an inactive account');
+    }
+
     const payload = {
       userId: user.id,
       username: user.username,
@@ -111,25 +119,18 @@ export class AuthService {
   /**
    * Login user
    */
-  async login(
-    username: string,
-    password: string
-  ): Promise<{ user: UserPublic; token: string } | null> {
+  async login(username: string, password: string): Promise<AuthResult | null> {
     const user = await userModel.verifyPassword(username, password);
     if (!user) return null;
 
-    const userPublic: UserPublic = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      avatar: user.avatar,
-      createdAt: new Date(user.created_at).toISOString(),
-      updatedAt: new Date(user.updated_at).toISOString(),
-    };
+    const userPublic = userModel.getUserById(user.id);
+    if (!userPublic) return null;
+    if (userPublic.status !== 'active') {
+      return { status: 'pending', user: userPublic };
+    }
 
     const token = this.generateToken(userPublic);
-    return { user: userPublic, token };
+    return { status: 'authenticated', user: userPublic, token };
   }
 
   /**
@@ -166,7 +167,8 @@ export class AuthService {
     const payload = this.verifyToken(token);
     if (!payload) return null;
 
-    return userModel.getUserById(payload.userId);
+    const user = userModel.getUserById(payload.userId);
+    return user?.status === 'active' ? user : null;
   }
 
   /**
@@ -176,15 +178,7 @@ export class AuthService {
     const user = userModel.getUserByUsername(username);
     if (!user) return null;
 
-    return {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      avatar: user.avatar,
-      createdAt: new Date(user.created_at).toISOString(),
-      updatedAt: new Date(user.updated_at).toISOString(),
-    };
+    return userModel.getUserById(user.id);
   }
 
   /**
@@ -194,7 +188,7 @@ export class AuthService {
     username: string,
     password: string,
     email?: string
-  ): Promise<{ user: UserPublic; token: string } | null> {
+  ): Promise<AuthResult | null> {
     try {
       if (!this.canCreateLocalAccount()) {
         logger.warn(
@@ -203,24 +197,23 @@ export class AuthService {
         return null;
       }
 
-      const userCount = userModel.getUserCount();
-
-      // Only the very first real user (excluding the default system user) becomes admin
-      const isFirstRealUser = userCount === 0;
-
       const userData = {
         username,
         password,
         email: email || null, // Use null instead of empty string
-        // First real user becomes admin, subsequent users are regular users
-        role: isFirstRealUser ? ('admin' as const) : ('user' as const),
       };
 
-      const user = await userModel.createUser(userData);
+      // Bootstrap must remain possible. The model atomically makes the first
+      // real user active/admin and holds every later registration for review.
+      const user = await userModel.createPublicUser(userData);
       if (!user) return null;
 
+      if (user.status === 'pending') {
+        return { status: 'pending', user };
+      }
+
       const token = this.generateToken(user);
-      return { user, token };
+      return { status: 'authenticated', user, token };
     } catch (error) {
       logger.error('Signup error:', error);
       return null;

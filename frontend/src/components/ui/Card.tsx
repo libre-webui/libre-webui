@@ -18,14 +18,18 @@
 import React from 'react';
 import { cn } from '@/utils';
 
-interface CardProps {
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  className?: string;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = '' }) => {
+export const Card: React.FC<CardProps> = ({
+  children,
+  className = '',
+  ...props
+}) => {
   return (
     <div
+      {...props}
       className={cn(
         'rounded-2xl border border-line bg-surface-raised shadow-card',
         className

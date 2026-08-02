@@ -57,6 +57,7 @@
       "loginSuccess": "Login successful!",
       "loginFailed": "Login failed",
       "checkCredentials": "Login failed. Please check your credentials.",
+      "approvalPending": "Your account is waiting for administrator approval.",
       "enterBoth": "Please enter both username and password",
       "githubSuccess": "GitHub login successful!",
       "githubFailed": "GitHub authentication failed",
@@ -78,6 +79,10 @@
       "hasAccount": "Already have an account?",
       "signInHere": "Sign in here",
       "signupSuccess": "Account created successfully!",
+      "approvalPending": "Registration received. An administrator must approve your account.",
+      "awaitingApproval": "Awaiting approval",
+      "awaitingApprovalDescription": "Your account has been created, but an administrator must activate it before you can sign in.",
+      "backToSignIn": "Back to sign in",
       "signupFailed": "Signup failed",
       "tryAgain": "Signup failed. Please try again.",
       "usernameRequired": "Username and password are required",
@@ -155,6 +160,7 @@
       "createAdmin": "Create Admin",
       "success": "Admin account created successfully!",
       "failed": "Failed to create admin account",
+      "approvalUnexpected": "The initial administrator could not be activated. Please try again.",
       "fillAllFields": "Please fill in all fields",
       "note": "This will be the primary administrator account for your Libre WebUI instance"
     },
@@ -1116,6 +1122,17 @@
     "deleteSuccess": "User deleted successfully",
     "deleteFailed": "Failed to delete user",
     "cannotDeleteSelf": "You cannot delete your own account",
+    "approval": {
+      "title": "Pending approvals",
+      "description": "Review new registrations before allowing them into this instance.",
+      "registered": "Registered",
+      "activate": "Activate account",
+      "reject": "Reject registration",
+      "approved": "{{name}} can now sign in.",
+      "failed": "The account could not be approved.",
+      "notification": "{{count}} registration(s) are waiting for your approval.",
+      "notificationBadge": "{{count}} pending user approvals"
+    },
     "form": {
       "title": {
         "create": "Create User",

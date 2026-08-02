@@ -32,7 +32,15 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui';
-import { Plus, Edit, Trash2, User as UserIcon, Shield } from 'lucide-react';
+import {
+  Clock3,
+  Edit,
+  Plus,
+  Shield,
+  Trash2,
+  User as UserIcon,
+  UserCheck,
+} from 'lucide-react';
 import { createLogger } from '@/utils/logger';
 
 const logger = createLogger('components:user-manager');
@@ -64,6 +72,9 @@ export const UserManager: React.FC = () => {
 
   const invalidateUsers = () =>
     queryClient.invalidateQueries({ queryKey: ['users'] });
+
+  const pendingUsers = users.filter(user => user.status === 'pending');
+  const activeUsers = users.filter(user => user.status !== 'pending');
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,6 +167,30 @@ export const UserManager: React.FC = () => {
       }
 
       toast.error(errorMessage);
+    }
+  };
+
+  const handleApproveUser = async (user: User) => {
+    try {
+      const response = await usersApi.approveUser(user.id);
+      if (response.success && response.data) {
+        await invalidateUsers();
+        toast.success(
+          t('userManager.approval.approved', {
+            name: user.username,
+            defaultValue: '{{name}} can now sign in.',
+          })
+        );
+      }
+    } catch (error: unknown) {
+      logger.error('Error approving user:', error);
+      const apiError = error as {
+        response?: { data?: { message?: string } };
+      };
+      toast.error(
+        apiError.response?.data?.message ||
+          t('userManager.approval.failed', 'The account could not be approved.')
+      );
     }
   };
 
@@ -425,11 +460,83 @@ export const UserManager: React.FC = () => {
         </Card>
       )}
 
+      {pendingUsers.length > 0 && (
+        <Card
+          data-testid='pending-user-approvals'
+          className='border border-warning-500/30 bg-warning-500/[0.06] shadow-lg'
+        >
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2 text-gray-900 dark:text-gray-100'>
+              <Clock3 className='h-5 w-5 text-warning-700 dark:text-warning-400' />
+              {t('userManager.approval.title', 'Pending approvals')} (
+              {pendingUsers.length})
+            </CardTitle>
+            <CardDescription className='text-gray-600 dark:text-gray-400'>
+              {t(
+                'userManager.approval.description',
+                'Review new registrations before allowing them into this instance.'
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className='space-y-3'>
+              {pendingUsers.map(user => (
+                <div
+                  key={user.id}
+                  data-testid='pending-user-row'
+                  className='flex flex-col gap-4 rounded-xl border border-warning-500/25 bg-surface p-4 sm:flex-row sm:items-center sm:justify-between'
+                >
+                  <div className='min-w-0'>
+                    <h3 className='truncate font-medium text-ink'>
+                      {user.username}
+                    </h3>
+                    <p className='truncate text-sm text-ink-muted'>
+                      {user.email || t('userManager.noEmail')}
+                    </p>
+                    <p className='mt-1 text-xs text-ink-subtle'>
+                      {t('userManager.approval.registered', 'Registered')}:{' '}
+                      {new Date(user.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className='flex shrink-0 items-center gap-2'>
+                    <Button
+                      type='button'
+                      size='sm'
+                      data-testid='approve-user-button'
+                      onClick={() => void handleApproveUser(user)}
+                      className='gap-2'
+                    >
+                      <UserCheck size={16} />
+                      {t('userManager.approval.activate', 'Activate account')}
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      aria-label={t(
+                        'userManager.approval.reject',
+                        'Reject registration'
+                      )}
+                      onClick={() =>
+                        void handleDeleteUser(user.id, user.username)
+                      }
+                      className='text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300'
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Users List */}
       <Card className='bg-white dark:bg-dark-25 border border-gray-200 dark:border-dark-200 shadow-lg'>
         <CardHeader>
           <CardTitle className='text-gray-900 dark:text-gray-100'>
-            {t('userManager.title')} ({users.length})
+            {t('userManager.title')} ({activeUsers.length})
           </CardTitle>
           <CardDescription className='text-gray-600 dark:text-gray-400'>
             {t('userManager.subtitle')}
@@ -437,7 +544,7 @@ export const UserManager: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className='space-y-3'>
-            {users.map(user => (
+            {activeUsers.map(user => (
               <div
                 key={user.id}
                 className='flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-100 rounded-lg border border-gray-200 dark:border-dark-300'

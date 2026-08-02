@@ -113,7 +113,7 @@ const authorizeChatUpgrade = (
     const payload = authService.verifyToken(token);
     if (!payload) return null;
     const currentUser = userModel.getUserById(payload.userId);
-    if (!currentUser) return null;
+    if (!currentUser || currentUser.status !== 'active') return null;
     return { token, userId: currentUser.id };
   } catch {
     return null;
@@ -171,7 +171,11 @@ export function registerWebSocketServer(server: Server): void {
         const currentUser = currentPayload
           ? userModel.getUserById(currentPayload.userId)
           : null;
-        if (!currentUser || currentUser.id !== userId) {
+        if (
+          !currentUser ||
+          currentUser.status !== 'active' ||
+          currentUser.id !== userId
+        ) {
           ws.close(1008, 'Session expired or account unavailable');
           return;
         }

@@ -33,6 +33,7 @@ interface SidebarUserSectionProps {
   requiresAuth?: boolean;
   user: User | null;
   isAdmin: boolean;
+  pendingApprovalCount: number;
   sidebarCompact: boolean;
   userMenuOpen: boolean;
   userMenuRef: RefObject<HTMLDivElement | null>;
@@ -71,6 +72,7 @@ export function SidebarUserSection({
   requiresAuth,
   user,
   isAdmin,
+  pendingApprovalCount,
   sidebarCompact,
   userMenuOpen,
   userMenuRef,
@@ -108,10 +110,22 @@ export function SidebarUserSection({
             <Link
               to='/users'
               onClick={onMobileNavigate}
-              className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
+              className='relative w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
               title={t('sidebar.navigation.userManagement')}
             >
               <UserIcon className='h-4 w-4' />
+              {pendingApprovalCount > 0 && (
+                <span
+                  data-testid='pending-user-notification-badge'
+                  className='absolute -end-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-error-500 px-1 text-[10px] font-semibold text-white shadow-subtle'
+                  aria-label={t('userManager.approval.notificationBadge', {
+                    count: pendingApprovalCount,
+                    defaultValue: '{{count}} pending user approvals',
+                  })}
+                >
+                  {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
+                </span>
+              )}
             </Link>
           )}
 
@@ -127,7 +141,7 @@ export function SidebarUserSection({
         <div className='relative' ref={userMenuRef}>
           <button
             onClick={onToggleUserMenu}
-            className='w-full p-2.5 rounded-xl hover:bg-white/70 dark:hover:bg-dark-200 transition-colors duration-150 text-start touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
+            className='relative w-full p-2.5 rounded-xl hover:bg-white/70 dark:hover:bg-dark-200 transition-colors duration-150 text-start touch-manipulation outline-none focus-visible:ring-2 focus-visible:ring-primary-500/30'
           >
             <div className='flex items-center gap-2.5'>
               <UserAvatar user={user} size='sm' />
@@ -151,6 +165,18 @@ export function SidebarUserSection({
                 )}
               />
             </div>
+            {isAdmin && pendingApprovalCount > 0 && (
+              <span
+                data-testid='pending-user-notification-badge'
+                className='absolute -end-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-error-500 px-1 text-[10px] font-semibold text-white shadow-subtle'
+                aria-label={t('userManager.approval.notificationBadge', {
+                  count: pendingApprovalCount,
+                  defaultValue: '{{count}} pending user approvals',
+                })}
+              >
+                {pendingApprovalCount > 99 ? '99+' : pendingApprovalCount}
+              </span>
+            )}
           </button>
 
           {userMenuOpen && (
@@ -202,7 +228,16 @@ export function SidebarUserSection({
                     className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150'
                   >
                     <UserIcon className='h-4 w-4 shrink-0' />
-                    {t('user.menu.userManagement')}
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.userManagement')}
+                    </span>
+                    {pendingApprovalCount > 0 && (
+                      <span className='ms-2 rounded-full bg-error-500 px-1.5 py-0.5 text-[10px] font-semibold text-white'>
+                        {pendingApprovalCount > 99
+                          ? '99+'
+                          : pendingApprovalCount}
+                      </span>
+                    )}
                   </Link>
                 )}
 

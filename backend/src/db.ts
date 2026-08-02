@@ -130,6 +130,9 @@ function initializeTables(): void {
       email TEXT UNIQUE,
       password_hash TEXT NOT NULL,
       role TEXT DEFAULT 'user',
+      account_status TEXT NOT NULL DEFAULT 'active' CHECK(account_status IN ('pending', 'active')),
+      approved_at INTEGER,
+      approved_by TEXT,
       avatar TEXT,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL
@@ -145,6 +148,27 @@ function initializeTables(): void {
     if (!hasAvatar) {
       db.exec('ALTER TABLE users ADD COLUMN avatar TEXT');
       logger.debug('Migration: Added avatar column to users table');
+    }
+    const hasAccountStatus = tableInfo.some(
+      col => col.name === 'account_status'
+    );
+    if (!hasAccountStatus) {
+      db.exec(
+        "ALTER TABLE users ADD COLUMN account_status TEXT NOT NULL DEFAULT 'active'"
+      );
+      logger.debug('Migration: Added account approval status to users table');
+    }
+    const hasApprovedAt = tableInfo.some(col => col.name === 'approved_at');
+    if (!hasApprovedAt) {
+      db.exec('ALTER TABLE users ADD COLUMN approved_at INTEGER');
+      logger.debug(
+        'Migration: Added account approval timestamp to users table'
+      );
+    }
+    const hasApprovedBy = tableInfo.some(col => col.name === 'approved_by');
+    if (!hasApprovedBy) {
+      db.exec('ALTER TABLE users ADD COLUMN approved_by TEXT');
+      logger.debug('Migration: Added account approver to users table');
     }
   } catch {
     // Column might already exist or table doesn't exist yet

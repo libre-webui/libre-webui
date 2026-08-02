@@ -118,6 +118,15 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
       });
 
       if (response.success && response.data) {
+        if (!('token' in response.data)) {
+          toast.error(
+            t(
+              'setup.admin.approvalUnexpected',
+              'The initial administrator could not be activated. Please try again.'
+            )
+          );
+          return;
+        }
         login(
           response.data.user,
           response.data.token,

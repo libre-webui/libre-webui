@@ -64,6 +64,14 @@ export const authenticate = async (
       });
       return;
     }
+    if (currentUser.status !== 'active') {
+      res.status(403).json({
+        success: false,
+        code: 'ACCOUNT_PENDING',
+        message: 'Your account is waiting for administrator approval',
+      });
+      return;
+    }
 
     // Refresh identity and role from the database on every request. A deleted
     // account is rejected above, and role changes take effect without waiting
@@ -101,7 +109,11 @@ export const requireAdmin = async (
 
   try {
     const currentUser = userModel.getUserById(req.user.userId);
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (
+      !currentUser ||
+      currentUser.status !== 'active' ||
+      currentUser.role !== 'admin'
+    ) {
       res.status(403).json({
         success: false,
         message: 'Admin access required',
@@ -142,7 +154,7 @@ export const optionalAuth = async (
       const payload = authService.verifyToken(token);
       if (payload) {
         const currentUser = userModel.getUserById(payload.userId);
-        if (currentUser) {
+        if (currentUser?.status === 'active') {
           req.user = {
             userId: currentUser.id,
             username: currentUser.username,
