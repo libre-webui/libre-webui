@@ -1,0 +1,19 @@
+{
+  "id": "codex-oauth",
+  "name": "Codex (ChatGPT)",
+  "type": "completion",
+  "endpoint": "https://chatgpt.com/backend-api/codex/responses",
+  "api_mode": "responses",
+  "auth": {
+    "header": "Authorization",
+    "prefix": "Bearer ",
+    "key_env": "CODEX_OAUTH_ACCESS_TOKEN"
+  },
+  "model_map": [
+    "gpt-5.6-sol",
+    "gpt-5.6-terra",
+    "gpt-5.6-luna",
+    "gpt-5.5",
+    "gpt-5.3-codex-spark"
+  ]
+}

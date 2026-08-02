@@ -117,6 +117,8 @@ Libre WebUI backend:
 | `WORK_HOST_WORKSPACE_ROOTS`           | the server user's home directory                                                              | `:`-separated roots a host workspace must live inside    |
 | `AGENT_CLI_MODELS_ENABLED`            | `true`                                                                                        | Offer installed agent CLIs as chat models to admins      |
 | `AGENT_CLI_TIMEOUT_MS`                | `600000`                                                                                      | Time an agent CLI may run before it is killed            |
+| `CODEX_OAUTH_MODELS_ENABLED`          | `true`                                                                                        | Offer the Codex (ChatGPT) provider to admins             |
+| `CODEX_HOME`                          | `~/.codex`                                                                                    | Where the Codex CLI sign-in (`auth.json`) is read from   |
 
 A host workspace bind-mounts a real directory at `/workspace`, so the task can
 read and write those files directly instead of working in its own Docker volume.

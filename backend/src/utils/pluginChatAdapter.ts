@@ -374,6 +374,8 @@ export function buildPluginChatPayload(
   }
 
   if (apiMode === 'responses') {
+    // The ChatGPT-backed codex endpoint rejects sampling parameters outright.
+    const supportsSampling = plugin.id !== 'codex-oauth';
     return {
       payload: buildOpenAIResponsesPayload(
         model,
@@ -381,9 +383,13 @@ export function buildPluginChatPayload(
           preserveProviderMetadata: true,
         }),
         {
-          max_tokens: params.maxTokens,
-          temperature: params.temperature,
-          top_p: params.topP,
+          ...(supportsSampling
+            ? {
+                max_tokens: params.maxTokens,
+                temperature: params.temperature,
+                top_p: params.topP,
+              }
+            : {}),
           stream: params.shouldStream,
           stateScope: providerStateScope,
         }

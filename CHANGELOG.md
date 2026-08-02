@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (GPT-5.6 Sol, Terra, Luna, and GPT-5.3 Codex Spark), and OpenCode lists
   every model its providers offer and requires an explicit pick, because its
   CLI default can point at an unreachable local server.
+- **Codex models as a real provider — chat and Work — via your ChatGPT
+  sign-in.** A bundled, administrator-only Codex (ChatGPT) provider reuses the
+  server's `codex login` session: tokens are refreshed through the CLI's own
+  OAuth client and never enter task containers, so GPT-5.6 Sol, Terra, Luna,
+  GPT-5.5, and Codex Spark can drive sandboxed Work tasks and chats without an
+  API key. Disable with `CODEX_OAUTH_MODELS_ENABLED=false`.
 - **Ollama and agent chats are metered too.** The Usage page now counts local
   Ollama conversations (with prompt and completion tokens) and agent CLI turns
   beside provider plugins, so the activity calendar and model tables cover

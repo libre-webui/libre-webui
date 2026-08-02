@@ -56,6 +56,9 @@ import {
   validatePluginModel,
 } from '../utils/pluginValidation.js';
 import { AGENT_CLI_DEFINITIONS } from './agentCliService.js';
+import codexOAuthService, {
+  CODEX_OAUTH_PLUGIN_ID,
+} from './codexOAuthService.js';
 import ollamaService from './ollamaService.js';
 import pluginService from './pluginService.js';
 import pluginUsageService, {
@@ -363,6 +366,9 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
+    if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
+      await codexOAuthService.ensureFreshToken();
+    }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
@@ -546,6 +552,9 @@ export class WorkModelProviderService {
     signal?: AbortSignal
   ): Promise<OllamaChatResponse> {
     validatePluginModel(request.model);
+    if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
+      await codexOAuthService.ensureFreshToken();
+    }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
       userId
@@ -745,14 +754,20 @@ export function buildPluginWorkPayload(
   if (apiMode === 'responses') {
     const sampling = getOpenAICompatibleSamplingParameters(plugin, params);
     const tools = toOpenAIResponsesTools(request.tools || []);
+    // The ChatGPT-backed codex endpoint rejects sampling parameters outright.
+    const supportsSampling = plugin.id !== CODEX_OAUTH_PLUGIN_ID;
     return {
       payload: {
         model: request.model,
         input: toOpenAIResponsesWorkInput(request.messages, providerStateScope),
         ...(tools.length ? { tools, tool_choice: 'auto' } : {}),
-        temperature: sampling.temperature,
-        top_p: sampling.top_p,
-        max_output_tokens: params.maxTokens,
+        ...(supportsSampling
+          ? {
+              temperature: sampling.temperature,
+              top_p: sampling.top_p,
+              max_output_tokens: params.maxTokens,
+            }
+          : {}),
         stream: Boolean(request.stream),
         store: false,
         include: ['reasoning.encrypted_content'],
