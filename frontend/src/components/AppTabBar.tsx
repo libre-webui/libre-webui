@@ -76,6 +76,16 @@ const tabIcon = (tab: AppTab): IconComponent => {
 
 const modKey = () => (isMac() ? '⌘' : 'Ctrl');
 
+const ADMIN_ONLY_TAB_PATHS = new Set([
+  '/agents',
+  '/users',
+  '/usage',
+  '/system',
+]);
+
+const isAdminOnlyTab = (tab: AppTab) =>
+  tab.kind === 'work' || ADMIN_ONLY_TAB_PATHS.has(tab.path);
+
 interface NewTabMenuItem {
   key: string;
   label: string;
@@ -112,7 +122,12 @@ export const AppTabBar: React.FC = () => {
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const stripRef = useRef<HTMLDivElement>(null);
 
-  const showWork = systemInfo?.requiresAuth === false || isAdmin();
+  const admin = isAdmin();
+  const showAdminWorkspace = systemInfo?.requiresAuth === false || admin;
+  const showWork = showAdminWorkspace;
+  const accessibleTabs = showAdminWorkspace
+    ? tabs
+    : tabs.filter(tab => !isAdminOnlyTab(tab));
 
   useEffect(() => {
     syncWithPath(location.pathname);
@@ -123,7 +138,15 @@ export const AppTabBar: React.FC = () => {
     const strip = stripRef.current;
     const active = strip?.querySelector<HTMLElement>('[data-active="true"]');
     active?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }, [activeTabId, tabs.length]);
+  }, [accessibleTabs.length, activeTabId]);
+
+  useEffect(() => {
+    if (!systemInfo || showAdminWorkspace) return;
+    const restrictedTabIds = tabs.filter(isAdminOnlyTab).map(tab => tab.id);
+    if (restrictedTabIds.length === 0) return;
+    const fallback = closeTabs(restrictedTabIds, 'home');
+    if (fallback) navigate(fallback.path, { replace: true });
+  }, [closeTabs, navigate, showAdminWorkspace, systemInfo, tabs]);
 
   useEffect(() => {
     if (!menuOpen && !contextMenu) return;
@@ -292,42 +315,52 @@ export const AppTabBar: React.FC = () => {
           },
         ]
       : []),
-    ...['/models', '/personas', '/gallery', '/agents'].map(path => ({
+    ...['/models', '/personas', '/gallery'].map(path => ({
       key: path,
       label: t(PAGE_META[path].labelKey, path.slice(1)),
       icon: PAGE_META[path].icon,
       action: () => navigate(path),
     })),
-    ...(isAdmin()
-      ? ['/users', '/system', '/usage'].map((path, index) => ({
+    ...(showAdminWorkspace
+      ? [
+          {
+            key: '/agents',
+            label: t(PAGE_META['/agents'].labelKey, 'Agents'),
+            icon: PAGE_META['/agents'].icon,
+            separatorBefore: true,
+            action: () => navigate('/agents'),
+          },
+        ]
+      : []),
+    ...(admin
+      ? ['/users', '/system', '/usage'].map(path => ({
           key: path,
           label: t(PAGE_META[path].labelKey, path.slice(1)),
           icon: PAGE_META[path].icon,
-          separatorBefore: index === 0,
           action: () => navigate(path),
         }))
       : []),
   ];
 
   const contextTab = contextMenu
-    ? tabs.find(tab => tab.id === contextMenu.tabId)
+    ? accessibleTabs.find(tab => tab.id === contextMenu.tabId)
     : undefined;
   const contextTabIndex = contextTab
-    ? tabs.findIndex(tab => tab.id === contextTab.id)
+    ? accessibleTabs.findIndex(tab => tab.id === contextTab.id)
     : -1;
   const otherTabIds = contextTab
-    ? tabs
+    ? accessibleTabs
         .filter(tab => tab.id !== 'home' && tab.id !== contextTab.id)
         .map(tab => tab.id)
     : [];
   const rightTabIds =
     contextTabIndex >= 0
-      ? tabs
+      ? accessibleTabs
           .slice(contextTabIndex + 1)
           .filter(tab => tab.id !== 'home')
           .map(tab => tab.id)
       : [];
-  const allClosableTabIds = tabs
+  const allClosableTabIds = accessibleTabs
     .filter(tab => tab.id !== 'home')
     .map(tab => tab.id);
 
@@ -342,7 +375,7 @@ export const AppTabBar: React.FC = () => {
         aria-label={t('tabs.label', 'Open tabs')}
         className='flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
       >
-        {tabs.map(tab => {
+        {accessibleTabs.map(tab => {
           const Icon =
             tab.id === 'chat:new' && currentSession?.isPrivate
               ? Ghost

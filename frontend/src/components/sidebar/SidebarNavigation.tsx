@@ -23,6 +23,7 @@ import { cn } from '@/utils';
 interface SidebarNavigationProps {
   sidebarCompact: boolean;
   activePath: string;
+  showAgents: boolean;
   onMobileNavigate: () => void;
 }
 
@@ -45,6 +46,7 @@ const DESTINATIONS = [
 export function SidebarNavigation({
   sidebarCompact,
   activePath,
+  showAgents,
   onMobileNavigate,
 }: SidebarNavigationProps) {
   const { t } = useTranslation();
@@ -59,7 +61,9 @@ export function SidebarNavigation({
           sidebarCompact ? 'flex-col items-center' : 'items-center'
         )}
       >
-        {DESTINATIONS.map(({ path, icon: Icon, labelKey }) => {
+        {DESTINATIONS.filter(
+          destination => destination.path !== '/agents' || showAgents
+        ).map(({ path, icon: Icon, labelKey }) => {
           const active = activePath === path;
           const label = t(labelKey);
           return (

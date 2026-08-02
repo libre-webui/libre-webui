@@ -98,9 +98,15 @@ test('Work stays available when no chat model is installed', async ({
   await expect(page.getByTestId('sidebar-chat-button')).toBeDisabled();
 });
 
-test('Work is hidden and route-protected for non-admin users', async ({
+test('Work and Agents are hidden and route-protected for non-admin users', async ({
   page,
 }) => {
+  let libreClawRequests = 0;
+  page.on('request', request => {
+    if (new URL(request.url()).pathname.startsWith('/api/libre-claw')) {
+      libreClawRequests += 1;
+    }
+  });
   const mock = await mockLibreWebUiApi(page, {
     authRole: 'user',
     workTasks: [privateWorkTask],
@@ -113,6 +119,21 @@ test('Work is hidden and route-protected for non-admin users', async ({
       turnstile: { enabled: false },
     },
   });
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'libre-webui-tabs',
+      JSON.stringify({
+        state: {
+          tabs: [
+            { id: 'home', kind: 'home', path: '/' },
+            { id: 'page:/agents', kind: 'page', path: '/agents' },
+          ],
+          activeTabId: 'page:/agents',
+        },
+        version: 0,
+      })
+    );
+  });
 
   await page.goto('/login');
   await page.getByLabel('Username').fill('member');
@@ -122,10 +143,41 @@ test('Work is hidden and route-protected for non-admin users', async ({
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId('sidebar-work-button')).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Work' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Agents' })).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Agents', exact: true })
+  ).toHaveCount(0);
+  await expect(
+    page.getByTestId('app-tab').filter({ hasText: 'Agents' })
+  ).toHaveCount(0);
+
+  await page.getByTestId('app-tab-new').click();
+  await expect(
+    page
+      .getByTestId('app-tab-new-menu')
+      .getByRole('menuitem', { name: 'Agents' })
+  ).toHaveCount(0);
+  await page.getByTestId('app-tab-new').click();
+
+  await page.keyboard.press('ControlOrMeta+k');
+  await page.getByTestId('command-palette-input').fill('agents');
+  await expect(
+    page
+      .getByTestId('command-palette')
+      .getByRole('button', { name: 'Agents', exact: true })
+  ).toHaveCount(0);
+  await page.keyboard.press('Escape');
 
   await page.goto('/work');
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByTestId('work-page')).toHaveCount(0);
   await expect(page.getByText(privateWorkTask.title)).toHaveCount(0);
   expect(mock.workTaskListRequests).toHaveLength(0);
+
+  await page.goto('/agents');
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole('heading', { name: 'Libre Claw' })).toHaveCount(
+    0
+  );
+  expect(libreClawRequests).toBe(0);
 });

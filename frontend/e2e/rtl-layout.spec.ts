@@ -150,3 +150,99 @@ test('Arabic time greeting isolates a Latin username', async ({ page }) => {
   expect(greetingText).toContain('،');
   expect(greetingText).toContain('\u2068e2e\u2069');
 });
+
+test('Arabic mirrors the new Home and tab menus', async ({ page }) => {
+  await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      allowUserModelPull: true,
+      version: '0.17.0-e2e',
+      turnstile: { enabled: false },
+    },
+    authUsers: [
+      {
+        id: 'rtl-admin',
+        username: 'admin',
+        email: 'admin@example.test',
+        role: 'admin',
+        status: 'active',
+        token: 'rtl-admin-token',
+      },
+    ],
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('i18nextLng', 'ar');
+    localStorage.setItem('auth-token', 'rtl-admin-token');
+  });
+
+  await page.goto('/');
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+
+  const incognitoAction = page.getByTestId('home-incognito-chat');
+  await expect(incognitoAction).toHaveText('دردشة مخفية');
+  await expect(incognitoAction).toHaveCSS('direction', 'rtl');
+  const homeIconBox = await incognitoAction.locator('svg').boundingBox();
+  const homeLabelBox = await incognitoAction.locator('span').boundingBox();
+  expect(homeIconBox).not.toBeNull();
+  expect(homeLabelBox).not.toBeNull();
+  expect(homeIconBox!.x + homeIconBox!.width / 2).toBeGreaterThan(
+    homeLabelBox!.x + homeLabelBox!.width / 2
+  );
+
+  const newTabButton = page.getByTestId('app-tab-new');
+  await newTabButton.click();
+  const newTabMenu = page.getByTestId('app-tab-new-menu');
+  await expect(newTabMenu).toHaveCSS('direction', 'rtl');
+  await expect(
+    newTabMenu.getByRole('menuitem', { name: 'الوكلاء' })
+  ).toBeVisible();
+  await expect(
+    newTabMenu.getByRole('menuitem', { name: 'إدارة المستخدمين' })
+  ).toBeVisible();
+
+  const incognitoMenuItem = newTabMenu.getByRole('menuitem', {
+    name: 'دردشة مخفية',
+  });
+  const menuIconBox = await incognitoMenuItem.locator('svg').boundingBox();
+  const menuLabelBox = await incognitoMenuItem
+    .locator('span')
+    .first()
+    .boundingBox();
+  expect(menuIconBox).not.toBeNull();
+  expect(menuLabelBox).not.toBeNull();
+  expect(menuIconBox!.x + menuIconBox!.width / 2).toBeGreaterThan(
+    menuLabelBox!.x + menuLabelBox!.width / 2
+  );
+
+  const newTabButtonBox = await newTabButton.boundingBox();
+  const newTabMenuBox = await newTabMenu.boundingBox();
+  expect(newTabButtonBox).not.toBeNull();
+  expect(newTabMenuBox).not.toBeNull();
+  expect(
+    Math.abs(
+      newTabMenuBox!.x +
+        newTabMenuBox!.width -
+        (newTabButtonBox!.x + newTabButtonBox!.width)
+    )
+  ).toBeLessThanOrEqual(2);
+
+  await newTabButton.click();
+  await page.getByRole('button', { name: /admin/i }).last().click();
+  const userMenu = page.getByTestId('sidebar-user-menu');
+  await expect(userMenu).toHaveCSS('direction', 'rtl');
+  const settingsButton = userMenu.getByRole('button', {
+    name: 'الإعدادات',
+    exact: true,
+  });
+  const settingsButtonBox = await settingsButton.boundingBox();
+  const settingsIconBox = await settingsButton
+    .locator('.lucide-settings')
+    .boundingBox();
+  expect(settingsButtonBox).not.toBeNull();
+  expect(settingsIconBox).not.toBeNull();
+  expect(settingsIconBox!.x + settingsIconBox!.width / 2).toBeGreaterThan(
+    settingsButtonBox!.x + settingsButtonBox!.width / 2
+  );
+});

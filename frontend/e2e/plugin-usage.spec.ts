@@ -129,6 +129,7 @@ test('administrators open provider usage from the user menu', async ({
   const usageIndex = newTabLabels.findIndex(label =>
     label.includes('Provider Usage')
   );
+  expect(agentsIndex).toBeGreaterThan(-1);
   expect(usersIndex).toBeGreaterThan(agentsIndex);
   expect(systemIndex).toBeGreaterThan(usersIndex);
   expect(usageIndex).toBeGreaterThan(systemIndex);

@@ -84,6 +84,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const { systemInfo, isAdmin } = useAuthStore();
 
   const showWork = systemInfo?.requiresAuth === false || isAdmin();
+  const showAgents = showWork;
   const mod = isMac() ? '⌘' : 'Ctrl';
 
   // Own capture-phase listener so ⌘K works even while typing in the composer.
@@ -177,13 +178,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         icon: Sparkles,
         run: () => navigate('/gallery'),
       },
-      {
-        id: 'action:agents',
-        section: actionSection,
-        label: t('sidebar.navigation.agents', 'Agents'),
-        icon: Bot,
-        run: () => navigate('/agents'),
-      },
+      ...(showAgents
+        ? [
+            {
+              id: 'action:agents',
+              section: actionSection,
+              label: t('sidebar.navigation.agents', 'Agents'),
+              icon: Bot,
+              run: () => navigate('/agents'),
+            },
+          ]
+        : []),
       {
         id: 'action:settings',
         section: actionSection,
@@ -240,6 +245,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     sessions,
     workTasks,
     showWork,
+    showAgents,
     i18n.language,
   ]);
 

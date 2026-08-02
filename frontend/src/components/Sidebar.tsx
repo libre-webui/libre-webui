@@ -353,6 +353,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <SidebarNavigation
             sidebarCompact={sidebarCompact}
             activePath={location.pathname}
+            showAgents={showWork}
             onMobileNavigate={compactOnMobile}
           />
 

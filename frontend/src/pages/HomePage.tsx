@@ -63,6 +63,7 @@ export const HomePage: React.FC = () => {
   const loadCapabilities = useWorkStore(state => state.loadCapabilities);
 
   const showWork = systemInfo?.requiresAuth === false || isAdmin();
+  const showAgents = showWork;
 
   useEffect(() => {
     if (!showWork) return;
@@ -241,7 +242,9 @@ export const HomePage: React.FC = () => {
                   Sparkles,
                   t('sidebar.navigation.imagine', 'Imagine'),
                 ],
-                ['/agents', Bot, t('sidebar.navigation.agents', 'Agents')],
+                ...(showAgents
+                  ? [['/agents', Bot, t('sidebar.navigation.agents', 'Agents')]]
+                  : []),
               ] as Array<
                 [string, React.ComponentType<{ className?: string }>, string]
               >
