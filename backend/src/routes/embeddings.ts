@@ -23,7 +23,7 @@ import {
   getErrorMessage,
 } from '../types/index.js';
 import embeddingService from '../services/embeddingService.js';
-import { AuthenticatedRequest, optionalAuth } from '../middleware/auth.js';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -40,7 +40,7 @@ const embeddingsRateLimiter = rateLimit({
 });
 
 router.use(embeddingsRateLimiter);
-router.use(optionalAuth);
+router.use(authenticate);
 
 router.get(
   '/models',

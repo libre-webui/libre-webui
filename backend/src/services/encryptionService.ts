@@ -67,7 +67,11 @@ export class EncryptionService {
       }
 
       // Write the key to persistent storage
-      fs.writeFileSync(keyPath, encryptionKey, 'utf8');
+      fs.writeFileSync(keyPath, encryptionKey, {
+        encoding: 'utf8',
+        mode: 0o600,
+      });
+      fs.chmodSync(keyPath, 0o600);
       logger.info(
         `✅ Automatically saved ENCRYPTION_KEY to persistent storage: ${keyPath}`
       );
@@ -78,9 +82,8 @@ export class EncryptionService {
         error
       );
       logger.warn(
-        '   Please set ENCRYPTION_KEY environment variable manually:'
+        '   Set ENCRYPTION_KEY through protected configuration before restarting.'
       );
-      logger.warn(`   ENCRYPTION_KEY=${encryptionKey}`);
     }
   }
 
@@ -139,7 +142,11 @@ export class EncryptionService {
             /# ENCRYPTION_KEY=.*/,
             `ENCRYPTION_KEY=${encryptionKey}`
           );
-          fs.writeFileSync(envPath, envContent, 'utf8');
+          fs.writeFileSync(envPath, envContent, {
+            encoding: 'utf8',
+            mode: 0o600,
+          });
+          fs.chmodSync(envPath, 0o600);
           logger.info(
             `✅ Automatically added ENCRYPTION_KEY to .env file: ${envPath}`
           );
@@ -157,7 +164,11 @@ export class EncryptionService {
       envContent += keyLine;
 
       // Write back to .env file
-      fs.writeFileSync(envPath, envContent, 'utf8');
+      fs.writeFileSync(envPath, envContent, {
+        encoding: 'utf8',
+        mode: 0o600,
+      });
+      fs.chmodSync(envPath, 0o600);
       logger.info(
         `✅ Automatically added ENCRYPTION_KEY to .env file: ${envPath}`
       );
@@ -167,9 +178,8 @@ export class EncryptionService {
         error
       );
       logger.warn(
-        '   Please manually add the following line to your .env file:'
+        '   Set ENCRYPTION_KEY through protected configuration before restarting.'
       );
-      logger.warn(`   ENCRYPTION_KEY=${encryptionKey}`);
     }
   }
 
@@ -230,9 +240,7 @@ export class EncryptionService {
       this.encryptionKey = crypto.randomBytes(32);
       const newKeyString = this.encryptionKey.toString('hex');
 
-      logger.warn(
-        `⚠️  No ENCRYPTION_KEY found. Generated key: ${newKeyString}`
-      );
+      logger.warn('⚠️  No ENCRYPTION_KEY found. Generated a new key.');
 
       // Automatically add the key to appropriate storage (Docker/npx vs dev)
       this.addKeyToStorage(newKeyString);

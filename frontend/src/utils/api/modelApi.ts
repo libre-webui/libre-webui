@@ -28,6 +28,75 @@ import { API_BASE_URL } from '@/utils/config';
 import { api, createDemoResponse } from './client';
 import { DEMO_MODELS } from './demoData';
 
+const streamWithAuthentication = (
+  url: string,
+  onData: (data: Record<string, unknown>) => void,
+  onError: (error: string) => void
+): (() => void) => {
+  const controller = new AbortController();
+  const token = localStorage.getItem('auth-token');
+
+  void (async () => {
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'text/event-stream',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        cache: 'no-store',
+        credentials: 'same-origin',
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        let message = `Request failed with status ${response.status}`;
+        try {
+          const payload = (await response.json()) as {
+            error?: unknown;
+            message?: unknown;
+          };
+          if (typeof payload.error === 'string') message = payload.error;
+          else if (typeof payload.message === 'string')
+            message = payload.message;
+        } catch {
+          // Keep the status-based fallback for non-JSON responses.
+        }
+        throw new Error(message);
+      }
+      if (!response.body) throw new Error('Response stream is unavailable');
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      try {
+        while (!controller.signal.aborted) {
+          const { done, value } = await reader.read();
+          buffer += decoder.decode(value, { stream: !done });
+          const events = buffer.split(/\r?\n\r?\n/);
+          buffer = events.pop() || '';
+          for (const event of events) {
+            const dataLine = event
+              .split(/\r?\n/)
+              .find(line => line.startsWith('data:'));
+            if (!dataLine) continue;
+            onData(
+              JSON.parse(dataLine.slice(5).trim()) as Record<string, unknown>
+            );
+          }
+          if (done) break;
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        onError(error instanceof Error ? error.message : 'Connection lost');
+      }
+    }
+  })();
+
+  return () => controller.abort();
+};
+
 export const ollamaApi = {
   // Health check
   checkHealth: (): Promise<ApiResponse<{ status: string }>> => {
@@ -96,48 +165,31 @@ export const ollamaApi = {
     const params = new URLSearchParams({
       model: modelName,
     });
-    const token = localStorage.getItem('auth-token');
-    if (token) {
-      params.set('token', token);
-    }
-
-    const eventSource = new EventSource(
-      `${API_BASE_URL}/ollama/pull/stream?${params.toString()}`
+    return streamWithAuthentication(
+      `${API_BASE_URL}/ollama/pull/stream?${params.toString()}`,
+      data => {
+        switch (data.type) {
+          case 'progress':
+            onProgress({
+              status: typeof data.status === 'string' ? data.status : 'pulling',
+              digest: typeof data.digest === 'string' ? data.digest : undefined,
+              total: typeof data.total === 'number' ? data.total : undefined,
+              completed:
+                typeof data.completed === 'number' ? data.completed : undefined,
+              percent:
+                typeof data.percent === 'number' ? data.percent : undefined,
+            });
+            break;
+          case 'complete':
+            onComplete();
+            break;
+          case 'error':
+            onError(String(data.error || 'Model pull failed'));
+            break;
+        }
+      },
+      onError
     );
-
-    eventSource.onmessage = event => {
-      const data = JSON.parse(event.data);
-
-      switch (data.type) {
-        case 'progress':
-          onProgress({
-            status: data.status,
-            digest: data.digest,
-            total: data.total,
-            completed: data.completed,
-            percent: data.percent,
-          });
-          break;
-        case 'complete':
-          eventSource.close();
-          onComplete();
-          break;
-        case 'error':
-          eventSource.close();
-          onError(data.error);
-          break;
-      }
-    };
-
-    eventSource.onerror = () => {
-      eventSource.close();
-      onError('Connection to server lost');
-    };
-
-    // Return cancel function
-    return () => {
-      eventSource.close();
-    };
   },
 
   deleteModel: (modelName: string): Promise<ApiResponse> => {
@@ -228,38 +280,35 @@ export const ollamaApi = {
       return;
     }
 
-    const eventSource = new EventSource(
-      `${API_BASE_URL}/ollama/models/pull-all/stream`
+    streamWithAuthentication(
+      `${API_BASE_URL}/ollama/models/pull-all/stream`,
+      data => {
+        switch (data.type) {
+          case 'progress': {
+            const status =
+              data.status === 'success' || data.status === 'error'
+                ? data.status
+                : 'starting';
+            onProgress({
+              current: typeof data.current === 'number' ? data.current : 0,
+              total: typeof data.total === 'number' ? data.total : 0,
+              modelName:
+                typeof data.modelName === 'string' ? data.modelName : 'unknown',
+              status,
+              error: typeof data.error === 'string' ? data.error : undefined,
+            });
+            break;
+          }
+          case 'complete':
+            onComplete();
+            break;
+          case 'error':
+            onError(String(data.error || 'Model update failed'));
+            break;
+        }
+      },
+      onError
     );
-
-    eventSource.onmessage = event => {
-      const data = JSON.parse(event.data);
-
-      switch (data.type) {
-        case 'progress':
-          onProgress({
-            current: data.current,
-            total: data.total,
-            modelName: data.modelName,
-            status: data.status,
-            error: data.error,
-          });
-          break;
-        case 'complete':
-          eventSource.close();
-          onComplete();
-          break;
-        case 'error':
-          eventSource.close();
-          onError(data.error);
-          break;
-      }
-    };
-
-    eventSource.onerror = () => {
-      eventSource.close();
-      onError('Connection to server lost');
-    };
   },
 
   generateEmbeddings: (

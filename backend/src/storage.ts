@@ -598,8 +598,8 @@ class StorageService {
 
       const stmt = db.prepare(`
         INSERT OR REPLACE INTO documents 
-        (id, user_id, filename, title, content, metadata, uploaded_at, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, user_id, filename, title, content, file_type, size, session_id, metadata, uploaded_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
       // Encrypt sensitive document data
@@ -619,6 +619,9 @@ class StorageService {
         document.filename,
         encryptedTitle,
         encryptedContent,
+        document.fileType || null,
+        document.size || null,
+        document.sessionId || null,
         encryptedMetadata,
         document.uploadedAt,
         document.createdAt || now,

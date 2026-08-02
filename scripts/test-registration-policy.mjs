@@ -29,8 +29,9 @@ test('ENABLE_SIGNUP=false disables public registration', () => {
   assert.equal(isPublicRegistrationEnabled(' FALSE '), false);
 });
 
-test('local signup keeps first-administrator bootstrap available', () => {
-  assert.equal(canCreateLocalAccount(0, false), true);
+test('disabled registration also blocks an empty-instance bootstrap', () => {
+  assert.equal(canCreateLocalAccount(0, false), false);
   assert.equal(canCreateLocalAccount(1, false), false);
+  assert.equal(canCreateLocalAccount(0, true), true);
   assert.equal(canCreateLocalAccount(2, true), true);
 });

@@ -45,6 +45,25 @@ export class TurnstileService {
     return process.env.TURNSTILE_SECRET_KEY?.trim() || undefined;
   }
 
+  private get expectedHostname(): string | undefined {
+    const explicit = process.env.TURNSTILE_EXPECTED_HOSTNAME?.trim();
+    if (explicit) return explicit.toLowerCase();
+
+    const configuredUrl =
+      process.env.BASE_URL?.trim() ||
+      process.env.CORS_ORIGIN?.split(',')[0]?.trim();
+    if (!configuredUrl) return undefined;
+
+    try {
+      return new URL(configuredUrl).hostname.toLowerCase();
+    } catch {
+      logger.error(
+        'Turnstile hostname validation is disabled because BASE_URL/CORS_ORIGIN is invalid'
+      );
+      return undefined;
+    }
+  }
+
   isConfigured(): boolean {
     return Boolean(this.siteKey && this.secretKey);
   }
@@ -60,7 +79,11 @@ export class TurnstileService {
     };
   }
 
-  async verify(token: unknown, remoteIp?: string): Promise<boolean> {
+  async verify(
+    token: unknown,
+    remoteIp?: string,
+    expectedAction?: string
+  ): Promise<boolean> {
     if (!this.isConfigured()) {
       return true;
     }
@@ -100,9 +123,21 @@ export class TurnstileService {
           'Turnstile verification failed:',
           data['error-codes']?.join(', ') || 'unknown error'
         );
+        return false;
       }
 
-      return data.success;
+      const hostname = data.hostname?.trim().toLowerCase();
+      if (this.expectedHostname && hostname !== this.expectedHostname) {
+        logger.warn('Turnstile verification returned an unexpected hostname');
+        return false;
+      }
+
+      if (expectedAction && data.action !== expectedAction) {
+        logger.warn('Turnstile verification returned an unexpected action');
+        return false;
+      }
+
+      return true;
     } catch (error) {
       logger.error('Turnstile verification error:', error);
       return false;

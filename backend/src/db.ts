@@ -193,6 +193,9 @@ function initializeTables(): void {
       filename TEXT NOT NULL,
       title TEXT,
       content TEXT,
+      file_type TEXT,
+      size INTEGER,
+      session_id TEXT,
       metadata TEXT, -- JSON string for additional metadata
       uploaded_at INTEGER NOT NULL,
       created_at INTEGER NOT NULL,
@@ -200,6 +203,22 @@ function initializeTables(): void {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
+
+  const documentColumns = db.prepare('PRAGMA table_info(documents)').all() as {
+    name: string;
+  }[];
+  const existingDocumentColumns = new Set(
+    documentColumns.map(column => column.name)
+  );
+  for (const column of [
+    { name: 'file_type', type: 'TEXT' },
+    { name: 'size', type: 'INTEGER' },
+    { name: 'session_id', type: 'TEXT' },
+  ]) {
+    if (!existingDocumentColumns.has(column.name)) {
+      db.exec(`ALTER TABLE documents ADD COLUMN ${column.name} ${column.type}`);
+    }
+  }
 
   // Document chunks table - migrated from document-chunks.json
   db.exec(`

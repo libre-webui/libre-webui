@@ -1,0 +1,173 @@
+name: libre-webui-private
+
+services:
+  libre-webui:
+    image: ${LIBRE_WEBUI_IMAGE:-ghcr.io/libre-webui/libre-webui:main}
+    container_name: libre-webui
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=512m
+      - /app/temp:rw,nosuid,nodev,noexec,size=512m
+      - /app/backend/temp:rw,nosuid,nodev,noexec,size=512m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: ${LIBRE_WEBUI_PIDS_LIMIT:-512}
+    mem_limit: ${LIBRE_WEBUI_MEMORY_LIMIT:-4g}
+    cpus: ${LIBRE_WEBUI_CPU_LIMIT:-4}
+    environment:
+      NODE_ENV: production
+      BASE_URL: https://${PUBLIC_HOSTNAME:?set PUBLIC_HOSTNAME}
+      CORS_ORIGIN: https://${PUBLIC_HOSTNAME:?set PUBLIC_HOSTNAME}
+      TRUST_PROXY: '1'
+      ENABLE_SIGNUP: ${ENABLE_SIGNUP:-false}
+      OLLAMA_BASE_URL: http://ollama:11434
+      WORK_PREVIEW_BIND: 172.30.0.1
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set ENCRYPTION_KEY}
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:?set TURNSTILE_SITE_KEY}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:?set TURNSTILE_SECRET_KEY}
+      TURNSTILE_EXPECTED_HOSTNAME: ${TURNSTILE_EXPECTED_HOSTNAME:?set TURNSTILE_EXPECTED_HOSTNAME}
+    volumes:
+      - libre-webui-data:/app/backend/data
+      # Work needs daemon control. Removing this mount disables Work and removes
+      # the stack's root-equivalent Docker trust boundary.
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - '${DOCKER_GID:?set DOCKER_GID}'
+    expose:
+      - '3001'
+    networks:
+      - private
+    depends_on:
+      ollama:
+        condition: service_healthy
+    labels:
+      com.centurylinklabs.watchtower.enable: 'true'
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3001/api/auth/system-info').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: libre-webui-ollama
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: ${OLLAMA_PIDS_LIMIT:-1024}
+    mem_limit: ${OLLAMA_MEMORY_LIMIT:-12g}
+    cpus: ${OLLAMA_CPU_LIMIT:-8}
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    volumes:
+      - ollama-data:/root/.ollama
+    expose:
+      - '11434'
+    networks:
+      - private
+    healthcheck:
+      test: ['CMD', 'ollama', 'list']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    labels:
+      com.centurylinklabs.watchtower.enable: 'true'
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: libre-webui-cloudflared
+    restart: unless-stopped
+    init: true
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    command:
+      - tunnel
+      - --no-autoupdate
+      - run
+      - --token-file
+      - /run/secrets/tunnel-token
+    volumes:
+      - ./secrets/tunnel-token:/run/secrets/tunnel-token:ro
+    networks:
+      - private
+    depends_on:
+      libre-webui:
+        condition: service_healthy
+    labels:
+      com.centurylinklabs.watchtower.enable: 'false'
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '3'
+
+  watchtower:
+    image: containrrr/watchtower:1.7.1
+    container_name: libre-webui-watchtower
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,noexec,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    environment:
+      DOCKER_API_VERSION: '1.44'
+      WATCHTOWER_CLEANUP: 'true'
+      WATCHTOWER_LABEL_ENABLE: 'true'
+      WATCHTOWER_POLL_INTERVAL: '1800'
+      WATCHTOWER_WARN_ON_HEAD_FAILURE: never
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    labels:
+      com.centurylinklabs.watchtower.enable: 'false'
+    logging:
+      driver: local
+      options:
+        max-size: 10m
+        max-file: '3'
+
+networks:
+  private:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: lwui-private
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+          gateway: 172.30.0.1
+
+volumes:
+  libre-webui-data:
+  ollama-data:

@@ -20,10 +20,17 @@ import multer from 'multer';
 import documentService from '../services/documentService.js';
 import { ApiResponse } from '../types/index.js';
 import { createLogger } from '../utils/logger.js';
+import { authenticate } from '../middleware/auth.js';
 
 const logger = createLogger('routes:documents');
 
 const router = express.Router();
+router.use(authenticate);
+
+const requireUserId = (req: express.Request): string => {
+  if (!req.user?.userId) throw new Error('Authenticated user context missing');
+  return req.user.userId;
+};
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -59,6 +66,7 @@ router.post('/upload', upload.single('document'), async (req, res) => {
       req.file.originalname,
       req.file.buffer,
       req.file.mimetype,
+      requireUserId(req),
       sessionId
     );
 
@@ -88,7 +96,10 @@ router.post('/upload', upload.single('document'), async (req, res) => {
 router.get('/session/:sessionId', (req, res) => {
   try {
     const { sessionId } = req.params;
-    const documents = documentService.getDocuments(sessionId);
+    const documents = documentService.getDocuments(
+      requireUserId(req),
+      sessionId
+    );
 
     // Return documents without full content
     const documentsWithoutContent = documents.map(doc => ({
@@ -116,7 +127,7 @@ router.get('/session/:sessionId', (req, res) => {
 // Get all documents
 router.get('/', (req, res) => {
   try {
-    const documents = documentService.getDocuments();
+    const documents = documentService.getDocuments(requireUserId(req));
 
     // Return documents without full content
     const documentsWithoutContent = documents.map(doc => ({
@@ -141,11 +152,114 @@ router.get('/', (req, res) => {
   }
 });
 
-// Get document details
+// Search documents
+router.post('/search', async (req, res) => {
+  try {
+    const { query, sessionId, limit } = req.body;
+
+    if (!query || typeof query !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'Query is required and must be a string',
+      } as ApiResponse);
+      return;
+    }
+
+    const chunks = await documentService.searchDocuments(
+      query,
+      requireUserId(req),
+      sessionId,
+      limit
+    );
+
+    res.json({
+      success: true,
+      data: chunks,
+    } as ApiResponse);
+  } catch (error) {
+    logger.error('Document search error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    } as ApiResponse);
+  }
+});
+
+// Delete document
+router.delete('/:documentId', (req, res) => {
+  try {
+    const { documentId } = req.params;
+    const deleted = documentService.deleteDocument(
+      documentId,
+      requireUserId(req)
+    );
+
+    if (!deleted) {
+      res.status(404).json({
+        success: false,
+        error: 'Document not found',
+      } as ApiResponse);
+      return;
+    }
+
+    res.json({
+      success: true,
+      message: 'Document deleted successfully',
+    } as ApiResponse);
+  } catch (error) {
+    logger.error('Delete document error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    } as ApiResponse);
+  }
+});
+
+// Get embedding status and information
+router.get('/embeddings/status', async (req, res) => {
+  try {
+    const embeddingInfo = await documentService.getEmbeddingModelInfo(
+      requireUserId(req)
+    );
+    res.json({
+      success: true,
+      data: embeddingInfo,
+    } as ApiResponse);
+  } catch (error) {
+    logger.error('Get embedding status error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get embedding status',
+    } as ApiResponse);
+  }
+});
+
+// Regenerate embeddings for all documents
+router.post('/embeddings/regenerate', async (req, res) => {
+  try {
+    await documentService.regenerateAllEmbeddings(requireUserId(req));
+    res.json({
+      success: true,
+      message: 'Embeddings regenerated successfully',
+    } as ApiResponse);
+  } catch (error) {
+    logger.error('Regenerate embeddings error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to regenerate embeddings',
+    } as ApiResponse);
+  }
+});
+
+// Keep this parameterized route after named GET routes such as
+// /embeddings/status so document IDs cannot shadow them.
 router.get('/:documentId', (req, res) => {
   try {
     const { documentId } = req.params;
-    const document = documentService.getDocument(documentId);
+    const document = documentService.getDocument(
+      documentId,
+      requireUserId(req)
+    );
 
     if (!document) {
       res.status(404).json({
@@ -173,99 +287,6 @@ router.get('/:documentId', (req, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
-    } as ApiResponse);
-  }
-});
-
-// Search documents
-router.post('/search', async (req, res) => {
-  try {
-    const { query, sessionId, limit } = req.body;
-
-    if (!query || typeof query !== 'string') {
-      res.status(400).json({
-        success: false,
-        error: 'Query is required and must be a string',
-      } as ApiResponse);
-      return;
-    }
-
-    const chunks = await documentService.searchDocuments(
-      query,
-      sessionId,
-      limit
-    );
-
-    res.json({
-      success: true,
-      data: chunks,
-    } as ApiResponse);
-  } catch (error) {
-    logger.error('Document search error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    } as ApiResponse);
-  }
-});
-
-// Delete document
-router.delete('/:documentId', (req, res) => {
-  try {
-    const { documentId } = req.params;
-    const deleted = documentService.deleteDocument(documentId);
-
-    if (!deleted) {
-      res.status(404).json({
-        success: false,
-        error: 'Document not found',
-      } as ApiResponse);
-      return;
-    }
-
-    res.json({
-      success: true,
-      message: 'Document deleted successfully',
-    } as ApiResponse);
-  } catch (error) {
-    logger.error('Delete document error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-    } as ApiResponse);
-  }
-});
-
-// Get embedding status and information
-router.get('/embeddings/status', async (req, res) => {
-  try {
-    const embeddingInfo = await documentService.getEmbeddingModelInfo();
-    res.json({
-      success: true,
-      data: embeddingInfo,
-    } as ApiResponse);
-  } catch (error) {
-    logger.error('Get embedding status error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get embedding status',
-    } as ApiResponse);
-  }
-});
-
-// Regenerate embeddings for all documents
-router.post('/embeddings/regenerate', async (req, res) => {
-  try {
-    await documentService.regenerateAllEmbeddings();
-    res.json({
-      success: true,
-      message: 'Embeddings regenerated successfully',
-    } as ApiResponse);
-  } catch (error) {
-    logger.error('Regenerate embeddings error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to regenerate embeddings',
     } as ApiResponse);
   }
 });

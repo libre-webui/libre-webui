@@ -26,14 +26,16 @@ export interface ChatDocumentContext {
 
 export async function buildChatDocumentContext(
   message: string,
-  sessionId: string
+  sessionId: string,
+  userId: string
 ): Promise<ChatDocumentContext> {
   let documentContext = '';
-  const preferences = preferencesService.getPreferences();
+  const preferences = preferencesService.getPreferences(userId);
 
   if (preferences.embeddingSettings?.enabled) {
     const relevantDocuments = await documentService.searchDocuments(
       message,
+      userId,
       sessionId
     );
 
@@ -43,7 +45,7 @@ export async function buildChatDocumentContext(
         if (!documentsMap.has(chunk.documentId)) {
           documentsMap.set(
             chunk.documentId,
-            documentService.getDocument(chunk.documentId)
+            documentService.getDocument(chunk.documentId, userId)
           );
         }
       }

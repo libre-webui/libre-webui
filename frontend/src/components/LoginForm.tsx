@@ -213,6 +213,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
         {isTurnstileEnabled && turnstileSiteKey && (
           <TurnstileWidget
             siteKey={turnstileSiteKey}
+            action='login'
             disabled={isLoading}
             errorMessage={t(
               'auth.login.verificationFailed',

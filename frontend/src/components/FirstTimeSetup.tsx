@@ -459,6 +459,7 @@ export const FirstTimeSetup: React.FC<FirstTimeSetupProps> = ({
             {isTurnstileEnabled && turnstileSiteKey && (
               <TurnstileWidget
                 siteKey={turnstileSiteKey}
+                action='signup'
                 disabled={isLoading}
                 errorMessage={t('auth.signup.tryAgain')}
                 onTokenChange={handleTurnstileTokenChange}

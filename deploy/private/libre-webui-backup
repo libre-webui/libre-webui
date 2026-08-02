@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+umask 077
+
+stack_dir=${LIBRE_WEBUI_STACK_DIR:-/opt/libre-webui}
+backup_dir=${LIBRE_WEBUI_BACKUP_DIR:-/var/backups/libre-webui}
+retention_days=${LIBRE_WEBUI_BACKUP_RETENTION_DAYS:-14}
+compose_file=${stack_dir}/docker-compose.yml
+data_volume=${LIBRE_WEBUI_DATA_VOLUME:-}
+timestamp=$(date -u +%Y%m%dT%H%M%SZ)
+archive=${backup_dir}/libre-webui-data-${timestamp}.tar.gz
+
+install -d -m 0700 "${backup_dir}"
+if [[ -z "${data_volume}" ]]; then
+  data_volume=$(docker inspect libre-webui --format '{{range .Mounts}}{{if eq .Destination "/app/backend/data"}}{{.Name}}{{end}}{{end}}')
+fi
+if [[ -z "${data_volume}" ]]; then
+  echo 'Could not resolve the Libre WebUI data volume.' >&2
+  exit 1
+fi
+docker compose -f "${compose_file}" stop libre-webui
+restart_app=true
+cleanup() {
+  if [[ "${restart_app}" == true ]]; then
+    docker compose -f "${compose_file}" start libre-webui >/dev/null
+  fi
+}
+trap cleanup EXIT
+
+docker run --rm \
+  --read-only \
+  --network none \
+  --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --mount type=volume,src="${data_volume}",dst=/data,readonly \
+  --mount type=bind,src="${backup_dir}",dst=/backup \
+  alpine:3.22 \
+  tar -C /data -czf "/backup/$(basename "${archive}")" .
+chmod 0600 "${archive}"
+
+docker compose -f "${compose_file}" start libre-webui >/dev/null
+restart_app=false
+find "${backup_dir}" -type f -name 'libre-webui-data-*.tar.gz' \
+  -mtime "+${retention_days}" -delete

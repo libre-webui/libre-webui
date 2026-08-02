@@ -56,7 +56,23 @@ export const authenticate = async (
       return;
     }
 
-    req.user = payload;
+    const currentUser = userModel.getUserById(payload.userId);
+    if (!currentUser) {
+      res.status(401).json({
+        success: false,
+        message: 'The account for this session no longer exists',
+      });
+      return;
+    }
+
+    // Refresh identity and role from the database on every request. A deleted
+    // account is rejected above, and role changes take effect without waiting
+    // for the JWT to expire.
+    req.user = {
+      userId: currentUser.id,
+      username: currentUser.username,
+      role: currentUser.role,
+    };
     next();
   } catch (error) {
     logger.error('Authentication error:', error);
@@ -125,7 +141,14 @@ export const optionalAuth = async (
       const token = authHeader.substring(7);
       const payload = authService.verifyToken(token);
       if (payload) {
-        req.user = payload;
+        const currentUser = userModel.getUserById(payload.userId);
+        if (currentUser) {
+          req.user = {
+            userId: currentUser.id,
+            username: currentUser.username,
+            role: currentUser.role,
+          };
+        }
       }
     }
   } catch (error) {
