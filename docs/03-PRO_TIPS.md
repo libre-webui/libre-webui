@@ -23,6 +23,43 @@ Good daily-driver examples:
 
 Open **Models** to see which models are running. Unload models you are not using when VRAM gets tight.
 
+## Use Incognito Chat for Conversations That Should Not Persist
+
+Start an incognito chat from the tab bar's `+` menu, the command palette, the
+Home page, or the ghost button on the chat welcome screen. It also has a
+direct URL: `/chat?incognito=1`.
+
+An incognito chat is never persisted: no session is created on the server, no
+message is saved, and it never appears in the sidebar or history. The chat
+shows a **Private Mode** banner ("This conversation won't be saved"). Opening
+a saved chat leaves incognito mode; reloading an incognito tab starts a fresh
+empty private chat, so the previous turns are gone.
+
+Be clear about the boundary: incognito controls persistence, not provider
+exposure. The selected model — local or remote — still receives the full
+conversation, and document context still applies when it is enabled. For a
+conversation that must not leave your infrastructure, combine incognito with a
+local Ollama model.
+
+## Manage Tabs with the Context Menu
+
+Right-click a tab (or press `Shift + F10` on a focused tab) for:
+
+- **Close tab**
+- **Close other tabs**
+- **Close tabs to the right**
+- **Close all tabs**
+
+Home is always the first tab and cannot be closed. Administrators also get
+direct **Users**, **System**, and **Usage** entries in the `+` menu.
+
+## Theme Default
+
+New installs use the dark theme, applied before first paint so there is no
+light flash. A saved light preference is always respected. Libre WebUI does
+not follow the operating system's theme setting; switch explicitly with
+`Cmd/Ctrl + D` or from Settings.
+
 ## Keep Work Tasks Focused
 
 Use a separate Work task for each project or independent goal. Every task has

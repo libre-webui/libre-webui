@@ -33,6 +33,47 @@ Local signup requires:
 
 Passwords are hashed with bcrypt before storage. Login and signup routes are rate-limited.
 
+## Registration Approval
+
+Public registration does not grant access by itself. Every account created
+through the public signup form or through an OAuth provider starts in a
+`pending` state and must be approved by an administrator before it can sign in.
+
+The one exception is bootstrap: the first real account on an empty database is
+created `active` with the `admin` role, atomically, so a fresh install still
+produces a working administrator. Every later registration waits for review.
+
+What a pending user sees:
+
+- Signup succeeds but returns no session token. The API responds `202` with
+  `approvalRequired: true`, and the UI explains that an administrator has to
+  approve the account.
+- A password sign-in with correct credentials is refused with `403` and the
+  code `ACCOUNT_PENDING` ("Your account is waiting for administrator
+  approval"). An OAuth sign-in redirects back to the login page with
+  `?approval=pending`.
+- Account status is re-read from the database on every authenticated request,
+  so a session can never outlive an account's `active` status.
+
+What an administrator sees:
+
+- User management shows a **Pending approvals** card listing waiting accounts,
+  each with an **Activate account** action and a reject action. Rejection is
+  deletion; there is no separate suspended state.
+- Administrators are notified in the app while signed in: a badge on the Users
+  entry and a toast when new registrations arrive. The pending-approvals
+  summary is polled about once a minute
+  (`GET /api/users/pending-approvals`, admin-only).
+- Approval (`PATCH /api/users/:id/approve`, admin-only) records which
+  administrator approved the account and when. It does not change the role:
+  approved accounts keep the `user` role until an administrator promotes them.
+  Approval takes effect on the user's next sign-in attempt; nothing needs to
+  be recreated.
+
+Existing accounts are unaffected by an upgrade: only accounts created through
+public registration after the feature shipped start as pending. Accounts
+created by an administrator from user management are active immediately.
+
 ### Disable public registration
 
 Set the backend environment variable below to close public registration:

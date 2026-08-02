@@ -140,6 +140,7 @@ Codex, can also be used as a chat model without an API key.
 - [Kimi Code](./KIMI_CODE)
 - [Hugging Face Hub](./HUGGINGFACE_HUB)
 - [MLX LM on Apple Silicon](./MLX_APPLE_SILICON)
+- [Video & Audio Generation](./MEDIA_GENERATION)
 - [Document Chat](./RAG_FEATURE)
 - [Artifacts](./ARTIFACTS_FEATURE)
 - [Personas](./PERSONA_DEVELOPMENT_FRAMEWORK)
@@ -150,6 +151,7 @@ Codex, can also be used as a chat model without an API key.
 
 - [Authentication](./AUTHENTICATION)
 - [Single Sign-On](./SINGLE_SIGN_ON)
+- [System Diagnostics & Usage Analytics](./SYSTEM_MONITORING)
 - [Environment Variables](./ENVIRONMENT_VARIABLES)
 - [Database Encryption](./DATABASE_ENCRYPTION)
 

@@ -110,7 +110,7 @@ Libre WebUI backend:
 | `WORK_MAX_TASKS_PER_USER`             | `100`                                                                                         | Maximum persisted Work tasks for one administrator       |
 | `WORK_NETWORK_NAME`                   | `libre-webui-work`                                                                            | Managed sandbox bridge network for networked tasks       |
 | `WORK_RUNTIME_DNS`                    | unset                                                                                         | Comma-separated resolver IPs forced onto networked tasks |
-| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://`, else `/var/run/docker.sock`                                       | Docker Engine socket used for interactive terminals      |
+| `WORK_DOCKER_SOCKET`                  | `DOCKER_HOST` if `unix://`, else `/var/run/docker.sock`                                       | Docker Engine socket for terminals and diagnostics       |
 | `WORK_TERMINAL_MAX_SESSIONS_PER_TASK` | `2`                                                                                           | Simultaneous browser terminals attached to one task      |
 | `WORK_TERMINAL_IDLE_TIMEOUT_MS`       | `900000`                                                                                      | Idle timeout before a terminal session is closed         |
 | `WORK_HOST_WORKSPACES_ENABLED`        | `false`                                                                                       | Allow a task to use a host folder instead of a volume    |

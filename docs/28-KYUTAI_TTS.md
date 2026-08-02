@@ -157,18 +157,20 @@ curl http://localhost:8201/v1/audio/speech \
 ### Voices
 
 **Alba MacKenna (CC BY 4.0):**
-| Voice | Style |
-|-------|-------|
+
+| Voice                  | Style               |
+| ---------------------- | ------------------- |
 | `alba` / `alba-casual` | Casual conversation |
-| `alba-merchant` | Merchant character |
-| `alba-announcer` | Announcer style |
+| `alba-merchant`        | Merchant character  |
+| `alba-announcer`       | Announcer style     |
 
 **Expresso (CC BY-NC 4.0 - non-commercial):**
-| Voice | Emotion |
-|-------|---------|
-| `expresso-happy` | Happy |
-| `expresso-sad` | Sad |
-| `expresso-angry` | Angry |
+
+| Voice            | Emotion |
+| ---------------- | ------- |
+| `expresso-happy` | Happy   |
+| `expresso-sad`   | Sad     |
+| `expresso-angry` | Angry   |
 
 **VCTK (CC BY 4.0):**
 

@@ -60,6 +60,32 @@ For Ollama Cloud results, the UI normalizes cloud model names before pulling. If
 
 You can keep local models for private work and enable provider plugins for tasks that need larger hosted models.
 
+## Default Vision Model
+
+You can chat with a fast text model and still send images. Pick a vision model
+under **Settings → Model → Specialized Models → Vision Model**; whenever the
+outgoing chat context contains images — a new attachment, an image earlier in
+the session, or history in an incognito chat — that turn is routed to the
+configured vision model instead of the session model. Text-only turns keep the
+session model.
+
+The setting is per user, and the routing is automatic and silent. Leaving the
+selection on **Use the current chat model** disables it. Note that the check is
+for images, not for the session model's abilities: when a vision model is
+configured, every image-bearing turn uses it, even if the session model could
+handle images itself.
+
+The selection stores the exact provider identity (Ollama or a specific plugin)
+together with the model name, so a provider cannot capture an identically named
+model. If the saved selection loses that identity — for example the model or
+provider is no longer available — an image-bearing turn fails with:
+
+> The configured vision model has no provider identity. Re-select it in
+> Settings > Model > Vision Model.
+
+Re-selecting the model in Settings repairs it. Failing loudly is deliberate;
+Libre WebUI does not silently substitute another provider.
+
 ## Models for Work
 
 Work needs a chat model that can call tools. It can use:

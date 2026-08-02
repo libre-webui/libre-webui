@@ -321,11 +321,11 @@ Helm chart does not, so Work stays unavailable on Kubernetes. When a Compose
 deployment still reports **Runtime unavailable**, the Work page names which of
 these applies:
 
-| Message                                        | Cause and fix                                                                                                          |
-| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `The "docker" CLI is not installed…`           | A custom image without `docker-cli`. Use the official image, or point `WORK_DOCKER_COMMAND` at a CLI.                   |
-| `No Docker daemon is reachable…`               | The socket mount was removed, or the host daemon is stopped. Restore the mount in your Compose file and start Docker.   |
-| `The Docker socket is mounted but…cannot open` | The socket's group differs from the container's. Set `DOCKER_GID` in `.env` (see below) and recreate the container.     |
+| Message                                        | Cause and fix                                                                                                         |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `The "docker" CLI is not installed…`           | A custom image without `docker-cli`. Use the official image, or point `WORK_DOCKER_COMMAND` at a CLI.                 |
+| `No Docker daemon is reachable…`               | The socket mount was removed, or the host daemon is stopped. Restore the mount in your Compose file and start Docker. |
+| `The Docker socket is mounted but…cannot open` | The socket's group differs from the container's. Set `DOCKER_GID` in `.env` (see below) and recreate the container.   |
 
 Read the socket group through a container, because a macOS host reports a
 different value than the container sees:
