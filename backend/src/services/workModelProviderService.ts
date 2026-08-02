@@ -621,7 +621,9 @@ export class WorkModelProviderService {
       if (
         response.ok &&
         !contentType.includes('text/event-stream') &&
-        !contentType.includes('application/x-ndjson')
+        !contentType.includes('application/x-ndjson') &&
+        // The codex endpoint streams SSE without any content-type header.
+        plugin.id !== CODEX_OAUTH_PLUGIN_ID
       ) {
         const data = (await response.json()) as JsonObject;
         const normalized = normalizePluginWorkResponse(
@@ -776,7 +778,8 @@ export function buildPluginWorkPayload(
               max_output_tokens: params.maxTokens,
             }
           : {}),
-        stream: Boolean(request.stream),
+        // The codex endpoint rejects non-streaming requests outright.
+        stream: supportsSampling ? Boolean(request.stream) : true,
         store: false,
         include: ['reasoning.encrypted_content'],
       },

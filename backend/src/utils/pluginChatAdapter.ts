@@ -390,7 +390,8 @@ export function buildPluginChatPayload(
                 top_p: params.topP,
               }
             : {}),
-          stream: params.shouldStream,
+          // The codex endpoint rejects non-streaming requests outright.
+          stream: supportsSampling ? params.shouldStream : true,
           stateScope: providerStateScope,
         }
       ),

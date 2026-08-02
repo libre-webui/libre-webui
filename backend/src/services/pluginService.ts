@@ -1948,7 +1948,10 @@ export class PluginService {
         yield* forward(streamAnthropicResponse(response));
       } else if (apiMode === 'responses') {
         const contentType = response.headers.get('content-type') || '';
-        if (!contentType.includes('text/event-stream')) {
+        // The codex endpoint streams SSE without any content-type header.
+        const streamedAnyway =
+          activePlugin.id === CODEX_OAUTH_PLUGIN_ID && response.ok;
+        if (!contentType.includes('text/event-stream') && !streamedAnyway) {
           if (!response.ok) {
             const errorText = await response.text();
             throw new Error(
