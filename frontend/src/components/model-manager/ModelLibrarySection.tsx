@@ -308,7 +308,7 @@ function LibraryModelCard({
         </div>
 
         <Button
-          data-testid={`library-model-pull-${model.name}`}
+          data-testid={`library-model-install-${model.name}`}
           onClick={() => {
             if (!pullSectionExpanded) {
               onTogglePullSection();

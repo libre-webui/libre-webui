@@ -282,15 +282,6 @@ function initializeTables(): void {
     )
   `);
 
-  // Seed default system settings
-  const systemSettingsNow = Date.now();
-  db.prepare(
-    `
-      INSERT OR IGNORE INTO system_settings (key, value, updated_at)
-      VALUES (?, ?, ?)
-    `
-  ).run('allow_user_model_pull', 'true', systemSettingsNow);
-
   // Personas table - for AI personas/characters
   db.exec(`
     CREATE TABLE IF NOT EXISTS personas (

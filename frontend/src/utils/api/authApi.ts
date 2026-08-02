@@ -52,7 +52,6 @@ export const authApi = {
           hasUsers: true,
           userCount: 1,
           signupEnabled: true,
-          allowUserModelPull: true,
           version: appVersion,
         },
       });
@@ -84,7 +83,6 @@ export const authApi = {
           hasUsers: true,
           userCount: 1,
           signupEnabled: true,
-          allowUserModelPull: true,
           version: appVersion,
           turnstile: { enabled: false },
         },
@@ -111,7 +109,6 @@ export const authApi = {
         hasUsers: true,
         userCount: 1,
         signupEnabled: true,
-        allowUserModelPull: true,
         version: appVersion,
         turnstile: { enabled: false },
       });
@@ -169,26 +166,6 @@ export const authApi = {
     }
 
     return api.get('/auth/encryption-key').then(res => res.data);
-  },
-
-  updateModelPullSetting: (
-    allowUserModelPull: boolean
-  ): Promise<ApiResponse<SystemInfo>> => {
-    if (isDemoMode()) {
-      return createDemoResponse<SystemInfo>({
-        requiresAuth: true,
-        hasUsers: true,
-        userCount: 1,
-        signupEnabled: true,
-        allowUserModelPull,
-        version: appVersion,
-        turnstile: { enabled: false },
-      });
-    }
-
-    return api
-      .patch('/auth/system-settings/model-pull', { allowUserModelPull })
-      .then(res => res.data);
   },
 };
 

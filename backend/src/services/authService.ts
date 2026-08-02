@@ -21,7 +21,6 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { randomBytes } from 'crypto';
-import { systemSettingsService } from './systemSettingsService.js';
 import { turnstileService, TurnstilePublicConfig } from './turnstileService.js';
 import {
   canCreateLocalAccount,
@@ -73,7 +72,6 @@ export interface SystemInfo {
   hasUsers: boolean;
   userCount: number;
   signupEnabled: boolean;
-  allowUserModelPull: boolean;
   version?: string;
   turnstile: TurnstilePublicConfig;
 }
@@ -144,7 +142,6 @@ export class AuthService {
       hasUsers: userCount > 0,
       userCount,
       signupEnabled: canCreateLocalAccount(userCount),
-      allowUserModelPull: systemSettingsService.getAllowUserModelPull(),
       version: packageVersion,
       turnstile: turnstileService.getPublicConfig(),
     };

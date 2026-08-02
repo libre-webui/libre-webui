@@ -26,7 +26,6 @@ import {
   AuthenticatedRequest,
 } from '../middleware/auth.js';
 import { encryptionService } from '../services/encryptionService.js';
-import { systemSettingsService } from '../services/systemSettingsService.js';
 import { turnstileService } from '../services/turnstileService.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -220,45 +219,6 @@ router.get('/system-info', async (req, res) => {
     });
   }
 });
-
-/**
- * Update model pull permission (admin only)
- */
-router.patch(
-  '/system-settings/model-pull',
-  generalAuthRateLimiter,
-  authenticate,
-  requireAdmin,
-  async (req: AuthenticatedRequest, res) => {
-    try {
-      const { allowUserModelPull } = req.body as {
-        allowUserModelPull?: unknown;
-      };
-
-      if (typeof allowUserModelPull !== 'boolean') {
-        res.status(400).json({
-          success: false,
-          message: 'allowUserModelPull must be a boolean',
-        });
-        return;
-      }
-
-      systemSettingsService.setAllowUserModelPull(allowUserModelPull);
-      const systemInfo = authService.getSystemInfo();
-
-      res.json({
-        success: true,
-        data: systemInfo,
-      });
-    } catch (error) {
-      logger.error('Update model pull setting error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-      });
-    }
-  }
-);
 
 /**
  * Get encryption key for first-time setup

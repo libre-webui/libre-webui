@@ -76,9 +76,8 @@ export const HuggingFaceModelBrowser: React.FC<
   HuggingFaceModelBrowserProps
 > = ({ isOpen, onClose, onSelectModel, selectedModels = [] }) => {
   const { t } = useTranslation();
-  const { user, systemInfo } = useAuthStore();
-  const canInstallModels =
-    user?.role === 'admin' || (systemInfo?.allowUserModelPull ?? true);
+  const { user } = useAuthStore();
+  const canInstallModels = user?.role === 'admin';
   const [searchQuery, setSearchQuery] = useState('');
   const [task, setTask] = useState<TaskOption>('text-generation');
   const [sort, setSort] = useState<SortOption>('downloads');

@@ -23,7 +23,6 @@ const systemInfo = {
   hasUsers: true,
   userCount: 1,
   signupEnabled: true,
-  allowUserModelPull: true,
   version: '0.17.0-e2e',
   turnstile: { enabled: false },
 };

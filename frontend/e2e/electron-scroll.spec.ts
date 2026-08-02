@@ -26,7 +26,6 @@ const systemInfo = {
   requiresAuth: true,
   hasUsers: true,
   userCount: 1,
-  allowUserModelPull: true,
   version: '0.13.4-e2e',
   turnstile: { enabled: false },
 };

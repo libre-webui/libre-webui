@@ -90,9 +90,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
   const internalTriggerRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const { user, systemInfo } = useAuthStore();
-  const canInstallModels =
-    user?.role === 'admin' || (systemInfo?.allowUserModelPull ?? true);
+  const { user } = useAuthStore();
+  const canInstallModels = user?.role === 'admin';
 
   const [libraryCategory, setLibraryCategory] = useState('all');
   const [libraryDebouncedSearch, setLibraryDebouncedSearch] = useState('');

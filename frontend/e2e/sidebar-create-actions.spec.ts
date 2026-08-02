@@ -114,7 +114,6 @@ test('Work and Agents are hidden and route-protected for non-admin users', async
       requiresAuth: true,
       hasUsers: true,
       userCount: 2,
-      allowUserModelPull: true,
       version: '0.10.0-e2e',
       turnstile: { enabled: false },
     },

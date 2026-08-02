@@ -46,7 +46,6 @@ import { useChatStore } from '@/store/chatStore';
 import { getErrorMessage } from '@/store/chatStoreHelpers';
 import { useAppStore } from '@/store/appStore';
 import { usePluginStore } from '@/store/pluginStore';
-import { useAuthStore } from '@/store/authStore';
 import { EmbeddingModel, Theme } from '@/types';
 import { normalizeTheme } from '@/utils/theme';
 import {
@@ -58,7 +57,6 @@ import {
 import {
   preferencesApi,
   ollamaApi,
-  authApi,
   documentsApi,
   embeddingApi,
   ttsApi,
@@ -129,7 +127,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   } = useChatStore();
   const { theme, updateTheme, preferences, setPreferences, loadPreferences } =
     useAppStore();
-  const { user, systemInfo, setSystemInfo } = useAuthStore();
   const {
     plugins,
     isLoading: pluginLoading,
@@ -239,7 +236,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [tempSystemMessage, setTempSystemMessage] = useState(systemMessage);
 
   const [updatingAllModels, setUpdatingAllModels] = useState(false);
-  const [updatingModelPullAccess, setUpdatingModelPullAccess] = useState(false);
   const [updateProgress, setUpdateProgress] = useState<{
     current: number;
     total: number;
@@ -1038,27 +1034,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     );
   };
 
-  const handleModelPullAccessToggle = async (allowUserModelPull: boolean) => {
-    setUpdatingModelPullAccess(true);
-    try {
-      const response = await authApi.updateModelPullSetting(allowUserModelPull);
-      if (response.success && response.data) {
-        setSystemInfo(response.data);
-        toast.success(t('settings.model.modelPullAccessSaved'));
-      } else {
-        throw new Error(response.error || 'Failed to update model access');
-      }
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      toast.error(
-        `${t('settings.model.modelPullAccessSaveFailed')}: ${errorMessage}`
-      );
-    } finally {
-      setUpdatingModelPullAccess(false);
-    }
-  };
-
   const handleAutoTitleChange = (autoTitle: boolean) => {
     const newTitleSettings = {
       ...preferences.titleSettings,
@@ -1311,17 +1286,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             systemMessage={systemMessage}
             tempSystemMessage={tempSystemMessage}
             loading={loading}
-            user={user}
-            systemInfo={systemInfo}
             preferences={preferences}
             currentVisionModel={currentVisionModel}
             visionModelOptions={visionModelOptions}
             currentTaskModel={currentTaskModel}
             autoTitleTaskModelOptions={autoTitleTaskModelOptions}
-            updatingModelPullAccess={updatingModelPullAccess}
             updatingAllModels={updatingAllModels}
             updateProgress={updateProgress}
-            onModelPullAccessToggle={handleModelPullAccessToggle}
             onModelChange={handleModelChange}
             onSystemMessageChange={handleSystemMessageChange}
             onSystemMessageSave={handleSystemMessageSave}

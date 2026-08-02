@@ -157,7 +157,6 @@ test('Arabic mirrors the new Home and tab menus', async ({ page }) => {
       requiresAuth: true,
       hasUsers: true,
       userCount: 1,
-      allowUserModelPull: true,
       version: '0.17.0-e2e',
       turnstile: { enabled: false },
     },

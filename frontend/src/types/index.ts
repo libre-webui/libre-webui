@@ -492,7 +492,6 @@ export interface SystemInfo {
   hasUsers: boolean;
   userCount: number;
   signupEnabled: boolean;
-  allowUserModelPull?: boolean;
   version?: string;
   turnstile?: {
     enabled: boolean;

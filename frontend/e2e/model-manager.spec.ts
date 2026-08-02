@@ -45,7 +45,7 @@ test('cloud library pulls append the Ollama cloud suffix automatically', async (
     return url.includes('/api/ollama/pull/stream') && url.includes('model=');
   });
 
-  await page.getByTestId('library-model-pull-gpt-oss').click();
+  await page.getByTestId('library-model-install-gpt-oss').click();
   const request = await pullRequest;
   const model = new URL(request.url()).searchParams.get('model');
 

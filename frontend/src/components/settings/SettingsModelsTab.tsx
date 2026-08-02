@@ -18,13 +18,7 @@
 import type { ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Select, Textarea } from '@/components/ui';
-import type {
-  ChatProviderType,
-  OllamaModel,
-  SystemInfo,
-  User,
-  UserPreferences,
-} from '@/types';
+import type { ChatProviderType, OllamaModel, UserPreferences } from '@/types';
 import { SettingsToggle } from './SettingsToggle';
 import {
   chatModelOptionKey,
@@ -54,17 +48,13 @@ interface SettingsModelsTabProps {
   systemMessage: string;
   tempSystemMessage: string;
   loading: boolean;
-  user: User | null;
-  systemInfo: SystemInfo | null;
   preferences: UserPreferences;
   currentVisionModel: string;
   visionModelOptions: SelectOption[];
   currentTaskModel: string;
   autoTitleTaskModelOptions: SelectOption[];
-  updatingModelPullAccess: boolean;
   updatingAllModels: boolean;
   updateProgress: UpdateProgress | null;
-  onModelPullAccessToggle: (allowUserModelPull: boolean) => void;
   onModelChange: (event: ChangeEvent<HTMLSelectElement>) => void;
   onSystemMessageChange: (event: ChangeEvent<HTMLTextAreaElement>) => void;
   onSystemMessageSave: () => void;
@@ -82,17 +72,13 @@ export function SettingsModelsTab({
   systemMessage,
   tempSystemMessage,
   loading,
-  user,
-  systemInfo,
   preferences,
   currentVisionModel,
   visionModelOptions,
   currentTaskModel,
   autoTitleTaskModelOptions,
-  updatingModelPullAccess,
   updatingAllModels,
   updateProgress,
-  onModelPullAccessToggle,
   onModelChange,
   onSystemMessageChange,
   onSystemMessageSave,
@@ -123,26 +109,6 @@ export function SettingsModelsTab({
           {t('settings.model.title')}
         </h3>
         <div className='space-y-6'>
-          {user?.role === 'admin' && (
-            <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
-              <div className='flex items-center justify-between'>
-                <div className='flex flex-col pe-4'>
-                  <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
-                    {t('settings.model.modelPullAccess')}
-                  </span>
-                  <span className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                    {t('settings.model.modelPullAccessDescription')}
-                  </span>
-                </div>
-                <SettingsToggle
-                  checked={systemInfo?.allowUserModelPull ?? true}
-                  onChange={onModelPullAccessToggle}
-                  disabled={updatingModelPullAccess}
-                />
-              </div>
-            </div>
-          )}
-
           <div className='bg-white dark:bg-dark-100 rounded-lg p-4 border border-gray-200 dark:border-dark-300'>
             <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
               {t('settings.model.defaultModel')}

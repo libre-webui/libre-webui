@@ -449,11 +449,7 @@
         "taskModelDescription": "Model used for generating conversation titles"
       },
       "updatingModel": "Updating {{name}} ({{current}}/{{total}})",
-      "modelsProgress": "{{current}} of {{total}} models",
-      "modelPullAccess": "Model Install Access",
-      "modelPullAccessDescription": "Allow non-admin users to pull and install new models.",
-      "modelPullAccessSaved": "Model install permissions updated",
-      "modelPullAccessSaveFailed": "Failed to update model install permissions"
+      "modelsProgress": "{{current}} of {{total}} models"
     },
     "systemMessage": {
       "title": "System Message",

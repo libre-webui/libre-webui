@@ -30,7 +30,6 @@ type MockSystemInfo = {
   hasUsers: boolean;
   userCount: number;
   signupEnabled?: boolean;
-  allowUserModelPull: boolean;
   version: string;
   turnstile?: { enabled: boolean; siteKey?: string };
 };
@@ -401,7 +400,6 @@ const defaultSystemInfo: MockSystemInfo = {
   requiresAuth: false,
   hasUsers: true,
   userCount: 1,
-  allowUserModelPull: true,
   version: '0.10.0-e2e',
   turnstile: { enabled: false },
 };
