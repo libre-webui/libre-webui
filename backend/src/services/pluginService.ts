@@ -1694,6 +1694,23 @@ export class PluginService {
     }
     if (activePlugin.id === CODEX_OAUTH_PLUGIN_ID) {
       await codexOAuthService.ensureFreshToken();
+      // The codex endpoint only answers as an SSE stream; aggregate it here
+      // so non-streaming callers still get a complete response.
+      let aggregated = '';
+      for await (const chunk of this.executePluginStreamRequest(
+        model,
+        messages,
+        options,
+        userId,
+        activePlugin.id
+      )) {
+        if (chunk.type === 'content' && chunk.content) {
+          aggregated += chunk.content;
+        }
+      }
+      return {
+        choices: [{ message: { role: 'assistant', content: aggregated } }],
+      } as PluginResponse;
     }
 
     const pluginVars = this.getPluginVariables(activePlugin, userId);

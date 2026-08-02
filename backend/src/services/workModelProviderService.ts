@@ -368,6 +368,14 @@ export class WorkModelProviderService {
     validatePluginModel(request.model);
     if (plugin.id === CODEX_OAUTH_PLUGIN_ID) {
       await codexOAuthService.ensureFreshToken();
+      // The codex endpoint only answers as an SSE stream; aggregate it.
+      return this.generatePluginStream(
+        plugin,
+        { ...request, stream: true },
+        userId,
+        {},
+        signal
+      );
     }
     const variables = this.dependencies.plugins.getPluginVariables(
       plugin,
