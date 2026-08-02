@@ -2,6 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (() => {
+        let mode = 'dark';
+
+        try {
+          const savedState = JSON.parse(
+            localStorage.getItem('libre-webui-app-state') || 'null'
+          );
+
+          if (savedState?.state?.theme?.mode === 'light') {
+            mode = 'light';
+          }
+        } catch {
+          // Keep the dark default when persisted state is unavailable or invalid.
+        }
+
+        document.documentElement.classList.toggle('dark', mode === 'dark');
+        document.documentElement.style.colorScheme = mode;
+      })();
+    </script>
     <!-- Always use dark favicon -->
     <link rel="icon" type="image/png" href="/favicon-dark.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

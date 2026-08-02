@@ -27,6 +27,7 @@ type MockSystemInfo = {
   requiresAuth: boolean;
   hasUsers: boolean;
   userCount: number;
+  signupEnabled?: boolean;
   allowUserModelPull: boolean;
   version: string;
   turnstile?: { enabled: boolean; siteKey?: string };
