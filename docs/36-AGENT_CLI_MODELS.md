@@ -45,7 +45,9 @@ runs in your server's shell, it shows up.
 Each CLI can expose several entries in the Agents group:
 
 - **Claude Code** offers its signed-in default plus Sonnet, Opus, and Haiku.
-- **Codex** and **Pi** run with the model configured in the CLI itself.
+- **Codex** offers its configured default plus the documented ChatGPT sign-in
+  family: GPT-5.6 Sol, Terra, Luna, and GPT-5.3 Codex Spark.
+- **Pi** runs with the model configured in the CLI itself.
 - **OpenCode** lists the models of every provider it is authenticated with
   (from `opencode models`), and always requires an explicit choice — its
   CLI-level default can point at a local server that is not reachable from the

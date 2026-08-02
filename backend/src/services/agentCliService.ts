@@ -23,6 +23,7 @@ import { ChatMessage } from '../types/index.js';
 import { PluginStreamChunk } from '../utils/pluginStreaming.js';
 import { userModel } from '../models/userModel.js';
 import { createLogger } from '../utils/logger.js';
+import pluginUsageService from './pluginUsageService.js';
 
 const logger = createLogger('agent-cli');
 
@@ -97,6 +98,13 @@ export const AGENT_CLI_DEFINITIONS: AgentCliDefinition[] = [
       '--skip-git-repo-check',
       ...(model ? ['-m', model] : []),
       '-',
+    ],
+    // The ChatGPT sign-in family from developers.openai.com/codex/models.
+    modelOptions: [
+      { id: 'gpt-5.6-sol', label: 'GPT-5.6 Sol' },
+      { id: 'gpt-5.6-terra', label: 'GPT-5.6 Terra' },
+      { id: 'gpt-5.6-luna', label: 'GPT-5.6 Luna' },
+      { id: 'gpt-5.3-codex-spark', label: 'GPT-5.3 Codex Spark' },
     ],
   },
   {
@@ -567,6 +575,19 @@ export class AgentCliService {
     let stderrBuffer = '';
     let totalChars = 0;
     let settled = false;
+    const startedAt = Date.now();
+
+    const recordUsage = (status: 'success' | 'error') => {
+      pluginUsageService.record({
+        userId,
+        pluginId: `agent-cli:${definition.id}`,
+        pluginName: definition.name,
+        capability: 'chat',
+        model: options.model || definition.id,
+        status,
+        durationMs: Date.now() - startedAt,
+      });
+    };
 
     const timeout = setTimeout(() => {
       fail(new Error(`Agent CLI timed out after ${AGENT_TIMEOUT_MS}ms.`));
@@ -577,6 +598,7 @@ export class AgentCliService {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
+      recordUsage('error');
       queue.finish(error);
     };
 
@@ -584,6 +606,7 @@ export class AgentCliService {
       if (settled) return;
       settled = true;
       clearTimeout(timeout);
+      recordUsage('success');
       const metadata: Record<string, unknown> = { agentCli: definition.id };
       if (state.agentSessionId) {
         metadata.agentSessionId = state.agentSessionId;

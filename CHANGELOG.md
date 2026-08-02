@@ -19,9 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   intensity ramp. The palette passes colorblind-safety validation in both
   themes.
 - **Agent entries carry a model choice.** Claude Code offers Sonnet, Opus, and
-  Haiku beside its default, and OpenCode lists every model its providers offer
-  and requires an explicit pick, because its CLI default can point at an
-  unreachable local server.
+  Haiku beside its default, Codex offers the documented ChatGPT sign-in family
+  (GPT-5.6 Sol, Terra, Luna, and GPT-5.3 Codex Spark), and OpenCode lists
+  every model its providers offer and requires an explicit pick, because its
+  CLI default can point at an unreachable local server.
+- **Ollama and agent chats are metered too.** The Usage page now counts local
+  Ollama conversations (with prompt and completion tokens) and agent CLI turns
+  beside provider plugins, so the activity calendar and model tables cover
+  everything the instance runs.
 
 ### 🔧 Improvements
 

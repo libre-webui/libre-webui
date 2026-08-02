@@ -737,7 +737,9 @@ router.post(
 
           res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
           res.end();
-        }
+        },
+        undefined,
+        { userId }
       );
     } catch (error: unknown) {
       if (!res.headersSent) {

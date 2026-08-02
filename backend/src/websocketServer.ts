@@ -543,6 +543,7 @@ export function registerWebSocketServer(server: Server): void {
             request: chatRequest,
             streamSource: ollamaService,
             messageId: assistantMessageId,
+            userId,
           });
 
           assistantContent = ollamaStream.content;

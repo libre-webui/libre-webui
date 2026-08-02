@@ -237,7 +237,11 @@ class ChatGenerationService {
           throw pluginError;
         }
 
-        const response = await ollamaService.generateChatResponse(chatRequest);
+        const response = await ollamaService.generateChatResponse(
+          chatRequest,
+          undefined,
+          { userId }
+        );
         return {
           response,
           assistantContent: response.message.content,
@@ -247,7 +251,11 @@ class ChatGenerationService {
       }
     }
 
-    const response = await ollamaService.generateChatResponse(chatRequest);
+    const response = await ollamaService.generateChatResponse(
+      chatRequest,
+      undefined,
+      { userId }
+    );
     return {
       response,
       assistantContent: response.message.content,

@@ -32,7 +32,9 @@ export interface OllamaChatStreamGenerator {
     request: OllamaChatRequest,
     onChunk: (chunk: OllamaChatResponse) => void,
     onError: (error: Error) => void,
-    onComplete: () => void
+    onComplete: () => void,
+    signal?: AbortSignal,
+    usage?: { userId?: string }
   ): Promise<void>;
 }
 
@@ -41,6 +43,8 @@ export interface StreamOllamaChatResponseOptions {
   request: OllamaChatRequest;
   streamSource: OllamaChatStreamGenerator;
   messageId?: string;
+  /** Attributes the metered usage of this call to a user. */
+  userId?: string;
 }
 
 export interface StreamOllamaChatResponseResult {
@@ -55,6 +59,7 @@ export async function streamOllamaChatResponse({
   request,
   streamSource,
   messageId,
+  userId,
 }: StreamOllamaChatResponseOptions): Promise<StreamOllamaChatResponseResult> {
   return new Promise(resolve => {
     let content = '';
@@ -107,8 +112,13 @@ export async function streamOllamaChatResponse({
     };
 
     streamSource
-      .generateChatStreamResponse(request, handleChunk, handleError, () =>
-        finish({ completed: true })
+      .generateChatStreamResponse(
+        request,
+        handleChunk,
+        handleError,
+        () => finish({ completed: true }),
+        undefined,
+        { userId }
       )
       .catch(error => {
         handleError(error instanceof Error ? error : new Error(String(error)));
