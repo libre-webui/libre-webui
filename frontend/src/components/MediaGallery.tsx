@@ -99,14 +99,14 @@ export function MediaGallery({
 
   if (query.isLoading) {
     return (
-      <div className='flex justify-center py-20'>
+      <div className='flex justify-center py-12'>
         <Loader2 className='h-8 w-8 animate-spin text-gray-400' />
       </div>
     );
   }
   if (media.length === 0) {
     return (
-      <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white/30 px-6 py-20 text-center dark:border-white/15 dark:bg-white/[0.02]'>
+      <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white/30 px-6 py-12 text-center dark:border-white/15 dark:bg-white/[0.02]'>
         <ImageOff className='mb-4 h-10 w-10 text-gray-300 dark:text-gray-600' />
         <h3 className='text-lg font-medium'>{t('mediaGallery.empty')}</h3>
         <p className='mt-2 max-w-sm text-gray-500 dark:text-gray-400'>
@@ -249,7 +249,7 @@ function MediaPreview({
     );
   }
   return (
-    <div className='flex min-h-40 flex-col items-center justify-center gap-4 bg-gradient-to-br from-primary-500/10 to-cyan-500/10 p-5'>
+    <div className='flex min-h-40 flex-col items-center justify-center gap-3 bg-gradient-to-br from-primary-500/10 to-cyan-500/10 p-4'>
       <Volume2 className='h-9 w-9 text-primary-500' />
       <audio src={source} controls preload='metadata' className='w-full' />
     </div>

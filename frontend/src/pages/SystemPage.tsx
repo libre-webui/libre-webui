@@ -98,17 +98,17 @@ const Panel: React.FC<
 > = ({ title, description, icon: Icon, className, action, children }) => (
   <section
     className={cn(
-      'overflow-hidden rounded-3xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75',
+      'overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75',
       className
     )}
   >
-    <div className='flex items-start justify-between gap-4 border-b border-gray-200/70 px-5 py-5 dark:border-white/[0.07] sm:px-6'>
+    <div className='flex items-start justify-between gap-4 border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.07] sm:px-5'>
       <div className='flex min-w-0 items-start gap-3'>
-        <div className='mt-0.5 rounded-xl bg-primary-500/10 p-2 text-primary-600 dark:text-primary-300'>
+        <div className='mt-0.5 rounded-xl bg-primary-500/10 p-1.5 text-primary-600 dark:text-primary-300'>
           <Icon className='h-4 w-4' />
         </div>
         <div className='min-w-0'>
-          <h2 className='text-base font-medium text-gray-950 dark:text-dark-950'>
+          <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
             {title}
           </h2>
           {description && (
@@ -129,7 +129,7 @@ const DetailRow: React.FC<{
   value: React.ReactNode;
   mono?: boolean;
 }> = ({ label, value, mono }) => (
-  <div className='flex min-w-0 items-start justify-between gap-5 border-b border-gray-100 py-3 last:border-0 dark:border-white/[0.05]'>
+  <div className='flex min-w-0 items-start justify-between gap-5 border-b border-gray-100 py-2 last:border-0 dark:border-white/[0.05]'>
     <dt className='shrink-0 text-xs text-gray-500 dark:text-dark-500'>
       {label}
     </dt>
@@ -241,10 +241,10 @@ const SystemPage: React.FC = () => {
       )}
 
       {diagnostics && (
-        <div data-testid='system-dashboard' className='space-y-6'>
+        <div data-testid='system-dashboard' className='space-y-4'>
           <SummaryCards diagnostics={diagnostics} />
 
-          <div className='grid gap-6 xl:grid-cols-2'>
+          <div className='grid gap-4 xl:grid-cols-2'>
             <HostPanel diagnostics={diagnostics} />
             <MemoryPanel diagnostics={diagnostics} />
           </div>
@@ -320,7 +320,7 @@ const SummaryCards: React.FC<{ diagnostics: SystemDiagnostics }> = ({
         return (
           <section
             key={card.label}
-            className='rounded-2xl border border-gray-200/80 bg-white/75 p-5 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/70'
+            className='rounded-2xl border border-gray-200/80 bg-white/75 p-4 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/70'
           >
             <div className='flex items-center justify-between gap-3'>
               <span className='text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-dark-500'>
@@ -328,10 +328,10 @@ const SummaryCards: React.FC<{ diagnostics: SystemDiagnostics }> = ({
               </span>
               <Icon className='h-4 w-4 text-primary-500 dark:text-primary-400' />
             </div>
-            <div className='mt-4 text-3xl font-normal tracking-[-0.04em] text-gray-950 dark:text-dark-950'>
+            <div className='mt-2 text-2xl font-normal tracking-[-0.04em] text-gray-950 dark:text-dark-950'>
               {card.value}
             </div>
-            <p className='mt-2 text-xs text-gray-500 dark:text-dark-500'>
+            <p className='mt-1.5 text-xs text-gray-500 dark:text-dark-500'>
               {card.detail}
             </p>
           </section>
@@ -359,7 +359,7 @@ const HostPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
         </span>
       }
     >
-      <dl className='px-5 py-2 sm:px-6'>
+      <dl className='px-4 py-2 sm:px-5'>
         <DetailRow
           label={t('systemPage.host.hostname')}
           value={host.hostname}
@@ -411,11 +411,11 @@ const MemoryPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
       description={t('systemPage.memory.description')}
       icon={MemoryStick}
     >
-      <div className='space-y-6 p-5 sm:p-6'>
+      <div className='space-y-4 p-4 sm:p-5'>
         <div>
           <div className='mb-2 flex items-end justify-between gap-4'>
             <div>
-              <div className='text-3xl tracking-[-0.04em] text-gray-950 dark:text-dark-950'>
+              <div className='text-2xl tracking-[-0.04em] text-gray-950 dark:text-dark-950'>
                 {numberFormatter.format(memory.usedPercent)}%
               </div>
               <div className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
@@ -445,7 +445,7 @@ const MemoryPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
           ].map(([label, value]) => (
             <div
               key={String(label)}
-              className='rounded-2xl bg-gray-50 px-4 py-3 dark:bg-dark-200/70'
+              className='rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-dark-200/70'
             >
               <div className='text-[11px] text-gray-500 dark:text-dark-500'>
                 {label}
@@ -472,15 +472,15 @@ const StoragePanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
       icon={HardDrive}
     >
       {diagnostics.filesystems.length === 0 ? (
-        <p className='p-6 text-sm text-gray-500 dark:text-dark-500'>
+        <p className='p-5 text-sm text-gray-500 dark:text-dark-500'>
           {t('systemPage.storage.empty')}
         </p>
       ) : (
-        <div className='grid gap-4 p-5 sm:grid-cols-2 sm:p-6'>
+        <div className='grid gap-3 p-4 sm:grid-cols-2 sm:p-5'>
           {diagnostics.filesystems.map(filesystem => (
             <div
               key={`${filesystem.label}:${filesystem.path}`}
-              className='rounded-2xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/[0.06] dark:bg-dark-200/55'
+              className='rounded-xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/[0.06] dark:bg-dark-200/55'
             >
               <div className='flex items-start justify-between gap-4'>
                 <div className='min-w-0'>
@@ -553,7 +553,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
       }
     >
       {!docker.available ? (
-        <div className='m-5 flex items-start gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-600 dark:border-white/[0.07] dark:bg-dark-200/60 dark:text-dark-600 sm:m-6'>
+        <div className='m-4 flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm text-gray-600 dark:border-white/[0.07] dark:bg-dark-200/60 dark:text-dark-600 sm:m-5'>
           <TriangleAlert className='mt-0.5 h-4 w-4 shrink-0' />
           <div>
             <p>{docker.reason || t('systemPage.docker.unavailableDetail')}</p>
@@ -568,7 +568,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
         </div>
       ) : (
         <>
-          <div className='grid gap-3 border-b border-gray-200/70 p-5 dark:border-white/[0.07] sm:grid-cols-2 sm:p-6 lg:grid-cols-4'>
+          <div className='grid gap-3 border-b border-gray-200/70 p-4 dark:border-white/[0.07] sm:grid-cols-2 sm:p-5 lg:grid-cols-4'>
             {[
               [t('systemPage.docker.running'), docker.runningContainers],
               [t('systemPage.docker.stopped'), docker.stoppedContainers],
@@ -577,19 +577,19 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
             ].map(([label, value]) => (
               <div
                 key={String(label)}
-                className='rounded-2xl bg-gray-50 px-4 py-3 dark:bg-dark-200/70'
+                className='rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-dark-200/70'
               >
                 <div className='text-[11px] text-gray-500 dark:text-dark-500'>
                   {label}
                 </div>
-                <div className='mt-1 text-2xl text-gray-950 dark:text-dark-950'>
+                <div className='mt-1 text-xl text-gray-950 dark:text-dark-950'>
                   {value}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className='flex flex-wrap gap-2 px-5 py-4 sm:px-6'>
+          <div className='flex flex-wrap gap-2 px-4 py-4 sm:px-5'>
             {docker.serverVersion && (
               <EnginePill
                 label={t('systemPage.docker.version')}
@@ -623,7 +623,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
           </div>
 
           {docker.containers.length === 0 ? (
-            <p className='px-6 pb-6 text-sm text-gray-500 dark:text-dark-500'>
+            <p className='px-5 pb-5 text-sm text-gray-500 dark:text-dark-500'>
               {t('systemPage.docker.empty')}
             </p>
           ) : (
@@ -634,16 +634,16 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
               >
                 <thead className='text-[11px] uppercase tracking-[0.1em] text-gray-400 dark:text-dark-500'>
                   <tr>
-                    <th className='px-6 py-3 text-start font-medium'>
+                    <th className='px-5 py-2 text-start font-medium'>
                       {t('systemPage.docker.container')}
                     </th>
-                    <th className='px-4 py-3 text-start font-medium'>
+                    <th className='px-4 py-2 text-start font-medium'>
                       {t('systemPage.docker.image')}
                     </th>
-                    <th className='px-4 py-3 text-start font-medium'>
+                    <th className='px-4 py-2 text-start font-medium'>
                       {t('systemPage.docker.state')}
                     </th>
-                    <th className='px-6 py-3 text-end font-medium'>
+                    <th className='px-5 py-2 text-end font-medium'>
                       {t('systemPage.docker.created')}
                     </th>
                   </tr>
@@ -651,7 +651,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
                 <tbody className='divide-y divide-gray-100 dark:divide-white/[0.06]'>
                   {docker.containers.map(container => (
                     <tr key={container.id}>
-                      <td className='px-6 py-4'>
+                      <td className='px-5 py-2.5'>
                         <div className='font-medium text-gray-900 dark:text-dark-900'>
                           {container.name}
                         </div>
@@ -659,7 +659,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
                           {container.id}
                         </div>
                       </td>
-                      <td className='max-w-[280px] px-4 py-4'>
+                      <td className='max-w-[280px] px-4 py-2.5'>
                         <div
                           className='truncate font-mono text-[11px] text-gray-600 dark:text-dark-600'
                           title={container.image}
@@ -667,7 +667,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
                           {container.image}
                         </div>
                       </td>
-                      <td className='px-4 py-4'>
+                      <td className='px-4 py-2.5'>
                         <span
                           className={cn(
                             'inline-flex rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.08em]',
@@ -680,7 +680,7 @@ const DockerPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
                           {container.status}
                         </div>
                       </td>
-                      <td className='px-6 py-4 text-end text-xs text-gray-500 dark:text-dark-500'>
+                      <td className='px-5 py-2.5 text-end text-xs text-gray-500 dark:text-dark-500'>
                         {container.createdAt
                           ? dateFormatter.format(container.createdAt)
                           : '—'}
@@ -717,15 +717,15 @@ const NetworkPanel: React.FC<{ diagnostics: SystemDiagnostics }> = ({
       icon={Network}
     >
       {diagnostics.network.interfaces.length === 0 ? (
-        <p className='p-6 text-sm text-gray-500 dark:text-dark-500'>
+        <p className='p-5 text-sm text-gray-500 dark:text-dark-500'>
           {t('systemPage.network.empty')}
         </p>
       ) : (
-        <div className='grid gap-4 p-5 sm:grid-cols-2 sm:p-6 xl:grid-cols-3'>
+        <div className='grid gap-3 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3'>
           {diagnostics.network.interfaces.map(networkInterface => (
             <div
               key={networkInterface.name}
-              className='rounded-2xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/[0.06] dark:bg-dark-200/55'
+              className='rounded-xl border border-gray-200/80 bg-gray-50/70 p-4 dark:border-white/[0.06] dark:bg-dark-200/55'
             >
               <div className='flex items-center gap-2'>
                 <Box className='h-4 w-4 text-primary-500' />

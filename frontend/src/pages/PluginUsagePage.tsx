@@ -110,11 +110,11 @@ const UsageChart: React.FC<UsageChartProps> = ({
   return (
     <div
       data-testid='plugin-usage-chart'
-      className='overflow-hidden rounded-3xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'
+      className='overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'
     >
-      <div className='flex flex-col gap-3 border-b border-gray-200/70 px-5 py-5 dark:border-white/[0.07] sm:flex-row sm:items-center sm:justify-between sm:px-6'>
+      <div className='flex flex-col gap-3 border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.07] sm:flex-row sm:items-center sm:justify-between sm:px-5'>
         <div>
-          <h2 className='text-base font-medium text-gray-950 dark:text-dark-950'>
+          <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
             {t('usageAnalytics.activity.title')}
           </h2>
           <p className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
@@ -368,14 +368,14 @@ const PluginUsagePage: React.FC = () => {
       )}
 
       {analytics && (
-        <div className='space-y-6'>
+        <div className='space-y-4'>
           <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
             {cards.map(card => {
               const Icon = card.icon;
               return (
                 <section
                   key={card.label}
-                  className='rounded-2xl border border-gray-200/80 bg-white/75 p-5 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/70'
+                  className='rounded-2xl border border-gray-200/80 bg-white/75 p-4 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/70'
                 >
                   <div className='flex items-center justify-between gap-3'>
                     <span className='text-xs font-medium uppercase tracking-[0.12em] text-gray-500 dark:text-dark-500'>
@@ -383,10 +383,10 @@ const PluginUsagePage: React.FC = () => {
                     </span>
                     <Icon className='h-4 w-4 text-primary-500 dark:text-primary-400' />
                   </div>
-                  <div className='mt-4 text-3xl font-normal tracking-[-0.04em] text-gray-950 dark:text-dark-950'>
+                  <div className='mt-2 text-2xl font-normal tracking-[-0.04em] text-gray-950 dark:text-dark-950'>
                     {card.value}
                   </div>
-                  <p className='mt-2 text-xs text-gray-500 dark:text-dark-500'>
+                  <p className='mt-1.5 text-xs text-gray-500 dark:text-dark-500'>
                     {card.detail}
                   </p>
                 </section>
@@ -401,7 +401,7 @@ const PluginUsagePage: React.FC = () => {
           />
 
           {analytics.totals.calls === 0 ? (
-            <div className='rounded-3xl border border-dashed border-gray-300 px-6 py-16 text-center dark:border-white/[0.12]'>
+            <div className='rounded-2xl border border-dashed border-gray-300 px-6 py-10 text-center dark:border-white/[0.12]'>
               <Bot className='mx-auto h-8 w-8 text-gray-400 dark:text-dark-500' />
               <h2 className='mt-4 text-base font-medium text-gray-900 dark:text-dark-900'>
                 {t('usageAnalytics.empty.title')}
@@ -411,10 +411,10 @@ const PluginUsagePage: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div className='grid gap-6 xl:grid-cols-[1.15fr_0.85fr]'>
-              <section className='overflow-hidden rounded-3xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'>
-                <div className='border-b border-gray-200/70 px-5 py-5 dark:border-white/[0.07] sm:px-6'>
-                  <h2 className='text-base font-medium text-gray-950 dark:text-dark-950'>
+            <div className='grid gap-4 xl:grid-cols-[1.15fr_0.85fr]'>
+              <section className='overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'>
+                <div className='border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.07] sm:px-5'>
+                  <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
                     {t('usageAnalytics.models.title')}
                   </h2>
                   <p className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
@@ -425,19 +425,19 @@ const PluginUsagePage: React.FC = () => {
                   <table className='w-full min-w-[620px] text-start text-sm'>
                     <thead className='text-[11px] uppercase tracking-[0.1em] text-gray-400 dark:text-dark-500'>
                       <tr>
-                        <th className='px-6 py-3 text-start font-medium'>
+                        <th className='px-5 py-2 text-start font-medium'>
                           {t('usageAnalytics.models.model')}
                         </th>
-                        <th className='px-4 py-3 text-end font-medium'>
+                        <th className='px-4 py-2 text-end font-medium'>
                           {t('usageAnalytics.metrics.calls')}
                         </th>
-                        <th className='px-4 py-3 text-end font-medium'>
+                        <th className='px-4 py-2 text-end font-medium'>
                           {t('usageAnalytics.metrics.tokens')}
                         </th>
-                        <th className='px-4 py-3 text-end font-medium'>
+                        <th className='px-4 py-2 text-end font-medium'>
                           {t('usageAnalytics.models.success')}
                         </th>
-                        <th className='px-6 py-3 text-end font-medium'>
+                        <th className='px-5 py-2 text-end font-medium'>
                           {t('usageAnalytics.models.latency')}
                         </th>
                       </tr>
@@ -445,7 +445,7 @@ const PluginUsagePage: React.FC = () => {
                     <tbody className='divide-y divide-gray-100 dark:divide-white/[0.06]'>
                       {analytics.models.slice(0, 12).map(model => (
                         <tr key={`${model.pluginId}:${model.model}`}>
-                          <td className='px-6 py-4'>
+                          <td className='px-5 py-2.5'>
                             <div
                               className='max-w-[260px] truncate font-medium text-gray-900 dark:text-dark-900'
                               title={model.model}
@@ -456,16 +456,16 @@ const PluginUsagePage: React.FC = () => {
                               {model.pluginName}
                             </div>
                           </td>
-                          <td className='px-4 py-4 text-end tabular-nums text-gray-700 dark:text-dark-700'>
+                          <td className='px-4 py-2.5 text-end tabular-nums text-gray-700 dark:text-dark-700'>
                             {formatCount(model.calls)}
                           </td>
-                          <td className='px-4 py-4 text-end tabular-nums text-gray-700 dark:text-dark-700'>
+                          <td className='px-4 py-2.5 text-end tabular-nums text-gray-700 dark:text-dark-700'>
                             {model.tokens ? formatCount(model.tokens) : '—'}
                           </td>
-                          <td className='px-4 py-4 text-end tabular-nums text-gray-700 dark:text-dark-700'>
+                          <td className='px-4 py-2.5 text-end tabular-nums text-gray-700 dark:text-dark-700'>
                             {successRate(model.calls, model.errors).toFixed(1)}%
                           </td>
-                          <td className='px-6 py-4 text-end tabular-nums text-gray-500 dark:text-dark-500'>
+                          <td className='px-5 py-2.5 text-end tabular-nums text-gray-500 dark:text-dark-500'>
                             {formatLatency(model.averageLatencyMs)}
                           </td>
                         </tr>
@@ -475,9 +475,9 @@ const PluginUsagePage: React.FC = () => {
                 </div>
               </section>
 
-              <div className='space-y-6'>
-                <section className='rounded-3xl border border-gray-200/80 bg-white/80 p-5 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75 sm:p-6'>
-                  <h2 className='text-base font-medium text-gray-950 dark:text-dark-950'>
+              <div className='space-y-4'>
+                <section className='rounded-2xl border border-gray-200/80 bg-white/80 p-4 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75 sm:p-5'>
+                  <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
                     {t('usageAnalytics.providers.title')}
                   </h2>
                   <div className='mt-5 space-y-4'>
@@ -515,10 +515,10 @@ const PluginUsagePage: React.FC = () => {
                   </div>
                 </section>
 
-                <section className='rounded-3xl border border-gray-200/80 bg-white/80 p-5 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75 sm:p-6'>
+                <section className='rounded-2xl border border-gray-200/80 bg-white/80 p-4 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75 sm:p-5'>
                   <div className='flex items-center gap-2'>
                     <Users className='h-4 w-4 text-primary-500 dark:text-primary-400' />
-                    <h2 className='text-base font-medium text-gray-950 dark:text-dark-950'>
+                    <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
                       {t('usageAnalytics.capabilities.title')}
                     </h2>
                   </div>
@@ -526,7 +526,7 @@ const PluginUsagePage: React.FC = () => {
                     {analytics.capabilities.map(capability => (
                       <div
                         key={capability.capability}
-                        className='rounded-2xl bg-gray-50 px-4 py-3 dark:bg-dark-200/70'
+                        className='rounded-xl bg-gray-50 px-3 py-2.5 dark:bg-dark-200/70'
                       >
                         <div className='text-xs font-medium capitalize text-gray-500 dark:text-dark-500'>
                           {capability.capability}

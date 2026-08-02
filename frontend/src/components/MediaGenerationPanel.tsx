@@ -172,9 +172,9 @@ export function MediaGenerationPanel({
         role='dialog'
         aria-modal='true'
         aria-labelledby={titleId}
-        className='relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-gray-200/80 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-dark-25/95'
+        className='relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-white/10 dark:bg-dark-25/95'
       >
-        <div className='flex items-center justify-between border-b border-gray-200/70 px-5 py-4 dark:border-white/[0.08] sm:px-6'>
+        <div className='flex items-center justify-between border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.08] sm:px-5'>
           <div>
             <h2
               id={titleId}
@@ -191,8 +191,8 @@ export function MediaGenerationPanel({
           </button>
         </div>
 
-        <div className='scroll-region min-h-0 flex-1 space-y-5 p-5 sm:p-6'>
-          <div className='grid grid-cols-2 gap-2 rounded-2xl bg-gray-100 p-1 dark:bg-white/[0.05]'>
+        <div className='scroll-region min-h-0 flex-1 space-y-4 p-4 sm:p-5'>
+          <div className='grid grid-cols-2 gap-2 rounded-xl bg-gray-100 p-1 dark:bg-white/[0.05]'>
             {(['video', 'audio'] as const).map(option => (
               <button
                 key={option}
@@ -220,7 +220,7 @@ export function MediaGenerationPanel({
               <Loader2 className='h-7 w-7 animate-spin' />
             </div>
           ) : models.length === 0 ? (
-            <div className='rounded-2xl border border-amber-500/25 bg-amber-500/10 p-5 text-sm text-amber-800 dark:text-amber-200'>
+            <div className='rounded-xl border border-amber-500/25 bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-200'>
               {t('mediaGeneration.noModels', {
                 kind: t(`mediaGeneration.${kind}`),
               })}
@@ -350,7 +350,7 @@ export function MediaGenerationPanel({
         </div>
 
         {models.length > 0 && (
-          <div className='border-t border-gray-200/70 p-4 dark:border-white/[0.08] sm:px-6'>
+          <div className='border-t border-gray-200/70 p-4 dark:border-white/[0.08] sm:px-5'>
             <Button
               onClick={handleGenerate}
               disabled={generating || !selectedModel || !prompt.trim()}
