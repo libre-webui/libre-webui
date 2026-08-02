@@ -56,7 +56,10 @@ test('Work preview proxy serves remote-safe sandboxed HTTP and WebSocket traffic
 
     if (request.url === '/') {
       response.setHeader('Content-Type', 'text/html; charset=utf-8');
-      response.setHeader('Set-Cookie', 'preview-secret=must-not-escape');
+      response.setHeader(
+        'Set-Cookie',
+        'preview-secret=must-not-escape; HttpOnly; Secure'
+      );
       response.setHeader('Clear-Site-Data', '"storage"');
       response.setHeader('Alt-Svc', 'h3=":443"');
       response.setHeader('X-Frame-Options', 'SAMEORIGIN');

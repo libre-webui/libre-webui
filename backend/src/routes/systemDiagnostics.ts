@@ -30,14 +30,10 @@ import systemDiagnosticsService, {
 
 const router = express.Router();
 
-router.use(authenticate);
-router.use(requireAdmin);
 router.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 120,
-    keyGenerator: req =>
-      `user:${(req as AuthenticatedRequest).user?.userId ?? 'unknown'}`,
     message: {
       success: false,
       error: 'Too many system diagnostics requests, please try again later.',
@@ -46,6 +42,8 @@ router.use(
     legacyHeaders: false,
   })
 );
+router.use(authenticate);
+router.use(requireAdmin);
 
 router.get(
   '/',

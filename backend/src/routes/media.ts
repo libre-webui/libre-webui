@@ -34,7 +34,15 @@ const galleryRateLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+// Umbrella limit ahead of authentication; per-route limiters below stay tighter.
+const routerRateLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 240,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
+router.use(routerRateLimiter);
 router.use(authenticate);
 
 function userId(req: AuthenticatedRequest): string {
