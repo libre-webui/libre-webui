@@ -234,14 +234,17 @@ const AppContent: React.FC = () => {
     backgroundImage,
     preferences,
     artifactPanelOpen,
+    closeArtifactPanel,
   } = useAppStore();
   const {
     systemInfo,
     isLoading: authLoading,
     user: _user,
-    isAuthenticated: _isAuthenticated,
+    isAuthenticated,
   } = useAuthStore();
   const { isDemoMode, demoConfig } = useAppStore();
+  const hasWorkspaceAccess =
+    systemInfo?.requiresAuth === false || isAuthenticated;
 
   // Handle OAuth callback FIRST - before any routing or initialization
   const [oauthProcessed, setOauthProcessed] = React.useState(false);
@@ -406,16 +409,35 @@ const AppContent: React.FC = () => {
   ];
 
   // Enable keyboard shortcuts
-  useKeyboardShortcuts(shortcuts);
+  useKeyboardShortcuts(shortcuts, hasWorkspaceAccess);
+
+  // Global overlays live outside ProtectedRoute, so they must be closed and
+  // hidden explicitly whenever the authenticated workspace becomes
+  // unavailable (logout, expiry, or an unauthenticated /login visit).
+  React.useEffect(() => {
+    if (hasWorkspaceAccess) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      setSettingsOpen(false);
+      setShortcutsOpen(false);
+      closeArtifactPanel();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [closeArtifactPanel, hasWorkspaceAccess]);
 
   // Initialize WebSocket connection
   React.useEffect(() => {
+    if (!hasWorkspaceAccess) {
+      websocketService.disconnect();
+      return;
+    }
+
     websocketService.connect().catch(logger.error);
 
     return () => {
       websocketService.disconnect();
     };
-  }, []);
+  }, [hasWorkspaceAccess]);
 
   // Auto-retry connection to backend when it's not available
   React.useEffect(() => {
@@ -631,7 +653,7 @@ const AppContent: React.FC = () => {
       )}
 
       {/* Modals */}
-      {settingsOpen && (
+      {hasWorkspaceAccess && settingsOpen && (
         <Suspense fallback={null}>
           <SettingsModal
             isOpen={settingsOpen}
@@ -641,18 +663,20 @@ const AppContent: React.FC = () => {
       )}
 
       <KeyboardShortcutsModal
-        isOpen={shortcutsOpen}
+        isOpen={hasWorkspaceAccess && shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
         shortcuts={shortcuts}
       />
 
       {/* Keyboard shortcuts indicator - only show on chat pages */}
-      <ConditionalKeyboardShortcutsIndicator
-        onClick={() => setShortcutsOpen(true)}
-      />
+      {hasWorkspaceAccess && (
+        <ConditionalKeyboardShortcutsIndicator
+          onClick={() => setShortcutsOpen(true)}
+        />
+      )}
 
       {/* Artifact slide-out panel */}
-      {artifactPanelOpen && (
+      {hasWorkspaceAccess && artifactPanelOpen && (
         <Suspense fallback={null}>
           <ArtifactSlideOutPanel />
         </Suspense>
@@ -691,7 +715,9 @@ const AppContent: React.FC = () => {
         }}
       />
 
-      <CommandPalette onOpenSettings={() => setSettingsOpen(true)} />
+      {hasWorkspaceAccess && (
+        <CommandPalette onOpenSettings={() => setSettingsOpen(true)} />
+      )}
     </>
   );
 };

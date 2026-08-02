@@ -82,6 +82,72 @@ test('login and signup default to dark mode', async ({ page }) => {
   await expect(page.locator('html')).toHaveClass(/\bdark\b/);
 });
 
+test('unauthenticated login cannot open protected global UI', async ({
+  page,
+}) => {
+  await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      signupEnabled: true,
+      allowUserModelPull: true,
+      version: '0.17.0-e2e',
+      turnstile: { enabled: false },
+    },
+  });
+
+  await page.goto('/login');
+  await expect(
+    page.getByRole('heading', { name: 'Welcome Back' })
+  ).toBeVisible();
+
+  for (const modifiers of [{ metaKey: true }, { ctrlKey: true }]) {
+    await page.evaluate(modifierState => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'k',
+          ...modifierState,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    }, modifiers);
+    await expect(page.getByTestId('command-palette')).toHaveCount(0);
+
+    await page.evaluate(modifierState => {
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: ',',
+          ...modifierState,
+          bubbles: true,
+          cancelable: true,
+        })
+      );
+    }, modifiers);
+    await expect(page.getByTestId('settings-modal-panel')).toHaveCount(0);
+  }
+
+  await page.evaluate(() => {
+    window.dispatchEvent(new Event('libre:open-palette'));
+  });
+  await expect(page.getByTestId('command-palette')).toHaveCount(0);
+
+  await page.evaluate(() => {
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'o',
+        metaKey: true,
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      })
+    );
+  });
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByTestId('app-shell-content')).toHaveCount(0);
+});
+
 test('login preserves an explicit light theme preference', async ({ page }) => {
   const lightTheme = {
     mode: 'light' as const,
