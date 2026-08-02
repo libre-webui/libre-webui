@@ -572,7 +572,8 @@ router.post(
         for await (const chunk of agentCliService.executeAgentStreamRequest(
           target.providerId,
           pluginMessages,
-          userId
+          userId,
+          { model: target.actualModelName }
         )) {
           if (chunk.type === 'content' && chunk.content) {
             fullResponse += chunk.content;

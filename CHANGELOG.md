@@ -9,9 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ✨ New Features
 
+- **OpenCode and Pi as chat agents.** The Agents group now detects the
+  `opencode` and `pi` CLIs beside Claude Code and Codex. Pi runs each turn
+  stateless with tools disabled and a neutral system prompt, so chats never
+  touch the server user's personal Pi configuration.
+- **Agent entries carry a model choice.** Claude Code offers Sonnet, Opus, and
+  Haiku beside its default, and OpenCode lists every model its providers offer
+  and requires an explicit pick, because its CLI default can point at an
+  unreachable local server.
+
 ### 🔧 Improvements
 
 ### 🐛 Bug Fixes
+
+- Selecting an agent from the model selector works again: the provider
+  identity was dropped when saving the choice, so starting or switching a chat
+  onto an agent was rejected.
 
 ### 📚 Documentation
 

@@ -111,6 +111,8 @@ export interface OllamaModel {
   // Agent-CLI fields (installed coding agents exposed as chat models)
   isAgent?: boolean;
   agentName?: string;
+  /** CLI id shared by every entry of one agent CLI; the chat providerId. */
+  agentId?: string;
   isLegacySelection?: boolean;
   isUnavailable?: boolean;
 }

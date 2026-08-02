@@ -66,7 +66,7 @@ export function chatModelSelectionFromModel(
     return {
       model: model.name,
       providerType: 'agent',
-      providerId: model.name,
+      providerId: model.agentId || model.name,
     };
   }
 
@@ -306,6 +306,10 @@ export function withUnavailableChatModel(
       pluginId: providerId,
       pluginName: providerId,
       isAgent: providerType === 'agent',
+      agentId:
+        providerType === 'agent'
+          ? selection.providerId || undefined
+          : undefined,
       isPersona,
       personaName: isPersona
         ? selection.model.slice(PERSONA_PREFIX.length)

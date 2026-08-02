@@ -197,7 +197,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 model.isUnavailable ? ' (unavailable)' : ''
               }`
             : model.isAgent
-              ? `${model.name} · ${model.agentName || 'Agent'}${
+              ? `${model.agentName || model.name} · Agent CLI${
                   model.isUnavailable ? ' (unavailable)' : ''
                 }`
               : `${model.name} · Ollama${

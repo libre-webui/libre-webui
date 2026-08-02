@@ -262,7 +262,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           model: selection.model,
           providerType: selection.providerType,
           providerId:
-            selection.providerType === 'plugin'
+            selection.providerType === 'plugin' ||
+            selection.providerType === 'agent'
               ? selection.providerId || null
               : null,
           personaId: null,

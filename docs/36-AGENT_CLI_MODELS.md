@@ -1,13 +1,15 @@
 ---
 sidebar_position: 14
 title: 'Use an Installed Coding Agent as a Chat Model'
-description: 'Expose the Claude Code or Codex CLI already installed on your server as a selectable Libre WebUI chat model, without adding an API key.'
+description: 'Expose the Claude Code, Codex, OpenCode, or Pi CLI already installed on your server as a selectable Libre WebUI chat model, without adding an API key.'
 slug: /AGENT_CLI_MODELS
 keywords:
   [
     agent cli,
     claude code,
     codex,
+    opencode,
+    pi,
     coding agent,
     chat model,
     no api key,
@@ -27,14 +29,31 @@ the model selector like any other model.
 On each request for the model list, Libre WebUI looks on the server's `PATH` for
 these commands:
 
-| Model           | Command  | Provided by |
-| --------------- | -------- | ----------- |
-| **Claude Code** | `claude` | Anthropic   |
-| **Codex**       | `codex`  | OpenAI      |
+| Model           | Command    | Provided by   |
+| --------------- | ---------- | ------------- |
+| **Claude Code** | `claude`   | Anthropic     |
+| **Codex**       | `codex`    | OpenAI        |
+| **OpenCode**    | `opencode` | SST           |
+| **Pi**          | `pi`       | Mario Zechner |
 
 Anything found appears under an **Agents** group in the model selector. Nothing
 is installed for you, and no configuration file is required — if the command
 runs in your server's shell, it shows up.
+
+## Choosing a model, not just a CLI
+
+Each CLI can expose several entries in the Agents group:
+
+- **Claude Code** offers its signed-in default plus Sonnet, Opus, and Haiku.
+- **Codex** and **Pi** run with the model configured in the CLI itself.
+- **OpenCode** lists the models of every provider it is authenticated with
+  (from `opencode models`), and always requires an explicit choice — its
+  CLI-level default can point at a local server that is not reachable from the
+  Libre WebUI host.
+
+Pi runs each turn stateless (`--no-session`), with local tools disabled and a
+neutral system prompt, so replies are not colored by — and chats never touch —
+the personal Pi configuration of the server's operating-system user.
 
 ## Using it
 
@@ -84,6 +103,8 @@ launcher often starts with a much smaller `PATH` than a login terminal.
 **The reply fails immediately.** Run the same command by hand as the server user
 (`claude -p "hello"` or `codex exec "hello"`). Most failures are the agent asking
 for a login that has expired, or a rate limit on the underlying subscription.
+OpenCode in particular reports an expired provider login only in its own logs;
+re-run `opencode auth login` as the server user.
 
 **Replies stop partway.** A long turn may have hit `AGENT_CLI_TIMEOUT_MS`. Raise
 it, or break the request into smaller steps.

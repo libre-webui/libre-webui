@@ -506,6 +506,11 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
     if (model.isPersona) {
       return model.personaName || model.name;
     }
+    if (model.isAgent) {
+      return model.isUnavailable
+        ? `${model.agentName || model.name} (${t('modelSelector.unavailable', 'unavailable')})`
+        : model.agentName || model.name;
+    }
     if (model.isPlugin) {
       return model.isUnavailable
         ? `${model.name} (${t('modelSelector.unavailable', 'unavailable')})`

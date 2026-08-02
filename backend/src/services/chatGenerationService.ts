@@ -176,7 +176,8 @@ class ChatGenerationService {
       for await (const chunk of agentCliService.executeAgentStreamRequest(
         target.providerId,
         pluginMessages,
-        userId
+        userId,
+        { model: target.actualModelName }
       )) {
         if (chunk.type === 'content' && chunk.content) {
           assistantContent += chunk.content;

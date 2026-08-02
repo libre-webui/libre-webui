@@ -380,7 +380,8 @@ export function registerWebSocketServer(server: Server): void {
                     ? agentCliService.executeAgentStreamRequest(
                         agentProviderId,
                         pluginMessages,
-                        userId
+                        userId,
+                        { model: actualModelName }
                       )
                     : pluginService.executePluginStreamRequest(
                         actualModelName,

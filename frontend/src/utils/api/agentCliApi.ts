@@ -24,6 +24,8 @@ export interface AgentCliModel {
   name: string;
   command: string;
   binaryPath: string;
+  /** CLI id — the chat providerId shared by every entry of one CLI. */
+  agentId: string;
 }
 
 export const agentCliApi = {
