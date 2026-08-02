@@ -7,13 +7,113 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Libre WebUI 0.18.0 closes the remaining unauthenticated API surface, puts new
+registrations behind administrator approval, and gives administrators two new
+views of the instance: live system diagnostics and provider usage analytics.
+Work gains a guarded local Git panel, previews now work behind HTTPS and for
+remote browsers, and OpenRouter models can generate video and audio.
+
+API clients that called provider, document, persona, TTS, or embedding routes
+without a token must now authenticate, the chat WebSocket requires a valid
+token on connect, and model install/delete/copy/push is administrator-only.
+Schema migrations run automatically on first boot — back up your database
+before upgrading.
+
 ### ✨ New Features
+
+- **Registration approval queue.** Public signups now wait for an
+  administrator. New accounts land in a pending state, are told so at sign-in,
+  and appear in a Pending approvals card in user management to approve or
+  remove. Existing accounts are unaffected, and the first account on a fresh
+  install still becomes the active administrator.
+- **Public registration can be disabled entirely** with `ENABLE_SIGNUP=false`.
+  The sign-up link disappears, direct registration and OAuth account creation
+  are refused, and the setting is absolute: it also blocks first-administrator
+  creation on an empty database, so a private install sets it to `true` once,
+  behind its outer identity boundary, to bootstrap.
+- **Cloudflare Turnstile on password sign-in.** When configured, the login form
+  requires a solved challenge and the server rejects tokens whose hostname or
+  action do not match what it expects.
+- **System diagnostics.** An administrator-only System page reports host,
+  runtime, memory, storage, network interfaces, and — when the Docker socket is
+  available — engine details and container states, refreshing every 30 seconds.
+- **Provider usage analytics.** Every outbound provider call is metered — model,
+  status, token counts, duration — and charted on an administrator-only Usage
+  page with per-model and per-plugin breakdowns over 7 to 90 days. Prompts,
+  responses, endpoints, and credentials are never stored.
+- **Video and audio generation.** OpenRouter models with media capabilities can
+  generate video and audio jobs alongside images, tracked through a job
+  lifecycle and collected in a unified media gallery with kind filters.
+- **Default vision model.** A configured vision model takes over automatically
+  when a conversation turn includes images, selectable under Settings → Models.
+- **Guarded local Git panel in Work.** A Git tab in the workspace offers init,
+  status with ahead/behind, bounded diffs, explicit staging, commits, and local
+  branch switching — all inside the task sandbox. There is deliberately no
+  clone, fetch, pull, push, remote, or credential surface.
+- **Tab context menu.** Right-click a tab for close, close others, and close to
+  the right; the `+` menu gains Incognito Chat and, for administrators, direct
+  Users, System, and Usage entries.
+- **Private remote deployment kit.** `deploy/private/` ships a hardened Compose
+  file (no published ports, read-only rootfs, dropped capabilities, resource
+  limits, Cloudflare Tunnel), sysctl and fail2ban configs, and a backup script
+  with a systemd timer, documented end to end.
 
 ### 🔧 Improvements
 
+- **Compact admin and media surfaces.** The density pass that reshaped chat in
+  0.17.0 now covers the System, Usage, and media surfaces: tighter panels,
+  denser tables, and a smaller stat scale.
+- **Dark mode is the default for new installs.** A pre-hydration script applies
+  the theme before first paint, so there is no light flash. A saved light
+  preference is respected.
+- **Work surfaces show your wallpaper.** The Work page and its panes are
+  translucent instead of opaque.
+- **Documents are owned per user** and carry their type, size, and session
+  across restarts. Every document route requires authentication.
+- **OpenRouter requests identify the app** through attribution headers, sent
+  only to OpenRouter's own endpoint.
+
 ### 🐛 Bug Fixes
 
+- **Work previews now work for remote browsers and behind HTTPS.** Previews are
+  proxied through the app origin as signed, revocable URLs instead of pointing
+  the browser at a loopback port. Stopping a preview revokes its URL, and
+  upstream cookies and credentials never reach the embedded page. Custom
+  reverse proxies must forward HTTP and WebSocket traffic for
+  `/api/work/previews/`; `WORK_PREVIEW_HOST` is no longer needed and was
+  removed.
+- Settings, keyboard shortcuts, the command palette, and the artifact panel are
+  no longer reachable from the sign-in screen, and are closed when a session
+  ends.
+- The Agents surface is administrator-only in the interface, matching the
+  backend.
+- An explicit saved-session link can now leave incognito mode instead of being
+  trapped in a private chat.
+
+### 🔒 Security
+
+- **The remaining unauthenticated API surface is closed.** Provider, document,
+  persona, TTS, embedding, Hugging Face, and agent CLI routes all require
+  authentication; model install, delete, copy, push, and unload require an
+  administrator.
+- **The chat WebSocket requires a valid token** and an allowed origin on
+  connect, re-verifies both on every message, and enforces payload and rate
+  limits (`CHAT_WS_MAX_PAYLOAD_BYTES`, `CHAT_WS_MAX_MESSAGES_PER_MINUTE`).
+- **Identity is re-read from the database on every request**, so a deleted
+  account is rejected and a role change applies without waiting for token
+  expiry.
+- Generated encryption keys are no longer written to logs, and key files are
+  created with owner-only permissions.
+- Work's Git integration runs fixed argument lists as an unprivileged user with
+  hooks, prompts, credential helpers, external diff drivers, and network
+  protocols disabled, and refuses repositories that escape the workspace.
+
 ### 📚 Documentation
+
+- A private remote deployment guide covering Cloudflare Access and Tunnel,
+  bootstrap order, and the security model.
+- Documented `ENABLE_SIGNUP`, the Turnstile hostname and action binding, chat
+  WebSocket limits, and the Work production hardening checklist.
 
 ## [0.17.0] - 2026-08-01
 
