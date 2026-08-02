@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persona digunakan",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "Gagal mengeluarkan persona"
     },
     "model": {
       "updated": "Model dikemas kini",
@@ -273,7 +274,8 @@
       "noModelsDescription": "Tiada model tersedia. Pastikan Ollama sedang berjalan dan mempunyai model yang dipasang.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Tiada model tersedia. Sila pastikan Ollama sedang berjalan dan model telah dipasang.",
-      "selectBeforePrivateChat": "Pilih model yang tersedia sebelum memulakan sembang peribadi"
+      "selectBeforePrivateChat": "Pilih model yang tersedia sebelum memulakan sembang peribadi",
+      "selectBeforeSending": "Pilih model yang tersedia sebelum menghantar"
     },
     "footer": {
       "disclaimer": "LLM boleh membuat kesilapan - sahkan maklumat penting",

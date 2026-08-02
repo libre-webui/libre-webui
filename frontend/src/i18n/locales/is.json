@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persóna notuð",
-      "label": "Persóna"
+      "label": "Persóna",
+      "removeFailed": "Ekki tókst að fjarlægja persónu"
     },
     "model": {
       "updated": "Líkan uppfært",
@@ -273,7 +274,8 @@
       "noModelsDescription": "Engin líkön tiltæk. Gakktu úr skugga um að Ollama sé í gangi og hafi líkön uppsett.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Engin líkön tiltæk. Gakktu úr skugga um að Ollama sé í gangi og líkön séu uppsett.",
-      "selectBeforePrivateChat": "Veldu tiltækt líkan áður en þú byrjar einkaspjall"
+      "selectBeforePrivateChat": "Veldu tiltækt líkan áður en þú byrjar einkaspjall",
+      "selectBeforeSending": "Veldu tiltækt líkan áður en þú sendir"
     },
     "footer": {
       "disclaimer": "Gervigreind getur gert mistök - staðfestu mikilvægar upplýsingar",

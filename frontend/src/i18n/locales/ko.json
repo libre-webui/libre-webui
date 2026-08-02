@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "페르소나 적용됨",
-      "label": "페르소나"
+      "label": "페르소나",
+      "removeFailed": "페르소나 제거에 실패했습니다"
     },
     "model": {
       "updated": "모델 업데이트됨",
@@ -273,7 +274,8 @@
       "noModelsDescription": "사용 가능한 모델이 없습니다. Ollama가 실행 중이고 모델이 설치되어 있는지 확인하세요.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "사용 가능한 모델이 없습니다. Ollama가 실행 중이고 모델이 설치되어 있는지 확인하세요.",
-      "selectBeforePrivateChat": "비공개 채팅을 시작하기 전에 사용 가능한 모델을 선택하세요"
+      "selectBeforePrivateChat": "비공개 채팅을 시작하기 전에 사용 가능한 모델을 선택하세요",
+      "selectBeforeSending": "전송하기 전에 사용 가능한 모델을 선택하세요"
     },
     "footer": {
       "disclaimer": "LLM은 실수를 할 수 있습니다 - 중요한 정보는 확인하세요",

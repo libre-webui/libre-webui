@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persona použita",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "Nepodařilo se odebrat personu"
     },
     "model": {
       "updated": "Model aktualizován",
@@ -273,7 +274,8 @@
       "noModelsDescription": "Žádné dostupné modely. Ujistěte se, že Ollama běží a modely jsou nainstalované.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Žádné dostupné modely. Ujistěte se, že Ollama běží a modely jsou nainstalované.",
-      "selectBeforePrivateChat": "Před zahájením soukromého chatu vyberte dostupný model"
+      "selectBeforePrivateChat": "Před zahájením soukromého chatu vyberte dostupný model",
+      "selectBeforeSending": "Před odesláním vyberte dostupný model"
     },
     "footer": {
       "disclaimer": "LLM může dělat chyby - ověřujte důležité informace",

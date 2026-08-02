@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "पर्सोना लागू किया गया",
-      "label": "पर्सोना"
+      "label": "पर्सोना",
+      "removeFailed": "पर्सोना हटाने में विफल"
     },
     "model": {
       "updated": "मॉडल अपडेट किया गया",
@@ -273,7 +274,8 @@
       "noModelsDescription": "कोई मॉडल उपलब्ध नहीं। सुनिश्चित करें कि Ollama चल रहा है और मॉडल इंस्टॉल हैं।",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "कोई मॉडल उपलब्ध नहीं। कृपया सुनिश्चित करें कि Ollama चल रहा है और मॉडल इंस्टॉल हैं।",
-      "selectBeforePrivateChat": "निजी चैट शुरू करने से पहले एक उपलब्ध मॉडल चुनें"
+      "selectBeforePrivateChat": "निजी चैट शुरू करने से पहले एक उपलब्ध मॉडल चुनें",
+      "selectBeforeSending": "भेजने से पहले एक उपलब्ध मॉडल चुनें"
     },
     "footer": {
       "disclaimer": "LLM गलतियाँ कर सकता है - महत्वपूर्ण जानकारी की पुष्टि करें",

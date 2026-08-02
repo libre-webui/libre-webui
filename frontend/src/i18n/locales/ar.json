@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "تم تطبيق الشخصية",
-      "label": "الشخصية"
+      "label": "الشخصية",
+      "removeFailed": "فشل في إزالة الشخصية"
     },
     "model": {
       "updated": "تم تحديث النموذج",
@@ -273,7 +274,8 @@
       "noModelsDescription": "لا توجد نماذج متاحة. تأكد من تشغيل Ollama وتثبيت النماذج.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "لا توجد نماذج متاحة. يرجى التأكد من تشغيل Ollama وتثبيت النماذج.",
-      "selectBeforePrivateChat": "اختر نموذجاً متاحاً قبل بدء محادثة خاصة"
+      "selectBeforePrivateChat": "اختر نموذجاً متاحاً قبل بدء محادثة خاصة",
+      "selectBeforeSending": "اختر نموذجاً متاحاً قبل الإرسال"
     },
     "footer": {
       "disclaimer": "قد يرتكب الذكاء الاصطناعي أخطاء - تحقق من المعلومات المهمة",

@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "ペルソナが適用されました",
-      "label": "ペルソナ"
+      "label": "ペルソナ",
+      "removeFailed": "ペルソナの削除に失敗しました"
     },
     "model": {
       "updated": "モデルが更新されました",
@@ -273,7 +274,8 @@
       "noModelsDescription": "利用可能なモデルがありません。Ollamaが実行中でモデルがインストールされていることを確認してください。",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "利用可能なモデルがありません。Ollamaが実行中でモデルがインストールされていることを確認してください。",
-      "selectBeforePrivateChat": "プライベートチャットを開始する前に利用可能なモデルを選択してください"
+      "selectBeforePrivateChat": "プライベートチャットを開始する前に利用可能なモデルを選択してください",
+      "selectBeforeSending": "送信する前に利用可能なモデルを選択してください"
     },
     "footer": {
       "disclaimer": "LLMは間違えることがあります - 重要な情報は確認してください",

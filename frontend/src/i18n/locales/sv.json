@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persona tillämpad",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "Det gick inte att ta bort personan"
     },
     "model": {
       "updated": "Modell uppdaterad",
@@ -273,7 +274,8 @@
       "noModelsDescription": "Inga modeller tillgängliga. Se till att Ollama körs och har modeller installerade.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Inga modeller tillgängliga. Se till att Ollama körs och modeller är installerade.",
-      "selectBeforePrivateChat": "Välj en tillgänglig modell innan du startar en privat chatt"
+      "selectBeforePrivateChat": "Välj en tillgänglig modell innan du startar en privat chatt",
+      "selectBeforeSending": "Välj en tillgänglig modell innan du skickar"
     },
     "footer": {
       "disclaimer": "AI kan göra misstag - verifiera viktig information",

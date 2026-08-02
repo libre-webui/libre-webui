@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "已应用角色",
-      "label": "角色"
+      "label": "角色",
+      "removeFailed": "移除角色失败"
     },
     "model": {
       "updated": "模型已更新",
@@ -273,7 +274,8 @@
       "noModelsDescription": "没有可用的模型。请确保 Ollama 正在运行并已安装模型。",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "没有可用的模型。请确保 Ollama 正在运行并已安装模型。",
-      "selectBeforePrivateChat": "开始私密聊天前请选择一个可用的模型"
+      "selectBeforePrivateChat": "开始私密聊天前请选择一个可用的模型",
+      "selectBeforeSending": "发送前请选择一个可用的模型"
     },
     "footer": {
       "disclaimer": "大语言模型可能会犯错——请核实重要信息",

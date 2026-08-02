@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persona uygulandı",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "Persona kaldırılamadı"
     },
     "model": {
       "updated": "Model güncellendi",
@@ -273,7 +274,8 @@
       "noModelsDescription": "Kullanılabilir model yok. Ollama'nın çalıştığından ve modellerin yüklü olduğundan emin olun.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Kullanılabilir model yok. Lütfen Ollama'nın çalıştığından ve modellerin yüklü olduğundan emin olun.",
-      "selectBeforePrivateChat": "Gizli sohbeti başlatmadan önce kullanılabilir bir model seçin"
+      "selectBeforePrivateChat": "Gizli sohbeti başlatmadan önce kullanılabilir bir model seçin",
+      "selectBeforeSending": "Göndermeden önce kullanılabilir bir model seçin"
     },
     "footer": {
       "disclaimer": "Yapay zeka hata yapabilir - önemli bilgileri doğrulayın",

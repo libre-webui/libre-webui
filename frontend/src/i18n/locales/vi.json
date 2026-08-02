@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Đã áp dụng persona",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "Không thể xóa persona"
     },
     "model": {
       "updated": "Đã cập nhật mô hình",
@@ -273,7 +274,8 @@
       "noModelsDescription": "Không có mô hình nào. Hãy đảm bảo Ollama đang chạy và đã cài đặt các mô hình.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Không có mô hình nào. Vui lòng đảm bảo Ollama đang chạy và các mô hình đã được cài đặt.",
-      "selectBeforePrivateChat": "Chọn một mô hình khả dụng trước khi bắt đầu trò chuyện riêng tư"
+      "selectBeforePrivateChat": "Chọn một mô hình khả dụng trước khi bắt đầu trò chuyện riêng tư",
+      "selectBeforeSending": "Chọn một mô hình khả dụng trước khi gửi"
     },
     "footer": {
       "disclaimer": "LLM có thể mắc lỗi - hãy xác minh thông tin quan trọng",

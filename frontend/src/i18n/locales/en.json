@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persona applied",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "Failed to remove persona"
     },
     "model": {
       "updated": "Model updated",
@@ -273,7 +274,8 @@
       "noModelsDescription": "No models available. Make sure Ollama is running and has models installed.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "No models available. Please ensure Ollama is running and models are installed.",
-      "selectBeforePrivateChat": "Select an available model before starting private chat"
+      "selectBeforePrivateChat": "Select an available model before starting private chat",
+      "selectBeforeSending": "Select an available model before sending"
     },
     "footer": {
       "disclaimer": "LLM can make mistakes - verify important information",

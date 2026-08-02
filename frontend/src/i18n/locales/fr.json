@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persona appliqué",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "Échec de la suppression du persona"
     },
     "model": {
       "updated": "Modèle mis à jour",
@@ -273,7 +274,8 @@
       "noModelsDescription": "Aucun modèle disponible. Assurez-vous qu'Ollama est en cours d'exécution et que des modèles sont installés.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Aucun modèle disponible. Veuillez vous assurer qu'Ollama est en cours d'exécution et que des modèles sont installés.",
-      "selectBeforePrivateChat": "Sélectionnez un modèle disponible avant de démarrer une discussion privée"
+      "selectBeforePrivateChat": "Sélectionnez un modèle disponible avant de démarrer une discussion privée",
+      "selectBeforeSending": "Sélectionnez un modèle disponible avant d'envoyer"
     },
     "footer": {
       "disclaimer": "Les LLM peuvent faire des erreurs - vérifiez les informations importantes",

@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persona angewendet",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "Persona konnte nicht entfernt werden"
     },
     "model": {
       "updated": "Modell aktualisiert",
@@ -273,7 +274,8 @@
       "noModelsDescription": "Keine Modelle verfügbar. Stellen Sie sicher, dass Ollama läuft und Modelle installiert sind.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Keine Modelle verfügbar. Bitte stellen Sie sicher, dass Ollama läuft und Modelle installiert sind.",
-      "selectBeforePrivateChat": "Wählen Sie ein verfügbares Modell aus, bevor Sie einen privaten Chat starten"
+      "selectBeforePrivateChat": "Wählen Sie ein verfügbares Modell aus, bevor Sie einen privaten Chat starten",
+      "selectBeforeSending": "Wählen Sie ein verfügbares Modell aus, bevor Sie senden"
     },
     "footer": {
       "disclaimer": "KI kann Fehler machen – überprüfen Sie wichtige Informationen",

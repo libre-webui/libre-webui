@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persona anvendt",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "Kunne ikke fjerne persona"
     },
     "model": {
       "updated": "Model opdateret",
@@ -273,7 +274,8 @@
       "noModelsDescription": "Ingen modeller tilgængelige. Sørg for, at Ollama kører og har installeret modeller.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "Ingen modeller tilgængelige. Sørg venligst for, at Ollama kører, og at modeller er installeret.",
-      "selectBeforePrivateChat": "Vælg en tilgængelig model, før du starter en privat chat"
+      "selectBeforePrivateChat": "Vælg en tilgængelig model, før du starter en privat chat",
+      "selectBeforeSending": "Vælg en tilgængelig model, før du sender"
     },
     "footer": {
       "disclaimer": "LLM kan begå fejl - verificer vigtige oplysninger",

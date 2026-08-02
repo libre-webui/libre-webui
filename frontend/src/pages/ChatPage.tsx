@@ -411,7 +411,7 @@ export const ChatPage: React.FC = () => {
     e.preventDefault();
     if (!welcomeMessage.trim() || !selectedModel) return;
     if (!selectedModelAvailable) {
-      toast.error('Select an available model before sending');
+      toast.error(t('chat.model.selectBeforeSending'));
       return;
     }
 
@@ -717,7 +717,7 @@ export const ChatPage: React.FC = () => {
                   })
                   .catch(error => {
                     logger.error('Failed to remove persona:', error);
-                    toast.error('Failed to remove persona');
+                    toast.error(t('chat.persona.removeFailed'));
                   });
               }}
             />

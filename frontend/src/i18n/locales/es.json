@@ -265,7 +265,8 @@
     },
     "persona": {
       "applied": "Persona aplicada",
-      "label": "Persona"
+      "label": "Persona",
+      "removeFailed": "No se pudo eliminar la persona"
     },
     "model": {
       "updated": "Modelo actualizado",
@@ -273,7 +274,8 @@
       "noModelsDescription": "No hay modelos disponibles. Asegúrate de que Ollama esté ejecutándose y tenga modelos instalados.",
       "pullCommand": "ollama pull llama3.2:3b",
       "noModelsTooltip": "No hay modelos disponibles. Asegúrate de que Ollama esté ejecutándose y los modelos estén instalados.",
-      "selectBeforePrivateChat": "Selecciona un modelo disponible antes de iniciar el chat privado"
+      "selectBeforePrivateChat": "Selecciona un modelo disponible antes de iniciar el chat privado",
+      "selectBeforeSending": "Selecciona un modelo disponible antes de enviar"
     },
     "footer": {
       "disclaimer": "Los LLM pueden cometer errores - verifica la información importante",
