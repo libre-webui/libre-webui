@@ -23,6 +23,8 @@ import type {
   WorkCapabilities,
   WorkFile,
   WorkFileEntry,
+  WorkGitDiff,
+  WorkGitStatus,
   WorkMessagePage,
   WorkTask,
   WorkTaskSummary,
@@ -120,6 +122,54 @@ export const workApi = {
         { content, expectedUpdatedAt },
         { params: { path } }
       )
+      .then(response => response.data),
+
+  getGitStatus: (taskId: string): Promise<ApiResponse<WorkGitStatus>> =>
+    api.get(`${taskPath(taskId)}/git`).then(response => response.data),
+
+  getGitDiff: (
+    taskId: string,
+    path?: string
+  ): Promise<ApiResponse<WorkGitDiff>> =>
+    api
+      .get(`${taskPath(taskId)}/git/diff`, {
+        params: path ? { path } : undefined,
+      })
+      .then(response => response.data),
+
+  initializeGit: (taskId: string): Promise<ApiResponse<WorkGitStatus>> =>
+    api.post(`${taskPath(taskId)}/git/init`).then(response => response.data),
+
+  stageGitPaths: (
+    taskId: string,
+    paths: string[]
+  ): Promise<ApiResponse<WorkGitStatus>> =>
+    api
+      .post(`${taskPath(taskId)}/git/stage`, { paths })
+      .then(response => response.data),
+
+  commitGit: (
+    taskId: string,
+    message: string
+  ): Promise<ApiResponse<WorkGitStatus>> =>
+    api
+      .post(`${taskPath(taskId)}/git/commit`, { message })
+      .then(response => response.data),
+
+  createGitBranch: (
+    taskId: string,
+    name: string
+  ): Promise<ApiResponse<WorkGitStatus>> =>
+    api
+      .post(`${taskPath(taskId)}/git/branches`, { name })
+      .then(response => response.data),
+
+  switchGitBranch: (
+    taskId: string,
+    name: string
+  ): Promise<ApiResponse<WorkGitStatus>> =>
+    api
+      .post(`${taskPath(taskId)}/git/switch`, { name })
       .then(response => response.data),
 
   startPreview: (

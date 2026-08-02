@@ -241,6 +241,41 @@ export interface WorkFile {
   updatedAt?: number;
 }
 
+export interface WorkGitChange {
+  path: string;
+  originalPath?: string;
+  indexStatus: string;
+  workingTreeStatus: string;
+  staged: boolean;
+}
+
+export interface WorkGitCommit {
+  hash: string;
+  shortHash: string;
+  author: string;
+  authoredAt: string;
+  subject: string;
+}
+
+export interface WorkGitStatus {
+  initialized: boolean;
+  branch?: string;
+  detached: boolean;
+  head?: string;
+  upstream?: string;
+  ahead: number;
+  behind: number;
+  changes: WorkGitChange[];
+  branches: string[];
+  commits: WorkGitCommit[];
+}
+
+export interface WorkGitDiff {
+  path?: string;
+  patch: string;
+  truncated: boolean;
+}
+
 export interface CreateWorkTaskRequest {
   message: string;
   model: string;
