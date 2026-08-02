@@ -30,6 +30,96 @@ type TurnstileTestWindow = Window & {
   };
 };
 
+test('first-time setup defaults to dark mode', async ({ page }) => {
+  await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: false,
+      userCount: 0,
+      signupEnabled: true,
+      allowUserModelPull: true,
+      version: '0.17.0-e2e',
+      turnstile: { enabled: false },
+    },
+  });
+
+  await page.goto('/');
+
+  await expect(
+    page.getByRole('heading', { name: "Let's Get Started" })
+  ).toBeVisible();
+  await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+});
+
+test('login and signup default to dark mode', async ({ page }) => {
+  await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      signupEnabled: true,
+      allowUserModelPull: true,
+      version: '0.17.0-e2e',
+      turnstile: { enabled: false },
+    },
+  });
+
+  await page.goto('/login');
+
+  await expect(
+    page.getByRole('heading', { name: 'Welcome Back' })
+  ).toBeVisible();
+  await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+  await expect(
+    page.getByRole('button', { name: 'Switch to light mode' })
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Sign up here' }).click();
+
+  await expect(
+    page.getByRole('heading', { name: 'Create Account' })
+  ).toBeVisible();
+  await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+});
+
+test('login preserves an explicit light theme preference', async ({ page }) => {
+  const lightTheme = {
+    mode: 'light' as const,
+    adaptToAccent: false,
+    accent: 'blue',
+    customAccent: '#2563eb',
+  };
+
+  await page.addInitScript(theme => {
+    localStorage.setItem(
+      'libre-webui-app-state',
+      JSON.stringify({ state: { theme } })
+    );
+  }, lightTheme);
+
+  await mockLibreWebUiApi(page, {
+    systemInfo: {
+      requiresAuth: true,
+      hasUsers: true,
+      userCount: 1,
+      signupEnabled: true,
+      allowUserModelPull: true,
+      version: '0.17.0-e2e',
+      turnstile: { enabled: false },
+    },
+  });
+
+  await page.goto('/login');
+
+  await expect(
+    page.getByRole('heading', { name: 'Welcome Back' })
+  ).toBeVisible();
+  await expect(page.locator('html')).not.toHaveClass(/\bdark\b/);
+  await expect(
+    page.getByRole('button', { name: 'Switch to dark mode' })
+  ).toBeVisible();
+});
+
 test('demo mode login is click-only with disabled demo credentials', async ({
   page,
 }) => {

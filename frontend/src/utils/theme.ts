@@ -17,6 +17,7 @@
 
 import { Theme } from '@/types';
 
+export const DEFAULT_THEME_MODE: Theme['mode'] = 'dark';
 export const DEFAULT_ACCENT = 'blue';
 export const DEFAULT_CUSTOM_ACCENT = '#2563eb';
 
@@ -471,7 +472,7 @@ const createCustomPalette = (customAccent?: string): AccentPalette => {
 };
 
 export const normalizeTheme = (theme?: Partial<Theme> | null): Theme => {
-  const mode = theme?.mode === 'dark' ? 'dark' : 'light';
+  const mode = theme?.mode === 'light' ? 'light' : DEFAULT_THEME_MODE;
   const accent = theme?.accent === 'custom' ? 'custom' : theme?.accent;
   const presetAccent = ACCENT_OPTIONS.some(option => option.id === accent)
     ? accent
@@ -486,6 +487,9 @@ export const normalizeTheme = (theme?: Partial<Theme> | null): Theme => {
     customAccent,
   };
 };
+
+export const createDefaultTheme = (): Theme =>
+  normalizeTheme({ mode: DEFAULT_THEME_MODE });
 
 export const getAccentPalette = (theme?: Partial<Theme> | null) => {
   const normalizedTheme = normalizeTheme(theme);

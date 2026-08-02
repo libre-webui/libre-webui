@@ -18,6 +18,7 @@
 import { useEffect, useRef } from 'react';
 import { useChatStore } from '@/store/chatStore';
 import { useAppStore } from '@/store/appStore';
+import { useAuthStore } from '@/store/authStore';
 import { usePluginStore } from '@/store/pluginStore';
 import { ollamaApi } from '@/utils/api';
 import { UserService } from '@/services/userService';
@@ -54,6 +55,15 @@ export const useInitializeApp = () => {
 
         // Initialize authentication first
         await UserService.initializeAuth();
+
+        const authState = useAuthStore.getState();
+        if (authState.requiresAuth() && !authState.isAuthenticated) {
+          logger.debug(
+            'Authentication required; deferring protected app initialization'
+          );
+          initialized.current = true;
+          return;
+        }
 
         // Ollama and configured plugins are independent model providers. An
         // unavailable Ollama daemon must not prevent the rest of the app (or

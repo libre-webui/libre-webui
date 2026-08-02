@@ -21,8 +21,7 @@ import { UserPreferences, Theme, Artifact } from '@/types';
 import { isDemoMode, getDemoConfig } from '@/utils/demoMode';
 import {
   applyThemeToDocument,
-  DEFAULT_ACCENT,
-  DEFAULT_CUSTOM_ACCENT,
+  createDefaultTheme,
   normalizeTheme,
 } from '@/utils/theme';
 import { createLogger } from '@/utils/logger';
@@ -87,12 +86,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
       // Theme
-      theme: {
-        mode: 'light',
-        adaptToAccent: false,
-        accent: DEFAULT_ACCENT,
-        customAccent: DEFAULT_CUSTOM_ACCENT,
-      },
+      theme: createDefaultTheme(),
       themeSyncPending: false,
       syncThemePreference: async theme => {
         if (themeSyncTimeout) {
@@ -185,12 +179,7 @@ export const useAppStore = create<AppState>()(
 
       // User preferences
       preferences: {
-        theme: {
-          mode: 'light',
-          adaptToAccent: false,
-          accent: DEFAULT_ACCENT,
-          customAccent: DEFAULT_CUSTOM_ACCENT,
-        },
+        theme: createDefaultTheme(),
         defaultModel: '',
         defaultProviderType: null,
         defaultProviderId: null,
@@ -378,12 +367,7 @@ export const useAppStore = create<AppState>()(
 
       // Clear user-specific state (called on logout/login to prevent data leaking between users)
       clearUserState: () => {
-        const defaultTheme = normalizeTheme({
-          mode: 'light',
-          adaptToAccent: false,
-          accent: DEFAULT_ACCENT,
-          customAccent: DEFAULT_CUSTOM_ACCENT,
-        });
+        const defaultTheme = createDefaultTheme();
 
         if (themeSyncTimeout) {
           clearTimeout(themeSyncTimeout);

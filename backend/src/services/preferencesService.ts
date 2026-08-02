@@ -41,7 +41,7 @@ class PreferencesService {
   private defaultPreferences: UserPreferences = {
     defaultModel: '',
     theme: {
-      mode: 'light',
+      mode: 'dark',
       adaptToAccent: false,
       accent: 'blue',
       customAccent: '#2563eb',
