@@ -110,6 +110,7 @@ class DocumentService {
     fileName: string,
     fileBuffer: Buffer,
     mimeType: string,
+    userId: string,
     sessionId?: string
   ): Promise<Document> {
     const documentId = uuidv4();
@@ -162,17 +163,19 @@ class DocumentService {
       };
 
       // Process the document into chunks
-      const chunks = this.chunkDocument(document);
+      const chunks = this.chunkDocument(document, userId);
 
       // Generate embeddings for chunks if enabled
-      const chunksWithEmbeddings =
-        await this.generateEmbeddingsForChunks(chunks);
+      const chunksWithEmbeddings = await this.generateEmbeddingsForChunks(
+        chunks,
+        userId
+      );
 
       // Store document and chunks
       this.documents.set(documentId, document);
       this.chunks.set(documentId, chunksWithEmbeddings);
 
-      storageService.saveDocument(document);
+      storageService.saveDocument(document, userId);
       storageService.saveDocumentChunks(documentId, chunksWithEmbeddings);
 
       logger.debug(
@@ -187,9 +190,9 @@ class DocumentService {
     }
   }
 
-  private chunkDocument(document: Document): DocumentChunk[] {
+  private chunkDocument(document: Document, userId: string): DocumentChunk[] {
     const chunks: DocumentChunk[] = [];
-    const preferences = preferencesService.getPreferences();
+    const preferences = preferencesService.getPreferences(userId);
     const chunkSize = preferences.embeddingSettings?.chunkSize || 1000; // characters per chunk
     const overlap = preferences.embeddingSettings?.chunkOverlap || 200; // character overlap between chunks
 
@@ -269,18 +272,22 @@ class DocumentService {
   }
 
   private async generateEmbeddingForText(
-    text: string
+    text: string,
+    userId: string
   ): Promise<number[] | null> {
     try {
-      const preferences = preferencesService.getPreferences();
+      const preferences = preferencesService.getPreferences(userId);
       if (!preferences.embeddingSettings.enabled) {
         return null;
       }
 
-      const response = await embeddingService.generateEmbeddings({
-        model: preferences.embeddingSettings.model,
-        input: text,
-      });
+      const response = await embeddingService.generateEmbeddings(
+        {
+          model: preferences.embeddingSettings.model,
+          input: text,
+        },
+        userId
+      );
 
       return response.embeddings[0] || null;
     } catch (error) {
@@ -290,9 +297,10 @@ class DocumentService {
   }
 
   private async generateEmbeddingsForChunks(
-    chunks: DocumentChunk[]
+    chunks: DocumentChunk[],
+    userId: string
   ): Promise<DocumentChunk[]> {
-    const preferences = preferencesService.getPreferences();
+    const preferences = preferencesService.getPreferences(userId);
     if (!preferences.embeddingSettings.enabled) {
       return chunks;
     }
@@ -301,7 +309,10 @@ class DocumentService {
     const chunksWithEmbeddings: DocumentChunk[] = [];
 
     for (const chunk of chunks) {
-      const embedding = await this.generateEmbeddingForText(chunk.content);
+      const embedding = await this.generateEmbeddingForText(
+        chunk.content,
+        userId
+      );
       chunksWithEmbeddings.push({
         ...chunk,
         embedding: embedding || undefined,
@@ -315,8 +326,8 @@ class DocumentService {
   }
 
   // Method to regenerate embeddings for all existing documents
-  async regenerateAllEmbeddings(): Promise<void> {
-    const preferences = preferencesService.getPreferences();
+  async regenerateAllEmbeddings(userId: string): Promise<void> {
+    const preferences = preferencesService.getPreferences(userId);
     if (!preferences.embeddingSettings.enabled) {
       logger.debug('Embeddings are disabled, skipping regeneration');
       return;
@@ -326,32 +337,37 @@ class DocumentService {
     let processedChunks = 0;
     let totalChunks = 0;
 
-    for (const [documentId, chunks] of this.chunks.entries()) {
+    for (const document of storageService.getAllDocuments(userId)) {
+      const documentId = document.id;
+      const chunks = this.loadDocumentChunks(documentId);
       totalChunks += chunks.length;
-      const chunksWithEmbeddings =
-        await this.generateEmbeddingsForChunks(chunks);
+      const chunksWithEmbeddings = await this.generateEmbeddingsForChunks(
+        chunks,
+        userId
+      );
       this.chunks.set(documentId, chunksWithEmbeddings);
+      storageService.saveDocumentChunks(documentId, chunksWithEmbeddings);
       processedChunks += chunksWithEmbeddings.filter(c => c.embedding).length;
     }
 
-    this.saveChunks();
     logger.debug(
       `Regenerated embeddings for ${processedChunks}/${totalChunks} chunks`
     );
   }
 
   // Method to get embedding model information
-  async getEmbeddingModelInfo(): Promise<{
+  async getEmbeddingModelInfo(userId: string): Promise<{
     available: boolean;
     model: string;
     chunksWithEmbeddings: number;
     totalChunks: number;
   }> {
-    const preferences = preferencesService.getPreferences();
+    const preferences = preferencesService.getPreferences(userId);
     let chunksWithEmbeddings = 0;
     let totalChunks = 0;
 
-    for (const chunks of this.chunks.values()) {
+    for (const document of storageService.getAllDocuments(userId)) {
+      const chunks = this.loadDocumentChunks(document.id);
       totalChunks += chunks.length;
       chunksWithEmbeddings += chunks.filter(c => c.embedding).length;
     }
@@ -364,76 +380,74 @@ class DocumentService {
     };
   }
 
-  getDocument(documentId: string): Document | undefined {
-    return this.documents.get(documentId);
+  getDocument(documentId: string, userId: string): Document | undefined {
+    return storageService.getDocument(documentId, userId);
   }
 
-  getDocuments(sessionId?: string): Document[] {
-    const allDocs = Array.from(this.documents.values());
+  getDocuments(userId: string, sessionId?: string): Document[] {
+    const allDocs = storageService.getAllDocuments(userId);
     if (sessionId) {
       return allDocs.filter(doc => doc.sessionId === sessionId);
     }
     return allDocs.sort((a, b) => b.uploadedAt - a.uploadedAt);
   }
 
-  getDocumentChunks(documentId: string): DocumentChunk[] {
-    return this.chunks.get(documentId) || [];
+  getDocumentChunks(documentId: string, userId: string): DocumentChunk[] {
+    if (!this.getDocument(documentId, userId)) return [];
+    return this.loadDocumentChunks(documentId);
   }
 
-  deleteDocument(documentId: string): boolean {
+  deleteDocument(documentId: string, userId: string): boolean {
+    if (!this.getDocument(documentId, userId)) return false;
     const deleted = this.documents.delete(documentId);
     this.chunks.delete(documentId);
-
-    if (deleted) {
-      storageService.deleteDocument(documentId);
-      storageService.deleteDocumentChunks(documentId);
-    }
-
-    return deleted;
+    storageService.deleteDocumentChunks(documentId);
+    return storageService.deleteDocument(documentId, userId) || deleted;
   }
 
   // Enhanced search with semantic similarity using embeddings
   async searchDocuments(
     query: string,
+    userId: string,
     sessionId?: string,
     limit = 5
   ): Promise<DocumentChunk[]> {
-    const preferences = preferencesService.getPreferences();
+    const preferences = preferencesService.getPreferences(userId);
 
     // Use semantic search if embeddings are enabled
     if (preferences.embeddingSettings.enabled) {
-      return this.semanticSearchDocuments(query, sessionId, limit);
+      return this.semanticSearchDocuments(query, userId, sessionId, limit);
     }
 
     // Fall back to keyword search
-    return this.keywordSearchDocuments(query, sessionId, limit);
+    return this.keywordSearchDocuments(query, userId, sessionId, limit);
   }
 
   private async semanticSearchDocuments(
     query: string,
+    userId: string,
     sessionId?: string,
     limit = 5
   ): Promise<DocumentChunk[]> {
     try {
       // Generate embedding for the query
-      const queryEmbedding = await this.generateEmbeddingForText(query);
+      const queryEmbedding = await this.generateEmbeddingForText(query, userId);
       if (!queryEmbedding) {
         logger.warn(
           'Failed to generate query embedding, falling back to keyword search'
         );
-        return this.keywordSearchDocuments(query, sessionId, limit);
+        return this.keywordSearchDocuments(query, userId, sessionId, limit);
       }
 
-      const preferences = preferencesService.getPreferences();
+      const preferences = preferencesService.getPreferences(userId);
       const results: {
         chunk: DocumentChunk;
         similarity: number;
         document: Document;
       }[] = [];
 
-      for (const [documentId, documentChunks] of this.chunks.entries()) {
-        const document = this.documents.get(documentId);
-        if (!document) continue;
+      for (const document of storageService.getAllDocuments(userId)) {
+        const documentChunks = this.loadDocumentChunks(document.id);
 
         // Filter by session if specified
         if (sessionId && document.sessionId !== sessionId) continue;
@@ -463,12 +477,13 @@ class DocumentService {
         'Semantic search failed, falling back to keyword search:',
         error
       );
-      return this.keywordSearchDocuments(query, sessionId, limit);
+      return this.keywordSearchDocuments(query, userId, sessionId, limit);
     }
   }
 
   private keywordSearchDocuments(
     query: string,
+    userId: string,
     sessionId?: string,
     limit = 5
   ): DocumentChunk[] {
@@ -482,9 +497,8 @@ class DocumentService {
       document: Document;
     }[] = [];
 
-    for (const [documentId, documentChunks] of this.chunks.entries()) {
-      const document = this.documents.get(documentId);
-      if (!document) continue;
+    for (const document of storageService.getAllDocuments(userId)) {
+      const documentChunks = this.loadDocumentChunks(document.id);
 
       // Filter by session if specified
       if (sessionId && document.sessionId !== sessionId) continue;
@@ -521,9 +535,15 @@ class DocumentService {
   // Get relevant context for RAG
   async getRelevantContext(
     query: string,
+    userId: string,
     sessionId?: string
   ): Promise<string[]> {
-    const relevantChunks = await this.searchDocuments(query, sessionId, 3);
+    const relevantChunks = await this.searchDocuments(
+      query,
+      userId,
+      sessionId,
+      3
+    );
     return relevantChunks.map(
       (chunk: DocumentChunk & { filename?: string }) => {
         const filename = chunk.filename || 'Unknown';
@@ -533,13 +553,13 @@ class DocumentService {
   }
 
   // Restore a document from import (used during data import)
-  restoreDocument(document: Document): void {
+  restoreDocument(document: Document, userId: string): void {
     try {
       // Add to memory
       this.documents.set(document.id, document);
 
       // Save to storage
-      storageService.saveDocument(document);
+      storageService.saveDocument(document, userId);
 
       // If there are any chunks with this document, they'll be handled separately
       logger.debug(`Restored document: ${document.filename} (${document.id})`);
@@ -549,6 +569,14 @@ class DocumentService {
         `Failed to restore document: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
     }
+  }
+
+  private loadDocumentChunks(documentId: string): DocumentChunk[] {
+    const cached = this.chunks.get(documentId);
+    if (cached) return cached;
+    const chunks = storageService.getDocumentChunks(documentId);
+    this.chunks.set(documentId, chunks);
+    return chunks;
   }
 }
 

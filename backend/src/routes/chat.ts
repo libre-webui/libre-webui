@@ -419,7 +419,11 @@ router.post(
         hasRelevantContext: false,
       };
       try {
-        documentContext = await buildChatDocumentContext(message, sessionId);
+        documentContext = await buildChatDocumentContext(
+          message,
+          sessionId,
+          userId
+        );
       } catch (error) {
         logger.error('Error during document search:', error);
       }

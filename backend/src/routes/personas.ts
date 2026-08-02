@@ -20,8 +20,10 @@ import rateLimit from 'express-rate-limit';
 import { personaService } from '../services/personaService.js';
 import preferencesService from '../services/preferencesService.js';
 import { ApiResponse, getErrorMessage } from '../types/index.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
+router.use(authenticate);
 
 // Rate limiting for persona operations (temporarily disabled for development)
 const personaRateLimit = rateLimit({

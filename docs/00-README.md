@@ -73,7 +73,7 @@ something lives on.
 - Document Chat for PDF and plain-text files, with keyword search or embeddings
 - Personas with model settings, prompts, import/export, memory, and mutation state
 - Interactive artifacts for HTML, SVG, JSON, code, and bundled multi-file outputs
-- Authentication with local accounts, optional GitHub/Hugging Face OAuth, and optional Cloudflare Turnstile on signup
+- Authentication with local accounts, optional GitHub/Hugging Face OAuth, and optional Cloudflare Turnstile on login and signup
 - Light/dark themes with custom accent colors and 25 translated locales,
   including fully mirrored Arabic RTL Work layouts
 
@@ -126,6 +126,7 @@ Codex, can also be used as a chat model without an API key.
 ### Deployment
 
 - [Docker](./DOCKER)
+- [Private Remote Deployment](./PRIVATE_REMOTE_DEPLOYMENT)
 - [Docker with External Ollama](./DOCKER_EXTERNAL_OLLAMA)
 - [Kubernetes](./KUBERNETES)
 - [Desktop App](./ELECTRON_DESKTOP_APP)
@@ -164,9 +165,10 @@ JWT_SECRET=replace-with-a-long-random-secret
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 
-# Optional signup protection
+# Optional login and signup protection
 TURNSTILE_SITE_KEY=...
 TURNSTILE_SECRET_KEY=...
+TURNSTILE_EXPECTED_HOSTNAME=librewebui.example
 ```
 
 The first local account created in a fresh install becomes the administrator.

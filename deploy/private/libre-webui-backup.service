@@ -1,0 +1,15 @@
+[Unit]
+Description=Back up the Libre WebUI data volume
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/libre-webui-backup
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/libre-webui /var/run/docker.sock
+NoNewPrivileges=true

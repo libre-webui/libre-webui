@@ -256,6 +256,7 @@ export const SignupForm: React.FC<SignupFormProps> = ({
         {isTurnstileEnabled && turnstileSiteKey && (
           <TurnstileWidget
             siteKey={turnstileSiteKey}
+            action='signup'
             disabled={isLoading}
             errorMessage={t('auth.signup.tryAgain')}
             onTokenChange={handleTurnstileTokenChange}

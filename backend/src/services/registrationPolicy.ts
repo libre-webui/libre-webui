@@ -20,8 +20,8 @@ export const isPublicRegistrationEnabled = (
   value: string | undefined = process.env.ENABLE_SIGNUP
 ): boolean => value?.trim().toLowerCase() !== 'false';
 
-/** A fresh instance must always permit creation of its first administrator. */
+/** Disabled registration is absolute, including on an empty database. */
 export const canCreateLocalAccount = (
-  userCount: number,
+  _userCount: number,
   registrationEnabled = isPublicRegistrationEnabled()
-): boolean => userCount === 0 || registrationEnabled;
+): boolean => registrationEnabled;

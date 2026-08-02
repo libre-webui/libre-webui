@@ -16,10 +16,11 @@
  */
 
 import express, { Response } from 'express';
-import { AuthenticatedRequest } from '../middleware/auth.js';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth.js';
 import agentCliService from '../services/agentCliService.js';
 
 const router = express.Router();
+router.use(authenticate);
 
 /**
  * Installed agent CLIs usable as chat models. Non-admin users get an empty

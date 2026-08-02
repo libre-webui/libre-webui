@@ -18,12 +18,13 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import pluginService from '../services/pluginService.js';
-import type { AuthenticatedRequest } from '../middleware/auth.js';
+import { authenticate, type AuthenticatedRequest } from '../middleware/auth.js';
 import { createLogger } from '../utils/logger.js';
 
 const logger = createLogger('routes:tts');
 
 const router = express.Router();
+router.use(authenticate);
 
 // Rate limiter for TTS routes: 30 requests per minute
 const ttsRateLimiter = rateLimit({

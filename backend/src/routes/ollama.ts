@@ -15,89 +15,22 @@
  * limitations under the License.
  */
 
-import express, { NextFunction, Request, Response } from 'express';
+import express, { Request, Response } from 'express';
 import embeddingService from '../services/embeddingService.js';
 import ollamaService from '../services/ollamaService.js';
 import { ApiResponse, OllamaModel, getErrorMessage } from '../types/index.js';
-import { AuthenticatedRequest, optionalAuth } from '../middleware/auth.js';
-import { authService } from '../services/authService.js';
-import { systemSettingsService } from '../services/systemSettingsService.js';
+import {
+  authenticate,
+  AuthenticatedRequest,
+  requireAdmin,
+} from '../middleware/auth.js';
 import {
   getOllamaLibraryModels,
   type RemoteModelInfo,
 } from '../utils/ollamaLibrary.js';
 
 const router = express.Router();
-
-const getRequestToken = (req: Request): string | null => {
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7);
-  }
-
-  const queryToken = req.query.token;
-  if (typeof queryToken === 'string' && queryToken.trim()) {
-    return queryToken;
-  }
-
-  return null;
-};
-
-const checkModelPullPermission = (
-  req: AuthenticatedRequest
-): { allowed: true } | { allowed: false; status: number; error: string } => {
-  // When enabled, preserve current behavior.
-  if (systemSettingsService.getAllowUserModelPull()) {
-    return { allowed: true };
-  }
-
-  const token = getRequestToken(req);
-  if (!token) {
-    return {
-      allowed: false,
-      status: 401,
-      error: 'Authentication required to install models',
-    };
-  }
-
-  const payload = authService.verifyToken(token);
-  if (!payload) {
-    return {
-      allowed: false,
-      status: 401,
-      error: 'Invalid or expired token',
-    };
-  }
-
-  req.user = payload;
-
-  if (payload.role !== 'admin') {
-    return {
-      allowed: false,
-      status: 403,
-      error: 'Only admins can install new models on this instance',
-    };
-  }
-
-  return { allowed: true };
-};
-
-const enforceModelPullPermission = (
-  req: AuthenticatedRequest,
-  res: Response<ApiResponse>,
-  next: NextFunction
-): void => {
-  const permission = checkModelPullPermission(req);
-  if (!permission.allowed) {
-    res.status(permission.status).json({
-      success: false,
-      error: permission.error,
-    });
-    return;
-  }
-
-  next();
-};
+router.use(authenticate);
 
 // Health check
 router.get(
@@ -155,6 +88,7 @@ router.get(
 // Pull all models
 router.post(
   '/models/pull-all',
+  requireAdmin,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const result = await ollamaService.pullAllModels();
@@ -177,12 +111,12 @@ router.post(
 // Pull all models with streaming progress (GET for Server-Sent Events)
 router.get(
   '/models/pull-all/stream',
+  requireAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
-      res.setHeader('Access-Control-Allow-Origin', '*');
 
       await ollamaService.pullAllModelsStream(
         progress => {
@@ -211,7 +145,7 @@ router.get(
 // Pull a new model (uses request body to support model names with slashes like hf.co/author/model:tag)
 router.post(
   '/models/pull',
-  enforceModelPullPermission,
+  requireAdmin,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const modelName = req.body.name as string;
@@ -239,24 +173,11 @@ router.post(
 
 // Pull a model with streaming progress
 // Uses query param ?model= to support model names with slashes (e.g., hf.co/author/model)
-// Optional ?token= can be provided for role checks when EventSource cannot set auth headers
 router.get(
   '/pull/stream',
+  requireAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
-      const permission = checkModelPullPermission(req as AuthenticatedRequest);
-      if (!permission.allowed) {
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.write(
-          `data: ${JSON.stringify({ type: 'error', error: permission.error })}\n\n`
-        );
-        res.end();
-        return;
-      }
-
       const modelName = req.query.model as string;
 
       if (!modelName) {
@@ -269,7 +190,6 @@ router.get(
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
-      res.setHeader('Access-Control-Allow-Origin', '*');
 
       await ollamaService.pullModelStream(
         modelName,
@@ -301,6 +221,7 @@ router.get(
 // Delete a model (uses query param ?name= to support model names with slashes like hf.co/author/model:tag)
 router.delete(
   '/models',
+  requireAdmin,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const modelName = req.query.name as string;
@@ -354,6 +275,7 @@ router.get(
 // Create a model
 router.post(
   '/models',
+  requireAdmin,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       await ollamaService.createModel(req.body);
@@ -370,6 +292,7 @@ router.post(
 // Copy a model
 router.post(
   '/models/copy',
+  requireAdmin,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const { source, destination } = req.body;
@@ -387,6 +310,7 @@ router.post(
 // Push a model (uses request body to support model names with slashes like hf.co/author/model:tag)
 router.post(
   '/models/push',
+  requireAdmin,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const modelName = req.body.name as string;
@@ -414,7 +338,6 @@ router.post(
 // Generate embeddings
 router.post(
   '/embed',
-  optionalAuth,
   async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse>
@@ -453,6 +376,7 @@ router.get(
 // Unload a model from memory (free VRAM)
 router.post(
   '/models/unload',
+  requireAdmin,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       const modelName = req.body.name as string;
@@ -480,6 +404,7 @@ router.post(
 // Unload all running models from memory
 router.post(
   '/models/unload-all',
+  requireAdmin,
   async (req: Request, res: Response<ApiResponse>): Promise<void> => {
     try {
       await ollamaService.unloadAllModels();
@@ -536,7 +461,6 @@ router.post(
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
-      res.setHeader('Access-Control-Allow-Origin', '*');
 
       await ollamaService.generateChatStreamResponse(
         req.body,
@@ -587,6 +511,7 @@ router.head(
 // Push a blob
 router.post(
   '/blobs/:digest',
+  requireAdmin,
   async (req: Request, res: Response): Promise<void> => {
     try {
       const digest = req.params.digest as string;
@@ -627,7 +552,6 @@ router.post(
 // Legacy embeddings endpoint (deprecated)
 router.post(
   '/embeddings',
-  optionalAuth,
   async (
     req: AuthenticatedRequest,
     res: Response<ApiResponse>

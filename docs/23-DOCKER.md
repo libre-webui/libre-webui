@@ -10,6 +10,11 @@ keywords: [libre webui docker, docker compose, container deployment]
 
 Docker is the easiest production-style deployment for a single server.
 
+For an Internet-reachable single-server installation, start with
+[Private Remote Deployment](./PRIVATE_REMOTE_DEPLOYMENT). Its Compose template
+publishes no application ports, defaults to the `main` image, and adds an outer
+Cloudflare Access boundary, host controls, backups, and container limits.
+
 ## Work Availability
 
 Work is enabled in every repository Compose file. The image ships the Docker

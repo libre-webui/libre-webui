@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the Libre WebUI backup every night
+
+[Timer]
+OnCalendar=*-*-* 03:20:00
+RandomizedDelaySec=20m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

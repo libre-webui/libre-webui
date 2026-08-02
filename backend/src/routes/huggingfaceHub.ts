@@ -19,6 +19,7 @@ import express, { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import axios from 'axios';
 import { ApiResponse, getErrorMessage } from '../types/index.js';
+import { authenticate, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -120,6 +121,7 @@ const hubRateLimit = rateLimit({
 });
 
 router.use(hubRateLimit);
+router.use(authenticate);
 
 /**
  * Get models from HuggingFace Hub API
@@ -292,6 +294,7 @@ router.get(
  */
 router.post(
   '/cache/clear',
+  requireAdmin,
   async (req: Request, res: Response<ApiResponse<boolean>>): Promise<void> => {
     modelCache.clear();
     res.json({

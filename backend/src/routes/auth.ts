@@ -91,7 +91,8 @@ router.post('/login', authRateLimiter, async (req, res) => {
 
     const turnstileValid = await turnstileService.verify(
       turnstileToken,
-      getClientIp(req)
+      getClientIp(req),
+      'login'
     );
 
     if (!turnstileValid) {
@@ -253,32 +254,39 @@ router.patch(
  * Get encryption key for first-time setup
  * Only accessible during initial setup (when only one user exists - the newly created admin)
  */
-router.get('/encryption-key', generalAuthRateLimiter, async (req, res) => {
-  try {
-    const systemInfo = authService.getSystemInfo();
+router.get(
+  '/encryption-key',
+  generalAuthRateLimiter,
+  authenticate,
+  requireAdmin,
+  async (_req, res) => {
+    try {
+      const systemInfo = authService.getSystemInfo();
 
-    // Only allow access during first-time setup (when only one user exists - the newly created admin)
-    if (systemInfo.userCount !== 1) {
-      res.status(403).json({
-        success: false,
-        message: 'Encryption key is only available during first-time setup',
+      // Keep the first-time setup behavior, but bind disclosure to the
+      // authenticated administrator created by that setup.
+      if (systemInfo.userCount !== 1) {
+        res.status(403).json({
+          success: false,
+          message: 'Encryption key is only available during first-time setup',
+        });
+        return;
+      }
+
+      const encryptionKey = encryptionService.getKeyForDisplay();
+      res.json({
+        success: true,
+        data: { encryptionKey },
       });
-      return;
+    } catch (error) {
+      logger.error('Encryption key retrieval error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+      });
     }
-
-    const encryptionKey = encryptionService.getKeyForDisplay();
-    res.json({
-      success: true,
-      data: { encryptionKey },
-    });
-  } catch (error) {
-    logger.error('Encryption key retrieval error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error',
-    });
   }
-});
+);
 
 /**
  * Signup endpoint
@@ -315,7 +323,8 @@ router.post('/signup', authRateLimiter, async (req, res) => {
 
     const turnstileValid = await turnstileService.verify(
       turnstileToken,
-      getClientIp(req)
+      getClientIp(req),
+      'signup'
     );
 
     if (!turnstileValid) {

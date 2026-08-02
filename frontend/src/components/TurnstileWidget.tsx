@@ -31,6 +31,7 @@ interface TurnstileApi {
     options: {
       sitekey: string;
       theme: 'auto';
+      action: string;
       callback: (token: string) => void;
       'expired-callback': () => void;
       'error-callback': () => void;
@@ -48,6 +49,7 @@ declare global {
 
 interface TurnstileWidgetProps {
   siteKey: string;
+  action: 'login' | 'signup';
   disabled?: boolean;
   errorMessage: string;
   onTokenChange: (token: string) => void;
@@ -89,6 +91,7 @@ const loadTurnstileScript = (): Promise<void> => {
 
 export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
   siteKey,
+  action,
   disabled = false,
   errorMessage,
   onTokenChange,
@@ -112,6 +115,7 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
         widgetIdRef.current = window.turnstile.render(container, {
           sitekey: siteKey,
           theme: 'auto',
+          action,
           callback: token => onTokenChange(token),
           'expired-callback': () => onTokenChange(''),
           'error-callback': () => onTokenChange(''),
@@ -136,7 +140,7 @@ export const TurnstileWidget: React.FC<TurnstileWidgetProps> = ({
 
       widgetIdRef.current = null;
     };
-  }, [onTokenChange, siteKey]);
+  }, [action, onTokenChange, siteKey]);
 
   useEffect(() => {
     if (disabled && widgetIdRef.current) {

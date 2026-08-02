@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import type { Server } from 'http';
+import type { IncomingMessage, Server } from 'http';
+import type { Duplex } from 'stream';
 import { WebSocketServer } from 'ws';
 
 import ollamaService from './services/ollamaService.js';
@@ -40,7 +41,6 @@ import {
   sendUserMessage,
   streamAssistantFakeChunks,
 } from './utils/websocketMessages.js';
-import { verifyToken } from './utils/jwt.js';
 import {
   createWorkTerminalServer,
   WORK_TERMINAL_WS_PATH,
@@ -48,49 +48,134 @@ import {
 import { OllamaChatRequest, ChatSession } from './types/index.js';
 import { normalizeChatProviderSelection } from './utils/chatProviderSelection.js';
 import workPreviewProxyService from './services/workPreviewProxyService.js';
+import { authService } from './services/authService.js';
+import { userModel } from './models/userModel.js';
 
 const chatRequestService = new ChatRequestService({
   chatGenerationService,
   personaService,
 });
 const logger = createLogger('websocket');
+const CHAT_WS_MAX_PAYLOAD_BYTES = positiveInteger(
+  process.env.CHAT_WS_MAX_PAYLOAD_BYTES,
+  10 * 1024 * 1024
+);
+const CHAT_WS_MAX_MESSAGES_PER_MINUTE = positiveInteger(
+  process.env.CHAT_WS_MAX_MESSAGES_PER_MINUTE,
+  120
+);
+
+interface AuthenticatedChatRequest extends IncomingMessage {
+  chatAuth?: {
+    token: string;
+    userId: string;
+  };
+}
+
+function positiveInteger(value: string | undefined, fallback: number): number {
+  const parsed = Number.parseInt(value || '', 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+export const isAllowedWebSocketOrigin = (
+  origin: string | undefined,
+  configuredOrigins = [process.env.CORS_ORIGIN, process.env.BASE_URL]
+): boolean => {
+  if (!origin) return true;
+  let requestOrigin: string;
+  try {
+    requestOrigin = new URL(origin).origin;
+  } catch {
+    return false;
+  }
+
+  const allowed = configuredOrigins
+    .flatMap(value => value?.split(',') || [])
+    .map(value => value.trim())
+    .filter(Boolean)
+    .flatMap(value => {
+      try {
+        return [new URL(value).origin];
+      } catch {
+        return [];
+      }
+    });
+  return allowed.length === 0 || allowed.includes(requestOrigin);
+};
+
+const authorizeChatUpgrade = (
+  request: AuthenticatedChatRequest
+): { token: string; userId: string } | null => {
+  try {
+    const url = new URL(request.url || '', `http://${request.headers.host}`);
+    const token = url.searchParams.get('token')?.trim() || '';
+    if (!token) return null;
+    const payload = authService.verifyToken(token);
+    if (!payload) return null;
+    const currentUser = userModel.getUserById(payload.userId);
+    if (!currentUser) return null;
+    return { token, userId: currentUser.id };
+  } catch {
+    return null;
+  }
+};
+
+const rejectUpgrade = (
+  socket: Duplex,
+  status: 401 | 403,
+  message: string
+): void => {
+  const body = JSON.stringify({ success: false, message });
+  socket.end(
+    `HTTP/1.1 ${status} ${status === 401 ? 'Unauthorized' : 'Forbidden'}\r\n` +
+      'Connection: close\r\n' +
+      'Content-Type: application/json\r\n' +
+      `Content-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`
+  );
+};
 
 export function registerWebSocketServer(server: Server): void {
   // WebSocket server for real-time chat streaming. Upgrades are dispatched by
   // path in index.ts so the Work terminal can share the same HTTP server.
-  const wss = new WebSocketServer({ noServer: true });
+  const wss = new WebSocketServer({
+    noServer: true,
+    maxPayload: CHAT_WS_MAX_PAYLOAD_BYTES,
+  });
 
-  wss.on('connection', (ws, req) => {
+  wss.on('connection', (ws, rawRequest) => {
     logger.debug('WebSocket client connected');
-
-    // Extract and verify auth token from query parameters
-    let userId = 'default';
-    try {
-      const url = new URL(req.url || '', `http://${req.headers.host}`);
-      const token = url.searchParams.get('token');
-
-      if (token) {
-        // Verify JWT token using the same logic as the auth middleware
-        const decoded = verifyToken(token);
-        userId = decoded.userId;
-        logger.debug('WebSocket authenticated for user:', userId);
-      } else {
-        logger.debug(
-          'WebSocket connection without auth token, using default user'
-        );
-      }
-    } catch (error) {
-      // An expired/invalid token here is expected (e.g. a stale browser token);
-      // fall back to the default user without dumping a stack trace.
-      logger.warn(
-        'WebSocket auth failed, using default user:',
-        error instanceof Error ? error.message : error
-      );
-      // Continue with default user for backward compatibility
+    const req = rawRequest as AuthenticatedChatRequest;
+    const chatAuth = req.chatAuth;
+    if (!chatAuth) {
+      ws.close(1008, 'Authentication required');
+      return;
     }
+    const { userId } = chatAuth;
+    let messageWindowStartedAt = Date.now();
+    let messageCount = 0;
 
     ws.on('message', async data => {
       try {
+        const now = Date.now();
+        if (now - messageWindowStartedAt >= 60_000) {
+          messageWindowStartedAt = now;
+          messageCount = 0;
+        }
+        messageCount += 1;
+        if (messageCount > CHAT_WS_MAX_MESSAGES_PER_MINUTE) {
+          ws.close(1008, 'Message rate limit exceeded');
+          return;
+        }
+
+        const currentPayload = authService.verifyToken(chatAuth.token);
+        const currentUser = currentPayload
+          ? userModel.getUserById(currentPayload.userId)
+          : null;
+        if (!currentUser || currentUser.id !== userId) {
+          ws.close(1008, 'Session expired or account unavailable');
+          return;
+        }
+
         const message = JSON.parse(data.toString());
 
         if (message.type === 'chat_stream') {
@@ -197,6 +282,7 @@ export function registerWebSocketServer(server: Server): void {
           // RAG: Get relevant document context for the user's query
           const relevantContext = await documentService.getRelevantContext(
             content,
+            userId,
             sessionId
           );
           const enhancedContent = buildDocumentEnhancedContent(
@@ -572,6 +658,17 @@ export function registerWebSocketServer(server: Server): void {
       return;
     }
     if (pathname === '/ws') {
+      if (!isAllowedWebSocketOrigin(request.headers.origin)) {
+        rejectUpgrade(socket, 403, 'WebSocket origin is not allowed');
+        return;
+      }
+      const authenticatedRequest = request as AuthenticatedChatRequest;
+      const chatAuth = authorizeChatUpgrade(authenticatedRequest);
+      if (!chatAuth) {
+        rejectUpgrade(socket, 401, 'WebSocket authentication is required');
+        return;
+      }
+      authenticatedRequest.chatAuth = chatAuth;
       wss.handleUpgrade(request, socket, head, ws => {
         wss.emit('connection', ws, request);
       });

@@ -35,21 +35,29 @@ This page lists the environment variables read by the current Libre WebUI backen
 
 ## Authentication and Security
 
-| Variable               | Default                           | Purpose                                                  |
-| ---------------------- | --------------------------------- | -------------------------------------------------------- |
-| `ENABLE_SIGNUP`        | `true`                            | Set to `false` to disable public account registration    |
-| `JWT_SECRET`           | generated/fallback in development | JWT signing secret; set explicitly in production         |
-| `JWT_EXPIRES_IN`       | `7d`                              | Session-token lifetime                                   |
-| `ENCRYPTION_KEY`       | auto-generated                    | 64-character hex key for encrypted values                |
-| `DEBUG_ENCRYPTION`     | unset                             | Logs encryption debug output when set                    |
-| `TURNSTILE_SITE_KEY`   | unset                             | Cloudflare Turnstile site key for signup                 |
-| `TURNSTILE_SECRET_KEY` | unset                             | Cloudflare Turnstile secret key for backend verification |
+| Variable                      | Default                           | Purpose                                                  |
+| ----------------------------- | --------------------------------- | -------------------------------------------------------- |
+| `ENABLE_SIGNUP`               | `true`                            | Set to `false` to disable public account registration    |
+| `JWT_SECRET`                  | generated/fallback in development | JWT signing secret; set explicitly in production         |
+| `JWT_EXPIRES_IN`              | `7d`                              | Session-token lifetime                                   |
+| `ENCRYPTION_KEY`              | auto-generated                    | 64-character hex key for encrypted values                |
+| `DEBUG_ENCRYPTION`            | unset                             | Logs encryption debug output when set                    |
+| `TURNSTILE_SITE_KEY`          | unset                             | Cloudflare Turnstile site key for login and signup       |
+| `TURNSTILE_SECRET_KEY`        | unset                             | Cloudflare Turnstile secret key for backend verification |
+| `TURNSTILE_EXPECTED_HOSTNAME` | hostname from `BASE_URL`          | Required hostname in Cloudflare's verification response  |
 
 Turnstile is enabled only when both Turnstile keys are present.
 
-`ENABLE_SIGNUP=false` blocks new local and OAuth accounts after the first
-administrator exists. First-time administrator setup remains available on an
-empty database so a new instance cannot be locked before it is configured.
+`ENABLE_SIGNUP=false` blocks new local and OAuth accounts even on an empty
+database. Temporarily enable it only after an outer identity boundary protects
+the initial administrator setup.
+
+Chat WebSocket admission can be tuned without weakening authentication:
+
+| Variable                          | Default | Purpose                                  |
+| --------------------------------- | ------- | ---------------------------------------- |
+| `CHAT_WS_MAX_PAYLOAD_BYTES`       | 10 MiB  | Maximum accepted WebSocket message size  |
+| `CHAT_WS_MAX_MESSAGES_PER_MINUTE` | `120`   | Per-connection WebSocket message ceiling |
 
 ## OAuth
 
@@ -264,6 +272,7 @@ OLLAMA_LONG_OPERATION_TIMEOUT=900000
 
 TURNSTILE_SITE_KEY=...
 TURNSTILE_SECRET_KEY=...
+TURNSTILE_EXPECTED_HOSTNAME=librewebui.example
 ```
 
 ## Related Docs

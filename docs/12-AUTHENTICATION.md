@@ -46,9 +46,10 @@ create accounts from user management. New local signups and new accounts from
 OAuth providers are blocked. Libre WebUI also removes the signup link from the
 login page.
 
-On an empty database, first-time setup remains available even when registration
-is disabled. This permits creation of the initial administrator; registration
-closes as soon as that account exists.
+Registration stays closed on an empty database. For a new private deployment,
+first place the hostname behind an identity allowlist such as Cloudflare
+Access, temporarily set `ENABLE_SIGNUP=true`, create the initial administrator,
+then set it back to `false` and recreate the application container.
 
 ## Roles
 
@@ -57,7 +58,8 @@ closes as soon as that account exists.
 | `admin` | Instance administration, user management, system settings, and trusted Work runtime operation |
 | `user`  | Normal chat, model, persona, document, and settings workflows                                 |
 
-Administrators can update some system settings, including whether normal users may pull models.
+Model installation, deletion, copying, pushing, and unloading are restricted to
+administrators because these operations change host resources.
 
 ### Work Access
 
@@ -92,14 +94,18 @@ Changing `JWT_SECRET` invalidates existing sessions. Local login tokens are curr
 
 ## Cloudflare Turnstile
 
-Turnstile protects signup when both keys are configured:
+Turnstile protects password login and signup when both keys are configured:
 
 ```env
 TURNSTILE_SITE_KEY=...
 TURNSTILE_SECRET_KEY=...
+TURNSTILE_EXPECTED_HOSTNAME=chat.example.com
 ```
 
-The frontend displays the widget on the Create Account form. The backend verifies the Turnstile token before creating the account.
+The frontend assigns distinct `login` and `signup` actions. The backend verifies
+the token with Cloudflare and rejects a response whose hostname or action does
+not match the request. `BASE_URL` supplies the expected hostname when
+`TURNSTILE_EXPECTED_HOSTNAME` is not set explicitly.
 
 If either key is missing, Turnstile is disabled.
 
