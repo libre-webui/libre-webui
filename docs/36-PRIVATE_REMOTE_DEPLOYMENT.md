@@ -14,7 +14,7 @@ Docker host without publishing the application or Ollama ports. Cloudflare
 Access is the outer identity boundary; Libre WebUI authentication remains the
 inner boundary.
 
-Use [`deploy/private/docker-compose.yml`](../deploy/private/docker-compose.yml)
+Use [`deploy/private/docker-compose.yml`](https://github.com/libre-webui/libre-webui/blob/main/deploy/private/docker-compose.yml)
 as the starting point. It defaults to the `main` image:
 
 ```env
