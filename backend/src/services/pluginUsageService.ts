@@ -23,6 +23,9 @@ const logger = createLogger('plugin-usage');
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MIN_ANALYTICS_DAYS = 1;
 const MAX_ANALYTICS_DAYS = 365;
+const HEATMAP_DAYS = 365;
+const HEATMAP_TOP_MODELS = 5;
+const HEATMAP_MODELS_PER_DAY = 5;
 const RETENTION_DAYS = 400;
 
 export type PluginUsageCapability =
@@ -94,6 +97,21 @@ export interface PluginUsageAnalytics {
     inputUnits: number;
     outputUnits: number;
   }>;
+  /**
+   * Contribution-style calendar over a fixed trailing year, independent of the
+   * requested range: per-day call counts with each day's leading models.
+   */
+  heatmap: {
+    from: number;
+    days: number;
+    /** Top models across the whole year, most-called first. */
+    models: string[];
+    cells: Array<{
+      timestamp: number;
+      calls: number;
+      models: Array<{ model: string; calls: number }>;
+    }>;
+  };
 }
 
 type Numberish = number | bigint | null;
@@ -285,6 +303,59 @@ class PluginUsageService {
       )
       .all(from, to) as Array<Record<string, string | Numberish>>;
 
+    const heatmapFrom = startOfToday.getTime() - (HEATMAP_DAYS - 1) * DAY_MS;
+    const heatmapRows = db
+      .prepare(
+        `SELECT
+           CAST((created_at - ?) / ? AS INTEGER) AS bucket,
+           model,
+           COUNT(*) AS calls
+         FROM plugin_usage_events
+         WHERE created_at >= ? AND created_at <= ?
+         GROUP BY bucket, model
+         ORDER BY bucket ASC, calls DESC`
+      )
+      .all(heatmapFrom, DAY_MS, heatmapFrom, to) as Array<
+      Record<string, string | Numberish>
+    >;
+
+    const heatmapBuckets = new Map<
+      number,
+      Array<{ model: string; calls: number }>
+    >();
+    const heatmapModelTotals = new Map<string, number>();
+    for (const row of heatmapRows) {
+      const bucket = asNumber(row.bucket as Numberish);
+      if (bucket < 0 || bucket >= HEATMAP_DAYS) continue;
+      const model = String(row.model ?? '');
+      const calls = asNumber(row.calls as Numberish);
+      if (!model || calls <= 0) continue;
+      const entries = heatmapBuckets.get(bucket) ?? [];
+      entries.push({ model, calls });
+      heatmapBuckets.set(bucket, entries);
+      heatmapModelTotals.set(
+        model,
+        (heatmapModelTotals.get(model) ?? 0) + calls
+      );
+    }
+    const heatmap = {
+      from: heatmapFrom,
+      days: HEATMAP_DAYS,
+      models: [...heatmapModelTotals.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, HEATMAP_TOP_MODELS)
+        .map(([model]) => model),
+      cells: [...heatmapBuckets.entries()]
+        .sort((a, b) => a[0] - b[0])
+        .map(([bucket, entries]) => ({
+          timestamp: heatmapFrom + bucket * DAY_MS,
+          calls: entries.reduce((sum, entry) => sum + entry.calls, 0),
+          models: entries
+            .sort((a, b) => b.calls - a.calls)
+            .slice(0, HEATMAP_MODELS_PER_DAY),
+        })),
+    };
+
     const capabilities = db
       .prepare(
         `SELECT capability, COUNT(*) AS calls,
@@ -337,6 +408,7 @@ class PluginUsageService {
         inputUnits: asNumber(row.input_units as Numberish),
         outputUnits: asNumber(row.output_units as Numberish),
       })),
+      heatmap,
     };
   }
 
@@ -368,6 +440,12 @@ class PluginUsageService {
       plugins: [],
       models: [],
       capabilities: [],
+      heatmap: {
+        from: from - (HEATMAP_DAYS - days) * DAY_MS,
+        days: HEATMAP_DAYS,
+        models: [],
+        cells: [],
+      },
     };
   }
 }

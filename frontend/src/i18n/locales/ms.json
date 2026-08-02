@@ -1790,7 +1790,16 @@
       "title": "Tiada panggilan pembekal lagi",
       "description": "Panggilan akan dipaparkan di sini selepas pemalam yang didayakan mengendalikan permintaan sembang, Work, pembenaman, imej, pertuturan, bunyi, atau video."
     },
-    "privacyNote": "Penggunaan diukur pada pelayan di sempadan pemalam keluar. Libre WebUI menyimpan pembekal, model, masa, status, dan pembilang dilaporkan—tidak pernah gesaan, respons, titik akhir, kelayakan, atau badan ralat pembekal. Jumlah token hanya termasuk panggilan di mana pembekal memulangkan metadata penggunaan."
+    "privacyNote": "Penggunaan diukur pada pelayan di sempadan pemalam keluar. Libre WebUI menyimpan pembekal, model, masa, status, dan pembilang dilaporkan—tidak pernah gesaan, respons, titik akhir, kelayakan, atau badan ralat pembekal. Jumlah token hanya termasuk panggilan di mana pembekal memulangkan metadata penggunaan.",
+    "heatmap": {
+      "title": "Setahun aktiviti",
+      "description": "Panggilan penyedia harian sepanjang tahun lalu, diwarnakan mengikut model paling banyak digunakan setiap hari.",
+      "calls": "panggilan",
+      "noCalls": "Tiada panggilan",
+      "other": "Model lain",
+      "less": "Kurang",
+      "more": "Lebih"
+    }
   },
   "systemPage": {
     "eyebrow": "Pentadbiran",

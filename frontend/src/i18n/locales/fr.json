@@ -1790,7 +1790,16 @@
       "title": "Aucun appel fournisseur pour le moment",
       "description": "Les appels apparaîtront ici une fois qu'un plugin activé aura traité des requêtes de chat, Work, d'embedding, d'image, de parole, de son ou de vidéo."
     },
-    "privacyNote": "L'utilisation est mesurée sur le serveur à la limite du plugin sortant. Libre WebUI stocke le fournisseur, le modèle, le minutage, le statut et les compteurs signalés — jamais les prompts, les réponses, les points de terminaison, les identifiants ou les corps d'erreur du fournisseur. Les totaux de jetons incluent uniquement les appels où le fournisseur a renvoyé des métadonnées d'utilisation."
+    "privacyNote": "L'utilisation est mesurée sur le serveur à la limite du plugin sortant. Libre WebUI stocke le fournisseur, le modèle, le minutage, le statut et les compteurs signalés — jamais les prompts, les réponses, les points de terminaison, les identifiants ou les corps d'erreur du fournisseur. Les totaux de jetons incluent uniquement les appels où le fournisseur a renvoyé des métadonnées d'utilisation.",
+    "heatmap": {
+      "title": "Une année d'activité",
+      "description": "Appels quotidiens aux fournisseurs sur l'année écoulée, colorés selon le modèle le plus utilisé chaque jour.",
+      "calls": "appels",
+      "noCalls": "Aucun appel",
+      "other": "Autres modèles",
+      "less": "Moins",
+      "more": "Plus"
+    }
   },
   "systemPage": {
     "eyebrow": "Administration",

@@ -1790,7 +1790,16 @@
       "title": "Nenhuma chamada de provedor ainda",
       "description": "As chamadas aparecerão aqui após um plugin ativado processar solicitações de chat, trabalho, incorporação, imagem, fala, som ou vídeo."
     },
-    "privacyNote": "O uso é medido no servidor no limite do plugin de saída. O Libre WebUI armazena provedor, modelo, tempo, status e contadores reportados — nunca prompts, respostas, endpoints, credenciais ou corpos de erro do provedor. Os totais de tokens incluem apenas chamadas em que o provedor retornou metadados de uso."
+    "privacyNote": "O uso é medido no servidor no limite do plugin de saída. O Libre WebUI armazena provedor, modelo, tempo, status e contadores reportados — nunca prompts, respostas, endpoints, credenciais ou corpos de erro do provedor. Os totais de tokens incluem apenas chamadas em que o provedor retornou metadados de uso.",
+    "heatmap": {
+      "title": "Um ano de atividade",
+      "description": "Chamadas diárias a provedores no último ano, coloridas pelo modelo mais usado de cada dia.",
+      "calls": "chamadas",
+      "noCalls": "Sem chamadas",
+      "other": "Outros modelos",
+      "less": "Menos",
+      "more": "Mais"
+    }
   },
   "systemPage": {
     "eyebrow": "Administração",

@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `opencode` and `pi` CLIs beside Claude Code and Codex. Pi runs each turn
   stateless with tools disabled and a neutral system prompt, so chats never
   touch the server user's personal Pi configuration.
+- **A year of activity on the Usage page.** A contribution-style calendar shows
+  every day of provider calls over the trailing year, colored by each day's
+  most-used model with a per-day tooltip, a ranked model legend, and an
+  intensity ramp. The palette passes colorblind-safety validation in both
+  themes.
 - **Agent entries carry a model choice.** Claude Code offers Sonnet, Opus, and
   Haiku beside its default, and OpenCode lists every model its providers offer
   and requires an explicit pick, because its CLI default can point at an

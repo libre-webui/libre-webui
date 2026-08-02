@@ -1790,7 +1790,16 @@
       "title": "Inga leverantörsanrop ännu",
       "description": "Anrop visas här efter att en aktiverad plugin hanterar chatt-, Work-, inbäddnings-, bild-, tal-, ljud- eller videoförfrågningar."
     },
-    "privacyNote": "Användning mäts på servern vid den utgående plugin-gränsen. Libre WebUI lagrar leverantör, modell, tidsmätning, status och rapporterade räknare—aldrig prompts, svar, ändpunkter, autentiseringsuppgifter eller leverantörsfelkroppar. Token-totaler inkluderar endast anrop där leverantören returnerade användningsmetadata."
+    "privacyNote": "Användning mäts på servern vid den utgående plugin-gränsen. Libre WebUI lagrar leverantör, modell, tidsmätning, status och rapporterade räknare—aldrig prompts, svar, ändpunkter, autentiseringsuppgifter eller leverantörsfelkroppar. Token-totaler inkluderar endast anrop där leverantören returnerade användningsmetadata.",
+    "heatmap": {
+      "title": "Ett år av aktivitet",
+      "description": "Dagliga leverantörsanrop under det senaste året, färgade efter dagens mest använda modell.",
+      "calls": "anrop",
+      "noCalls": "Inga anrop",
+      "other": "Övriga modeller",
+      "less": "Mindre",
+      "more": "Mer"
+    }
   },
   "systemPage": {
     "eyebrow": "Administration",

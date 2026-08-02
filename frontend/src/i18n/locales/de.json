@@ -1790,7 +1790,16 @@
       "title": "Noch keine Anbieter-Aufrufe",
       "description": "Aufrufe erscheinen hier, nachdem ein aktiviertes Plugin Chat-, Work-, Embedding-, Bild-, Sprach-, Sound- oder Video-Anfragen verarbeitet hat."
     },
-    "privacyNote": "Die Nutzung wird auf dem Server an der Plugin-Ausgangsgrenze gemessen. Libre WebUI speichert Anbieter, Modell, Timing, Status und gemeldete Zähler – niemals Prompts, Antworten, Endpunkte, Anmeldeinformationen oder Anbieter-Fehlermeldungen. Token-Gesamtsummen umfassen nur Aufrufe, bei denen der Anbieter Nutzungsmetadaten zurückgegeben hat."
+    "privacyNote": "Die Nutzung wird auf dem Server an der Plugin-Ausgangsgrenze gemessen. Libre WebUI speichert Anbieter, Modell, Timing, Status und gemeldete Zähler – niemals Prompts, Antworten, Endpunkte, Anmeldeinformationen oder Anbieter-Fehlermeldungen. Token-Gesamtsummen umfassen nur Aufrufe, bei denen der Anbieter Nutzungsmetadaten zurückgegeben hat.",
+    "heatmap": {
+      "title": "Ein Jahr Aktivität",
+      "description": "Tägliche Anbieteraufrufe des letzten Jahres, eingefärbt nach dem meistgenutzten Modell des Tages.",
+      "calls": "Aufrufe",
+      "noCalls": "Keine Aufrufe",
+      "other": "Weitere Modelle",
+      "less": "Weniger",
+      "more": "Mehr"
+    }
   },
   "systemPage": {
     "eyebrow": "Verwaltung",

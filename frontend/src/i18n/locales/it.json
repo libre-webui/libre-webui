@@ -1790,7 +1790,16 @@
       "title": "Nessuna chiamata al provider ancora",
       "description": "Le chiamate appariranno qui dopo che un plugin abilitato gestisce richieste di chat, Work, embedding, immagini, voce, audio o video."
     },
-    "privacyNote": "L'utilizzo viene misurato sul server al limite del plugin in uscita. Libre WebUI memorizza provider, modello, tempistiche, stato e contatori segnalati, mai prompt, risposte, endpoint, credenziali o corpi degli errori del provider. I totali dei token includono solo le chiamate in cui il provider ha restituito i metadati di utilizzo."
+    "privacyNote": "L'utilizzo viene misurato sul server al limite del plugin in uscita. Libre WebUI memorizza provider, modello, tempistiche, stato e contatori segnalati, mai prompt, risposte, endpoint, credenziali o corpi degli errori del provider. I totali dei token includono solo le chiamate in cui il provider ha restituito i metadati di utilizzo.",
+    "heatmap": {
+      "title": "Un anno di attività",
+      "description": "Chiamate giornaliere ai provider nell'ultimo anno, colorate in base al modello più usato di ogni giorno.",
+      "calls": "chiamate",
+      "noCalls": "Nessuna chiamata",
+      "other": "Altri modelli",
+      "less": "Meno",
+      "more": "Più"
+    }
   },
   "systemPage": {
     "eyebrow": "Amministrazione",

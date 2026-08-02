@@ -1790,7 +1790,16 @@
       "title": "Belum ada panggilan provider",
       "description": "Panggilan akan muncul di sini setelah plugin aktif menangani permintaan chat, Work, embedding, gambar, ucapan, suara, atau video."
     },
-    "privacyNote": "Penggunaan diukur di server pada batas plugin keluar. Libre WebUI menyimpan provider, model, waktu, status, dan penghitung yang dilaporkan—tidak pernah menyimpan prompt, respons, endpoint, kredensial, atau isi error provider. Total token hanya mencakup panggilan di mana provider mengembalikan metadata penggunaan."
+    "privacyNote": "Penggunaan diukur di server pada batas plugin keluar. Libre WebUI menyimpan provider, model, waktu, status, dan penghitung yang dilaporkan—tidak pernah menyimpan prompt, respons, endpoint, kredensial, atau isi error provider. Total token hanya mencakup panggilan di mana provider mengembalikan metadata penggunaan.",
+    "heatmap": {
+      "title": "Setahun aktivitas",
+      "description": "Panggilan penyedia harian selama setahun terakhir, diwarnai berdasarkan model yang paling banyak digunakan setiap hari.",
+      "calls": "panggilan",
+      "noCalls": "Tidak ada panggilan",
+      "other": "Model lainnya",
+      "less": "Sedikit",
+      "more": "Banyak"
+    }
   },
   "systemPage": {
     "eyebrow": "Administrasi",

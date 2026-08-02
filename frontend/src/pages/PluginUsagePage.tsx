@@ -244,6 +244,291 @@ const UsageChart: React.FC<UsageChartProps> = ({
   );
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+const CELL = 10;
+const CELL_GAP = 2;
+const CELL_PITCH = CELL + CELL_GAP;
+const HEATMAP_LEFT_PAD = 30;
+const HEATMAP_TOP_PAD = 16;
+
+// Fixed categorical assignment, ranked by yearly calls. Light/dark steps were
+// both run through the palette validator against the app surfaces.
+const MODEL_FILLS = [
+  'fill-blue-500',
+  'fill-emerald-500 dark:fill-emerald-600',
+  'fill-amber-500 dark:fill-amber-600',
+  'fill-violet-500',
+  'fill-rose-500',
+];
+const MODEL_CHIPS = [
+  'bg-blue-500',
+  'bg-emerald-500 dark:bg-emerald-600',
+  'bg-amber-500 dark:bg-amber-600',
+  'bg-violet-500',
+  'bg-rose-500',
+];
+const OTHER_FILL = 'fill-gray-400 dark:fill-gray-500';
+const OTHER_CHIP = 'bg-gray-400 dark:bg-gray-500';
+const EMPTY_FILL = 'fill-gray-950/[0.06] dark:fill-white/[0.07]';
+const INTENSITY_OPACITY = [0, 0.35, 0.55, 0.75, 1];
+
+interface HeatmapTooltip {
+  x: number;
+  y: number;
+  timestamp: number;
+  calls: number;
+  models: Array<{ model: string; calls: number }>;
+}
+
+const UsageHeatmap: React.FC<{
+  heatmap: NonNullable<PluginUsageAnalytics['heatmap']>;
+}> = ({ heatmap }) => {
+  const { t, i18n } = useTranslation();
+  const [tooltip, setTooltip] = useState<HeatmapTooltip | null>(null);
+
+  const { weeks, firstColStart, cellsByDay, maxCalls, modelRank } =
+    useMemo(() => {
+      const cellsByDay = new Map(
+        heatmap.cells.map(cell => [cell.timestamp, cell])
+      );
+      const start = heatmap.from;
+      const end = heatmap.from + (heatmap.days - 1) * DAY_MS;
+      const firstColStart = start - new Date(start).getUTCDay() * DAY_MS;
+      const weeks = Math.ceil((end - firstColStart + DAY_MS) / (7 * DAY_MS));
+      const maxCalls = Math.max(1, ...heatmap.cells.map(cell => cell.calls));
+      const modelRank = new Map(
+        heatmap.models.map((model, index) => [model, index])
+      );
+      return { weeks, firstColStart, cellsByDay, maxCalls, modelRank };
+    }, [heatmap]);
+
+  const monthFormatter = new Intl.DateTimeFormat(i18n.language, {
+    month: 'short',
+    timeZone: 'UTC',
+  });
+  const weekdayFormatter = new Intl.DateTimeFormat(i18n.language, {
+    weekday: 'short',
+    timeZone: 'UTC',
+  });
+  const dateFormatter = new Intl.DateTimeFormat(i18n.language, {
+    dateStyle: 'medium',
+    timeZone: 'UTC',
+  });
+
+  const start = heatmap.from;
+  const end = heatmap.from + (heatmap.days - 1) * DAY_MS;
+  const width = HEATMAP_LEFT_PAD + weeks * CELL_PITCH;
+  const height = HEATMAP_TOP_PAD + 7 * CELL_PITCH;
+
+  const monthLabels: Array<{ x: number; label: string }> = [];
+  let lastMonth = -1;
+  for (let week = 0; week < weeks; week++) {
+    const columnStart = firstColStart + week * 7 * DAY_MS;
+    const visibleStart = Math.max(columnStart, start);
+    const month = new Date(visibleStart).getUTCMonth();
+    if (month !== lastMonth && columnStart >= start - 6 * DAY_MS) {
+      if (lastMonth !== -1 || columnStart >= start) {
+        monthLabels.push({
+          x: HEATMAP_LEFT_PAD + week * CELL_PITCH,
+          label: monthFormatter.format(visibleStart),
+        });
+      }
+      lastMonth = month;
+    }
+  }
+
+  const intensity = (calls: number): number =>
+    calls <= 0
+      ? 0
+      : Math.min(4, Math.max(1, Math.ceil((calls / maxCalls) * 4)));
+
+  const fillFor = (cell: { models: Array<{ model: string }> }): string => {
+    const top = cell.models[0]?.model;
+    const rank = top !== undefined ? modelRank.get(top) : undefined;
+    return rank !== undefined ? MODEL_FILLS[rank] : OTHER_FILL;
+  };
+
+  const showTooltip = (
+    event: React.MouseEvent<SVGRectElement>,
+    timestamp: number,
+    cell: { calls: number; models: Array<{ model: string; calls: number }> }
+  ) => {
+    const wrapper = event.currentTarget.closest('[data-heatmap-wrapper]');
+    if (!wrapper) return;
+    const bounds = wrapper.getBoundingClientRect();
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTooltip({
+      x: rect.left - bounds.left + rect.width / 2,
+      y: rect.top - bounds.top,
+      timestamp,
+      calls: cell.calls,
+      models: cell.models,
+    });
+  };
+
+  return (
+    <section
+      data-testid='usage-heatmap'
+      className='overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'
+    >
+      <div className='border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.07] sm:px-5'>
+        <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
+          {t('usageAnalytics.heatmap.title')}
+        </h2>
+        <p className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
+          {t('usageAnalytics.heatmap.description')}
+        </p>
+      </div>
+      <div className='relative p-4 sm:px-5' data-heatmap-wrapper>
+        <div className='overflow-x-auto'>
+          <svg
+            width={width}
+            height={height}
+            role='img'
+            aria-label={t('usageAnalytics.heatmap.title')}
+            onMouseLeave={() => setTooltip(null)}
+          >
+            {monthLabels.map(({ x, label }) => (
+              <text
+                key={`${x}-${label}`}
+                x={x}
+                y={10}
+                className='fill-gray-400 text-[9px] dark:fill-dark-500'
+              >
+                {label}
+              </text>
+            ))}
+            {[1, 3, 5].map(day => (
+              <text
+                key={day}
+                x={0}
+                y={HEATMAP_TOP_PAD + day * CELL_PITCH + CELL - 2}
+                className='fill-gray-400 text-[9px] dark:fill-dark-500'
+              >
+                {weekdayFormatter.format(
+                  // A known Sunday plus the row offset yields the weekday name.
+                  new Date(Date.UTC(2023, 0, 1 + day))
+                )}
+              </text>
+            ))}
+            {Array.from({ length: weeks }, (_, week) =>
+              Array.from({ length: 7 }, (_, day) => {
+                const timestamp = firstColStart + (week * 7 + day) * DAY_MS;
+                if (timestamp < start || timestamp > end) return null;
+                const cell = cellsByDay.get(timestamp);
+                const calls = cell?.calls ?? 0;
+                const level = intensity(calls);
+                return (
+                  <rect
+                    key={timestamp}
+                    x={HEATMAP_LEFT_PAD + week * CELL_PITCH}
+                    y={HEATMAP_TOP_PAD + day * CELL_PITCH}
+                    width={CELL}
+                    height={CELL}
+                    rx={2}
+                    fillOpacity={level === 0 ? 1 : INTENSITY_OPACITY[level]}
+                    className={cn(
+                      'transition-opacity',
+                      level === 0 || !cell ? EMPTY_FILL : fillFor(cell)
+                    )}
+                    onMouseEnter={event =>
+                      showTooltip(event, timestamp, {
+                        calls,
+                        models: cell?.models ?? [],
+                      })
+                    }
+                  >
+                    <title>
+                      {`${dateFormatter.format(timestamp)} — ${formatCount(calls)}`}
+                    </title>
+                  </rect>
+                );
+              })
+            )}
+          </svg>
+        </div>
+        {tooltip && (
+          <div
+            className='pointer-events-none absolute z-10 min-w-[10rem] -translate-x-1/2 -translate-y-full rounded-lg border border-gray-200/80 bg-white/95 px-3 py-2 shadow-card backdrop-blur-md dark:border-white/[0.1] dark:bg-dark-100/95'
+            style={{ left: tooltip.x, top: tooltip.y - 6 }}
+          >
+            <div className='text-[11px] font-medium text-gray-900 dark:text-dark-900'>
+              {dateFormatter.format(tooltip.timestamp)}
+            </div>
+            <div className='mt-0.5 text-[11px] text-gray-500 dark:text-dark-500'>
+              {tooltip.calls === 0
+                ? t('usageAnalytics.heatmap.noCalls')
+                : `${formatCount(tooltip.calls)} ${t('usageAnalytics.heatmap.calls')}`}
+            </div>
+            {tooltip.models.slice(0, 3).map(entry => (
+              <div
+                key={entry.model}
+                className='mt-1 flex items-center justify-between gap-3 text-[11px]'
+              >
+                <span className='flex min-w-0 items-center gap-1.5'>
+                  <span
+                    className={cn(
+                      'h-2 w-2 shrink-0 rounded-[3px]',
+                      modelRank.has(entry.model)
+                        ? MODEL_CHIPS[modelRank.get(entry.model) as number]
+                        : OTHER_CHIP
+                    )}
+                  />
+                  <span
+                    className='truncate font-mono text-gray-700 dark:text-dark-700'
+                    dir='ltr'
+                  >
+                    {entry.model}
+                  </span>
+                </span>
+                <span className='tabular-nums text-gray-500 dark:text-dark-500'>
+                  {formatCount(entry.calls)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className='mt-3 flex flex-wrap items-center justify-between gap-3'>
+          <div className='flex flex-wrap items-center gap-x-4 gap-y-1.5'>
+            {heatmap.models.map((model, index) => (
+              <span
+                key={model}
+                className='flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-dark-600'
+              >
+                <span
+                  className={cn(
+                    'h-2.5 w-2.5 rounded-[3px]',
+                    MODEL_CHIPS[index]
+                  )}
+                />
+                <span className='font-mono' dir='ltr'>
+                  {model}
+                </span>
+              </span>
+            ))}
+            <span className='flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-dark-600'>
+              <span className={cn('h-2.5 w-2.5 rounded-[3px]', OTHER_CHIP)} />
+              {t('usageAnalytics.heatmap.other')}
+            </span>
+          </div>
+          <div className='flex items-center gap-1.5 text-[11px] text-gray-500 dark:text-dark-500'>
+            {t('usageAnalytics.heatmap.less')}
+            <span className='h-2.5 w-2.5 rounded-[3px] bg-gray-950/[0.06] dark:bg-white/[0.07]' />
+            {INTENSITY_OPACITY.slice(1).map(opacity => (
+              <span
+                key={opacity}
+                className='h-2.5 w-2.5 rounded-[3px] bg-primary-500'
+                style={{ opacity }}
+              />
+            ))}
+            {t('usageAnalytics.heatmap.more')}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const PluginUsagePage: React.FC = () => {
   const { t } = useTranslation();
   const [days, setDays] = useState(30);
@@ -393,6 +678,10 @@ const PluginUsagePage: React.FC = () => {
               );
             })}
           </div>
+
+          {analytics.heatmap && analytics.heatmap.cells.length > 0 && (
+            <UsageHeatmap heatmap={analytics.heatmap} />
+          )}
 
           <UsageChart
             analytics={analytics}
