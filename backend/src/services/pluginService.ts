@@ -2023,7 +2023,10 @@ export class PluginService {
           };
         } else {
           yield* forward(
-            streamOpenAIResponsesResponse(response, providerStateScope)
+            streamOpenAIResponsesResponse(response, providerStateScope, {
+              allowEmptyTerminalOutput:
+                activePlugin.id === CODEX_OAUTH_PLUGIN_ID,
+            })
           );
         }
       } else {

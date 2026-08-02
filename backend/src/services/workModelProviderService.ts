@@ -655,7 +655,9 @@ export class WorkModelProviderService {
           : plugin.id === 'gemini'
             ? streamGeminiWorkResponse(response)
             : apiConfig.apiMode === 'responses'
-              ? streamOpenAIResponsesResponse(response, providerStateScope)
+              ? streamOpenAIResponsesResponse(response, providerStateScope, {
+                  allowEmptyTerminalOutput: plugin.id === CODEX_OAUTH_PLUGIN_ID,
+                })
               : streamOpenAICompatibleResponse(response);
       const normalized = await collectPluginWorkStream(
         chunks,

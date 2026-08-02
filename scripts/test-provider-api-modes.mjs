@@ -106,12 +106,14 @@ const collectResponsesStream = async (events, stateScope) => {
   return chunks;
 };
 
-const collectResponsesStreamError = async events => {
+const collectResponsesStreamError = async (events, streamOptions) => {
   const chunks = [];
   let error;
   try {
     for await (const chunk of streamAdapter.streamOpenAIResponsesResponse(
-      responsesStream(events)
+      responsesStream(events),
+      undefined,
+      streamOptions
     )) {
       chunks.push(chunk);
     }
@@ -1948,6 +1950,26 @@ test('Responses terminal output rejects transient text absent from the authorita
 
   assert.deepEqual(chunks, [{ type: 'content', content: 'Transient text' }]);
   assert.match(error?.message || '', /terminal output/);
+});
+
+test('Responses empty terminal output keeps streamed text only when explicitly allowed', async () => {
+  // The ChatGPT codex endpoint completes with an empty output array; the
+  // streamed items are the only record of the turn for that provider.
+  const { chunks, error } = await collectResponsesStreamError(
+    [
+      { type: 'response.output_text.delta', delta: 'Kept text' },
+      {
+        type: 'response.completed',
+        response: { status: 'completed', output: [] },
+      },
+    ],
+    { allowEmptyTerminalOutput: true }
+  );
+
+  assert.equal(error, undefined);
+  assert.equal(chunks[0]?.type, 'content');
+  assert.equal(chunks[0]?.content, 'Kept text');
+  assert.ok(chunks.some(chunk => chunk.type === 'done'));
 });
 
 test('Responses streaming rejects malformed argument delta and done events', async () => {
