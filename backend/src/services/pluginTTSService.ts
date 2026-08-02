@@ -21,6 +21,7 @@ import { createLogger } from '../utils/logger.js';
 import {
   assertSafePluginEndpoint,
   applyModelEndpointTemplate,
+  buildPluginAttributionHeaders,
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
@@ -284,6 +285,10 @@ export class PluginTTSService {
     }
 
     assertSafePluginEndpoint(processedEndpoint, 'TTS endpoint URL constructed');
+    Object.assign(
+      headers,
+      buildPluginAttributionHeaders(plugin, processedEndpoint)
+    );
 
     const startedAt = Date.now();
     try {

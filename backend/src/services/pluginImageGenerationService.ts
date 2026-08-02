@@ -24,6 +24,7 @@ import {
 import {
   assertSafePluginEndpoint,
   applyModelEndpointTemplate,
+  buildPluginAuthHeaders,
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
@@ -201,17 +202,7 @@ export class PluginImageGenerationService {
       }
     }
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (apiKey) {
-      if (plugin.auth.prefix) {
-        headers[plugin.auth.header] = `${plugin.auth.prefix}${apiKey}`;
-      } else {
-        headers[plugin.auth.header] = apiKey;
-      }
-    }
+    const headers = buildPluginAuthHeaders(plugin, apiKey, endpoint);
 
     const payload: Record<string, unknown> = {
       model,

@@ -377,7 +377,7 @@ export class WorkModelProviderService {
             createPluginCredentialFingerprint(apiKey)
           )
         : undefined;
-    const headers = buildPluginAuthHeaders(plugin, apiKey);
+    const headers = buildPluginAuthHeaders(plugin, apiKey, endpoint);
     const { payload, extraHeaders } = buildPluginWorkPayload(
       plugin,
       request,
@@ -564,7 +564,7 @@ export class WorkModelProviderService {
       endpoint = geminiStreamingEndpoint(endpoint);
     }
     assertSafePluginEndpoint(endpoint, 'Work model endpoint');
-    const headers = buildPluginAuthHeaders(plugin, apiKey);
+    const headers = buildPluginAuthHeaders(plugin, apiKey, endpoint);
     const { payload, extraHeaders } = buildPluginWorkPayload(
       plugin,
       { ...request, stream: true },

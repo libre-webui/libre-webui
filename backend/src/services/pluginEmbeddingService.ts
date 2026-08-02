@@ -25,6 +25,7 @@ import {
 import {
   assertSafePluginEndpoint,
   applyModelEndpointTemplate,
+  buildPluginAuthHeaders,
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
@@ -187,15 +188,7 @@ export class PluginEmbeddingService {
       );
     }
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (apiKey && plugin.auth.header) {
-      const authValue = plugin.auth.prefix
-        ? `${plugin.auth.prefix}${apiKey}`
-        : apiKey;
-      headers[plugin.auth.header] = authValue;
-    }
+    const headers = buildPluginAuthHeaders(plugin, apiKey, processedEndpoint);
 
     const startedAt = Date.now();
     try {

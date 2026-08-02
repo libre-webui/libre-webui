@@ -26,6 +26,10 @@ const PLUGIN_API_MODES = new Set<PluginApiMode>([
   'responses',
 ]);
 const MAX_API_PATH_DECODE_PASSES = 8;
+// https://openrouter.ai/docs/app-attribution
+const OPENROUTER_APP_URL = 'https://librewebui.org';
+const OPENROUTER_APP_TITLE = 'Libre WebUI';
+const OPENROUTER_APP_CATEGORIES = 'general-chat,personal-agent';
 export const PLUGIN_MODEL_DISCOVERY_VARIABLES = [
   'endpoint',
   'api_url',
@@ -367,7 +371,8 @@ export function applyModelEndpointTemplate(
 
 export function buildPluginAuthHeaders(
   plugin: Plugin,
-  apiKey?: string | null
+  apiKey?: string | null,
+  endpoint?: string
 ): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -379,7 +384,33 @@ export function buildPluginAuthHeaders(
       : apiKey;
   }
 
+  if (endpoint) {
+    Object.assign(headers, buildPluginAttributionHeaders(plugin, endpoint));
+  }
+
   return headers;
+}
+
+export function buildPluginAttributionHeaders(
+  plugin: Pick<Plugin, 'id'>,
+  endpoint: string
+): Record<string, string> {
+  if (plugin.id !== 'openrouter') return {};
+
+  try {
+    const url = new URL(endpoint);
+    if (url.protocol !== 'https:' || url.hostname !== 'openrouter.ai') {
+      return {};
+    }
+  } catch {
+    return {};
+  }
+
+  return {
+    'HTTP-Referer': OPENROUTER_APP_URL,
+    'X-OpenRouter-Title': OPENROUTER_APP_TITLE,
+    'X-OpenRouter-Categories': OPENROUTER_APP_CATEGORIES,
+  };
 }
 
 export function pluginRequiresApiKey(plugin: Pick<Plugin, 'auth'>): boolean {
@@ -388,7 +419,8 @@ export function pluginRequiresApiKey(plugin: Pick<Plugin, 'auth'>): boolean {
 
 export function buildPluginModelDiscoveryHeaders(
   plugin: Plugin,
-  apiKey?: string | null
+  apiKey?: string | null,
+  endpoint?: string
 ): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
@@ -402,6 +434,10 @@ export function buildPluginModelDiscoveryHeaders(
 
   if (plugin.id === 'anthropic') {
     headers['anthropic-version'] = '2023-06-01';
+  }
+
+  if (endpoint) {
+    Object.assign(headers, buildPluginAttributionHeaders(plugin, endpoint));
   }
 
   return headers;

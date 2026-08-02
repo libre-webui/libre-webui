@@ -911,7 +911,11 @@ export class PluginService {
         reason: this.describeMissingCredential(plugin),
       };
     }
-    const headers = buildPluginModelDiscoveryHeaders(plugin, apiKey);
+    const headers = buildPluginModelDiscoveryHeaders(
+      plugin,
+      apiKey,
+      modelsEndpoint
+    );
 
     try {
       const response = await axios.get(modelsEndpoint, {
@@ -1299,7 +1303,11 @@ export class PluginService {
             createPluginCredentialFingerprint(apiKey)
           )
         : undefined;
-    const headers = buildPluginAuthHeaders(activePlugin, apiKey);
+    const headers = buildPluginAuthHeaders(
+      activePlugin,
+      apiKey,
+      processedEndpoint
+    );
     const { payload, headers: payloadHeaders } = buildPluginChatPayload(
       activePlugin,
       model,
@@ -1428,7 +1436,11 @@ export class PluginService {
             createPluginCredentialFingerprint(apiKey)
           )
         : undefined;
-    const headers = buildPluginAuthHeaders(activePlugin, apiKey);
+    const headers = buildPluginAuthHeaders(
+      activePlugin,
+      apiKey,
+      processedEndpoint
+    );
     let payload: Record<string, unknown>;
 
     if (activePlugin.id === 'anthropic' || apiMode === 'responses') {
