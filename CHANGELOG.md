@@ -72,6 +72,12 @@ before upgrading.
   across restarts. Every document route requires authentication.
 - **OpenRouter requests identify the app** through attribution headers, sent
   only to OpenRouter's own endpoint.
+- **Removed the model install access setting.** Model install, delete, copy,
+  and push now require an administrator regardless of settings, so the toggle
+  no longer did anything; the interface no longer shows install affordances to
+  non-administrators, and its endpoint was removed.
+- New toasts introduced this cycle are translated across all 25 locales
+  instead of appearing in English everywhere.
 
 ### 🐛 Bug Fixes
 
@@ -114,6 +120,14 @@ before upgrading.
   bootstrap order, and the security model.
 - Documented `ENABLE_SIGNUP`, the Turnstile hostname and action binding, chat
   WebSocket limits, and the Work production hardening checklist.
+- A system monitoring guide covering the System and Usage pages: what each
+  reports, what usage metering never stores, and the Docker socket trust
+  caveat.
+- A media generation guide covering plugin capability blocks, the video job
+  lifecycle, the unified gallery, storage encryption, and rate limits.
+- Documented the registration approval flow, the default vision model,
+  incognito chat, the tab context menu, and the dark-by-default theme in the
+  authentication, models, and tips guides.
 
 ## [0.17.0] - 2026-08-01
 
