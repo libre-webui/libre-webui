@@ -58,6 +58,8 @@ export type {
   PluginVariableValue,
 } from './api/pluginApi';
 export { preferencesApi } from './api/preferencesApi';
+export { systemApi } from './api/systemApi';
+export type { SystemDiagnostics } from './api/systemApi';
 export { workApi } from './api/workApi';
 export { ttsApi } from './api/ttsApi';
 export type {

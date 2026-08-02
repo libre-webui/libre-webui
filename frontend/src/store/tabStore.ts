@@ -35,6 +35,7 @@ const PAGE_TAB_PATHS = [
   '/agents',
   '/users',
   '/usage',
+  '/system',
   '/artifacts',
 ] as const;
 

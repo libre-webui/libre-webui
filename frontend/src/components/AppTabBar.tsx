@@ -28,6 +28,7 @@ import {
   Package,
   PanelRightClose,
   Plus,
+  Server,
   SquareX,
   Sparkles,
   User as UserIcon,
@@ -54,6 +55,7 @@ const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
     icon: ChartNoAxesCombined,
     labelKey: 'usageAnalytics.title',
   },
+  '/system': { icon: Server, labelKey: 'systemPage.title' },
   '/artifacts': { icon: Package, labelKey: 'tabs.artifacts' },
 };
 

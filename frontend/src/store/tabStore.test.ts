@@ -68,6 +68,14 @@ test('provider usage participates in the application tab shell', () => {
   });
 });
 
+test('system diagnostics participate in the application tab shell', () => {
+  assert.deepEqual(tabForPath('/system'), {
+    id: 'page:/system',
+    kind: 'page',
+    path: '/system',
+  });
+});
+
 test('bulk close always preserves Home and can return to it', () => {
   useTabStore.setState({
     tabs: [HOME_TAB, chatTab, modelsTab],

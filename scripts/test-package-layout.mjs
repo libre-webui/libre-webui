@@ -477,6 +477,23 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
       assert.equal(adminUsagePayload.success, true);
       assert.equal(adminUsagePayload.data?.range?.days, 30);
 
+      const adminSystemResponse = await fetch(`${backendBaseUrl}/api/system`, {
+        headers: pluginHeaders,
+      });
+      assert.equal(adminSystemResponse.status, 200);
+      assert.equal(
+        adminSystemResponse.headers.get('cache-control'),
+        'no-store'
+      );
+      const adminSystemPayload = await adminSystemResponse.json();
+      assert.equal(adminSystemPayload.success, true);
+      assert.equal(
+        typeof adminSystemPayload.data?.host?.uptimeSeconds,
+        'number'
+      );
+      assert.equal(typeof adminSystemPayload.data?.memory?.freeBytes, 'number');
+      assert.ok(Array.isArray(adminSystemPayload.data?.docker?.containers));
+
       const pluginReadStatuses = [];
       for (let request = 0; request < 205; request++) {
         const pluginReadResponse = await fetch(
@@ -582,6 +599,14 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         forbiddenUsageRead.status,
         403,
         'only administrators may inspect instance-wide provider consumption'
+      );
+      const forbiddenSystemRead = await fetch(`${backendBaseUrl}/api/system`, {
+        headers: { Authorization: `Bearer ${secondUser.token}` },
+      });
+      assert.equal(
+        forbiddenSystemRead.status,
+        403,
+        'only administrators may inspect host and Docker diagnostics'
       );
     } catch (error) {
       throw new Error(

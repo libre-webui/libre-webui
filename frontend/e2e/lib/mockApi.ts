@@ -17,6 +17,7 @@
 
 import { Page, Route } from '@playwright/test';
 import type { PluginUsageAnalytics } from '../../src/utils/api/pluginApi';
+import type { SystemDiagnostics } from '../../src/utils/api/systemApi';
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -343,6 +344,7 @@ type MockOptions = {
   pluginVariableResetFailures?: number;
   pluginMutationRefreshDelayMs?: number;
   pluginUsage?: PluginUsageAnalytics;
+  systemDiagnostics?: SystemDiagnostics;
   libraryModels?: MockLibraryModel[];
   cloudLibraryModels?: MockLibraryModel[];
   ttsModels?: MockTTSModel[];
@@ -1021,6 +1023,15 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
             capabilities: [],
           }
         );
+        return;
+      }
+
+      if (path === '/system' && method === 'GET') {
+        if (!options.systemDiagnostics) {
+          await fulfillApiError(route, 503, 'System diagnostics unavailable');
+          return;
+        }
+        await fulfillJson(route, options.systemDiagnostics);
         return;
       }
 

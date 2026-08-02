@@ -315,6 +315,7 @@
       "work": "Work",
       "settings": "Settings",
       "usageAnalytics": "Provider Usage",
+      "system": "System",
       "userManagement": "User Management",
       "signOut": "Sign Out",
       "exploreLabel": "Explore"
@@ -327,6 +328,7 @@
       "changePicture": "Change Picture",
       "settings": "Settings",
       "usageAnalytics": "Provider Usage",
+      "system": "System",
       "userManagement": "User Management",
       "logout": "Log out"
     },
@@ -1207,6 +1209,89 @@
       "description": "Calls will appear here after an enabled plugin handles chat, Work, embedding, image, or speech requests."
     },
     "privacyNote": "Usage is metered on the server at the outbound plugin boundary. Libre WebUI stores provider, model, timing, status, and reported counters—never prompts, responses, endpoints, credentials, or provider error bodies. Token totals include only calls where the provider returned usage metadata."
+  },
+  "systemPage": {
+    "eyebrow": "Administration",
+    "title": "System",
+    "description": "Monitor the machine and runtime hosting this Libre WebUI instance.",
+    "updated": "Updated {{date}}",
+    "refresh": "Refresh system information",
+    "loadFailed": "System information could not be loaded.",
+    "cards": {
+      "uptime": "Host uptime",
+      "uptimeDetail": "Running since {{date}}",
+      "memory": "Memory used",
+      "memoryDetail": "{{used}} of {{total}}",
+      "freeSpace": "Free space",
+      "freeSpaceDetail": "{{label}} · {{total}} total",
+      "containers": "Running containers",
+      "containersDetail": "{{total}} container(s) known to Docker",
+      "dockerUnavailable": "Docker unavailable",
+      "unavailable": "Unavailable"
+    },
+    "host": {
+      "title": "Host & runtime",
+      "description": "Operating system, processor, and Libre WebUI process details.",
+      "container": "Container runtime",
+      "native": "Native runtime",
+      "hostname": "Hostname",
+      "operatingSystem": "Operating system",
+      "processor": "Processor",
+      "logicalCpus": "logical CPUs",
+      "loadAverage": "Load average · 1 / 5 / 15 min",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Process",
+      "workingDirectory": "Working directory"
+    },
+    "memory": {
+      "title": "Memory",
+      "description": "Runtime-visible system memory and application process usage.",
+      "usedOf": "{{used}} used of {{total}}",
+      "free": "{{value}} free",
+      "processRss": "Process RSS",
+      "heapUsed": "V8 heap used",
+      "heapTotal": "V8 heap total",
+      "external": "External memory"
+    },
+    "storage": {
+      "title": "Storage",
+      "description": "Available space for the runtime filesystem and persistent application data.",
+      "used": "{{value}} used",
+      "free": "{{value}} free",
+      "empty": "Filesystem information is unavailable in this runtime."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Read-only Docker Engine status and a reduced list of containers.",
+      "connected": "Connected",
+      "unavailable": "Unavailable",
+      "unavailableDetail": "Docker Engine diagnostics are unavailable.",
+      "socketStatus": "Local socket: {{status}}",
+      "mounted": "mounted",
+      "notMounted": "not mounted",
+      "running": "Running",
+      "stopped": "Stopped",
+      "paused": "Paused",
+      "total": "Total",
+      "version": "Version",
+      "host": "Host",
+      "architecture": "Architecture",
+      "cpus": "CPUs",
+      "memory": "Memory",
+      "container": "Container",
+      "image": "Image",
+      "state": "State",
+      "created": "Created",
+      "empty": "Docker is connected and no containers are currently listed."
+    },
+    "network": {
+      "title": "Network",
+      "description": "Runtime-visible interfaces, addresses, and Linux traffic counters.",
+      "internal": "internal",
+      "empty": "No network interfaces are visible to the application runtime."
+    },
+    "securityNote": "This page is restricted to administrators. The server returns operational summaries only: it does not expose environment variables, credentials, Docker labels, mounts, container commands, or inspect payloads. When Libre WebUI runs in a container, host-level CPU and memory details come from Docker Engine when its local socket is available; other values describe the application runtime."
   },
   "chatHistory": {
     "label": "Conversation history",
