@@ -29,6 +29,7 @@ import {
   Bot,
   Briefcase,
   Database,
+  Ghost,
   Home,
   MessageSquare,
   Moon,
@@ -41,7 +42,11 @@ import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
 import { useAuthStore } from '@/store/authStore';
 import { useAppStore } from '@/store/appStore';
-import { startNewChat, startNewWork } from '@/utils/appNavigation';
+import {
+  startIncognitoChat,
+  startNewChat,
+  startNewWork,
+} from '@/utils/appNavigation';
 import { cn, formatTimestamp, isMac } from '@/utils';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
@@ -124,6 +129,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         icon: MessageSquare,
         hint: `${mod}⇧O`,
         run: () => startNewChat(navigate),
+      },
+      {
+        id: 'action:incognito-chat',
+        section: actionSection,
+        label: t('chat.session.incognito', 'Incognito Chat'),
+        icon: Ghost,
+        run: () => startIncognitoChat(navigate),
       },
       ...(showWork
         ? [

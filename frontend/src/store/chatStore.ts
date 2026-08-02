@@ -182,8 +182,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
           const sessions = response.data || [];
           const backendSessionIds = sessions.map(s => s.id);
           let currentSession: ChatSession | null = null;
-          // Only keep currentSession if it exists in backend sessions
-          if (
+          // Incognito sessions intentionally never exist in backend history.
+          if (prevState.currentSession?.isPrivate) {
+            currentSession = prevState.currentSession;
+          } else if (
             prevState.currentSession &&
             backendSessionIds.includes(prevState.currentSession.id)
           ) {

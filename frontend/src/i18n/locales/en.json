@@ -251,6 +251,7 @@
       "work": "Work",
       "chat": "Chat",
       "private": "Private",
+      "incognito": "Incognito Chat",
       "privateMode": "Private Mode",
       "privateDescription": "This conversation won't be saved",
       "privateTooltip": "Start a private conversation that won't be saved",

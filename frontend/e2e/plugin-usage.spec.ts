@@ -118,7 +118,33 @@ test('administrators open provider usage from the user menu', async ({
   });
 
   await page.goto('/');
+  await page.getByTestId('app-tab-new').click();
+  const newTabMenu = page.getByTestId('app-tab-new-menu');
+  const newTabLabels = await newTabMenu.getByRole('menuitem').allTextContents();
+  const agentsIndex = newTabLabels.findIndex(label => label.includes('Agents'));
+  const usersIndex = newTabLabels.findIndex(label =>
+    label.includes('User Management')
+  );
+  const systemIndex = newTabLabels.findIndex(label => label.includes('System'));
+  const usageIndex = newTabLabels.findIndex(label =>
+    label.includes('Provider Usage')
+  );
+  expect(usersIndex).toBeGreaterThan(agentsIndex);
+  expect(systemIndex).toBeGreaterThan(usersIndex);
+  expect(usageIndex).toBeGreaterThan(systemIndex);
+  await page.getByTestId('app-tab-new').click();
+
   await page.getByRole('button', { name: /admin/i }).last().click();
+  await expect(
+    page.getByTestId('sidebar-user-menu').locator('button, a')
+  ).toHaveText([
+    'Change Picture',
+    'User Management',
+    'System',
+    'Provider Usage',
+    'Settings',
+    'Log out',
+  ]);
   await page.getByRole('link', { name: 'Provider Usage' }).click();
 
   await expect(page).toHaveURL(/\/usage$/);
@@ -159,4 +185,16 @@ test('regular users do not receive the provider usage navigation entry', async (
   await expect(page.getByRole('link', { name: 'Provider Usage' })).toHaveCount(
     0
   );
+
+  await page.getByTestId('app-tab-new').click();
+  const newTabMenu = page.getByTestId('app-tab-new-menu');
+  await expect(
+    newTabMenu.getByRole('menuitem', { name: 'User Management' })
+  ).toHaveCount(0);
+  await expect(
+    newTabMenu.getByRole('menuitem', { name: 'System' })
+  ).toHaveCount(0);
+  await expect(
+    newTabMenu.getByRole('menuitem', { name: 'Provider Usage' })
+  ).toHaveCount(0);
 });

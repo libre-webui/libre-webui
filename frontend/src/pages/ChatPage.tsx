@@ -15,7 +15,13 @@
  * limitations under the License.
  */
 
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+} from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { Send, Plus, Paperclip, Minus, Ghost } from 'lucide-react';
@@ -174,6 +180,8 @@ export const ChatPage: React.FC = () => {
     models,
     selectedModelState
   );
+  const incognitoRequested =
+    new URLSearchParams(location.search).get('incognito') === '1';
 
   const [welcomePromptIndex, setWelcomePromptIndex] = useState(
     getWelcomePromptIndex
@@ -215,12 +223,51 @@ export const ChatPage: React.FC = () => {
   const [hasImageGenPlugins, setHasImageGenPlugins] = useState(false);
   const showImageGeneration = imageGenerationEnabled && hasImageGenPlugins;
 
+  const startPrivateSession = useCallback(
+    (notifyWhenUnavailable = true) => {
+      const privateSelection = selectedModel
+        ? selectedModelState
+        : models[0]
+          ? chatModelSelectionFromModel(models[0])
+          : null;
+      if (
+        !privateSelection ||
+        !isChatModelSelectionAvailable(models, privateSelection)
+      ) {
+        if (notifyWhenUnavailable) {
+          toast.error('Select an available model before starting private chat');
+        }
+        return false;
+      }
+
+      const now = Date.now();
+      setCurrentSession({
+        id: `private-${now}`,
+        title: t('chat.session.incognito', 'Incognito Chat'),
+        model: privateSelection.model,
+        providerType: privateSelection.providerType,
+        providerId: privateSelection.providerId,
+        messages: [],
+        createdAt: now,
+        updatedAt: now,
+        isPrivate: true,
+      });
+      return true;
+    },
+    [models, selectedModel, selectedModelState, setCurrentSession, t]
+  );
+
   // Load sessions on mount
   useEffect(() => {
     if (sessions.length === 0) {
       loadSessions();
     }
   }, [loadSessions, sessions.length]); // Include both dependencies
+
+  useEffect(() => {
+    if (!incognitoRequested || currentSession?.isPrivate) return;
+    startPrivateSession(false);
+  }, [currentSession?.isPrivate, incognitoRequested, startPrivateSession]);
 
   // Check for available image generation plugins
   useEffect(() => {
@@ -258,8 +305,9 @@ export const ChatPage: React.FC = () => {
         return; // Don't load any session, show welcome screen
       }
 
-      // Skip session routing if we have a private session active
-      if (currentSession?.isPrivate) {
+      // Keep an incognito session on the unsaved /chat route, but allow an
+      // explicit saved-session URL to leave incognito mode.
+      if (currentSession?.isPrivate && !sessionId) {
         return;
       }
 
@@ -442,40 +490,7 @@ export const ChatPage: React.FC = () => {
 
         {/* Private Mode Button - Top Right Corner */}
         <button
-          onClick={() => {
-            if (!selectedModel && models.length === 0) {
-              return;
-            }
-            // Create a private session that won't be saved
-            // Don't navigate - just set the session and it will show the chat UI
-            const now = Date.now();
-            const privateSelection = selectedModel
-              ? selectedModelState
-              : models[0]
-                ? chatModelSelectionFromModel(models[0])
-                : null;
-            if (
-              !privateSelection ||
-              !isChatModelSelectionAvailable(models, privateSelection)
-            ) {
-              toast.error(
-                'Select an available model before starting private chat'
-              );
-              return;
-            }
-            const privateSession = {
-              id: `private-${now}`,
-              title: t('chat.session.private'),
-              model: privateSelection.model,
-              providerType: privateSelection.providerType,
-              providerId: privateSelection.providerId,
-              messages: [],
-              createdAt: now,
-              updatedAt: now,
-              isPrivate: true,
-            };
-            setCurrentSession(privateSession);
-          }}
+          onClick={() => startPrivateSession()}
           disabled={
             (!selectedModel && models.length === 0) ||
             (Boolean(selectedModel) && !selectedModelAvailable)
@@ -484,7 +499,7 @@ export const ChatPage: React.FC = () => {
           title={t('chat.session.privateTooltip')}
         >
           <Ghost className='h-3.5 w-3.5' />
-          <span>{t('chat.session.private')}</span>
+          <span>{t('chat.session.incognito', 'Incognito Chat')}</span>
         </button>
 
         <div className='relative z-[1] mx-auto flex min-h-full w-full max-w-3xl flex-col items-center justify-center'>

@@ -22,6 +22,7 @@ import {
   Bot,
   Briefcase,
   Database,
+  Ghost,
   Home,
   ListX,
   MessageSquare,
@@ -41,7 +42,11 @@ import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
 import { useAuthStore } from '@/store/authStore';
 import { cn, isMac } from '@/utils';
-import { startNewChat, startNewWork } from '@/utils/appNavigation';
+import {
+  startIncognitoChat,
+  startNewChat,
+  startNewWork,
+} from '@/utils/appNavigation';
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 
@@ -50,7 +55,10 @@ const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
   '/personas': { icon: UserIcon, labelKey: 'sidebar.navigation.personas' },
   '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
   '/agents': { icon: Bot, labelKey: 'sidebar.navigation.agents' },
-  '/users': { icon: Users, labelKey: 'tabs.users' },
+  '/users': {
+    icon: Users,
+    labelKey: 'sidebar.navigation.userManagement',
+  },
   '/usage': {
     icon: ChartNoAxesCombined,
     labelKey: 'usageAnalytics.title',
@@ -73,6 +81,7 @@ interface NewTabMenuItem {
   label: string;
   icon: IconComponent;
   shortcut?: string;
+  separatorBefore?: boolean;
   action: () => void;
 }
 
@@ -92,6 +101,7 @@ export const AppTabBar: React.FC = () => {
   const closeTab = useTabStore(state => state.closeTab);
   const closeTabs = useTabStore(state => state.closeTabs);
   const sessions = useChatStore(state => state.sessions);
+  const currentSession = useChatStore(state => state.currentSession);
   const workTasks = useWorkStore(state => state.tasks);
   const { systemInfo, isAdmin } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -151,7 +161,11 @@ export const AppTabBar: React.FC = () => {
   const tabTitle = (tab: AppTab): string => {
     if (tab.kind === 'home') return t('tabs.home', 'Home');
     if (tab.kind === 'chat') {
-      if (tab.id === 'chat:new') return t('tabs.newChat', 'New Chat');
+      if (tab.id === 'chat:new') {
+        return currentSession?.isPrivate
+          ? t('chat.session.incognito', 'Incognito Chat')
+          : t('tabs.newChat', 'New Chat');
+      }
       const sessionId = tab.id.slice('chat:'.length);
       return (
         sessions.find(session => session.id === sessionId)?.title ||
@@ -261,6 +275,12 @@ export const AppTabBar: React.FC = () => {
       shortcut: `${modKey()}⇧O`,
       action: () => startNewChat(navigate),
     },
+    {
+      key: 'incognito-chat',
+      label: t('chat.session.incognito', 'Incognito Chat'),
+      icon: Ghost,
+      action: () => startIncognitoChat(navigate),
+    },
     ...(showWork
       ? [
           {
@@ -278,6 +298,15 @@ export const AppTabBar: React.FC = () => {
       icon: PAGE_META[path].icon,
       action: () => navigate(path),
     })),
+    ...(isAdmin()
+      ? ['/users', '/system', '/usage'].map((path, index) => ({
+          key: path,
+          label: t(PAGE_META[path].labelKey, path.slice(1)),
+          icon: PAGE_META[path].icon,
+          separatorBefore: index === 0,
+          action: () => navigate(path),
+        }))
+      : []),
   ];
 
   const contextTab = contextMenu
@@ -314,7 +343,10 @@ export const AppTabBar: React.FC = () => {
         className='flex min-w-0 items-center gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
       >
         {tabs.map(tab => {
-          const Icon = tabIcon(tab);
+          const Icon =
+            tab.id === 'chat:new' && currentSession?.isPrivate
+              ? Ghost
+              : tabIcon(tab);
           const isActive = tab.id === activeTabId;
           return (
             <button
@@ -447,26 +479,30 @@ export const AppTabBar: React.FC = () => {
             className='absolute start-0 top-full z-50 mt-1 w-56 rounded-xl border border-line bg-surface-overlay/95 p-1 shadow-overlay backdrop-blur-xl animate-fade-in motion-reduce:animate-none'
           >
             {menuItems.map(item => (
-              <button
-                key={item.key}
-                type='button'
-                role='menuitem'
-                onClick={() => {
-                  setMenuOpen(false);
-                  item.action();
-                }}
-                className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink dark:hover:bg-white/[0.06]'
-              >
-                <item.icon className='h-4 w-4 shrink-0' />
-                <span className='min-w-0 flex-1 truncate text-start'>
-                  {item.label}
-                </span>
-                {item.shortcut && (
-                  <span className='font-mono text-[10px] tracking-wide text-ink-subtle'>
-                    {item.shortcut}
-                  </span>
+              <React.Fragment key={item.key}>
+                {item.separatorBefore && (
+                  <div className='mx-2 my-1 h-px bg-line' role='separator' />
                 )}
-              </button>
+                <button
+                  type='button'
+                  role='menuitem'
+                  onClick={() => {
+                    setMenuOpen(false);
+                    item.action();
+                  }}
+                  className='flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] text-ink-muted transition-colors hover:bg-black/[0.05] hover:text-ink dark:hover:bg-white/[0.06]'
+                >
+                  <item.icon className='h-4 w-4 shrink-0' />
+                  <span className='min-w-0 flex-1 truncate text-start'>
+                    {item.label}
+                  </span>
+                  {item.shortcut && (
+                    <span className='font-mono text-[10px] tracking-wide text-ink-subtle'>
+                      {item.shortcut}
+                    </span>
+                  )}
+                </button>
+              </React.Fragment>
             ))}
           </div>
         )}

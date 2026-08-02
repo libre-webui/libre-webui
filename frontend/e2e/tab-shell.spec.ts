@@ -69,10 +69,57 @@ test('the new-tab menu opens pages as tabs and shows their shortcuts', async ({
   await expect(menu).toBeVisible();
   await expect(menu.getByRole('menuitem').first()).toContainText('New Chat');
   await expect(menu.getByRole('menuitem').first()).toContainText('O');
+  await expect(menu.getByRole('menuitem').nth(1)).toHaveText('Incognito Chat');
 
   await menu.getByRole('menuitem', { name: /Models/ }).click();
   await expect(page).toHaveURL(/\/models$/);
   await expect(page.getByTestId('app-tab')).toHaveCount(2);
+});
+
+test('incognito chat starts from Home without creating a saved session', async ({
+  page,
+}) => {
+  let createSessionRequests = 0;
+  page.on('request', request => {
+    if (
+      request.method() === 'POST' &&
+      new URL(request.url()).pathname.endsWith('/chat/sessions')
+    ) {
+      createSessionRequests += 1;
+    }
+  });
+
+  await mockLibreWebUiApi(page, { sessions: [session] });
+  await page.goto('/');
+
+  const startActions = page.locator(
+    '[data-testid="home-new-chat"], [data-testid="home-incognito-chat"], [data-testid="home-new-work"]'
+  );
+  await expect(startActions).toHaveCount(3);
+  await expect(startActions.nth(0)).toContainText('New Chat');
+  await expect(startActions.nth(1)).toContainText('Incognito Chat');
+  await expect(startActions.nth(2)).toContainText('New Work');
+
+  await page.getByTestId('home-incognito-chat').click();
+  await expect(page).toHaveURL(/\/chat\?incognito=1$/);
+  await expect(page.getByText('Private Mode')).toBeVisible();
+  await expect(page.getByTestId('app-tab').last()).toContainText(
+    'Incognito Chat'
+  );
+  expect(createSessionRequests).toBe(0);
+
+  await page.reload();
+  await expect(page.getByText('Private Mode')).toBeVisible();
+  expect(createSessionRequests).toBe(0);
+
+  await page.keyboard.press('ControlOrMeta+k');
+  await page.getByTestId('command-palette-input').fill('garden');
+  await page
+    .getByTestId('command-palette')
+    .getByRole('button', { name: /Garden planning notes/ })
+    .click();
+  await expect(page).toHaveURL(/\/c\/tab-session$/);
+  await expect(page.getByText('Private Mode')).toHaveCount(0);
 });
 
 test('the tab context menu closes other, right-side, or all non-Home tabs', async ({

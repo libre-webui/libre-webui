@@ -32,6 +32,14 @@ export const startNewChat = (navigate: NavigateFn) => {
   navigate('/chat');
 };
 
+export const startIncognitoChat = (navigate: NavigateFn) => {
+  advanceWelcomePrompt();
+  useChatStore.getState().setCurrentSession(null);
+  sessionStorage.removeItem('pendingMessage');
+  sessionStorage.setItem('forceWelcomeScreen', 'true');
+  navigate('/chat?incognito=1');
+};
+
 export const startNewWork = (navigate: NavigateFn) => {
   useWorkStore.getState().clearError();
   navigate('/work');

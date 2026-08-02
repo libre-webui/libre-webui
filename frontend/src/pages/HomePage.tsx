@@ -22,6 +22,7 @@ import {
   Bot,
   Briefcase,
   Database,
+  Ghost,
   MessageSquare,
   Sparkles,
   User as UserIcon,
@@ -29,7 +30,11 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
 import { useWorkStore } from '@/store/workStore';
-import { startNewChat, startNewWork } from '@/utils/appNavigation';
+import {
+  startIncognitoChat,
+  startNewChat,
+  startNewWork,
+} from '@/utils/appNavigation';
 import { workStatusPresentation } from '@/utils/workStatus';
 import { isWorkTaskActive } from '@/types/work';
 import { cn, formatTimestamp, isMac } from '@/utils';
@@ -112,6 +117,17 @@ export const HomePage: React.FC = () => {
               <span className='flex-1'>{t('tabs.newChat', 'New Chat')}</span>
               <span className='font-mono text-[10px] tracking-wide text-gray-400 opacity-0 transition-opacity group-hover:opacity-100 dark:text-dark-500'>
                 {mod}⇧O
+              </span>
+            </button>
+            <button
+              type='button'
+              data-testid='home-incognito-chat'
+              className={rowClass}
+              onClick={() => startIncognitoChat(navigate)}
+            >
+              <Ghost className='h-4 w-4 shrink-0 text-gray-400 transition-colors group-hover:text-gray-600 dark:text-dark-500 dark:group-hover:text-dark-700' />
+              <span className='flex-1'>
+                {t('chat.session.incognito', 'Incognito Chat')}
               </span>
             </button>
             {showWork && (

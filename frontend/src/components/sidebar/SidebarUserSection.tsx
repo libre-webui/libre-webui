@@ -100,36 +100,6 @@ export function SidebarUserSection({
         <div className='flex flex-col items-center space-y-2'>
           <UserAvatar user={user} size='sm' />
 
-          <button
-            onClick={onOpenSettings}
-            className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
-            title={t('sidebar.navigation.settings')}
-          >
-            <Settings className='h-4 w-4' />
-          </button>
-
-          {isAdmin && (
-            <Link
-              to='/usage'
-              onClick={onMobileNavigate}
-              className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
-              title={t('sidebar.navigation.usageAnalytics')}
-            >
-              <ChartNoAxesCombined className='h-4 w-4' />
-            </Link>
-          )}
-
-          {isAdmin && (
-            <Link
-              to='/system'
-              onClick={onMobileNavigate}
-              className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
-              title={t('sidebar.navigation.system')}
-            >
-              <Server className='h-4 w-4' />
-            </Link>
-          )}
-
           {isAdmin && (
             <Link
               to='/users'
@@ -152,6 +122,36 @@ export function SidebarUserSection({
               )}
             </Link>
           )}
+
+          {isAdmin && (
+            <Link
+              to='/system'
+              onClick={onMobileNavigate}
+              className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
+              title={t('sidebar.navigation.system')}
+            >
+              <Server className='h-4 w-4' />
+            </Link>
+          )}
+
+          {isAdmin && (
+            <Link
+              to='/usage'
+              onClick={onMobileNavigate}
+              className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
+              title={t('sidebar.navigation.usageAnalytics')}
+            >
+              <ChartNoAxesCombined className='h-4 w-4' />
+            </Link>
+          )}
+
+          <button
+            onClick={onOpenSettings}
+            className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
+            title={t('sidebar.navigation.settings')}
+          >
+            <Settings className='h-4 w-4' />
+          </button>
 
           <button
             onClick={onLogout}
@@ -204,7 +204,10 @@ export function SidebarUserSection({
           </button>
 
           {userMenuOpen && (
-            <div className='scroll-region absolute bottom-full left-0 right-0 z-50 mb-2 max-h-[calc(100dvh-1rem)] rounded-2xl border border-black/[0.07] bg-white/95 py-2 shadow-[0_18px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in scrollbar-thin dark:border-white/[0.08] dark:bg-dark-25/95'>
+            <div
+              data-testid='sidebar-user-menu'
+              className='scroll-region absolute bottom-full left-0 right-0 z-50 mb-2 max-h-[calc(100dvh-1rem)] rounded-2xl border border-black/[0.07] bg-white/95 py-2 shadow-[0_18px_60px_rgba(15,23,42,0.16)] backdrop-blur-xl animate-scale-in scrollbar-thin dark:border-white/[0.08] dark:bg-dark-25/95'
+            >
               <div className='px-3 py-2 border-b border-gray-100 dark:border-dark-200/50'>
                 <div className='flex items-center gap-2.5'>
                   <UserAvatar user={user} size='md' />
@@ -231,49 +234,6 @@ export function SidebarUserSection({
                   {t('user.menu.changePicture')}
                 </button>
 
-                <button
-                  onClick={() => {
-                    onOpenSettings();
-                    onCloseUserMenu();
-                  }}
-                  className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150 text-start'
-                >
-                  <Settings className='h-4 w-4 shrink-0' />
-                  {t('user.menu.settings')}
-                </button>
-
-                {isAdmin && (
-                  <Link
-                    to='/usage'
-                    onClick={() => {
-                      onCloseUserMenu();
-                      onMobileNavigate();
-                    }}
-                    className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150'
-                  >
-                    <ChartNoAxesCombined className='h-4 w-4 shrink-0' />
-                    <span className='min-w-0 flex-1 text-start'>
-                      {t('user.menu.usageAnalytics')}
-                    </span>
-                  </Link>
-                )}
-
-                {isAdmin && (
-                  <Link
-                    to='/system'
-                    onClick={() => {
-                      onCloseUserMenu();
-                      onMobileNavigate();
-                    }}
-                    className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150'
-                  >
-                    <Server className='h-4 w-4 shrink-0' />
-                    <span className='min-w-0 flex-1 text-start'>
-                      {t('user.menu.system')}
-                    </span>
-                  </Link>
-                )}
-
                 {isAdmin && (
                   <Link
                     to='/users'
@@ -297,7 +257,50 @@ export function SidebarUserSection({
                   </Link>
                 )}
 
+                {isAdmin && (
+                  <Link
+                    to='/system'
+                    onClick={() => {
+                      onCloseUserMenu();
+                      onMobileNavigate();
+                    }}
+                    className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150'
+                  >
+                    <Server className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.system')}
+                    </span>
+                  </Link>
+                )}
+
+                {isAdmin && (
+                  <Link
+                    to='/usage'
+                    onClick={() => {
+                      onCloseUserMenu();
+                      onMobileNavigate();
+                    }}
+                    className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150'
+                  >
+                    <ChartNoAxesCombined className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.usageAnalytics')}
+                    </span>
+                  </Link>
+                )}
+
                 <div className='border-t border-gray-100 dark:border-dark-200/50 my-1'></div>
+
+                <button
+                  onClick={() => {
+                    onOpenSettings();
+                    onCloseUserMenu();
+                  }}
+                  className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150 text-start'
+                >
+                  <Settings className='h-4 w-4 shrink-0' />
+                  {t('user.menu.settings')}
+                </button>
 
                 <button
                   onClick={() => {
