@@ -163,6 +163,7 @@ test('Hugging Face capabilities ignore the generic Chat endpoint and use task pa
     },
   };
   const dependencies = {
+    usageEvents: [],
     getAllPlugins: () => [plugin],
     getPlugin: id => (id === plugin.id ? plugin : null),
     getApiKey: () => 'user-hf-key',
@@ -170,6 +171,9 @@ test('Hugging Face capabilities ignore the generic Chat endpoint and use task pa
       endpoint: `${origin}/must-not-receive-capability-requests`,
     }),
     validateEndpointUrl: endpoint => endpoint,
+    recordUsage(usage) {
+      this.usageEvents.push(usage);
+    },
   };
   const embeddings = new PluginEmbeddingService(dependencies);
   const tts = new PluginTTSService(dependencies);
@@ -240,6 +244,42 @@ test('Hugging Face capabilities ignore the generic Chat endpoint and use task pa
     inputs: 'a lighthouse',
     parameters: { width: 768, height: 512 },
   });
+  assert.deepEqual(
+    dependencies.usageEvents.map(usage => ({
+      capability: usage.capability,
+      pluginId: usage.pluginId,
+      model: usage.model,
+      status: usage.status,
+      inputUnits: usage.inputUnits,
+      outputUnits: usage.outputUnits,
+    })),
+    [
+      {
+        capability: 'embedding',
+        pluginId: 'huggingface',
+        model: 'sentence-transformers/all-MiniLM-L6-v2',
+        status: 'success',
+        inputUnits: 1,
+        outputUnits: undefined,
+      },
+      {
+        capability: 'tts',
+        pluginId: 'huggingface',
+        model: 'facebook/mms-tts-eng',
+        status: 'success',
+        inputUnits: 5,
+        outputUnits: undefined,
+      },
+      {
+        capability: 'image',
+        pluginId: 'huggingface',
+        model: 'black-forest-labs/FLUX.1-dev',
+        status: 'success',
+        inputUnits: undefined,
+        outputUnits: 1,
+      },
+    ]
+  );
 });
 
 test('capability requests reject redirects without reaching the target', async () => {

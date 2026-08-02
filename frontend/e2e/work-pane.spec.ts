@@ -2324,13 +2324,13 @@ test('keeps the compact task surface switch in the task header', async ({
   await taskActionsButton.press('ArrowDown');
   await expect(deleteTaskButton).toBeFocused();
   const deleteDialogPromise = page.waitForEvent('dialog');
-  const deleteClick = deleteTaskButton.click();
+  const deleteActivation = deleteTaskButton.press('Enter');
   const deleteDialog = await deleteDialogPromise;
   expect(deleteDialog.message()).toContain(
     'Delete “Compact workspace” and its workspace permanently?'
   );
   await deleteDialog.accept();
-  await deleteClick;
+  await deleteActivation;
   await expect(page).toHaveURL(/\/work$/);
 });
 

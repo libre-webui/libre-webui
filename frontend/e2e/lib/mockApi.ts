@@ -16,6 +16,7 @@
  */
 
 import { Page, Route } from '@playwright/test';
+import type { PluginUsageAnalytics } from '../../src/utils/api/pluginApi';
 
 type ApiEnvelope<T> = {
   success: boolean;
@@ -341,6 +342,7 @@ type MockOptions = {
   pluginDiscoveryFailures?: Record<string, string>;
   pluginVariableResetFailures?: number;
   pluginMutationRefreshDelayMs?: number;
+  pluginUsage?: PluginUsageAnalytics;
   libraryModels?: MockLibraryModel[];
   cloudLibraryModels?: MockLibraryModel[];
   ttsModels?: MockTTSModel[];
@@ -990,6 +992,35 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
 
       if (path === '/auth/system-info' && method === 'GET') {
         await fulfillJson(route, systemInfo);
+        return;
+      }
+
+      if (path === '/plugins/usage' && method === 'GET') {
+        const days = Number(url.searchParams.get('days') || 30);
+        const to = Date.now();
+        const from = to - Math.max(0, days - 1) * 86_400_000;
+        await fulfillJson(
+          route,
+          options.pluginUsage ?? {
+            range: { from, to, days },
+            totals: {
+              calls: 0,
+              successfulCalls: 0,
+              failedCalls: 0,
+              cancelledCalls: 0,
+              meteredCalls: 0,
+              promptTokens: 0,
+              completionTokens: 0,
+              reportedTokens: 0,
+              averageLatencyMs: 0,
+              uniqueUsers: 0,
+            },
+            series: [],
+            plugins: [],
+            models: [],
+            capabilities: [],
+          }
+        );
         return;
       }
 

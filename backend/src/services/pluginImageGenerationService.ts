@@ -27,6 +27,7 @@ import {
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
 type ImageGenImage = ImageGenResponse['images'][number];
@@ -37,6 +38,7 @@ export interface PluginImageGenerationServiceDependencies {
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
   validateEndpointUrl(endpoint: string): string;
+  recordUsage?(usage: PluginUsageEventInput): void;
 }
 
 export class PluginImageGenerationService {
@@ -233,18 +235,18 @@ export class PluginImageGenerationService {
       payload.style = options.style || imageConfig?.default_style;
     }
 
-    if (plugin.id === 'comfyui') {
-      return executeComfyUIRequest(baseUrl, prompt, {
-        ...options,
-        headers,
-        model,
-        pluginId: plugin.id,
-        pluginVars: imageVars,
-      });
-    }
-
+    const startedAt = Date.now();
     try {
-      if (plugin.id === 'huggingface') {
+      let result: ImageGenResponse;
+      if (plugin.id === 'comfyui') {
+        result = await executeComfyUIRequest(baseUrl, prompt, {
+          ...options,
+          headers,
+          model,
+          pluginId: plugin.id,
+          pluginVars: imageVars,
+        });
+      } else if (plugin.id === 'huggingface') {
         const [width, height] = String(payload.size)
           .split('x')
           .map(value => Number.parseInt(value, 10));
@@ -266,7 +268,7 @@ export class PluginImageGenerationService {
         const mimeType = normalizeImageMediaType(
           response.headers['content-type']
         );
-        return {
+        result = {
           images: [
             {
               b64_json: Buffer.from(response.data).toString('base64'),
@@ -276,20 +278,43 @@ export class PluginImageGenerationService {
           model,
           pluginId: plugin.id,
         };
+      } else {
+        const response = await axios.post(endpoint, payload, {
+          headers,
+          timeout: 120000,
+          maxRedirects: 0,
+        });
+        result = {
+          images: normalizeImageGenerationResponse(response.data),
+          model,
+          pluginId: plugin.id,
+        };
       }
 
-      const response = await axios.post(endpoint, payload, {
-        headers,
-        timeout: 120000,
-        maxRedirects: 0,
-      });
-
-      return {
-        images: normalizeImageGenerationResponse(response.data),
-        model,
+      this.deps.recordUsage?.({
+        userId: options.userId,
         pluginId: plugin.id,
-      };
+        pluginName: plugin.name,
+        capability: 'image',
+        model,
+        status: 'success',
+        durationMs: Date.now() - startedAt,
+        outputUnits: result.images.length,
+        unitKind: 'images',
+      });
+      return result;
     } catch (error) {
+      this.deps.recordUsage?.({
+        userId: options.userId,
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        capability: 'image',
+        model,
+        status: 'error',
+        durationMs: Date.now() - startedAt,
+        outputUnits: 0,
+        unitKind: 'images',
+      });
       if (axios.isAxiosError(error)) {
         const message =
           error.response?.data?.error?.message ||

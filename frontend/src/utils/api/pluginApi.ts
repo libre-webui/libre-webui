@@ -36,7 +36,88 @@ export interface PluginModelDiscoveryResult {
   reason?: string;
 }
 
+export interface PluginUsageAnalytics {
+  range: { from: number; to: number; days: number };
+  totals: {
+    calls: number;
+    successfulCalls: number;
+    failedCalls: number;
+    cancelledCalls: number;
+    meteredCalls: number;
+    promptTokens: number;
+    completionTokens: number;
+    reportedTokens: number;
+    averageLatencyMs: number;
+    uniqueUsers: number;
+  };
+  series: Array<{
+    timestamp: number;
+    calls: number;
+    tokens: number;
+    errors: number;
+  }>;
+  plugins: Array<{
+    pluginId: string;
+    pluginName: string;
+    calls: number;
+    tokens: number;
+    errors: number;
+    averageLatencyMs: number;
+  }>;
+  models: Array<{
+    model: string;
+    pluginId: string;
+    pluginName: string;
+    calls: number;
+    tokens: number;
+    errors: number;
+    averageLatencyMs: number;
+  }>;
+  capabilities: Array<{
+    capability: 'chat' | 'embedding' | 'image' | 'tts';
+    calls: number;
+    tokens: number;
+    inputUnits: number;
+    outputUnits: number;
+  }>;
+}
+
+const emptyUsageAnalytics = (days: number): PluginUsageAnalytics => {
+  const to = Date.now();
+  const from = to - Math.max(0, days - 1) * 86_400_000;
+  return {
+    range: { from, to, days },
+    totals: {
+      calls: 0,
+      successfulCalls: 0,
+      failedCalls: 0,
+      cancelledCalls: 0,
+      meteredCalls: 0,
+      promptTokens: 0,
+      completionTokens: 0,
+      reportedTokens: 0,
+      averageLatencyMs: 0,
+      uniqueUsers: 0,
+    },
+    series: [],
+    plugins: [],
+    models: [],
+    capabilities: [],
+  };
+};
+
 export const pluginApi = {
+  getUsage: (days = 30): Promise<ApiResponse<PluginUsageAnalytics>> => {
+    if (isDemoMode()) {
+      return createDemoResponse<PluginUsageAnalytics>(
+        emptyUsageAnalytics(days)
+      );
+    }
+    return api
+      .get('/plugins/usage', { params: { days } })
+      .then(res => res.data);
+  },
+
   getAllPlugins: (): Promise<ApiResponse<Plugin[]>> => {
     if (isDemoMode()) {
       return createDemoResponse<Plugin[]>([]);

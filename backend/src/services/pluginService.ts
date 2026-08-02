@@ -74,6 +74,10 @@ import {
   OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY,
 } from '../utils/openAIResponsesAdapter.js';
 import { getPluginConnectionVariableNames } from '../utils/pluginConnectionVariables.js';
+import pluginUsageService, {
+  type PluginUsageStatus,
+  type ProviderTokenUsage,
+} from './pluginUsageService.js';
 import {
   getPluginDefinitionFingerprint,
   matchesBundledPluginTrustAnchor,
@@ -231,6 +235,7 @@ export class PluginService {
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
+      recordUsage: usage => pluginUsageService.record(usage),
     });
     this.ttsService = new PluginTTSService({
       getAllPlugins: userId => this.getActivePlugins(userId),
@@ -239,6 +244,7 @@ export class PluginService {
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
+      recordUsage: usage => pluginUsageService.record(usage),
     });
     this.imageGenerationService = new PluginImageGenerationService({
       getAllPlugins: userId => this.getActivePlugins(userId),
@@ -247,6 +253,7 @@ export class PluginService {
       getPluginVariables: (plugin, userId) =>
         this.getPluginVariables(plugin, userId),
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
+      recordUsage: usage => pluginUsageService.record(usage),
     });
     this.capabilityRegistryService = new PluginCapabilityRegistryService({
       getAllPlugins: userId => this.getActivePlugins(userId),
@@ -1305,6 +1312,7 @@ export class PluginService {
     );
     Object.assign(headers, payloadHeaders);
 
+    const startedAt = Date.now();
     try {
       const response = await axios.post(processedEndpoint, payload, {
         headers,
@@ -1312,14 +1320,40 @@ export class PluginService {
         maxRedirects: 0,
       });
 
-      return convertProviderResponse(
+      const normalized = convertProviderResponse(
         activePlugin,
         response.data,
         model,
         apiMode,
         providerStateScope
       );
+      pluginUsageService.record({
+        userId,
+        pluginId: activePlugin.id,
+        pluginName: activePlugin.name,
+        capability: 'chat',
+        model,
+        status: 'success',
+        durationMs: Date.now() - startedAt,
+        tokens: normalized.usage
+          ? {
+              promptTokens: normalized.usage.prompt_tokens,
+              completionTokens: normalized.usage.completion_tokens,
+              totalTokens: normalized.usage.total_tokens,
+            }
+          : undefined,
+      });
+      return normalized;
     } catch (error: unknown) {
+      pluginUsageService.record({
+        userId,
+        pluginId: activePlugin.id,
+        pluginName: activePlugin.name,
+        capability: 'chat',
+        model,
+        status: 'error',
+        durationMs: Date.now() - startedAt,
+      });
       logger.error(`Plugin request failed for ${activePlugin.id}:`, error);
 
       if (error && typeof error === 'object' && 'response' in error) {
@@ -1422,90 +1456,141 @@ export class PluginService {
       };
     }
 
-    const response = await fetch(processedEndpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-      redirect: 'error',
-    });
+    const startedAt = Date.now();
+    let status: PluginUsageStatus = 'cancelled';
+    let tokenUsage: ProviderTokenUsage | undefined;
+    const captureUsage = (chunk: PluginStreamChunk): void => {
+      if (chunk.type !== 'usage' || !chunk.usage) return;
+      const { promptTokens, completionTokens, totalTokens } = chunk.usage;
+      if (
+        promptTokens === undefined &&
+        completionTokens === undefined &&
+        totalTokens === undefined
+      ) {
+        return;
+      }
+      const prompt = promptTokens ?? 0;
+      const completion = completionTokens ?? 0;
+      tokenUsage = {
+        promptTokens: prompt,
+        completionTokens: completion,
+        totalTokens: totalTokens ?? prompt + completion,
+      };
+    };
+    const forward = async function* (
+      chunks: AsyncIterable<PluginStreamChunk>
+    ): AsyncGenerator<PluginStreamChunk, void, unknown> {
+      for await (const chunk of chunks) {
+        captureUsage(chunk);
+        yield chunk;
+      }
+    };
 
-    if (activePlugin.id === 'anthropic') {
-      yield* streamAnthropicResponse(response);
-    } else if (apiMode === 'responses') {
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('text/event-stream')) {
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(
-            `Plugin API error: ${response.status} - ${errorText.slice(0, 200)}`
+    try {
+      const response = await fetch(processedEndpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+        redirect: 'error',
+      });
+
+      if (activePlugin.id === 'anthropic') {
+        yield* forward(streamAnthropicResponse(response));
+      } else if (apiMode === 'responses') {
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('text/event-stream')) {
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(
+              `Plugin API error: ${response.status} - ${errorText.slice(0, 200)}`
+            );
+          }
+          const normalized = convertProviderResponse(
+            activePlugin,
+            (await response.json()) as Record<string, unknown>,
+            model,
+            apiMode,
+            providerStateScope
+          );
+          const choice = normalized.choices[0];
+          const message = choice?.message;
+          if (typeof message?.content === 'string' && message.content) {
+            yield { type: 'content', content: message.content };
+          }
+          if (
+            typeof message?.reasoning_content === 'string' &&
+            message.reasoning_content
+          ) {
+            yield {
+              type: 'reasoning',
+              content: message.reasoning_content,
+            };
+          }
+          for (const call of message?.tool_calls || []) {
+            yield {
+              type: 'tool_call',
+              toolCall: {
+                id: call.id,
+                name: call.function.name,
+                arguments: call.function.arguments,
+                ...(call.providerMetadata
+                  ? { providerMetadata: call.providerMetadata }
+                  : {}),
+              },
+            };
+          }
+          if (normalized.usage) {
+            const usageChunk: PluginStreamChunk = {
+              type: 'usage',
+              usage: {
+                promptTokens: normalized.usage.prompt_tokens,
+                completionTokens: normalized.usage.completion_tokens,
+                totalTokens: normalized.usage.total_tokens,
+              },
+            };
+            captureUsage(usageChunk);
+            yield usageChunk;
+          }
+          const incompleteReason =
+            typeof normalized.providerMetadata?.[
+              OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY
+            ] === 'string'
+              ? normalized.providerMetadata[
+                  OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY
+                ]
+              : undefined;
+          yield {
+            type: 'done',
+            ...(incompleteReason
+              ? { doneReason: `incomplete:${incompleteReason}` }
+              : {}),
+            ...(normalized.providerMetadata
+              ? { providerMetadata: normalized.providerMetadata }
+              : {}),
+          };
+        } else {
+          yield* forward(
+            streamOpenAIResponsesResponse(response, providerStateScope)
           );
         }
-        const normalized = convertProviderResponse(
-          activePlugin,
-          (await response.json()) as Record<string, unknown>,
-          model,
-          apiMode,
-          providerStateScope
-        );
-        const choice = normalized.choices[0];
-        const message = choice?.message;
-        if (typeof message?.content === 'string' && message.content) {
-          yield { type: 'content', content: message.content };
-        }
-        if (
-          typeof message?.reasoning_content === 'string' &&
-          message.reasoning_content
-        ) {
-          yield {
-            type: 'reasoning',
-            content: message.reasoning_content,
-          };
-        }
-        for (const call of message?.tool_calls || []) {
-          yield {
-            type: 'tool_call',
-            toolCall: {
-              id: call.id,
-              name: call.function.name,
-              arguments: call.function.arguments,
-              ...(call.providerMetadata
-                ? { providerMetadata: call.providerMetadata }
-                : {}),
-            },
-          };
-        }
-        if (normalized.usage) {
-          yield {
-            type: 'usage',
-            usage: {
-              promptTokens: normalized.usage.prompt_tokens,
-              completionTokens: normalized.usage.completion_tokens,
-              totalTokens: normalized.usage.total_tokens,
-            },
-          };
-        }
-        const incompleteReason =
-          typeof normalized.providerMetadata?.[
-            OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY
-          ] === 'string'
-            ? normalized.providerMetadata[
-                OPENAI_RESPONSES_INCOMPLETE_REASON_METADATA_KEY
-              ]
-            : undefined;
-        yield {
-          type: 'done',
-          ...(incompleteReason
-            ? { doneReason: `incomplete:${incompleteReason}` }
-            : {}),
-          ...(normalized.providerMetadata
-            ? { providerMetadata: normalized.providerMetadata }
-            : {}),
-        };
       } else {
-        yield* streamOpenAIResponsesResponse(response, providerStateScope);
+        yield* forward(streamOpenAICompatibleResponse(response));
       }
-    } else {
-      yield* streamOpenAICompatibleResponse(response);
+      status = 'success';
+    } catch (error) {
+      status = 'error';
+      throw error;
+    } finally {
+      pluginUsageService.record({
+        userId,
+        pluginId: activePlugin.id,
+        pluginName: activePlugin.name,
+        capability: 'chat',
+        model,
+        status,
+        durationMs: Date.now() - startedAt,
+        tokens: tokenUsage,
+      });
     }
   }
 

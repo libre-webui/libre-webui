@@ -28,6 +28,7 @@ import {
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 type PluginVariables = Record<string, string | number | boolean>;
 
@@ -36,6 +37,7 @@ export interface PluginEmbeddingServiceDependencies {
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
   validateEndpointUrl(endpoint: string): string;
+  recordUsage?(usage: PluginUsageEventInput): void;
 }
 
 export class PluginEmbeddingService {
@@ -195,51 +197,88 @@ export class PluginEmbeddingService {
       headers[plugin.auth.header] = authValue;
     }
 
-    const response = await axios.post(
-      processedEndpoint,
-      plugin.id === 'huggingface' ? { inputs: input } : { model, input },
-      {
-        headers,
-        timeout: 60000,
-        maxRedirects: 0,
+    const startedAt = Date.now();
+    try {
+      const response = await axios.post(
+        processedEndpoint,
+        plugin.id === 'huggingface' ? { inputs: input } : { model, input },
+        {
+          headers,
+          timeout: 60000,
+          maxRedirects: 0,
+        }
+      );
+
+      let result: OllamaEmbeddingsResponse;
+      if (
+        Array.isArray(response.data) &&
+        response.data.every(value => typeof value === 'number')
+      ) {
+        result = { embeddings: [response.data as number[]] };
+      } else if (
+        Array.isArray(response.data) &&
+        response.data.every(
+          value =>
+            Array.isArray(value) &&
+            value.every(component => typeof component === 'number')
+        )
+      ) {
+        result = { embeddings: response.data as number[][] };
+      } else if (Array.isArray(response.data?.embeddings)) {
+        result = { embeddings: response.data.embeddings };
+      } else if (Array.isArray(response.data?.data)) {
+        result = {
+          embeddings: response.data.data
+            .map((entry: { embedding?: number[] }) => entry.embedding)
+            .filter((embedding: unknown): embedding is number[] =>
+              Array.isArray(embedding)
+            ),
+        };
+      } else {
+        throw new Error('Embedding provider returned an unexpected response');
       }
-    );
 
-    if (
-      Array.isArray(response.data) &&
-      response.data.every(value => typeof value === 'number')
-    ) {
-      return { embeddings: [response.data as number[]] };
+      const usage = response.data?.usage as
+        | {
+            prompt_tokens?: number;
+            total_tokens?: number;
+          }
+        | undefined;
+      this.deps.recordUsage?.({
+        userId,
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        capability: 'embedding',
+        model,
+        status: 'success',
+        durationMs: Date.now() - startedAt,
+        inputUnits: Array.isArray(input) ? input.length : 1,
+        unitKind: 'inputs',
+        tokens:
+          typeof usage?.total_tokens === 'number' ||
+          typeof usage?.prompt_tokens === 'number'
+            ? {
+                promptTokens: usage.prompt_tokens ?? usage.total_tokens ?? 0,
+                completionTokens: 0,
+                totalTokens: usage.total_tokens ?? usage.prompt_tokens ?? 0,
+              }
+            : undefined,
+      });
+      return result;
+    } catch (error) {
+      this.deps.recordUsage?.({
+        userId,
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        capability: 'embedding',
+        model,
+        status: 'error',
+        durationMs: Date.now() - startedAt,
+        inputUnits: Array.isArray(input) ? input.length : 1,
+        unitKind: 'inputs',
+      });
+      throw error;
     }
-
-    if (
-      Array.isArray(response.data) &&
-      response.data.every(
-        value =>
-          Array.isArray(value) &&
-          value.every(component => typeof component === 'number')
-      )
-    ) {
-      return { embeddings: response.data as number[][] };
-    }
-
-    if (Array.isArray(response.data?.embeddings)) {
-      return {
-        embeddings: response.data.embeddings,
-      };
-    }
-
-    if (Array.isArray(response.data?.data)) {
-      return {
-        embeddings: response.data.data
-          .map((entry: { embedding?: number[] }) => entry.embedding)
-          .filter((embedding: unknown): embedding is number[] =>
-            Array.isArray(embedding)
-          ),
-      };
-    }
-
-    throw new Error('Embedding provider returned an unexpected response');
   }
 
   private getEmbeddingCapability(plugin: Plugin):

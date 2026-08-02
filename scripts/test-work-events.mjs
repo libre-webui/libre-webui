@@ -80,6 +80,7 @@ const tokenFor = (id, role) =>
     username: id,
     email: null,
     role,
+    status: 'active',
     avatar: null,
     createdAt: new Date(now).toISOString(),
     updatedAt: new Date(now).toISOString(),

@@ -114,6 +114,7 @@ test('auth-free local plugins are available without a fake API key', async () =>
     },
   };
   const requests = [];
+  const usageEvents = [];
   const service = new WorkModelProviderService({
     ollama: {
       isHealthy: async () => false,
@@ -132,6 +133,11 @@ test('auth-free local plugins are available without a fake API key', async () =>
       requests.push({ endpoint, payload, config });
       return {
         data: {
+          usage: {
+            prompt_tokens: 24,
+            completion_tokens: 8,
+            total_tokens: 32,
+          },
           choices: [
             {
               message: {
@@ -143,6 +149,7 @@ test('auth-free local plugins are available without a fake API key', async () =>
         },
       };
     },
+    recordPluginUsage: usage => usageEvents.push(usage),
   });
 
   assert.equal(pluginRequiresApiKey(localPlugin), false);
@@ -170,6 +177,22 @@ test('auth-free local plugins are available without a fake API key', async () =>
   assert.equal(requests.length, 1);
   assert.equal(requests[0].config.headers.Authorization, undefined);
   assert.equal(requests[0].config.headers['Content-Type'], 'application/json');
+  assert.deepEqual(usageEvents, [
+    {
+      userId: 'test-user',
+      pluginId: 'mlx-lm',
+      pluginName: 'mlx-lm',
+      capability: 'chat',
+      model: 'test-model',
+      status: 'success',
+      durationMs: usageEvents[0].durationMs,
+      tokens: {
+        promptTokens: 24,
+        completionTokens: 8,
+        totalTokens: 32,
+      },
+    },
+  ]);
 });
 
 test('OpenAI-compatible Work payload preserves tool-call correlation', () => {

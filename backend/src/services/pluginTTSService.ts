@@ -24,6 +24,7 @@ import {
   resolvePluginOperationEndpoint,
   validatePluginModel,
 } from '../utils/pluginValidation.js';
+import type { PluginUsageEventInput } from './pluginUsageService.js';
 
 const logger = createLogger('plugin-tts');
 
@@ -35,6 +36,7 @@ export interface PluginTTSServiceDependencies {
   getApiKey(plugin: Plugin, userId?: string): string | null;
   getPluginVariables(plugin: Plugin, userId?: string): PluginVariables;
   validateEndpointUrl(endpoint: string): string;
+  recordUsage?(usage: PluginUsageEventInput): void;
 }
 
 export class PluginTTSService {
@@ -283,6 +285,7 @@ export class PluginTTSService {
 
     assertSafePluginEndpoint(processedEndpoint, 'TTS endpoint URL constructed');
 
+    const startedAt = Date.now();
     try {
       const response = await axios.post(processedEndpoint, payload, {
         headers,
@@ -291,8 +294,31 @@ export class PluginTTSService {
         maxRedirects: 0,
       });
 
-      return Buffer.from(response.data);
+      const audio = Buffer.from(response.data);
+      this.deps.recordUsage?.({
+        userId: options.userId,
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        capability: 'tts',
+        model,
+        status: 'success',
+        durationMs: Date.now() - startedAt,
+        inputUnits: input.length,
+        unitKind: 'characters',
+      });
+      return audio;
     } catch (error: unknown) {
+      this.deps.recordUsage?.({
+        userId: options.userId,
+        pluginId: plugin.id,
+        pluginName: plugin.name,
+        capability: 'tts',
+        model,
+        status: 'error',
+        durationMs: Date.now() - startedAt,
+        inputUnits: input.length,
+        unitKind: 'characters',
+      });
       logger.error(`TTS plugin request failed for ${plugin.id}:`, error);
 
       if (error && typeof error === 'object' && 'response' in error) {

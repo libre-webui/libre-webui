@@ -51,6 +51,7 @@ const token = authService.generateToken({
   username: 'chat-rest-user',
   email: null,
   role: 'user',
+  status: 'active',
   avatar: null,
   createdAt: new Date(now).toISOString(),
   updatedAt: new Date(now).toISOString(),

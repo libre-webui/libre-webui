@@ -38,7 +38,7 @@ Object.defineProperty(globalThis, 'window', {
   value: { localStorage: globalThis.localStorage },
 });
 
-const { HOME_TAB, useTabStore } = await import('./tabStore');
+const { HOME_TAB, tabForPath, useTabStore } = await import('./tabStore');
 
 const chatTab: AppTab = {
   id: 'chat:alpha',
@@ -58,6 +58,14 @@ const workTab: AppTab = {
 
 afterEach(() => {
   useTabStore.setState({ tabs: [HOME_TAB], activeTabId: HOME_TAB.id });
+});
+
+test('provider usage participates in the application tab shell', () => {
+  assert.deepEqual(tabForPath('/usage'), {
+    id: 'page:/usage',
+    kind: 'page',
+    path: '/usage',
+  });
 });
 
 test('bulk close always preserves Home and can return to it', () => {

@@ -20,6 +20,7 @@ import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import {
   Camera,
+  ChartNoAxesCombined,
   ChevronRight,
   LogOut,
   Settings,
@@ -105,6 +106,17 @@ export function SidebarUserSection({
           >
             <Settings className='h-4 w-4' />
           </button>
+
+          {isAdmin && (
+            <Link
+              to='/usage'
+              onClick={onMobileNavigate}
+              className='w-10 h-10 flex items-center justify-center rounded-xl text-gray-600 dark:text-dark-600 hover:bg-white/70 dark:hover:bg-dark-200 hover:text-gray-950 dark:hover:text-dark-950 touch-manipulation transition-colors duration-150'
+              title={t('sidebar.navigation.usageAnalytics')}
+            >
+              <ChartNoAxesCombined className='h-4 w-4' />
+            </Link>
+          )}
 
           {isAdmin && (
             <Link
@@ -217,6 +229,22 @@ export function SidebarUserSection({
                   <Settings className='h-4 w-4 shrink-0' />
                   {t('user.menu.settings')}
                 </button>
+
+                {isAdmin && (
+                  <Link
+                    to='/usage'
+                    onClick={() => {
+                      onCloseUserMenu();
+                      onMobileNavigate();
+                    }}
+                    className='w-full flex items-center gap-3 px-3 py-2.5 text-[13px] text-gray-700 dark:text-dark-700 hover:bg-gray-100/70 dark:hover:bg-dark-200/70 transition-colors duration-150'
+                  >
+                    <ChartNoAxesCombined className='h-4 w-4 shrink-0' />
+                    <span className='min-w-0 flex-1 text-start'>
+                      {t('user.menu.usageAnalytics')}
+                    </span>
+                  </Link>
+                )}
 
                 {isAdmin && (
                   <Link

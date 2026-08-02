@@ -57,6 +57,12 @@ import {
 } from '../utils/pluginValidation.js';
 import ollamaService from './ollamaService.js';
 import pluginService from './pluginService.js';
+import pluginUsageService, {
+  normalizeProviderTokenUsage,
+  type PluginUsageEventInput,
+  type PluginUsageStatus,
+  type ProviderTokenUsage,
+} from './pluginUsageService.js';
 import type { WorkProviderSelection } from '../types/work.js';
 
 type JsonObject = Record<string, unknown>;
@@ -81,6 +87,7 @@ interface WorkModelProviderDependencies {
     'getActivePlugins' | 'getPlugin' | 'getApiKey' | 'getPluginVariables'
   >;
   post: typeof axios.post;
+  recordPluginUsage?: (usage: PluginUsageEventInput) => void;
 }
 
 export interface WorkModelStreamObserver {
@@ -107,6 +114,7 @@ export class WorkModelProviderService {
       ollama: ollamaService,
       plugins: pluginService,
       post: axios.post.bind(axios),
+      recordPluginUsage: usage => pluginUsageService.record(usage),
     }
   ) {}
 
@@ -379,6 +387,7 @@ export class WorkModelProviderService {
     );
     Object.assign(headers, extraHeaders);
 
+    const startedAt = Date.now();
     try {
       const response = await this.dependencies.post<JsonObject>(
         endpoint,
@@ -390,14 +399,31 @@ export class WorkModelProviderService {
           maxRedirects: 0,
         }
       );
-      return normalizePluginWorkResponse(
+      const normalized = normalizePluginWorkResponse(
         plugin,
         response.data,
         request.model,
         apiConfig.apiMode,
         providerStateScope
       );
+      this.recordPluginUsage(
+        plugin,
+        userId,
+        request.model,
+        'success',
+        startedAt,
+        normalized,
+        normalizeProviderTokenUsage(response.data)
+      );
+      return normalized;
     } catch (error) {
+      this.recordPluginUsage(
+        plugin,
+        userId,
+        request.model,
+        signal?.aborted ? 'cancelled' : 'error',
+        startedAt
+      );
       if (signal?.aborted) throw error;
       const message =
         axios.isAxiosError(error) && error.response
@@ -552,6 +578,7 @@ export class WorkModelProviderService {
       ? AbortSignal.any([signal, timeoutSignal])
       : timeoutSignal;
 
+    const startedAt = Date.now();
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -580,6 +607,14 @@ export class WorkModelProviderService {
         if (normalized.message.content) {
           observer.onContent?.(normalized.message.content);
         }
+        this.recordPluginUsage(
+          plugin,
+          userId,
+          request.model,
+          'success',
+          startedAt,
+          normalized
+        );
         return normalized;
       }
       const chunks =
@@ -590,8 +625,28 @@ export class WorkModelProviderService {
             : apiConfig.apiMode === 'responses'
               ? streamOpenAIResponsesResponse(response, providerStateScope)
               : streamOpenAICompatibleResponse(response);
-      return await collectPluginWorkStream(chunks, request.model, observer);
+      const normalized = await collectPluginWorkStream(
+        chunks,
+        request.model,
+        observer
+      );
+      this.recordPluginUsage(
+        plugin,
+        userId,
+        request.model,
+        'success',
+        startedAt,
+        normalized
+      );
+      return normalized;
     } catch (error) {
+      this.recordPluginUsage(
+        plugin,
+        userId,
+        request.model,
+        signal?.aborted ? 'cancelled' : 'error',
+        startedAt
+      );
       if (signal?.aborted) throw error;
       if (timeoutSignal.aborted) {
         throw new WorkModelProviderError(
@@ -607,6 +662,39 @@ export class WorkModelProviderService {
         'WORK_PLUGIN_REQUEST_FAILED'
       );
     }
+  }
+
+  private recordPluginUsage(
+    plugin: Plugin,
+    userId: string,
+    model: string,
+    status: PluginUsageStatus,
+    startedAt: number,
+    response?: OllamaChatResponse,
+    reportedTokens?: ProviderTokenUsage
+  ): void {
+    const promptTokens = response?.prompt_eval_count;
+    const completionTokens = response?.eval_count;
+    const hasUsage =
+      typeof promptTokens === 'number' || typeof completionTokens === 'number';
+    this.dependencies.recordPluginUsage?.({
+      userId,
+      pluginId: plugin.id,
+      pluginName: plugin.name,
+      capability: 'chat',
+      model,
+      status,
+      durationMs: Date.now() - startedAt,
+      tokens:
+        reportedTokens ??
+        (hasUsage
+          ? {
+              promptTokens: promptTokens ?? 0,
+              completionTokens: completionTokens ?? 0,
+              totalTokens: (promptTokens ?? 0) + (completionTokens ?? 0),
+            }
+          : undefined),
+    });
   }
 }
 

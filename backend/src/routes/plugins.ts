@@ -49,6 +49,9 @@ import {
   PLUGIN_MODEL_DISCOVERY_VARIABLES,
 } from '../utils/pluginValidation.js';
 import type { PluginVariableDefinition } from '../types/index.js';
+import pluginUsageService, {
+  type PluginUsageAnalytics,
+} from '../services/pluginUsageService.js';
 
 const router = express.Router();
 
@@ -272,6 +275,41 @@ router.get(
       res.status(500).json({
         success: false,
         error: getErrorMessage(error, 'Failed to get plugin status'),
+      });
+    }
+  }
+);
+
+// Instance-wide provider consumption. Only administrators may inspect usage
+// aggregated across accounts; raw prompts and responses are never stored.
+router.get(
+  '/usage',
+  requireAdmin,
+  async (
+    req: Request,
+    res: Response<ApiResponse<PluginUsageAnalytics>>
+  ): Promise<void> => {
+    const daysValue = Array.isArray(req.query.days)
+      ? req.query.days[0]
+      : req.query.days;
+    const days = daysValue === undefined ? 30 : Number(daysValue);
+    if (!Number.isInteger(days) || days < 1 || days > 365) {
+      res.status(400).json({
+        success: false,
+        error: 'days must be an integer between 1 and 365',
+      });
+      return;
+    }
+
+    try {
+      res.json({
+        success: true,
+        data: pluginUsageService.getAnalytics(days),
+      });
+    } catch (error: unknown) {
+      res.status(500).json({
+        success: false,
+        error: getErrorMessage(error, 'Failed to load plugin usage'),
       });
     }
   }

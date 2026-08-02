@@ -183,6 +183,7 @@ test('reopening the palette starts from an empty, focused query', async ({
   await expect(input).toHaveValue('');
 
   // The input takes focus on open, so typing goes straight into it.
+  await expect(input).toBeFocused();
   await page.keyboard.type('imag');
   await expect(input).toHaveValue('imag');
 });

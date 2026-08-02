@@ -232,6 +232,7 @@ function upsertTestUser(userId, role) {
     username: userId,
     email: null,
     role,
+    status: 'active',
     avatar: null,
     createdAt: new Date(now).toISOString(),
     updatedAt: new Date(now).toISOString(),

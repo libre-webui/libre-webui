@@ -32,6 +32,7 @@ import {
   Sparkles,
   User as UserIcon,
   Users,
+  ChartNoAxesCombined,
   X,
 } from 'lucide-react';
 import { useTabStore, AppTab } from '@/store/tabStore';
@@ -49,6 +50,10 @@ const PAGE_META: Record<string, { icon: IconComponent; labelKey: string }> = {
   '/gallery': { icon: Sparkles, labelKey: 'sidebar.navigation.imagine' },
   '/agents': { icon: Bot, labelKey: 'sidebar.navigation.agents' },
   '/users': { icon: Users, labelKey: 'tabs.users' },
+  '/usage': {
+    icon: ChartNoAxesCombined,
+    labelKey: 'usageAnalytics.title',
+  },
   '/artifacts': { icon: Package, labelKey: 'tabs.artifacts' },
 };
 

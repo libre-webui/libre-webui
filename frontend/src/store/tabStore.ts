@@ -34,6 +34,7 @@ const PAGE_TAB_PATHS = [
   '/gallery',
   '/agents',
   '/users',
+  '/usage',
   '/artifacts',
 ] as const;
 

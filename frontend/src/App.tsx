@@ -84,6 +84,7 @@ const WorkPage = React.lazy(() => import('@/pages/WorkPage'));
 const UserManagementPage = React.lazy(
   () => import('@/pages/UserManagementPage')
 );
+const PluginUsagePage = React.lazy(() => import('@/pages/PluginUsagePage'));
 const ArtifactDemoPage = React.lazy(() => import('@/pages/ArtifactDemoPage'));
 const SettingsModal = React.lazy(() =>
   import('@/components/SettingsModal').then(module => ({
@@ -536,6 +537,14 @@ const AppContent: React.FC = () => {
               }
             />
             <Route path='/agents' element={<LibreClawPage />} />
+            <Route
+              path='/usage'
+              element={
+                <ProtectedRoute requireAdmin={true}>
+                  <PluginUsagePage />
+                </ProtectedRoute>
+              }
+            />
             <Route path='/login' element={<LoginPage />} />
           </Routes>
         </ShellLayout>
@@ -580,6 +589,14 @@ const AppContent: React.FC = () => {
                     />
                     <Route path='/agents' element={<LibreClawPage />} />
                     <Route path='/artifacts' element={<ArtifactDemoPage />} />
+                    <Route
+                      path='/usage'
+                      element={
+                        <ProtectedRoute requireAdmin={true}>
+                          <PluginUsagePage />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route
                       path='/users'
                       element={

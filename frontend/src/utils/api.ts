@@ -53,7 +53,10 @@ export type {
 export { ollamaApi } from './api/modelApi';
 export { personaApi } from './api/personaApi';
 export { pluginApi } from './api/pluginApi';
-export type { PluginVariableValue } from './api/pluginApi';
+export type {
+  PluginUsageAnalytics,
+  PluginVariableValue,
+} from './api/pluginApi';
 export { preferencesApi } from './api/preferencesApi';
 export { workApi } from './api/workApi';
 export { ttsApi } from './api/ttsApi';

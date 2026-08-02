@@ -376,6 +376,30 @@ function initializeTables(): void {
     )
   `);
 
+  // Server-side metering for outbound plugin provider calls. This table stores
+  // no prompts, responses, endpoints, credentials, or provider error bodies.
+  // Names are snapshotted so historical usage remains understandable after a
+  // plugin definition or user account is changed.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plugin_usage_events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      plugin_id TEXT NOT NULL,
+      plugin_name TEXT NOT NULL,
+      capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'tts')),
+      model TEXT NOT NULL,
+      status TEXT NOT NULL CHECK(status IN ('success', 'error', 'cancelled')),
+      prompt_tokens INTEGER,
+      completion_tokens INTEGER,
+      total_tokens INTEGER,
+      input_units INTEGER NOT NULL DEFAULT 0,
+      output_units INTEGER NOT NULL DEFAULT 0,
+      unit_kind TEXT,
+      duration_ms INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    )
+  `);
+
   // Generated images table - for image gallery
   db.exec(`
     CREATE TABLE IF NOT EXISTS generated_images (
@@ -475,6 +499,10 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_plugin_discovered_models_plugin_id ON plugin_discovered_models(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_activations_plugin_id ON plugin_activations(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_definition_approvals_approver ON plugin_definition_approvals(approved_by_user_id);
+    CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_created_at ON plugin_usage_events(created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_plugin_created ON plugin_usage_events(plugin_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_model_created ON plugin_usage_events(model, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_user_created ON plugin_usage_events(user_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_generated_images_user_id ON generated_images(user_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
   `);

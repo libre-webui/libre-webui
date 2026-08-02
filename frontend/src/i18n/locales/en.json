@@ -314,6 +314,7 @@
       "agents": "Agents",
       "work": "Work",
       "settings": "Settings",
+      "usageAnalytics": "Provider Usage",
       "userManagement": "User Management",
       "signOut": "Sign Out",
       "exploreLabel": "Explore"
@@ -325,6 +326,7 @@
     "menu": {
       "changePicture": "Change Picture",
       "settings": "Settings",
+      "usageAnalytics": "Provider Usage",
       "userManagement": "User Management",
       "logout": "Log out"
     },
@@ -1155,6 +1157,56 @@
       "createFailed": "Failed to create user",
       "updateFailed": "Failed to update user"
     }
+  },
+  "usageAnalytics": {
+    "eyebrow": "Administration",
+    "title": "Provider Usage",
+    "description": "Follow outbound API calls and model consumption across the enabled plugins on this instance.",
+    "days": "{{count}} days",
+    "refresh": "Refresh usage",
+    "loadFailed": "Provider usage could not be loaded.",
+    "metrics": {
+      "calls": "Calls",
+      "tokens": "Tokens"
+    },
+    "cards": {
+      "calls": "API calls",
+      "callsDetail": "Across {{count}} active user(s)",
+      "tokens": "Reported tokens",
+      "tokensDetail": "Usage reported on {{count}} call(s)",
+      "success": "Success rate",
+      "successDetail": "{{count}} failed call(s)",
+      "latency": "Average latency",
+      "latencyDetail": "End-to-end provider time"
+    },
+    "activity": {
+      "title": "Consumption over time",
+      "callsDescription": "Daily outbound requests to enabled plugins",
+      "tokensDescription": "Daily token totals reported by providers",
+      "chartLabel": "Daily provider {{metric}} chart"
+    },
+    "models": {
+      "title": "Model consumption",
+      "description": "The models carrying the most traffic in this period.",
+      "model": "Model",
+      "success": "Success",
+      "latency": "Latency"
+    },
+    "providers": {
+      "title": "Enabled plugin traffic"
+    },
+    "capabilities": {
+      "title": "Capability mix",
+      "characters": "{{count}} characters",
+      "images": "{{count}} images",
+      "inputs": "{{count}} inputs",
+      "reportedTokens": "{{count}} reported tokens"
+    },
+    "empty": {
+      "title": "No provider calls yet",
+      "description": "Calls will appear here after an enabled plugin handles chat, Work, embedding, image, or speech requests."
+    },
+    "privacyNote": "Usage is metered on the server at the outbound plugin boundary. Libre WebUI stores provider, model, timing, status, and reported counters—never prompts, responses, endpoints, credentials, or provider error bodies. Token totals include only calls where the provider returned usage metadata."
   },
   "chatHistory": {
     "label": "Conversation history",

@@ -120,6 +120,39 @@ async function signupPackedUser(baseUrl, username) {
   return payload.data;
 }
 
+async function signupAndApprovePackedUser(baseUrl, username, adminToken) {
+  const password = 'packed-test-password';
+  const signupResponse = await fetch(`${baseUrl}/api/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  assert.equal(signupResponse.status, 202);
+  const signupPayload = await signupResponse.json();
+  assert.equal(signupPayload.success, true);
+  assert.equal(signupPayload.data?.user?.status, 'pending');
+
+  const approvalResponse = await fetch(
+    `${baseUrl}/api/users/${signupPayload.data.user.id}/approve`,
+    {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${adminToken}` },
+    }
+  );
+  assert.equal(approvalResponse.status, 200);
+
+  const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  assert.equal(loginResponse.status, 200);
+  const loginPayload = await loginResponse.json();
+  assert.equal(loginPayload.success, true);
+  assert.equal(typeof loginPayload.data?.token, 'string');
+  return loginPayload.data;
+}
+
 async function waitForServer(url, child, timeoutMs = 15000) {
   const deadline = Date.now() + timeoutMs;
 
@@ -435,6 +468,15 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
       );
       assert.equal(activationResponse.status, 200);
 
+      const adminUsageResponse = await fetch(
+        `${backendBaseUrl}/api/plugins/usage?days=30`,
+        { headers: pluginHeaders }
+      );
+      assert.equal(adminUsageResponse.status, 200);
+      const adminUsagePayload = await adminUsageResponse.json();
+      assert.equal(adminUsagePayload.success, true);
+      assert.equal(adminUsagePayload.data?.range?.days, 30);
+
       const pluginReadStatuses = [];
       for (let request = 0; request < 205; request++) {
         const pluginReadResponse = await fetch(
@@ -491,9 +533,9 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         )
       );
 
-      // Endpoint, credential, and activation setup consumed three requests
-      // from this authenticated user's 1000-request plugin-router quota.
-      for (let request = pluginReadStatuses.length; request < 997; request++) {
+      // Endpoint, credential, activation, and usage setup consumed four
+      // requests from this authenticated user's 1000-request plugin quota.
+      for (let request = pluginReadStatuses.length; request < 996; request++) {
         const pluginReadResponse = await fetch(
           `${backendBaseUrl}/api/plugins`,
           { method: 'HEAD', headers: pluginHeaders }
@@ -514,9 +556,10 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         error: 'Too many plugin requests, please try again later.',
       });
 
-      const secondUser = await signupPackedUser(
+      const secondUser = await signupAndApprovePackedUser(
         backendBaseUrl,
-        'packed-plugin-user'
+        'packed-plugin-user',
+        firstUser.token
       );
       const authenticatedPluginRead = await fetch(
         `${backendBaseUrl}/api/plugins`,
@@ -528,6 +571,17 @@ test('packed npm artifact exposes provider-backed embedding models and requests'
         authenticatedPluginRead.status,
         200,
         'authenticated users must not share another account’s exhausted quota'
+      );
+      const forbiddenUsageRead = await fetch(
+        `${backendBaseUrl}/api/plugins/usage?days=30`,
+        {
+          headers: { Authorization: `Bearer ${secondUser.token}` },
+        }
+      );
+      assert.equal(
+        forbiddenUsageRead.status,
+        403,
+        'only administrators may inspect instance-wide provider consumption'
       );
     } catch (error) {
       throw new Error(

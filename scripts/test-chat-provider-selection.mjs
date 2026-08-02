@@ -64,6 +64,16 @@ const providerServer = http.createServer((request, response) => {
           choices: [{ delta: { content: providerId } }],
         })}\n\n`
       );
+      response.write(
+        `data: ${JSON.stringify({
+          choices: [],
+          usage: {
+            prompt_tokens: 12,
+            completion_tokens: 3,
+            total_tokens: 15,
+          },
+        })}\n\n`
+      );
       response.end('data: [DONE]\n\n');
       return;
     }
@@ -82,6 +92,11 @@ const providerServer = http.createServer((request, response) => {
             finish_reason: 'stop',
           },
         ],
+        usage: {
+          prompt_tokens: 12,
+          completion_tokens: 3,
+          total_tokens: 15,
+        },
       })
     );
   });
@@ -664,6 +679,20 @@ test('exact plugin routing reaches the selected provider for regular and streami
     requests.map(request => request.providerId),
     [pluginAId]
   );
+
+  const usageRows = dbModule
+    .getDatabase()
+    .prepare(
+      `SELECT plugin_id, status, total_tokens
+       FROM plugin_usage_events
+       ORDER BY created_at ASC`
+    )
+    .all();
+  assert.deepEqual(usageRows, [
+    { plugin_id: pluginBId, status: 'success', total_tokens: 15 },
+    { plugin_id: pluginBId, status: 'success', total_tokens: 15 },
+    { plugin_id: pluginAId, status: 'success', total_tokens: 15 },
+  ]);
 });
 
 test('exact plugin selection rejects unavailable providers before any request', async () => {
