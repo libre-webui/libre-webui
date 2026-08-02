@@ -53,6 +53,41 @@ const interpolationNames = (message: string): string[] =>
     match => match[1]
   ).sort();
 
+test('every shipped locale completely translates the English catalog', async () => {
+  const localeFiles = (await readdir(localeDirectory))
+    .filter(file => file.endsWith('.json'))
+    .sort();
+  const english = flattenMessages(
+    JSON.parse(
+      await readFile(join(localeDirectory, 'en.json'), 'utf8')
+    ) as Messages
+  );
+  const englishKeys = Object.keys(english).sort();
+
+  for (const localeFile of localeFiles) {
+    const locale = flattenMessages(
+      JSON.parse(
+        await readFile(join(localeDirectory, localeFile), 'utf8')
+      ) as Messages
+    );
+
+    assert.deepEqual(
+      Object.keys(locale).sort(),
+      englishKeys,
+      `${localeFile} must contain exactly the English translation keys`
+    );
+
+    for (const key of englishKeys) {
+      assert.ok(locale[key].trim(), `${localeFile}: ${key} must not be empty`);
+      assert.deepEqual(
+        interpolationNames(locale[key]),
+        interpolationNames(english[key]),
+        `${localeFile}: ${key} must preserve interpolation variables`
+      );
+    }
+  }
+});
+
 test('every shipped locale completely translates the Work interface', async () => {
   const localeFiles = (await readdir(localeDirectory))
     .filter(file => file.endsWith('.json'))

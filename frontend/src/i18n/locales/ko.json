@@ -60,7 +60,8 @@
       "enterBoth": "사용자 이름과 비밀번호를 모두 입력하세요",
       "githubSuccess": "GitHub 로그인 성공!",
       "githubFailed": "GitHub 인증 실패",
-      "githubVerifyFailed": "GitHub 인증 확인 실패"
+      "githubVerifyFailed": "GitHub 인증 확인 실패",
+      "approvalPending": "계정이 관리자 승인을 기다리고 있습니다."
     },
     "signup": {
       "title": "계정 만들기",
@@ -82,7 +83,11 @@
       "tryAgain": "가입 실패. 다시 시도해주세요.",
       "usernameRequired": "사용자 이름과 비밀번호가 필요합니다",
       "passwordMismatch": "비밀번호가 일치하지 않습니다",
-      "passwordTooShort": "비밀번호는 최소 6자 이상이어야 합니다"
+      "passwordTooShort": "비밀번호는 최소 6자 이상이어야 합니다",
+      "approvalPending": "가입이 완료되었습니다. 관리자가 계정을 승인해야 합니다.",
+      "awaitingApproval": "승인 대기 중",
+      "awaitingApprovalDescription": "계정이 생성되었지만, 로그인하려면 관리자가 계정을 활성화해야 합니다.",
+      "backToSignIn": "로그인으로 돌아가기"
     },
     "logout": {
       "button": "로그아웃",
@@ -105,7 +110,23 @@
     "jwtActive": "JWT 인증 활성",
     "jwtDescription": "GitHub OAuth 기반 JWT 인증",
     "github": "GitHub",
-    "provider": "제공자"
+    "provider": "제공자",
+    "tagline": "당신의 AI 스택은 당신이 통제해야 합니다.",
+    "selfHosted": "자체 호스팅 · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "로컬 우선",
+        "body": "대화와 파일은 이 앱을 실행하는 기기에 그대로 보관됩니다."
+      },
+      "providers": {
+        "title": "모든 프로바이더",
+        "body": "Ollama를 통한 로컬 모델과 추가하기로 선택한 원격 프로바이더를 지원합니다."
+      },
+      "work": {
+        "title": "격리된 작업 환경",
+        "body": "모델에 파일, 터미널, 미리보기가 있는 샌드박스 작업 공간을 제공하세요."
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "관리자 계정이 성공적으로 생성되었습니다!",
       "failed": "관리자 계정 생성 실패",
       "fillAllFields": "모든 필드를 입력하세요",
-      "note": "이것은 Libre WebUI 인스턴스의 기본 관리자 계정이 됩니다"
+      "note": "이것은 Libre WebUI 인스턴스의 기본 관리자 계정이 됩니다",
+      "approvalUnexpected": "초기 관리자를 활성화할 수 없습니다. 다시 시도해 주세요."
     },
     "encryptionKey": {
       "title": "암호화 키 저장",
@@ -238,7 +260,8 @@
       "createFirst": "위에서 첫 번째 채팅을 만드세요",
       "chats": "채팅",
       "renameChat": "채팅 이름 변경",
-      "deleteChat": "채팅 삭제"
+      "deleteChat": "채팅 삭제",
+      "incognito": "시크릿 채팅"
     },
     "persona": {
       "applied": "페르소나 적용됨",
@@ -294,7 +317,9 @@
       "signOut": "로그아웃",
       "agents": "에이전트",
       "work": "작업",
-      "exploreLabel": "둘러보기"
+      "exploreLabel": "둘러보기",
+      "usageAnalytics": "프로바이더 사용량",
+      "system": "시스템"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -304,7 +329,9 @@
       "changePicture": "사진 변경",
       "settings": "설정",
       "userManagement": "사용자 관리",
-      "logout": "로그아웃"
+      "logout": "로그아웃",
+      "usageAnalytics": "프로바이더 사용량",
+      "system": "시스템"
     },
     "avatar": {
       "title": "프로필 사진 변경",
@@ -419,7 +446,11 @@
       "modelPullAccess": "모델 설치 권한",
       "modelPullAccessDescription": "관리자가 아닌 사용자가 새 모델을 pull 및 설치할 수 있도록 허용합니다.",
       "modelPullAccessSaved": "모델 설치 권한이 업데이트되었습니다",
-      "modelPullAccessSaveFailed": "모델 설치 권한 업데이트에 실패했습니다"
+      "modelPullAccessSaveFailed": "모델 설치 권한 업데이트에 실패했습니다",
+      "specializedModels": "특화 모델",
+      "visionModel": "비전 모델",
+      "selectVisionModel": "현재 채팅 모델 사용",
+      "visionModelDescription": "전송되는 채팅 컨텍스트에 이미지가 포함될 때마다 자동으로 사용됩니다. 이미지 입력을 지원하는 모델을 선택하세요."
     },
     "systemMessage": {
       "title": "시스템 메시지",
@@ -467,7 +498,41 @@
         "removeFailed": "API 키 제거 실패",
         "enterKey": "API 키를 입력하세요"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "프로바이더 연결",
+      "providerConnectionsDescription": "플러그인을 통해 모델 프로바이더를 연결, 구성 및 검사합니다.",
+      "providers": "프로바이더",
+      "searchProviders": "프로바이더 검색",
+      "noProvidersFound": "검색과 일치하는 프로바이더가 없습니다.",
+      "selectProvider": "프로바이더 선택",
+      "selectProviderDescription": "연결 및 모델 카탈로그를 검사할 프로바이더를 선택하세요.",
+      "apiKeyDescription": "{{name}}의 개인 API 키를 저장합니다.",
+      "showApiKey": "API 키 표시",
+      "hideApiKey": "API 키 숨기기",
+      "configure": "구성",
+      "providerSettings": "프로바이더 설정",
+      "status": "상태",
+      "defaultEndpoint": "기본 엔드포인트",
+      "modelCatalog": "모델 카탈로그",
+      "modelCatalogDescription": "이 프로바이더에 대해 검색 및 구성된 모델과 기능입니다.",
+      "refreshModels": "모델 새로고침",
+      "noModelsConfigured": "이 제공자에 대해 구성된 모델이 없습니다.",
+      "modelId": "모델 ID",
+      "capabilities": "기능",
+      "modelCatalogUpdated": "모델 카탈로그가 업데이트되었습니다: {{count}}개 모델.",
+      "modelCatalogUnchanged": "모델 카탈로그가 이미 최신 상태입니다.",
+      "modelCatalogNeedsApiKey": "이 제공자의 실시간 모델 목록을 불러오려면 유효한 API 키를 추가하세요.",
+      "modelCatalogUnavailable": "제공자의 모델 목록을 불러올 수 없습니다.",
+      "modelCatalogRefreshFailed": "모델 카탈로그를 새로고침하지 못했습니다.",
+      "capability": {
+        "chat": "채팅",
+        "embedding": "임베딩",
+        "image": "이미지",
+        "speech": "음성",
+        "transcription": "전사"
+      },
+      "exportPlugin": "플러그인 내보내기",
+      "deletePlugin": "플러그인 삭제"
     },
     "generation": {
       "title": "생성 옵션",
@@ -503,7 +568,9 @@
       "resetDefaults": "기본값으로 재설정",
       "saveOptions": "옵션 저장",
       "embeddingSettings": "임베딩 설정",
-      "enableEmbeddings": "문서 임베딩 활성화"
+      "enableEmbeddings": "문서 임베딩 활성화",
+      "advancedSettings": "고급 생성 설정",
+      "advancedSettingsDescription": "샘플링, 토큰 제한, 컨텍스트, 페널티 및 정지 시퀀스"
     },
     "documents": {
       "title": "문서 설정",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "사용자가 성공적으로 업데이트되었습니다",
       "createFailed": "사용자 만들기 실패",
       "updateFailed": "사용자 업데이트 실패"
+    },
+    "approval": {
+      "title": "대기 중인 승인",
+      "description": "이 인스턴스에 들어오기 전에 새 등록을 검토하세요.",
+      "registered": "등록됨",
+      "activate": "계정 활성화",
+      "reject": "등록 거부",
+      "approved": "{{name}}님이 이제 로그인할 수 있습니다.",
+      "failed": "계정을 승인할 수 없습니다.",
+      "notification": "{{count}}건의 등록이 승인을 기다리고 있습니다.",
+      "notificationBadge": "{{count}}건의 대기 중인 사용자 승인"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "변수 저장 실패",
       "resetDefaults": "기본값으로 재설정",
       "reset": "변수가 재설정되었습니다",
-      "sensitiveSet": "값이 설정됨 (변경하려면 새 값 입력)"
+      "sensitiveSet": "값이 설정됨 (변경하려면 새 값 입력)",
+      "resetFailed": "변수 초기화 실패",
+      "showValue": "{{label}} 값 표시",
+      "hideValue": "{{label}} 값 숨기기",
+      "connection": "연결",
+      "advanced": "고급 매개변수",
+      "inherited": "제공자 기본값 사용",
+      "inheritedValue": "제공자 기본값 사용 ({{value}})",
+      "enabled": "활성화됨",
+      "disabled": "비활성화됨",
+      "required": "값이 필요합니다",
+      "fullApiEndpoint": "전체 API 엔드포인트 URL",
+      "endpointHelp": "제공자 기본 URL이 아닌 작업 경로(예: /v1/chat/completions)를 포함한 전체 요청 URL을 입력하세요.",
+      "invalidUrl": "유효한 전체 API 엔드포인트 URL을 입력하세요. 예: https://provider.example/v1/chat/completions",
+      "insecureUrl": "API 엔드포인트는 HTTP 또는 HTTPS를 사용해야 합니다.",
+      "httpWarning": "HTTP는 자격 증명이나 트래픽을 암호화하지 않습니다. 신뢰할 수 있는 네트워크에서만 사용하세요.",
+      "invalidBaseUrl": "기본 URL에는 쿼리 문자열이나 프래그먼트가 포함될 수 없습니다.",
+      "invalidApiPath": "/로 시작해야 하며 URL, 쿼리, 프래그먼트 또는 .. 세그먼트를 포함할 수 없습니다.",
+      "tooLong": "값이 너무 깁니다"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "이 배포에서는 대화형 터미널을 사용할 수 없습니다.",
       "blockedByRun": "모델이 이 컨테이너를 사용 중입니다. 턴이 끝나면 터미널이 열립니다.",
       "taskRunning": "모델 턴 진행 중"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "관리",
+    "title": "제공자 사용량",
+    "description": "이 인스턴스에서 활성화된 플러그인의 아웃바운드 API 호출 및 모델 소비를 추적하세요.",
+    "days": "{{count}}일",
+    "refresh": "사용량 새로고침",
+    "loadFailed": "제공자 사용량을 불러올 수 없습니다.",
+    "metrics": {
+      "calls": "호출",
+      "tokens": "토큰"
+    },
+    "cards": {
+      "calls": "API 호출",
+      "callsDetail": "{{count}}명의 활성 사용자 기준",
+      "tokens": "보고된 토큰",
+      "tokensDetail": "{{count}}건의 호출에 보고된 사용량",
+      "success": "성공률",
+      "successDetail": "{{count}}건의 실패한 호출",
+      "latency": "평균 지연 시간",
+      "latencyDetail": "엔드투엔드 제공자 시간"
+    },
+    "activity": {
+      "title": "시간 경과에 따른 사용량",
+      "callsDescription": "활성화된 플러그인에 대한 일일 아웃바운드 요청",
+      "tokensDescription": "제공자가 보고한 일일 토큰 총량",
+      "chartLabel": "일일 제공자 {{metric}} 차트"
+    },
+    "models": {
+      "title": "모델 사용량",
+      "description": "이 기간 동안 트래픽이 가장 많은 모델입니다.",
+      "model": "모델",
+      "success": "성공",
+      "latency": "지연 시간"
+    },
+    "providers": {
+      "title": "활성화된 플러그인 트래픽"
+    },
+    "capabilities": {
+      "title": "기능 분포",
+      "characters": "{{count}}자",
+      "images": "{{count}}개 이미지",
+      "jobs": "{{count}}개 비디오 작업",
+      "inputs": "{{count}}개 입력",
+      "reportedTokens": "{{count}}개 보고된 토큰"
+    },
+    "empty": {
+      "title": "아직 제공자 호출이 없습니다",
+      "description": "활성화된 플러그인이 채팅, Work, 임베딩, 이미지, 음성, 소리 또는 비디오 요청을 처리하면 호출이 여기에 표시됩니다."
+    },
+    "privacyNote": "사용량은 아웃바운드 플러그인 경계에서 서버를 통해 측정됩니다. Libre WebUI는 제공자, 모델, 타이밍, 상태 및 보고된 카운터를 저장하며, 프롬프트, 응답, 엔드포인트, 자격 증명 또는 제공자 오류 본문은 절대 저장하지 않습니다. 토큰 총량에는 제공자가 사용 메타데이터를 반환한 호출만 포함됩니다."
+  },
+  "systemPage": {
+    "eyebrow": "관리",
+    "title": "시스템",
+    "description": "이 Libre WebUI 인스턴스를 호스팅하는 머신과 런타임을 모니터링합니다.",
+    "updated": "{{date}}에 업데이트됨",
+    "refresh": "시스템 정보 새로고침",
+    "loadFailed": "시스템 정보를 불러올 수 없습니다.",
+    "cards": {
+      "uptime": "호스트 가동 시간",
+      "uptimeDetail": "{{date}}부터 실행 중",
+      "memory": "사용된 메모리",
+      "memoryDetail": "{{total}} 중 {{used}}",
+      "freeSpace": "여유 공간",
+      "freeSpaceDetail": "{{label}} · 총 {{total}}",
+      "containers": "실행 중인 컨테이너",
+      "containersDetail": "Docker에 알려진 컨테이너 {{total}}개",
+      "dockerUnavailable": "Docker 사용 불가",
+      "unavailable": "사용 불가"
+    },
+    "host": {
+      "title": "호스트 및 런타임",
+      "description": "운영 체제, 프로세서 및 Libre WebUI 프로세스 세부 정보입니다.",
+      "container": "컨테이너 런타임",
+      "native": "네이티브 런타임",
+      "hostname": "호스트 이름",
+      "operatingSystem": "운영 체제",
+      "processor": "프로세서",
+      "logicalCpus": "논리 CPU",
+      "loadAverage": "평균 부하 · 1 / 5 / 15분",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "프로세스",
+      "workingDirectory": "작업 디렉터리"
+    },
+    "memory": {
+      "title": "메모리",
+      "description": "런타임에서 보이는 시스템 메모리 및 애플리케이션 프로세스 사용량.",
+      "usedOf": "{{total}} 중 {{used}} 사용",
+      "free": "{{value}} 여유",
+      "processRss": "프로세스 RSS",
+      "heapUsed": "V8 힙 사용량",
+      "heapTotal": "V8 전체 힙",
+      "external": "외부 메모리"
+    },
+    "storage": {
+      "title": "저장소",
+      "description": "런타임 파일 시스템 및 영구 애플리케이션 데이터에 사용 가능한 공간.",
+      "used": "{{value}} 사용",
+      "free": "{{value}} 여유",
+      "empty": "이 런타임에서는 파일 시스템 정보를 사용할 수 없습니다."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "읽기 전용 Docker Engine 상태 및 축소된 컨테이너 목록.",
+      "connected": "연결됨",
+      "unavailable": "사용 불가",
+      "unavailableDetail": "Docker Engine 진단을 사용할 수 없습니다.",
+      "socketStatus": "로컬 소켓: {{status}}",
+      "mounted": "마운트됨",
+      "notMounted": "마운트되지 않음",
+      "running": "실행 중",
+      "stopped": "중지됨",
+      "paused": "일시 정지됨",
+      "total": "전체",
+      "version": "버전",
+      "host": "호스트",
+      "architecture": "아키텍처",
+      "cpus": "CPU",
+      "memory": "메모리",
+      "container": "컨테이너",
+      "image": "이미지",
+      "state": "상태",
+      "created": "생성됨",
+      "empty": "Docker에 연결되었으며 현재 나열된 컨테이너가 없습니다."
+    },
+    "network": {
+      "title": "네트워크",
+      "description": "런타임에 표시되는 인터페이스, 주소 및 Linux 트래픽 카운터.",
+      "internal": "내부",
+      "empty": "애플리케이션 런타임에 표시되는 네트워크 인터페이스가 없습니다."
+    },
+    "securityNote": "이 페이지는 관리자 전용입니다. 서버는 운영 요약만 반환합니다: 환경 변수, 자격 증명, Docker 레이블, 마운트, 컨테이너 명령 또는 검사 페이로드를 노출하지 않습니다. Libre WebUI가 컨테이너에서 실행될 때 로컬 소켓을 사용할 수 있는 경우 호스트 수준 CPU 및 메모리 세부 정보는 Docker Engine에서 가져옵니다. 다른 값은 애플리케이션 런타임을 설명합니다."
+  },
+  "mediaGeneration": {
+    "title": "미디어 생성",
+    "description": "활성화된 미디어 제공자로 비디오, 사운드, 음악 또는 음성을 생성합니다.",
+    "image": "이미지",
+    "video": "비디오",
+    "audio": "오디오",
+    "sound": "사운드",
+    "speech": "음성",
+    "model": "모델",
+    "voice": "음성 또는 음성 ID",
+    "resolution": "해상도",
+    "aspectRatio": "화면 비율",
+    "duration": "길이",
+    "providerDefault": "제공자 기본값",
+    "generateAudio": "지원되는 경우 비디오와 함께 오디오 생성",
+    "prompt": "프롬프트",
+    "text": "음성으로 변환할 텍스트",
+    "videoPlaceholder": "장면, 동작, 카메라 및 조명을 설명하세요...",
+    "audioPlaceholder": "음성으로 말할 텍스트를 입력하세요...",
+    "soundPlaceholder": "원하는 사운드, 음악, 분위기 또는 음성 응답을 설명하세요...",
+    "generate": "생성",
+    "generating": "생성 중… 몇 분 정도 걸릴 수 있습니다",
+    "success": "미디어가 생성되어 Imagine에 저장되었습니다",
+    "failed": "미디어 생성 실패",
+    "loadFailed": "미디어 제공자 로드 실패",
+    "noModels": "사용 가능한 {{kind}} 모델이 없습니다. 호환되는 제공자를 활성화하고 자격 증명을 먼저 저장하세요."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}}개 항목",
+    "empty": "아직 생성된 미디어가 없습니다",
+    "emptyHint": "이미지, 비디오 또는 음성 클립을 생성하면 여기에 표시됩니다.",
+    "filters": {
+      "all": "전체",
+      "image": "이미지",
+      "video": "동영상",
+      "audio": "오디오"
     }
   }
 }

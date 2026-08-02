@@ -60,7 +60,8 @@
       "enterBoth": "Veuillez entrer le nom d'utilisateur et le mot de passe",
       "githubSuccess": "Connexion GitHub réussie !",
       "githubFailed": "Échec de l'authentification GitHub",
-      "githubVerifyFailed": "Échec de la vérification de l'authentification GitHub"
+      "githubVerifyFailed": "Échec de la vérification de l'authentification GitHub",
+      "approvalPending": "Votre compte est en attente d'approbation par un administrateur."
     },
     "signup": {
       "title": "Créer un compte",
@@ -82,7 +83,11 @@
       "tryAgain": "Échec de l'inscription. Veuillez réessayer.",
       "usernameRequired": "Le nom d'utilisateur et le mot de passe sont requis",
       "passwordMismatch": "Les mots de passe ne correspondent pas",
-      "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères"
+      "passwordTooShort": "Le mot de passe doit contenir au moins 6 caractères",
+      "approvalPending": "Inscription reçue. Un administrateur doit approuver votre compte.",
+      "awaitingApproval": "En attente d'approbation",
+      "awaitingApprovalDescription": "Votre compte a été créé, mais un administrateur doit l'activer avant que vous puissiez vous connecter.",
+      "backToSignIn": "Retour à la connexion"
     },
     "logout": {
       "button": "Déconnexion",
@@ -105,7 +110,23 @@
     "jwtActive": "Authentification JWT active",
     "jwtDescription": "Authentification JWT avec GitHub OAuth",
     "github": "GitHub",
-    "provider": "Fournisseur"
+    "provider": "Fournisseur",
+    "tagline": "Votre pile d'IA devrait répondre à vos ordres.",
+    "selfHosted": "Auto-hébergé · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "Local d'abord",
+        "body": "Vos conversations et fichiers restent sur la machine sur laquelle vous l'exécutez."
+      },
+      "providers": {
+        "title": "N'importe quel fournisseur",
+        "body": "Modèles locaux via Ollama, plus les fournisseurs distants que vous choisissez d'ajouter."
+      },
+      "work": {
+        "title": "Travail isolé",
+        "body": "Donnez à un modèle un espace de travail sandbox avec fichiers, terminal et aperçu."
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "Compte administrateur créé avec succès !",
       "failed": "Échec de la création du compte administrateur",
       "fillAllFields": "Veuillez remplir tous les champs",
-      "note": "Ce sera le compte administrateur principal pour votre instance Libre WebUI"
+      "note": "Ce sera le compte administrateur principal pour votre instance Libre WebUI",
+      "approvalUnexpected": "L'administrateur initial n'a pas pu être activé. Veuillez réessayer."
     },
     "encryptionKey": {
       "title": "Sauvegardez votre clé de chiffrement",
@@ -238,7 +260,8 @@
       "createFirst": "Créez votre première conversation ci-dessus",
       "chats": "Conversations",
       "renameChat": "Renommer la conversation",
-      "deleteChat": "Supprimer la conversation"
+      "deleteChat": "Supprimer la conversation",
+      "incognito": "Chat incognito"
     },
     "persona": {
       "applied": "Persona appliqué",
@@ -294,7 +317,9 @@
       "settings": "Paramètres",
       "userManagement": "Gestion des utilisateurs",
       "signOut": "Déconnexion",
-      "exploreLabel": "Explorer"
+      "exploreLabel": "Explorer",
+      "usageAnalytics": "Utilisation des fournisseurs",
+      "system": "Système"
     },
     "toggleSize": "Basculer la taille de la barre latérale",
     "expandSidebar": "Agrandir la barre latérale"
@@ -304,7 +329,9 @@
       "changePicture": "Changer la photo",
       "settings": "Paramètres",
       "userManagement": "Gestion des utilisateurs",
-      "logout": "Déconnexion"
+      "logout": "Déconnexion",
+      "usageAnalytics": "Utilisation des fournisseurs",
+      "system": "Système"
     },
     "avatar": {
       "title": "Changer la photo de profil",
@@ -419,7 +446,11 @@
       "modelPullAccess": "Accès à l'installation des modèles",
       "modelPullAccessDescription": "Autoriser les utilisateurs non administrateurs à télécharger et installer de nouveaux modèles.",
       "modelPullAccessSaved": "Les autorisations d'installation des modèles ont été mises à jour",
-      "modelPullAccessSaveFailed": "Échec de la mise à jour des autorisations d'installation des modèles"
+      "modelPullAccessSaveFailed": "Échec de la mise à jour des autorisations d'installation des modèles",
+      "specializedModels": "Modèles spécialisés",
+      "visionModel": "Modèle de vision",
+      "selectVisionModel": "Utiliser le modèle de chat actuel",
+      "visionModelDescription": "Utilisé automatiquement chaque fois que le contexte de chat sortant contient des images. Choisissez un modèle qui prend en charge l'entrée d'images."
     },
     "systemMessage": {
       "title": "Message système",
@@ -467,7 +498,41 @@
         "removeFailed": "Échec de la suppression de la clé API",
         "enterKey": "Veuillez entrer une clé API"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "Connexions aux fournisseurs",
+      "providerConnectionsDescription": "Connectez, configurez et inspectez les fournisseurs de modèles via des plugins.",
+      "providers": "Fournisseurs",
+      "searchProviders": "Rechercher des fournisseurs",
+      "noProvidersFound": "Aucun fournisseur ne correspond à votre recherche.",
+      "selectProvider": "Sélectionner un fournisseur",
+      "selectProviderDescription": "Choisissez un fournisseur pour inspecter sa connexion et son catalogue de modèles.",
+      "apiKeyDescription": "Stocker une clé API personnelle pour {{name}}.",
+      "showApiKey": "Afficher la clé API",
+      "hideApiKey": "Masquer la clé API",
+      "configure": "Configurer",
+      "providerSettings": "Paramètres du fournisseur",
+      "status": "Statut",
+      "defaultEndpoint": "Endpoint par défaut",
+      "modelCatalog": "Catalogue de modèles",
+      "modelCatalogDescription": "Modèles découverts et configurés pour ce fournisseur et ses capacités.",
+      "refreshModels": "Actualiser les modèles",
+      "noModelsConfigured": "Aucun modèle n'est configuré pour ce fournisseur.",
+      "modelId": "ID du modèle",
+      "capabilities": "Capacités",
+      "modelCatalogUpdated": "Catalogue de modèles mis à jour : {{count}} modèles.",
+      "modelCatalogUnchanged": "Le catalogue de modèles est déjà à jour.",
+      "modelCatalogNeedsApiKey": "Ajoutez une clé API valide pour ce fournisseur afin de charger sa liste de modèles en direct.",
+      "modelCatalogUnavailable": "Impossible de charger la liste des modèles du fournisseur.",
+      "modelCatalogRefreshFailed": "Échec de l'actualisation du catalogue de modèles",
+      "capability": {
+        "chat": "Chat",
+        "embedding": "Embedding",
+        "image": "Image",
+        "speech": "Parole",
+        "transcription": "Transcription"
+      },
+      "exportPlugin": "Exporter le plugin",
+      "deletePlugin": "Supprimer le plugin"
     },
     "generation": {
       "title": "Options de génération",
@@ -503,7 +568,9 @@
       "resetDefaults": "Réinitialiser les valeurs par défaut",
       "saveOptions": "Enregistrer les options",
       "embeddingSettings": "Paramètres d'embedding",
-      "enableEmbeddings": "Activer les embeddings de documents"
+      "enableEmbeddings": "Activer les embeddings de documents",
+      "advancedSettings": "Paramètres de génération avancés",
+      "advancedSettingsDescription": "Échantillonnage, limites de jetons, contexte, pénalités et séquences d'arrêt"
     },
     "documents": {
       "title": "Paramètres des documents",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "Utilisateur mis à jour avec succès",
       "createFailed": "Échec de la création de l'utilisateur",
       "updateFailed": "Échec de la mise à jour de l'utilisateur"
+    },
+    "approval": {
+      "title": "Approbations en attente",
+      "description": "Vérifiez les nouvelles inscriptions avant de les autoriser sur cette instance.",
+      "registered": "Inscrit",
+      "activate": "Activer le compte",
+      "reject": "Rejeter l'inscription",
+      "approved": "{{name}} peut maintenant se connecter.",
+      "failed": "Le compte n'a pas pu être approuvé.",
+      "notification": "{{count}} inscription(s) en attente de votre approbation.",
+      "notificationBadge": "{{count}} approbations d'utilisateurs en attente"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "Échec de l'enregistrement",
       "resetDefaults": "Réinitialiser",
       "reset": "Variables réinitialisées",
-      "sensitiveSet": "Valeur définie (entrez une nouvelle valeur pour modifier)"
+      "sensitiveSet": "Valeur définie (entrez une nouvelle valeur pour modifier)",
+      "resetFailed": "Échec de la réinitialisation des variables",
+      "showValue": "Afficher la valeur de {{label}}",
+      "hideValue": "Masquer la valeur de {{label}}",
+      "connection": "Connexion",
+      "advanced": "Paramètres avancés",
+      "inherited": "Utiliser la valeur par défaut du fournisseur",
+      "inheritedValue": "Utiliser la valeur par défaut du fournisseur ({{value}})",
+      "enabled": "Activé",
+      "disabled": "Désactivé",
+      "required": "Une valeur est requise",
+      "fullApiEndpoint": "URL complète du point de terminaison API",
+      "endpointHelp": "Saisissez l'URL de requête complète, y compris son chemin d'opération (par exemple, /v1/chat/completions), et non uniquement l'URL de base du fournisseur.",
+      "invalidUrl": "Saisissez une URL complète de point de terminaison API valide, par exemple https://provider.example/v1/chat/completions",
+      "insecureUrl": "Les points de terminaison API doivent utiliser HTTP ou HTTPS.",
+      "httpWarning": "HTTP ne chiffre pas les identifiants ni le trafic. Ne l'utilisez que sur un réseau de confiance.",
+      "invalidBaseUrl": "Les URL de base ne peuvent pas contenir de chaîne de requête ni de fragment.",
+      "invalidApiPath": "Doit commencer par / et ne contenir ni URL, ni requête, ni fragment, ni segment ..",
+      "tooLong": "La valeur est trop longue"
     }
   },
   "huggingface": {
@@ -1643,5 +1739,177 @@
     "pull": "Télécharger",
     "pullRestricted": "L'installation des modèles est réservée aux administrateurs sur cette instance.",
     "adminOnlyPull": "Admins uniquement"
+  },
+  "usageAnalytics": {
+    "eyebrow": "Administration",
+    "title": "Utilisation des fournisseurs",
+    "description": "Suivez les appels API sortants et la consommation des modèles sur les plugins activés de cette instance.",
+    "days": "{{count}} jours",
+    "refresh": "Actualiser l'utilisation",
+    "loadFailed": "L'utilisation des fournisseurs n'a pas pu être chargée.",
+    "metrics": {
+      "calls": "Appels",
+      "tokens": "Jetons"
+    },
+    "cards": {
+      "calls": "Appels API",
+      "callsDetail": "Sur {{count}} utilisateur(s) actif(s)",
+      "tokens": "Jetons signalés",
+      "tokensDetail": "Utilisation signalée sur {{count}} appel(s)",
+      "success": "Taux de réussite",
+      "successDetail": "{{count}} appel(s) échoué(s)",
+      "latency": "Latence moyenne",
+      "latencyDetail": "Temps de bout en bout du fournisseur"
+    },
+    "activity": {
+      "title": "Consommation au fil du temps",
+      "callsDescription": "Requêtes sortantes quotidiennes vers les plugins activés",
+      "tokensDescription": "Totaux quotidiens de jetons signalés par les fournisseurs",
+      "chartLabel": "Graphique quotidien des {{metric}} du fournisseur"
+    },
+    "models": {
+      "title": "Consommation par modèle",
+      "description": "Les modèles générant le plus de trafic sur cette période.",
+      "model": "Modèle",
+      "success": "Succès",
+      "latency": "Latence"
+    },
+    "providers": {
+      "title": "Trafic des plugins activés"
+    },
+    "capabilities": {
+      "title": "Répartition des capacités",
+      "characters": "{{count}} caractères",
+      "images": "{{count}} images",
+      "jobs": "{{count}} tâches vidéo",
+      "inputs": "{{count}} entrées",
+      "reportedTokens": "{{count}} jetons signalés"
+    },
+    "empty": {
+      "title": "Aucun appel fournisseur pour le moment",
+      "description": "Les appels apparaîtront ici une fois qu'un plugin activé aura traité des requêtes de chat, Work, d'embedding, d'image, de parole, de son ou de vidéo."
+    },
+    "privacyNote": "L'utilisation est mesurée sur le serveur à la limite du plugin sortant. Libre WebUI stocke le fournisseur, le modèle, le minutage, le statut et les compteurs signalés — jamais les prompts, les réponses, les points de terminaison, les identifiants ou les corps d'erreur du fournisseur. Les totaux de jetons incluent uniquement les appels où le fournisseur a renvoyé des métadonnées d'utilisation."
+  },
+  "systemPage": {
+    "eyebrow": "Administration",
+    "title": "Système",
+    "description": "Surveillez la machine et l'environnement d'exécution hébergeant cette instance de Libre WebUI.",
+    "updated": "Mis à jour le {{date}}",
+    "refresh": "Actualiser les informations système",
+    "loadFailed": "Les informations système n'ont pas pu être chargées.",
+    "cards": {
+      "uptime": "Temps d'activité de l'hôte",
+      "uptimeDetail": "En cours d'exécution depuis le {{date}}",
+      "memory": "Mémoire utilisée",
+      "memoryDetail": "{{used}} sur {{total}}",
+      "freeSpace": "Espace libre",
+      "freeSpaceDetail": "{{label}} · {{total}} au total",
+      "containers": "Conteneurs en cours d'exécution",
+      "containersDetail": "{{total}} conteneur(s) connu(s) de Docker",
+      "dockerUnavailable": "Docker indisponible",
+      "unavailable": "Indisponible"
+    },
+    "host": {
+      "title": "Hôte et environnement d'exécution",
+      "description": "Détails du système d'exploitation, du processeur et du processus Libre WebUI.",
+      "container": "Environnement d'exécution de conteneurs",
+      "native": "Runtime natif",
+      "hostname": "Nom d'hôte",
+      "operatingSystem": "Système d'exploitation",
+      "processor": "Processeur",
+      "logicalCpus": "CPU logiques",
+      "loadAverage": "Charge moyenne · 1 / 5 / 15 min",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Processus",
+      "workingDirectory": "Répertoire de travail"
+    },
+    "memory": {
+      "title": "Mémoire",
+      "description": "Mémoire système visible au runtime et utilisation par le processus de l'application.",
+      "usedOf": "{{used}} utilisés sur {{total}}",
+      "free": "{{value}} libres",
+      "processRss": "RSS du processus",
+      "heapUsed": "Tas V8 utilisé",
+      "heapTotal": "Tas V8 total",
+      "external": "Mémoire externe"
+    },
+    "storage": {
+      "title": "Stockage",
+      "description": "Espace disponible pour le système de fichiers du runtime et les données persistantes de l'application.",
+      "used": "{{value}} utilisés",
+      "free": "{{value}} libres",
+      "empty": "Les informations sur le système de fichiers sont indisponibles dans ce runtime."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Statut en lecture seule de Docker Engine et liste réduite des conteneurs.",
+      "connected": "Connecté",
+      "unavailable": "Indisponible",
+      "unavailableDetail": "Les diagnostics de Docker Engine sont indisponibles.",
+      "socketStatus": "Socket local : {{status}}",
+      "mounted": "monté",
+      "notMounted": "non monté",
+      "running": "En cours d'exécution",
+      "stopped": "Arrêté",
+      "paused": "En pause",
+      "total": "Total",
+      "version": "Version",
+      "host": "Hôte",
+      "architecture": "Architecture",
+      "cpus": "CPUs",
+      "memory": "Mémoire",
+      "container": "Conteneur",
+      "image": "Image",
+      "state": "État",
+      "created": "Créé",
+      "empty": "Docker est connecté et aucun conteneur n'est actuellement listé."
+    },
+    "network": {
+      "title": "Réseau",
+      "description": "Interfaces, adresses et compteurs de trafic Linux visibles à l'exécution.",
+      "internal": "interne",
+      "empty": "Aucune interface réseau n'est visible pour l'environnement d'exécution de l'application."
+    },
+    "securityNote": "Cette page est réservée aux administrateurs. Le serveur renvoie uniquement des résumés opérationnels : il n'expose pas les variables d'environnement, les identifiants, les étiquettes Docker, les points de montage, les commandes de conteneur ou les charges utiles d'inspection. Lorsque Libre WebUI s'exécute dans un conteneur, les détails du CPU et de la mémoire au niveau de l'hôte proviennent de Docker Engine lorsque son socket local est disponible ; les autres valeurs décrivent l'environnement d'exécution de l'application."
+  },
+  "mediaGeneration": {
+    "title": "Générer des médias",
+    "description": "Créer une vidéo, un son, de la musique ou de la parole avec un fournisseur de médias activé.",
+    "image": "Image",
+    "video": "Vidéo",
+    "audio": "Audio",
+    "sound": "Son",
+    "speech": "Parole",
+    "model": "Modèle",
+    "voice": "Voix ou ID de voix",
+    "resolution": "Résolution",
+    "aspectRatio": "Format d'image",
+    "duration": "Durée",
+    "providerDefault": "Par défaut du fournisseur",
+    "generateAudio": "Générer l'audio avec la vidéo si pris en charge",
+    "prompt": "Invite",
+    "text": "Texte à prononcer",
+    "videoPlaceholder": "Décrivez la scène, le mouvement, la caméra et l'éclairage...",
+    "audioPlaceholder": "Saisissez le texte que la voix doit prononcer...",
+    "soundPlaceholder": "Décrivez le son, la musique, l'atmosphère ou la réponse vocale souhaitée...",
+    "generate": "Générer",
+    "generating": "Génération… cela peut prendre plusieurs minutes",
+    "success": "Média généré et enregistré dans Imagine",
+    "failed": "Échec de la génération du média",
+    "loadFailed": "Échec du chargement des fournisseurs de médias",
+    "noModels": "Aucun modèle {{kind}} n'est disponible. Activez un fournisseur compatible et enregistrez d'abord ses identifiants."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} éléments",
+    "empty": "Aucun média généré pour le moment",
+    "emptyHint": "Générez une image, une vidéo ou un clip vocal et il apparaîtra ici.",
+    "filters": {
+      "all": "Tous",
+      "image": "Images",
+      "video": "Vidéos",
+      "audio": "Audio"
+    }
   }
 }

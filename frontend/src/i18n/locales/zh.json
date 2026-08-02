@@ -60,7 +60,8 @@
       "enterBoth": "请输入用户名和密码",
       "githubSuccess": "GitHub 登录成功！",
       "githubFailed": "GitHub 认证失败",
-      "githubVerifyFailed": "GitHub 认证验证失败"
+      "githubVerifyFailed": "GitHub 认证验证失败",
+      "approvalPending": "您的账户正在等待管理员批准。"
     },
     "signup": {
       "title": "创建账户",
@@ -82,7 +83,11 @@
       "tryAgain": "注册失败，请重试。",
       "usernameRequired": "用户名和密码为必填项",
       "passwordMismatch": "两次输入的密码不一致",
-      "passwordTooShort": "密码长度至少为6个字符"
+      "passwordTooShort": "密码长度至少为6个字符",
+      "approvalPending": "已收到注册申请。需要管理员批准您的账户。",
+      "awaitingApproval": "等待批准",
+      "awaitingApprovalDescription": "您的账户已创建，但需要管理员激活后才能登录。",
+      "backToSignIn": "返回登录"
     },
     "logout": {
       "button": "退出登录",
@@ -105,7 +110,23 @@
     "jwtActive": "JWT 认证已激活",
     "jwtDescription": "基于 JWT 的 GitHub OAuth 认证",
     "github": "GitHub",
-    "provider": "提供商"
+    "provider": "提供商",
+    "tagline": "你的 AI 技术栈应由你掌控。",
+    "selfHosted": "自托管 · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "本地优先",
+        "body": "你的对话和文件保留在你运行此程序的机器上。"
+      },
+      "providers": {
+        "title": "任意提供商",
+        "body": "通过 Ollama 使用本地模型，以及你选择添加的远程提供商。"
+      },
+      "work": {
+        "title": "隔离工作区",
+        "body": "为模型提供一个包含文件、终端和预览的沙盒工作区。"
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "管理员账户创建成功！",
       "failed": "创建管理员账户失败",
       "fillAllFields": "请填写所有字段",
-      "note": "这将是您 Libre WebUI 实例的主管理员账户"
+      "note": "这将是您 Libre WebUI 实例的主管理员账户",
+      "approvalUnexpected": "无法激活初始管理员。请重试。"
     },
     "encryptionKey": {
       "title": "保存您的加密密钥",
@@ -238,7 +260,8 @@
       "createFirst": "在上方创建您的第一个对话",
       "chats": "对话",
       "renameChat": "重命名对话",
-      "deleteChat": "删除对话"
+      "deleteChat": "删除对话",
+      "incognito": "隐身聊天"
     },
     "persona": {
       "applied": "已应用角色",
@@ -294,7 +317,9 @@
       "signOut": "退出登录",
       "agents": "智能体",
       "work": "工作",
-      "exploreLabel": "探索"
+      "exploreLabel": "探索",
+      "usageAnalytics": "提供商使用情况",
+      "system": "系统"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -304,7 +329,9 @@
       "changePicture": "更换头像",
       "settings": "设置",
       "userManagement": "用户管理",
-      "logout": "退出登录"
+      "logout": "退出登录",
+      "usageAnalytics": "提供商使用情况",
+      "system": "系统"
     },
     "avatar": {
       "title": "更换头像",
@@ -419,7 +446,11 @@
       "modelPullAccess": "模型安装权限",
       "modelPullAccessDescription": "允许非管理员用户拉取并安装新模型。",
       "modelPullAccessSaved": "模型安装权限已更新",
-      "modelPullAccessSaveFailed": "更新模型安装权限失败"
+      "modelPullAccessSaveFailed": "更新模型安装权限失败",
+      "specializedModels": "专用模型",
+      "visionModel": "视觉模型",
+      "selectVisionModel": "使用当前聊天模型",
+      "visionModelDescription": "当发出的聊天上下文包含图像时自动使用。请选择支持图像输入的模型。"
     },
     "systemMessage": {
       "title": "系统消息",
@@ -467,7 +498,41 @@
         "removeFailed": "移除 API 密钥失败",
         "enterKey": "请输入 API 密钥"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "提供商连接",
+      "providerConnectionsDescription": "通过插件连接、配置和检查模型提供商。",
+      "providers": "提供商",
+      "searchProviders": "搜索提供商",
+      "noProvidersFound": "没有找到匹配的提供商。",
+      "selectProvider": "选择提供商",
+      "selectProviderDescription": "选择一个提供商以检查其连接和模型目录。",
+      "apiKeyDescription": "为 {{name}} 存储个人 API 密钥。",
+      "showApiKey": "显示 API 密钥",
+      "hideApiKey": "隐藏 API 密钥",
+      "configure": "配置",
+      "providerSettings": "提供商设置",
+      "status": "状态",
+      "defaultEndpoint": "默认端点",
+      "modelCatalog": "模型目录",
+      "modelCatalogDescription": "为此提供商发现和配置的模型及其功能。",
+      "refreshModels": "刷新模型",
+      "noModelsConfigured": "未为该提供商配置模型。",
+      "modelId": "模型 ID",
+      "capabilities": "能力",
+      "modelCatalogUpdated": "模型目录已更新：{{count}} 个模型。",
+      "modelCatalogUnchanged": "模型目录已是最新。",
+      "modelCatalogNeedsApiKey": "为该提供商添加有效的 API 密钥以加载其实时模型列表。",
+      "modelCatalogUnavailable": "无法加载该提供商的模型列表。",
+      "modelCatalogRefreshFailed": "刷新模型目录失败",
+      "capability": {
+        "chat": "聊天",
+        "embedding": "嵌入",
+        "image": "图像",
+        "speech": "语音",
+        "transcription": "转录"
+      },
+      "exportPlugin": "导出插件",
+      "deletePlugin": "删除插件"
     },
     "generation": {
       "title": "生成选项",
@@ -503,7 +568,9 @@
       "resetDefaults": "重置为默认值",
       "saveOptions": "保存选项",
       "embeddingSettings": "嵌入设置",
-      "enableEmbeddings": "启用文档嵌入"
+      "enableEmbeddings": "启用文档嵌入",
+      "advancedSettings": "高级生成设置",
+      "advancedSettingsDescription": "采样、Token 限制、上下文、惩罚和停止序列"
     },
     "documents": {
       "title": "文档设置",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "用户更新成功",
       "createFailed": "创建用户失败",
       "updateFailed": "更新用户失败"
+    },
+    "approval": {
+      "title": "待审批",
+      "description": "在允许新注册用户进入此实例之前进行审核。",
+      "registered": "已注册",
+      "activate": "激活账户",
+      "reject": "拒绝注册",
+      "approved": "{{name}} 现在可以登录了。",
+      "failed": "无法批准该账户。",
+      "notification": "{{count}} 个注册正在等待您的批准。",
+      "notificationBadge": "{{count}} 个待处理的用户批准"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "保存变量失败",
       "resetDefaults": "重置为默认值",
       "reset": "变量已重置",
-      "sensitiveSet": "值已设置（输入新值以更改）"
+      "sensitiveSet": "值已设置（输入新值以更改）",
+      "resetFailed": "重置变量失败",
+      "showValue": "显示 {{label}} 值",
+      "hideValue": "隐藏 {{label}} 值",
+      "connection": "连接",
+      "advanced": "高级参数",
+      "inherited": "使用提供商默认值",
+      "inheritedValue": "使用提供商默认值 ({{value}})",
+      "enabled": "已启用",
+      "disabled": "已禁用",
+      "required": "需要提供值",
+      "fullApiEndpoint": "完整 API 端点 URL",
+      "endpointHelp": "输入完整的请求 URL，包括其操作路径（例如 /v1/chat/completions），而不仅仅是提供商基础 URL。",
+      "invalidUrl": "输入有效的完整 API 端点 URL，例如 https://provider.example/v1/chat/completions",
+      "insecureUrl": "API 端点必须使用 HTTP 或 HTTPS。",
+      "httpWarning": "HTTP 不会加密凭据或流量。仅在受信任的网络中使用。",
+      "invalidBaseUrl": "基础 URL 不能包含查询字符串或片段。",
+      "invalidApiPath": "必须以 / 开头，且不包含 URL、查询、片段或 .. 段",
+      "tooLong": "值过长"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "此部署不支持交互式终端。",
       "blockedByRun": "模型正在使用该容器。回合结束后终端将打开。",
       "taskRunning": "模型回合进行中"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "管理",
+    "title": "提供商使用情况",
+    "description": "跟踪此实例上已启用插件的出站 API 调用和模型消耗。",
+    "days": "{{count}} 天",
+    "refresh": "刷新使用情况",
+    "loadFailed": "无法加载提供商使用情况。",
+    "metrics": {
+      "calls": "调用",
+      "tokens": "Token"
+    },
+    "cards": {
+      "calls": "API 调用",
+      "callsDetail": "跨 {{count}} 个活跃用户",
+      "tokens": "报告的 Token",
+      "tokensDetail": "在 {{count}} 次调用中报告的使用情况",
+      "success": "成功率",
+      "successDetail": "{{count}} 次失败调用",
+      "latency": "平均延迟",
+      "latencyDetail": "端到端提供商耗时"
+    },
+    "activity": {
+      "title": "随时间变化的消耗",
+      "callsDescription": "每日对已启用插件的出站请求",
+      "tokensDescription": "提供商报告的每日 token 总量",
+      "chartLabel": "每日提供商 {{metric}} 图表"
+    },
+    "models": {
+      "title": "模型消耗",
+      "description": "此期间承载最多流量的模型。",
+      "model": "模型",
+      "success": "成功",
+      "latency": "延迟"
+    },
+    "providers": {
+      "title": "已启用插件的流量"
+    },
+    "capabilities": {
+      "title": "能力组合",
+      "characters": "{{count}} 个字符",
+      "images": "{{count}} 张图片",
+      "jobs": "{{count}} 个视频任务",
+      "inputs": "{{count}} 个输入",
+      "reportedTokens": "{{count}} 个已报告 token"
+    },
+    "empty": {
+      "title": "暂无提供商调用",
+      "description": "当已启用的插件处理聊天、工作、嵌入、图像、语音、声音或视频请求后，调用将显示在此处。"
+    },
+    "privacyNote": "使用量在服务器的出站插件边界处进行计量。Libre WebUI 存储提供商、模型、计时、状态和已报告的计数器——绝不存储提示词、响应、端点、凭据或提供商错误正文。Token 总量仅包含提供商返回使用元数据的调用。"
+  },
+  "systemPage": {
+    "eyebrow": "管理",
+    "title": "系统",
+    "description": "监控托管此 Libre WebUI 实例的机器和运行时。",
+    "updated": "已更新于 {{date}}",
+    "refresh": "刷新系统信息",
+    "loadFailed": "无法加载系统信息。",
+    "cards": {
+      "uptime": "主机运行时间",
+      "uptimeDetail": "自 {{date}} 起运行",
+      "memory": "已用内存",
+      "memoryDetail": "{{used}} / {{total}}",
+      "freeSpace": "可用空间",
+      "freeSpaceDetail": "{{label}} · 总计 {{total}}",
+      "containers": "运行中的容器",
+      "containersDetail": "Docker 已知 {{total}} 个容器",
+      "dockerUnavailable": "Docker 不可用",
+      "unavailable": "不可用"
+    },
+    "host": {
+      "title": "主机与运行时",
+      "description": "操作系统、处理器和 Libre WebUI 进程详情。",
+      "container": "容器运行时",
+      "native": "原生运行时",
+      "hostname": "主机名",
+      "operatingSystem": "操作系统",
+      "processor": "处理器",
+      "logicalCpus": "逻辑 CPU",
+      "loadAverage": "平均负载 · 1 / 5 / 15 分钟",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "进程",
+      "workingDirectory": "工作目录"
+    },
+    "memory": {
+      "title": "内存",
+      "description": "运行时可见的系统内存和应用程序进程使用情况。",
+      "usedOf": "已用 {{used}} / 共 {{total}}",
+      "free": "{{value}} 可用",
+      "processRss": "进程 RSS",
+      "heapUsed": "V8 堆已用",
+      "heapTotal": "V8 堆总量",
+      "external": "外部内存"
+    },
+    "storage": {
+      "title": "存储",
+      "description": "运行时文件系统和持久化应用程序数据的可用空间。",
+      "used": "已用 {{value}}",
+      "free": "{{value}} 可用",
+      "empty": "此运行时中文件系统信息不可用。"
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "只读的 Docker Engine 状态和精简的容器列表。",
+      "connected": "已连接",
+      "unavailable": "不可用",
+      "unavailableDetail": "Docker Engine 诊断不可用。",
+      "socketStatus": "本地套接字：{{status}}",
+      "mounted": "已挂载",
+      "notMounted": "未挂载",
+      "running": "运行中",
+      "stopped": "已停止",
+      "paused": "已暂停",
+      "total": "总计",
+      "version": "版本",
+      "host": "主机",
+      "architecture": "架构",
+      "cpus": "CPU",
+      "memory": "内存",
+      "container": "容器",
+      "image": "镜像",
+      "state": "状态",
+      "created": "创建时间",
+      "empty": "Docker 已连接，当前未列出任何容器。"
+    },
+    "network": {
+      "title": "网络",
+      "description": "运行时可见的接口、地址和 Linux 流量计数器。",
+      "internal": "内部",
+      "empty": "应用运行时未显示任何网络接口。"
+    },
+    "securityNote": "此页面仅限管理员访问。服务器仅返回运行状态摘要：不会暴露环境变量、凭据、Docker 标签、挂载点、容器命令或 inspect 负载。当 Libre WebUI 在容器中运行时，如果本地套接字可用，主机级别的 CPU 和内存详情来自 Docker Engine；其他值描述的是应用运行时。"
+  },
+  "mediaGeneration": {
+    "title": "生成媒体",
+    "description": "使用已激活的媒体提供商创建视频、声音、音乐或语音。",
+    "image": "图像",
+    "video": "视频",
+    "audio": "音频",
+    "sound": "声音",
+    "speech": "语音",
+    "model": "模型",
+    "voice": "语音或语音 ID",
+    "resolution": "分辨率",
+    "aspectRatio": "宽高比",
+    "duration": "时长",
+    "providerDefault": "提供商默认",
+    "generateAudio": "在支持时随视频生成音频",
+    "prompt": "提示词",
+    "text": "要朗读的文本",
+    "videoPlaceholder": "描述场景、动作、镜头和光线...",
+    "audioPlaceholder": "输入您想让语音朗读的文本...",
+    "soundPlaceholder": "描述您想要的声音、音乐、氛围或语音响应...",
+    "generate": "生成",
+    "generating": "正在生成…这可能需要几分钟",
+    "success": "媒体已生成并保存到 Imagine",
+    "failed": "生成媒体失败",
+    "loadFailed": "加载媒体提供商失败",
+    "noModels": "没有可用的 {{kind}} 模型。请先激活兼容的提供商并保存其凭据。"
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} 项",
+    "empty": "暂无生成的媒体",
+    "emptyHint": "生成图像、视频或语音片段后，将显示在此处。",
+    "filters": {
+      "all": "全部",
+      "image": "图像",
+      "video": "视频",
+      "audio": "音频"
     }
   }
 }

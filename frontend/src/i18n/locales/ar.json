@@ -60,7 +60,8 @@
       "enterBoth": "يرجى إدخال اسم المستخدم وكلمة المرور",
       "githubSuccess": "تم تسجيل الدخول عبر GitHub بنجاح!",
       "githubFailed": "فشلت مصادقة GitHub",
-      "githubVerifyFailed": "فشل التحقق من مصادقة GitHub"
+      "githubVerifyFailed": "فشل التحقق من مصادقة GitHub",
+      "approvalPending": "حسابك في انتظار موافقة المسؤول."
     },
     "signup": {
       "title": "إنشاء حساب",
@@ -82,7 +83,11 @@
       "tryAgain": "فشل التسجيل. يرجى المحاولة مرة أخرى.",
       "usernameRequired": "اسم المستخدم وكلمة المرور مطلوبان",
       "passwordMismatch": "كلمات المرور غير متطابقة",
-      "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل"
+      "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+      "approvalPending": "تم استلام التسجيل. يجب أن يوافق المسؤول على حسابك.",
+      "awaitingApproval": "في انتظار الموافقة",
+      "awaitingApprovalDescription": "تم إنشاء حسابك، ولكن يجب أن يقوم المسؤول بتفعيله قبل أن تتمكن من تسجيل الدخول.",
+      "backToSignIn": "العودة لتسجيل الدخول"
     },
     "logout": {
       "button": "تسجيل الخروج",
@@ -105,7 +110,23 @@
     "jwtActive": "مصادقة JWT نشطة",
     "jwtDescription": "مصادقة JWT مع GitHub OAuth",
     "github": "GitHub",
-    "provider": "المزود"
+    "provider": "المزود",
+    "tagline": "يجب أن يخضع مكدس الذكاء الاصطناعي الخاص بك لك.",
+    "selfHosted": "مستضاف ذاتيًا · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "محلي أولاً",
+        "body": "تبقى محادثاتك وملفاتك على الجهاز الذي تشغل هذا عليه."
+      },
+      "providers": {
+        "title": "أي مزود",
+        "body": "نماذج محلية عبر Ollama، بالإضافة إلى المزودين عن بُعد الذين تختار إضافتهم."
+      },
+      "work": {
+        "title": "عمل معزول",
+        "body": "امنح النموذج مساحة عمل معزولة بالملفات والطرفية والمعاينة."
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "تم إنشاء حساب المسؤول بنجاح!",
       "failed": "فشل إنشاء حساب المسؤول",
       "fillAllFields": "يرجى ملء جميع الحقول",
-      "note": "سيكون هذا حساب المسؤول الرئيسي لـ Libre WebUI الخاص بك"
+      "note": "سيكون هذا حساب المسؤول الرئيسي لـ Libre WebUI الخاص بك",
+      "approvalUnexpected": "تعذر تفعيل المسؤول الأولي. يرجى المحاولة مرة أخرى."
     },
     "encryptionKey": {
       "title": "احفظ مفتاح التشفير",
@@ -238,7 +260,8 @@
       "createFirst": "أنشئ أول محادثة أعلاه",
       "chats": "المحادثات",
       "renameChat": "إعادة تسمية المحادثة",
-      "deleteChat": "حذف المحادثة"
+      "deleteChat": "حذف المحادثة",
+      "incognito": "دردشة مخفية"
     },
     "persona": {
       "applied": "تم تطبيق الشخصية",
@@ -294,7 +317,9 @@
       "userManagement": "إدارة المستخدمين",
       "signOut": "تسجيل الخروج",
       "agents": "الوكلاء",
-      "exploreLabel": "استكشاف"
+      "exploreLabel": "استكشاف",
+      "usageAnalytics": "استخدام المزود",
+      "system": "النظام"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
     "expandSidebar": "توسيع الشريط الجانبي"
@@ -304,7 +329,9 @@
       "changePicture": "تغيير الصورة",
       "settings": "الإعدادات",
       "userManagement": "إدارة المستخدمين",
-      "logout": "تسجيل الخروج"
+      "logout": "تسجيل الخروج",
+      "usageAnalytics": "استخدام المزود",
+      "system": "النظام"
     },
     "avatar": {
       "title": "تغيير صورة الملف الشخصي",
@@ -419,7 +446,11 @@
       "modelPullAccess": "وصول تثبيت النماذج",
       "modelPullAccessDescription": "السماح للمستخدمين غير المسؤولين بسحب النماذج الجديدة وتثبيتها.",
       "modelPullAccessSaved": "تم تحديث أذونات تثبيت النماذج",
-      "modelPullAccessSaveFailed": "فشل تحديث أذونات تثبيت النماذج"
+      "modelPullAccessSaveFailed": "فشل تحديث أذونات تثبيت النماذج",
+      "specializedModels": "نماذج متخصصة",
+      "visionModel": "نموذج الرؤية",
+      "selectVisionModel": "استخدام نموذج الدردشة الحالي",
+      "visionModelDescription": "يُستخدم تلقائيًا كلما احتوى سياق الدردشة الصادر على صور. اختر نموذجًا يدعم إدخال الصور."
     },
     "systemMessage": {
       "title": "رسالة النظام",
@@ -467,7 +498,41 @@
         "removeFailed": "فشل إزالة مفتاح API",
         "enterKey": "يرجى إدخال مفتاح API"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "اتصالات المزود",
+      "providerConnectionsDescription": "اتصل، وقم بتكوين، وفحص مزودي النماذج عبر الإضافات.",
+      "providers": "المزودون",
+      "searchProviders": "ابحث عن المزودين",
+      "noProvidersFound": "لا يوجد مزودون يطابقون بحثك.",
+      "selectProvider": "اختر مزودًا",
+      "selectProviderDescription": "اختر مزودًا لفحص اتصاله وكتالوج النماذج الخاص به.",
+      "apiKeyDescription": "قم بتخزين مفتاح API شخصي لـ {{name}}.",
+      "showApiKey": "إظهار مفتاح API",
+      "hideApiKey": "إخفاء مفتاح API",
+      "configure": "تكوين",
+      "providerSettings": "إعدادات المزود",
+      "status": "الحالة",
+      "defaultEndpoint": "نقطة النهاية الافتراضية",
+      "modelCatalog": "كتالوج النماذج",
+      "modelCatalogDescription": "النماذج المكتشفة والمكونة لهذا المزود وقدراته.",
+      "refreshModels": "تحديث النماذج",
+      "noModelsConfigured": "لا توجد نماذج مكونة لهذا المزود.",
+      "modelId": "معرف النموذج",
+      "capabilities": "القدرات",
+      "modelCatalogUpdated": "تم تحديث كتالوج النماذج: {{count}} نماذج.",
+      "modelCatalogUnchanged": "كتالوج النماذج محدث بالفعل.",
+      "modelCatalogNeedsApiKey": "أضف مفتاح API صالح لهذا المزود لتحميل قائمة نماذجه المباشرة.",
+      "modelCatalogUnavailable": "تعذر تحميل قائمة نماذج المزود.",
+      "modelCatalogRefreshFailed": "فشل تحديث كتالوج النماذج",
+      "capability": {
+        "chat": "دردشة",
+        "embedding": "تضمين",
+        "image": "صورة",
+        "speech": "كلام",
+        "transcription": "نسخ"
+      },
+      "exportPlugin": "تصدير الإضافة",
+      "deletePlugin": "حذف الإضافة"
     },
     "generation": {
       "title": "خيارات التوليد",
@@ -503,7 +568,9 @@
       "resetDefaults": "إعادة تعيين الافتراضيات",
       "saveOptions": "حفظ الخيارات",
       "embeddingSettings": "إعدادات التضمين",
-      "enableEmbeddings": "تفعيل تضمين المستندات"
+      "enableEmbeddings": "تفعيل تضمين المستندات",
+      "advancedSettings": "إعدادات التوليد المتقدمة",
+      "advancedSettingsDescription": "أخذ العينات، وحدود الرموز، والسياق، والعقوبات، وتسلسلات الإيقاف"
     },
     "documents": {
       "title": "إعدادات المستندات",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "تم تحديث المستخدم بنجاح",
       "createFailed": "فشل إنشاء المستخدم",
       "updateFailed": "فشل تحديث المستخدم"
+    },
+    "approval": {
+      "title": "الموافقات المعلقة",
+      "description": "راجع التسجيلات الجديدة قبل السماح لها بالدخول إلى هذا المثيل.",
+      "registered": "مسجل",
+      "activate": "تفعيل الحساب",
+      "reject": "رفض التسجيل",
+      "approved": "يمكن لـ {{name}} الآن تسجيل الدخول.",
+      "failed": "تعذر الموافقة على الحساب.",
+      "notification": "{{count}} تسجيل ينتظر موافقتك.",
+      "notificationBadge": "{{count}} موافقات مستخدمين معلقة"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "فشل حفظ المتغيرات",
       "resetDefaults": "إعادة التعيين للافتراضي",
       "reset": "تم إعادة تعيين المتغيرات",
-      "sensitiveSet": "تم تعيين القيمة (أدخل قيمة جديدة للتغيير)"
+      "sensitiveSet": "تم تعيين القيمة (أدخل قيمة جديدة للتغيير)",
+      "resetFailed": "فشل إعادة تعيين المتغيرات",
+      "showValue": "إظهار قيمة {{label}}",
+      "hideValue": "إخفاء قيمة {{label}}",
+      "connection": "اتصال",
+      "advanced": "معلمات متقدمة",
+      "inherited": "استخدام افتراضي للمزود",
+      "inheritedValue": "استخدام افتراضي للمزود ({{value}})",
+      "enabled": "ممكّن",
+      "disabled": "معطّل",
+      "required": "القيمة مطلوبة",
+      "fullApiEndpoint": "URL كامل لنقطة نهاية API",
+      "endpointHelp": "أدخل URL الطلب الكامل، بما في ذلك مسار العملية الخاص به (على سبيل المثال، /v1/chat/completions)، وليس فقط URL الأساسي للمزود.",
+      "invalidUrl": "أدخل URL كامل وصالح لنقطة نهاية API، على سبيل المثال https://provider.example/v1/chat/completions",
+      "insecureUrl": "يجب أن تستخدم نقاط نهاية API بروتوكول HTTP أو HTTPS.",
+      "httpWarning": "لا يقوم HTTP بتشفير بيانات الاعتماد أو حركة المرور. استخدمه فقط على شبكة موثوقة.",
+      "invalidBaseUrl": "لا يمكن أن تحتوي عناوين URL الأساسية على سلسلة استعلام أو جزء.",
+      "invalidApiPath": "يجب أن يبدأ بـ / وألا يحتوي على URL أو استعلام أو جزء أو مقطع ..",
+      "tooLong": "القيمة طويلة جدًا"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "الطرفية التفاعلية غير متاحة في هذا النشر.",
       "blockedByRun": "النموذج يستخدم هذه الحاوية. تفتح الطرفية عند انتهاء الدور.",
       "taskRunning": "دور النموذج قيد التنفيذ"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "الإدارة",
+    "title": "استخدام المزود",
+    "description": "تابع مكالمات API الصادرة واستهلاك النماذج عبر الإضافات الممكّنة في هذا المثيل.",
+    "days": "{{count}} أيام",
+    "refresh": "تحديث الاستخدام",
+    "loadFailed": "تعذر تحميل استخدام المزود.",
+    "metrics": {
+      "calls": "المكالمات",
+      "tokens": "الرموز"
+    },
+    "cards": {
+      "calls": "مكالمات API",
+      "callsDetail": "عبر {{count}} مستخدم نشط",
+      "tokens": "الرموز المُبلغ عنها",
+      "tokensDetail": "الاستخدام المُبلغ عنه في {{count}} مكالمة",
+      "success": "معدل النجاح",
+      "successDetail": "{{count}} مكالمة فاشلة",
+      "latency": "متوسط زمن الاستجابة",
+      "latencyDetail": "وقت المزود من البداية للنهاية"
+    },
+    "activity": {
+      "title": "الاستهلاك بمرور الوقت",
+      "callsDescription": "الطلبات الصادرة اليومية للإضافات الممكّنة",
+      "tokensDescription": "إجمالي الرموز اليومية التي أبلغ عنها المزودون",
+      "chartLabel": "مخطط {{metric}} اليومي للمزود"
+    },
+    "models": {
+      "title": "استهلاك النموذج",
+      "description": "النماذج التي تحمل أكبر قدر من حركة المرور في هذه الفترة.",
+      "model": "النموذج",
+      "success": "النجاح",
+      "latency": "زمن الاستجابة"
+    },
+    "providers": {
+      "title": "حركة مرور الإضافات الممكّنة"
+    },
+    "capabilities": {
+      "title": "مزيج القدرات",
+      "characters": "{{count}} حرف",
+      "images": "{{count}} صورة",
+      "jobs": "{{count}} مهمة فيديو",
+      "inputs": "{{count}} مدخل",
+      "reportedTokens": "{{count}} رمز مُبلغ عنه"
+    },
+    "empty": {
+      "title": "لا توجد مكالمات مزود بعد",
+      "description": "ستظهر المكالمات هنا بعد أن تعالج إضافة ممكّنة طلبات الدردشة، أو العمل، أو التضمين، أو الصورة، أو الكلام، أو الصوت، أو الفيديو."
+    },
+    "privacyNote": "يتم قياس الاستخدام على الخادم عند حدود الإضافة الصادرة. يخزن Libre WebUI المزود، والنموذج، والتوقيت، والحالة، والعدادات المُبلغ عنها — وليس المطالبات، أو الاستجابات، أو نقاط النهاية، أو بيانات الاعتماد، أو هيئات أخطاء المزود. تشمل إجماليات الرموز فقط المكالمات التي أعاد فيها المزود بيانات الاستخدام الوصفية."
+  },
+  "systemPage": {
+    "eyebrow": "الإدارة",
+    "title": "النظام",
+    "description": "راقب الجهاز ووقت التشغيل الذي يستضيف مثيل Libre WebUI هذا.",
+    "updated": "تم التحديث {{date}}",
+    "refresh": "تحديث معلومات النظام",
+    "loadFailed": "تعذر تحميل معلومات النظام.",
+    "cards": {
+      "uptime": "وقت تشغيل المضيف",
+      "uptimeDetail": "يعمل منذ {{date}}",
+      "memory": "الذاكرة المستخدمة",
+      "memoryDetail": "{{used}} من {{total}}",
+      "freeSpace": "مساحة فارغة",
+      "freeSpaceDetail": "{{label}} · {{total}} الإجمالي",
+      "containers": "الحاويات قيد التشغيل",
+      "containersDetail": "{{total}} حاوية معروفة لـ Docker",
+      "dockerUnavailable": "Docker غير متاح",
+      "unavailable": "غير متاح"
+    },
+    "host": {
+      "title": "المضيف ووقت التشغيل",
+      "description": "تفاصيل نظام التشغيل والمعالج وعملية Libre WebUI.",
+      "container": "وقت تشغيل الحاوية",
+      "native": "وقت تشغيل أصلي",
+      "hostname": "اسم المضيف",
+      "operatingSystem": "نظام التشغيل",
+      "processor": "المعالج",
+      "logicalCpus": "وحدات CPU منطقية",
+      "loadAverage": "متوسط الحمل · 1 / 5 / 15 دقيقة",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "العملية",
+      "workingDirectory": "دليل العمل"
+    },
+    "memory": {
+      "title": "الذاكرة",
+      "description": "ذاكرة النظام المرئية لوقت التشغيل واستخدام عملية التطبيق.",
+      "usedOf": "{{used}} مستخدمة من {{total}}",
+      "free": "{{value}} فارغة",
+      "processRss": "RSS العملية",
+      "heapUsed": "كومة V8 المستخدمة",
+      "heapTotal": "إجمالي كومة V8",
+      "external": "ذاكرة خارجية"
+    },
+    "storage": {
+      "title": "التخزين",
+      "description": "المساحة المتاحة لنظام ملفات وقت التشغيل وبيانات التطبيق الدائمة.",
+      "used": "{{value}} مستخدمة",
+      "free": "{{value}} فارغة",
+      "empty": "معلومات نظام الملفات غير متاحة في وقت التشغيل هذا."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "حالة Docker Engine للقراءة فقط وقائمة مختصرة من الحاويات.",
+      "connected": "متصل",
+      "unavailable": "غير متاح",
+      "unavailableDetail": "تشخيصات Docker Engine غير متاحة.",
+      "socketStatus": "مقبس محلي: {{status}}",
+      "mounted": "مُثبت",
+      "notMounted": "غير مُثبت",
+      "running": "قيد التشغيل",
+      "stopped": "متوقف",
+      "paused": "متوقف مؤقتًا",
+      "total": "الإجمالي",
+      "version": "الإصدار",
+      "host": "المضيف",
+      "architecture": "البنية",
+      "cpus": "وحدات CPU",
+      "memory": "الذاكرة",
+      "container": "الحاوية",
+      "image": "الصورة",
+      "state": "الحالة",
+      "created": "تم الإنشاء",
+      "empty": "Docker متصل ولا توجد حاويات مدرجة حاليًا."
+    },
+    "network": {
+      "title": "الشبكة",
+      "description": "الواجهات والعناوين وعدادات حركة مرور Linux المرئية لوقت التشغيل.",
+      "internal": "داخلي",
+      "empty": "لا توجد واجهات شبكة مرئية لوقت تشغيل التطبيق."
+    },
+    "securityNote": "هذه الصفحة مخصصة للمسؤولين فقط. يُرجع الخادم ملخصات تشغيلية فقط: فهو لا يكشف متغيرات البيئة، أو بيانات الاعتماد، أو تسميات Docker، أو التثبيتات، أو أوامر الحاوية، أو حمولات الفحص. عندما يعمل Libre WebUI في حاوية، تأتي تفاصيل CPU والذاكرة على مستوى المضيف من Docker Engine عندما يكون مقبسه المحلي متاحًا؛ تصف القيم الأخرى وقت تشغيل التطبيق."
+  },
+  "mediaGeneration": {
+    "title": "توليد الوسائط",
+    "description": "أنشئ فيديو أو صوتًا أو موسيقى أو كلامًا باستخدام مزود وسائط مُفعّل.",
+    "image": "صورة",
+    "video": "فيديو",
+    "audio": "صوت",
+    "sound": "صوت",
+    "speech": "كلام",
+    "model": "النموذج",
+    "voice": "الصوت أو معرف الصوت",
+    "resolution": "الدقة",
+    "aspectRatio": "نسبة العرض إلى الارتفاع",
+    "duration": "المدة",
+    "providerDefault": "افتراضي للمزود",
+    "generateAudio": "توليد صوت مع الفيديو عند الدعم",
+    "prompt": "المطالبة",
+    "text": "النص للتحدث",
+    "videoPlaceholder": "صف المشهد، والحركة، والكاميرا، والإضاءة...",
+    "audioPlaceholder": "أدخل النص الذي تريد للصوت أن ينطقه...",
+    "soundPlaceholder": "صف الصوت، أو الموسيقى، أو الأجواء، أو الاستجابة المنطوقة التي تريدها...",
+    "generate": "توليد",
+    "generating": "جارٍ التوليد… قد يستغرق هذا عدة دقائق",
+    "success": "تم توليد الوسائط وحفظها في Imagine",
+    "failed": "فشل توليد الوسائط",
+    "loadFailed": "فشل تحميل مزودي الوسائط",
+    "noModels": "لا تتوفر نماذج {{kind}}. قم بتفعيل مزود متوافق واحفظ بيانات اعتماده أولاً."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} عناصر",
+    "empty": "لا توجد وسائط مولدة بعد",
+    "emptyHint": "قم بتوليد صورة أو فيديو أو مقطع صوتي وسيظهر هنا.",
+    "filters": {
+      "all": "الكل",
+      "image": "الصور",
+      "video": "مقاطع الفيديو",
+      "audio": "الصوت"
     }
   }
 }

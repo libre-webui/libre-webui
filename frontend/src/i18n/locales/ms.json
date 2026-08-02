@@ -60,7 +60,8 @@
       "enterBoth": "Sila masukkan nama pengguna dan kata laluan",
       "githubSuccess": "Berjaya log masuk melalui GitHub!",
       "githubFailed": "Pengesahan GitHub gagal",
-      "githubVerifyFailed": "Gagal mengesahkan pengesahan GitHub"
+      "githubVerifyFailed": "Gagal mengesahkan pengesahan GitHub",
+      "approvalPending": "Akaun anda sedang menunggu kelulusan pentadbir."
     },
     "signup": {
       "title": "Cipta Akaun",
@@ -82,7 +83,11 @@
       "tryAgain": "Gagal mendaftar. Sila cuba lagi.",
       "usernameRequired": "Nama pengguna dan kata laluan diperlukan",
       "passwordMismatch": "Kata laluan tidak sepadan",
-      "passwordTooShort": "Kata laluan mesti sekurang-kurangnya 6 aksara"
+      "passwordTooShort": "Kata laluan mesti sekurang-kurangnya 6 aksara",
+      "approvalPending": "Pendaftaran diterima. Pentadbir perlu meluluskan akaun anda.",
+      "awaitingApproval": "Menunggu kelulusan",
+      "awaitingApprovalDescription": "Akaun anda telah dicipta, tetapi pentadbir perlu mengaktifkannya sebelum anda boleh log masuk.",
+      "backToSignIn": "Kembali ke log masuk"
     },
     "logout": {
       "button": "Log keluar",
@@ -105,7 +110,23 @@
     "jwtActive": "Pengesahan JWT aktif",
     "jwtDescription": "Pengesahan berasaskan JWT dengan GitHub OAuth",
     "github": "GitHub",
-    "provider": "Pembekal"
+    "provider": "Pembekal",
+    "tagline": "Tindanan AI anda patut menjawab kepada anda.",
+    "selfHosted": "Dihoskan sendiri · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "Tempatan dahulu",
+        "body": "Perbualan dan fail anda kekal pada mesin tempat anda menjalankan ini."
+      },
+      "providers": {
+        "title": "Mana-mana penyedia",
+        "body": "Model tempatan melalui Ollama, serta penyedia jauh yang anda pilih untuk ditambah."
+      },
+      "work": {
+        "title": "Kerja Terpencil",
+        "body": "Beri model ruang kerja terkotak pasir dengan fail, terminal, dan pratonton."
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "Akaun pentadbir berjaya dicipta!",
       "failed": "Gagal mencipta akaun pentadbir",
       "fillAllFields": "Sila isi semua ruangan",
-      "note": "Ini akan menjadi akaun pentadbir utama untuk Libre WebUI anda"
+      "note": "Ini akan menjadi akaun pentadbir utama untuk Libre WebUI anda",
+      "approvalUnexpected": "Pentadbir awal tidak dapat diaktifkan. Sila cuba lagi."
     },
     "encryptionKey": {
       "title": "Simpan Kunci Penyulitan Anda",
@@ -238,7 +260,8 @@
       "createFirst": "Cipta sembang pertama anda di atas",
       "chats": "Sembang",
       "renameChat": "Namakan semula sembang",
-      "deleteChat": "Padam sembang"
+      "deleteChat": "Padam sembang",
+      "incognito": "Sembang Inkognito"
     },
     "persona": {
       "applied": "Persona digunakan",
@@ -294,7 +317,9 @@
       "signOut": "Log Keluar",
       "agents": "Ejen",
       "work": "Kerja",
-      "exploreLabel": "Terokai"
+      "exploreLabel": "Terokai",
+      "usageAnalytics": "Penggunaan Penyedia",
+      "system": "Sistem"
     },
     "toggleSize": "Togol saiz bar sisi",
     "expandSidebar": "Kembangkan bar sisi"
@@ -304,7 +329,9 @@
       "changePicture": "Tukar Gambar",
       "settings": "Tetapan",
       "userManagement": "Pengurusan Pengguna",
-      "logout": "Log keluar"
+      "logout": "Log keluar",
+      "usageAnalytics": "Penggunaan Penyedia",
+      "system": "Sistem"
     },
     "avatar": {
       "title": "Tukar Gambar Profil",
@@ -419,7 +446,11 @@
       "modelPullAccess": "Akses Pemasangan Model",
       "modelPullAccessDescription": "Benarkan pengguna bukan pentadbir untuk menarik dan memasang model baharu.",
       "modelPullAccessSaved": "Kebenaran pemasangan model telah dikemas kini",
-      "modelPullAccessSaveFailed": "Gagal mengemas kini kebenaran pemasangan model"
+      "modelPullAccessSaveFailed": "Gagal mengemas kini kebenaran pemasangan model",
+      "specializedModels": "Model Khusus",
+      "visionModel": "Model Penglihatan",
+      "selectVisionModel": "Guna model sembang semasa",
+      "visionModelDescription": "Digunakan secara automatik apabila konteks sembang keluar mengandungi imej. Pilih model yang menyokong input imej."
     },
     "systemMessage": {
       "title": "Mesej Sistem",
@@ -467,7 +498,41 @@
         "removeFailed": "Gagal membuang kunci API",
         "enterKey": "Sila masukkan kunci API"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "Sambungan penyedia",
+      "providerConnectionsDescription": "Sambung, konfigur, dan periksa penyedia model melalui pemalam.",
+      "providers": "Penyedia",
+      "searchProviders": "Cari penyedia",
+      "noProvidersFound": "Tiada penyedia sepadan dengan carian anda.",
+      "selectProvider": "Pilih penyedia",
+      "selectProviderDescription": "Pilih penyedia untuk memeriksa sambungan dan katalog modelnya.",
+      "apiKeyDescription": "Simpan kunci API peribadi untuk {{name}}.",
+      "showApiKey": "Tunjukkan kunci API",
+      "hideApiKey": "Sembunyikan kunci API",
+      "configure": "Konfigur",
+      "providerSettings": "Tetapan penyedia",
+      "status": "Status",
+      "defaultEndpoint": "Titik akhir lalai",
+      "modelCatalog": "Katalog model",
+      "modelCatalogDescription": "Model yang ditemui dan dikonfigur untuk penyedia ini serta keupayaannya.",
+      "refreshModels": "Segarkan model",
+      "noModelsConfigured": "Tiada model dikonfigurasi untuk penyedia ini.",
+      "modelId": "ID Model",
+      "capabilities": "Keupayaan",
+      "modelCatalogUpdated": "Katalog model dikemas kini: {{count}} model.",
+      "modelCatalogUnchanged": "Katalog model sudah dikemas kini.",
+      "modelCatalogNeedsApiKey": "Tambah kunci API yang sah untuk penyedia ini bagi memuatkan senarai model langsungnya.",
+      "modelCatalogUnavailable": "Tidak dapat memuatkan senarai model penyedia.",
+      "modelCatalogRefreshFailed": "Gagal memuat semula katalog model",
+      "capability": {
+        "chat": "Sembang",
+        "embedding": "Pembenaman",
+        "image": "Imej",
+        "speech": "Ucapan",
+        "transcription": "Transkripsi"
+      },
+      "exportPlugin": "Eksport plugin",
+      "deletePlugin": "Padam plugin"
     },
     "generation": {
       "title": "Pilihan Penjanaan",
@@ -503,7 +568,9 @@
       "resetDefaults": "Tetap Semula ke Lalai",
       "saveOptions": "Simpan Pilihan",
       "embeddingSettings": "Tetapan Pembenaman",
-      "enableEmbeddings": "Aktifkan Pembenaman Dokumen"
+      "enableEmbeddings": "Aktifkan Pembenaman Dokumen",
+      "advancedSettings": "Tetapan penjanaan lanjutan",
+      "advancedSettingsDescription": "Persampelan, had token, konteks, penalti, dan jujukan berhenti"
     },
     "documents": {
       "title": "Tetapan Dokumen",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "Pengguna berjaya dikemas kini",
       "createFailed": "Gagal mencipta pengguna",
       "updateFailed": "Gagal mengemas kini pengguna"
+    },
+    "approval": {
+      "title": "Kelulusan tertangguh",
+      "description": "Semak pendaftaran baharu sebelum membenarkan mereka masuk ke instance ini.",
+      "registered": "Berdaftar",
+      "activate": "Aktifkan akaun",
+      "reject": "Tolak pendaftaran",
+      "approved": "{{name}} kini boleh log masuk.",
+      "failed": "Akaun tidak dapat diluluskan.",
+      "notification": "{{count}} pendaftaran menunggu kelulusan anda.",
+      "notificationBadge": "{{count}} kelulusan pengguna tertangguh"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "Gagal menyimpan pembolehubah",
       "resetDefaults": "Set semula lalai",
       "reset": "Pembolehubah ditetapkan semula",
-      "sensitiveSet": "Nilai ditetapkan (masukkan nilai baharu untuk menukar)"
+      "sensitiveSet": "Nilai ditetapkan (masukkan nilai baharu untuk menukar)",
+      "resetFailed": "Gagal menetapkan semula pemboleh ubah",
+      "showValue": "Tunjuk nilai {{label}}",
+      "hideValue": "Sembunyi nilai {{label}}",
+      "connection": "Sambungan",
+      "advanced": "Parameter lanjutan",
+      "inherited": "Gunakan lalai penyedia",
+      "inheritedValue": "Gunakan lalai penyedia ({{value}})",
+      "enabled": "Diaktifkan",
+      "disabled": "Dinyahaktifkan",
+      "required": "Nilai diperlukan",
+      "fullApiEndpoint": "URL endpoint API penuh",
+      "endpointHelp": "Masukkan URL permintaan lengkap, termasuk laluan operasinya (contohnya, /v1/chat/completions), bukan hanya URL asas penyedia.",
+      "invalidUrl": "Masukkan URL endpoint API penuh yang sah, contohnya https://provider.example/v1/chat/completions",
+      "insecureUrl": "Endpoint API mesti menggunakan HTTP atau HTTPS.",
+      "httpWarning": "HTTP tidak menyulitkan kelayakan atau trafik. Gunakannya hanya pada rangkaian yang dipercayai.",
+      "invalidBaseUrl": "URL asas tidak boleh mengandungi rentetan pertanyaan atau cebisan.",
+      "invalidApiPath": "Mesti bermula dengan / dan tidak mengandungi URL, pertanyaan, cebisan, atau segmen ..",
+      "tooLong": "Nilai terlalu panjang"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "Terminal interaktif tidak tersedia dalam penggunaan ini.",
       "blockedByRun": "Model sedang menggunakan bekas ini. Terminal dibuka apabila giliran selesai.",
       "taskRunning": "Giliran model sedang berjalan"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "Pentadbiran",
+    "title": "Penggunaan Penyedia",
+    "description": "Ikut panggilan API keluar dan penggunaan model merentasi plugin yang didayakan pada instance ini.",
+    "days": "{{count}} hari",
+    "refresh": "Muat semula penggunaan",
+    "loadFailed": "Penggunaan penyedia tidak dapat dimuatkan.",
+    "metrics": {
+      "calls": "Panggilan",
+      "tokens": "Token"
+    },
+    "cards": {
+      "calls": "Panggilan API",
+      "callsDetail": "Merentasi {{count}} pengguna aktif",
+      "tokens": "Token dilaporkan",
+      "tokensDetail": "Penggunaan dilaporkan pada {{count}} panggilan",
+      "success": "Kadar kejayaan",
+      "successDetail": "{{count}} panggilan gagal",
+      "latency": "Latensi purata",
+      "latencyDetail": "Masa pembekal hujung ke hujung"
+    },
+    "activity": {
+      "title": "Penggunaan dari semasa ke semasa",
+      "callsDescription": "Permintaan keluar harian kepada pemalam yang didayakan",
+      "tokensDescription": "Jumlah token harian dilaporkan oleh pembekal",
+      "chartLabel": "Carta {{metric}} pembekal harian"
+    },
+    "models": {
+      "title": "Penggunaan model",
+      "description": "Model yang membawa trafik paling banyak dalam tempoh ini.",
+      "model": "Model",
+      "success": "Berjaya",
+      "latency": "Latensi"
+    },
+    "providers": {
+      "title": "Trafik pemalam didayakan"
+    },
+    "capabilities": {
+      "title": "Campuran keupayaan",
+      "characters": "{{count}} aksara",
+      "images": "{{count}} imej",
+      "jobs": "{{count}} kerja video",
+      "inputs": "{{count}} input",
+      "reportedTokens": "{{count}} token dilaporkan"
+    },
+    "empty": {
+      "title": "Tiada panggilan pembekal lagi",
+      "description": "Panggilan akan dipaparkan di sini selepas pemalam yang didayakan mengendalikan permintaan sembang, Work, pembenaman, imej, pertuturan, bunyi, atau video."
+    },
+    "privacyNote": "Penggunaan diukur pada pelayan di sempadan pemalam keluar. Libre WebUI menyimpan pembekal, model, masa, status, dan pembilang dilaporkan—tidak pernah gesaan, respons, titik akhir, kelayakan, atau badan ralat pembekal. Jumlah token hanya termasuk panggilan di mana pembekal memulangkan metadata penggunaan."
+  },
+  "systemPage": {
+    "eyebrow": "Pentadbiran",
+    "title": "Sistem",
+    "description": "Pantau mesin dan masa jalan yang menempatkan kejadian Libre WebUI ini.",
+    "updated": "Dikemas kini {{date}}",
+    "refresh": "Muat semula maklumat sistem",
+    "loadFailed": "Maklumat sistem tidak dapat dimuatkan.",
+    "cards": {
+      "uptime": "Masa hidup hos",
+      "uptimeDetail": "Berjalan sejak {{date}}",
+      "memory": "Ingatan digunakan",
+      "memoryDetail": "{{used}} daripada {{total}}",
+      "freeSpace": "Ruang kosong",
+      "freeSpaceDetail": "{{label}} · {{total}} jumlah",
+      "containers": "Kontena berjalan",
+      "containersDetail": "{{total}} kontena diketahui oleh Docker",
+      "dockerUnavailable": "Docker tidak tersedia",
+      "unavailable": "Tidak tersedia"
+    },
+    "host": {
+      "title": "Hos & masa jalan",
+      "description": "Butiran sistem pengendalian, pemproses, dan proses Libre WebUI.",
+      "container": "Masa jalan kontena",
+      "native": "Runtime asli",
+      "hostname": "Nama hos",
+      "operatingSystem": "Sistem pengendalian",
+      "processor": "Pemproses",
+      "logicalCpus": "CPU logikal",
+      "loadAverage": "Purata beban · 1 / 5 / 15 min",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Proses",
+      "workingDirectory": "Direktori kerja"
+    },
+    "memory": {
+      "title": "Memori",
+      "description": "Memori sistem yang kelihatan pada runtime dan penggunaan proses aplikasi.",
+      "usedOf": "{{used}} digunakan daripada {{total}}",
+      "free": "{{value}} bebas",
+      "processRss": "RSS Proses",
+      "heapUsed": "Timbunan V8 digunakan",
+      "heapTotal": "Jumlah timbunan V8",
+      "external": "Memori luaran"
+    },
+    "storage": {
+      "title": "Storan",
+      "description": "Ruang tersedia untuk sistem fail runtime dan data aplikasi kekal.",
+      "used": "{{value}} digunakan",
+      "free": "{{value}} bebas",
+      "empty": "Maklumat sistem fail tidak tersedia dalam runtime ini."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Status Docker Engine baca-sahaja dan senarai kontena yang dikurangkan.",
+      "connected": "Disambung",
+      "unavailable": "Tidak tersedia",
+      "unavailableDetail": "Diagnostics Docker Engine tidak tersedia.",
+      "socketStatus": "Soket tempatan: {{status}}",
+      "mounted": "dilekap",
+      "notMounted": "tidak dilekap",
+      "running": "Berjalan",
+      "stopped": "Dihentikan",
+      "paused": "Dijeda",
+      "total": "Jumlah",
+      "version": "Versi",
+      "host": "Hos",
+      "architecture": "Seni bina",
+      "cpus": "CPU",
+      "memory": "Memori",
+      "container": "Kontena",
+      "image": "Imej",
+      "state": "Keadaan",
+      "created": "Dicipta",
+      "empty": "Docker disambung dan tiada kontena disenaraikan buat masa ini."
+    },
+    "network": {
+      "title": "Rangkaian",
+      "description": "Antara muka, alamat dan pengira trafik Linux yang boleh dilihat pada masa jalan.",
+      "internal": "dalaman",
+      "empty": "Tiada antara muka rangkaian yang boleh dilihat oleh masa jalan aplikasi."
+    },
+    "securityNote": "Halaman ini terhad kepada pentadbir. Pelayan hanya memulangkan ringkasan operasi: ia tidak mendedahkan pembolehubah persekitaran, kelayakan, label Docker, lekap, arahan kontena atau muatan pemeriksaan. Apabila Libre WebUI berjalan dalam kontena, butiran CPU dan ingatan peringkat hos datang dari Docker Engine apabila soket tempatannya tersedia; nilai lain menerangkan masa jalan aplikasi."
+  },
+  "mediaGeneration": {
+    "title": "Jana media",
+    "description": "Cipta video, bunyi, muzik atau ucapan dengan penyedia media yang diaktifkan.",
+    "image": "Imej",
+    "video": "Video",
+    "audio": "Audio",
+    "sound": "Bunyi",
+    "speech": "Ucapan",
+    "model": "Model",
+    "voice": "Suara atau ID suara",
+    "resolution": "Resolusi",
+    "aspectRatio": "Nisbah bidang",
+    "duration": "Tempoh",
+    "providerDefault": "Lalai penyedia",
+    "generateAudio": "Jana audio dengan video apabila disokong",
+    "prompt": "Gesaan",
+    "text": "Teks untuk dilafazkan",
+    "videoPlaceholder": "Huraikan adegan, gerakan, kamera dan pencahayaan...",
+    "audioPlaceholder": "Masukkan teks yang anda mahu suara lafazkan...",
+    "soundPlaceholder": "Huraikan bunyi, muzik, suasana atau respons lisan yang anda mahu...",
+    "generate": "Jana",
+    "generating": "Menjana… ini boleh mengambil masa beberapa minit",
+    "success": "Media dijana dan disimpan ke Imagine",
+    "failed": "Gagal menjana media",
+    "loadFailed": "Gagal memuatkan penyedia media",
+    "noModels": "Tiada model {{kind}} tersedia. Aktifkan penyedia yang serasi dan simpan kelayakannya dahulu."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} item",
+    "empty": "Belum ada media dijana",
+    "emptyHint": "Jana imej, video atau klip suara dan ia akan dipaparkan di sini.",
+    "filters": {
+      "all": "Semua",
+      "image": "Imej",
+      "video": "Video",
+      "audio": "Audio"
     }
   }
 }

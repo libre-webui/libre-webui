@@ -60,7 +60,8 @@
       "enterBoth": "Lütfen kullanıcı adı ve şifrenizi girin",
       "githubSuccess": "GitHub girişi başarılı!",
       "githubFailed": "GitHub kimlik doğrulaması başarısız",
-      "githubVerifyFailed": "GitHub kimlik doğrulaması doğrulanamadı"
+      "githubVerifyFailed": "GitHub kimlik doğrulaması doğrulanamadı",
+      "approvalPending": "Hesabınız yönetici onayı bekliyor."
     },
     "signup": {
       "title": "Hesap Oluştur",
@@ -82,7 +83,11 @@
       "tryAgain": "Kayıt başarısız. Lütfen tekrar deneyin.",
       "usernameRequired": "Kullanıcı adı ve şifre gereklidir",
       "passwordMismatch": "Şifreler eşleşmiyor",
-      "passwordTooShort": "Şifre en az 6 karakter olmalıdır"
+      "passwordTooShort": "Şifre en az 6 karakter olmalıdır",
+      "approvalPending": "Kayıt alındı. Hesabınızın bir yönetici tarafından onaylanması gerekiyor.",
+      "awaitingApproval": "Onay bekleniyor",
+      "awaitingApprovalDescription": "Hesabınız oluşturuldu, ancak oturum açmadan önce bir yönetici tarafından etkinleştirilmesi gerekiyor.",
+      "backToSignIn": "Oturum açmaya geri dön"
     },
     "logout": {
       "button": "Çıkış Yap",
@@ -105,7 +110,23 @@
     "jwtActive": "JWT kimlik doğrulama aktif",
     "jwtDescription": "GitHub OAuth ile JWT tabanlı kimlik doğrulama",
     "github": "GitHub",
-    "provider": "Sağlayıcı"
+    "provider": "Sağlayıcı",
+    "tagline": "Yapay zeka yığınınız size cevap vermelidir.",
+    "selfHosted": "Kendi sunucunuzda · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "Önce yerel",
+        "body": "Konuşmalarınız ve dosyalarınız bunu çalıştırdığınız makinede kalır."
+      },
+      "providers": {
+        "title": "Herhangi bir sağlayıcı",
+        "body": "Ollama üzerinden yerel modeller, ayrıca eklemeyi seçtiğiniz uzak sağlayıcılar."
+      },
+      "work": {
+        "title": "İzole Çalışma",
+        "body": "Modele dosyalar, bir terminal ve bir önizleme içeren korumalı bir çalışma alanı verin."
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "Yönetici hesabı başarıyla oluşturuldu!",
       "failed": "Yönetici hesabı oluşturulamadı",
       "fillAllFields": "Lütfen tüm alanları doldurun",
-      "note": "Bu, Libre WebUI kurulumunuz için ana yönetici hesabı olacaktır"
+      "note": "Bu, Libre WebUI kurulumunuz için ana yönetici hesabı olacaktır",
+      "approvalUnexpected": "İlk yönetici etkinleştirilemedi. Lütfen tekrar deneyin."
     },
     "encryptionKey": {
       "title": "Şifreleme Anahtarınızı Kaydedin",
@@ -238,7 +260,8 @@
       "createFirst": "Yukarıdan ilk sohbetinizi oluşturun",
       "chats": "Sohbetler",
       "renameChat": "Sohbeti yeniden adlandır",
-      "deleteChat": "Sohbeti sil"
+      "deleteChat": "Sohbeti sil",
+      "incognito": "Gizli Sohbet"
     },
     "persona": {
       "applied": "Persona uygulandı",
@@ -294,7 +317,9 @@
       "signOut": "Çıkış Yap",
       "agents": "Ajanlar",
       "work": "Çalışma",
-      "exploreLabel": "Keşfet"
+      "exploreLabel": "Keşfet",
+      "usageAnalytics": "Sağlayıcı Kullanımı",
+      "system": "Sistem"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -304,7 +329,9 @@
       "changePicture": "Resmi Değiştir",
       "settings": "Ayarlar",
       "userManagement": "Kullanıcı Yönetimi",
-      "logout": "Çıkış Yap"
+      "logout": "Çıkış Yap",
+      "usageAnalytics": "Sağlayıcı Kullanımı",
+      "system": "Sistem"
     },
     "avatar": {
       "title": "Profil Resmini Değiştir",
@@ -419,7 +446,11 @@
       "modelPullAccess": "Model Kurulum Erişimi",
       "modelPullAccessDescription": "Yönetici olmayan kullanıcıların yeni modelleri çekmesine ve kurmasına izin ver.",
       "modelPullAccessSaved": "Model kurulum izinleri güncellendi",
-      "modelPullAccessSaveFailed": "Model kurulum izinleri güncellenemedi"
+      "modelPullAccessSaveFailed": "Model kurulum izinleri güncellenemedi",
+      "specializedModels": "Özelleştirilmiş Modeller",
+      "visionModel": "Görüntü Modeli",
+      "selectVisionModel": "Mevcut sohbet modelini kullan",
+      "visionModelDescription": "Giden sohbet bağlamı görüntü içerdiğinde otomatik olarak kullanılır. Görüntü girişini destekleyen bir model seçin."
     },
     "systemMessage": {
       "title": "Sistem Mesajı",
@@ -467,7 +498,41 @@
         "removeFailed": "API anahtarı kaldırılamadı",
         "enterKey": "Lütfen bir API anahtarı girin"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "Sağlayıcı bağlantıları",
+      "providerConnectionsDescription": "Eklentiler aracılığıyla model sağlayıcılarını bağlayın, yapılandırın ve inceleyin.",
+      "providers": "Sağlayıcılar",
+      "searchProviders": "Sağlayıcı ara",
+      "noProvidersFound": "Aramanızla eşleşen sağlayıcı yok.",
+      "selectProvider": "Bir sağlayıcı seçin",
+      "selectProviderDescription": "Bağlantısını ve model kataloğunu incelemek için bir sağlayıcı seçin.",
+      "apiKeyDescription": "{{name}} için kişisel bir API anahtarı depolayın.",
+      "showApiKey": "API anahtarını göster",
+      "hideApiKey": "API anahtarını gizle",
+      "configure": "Yapılandır",
+      "providerSettings": "Sağlayıcı ayarları",
+      "status": "Durum",
+      "defaultEndpoint": "Varsayılan uç nokta",
+      "modelCatalog": "Model kataloğu",
+      "modelCatalogDescription": "Bu sağlayıcı ve yetenekleri için keşfedilen ve yapılandırılan modeller.",
+      "refreshModels": "Modelleri yenile",
+      "noModelsConfigured": "Bu sağlayıcı için yapılandırılmış model yok.",
+      "modelId": "Model Kimliği",
+      "capabilities": "Yetenekler",
+      "modelCatalogUpdated": "Model kataloğu güncellendi: {{count}} model.",
+      "modelCatalogUnchanged": "Model kataloğu zaten güncel.",
+      "modelCatalogNeedsApiKey": "Canlı model listesini yüklemek için bu sağlayıcıya geçerli bir API anahtarı ekleyin.",
+      "modelCatalogUnavailable": "Sağlayıcının model listesi yüklenemedi.",
+      "modelCatalogRefreshFailed": "Model kataloğu yenilenemedi",
+      "capability": {
+        "chat": "Sohbet",
+        "embedding": "Gömme",
+        "image": "Görüntü",
+        "speech": "Konuşma",
+        "transcription": "Transkripsiyon"
+      },
+      "exportPlugin": "Eklentiyi dışa aktar",
+      "deletePlugin": "Eklentiyi sil"
     },
     "generation": {
       "title": "Üretim Seçenekleri",
@@ -503,7 +568,9 @@
       "resetDefaults": "Varsayılanlara Sıfırla",
       "saveOptions": "Seçenekleri Kaydet",
       "embeddingSettings": "Gömme Ayarları",
-      "enableEmbeddings": "Belge Gömmelerini Etkinleştir"
+      "enableEmbeddings": "Belge Gömmelerini Etkinleştir",
+      "advancedSettings": "Gelişmiş üretim ayarları",
+      "advancedSettingsDescription": "Örnekleme, belirteç limitleri, bağlam, cezalar ve durdurma dizileri"
     },
     "documents": {
       "title": "Belge Ayarları",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "Kullanıcı başarıyla güncellendi",
       "createFailed": "Kullanıcı oluşturulamadı",
       "updateFailed": "Kullanıcı güncellenemedi"
+    },
+    "approval": {
+      "title": "Bekleyen onaylar",
+      "description": "Yeni kayıtların bu örneğe erişmesine izin vermeden önce inceleyin.",
+      "registered": "Kayıtlı",
+      "activate": "Hesabı etkinleştir",
+      "reject": "Kaydı reddet",
+      "approved": "{{name}} artık oturum açabilir.",
+      "failed": "Hesap onaylanamadı.",
+      "notification": "{{count}} kayıt onayınızı bekliyor.",
+      "notificationBadge": "{{count}} bekleyen kullanıcı onayı"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "Değişkenler kaydedilemedi",
       "resetDefaults": "Varsayılanlara sıfırla",
       "reset": "Değişkenler sıfırlandı",
-      "sensitiveSet": "Değer ayarlandı (değiştirmek için yeni değer girin)"
+      "sensitiveSet": "Değer ayarlandı (değiştirmek için yeni değer girin)",
+      "resetFailed": "Değişkenler sıfırlanamadı",
+      "showValue": "{{label}} değerini göster",
+      "hideValue": "{{label}} değerini gizle",
+      "connection": "Bağlantı",
+      "advanced": "Gelişmiş parametreler",
+      "inherited": "Sağlayıcı varsayılanını kullan",
+      "inheritedValue": "Sağlayıcı varsayılanını kullan ({{value}})",
+      "enabled": "Etkin",
+      "disabled": "Devre dışı",
+      "required": "Bir değer gereklidir",
+      "fullApiEndpoint": "Tam API uç noktası URL'si",
+      "endpointHelp": "Yalnızca sağlayıcı temel URL'sini değil, işlem yolunu da içeren (örneğin, /v1/chat/completions) tam istek URL'sini girin.",
+      "invalidUrl": "Geçerli bir tam API uç noktası URL'si girin, örneğin https://provider.example/v1/chat/completions",
+      "insecureUrl": "API uç noktaları HTTP veya HTTPS kullanmalıdır.",
+      "httpWarning": "HTTP, kimlik bilgilerini veya trafiği şifrelemez. Yalnızca güvenilir bir ağda kullanın.",
+      "invalidBaseUrl": "Temel URL'ler bir sorgu dizesi veya parça içeremez.",
+      "invalidApiPath": "/ ile başlamalı ve URL, sorgu, parça veya .. segmenti içermemelidir",
+      "tooLong": "Değer çok uzun"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "Etkileşimli terminal bu kurulumda kullanılamıyor.",
       "blockedByRun": "Model bu kapsayıcıyı kullanıyor. Tur bitince terminal açılır.",
       "taskRunning": "Model turu sürüyor"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "Yönetim",
+    "title": "Sağlayıcı Kullanımı",
+    "description": "Bu örnekteki etkin eklentiler genelinde giden API çağrılarını ve model tüketimini takip edin.",
+    "days": "{{count}} gün",
+    "refresh": "Kullanımı yenile",
+    "loadFailed": "Sağlayıcı kullanımı yüklenemedi.",
+    "metrics": {
+      "calls": "Çağrılar",
+      "tokens": "Belirteçler"
+    },
+    "cards": {
+      "calls": "API çağrıları",
+      "callsDetail": "{{count}} aktif kullanıcı genelinde",
+      "tokens": "Raporlanan belirteçler",
+      "tokensDetail": "{{count}} çağrıda raporlanan kullanım",
+      "success": "Başarı oranı",
+      "successDetail": "{{count}} başarısız çağrı",
+      "latency": "Ortalama gecikme",
+      "latencyDetail": "Uçtan uca sağlayıcı süresi"
+    },
+    "activity": {
+      "title": "Zamanla tüketim",
+      "callsDescription": "Etkin eklentilere günlük giden istekler",
+      "tokensDescription": "Sağlayıcılar tarafından bildirilen günlük token toplamları",
+      "chartLabel": "Günlük sağlayıcı {{metric}} grafiği"
+    },
+    "models": {
+      "title": "Model tüketimi",
+      "description": "Bu dönemde en çok trafiği taşıyan modeller.",
+      "model": "Model",
+      "success": "Başarı",
+      "latency": "Gecikme"
+    },
+    "providers": {
+      "title": "Etkin eklenti trafiği"
+    },
+    "capabilities": {
+      "title": "Yetenek dağılımı",
+      "characters": "{{count}} karakter",
+      "images": "{{count}} görüntü",
+      "jobs": "{{count}} video işi",
+      "inputs": "{{count}} girdi",
+      "reportedTokens": "{{count}} bildirilen token"
+    },
+    "empty": {
+      "title": "Henüz sağlayıcı çağrısı yok",
+      "description": "Etkin bir eklenti sohbet, Work, gömme, görüntü, konuşma, ses veya video isteklerini işledikten sonra çağrılar burada görünecektir."
+    },
+    "privacyNote": "Kullanım, sunucuda giden eklenti sınırında ölçülür. Libre WebUI; sağlayıcı, model, zamanlama, durum ve bildirilen sayaçları saklar—asla istemleri, yanıtları, uç noktaları, kimlik bilgilerini veya sağlayıcı hata gövdelerini saklamaz. Token toplamları yalnızca sağlayıcının kullanım meta verilerini döndürdüğü çağrıları içerir."
+  },
+  "systemPage": {
+    "eyebrow": "Yönetim",
+    "title": "Sistem",
+    "description": "Bu Libre WebUI örneğini barındıran makineyi ve çalışma zamanını izleyin.",
+    "updated": "Güncellendi {{date}}",
+    "refresh": "Sistem bilgilerini yenile",
+    "loadFailed": "Sistem bilgileri yüklenemedi.",
+    "cards": {
+      "uptime": "Ana makine çalışma süresi",
+      "uptimeDetail": "{{date}} tarihinden beri çalışıyor",
+      "memory": "Kullanılan bellek",
+      "memoryDetail": "{{used}} / {{total}}",
+      "freeSpace": "Boş alan",
+      "freeSpaceDetail": "{{label}} · Toplam {{total}}",
+      "containers": "Çalışan kapsayıcılar",
+      "containersDetail": "Docker tarafından bilinen {{total}} kapsayıcı",
+      "dockerUnavailable": "Docker kullanılamıyor",
+      "unavailable": "Kullanılamıyor"
+    },
+    "host": {
+      "title": "Ana makine ve çalışma zamanı",
+      "description": "İşletim sistemi, işlemci ve Libre WebUI işlem ayrıntıları.",
+      "container": "Kapsayıcı çalışma zamanı",
+      "native": "Yerel çalışma zamanı",
+      "hostname": "Sunucu adı",
+      "operatingSystem": "İşletim sistemi",
+      "processor": "İşlemci",
+      "logicalCpus": "mantıksal CPU",
+      "loadAverage": "Yük ortalaması · 1 / 5 / 15 dk",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Süreç",
+      "workingDirectory": "Çalışma dizini"
+    },
+    "memory": {
+      "title": "Bellek",
+      "description": "Çalışma zamanında görülebilen sistem belleği ve uygulama süreç kullanımı.",
+      "usedOf": "{{used}} / {{total}} kullanıldı",
+      "free": "{{value}} boş",
+      "processRss": "Süreç RSS",
+      "heapUsed": "V8 heap kullanılan",
+      "heapTotal": "V8 heap toplam",
+      "external": "Harici bellek"
+    },
+    "storage": {
+      "title": "Depolama",
+      "description": "Çalışma zamanı dosya sistemi ve kalıcı uygulama verileri için kullanılabilir alan.",
+      "used": "{{value}} kullanıldı",
+      "free": "{{value}} boş",
+      "empty": "Bu çalışma zamanında dosya sistemi bilgisi kullanılamıyor."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Salt okunur Docker Engine durumu ve kapsamlı bir konteyner listesi.",
+      "connected": "Bağlı",
+      "unavailable": "Kullanılamıyor",
+      "unavailableDetail": "Docker Engine tanılamaları kullanılamıyor.",
+      "socketStatus": "Yerel soket: {{status}}",
+      "mounted": "bağlı",
+      "notMounted": "bağlı değil",
+      "running": "Çalışıyor",
+      "stopped": "Durduruldu",
+      "paused": "Duraklatıldı",
+      "total": "Toplam",
+      "version": "Sürüm",
+      "host": "Sunucu",
+      "architecture": "Mimari",
+      "cpus": "CPU",
+      "memory": "Bellek",
+      "container": "Konteyner",
+      "image": "İmaj",
+      "state": "Durum",
+      "created": "Oluşturulma",
+      "empty": "Docker bağlı ve şu anda listelenen konteyner yok."
+    },
+    "network": {
+      "title": "Ağ",
+      "description": "Çalışma zamanında görünen arayüzler, adresler ve Linux trafik sayaçları.",
+      "internal": "dahili",
+      "empty": "Uygulama çalışma zamanına görünür ağ arayüzü yok."
+    },
+    "securityNote": "Bu sayfa yöneticilerle sınırlıdır. Sunucu yalnızca operasyonel özetler döndürür: ortam değişkenlerini, kimlik bilgilerini, Docker etiketlerini, bağlamaları, konteyner komutlarını veya inceleme yüklerini açıklamaz. Libre WebUI bir konteynerde çalıştığında, ana makine düzeyindeki CPU ve bellek ayrıntıları yerel soketi kullanılabilir olduğunda Docker Engine'den gelir; diğer değerler uygulama çalışma zamanını tanımlar."
+  },
+  "mediaGeneration": {
+    "title": "Medya oluştur",
+    "description": "Etkinleştirilmiş bir medya sağlayıcısıyla video, ses, müzik veya konuşma oluşturun.",
+    "image": "Görüntü",
+    "video": "Video",
+    "audio": "Ses",
+    "sound": "Ses",
+    "speech": "Konuşma",
+    "model": "Model",
+    "voice": "Ses veya ses kimliği",
+    "resolution": "Çözünürlük",
+    "aspectRatio": "En boy oranı",
+    "duration": "Süre",
+    "providerDefault": "Sağlayıcı varsayılanı",
+    "generateAudio": "Desteklendiğinde videoyla birlikte ses oluştur",
+    "prompt": "İstem",
+    "text": "Konuşulacak metin",
+    "videoPlaceholder": "Sahneyi, hareketi, kamerayı ve aydınlatmayı açıklayın...",
+    "audioPlaceholder": "Sesin konuşmasını istediğiniz metni girin...",
+    "soundPlaceholder": "İstediğiniz sesi, müziği, atmosferi veya sözlü yanıtı açıklayın...",
+    "generate": "Oluştur",
+    "generating": "Oluşturuluyor… bu birkaç dakika sürebilir",
+    "success": "Medya oluşturuldu ve Imagine'a kaydedildi",
+    "failed": "Medya oluşturulamadı",
+    "loadFailed": "Medya sağlayıcıları yüklenemedi",
+    "noModels": "Kullanılabilir {{kind}} modeli yok. Önce uyumlu bir sağlayıcı etkinleştirin ve kimlik bilgilerini kaydedin."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} öğe",
+    "empty": "Henüz oluşturulmuş medya yok",
+    "emptyHint": "Bir görüntü, video veya ses klibi oluşturun ve burada görünecektir.",
+    "filters": {
+      "all": "Tümü",
+      "image": "Görüntüler",
+      "video": "Videolar",
+      "audio": "Ses"
     }
   }
 }

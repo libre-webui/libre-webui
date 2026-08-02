@@ -60,7 +60,8 @@
       "enterBoth": "Wprowadź nazwę użytkownika i hasło",
       "githubSuccess": "Logowanie przez GitHub pomyślne!",
       "githubFailed": "Uwierzytelnianie GitHub nie powiodło się",
-      "githubVerifyFailed": "Nie udało się zweryfikować uwierzytelnienia GitHub"
+      "githubVerifyFailed": "Nie udało się zweryfikować uwierzytelnienia GitHub",
+      "approvalPending": "Twoje konto oczekuje na zatwierdzenie przez administratora."
     },
     "signup": {
       "title": "Utwórz konto",
@@ -82,7 +83,11 @@
       "tryAgain": "Rejestracja nie powiodła się. Spróbuj ponownie.",
       "usernameRequired": "Nazwa użytkownika i hasło są wymagane",
       "passwordMismatch": "Hasła nie pasują do siebie",
-      "passwordTooShort": "Hasło musi mieć co najmniej 6 znaków"
+      "passwordTooShort": "Hasło musi mieć co najmniej 6 znaków",
+      "approvalPending": "Rejestracja przyjęta. Administrator musi zatwierdzić Twoje konto.",
+      "awaitingApproval": "Oczekuje na zatwierdzenie",
+      "awaitingApprovalDescription": "Twoje konto zostało utworzone, ale administrator musi je aktywować, zanim będziesz mógł się zalogować.",
+      "backToSignIn": "Powrót do logowania"
     },
     "logout": {
       "button": "Wyloguj się",
@@ -105,7 +110,23 @@
     "jwtActive": "Uwierzytelnianie JWT aktywne",
     "jwtDescription": "Uwierzytelnianie JWT z GitHub OAuth",
     "github": "GitHub",
-    "provider": "Dostawca"
+    "provider": "Dostawca",
+    "tagline": "Twój stos AI powinien odpowiadać Tobie.",
+    "selfHosted": "Samodzielnie hostowane · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "Najpierw lokalnie",
+        "body": "Twoje rozmowy i pliki pozostają na maszynie, na której to uruchamiasz."
+      },
+      "providers": {
+        "title": "Dowolny dostawca",
+        "body": "Modele lokalne przez Ollama oraz zdalni dostawcy, których dodasz."
+      },
+      "work": {
+        "title": "Odizolowana praca",
+        "body": "Daj modelowi odizolowane środowisko z plikami, terminalem i podglądem."
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "Konto administratora utworzone pomyślnie!",
       "failed": "Nie udało się utworzyć konta administratora",
       "fillAllFields": "Wypełnij wszystkie pola",
-      "note": "To będzie główne konto administratora dla Twojej instancji Libre WebUI"
+      "note": "To będzie główne konto administratora dla Twojej instancji Libre WebUI",
+      "approvalUnexpected": "Nie udało się aktywować początkowego administratora. Spróbuj ponownie."
     },
     "encryptionKey": {
       "title": "Zapisz klucz szyfrowania",
@@ -238,7 +260,8 @@
       "createFirst": "Utwórz swój pierwszy czat powyżej",
       "chats": "Czaty",
       "renameChat": "Zmień nazwę czatu",
-      "deleteChat": "Usuń czat"
+      "deleteChat": "Usuń czat",
+      "incognito": "Czat incognito"
     },
     "persona": {
       "applied": "Persona zastosowana",
@@ -294,7 +317,9 @@
       "signOut": "Wyloguj się",
       "agents": "Agenci",
       "work": "Praca",
-      "exploreLabel": "Odkrywaj"
+      "exploreLabel": "Odkrywaj",
+      "usageAnalytics": "Użycie dostawców",
+      "system": "System"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
     "expandSidebar": "Rozwiń panel boczny"
@@ -304,7 +329,9 @@
       "changePicture": "Zmień zdjęcie",
       "settings": "Ustawienia",
       "userManagement": "Zarządzanie użytkownikami",
-      "logout": "Wyloguj się"
+      "logout": "Wyloguj się",
+      "usageAnalytics": "Użycie dostawców",
+      "system": "System"
     },
     "avatar": {
       "title": "Zmień zdjęcie profilowe",
@@ -419,7 +446,11 @@
       "modelPullAccess": "Dostęp do instalacji modeli",
       "modelPullAccessDescription": "Zezwól użytkownikom niebędącym administratorami na pobieranie i instalowanie nowych modeli.",
       "modelPullAccessSaved": "Uprawnienia instalacji modeli zostały zaktualizowane",
-      "modelPullAccessSaveFailed": "Nie udało się zaktualizować uprawnień instalacji modeli"
+      "modelPullAccessSaveFailed": "Nie udało się zaktualizować uprawnień instalacji modeli",
+      "specializedModels": "Modele specjalistyczne",
+      "visionModel": "Model wizyjny",
+      "selectVisionModel": "Użyj bieżącego modelu czatu",
+      "visionModelDescription": "Używany automatycznie, gdy wychodzący kontekst czatu zawiera obrazy. Wybierz model obsługujący wprowadzanie obrazów."
     },
     "systemMessage": {
       "title": "Wiadomość systemowa",
@@ -467,7 +498,41 @@
         "removeFailed": "Nie udało się usunąć klucza API",
         "enterKey": "Wprowadź klucz API"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "Połączenia dostawców",
+      "providerConnectionsDescription": "Łącz, konfiguruj i sprawdzaj dostawców modeli przez wtyczki.",
+      "providers": "Dostawcy",
+      "searchProviders": "Szukaj dostawców",
+      "noProvidersFound": "Żaden dostawca nie pasuje do wyszukiwania.",
+      "selectProvider": "Wybierz dostawcę",
+      "selectProviderDescription": "Wybierz dostawcę, aby sprawdzić jego połączenie i katalog modeli.",
+      "apiKeyDescription": "Przechowaj osobisty klucz API dla {{name}}.",
+      "showApiKey": "Pokaż klucz API",
+      "hideApiKey": "Ukryj klucz API",
+      "configure": "Konfiguruj",
+      "providerSettings": "Ustawienia dostawcy",
+      "status": "Status",
+      "defaultEndpoint": "Domyślny punkt końcowy",
+      "modelCatalog": "Katalog modeli",
+      "modelCatalogDescription": "Odkryte i skonfigurowane modele dla tego dostawcy oraz jego możliwości.",
+      "refreshModels": "Odśwież modele",
+      "noModelsConfigured": "Brak skonfigurowanych modeli dla tego dostawcy.",
+      "modelId": "ID modelu",
+      "capabilities": "Możliwości",
+      "modelCatalogUpdated": "Katalog modeli zaktualizowany: {{count}} modeli.",
+      "modelCatalogUnchanged": "Katalog modeli jest już aktualny.",
+      "modelCatalogNeedsApiKey": "Dodaj prawidłowy klucz API dla tego dostawcy, aby załadować jego listę modeli na żywo.",
+      "modelCatalogUnavailable": "Nie udało się załadować listy modeli dostawcy.",
+      "modelCatalogRefreshFailed": "Nie udało się odświeżyć katalogu modeli",
+      "capability": {
+        "chat": "Czat",
+        "embedding": "Embedding",
+        "image": "Obraz",
+        "speech": "Mowa",
+        "transcription": "Transkrypcja"
+      },
+      "exportPlugin": "Eksportuj wtyczkę",
+      "deletePlugin": "Usuń wtyczkę"
     },
     "generation": {
       "title": "Opcje generowania",
@@ -503,7 +568,9 @@
       "resetDefaults": "Przywróć domyślne",
       "saveOptions": "Zapisz opcje",
       "embeddingSettings": "Ustawienia embeddingów",
-      "enableEmbeddings": "Włącz embeddingi dokumentów"
+      "enableEmbeddings": "Włącz embeddingi dokumentów",
+      "advancedSettings": "Zaawansowane ustawienia generowania",
+      "advancedSettingsDescription": "Próbkowanie, limity tokenów, kontekst, kary i sekwencje zatrzymania"
     },
     "documents": {
       "title": "Ustawienia dokumentów",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "Użytkownik zaktualizowany pomyślnie",
       "createFailed": "Nie udało się utworzyć użytkownika",
       "updateFailed": "Nie udało się zaktualizować użytkownika"
+    },
+    "approval": {
+      "title": "Oczekujące zatwierdzenia",
+      "description": "Przejrzyj nowe rejestracje przed wpuszczeniem ich do tej instancji.",
+      "registered": "Zarejestrowany",
+      "activate": "Aktywuj konto",
+      "reject": "Odrzuć rejestrację",
+      "approved": "{{name}} może się teraz zalogować.",
+      "failed": "Nie udało się zatwierdzić konta.",
+      "notification": "{{count}} rejestracja(-e) czeka(-ją) na Twoje zatwierdzenie.",
+      "notificationBadge": "{{count}} oczekujących zatwierdzeń użytkowników"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "Nie udało się zapisać zmiennych",
       "resetDefaults": "Przywróć domyślne",
       "reset": "Zmienne przywrócone",
-      "sensitiveSet": "Wartość ustawiona (wprowadź nową, aby zmienić)"
+      "sensitiveSet": "Wartość ustawiona (wprowadź nową, aby zmienić)",
+      "resetFailed": "Nie udało się zresetować zmiennych",
+      "showValue": "Pokaż wartość {{label}}",
+      "hideValue": "Ukryj wartość {{label}}",
+      "connection": "Połączenie",
+      "advanced": "Parametry zaawansowane",
+      "inherited": "Użyj domyślnych dostawcy",
+      "inheritedValue": "Użyj domyślnych dostawcy ({{value}})",
+      "enabled": "Włączone",
+      "disabled": "Wyłączone",
+      "required": "Wartość jest wymagana",
+      "fullApiEndpoint": "Pełny URL punktu końcowego API",
+      "endpointHelp": "Wprowadź pełny URL żądania, wraz ze ścieżką operacji (np. /v1/chat/completions), a nie tylko bazowy URL dostawcy.",
+      "invalidUrl": "Wprowadź prawidłowy pełny URL punktu końcowego API, np. https://provider.example/v1/chat/completions",
+      "insecureUrl": "Punkty końcowe API muszą używać HTTP lub HTTPS.",
+      "httpWarning": "HTTP nie szyfruje poświadczeń ani ruchu. Używaj tylko w zaufanej sieci.",
+      "invalidBaseUrl": "Bazowe URL nie mogą zawierać ciągu zapytania ani fragmentu.",
+      "invalidApiPath": "Musi zaczynać się od / i nie zawierać URL, zapytania, fragmentu ani segmentu ..",
+      "tooLong": "Wartość jest za długa"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "Terminal interaktywny nie jest dostępny w tym wdrożeniu.",
       "blockedByRun": "Model używa tego kontenera. Terminal otworzy się po zakończeniu tury.",
       "taskRunning": "Trwa tura modelu"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "Administracja",
+    "title": "Użycie dostawców",
+    "description": "Śledź wychodzące wywołania API i zużycie modeli w włączonych wtyczkach w tej instancji.",
+    "days": "{{count}} dni",
+    "refresh": "Odśwież użycie",
+    "loadFailed": "Nie udało się załadować użycia dostawców.",
+    "metrics": {
+      "calls": "Wywołania",
+      "tokens": "Tokeny"
+    },
+    "cards": {
+      "calls": "Wywołania API",
+      "callsDetail": "Na {{count}} aktywnym użytkowniku(ach)",
+      "tokens": "Zgłoszone tokeny",
+      "tokensDetail": "Użycie zgłoszone w {{count}} wywołaniu(aniach)",
+      "success": "Wskaźnik sukcesu",
+      "successDetail": "{{count}} nieudanych wywołań",
+      "latency": "Średnie opóźnienie",
+      "latencyDetail": "Czas dostawcy end-to-end"
+    },
+    "activity": {
+      "title": "Zużycie w czasie",
+      "callsDescription": "Codzienne żądania wychodzące do włączonych wtyczek",
+      "tokensDescription": "Codzienne sumy tokenów zgłaszane przez dostawców",
+      "chartLabel": "Codzienny wykres {{metric}} dostawcy"
+    },
+    "models": {
+      "title": "Zużycie modeli",
+      "description": "Modele generujące największy ruch w tym okresie.",
+      "model": "Model",
+      "success": "Sukces",
+      "latency": "Opóźnienie"
+    },
+    "providers": {
+      "title": "Ruch włączonych wtyczek"
+    },
+    "capabilities": {
+      "title": "Rozkład możliwości",
+      "characters": "{{count}} znaków",
+      "images": "{{count}} obrazów",
+      "jobs": "{{count}} zadań wideo",
+      "inputs": "{{count}} wejść",
+      "reportedTokens": "{{count}} zgłoszonych tokenów"
+    },
+    "empty": {
+      "title": "Brak wywołań dostawcy",
+      "description": "Wywołania pojawią się tutaj po obsłużeniu żądań czatu, Work, osadzania, obrazu, mowy, dźwięku lub wideo przez włączoną wtyczkę."
+    },
+    "privacyNote": "Zużycie jest mierzone na serwerze na granicy wtyczki wychodzącej. Libre WebUI przechowuje dostawcę, model, czas, status i zgłoszone liczniki — nigdy prompty, odpowiedzi, endpointy, dane uwierzytelniające ani treści błędów dostawcy. Sumy tokenów obejmują tylko wywołania, w których dostawca zwrócił metadane użycia."
+  },
+  "systemPage": {
+    "eyebrow": "Administracja",
+    "title": "System",
+    "description": "Monitoruj maszynę i środowisko uruchomieniowe hostujące tę instancję Libre WebUI.",
+    "updated": "Zaktualizowano {{date}}",
+    "refresh": "Odśwież informacje o systemie",
+    "loadFailed": "Nie udało się załadować informacji o systemie.",
+    "cards": {
+      "uptime": "Czas działania hosta",
+      "uptimeDetail": "Działa od {{date}}",
+      "memory": "Użyta pamięć",
+      "memoryDetail": "{{used}} z {{total}}",
+      "freeSpace": "Wolne miejsce",
+      "freeSpaceDetail": "{{label}} · {{total}} łącznie",
+      "containers": "Uruchomione kontenery",
+      "containersDetail": "{{total}} kontenerów znanych Docker",
+      "dockerUnavailable": "Docker niedostępny",
+      "unavailable": "Niedostępne"
+    },
+    "host": {
+      "title": "Host i środowisko uruchomieniowe",
+      "description": "System operacyjny, procesor i szczegóły procesu Libre WebUI.",
+      "container": "Środowisko uruchomieniowe kontenera",
+      "native": "Natywne środowisko uruchomieniowe",
+      "hostname": "Nazwa hosta",
+      "operatingSystem": "System operacyjny",
+      "processor": "Procesor",
+      "logicalCpus": "logiczne CPU",
+      "loadAverage": "Średnie obciążenie · 1 / 5 / 15 min",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Proces",
+      "workingDirectory": "Katalog roboczy"
+    },
+    "memory": {
+      "title": "Pamięć",
+      "description": "Pamięć systemowa widoczna dla środowiska uruchomieniowego i użycie procesu aplikacji.",
+      "usedOf": "{{used}} zajęte z {{total}}",
+      "free": "{{value}} wolne",
+      "processRss": "RSS procesu",
+      "heapUsed": "Zajęta sterta V8",
+      "heapTotal": "Całkowita sterta V8",
+      "external": "Pamięć zewnętrzna"
+    },
+    "storage": {
+      "title": "Pamięć masowa",
+      "description": "Dostępne miejsce dla systemu plików środowiska uruchomieniowego i trwałych danych aplikacji.",
+      "used": "{{value}} zajęte",
+      "free": "{{value}} wolne",
+      "empty": "Informacje o systemie plików są niedostępne w tym środowisku uruchomieniowym."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Status Docker Engine tylko do odczytu i skrócona lista kontenerów.",
+      "connected": "Połączono",
+      "unavailable": "Niedostępne",
+      "unavailableDetail": "Diagnostyka Docker Engine jest niedostępna.",
+      "socketStatus": "Lokalne gniazdo: {{status}}",
+      "mounted": "zamontowane",
+      "notMounted": "niezamontowane",
+      "running": "Uruchomione",
+      "stopped": "Zatrzymane",
+      "paused": "Wstrzymane",
+      "total": "Razem",
+      "version": "Wersja",
+      "host": "Host",
+      "architecture": "Architektura",
+      "cpus": "CPU",
+      "memory": "Pamięć",
+      "container": "Kontener",
+      "image": "Obraz",
+      "state": "Stan",
+      "created": "Utworzony",
+      "empty": "Docker jest połączony i obecnie nie ma żadnych kontenerów na liście."
+    },
+    "network": {
+      "title": "Sieć",
+      "description": "Interfejsy, adresy i liczniki ruchu Linuksa widoczne w czasie działania.",
+      "internal": "wewnętrzny",
+      "empty": "Żadne interfejsy sieciowe nie są widoczne dla środowiska uruchomieniowego aplikacji."
+    },
+    "securityNote": "Ta strona jest dostępna tylko dla administratorów. Serwer zwraca tylko podsumowania operacyjne: nie udostępnia zmiennych środowiskowych, poświadczeń, etykiet Docker, punktów montowania, poleceń kontenera ani ładunków inspekcji. Gdy Libre WebUI działa w kontenerze, szczegóły CPU i pamięci na poziomie hosta pochodzą z Docker Engine, gdy jego lokalne gniazdo jest dostępne; inne wartości opisują środowisko uruchomieniowe aplikacji."
+  },
+  "mediaGeneration": {
+    "title": "Generuj multimedia",
+    "description": "Twórz wideo, dźwięk, muzykę lub mowę za pomocą aktywowanego dostawcy multimediów.",
+    "image": "Obraz",
+    "video": "Wideo",
+    "audio": "Audio",
+    "sound": "Dźwięk",
+    "speech": "Mowa",
+    "model": "Model",
+    "voice": "Głos lub identyfikator głosu",
+    "resolution": "Rozdzielczość",
+    "aspectRatio": "Proporcje obrazu",
+    "duration": "Czas trwania",
+    "providerDefault": "Domyślne ustawienia dostawcy",
+    "generateAudio": "Generuj dźwięk wraz z wideo, gdy jest obsługiwane",
+    "prompt": "Prompt",
+    "text": "Tekst do przeczytania",
+    "videoPlaceholder": "Opisz scenę, ruch, kamerę i oświetlenie...",
+    "audioPlaceholder": "Wpisz tekst, który ma zostać odczytany przez głos...",
+    "soundPlaceholder": "Opisz dźwięk, muzykę, atmosferę lub odpowiedź głosową, której oczekujesz...",
+    "generate": "Generuj",
+    "generating": "Generowanie… to może zająć kilka minut",
+    "success": "Multimedia wygenerowane i zapisane w Imagine",
+    "failed": "Nie udało się wygenerować multimediów",
+    "loadFailed": "Nie udało się załadować dostawców multimediów",
+    "noModels": "Brak dostępnych modeli {{kind}}. Najpierw aktywuj kompatybilnego dostawcę i zapisz jego poświadczenia."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} elementów",
+    "empty": "Brak wygenerowanych multimediów",
+    "emptyHint": "Wygeneruj obraz, wideo lub klip głosowy, a pojawi się tutaj.",
+    "filters": {
+      "all": "Wszystkie",
+      "image": "Obrazy",
+      "video": "Wideo",
+      "audio": "Audio"
     }
   }
 }

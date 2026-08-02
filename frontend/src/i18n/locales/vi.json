@@ -60,7 +60,8 @@
       "enterBoth": "Vui lòng nhập cả tên người dùng và mật khẩu",
       "githubSuccess": "Đăng nhập GitHub thành công!",
       "githubFailed": "Xác thực GitHub thất bại",
-      "githubVerifyFailed": "Không thể xác minh xác thực GitHub"
+      "githubVerifyFailed": "Không thể xác minh xác thực GitHub",
+      "approvalPending": "Tài khoản của bạn đang chờ quản trị viên phê duyệt."
     },
     "signup": {
       "title": "Tạo tài khoản",
@@ -82,7 +83,11 @@
       "tryAgain": "Đăng ký thất bại. Vui lòng thử lại.",
       "usernameRequired": "Tên người dùng và mật khẩu là bắt buộc",
       "passwordMismatch": "Mật khẩu không khớp",
-      "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự"
+      "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự",
+      "approvalPending": "Đã nhận đăng ký. Quản trị viên phải phê duyệt tài khoản của bạn.",
+      "awaitingApproval": "Đang chờ phê duyệt",
+      "awaitingApprovalDescription": "Tài khoản của bạn đã được tạo, nhưng quản trị viên phải kích hoạt nó trước khi bạn có thể đăng nhập.",
+      "backToSignIn": "Quay lại đăng nhập"
     },
     "logout": {
       "button": "Đăng xuất",
@@ -105,7 +110,23 @@
     "jwtActive": "Xác thực JWT đang hoạt động",
     "jwtDescription": "Xác thực dựa trên JWT với GitHub OAuth",
     "github": "GitHub",
-    "provider": "Nhà cung cấp"
+    "provider": "Nhà cung cấp",
+    "tagline": "Ngăn xếp AI của bạn nên trả lời bạn.",
+    "selfHosted": "Tự lưu trữ · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "Ưu tiên cục bộ",
+        "body": "Các cuộc trò chuyện và tệp của bạn vẫn nằm trên máy bạn đang chạy ứng dụng này."
+      },
+      "providers": {
+        "title": "Bất kỳ nhà cung cấp nào",
+        "body": "Mô hình cục bộ thông qua Ollama, cộng với các nhà cung cấp từ xa mà bạn chọn thêm."
+      },
+      "work": {
+        "title": "Công việc cô lập",
+        "body": "Cấp cho mô hình một không gian làm việc sandbox với tệp, terminal và bản xem trước."
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "Tạo tài khoản quản trị thành công!",
       "failed": "Không thể tạo tài khoản quản trị",
       "fillAllFields": "Vui lòng điền tất cả các trường",
-      "note": "Đây sẽ là tài khoản quản trị chính cho phiên bản Libre WebUI của bạn"
+      "note": "Đây sẽ là tài khoản quản trị chính cho phiên bản Libre WebUI của bạn",
+      "approvalUnexpected": "Không thể kích hoạt quản trị viên ban đầu. Vui lòng thử lại."
     },
     "encryptionKey": {
       "title": "Lưu khóa mã hóa của bạn",
@@ -238,7 +260,8 @@
       "createFirst": "Tạo cuộc trò chuyện đầu tiên của bạn ở trên",
       "chats": "Cuộc trò chuyện",
       "renameChat": "Đổi tên cuộc trò chuyện",
-      "deleteChat": "Xóa cuộc trò chuyện"
+      "deleteChat": "Xóa cuộc trò chuyện",
+      "incognito": "Trò chuyện ẩn danh"
     },
     "persona": {
       "applied": "Đã áp dụng persona",
@@ -294,7 +317,9 @@
       "signOut": "Đăng xuất",
       "agents": "Tác nhân",
       "work": "Công việc",
-      "exploreLabel": "Khám phá"
+      "exploreLabel": "Khám phá",
+      "usageAnalytics": "Mức sử dụng nhà cung cấp",
+      "system": "Hệ thống"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -304,7 +329,9 @@
       "changePicture": "Đổi ảnh đại diện",
       "settings": "Cài đặt",
       "userManagement": "Quản lý người dùng",
-      "logout": "Đăng xuất"
+      "logout": "Đăng xuất",
+      "usageAnalytics": "Mức sử dụng nhà cung cấp",
+      "system": "Hệ thống"
     },
     "avatar": {
       "title": "Đổi ảnh hồ sơ",
@@ -419,7 +446,11 @@
       "modelPullAccess": "Quyền cài đặt mô hình",
       "modelPullAccessDescription": "Cho phép người dùng không phải quản trị viên tải và cài đặt mô hình mới.",
       "modelPullAccessSaved": "Đã cập nhật quyền cài đặt mô hình",
-      "modelPullAccessSaveFailed": "Không thể cập nhật quyền cài đặt mô hình"
+      "modelPullAccessSaveFailed": "Không thể cập nhật quyền cài đặt mô hình",
+      "specializedModels": "Mô hình chuyên biệt",
+      "visionModel": "Mô hình thị giác",
+      "selectVisionModel": "Sử dụng mô hình trò chuyện hiện tại",
+      "visionModelDescription": "Được sử dụng tự động bất cứ khi nào ngữ cảnh trò chuyện gửi đi có chứa hình ảnh. Chọn một mô hình hỗ trợ đầu vào hình ảnh."
     },
     "systemMessage": {
       "title": "Tin nhắn hệ thống",
@@ -467,7 +498,41 @@
         "removeFailed": "Không thể xóa khóa API",
         "enterKey": "Vui lòng nhập khóa API"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "Kết nối nhà cung cấp",
+      "providerConnectionsDescription": "Kết nối, cấu hình và kiểm tra các nhà cung cấp mô hình thông qua plugin.",
+      "providers": "Nhà cung cấp",
+      "searchProviders": "Tìm kiếm nhà cung cấp",
+      "noProvidersFound": "Không có nhà cung cấp nào khớp với tìm kiếm của bạn.",
+      "selectProvider": "Chọn một nhà cung cấp",
+      "selectProviderDescription": "Chọn một nhà cung cấp để kiểm tra kết nối và danh mục mô hình của nó.",
+      "apiKeyDescription": "Lưu trữ khóa API cá nhân cho {{name}}.",
+      "showApiKey": "Hiển thị khóa API",
+      "hideApiKey": "Ẩn khóa API",
+      "configure": "Cấu hình",
+      "providerSettings": "Cài đặt nhà cung cấp",
+      "status": "Trạng thái",
+      "defaultEndpoint": "Điểm cuối mặc định",
+      "modelCatalog": "Danh mục mô hình",
+      "modelCatalogDescription": "Các mô hình đã phát hiện và cấu hình cho nhà cung cấp này cùng khả năng của chúng.",
+      "refreshModels": "Làm mới mô hình",
+      "noModelsConfigured": "Không có mô hình nào được cấu hình cho nhà cung cấp này.",
+      "modelId": "ID mô hình",
+      "capabilities": "Khả năng",
+      "modelCatalogUpdated": "Danh mục mô hình đã cập nhật: {{count}} mô hình.",
+      "modelCatalogUnchanged": "Danh mục mô hình đã được cập nhật.",
+      "modelCatalogNeedsApiKey": "Thêm API key hợp lệ cho nhà cung cấp này để tải danh sách mô hình trực tiếp của nó.",
+      "modelCatalogUnavailable": "Không thể tải danh sách mô hình của nhà cung cấp.",
+      "modelCatalogRefreshFailed": "Không thể làm mới danh mục mô hình",
+      "capability": {
+        "chat": "Trò chuyện",
+        "embedding": "Embedding",
+        "image": "Hình ảnh",
+        "speech": "Giọng nói",
+        "transcription": "Chuyển ngữ"
+      },
+      "exportPlugin": "Xuất plugin",
+      "deletePlugin": "Xóa plugin"
     },
     "generation": {
       "title": "Tùy chọn tạo nội dung",
@@ -503,7 +568,9 @@
       "resetDefaults": "Đặt lại mặc định",
       "saveOptions": "Lưu tùy chọn",
       "embeddingSettings": "Cài đặt nhúng",
-      "enableEmbeddings": "Bật nhúng tài liệu"
+      "enableEmbeddings": "Bật nhúng tài liệu",
+      "advancedSettings": "Cài đặt tạo nâng cao",
+      "advancedSettingsDescription": "Lấy mẫu, giới hạn token, ngữ cảnh, hình phạt và chuỗi dừng"
     },
     "documents": {
       "title": "Cài đặt tài liệu",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "Đã cập nhật người dùng thành công",
       "createFailed": "Không thể tạo người dùng",
       "updateFailed": "Không thể cập nhật người dùng"
+    },
+    "approval": {
+      "title": "Phê duyệt đang chờ xử lý",
+      "description": "Xem xét các đăng ký mới trước khi cho phép họ vào phiên bản này.",
+      "registered": "Đã đăng ký",
+      "activate": "Kích hoạt tài khoản",
+      "reject": "Từ chối đăng ký",
+      "approved": "{{name}} hiện có thể đăng nhập.",
+      "failed": "Không thể phê duyệt tài khoản.",
+      "notification": "{{count}} đăng ký đang chờ bạn phê duyệt.",
+      "notificationBadge": "{{count}} phê duyệt người dùng đang chờ xử lý"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "Không thể lưu biến",
       "resetDefaults": "Đặt lại mặc định",
       "reset": "Đã đặt lại biến",
-      "sensitiveSet": "Giá trị đã được đặt (nhập giá trị mới để thay đổi)"
+      "sensitiveSet": "Giá trị đã được đặt (nhập giá trị mới để thay đổi)",
+      "resetFailed": "Không thể đặt lại biến",
+      "showValue": "Hiển thị giá trị {{label}}",
+      "hideValue": "Ẩn giá trị {{label}}",
+      "connection": "Kết nối",
+      "advanced": "Tham số nâng cao",
+      "inherited": "Sử dụng mặc định của nhà cung cấp",
+      "inheritedValue": "Sử dụng mặc định của nhà cung cấp ({{value}})",
+      "enabled": "Đã bật",
+      "disabled": "Đã tắt",
+      "required": "Yêu cầu một giá trị",
+      "fullApiEndpoint": "URL điểm cuối API đầy đủ",
+      "endpointHelp": "Nhập URL yêu cầu hoàn chỉnh, bao gồm đường dẫn hoạt động của nó (ví dụ: /v1/chat/completions), không chỉ URL cơ sở của nhà cung cấp.",
+      "invalidUrl": "Nhập URL điểm cuối API đầy đủ hợp lệ, ví dụ https://provider.example/v1/chat/completions",
+      "insecureUrl": "Các điểm cuối API phải sử dụng HTTP hoặc HTTPS.",
+      "httpWarning": "HTTP không mã hóa thông tin xác thực hoặc lưu lượng truy cập. Chỉ sử dụng trên mạng đáng tin cậy.",
+      "invalidBaseUrl": "URL cơ sở không được chứa chuỗi truy vấn hoặc phân đoạn.",
+      "invalidApiPath": "Phải bắt đầu bằng / và không chứa URL, truy vấn, phân đoạn hoặc phân đoạn ..",
+      "tooLong": "Giá trị quá dài"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "Terminal tương tác không khả dụng trong bản triển khai này.",
       "blockedByRun": "Mô hình đang dùng vùng chứa này. Terminal sẽ mở khi lượt kết thúc.",
       "taskRunning": "Lượt của mô hình đang chạy"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "Quản trị",
+    "title": "Mức sử dụng nhà cung cấp",
+    "description": "Theo dõi các cuộc gọi API gửi đi và mức tiêu thụ mô hình trên các plugin đã bật trong phiên bản này.",
+    "days": "{{count}} ngày",
+    "refresh": "Làm mới mức sử dụng",
+    "loadFailed": "Không thể tải mức sử dụng của nhà cung cấp.",
+    "metrics": {
+      "calls": "Cuộc gọi",
+      "tokens": "Token"
+    },
+    "cards": {
+      "calls": "Cuộc gọi API",
+      "callsDetail": "Trên {{count}} người dùng đang hoạt động",
+      "tokens": "Token đã báo cáo",
+      "tokensDetail": "Mức sử dụng được báo cáo trên {{count}} cuộc gọi",
+      "success": "Tỷ lệ thành công",
+      "successDetail": "{{count}} cuộc gọi thất bại",
+      "latency": "Độ trễ trung bình",
+      "latencyDetail": "Thời gian nhà cung cấp từ đầu đến cuối"
+    },
+    "activity": {
+      "title": "Mức sử dụng theo thời gian",
+      "callsDescription": "Yêu cầu gửi đi hàng ngày tới các plugin đã bật",
+      "tokensDescription": "Tổng token hàng ngày được báo cáo bởi nhà cung cấp",
+      "chartLabel": "Biểu đồ {{metric}} nhà cung cấp hàng ngày"
+    },
+    "models": {
+      "title": "Mức sử dụng theo mô hình",
+      "description": "Các mô hình có lượng truy cập cao nhất trong giai đoạn này.",
+      "model": "Mô hình",
+      "success": "Thành công",
+      "latency": "Độ trễ"
+    },
+    "providers": {
+      "title": "Lưu lượng plugin đã bật"
+    },
+    "capabilities": {
+      "title": "Phân bổ khả năng",
+      "characters": "{{count}} ký tự",
+      "images": "{{count}} hình ảnh",
+      "jobs": "{{count}} tác vụ video",
+      "inputs": "{{count}} đầu vào",
+      "reportedTokens": "{{count}} token đã báo cáo"
+    },
+    "empty": {
+      "title": "Chưa có lệnh gọi nhà cung cấp",
+      "description": "Các lệnh gọi sẽ hiển thị tại đây sau khi một plugin đã bật xử lý yêu cầu trò chuyện, Work, nhúng, hình ảnh, giọng nói, âm thanh hoặc video."
+    },
+    "privacyNote": "Mức sử dụng được đo trên máy chủ tại ranh giới plugin gửi đi. Libre WebUI lưu trữ nhà cung cấp, mô hình, thời gian, trạng thái và bộ đếm đã báo cáo—không bao gồm lời nhắc, phản hồi, điểm cuối, thông tin xác thực hoặc nội dung lỗi của nhà cung cấp. Tổng token chỉ bao gồm các lệnh gọi mà nhà cung cấp trả về siêu dữ liệu sử dụng."
+  },
+  "systemPage": {
+    "eyebrow": "Quản trị",
+    "title": "Hệ thống",
+    "description": "Giám sát máy và môi trường chạy lưu trữ phiên bản Libre WebUI này.",
+    "updated": "Đã cập nhật {{date}}",
+    "refresh": "Làm mới thông tin hệ thống",
+    "loadFailed": "Không thể tải thông tin hệ thống.",
+    "cards": {
+      "uptime": "Thời gian hoạt động máy chủ",
+      "uptimeDetail": "Hoạt động từ {{date}}",
+      "memory": "Bộ nhớ đã dùng",
+      "memoryDetail": "{{used}} trên {{total}}",
+      "freeSpace": "Không gian trống",
+      "freeSpaceDetail": "{{label}} · {{total}} tổng",
+      "containers": "Container đang chạy",
+      "containersDetail": "{{total}} container được Docker nhận biết",
+      "dockerUnavailable": "Docker không khả dụng",
+      "unavailable": "Không khả dụng"
+    },
+    "host": {
+      "title": "Máy chủ & môi trường chạy",
+      "description": "Hệ điều hành, bộ xử lý và chi tiết tiến trình Libre WebUI.",
+      "container": "Môi trường chạy container",
+      "native": "Runtime gốc",
+      "hostname": "Tên máy chủ",
+      "operatingSystem": "Hệ điều hành",
+      "processor": "Bộ xử lý",
+      "logicalCpus": "CPU logic",
+      "loadAverage": "Tải trung bình · 1 / 5 / 15 phút",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Tiến trình",
+      "workingDirectory": "Thư mục làm việc"
+    },
+    "memory": {
+      "title": "Bộ nhớ",
+      "description": "Bộ nhớ hệ thống hiển thị trong runtime và mức sử dụng tiến trình ứng dụng.",
+      "usedOf": "Đã dùng {{used}} trên {{total}}",
+      "free": "{{value}} trống",
+      "processRss": "RSS tiến trình",
+      "heapUsed": "V8 heap đã dùng",
+      "heapTotal": "Tổng V8 heap",
+      "external": "Bộ nhớ ngoài"
+    },
+    "storage": {
+      "title": "Lưu trữ",
+      "description": "Dung lượng khả dụng cho hệ thống tệp runtime và dữ liệu ứng dụng cố định.",
+      "used": "Đã dùng {{value}}",
+      "free": "{{value}} trống",
+      "empty": "Thông tin hệ thống tệp không có sẵn trong runtime này."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Trạng thái Docker Engine chỉ đọc và danh sách rút gọn các container.",
+      "connected": "Đã kết nối",
+      "unavailable": "Không khả dụng",
+      "unavailableDetail": "Không thể chẩn đoán Docker Engine.",
+      "socketStatus": "Socket cục bộ: {{status}}",
+      "mounted": "đã gắn",
+      "notMounted": "chưa gắn",
+      "running": "Đang chạy",
+      "stopped": "Đã dừng",
+      "paused": "Đã tạm dừng",
+      "total": "Tổng",
+      "version": "Phiên bản",
+      "host": "Máy chủ",
+      "architecture": "Kiến trúc",
+      "cpus": "CPU",
+      "memory": "Bộ nhớ",
+      "container": "Container",
+      "image": "Image",
+      "state": "Trạng thái",
+      "created": "Đã tạo",
+      "empty": "Docker đã được kết nối và hiện không có container nào được liệt kê."
+    },
+    "network": {
+      "title": "Mạng",
+      "description": "Các giao diện, địa chỉ hiển thị trong thời gian chạy và bộ đếm lưu lượng Linux.",
+      "internal": "nội bộ",
+      "empty": "Không có giao diện mạng nào hiển thị với thời gian chạy của ứng dụng."
+    },
+    "securityNote": "Trang này chỉ dành cho quản trị viên. Máy chủ chỉ trả về tóm tắt hoạt động: nó không tiết lộ biến môi trường, thông tin xác thực, nhãn Docker, điểm gắn kết, lệnh container hoặc payload kiểm tra. Khi Libre WebUI chạy trong container, chi tiết CPU và bộ nhớ cấp máy chủ đến từ Docker Engine khi socket cục bộ của nó khả dụng; các giá trị khác mô tả thời gian chạy của ứng dụng."
+  },
+  "mediaGeneration": {
+    "title": "Tạo phương tiện",
+    "description": "Tạo video, âm thanh, nhạc hoặc giọng nói với nhà cung cấp phương tiện đã kích hoạt.",
+    "image": "Hình ảnh",
+    "video": "Video",
+    "audio": "Âm thanh",
+    "sound": "Âm thanh",
+    "speech": "Giọng nói",
+    "model": "Mô hình",
+    "voice": "Giọng nói hoặc ID giọng nói",
+    "resolution": "Độ phân giải",
+    "aspectRatio": "Tỷ lệ khung hình",
+    "duration": "Thời lượng",
+    "providerDefault": "Mặc định của nhà cung cấp",
+    "generateAudio": "Tạo âm thanh cùng với video khi được hỗ trợ",
+    "prompt": "Lời nhắc",
+    "text": "Văn bản để đọc",
+    "videoPlaceholder": "Mô tả cảnh, chuyển động, góc máy và ánh sáng...",
+    "audioPlaceholder": "Nhập văn bản bạn muốn giọng nói đọc...",
+    "soundPlaceholder": "Mô tả âm thanh, nhạc, bầu không khí hoặc phản hồi bằng giọng nói mà bạn muốn...",
+    "generate": "Tạo",
+    "generating": "Đang tạo… việc này có thể mất vài phút",
+    "success": "Đã tạo phương tiện và lưu vào Imagine",
+    "failed": "Không thể tạo phương tiện",
+    "loadFailed": "Không thể tải nhà cung cấp phương tiện",
+    "noModels": "Không có mô hình {{kind}} nào khả dụng. Kích hoạt nhà cung cấp tương thích và lưu thông tin xác thực của nó trước."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} mục",
+    "empty": "Chưa có phương tiện nào được tạo",
+    "emptyHint": "Tạo hình ảnh, video hoặc đoạn giọng nói và nó sẽ hiển thị tại đây.",
+    "filters": {
+      "all": "Tất cả",
+      "image": "Hình ảnh",
+      "video": "Video",
+      "audio": "Âm thanh"
     }
   }
 }

@@ -60,7 +60,8 @@
       "enterBoth": "Voer zowel gebruikersnaam als wachtwoord in",
       "githubSuccess": "GitHub-aanmelding gelukt!",
       "githubFailed": "GitHub-authenticatie mislukt",
-      "githubVerifyFailed": "Verificatie van GitHub-authenticatie mislukt"
+      "githubVerifyFailed": "Verificatie van GitHub-authenticatie mislukt",
+      "approvalPending": "Uw account wacht op goedkeuring van de beheerder."
     },
     "signup": {
       "title": "Account aanmaken",
@@ -82,7 +83,11 @@
       "tryAgain": "Registratie mislukt. Probeer het opnieuw.",
       "usernameRequired": "Gebruikersnaam en wachtwoord zijn verplicht",
       "passwordMismatch": "Wachtwoorden komen niet overeen",
-      "passwordTooShort": "Wachtwoord moet minimaal 6 tekens bevatten"
+      "passwordTooShort": "Wachtwoord moet minimaal 6 tekens bevatten",
+      "approvalPending": "Registratie ontvangen. Een beheerder moet uw account goedkeuren.",
+      "awaitingApproval": "In afwachting van goedkeuring",
+      "awaitingApprovalDescription": "Uw account is aangemaakt, maar een beheerder moet het activeren voordat u kunt inloggen.",
+      "backToSignIn": "Terug naar inloggen"
     },
     "logout": {
       "button": "Uitloggen",
@@ -105,7 +110,23 @@
     "jwtActive": "JWT-authenticatie actief",
     "jwtDescription": "JWT-authenticatie met GitHub OAuth",
     "github": "GitHub",
-    "provider": "Provider"
+    "provider": "Provider",
+    "tagline": "Uw AI-stack moet u antwoorden.",
+    "selfHosted": "Zelfgehost · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "Lokaal eerst",
+        "body": "Uw gesprekken en bestanden blijven op de machine waarop u dit uitvoert."
+      },
+      "providers": {
+        "title": "Elke provider",
+        "body": "Lokale modellen via Ollama, plus de externe providers die u kiest toe te voegen."
+      },
+      "work": {
+        "title": "Geïsoleerd werk",
+        "body": "Geef een model een sandbox-werkruimte met bestanden, een terminal en een voorvertoning."
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "Admin-account succesvol aangemaakt!",
       "failed": "Kon admin-account niet aanmaken",
       "fillAllFields": "Vul alle velden in",
-      "note": "Dit wordt het primaire beheerdersaccount voor uw Libre WebUI-instantie"
+      "note": "Dit wordt het primaire beheerdersaccount voor uw Libre WebUI-instantie",
+      "approvalUnexpected": "De initiële beheerder kon niet worden geactiveerd. Probeer het opnieuw."
     },
     "encryptionKey": {
       "title": "Bewaar uw encryptiesleutel",
@@ -238,7 +260,8 @@
       "createFirst": "Maak hierboven uw eerste chat",
       "chats": "Chats",
       "renameChat": "Chat hernoemen",
-      "deleteChat": "Chat verwijderen"
+      "deleteChat": "Chat verwijderen",
+      "incognito": "Incognito chat"
     },
     "persona": {
       "applied": "Persona toegepast",
@@ -294,7 +317,9 @@
       "signOut": "Uitloggen",
       "agents": "Agents",
       "work": "Werk",
-      "exploreLabel": "Verkennen"
+      "exploreLabel": "Verkennen",
+      "usageAnalytics": "Providergebruik",
+      "system": "Systeem"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -304,7 +329,9 @@
       "changePicture": "Foto wijzigen",
       "settings": "Instellingen",
       "userManagement": "Gebruikersbeheer",
-      "logout": "Uitloggen"
+      "logout": "Uitloggen",
+      "usageAnalytics": "Providergebruik",
+      "system": "Systeem"
     },
     "avatar": {
       "title": "Profielfoto wijzigen",
@@ -419,7 +446,11 @@
       "modelPullAccess": "Toegang tot modelinstallatie",
       "modelPullAccessDescription": "Sta niet-beheerders toe om nieuwe modellen op te halen en te installeren.",
       "modelPullAccessSaved": "Machtigingen voor modelinstallatie zijn bijgewerkt",
-      "modelPullAccessSaveFailed": "Machtigingen voor modelinstallatie bijwerken mislukt"
+      "modelPullAccessSaveFailed": "Machtigingen voor modelinstallatie bijwerken mislukt",
+      "specializedModels": "Gespecialiseerde modellen",
+      "visionModel": "Visiemodel",
+      "selectVisionModel": "Gebruik het huidige chatmodel",
+      "visionModelDescription": "Wordt automatisch gebruikt wanneer de uitgaande chatcontext afbeeldingen bevat. Kies een model dat afbeeldingsinvoer ondersteunt."
     },
     "systemMessage": {
       "title": "Systeembericht",
@@ -467,7 +498,41 @@
         "removeFailed": "Kon API-sleutel niet verwijderen",
         "enterKey": "Voer een API-sleutel in"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "Providerverbindingen",
+      "providerConnectionsDescription": "Verbind, configureer en inspecteer modelproviders via plug-ins.",
+      "providers": "Providers",
+      "searchProviders": "Providers zoeken",
+      "noProvidersFound": "Geen providers komen overeen met uw zoekopdracht.",
+      "selectProvider": "Selecteer een provider",
+      "selectProviderDescription": "Kies een provider om de verbinding en modelcatalogus te inspecteren.",
+      "apiKeyDescription": "Sla een persoonlijke API-sleutel op voor {{name}}.",
+      "showApiKey": "API-sleutel tonen",
+      "hideApiKey": "API-sleutel verbergen",
+      "configure": "Configureren",
+      "providerSettings": "Providerinstellingen",
+      "status": "Status",
+      "defaultEndpoint": "Standaard eindpunt",
+      "modelCatalog": "Modelcatalogus",
+      "modelCatalogDescription": "Ontdekte en geconfigureerde modellen voor deze provider en de bijbehorende mogelijkheden.",
+      "refreshModels": "Modellen vernieuwen",
+      "noModelsConfigured": "Er zijn geen modellen geconfigureerd voor deze provider.",
+      "modelId": "Model-ID",
+      "capabilities": "Mogelijkheden",
+      "modelCatalogUpdated": "Modelcatalogus bijgewerkt: {{count}} modellen.",
+      "modelCatalogUnchanged": "Modelcatalogus is al up-to-date.",
+      "modelCatalogNeedsApiKey": "Voeg een geldige API-sleutel toe voor deze provider om de live modellenlijst te laden.",
+      "modelCatalogUnavailable": "Kon de modellenlijst van de provider niet laden.",
+      "modelCatalogRefreshFailed": "Vernieuwen van modelcatalogus mislukt",
+      "capability": {
+        "chat": "Chat",
+        "embedding": "Embedding",
+        "image": "Afbeelding",
+        "speech": "Spraak",
+        "transcription": "Transcriptie"
+      },
+      "exportPlugin": "Plugin exporteren",
+      "deletePlugin": "Plugin verwijderen"
     },
     "generation": {
       "title": "Generatieopties",
@@ -503,7 +568,9 @@
       "resetDefaults": "Resetten naar standaard",
       "saveOptions": "Opties opslaan",
       "embeddingSettings": "Embedding-instellingen",
-      "enableEmbeddings": "Document-embeddings inschakelen"
+      "enableEmbeddings": "Document-embeddings inschakelen",
+      "advancedSettings": "Geavanceerde generatie-instellingen",
+      "advancedSettingsDescription": "Sampling, tokenlimieten, context, straffen en stopreeksen"
     },
     "documents": {
       "title": "Documentinstellingen",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "Gebruiker succesvol bijgewerkt",
       "createFailed": "Kon gebruiker niet aanmaken",
       "updateFailed": "Kon gebruiker niet bijwerken"
+    },
+    "approval": {
+      "title": "Openstaande goedkeuringen",
+      "description": "Beoordeel nieuwe registraties voordat u ze toegang geeft tot deze instantie.",
+      "registered": "Geregistreerd",
+      "activate": "Account activeren",
+      "reject": "Registratie afwijzen",
+      "approved": "{{name}} kan nu inloggen.",
+      "failed": "Het account kon niet worden goedgekeurd.",
+      "notification": "{{count}} registratie(s) wachten op uw goedkeuring.",
+      "notificationBadge": "{{count}} openstaande gebruikersgoedkeuringen"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "Variabelen opslaan mislukt",
       "resetDefaults": "Standaardwaarden herstellen",
       "reset": "Variabelen hersteld",
-      "sensitiveSet": "Waarde is ingesteld (voer nieuwe waarde in om te wijzigen)"
+      "sensitiveSet": "Waarde is ingesteld (voer nieuwe waarde in om te wijzigen)",
+      "resetFailed": "Variabelen opnieuw instellen mislukt",
+      "showValue": "Toon {{label}} waarde",
+      "hideValue": "Verberg {{label}} waarde",
+      "connection": "Verbinding",
+      "advanced": "Geavanceerde parameters",
+      "inherited": "Standaardwaarde provider gebruiken",
+      "inheritedValue": "Standaardwaarde provider gebruiken ({{value}})",
+      "enabled": "Ingeschakeld",
+      "disabled": "Uitgeschakeld",
+      "required": "Een waarde is vereist",
+      "fullApiEndpoint": "Volledige API-eindpunt-URL",
+      "endpointHelp": "Voer de volledige aanvraag-URL in, inclusief het bijbehorende operatiepad (bijvoorbeeld /v1/chat/completions), en niet alleen de basis-URL van de provider.",
+      "invalidUrl": "Voer een geldige volledige API-eindpunt-URL in, bijvoorbeeld https://provider.example/v1/chat/completions",
+      "insecureUrl": "API-eindpunten moeten HTTP of HTTPS gebruiken.",
+      "httpWarning": "HTTP versleutelt geen inloggegevens of verkeer. Gebruik dit alleen op een vertrouwd netwerk.",
+      "invalidBaseUrl": "Basis-URL's mogen geen queryreeks of fragment bevatten.",
+      "invalidApiPath": "Moet beginnen met / en geen URL, query, fragment of .. segment bevatten",
+      "tooLong": "Waarde is te lang"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "De interactieve terminal is niet beschikbaar in deze installatie.",
       "blockedByRun": "Het model gebruikt deze container. De terminal opent na de beurt.",
       "taskRunning": "Modelbeurt bezig"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "Beheer",
+    "title": "Providergebruik",
+    "description": "Volg uitgaande API-aanroepen en modelverbruik via de ingeschakelde plugins op deze instantie.",
+    "days": "{{count}} dagen",
+    "refresh": "Gebruik vernieuwen",
+    "loadFailed": "Providergebruik kon niet worden geladen.",
+    "metrics": {
+      "calls": "Aanroepen",
+      "tokens": "Tokens"
+    },
+    "cards": {
+      "calls": "API-aanroepen",
+      "callsDetail": "Over {{count}} actieve gebruiker(s)",
+      "tokens": "Gerapporteerde tokens",
+      "tokensDetail": "Gebruik gerapporteerd op {{count}} aanroep(en)",
+      "success": "Succespercentage",
+      "successDetail": "{{count}} mislukte aanroep(en)",
+      "latency": "Gemiddelde latentie",
+      "latencyDetail": "End-to-end providertijd"
+    },
+    "activity": {
+      "title": "Verbruik over tijd",
+      "callsDescription": "Dagelijkse uitgaande verzoeken naar ingeschakelde plug-ins",
+      "tokensDescription": "Dagelijkse token totalen gerapporteerd door providers",
+      "chartLabel": "Dagelijkse provider {{metric}} grafiek"
+    },
+    "models": {
+      "title": "Modelverbruik",
+      "description": "De modellen met het meeste verkeer in deze periode.",
+      "model": "Model",
+      "success": "Succes",
+      "latency": "Latentie"
+    },
+    "providers": {
+      "title": "Verkeer van ingeschakelde plug-ins"
+    },
+    "capabilities": {
+      "title": "Mogelijkhedenmix",
+      "characters": "{{count}} tekens",
+      "images": "{{count}} afbeeldingen",
+      "jobs": "{{count}} video jobs",
+      "inputs": "{{count}} inputs",
+      "reportedTokens": "{{count}} gerapporteerde tokens"
+    },
+    "empty": {
+      "title": "Nog geen provider-aanroepen",
+      "description": "Aanroepen verschijnen hier nadat een ingeschakelde plug-in chat-, Work-, embedding-, afbeeldings-, spraak-, geluids- of videoverzoeken afhandelt."
+    },
+    "privacyNote": "Gebruik wordt op de server gemeten op de grens van de uitgaande plug-in. Libre WebUI slaat provider, model, timing, status en gerapporteerde tellers op—nooit prompts, antwoorden, endpoints, inloggegevens of foutmeldingen van de provider. Token totalen bevatten alleen aanroepen waarbij de provider gebruiks-metadata retourneerde."
+  },
+  "systemPage": {
+    "eyebrow": "Beheer",
+    "title": "Systeem",
+    "description": "Bewaak de machine en runtime die deze Libre WebUI-instantie hosten.",
+    "updated": "Bijgewerkt {{date}}",
+    "refresh": "Systeeminformatie vernieuwen",
+    "loadFailed": "Systeeminformatie kon niet worden geladen.",
+    "cards": {
+      "uptime": "Host-uptime",
+      "uptimeDetail": "Draait sinds {{date}}",
+      "memory": "Geheugen gebruikt",
+      "memoryDetail": "{{used}} van {{total}}",
+      "freeSpace": "Vrije ruimte",
+      "freeSpaceDetail": "{{label}} · {{total}} totaal",
+      "containers": "Actieve containers",
+      "containersDetail": "{{total}} container(s) bekend bij Docker",
+      "dockerUnavailable": "Docker niet beschikbaar",
+      "unavailable": "Niet beschikbaar"
+    },
+    "host": {
+      "title": "Host & runtime",
+      "description": "Besturingssysteem, processor en Libre WebUI-procesdetails.",
+      "container": "Container-runtime",
+      "native": "Native runtime",
+      "hostname": "Hostnaam",
+      "operatingSystem": "Besturingssysteem",
+      "processor": "Processor",
+      "logicalCpus": "logische CPU's",
+      "loadAverage": "Gemiddelde belasting · 1 / 5 / 15 min",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Proces",
+      "workingDirectory": "Werkmap"
+    },
+    "memory": {
+      "title": "Geheugen",
+      "description": "Zichtbaar systeemgeheugen en geheugengebruik van het applicatieproces.",
+      "usedOf": "{{used}} gebruikt van {{total}}",
+      "free": "{{value}} vrij",
+      "processRss": "Proces RSS",
+      "heapUsed": "V8 heap gebruikt",
+      "heapTotal": "V8 heap totaal",
+      "external": "Extern geheugen"
+    },
+    "storage": {
+      "title": "Opslag",
+      "description": "Beschikbare ruimte voor het runtime-bestandssysteem en persistente applicatiegegevens.",
+      "used": "{{value}} gebruikt",
+      "free": "{{value}} vrij",
+      "empty": "Bestandssysteeminformatie is niet beschikbaar in deze runtime."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Alleen-lezen Docker Engine-status en een beperkte lijst van containers.",
+      "connected": "Verbonden",
+      "unavailable": "Niet beschikbaar",
+      "unavailableDetail": "Docker Engine-diagnoses zijn niet beschikbaar.",
+      "socketStatus": "Lokale socket: {{status}}",
+      "mounted": "gekoppeld",
+      "notMounted": "niet gekoppeld",
+      "running": "Actief",
+      "stopped": "Gestopt",
+      "paused": "Gepauzeerd",
+      "total": "Totaal",
+      "version": "Versie",
+      "host": "Host",
+      "architecture": "Architectuur",
+      "cpus": "CPU's",
+      "memory": "Geheugen",
+      "container": "Container",
+      "image": "Image",
+      "state": "Status",
+      "created": "Aangemaakt",
+      "empty": "Docker is verbonden en er zijn momenteel geen containers weergegeven."
+    },
+    "network": {
+      "title": "Netwerk",
+      "description": "Voor de runtime zichtbare interfaces, adressen en Linux-verkeerstellers.",
+      "internal": "intern",
+      "empty": "Er zijn geen netwerkinterfaces zichtbaar voor de applicatieruntime."
+    },
+    "securityNote": "Deze pagina is beperkt tot beheerders. De server retourneert alleen operationele samenvattingen: het stelt geen omgevingsvariabelen, inloggegevens, Docker-labels, mounts, containercommando's of inspect-payloads bloot. Wanneer Libre WebUI in een container draait, komen host-level CPU- en geheugendetails van Docker Engine wanneer de lokale socket beschikbaar is; andere waarden beschrijven de applicatieruntime."
+  },
+  "mediaGeneration": {
+    "title": "Media genereren",
+    "description": "Maak video, geluid, muziek of spraak met een geactiveerde mediaprovider.",
+    "image": "Afbeelding",
+    "video": "Video",
+    "audio": "Audio",
+    "sound": "Geluid",
+    "speech": "Spraak",
+    "model": "Model",
+    "voice": "Stem of stem-ID",
+    "resolution": "Resolutie",
+    "aspectRatio": "Beeldverhouding",
+    "duration": "Duur",
+    "providerDefault": "Provider standaard",
+    "generateAudio": "Genereer audio bij de video indien ondersteund",
+    "prompt": "Prompt",
+    "text": "Tekst om uit te spreken",
+    "videoPlaceholder": "Beschrijf de scène, beweging, camera en belichting...",
+    "audioPlaceholder": "Voer de tekst in die de stem moet uitspreken...",
+    "soundPlaceholder": "Beschrijf het geluid, de muziek, de sfeer of het gesproken antwoord dat je wilt...",
+    "generate": "Genereren",
+    "generating": "Genereren… dit kan enkele minuten duren",
+    "success": "Media gegenereerd en opgeslagen in Imagine",
+    "failed": "Media genereren mislukt",
+    "loadFailed": "Laden van mediaproviders mislukt",
+    "noModels": "Er zijn geen {{kind}} modellen beschikbaar. Activeer eerst een compatibele provider en sla de inloggegevens op."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} items",
+    "empty": "Nog geen gegenereerde media",
+    "emptyHint": "Genereer een afbeelding, video of stemfragment en deze verschijnt hier.",
+    "filters": {
+      "all": "Alle",
+      "image": "Afbeeldingen",
+      "video": "Video's",
+      "audio": "Audio"
     }
   }
 }

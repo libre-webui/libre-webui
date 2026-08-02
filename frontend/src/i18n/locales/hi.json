@@ -60,7 +60,8 @@
       "enterBoth": "कृपया उपयोगकर्ता नाम और पासवर्ड दोनों दर्ज करें",
       "githubSuccess": "GitHub लॉगिन सफल!",
       "githubFailed": "GitHub प्रमाणीकरण विफल",
-      "githubVerifyFailed": "GitHub प्रमाणीकरण सत्यापित करने में विफल"
+      "githubVerifyFailed": "GitHub प्रमाणीकरण सत्यापित करने में विफल",
+      "approvalPending": "आपका खाता व्यवस्थापक की मंज़ूरी का इंतज़ार कर रहा है।"
     },
     "signup": {
       "title": "खाता बनाएं",
@@ -82,7 +83,11 @@
       "tryAgain": "साइन अप विफल। कृपया पुनः प्रयास करें।",
       "usernameRequired": "उपयोगकर्ता नाम और पासवर्ड आवश्यक हैं",
       "passwordMismatch": "पासवर्ड मेल नहीं खाते",
-      "passwordTooShort": "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए"
+      "passwordTooShort": "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए",
+      "approvalPending": "पंजीकरण प्राप्त हुआ। किसी व्यवस्थापक को आपका खाता मंज़ूर करना होगा।",
+      "awaitingApproval": "मंज़ूरी का इंतज़ार",
+      "awaitingApprovalDescription": "आपका खाता बन गया है, लेकिन साइन इन करने से पहले किसी व्यवस्थापक को इसे सक्रिय करना होगा।",
+      "backToSignIn": "साइन इन पर वापस जाएँ"
     },
     "logout": {
       "button": "लॉग आउट",
@@ -105,7 +110,23 @@
     "jwtActive": "JWT प्रमाणीकरण सक्रिय",
     "jwtDescription": "GitHub OAuth के साथ JWT प्रमाणीकरण",
     "github": "GitHub",
-    "provider": "प्रदाता"
+    "provider": "प्रदाता",
+    "tagline": "आपका AI स्टैक आपको जवाब देना चाहिए।",
+    "selfHosted": "स्व-होस्टेड · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "पहले स्थानीय",
+        "body": "आपकी बातचीत और फ़ाइलें उस मशीन पर रहती हैं जिस पर आप इसे चलाते हैं।"
+      },
+      "providers": {
+        "title": "कोई भी प्रदाता",
+        "body": "Ollama के माध्यम से स्थानीय मॉडल, साथ ही वे रिमोट प्रदाता जिन्हें आप जोड़ना चुनते हैं।"
+      },
+      "work": {
+        "title": "पृथक कार्य",
+        "body": "किसी मॉडल को फ़ाइलों, टर्मिनल और पूर्वावलोकन के साथ एक सैंडबॉक्स्ड वर्कस्पेस दें।"
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "एडमिन खाता सफलतापूर्वक बनाया गया!",
       "failed": "एडमिन खाता बनाने में विफल",
       "fillAllFields": "कृपया सभी फ़ील्ड भरें",
-      "note": "यह आपके Libre WebUI इंस्टेंस का प्राथमिक एडमिनिस्ट्रेटर खाता होगा"
+      "note": "यह आपके Libre WebUI इंस्टेंस का प्राथमिक एडमिनिस्ट्रेटर खाता होगा",
+      "approvalUnexpected": "प्रारंभिक व्यवस्थापक को सक्रिय नहीं किया जा सका। कृपया पुनः प्रयास करें।"
     },
     "encryptionKey": {
       "title": "अपनी एन्क्रिप्शन कुंजी सहेजें",
@@ -238,7 +260,8 @@
       "createFirst": "ऊपर अपनी पहली चैट बनाएं",
       "chats": "चैट्स",
       "renameChat": "चैट का नाम बदलें",
-      "deleteChat": "चैट हटाएं"
+      "deleteChat": "चैट हटाएं",
+      "incognito": "गुप्त चैट"
     },
     "persona": {
       "applied": "पर्सोना लागू किया गया",
@@ -294,7 +317,9 @@
       "signOut": "साइन आउट",
       "agents": "एजेंट",
       "work": "काम",
-      "exploreLabel": "एक्सप्लोर"
+      "exploreLabel": "एक्सप्लोर",
+      "usageAnalytics": "प्रदाता उपयोग",
+      "system": "सिस्टम"
     },
     "toggleSize": "साइडबार का आकार बदलें",
     "expandSidebar": "साइडबार विस्तारित करें"
@@ -304,7 +329,9 @@
       "changePicture": "तस्वीर बदलें",
       "settings": "सेटिंग्स",
       "userManagement": "उपयोगकर्ता प्रबंधन",
-      "logout": "लॉग आउट"
+      "logout": "लॉग आउट",
+      "usageAnalytics": "प्रदाता उपयोग",
+      "system": "सिस्टम"
     },
     "avatar": {
       "title": "प्रोफ़ाइल चित्र बदलें",
@@ -419,7 +446,11 @@
       "modelPullAccess": "मॉडल इंस्टॉल एक्सेस",
       "modelPullAccessDescription": "गैर-एडमिन उपयोगकर्ताओं को नए मॉडल pull और install करने की अनुमति दें।",
       "modelPullAccessSaved": "मॉडल इंस्टॉल अनुमतियां अपडेट कर दी गई हैं",
-      "modelPullAccessSaveFailed": "मॉडल इंस्टॉल अनुमतियां अपडेट करने में विफल"
+      "modelPullAccessSaveFailed": "मॉडल इंस्टॉल अनुमतियां अपडेट करने में विफल",
+      "specializedModels": "विशेष मॉडल",
+      "visionModel": "विज़न मॉडल",
+      "selectVisionModel": "वर्तमान चैट मॉडल का उपयोग करें",
+      "visionModelDescription": "जब भी आउटगोइंग चैट संदर्भ में चित्र हों तो इसका स्वचालित रूप से उपयोग किया जाता है। एक ऐसा मॉडल चुनें जो चित्र इनपुट का समर्थन करता हो।"
     },
     "systemMessage": {
       "title": "सिस्टम संदेश",
@@ -467,7 +498,41 @@
         "removeFailed": "API कुंजी हटाने में विफल",
         "enterKey": "कृपया API कुंजी दर्ज करें"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "प्रदाता कनेक्शन",
+      "providerConnectionsDescription": "प्लगइन्स के माध्यम से मॉडल प्रदाताओं को कनेक्ट, कॉन्फ़िगर और निरीक्षण करें।",
+      "providers": "प्रदाता",
+      "searchProviders": "प्रदाता खोजें",
+      "noProvidersFound": "आपकी खोज से कोई प्रदाता मेल नहीं खाता।",
+      "selectProvider": "एक प्रदाता चुनें",
+      "selectProviderDescription": "इसके कनेक्शन और मॉडल कैटलॉग का निरीक्षण करने के लिए एक प्रदाता चुनें।",
+      "apiKeyDescription": "{{name}} के लिए एक व्यक्तिगत API कुंजी संग्रहीत करें।",
+      "showApiKey": "API कुंजी दिखाएँ",
+      "hideApiKey": "API कुंजी छिपाएँ",
+      "configure": "कॉन्फ़िगर करें",
+      "providerSettings": "प्रदाता सेटिंग्स",
+      "status": "स्थिति",
+      "defaultEndpoint": "डिफ़ॉल्ट एंडपॉइंट",
+      "modelCatalog": "मॉडल कैटलॉग",
+      "modelCatalogDescription": "इस प्रदाता और उसकी क्षमताओं के लिए खोजे गए और कॉन्फ़िगर किए गए मॉडल।",
+      "refreshModels": "मॉडल रिफ़्रेश करें",
+      "noModelsConfigured": "इस प्रदाता के लिए कोई मॉडल कॉन्फ़िगर नहीं किए गए हैं।",
+      "modelId": "मॉडल ID",
+      "capabilities": "क्षमताएँ",
+      "modelCatalogUpdated": "मॉडल कैटलॉग अपडेट किया गया: {{count}} मॉडल।",
+      "modelCatalogUnchanged": "मॉडल कैटलॉग पहले से ही अप-टू-डेट है।",
+      "modelCatalogNeedsApiKey": "इस प्रदाता की लाइव मॉडल सूची लोड करने के लिए एक मान्य API कुंजी जोड़ें।",
+      "modelCatalogUnavailable": "प्रदाता की मॉडल सूची लोड नहीं की जा सकी।",
+      "modelCatalogRefreshFailed": "मॉडल कैटलॉग रिफ्रेश करने में विफल",
+      "capability": {
+        "chat": "चैट",
+        "embedding": "एम्बेडिंग",
+        "image": "छवि",
+        "speech": "वाक्",
+        "transcription": "प्रतिलेखन"
+      },
+      "exportPlugin": "प्लगइन निर्यात करें",
+      "deletePlugin": "प्लगइन हटाएँ"
     },
     "generation": {
       "title": "जनरेशन विकल्प",
@@ -503,7 +568,9 @@
       "resetDefaults": "डिफ़ॉल्ट पर रीसेट करें",
       "saveOptions": "विकल्प सहेजें",
       "embeddingSettings": "एम्बेडिंग सेटिंग्स",
-      "enableEmbeddings": "दस्तावेज़ एम्बेडिंग सक्षम करें"
+      "enableEmbeddings": "दस्तावेज़ एम्बेडिंग सक्षम करें",
+      "advancedSettings": "उन्नत जनरेशन सेटिंग्स",
+      "advancedSettingsDescription": "सैंपलिंग, टोकन सीमाएँ, संदर्भ, पेनल्टी और स्टॉप अनुक्रम"
     },
     "documents": {
       "title": "दस्तावेज़ सेटिंग्स",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "उपयोगकर्ता सफलतापूर्वक अपडेट किया गया",
       "createFailed": "उपयोगकर्ता बनाने में विफल",
       "updateFailed": "उपयोगकर्ता अपडेट करने में विफल"
+    },
+    "approval": {
+      "title": "लंबित अनुमोदन",
+      "description": "इस इंस्टेंस में शामिल करने से पहले नई पंजीकरण समीक्षा करें।",
+      "registered": "पंजीकृत",
+      "activate": "खाता सक्रिय करें",
+      "reject": "पंजीकरण अस्वीकार करें",
+      "approved": "{{name}} अब साइन इन कर सकते हैं।",
+      "failed": "खाता अनुमोदित नहीं किया जा सका।",
+      "notification": "{{count}} पंजीकरण आपके अनुमोदन की प्रतीक्षा कर रहे हैं।",
+      "notificationBadge": "{{count}} लंबित उपयोगकर्ता अनुमोदन"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "वेरिएबल सहेजने में विफल",
       "resetDefaults": "डिफ़ॉल्ट पर रीसेट",
       "reset": "वेरिएबल रीसेट हो गए",
-      "sensitiveSet": "मान सेट है (बदलने के लिए नया मान दर्ज करें)"
+      "sensitiveSet": "मान सेट है (बदलने के लिए नया मान दर्ज करें)",
+      "resetFailed": "वेरिएबल रीसेट करने में विफल",
+      "showValue": "{{label}} मान दिखाएँ",
+      "hideValue": "{{label}} मान छिपाएँ",
+      "connection": "कनेक्शन",
+      "advanced": "उन्नत पैरामीटर",
+      "inherited": "प्रदाता डिफ़ॉल्ट का उपयोग करें",
+      "inheritedValue": "प्रदाता डिफ़ॉल्ट का उपयोग करें ({{value}})",
+      "enabled": "सक्षम",
+      "disabled": "अक्षम",
+      "required": "एक मान आवश्यक है",
+      "fullApiEndpoint": "पूर्ण API एंडपॉइंट URL",
+      "endpointHelp": "पूर्ण अनुरोध URL दर्ज करें, इसके ऑपरेशन पथ (उदाहरण के लिए, /v1/chat/completions) सहित, केवल प्रदाता बेस URL नहीं।",
+      "invalidUrl": "एक मान्य पूर्ण API एंडपॉइंट URL दर्ज करें, उदाहरण के लिए https://provider.example/v1/chat/completions",
+      "insecureUrl": "API एंडपॉइंट को HTTP या HTTPS का उपयोग करना चाहिए।",
+      "httpWarning": "HTTP क्रेडेंशियल या ट्रैफ़िक को एन्क्रिप्ट नहीं करता है। इसका उपयोग केवल विश्वसनीय नेटवर्क पर करें।",
+      "invalidBaseUrl": "बेस URL में क्वेरी स्ट्रिंग या फ़्रैगमेंट नहीं हो सकता।",
+      "invalidApiPath": "/ से शुरू होना चाहिए और इसमें कोई URL, क्वेरी, फ़्रैगमेंट या .. सेगमेंट नहीं होना चाहिए",
+      "tooLong": "मान बहुत लंबा है"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "इस परिनियोजन में इंटरैक्टिव टर्मिनल उपलब्ध नहीं है।",
       "blockedByRun": "मॉडल इस कंटेनर का उपयोग कर रहा है। बारी समाप्त होने पर टर्मिनल खुलेगा।",
       "taskRunning": "मॉडल की बारी चल रही है"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "प्रशासन",
+    "title": "प्रदाता उपयोग",
+    "description": "इस इंस्टेंस पर सक्षम प्लगइन्स में आउटबाउंड API कॉल और मॉडल खपत का अनुसरण करें।",
+    "days": "{{count}} दिन",
+    "refresh": "उपयोग रिफ्रेश करें",
+    "loadFailed": "प्रदाता उपयोग लोड नहीं किया जा सका।",
+    "metrics": {
+      "calls": "कॉल",
+      "tokens": "टोकन"
+    },
+    "cards": {
+      "calls": "API कॉल",
+      "callsDetail": "{{count}} सक्रिय उपयोगकर्ता(ओं) में",
+      "tokens": "रिपोर्ट किए गए टोकन",
+      "tokensDetail": "{{count}} कॉल पर रिपोर्ट किया गया उपयोग",
+      "success": "सफलता दर",
+      "successDetail": "{{count}} विफल कॉल",
+      "latency": "औसत विलंबता",
+      "latencyDetail": "एंड-टू-एंड प्रदाता समय"
+    },
+    "activity": {
+      "title": "समय के साथ खपत",
+      "callsDescription": "सक्षम प्लगइन्स के लिए दैनिक आउटबाउंड अनुरोध",
+      "tokensDescription": "प्रदाताओं द्वारा रिपोर्ट किए गए दैनिक टोकन कुल",
+      "chartLabel": "दैनिक प्रदाता {{metric}} चार्ट"
+    },
+    "models": {
+      "title": "मॉडल खपत",
+      "description": "इस अवधि में सबसे अधिक ट्रैफ़िक ले जाने वाले मॉडल।",
+      "model": "मॉडल",
+      "success": "सफलता",
+      "latency": "विलंबता"
+    },
+    "providers": {
+      "title": "सक्षम प्लगइन ट्रैफ़िक"
+    },
+    "capabilities": {
+      "title": "क्षमता मिश्रण",
+      "characters": "{{count}} अक्षर",
+      "images": "{{count}} छवियाँ",
+      "jobs": "{{count}} वीडियो कार्य",
+      "inputs": "{{count}} इनपुट",
+      "reportedTokens": "{{count}} रिपोर्ट किए गए टोकन"
+    },
+    "empty": {
+      "title": "अभी तक कोई प्रदाता कॉल नहीं",
+      "description": "सक्षम प्लगइन द्वारा चैट, वर्क, एम्बेडिंग, छवि, भाषण, ध्वनि या वीडियो अनुरोधों को संभालने के बाद कॉल यहां दिखाई देंगे।"
+    },
+    "privacyNote": "उपयोग को आउटबाउंड प्लगइन सीमा पर सर्वर पर मापा जाता है। Libre WebUI प्रदाता, मॉडल, समय, स्थिति और रिपोर्ट किए गए काउंटरों को संग्रहीत करता है—कभी भी प्रॉम्प्ट, प्रतिक्रिया, एंडपॉइंट, क्रेडेंशियल या प्रदाता त्रुटि निकाय नहीं। टोकन कुल में केवल वे कॉल शामिल होते हैं जहां प्रदाता ने उपयोग मेटाडेटा लौटाया।"
+  },
+  "systemPage": {
+    "eyebrow": "प्रशासन",
+    "title": "सिस्टम",
+    "description": "इस Libre WebUI इंस्टेंस को होस्ट करने वाली मशीन और रनटाइम की निगरानी करें।",
+    "updated": "अपडेट किया गया {{date}}",
+    "refresh": "सिस्टम जानकारी रिफ्रेश करें",
+    "loadFailed": "सिस्टम जानकारी लोड नहीं की जा सकी।",
+    "cards": {
+      "uptime": "होस्ट अपटाइम",
+      "uptimeDetail": "{{date}} से चल रहा है",
+      "memory": "उपयोग की गई मेमोरी",
+      "memoryDetail": "{{total}} में से {{used}}",
+      "freeSpace": "खाली जगह",
+      "freeSpaceDetail": "{{label}} · कुल {{total}}",
+      "containers": "चल रहे कंटेनर",
+      "containersDetail": "Docker को ज्ञात {{total}} कंटेनर",
+      "dockerUnavailable": "Docker अनुपलब्ध",
+      "unavailable": "अनुपलब्ध"
+    },
+    "host": {
+      "title": "होस्ट और रनटाइम",
+      "description": "ऑपरेटिंग सिस्टम, प्रोसेसर और Libre WebUI प्रोसेस विवरण।",
+      "container": "कंटेनर रनटाइम",
+      "native": "नेटिव रनटाइम",
+      "hostname": "होस्टनेम",
+      "operatingSystem": "ऑपरेटिंग सिस्टम",
+      "processor": "प्रोसेसर",
+      "logicalCpus": "लॉजिकल CPU",
+      "loadAverage": "लोड औसत · 1 / 5 / 15 मिनट",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "प्रोसेस",
+      "workingDirectory": "वर्किंग डायरेक्टरी"
+    },
+    "memory": {
+      "title": "मेमोरी",
+      "description": "रनटाइम-दृश्य सिस्टम मेमोरी और एप्लिकेशन प्रोसेस उपयोग।",
+      "usedOf": "{{total}} में से {{used}} उपयोगित",
+      "free": "{{value}} खाली",
+      "processRss": "प्रोसेस RSS",
+      "heapUsed": "V8 हीप उपयोगित",
+      "heapTotal": "V8 हीप कुल",
+      "external": "बाहरी मेमोरी"
+    },
+    "storage": {
+      "title": "स्टोरेज",
+      "description": "रनटाइम फाइलसिस्टम और स्थायी एप्लिकेशन डेटा के लिए उपलब्ध स्थान।",
+      "used": "{{value}} उपयोगित",
+      "free": "{{value}} खाली",
+      "empty": "इस रनटाइम में फाइलसिस्टम जानकारी अनुपलब्ध है।"
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "केवल-पठनीय Docker Engine स्थिति और कंटेनरों की एक संक्षिप्त सूची।",
+      "connected": "कनेक्टेड",
+      "unavailable": "अनुपलब्ध",
+      "unavailableDetail": "Docker Engine डायग्नोस्टिक्स अनुपलब्ध हैं।",
+      "socketStatus": "लोकल सॉकेट: {{status}}",
+      "mounted": "माउंटेड",
+      "notMounted": "माउंट नहीं किया गया",
+      "running": "चल रहा है",
+      "stopped": "रुका हुआ",
+      "paused": "रोका हुआ",
+      "total": "कुल",
+      "version": "संस्करण",
+      "host": "होस्ट",
+      "architecture": "आर्किटेक्चर",
+      "cpus": "CPU",
+      "memory": "मेमोरी",
+      "container": "कंटेनर",
+      "image": "इमेज",
+      "state": "स्थिति",
+      "created": "बनाया गया",
+      "empty": "Docker कनेक्ट है और वर्तमान में कोई कंटेनर सूचीबद्ध नहीं हैं।"
+    },
+    "network": {
+      "title": "नेटवर्क",
+      "description": "रनटाइम-दृश्यमान इंटरफेस, पते, और Linux ट्रैफ़िक काउंटर।",
+      "internal": "आंतरिक",
+      "empty": "एप्लिकेशन रनटाइम को कोई नेटवर्क इंटरफेस दृश्यमान नहीं है।"
+    },
+    "securityNote": "यह पृष्ठ व्यवस्थापकों तक सीमित है। सर्वर केवल संचालन सारांश लौटाता है: यह एनवायरनमेंट वेरिएबल, क्रेडेंशियल, Docker लेबल, माउंट, कंटेनर कमांड या इंस्पेक्ट पेलोड का खुलासा नहीं करता है। जब Libre WebUI कंटेनर में चलता है, तब होस्ट-स्तरीय CPU और मेमोरी विवरण Docker Engine से आते हैं जब इसका लोकल सॉकेट उपलब्ध होता है; अन्य मान एप्लिकेशन रनटाइम का वर्णन करते हैं।"
+  },
+  "mediaGeneration": {
+    "title": "मीडिया जनरेट करें",
+    "description": "सक्रिय मीडिया प्रदाता के साथ वीडियो, ध्वनि, संगीत या भाषण बनाएं।",
+    "image": "इमेज",
+    "video": "वीडियो",
+    "audio": "ऑडियो",
+    "sound": "ध्वनि",
+    "speech": "भाषण",
+    "model": "मॉडल",
+    "voice": "आवाज़ या आवाज़ ID",
+    "resolution": "रिज़ॉल्यूशन",
+    "aspectRatio": "पक्ष अनुपात",
+    "duration": "अवधि",
+    "providerDefault": "प्रदाता डिफ़ॉल्ट",
+    "generateAudio": "समर्थित होने पर वीडियो के साथ ऑडियो जनरेट करें",
+    "prompt": "प्रॉम्प्ट",
+    "text": "बोलने के लिए टेक्स्ट",
+    "videoPlaceholder": "दृश्य, गति, कैमरा और लाइटिंग का वर्णन करें...",
+    "audioPlaceholder": "वह टेक्स्ट दर्ज करें जिसे आप आवाज़ द्वारा बोला जाना चाहते हैं...",
+    "soundPlaceholder": "वह ध्वनि, संगीत, वातावरण या बोली गई प्रतिक्रिया का वर्णन करें जिसे आप चाहते हैं...",
+    "generate": "जनरेट करें",
+    "generating": "जनरेट कर रहे हैं… इसमें कई मिनट लग सकते हैं",
+    "success": "मीडिया जनरेट हो गया और Imagine में सहेजा गया",
+    "failed": "मीडिया जनरेट करने में विफल",
+    "loadFailed": "मीडिया प्रदाताओं को लोड करने में विफल",
+    "noModels": "कोई {{kind}} मॉडल उपलब्ध नहीं हैं। पहले एक संगत प्रदाता सक्रिय करें और उसका क्रेडेंशियल सहेजें।"
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} आइटम",
+    "empty": "अभी तक कोई जनरेट की गई मीडिया नहीं",
+    "emptyHint": "इमेज, वीडियो या वॉइस क्लिप जनरेट करें और यह यहां दिखाई देगा।",
+    "filters": {
+      "all": "सभी",
+      "image": "इमेज",
+      "video": "वीडियो",
+      "audio": "ऑडियो"
     }
   }
 }

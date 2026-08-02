@@ -60,7 +60,8 @@
       "enterBoth": "Zadejte uživatelské jméno a heslo",
       "githubSuccess": "Přihlášení přes GitHub úspěšné!",
       "githubFailed": "Ověření GitHub se nezdařilo",
-      "githubVerifyFailed": "Nepodařilo se ověřit GitHub autentizaci"
+      "githubVerifyFailed": "Nepodařilo se ověřit GitHub autentizaci",
+      "approvalPending": "Váš účet čeká na schválení správcem."
     },
     "signup": {
       "title": "Vytvořit účet",
@@ -82,7 +83,11 @@
       "tryAgain": "Registrace se nezdařila. Zkuste to znovu.",
       "usernameRequired": "Uživatelské jméno a heslo jsou povinné",
       "passwordMismatch": "Hesla se neshodují",
-      "passwordTooShort": "Heslo musí mít alespoň 6 znaků"
+      "passwordTooShort": "Heslo musí mít alespoň 6 znaků",
+      "approvalPending": "Registrace přijata. Správce musí schválit váš účet.",
+      "awaitingApproval": "Čeká na schválení",
+      "awaitingApprovalDescription": "Váš účet byl vytvořen, ale správce ho musí aktivovat, než se budete moci přihlásit.",
+      "backToSignIn": "Zpět na přihlášení"
     },
     "logout": {
       "button": "Odhlásit se",
@@ -105,7 +110,23 @@
     "jwtActive": "JWT autentizace aktivní",
     "jwtDescription": "JWT autentizace s GitHub OAuth",
     "github": "GitHub",
-    "provider": "Poskytovatel"
+    "provider": "Poskytovatel",
+    "tagline": "Váš AI stack by měl odpovídat vám.",
+    "selfHosted": "Vlastní hosting · Apache 2.0",
+    "highlights": {
+      "local": {
+        "title": "Lokální priorita",
+        "body": "Vaše konverzace a soubory zůstávají na počítači, na kterém to spouštíte."
+      },
+      "providers": {
+        "title": "Jakýkoliv poskytovatel",
+        "body": "Lokální modely přes Ollama a vzdálení poskytovatelé, které si přidáte."
+      },
+      "work": {
+        "title": "Izolovaná práce",
+        "body": "Dejte modelu izolovaný pracovní prostor se soubory, terminálem a náhledem."
+      }
+    }
   },
   "setup": {
     "welcome": {
@@ -140,7 +161,8 @@
       "success": "Účet správce úspěšně vytvořen!",
       "failed": "Nepodařilo se vytvořit účet správce",
       "fillAllFields": "Vyplňte všechna pole",
-      "note": "Toto bude hlavní účet správce pro vaši instanci Libre WebUI"
+      "note": "Toto bude hlavní účet správce pro vaši instanci Libre WebUI",
+      "approvalUnexpected": "Počátečního správce nebylo možné aktivovat. Zkuste to znovu."
     },
     "encryptionKey": {
       "title": "Uložte šifrovací klíč",
@@ -238,7 +260,8 @@
       "createFirst": "Vytvořte svůj první chat výše",
       "chats": "Chaty",
       "renameChat": "Přejmenovat chat",
-      "deleteChat": "Smazat chat"
+      "deleteChat": "Smazat chat",
+      "incognito": "Anonymní chat"
     },
     "persona": {
       "applied": "Persona použita",
@@ -294,7 +317,9 @@
       "signOut": "Odhlásit se",
       "agents": "Agenti",
       "work": "Práce",
-      "exploreLabel": "Prozkoumat"
+      "exploreLabel": "Prozkoumat",
+      "usageAnalytics": "Využití poskytovatelů",
+      "system": "Systém"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -304,7 +329,9 @@
       "changePicture": "Změnit obrázek",
       "settings": "Nastavení",
       "userManagement": "Správa uživatelů",
-      "logout": "Odhlásit se"
+      "logout": "Odhlásit se",
+      "usageAnalytics": "Využití poskytovatelů",
+      "system": "Systém"
     },
     "avatar": {
       "title": "Změnit profilový obrázek",
@@ -419,7 +446,11 @@
       "modelPullAccess": "Přístup k instalaci modelů",
       "modelPullAccessDescription": "Povolit neadmin uživatelům stahovat a instalovat nové modely.",
       "modelPullAccessSaved": "Oprávnění k instalaci modelů byla aktualizována",
-      "modelPullAccessSaveFailed": "Nepodařilo se aktualizovat oprávnění k instalaci modelů"
+      "modelPullAccessSaveFailed": "Nepodařilo se aktualizovat oprávnění k instalaci modelů",
+      "specializedModels": "Specializované modely",
+      "visionModel": "Vizní model",
+      "selectVisionModel": "Použít aktuální chatový model",
+      "visionModelDescription": "Používá se automaticky, kdykoli odchozí kontext chatu obsahuje obrázky. Vyberte model, který podporuje vstup obrázků."
     },
     "systemMessage": {
       "title": "Systémová zpráva",
@@ -467,7 +498,41 @@
         "removeFailed": "Nepodařilo se odstranit API klíč",
         "enterKey": "Zadejte API klíč"
       },
-      "variables": "Variables"
+      "variables": "Variables",
+      "providerConnections": "Připojení poskytovatelů",
+      "providerConnectionsDescription": "Připojte, nakonfigurujte a prozkoumejte poskytovatele modelů pomocí zásuvných modulů.",
+      "providers": "Poskytovatelé",
+      "searchProviders": "Hledat poskytovatele",
+      "noProvidersFound": "Žádní poskytovatelé neodpovídají vašemu hledání.",
+      "selectProvider": "Vybrat poskytovatele",
+      "selectProviderDescription": "Vyberte poskytovatele pro zobrazení jeho připojení a katalogu modelů.",
+      "apiKeyDescription": "Uložit osobní API klíč pro {{name}}.",
+      "showApiKey": "Zobrazit API klíč",
+      "hideApiKey": "Skrýt API klíč",
+      "configure": "Konfigurovat",
+      "providerSettings": "Nastavení poskytovatele",
+      "status": "Stav",
+      "defaultEndpoint": "Výchozí endpoint",
+      "modelCatalog": "Katalog modelů",
+      "modelCatalogDescription": "Objevené a nakonfigurované modely pro tohoto poskytovatele a jejich schopnosti.",
+      "refreshModels": "Obnovit modely",
+      "noModelsConfigured": "Pro tohoto poskytovatele nejsou nakonfigurovány žádné modely.",
+      "modelId": "ID modelu",
+      "capabilities": "Schopnosti",
+      "modelCatalogUpdated": "Katalog modelů aktualizován: {{count}} modelů.",
+      "modelCatalogUnchanged": "Katalog modelů je již aktuální.",
+      "modelCatalogNeedsApiKey": "Přidejte platný API klíč pro tohoto poskytovatele, aby se načetl jeho živý seznam modelů.",
+      "modelCatalogUnavailable": "Nelze načíst seznam modelů poskytovatele.",
+      "modelCatalogRefreshFailed": "Nepodařilo se obnovit katalog modelů",
+      "capability": {
+        "chat": "Chat",
+        "embedding": "Embedding",
+        "image": "Obrázek",
+        "speech": "Řeč",
+        "transcription": "Přepis"
+      },
+      "exportPlugin": "Exportovat zásuvný modul",
+      "deletePlugin": "Smazat zásuvný modul"
     },
     "generation": {
       "title": "Možnosti generování",
@@ -503,7 +568,9 @@
       "resetDefaults": "Obnovit výchozí",
       "saveOptions": "Uložit možnosti",
       "embeddingSettings": "Nastavení embeddingů",
-      "enableEmbeddings": "Povolit embeddingy dokumentů"
+      "enableEmbeddings": "Povolit embeddingy dokumentů",
+      "advancedSettings": "Pokročilá nastavení generování",
+      "advancedSettingsDescription": "Vzorkování, limity tokenů, kontext, penalizace a stop sekvence"
     },
     "documents": {
       "title": "Nastavení dokumentů",
@@ -1085,6 +1152,17 @@
       "updateSuccess": "Uživatel úspěšně aktualizován",
       "createFailed": "Nepodařilo se vytvořit uživatele",
       "updateFailed": "Nepodařilo se aktualizovat uživatele"
+    },
+    "approval": {
+      "title": "Nevyřízená schválení",
+      "description": "Zkontrolujte nové registrace před jejich povolením do této instance.",
+      "registered": "Registrováno",
+      "activate": "Aktivovat účet",
+      "reject": "Odmítnout registraci",
+      "approved": "{{name}} se nyní může přihlásit.",
+      "failed": "Účet nebylo možné schválit.",
+      "notification": "{{count}} registrací čeká na vaše schválení.",
+      "notificationBadge": "{{count}} nevyřízených schválení uživatelů"
     }
   },
   "chatHistory": {
@@ -1295,7 +1373,25 @@
       "saveFailed": "Nepodařilo se uložit proměnné",
       "resetDefaults": "Obnovit výchozí",
       "reset": "Proměnné obnoveny na výchozí",
-      "sensitiveSet": "Hodnota je nastavena (zadejte novou pro změnu)"
+      "sensitiveSet": "Hodnota je nastavena (zadejte novou pro změnu)",
+      "resetFailed": "Nepodařilo se resetovat proměnné",
+      "showValue": "Zobrazit hodnotu {{label}}",
+      "hideValue": "Skrýt hodnotu {{label}}",
+      "connection": "Připojení",
+      "advanced": "Pokročilé parametry",
+      "inherited": "Použít výchozí poskytovatele",
+      "inheritedValue": "Použít výchozí poskytovatele ({{value}})",
+      "enabled": "Povoleno",
+      "disabled": "Zakázáno",
+      "required": "Hodnota je vyžadována",
+      "fullApiEndpoint": "Úplná URL API endpointu",
+      "endpointHelp": "Zadejte úplnou URL požadavku včetně cesty operace (například /v1/chat/completions), nikoliv pouze základní URL poskytovatele.",
+      "invalidUrl": "Zadejte platnou úplnou URL API endpointu, například https://provider.example/v1/chat/completions",
+      "insecureUrl": "API endpointy musí používat HTTP nebo HTTPS.",
+      "httpWarning": "HTTP nešifruje přihlašovací údaje ani provoz. Používejte jej pouze v důvěryhodné síti.",
+      "invalidBaseUrl": "Základní URL nesmí obsahovat řetězec dotazu ani fragment.",
+      "invalidApiPath": "Musí začínat znakem / a nesmí obsahovat URL, dotaz, fragment ani segment ..",
+      "tooLong": "Hodnota je příliš dlouhá"
     }
   },
   "huggingface": {
@@ -1642,6 +1738,178 @@
       "unavailable": "Interaktivní terminál není v tomto nasazení dostupný.",
       "blockedByRun": "Model používá tento kontejner. Terminál se otevře po dokončení tahu.",
       "taskRunning": "Probíhá tah modelu"
+    }
+  },
+  "usageAnalytics": {
+    "eyebrow": "Správa",
+    "title": "Využití poskytovatelů",
+    "description": "Sledujte odchozí API volání a spotřebu modelů napříč povolenými zásuvnými moduly v této instanci.",
+    "days": "{{count}} dní",
+    "refresh": "Obnovit využití",
+    "loadFailed": "Využití poskytovatelů nelze načíst.",
+    "metrics": {
+      "calls": "Volání",
+      "tokens": "Tokeny"
+    },
+    "cards": {
+      "calls": "API volání",
+      "callsDetail": "Napříč {{count}} aktivními uživateli",
+      "tokens": "Nahlášené tokeny",
+      "tokensDetail": "Využití nahlášené na {{count}} voláních",
+      "success": "Úspěšnost",
+      "successDetail": "{{count}} neúspěšných volání",
+      "latency": "Průměrná latence",
+      "latencyDetail": "Celková doba odpovědi poskytovatele"
+    },
+    "activity": {
+      "title": "Spotřeba v čase",
+      "callsDescription": "Denní odchozí požadavky na povolené zásuvné moduly",
+      "tokensDescription": "Denní součty tokenů nahlášené poskytovateli",
+      "chartLabel": "Graf denního {{metric}} poskytovatele"
+    },
+    "models": {
+      "title": "Spotřeba modelů",
+      "description": "Modely s největším provozem v tomto období.",
+      "model": "Model",
+      "success": "Úspěšnost",
+      "latency": "Latence"
+    },
+    "providers": {
+      "title": "Provoz povolených zásuvných modulů"
+    },
+    "capabilities": {
+      "title": "Mix schopností",
+      "characters": "{{count}} znaků",
+      "images": "{{count}} obrázků",
+      "jobs": "{{count}} video úloh",
+      "inputs": "{{count}} vstupů",
+      "reportedTokens": "{{count}} nahlášených tokenů"
+    },
+    "empty": {
+      "title": "Zatím žádná volání poskytovatelů",
+      "description": "Volání se zde zobrazí, jakmile povolený zásuvný modul zpracuje požadavky na chat, práci, embedding, obrázek, řeč, zvuk nebo video."
+    },
+    "privacyNote": "Využití se měří na serveru na hranici odchozího zásuvného modulu. Libre WebUI ukládá poskytovatele, model, časování, stav a nahlášené čítače — nikdy výzvy, odpovědi, endpointy, přihlašovací údaje ani těla chyb poskytovatele. Součty tokenů zahrnují pouze volání, kde poskytovatel vrátil metadata o využití."
+  },
+  "systemPage": {
+    "eyebrow": "Správa",
+    "title": "Systém",
+    "description": "Monitorujte stroj a běhové prostředí hostující tuto instanci Libre WebUI.",
+    "updated": "Aktualizováno {{date}}",
+    "refresh": "Obnovit systémové informace",
+    "loadFailed": "Systémové informace nelze načíst.",
+    "cards": {
+      "uptime": "Doba běhu hostitele",
+      "uptimeDetail": "Běží od {{date}}",
+      "memory": "Využitá paměť",
+      "memoryDetail": "{{used}} z {{total}}",
+      "freeSpace": "Volné místo",
+      "freeSpaceDetail": "{{label}} · {{total}} celkem",
+      "containers": "Běžící kontejnery",
+      "containersDetail": "{{total}} kontejnerů známých Dockeru",
+      "dockerUnavailable": "Docker nedostupný",
+      "unavailable": "Nedostupné"
+    },
+    "host": {
+      "title": "Hostitel a běhové prostředí",
+      "description": "Operační systém, procesor a detaily procesu Libre WebUI.",
+      "container": "Kontejnerové běhové prostředí",
+      "native": "Nativní běhové prostředí",
+      "hostname": "Název hostitele",
+      "operatingSystem": "Operační systém",
+      "processor": "Procesor",
+      "logicalCpus": "logických CPU",
+      "loadAverage": "Průměrné zatížení · 1 / 5 / 15 min",
+      "libreVersion": "Libre WebUI",
+      "nodeVersion": "Node.js",
+      "process": "Proces",
+      "workingDirectory": "Pracovní adresář"
+    },
+    "memory": {
+      "title": "Paměť",
+      "description": "Systémová paměť viditelná běhovým prostředím a využití procesu aplikace.",
+      "usedOf": "{{used}} využito z {{total}}",
+      "free": "{{value}} volných",
+      "processRss": "RSS procesu",
+      "heapUsed": "V8 halda využito",
+      "heapTotal": "V8 halda celkem",
+      "external": "Externí paměť"
+    },
+    "storage": {
+      "title": "Úložiště",
+      "description": "Dostupné místo pro běhový souborový systém a trvalá data aplikace.",
+      "used": "{{value}} využito",
+      "free": "{{value}} volných",
+      "empty": "Informace o souborovém systému nejsou v tomto běhovém prostředí dostupné."
+    },
+    "docker": {
+      "title": "Docker",
+      "description": "Stav Docker Engine pouze pro čtení a zkrácený seznam kontejnerů.",
+      "connected": "Připojeno",
+      "unavailable": "Nedostupné",
+      "unavailableDetail": "Diagnostika Docker Engine není dostupná.",
+      "socketStatus": "Lokální socket: {{status}}",
+      "mounted": "připojeno",
+      "notMounted": "nepřipojeno",
+      "running": "Běží",
+      "stopped": "Zastaveno",
+      "paused": "Pozastaveno",
+      "total": "Celkem",
+      "version": "Verze",
+      "host": "Hostitel",
+      "architecture": "Architektura",
+      "cpus": "CPU",
+      "memory": "Paměť",
+      "container": "Kontejner",
+      "image": "Obraz",
+      "state": "Stav",
+      "created": "Vytvořeno",
+      "empty": "Docker je připojen a nejsou aktuálně vypsány žádné kontejnery."
+    },
+    "network": {
+      "title": "Síť",
+      "description": "Rozhraní, adresy a linuxové čítače provozu viditelné běhovým prostředím.",
+      "internal": "interní",
+      "empty": "Běhovému prostředí aplikace nejsou viditelná žádná síťová rozhraní."
+    },
+    "securityNote": "Tato stránka je přístupná pouze správcům. Server vrací pouze provozní shrnutí: neodhaluje proměnné prostředí, přihlašovací údaje, Docker štítky, připojené svazky, příkazy kontejnerů ani inspect payloady. Když běží Libre WebUI v kontejneru, detaily o CPU a paměti hostitele pocházejí z Docker Engine, pokud je dostupný lokální socket; ostatní hodnoty popisují běhové prostředí aplikace."
+  },
+  "mediaGeneration": {
+    "title": "Generovat média",
+    "description": "Vytvořte video, zvuk, hudbu nebo řeč s aktivovaným poskytovatelem médií.",
+    "image": "Obrázek",
+    "video": "Video",
+    "audio": "Audio",
+    "sound": "Zvuk",
+    "speech": "Řeč",
+    "model": "Model",
+    "voice": "Hlas nebo ID hlasu",
+    "resolution": "Rozlišení",
+    "aspectRatio": "Poměr stran",
+    "duration": "Délka",
+    "providerDefault": "Výchozí poskytovatele",
+    "generateAudio": "Generovat zvuk spolu s videem, pokud je podporováno",
+    "prompt": "Výzva",
+    "text": "Text k přečtení",
+    "videoPlaceholder": "Popište scénu, pohyb, kameru a osvětlení...",
+    "audioPlaceholder": "Zadejte text, který má hlas přečíst...",
+    "soundPlaceholder": "Popište zvuk, hudbu, atmosféru nebo mluvenou odpověď, kterou chcete...",
+    "generate": "Generovat",
+    "generating": "Generování… to může trvat několik minut",
+    "success": "Média vygenerována a uložena do Imagine",
+    "failed": "Nepodařilo se vygenerovat média",
+    "loadFailed": "Nepodařilo se načíst poskytovatele médií",
+    "noModels": "Nejsou dostupné žádné modely typu {{kind}}. Nejprve aktivujte kompatibilního poskytovatele a uložte jeho přihlašovací údaje."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} položek",
+    "empty": "Zatím žádná vygenerovaná média",
+    "emptyHint": "Vygenerujte obrázek, video nebo hlasový klip a zobrazí se zde.",
+    "filters": {
+      "all": "Vše",
+      "image": "Obrázky",
+      "video": "Videa",
+      "audio": "Audio"
     }
   }
 }
