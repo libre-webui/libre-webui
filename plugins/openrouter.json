@@ -348,6 +348,95 @@
     "z-ai/glm-5.2",
     "z-ai/glm-5v-turbo"
   ],
+  "capabilities": {
+    "image": {
+      "endpoint": "https://openrouter.ai/api/v1/images",
+      "models_endpoint": "https://openrouter.ai/api/v1/images/models",
+      "model_map": [
+        "openai/gpt-image-2",
+        "google/gemini-3.1-flash-image",
+        "black-forest-labs/flux.2-pro",
+        "recraft/recraft-v4"
+      ],
+      "config": {
+        "sizes": ["1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3"],
+        "default_size": "1:1",
+        "size_parameter": "aspect_ratio",
+        "size_label": "Aspect ratio",
+        "supports_n": false,
+        "max_n": 1,
+        "supports_response_format": false,
+        "omit_quality_when_empty": true,
+        "max_prompt_length": 32000
+      }
+    },
+    "tts": {
+      "endpoint": "https://openrouter.ai/api/v1/audio/speech",
+      "models_endpoint": "https://openrouter.ai/api/v1/models?output_modalities=speech",
+      "model_map": [
+        "fish-audio/s1",
+        "fish-audio/s2-pro",
+        "microsoft/mai-voice-2-flash",
+        "qwen/qwen-audio-3.0-tts-flash"
+      ],
+      "config": {
+        "voices": ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+        "default_voice": "alloy",
+        "formats": ["mp3", "pcm"],
+        "default_format": "mp3",
+        "max_characters": 4096,
+        "supports_streaming": false,
+        "allows_custom_voice": true
+      }
+    },
+    "audio": {
+      "endpoint": "https://openrouter.ai/api/v1/chat/completions",
+      "models_endpoint": "https://openrouter.ai/api/v1/models?output_modalities=audio",
+      "model_map": [
+        "openai/gpt-audio",
+        "openai/gpt-audio-mini",
+        "google/lyria-3-clip-preview",
+        "google/lyria-3-pro-preview"
+      ],
+      "config": {
+        "voices": ["alloy", "echo", "fable", "onyx", "nova", "shimmer"],
+        "default_voice": "alloy",
+        "formats": ["wav", "mp3", "flac", "opus", "pcm16"],
+        "default_format": "wav",
+        "max_prompt_length": 32000
+      }
+    },
+    "video": {
+      "endpoint": "https://openrouter.ai/api/v1/videos",
+      "models_endpoint": "https://openrouter.ai/api/v1/videos/models",
+      "model_map": [
+        "runway/gen-4.5",
+        "x-ai/grok-imagine-video-1.5",
+        "alibaba/happyhorse-1.1",
+        "kwaivgi/kling-v3.0-pro"
+      ],
+      "config": {
+        "resolutions": ["480p", "720p", "1080p", "1K", "2K", "4K"],
+        "aspect_ratios": [
+          "16:9",
+          "9:16",
+          "1:1",
+          "4:3",
+          "3:4",
+          "3:2",
+          "2:3",
+          "21:9",
+          "9:21"
+        ],
+        "durations": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15],
+        "supports_audio": true,
+        "default_generate_audio": true,
+        "max_prompt_length": 32000,
+        "poll_interval_ms": 30000,
+        "timeout_ms": 900000
+      }
+    }
+  },
   "variables": [
     {
       "name": "endpoint",

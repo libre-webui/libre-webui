@@ -50,6 +50,7 @@ interface ImagePanelSelection {
   qualities: string[];
   styles: string[];
   maxPromptLength: number | null;
+  sizeLabel: string;
 }
 
 function getImagePanelSelection(
@@ -63,7 +64,9 @@ function getImagePanelSelection(
   const qualities =
     plugin.config?.qualities && plugin.config.qualities.length > 0
       ? plugin.config.qualities
-      : [preferred.quality || plugin.config?.default_quality || 'standard'];
+      : plugin.config?.omit_quality_when_empty
+        ? []
+        : [preferred.quality || plugin.config?.default_quality || 'standard'];
   const styles =
     plugin.config?.styles && plugin.config.styles.length > 0
       ? plugin.config.styles
@@ -78,12 +81,15 @@ function getImagePanelSelection(
       plugin.config?.default_size,
       '1024x1024'
     ),
-    quality: resolveImageGenOption(
-      qualities,
-      preferred.quality,
-      plugin.config?.default_quality,
-      'standard'
-    ),
+    quality:
+      qualities.length > 0
+        ? resolveImageGenOption(
+            qualities,
+            preferred.quality,
+            plugin.config?.default_quality,
+            'standard'
+          )
+        : '',
     style:
       styles.length > 0
         ? resolveImageGenOption(
@@ -97,6 +103,7 @@ function getImagePanelSelection(
     qualities,
     styles,
     maxPromptLength: plugin.config?.max_prompt_length ?? null,
+    sizeLabel: plugin.config?.size_label || '',
   };
 }
 
@@ -136,6 +143,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
   ]);
   const [availableStyles, setAvailableStyles] = useState<string[]>([]);
   const [maxPromptLength, setMaxPromptLength] = useState<number | null>(null);
+  const [sizeLabel, setSizeLabel] = useState('');
   const titleId = React.useId();
 
   const applyPluginSelection = useCallback(
@@ -150,6 +158,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
       setAvailableQualities(selection.qualities);
       setAvailableStyles(selection.styles);
       setMaxPromptLength(selection.maxPromptLength);
+      setSizeLabel(selection.sizeLabel);
     },
     []
   );
@@ -449,7 +458,7 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
               <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t('imageGeneration.size')}
+                    {sizeLabel || t('imageGeneration.size')}
                   </label>
                   <select
                     value={size}
@@ -470,28 +479,30 @@ export const ImageGenerationPanel: React.FC<ImageGenerationPanelProps> = ({
                   </select>
                 </div>
 
-                <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
-                    {t('imageGeneration.quality')}
-                  </label>
-                  <select
-                    value={quality}
-                    onChange={e => setQuality(e.target.value)}
-                    className={cn(
-                      'w-full rounded-xl px-3 py-2.5 text-sm',
-                      'bg-white/70 dark:bg-white/[0.035]',
-                      'border border-gray-200/80 dark:border-white/10',
-                      'text-gray-900 dark:text-gray-100',
-                      'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
-                    )}
-                  >
-                    {availableQualities.map(q => (
-                      <option key={q} value={q}>
-                        {q.charAt(0).toUpperCase() + q.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {availableQualities.length > 0 && (
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                      {t('imageGeneration.quality')}
+                    </label>
+                    <select
+                      value={quality}
+                      onChange={e => setQuality(e.target.value)}
+                      className={cn(
+                        'w-full rounded-xl px-3 py-2.5 text-sm',
+                        'bg-white/70 dark:bg-white/[0.035]',
+                        'border border-gray-200/80 dark:border-white/10',
+                        'text-gray-900 dark:text-gray-100',
+                        'focus:outline-none focus:ring-2 focus:ring-primary-500/20'
+                      )}
+                    >
+                      {availableQualities.map(q => (
+                        <option key={q} value={q}>
+                          {q.charAt(0).toUpperCase() + q.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Prompt */}

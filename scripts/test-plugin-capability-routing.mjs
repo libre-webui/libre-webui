@@ -358,7 +358,7 @@ test('capability requests reject redirects without reaching the target', async (
   assert.equal(targetRequests, 0);
 });
 
-test('chat, Work, discovery, and ComfyUI clients disable redirects', () => {
+test('chat, Work, discovery, and generated media clients disable redirects', () => {
   const pluginServiceSource = fs.readFileSync(
     path.join(repoRoot, 'backend', 'src', 'services', 'pluginService.ts'),
     'utf8'
@@ -383,8 +383,28 @@ test('chat, Work, discovery, and ComfyUI clients disable redirects', () => {
     ),
     'utf8'
   );
+  const videoServiceSource = fs.readFileSync(
+    path.join(
+      repoRoot,
+      'backend',
+      'src',
+      'services',
+      'pluginVideoGenerationService.ts'
+    ),
+    'utf8'
+  );
+  const audioServiceSource = fs.readFileSync(
+    path.join(
+      repoRoot,
+      'backend',
+      'src',
+      'services',
+      'pluginAudioGenerationService.ts'
+    ),
+    'utf8'
+  );
 
-  assert.equal((pluginServiceSource.match(/maxRedirects: 0/g) || []).length, 2);
+  assert.equal((pluginServiceSource.match(/maxRedirects: 0/g) || []).length, 3);
   assert.match(
     pluginServiceSource,
     /fetch\(processedEndpoint,[\s\S]*?redirect: 'error'/
@@ -392,4 +412,6 @@ test('chat, Work, discovery, and ComfyUI clients disable redirects', () => {
   assert.match(workServiceSource, /timeout: 300_000,[\s\S]*?maxRedirects: 0/);
   assert.match(workServiceSource, /fetch\(endpoint,[\s\S]*?redirect: 'error'/);
   assert.equal((imageServiceSource.match(/maxRedirects: 0/g) || []).length, 5);
+  assert.equal((audioServiceSource.match(/maxRedirects: 0/g) || []).length, 1);
+  assert.equal((videoServiceSource.match(/maxRedirects: 0/g) || []).length, 3);
 });

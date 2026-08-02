@@ -25,7 +25,8 @@ const MIN_ANALYTICS_DAYS = 1;
 const MAX_ANALYTICS_DAYS = 365;
 const RETENTION_DAYS = 400;
 
-export type PluginUsageCapability = 'chat' | 'embedding' | 'image' | 'tts';
+export type PluginUsageCapability =
+  'chat' | 'embedding' | 'image' | 'tts' | 'audio' | 'video';
 export type PluginUsageStatus = 'success' | 'error' | 'cancelled';
 
 export interface ProviderTokenUsage {
@@ -45,7 +46,7 @@ export interface PluginUsageEventInput {
   tokens?: ProviderTokenUsage;
   inputUnits?: number;
   outputUnits?: number;
-  unitKind?: 'characters' | 'images' | 'inputs';
+  unitKind?: 'characters' | 'images' | 'inputs' | 'jobs' | 'seconds' | 'bytes';
   createdAt?: number;
 }
 

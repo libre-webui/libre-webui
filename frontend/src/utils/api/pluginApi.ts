@@ -74,7 +74,7 @@ export interface PluginUsageAnalytics {
     averageLatencyMs: number;
   }>;
   capabilities: Array<{
-    capability: 'chat' | 'embedding' | 'image' | 'tts';
+    capability: 'chat' | 'embedding' | 'image' | 'tts' | 'audio' | 'video';
     calls: number;
     tokens: number;
     inputUnits: number;

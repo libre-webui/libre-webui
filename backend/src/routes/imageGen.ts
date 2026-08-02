@@ -70,6 +70,10 @@ router.use(authenticate);
  */
 router.get('/models', async (req: AuthenticatedRequest, res) => {
   try {
+    await pluginService.refreshStaleCapabilityModels(
+      'image',
+      getRequestUserId(req)
+    );
     const models = pluginService.getAvailableImageGenModels(
       getRequestUserId(req)
     );
@@ -125,6 +129,10 @@ router.get('/config/:pluginId', async (req: AuthenticatedRequest, res) => {
  */
 router.get('/plugins', async (req: AuthenticatedRequest, res) => {
   try {
+    await pluginService.refreshStaleCapabilityModels(
+      'image',
+      getRequestUserId(req)
+    );
     const plugins = pluginService
       .getPluginsByCapability('image', getRequestUserId(req))
       .filter(plugin => plugin.active);

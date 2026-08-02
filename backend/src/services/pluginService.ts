@@ -21,6 +21,7 @@ import { createHash } from 'crypto';
 import sanitize from 'sanitize-filename';
 import axios from 'axios';
 import {
+  AudioGenConfig,
   EmbeddingModel,
   OllamaEmbeddingsResponse,
   Plugin,
@@ -32,14 +33,17 @@ import {
   ImageGenConfig,
   ImageGenResponse,
   PluginType,
+  VideoGenConfig,
 } from '../types/index.js';
 import pluginCredentialsService from './pluginCredentialsService.js';
 import pluginVariablesService from './pluginVariablesService.js';
 import pluginActivationService from './pluginActivationService.js';
+import { PluginAudioGenerationService } from './pluginAudioGenerationService.js';
 import { PluginCapabilityRegistryService } from './pluginCapabilityRegistryService.js';
 import { PluginEmbeddingService } from './pluginEmbeddingService.js';
 import { PluginImageGenerationService } from './pluginImageGenerationService.js';
 import { PluginTTSService } from './pluginTTSService.js';
+import { PluginVideoGenerationService } from './pluginVideoGenerationService.js';
 import {
   applyPluginDefinitionPolicy,
   buildPluginChatPayload,
@@ -106,6 +110,7 @@ const modelDiscoveryRefreshDeadlineMs = (): number =>
   readPositiveIntEnv('PLUGIN_MODEL_DISCOVERY_REFRESH_DEADLINE_MS', 3000);
 
 const MODEL_DISCOVERY_REQUEST_TIMEOUT_MS = 5000;
+type DiscoverableMediaCapability = 'image' | 'tts' | 'audio' | 'video';
 
 /**
  * Why a refresh did or did not change the catalog. Reported to the caller so a
@@ -153,6 +158,7 @@ function getPluginRoutingAuthProjection(plugin: Plugin): string {
       return {
         name,
         endpoint: capability.endpoint ?? null,
+        models_endpoint: capability.models_endpoint ?? null,
         endpoint_variable:
           config.endpoint_variable ?? capability.endpoint_variable ?? null,
       };
@@ -207,9 +213,18 @@ export class PluginService {
     string,
     Promise<PluginModelDiscoveryResult>
   >();
+  private discoveredCapabilityModelsCache = new Map<string, string[] | null>();
+  private discoveredCapabilityModelsUpdatedAt = new Map<string, number>();
+  private capabilityDiscoveryAttemptedAt = new Map<string, number>();
+  private inflightCapabilityDiscovery = new Map<
+    string,
+    Promise<PluginModelDiscoveryResult>
+  >();
   private embeddingService: PluginEmbeddingService;
   private ttsService: PluginTTSService;
   private imageGenerationService: PluginImageGenerationService;
+  private audioGenerationService: PluginAudioGenerationService;
+  private videoGenerationService: PluginVideoGenerationService;
   private capabilityRegistryService: PluginCapabilityRegistryService;
   private bundledRoutingProjectionCache = new Map<string, string | null>();
 
@@ -255,6 +270,24 @@ export class PluginService {
       validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
       recordUsage: usage => pluginUsageService.record(usage),
     });
+    this.audioGenerationService = new PluginAudioGenerationService({
+      getAllPlugins: userId => this.getActivePlugins(userId),
+      getPlugin: (id, userId) => this.getPlugin(id, userId),
+      getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
+      getPluginVariables: (plugin, userId) =>
+        this.getPluginVariables(plugin, userId),
+      validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
+      recordUsage: usage => pluginUsageService.record(usage),
+    });
+    this.videoGenerationService = new PluginVideoGenerationService({
+      getAllPlugins: userId => this.getActivePlugins(userId),
+      getPlugin: (id, userId) => this.getPlugin(id, userId),
+      getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
+      getPluginVariables: (plugin, userId) =>
+        this.getPluginVariables(plugin, userId),
+      validateEndpointUrl: endpoint => this.validateEndpointUrl(endpoint),
+      recordUsage: usage => pluginUsageService.record(usage),
+    });
     this.capabilityRegistryService = new PluginCapabilityRegistryService({
       getAllPlugins: userId => this.getActivePlugins(userId),
       getApiKey: (plugin, userId) => this.getApiKey(plugin, userId),
@@ -263,6 +296,114 @@ export class PluginService {
 
   private discoveredModelsCacheKey(pluginId: string, userId: string): string {
     return `${userId}:${pluginId}`;
+  }
+
+  private discoveredCapabilityModelsCacheKey(
+    pluginId: string,
+    capability: DiscoverableMediaCapability,
+    userId: string
+  ): string {
+    return `${userId}:${pluginId}:${capability}`;
+  }
+
+  private getDiscoveredCapabilityModels(
+    pluginId: string,
+    capability: DiscoverableMediaCapability,
+    userId?: string
+  ): string[] | undefined {
+    const effectiveUserId = userId || 'default';
+    const cacheKey = this.discoveredCapabilityModelsCacheKey(
+      pluginId,
+      capability,
+      effectiveUserId
+    );
+    if (this.discoveredCapabilityModelsCache.has(cacheKey)) {
+      return this.discoveredCapabilityModelsCache.get(cacheKey) || undefined;
+    }
+
+    const db = getDatabaseSafe();
+    if (!db) {
+      this.discoveredCapabilityModelsCache.set(cacheKey, null);
+      return undefined;
+    }
+
+    try {
+      const row = db
+        .prepare(
+          `SELECT models_json, updated_at
+           FROM plugin_discovered_capability_models
+           WHERE user_id = ? AND plugin_id = ? AND capability = ?`
+        )
+        .get(effectiveUserId, pluginId, capability) as
+        { models_json: string; updated_at: number } | undefined;
+      if (!row) {
+        this.discoveredCapabilityModelsCache.set(cacheKey, null);
+        return undefined;
+      }
+
+      const parsed = JSON.parse(row.models_json) as unknown;
+      const models = Array.isArray(parsed)
+        ? Array.from(
+            new Set(
+              parsed.filter(
+                (model): model is string =>
+                  typeof model === 'string' && model.length > 0
+              )
+            )
+          )
+        : [];
+      if (models.length === 0) {
+        this.discoveredCapabilityModelsCache.set(cacheKey, null);
+        return undefined;
+      }
+      this.discoveredCapabilityModelsCache.set(cacheKey, models);
+      this.discoveredCapabilityModelsUpdatedAt.set(cacheKey, row.updated_at);
+      return models;
+    } catch (error) {
+      logger.warn(
+        'Failed to read discovered %s models for plugin %s:',
+        capability,
+        pluginId,
+        error
+      );
+      this.discoveredCapabilityModelsCache.set(cacheKey, null);
+      return undefined;
+    }
+  }
+
+  private storeDiscoveredCapabilityModels(
+    pluginId: string,
+    capability: DiscoverableMediaCapability,
+    models: string[],
+    userId?: string
+  ): void {
+    const effectiveUserId = userId || 'default';
+    const uniqueModels = Array.from(new Set(models));
+    const cacheKey = this.discoveredCapabilityModelsCacheKey(
+      pluginId,
+      capability,
+      effectiveUserId
+    );
+    const discoveredAt = Date.now();
+    this.discoveredCapabilityModelsCache.set(cacheKey, uniqueModels);
+    this.discoveredCapabilityModelsUpdatedAt.set(cacheKey, discoveredAt);
+
+    const db = getDatabaseSafe();
+    if (!db) return;
+    db.prepare(
+      `INSERT INTO plugin_discovered_capability_models
+         (user_id, plugin_id, capability, models_json, updated_at)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(user_id, plugin_id, capability) DO UPDATE SET
+         models_json = excluded.models_json,
+         updated_at = excluded.updated_at`
+    ).run(
+      effectiveUserId,
+      pluginId,
+      capability,
+      JSON.stringify(uniqueModels),
+      discoveredAt
+    );
   }
 
   private getDiscoveredModels(
@@ -363,6 +504,7 @@ export class PluginService {
   }
 
   clearDiscoveredModels(pluginId: string, userId?: string): void {
+    this.clearDiscoveredCapabilityModels(pluginId, userId);
     const db = getDatabaseSafe();
     if (userId) {
       const cacheKey = this.discoveredModelsCacheKey(pluginId, userId);
@@ -405,6 +547,49 @@ export class PluginService {
     }
   }
 
+  private clearDiscoveredCapabilityModels(
+    pluginId: string,
+    userId?: string
+  ): void {
+    const db = getDatabaseSafe();
+    if (userId) {
+      for (const capability of ['image', 'tts', 'audio', 'video'] as const) {
+        const key = this.discoveredCapabilityModelsCacheKey(
+          pluginId,
+          capability,
+          userId
+        );
+        this.discoveredCapabilityModelsCache.delete(key);
+        this.discoveredCapabilityModelsUpdatedAt.delete(key);
+        this.capabilityDiscoveryAttemptedAt.delete(key);
+      }
+      if (db) {
+        db.prepare(
+          `DELETE FROM plugin_discovered_capability_models
+           WHERE user_id = ? AND plugin_id = ?`
+        ).run(userId, pluginId);
+      }
+      return;
+    }
+
+    for (const key of this.discoveredCapabilityModelsCache.keys()) {
+      if (
+        (['image', 'tts', 'audio', 'video'] as const).some(capability =>
+          key.endsWith(`:${pluginId}:${capability}`)
+        )
+      ) {
+        this.discoveredCapabilityModelsCache.delete(key);
+        this.discoveredCapabilityModelsUpdatedAt.delete(key);
+        this.capabilityDiscoveryAttemptedAt.delete(key);
+      }
+    }
+    if (db) {
+      db.prepare(
+        'DELETE FROM plugin_discovered_capability_models WHERE plugin_id = ?'
+      ).run(pluginId);
+    }
+  }
+
   private applyDiscoveredModels(plugin: Plugin, userId?: string): Plugin {
     if (
       !this.canUseStoredConnectionOverrides(userId) &&
@@ -418,7 +603,30 @@ export class PluginService {
       return plugin;
     }
     const models = this.getDiscoveredModels(plugin.id, userId);
-    return models ? { ...plugin, model_map: [...models] } : plugin;
+    const capabilities = plugin.capabilities
+      ? { ...plugin.capabilities }
+      : undefined;
+    if (capabilities) {
+      for (const capability of ['image', 'tts', 'audio', 'video'] as const) {
+        const definition = capabilities[capability];
+        const discovered = this.getDiscoveredCapabilityModels(
+          plugin.id,
+          capability,
+          userId
+        );
+        if (definition && discovered) {
+          capabilities[capability] = {
+            ...definition,
+            model_map: [...discovered],
+          };
+        }
+      }
+    }
+    return {
+      ...plugin,
+      ...(models ? { model_map: [...models] } : {}),
+      ...(capabilities ? { capabilities } : {}),
+    };
   }
 
   private ensurePluginsDirectory(): void {
@@ -853,6 +1061,177 @@ export class PluginService {
     ]);
   }
 
+  async discoverCapabilityModels(
+    pluginId: string,
+    capability: DiscoverableMediaCapability,
+    userId?: string
+  ): Promise<PluginModelDiscoveryResult> {
+    const cacheKey = this.discoveredCapabilityModelsCacheKey(
+      pluginId,
+      capability,
+      userId || 'default'
+    );
+    const inflight = this.inflightCapabilityDiscovery.get(cacheKey);
+    if (inflight) return inflight;
+
+    const attempt = this.runCapabilityModelDiscovery(
+      pluginId,
+      capability,
+      userId
+    ).finally(() => this.inflightCapabilityDiscovery.delete(cacheKey));
+    this.inflightCapabilityDiscovery.set(cacheKey, attempt);
+    return attempt;
+  }
+
+  private isCapabilityModelDiscoveryDue(
+    pluginId: string,
+    capability: DiscoverableMediaCapability,
+    userId?: string
+  ): boolean {
+    const cacheKey = this.discoveredCapabilityModelsCacheKey(
+      pluginId,
+      capability,
+      userId || 'default'
+    );
+    const attemptedAt = this.capabilityDiscoveryAttemptedAt.get(cacheKey);
+    if (attemptedAt && Date.now() - attemptedAt < modelDiscoveryRetryMs()) {
+      return false;
+    }
+    const models = this.getDiscoveredCapabilityModels(
+      pluginId,
+      capability,
+      userId
+    );
+    const updatedAt = this.discoveredCapabilityModelsUpdatedAt.get(cacheKey);
+    return (
+      !models || !updatedAt || Date.now() - updatedAt >= modelDiscoveryTtlMs()
+    );
+  }
+
+  async refreshStaleCapabilityModels(
+    capability: DiscoverableMediaCapability,
+    userId?: string
+  ): Promise<void> {
+    const due = this.getActivePlugins(userId).filter(plugin => {
+      const definition = plugin.capabilities?.[capability];
+      return (
+        Boolean(definition?.models_endpoint) &&
+        this.isCapabilityModelDiscoveryDue(plugin.id, capability, userId)
+      );
+    });
+    if (due.length === 0) return;
+
+    const refreshes = Promise.all(
+      due.map(plugin =>
+        this.discoverCapabilityModels(plugin.id, capability, userId).catch(
+          () => undefined
+        )
+      )
+    );
+    await Promise.race([
+      refreshes,
+      new Promise(resolve =>
+        setTimeout(resolve, modelDiscoveryRefreshDeadlineMs()).unref?.()
+      ),
+    ]);
+  }
+
+  private async runCapabilityModelDiscovery(
+    pluginId: string,
+    capability: DiscoverableMediaCapability,
+    userId?: string
+  ): Promise<PluginModelDiscoveryResult> {
+    const plugin = this.getPlugin(pluginId, userId);
+    const definition = plugin?.capabilities?.[capability];
+    if (!plugin || !definition) {
+      return {
+        models: [],
+        outcome: 'unavailable',
+        reason: `Plugin has no ${capability} capability`,
+      };
+    }
+    if (!definition.models_endpoint) {
+      return { models: definition.model_map, outcome: 'unchanged' };
+    }
+
+    const cacheKey = this.discoveredCapabilityModelsCacheKey(
+      pluginId,
+      capability,
+      userId || 'default'
+    );
+    this.capabilityDiscoveryAttemptedAt.set(cacheKey, Date.now());
+    const modelsEndpoint = definition.models_endpoint;
+    assertSafePluginEndpoint(
+      modelsEndpoint,
+      `${capability} model discovery endpoint`
+    );
+
+    const apiKey = this.getApiKey(plugin, userId);
+    if (pluginRequiresApiKey(plugin) && !apiKey) {
+      return {
+        models: definition.model_map,
+        outcome: 'missing_credentials',
+        reason: this.describeMissingCredential(plugin),
+      };
+    }
+
+    try {
+      const response = await axios.get(modelsEndpoint, {
+        headers: buildPluginModelDiscoveryHeaders(
+          plugin,
+          apiKey,
+          modelsEndpoint
+        ),
+        timeout: MODEL_DISCOVERY_REQUEST_TIMEOUT_MS,
+        maxRedirects: 0,
+      });
+      const data = response.data?.data;
+      const models = Array.isArray(data)
+        ? Array.from(
+            new Set(
+              data
+                .map((entry: { id?: unknown }) => entry?.id)
+                .filter(
+                  (id: unknown): id is string =>
+                    typeof id === 'string' && id.length > 0
+                )
+            )
+          )
+        : [];
+      if (models.length === 0) {
+        return {
+          models: definition.model_map,
+          outcome: 'unavailable',
+          reason: 'The provider returned no models',
+        };
+      }
+
+      const previous = definition.model_map;
+      this.storeDiscoveredCapabilityModels(
+        pluginId,
+        capability,
+        models,
+        userId
+      );
+      return {
+        models,
+        outcome:
+          JSON.stringify(previous) === JSON.stringify(models)
+            ? 'unchanged'
+            : 'updated',
+      };
+    } catch (error) {
+      const reason = describeModelDiscoveryFailure(error);
+      logger.debug(
+        '[Plugin] %s model discovery unavailable for %s (%s)',
+        capability,
+        pluginId,
+        reason
+      );
+      return { models: definition.model_map, outcome: 'unavailable', reason };
+    }
+  }
+
   /**
    * Say why no key was usable. An environment key is deliberately ignored for a
    * provider whose definition was installed into the writable plugins directory,
@@ -1169,7 +1548,18 @@ export class PluginService {
 
     // Wait for discovery so the activation response and the UI's first reload
     // observe the same user-scoped model catalog.
-    await this.discoverModels(id, userId).catch(() => {});
+    await Promise.all([
+      this.discoverModels(id, userId).catch(() => []),
+      ...(['image', 'tts', 'audio', 'video'] as const)
+        .filter(
+          capability => plugin.capabilities?.[capability]?.models_endpoint
+        )
+        .map(capability =>
+          this.discoverCapabilityModels(id, capability, userId).catch(
+            () => undefined
+          )
+        ),
+    ]);
 
     return true;
   }
@@ -1821,6 +2211,66 @@ export class PluginService {
   ): Plugin[] {
     return this.capabilityRegistryService.getPluginsByCapability(
       capabilityType,
+      userId
+    );
+  }
+
+  getAvailableAudioGenModels(userId?: string): Array<{
+    model: string;
+    plugin: string;
+    config?: AudioGenConfig;
+  }> {
+    return this.audioGenerationService.getAvailableModels(userId);
+  }
+
+  executeAudioGenRequest(
+    model: string,
+    prompt: string,
+    options: Parameters<PluginAudioGenerationService['generate']>[2]
+  ) {
+    return this.audioGenerationService.generate(model, prompt, options);
+  }
+
+  getAvailableVideoGenModels(userId?: string): Array<{
+    model: string;
+    plugin: string;
+    config?: VideoGenConfig;
+  }> {
+    return this.videoGenerationService.getAvailableModels(userId);
+  }
+
+  submitVideoGenRequest(
+    model: string,
+    prompt: string,
+    options: Parameters<PluginVideoGenerationService['submit']>[2]
+  ) {
+    return this.videoGenerationService.submit(model, prompt, options);
+  }
+
+  pollVideoGenRequest(
+    model: string,
+    providerJobId: string,
+    pluginId: string,
+    userId: string
+  ) {
+    return this.videoGenerationService.poll(
+      model,
+      providerJobId,
+      pluginId,
+      userId
+    );
+  }
+
+  downloadVideoGenResult(
+    model: string,
+    providerJobId: string,
+    pluginId: string,
+    userId: string
+  ) {
+    return this.videoGenerationService.download(
+      model,
+      providerJobId,
+      pluginId,
       userId
     );
   }

@@ -26,6 +26,8 @@ export interface ImageGenModel {
     styles?: string[];
     default_style?: string;
     max_prompt_length?: number;
+    size_label?: string;
+    omit_quality_when_empty?: boolean;
   };
 }
 

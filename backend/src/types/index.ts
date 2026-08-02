@@ -367,7 +367,14 @@ export interface PluginAuthConfig {
 
 // Unified plugin type supporting multiple capabilities
 export type PluginType =
-  'completion' | 'embedding' | 'chat' | 'tts' | 'stt' | 'image';
+  | 'completion'
+  | 'embedding'
+  | 'chat'
+  | 'tts'
+  | 'stt'
+  | 'image'
+  | 'audio'
+  | 'video';
 
 // TTS-specific configuration
 export interface TTSConfig {
@@ -378,6 +385,7 @@ export interface TTSConfig {
   max_characters?: number; // Maximum text length
   supports_streaming?: boolean; // Whether streaming is supported
   endpoint_variable?: string; // Capability-specific endpoint override variable
+  allows_custom_voice?: boolean; // Whether arbitrary provider voice IDs are accepted
 }
 
 // Image Generation-specific configuration
@@ -395,6 +403,33 @@ export interface ImageGenConfig {
   endpoint_variable?: string; // Capability-specific endpoint override variable
   supports_response_format?: boolean; // Whether the API accepts response_format
   default_response_format?: 'url' | 'b64_json';
+  size_parameter?: 'size' | 'aspect_ratio' | 'resolution';
+  size_label?: string;
+  omit_quality_when_empty?: boolean;
+}
+
+export interface VideoGenConfig {
+  resolutions?: string[];
+  default_resolution?: string;
+  aspect_ratios?: string[];
+  default_aspect_ratio?: string;
+  durations?: number[];
+  default_duration?: number;
+  supports_audio?: boolean;
+  default_generate_audio?: boolean;
+  max_prompt_length?: number;
+  endpoint_variable?: string;
+  poll_interval_ms?: number;
+  timeout_ms?: number;
+}
+
+export interface AudioGenConfig {
+  voices?: string[];
+  default_voice?: string;
+  formats?: string[];
+  default_format?: string;
+  max_prompt_length?: number;
+  endpoint_variable?: string;
 }
 
 // Embedding-specific configuration
@@ -411,10 +446,12 @@ export interface PluginCapabilities {
   completion?: {
     endpoint: string;
     model_map: string[];
+    models_endpoint?: string;
   };
   tts?: {
     endpoint: string;
     model_map: string[];
+    models_endpoint?: string;
     config?: TTSConfig;
   };
   stt?: {
@@ -429,7 +466,20 @@ export interface PluginCapabilities {
   image?: {
     endpoint: string;
     model_map: string[];
+    models_endpoint?: string;
     config?: ImageGenConfig;
+  };
+  audio?: {
+    endpoint: string;
+    model_map: string[];
+    models_endpoint?: string;
+    config?: AudioGenConfig;
+  };
+  video?: {
+    endpoint: string;
+    model_map: string[];
+    models_endpoint?: string;
+    config?: VideoGenConfig;
   };
 }
 
@@ -507,6 +557,25 @@ export interface ImageGenResponse {
   pluginId?: string;
 }
 
+export interface VideoGenRequest {
+  model: string;
+  pluginId: string;
+  prompt: string;
+  duration?: number;
+  resolution?: string;
+  aspect_ratio?: string;
+  generate_audio?: boolean;
+}
+
+export interface VideoGenResponse {
+  model: string;
+  pluginId: string;
+  jobId: string;
+  video: Buffer;
+  mimeType: string;
+  usage?: Record<string, unknown>;
+}
+
 // Generated image for gallery
 export interface GeneratedImage {
   id: string;
@@ -516,6 +585,23 @@ export interface GeneratedImage {
   imageData: string; // base64 data URL
   size?: string;
   quality?: string;
+  createdAt: number;
+}
+
+export type GeneratedMediaKind = 'image' | 'video' | 'audio';
+
+export interface GeneratedMedia {
+  id: string;
+  userId: string;
+  kind: GeneratedMediaKind;
+  prompt: string;
+  model: string;
+  pluginId?: string;
+  mediaData: string;
+  mimeType: string;
+  size?: string;
+  quality?: string;
+  metadata?: Record<string, unknown>;
   createdAt: number;
 }
 

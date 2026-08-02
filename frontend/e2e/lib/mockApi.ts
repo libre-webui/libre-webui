@@ -112,6 +112,28 @@ type MockImageGenerationRequest = {
   n?: number;
 };
 
+type MockMediaModels = {
+  video: Array<{
+    model: string;
+    plugin: string;
+    config?: Record<string, unknown>;
+  }>;
+  audio: Array<{
+    model: string;
+    plugin: string;
+    mode: 'speech' | 'sound';
+    config?: Record<string, unknown>;
+  }>;
+};
+
+type MockSoundGenerationRequest = {
+  model: string;
+  pluginId: string;
+  prompt: string;
+  voice?: string;
+  format?: string;
+};
+
 type MockPlugin = {
   id: string;
   name: string;
@@ -351,6 +373,7 @@ type MockOptions = {
   ttsPlugins?: MockTTSPlugin[];
   imageGenModels?: MockImageGenModel[];
   imageGenPlugins?: MockImageGenPlugin[];
+  mediaModels?: MockMediaModels;
   preferences?: Partial<typeof defaultPreferences>;
   preferenceUpdateFailures?: number;
   deferPreferenceUpdates?: boolean;
@@ -533,6 +556,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const ttsPlugins = options.ttsPlugins ?? [];
   const imageGenModels = options.imageGenModels ?? [];
   const imageGenPlugins = options.imageGenPlugins ?? [];
+  const mediaModels = options.mediaModels ?? { video: [], audio: [] };
   const workCapabilities = options.workCapabilities ?? defaultWorkCapabilities;
   const workTaskTransition = options.workTaskTransition;
   const workTasks = structuredClone(options.workTasks ?? []);
@@ -585,6 +609,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
   const pullStreamUrls: string[] = [];
   const ttsGenerationRequests: MockTTSGenerationRequest[] = [];
   const imageGenerationRequests: MockImageGenerationRequest[] = [];
+  const soundGenerationRequests: MockSoundGenerationRequest[] = [];
   const titleGenerationRequests: Array<{
     sessionId: string;
     model: string;
@@ -1889,6 +1914,35 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
         return;
       }
 
+      if (path === '/media/models' && method === 'GET') {
+        await fulfillJson(route, mediaModels);
+        return;
+      }
+
+      if (path === '/media/gallery' && method === 'GET') {
+        await fulfillJson(route, { media: [], total: 0 });
+        return;
+      }
+
+      if (path === '/media/sound/generate' && method === 'POST') {
+        const request = route
+          .request()
+          .postDataJSON() as MockSoundGenerationRequest;
+        soundGenerationRequests.push(request);
+        await fulfillJson(route, {
+          id: 'generated-sound',
+          userId: 'default',
+          kind: 'audio',
+          prompt: request.prompt,
+          model: request.model,
+          pluginId: request.pluginId,
+          mediaData: '/api/media/gallery/generated-sound/content',
+          mimeType: 'audio/wav',
+          createdAt: Date.now(),
+        });
+        return;
+      }
+
       if (path === '/tts/models' && method === 'GET') {
         await fulfillJson(route, ttsModels);
         return;
@@ -1940,6 +1994,7 @@ export async function mockLibreWebUiApi(page: Page, options: MockOptions = {}) {
     },
     ttsGenerationRequests,
     imageGenerationRequests,
+    soundGenerationRequests,
     titleGenerationRequests,
     sessionUpdateRequests,
     workTaskCreateRequests,

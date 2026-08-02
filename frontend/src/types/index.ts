@@ -217,6 +217,23 @@ export interface GeneratedImage {
   createdAt: number;
 }
 
+export type GeneratedMediaKind = 'image' | 'video' | 'audio';
+
+export interface GeneratedMedia {
+  id: string;
+  userId: string;
+  kind: GeneratedMediaKind;
+  prompt: string;
+  model: string;
+  pluginId?: string;
+  mediaData: string;
+  mimeType: string;
+  size?: string;
+  quality?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: number;
+}
+
 export interface TitleSettings {
   autoTitle: boolean;
   taskModel: string;
@@ -337,13 +354,21 @@ export interface PluginVariableDefinition {
 }
 
 export type PluginType =
-  'completion' | 'embedding' | 'chat' | 'stt' | 'tts' | 'image';
+  | 'completion'
+  | 'embedding'
+  | 'chat'
+  | 'stt'
+  | 'tts'
+  | 'image'
+  | 'audio'
+  | 'video';
 
 export type PluginCapabilityType =
-  'completion' | 'embedding' | 'image' | 'stt' | 'tts';
+  'completion' | 'embedding' | 'image' | 'stt' | 'tts' | 'audio' | 'video';
 
 export interface PluginCapability {
   endpoint?: string;
+  models_endpoint?: string;
   endpoint_variable?: string;
   model_map?: string[];
   config?: {

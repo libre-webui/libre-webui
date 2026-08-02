@@ -48,7 +48,7 @@ export const BUNDLED_PLUGIN_DEFINITION_FINGERPRINTS: Readonly<
     'ebc3677f4f0ef2ec1628408d59a9e273059cc50d2f9d462e7a3b7f0c4eefe843',
   openai: '1f91bdec0091a9951e23fda7f9e32b956c040170644ae10b9ebb90025e0a6d17',
   openrouter:
-    'cbe183fae5341aa04e4777fc3bebecb83cd0973ad5f0876cc0a900c0a068fc96',
+    '83cd1e5918d6c3176bb2929fbed6e325677e5d2e0c1ceda2da7a75f64df8365f',
   'qwen-tts':
     '3a663efb46a9a228a78f850996b8006e886a67c32b52d0e31627586f856a9ba9',
 });

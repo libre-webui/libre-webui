@@ -77,6 +77,12 @@ export class PluginCapabilityRegistryService {
                   Record<string, unknown> | undefined
               )?.no_auth_required === true;
             break;
+          case 'audio':
+            hasCapability = !!plugin.capabilities.audio;
+            break;
+          case 'video':
+            hasCapability = !!plugin.capabilities.video;
+            break;
           case 'completion':
           case 'chat':
             hasCapability = !!plugin.capabilities.completion;

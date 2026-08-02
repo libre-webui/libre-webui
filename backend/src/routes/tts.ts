@@ -44,6 +44,7 @@ const ttsRateLimiter = rateLimit({
  */
 router.get('/models', async (req: AuthenticatedRequest, res) => {
   try {
+    await pluginService.refreshStaleCapabilityModels('tts', req.user?.userId);
     const models = pluginService.getAvailableTTSModels(req.user?.userId);
     res.json({
       success: true,
@@ -369,6 +370,7 @@ router.post(
  */
 router.get('/plugins', async (req: AuthenticatedRequest, res) => {
   try {
+    await pluginService.refreshStaleCapabilityModels('tts', req.user?.userId);
     const plugins = pluginService.getPluginsByCapability(
       'tts',
       req.user?.userId

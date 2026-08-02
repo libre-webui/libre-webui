@@ -17,7 +17,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { getDatabaseSafe } from '../db.js';
-import { GeneratedImage } from '../types/index.js';
+import {
+  GeneratedImage,
+  GeneratedMedia,
+  GeneratedMediaKind,
+} from '../types/index.js';
 import { encryptionService } from './encryptionService.js';
 import { createLogger } from '../utils/logger.js';
 
@@ -38,6 +42,27 @@ interface GetImagesParams {
 
 interface GetImagesResult {
   images: GeneratedImage[];
+  total: number;
+}
+
+interface SaveMediaParams {
+  kind: GeneratedMediaKind;
+  prompt: string;
+  model: string;
+  pluginId?: string;
+  mediaData: string;
+  mimeType: string;
+  size?: string;
+  quality?: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface GetMediaParams extends GetImagesParams {
+  kind?: GeneratedMediaKind;
+}
+
+interface GetMediaResult {
+  media: GeneratedMedia[];
   total: number;
 }
 
@@ -62,8 +87,9 @@ class GalleryService {
 
       db.prepare(
         `
-        INSERT INTO generated_images (id, user_id, prompt, model, image_data, size, quality, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO generated_images
+          (id, user_id, kind, prompt, model, image_data, mime_type, size, quality, created_at)
+        VALUES (?, ?, 'image', ?, ?, ?, ?, ?, ?, ?)
         `
       ).run(
         id,
@@ -71,6 +97,7 @@ class GalleryService {
         encryptedPrompt,
         params.model,
         encryptedImageData,
+        inferImageMimeType(params.imageData),
         params.size || null,
         params.quality || null,
         createdAt
@@ -92,6 +119,39 @@ class GalleryService {
     }
   }
 
+  saveMedia(userId: string, params: SaveMediaParams): GeneratedMedia | null {
+    const db = getDatabaseSafe();
+    if (!db) return null;
+
+    try {
+      const id = uuidv4();
+      const createdAt = Date.now();
+      db.prepare(
+        `INSERT INTO generated_images
+           (id, user_id, kind, prompt, model, plugin_id, image_data,
+            mime_type, size, quality, metadata, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(
+        id,
+        userId,
+        params.kind,
+        encryptionService.encrypt(params.prompt),
+        params.model,
+        params.pluginId || null,
+        encryptionService.encrypt(params.mediaData),
+        params.mimeType,
+        params.size || null,
+        params.quality || null,
+        params.metadata ? JSON.stringify(params.metadata) : null,
+        createdAt
+      );
+      return { id, userId, createdAt, ...params };
+    } catch (error) {
+      logger.error('Error saving generated media:', error);
+      return null;
+    }
+  }
+
   /**
    * Get user's images with pagination
    */
@@ -108,7 +168,8 @@ class GalleryService {
       // Get total count
       const countResult = db
         .prepare(
-          'SELECT COUNT(*) as total FROM generated_images WHERE user_id = ?'
+          `SELECT COUNT(*) as total FROM generated_images
+           WHERE user_id = ? AND kind = 'image'`
         )
         .get(userId) as { total: number };
 
@@ -118,7 +179,7 @@ class GalleryService {
           `
           SELECT id, user_id, prompt, model, image_data, size, quality, created_at
           FROM generated_images
-          WHERE user_id = ?
+          WHERE user_id = ? AND kind = 'image'
           ORDER BY created_at DESC
           LIMIT ? OFFSET ?
           `
@@ -155,6 +216,59 @@ class GalleryService {
     }
   }
 
+  getMedia(userId: string, params: GetMediaParams = {}): GetMediaResult {
+    const db = getDatabaseSafe();
+    if (!db) return { media: [], total: 0 };
+
+    try {
+      const limit = params.limit || 20;
+      const offset = params.offset || 0;
+      const where = params.kind
+        ? 'WHERE user_id = ? AND kind = ?'
+        : 'WHERE user_id = ?';
+      const bindings = params.kind ? [userId, params.kind] : [userId];
+      const count = db
+        .prepare(`SELECT COUNT(*) as total FROM generated_images ${where}`)
+        .get(...bindings) as { total: number };
+      const rows = db
+        .prepare(
+          `SELECT id, user_id, kind, prompt, model, plugin_id, image_data,
+                  mime_type, size, quality, metadata, created_at
+           FROM generated_images
+           ${where}
+           ORDER BY created_at DESC
+           LIMIT ? OFFSET ?`
+        )
+        .all(...bindings, limit, offset) as GeneratedMediaRow[];
+      return {
+        media: rows.map(toGeneratedMedia),
+        total: count.total,
+      };
+    } catch (error) {
+      logger.error('Error getting generated media:', error);
+      return { media: [], total: 0 };
+    }
+  }
+
+  getMediaItem(mediaId: string, userId: string): GeneratedMedia | null {
+    const db = getDatabaseSafe();
+    if (!db) return null;
+    try {
+      const row = db
+        .prepare(
+          `SELECT id, user_id, kind, prompt, model, plugin_id, image_data,
+                  mime_type, size, quality, metadata, created_at
+           FROM generated_images
+           WHERE id = ? AND user_id = ?`
+        )
+        .get(mediaId, userId) as GeneratedMediaRow | undefined;
+      return row ? toGeneratedMedia(row) : null;
+    } catch (error) {
+      logger.error('Error getting generated media item:', error);
+      return null;
+    }
+  }
+
   /**
    * Get a single image by ID
    */
@@ -170,7 +284,7 @@ class GalleryService {
           `
           SELECT id, user_id, prompt, model, image_data, size, quality, created_at
           FROM generated_images
-          WHERE id = ? AND user_id = ?
+          WHERE id = ? AND user_id = ? AND kind = 'image'
           `
         )
         .get(imageId, userId) as
@@ -218,7 +332,10 @@ class GalleryService {
     try {
       // Verify ownership before deleting
       const result = db
-        .prepare('DELETE FROM generated_images WHERE id = ? AND user_id = ?')
+        .prepare(
+          `DELETE FROM generated_images
+           WHERE id = ? AND user_id = ? AND kind = 'image'`
+        )
         .run(imageId, userId);
 
       return result.changes > 0;
@@ -238,13 +355,78 @@ class GalleryService {
     }
 
     try {
-      db.prepare('DELETE FROM generated_images WHERE user_id = ?').run(userId);
+      db.prepare(
+        `DELETE FROM generated_images WHERE user_id = ? AND kind = 'image'`
+      ).run(userId);
       return true;
     } catch (error) {
       logger.error('Error deleting all images from gallery:', error);
       return false;
     }
   }
+
+  deleteMedia(mediaId: string, userId: string): boolean {
+    const db = getDatabaseSafe();
+    if (!db) return false;
+    try {
+      return (
+        db
+          .prepare('DELETE FROM generated_images WHERE id = ? AND user_id = ?')
+          .run(mediaId, userId).changes > 0
+      );
+    } catch (error) {
+      logger.error('Error deleting generated media:', error);
+      return false;
+    }
+  }
+}
+
+interface GeneratedMediaRow {
+  id: string;
+  user_id: string;
+  kind: GeneratedMediaKind;
+  prompt: string;
+  model: string;
+  plugin_id: string | null;
+  image_data: string;
+  mime_type: string;
+  size: string | null;
+  quality: string | null;
+  metadata: string | null;
+  created_at: number;
+}
+
+function toGeneratedMedia(row: GeneratedMediaRow): GeneratedMedia {
+  let metadata: Record<string, unknown> | undefined;
+  if (row.metadata) {
+    try {
+      const parsed = JSON.parse(row.metadata) as unknown;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        metadata = parsed as Record<string, unknown>;
+      }
+    } catch {
+      metadata = undefined;
+    }
+  }
+  return {
+    id: row.id,
+    userId: row.user_id,
+    kind: row.kind,
+    prompt: encryptionService.decrypt(row.prompt),
+    model: row.model,
+    ...(row.plugin_id ? { pluginId: row.plugin_id } : {}),
+    mediaData: encryptionService.decrypt(row.image_data),
+    mimeType: row.mime_type,
+    ...(row.size ? { size: row.size } : {}),
+    ...(row.quality ? { quality: row.quality } : {}),
+    ...(metadata ? { metadata } : {}),
+    createdAt: row.created_at,
+  };
+}
+
+function inferImageMimeType(imageData: string): string {
+  const match = /^data:(image\/[a-z0-9.+-]+);base64,/i.exec(imageData);
+  return match?.[1]?.toLowerCase() || 'image/png';
 }
 
 export default new GalleryService();

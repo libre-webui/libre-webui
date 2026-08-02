@@ -18,7 +18,13 @@
 import type { Plugin, PluginCapabilityType, PluginType } from '@/types';
 
 export type PluginModelCapability =
-  'Chat' | 'Embedding' | 'Image' | 'Speech' | 'Transcription';
+  | 'Chat'
+  | 'Embedding'
+  | 'Image'
+  | 'Video'
+  | 'Audio'
+  | 'Speech'
+  | 'Transcription';
 
 export interface PluginProviderCatalogEntry {
   id: string;
@@ -28,6 +34,8 @@ export interface PluginProviderCatalogEntry {
 const CAPABILITY_ORDER: PluginModelCapability[] = [
   'Chat',
   'Image',
+  'Video',
+  'Audio',
   'Speech',
   'Transcription',
   'Embedding',
@@ -38,16 +46,20 @@ const PRIMARY_CAPABILITY: Record<PluginType, PluginModelCapability> = {
   completion: 'Chat',
   embedding: 'Embedding',
   image: 'Image',
+  audio: 'Audio',
   stt: 'Transcription',
   tts: 'Speech',
+  video: 'Video',
 };
 
 const PLUGIN_CAPABILITY: Record<PluginCapabilityType, PluginModelCapability> = {
   completion: 'Chat',
   embedding: 'Embedding',
   image: 'Image',
+  audio: 'Audio',
   stt: 'Transcription',
   tts: 'Speech',
+  video: 'Video',
 };
 
 export function buildPluginProviderCatalog(

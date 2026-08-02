@@ -204,12 +204,18 @@ export class PluginImageGenerationService {
 
     const headers = buildPluginAuthHeaders(plugin, apiKey, endpoint);
 
-    const payload: Record<string, unknown> = {
-      model,
-      prompt,
-      size: options.size || imageConfig?.default_size || '1024x1024',
-      quality: options.quality || imageConfig?.default_quality || 'standard',
-    };
+    const payload: Record<string, unknown> = { model, prompt };
+    const requestedSize = options.size || imageConfig?.default_size;
+    if (requestedSize) {
+      payload[imageConfig?.size_parameter || 'size'] = requestedSize;
+    } else if (!imageConfig) {
+      payload.size = '1024x1024';
+    }
+
+    if (!imageConfig?.omit_quality_when_empty) {
+      payload.quality =
+        options.quality || imageConfig?.default_quality || 'standard';
+    }
 
     if (imageConfig?.supports_n !== false) {
       payload.n = imageCount ?? 1;
@@ -272,7 +278,7 @@ export class PluginImageGenerationService {
       } else {
         const response = await axios.post(endpoint, payload, {
           headers,
-          timeout: 120000,
+          timeout: 300000,
           maxRedirects: 0,
         });
         result = {
@@ -399,7 +405,9 @@ function normalizeImageCandidate(candidate: unknown): ImageGenImage | null {
   if (b64Json) {
     normalized.b64_json = b64Json;
     const mimeType =
-      b64DataUrl?.mimeType || normalizeImageMediaType(candidate.mime_type);
+      b64DataUrl?.mimeType ||
+      normalizeImageMediaType(candidate.mime_type) ||
+      normalizeImageMediaType(candidate.media_type);
     if (mimeType) {
       normalized.mime_type = mimeType;
     }

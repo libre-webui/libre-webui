@@ -41,6 +41,13 @@ export type {
   ImageGenResponse,
 } from './api/imageGenApi';
 export { libreClawApi } from './api/libreClawApi';
+export { mediaApi } from './api/mediaApi';
+export type {
+  AudioGenModel,
+  MediaModelCatalog,
+  VideoGenerationJob,
+  VideoGenModel,
+} from './api/mediaApi';
 export type {
   LibreClawAutomation,
   LibreClawEvent,

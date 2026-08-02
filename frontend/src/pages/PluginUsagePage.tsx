@@ -543,14 +543,18 @@ const PluginUsagePage: React.FC = () => {
                               ? t('usageAnalytics.capabilities.images', {
                                   count: formatCount(capability.outputUnits),
                                 })
-                              : capability.capability === 'embedding'
-                                ? t('usageAnalytics.capabilities.inputs', {
-                                    count: formatCount(capability.inputUnits),
+                              : capability.capability === 'video'
+                                ? t('usageAnalytics.capabilities.jobs', {
+                                    count: formatCount(capability.calls),
                                   })
-                                : t(
-                                    'usageAnalytics.capabilities.reportedTokens',
-                                    { count: formatCount(capability.tokens) }
-                                  )}
+                                : capability.capability === 'embedding'
+                                  ? t('usageAnalytics.capabilities.inputs', {
+                                      count: formatCount(capability.inputUnits),
+                                    })
+                                  : t(
+                                      'usageAnalytics.capabilities.reportedTokens',
+                                      { count: formatCount(capability.tokens) }
+                                    )}
                         </div>
                       </div>
                     ))}

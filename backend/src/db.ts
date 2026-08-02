@@ -353,6 +353,18 @@ function initializeTables(): void {
     )
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS plugin_discovered_capability_models (
+      user_id TEXT DEFAULT 'default',
+      plugin_id TEXT NOT NULL,
+      capability TEXT NOT NULL CHECK(capability IN ('image', 'tts', 'audio', 'video')),
+      models_json TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      PRIMARY KEY (user_id, plugin_id, capability)
+    )
+  `);
+
   // Plugin activation is account-scoped. Definitions remain shared files.
   db.exec(`
     CREATE TABLE IF NOT EXISTS plugin_activations (
@@ -386,7 +398,7 @@ function initializeTables(): void {
       user_id TEXT NOT NULL,
       plugin_id TEXT NOT NULL,
       plugin_name TEXT NOT NULL,
-      capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'tts')),
+      capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'tts', 'audio', 'video')),
       model TEXT NOT NULL,
       status TEXT NOT NULL CHECK(status IN ('success', 'error', 'cancelled')),
       prompt_tokens INTEGER,
@@ -405,12 +417,34 @@ function initializeTables(): void {
     CREATE TABLE IF NOT EXISTS generated_images (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL DEFAULT 'default',
+      kind TEXT NOT NULL DEFAULT 'image' CHECK(kind IN ('image', 'video', 'audio')),
       prompt TEXT NOT NULL,
       model TEXT NOT NULL,
+      plugin_id TEXT,
       image_data TEXT NOT NULL,
+      mime_type TEXT NOT NULL DEFAULT 'image/png',
       size TEXT,
       quality TEXT,
+      metadata TEXT,
       created_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS media_generation_jobs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      provider_job_id TEXT NOT NULL,
+      plugin_id TEXT NOT NULL,
+      model TEXT NOT NULL,
+      prompt TEXT NOT NULL,
+      status TEXT NOT NULL CHECK(status IN ('pending', 'in_progress', 'completed', 'failed')),
+      options_json TEXT,
+      gallery_id TEXT,
+      error TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
@@ -497,6 +531,7 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_plugin_variables_user_id ON plugin_variables(user_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_variables_plugin_id ON plugin_variables(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_discovered_models_plugin_id ON plugin_discovered_models(plugin_id);
+    CREATE INDEX IF NOT EXISTS idx_plugin_discovered_capability_models_plugin_id ON plugin_discovered_capability_models(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_activations_plugin_id ON plugin_activations(plugin_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_definition_approvals_approver ON plugin_definition_approvals(approved_by_user_id);
     CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_created_at ON plugin_usage_events(created_at DESC);
@@ -505,6 +540,8 @@ function initializeTables(): void {
     CREATE INDEX IF NOT EXISTS idx_plugin_usage_events_user_created ON plugin_usage_events(user_id, created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_generated_images_user_id ON generated_images(user_id);
     CREATE INDEX IF NOT EXISTS idx_generated_images_created_at ON generated_images(created_at);
+    CREATE INDEX IF NOT EXISTS idx_media_generation_jobs_user_created ON media_generation_jobs(user_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_media_generation_jobs_updated_at ON media_generation_jobs(updated_at);
   `);
 
   logger.debug('Database tables initialized successfully');
@@ -546,8 +583,79 @@ function createDefaultUserIfNeeded(): void {
  */
 function runMigrations(): void {
   if (!db) return;
+  const migrationDb = db;
 
   try {
+    const usageTableSql = migrationDb
+      .prepare(
+        `SELECT sql FROM sqlite_master
+         WHERE type = 'table' AND name = 'plugin_usage_events'`
+      )
+      .get() as { sql?: string } | undefined;
+    if (
+      usageTableSql?.sql &&
+      (!usageTableSql.sql.includes("'video'") ||
+        !usageTableSql.sql.includes("'audio'"))
+    ) {
+      migrationDb.transaction(() => {
+        migrationDb.exec(`
+          CREATE TABLE plugin_usage_events_next (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            plugin_id TEXT NOT NULL,
+            plugin_name TEXT NOT NULL,
+            capability TEXT NOT NULL CHECK(capability IN ('chat', 'embedding', 'image', 'tts', 'audio', 'video')),
+            model TEXT NOT NULL,
+            status TEXT NOT NULL CHECK(status IN ('success', 'error', 'cancelled')),
+            prompt_tokens INTEGER,
+            completion_tokens INTEGER,
+            total_tokens INTEGER,
+            input_units INTEGER NOT NULL DEFAULT 0,
+            output_units INTEGER NOT NULL DEFAULT 0,
+            unit_kind TEXT,
+            duration_ms INTEGER NOT NULL,
+            created_at INTEGER NOT NULL
+          );
+          INSERT INTO plugin_usage_events_next SELECT * FROM plugin_usage_events;
+          DROP TABLE plugin_usage_events;
+          ALTER TABLE plugin_usage_events_next RENAME TO plugin_usage_events;
+          CREATE INDEX idx_plugin_usage_events_created_at ON plugin_usage_events(created_at DESC);
+          CREATE INDEX idx_plugin_usage_events_plugin_created ON plugin_usage_events(plugin_id, created_at DESC);
+          CREATE INDEX idx_plugin_usage_events_model_created ON plugin_usage_events(model, created_at DESC);
+          CREATE INDEX idx_plugin_usage_events_user_created ON plugin_usage_events(user_id, created_at DESC);
+        `);
+      })();
+    }
+
+    const generatedMediaColumns = (
+      db.prepare('PRAGMA table_info(generated_images)').all() as Array<{
+        name: string;
+      }>
+    ).map(column => column.name);
+    for (const column of [
+      {
+        name: 'kind',
+        definition:
+          "TEXT NOT NULL DEFAULT 'image' CHECK(kind IN ('image', 'video', 'audio'))",
+      },
+      { name: 'plugin_id', definition: 'TEXT' },
+      {
+        name: 'mime_type',
+        definition: "TEXT NOT NULL DEFAULT 'image/png'",
+      },
+      { name: 'metadata', definition: 'TEXT' },
+    ]) {
+      if (!generatedMediaColumns.includes(column.name)) {
+        db.exec(
+          `ALTER TABLE generated_images ADD COLUMN ${column.name} ${column.definition}`
+        );
+      }
+    }
+    db.exec(
+      `CREATE INDEX IF NOT EXISTS idx_generated_images_user_kind_created
+       ON generated_images(user_id, kind, created_at DESC)`
+    );
+
     const pluginCredentialColumns = (
       db.prepare('PRAGMA table_info(plugin_credentials)').all() as Array<{
         name: string;

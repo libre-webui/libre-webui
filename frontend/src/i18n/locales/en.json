@@ -757,7 +757,7 @@
   },
   "gallery": {
     "title": "Gallery",
-    "subtitle": "Your AI-generated image gallery",
+    "subtitle": "Your AI-generated images, videos, and audio",
     "imageCount": "{{count}} images",
     "generate": "Generate Image",
     "generateDescription": "Create images with AI",
@@ -1205,12 +1205,13 @@
       "title": "Capability mix",
       "characters": "{{count}} characters",
       "images": "{{count}} images",
+      "jobs": "{{count}} video jobs",
       "inputs": "{{count}} inputs",
       "reportedTokens": "{{count}} reported tokens"
     },
     "empty": {
       "title": "No provider calls yet",
-      "description": "Calls will appear here after an enabled plugin handles chat, Work, embedding, image, or speech requests."
+      "description": "Calls will appear here after an enabled plugin handles chat, Work, embedding, image, speech, sound, or video requests."
     },
     "privacyNote": "Usage is metered on the server at the outbound plugin boundary. Libre WebUI stores provider, model, timing, status, and reported counters—never prompts, responses, endpoints, credentials, or provider error bodies. Token totals include only calls where the provider returned usage metadata."
   },
@@ -1360,6 +1361,44 @@
     "failed": "Failed to generate image",
     "enterPrompt": "Please enter a prompt",
     "promptTooLong": "Prompt exceeds maximum length of {{max}} characters"
+  },
+  "mediaGeneration": {
+    "title": "Generate media",
+    "description": "Create video, sound, music, or speech with an activated media provider.",
+    "image": "Image",
+    "video": "Video",
+    "audio": "Audio",
+    "sound": "Sound",
+    "speech": "Speech",
+    "model": "Model",
+    "voice": "Voice or voice ID",
+    "resolution": "Resolution",
+    "aspectRatio": "Aspect ratio",
+    "duration": "Duration",
+    "providerDefault": "Provider default",
+    "generateAudio": "Generate audio with the video when supported",
+    "prompt": "Prompt",
+    "text": "Text to speak",
+    "videoPlaceholder": "Describe the scene, motion, camera, and lighting...",
+    "audioPlaceholder": "Enter the text you want the voice to speak...",
+    "soundPlaceholder": "Describe the sound, music, atmosphere, or spoken response you want...",
+    "generate": "Generate",
+    "generating": "Generating… this can take several minutes",
+    "success": "Media generated and saved to Imagine",
+    "failed": "Failed to generate media",
+    "loadFailed": "Failed to load media providers",
+    "noModels": "No {{kind}} models are available. Activate a compatible provider and save its credential first."
+  },
+  "mediaGallery": {
+    "itemCount": "{{count}} items",
+    "empty": "No generated media yet",
+    "emptyHint": "Generate an image, video, or voice clip and it will appear here.",
+    "filters": {
+      "all": "All",
+      "image": "Images",
+      "video": "Videos",
+      "audio": "Audio"
+    }
   },
   "errorBoundary": {
     "title": "Something went wrong",

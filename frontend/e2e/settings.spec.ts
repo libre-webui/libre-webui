@@ -1045,6 +1045,11 @@ test('accent palette can adapt the full light and dark interface and persists', 
     return (lighter + 0.05) / (darker + 0.05);
   };
 
+  // The sidebar transitions from the pre-hydration shell color. Wait for the
+  // saved neutral palette before comparing later accent-only updates.
+  await expect
+    .poll(async () => (await getThemeSnapshot()).sidebar)
+    .toBe('rgb(241, 245, 249)');
   const initialTheme = await getThemeSnapshot();
   expect(initialTheme.style).toBe('default');
   expect(initialTheme.inlineGray100).toBe('');
