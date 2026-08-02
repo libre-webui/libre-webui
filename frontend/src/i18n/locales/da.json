@@ -272,7 +272,8 @@
       "noModels": "Ingen modeller tilgængelige",
       "noModelsDescription": "Ingen modeller tilgængelige. Sørg for, at Ollama kører og har installeret modeller.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Ingen modeller tilgængelige. Sørg venligst for, at Ollama kører, og at modeller er installeret."
+      "noModelsTooltip": "Ingen modeller tilgængelige. Sørg venligst for, at Ollama kører, og at modeller er installeret.",
+      "selectBeforePrivateChat": "Vælg en tilgængelig model, før du starter en privat chat"
     },
     "footer": {
       "disclaimer": "LLM kan begå fejl - verificer vigtige oplysninger",
@@ -450,7 +451,9 @@
       "specializedModels": "Specialiserede modeller",
       "visionModel": "Visionsmodel",
       "selectVisionModel": "Brug den aktuelle chatmodel",
-      "visionModelDescription": "Bruges automatisk, når den udgående chatkontekst indeholder billeder. Vælg en model, der understøtter billedinput."
+      "visionModelDescription": "Bruges automatisk, når den udgående chatkontekst indeholder billeder. Vælg en model, der understøtter billedinput.",
+      "visionModelUpdateFailed": "Kunne ikke opdatere visionsmodellen: {{error}}",
+      "visionModelNoProvider": "Denne visionsmodel har ingen udbyderidentitet. Vælg en tilgængelig model."
     },
     "systemMessage": {
       "title": "Systembesked",

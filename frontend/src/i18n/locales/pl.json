@@ -272,7 +272,8 @@
       "noModels": "Brak dostępnych modeli",
       "noModelsDescription": "Brak dostępnych modeli. Upewnij się, że Ollama działa i modele są zainstalowane.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Brak dostępnych modeli. Upewnij się, że Ollama działa i modele są zainstalowane."
+      "noModelsTooltip": "Brak dostępnych modeli. Upewnij się, że Ollama działa i modele są zainstalowane.",
+      "selectBeforePrivateChat": "Wybierz dostępny model przed rozpoczęciem prywatnego czatu"
     },
     "footer": {
       "disclaimer": "LLM może popełniać błędy - weryfikuj ważne informacje",
@@ -450,7 +451,9 @@
       "specializedModels": "Modele specjalistyczne",
       "visionModel": "Model wizyjny",
       "selectVisionModel": "Użyj bieżącego modelu czatu",
-      "visionModelDescription": "Używany automatycznie, gdy wychodzący kontekst czatu zawiera obrazy. Wybierz model obsługujący wprowadzanie obrazów."
+      "visionModelDescription": "Używany automatycznie, gdy wychodzący kontekst czatu zawiera obrazy. Wybierz model obsługujący wprowadzanie obrazów.",
+      "visionModelUpdateFailed": "Nie udało się zaktualizować modelu wizyjnego: {{error}}",
+      "visionModelNoProvider": "Ten model wizyjny nie ma tożsamości dostawcy. Wybierz dostępny model."
     },
     "systemMessage": {
       "title": "Wiadomość systemowa",

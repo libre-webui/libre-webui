@@ -272,7 +272,8 @@
       "noModels": "Keine Modelle verfügbar",
       "noModelsDescription": "Keine Modelle verfügbar. Stellen Sie sicher, dass Ollama läuft und Modelle installiert sind.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Keine Modelle verfügbar. Bitte stellen Sie sicher, dass Ollama läuft und Modelle installiert sind."
+      "noModelsTooltip": "Keine Modelle verfügbar. Bitte stellen Sie sicher, dass Ollama läuft und Modelle installiert sind.",
+      "selectBeforePrivateChat": "Wählen Sie ein verfügbares Modell aus, bevor Sie einen privaten Chat starten"
     },
     "footer": {
       "disclaimer": "KI kann Fehler machen – überprüfen Sie wichtige Informationen",
@@ -450,7 +451,9 @@
       "specializedModels": "Spezialisierte Modelle",
       "visionModel": "Vision-Modell",
       "selectVisionModel": "Aktuelles Chat-Modell verwenden",
-      "visionModelDescription": "Wird automatisch verwendet, sobald der ausgehende Chat-Kontext Bilder enthält. Wählen Sie ein Modell, das Bildeingaben unterstützt."
+      "visionModelDescription": "Wird automatisch verwendet, sobald der ausgehende Chat-Kontext Bilder enthält. Wählen Sie ein Modell, das Bildeingaben unterstützt.",
+      "visionModelUpdateFailed": "Vision-Modell konnte nicht aktualisiert werden: {{error}}",
+      "visionModelNoProvider": "Dieses Vision-Modell hat keine Anbieter-Identität. Wählen Sie ein verfügbares Modell aus."
     },
     "systemMessage": {
       "title": "Systemnachricht",

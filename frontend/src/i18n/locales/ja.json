@@ -272,7 +272,8 @@
       "noModels": "利用可能なモデルがありません",
       "noModelsDescription": "利用可能なモデルがありません。Ollamaが実行中でモデルがインストールされていることを確認してください。",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "利用可能なモデルがありません。Ollamaが実行中でモデルがインストールされていることを確認してください。"
+      "noModelsTooltip": "利用可能なモデルがありません。Ollamaが実行中でモデルがインストールされていることを確認してください。",
+      "selectBeforePrivateChat": "プライベートチャットを開始する前に利用可能なモデルを選択してください"
     },
     "footer": {
       "disclaimer": "LLMは間違えることがあります - 重要な情報は確認してください",
@@ -450,7 +451,9 @@
       "specializedModels": "専用モデル",
       "visionModel": "ビジョンモデル",
       "selectVisionModel": "現在のチャットモデルを使用",
-      "visionModelDescription": "送信するチャットコンテキストに画像が含まれる場合、自動的に使用されます。画像入力に対応したモデルを選択してください。"
+      "visionModelDescription": "送信するチャットコンテキストに画像が含まれる場合、自動的に使用されます。画像入力に対応したモデルを選択してください。",
+      "visionModelUpdateFailed": "ビジョンモデルの更新に失敗しました: {{error}}",
+      "visionModelNoProvider": "このビジョンモデルにはプロバイダー識別情報がありません。利用可能なモデルを選択してください。"
     },
     "systemMessage": {
       "title": "システムメッセージ",

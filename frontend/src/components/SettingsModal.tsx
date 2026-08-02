@@ -1086,9 +1086,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       visionModel
     );
     if (!selection?.providerType) {
-      toast.error(
-        'This vision model has no provider identity. Select an available model.'
-      );
+      toast.error(t('settings.model.visionModelNoProvider'));
       return;
     }
 
@@ -1101,7 +1099,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     void preferencesApi.updatePreferences(updates).catch(error => {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      toast.error('Failed to update vision model: ' + errorMessage);
+      toast.error(
+        t('settings.model.visionModelUpdateFailed', { error: errorMessage })
+      );
     });
   };
 

@@ -272,7 +272,8 @@
       "noModels": "Geen modellen beschikbaar",
       "noModelsDescription": "Geen modellen beschikbaar. Zorg ervoor dat Ollama draait en modellen zijn geïnstalleerd.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Geen modellen beschikbaar. Zorg ervoor dat Ollama draait en modellen zijn geïnstalleerd."
+      "noModelsTooltip": "Geen modellen beschikbaar. Zorg ervoor dat Ollama draait en modellen zijn geïnstalleerd.",
+      "selectBeforePrivateChat": "Selecteer een beschikbaar model voordat je een privéchat start"
     },
     "footer": {
       "disclaimer": "LLM kan fouten maken - verifieer belangrijke informatie",
@@ -450,7 +451,9 @@
       "specializedModels": "Gespecialiseerde modellen",
       "visionModel": "Visiemodel",
       "selectVisionModel": "Gebruik het huidige chatmodel",
-      "visionModelDescription": "Wordt automatisch gebruikt wanneer de uitgaande chatcontext afbeeldingen bevat. Kies een model dat afbeeldingsinvoer ondersteunt."
+      "visionModelDescription": "Wordt automatisch gebruikt wanneer de uitgaande chatcontext afbeeldingen bevat. Kies een model dat afbeeldingsinvoer ondersteunt.",
+      "visionModelUpdateFailed": "Kan het visiemodel niet bijwerken: {{error}}",
+      "visionModelNoProvider": "Dit visiemodel heeft geen provideridentiteit. Selecteer een beschikbaar model."
     },
     "systemMessage": {
       "title": "Systeembericht",

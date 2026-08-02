@@ -272,7 +272,8 @@
       "noModels": "Žádné dostupné modely",
       "noModelsDescription": "Žádné dostupné modely. Ujistěte se, že Ollama běží a modely jsou nainstalované.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Žádné dostupné modely. Ujistěte se, že Ollama běží a modely jsou nainstalované."
+      "noModelsTooltip": "Žádné dostupné modely. Ujistěte se, že Ollama běží a modely jsou nainstalované.",
+      "selectBeforePrivateChat": "Před zahájením soukromého chatu vyberte dostupný model"
     },
     "footer": {
       "disclaimer": "LLM může dělat chyby - ověřujte důležité informace",
@@ -450,7 +451,9 @@
       "specializedModels": "Specializované modely",
       "visionModel": "Vizní model",
       "selectVisionModel": "Použít aktuální chatový model",
-      "visionModelDescription": "Používá se automaticky, kdykoli odchozí kontext chatu obsahuje obrázky. Vyberte model, který podporuje vstup obrázků."
+      "visionModelDescription": "Používá se automaticky, kdykoli odchozí kontext chatu obsahuje obrázky. Vyberte model, který podporuje vstup obrázků.",
+      "visionModelUpdateFailed": "Nepodařilo se aktualizovat vizní model: {{error}}",
+      "visionModelNoProvider": "Tento vizní model nemá identitu poskytovatele. Vyberte dostupný model."
     },
     "systemMessage": {
       "title": "Systémová zpráva",

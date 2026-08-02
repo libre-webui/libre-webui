@@ -272,7 +272,8 @@
       "noModels": "Kullanılabilir model yok",
       "noModelsDescription": "Kullanılabilir model yok. Ollama'nın çalıştığından ve modellerin yüklü olduğundan emin olun.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Kullanılabilir model yok. Lütfen Ollama'nın çalıştığından ve modellerin yüklü olduğundan emin olun."
+      "noModelsTooltip": "Kullanılabilir model yok. Lütfen Ollama'nın çalıştığından ve modellerin yüklü olduğundan emin olun.",
+      "selectBeforePrivateChat": "Gizli sohbeti başlatmadan önce kullanılabilir bir model seçin"
     },
     "footer": {
       "disclaimer": "Yapay zeka hata yapabilir - önemli bilgileri doğrulayın",
@@ -450,7 +451,9 @@
       "specializedModels": "Özelleştirilmiş Modeller",
       "visionModel": "Görüntü Modeli",
       "selectVisionModel": "Mevcut sohbet modelini kullan",
-      "visionModelDescription": "Giden sohbet bağlamı görüntü içerdiğinde otomatik olarak kullanılır. Görüntü girişini destekleyen bir model seçin."
+      "visionModelDescription": "Giden sohbet bağlamı görüntü içerdiğinde otomatik olarak kullanılır. Görüntü girişini destekleyen bir model seçin.",
+      "visionModelUpdateFailed": "Görüntü modeli güncellenemedi: {{error}}",
+      "visionModelNoProvider": "Bu görüntü modelinin sağlayıcı kimliği yok. Kullanılabilir bir model seçin."
     },
     "systemMessage": {
       "title": "Sistem Mesajı",

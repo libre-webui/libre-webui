@@ -272,7 +272,8 @@
       "noModels": "没有可用的模型",
       "noModelsDescription": "没有可用的模型。请确保 Ollama 正在运行并已安装模型。",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "没有可用的模型。请确保 Ollama 正在运行并已安装模型。"
+      "noModelsTooltip": "没有可用的模型。请确保 Ollama 正在运行并已安装模型。",
+      "selectBeforePrivateChat": "开始私密聊天前请选择一个可用的模型"
     },
     "footer": {
       "disclaimer": "大语言模型可能会犯错——请核实重要信息",
@@ -450,7 +451,9 @@
       "specializedModels": "专用模型",
       "visionModel": "视觉模型",
       "selectVisionModel": "使用当前聊天模型",
-      "visionModelDescription": "当发出的聊天上下文包含图像时自动使用。请选择支持图像输入的模型。"
+      "visionModelDescription": "当发出的聊天上下文包含图像时自动使用。请选择支持图像输入的模型。",
+      "visionModelUpdateFailed": "更新视觉模型失败：{{error}}",
+      "visionModelNoProvider": "此视觉模型没有提供商标识。请选择一个可用的模型。"
     },
     "systemMessage": {
       "title": "系统消息",

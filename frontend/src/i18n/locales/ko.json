@@ -272,7 +272,8 @@
       "noModels": "사용 가능한 모델 없음",
       "noModelsDescription": "사용 가능한 모델이 없습니다. Ollama가 실행 중이고 모델이 설치되어 있는지 확인하세요.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "사용 가능한 모델이 없습니다. Ollama가 실행 중이고 모델이 설치되어 있는지 확인하세요."
+      "noModelsTooltip": "사용 가능한 모델이 없습니다. Ollama가 실행 중이고 모델이 설치되어 있는지 확인하세요.",
+      "selectBeforePrivateChat": "비공개 채팅을 시작하기 전에 사용 가능한 모델을 선택하세요"
     },
     "footer": {
       "disclaimer": "LLM은 실수를 할 수 있습니다 - 중요한 정보는 확인하세요",
@@ -450,7 +451,9 @@
       "specializedModels": "특화 모델",
       "visionModel": "비전 모델",
       "selectVisionModel": "현재 채팅 모델 사용",
-      "visionModelDescription": "전송되는 채팅 컨텍스트에 이미지가 포함될 때마다 자동으로 사용됩니다. 이미지 입력을 지원하는 모델을 선택하세요."
+      "visionModelDescription": "전송되는 채팅 컨텍스트에 이미지가 포함될 때마다 자동으로 사용됩니다. 이미지 입력을 지원하는 모델을 선택하세요.",
+      "visionModelUpdateFailed": "비전 모델 업데이트에 실패했습니다: {{error}}",
+      "visionModelNoProvider": "이 비전 모델에는 제공자 정보가 없습니다. 사용 가능한 모델을 선택하세요."
     },
     "systemMessage": {
       "title": "시스템 메시지",

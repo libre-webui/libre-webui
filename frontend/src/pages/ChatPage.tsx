@@ -235,7 +235,7 @@ export const ChatPage: React.FC = () => {
         !isChatModelSelectionAvailable(models, privateSelection)
       ) {
         if (notifyWhenUnavailable) {
-          toast.error('Select an available model before starting private chat');
+          toast.error(t('chat.model.selectBeforePrivateChat'));
         }
         return false;
       }

@@ -272,7 +272,8 @@
       "noModels": "Engin líkön tiltæk",
       "noModelsDescription": "Engin líkön tiltæk. Gakktu úr skugga um að Ollama sé í gangi og hafi líkön uppsett.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Engin líkön tiltæk. Gakktu úr skugga um að Ollama sé í gangi og líkön séu uppsett."
+      "noModelsTooltip": "Engin líkön tiltæk. Gakktu úr skugga um að Ollama sé í gangi og líkön séu uppsett.",
+      "selectBeforePrivateChat": "Veldu tiltækt líkan áður en þú byrjar einkaspjall"
     },
     "footer": {
       "disclaimer": "Gervigreind getur gert mistök - staðfestu mikilvægar upplýsingar",
@@ -450,7 +451,9 @@
       "specializedModels": "Sérhæfð líkön",
       "visionModel": "Sjónlíkan",
       "selectVisionModel": "Nota núverandi spjalllíkan",
-      "visionModelDescription": "Notað sjálfkrafa þegar útgönguspjallsamhengi inniheldur myndir. Veldu líkan sem styður myndainntak."
+      "visionModelDescription": "Notað sjálfkrafa þegar útgönguspjallsamhengi inniheldur myndir. Veldu líkan sem styður myndainntak.",
+      "visionModelUpdateFailed": "Ekki tókst að uppfæra sjónlíkanið: {{error}}",
+      "visionModelNoProvider": "Þetta sjónlíkan hefur ekkert auðkenni veitanda. Veldu tiltækt líkan."
     },
     "systemMessage": {
       "title": "Kerfisskilaboð",

@@ -272,7 +272,8 @@
       "noModels": "Tiada model tersedia",
       "noModelsDescription": "Tiada model tersedia. Pastikan Ollama sedang berjalan dan mempunyai model yang dipasang.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Tiada model tersedia. Sila pastikan Ollama sedang berjalan dan model telah dipasang."
+      "noModelsTooltip": "Tiada model tersedia. Sila pastikan Ollama sedang berjalan dan model telah dipasang.",
+      "selectBeforePrivateChat": "Pilih model yang tersedia sebelum memulakan sembang peribadi"
     },
     "footer": {
       "disclaimer": "LLM boleh membuat kesilapan - sahkan maklumat penting",
@@ -450,7 +451,9 @@
       "specializedModels": "Model Khusus",
       "visionModel": "Model Penglihatan",
       "selectVisionModel": "Guna model sembang semasa",
-      "visionModelDescription": "Digunakan secara automatik apabila konteks sembang keluar mengandungi imej. Pilih model yang menyokong input imej."
+      "visionModelDescription": "Digunakan secara automatik apabila konteks sembang keluar mengandungi imej. Pilih model yang menyokong input imej.",
+      "visionModelUpdateFailed": "Gagal mengemas kini model penglihatan: {{error}}",
+      "visionModelNoProvider": "Model penglihatan ini tiada identiti pembekal. Pilih model yang tersedia."
     },
     "systemMessage": {
       "title": "Mesej Sistem",

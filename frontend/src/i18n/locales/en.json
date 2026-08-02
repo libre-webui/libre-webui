@@ -272,7 +272,8 @@
       "noModels": "No models available",
       "noModelsDescription": "No models available. Make sure Ollama is running and has models installed.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "No models available. Please ensure Ollama is running and models are installed."
+      "noModelsTooltip": "No models available. Please ensure Ollama is running and models are installed.",
+      "selectBeforePrivateChat": "Select an available model before starting private chat"
     },
     "footer": {
       "disclaimer": "LLM can make mistakes - verify important information",
@@ -422,6 +423,8 @@
       "visionModel": "Vision Model",
       "selectVisionModel": "Use the current chat model",
       "visionModelDescription": "Used automatically whenever the outgoing chat context contains images. Choose a model that supports image input.",
+      "visionModelUpdateFailed": "Failed to update vision model: {{error}}",
+      "visionModelNoProvider": "This vision model has no provider identity. Select an available model.",
       "persona": "Persona",
       "updateAll": "Update All Models",
       "updateAllDescription": "Check for updates and pull latest versions of all installed models",

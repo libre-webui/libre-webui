@@ -272,7 +272,8 @@
       "noModels": "Inga modeller tillgängliga",
       "noModelsDescription": "Inga modeller tillgängliga. Se till att Ollama körs och har modeller installerade.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Inga modeller tillgängliga. Se till att Ollama körs och modeller är installerade."
+      "noModelsTooltip": "Inga modeller tillgängliga. Se till att Ollama körs och modeller är installerade.",
+      "selectBeforePrivateChat": "Välj en tillgänglig modell innan du startar en privat chatt"
     },
     "footer": {
       "disclaimer": "AI kan göra misstag - verifiera viktig information",
@@ -450,7 +451,9 @@
       "specializedModels": "Specialiserade modeller",
       "visionModel": "Synmodell",
       "selectVisionModel": "Använd nuvarande chattmodell",
-      "visionModelDescription": "Används automatiskt när den utgående chattkontexten innehåller bilder. Välj en modell som stöder bildindata."
+      "visionModelDescription": "Används automatiskt när den utgående chattkontexten innehåller bilder. Välj en modell som stöder bildindata.",
+      "visionModelUpdateFailed": "Det gick inte att uppdatera synmodellen: {{error}}",
+      "visionModelNoProvider": "Den här synmodellen saknar leverantörsidentitet. Välj en tillgänglig modell."
     },
     "systemMessage": {
       "title": "Systemmeddelande",

@@ -272,7 +272,8 @@
       "noModels": "Aucun modèle disponible",
       "noModelsDescription": "Aucun modèle disponible. Assurez-vous qu'Ollama est en cours d'exécution et que des modèles sont installés.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Aucun modèle disponible. Veuillez vous assurer qu'Ollama est en cours d'exécution et que des modèles sont installés."
+      "noModelsTooltip": "Aucun modèle disponible. Veuillez vous assurer qu'Ollama est en cours d'exécution et que des modèles sont installés.",
+      "selectBeforePrivateChat": "Sélectionnez un modèle disponible avant de démarrer une discussion privée"
     },
     "footer": {
       "disclaimer": "Les LLM peuvent faire des erreurs - vérifiez les informations importantes",
@@ -450,7 +451,9 @@
       "specializedModels": "Modèles spécialisés",
       "visionModel": "Modèle de vision",
       "selectVisionModel": "Utiliser le modèle de chat actuel",
-      "visionModelDescription": "Utilisé automatiquement chaque fois que le contexte de chat sortant contient des images. Choisissez un modèle qui prend en charge l'entrée d'images."
+      "visionModelDescription": "Utilisé automatiquement chaque fois que le contexte de chat sortant contient des images. Choisissez un modèle qui prend en charge l'entrée d'images.",
+      "visionModelUpdateFailed": "Échec de la mise à jour du modèle de vision : {{error}}",
+      "visionModelNoProvider": "Ce modèle de vision n'a pas d'identité de fournisseur. Sélectionnez un modèle disponible."
     },
     "systemMessage": {
       "title": "Message système",

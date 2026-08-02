@@ -272,7 +272,8 @@
       "noModels": "لا توجد نماذج متاحة",
       "noModelsDescription": "لا توجد نماذج متاحة. تأكد من تشغيل Ollama وتثبيت النماذج.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "لا توجد نماذج متاحة. يرجى التأكد من تشغيل Ollama وتثبيت النماذج."
+      "noModelsTooltip": "لا توجد نماذج متاحة. يرجى التأكد من تشغيل Ollama وتثبيت النماذج.",
+      "selectBeforePrivateChat": "اختر نموذجاً متاحاً قبل بدء محادثة خاصة"
     },
     "footer": {
       "disclaimer": "قد يرتكب الذكاء الاصطناعي أخطاء - تحقق من المعلومات المهمة",
@@ -450,7 +451,9 @@
       "specializedModels": "نماذج متخصصة",
       "visionModel": "نموذج الرؤية",
       "selectVisionModel": "استخدام نموذج الدردشة الحالي",
-      "visionModelDescription": "يُستخدم تلقائيًا كلما احتوى سياق الدردشة الصادر على صور. اختر نموذجًا يدعم إدخال الصور."
+      "visionModelDescription": "يُستخدم تلقائيًا كلما احتوى سياق الدردشة الصادر على صور. اختر نموذجًا يدعم إدخال الصور.",
+      "visionModelUpdateFailed": "فشل تحديث نموذج الرؤية: {{error}}",
+      "visionModelNoProvider": "نموذج الرؤية هذا ليس له هوية مزوّد. اختر نموذجاً متاحاً."
     },
     "systemMessage": {
       "title": "رسالة النظام",

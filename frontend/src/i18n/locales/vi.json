@@ -272,7 +272,8 @@
       "noModels": "Không có mô hình nào",
       "noModelsDescription": "Không có mô hình nào. Hãy đảm bảo Ollama đang chạy và đã cài đặt các mô hình.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Không có mô hình nào. Vui lòng đảm bảo Ollama đang chạy và các mô hình đã được cài đặt."
+      "noModelsTooltip": "Không có mô hình nào. Vui lòng đảm bảo Ollama đang chạy và các mô hình đã được cài đặt.",
+      "selectBeforePrivateChat": "Chọn một mô hình khả dụng trước khi bắt đầu trò chuyện riêng tư"
     },
     "footer": {
       "disclaimer": "LLM có thể mắc lỗi - hãy xác minh thông tin quan trọng",
@@ -450,7 +451,9 @@
       "specializedModels": "Mô hình chuyên biệt",
       "visionModel": "Mô hình thị giác",
       "selectVisionModel": "Sử dụng mô hình trò chuyện hiện tại",
-      "visionModelDescription": "Được sử dụng tự động bất cứ khi nào ngữ cảnh trò chuyện gửi đi có chứa hình ảnh. Chọn một mô hình hỗ trợ đầu vào hình ảnh."
+      "visionModelDescription": "Được sử dụng tự động bất cứ khi nào ngữ cảnh trò chuyện gửi đi có chứa hình ảnh. Chọn một mô hình hỗ trợ đầu vào hình ảnh.",
+      "visionModelUpdateFailed": "Không thể cập nhật mô hình thị giác: {{error}}",
+      "visionModelNoProvider": "Mô hình thị giác này không có thông tin nhà cung cấp. Hãy chọn một mô hình khả dụng."
     },
     "systemMessage": {
       "title": "Tin nhắn hệ thống",

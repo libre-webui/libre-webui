@@ -272,7 +272,8 @@
       "noModels": "Tidak ada model tersedia",
       "noModelsDescription": "Tidak ada model tersedia. Pastikan Ollama berjalan dan model sudah diinstal.",
       "pullCommand": "ollama pull llama3.2:3b",
-      "noModelsTooltip": "Tidak ada model tersedia. Pastikan Ollama berjalan dan model sudah diinstal."
+      "noModelsTooltip": "Tidak ada model tersedia. Pastikan Ollama berjalan dan model sudah diinstal.",
+      "selectBeforePrivateChat": "Pilih model yang tersedia sebelum memulai obrolan privat"
     },
     "footer": {
       "disclaimer": "LLM dapat membuat kesalahan - verifikasi informasi penting",
@@ -450,7 +451,9 @@
       "specializedModels": "Model Khusus",
       "visionModel": "Model Visi",
       "selectVisionModel": "Gunakan model chat saat ini",
-      "visionModelDescription": "Digunakan secara otomatis setiap kali konteks chat keluar berisi gambar. Pilih model yang mendukung input gambar."
+      "visionModelDescription": "Digunakan secara otomatis setiap kali konteks chat keluar berisi gambar. Pilih model yang mendukung input gambar.",
+      "visionModelUpdateFailed": "Gagal memperbarui model visi: {{error}}",
+      "visionModelNoProvider": "Model visi ini tidak memiliki identitas penyedia. Pilih model yang tersedia."
     },
     "systemMessage": {
       "title": "Pesan Sistem",
