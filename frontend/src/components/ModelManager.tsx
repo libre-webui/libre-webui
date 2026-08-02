@@ -84,8 +84,9 @@ const normalizeCloudPullName = (modelName: string): string => {
 
 export const ModelManager: React.FC = () => {
   const { t } = useTranslation();
-  const { user } = useAuthStore();
-  const canInstallModels = user?.role === 'admin';
+  const { user, systemInfo } = useAuthStore();
+  const canInstallModels =
+    user?.role === 'admin' || systemInfo?.requiresAuth === false;
   const queryClient = useQueryClient();
   const [libraryFilter, setLibraryFilter] = useState<string>('all');
   const [librarySearch, setLibrarySearch] = useState('');
