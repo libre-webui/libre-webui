@@ -1798,7 +1798,8 @@
       "noCalls": "Engin köll",
       "other": "Önnur líkön",
       "less": "Minna",
-      "more": "Meira"
+      "more": "Meira",
+      "yearTotal": "{{formatted}} köll síðastliðið ár"
     }
   },
   "systemPage": {

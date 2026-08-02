@@ -1798,7 +1798,8 @@
       "noCalls": "呼び出しなし",
       "other": "その他のモデル",
       "less": "少",
-      "more": "多"
+      "more": "多",
+      "yearTotal": "過去1年間で{{formatted}}回の呼び出し"
     }
   },
   "systemPage": {

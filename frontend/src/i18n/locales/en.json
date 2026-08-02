@@ -1223,7 +1223,8 @@
       "noCalls": "No calls",
       "other": "Other models",
       "less": "Less",
-      "more": "More"
+      "more": "More",
+      "yearTotal": "{{formatted}} calls in the last year"
     }
   },
   "systemPage": {

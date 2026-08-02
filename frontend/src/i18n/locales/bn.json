@@ -1798,7 +1798,8 @@
       "noCalls": "কোনো কল নেই",
       "other": "অন্যান্য মডেল",
       "less": "কম",
-      "more": "বেশি"
+      "more": "বেশি",
+      "yearTotal": "গত এক বছরে {{formatted}} কল"
     }
   },
   "systemPage": {

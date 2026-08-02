@@ -1798,7 +1798,8 @@
       "noCalls": "Geen aanroepen",
       "other": "Overige modellen",
       "less": "Minder",
-      "more": "Meer"
+      "more": "Meer",
+      "yearTotal": "{{formatted}} aanroepen in het afgelopen jaar"
     }
   },
   "systemPage": {

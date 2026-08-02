@@ -286,7 +286,7 @@ const UsageHeatmap: React.FC<{
   const { t, i18n } = useTranslation();
   const [tooltip, setTooltip] = useState<HeatmapTooltip | null>(null);
 
-  const { weeks, firstColStart, cellsByDay, maxCalls, modelRank } =
+  const { weeks, firstColStart, cellsByDay, maxCalls, modelRank, totalCalls } =
     useMemo(() => {
       const cellsByDay = new Map(
         heatmap.cells.map(cell => [cell.timestamp, cell])
@@ -299,7 +299,18 @@ const UsageHeatmap: React.FC<{
       const modelRank = new Map(
         heatmap.models.map((model, index) => [model, index])
       );
-      return { weeks, firstColStart, cellsByDay, maxCalls, modelRank };
+      const totalCalls = heatmap.cells.reduce(
+        (sum, cell) => sum + cell.calls,
+        0
+      );
+      return {
+        weeks,
+        firstColStart,
+        cellsByDay,
+        maxCalls,
+        modelRank,
+        totalCalls,
+      };
     }, [heatmap]);
 
   const monthFormatter = new Intl.DateTimeFormat(i18n.language, {
@@ -357,8 +368,10 @@ const UsageHeatmap: React.FC<{
     if (!wrapper) return;
     const bounds = wrapper.getBoundingClientRect();
     const rect = event.currentTarget.getBoundingClientRect();
+    const rawX = rect.left - bounds.left + rect.width / 2;
     setTooltip({
-      x: rect.left - bounds.left + rect.width / 2,
+      // Keep the tooltip inside the card near the edges of the grid.
+      x: Math.min(Math.max(rawX, 96), Math.max(bounds.width - 96, 96)),
       y: rect.top - bounds.top,
       timestamp,
       calls: cell.calls,
@@ -371,19 +384,27 @@ const UsageHeatmap: React.FC<{
       data-testid='usage-heatmap'
       className='overflow-hidden rounded-2xl border border-gray-200/80 bg-white/80 shadow-subtle backdrop-blur-md dark:border-white/[0.08] dark:bg-dark-100/75'
     >
-      <div className='border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.07] sm:px-5'>
-        <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
-          {t('usageAnalytics.heatmap.title')}
-        </h2>
-        <p className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
-          {t('usageAnalytics.heatmap.description')}
-        </p>
+      <div className='flex flex-col gap-1 border-b border-gray-200/70 px-4 py-3 dark:border-white/[0.07] sm:flex-row sm:items-center sm:justify-between sm:px-5'>
+        <div>
+          <h2 className='text-sm font-medium text-gray-950 dark:text-dark-950'>
+            {t('usageAnalytics.heatmap.title')}
+          </h2>
+          <p className='mt-1 text-xs text-gray-500 dark:text-dark-500'>
+            {t('usageAnalytics.heatmap.description')}
+          </p>
+        </div>
+        <span className='shrink-0 text-xs tabular-nums text-gray-500 dark:text-dark-500'>
+          {t('usageAnalytics.heatmap.yearTotal', {
+            count: totalCalls,
+            formatted: formatCount(totalCalls),
+          })}
+        </span>
       </div>
       <div className='relative p-4 sm:px-5' data-heatmap-wrapper>
         <div className='overflow-x-auto'>
           <svg
-            width={width}
-            height={height}
+            viewBox={`0 0 ${width} ${height}`}
+            className='h-auto w-full min-w-[640px]'
             role='img'
             aria-label={t('usageAnalytics.heatmap.title')}
             onMouseLeave={() => setTooltip(null)}
@@ -393,7 +414,7 @@ const UsageHeatmap: React.FC<{
                 key={`${x}-${label}`}
                 x={x}
                 y={10}
-                className='fill-gray-400 text-[9px] dark:fill-dark-500'
+                className='fill-gray-400 text-[8px] dark:fill-dark-500'
               >
                 {label}
               </text>
@@ -403,7 +424,7 @@ const UsageHeatmap: React.FC<{
                 key={day}
                 x={0}
                 y={HEATMAP_TOP_PAD + day * CELL_PITCH + CELL - 2}
-                className='fill-gray-400 text-[9px] dark:fill-dark-500'
+                className='fill-gray-400 text-[8px] dark:fill-dark-500'
               >
                 {weekdayFormatter.format(
                   // A known Sunday plus the row offset yields the weekday name.
@@ -427,9 +448,13 @@ const UsageHeatmap: React.FC<{
                     height={CELL}
                     rx={2}
                     fillOpacity={level === 0 ? 1 : INTENSITY_OPACITY[level]}
+                    strokeWidth={tooltip?.timestamp === timestamp ? 1 : 0}
                     className={cn(
                       'transition-opacity',
-                      level === 0 || !cell ? EMPTY_FILL : fillFor(cell)
+                      level === 0 || !cell ? EMPTY_FILL : fillFor(cell),
+                      tooltip?.timestamp === timestamp
+                        ? 'stroke-gray-500 dark:stroke-white/60'
+                        : 'stroke-transparent'
                     )}
                     onMouseEnter={event =>
                       showTooltip(event, timestamp, {

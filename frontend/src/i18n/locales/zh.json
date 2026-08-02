@@ -1798,7 +1798,8 @@
       "noCalls": "无调用",
       "other": "其他模型",
       "less": "少",
-      "more": "多"
+      "more": "多",
+      "yearTotal": "过去一年共 {{formatted}} 次调用"
     }
   },
   "systemPage": {

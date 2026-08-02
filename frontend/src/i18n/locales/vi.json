@@ -1798,7 +1798,8 @@
       "noCalls": "Không có lượt gọi",
       "other": "Mô hình khác",
       "less": "Ít",
-      "more": "Nhiều"
+      "more": "Nhiều",
+      "yearTotal": "{{formatted}} lượt gọi trong năm qua"
     }
   },
   "systemPage": {

@@ -1798,7 +1798,8 @@
       "noCalls": "ไม่มีการเรียก",
       "other": "โมเดลอื่น ๆ",
       "less": "น้อย",
-      "more": "มาก"
+      "more": "มาก",
+      "yearTotal": "{{formatted}} ครั้งในปีที่ผ่านมา"
     }
   },
   "systemPage": {

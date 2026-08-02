@@ -1798,7 +1798,8 @@
       "noCalls": "कोई कॉल नहीं",
       "other": "अन्य मॉडल",
       "less": "कम",
-      "more": "अधिक"
+      "more": "अधिक",
+      "yearTotal": "पिछले वर्ष में {{formatted}} कॉल"
     }
   },
   "systemPage": {

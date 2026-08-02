@@ -1798,7 +1798,8 @@
       "noCalls": "Tidak ada panggilan",
       "other": "Model lainnya",
       "less": "Sedikit",
-      "more": "Banyak"
+      "more": "Banyak",
+      "yearTotal": "{{formatted}} panggilan dalam setahun terakhir"
     }
   },
   "systemPage": {

@@ -1798,7 +1798,8 @@
       "noCalls": "Tiada panggilan",
       "other": "Model lain",
       "less": "Kurang",
-      "more": "Lebih"
+      "more": "Lebih",
+      "yearTotal": "{{formatted}} panggilan dalam setahun lalu"
     }
   },
   "systemPage": {

@@ -1798,7 +1798,8 @@
       "noCalls": "호출 없음",
       "other": "기타 모델",
       "less": "적음",
-      "more": "많음"
+      "more": "많음",
+      "yearTotal": "지난 1년간 {{formatted}}회 호출"
     }
   },
   "systemPage": {

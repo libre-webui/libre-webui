@@ -1798,7 +1798,8 @@
       "noCalls": "Žádná volání",
       "other": "Ostatní modely",
       "less": "Méně",
-      "more": "Více"
+      "more": "Více",
+      "yearTotal": "{{formatted}} volání za poslední rok"
     }
   },
   "systemPage": {

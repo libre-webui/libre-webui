@@ -1798,7 +1798,8 @@
       "noCalls": "Inga anrop",
       "other": "Övriga modeller",
       "less": "Mindre",
-      "more": "Mer"
+      "more": "Mer",
+      "yearTotal": "{{formatted}} anrop under det senaste året"
     }
   },
   "systemPage": {

@@ -1798,7 +1798,8 @@
       "noCalls": "Keine Aufrufe",
       "other": "Weitere Modelle",
       "less": "Weniger",
-      "more": "Mehr"
+      "more": "Mehr",
+      "yearTotal": "{{formatted}} Aufrufe im letzten Jahr"
     }
   },
   "systemPage": {

@@ -1798,7 +1798,8 @@
       "noCalls": "لا استدعاءات",
       "other": "نماذج أخرى",
       "less": "أقل",
-      "more": "أكثر"
+      "more": "أكثر",
+      "yearTotal": "{{formatted}} استدعاءً خلال العام الماضي"
     }
   },
   "systemPage": {

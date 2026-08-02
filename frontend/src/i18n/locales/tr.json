@@ -1798,7 +1798,8 @@
       "noCalls": "Çağrı yok",
       "other": "Diğer modeller",
       "less": "Az",
-      "more": "Çok"
+      "more": "Çok",
+      "yearTotal": "Son bir yılda {{formatted}} çağrı"
     }
   },
   "systemPage": {

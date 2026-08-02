@@ -1798,7 +1798,8 @@
       "noCalls": "Sin llamadas",
       "other": "Otros modelos",
       "less": "Menos",
-      "more": "Más"
+      "more": "Más",
+      "yearTotal": "{{formatted}} llamadas en el último año"
     }
   },
   "systemPage": {

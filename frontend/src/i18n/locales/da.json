@@ -1798,7 +1798,8 @@
       "noCalls": "Ingen kald",
       "other": "Andre modeller",
       "less": "Mindre",
-      "more": "Mere"
+      "more": "Mere",
+      "yearTotal": "{{formatted}} kald det seneste år"
     }
   },
   "systemPage": {
