@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### ✨ New Features
+
+### 🔧 Improvements
+
+### 🐛 Bug Fixes
+
+### 📚 Documentation
+
+## [0.18.0] - 2026-08-02
+
 Libre WebUI 0.18.0 closes the remaining unauthenticated API surface, puts new
 registrations behind administrator approval, and gives administrators two new
 views of the instance: live system diagnostics and provider usage analytics.
