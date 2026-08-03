@@ -77,6 +77,11 @@ export interface ChatSession {
   personaId?: string | null;
   isPrivate?: boolean; // Private sessions are not saved to backend
   archived?: boolean; // Hidden from the sidebar until unarchived
+  settings?: ChatSessionSettings; // Per-chat overrides applied over global defaults
+}
+
+export interface ChatSessionSettings {
+  generationOptions?: Partial<GenerationOptions>;
 }
 
 export type ChatProviderType = 'ollama' | 'plugin' | 'agent';

@@ -187,6 +187,7 @@ function initializeTables(): void {
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
       archived INTEGER DEFAULT 0, -- Hidden from the sidebar until unarchived
+      settings TEXT, -- Encrypted JSON with per-chat overrides
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (persona_id) REFERENCES personas(id) ON DELETE SET NULL
     )
@@ -737,6 +738,7 @@ function runMigrations(): void {
       { name: 'provider_type', type: 'TEXT' },
       { name: 'provider_id', type: 'TEXT' },
       { name: 'archived', type: 'INTEGER DEFAULT 0' },
+      { name: 'settings', type: 'TEXT' },
     ]) {
       if (!existingSessionsColumns.includes(column.name)) {
         logger.debug(`Adding column ${column.name} to sessions table`);

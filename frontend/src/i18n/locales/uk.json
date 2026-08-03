@@ -326,6 +326,25 @@
       "applySchema": "Застосувати схему",
       "cancel": "Скасувати",
       "enabled": "Структурований вивід увімкнено"
+    },
+    "controls": {
+      "title": "Налаштування чату",
+      "systemPrompt": "Системний промпт",
+      "systemPromptPlaceholder": "Інструкції лише для цього чату…",
+      "advancedParams": "Розширені параметри",
+      "advancedParamsDescription": "Перевизначення для цього чату. Порожні поля використовують глобальні значення.",
+      "saved": "Налаштування збережено",
+      "saveFailed": "Не вдалося зберегти налаштування",
+      "params": {
+        "temperature": "Температура",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Макс. токенів",
+        "repeatPenalty": "Штраф за повтори",
+        "seed": "Сід",
+        "contextLength": "Довжина контексту"
+      }
     }
   },
   "sidebar": {

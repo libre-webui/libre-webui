@@ -326,6 +326,25 @@
       "applySchema": "スキーマを適用",
       "cancel": "キャンセル",
       "enabled": "構造化出力が有効"
+    },
+    "controls": {
+      "title": "チャット設定",
+      "systemPrompt": "システムプロンプト",
+      "systemPromptPlaceholder": "このチャットのみに適用される指示…",
+      "advancedParams": "詳細パラメータ",
+      "advancedParamsDescription": "このチャット専用の上書き。空欄はグローバル既定値を使います。",
+      "saved": "設定を保存しました",
+      "saveFailed": "設定を保存できませんでした",
+      "params": {
+        "temperature": "温度",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "最大トークン",
+        "repeatPenalty": "繰り返しペナルティ",
+        "seed": "シード",
+        "contextLength": "コンテキスト長"
+      }
     }
   },
   "sidebar": {

@@ -326,6 +326,25 @@
       "applySchema": "Nota skema",
       "cancel": "Hætta við",
       "enabled": "Skipulagt úttak virkt"
+    },
+    "controls": {
+      "title": "Spjallstýringar",
+      "systemPrompt": "Kerfisleiðbeining",
+      "systemPromptPlaceholder": "Leiðbeiningar sem gilda aðeins fyrir þetta spjall…",
+      "advancedParams": "Ítarlegar stillingar",
+      "advancedParamsDescription": "Yfirskrift fyrir þetta spjall. Tóm svæði nota sjálfgefin gildi.",
+      "saved": "Stýringar vistaðar",
+      "saveFailed": "Ekki tókst að vista stýringar",
+      "params": {
+        "temperature": "Hitastig",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Hám. tákn",
+        "repeatPenalty": "Endurtekningarrefsing",
+        "seed": "Sáðgildi",
+        "contextLength": "Samhengislengd"
+      }
     }
   },
   "sidebar": {

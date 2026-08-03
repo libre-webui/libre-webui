@@ -326,6 +326,25 @@
       "applySchema": "Zastosuj schemat",
       "cancel": "Anuluj",
       "enabled": "Strukturalne wyjście włączone"
+    },
+    "controls": {
+      "title": "Ustawienia czatu",
+      "systemPrompt": "Prompt systemowy",
+      "systemPromptPlaceholder": "Instrukcje obowiązujące tylko w tym czacie…",
+      "advancedParams": "Parametry zaawansowane",
+      "advancedParamsDescription": "Nadpisania dla tego czatu. Puste pola używają globalnych domyślnych.",
+      "saved": "Ustawienia zapisane",
+      "saveFailed": "Nie udało się zapisać ustawień",
+      "params": {
+        "temperature": "Temperatura",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Maks. tokenów",
+        "repeatPenalty": "Kara za powtórzenia",
+        "seed": "Ziarno",
+        "contextLength": "Długość kontekstu"
+      }
     }
   },
   "sidebar": {

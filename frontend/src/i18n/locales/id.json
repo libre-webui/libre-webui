@@ -326,6 +326,25 @@
       "applySchema": "Terapkan Skema",
       "cancel": "Batal",
       "enabled": "Output terstruktur diaktifkan"
+    },
+    "controls": {
+      "title": "Kontrol obrolan",
+      "systemPrompt": "Prompt sistem",
+      "systemPromptPlaceholder": "Instruksi yang hanya berlaku untuk obrolan ini…",
+      "advancedParams": "Parameter lanjutan",
+      "advancedParamsDescription": "Penggantian untuk obrolan ini. Kolom kosong memakai bawaan global.",
+      "saved": "Kontrol disimpan",
+      "saveFailed": "Gagal menyimpan kontrol",
+      "params": {
+        "temperature": "Temperatur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Token maks.",
+        "repeatPenalty": "Penalti pengulangan",
+        "seed": "Seed",
+        "contextLength": "Panjang konteks"
+      }
     }
   },
   "sidebar": {

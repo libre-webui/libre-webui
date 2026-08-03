@@ -326,6 +326,25 @@
       "applySchema": "Appliquer le schéma",
       "cancel": "Annuler",
       "enabled": "Sortie structurée activée"
+    },
+    "controls": {
+      "title": "Contrôles de la discussion",
+      "systemPrompt": "Prompt système",
+      "systemPromptPlaceholder": "Instructions valables uniquement pour cette discussion…",
+      "advancedParams": "Paramètres avancés",
+      "advancedParamsDescription": "Remplacements pour cette discussion. Les champs vides utilisent vos valeurs globales.",
+      "saved": "Contrôles enregistrés",
+      "saveFailed": "Impossible d'enregistrer les contrôles",
+      "params": {
+        "temperature": "Température",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Tokens max",
+        "repeatPenalty": "Pénalité de répétition",
+        "seed": "Graine",
+        "contextLength": "Longueur de contexte"
+      }
     }
   },
   "sidebar": {

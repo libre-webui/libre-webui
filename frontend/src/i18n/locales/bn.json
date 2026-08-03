@@ -326,6 +326,25 @@
       "applySchema": "স্কিমা প্রয়োগ করুন",
       "cancel": "বাতিল",
       "enabled": "স্ট্রাকচার্ড আউটপুট সক্রিয়"
+    },
+    "controls": {
+      "title": "চ্যাট নিয়ন্ত্রণ",
+      "systemPrompt": "সিস্টেম প্রম্পট",
+      "systemPromptPlaceholder": "শুধু এই চ্যাটে প্রযোজ্য নির্দেশনা…",
+      "advancedParams": "উন্নত প্যারামিটার",
+      "advancedParamsDescription": "এই চ্যাটের জন্য ওভাররাইড। খালি ঘরে গ্লোবাল ডিফল্ট ব্যবহৃত হয়।",
+      "saved": "নিয়ন্ত্রণ সংরক্ষিত হয়েছে",
+      "saveFailed": "নিয়ন্ত্রণ সংরক্ষণ করা যায়নি",
+      "params": {
+        "temperature": "তাপমাত্রা",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "সর্বোচ্চ টোকেন",
+        "repeatPenalty": "পুনরাবৃত্তি জরিমানা",
+        "seed": "সিড",
+        "contextLength": "প্রসঙ্গ দৈর্ঘ্য"
+      }
     }
   },
   "sidebar": {

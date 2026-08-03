@@ -326,6 +326,25 @@
       "applySchema": "تطبيق المخطط",
       "cancel": "إلغاء",
       "enabled": "تم تفعيل المخرجات المنظمة"
+    },
+    "controls": {
+      "title": "عناصر تحكم المحادثة",
+      "systemPrompt": "موجه النظام",
+      "systemPromptPlaceholder": "تعليمات تنطبق على هذه المحادثة فقط…",
+      "advancedParams": "معلمات متقدمة",
+      "advancedParamsDescription": "تجاوزات لهذه المحادثة. الحقول الفارغة تستخدم الإعدادات العامة.",
+      "saved": "تم حفظ عناصر التحكم",
+      "saveFailed": "تعذر حفظ عناصر التحكم",
+      "params": {
+        "temperature": "درجة الحرارة",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "أقصى عدد رموز",
+        "repeatPenalty": "عقوبة التكرار",
+        "seed": "البذرة",
+        "contextLength": "طول السياق"
+      }
     }
   },
   "sidebar": {

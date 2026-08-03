@@ -326,6 +326,25 @@
       "applySchema": "Použít schéma",
       "cancel": "Zrušit",
       "enabled": "Strukturovaný výstup povolen"
+    },
+    "controls": {
+      "title": "Ovládání chatu",
+      "systemPrompt": "Systémový prompt",
+      "systemPromptPlaceholder": "Pokyny platné jen pro tento chat…",
+      "advancedParams": "Pokročilé parametry",
+      "advancedParamsDescription": "Přepisy pro tento chat. Prázdná pole používají globální výchozí hodnoty.",
+      "saved": "Ovládání uloženo",
+      "saveFailed": "Ovládání se nepodařilo uložit",
+      "params": {
+        "temperature": "Teplota",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Max. tokenů",
+        "repeatPenalty": "Penalizace opakování",
+        "seed": "Seed",
+        "contextLength": "Délka kontextu"
+      }
     }
   },
   "sidebar": {

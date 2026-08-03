@@ -74,6 +74,11 @@ export interface ChatSession extends ChatProviderSelection {
   updatedAt: number;
   personaId?: string;
   archived?: boolean; // Hidden from the sidebar until unarchived
+  settings?: ChatSessionSettings; // Per-chat overrides applied over global defaults
+}
+
+export interface ChatSessionSettings {
+  generationOptions?: Partial<GenerationOptions>;
 }
 
 export interface GenerationOptions {

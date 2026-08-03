@@ -326,6 +326,25 @@
       "applySchema": "Áp dụng Schema",
       "cancel": "Hủy",
       "enabled": "Đã bật đầu ra có cấu trúc"
+    },
+    "controls": {
+      "title": "Điều khiển trò chuyện",
+      "systemPrompt": "Prompt hệ thống",
+      "systemPromptPlaceholder": "Hướng dẫn chỉ áp dụng cho cuộc trò chuyện này…",
+      "advancedParams": "Tham số nâng cao",
+      "advancedParamsDescription": "Ghi đè cho cuộc trò chuyện này. Ô trống dùng giá trị mặc định chung.",
+      "saved": "Đã lưu điều khiển",
+      "saveFailed": "Không thể lưu điều khiển",
+      "params": {
+        "temperature": "Nhiệt độ",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Số token tối đa",
+        "repeatPenalty": "Phạt lặp lại",
+        "seed": "Seed",
+        "contextLength": "Độ dài ngữ cảnh"
+      }
     }
   },
   "sidebar": {

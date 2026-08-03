@@ -326,6 +326,25 @@
       "applySchema": "Aplicar Esquema",
       "cancel": "Cancelar",
       "enabled": "Saída estruturada ativada"
+    },
+    "controls": {
+      "title": "Controlos do chat",
+      "systemPrompt": "Prompt de sistema",
+      "systemPromptPlaceholder": "Instruções que se aplicam apenas a este chat…",
+      "advancedParams": "Parâmetros avançados",
+      "advancedParamsDescription": "Substituições para este chat. Campos vazios usam os valores globais.",
+      "saved": "Controlos guardados",
+      "saveFailed": "Não foi possível guardar os controlos",
+      "params": {
+        "temperature": "Temperatura",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Tokens máx.",
+        "repeatPenalty": "Penalização de repetição",
+        "seed": "Semente",
+        "contextLength": "Comprimento do contexto"
+      }
     }
   },
   "sidebar": {

@@ -326,6 +326,25 @@
       "applySchema": "应用模式",
       "cancel": "取消",
       "enabled": "已启用结构化输出"
+    },
+    "controls": {
+      "title": "聊天控制",
+      "systemPrompt": "系统提示词",
+      "systemPromptPlaceholder": "仅适用于此聊天的指令…",
+      "advancedParams": "高级参数",
+      "advancedParamsDescription": "此聊天的覆盖设置。留空则使用全局默认值。",
+      "saved": "聊天控制已保存",
+      "saveFailed": "无法保存聊天控制",
+      "params": {
+        "temperature": "温度",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "最大 Token 数",
+        "repeatPenalty": "重复惩罚",
+        "seed": "种子",
+        "contextLength": "上下文长度"
+      }
     }
   },
   "sidebar": {

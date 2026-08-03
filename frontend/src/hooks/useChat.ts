@@ -505,7 +505,10 @@ export const useChat = (sessionId: string) => {
             content: content.trim(),
             images: images,
             format: format,
-            options: preferences.generationOptions,
+            options: {
+              ...preferences.generationOptions,
+              ...session?.settings?.generationOptions,
+            },
             assistantMessageId, // Send the message ID to backend
             isPrivate: isPrivateSession, // Private sessions don't persist to DB
             ...(isPrivateSession
@@ -648,7 +651,10 @@ export const useChat = (sessionId: string) => {
           sessionId,
           content: lastUserMessage.content,
           images: lastUserMessage.images,
-          options: preferences.generationOptions,
+          options: {
+            ...preferences.generationOptions,
+            ...session.settings?.generationOptions,
+          },
           assistantMessageId: newBranchMessageId,
           regenerate: true,
           originalMessageId: lastAssistantMessage.id, // For branching

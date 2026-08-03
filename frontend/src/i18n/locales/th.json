@@ -326,6 +326,25 @@
       "applySchema": "ใช้สกีมา",
       "cancel": "ยกเลิก",
       "enabled": "เปิดใช้เอาต์พุตที่มีโครงสร้างแล้ว"
+    },
+    "controls": {
+      "title": "การควบคุมแชท",
+      "systemPrompt": "พรอมต์ระบบ",
+      "systemPromptPlaceholder": "คำสั่งที่ใช้กับแชทนี้เท่านั้น…",
+      "advancedParams": "พารามิเตอร์ขั้นสูง",
+      "advancedParamsDescription": "การแทนที่สำหรับแชทนี้ ช่องว่างจะใช้ค่าเริ่มต้นส่วนกลาง",
+      "saved": "บันทึกการควบคุมแล้ว",
+      "saveFailed": "ไม่สามารถบันทึกการควบคุมได้",
+      "params": {
+        "temperature": "อุณหภูมิ",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "โทเคนสูงสุด",
+        "repeatPenalty": "บทลงโทษการทำซ้ำ",
+        "seed": "ซีด",
+        "contextLength": "ความยาวบริบท"
+      }
     }
   },
   "sidebar": {

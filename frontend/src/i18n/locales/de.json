@@ -326,6 +326,25 @@
       "applySchema": "Schema anwenden",
       "cancel": "Abbrechen",
       "enabled": "Strukturierte Ausgabe aktiviert"
+    },
+    "controls": {
+      "title": "Chat-Steuerung",
+      "systemPrompt": "Systemprompt",
+      "systemPromptPlaceholder": "Anweisungen nur für diesen Chat…",
+      "advancedParams": "Erweiterte Parameter",
+      "advancedParamsDescription": "Überschreibungen für diesen Chat. Leere Felder nutzen die globalen Standardwerte.",
+      "saved": "Chat-Steuerung gespeichert",
+      "saveFailed": "Chat-Steuerung konnte nicht gespeichert werden",
+      "params": {
+        "temperature": "Temperatur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Max. Tokens",
+        "repeatPenalty": "Wiederholungsstrafe",
+        "seed": "Seed",
+        "contextLength": "Kontextlänge"
+      }
     }
   },
   "sidebar": {

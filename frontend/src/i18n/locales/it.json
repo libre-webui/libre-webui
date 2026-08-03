@@ -326,6 +326,25 @@
       "applySchema": "Applica schema",
       "cancel": "Annulla",
       "enabled": "Output strutturato abilitato"
+    },
+    "controls": {
+      "title": "Controlli della chat",
+      "systemPrompt": "Prompt di sistema",
+      "systemPromptPlaceholder": "Istruzioni valide solo per questa chat…",
+      "advancedParams": "Parametri avanzati",
+      "advancedParamsDescription": "Sostituzioni per questa chat. I campi vuoti usano i valori globali.",
+      "saved": "Controlli salvati",
+      "saveFailed": "Impossibile salvare i controlli",
+      "params": {
+        "temperature": "Temperatura",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Token max",
+        "repeatPenalty": "Penalità di ripetizione",
+        "seed": "Seed",
+        "contextLength": "Lunghezza contesto"
+      }
     }
   },
   "sidebar": {

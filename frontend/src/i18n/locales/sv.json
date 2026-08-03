@@ -326,6 +326,25 @@
       "applySchema": "Tillämpa schema",
       "cancel": "Avbryt",
       "enabled": "Strukturerad utdata aktiverad"
+    },
+    "controls": {
+      "title": "Chattkontroller",
+      "systemPrompt": "Systemprompt",
+      "systemPromptPlaceholder": "Instruktioner som endast gäller den här chatten…",
+      "advancedParams": "Avancerade parametrar",
+      "advancedParamsDescription": "Åsidosättanden för den här chatten. Tomma fält använder dina globala standarder.",
+      "saved": "Kontroller sparade",
+      "saveFailed": "Kunde inte spara kontroller",
+      "params": {
+        "temperature": "Temperatur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Max antal tokens",
+        "repeatPenalty": "Upprepningsstraff",
+        "seed": "Frö",
+        "contextLength": "Kontextlängd"
+      }
     }
   },
   "sidebar": {

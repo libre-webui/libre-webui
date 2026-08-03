@@ -326,6 +326,25 @@
       "applySchema": "Schema toepassen",
       "cancel": "Annuleren",
       "enabled": "Gestructureerde uitvoer ingeschakeld"
+    },
+    "controls": {
+      "title": "Chatbediening",
+      "systemPrompt": "Systeemprompt",
+      "systemPromptPlaceholder": "Instructies die alleen voor deze chat gelden…",
+      "advancedParams": "Geavanceerde parameters",
+      "advancedParamsDescription": "Overschrijvingen voor deze chat. Lege velden gebruiken je globale standaarden.",
+      "saved": "Chatbediening opgeslagen",
+      "saveFailed": "Kon chatbediening niet opslaan",
+      "params": {
+        "temperature": "Temperatuur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Max. tokens",
+        "repeatPenalty": "Herhalingsstraf",
+        "seed": "Seed",
+        "contextLength": "Contextlengte"
+      }
     }
   },
   "sidebar": {

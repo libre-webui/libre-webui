@@ -326,6 +326,25 @@
       "applySchema": "스키마 적용",
       "cancel": "취소",
       "enabled": "구조화된 출력 활성화됨"
+    },
+    "controls": {
+      "title": "채팅 컨트롤",
+      "systemPrompt": "시스템 프롬프트",
+      "systemPromptPlaceholder": "이 채팅에만 적용되는 지시사항…",
+      "advancedParams": "고급 매개변수",
+      "advancedParamsDescription": "이 채팅 전용 재정의입니다. 빈 칸은 전역 기본값을 사용합니다.",
+      "saved": "컨트롤이 저장되었습니다",
+      "saveFailed": "컨트롤을 저장하지 못했습니다",
+      "params": {
+        "temperature": "온도",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "최대 토큰",
+        "repeatPenalty": "반복 페널티",
+        "seed": "시드",
+        "contextLength": "컨텍스트 길이"
+      }
     }
   },
   "sidebar": {

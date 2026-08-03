@@ -326,6 +326,25 @@
       "applySchema": "Şemayı Uygula",
       "cancel": "İptal",
       "enabled": "Yapılandırılmış çıktı etkin"
+    },
+    "controls": {
+      "title": "Sohbet denetimleri",
+      "systemPrompt": "Sistem istemi",
+      "systemPromptPlaceholder": "Yalnızca bu sohbete uygulanan talimatlar…",
+      "advancedParams": "Gelişmiş parametreler",
+      "advancedParamsDescription": "Bu sohbete özel geçersiz kılmalar. Boş alanlar genel varsayılanları kullanır.",
+      "saved": "Denetimler kaydedildi",
+      "saveFailed": "Denetimler kaydedilemedi",
+      "params": {
+        "temperature": "Sıcaklık",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Maks. token",
+        "repeatPenalty": "Tekrar cezası",
+        "seed": "Tohum",
+        "contextLength": "Bağlam uzunluğu"
+      }
     }
   },
   "sidebar": {

@@ -326,6 +326,25 @@
       "applySchema": "Применить схему",
       "cancel": "Отмена",
       "enabled": "Структурированный вывод включён"
+    },
+    "controls": {
+      "title": "Настройки чата",
+      "systemPrompt": "Системный промпт",
+      "systemPromptPlaceholder": "Инструкции только для этого чата…",
+      "advancedParams": "Расширенные параметры",
+      "advancedParamsDescription": "Переопределения для этого чата. Пустые поля используют глобальные значения.",
+      "saved": "Настройки сохранены",
+      "saveFailed": "Не удалось сохранить настройки",
+      "params": {
+        "temperature": "Температура",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Макс. токенов",
+        "repeatPenalty": "Штраф за повторы",
+        "seed": "Сид",
+        "contextLength": "Длина контекста"
+      }
     }
   },
   "sidebar": {

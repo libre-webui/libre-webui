@@ -326,6 +326,25 @@
       "applySchema": "Anvend skema",
       "cancel": "Annuller",
       "enabled": "Struktureret output aktiveret"
+    },
+    "controls": {
+      "title": "Chatstyring",
+      "systemPrompt": "Systemprompt",
+      "systemPromptPlaceholder": "Instruktioner der kun gælder denne chat…",
+      "advancedParams": "Avancerede parametre",
+      "advancedParamsDescription": "Tilsidesættelser for denne chat. Tomme felter bruger dine globale standarder.",
+      "saved": "Chatstyring gemt",
+      "saveFailed": "Kunne ikke gemme chatstyring",
+      "params": {
+        "temperature": "Temperatur",
+        "topP": "Top P",
+        "topK": "Top K",
+        "minP": "Min P",
+        "maxTokens": "Maks. tokens",
+        "repeatPenalty": "Gentagelsesstraf",
+        "seed": "Seed",
+        "contextLength": "Kontekstlængde"
+      }
     }
   },
   "sidebar": {
