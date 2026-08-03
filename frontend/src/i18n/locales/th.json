@@ -370,7 +370,8 @@
       "work": "งาน",
       "exploreLabel": "สำรวจ",
       "usageAnalytics": "การใช้งานผู้ให้บริการ",
-      "system": "ระบบ"
+      "system": "ระบบ",
+      "notes": "บันทึกย่อ"
     },
     "toggleSize": "สลับขนาดแถบด้านข้าง",
     "expandSidebar": "ขยายแถบด้านข้าง"
@@ -1990,5 +1991,18 @@
     "title": "มีอะไรใหม่",
     "releaseNotes": "บันทึกประจำรุ่น",
     "cta": "โอเค ไปกันเลย"
+  },
+  "notes": {
+    "title": "บันทึกย่อ",
+    "new": "บันทึกใหม่",
+    "untitled": "ไม่มีชื่อ",
+    "empty": "ยังไม่มีบันทึก",
+    "selectOrCreate": "เลือกบันทึกหรือสร้างใหม่",
+    "contentPlaceholder": "เขียนด้วย Markdown…",
+    "saved": "บันทึกแล้ว",
+    "saveFailed": "ไม่สามารถบันทึกได้",
+    "createFailed": "ไม่สามารถสร้างบันทึกได้",
+    "deleteConfirm": "ลบบันทึกนี้?",
+    "deleteFailed": "ไม่สามารถลบบันทึกได้"
   }
 }

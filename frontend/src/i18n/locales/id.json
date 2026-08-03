@@ -370,7 +370,8 @@
       "work": "Kerja",
       "exploreLabel": "Jelajahi",
       "usageAnalytics": "Penggunaan Penyedia",
-      "system": "Sistem"
+      "system": "Sistem",
+      "notes": "Catatan"
     },
     "toggleSize": "Ubah ukuran sidebar",
     "expandSidebar": "Perluas sidebar"
@@ -1990,5 +1991,18 @@
     "title": "Yang baru",
     "releaseNotes": "Catatan rilis",
     "cta": "Oke, ayo mulai"
+  },
+  "notes": {
+    "title": "Catatan",
+    "new": "Catatan baru",
+    "untitled": "Tanpa judul",
+    "empty": "Belum ada catatan",
+    "selectOrCreate": "Pilih catatan atau buat yang baru",
+    "contentPlaceholder": "Tulis dalam Markdown…",
+    "saved": "Tersimpan",
+    "saveFailed": "Gagal menyimpan catatan",
+    "createFailed": "Gagal membuat catatan",
+    "deleteConfirm": "Hapus catatan ini?",
+    "deleteFailed": "Gagal menghapus catatan"
   }
 }

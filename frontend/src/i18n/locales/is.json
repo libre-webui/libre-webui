@@ -370,7 +370,8 @@
       "work": "Vinna",
       "exploreLabel": "Kanna",
       "usageAnalytics": "Notkun þjónustuaðila",
-      "system": "Kerfi"
+      "system": "Kerfi",
+      "notes": "Glósur"
     },
     "toggleSize": "Skipta um stærð hliðarspjalds",
     "expandSidebar": "Stækka hliðarspjald"
@@ -1990,5 +1991,18 @@
     "title": "Nýjungar",
     "releaseNotes": "Útgáfuskýringar",
     "cta": "Allt í lagi, byrjum"
+  },
+  "notes": {
+    "title": "Glósur",
+    "new": "Ný glósa",
+    "untitled": "Án titils",
+    "empty": "Engar glósur enn",
+    "selectOrCreate": "Veldu glósu eða búðu til nýja",
+    "contentPlaceholder": "Skrifaðu í Markdown…",
+    "saved": "Vistað",
+    "saveFailed": "Ekki tókst að vista glósuna",
+    "createFailed": "Ekki tókst að búa til glósu",
+    "deleteConfirm": "Eyða þessari glósu?",
+    "deleteFailed": "Ekki tókst að eyða glósunni"
   }
 }

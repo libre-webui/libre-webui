@@ -370,7 +370,8 @@
       "work": "Arbeit",
       "exploreLabel": "Entdecken",
       "usageAnalytics": "Anbieter-Nutzung",
-      "system": "System"
+      "system": "System",
+      "notes": "Notizen"
     },
     "toggleSize": "Seitenleistengröße umschalten",
     "expandSidebar": "Seitenleiste erweitern"
@@ -1990,5 +1991,18 @@
     "title": "Was ist neu",
     "releaseNotes": "Versionshinweise",
     "cta": "Okay, los geht’s"
+  },
+  "notes": {
+    "title": "Notizen",
+    "new": "Neue Notiz",
+    "untitled": "Ohne Titel",
+    "empty": "Noch keine Notizen",
+    "selectOrCreate": "Wähle eine Notiz oder erstelle eine neue",
+    "contentPlaceholder": "In Markdown schreiben…",
+    "saved": "Gespeichert",
+    "saveFailed": "Notiz konnte nicht gespeichert werden",
+    "createFailed": "Notiz konnte nicht erstellt werden",
+    "deleteConfirm": "Diese Notiz löschen?",
+    "deleteFailed": "Notiz konnte nicht gelöscht werden"
   }
 }

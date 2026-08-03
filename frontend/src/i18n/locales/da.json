@@ -370,7 +370,8 @@
       "work": "Arbejde",
       "exploreLabel": "Udforsk",
       "usageAnalytics": "Udbyderforbrug",
-      "system": "System"
+      "system": "System",
+      "notes": "Noter"
     },
     "toggleSize": "Skift sidebjælkestørrelse",
     "expandSidebar": "Udvid sidebjælke"
@@ -1990,5 +1991,18 @@
     "title": "Nyheder",
     "releaseNotes": "Udgivelsesnoter",
     "cta": "Okay, lad os komme i gang"
+  },
+  "notes": {
+    "title": "Noter",
+    "new": "Ny note",
+    "untitled": "Uden titel",
+    "empty": "Ingen noter endnu",
+    "selectOrCreate": "Vælg en note eller opret en ny",
+    "contentPlaceholder": "Skriv i Markdown…",
+    "saved": "Gemt",
+    "saveFailed": "Kunne ikke gemme noten",
+    "createFailed": "Kunne ikke oprette en note",
+    "deleteConfirm": "Slet denne note?",
+    "deleteFailed": "Kunne ikke slette noten"
   }
 }

@@ -370,7 +370,8 @@
       "work": "Werk",
       "exploreLabel": "Verkennen",
       "usageAnalytics": "Providergebruik",
-      "system": "Systeem"
+      "system": "Systeem",
+      "notes": "Notities"
     },
     "toggleSize": "Zijbalk grootte wijzigen",
     "expandSidebar": "Zijbalk uitvouwen"
@@ -1990,5 +1991,18 @@
     "title": "Wat is nieuw",
     "releaseNotes": "Release-opmerkingen",
     "cta": "Oké, aan de slag"
+  },
+  "notes": {
+    "title": "Notities",
+    "new": "Nieuwe notitie",
+    "untitled": "Zonder titel",
+    "empty": "Nog geen notities",
+    "selectOrCreate": "Selecteer een notitie of maak een nieuwe",
+    "contentPlaceholder": "Schrijf in Markdown…",
+    "saved": "Opgeslagen",
+    "saveFailed": "Kon de notitie niet opslaan",
+    "createFailed": "Kon geen notitie maken",
+    "deleteConfirm": "Deze notitie verwijderen?",
+    "deleteFailed": "Kon de notitie niet verwijderen"
   }
 }

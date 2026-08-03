@@ -370,7 +370,8 @@
       "work": "Práce",
       "exploreLabel": "Prozkoumat",
       "usageAnalytics": "Využití poskytovatelů",
-      "system": "Systém"
+      "system": "Systém",
+      "notes": "Poznámky"
     },
     "toggleSize": "Změnit velikost postranního panelu",
     "expandSidebar": "Rozbalit postranní panel"
@@ -1990,5 +1991,18 @@
     "title": "Co je nového",
     "releaseNotes": "Poznámky k vydání",
     "cta": "Dobře, jdeme na to"
+  },
+  "notes": {
+    "title": "Poznámky",
+    "new": "Nová poznámka",
+    "untitled": "Bez názvu",
+    "empty": "Zatím žádné poznámky",
+    "selectOrCreate": "Vyberte poznámku nebo vytvořte novou",
+    "contentPlaceholder": "Pište v Markdownu…",
+    "saved": "Uloženo",
+    "saveFailed": "Poznámku se nepodařilo uložit",
+    "createFailed": "Poznámku se nepodařilo vytvořit",
+    "deleteConfirm": "Smazat tuto poznámku?",
+    "deleteFailed": "Poznámku se nepodařilo smazat"
   }
 }

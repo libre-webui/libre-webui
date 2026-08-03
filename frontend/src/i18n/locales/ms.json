@@ -370,7 +370,8 @@
       "work": "Kerja",
       "exploreLabel": "Terokai",
       "usageAnalytics": "Penggunaan Penyedia",
-      "system": "Sistem"
+      "system": "Sistem",
+      "notes": "Nota"
     },
     "toggleSize": "Togol saiz bar sisi",
     "expandSidebar": "Kembangkan bar sisi"
@@ -1990,5 +1991,18 @@
     "title": "Apa yang baharu",
     "releaseNotes": "Nota keluaran",
     "cta": "Okay, mari mula"
+  },
+  "notes": {
+    "title": "Nota",
+    "new": "Nota baharu",
+    "untitled": "Tanpa tajuk",
+    "empty": "Tiada nota lagi",
+    "selectOrCreate": "Pilih nota atau cipta yang baharu",
+    "contentPlaceholder": "Tulis dalam Markdown…",
+    "saved": "Disimpan",
+    "saveFailed": "Tidak dapat menyimpan nota",
+    "createFailed": "Tidak dapat mencipta nota",
+    "deleteConfirm": "Padam nota ini?",
+    "deleteFailed": "Tidak dapat memadam nota"
   }
 }

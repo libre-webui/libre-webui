@@ -370,7 +370,8 @@
       "signOut": "Déconnexion",
       "exploreLabel": "Explorer",
       "usageAnalytics": "Utilisation des fournisseurs",
-      "system": "Système"
+      "system": "Système",
+      "notes": "Notes"
     },
     "toggleSize": "Basculer la taille de la barre latérale",
     "expandSidebar": "Agrandir la barre latérale"
@@ -1990,5 +1991,18 @@
     "title": "Nouveautés",
     "releaseNotes": "Notes de version",
     "cta": "C'est parti"
+  },
+  "notes": {
+    "title": "Notes",
+    "new": "Nouvelle note",
+    "untitled": "Sans titre",
+    "empty": "Aucune note pour le moment",
+    "selectOrCreate": "Sélectionnez une note ou créez-en une",
+    "contentPlaceholder": "Écrivez en Markdown…",
+    "saved": "Enregistré",
+    "saveFailed": "Impossible d'enregistrer la note",
+    "createFailed": "Impossible de créer une note",
+    "deleteConfirm": "Supprimer cette note ?",
+    "deleteFailed": "Impossible de supprimer la note"
   }
 }

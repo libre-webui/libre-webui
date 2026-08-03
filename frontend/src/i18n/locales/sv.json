@@ -370,7 +370,8 @@
       "work": "Arbete",
       "exploreLabel": "Utforska",
       "usageAnalytics": "Leverantörsanvändning",
-      "system": "System"
+      "system": "System",
+      "notes": "Anteckningar"
     },
     "toggleSize": "Växla sidofältets storlek",
     "expandSidebar": "Expandera sidofältet"
@@ -1990,5 +1991,18 @@
     "title": "Nyheter",
     "releaseNotes": "Versionsinformation",
     "cta": "Okej, nu kör vi"
+  },
+  "notes": {
+    "title": "Anteckningar",
+    "new": "Ny anteckning",
+    "untitled": "Namnlös",
+    "empty": "Inga anteckningar än",
+    "selectOrCreate": "Välj en anteckning eller skapa en ny",
+    "contentPlaceholder": "Skriv i Markdown…",
+    "saved": "Sparad",
+    "saveFailed": "Kunde inte spara anteckningen",
+    "createFailed": "Kunde inte skapa en anteckning",
+    "deleteConfirm": "Ta bort den här anteckningen?",
+    "deleteFailed": "Kunde inte ta bort anteckningen"
   }
 }

@@ -370,7 +370,8 @@
       "work": "作業",
       "exploreLabel": "探索",
       "usageAnalytics": "プロバイダー使用状況",
-      "system": "システム"
+      "system": "システム",
+      "notes": "ノート"
     },
     "toggleSize": "サイドバーのサイズを切り替え",
     "expandSidebar": "サイドバーを展開"
@@ -1990,5 +1991,18 @@
     "title": "新機能",
     "releaseNotes": "リリースノート",
     "cta": "さあ、始めましょう"
+  },
+  "notes": {
+    "title": "ノート",
+    "new": "新しいノート",
+    "untitled": "無題",
+    "empty": "ノートはまだありません",
+    "selectOrCreate": "ノートを選択するか新規作成してください",
+    "contentPlaceholder": "Markdownで書く…",
+    "saved": "保存済み",
+    "saveFailed": "ノートを保存できませんでした",
+    "createFailed": "ノートを作成できませんでした",
+    "deleteConfirm": "このノートを削除しますか？",
+    "deleteFailed": "ノートを削除できませんでした"
   }
 }

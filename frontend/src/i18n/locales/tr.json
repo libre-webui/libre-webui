@@ -370,7 +370,8 @@
       "work": "Çalışma",
       "exploreLabel": "Keşfet",
       "usageAnalytics": "Sağlayıcı Kullanımı",
-      "system": "Sistem"
+      "system": "Sistem",
+      "notes": "Notlar"
     },
     "toggleSize": "Kenar çubuğu boyutunu değiştir",
     "expandSidebar": "Kenar çubuğunu genişlet"
@@ -1990,5 +1991,18 @@
     "title": "Yenilikler",
     "releaseNotes": "Sürüm notları",
     "cta": "Tamam, başlayalım"
+  },
+  "notes": {
+    "title": "Notlar",
+    "new": "Yeni not",
+    "untitled": "Başlıksız",
+    "empty": "Henüz not yok",
+    "selectOrCreate": "Bir not seçin veya yeni oluşturun",
+    "contentPlaceholder": "Markdown ile yazın…",
+    "saved": "Kaydedildi",
+    "saveFailed": "Not kaydedilemedi",
+    "createFailed": "Not oluşturulamadı",
+    "deleteConfirm": "Bu not silinsin mi?",
+    "deleteFailed": "Not silinemedi"
   }
 }

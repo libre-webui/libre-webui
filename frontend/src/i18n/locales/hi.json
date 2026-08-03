@@ -370,7 +370,8 @@
       "work": "काम",
       "exploreLabel": "एक्सप्लोर",
       "usageAnalytics": "प्रदाता उपयोग",
-      "system": "सिस्टम"
+      "system": "सिस्टम",
+      "notes": "नोट्स"
     },
     "toggleSize": "साइडबार का आकार बदलें",
     "expandSidebar": "साइडबार विस्तारित करें"
@@ -1990,5 +1991,18 @@
     "title": "नया क्या है",
     "releaseNotes": "रिलीज़ नोट्स",
     "cta": "ठीक है, चलिए"
+  },
+  "notes": {
+    "title": "नोट्स",
+    "new": "नया नोट",
+    "untitled": "बिना शीर्षक",
+    "empty": "अभी कोई नोट नहीं",
+    "selectOrCreate": "कोई नोट चुनें या नया बनाएँ",
+    "contentPlaceholder": "मार्कडाउन में लिखें…",
+    "saved": "सहेजा गया",
+    "saveFailed": "नोट सहेजा नहीं जा सका",
+    "createFailed": "नोट बनाया नहीं जा सका",
+    "deleteConfirm": "यह नोट हटाएँ?",
+    "deleteFailed": "नोट हटाया नहीं जा सका"
   }
 }

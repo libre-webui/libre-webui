@@ -370,7 +370,8 @@
       "agents": "الوكلاء",
       "exploreLabel": "استكشاف",
       "usageAnalytics": "استخدام المزود",
-      "system": "النظام"
+      "system": "النظام",
+      "notes": "الملاحظات"
     },
     "toggleSize": "تبديل حجم الشريط الجانبي",
     "expandSidebar": "توسيع الشريط الجانبي"
@@ -1990,5 +1991,18 @@
     "title": "ما الجديد",
     "releaseNotes": "ملاحظات الإصدار",
     "cta": "حسنًا، هيا بنا"
+  },
+  "notes": {
+    "title": "الملاحظات",
+    "new": "ملاحظة جديدة",
+    "untitled": "بدون عنوان",
+    "empty": "لا توجد ملاحظات بعد",
+    "selectOrCreate": "اختر ملاحظة أو أنشئ واحدة جديدة",
+    "contentPlaceholder": "اكتب بصيغة ماركداون…",
+    "saved": "تم الحفظ",
+    "saveFailed": "تعذر حفظ الملاحظة",
+    "createFailed": "تعذر إنشاء ملاحظة",
+    "deleteConfirm": "حذف هذه الملاحظة؟",
+    "deleteFailed": "تعذر حذف الملاحظة"
   }
 }

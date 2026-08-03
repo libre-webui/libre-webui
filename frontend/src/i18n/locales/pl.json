@@ -370,7 +370,8 @@
       "work": "Praca",
       "exploreLabel": "Odkrywaj",
       "usageAnalytics": "Użycie dostawców",
-      "system": "System"
+      "system": "System",
+      "notes": "Notatki"
     },
     "toggleSize": "Zmień rozmiar panelu bocznego",
     "expandSidebar": "Rozwiń panel boczny"
@@ -1990,5 +1991,18 @@
     "title": "Co nowego",
     "releaseNotes": "Informacje o wydaniu",
     "cta": "OK, zaczynamy"
+  },
+  "notes": {
+    "title": "Notatki",
+    "new": "Nowa notatka",
+    "untitled": "Bez tytułu",
+    "empty": "Brak notatek",
+    "selectOrCreate": "Wybierz notatkę lub utwórz nową",
+    "contentPlaceholder": "Pisz w Markdownie…",
+    "saved": "Zapisano",
+    "saveFailed": "Nie udało się zapisać notatki",
+    "createFailed": "Nie udało się utworzyć notatki",
+    "deleteConfirm": "Usunąć tę notatkę?",
+    "deleteFailed": "Nie udało się usunąć notatki"
   }
 }

@@ -370,7 +370,8 @@
       "work": "Trabajo",
       "exploreLabel": "Explorar",
       "usageAnalytics": "Uso del proveedor",
-      "system": "Sistema"
+      "system": "Sistema",
+      "notes": "Notas"
     },
     "toggleSize": "Cambiar tamaño de barra lateral",
     "expandSidebar": "Expandir barra lateral"
@@ -1990,5 +1991,18 @@
     "title": "Novedades",
     "releaseNotes": "Notas de la versión",
     "cta": "Vale, vamos"
+  },
+  "notes": {
+    "title": "Notas",
+    "new": "Nueva nota",
+    "untitled": "Sin título",
+    "empty": "Aún no hay notas",
+    "selectOrCreate": "Selecciona una nota o crea una nueva",
+    "contentPlaceholder": "Escribe en Markdown…",
+    "saved": "Guardado",
+    "saveFailed": "No se pudo guardar la nota",
+    "createFailed": "No se pudo crear la nota",
+    "deleteConfirm": "¿Eliminar esta nota?",
+    "deleteFailed": "No se pudo eliminar la nota"
   }
 }

@@ -78,6 +78,14 @@ export interface ChatSession extends ChatProviderSelection {
   folderId?: string | null; // Optional folder this chat lives in
 }
 
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface SessionFolder {
   id: string;
   name: string;

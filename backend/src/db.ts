@@ -206,6 +206,19 @@ function initializeTables(): void {
     )
   `);
 
+  // Standalone notes
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS notes (
+      id TEXT PRIMARY KEY,
+      user_id TEXT DEFAULT 'default',
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
   // Session messages table - normalized from sessions.json
   db.exec(`
     CREATE TABLE IF NOT EXISTS session_messages (

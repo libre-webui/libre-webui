@@ -370,7 +370,8 @@
       "work": "Công việc",
       "exploreLabel": "Khám phá",
       "usageAnalytics": "Mức sử dụng nhà cung cấp",
-      "system": "Hệ thống"
+      "system": "Hệ thống",
+      "notes": "Ghi chú"
     },
     "toggleSize": "Chuyển đổi kích thước thanh bên",
     "expandSidebar": "Mở rộng thanh bên"
@@ -1990,5 +1991,18 @@
     "title": "Có gì mới",
     "releaseNotes": "Ghi chú phát hành",
     "cta": "Được rồi, bắt đầu thôi"
+  },
+  "notes": {
+    "title": "Ghi chú",
+    "new": "Ghi chú mới",
+    "untitled": "Không có tiêu đề",
+    "empty": "Chưa có ghi chú nào",
+    "selectOrCreate": "Chọn một ghi chú hoặc tạo mới",
+    "contentPlaceholder": "Viết bằng Markdown…",
+    "saved": "Đã lưu",
+    "saveFailed": "Không thể lưu ghi chú",
+    "createFailed": "Không thể tạo ghi chú",
+    "deleteConfirm": "Xóa ghi chú này?",
+    "deleteFailed": "Không thể xóa ghi chú"
   }
 }

@@ -370,7 +370,8 @@
       "work": "작업",
       "exploreLabel": "둘러보기",
       "usageAnalytics": "프로바이더 사용량",
-      "system": "시스템"
+      "system": "시스템",
+      "notes": "노트"
     },
     "toggleSize": "사이드바 크기 전환",
     "expandSidebar": "사이드바 확장"
@@ -1990,5 +1991,18 @@
     "title": "새로운 기능",
     "releaseNotes": "릴리스 노트",
     "cta": "좋아요, 시작하죠"
+  },
+  "notes": {
+    "title": "노트",
+    "new": "새 노트",
+    "untitled": "제목 없음",
+    "empty": "아직 노트가 없습니다",
+    "selectOrCreate": "노트를 선택하거나 새로 만드세요",
+    "contentPlaceholder": "Markdown으로 작성…",
+    "saved": "저장됨",
+    "saveFailed": "노트를 저장하지 못했습니다",
+    "createFailed": "노트를 만들지 못했습니다",
+    "deleteConfirm": "이 노트를 삭제할까요?",
+    "deleteFailed": "노트를 삭제하지 못했습니다"
   }
 }

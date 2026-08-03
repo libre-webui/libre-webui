@@ -370,7 +370,8 @@
       "system": "System",
       "userManagement": "User Management",
       "signOut": "Sign Out",
-      "exploreLabel": "Explore"
+      "exploreLabel": "Explore",
+      "notes": "Notes"
     },
     "toggleSize": "Toggle sidebar size",
     "expandSidebar": "Expand sidebar"
@@ -1990,5 +1991,18 @@
     "title": "What's new",
     "releaseNotes": "Release notes",
     "cta": "Okay, let's go"
+  },
+  "notes": {
+    "title": "Notes",
+    "new": "New note",
+    "untitled": "Untitled",
+    "empty": "No notes yet",
+    "selectOrCreate": "Select a note or create a new one",
+    "contentPlaceholder": "Write in Markdown…",
+    "saved": "Saved",
+    "saveFailed": "Could not save the note",
+    "createFailed": "Could not create a note",
+    "deleteConfirm": "Delete this note?",
+    "deleteFailed": "Could not delete the note"
   }
 }

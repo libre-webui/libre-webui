@@ -24,6 +24,7 @@ import getDatabase, { isDatabaseInitialized } from './db.js';
 import {
   ChatSession,
   DocumentChunk,
+  Note,
   SessionFolder,
   UserPreferences,
 } from './types/index.js';
@@ -373,6 +374,61 @@ class StorageService {
     }
 
     return false;
+  }
+
+  // =================================
+  // NOTES
+  // =================================
+
+  getNotes(userId = 'default'): Note[] {
+    if (!this.useSQLite) return [];
+    const db = getDatabase();
+    const rows = db
+      .prepare('SELECT * FROM notes WHERE user_id = ? ORDER BY updated_at DESC')
+      .all(userId) as Array<{
+      id: string;
+      title: string;
+      content: string;
+      created_at: number;
+      updated_at: number;
+    }>;
+    return rows.map(row => ({
+      id: row.id,
+      title: encryptionService.decrypt(row.title),
+      content: encryptionService.decrypt(row.content),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    }));
+  }
+
+  getNote(noteId: string, userId = 'default'): Note | undefined {
+    return this.getNotes(userId).find(note => note.id === noteId);
+  }
+
+  saveNote(note: Note, userId = 'default'): void {
+    if (!this.useSQLite) return;
+    const db = getDatabase();
+    db.prepare(
+      `INSERT OR REPLACE INTO notes (id, user_id, title, content, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)`
+    ).run(
+      note.id,
+      userId,
+      encryptionService.encrypt(note.title),
+      encryptionService.encrypt(note.content),
+      note.createdAt,
+      note.updatedAt
+    );
+  }
+
+  deleteNote(noteId: string, userId = 'default'): boolean {
+    if (!this.useSQLite) return false;
+    const db = getDatabase();
+    return (
+      db
+        .prepare('DELETE FROM notes WHERE id = ? AND user_id = ?')
+        .run(noteId, userId).changes > 0
+    );
   }
 
   // =================================

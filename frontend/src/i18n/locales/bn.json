@@ -370,7 +370,8 @@
       "work": "কাজ",
       "exploreLabel": "অন্বেষণ",
       "usageAnalytics": "প্রোভাইডার ব্যবহার",
-      "system": "সিস্টেম"
+      "system": "সিস্টেম",
+      "notes": "নোট"
     },
     "toggleSize": "সাইডবার সাইজ টগল করুন",
     "expandSidebar": "সাইডবার প্রসারিত করুন"
@@ -1990,5 +1991,18 @@
     "title": "নতুন কী আছে",
     "releaseNotes": "রিলিজ নোট",
     "cta": "ঠিক আছে, চলুন"
+  },
+  "notes": {
+    "title": "নোট",
+    "new": "নতুন নোট",
+    "untitled": "শিরোনামহীন",
+    "empty": "এখনও কোনো নোট নেই",
+    "selectOrCreate": "একটি নোট নির্বাচন করুন বা নতুন তৈরি করুন",
+    "contentPlaceholder": "মার্কডাউনে লিখুন…",
+    "saved": "সংরক্ষিত",
+    "saveFailed": "নোট সংরক্ষণ করা যায়নি",
+    "createFailed": "নোট তৈরি করা যায়নি",
+    "deleteConfirm": "এই নোটটি মুছবেন?",
+    "deleteFailed": "নোট মুছে ফেলা যায়নি"
   }
 }

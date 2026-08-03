@@ -370,7 +370,8 @@
       "work": "工作",
       "exploreLabel": "探索",
       "usageAnalytics": "提供商使用情况",
-      "system": "系统"
+      "system": "系统",
+      "notes": "笔记"
     },
     "toggleSize": "切换侧边栏大小",
     "expandSidebar": "展开侧边栏"
@@ -1990,5 +1991,18 @@
     "title": "新功能",
     "releaseNotes": "版本说明",
     "cta": "好的，开始吧"
+  },
+  "notes": {
+    "title": "笔记",
+    "new": "新建笔记",
+    "untitled": "无标题",
+    "empty": "还没有笔记",
+    "selectOrCreate": "选择一条笔记或新建一条",
+    "contentPlaceholder": "用 Markdown 书写…",
+    "saved": "已保存",
+    "saveFailed": "无法保存笔记",
+    "createFailed": "无法创建笔记",
+    "deleteConfirm": "删除此笔记？",
+    "deleteFailed": "无法删除笔记"
   }
 }
