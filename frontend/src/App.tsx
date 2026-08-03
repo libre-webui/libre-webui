@@ -52,6 +52,7 @@ import {
   KeyboardShortcutsModal,
   KeyboardShortcutsIndicator,
 } from '@/components/KeyboardShortcuts';
+import { WhatsNewModal, useWhatsNew } from '@/components/WhatsNewModal';
 import { DemoModeBanner } from '@/components/DemoModeBanner';
 import { BackgroundRenderer } from '@/components/BackgroundRenderer';
 import { AppTabBar } from '@/components/AppTabBar';
@@ -245,6 +246,7 @@ const AppContent: React.FC = () => {
   const { isDemoMode, demoConfig } = useAppStore();
   const hasWorkspaceAccess =
     systemInfo?.requiresAuth === false || isAuthenticated;
+  const whatsNew = useWhatsNew();
 
   // Handle OAuth callback FIRST - before any routing or initialization
   const [oauthProcessed, setOauthProcessed] = React.useState(false);
@@ -666,6 +668,10 @@ const AppContent: React.FC = () => {
         onClose={() => setShortcutsOpen(false)}
         shortcuts={shortcuts}
       />
+
+      {hasWorkspaceAccess && whatsNew.open && whatsNew.notes && (
+        <WhatsNewModal notes={whatsNew.notes} onDismiss={whatsNew.dismiss} />
+      )}
 
       {/* Keyboard shortcuts indicator - only show on chat pages */}
       {hasWorkspaceAccess && (

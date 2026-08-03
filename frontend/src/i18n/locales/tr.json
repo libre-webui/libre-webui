@@ -1943,5 +1943,10 @@
       "video": "Videolar",
       "audio": "Ses"
     }
+  },
+  "whatsNew": {
+    "title": "Yenilikler",
+    "releaseNotes": "Sürüm notları",
+    "cta": "Tamam, başlayalım"
   }
 }

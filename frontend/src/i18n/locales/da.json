@@ -1943,5 +1943,10 @@
       "video": "Videoer",
       "audio": "Lyd"
     }
+  },
+  "whatsNew": {
+    "title": "Nyheder",
+    "releaseNotes": "Udgivelsesnoter",
+    "cta": "Okay, lad os komme i gang"
   }
 }

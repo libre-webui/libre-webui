@@ -1943,5 +1943,10 @@
     "pull": "Pull",
     "pullRestricted": "Model installation is restricted to administrators on this instance.",
     "adminOnlyPull": "Admins only"
+  },
+  "whatsNew": {
+    "title": "What's new",
+    "releaseNotes": "Release notes",
+    "cta": "Okay, let's go"
   }
 }

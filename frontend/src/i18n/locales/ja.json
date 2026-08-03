@@ -1943,5 +1943,10 @@
       "video": "動画",
       "audio": "オーディオ"
     }
+  },
+  "whatsNew": {
+    "title": "新機能",
+    "releaseNotes": "リリースノート",
+    "cta": "さあ、始めましょう"
   }
 }

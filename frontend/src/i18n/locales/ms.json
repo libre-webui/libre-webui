@@ -1943,5 +1943,10 @@
       "video": "Video",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Apa yang baharu",
+    "releaseNotes": "Nota keluaran",
+    "cta": "Okay, mari mula"
   }
 }

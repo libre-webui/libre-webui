@@ -1943,5 +1943,10 @@
       "video": "동영상",
       "audio": "오디오"
     }
+  },
+  "whatsNew": {
+    "title": "새로운 기능",
+    "releaseNotes": "릴리스 노트",
+    "cta": "좋아요, 시작하죠"
   }
 }

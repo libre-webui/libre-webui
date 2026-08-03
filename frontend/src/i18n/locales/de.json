@@ -1943,5 +1943,10 @@
       "video": "Videos",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Was ist neu",
+    "releaseNotes": "Versionshinweise",
+    "cta": "Okay, los geht’s"
   }
 }

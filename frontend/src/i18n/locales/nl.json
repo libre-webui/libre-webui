@@ -1943,5 +1943,10 @@
       "video": "Video's",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Wat is nieuw",
+    "releaseNotes": "Release-opmerkingen",
+    "cta": "Oké, aan de slag"
   }
 }

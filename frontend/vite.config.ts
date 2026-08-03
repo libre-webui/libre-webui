@@ -44,6 +44,32 @@ const getVersion = () => {
 
 const appVersion = getVersion();
 
+// Latest released section of the root CHANGELOG, embedded for the
+// What's New dialog. Falls back to null when the file is absent (e.g.
+// standalone frontend builds).
+const getLatestReleaseNotes = () => {
+  try {
+    const changelog = readFileSync(
+      path.resolve(__dirname, '../CHANGELOG.md'),
+      'utf-8'
+    );
+    const headings = [
+      ...changelog.matchAll(/^## \[(\d+\.\d+\.\d+)\] - (\S+)\s*$/gm),
+    ];
+    if (headings.length === 0) return null;
+    const [first, second] = headings;
+    const start = (first.index ?? 0) + first[0].length;
+    const end = second?.index ?? changelog.length;
+    return {
+      version: first[1],
+      date: first[2],
+      body: changelog.slice(start, end).trim(),
+    };
+  } catch {
+    return null;
+  }
+};
+
 const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:3001';
 const WS_BASE_URL = process.env.VITE_WS_BASE_URL || 'ws://localhost:3001';
 
@@ -56,6 +82,7 @@ export default defineConfig({
   base: isElectron ? './' : '/',
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
+    __LATEST_RELEASE_NOTES__: JSON.stringify(getLatestReleaseNotes()),
   },
   resolve: {
     alias: {

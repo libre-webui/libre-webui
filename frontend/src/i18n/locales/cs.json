@@ -1943,5 +1943,10 @@
       "video": "Videa",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Co je nového",
+    "releaseNotes": "Poznámky k vydání",
+    "cta": "Dobře, jdeme na to"
   }
 }

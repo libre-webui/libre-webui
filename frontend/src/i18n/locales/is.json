@@ -1943,5 +1943,10 @@
       "video": "Myndbönd",
       "audio": "Hljóð"
     }
+  },
+  "whatsNew": {
+    "title": "Nýjungar",
+    "releaseNotes": "Útgáfuskýringar",
+    "cta": "Allt í lagi, byrjum"
   }
 }

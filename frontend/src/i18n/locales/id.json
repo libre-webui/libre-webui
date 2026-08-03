@@ -1943,5 +1943,10 @@
       "video": "Video",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Yang baru",
+    "releaseNotes": "Catatan rilis",
+    "cta": "Oke, ayo mulai"
   }
 }

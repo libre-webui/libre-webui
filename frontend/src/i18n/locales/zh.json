@@ -1943,5 +1943,10 @@
       "video": "视频",
       "audio": "音频"
     }
+  },
+  "whatsNew": {
+    "title": "新功能",
+    "releaseNotes": "版本说明",
+    "cta": "好的，开始吧"
   }
 }

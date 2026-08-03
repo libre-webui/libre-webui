@@ -1943,5 +1943,10 @@
       "video": "Video",
       "audio": "Âm thanh"
     }
+  },
+  "whatsNew": {
+    "title": "Có gì mới",
+    "releaseNotes": "Ghi chú phát hành",
+    "cta": "Được rồi, bắt đầu thôi"
   }
 }

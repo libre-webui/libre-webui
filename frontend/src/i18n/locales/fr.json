@@ -1943,5 +1943,10 @@
       "video": "Vidéos",
       "audio": "Audio"
     }
+  },
+  "whatsNew": {
+    "title": "Nouveautés",
+    "releaseNotes": "Notes de version",
+    "cta": "C'est parti"
   }
 }
