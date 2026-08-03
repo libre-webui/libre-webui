@@ -15,6 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📚 Documentation
 
+## [0.19.1] - 2026-08-03
+
+Libre WebUI 0.19.1 fixes a container startup regression in 0.19.0. The
+production image omitted dependencies that npm installed inside the backend
+workspace, causing the compiled server to exit when it could not resolve
+packages such as `undici`.
+
+### 🐛 Bug Fixes
+
+- Copy the backend workspace's production `node_modules` tree into the final
+  Docker image alongside the root dependency tree, and add regression coverage
+  for non-hoisted backend packages.
+
 ## [0.19.0] - 2026-08-03
 
 Libre WebUI 0.19.0 expands the chat workspace with reusable knowledge
